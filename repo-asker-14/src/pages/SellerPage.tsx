@@ -1094,24 +1094,11 @@ const SellerPage: React.FC = () => {
     lastSeen: "2025-09-17T10:30:00Z" // ISO string from your backend
   });
 
-  // Handle case where sellerId is not provided
-  if (!sellerId) {
-    return <ErrorMessage message="Seller ID is required" />;
-  }
+  // Hooks with error handling - always call hooks before any early returns
+  const { data: seller, isLoading: sellerLoading, error: sellerError } = useSeller(sellerId || '');
+  const { data: products = [], isLoading: productsLoading, error: productsError } = useSellerProducts(sellerId || '');
 
-  // Hooks with error handling
-  const { data: seller, isLoading: sellerLoading, error: sellerError } = useSeller(sellerId);
-  const { data: products = [], isLoading: productsLoading, error: productsError } = useSellerProducts(sellerId);
-
-  // Error handling
-  if (sellerError) {
-    return <ErrorMessage message="Failed to load seller information" />;
-  }
-
-  if (productsError) {
-    return <ErrorMessage message="Failed to load products" />;
-  }
-
+  // ALL HOOKS MUST BE CALLED BEFORE ANY EARLY RETURNS
   // Improved scroll handling effect for sticky tabs
   useEffect(() => {
     let originalTabsOffsetTop = 0;
@@ -1201,6 +1188,20 @@ const SellerPage: React.FC = () => {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Handle case where sellerId is not provided
+  if (!sellerId) {
+    return <ErrorMessage message="Seller ID is required" />;
+  }
+
+  // Error handling
+  if (sellerError) {
+    return <ErrorMessage message="Failed to load seller information" />;
+  }
+
+  if (productsError) {
+    return <ErrorMessage message="Failed to load products" />;
+  }
 
   // Action handlers
   const handleFollow = () => {
@@ -1363,6 +1364,9 @@ const SellerPage: React.FC = () => {
         <div
           ref={mainContentRef}
           className="container mx-auto px-4 py-6 tab-content-container"
+          style={isTabsSticky ? {
+            paddingTop: `${headerHeight + tabsHeight + 24}px` // 24px for original py-6
+          } : undefined}
         >
           {activeTab === 'products' && (
             <ProductsTab
