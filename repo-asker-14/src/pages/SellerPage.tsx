@@ -1102,58 +1102,69 @@ const SellerPage: React.FC = () => {
   // Improved scroll handling effect for sticky tabs
   useEffect(() => {
     let originalTabsOffsetTop = 0;
+    let isCalculating = false;
 
     const calculateOriginalPosition = () => {
-      if (!headerRef.current || !tabsRef.current) return;
+      if (isCalculating || !headerRef.current || !tabsRef.current) return;
+      
+      isCalculating = true;
+      
+      // Use requestAnimationFrame to ensure DOM is fully rendered
+      requestAnimationFrame(() => {
+        try {
+          const headerHeight = headerRef.current?.offsetHeight || 0;
 
-      // Calculate the original position of tabs in the document flow
-      const headerHeight = headerRef.current.offsetHeight;
-
-      if (activeTab === 'products' && sellerInfoRef.current && heroBannerRef.current) {
-        // For products tab, tabs come after header + hero banner + seller info
-        const heroBannerHeight = heroBannerRef.current.offsetHeight;
-        const sellerInfoHeight = sellerInfoRef.current.offsetHeight;
-        originalTabsOffsetTop = headerHeight + heroBannerHeight + sellerInfoHeight;
-      } else {
-        // For other tabs, tabs come right after header (no hero banner or seller info)
-        originalTabsOffsetTop = headerHeight;
-      }
+          if (activeTab === 'products' && sellerInfoRef.current && heroBannerRef.current) {
+            // For products tab, tabs come after header + hero banner + seller info
+            const heroBannerHeight = heroBannerRef.current.offsetHeight;
+            const sellerInfoHeight = sellerInfoRef.current.offsetHeight;
+            originalTabsOffsetTop = headerHeight + heroBannerHeight + sellerInfoHeight;
+          } else {
+            // For other tabs, tabs come right after header (no hero banner or seller info)
+            originalTabsOffsetTop = headerHeight;
+          }
+        } finally {
+          isCalculating = false;
+        }
+      });
     };
 
     const handleScroll = () => {
-      if (!headerRef.current || !tabsRef.current) return;
+      if (!headerRef.current || !tabsRef.current || isCalculating) return;
 
       const scrollY = window.scrollY;
       const headerHeight = headerRef.current.offsetHeight;
+      const tabsCurrentHeight = tabsRef.current.offsetHeight;
 
-      // Recalculate original position (in case content changed)
-      calculateOriginalPosition();
-
-      // Store tabs height for spacer
-      if (tabsRef.current.offsetHeight !== tabsHeight) {
-        setTabsHeight(tabsRef.current.offsetHeight);
+      // Update tabs height if changed
+      if (tabsCurrentHeight !== tabsHeight) {
+        setTabsHeight(tabsCurrentHeight);
       }
 
-      // Calculate scroll progress for header transitions
+      // Calculate sticky threshold with precise timing
+      let stickyThreshold = 0;
+      
       if (activeTab === 'products') {
-        // Calculate progress based on scroll through hero banner and seller info
-        const maxScrollForProgress = originalTabsOffsetTop - headerHeight;
+        // For products tab, calculate exact position where tabs would naturally become sticky
+        if (sellerInfoRef.current && heroBannerRef.current) {
+          const heroBannerHeight = heroBannerRef.current.offsetHeight;
+          const sellerInfoHeight = sellerInfoRef.current.offsetHeight;
+          stickyThreshold = heroBannerHeight + sellerInfoHeight;
+        }
+        
+        // Calculate scroll progress for header transitions
+        const maxScrollForProgress = stickyThreshold;
         const calculatedProgress = Math.min(1, Math.max(0, scrollY / maxScrollForProgress));
         setScrollProgress(calculatedProgress);
-      }
-
-      // Determine if tabs should be sticky
-      // They become sticky when they would scroll past the header
-      let shouldBeSticky = false;
-
-      if (activeTab === 'products') {
-        // For products tab, use the calculated offset (after hero banner + seller info)
-        shouldBeSticky = scrollY > (originalTabsOffsetTop - headerHeight - 50); // 50px buffer for smoother transition
       } else {
-        // For other tabs, tabs should always be sticky to remain constantly visible
-        // Since other tabs don't have hero banner/seller info, they appear right after header
-        shouldBeSticky = true;
+        // For other tabs, they should be sticky immediately
+        stickyThreshold = 0;
       }
+
+      // Determine if tabs should be sticky with pixel-perfect timing
+      const shouldBeSticky = activeTab === 'products' 
+        ? scrollY >= stickyThreshold 
+        : true;
 
       // Only update state if it changed to prevent unnecessary re-renders
       if (shouldBeSticky !== isTabsSticky) {
@@ -1163,30 +1174,38 @@ const SellerPage: React.FC = () => {
 
     // Use RAF for smoother scrolling performance
     let rafId: number;
-    const throttledHandleScroll = () => {
-      cancelAnimationFrame(rafId);
+    const smoothScrollHandler = () => {
       rafId = requestAnimationFrame(handleScroll);
     };
 
-    // Initial calculation and setup
-    const timeoutId = setTimeout(() => {
+    // Initial setup with proper timing
+    const setupTimeout = setTimeout(() => {
       calculateOriginalPosition();
-      handleScroll(); // Set initial state
+      
+      // Wait for calculation to complete before initial scroll check
+      const initialCheckTimeout = setTimeout(() => {
+        handleScroll();
+        
+        // For non-products tabs, ensure tabs are sticky from the start
+        if (activeTab !== 'products') {
+          setIsTabsSticky(true);
+        }
+        
+        // Add scroll listener after initial setup
+        window.addEventListener('scroll', smoothScrollHandler, { passive: true });
+      }, 50);
 
-      // For non-products tabs, ensure tabs are sticky from the start
-      if (activeTab !== 'products') {
-        setIsTabsSticky(true);
-      }
-
-      window.addEventListener('scroll', throttledHandleScroll, { passive: true });
+      return () => clearTimeout(initialCheckTimeout);
     }, 100);
 
     return () => {
-      clearTimeout(timeoutId);
-      cancelAnimationFrame(rafId);
-      window.removeEventListener('scroll', throttledHandleScroll);
+      clearTimeout(setupTimeout);
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+      }
+      window.removeEventListener('scroll', smoothScrollHandler);
     };
-  }, [activeTab, seller, isTabsSticky, tabsHeight]); // Include dependencies
+  }, [activeTab, seller, isTabsSticky, tabsHeight])
 
   // Example effect to simulate real-time online status updates
   useEffect(() => {
@@ -1255,50 +1274,25 @@ const SellerPage: React.FC = () => {
       return;
     }
 
-    // Otherwise, change to the new tab
+    // Change to the new tab
     setActiveTab(newTab);
 
-    // Set sticky state based on tab type immediately
+    // Immediately set appropriate sticky state for seamless transition
     if (newTab === 'products') {
-      // Reset sticky state for products tab to recalculate positions
+      // For products tab, reset sticky state to false initially
       setIsTabsSticky(false);
+      setScrollProgress(0);
     } else {
-      // For non-products tabs, make them sticky immediately
+      // For non-products tabs, make them sticky immediately for constant visibility
       setIsTabsSticky(true);
+      setScrollProgress(1);
     }
 
-    // Scroll to top for new tab
+    // Scroll to top smoothly
     window.scrollTo({
       top: 0,
       behavior: 'smooth'
     });
-
-    // Force recalculation after state update
-    setTimeout(() => {
-      if (headerRef.current && tabsRef.current) {
-        const scrollY = window.scrollY;
-        const headerHeight = headerRef.current.offsetHeight;
-        let originalTabsOffsetTop = 0;
-
-        if (newTab === 'products' && sellerInfoRef.current && heroBannerRef.current) {
-          const heroBannerHeight = heroBannerRef.current.offsetHeight;
-          const sellerInfoHeight = sellerInfoRef.current.offsetHeight;
-          originalTabsOffsetTop = headerHeight + heroBannerHeight + sellerInfoHeight;
-        } else {
-          originalTabsOffsetTop = headerHeight;
-        }
-
-        // Calculate if tabs should be sticky based on tab type
-        let shouldBeSticky = false;
-        if (newTab === 'products') {
-          shouldBeSticky = scrollY > (originalTabsOffsetTop - headerHeight);
-        } else {
-          // For other tabs, they should always be sticky to remain constantly visible
-          shouldBeSticky = true;
-        }
-        setIsTabsSticky(shouldBeSticky);
-      }
-    }, 50);
   };
 
   // Loading state
@@ -1366,15 +1360,17 @@ const SellerPage: React.FC = () => {
 
         <nav
           ref={tabsRef}
-          className={`bg-white border-b transition-all duration-200 ease-out ${
+          className={`bg-white border-b transition-all duration-300 ease-out ${
             isTabsSticky
-              ? 'fixed top-0 left-0 right-0 z-40'
+              ? 'fixed top-0 left-0 right-0 z-40 shadow-sm'
               : 'relative'
           }`}
-          style={isTabsSticky ? {
-            top: `${headerHeight}px`,
-            transform: isTabsSticky ? 'translateZ(0)' : 'none' // GPU acceleration for smoother animation
-          } : undefined}
+          style={{
+            top: isTabsSticky ? `${headerHeight}px` : 'auto',
+            transform: 'translateZ(0)', // Always use GPU acceleration
+            willChange: isTabsSticky ? 'transform' : 'auto',
+            backfaceVisibility: 'hidden' // Prevent flickering
+          }}
         >
           <TabsNavigation
             tabs={tabs}
@@ -1386,8 +1382,12 @@ const SellerPage: React.FC = () => {
         {/* Spacer div when tabs are sticky to prevent content jumping */}
         {isTabsSticky && (
           <div
-            className="transition-all duration-200 ease-out"
-            style={{ height: `${tabsHeight}px` }}
+            className="transition-all duration-300 ease-out"
+            style={{ 
+              height: `${tabsHeight}px`,
+              opacity: isTabsSticky ? 1 : 0,
+              transform: 'translateZ(0)'
+            }}
           />
         )}
 
