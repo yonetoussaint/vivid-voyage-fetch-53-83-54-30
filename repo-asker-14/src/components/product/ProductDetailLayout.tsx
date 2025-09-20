@@ -165,6 +165,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
             console.error('❌ No seller ID found');
           }
         }}
+        onBuyNow={buyNow}
       />
 
       {/* Sticky Tabs Navigation - Moved back to main layout */}

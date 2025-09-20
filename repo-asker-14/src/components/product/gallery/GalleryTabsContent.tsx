@@ -108,10 +108,10 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
     </ProductSectionWrapper>
 
     {/* Sticky Checkout Bar for Overview Tab */}
-    {product && onBuyNow && (
+    {product && (
       <StickyCheckoutBar
         product={product}
-        onBuyNow={onBuyNow}
+        onBuyNow={onBuyNow || (() => console.log('No onBuyNow handler provided'))}
         onViewCart={handleViewCart}
         selectedColor=""
         selectedStorage=""
