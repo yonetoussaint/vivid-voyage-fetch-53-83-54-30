@@ -1,7 +1,7 @@
 import React, { forwardRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ProductImageGallery from "@/components/ProductImageGallery";
-import GalleryTabsContent from "@/components/GalleryTabsContent";
+import GalleryTabsContent from "@/components/product/gallery/GalleryTabsContent";
 
 interface ProductGallerySectionProps {
   galleryRef: React.RefObject<any>;
