@@ -1134,13 +1134,21 @@ const SellerPage: React.FC = () => {
         setTabsHeight(tabsRef.current.offsetHeight);
       }
 
+      // Calculate scroll progress for header transitions
+      if (activeTab === 'products') {
+        // Calculate progress based on scroll through hero banner and seller info
+        const maxScrollForProgress = originalTabsOffsetTop - headerHeight;
+        const calculatedProgress = Math.min(1, Math.max(0, scrollY / maxScrollForProgress));
+        setScrollProgress(calculatedProgress);
+      }
+
       // Determine if tabs should be sticky
       // They become sticky when they would scroll past the header
       let shouldBeSticky = false;
 
       if (activeTab === 'products') {
         // For products tab, use the calculated offset (after hero banner + seller info)
-        shouldBeSticky = scrollY > (originalTabsOffsetTop - headerHeight);
+        shouldBeSticky = scrollY > (originalTabsOffsetTop - headerHeight - 50); // 50px buffer for smoother transition
       } else {
         // For other tabs, tabs should always be sticky to remain constantly visible
         // Since other tabs don't have hero banner/seller info, they appear right after header
@@ -1320,8 +1328,8 @@ const SellerPage: React.FC = () => {
         onFollow={handleFollow}
         onMessage={handleMessage}
         onShare={handleShare}
-        customScrollProgress={activeTab === 'products' ? scrollProgress : 1}
-        forceScrolledState={activeTab !== 'products' || isTabsSticky}
+        customScrollProgress={activeTab === 'products' ? (isTabsSticky ? Math.max(0.8, scrollProgress) : scrollProgress) : 1}
+        forceScrolledState={activeTab !== 'products'}
         onlineStatus={onlineStatus}
         actionButtons={[
           {
