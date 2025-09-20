@@ -318,8 +318,8 @@ const StickyCheckoutBar = ({
 
   const handleViewCart = () => {
     console.log('🛒 Cart button clicked! Navigating to cart page...');
-    // Check if onViewCart is a meaningful function (not the default empty function)
-    if (typeof onViewCart === 'function' && onViewCart.toString() !== '() => {}') {
+    // Always try to use the provided onViewCart function first
+    if (typeof onViewCart === 'function') {
       console.log('🛒 Using provided onViewCart function');
       onViewCart();
     } else {
