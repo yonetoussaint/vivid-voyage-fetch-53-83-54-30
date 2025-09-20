@@ -1087,9 +1087,6 @@ const SellerPage: React.FC = () => {
   const [isTabsSticky, setIsTabsSticky] = useState(false);
   const [tabsHeight, setTabsHeight] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [stickyProgress, setStickyProgress] = useState(0);
-  const [lastScrollY, setLastScrollY] = useState(0);
-  const [scrollVelocity, setScrollVelocity] = useState(0);
 
   // Online status state - you would get this from your real-time data source
   const [onlineStatus, setOnlineStatus] = useState<OnlineStatus>({
@@ -1139,11 +1136,6 @@ const SellerPage: React.FC = () => {
       const headerHeight = headerRef.current.offsetHeight;
       const tabsCurrentHeight = tabsRef.current.offsetHeight;
 
-      // Calculate scroll velocity for adaptive transitions
-      const velocity = Math.abs(scrollY - lastScrollY);
-      setScrollVelocity(velocity);
-      setLastScrollY(scrollY);
-
       // Update tabs height if changed
       if (tabsCurrentHeight !== tabsHeight) {
         setTabsHeight(tabsCurrentHeight);
@@ -1166,36 +1158,19 @@ const SellerPage: React.FC = () => {
         const maxScrollForProgress = stickyThreshold;
         const calculatedProgress = Math.min(1, Math.max(0, scrollY / maxScrollForProgress));
         setScrollProgress(calculatedProgress);
-
-        // Create smooth transition zone (50px before and after threshold)
-        const transitionZone = 50;
-        const adaptiveZone = Math.max(transitionZone, velocity * 2); // Larger zone for fast scrolling
-        const transitionStart = stickyThreshold - adaptiveZone;
-        const transitionEnd = stickyThreshold + adaptiveZone;
-        
-        // Calculate smooth sticky progress
-        let smoothProgress = 0;
-        if (scrollY <= transitionStart) {
-          smoothProgress = 0;
-        } else if (scrollY >= transitionEnd) {
-          smoothProgress = 1;
-        } else {
-          // Smooth easing function for the transition
-          const t = (scrollY - transitionStart) / (transitionEnd - transitionStart);
-          smoothProgress = t * t * (3 - 2 * t); // Smoothstep function
-        }
-        
-        setStickyProgress(smoothProgress);
-        
-        // Determine sticky state with hysteresis to prevent flickering
-        const shouldBeSticky = smoothProgress > 0.5;
-        if (shouldBeSticky !== isTabsSticky) {
-          setIsTabsSticky(shouldBeSticky);
-        }
       } else {
         // For other tabs, they should be sticky immediately
-        setStickyProgress(1);
-        setIsTabsSticky(true);
+        stickyThreshold = 0;
+      }
+
+      // Determine if tabs should be sticky with pixel-perfect timing
+      const shouldBeSticky = activeTab === 'products' 
+        ? scrollY >= stickyThreshold 
+        : true;
+
+      // Only update state if it changed to prevent unnecessary re-renders
+      if (shouldBeSticky !== isTabsSticky) {
+        setIsTabsSticky(shouldBeSticky);
       }
     };
 
@@ -1232,7 +1207,7 @@ const SellerPage: React.FC = () => {
       }
       window.removeEventListener('scroll', smoothScrollHandler);
     };
-  }, [activeTab, seller, isTabsSticky, tabsHeight, lastScrollY, scrollVelocity, stickyProgress])
+  }, [activeTab, seller, isTabsSticky, tabsHeight])
 
   // Example effect to simulate real-time online status updates
   useEffect(() => {
@@ -1387,23 +1362,16 @@ const SellerPage: React.FC = () => {
 
         <nav
           ref={tabsRef}
-          className={`bg-white border-b transition-none ${
+          className={`bg-white border-b transition-all duration-300 ease-out ${
             isTabsSticky
-              ? 'fixed top-0 left-0 right-0 z-40'
+              ? 'fixed top-0 left-0 right-0 z-40 shadow-sm'
               : 'relative'
           }`}
           style={{
             top: isTabsSticky ? `${headerHeight}px` : 'auto',
-            transform: `translateZ(0) translateY(${(1 - stickyProgress) * -10}px)`,
-            opacity: Math.max(0.3, 0.7 + (stickyProgress * 0.3)), // Smooth opacity transition
-            backdropFilter: `blur(${stickyProgress * 8}px)`,
-            backgroundColor: `rgba(255, 255, 255, ${0.85 + (stickyProgress * 0.15)})`,
-            boxShadow: stickyProgress > 0.1 ? `0 2px ${8 * stickyProgress}px rgba(0,0,0,${0.05 + (stickyProgress * 0.1)})` : 'none',
-            willChange: 'transform, opacity, backdrop-filter',
-            backfaceVisibility: 'hidden',
-            transition: scrollVelocity > 20 
-              ? 'none' // No transition for fast scrolling to prevent lag
-              : 'box-shadow 0.2s ease-out, background-color 0.2s ease-out' // Smooth transitions for slow scrolling
+            transform: 'translateZ(0)', // Always use GPU acceleration
+            willChange: isTabsSticky ? 'transform' : 'auto',
+            backfaceVisibility: 'hidden' // Prevent flickering
           }}
         >
           <TabsNavigation
@@ -1414,13 +1382,13 @@ const SellerPage: React.FC = () => {
         </nav>
 
         {/* Spacer div when tabs are sticky to prevent content jumping */}
-        {stickyProgress > 0 && (
+        {isTabsSticky && (
           <div
+            className="transition-all duration-300 ease-out"
             style={{ 
-              height: `${tabsHeight * stickyProgress}px`,
-              opacity: stickyProgress,
-              transform: 'translateZ(0)',
-              transition: scrollVelocity > 20 ? 'none' : 'height 0.2s ease-out, opacity 0.2s ease-out'
+              height: `${tabsHeight}px`,
+              opacity: isTabsSticky ? 1 : 0,
+              transform: 'translateZ(0)'
             }}
           />
         )}
