@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, ChevronUp, Minus, Plus, CreditCard, LogIn, ShoppingCart } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useCurrency, currencies, currencyToCountry } from '@/contexts/CurrencyContext';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useAuthOverlay } from '@/context/AuthOverlayContext';
@@ -234,6 +235,7 @@ const StickyCheckoutBar = ({
   const { isAuthenticated } = useAuth();
   const { openAuthOverlay } = useAuthOverlay();
   const { currentCurrency, formatPrice, convertPrice } = useCurrency();
+  const navigate = useNavigate();
 
   // Measure sticky bar height to position sign-in banner above it
   const barRef = useRef<HTMLDivElement | null>(null);
@@ -318,8 +320,8 @@ const StickyCheckoutBar = ({
     if (typeof onViewCart === 'function') {
       onViewCart();
     } else {
-      // Default navigation to cart page
-      window.location.href = '/cart';
+      // Default navigation to cart page using React Router
+      navigate('/cart');
     }
   };
 
