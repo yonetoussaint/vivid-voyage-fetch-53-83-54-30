@@ -133,35 +133,18 @@ const SellerHeader = React.forwardRef<HTMLDivElement, SellerHeaderProps>(({
             )}
           </div>
 
-          {/* Center - Search bar or search icon */}
+          {/* Center - Search icon only in second state */}
           <div className="flex-1 mx-4">
-            {displayProgress >= 0.5 ? (
-              <div className="flex-1 relative max-w-md mx-auto">
-                <input
-                  type="text"
-                  placeholder="Search seller products..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onClick={() => {
-                    startLoading();
-                    navigate(`/search${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ''}`);
-                  }}
-                  className="w-full px-3 py-1 text-sm font-medium border-2 border-gray-800 rounded-full focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-300 bg-white shadow-sm cursor-pointer"
-                  readOnly
-                />
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-600 font-bold" />
-              </div>
-            ) : (
-              <div className="flex justify-center">
-                <HeaderActionButton
-                  Icon={Search}
-                  onClick={() => {
-                    startLoading();
-                    navigate('/search');
-                  }}
-                />
-              </div>
-            )}
+            <div className="flex justify-center">
+              <HeaderActionButton
+                Icon={Search}
+                onClick={() => {
+                  startLoading();
+                  navigate('/search');
+                }}
+                progress={displayProgress}
+              />
+            </div>
           </div>
 
           {/* Right side - Action buttons */}
