@@ -208,7 +208,7 @@ const SellerHeroBanner = React.forwardRef<HTMLDivElement, SellerHeroBannerProps>
           }
         }}
         className="hero-banner relative overflow-hidden w-full"
-        style={{ marginTop: offset }}
+        style={{ marginTop: 0 }}
       >
         <BannerSlides 
           slides={slidesToShow}

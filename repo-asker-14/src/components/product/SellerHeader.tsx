@@ -147,80 +147,28 @@ const SellerHeader = React.forwardRef<HTMLDivElement, SellerHeaderProps>(({
             )}
           </div>
 
-          {/* Center - Search icon only in second state */}
+          {/* Center - Empty space to push right elements to the right */}
           <div className="flex-1 mx-4">
-            <div className="flex justify-center">
-              <HeaderActionButton
-                Icon={Search}
-                onClick={() => {
-                  startLoading();
-                  navigate('/search');
-                }}
-                progress={displayProgress}
-              />
-            </div>
           </div>
 
-          {/* Right side - Action buttons */}
-          <div 
-            className="flex items-center gap-2 transition-all duration-300 ease-out"
-            style={{
-              opacity: displayProgress,
-              transform: `translateX(${(1 - displayProgress) * 20}px)`
-            }}
-          >
-            {actionButtons ? (
-              actionButtons.map((button, index) => (
-                <div 
-                  key={index}
-                  className="transition-all duration-300 ease-out"
-                  style={{
-                    transform: `scale(${0.9 + (displayProgress * 0.1)})`,
-                    transitionDelay: `${index * 50}ms`
-                  }}
-                >
-                  <HeaderActionButton 
-                    key={index}
-                    Icon={button.Icon} 
-                    active={button.active} 
-                    onClick={button.onClick} 
-                    progress={displayProgress} 
-                    activeColor={button.activeColor}
-                    likeCount={button.count}
-                    shareCount={button.count}
-                  />
-                </div>
-              ))
-            ) : (
-              <>
-                <div 
-                  className="transition-all duration-300 ease-out"
-                  style={{
-                    transform: `scale(${0.9 + (displayProgress * 0.1)})`
-                  }}
-                >
-                  <HeaderActionButton 
-                    Icon={Heart} 
-                    active={isFollowing} 
-                    onClick={onFollow} 
-                    progress={displayProgress} 
-                    activeColor="#f43f5e"
-                  />
-                </div>
-                <div 
-                  className="transition-all duration-300 ease-out"
-                  style={{
-                    transform: `scale(${0.9 + (displayProgress * 0.1)})`
-                  }}
-                >
-                  <HeaderActionButton 
-                    Icon={Share} 
-                    progress={displayProgress}
-                    onClick={onShare}
-                  />
-                </div>
-              </>
-            )}
+          {/* Right side - Search and Share buttons */}
+          <div className="flex items-center gap-2">
+            {/* Search button - always visible */}
+            <HeaderActionButton
+              Icon={Search}
+              onClick={() => {
+                startLoading();
+                navigate('/search');
+              }}
+              progress={displayProgress}
+            />
+            
+            {/* Share button - always visible */}
+            <HeaderActionButton 
+              Icon={Share} 
+              progress={displayProgress}
+              onClick={onShare}
+            />
           </div>
         </div>
       </div>
