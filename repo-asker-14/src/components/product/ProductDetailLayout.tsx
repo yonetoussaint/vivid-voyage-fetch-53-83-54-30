@@ -125,7 +125,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
   };
 
   return (
-    <div className="flex flex-col min-h-0 bg-white overscroll-none pb-20" ref={refs.contentRef}>
+    <div className="flex flex-col min-h-screen bg-white" ref={refs.contentRef}>
       {/* Header Section - Conditionally rendered */}
       {!hideHeader && (
         <ProductHeaderSection
@@ -156,19 +156,15 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
         }}
         onVariantImageChange={handlers.handleVariantImageSelection}
         onSellerClick={() => {
-          console.log('🔍 Seller click - seller data:', product?.sellers);
-          console.log('🔍 Seller ID:', product?.sellers?.id);
           if (product?.sellers?.id) {
             navigate(`/seller/${product?.sellers?.id}`);
-          } else {
-            console.error('❌ No seller ID found');
           }
         }}
         onBuyNow={buyNow}
         onViewCart={handleViewCart}
       />
 
-      {/* Sticky Tabs Navigation - Moved back to main layout */}
+      {/* Sticky Tabs Navigation */}
       <StickyTabsNavigation
         headerHeight={state.headerHeight}
         galleryRef={refs.galleryRef}
@@ -176,10 +172,6 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
         scrollContainerRef={scrollContainerRef}
         stickyTopOffset={stickyTopOffset}
       />
-
-      {/* Main Content Sections - Removed ProductContentSections component */}
-
-      {/* Related Products Section - Moved to recommendations tab */}
 
       {/* Scroll Management */}
       <ProductScrollManager
@@ -210,7 +202,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
         onBuyNow={buyNow}
         sharePanelOpen={state.sharePanelOpen}
         setSharePanelOpen={state.setSharePanelOpen}
-        hideCheckoutBar={true} // Hide checkout bar since it's now in overview tab
+        hideCheckoutBar={false}
       />
     </div>
   );
