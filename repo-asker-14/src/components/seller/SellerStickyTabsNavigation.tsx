@@ -81,16 +81,23 @@ const SellerStickyTabsNavigation: React.FC<SellerStickyTabsNavigationProps> = ({
 
   return (
     <div 
-      className="fixed left-0 right-0 z-40 bg-white border-b overflow-x-auto shadow-sm transition-all duration-200 ease-out"
+      className="fixed left-0 right-0 z-40 bg-white border-b overflow-x-auto shadow-sm transition-all duration-300 ease-out"
       style={{ 
         top: `${headerHeight}px`,
         opacity: opacity,
-        transform: `translateY(${(1 - opacity) * -10}px)`, // Subtle slide effect
-        backdropFilter: `blur(${opacity * 8}px)`,
-        backgroundColor: `rgba(255, 255, 255, ${0.95 * opacity})`
+        transform: `translateY(${(1 - opacity) * -15}px)`, // More noticeable slide effect
+        backdropFilter: `blur(${opacity * 10}px)`,
+        backgroundColor: `rgba(255, 255, 255, ${0.95 * opacity})`,
+        boxShadow: opacity > 0.5 ? '0 4px 20px rgba(0,0,0,0.08)' : 'none'
       }}
     >
-      <div className="w-full">
+      <div 
+        className="w-full transition-all duration-300 ease-out"
+        style={{
+          transform: `scale(${0.95 + (opacity * 0.05)})`,
+          opacity: opacity
+        }}
+      >
         <TabsNavigation
           tabs={[
             { id: 'overview', label: 'Overview' },

@@ -105,31 +105,39 @@ const SellerHeader = React.forwardRef<HTMLDivElement, SellerHeaderProps>(({
 
             {/* Seller info when scrolled */}
             {displayProgress >= 0.5 && seller && (
-              <div className="flex items-center gap-2">
+              <div 
+              className="flex items-center gap-3 transition-all duration-300 ease-out"
+              style={{
+                opacity: displayProgress,
+                transform: `translateX(${(1 - displayProgress) * -20}px)`
+              }}
+            >
+              <div className="relative transition-transform duration-300 ease-out">
                 <img
                   src={seller.profile_image || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face"}
                   alt={seller.name}
                   className="w-8 h-8 rounded-full object-cover border"
                 />
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-1">
-                    <span className="text-sm font-semibold text-gray-900 truncate max-w-32">
-                      {seller.name}
-                    </span>
-                    {seller.verified && (
-                      <CheckCircle className="w-3 h-3 text-blue-500 fill-current" />
-                    )}
-                  </div>
-                  {onlineStatus && (
-                    <div className="flex items-center gap-1">
-                      <div className={`w-2 h-2 rounded-full ${onlineStatus.isOnline ? 'bg-green-500' : 'bg-gray-400'}`} />
-                      <span className={`text-xs ${onlineStatus.isOnline ? 'text-green-600' : 'text-muted-foreground'}`}>
-                        {getStatusText()}
-                      </span>
-                    </div>
+              </div>
+              <div className="flex flex-col min-w-0">
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-semibold text-gray-900 truncate max-w-32 transition-opacity duration-300 ease-out">
+                    {seller.name}
+                  </span>
+                  {seller.verified && (
+                    <CheckCircle className="w-3 h-3 text-blue-500 fill-current" />
                   )}
                 </div>
+                {onlineStatus && (
+                  <div className="flex items-center gap-1">
+                    <div className={`w-2 h-2 rounded-full ${onlineStatus.isOnline ? 'bg-green-500' : 'bg-gray-400'}`} />
+                    <span className={`text-xs ${onlineStatus.isOnline ? 'text-green-600' : 'text-muted-foreground'}`}>
+                      {getStatusText()}
+                    </span>
+                  </div>
+                )}
               </div>
+            </div>
             )}
           </div>
 
@@ -148,34 +156,63 @@ const SellerHeader = React.forwardRef<HTMLDivElement, SellerHeaderProps>(({
           </div>
 
           {/* Right side - Action buttons */}
-          <div className="flex gap-2 flex-shrink-0">
+          <div 
+            className="flex items-center gap-2 transition-all duration-300 ease-out"
+            style={{
+              opacity: displayProgress,
+              transform: `translateX(${(1 - displayProgress) * 20}px)`
+            }}
+          >
             {actionButtons ? (
               actionButtons.map((button, index) => (
-                <HeaderActionButton 
+                <div 
                   key={index}
-                  Icon={button.Icon} 
-                  active={button.active} 
-                  onClick={button.onClick} 
-                  progress={displayProgress} 
-                  activeColor={button.activeColor}
-                  likeCount={button.count}
-                  shareCount={button.count}
-                />
+                  className="transition-all duration-300 ease-out"
+                  style={{
+                    transform: `scale(${0.9 + (displayProgress * 0.1)})`,
+                    transitionDelay: `${index * 50}ms`
+                  }}
+                >
+                  <HeaderActionButton 
+                    key={index}
+                    Icon={button.Icon} 
+                    active={button.active} 
+                    onClick={button.onClick} 
+                    progress={displayProgress} 
+                    activeColor={button.activeColor}
+                    likeCount={button.count}
+                    shareCount={button.count}
+                  />
+                </div>
               ))
             ) : (
               <>
-                <HeaderActionButton 
-                  Icon={Heart} 
-                  active={isFollowing} 
-                  onClick={onFollow} 
-                  progress={displayProgress} 
-                  activeColor="#f43f5e"
-                />
-                <HeaderActionButton 
-                  Icon={Share} 
-                  progress={displayProgress}
-                  onClick={onShare}
-                />
+                <div 
+                  className="transition-all duration-300 ease-out"
+                  style={{
+                    transform: `scale(${0.9 + (displayProgress * 0.1)})`
+                  }}
+                >
+                  <HeaderActionButton 
+                    Icon={Heart} 
+                    active={isFollowing} 
+                    onClick={onFollow} 
+                    progress={displayProgress} 
+                    activeColor="#f43f5e"
+                  />
+                </div>
+                <div 
+                  className="transition-all duration-300 ease-out"
+                  style={{
+                    transform: `scale(${0.9 + (displayProgress * 0.1)})`
+                  }}
+                >
+                  <HeaderActionButton 
+                    Icon={Share} 
+                    progress={displayProgress}
+                    onClick={onShare}
+                  />
+                </div>
               </>
             )}
           </div>
