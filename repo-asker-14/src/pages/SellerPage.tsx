@@ -1140,9 +1140,17 @@ const SellerPage: React.FC = () => {
       }
 
       // Calculate when tabs should become sticky
-      // They become sticky when they would scroll past the bottom of the header
-      const stickyThreshold = originalTabsPosition;
-      const shouldBeSticky = scrollY > stickyThreshold;
+      // For products tab: they become sticky when they would scroll past the bottom of the header
+      // For other tabs: they should always be sticky
+      let shouldBeSticky = false;
+      
+      if (activeTab === 'products') {
+        const stickyThreshold = originalTabsPosition;
+        shouldBeSticky = scrollY > stickyThreshold;
+      } else {
+        // For non-products tabs, always keep tabs sticky
+        shouldBeSticky = true;
+      }
 
       // Only update state if it changed to prevent unnecessary re-renders
       if (shouldBeSticky !== isTabsSticky) {
@@ -1211,14 +1219,23 @@ const SellerPage: React.FC = () => {
 
   // Fixed tab change handler
   const handleTabChange = (newTab: string) => {  
-    // If clicking on the currently active tab, scroll to tabs position
+    // If clicking on the currently active tab, scroll to appropriate position
     if (newTab === activeTab) {
       if (headerRef.current) {
         const headerHeight = headerRef.current.offsetHeight;
-        window.scrollTo({
-          top: headerHeight,
-          behavior: 'smooth'
-        });
+        if (newTab === 'products') {
+          // For products tab, scroll to tabs position (after hero banner)
+          window.scrollTo({
+            top: headerHeight,
+            behavior: 'smooth'
+          });
+        } else {
+          // For other tabs, scroll to header position (tabs will be sticky)
+          window.scrollTo({
+            top: headerHeight,
+            behavior: 'smooth'
+          });
+        }
       }
       return;
     }
@@ -1236,7 +1253,7 @@ const SellerPage: React.FC = () => {
         // For products tab, scroll to top to show hero banner
         return 0;
       } else {
-        // For other tabs, scroll to header + tabs position
+        // For other tabs, scroll to header position since tabs will be sticky
         return headerHeight;
       }
     };
