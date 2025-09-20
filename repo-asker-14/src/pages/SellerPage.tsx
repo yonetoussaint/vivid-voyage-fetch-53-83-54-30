@@ -1120,19 +1120,6 @@ const SellerPage: React.FC = () => {
       const scrollY = window.scrollY;  
       const headerHeight = headerRef.current.offsetHeight;  
 
-      // Calculate the original position where tabs should be in document flow
-      let originalTabsPosition = 0;
-      
-      if (activeTab === 'products') {
-        // For products tab, tabs come after header + hero banner + seller info
-        if (heroBannerRef.current && sellerInfoRef.current) {
-          originalTabsPosition = heroBannerRef.current.offsetHeight + sellerInfoRef.current.offsetHeight;
-        }
-      } else {
-        // For other tabs, tabs come right after the header (no hero banner or seller info)
-        originalTabsPosition = 0;
-      }
-
       // Store tabs height for spacer
       const currentTabsHeight = tabsRef.current.offsetHeight;
       if (currentTabsHeight !== tabsHeight) {
@@ -1140,16 +1127,20 @@ const SellerPage: React.FC = () => {
       }
 
       // Calculate when tabs should become sticky
-      // For products tab: they become sticky when they would scroll past the bottom of the header
-      // For other tabs: they should always be sticky
       let shouldBeSticky = false;
       
       if (activeTab === 'products') {
-        const stickyThreshold = originalTabsPosition;
-        shouldBeSticky = scrollY > stickyThreshold;
+        // For products tab: calculate exact position where tabs would naturally be
+        let tabsNaturalTop = 0;
+        if (heroBannerRef.current && sellerInfoRef.current) {
+          tabsNaturalTop = heroBannerRef.current.offsetHeight + sellerInfoRef.current.offsetHeight;
+        }
+        
+        // Tabs become sticky when their natural position would go above the header bottom
+        shouldBeSticky = scrollY >= tabsNaturalTop;
       } else {
-        // For non-products tabs, always keep tabs sticky
-        shouldBeSticky = true;
+        // For other tabs, they should be sticky immediately after the header
+        shouldBeSticky = scrollY > 0;
       }
 
       // Only update state if it changed to prevent unnecessary re-renders
@@ -1224,15 +1215,15 @@ const SellerPage: React.FC = () => {
       if (headerRef.current) {
         const headerHeight = headerRef.current.offsetHeight;
         if (newTab === 'products') {
-          // For products tab, scroll to tabs position (after hero banner)
+          // For products tab, scroll to show hero banner
           window.scrollTo({
-            top: headerHeight,
+            top: 0,
             behavior: 'smooth'
           });
         } else {
-          // For other tabs, scroll to header position (tabs will be sticky)
+          // For other tabs, scroll to just below header where content starts
           window.scrollTo({
-            top: headerHeight,
+            top: headerHeight + (tabsHeight || 60),
             behavior: 'smooth'
           });
         }
@@ -1243,27 +1234,27 @@ const SellerPage: React.FC = () => {
     // Change to the new tab
     setActiveTab(newTab);  
 
-    // Calculate scroll position based on the new tab
-    const calculateScrollPosition = () => {
-      if (!headerRef.current) return 0;
+    // Use a small delay to ensure DOM updates before scrolling
+    setTimeout(() => {
+      if (!headerRef.current) return;
       
       const headerHeight = headerRef.current.offsetHeight;
       
       if (newTab === 'products') {
         // For products tab, scroll to top to show hero banner
-        return 0;
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
       } else {
-        // For other tabs, scroll to header position since tabs will be sticky
-        return headerHeight;
+        // For other tabs, scroll to just below header + tabs height
+        const scrollTarget = headerHeight + (tabsHeight || 60);
+        window.scrollTo({
+          top: scrollTarget,
+          behavior: 'smooth'
+        });
       }
-    };
-
-    // Scroll to appropriate position for the new tab
-    const targetScrollTop = calculateScrollPosition();
-    window.scrollTo({
-      top: targetScrollTop,
-      behavior: 'smooth'
-    });
+    }, 50);
   };  
 
   // Loading state  
@@ -1361,7 +1352,7 @@ const SellerPage: React.FC = () => {
             minHeight: activeTab !== 'products' 
               ? `calc(100vh - ${headerHeight}px - ${tabsHeight}px)` 
               : 'auto',
-            marginTop: activeTab !== 'products' && isTabsSticky ? `${tabsHeight}px` : undefined
+            paddingTop: activeTab !== 'products' && isTabsSticky ? `${tabsHeight + 24}px` : '24px'
           }}
         >  
           {activeTab === 'products' && (  
