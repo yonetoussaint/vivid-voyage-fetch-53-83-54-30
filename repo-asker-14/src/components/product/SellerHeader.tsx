@@ -59,8 +59,8 @@ const SellerHeader = React.forwardRef<HTMLDivElement, SellerHeaderProps>(({
   // Use custom progress if provided, otherwise use internal progress
   const progress = customScrollProgress !== undefined ? customScrollProgress : internalProgress;
 
-  // Use forced state or actual scroll progress
-  const displayProgress = forceScrolledState ? 1 : progress;
+  // Use forced state or actual scroll progress - ensure minimum progress for forced state
+  const displayProgress = forceScrolledState ? Math.max(1, progress) : progress;
 
 
   if (isLoading) {
