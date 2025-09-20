@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ChevronLeft, Heart, Share, Search, ShoppingCart, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +40,7 @@ const ProductPageHeader: React.FC<ProductPageHeaderProps> = ({
   const [isScrolled, setIsScrolled] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   
   const searchSuggestions = [
     "Smartphones",
@@ -221,7 +222,7 @@ const ProductPageHeader: React.FC<ProductPageHeaderProps> = ({
               variant="ghost"
               size="sm" 
               className="text-gray-700 hover:bg-black/10 h-6 w-6 sm:h-7 sm:w-7 rounded-full p-0"
-              onClick={handleCartClick}
+              onClick={() => navigate('/cart')}
             >
               <ShoppingCart className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             </Button>
