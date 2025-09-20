@@ -14,21 +14,62 @@ const SellerStickyTabsNavigation: React.FC<SellerStickyTabsNavigationProps> = ({
   onTabChange
 }) => {
   const [showStickyTabs, setShowStickyTabs] = useState(false);
+  const [opacity, setOpacity] = useState(0);
 
   useEffect(() => {
     const handleScrollForStickyTabs = () => {
-      // Show sticky tabs when scrolled past the header area
+      // Calculate threshold based on actual content
+      const sellerHeader = document.getElementById('seller-header');
+      const sellerHeroBanner = document.querySelector('[data-testid="seller-hero-banner"]') || 
+                              document.querySelector('.seller-hero-banner') ||
+                              document.querySelector('[class*="hero"]');
+      const sellerInfo = document.querySelector('[data-testid="seller-info"]') || 
+                        document.querySelector('.seller-info') ||
+                        document.querySelector('[class*="seller-profile"]');
+      
+      let threshold = headerHeight + 200; // Default fallback
+      
+      // Calculate actual threshold based on DOM elements
+      if (sellerHeader) {
+        threshold = sellerHeader.offsetHeight;
+        
+        if (sellerHeroBanner) {
+          threshold += sellerHeroBanner.getBoundingClientRect().height;
+        }
+        
+        if (sellerInfo) {
+          threshold += sellerInfo.getBoundingClientRect().height;
+        }
+      }
+      
       const scrollTop = window.scrollY;
-      // Show tabs after scrolling past the seller info section (which is around 250px)
-      setShowStickyTabs(scrollTop > 250);
+      const shouldShow = scrollTop > (threshold - headerHeight - 20); // 20px buffer for smooth transition
+      
+      // Calculate opacity for smooth transition
+      const transitionZone = 40; // 40px transition zone
+      const transitionStart = threshold - headerHeight - transitionZone;
+      const fadeProgress = Math.max(0, Math.min(1, (scrollTop - transitionStart) / transitionZone));
+      
+      setShowStickyTabs(shouldShow);
+      setOpacity(fadeProgress);
+    };
+
+    // Use RAF for smoother performance
+    let rafId: number;
+    const throttledScroll = () => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(handleScrollForStickyTabs);
     };
 
     // Initial check
-    handleScrollForStickyTabs();
+    setTimeout(handleScrollForStickyTabs, 100); // Delay to ensure DOM is ready
     
-    window.addEventListener('scroll', handleScrollForStickyTabs, { passive: true });
-    return () => window.removeEventListener('scroll', handleScrollForStickyTabs);
-  }, [headerHeight]); // Add headerHeight dependency
+    window.addEventListener('scroll', throttledScroll, { passive: true });
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener('scroll', throttledScroll);
+    };
+  }, [headerHeight]);
 
   // Handle tab click - simplified to avoid scroll conflicts
   const handleTabClick = (tabId: string) => {
@@ -36,14 +77,20 @@ const SellerStickyTabsNavigation: React.FC<SellerStickyTabsNavigationProps> = ({
     // Don't scroll automatically to prevent sticky tabs from hiding
   };
 
-  if (!showStickyTabs) return null;
+  if (!showStickyTabs && opacity === 0) return null;
 
   return (
     <div 
-      className="fixed left-0 right-0 z-40 bg-white border-b overflow-x-auto shadow-sm"
-      style={{ top: `${headerHeight}px` }}
+      className="fixed left-0 right-0 z-40 bg-white border-b overflow-x-auto shadow-sm transition-all duration-200 ease-out"
+      style={{ 
+        top: `${headerHeight}px`,
+        opacity: opacity,
+        transform: `translateY(${(1 - opacity) * -10}px)`, // Subtle slide effect
+        backdropFilter: `blur(${opacity * 8}px)`,
+        backgroundColor: `rgba(255, 255, 255, ${0.95 * opacity})`
+      }}
     >
-      <div className="w-full bg-white">
+      <div className="w-full">
         <TabsNavigation
           tabs={[
             { id: 'overview', label: 'Overview' },
@@ -55,7 +102,7 @@ const SellerStickyTabsNavigation: React.FC<SellerStickyTabsNavigationProps> = ({
           onTabChange={handleTabClick}
           edgeToEdge={true}
           style={{ 
-            backgroundColor: 'white',
+            backgroundColor: 'transparent',
             margin: 0,
             padding: 0
           }}

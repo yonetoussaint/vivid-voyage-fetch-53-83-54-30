@@ -519,7 +519,7 @@ const AboutTab: React.FC<{ seller: Seller }> = ({ seller }) => {
                 <span className="text-lg">{achievement.icon}</span>
                 <div className="flex-1">
                   <h4 className="font-medium text-sm">{achievement.title}</h4>
-                  <p className="text-xs text-muted-foreground">{achievement.description}</p>
+                  <p className="text-sm text-muted-foreground">{achievement.description}</p>
                 </div>
                 {achievement.earned && (
                   <span className="text-green-600 text-xs">✓</span>
@@ -1164,12 +1164,12 @@ const SellerPage: React.FC = () => {
     const timeoutId = setTimeout(() => {
       calculateOriginalPosition();
       handleScroll(); // Set initial state
-      
+
       // For non-products tabs, ensure tabs are sticky from the start
       if (activeTab !== 'products') {
         setIsTabsSticky(true);
       }
-      
+
       window.addEventListener('scroll', throttledHandleScroll, { passive: true });
     }, 100);
 
@@ -1249,7 +1249,7 @@ const SellerPage: React.FC = () => {
 
     // Otherwise, change to the new tab
     setActiveTab(newTab);
-    
+
     // Set sticky state based on tab type immediately
     if (newTab === 'products') {
       // Reset sticky state for products tab to recalculate positions
@@ -1338,21 +1338,22 @@ const SellerPage: React.FC = () => {
       />
 
       <main>
+        {/* Hero Banner - only show for products tab */}
         {activeTab === 'products' && (
-          <>
-            <SellerHeroBanner
-              ref={heroBannerRef}
+          <div ref={heroBannerRef} className="w-full" data-testid="seller-hero-banner">
+            <SellerHeroBanner seller={seller} />
+          </div>
+        )}
+
+        {/* Seller Info Section - only show for products tab */}
+        {activeTab === 'products' && (
+          <div ref={sellerInfoRef} className="w-full" data-testid="seller-info">
+            <SellerInfoSection
               seller={seller}
-              onScrollProgress={handleScrollProgress}
+              products={products}
+              onlineStatus={onlineStatus}
             />
-            <div ref={sellerInfoRef}>
-              <SellerInfoSection
-                seller={seller}
-                products={products}
-                onlineStatus={onlineStatus}
-              />
-            </div>
-          </>
+          </div>
         )}
 
         <nav
