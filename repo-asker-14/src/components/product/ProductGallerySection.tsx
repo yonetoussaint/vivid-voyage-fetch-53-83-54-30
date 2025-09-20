@@ -1,6 +1,7 @@
-import React from "react";
+import React, { forwardRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ProductImageGallery from "@/components/ProductImageGallery";
+import GalleryTabsContent from "@/components/GalleryTabsContent";
 
 interface ProductGallerySectionProps {
   galleryRef: React.RefObject<any>;
@@ -13,9 +14,10 @@ interface ProductGallerySectionProps {
   onVariantImageChange: (imageUrl: string, variantName: string) => void;
   onSellerClick: () => void;
   onBuyNow?: () => void;
+  onViewCart?: () => void;
 }
 
-const ProductGallerySection = React.forwardRef<HTMLDivElement, ProductGallerySectionProps>(({
+const ProductGallerySection = forwardRef<HTMLDivElement, ProductGallerySectionProps>(({
   galleryRef,
   displayImages,
   product,
@@ -25,24 +27,36 @@ const ProductGallerySection = React.forwardRef<HTMLDivElement, ProductGallerySec
   onImageIndexChange,
   onVariantImageChange,
   onSellerClick,
-  onBuyNow
+  onBuyNow,
+  onViewCart
 }, ref) => {
+
+  const galleryState = {
+    activeTab: 0,
+    totalItems: displayImages.length || 1,
+    galleryItems: displayImages.length > 0 ? displayImages : ["/placeholder.svg"],
+    currentIndex: 0,
+    isPlaying: false,
+    videoIndices: [],
+    handleThumbnailClick: (index: number) => {},
+  };
+
   return (
     <div className="relative z-0 w-full bg-transparent" ref={ref} onClick={() => { if (focusMode) onFocusModeChange(false); }}>
-      <ProductImageGallery 
-        ref={galleryRef}
-        images={displayImages.length > 0 ? displayImages : ["/placeholder.svg"]}
-        videos={product?.product_videos || []}
-        model3dUrl={product?.model_3d_url}
-        focusMode={focusMode}
-        onFocusModeChange={onFocusModeChange}
-        seller={product?.sellers}
+      <GalleryTabsContent
+        activeTab={galleryState.activeTab}
+        totalItems={galleryState.totalItems}
+        galleryItems={galleryState.galleryItems}
+        currentIndex={galleryState.currentIndex}
+        isPlaying={galleryState.isPlaying}
+        videoIndices={galleryState.videoIndices}
+        productId={product?.id}
         product={product}
-        onSellerClick={onSellerClick}
-        onProductDetailsClick={onProductDetailsClick}
-        onImageIndexChange={onImageIndexChange}
-        onVariantImageChange={onVariantImageChange}
+        onThumbnailClick={galleryState.handleThumbnailClick}
+        onImageSelect={onVariantImageChange}
+        onConfigurationChange={() => {}}
         onBuyNow={onBuyNow}
+        onViewCart={onViewCart}
       />
     </div>
   );

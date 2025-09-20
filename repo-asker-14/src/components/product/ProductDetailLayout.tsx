@@ -119,6 +119,11 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     navigate(`/product-checkout?${checkoutParams.toString()}`);
   };
 
+  // Handle view cart navigation
+  const handleViewCart = () => {
+    navigate('/cart');
+  };
+
   return (
     <div className="flex flex-col min-h-0 bg-white overscroll-none pb-20" ref={refs.contentRef}>
       {/* Header Section - Conditionally rendered */}
@@ -159,6 +164,8 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
             console.error('❌ No seller ID found');
           }
         }}
+        onBuyNow={buyNow}
+        onViewCart={handleViewCart}
       />
 
       {/* Sticky Tabs Navigation - Moved back to main layout */}
