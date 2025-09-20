@@ -1115,20 +1115,14 @@ const SellerPage: React.FC = () => {
   // Improved scroll handling effect for sticky tabs  
   useEffect(() => {
     const handleScroll = () => {  
-      if (!headerRef.current || !tabsRef.current || !heroBannerRef.current) return;  
+      if (!headerRef.current || !tabsRef.current) return;  
 
       const scrollY = window.scrollY;  
       const headerHeight = headerRef.current.offsetHeight;  
-      const heroBannerHeight = heroBannerRef.current.offsetHeight;
 
-      // Calculate the original position of tabs based on current tab
-      let originalTabsOffsetTop = heroBannerHeight;
-
-      if (activeTab === 'products' && sellerInfoRef.current) {
-        // For products tab, tabs come after header + hero banner + seller info
-        const sellerInfoHeight = sellerInfoRef.current.offsetHeight;
-        originalTabsOffsetTop += sellerInfoHeight;
-      }
+      // Get the actual position of the tabs element in the document
+      const tabsRect = tabsRef.current.getBoundingClientRect();
+      const tabsOffsetTop = scrollY + tabsRect.top;
 
       // Store tabs height for spacer
       const currentTabsHeight = tabsRef.current.offsetHeight;
@@ -1136,9 +1130,10 @@ const SellerPage: React.FC = () => {
         setTabsHeight(currentTabsHeight);
       }
 
-      // Determine if tabs should be sticky
-      // They become sticky when they would scroll past the header
-      const shouldBeSticky = scrollY >= (originalTabsOffsetTop - headerHeight);
+      // Tabs become sticky when they would scroll past the bottom of the header
+      // Use a small buffer (10px) to make the transition smoother
+      const stickyThreshold = tabsOffsetTop - headerHeight - 10;
+      const shouldBeSticky = scrollY >= stickyThreshold;
 
       // Only update state if it changed to prevent unnecessary re-renders
       if (shouldBeSticky !== isTabsSticky) {
@@ -1153,14 +1148,11 @@ const SellerPage: React.FC = () => {
       rafId = requestAnimationFrame(handleScroll);
     };
 
-    // Initial setup with delay to ensure DOM is ready
-    const timeoutId = setTimeout(() => {
-      handleScroll(); // Set initial state
-      window.addEventListener('scroll', throttledHandleScroll, { passive: true });
-    }, 200);  
+    // Initial setup - run immediately and then add listener
+    handleScroll();
+    window.addEventListener('scroll', throttledHandleScroll, { passive: true });
 
     return () => {  
-      clearTimeout(timeoutId);
       if (rafId) cancelAnimationFrame(rafId);
       window.removeEventListener('scroll', throttledHandleScroll);  
     };  
@@ -1222,33 +1214,12 @@ const SellerPage: React.FC = () => {
     // Otherwise, change to the new tab
     setActiveTab(newTab);  
 
-    // Scroll to top for new tab
+    // Scroll to top for new tab - this will trigger the scroll handler
+    // which will automatically recalculate sticky state
     window.scrollTo({
       top: 0,
       behavior: 'smooth'
     });
-
-    // Reset sticky state immediately and recalculate after DOM updates
-    setIsTabsSticky(false);
-
-    // Force recalculation after DOM updates
-    setTimeout(() => {
-      if (headerRef.current && tabsRef.current && heroBannerRef.current) {
-        const scrollY = window.scrollY;
-        const headerHeight = headerRef.current.offsetHeight;
-        const heroBannerHeight = heroBannerRef.current.offsetHeight;
-        
-        let originalTabsOffsetTop = heroBannerHeight;
-
-        if (newTab === 'products' && sellerInfoRef.current) {
-          const sellerInfoHeight = sellerInfoRef.current.offsetHeight;
-          originalTabsOffsetTop += sellerInfoHeight;
-        }
-
-        const shouldBeSticky = scrollY >= (originalTabsOffsetTop - headerHeight);
-        setIsTabsSticky(shouldBeSticky);
-      }
-    }, 300);
   };  
 
   // Loading state  
