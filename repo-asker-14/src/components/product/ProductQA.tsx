@@ -9,6 +9,7 @@ import {
   Play,
   Send
 } from 'lucide-react';
+import SearchInfoComponent from './SearchInfoComponent';
 
 // Mock Button component
 const Button = ({ children, variant, className, onClick }) => (
@@ -342,10 +343,11 @@ const ProductQA = ({
             <p className="text-sm text-muted-foreground mt-1" style={{color: '#666'}}>Be the first to ask a question!</p>
           </div>
         ) : (
-          finalQuestions.map((qa) => (
-            <div key={qa.id} className="border-b pb-4" style={{borderBottom: '1px solid #e5e5e5'}}>
-              {/* Question */}
-              <div className="flex items-start justify-between mb-3 px-2">
+          finalQuestions.map((qa, index) => (
+            <div key={qa.id}>
+              <div className="border-b pb-4" style={{borderBottom: '1px solid #e5e5e5'}}>
+                {/* Question */}
+                <div className="flex items-start justify-between mb-3 px-2"></div>
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center text-sm font-semibold" style={{backgroundColor: 'rgba(0,0,0,0.1)'}}>
                     {qa.user_name.charAt(0)}
@@ -496,6 +498,14 @@ const ProductQA = ({
                       )}
                     </>
                   )}
+                </div>
+              )}
+              </div>
+              
+              {/* Insert SearchInfoComponent after the second question (index 1) */}
+              {index === 1 && (
+                <div className="my-6 px-2">
+                  <SearchInfoComponent productId={productId} />
                 </div>
               )}
             </div>
