@@ -75,6 +75,7 @@ import MainLayout from "./components/layout/MainLayout";
 import { AuthOverlayProvider } from "./context/AuthOverlayContext";
 import { ScreenOverlayProvider } from "./context/ScreenOverlayContext"; // SINGLE IMPORT
 import { AuthProvider } from "./contexts/auth/AuthContext";
+import CartPage from '@/pages/CartPage';
 
 import "./App.css";
 
@@ -161,6 +162,7 @@ function App() {
                               <Route path="auth/callback" element={<ForYou />} />
                               <Route path="seller-dashboard/*" element={<SellerDashboard />} />
                               <Route path="*" element={<NotFound />} />
+                              <Route path="/cart" element={<CartPage />} />
                             </Route>
                           </Routes>
                           <Toaster />

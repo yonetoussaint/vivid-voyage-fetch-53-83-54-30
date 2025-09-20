@@ -317,6 +317,9 @@ const StickyCheckoutBar = ({
   const handleViewCart = () => {
     if (typeof onViewCart === 'function') {
       onViewCart();
+    } else {
+      // Default navigation to cart page
+      window.location.href = '/cart';
     }
   };
 
