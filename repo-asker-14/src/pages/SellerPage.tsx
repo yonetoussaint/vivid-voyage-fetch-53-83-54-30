@@ -55,9 +55,9 @@ interface OnlineStatus {
 }
 
 // Profile Image Component
-const ProfileImage: React.FC<{ 
-  src?: string; 
-  name: string; 
+const ProfileImage: React.FC<{
+  src?: string;
+  name: string;
   size?: 'sm' | 'md' | 'xl' | 'lg' | 'card';
   showOnlineStatus?: boolean;
   isOnline?: boolean;
@@ -100,8 +100,8 @@ const ProfileImage: React.FC<{
     <div className="relative flex-shrink-0">
       <div className={`${sizeClasses[size]} rounded-full overflow-hidden bg-gradient-to-br from-primary/20 to-primary/10 border-2 border-background shadow-sm`}>
         {src ? (
-          <img 
-            src={src} 
+          <img
+            src={src}
             alt={`${name}'s profile`}
             className="w-full h-full object-cover"
           />
@@ -167,8 +167,8 @@ const ErrorMessage: React.FC<{ message: string }> = ({ message }) => (
 );
 
 // Seller Info Section Component
-const SellerInfoSection: React.FC<{ 
-  seller: Seller; 
+const SellerInfoSection: React.FC<{
+  seller: Seller;
   products: Product[];
   onlineStatus?: OnlineStatus;
 }> = ({ seller, products, onlineStatus }) => {
@@ -252,7 +252,7 @@ const ProductsTab: React.FC<{
   setSearchQuery,
   navigate
 }) => {
-  const filteredProducts = products.filter(product => 
+  const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     product.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -309,15 +309,15 @@ const ProductsTab: React.FC<{
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {filteredProducts.map((product) => (
-            <Card 
-              key={product.id} 
+            <Card
+              key={product.id}
               className="group cursor-pointer hover:shadow-lg transition-all duration-200 overflow-hidden border-0 shadow-sm"
               onClick={() => navigate(`/product/${product.id}`)}
             >
               <div className="aspect-square bg-muted rounded-t-lg overflow-hidden">
                 {product.product_images && product.product_images.length > 0 ? (
-                  <img 
-                    src={product.product_images[0].src} 
+                  <img
+                    src={product.product_images[0].src}
                     alt={product.product_images[0].alt || product.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                   />
@@ -410,8 +410,8 @@ const AboutTab: React.FC<{ seller: Seller }> = ({ seller }) => {
               <div className="flex items-center gap-1">
                 <span className="font-medium">{seller.trust_score}/100</span>
                 <div className="w-12 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-green-500 rounded-full transition-all duration-500" 
+                  <div
+                    className="h-full bg-green-500 rounded-full transition-all duration-500"
                     style={{ width: `${seller.trust_score}%` }}
                   />
                 </div>
@@ -497,9 +497,9 @@ const AboutTab: React.FC<{ seller: Seller }> = ({ seller }) => {
             <span>🏆</span>
             Achievements ({earnedAchievements.length})
           </h3>
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setShowAllAchievements(!showAllAchievements)}
           >
             {showAllAchievements ? 'Show Less' : 'View All'}
@@ -507,11 +507,11 @@ const AboutTab: React.FC<{ seller: Seller }> = ({ seller }) => {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {(showAllAchievements ? achievements : earnedAchievements).map((achievement) => (
-            <div 
-              key={achievement.id} 
+            <div
+              key={achievement.id}
               className={`p-3 rounded-lg border transition-all duration-200 ${
-                achievement.earned 
-                  ? 'bg-green-50 border-green-200 hover:bg-green-100' 
+                achievement.earned
+                  ? 'bg-green-50 border-green-200 hover:bg-green-100'
                   : 'bg-gray-50 border-gray-200 opacity-60'
               }`}
             >
@@ -579,8 +579,8 @@ const ReviewsTab: React.FC<{ seller: Seller }> = ({ seller }) => {
             <div key={rating} className="flex items-center gap-2 text-sm">
               <span className="w-4">{rating}★</span>
               <div className="flex-1 bg-muted rounded-full h-2">
-                <div 
-                  className="bg-yellow-400 h-2 rounded-full" 
+                <div
+                  className="bg-yellow-400 h-2 rounded-full"
                   style={{ width: `${rating === 5 ? 70 : rating === 4 ? 20 : rating === 3 ? 5 : rating === 2 ? 3 : 2}%` }}
                 />
               </div>
@@ -665,8 +665,8 @@ const ReelsTab: React.FC<{ sellerId: string }> = ({ sellerId }) => {
           <div key={reel.id} className="group cursor-pointer overflow-hidden">
             <div className="aspect-[3/4] bg-muted relative">
               {reel.video_url ? (
-                <video 
-                  src={reel.video_url} 
+                <video
+                  src={reel.video_url}
                   className="w-full h-full object-cover"
                   muted
                   preload="metadata"
@@ -698,17 +698,17 @@ const ContactTab: React.FC<{ seller: Seller }> = ({ seller }) => {
   const [showContactForm, setShowContactForm] = useState(false);
 
   const contactMethods = [
-    { 
-      icon: MessageCircle, 
-      title: 'Send Message', 
+    {
+      icon: MessageCircle,
+      title: 'Send Message',
       description: 'Get instant responses via our chat system',
       action: () => setShowContactForm(true),
       color: 'blue',
       available: true
     },
-    { 
-      icon: Phone, 
-      title: 'Call Direct', 
+    {
+      icon: Phone,
+      title: 'Call Direct',
       description: seller.phone || 'Phone number available during business hours',
       action: () => {
         if (seller.phone) {
@@ -720,9 +720,9 @@ const ContactTab: React.FC<{ seller: Seller }> = ({ seller }) => {
       color: 'green',
       available: !!seller.phone
     },
-    { 
-      icon: Mail, 
-      title: 'Email Support', 
+    {
+      icon: Mail,
+      title: 'Email Support',
       description: seller.email || 'Professional email response within 24h',
       action: () => {
         if (seller.email) {
@@ -768,11 +768,11 @@ const ContactTab: React.FC<{ seller: Seller }> = ({ seller }) => {
       {/* Contact Methods Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {contactMethods.map((method, index) => (
-          <Card 
-            key={index} 
+          <Card
+            key={index}
             className={`p-6 cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${
-              method.available 
-                ? `hover:border-${method.color}-200 bg-gradient-to-br from-${method.color}-50 to-${method.color}-100` 
+              method.available
+                ? `hover:border-${method.color}-200 bg-gradient-to-br from-${method.color}-50 to-${method.color}-100`
                 : 'opacity-60 hover:border-gray-200 bg-gray-50'
             }`}
             onClick={method.action}
@@ -975,7 +975,7 @@ const ContactTab: React.FC<{ seller: Seller }> = ({ seller }) => {
   );
 };
 
-// Categories Tab Component  
+// Categories Tab Component
 const CategoriesTab: React.FC<{ sellerId: string }> = ({ sellerId }) => {
   // Mock categories data - in a real app this would come from your database
   const mockCategories = [
@@ -988,7 +988,7 @@ const CategoriesTab: React.FC<{ sellerId: string }> = ({ sellerId }) => {
       created_at: '2024-01-15T00:00:00Z'
     },
     {
-      id: '2', 
+      id: '2',
       name: 'Fashion',
       description: 'Clothing, shoes, and accessories',
       image_url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w-400&h=300&fit=crop',
@@ -1007,7 +1007,7 @@ const CategoriesTab: React.FC<{ sellerId: string }> = ({ sellerId }) => {
       id: '4',
       name: 'Sports & Fitness',
       description: 'Equipment, apparel, and accessories',
-      image_url: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop',
+      image_url: 'https://images.unsplash.com/photo-1571019613454-1cb2f96d600d8?w=400&h=300&fit=crop',
       product_count: 12,
       created_at: '2024-01-01T00:00:00Z'
     }
@@ -1024,8 +1024,8 @@ const CategoriesTab: React.FC<{ sellerId: string }> = ({ sellerId }) => {
         {mockCategories.map((category) => (
           <Card key={category.id} className="group cursor-pointer hover:shadow-lg transition-all duration-200 overflow-hidden border-0 shadow-sm">
             <div className="aspect-[4/3] overflow-hidden">
-              <img 
-                src={category.image_url} 
+              <img
+                src={category.image_url}
                 alt={category.name}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
@@ -1071,48 +1071,48 @@ const CategoriesTab: React.FC<{ sellerId: string }> = ({ sellerId }) => {
   );
 };
 
-// Main SellerPage Component  
-const SellerPage: React.FC = () => {  
-  const { sellerId } = useParams<{ sellerId: string }>();  
-  const navigate = useNavigate();  
-  const headerRef = useRef<HTMLDivElement>(null);  
-  const tabsRef = useRef<HTMLDivElement>(null);  
-  const mainContentRef = useRef<HTMLDivElement>(null);  
+// Main SellerPage Component
+const SellerPage: React.FC = () => {
+  const { sellerId } = useParams<{ sellerId: string }>();
+  const navigate = useNavigate();
+  const headerRef = useRef<HTMLDivElement>(null);
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const mainContentRef = useRef<HTMLDivElement>(null);
   const sellerInfoRef = useRef<HTMLDivElement>(null);
   const heroBannerRef = useRef<HTMLDivElement>(null);
 
-  const [isFollowing, setIsFollowing] = useState(false);  
-  const [activeTab, setActiveTab] = useState('products');  
-  const [searchQuery, setSearchQuery] = useState('');  
-  const [isTabsSticky, setIsTabsSticky] = useState(false);  
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [activeTab, setActiveTab] = useState('products');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isTabsSticky, setIsTabsSticky] = useState(false);
   const [tabsHeight, setTabsHeight] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
 
-  // Online status state - you would get this from your real-time data source  
-  const [onlineStatus, setOnlineStatus] = useState<OnlineStatus>({  
-    isOnline: true, // This would come from your WebSocket or polling  
-    lastSeen: "2025-09-17T10:30:00Z" // ISO string from your backend  
-  });  
+  // Online status state - you would get this from your real-time data source
+  const [onlineStatus, setOnlineStatus] = useState<OnlineStatus>({
+    isOnline: true, // This would come from your WebSocket or polling
+    lastSeen: "2025-09-17T10:30:00Z" // ISO string from your backend
+  });
 
-  // Handle case where sellerId is not provided  
-  if (!sellerId) {  
-    return <ErrorMessage message="Seller ID is required" />;  
-  }  
+  // Handle case where sellerId is not provided
+  if (!sellerId) {
+    return <ErrorMessage message="Seller ID is required" />;
+  }
 
-  // Hooks with error handling  
-  const { data: seller, isLoading: sellerLoading, error: sellerError } = useSeller(sellerId);  
-  const { data: products = [], isLoading: productsLoading, error: productsError } = useSellerProducts(sellerId);  
+  // Hooks with error handling
+  const { data: seller, isLoading: sellerLoading, error: sellerError } = useSeller(sellerId);
+  const { data: products = [], isLoading: productsLoading, error: productsError } = useSellerProducts(sellerId);
 
-  // Error handling  
-  if (sellerError) {  
-    return <ErrorMessage message="Failed to load seller information" />;  
-  }  
+  // Error handling
+  if (sellerError) {
+    return <ErrorMessage message="Failed to load seller information" />;
+  }
 
-  if (productsError) {  
-    return <ErrorMessage message="Failed to load products" />;  
-  }  
+  if (productsError) {
+    return <ErrorMessage message="Failed to load products" />;
+  }
 
-  // Improved scroll handling effect for sticky tabs  
+  // Improved scroll handling effect for sticky tabs
   useEffect(() => {
     let originalTabsOffsetTop = 0;
 
@@ -1133,11 +1133,11 @@ const SellerPage: React.FC = () => {
       }
     };
 
-    const handleScroll = () => {  
-      if (!headerRef.current || !tabsRef.current) return;  
+    const handleScroll = () => {
+      if (!headerRef.current || !tabsRef.current) return;
 
-      const scrollY = window.scrollY;  
-      const headerHeight = headerRef.current.offsetHeight;  
+      const scrollY = window.scrollY;
+      const headerHeight = headerRef.current.offsetHeight;
 
       // Recalculate original position (in case content changed)
       calculateOriginalPosition();
@@ -1149,13 +1149,22 @@ const SellerPage: React.FC = () => {
 
       // Determine if tabs should be sticky
       // They become sticky when they would scroll past the header
-      const shouldBeSticky = scrollY > (originalTabsOffsetTop - headerHeight);
+      let shouldBeSticky = false;
+
+      if (activeTab === 'products') {
+        // For products tab, use the calculated offset (after hero banner + seller info)
+        shouldBeSticky = scrollY > (originalTabsOffsetTop - headerHeight);
+      } else {
+        // For other tabs, tabs should be sticky if we've scrolled past where they would normally be
+        // Since other tabs don't have hero banner/seller info, they stick immediately after header
+        shouldBeSticky = scrollY > 0;
+      }
 
       // Only update state if it changed to prevent unnecessary re-renders
       if (shouldBeSticky !== isTabsSticky) {
         setIsTabsSticky(shouldBeSticky);
       }
-    };  
+    };
 
     // Use RAF for smoother scrolling performance
     let rafId: number;
@@ -1169,38 +1178,38 @@ const SellerPage: React.FC = () => {
       calculateOriginalPosition();
       handleScroll(); // Set initial state
       window.addEventListener('scroll', throttledHandleScroll, { passive: true });
-    }, 100);  
+    }, 100);
 
-    return () => {  
+    return () => {
       clearTimeout(timeoutId);
       cancelAnimationFrame(rafId);
-      window.removeEventListener('scroll', throttledHandleScroll);  
-    };  
+      window.removeEventListener('scroll', throttledHandleScroll);
+    };
   }, [activeTab, seller, isTabsSticky, tabsHeight]); // Include dependencies
 
-  // Example effect to simulate real-time online status updates  
-  useEffect(() => {  
-    // This is where you'd set up your WebSocket connection or polling  
-    // For demo purposes, we'll simulate status changes  
-    const interval = setInterval(() => {  
-      // Randomly toggle online status for demo  
-      setOnlineStatus(prev => ({  
-        isOnline: Math.random() > 0.3, // 70% chance of being online  
-        lastSeen: prev.isOnline ? new Date().toISOString() : prev.lastSeen  
-      }));  
-    }, 30000); // Update every 30 seconds  
+  // Example effect to simulate real-time online status updates
+  useEffect(() => {
+    // This is where you'd set up your WebSocket connection or polling
+    // For demo purposes, we'll simulate status changes
+    const interval = setInterval(() => {
+      // Randomly toggle online status for demo
+      setOnlineStatus(prev => ({
+        isOnline: Math.random() > 0.3, // 70% chance of being online
+        lastSeen: prev.isOnline ? new Date().toISOString() : prev.lastSeen
+      }));
+    }, 30000); // Update every 30 seconds
 
-    return () => clearInterval(interval);  
-  }, []);  
+    return () => clearInterval(interval);
+  }, []);
 
-  // Action handlers  
-  const handleFollow = () => {  
-    setIsFollowing(!isFollowing);  
-    toast.success(isFollowing ? "Unfollowed" : "Following");  
-  };  
+  // Action handlers
+  const handleFollow = () => {
+    setIsFollowing(!isFollowing);
+    toast.success(isFollowing ? "Unfollowed" : "Following");
+  };
 
-  const handleMessage = () => {  
-    toast.info("Message feature coming soon");  
+  const handleMessage = () => {
+    toast.info("Message feature coming soon");
   };
 
   const handleShare = () => {
@@ -1218,10 +1227,10 @@ const SellerPage: React.FC = () => {
 
   const handleScrollProgress = (progress: number) => {
     setScrollProgress(progress);
-  };  
+  };
 
   // Fixed tab change handler
-  const handleTabChange = (newTab: string) => {  
+  const handleTabChange = (newTab: string) => {
     // If clicking on the currently active tab, scroll to top
     if (newTab === activeTab) {
       window.scrollTo({
@@ -1232,7 +1241,7 @@ const SellerPage: React.FC = () => {
     }
 
     // Otherwise, change to the new tab
-    setActiveTab(newTab);  
+    setActiveTab(newTab);
     // Reset sticky state when changing tabs to recalculate positions
     setIsTabsSticky(false);
 
@@ -1261,137 +1270,137 @@ const SellerPage: React.FC = () => {
         setIsTabsSticky(shouldBeSticky);
       }
     }, 50);
-  };  
+  };
 
-  // Loading state  
-  if (sellerLoading || !seller) {  
-    return <LoadingSpinner />;  
-  }  
+  // Loading state
+  if (sellerLoading || !seller) {
+    return <LoadingSpinner />;
+  }
 
-  const headerHeight = headerRef.current?.offsetHeight || 0;  
-  const tabs = [  
-    { id: 'products', label: 'Products' },  
-    { id: 'categories', label: 'Categories' },  
-    { id: 'reels', label: 'Reels' },  
-    { id: 'about', label: 'About' },  
-    { id: 'reviews', label: 'Reviews' },  
-    { id: 'qas', label: 'Q&A' },  
-    { id: 'contact', label: 'Contact' },  
+  const headerHeight = headerRef.current?.offsetHeight || 0;
+  const tabs = [
+    { id: 'products', label: 'Products' },
+    { id: 'categories', label: 'Categories' },
+    { id: 'reels', label: 'Reels' },
+    { id: 'about', label: 'About' },
+    { id: 'reviews', label: 'Reviews' },
+    { id: 'qas', label: 'Q&A' },
+    { id: 'contact', label: 'Contact' },
   ];
 
-  return (  
-    <div className="min-h-screen bg-white">  
-      <SellerHeader  
+  return (
+    <div className="min-h-screen bg-white">
+      <SellerHeader
         ref={headerRef}
-        activeTab={activeTab}  
-        onTabChange={handleTabChange}  
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
         seller={seller}
-        isFollowing={isFollowing}  
-        onFollow={handleFollow}  
+        isFollowing={isFollowing}
+        onFollow={handleFollow}
         onMessage={handleMessage}
         onShare={handleShare}
         customScrollProgress={scrollProgress}
         onlineStatus={onlineStatus}
-        actionButtons={[  
-          {  
-            Icon: Heart,  
-            active: isFollowing,  
-            onClick: handleFollow,  
-            activeColor: "#f43f5e"  
-          },  
-          {  
-            Icon: Share,  
-            onClick: handleShare  
-          }  
-        ]}  
-      />  
+        actionButtons={[
+          {
+            Icon: Heart,
+            active: isFollowing,
+            onClick: handleFollow,
+            activeColor: "#f43f5e"
+          },
+          {
+            Icon: Share,
+            onClick: handleShare
+          }
+        ]}
+      />
 
-      <main>  
+      <main>
         {activeTab === 'products' && (
           <>
-            <SellerHeroBanner 
+            <SellerHeroBanner
               ref={heroBannerRef}
-              seller={seller} 
+              seller={seller}
               onScrollProgress={handleScrollProgress}
             />
             <div ref={sellerInfoRef}>
-              <SellerInfoSection   
-                seller={seller}   
-                products={products}   
-                onlineStatus={onlineStatus}  
-              />  
+              <SellerInfoSection
+                seller={seller}
+                products={products}
+                onlineStatus={onlineStatus}
+              />
             </div>
           </>
-        )}  
+        )}
 
-        <nav   
-          ref={tabsRef}  
-          className={`bg-white border-b transition-all duration-200 ease-out ${  
-            isTabsSticky   
-              ? 'fixed top-0 left-0 right-0 z-40'   
-              : 'relative'  
-          }`}  
-          style={isTabsSticky ? { 
+        <nav
+          ref={tabsRef}
+          className={`bg-white border-b transition-all duration-200 ease-out ${
+            isTabsSticky
+              ? 'fixed top-0 left-0 right-0 z-40'
+              : 'relative'
+          }`}
+          style={isTabsSticky ? {
             top: `${headerHeight}px`,
             transform: isTabsSticky ? 'translateZ(0)' : 'none' // GPU acceleration for smoother animation
-          } : undefined}  
-        >  
-          <TabsNavigation  
-            tabs={tabs}  
-            activeTab={activeTab}  
-            onTabChange={handleTabChange}  
-          />  
-        </nav>  
+          } : undefined}
+        >
+          <TabsNavigation
+            tabs={tabs}
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+          />
+        </nav>
 
-        {/* Spacer div when tabs are sticky to prevent content jumping */}  
+        {/* Spacer div when tabs are sticky to prevent content jumping */}
         {isTabsSticky && (
-          <div 
+          <div
             className="transition-all duration-200 ease-out"
-            style={{ height: `${tabsHeight}px` }} 
+            style={{ height: `${tabsHeight}px` }}
           />
         )}
 
-        <div   
-          ref={mainContentRef}  
-          className="container mx-auto px-4 py-6 tab-content-container"  
-        >  
-          {activeTab === 'products' && (  
-            <ProductsTab  
-              products={products}  
-              isLoading={productsLoading}  
-              searchQuery={searchQuery}  
-              setSearchQuery={setSearchQuery}  
-              navigate={navigate}  
-            />  
-          )}  
-
-          {activeTab === 'categories' && (  
-            <CategoriesTab sellerId={sellerId} />  
-          )}  
-
-          {activeTab === 'reels' && (  
-            <ReelsTab sellerId={sellerId} />  
-          )}  
-
-          {activeTab === 'about' && (  
-            <AboutTab seller={seller} />  
-          )}  
-
-          {activeTab === 'reviews' && (  
-            <CustomerReviewsEnhanced productId={sellerId} limit={10} />  
-          )}  
-
-          {activeTab === 'qas' && (  
-            <ProductQA productId={sellerId} limit={10} />  
-          )}  
-
-          {activeTab === 'contact' && (  
-            <ContactTab seller={seller} />  
+        <div
+          ref={mainContentRef}
+          className="container mx-auto px-4 py-6 tab-content-container"
+        >
+          {activeTab === 'products' && (
+            <ProductsTab
+              products={products}
+              isLoading={productsLoading}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              navigate={navigate}
+            />
           )}
-        </div>  
-      </main>  
-    </div>  
-  );  
+
+          {activeTab === 'categories' && (
+            <CategoriesTab sellerId={sellerId} />
+          )}
+
+          {activeTab === 'reels' && (
+            <ReelsTab sellerId={sellerId} />
+          )}
+
+          {activeTab === 'about' && (
+            <AboutTab seller={seller} />
+          )}
+
+          {activeTab === 'reviews' && (
+            <CustomerReviewsEnhanced productId={sellerId} limit={10} />
+          )}
+
+          {activeTab === 'qas' && (
+            <ProductQA productId={sellerId} limit={10} />
+          )}
+
+          {activeTab === 'contact' && (
+            <ContactTab seller={seller} />
+          )}
+        </div>
+      </main>
+    </div>
+  );
 };
 
 export default SellerPage;
