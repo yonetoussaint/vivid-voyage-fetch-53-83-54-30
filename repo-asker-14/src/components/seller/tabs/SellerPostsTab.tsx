@@ -200,35 +200,45 @@ const VendorPostCard = ({
         <p className="whitespace-pre-line">{postDescription}</p>
       </div>
 
-      {/* Products Grid - Vertical Layout */}
+      {/* Products List - Vertical Full Width Layout */}
       <div className="px-4 pb-4">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-3">
           {displayProducts.map((product) => (
             <div
               key={product.id}
-              className="relative rounded-lg overflow-hidden bg-gray-50 aspect-square hover:shadow-md transition-shadow cursor-pointer"
+              className="relative w-full bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer p-3 rounded-lg"
             >
-              <img
-                src={product.image}
-                alt="Product"
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-              
-              {/* Discount Tag */}
-              {product.discount && (
-                <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md">
-                  {product.discount} OFF
-                </div>
-              )}
-              
-              {/* Price Info Overlay */}
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3">
-                <div className="flex items-center justify-between text-white">
-                  <span className="font-bold text-sm text-red-300">{product.currentPrice}</span>
-                  {product.originalPrice && (
-                    <span className="line-through text-gray-300 text-xs">{product.originalPrice}</span>
+              <div className="flex items-center gap-3">
+                <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                  <img
+                    src={product.image}
+                    alt="Product"
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  {/* Discount Tag */}
+                  {product.discount && (
+                    <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-md">
+                      {product.discount}
+                    </div>
                   )}
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-red-500 text-base">{product.currentPrice}</span>
+                      {product.originalPrice && (
+                        <span className="line-through text-gray-400 text-sm">{product.originalPrice}</span>
+                      )}
+                    </div>
+                    <button className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-full text-xs font-medium">
+                      View
+                    </button>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    Available now • Free shipping
+                  </div>
                 </div>
               </div>
             </div>
