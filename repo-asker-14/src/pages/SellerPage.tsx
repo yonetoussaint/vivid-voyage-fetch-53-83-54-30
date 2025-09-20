@@ -1331,7 +1331,7 @@ const SellerPage: React.FC = () => {
           ref={tabsRef}  
           className={`bg-white border-b transition-all duration-200 ease-out ${  
             isTabsSticky   
-              ? 'fixed top-0 left-0 right-0 z-40 shadow-md'   
+              ? 'fixed top-0 left-0 right-0 z-40'   
               : 'relative'  
           }`}  
           style={isTabsSticky ? { 
@@ -1361,7 +1361,7 @@ const SellerPage: React.FC = () => {
             minHeight: activeTab !== 'products' 
               ? `calc(100vh - ${headerHeight}px - ${tabsHeight}px)` 
               : 'auto',
-            paddingTop: activeTab !== 'products' && isTabsSticky ? `${tabsHeight}px` : undefined
+            marginTop: activeTab !== 'products' && isTabsSticky ? `${tabsHeight}px` : undefined
           }}
         >  
           {activeTab === 'products' && (  
