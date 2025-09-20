@@ -344,21 +344,19 @@ const ProductQA = ({
           </div>
         ) : (
           finalQuestions.map((qa, index) => (
-            <div key={qa.id}>
-              <div className="border-b pb-4" style={{borderBottom: '1px solid #e5e5e5'}}>
-                {/* Question */}
-                <div className="flex items-start justify-between mb-3 px-2"></div>
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center text-sm font-semibold" style={{backgroundColor: 'rgba(0,0,0,0.1)'}}>
-                    {qa.user_name.charAt(0)}
+            <div key={qa.id} className="border-b pb-6 last:border-b-0" style={{borderBottom: '1px solid #e5e5e5'}}>
+              {/* Question */}
+              <div className="flex items-start justify-between mb-3 px-2"></div>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center text-sm font-semibold" style={{backgroundColor: 'rgba(0,0,0,0.1)'}}>
+                  {qa.user_name.charAt(0)}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{qa.user_name}</span>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{qa.user_name}</span>
-                    </div>
-                    <div className="text-sm text-muted-foreground" style={{color: '#666'}}>
-                      {formatDate(qa.created_at)}
-                    </div>
+                  <div className="text-sm text-muted-foreground" style={{color: '#666'}}>
+                    {formatDate(qa.created_at)}
                   </div>
                 </div>
               </div>
