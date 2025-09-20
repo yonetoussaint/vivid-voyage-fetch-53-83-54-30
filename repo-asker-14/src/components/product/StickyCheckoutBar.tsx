@@ -317,9 +317,13 @@ const StickyCheckoutBar = ({
   };
 
   const handleViewCart = () => {
-    if (typeof onViewCart === 'function') {
+    console.log('🛒 Cart button clicked! Navigating to cart page...');
+    // Check if onViewCart is a meaningful function (not the default empty function)
+    if (typeof onViewCart === 'function' && onViewCart.toString() !== '() => {}') {
+      console.log('🛒 Using provided onViewCart function');
       onViewCart();
     } else {
+      console.log('🛒 Using default navigation to /cart');
       // Default navigation to cart page using React Router
       navigate('/cart');
     }
