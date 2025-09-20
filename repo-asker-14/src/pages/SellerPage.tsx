@@ -1142,8 +1142,9 @@ const SellerPage: React.FC = () => {
         // For products tab, use the calculated offset (after hero banner + seller info)
         shouldBeSticky = scrollY > (originalTabsOffsetTop - headerHeight);
       } else {
-        // For other tabs, tabs should be sticky if we've scrolled past where they would normally be
-        // Since other tabs don't have hero banner/seller info, they stick immediately after header
+        // For other tabs, tabs should be sticky when scrolled past their natural position
+        // Since other tabs don't have hero banner/seller info, they appear right after header
+        // They should become sticky when scrolled past where they would naturally be
         shouldBeSticky = scrollY > 0;
       }
 
@@ -1267,7 +1268,14 @@ const SellerPage: React.FC = () => {
           originalTabsOffsetTop = headerHeight;
         }
 
-        const shouldBeSticky = scrollY > (originalTabsOffsetTop - headerHeight);
+        // Calculate if tabs should be sticky based on tab type
+        let shouldBeSticky = false;
+        if (newTab === 'products') {
+          shouldBeSticky = scrollY > (originalTabsOffsetTop - headerHeight);
+        } else {
+          // For other tabs, they become sticky when scrolled past their natural position
+          shouldBeSticky = scrollY > 0;
+        }
         setIsTabsSticky(shouldBeSticky);
       }
     }, 50);
@@ -1364,9 +1372,6 @@ const SellerPage: React.FC = () => {
         <div
           ref={mainContentRef}
           className="container mx-auto px-4 py-6 tab-content-container"
-          style={isTabsSticky ? {
-            paddingTop: `${headerHeight + tabsHeight + 24}px` // 24px for original py-6
-          } : undefined}
         >
           {activeTab === 'products' && (
             <ProductsTab
