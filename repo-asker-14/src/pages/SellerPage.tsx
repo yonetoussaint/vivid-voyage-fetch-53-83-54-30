@@ -1359,8 +1359,9 @@ const SellerPage: React.FC = () => {
           className="container mx-auto px-4 py-6 tab-content-container"  
           style={{
             minHeight: activeTab !== 'products' 
-              ? `calc(100vh - ${headerHeight + tabsHeight}px)` 
-              : 'auto'
+              ? `calc(100vh - ${headerHeight}px - ${tabsHeight}px)` 
+              : 'auto',
+            paddingTop: activeTab !== 'products' && isTabsSticky ? `${tabsHeight}px` : undefined
           }}
         >  
           {activeTab === 'products' && (  
