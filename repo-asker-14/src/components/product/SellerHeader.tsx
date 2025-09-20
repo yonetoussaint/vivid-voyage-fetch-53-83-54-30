@@ -59,12 +59,8 @@ const SellerHeader = React.forwardRef<HTMLDivElement, SellerHeaderProps>(({
   // Use custom progress if provided, otherwise use internal progress
   const progress = customScrollProgress !== undefined ? customScrollProgress : internalProgress;
 
-  // Determine if the scrolled state should be forced
-  // Force scrolled state if activeTab is not 'products' or if forceScrolledState prop is true
-  const shouldForceScrolledState = activeTab !== "products" || forceScrolledState;
-
   // Use forced state or actual scroll progress
-  const displayProgress = shouldForceScrolledState ? 1 : progress;
+  const displayProgress = forceScrolledState ? 1 : progress;
 
 
   if (isLoading) {
@@ -156,13 +152,15 @@ const SellerHeader = React.forwardRef<HTMLDivElement, SellerHeaderProps>(({
                 <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-600 font-bold" />
               </div>
             ) : (
-               <HeaderActionButton
+              <div className="flex justify-center">
+                <HeaderActionButton
                   Icon={Search}
                   onClick={() => {
                     startLoading();
                     navigate('/search');
                   }}
                 />
+              </div>
             )}
           </div>
 
