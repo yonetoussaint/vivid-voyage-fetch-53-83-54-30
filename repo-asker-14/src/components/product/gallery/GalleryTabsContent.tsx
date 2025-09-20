@@ -45,6 +45,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
   const navigate = useNavigate();
 
   const handleViewCart = () => {
+    console.log('🛒 GalleryTabsContent: Navigating to cart page');
     navigate('/cart');
   };
 
