@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import SellerHeader from '@/components/product/SellerHeader';
 import SellerHeroBanner from '@/components/seller/SellerHeroBanner';
 import TabsNavigation from '@/components/home/TabsNavigation';
+import SellerPostsTab from '@/components/seller/tabs/SellerPostsTab';
 import { Heart, MessageCircle, Star, Search, Package, Calendar, Users, Play, Phone, Mail, MapPin, Share } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
