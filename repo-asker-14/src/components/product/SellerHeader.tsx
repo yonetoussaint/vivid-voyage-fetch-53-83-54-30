@@ -36,7 +36,7 @@ interface SellerHeaderProps {
   onlineStatus?: OnlineStatus;
 }
 
-const SellerHeader: React.FC<SellerHeaderProps> = ({ 
+const SellerHeader = React.forwardRef<HTMLDivElement, SellerHeaderProps>(({ 
   activeTab = "products", 
   onTabChange,
   forceScrolledState = false,
@@ -48,7 +48,7 @@ const SellerHeader: React.FC<SellerHeaderProps> = ({
   onShare,
   customScrollProgress,
   onlineStatus
-}) => {
+}, ref) => {
   const { progress: internalProgress } = useScrollProgress();
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
@@ -83,6 +83,7 @@ const SellerHeader: React.FC<SellerHeaderProps> = ({
 
   return (
     <div 
+      ref={ref}
       id="seller-header"
       className="fixed top-0 left-0 right-0 z-30 flex flex-col transition-all duration-300"
     >
@@ -186,6 +187,8 @@ const SellerHeader: React.FC<SellerHeaderProps> = ({
       </div>
     </div>
   );
-};
+});
+
+SellerHeader.displayName = 'SellerHeader';
 
 export default SellerHeader;

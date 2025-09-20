@@ -14,7 +14,7 @@ interface SellerHeroBannerProps {
   onScrollProgress?: (progress: number) => void;
 }
 
-export default function SellerHeroBanner({ seller, onScrollProgress }: SellerHeroBannerProps) {
+const SellerHeroBanner = React.forwardRef<HTMLDivElement, SellerHeroBannerProps>(({ seller, onScrollProgress }, ref) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [previousIndex, setPreviousIndex] = useState<number | null>(null);
   const [progress, setProgress] = useState(0);
@@ -197,7 +197,16 @@ export default function SellerHeroBanner({ seller, onScrollProgress }: SellerHer
   return (
     <>
       <div
-        ref={heroBannerRef}
+        ref={(el) => {
+          heroBannerRef.current = el;
+          if (ref) {
+            if (typeof ref === 'function') {
+              ref(el);
+            } else {
+              ref.current = el;
+            }
+          }
+        }}
         className="hero-banner relative overflow-hidden w-full"
         style={{ marginTop: offset }}
       >
@@ -231,4 +240,8 @@ export default function SellerHeroBanner({ seller, onScrollProgress }: SellerHer
       )}
     </>
   );
-}
+});
+
+SellerHeroBanner.displayName = 'SellerHeroBanner';
+
+export default SellerHeroBanner;

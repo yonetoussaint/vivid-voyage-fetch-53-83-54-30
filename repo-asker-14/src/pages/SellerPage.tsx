@@ -1295,20 +1295,21 @@ const SellerPage: React.FC = () => {
       />  
 
       <main>  
-        <SellerHeroBanner 
-          ref={heroBannerRef}
-          seller={seller} 
-          onScrollProgress={handleScrollProgress}
-        />
-
-        {activeTab === 'products' && (  
-          <div ref={sellerInfoRef}>
-            <SellerInfoSection   
-              seller={seller}   
-              products={products}   
-              onlineStatus={onlineStatus}  
-            />  
-          </div>
+        {activeTab === 'products' && (
+          <>
+            <SellerHeroBanner 
+              ref={heroBannerRef}
+              seller={seller} 
+              onScrollProgress={handleScrollProgress}
+            />
+            <div ref={sellerInfoRef}>
+              <SellerInfoSection   
+                seller={seller}   
+                products={products}   
+                onlineStatus={onlineStatus}  
+              />  
+            </div>
+          </>
         )}  
 
         <nav   
