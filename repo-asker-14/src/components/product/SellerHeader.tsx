@@ -9,6 +9,7 @@ import SearchPageSkeleton from '@/components/search/SearchPageSkeleton';
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import SearchBar from "./header/SearchBar";
+import VerificationBadge from "@/components/shared/VerificationBadge";
 
 
 interface ActionButton {
@@ -130,9 +131,7 @@ const SellerHeader = React.forwardRef<HTMLDivElement, SellerHeaderProps>(({
                   <span className="text-sm font-semibold text-gray-900 truncate max-w-32 transition-opacity duration-300 ease-out">
                     {seller.name}
                   </span>
-                  {seller.verified && (
-                    <CheckCircle className="w-3 h-3 text-blue-500 fill-current" />
-                  )}
+                  {seller.verified && <VerificationBadge size="xs" />}
                 </div>
                 {onlineStatus && (
                   <div className="flex items-center gap-1">
