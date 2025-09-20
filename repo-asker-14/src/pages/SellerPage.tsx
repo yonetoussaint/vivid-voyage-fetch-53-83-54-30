@@ -1112,59 +1112,35 @@ const SellerPage: React.FC = () => {
     return <ErrorMessage message="Failed to load products" />;  
   }  
 
-  // Improved scroll handling effect for sticky tabs  
+  // Simplified scroll handling for sticky tabs  
   useEffect(() => {
     const handleScroll = () => {  
       if (!headerRef.current || !tabsRef.current) return;  
 
       const scrollY = window.scrollY;  
       const headerHeight = headerRef.current.offsetHeight;  
-
-      // Store tabs height for spacer
+      
+      // Store tabs height
       const currentTabsHeight = tabsRef.current.offsetHeight;
       if (currentTabsHeight !== tabsHeight) {
         setTabsHeight(currentTabsHeight);
       }
 
-      // Calculate when tabs should become sticky
-      let shouldBeSticky = false;
-      
-      if (activeTab === 'products') {
-        // For products tab: calculate exact position where tabs would naturally be
-        let tabsNaturalTop = 0;
-        if (heroBannerRef.current && sellerInfoRef.current) {
-          tabsNaturalTop = heroBannerRef.current.offsetHeight + sellerInfoRef.current.offsetHeight;
-        }
-        
-        // Tabs become sticky when their natural position would go above the header bottom
-        shouldBeSticky = scrollY >= tabsNaturalTop;
-      } else {
-        // For other tabs, they should be sticky immediately after the header
-        shouldBeSticky = scrollY > 0;
-      }
+      // Simple sticky logic: tabs become sticky when scrolled past header
+      const shouldBeSticky = scrollY > headerHeight;
 
-      // Only update state if it changed to prevent unnecessary re-renders
       if (shouldBeSticky !== isTabsSticky) {
         setIsTabsSticky(shouldBeSticky);
       }
     };  
 
-    // Use RAF for smoother scrolling performance
-    let rafId: number;
-    const throttledHandleScroll = () => {
-      cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(handleScroll);
-    };
-
-    // Initial setup - run immediately and then add listener
     handleScroll();
-    window.addEventListener('scroll', throttledHandleScroll, { passive: true });
+    window.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {  
-      if (rafId) cancelAnimationFrame(rafId);
-      window.removeEventListener('scroll', throttledHandleScroll);  
+      window.removeEventListener('scroll', handleScroll);  
     };  
-  }, [activeTab, seller, isTabsSticky, tabsHeight]); // Include dependencies
+  }, [isTabsSticky, tabsHeight]);
 
   // Example effect to simulate real-time online status updates  
   useEffect(() => {  
@@ -1208,53 +1184,17 @@ const SellerPage: React.FC = () => {
     setScrollProgress(progress);
   };  
 
-  // Fixed tab change handler
+  // Simplified tab change handler
   const handleTabChange = (newTab: string) => {  
-    // If clicking on the currently active tab, scroll to appropriate position
-    if (newTab === activeTab) {
-      if (headerRef.current) {
-        const headerHeight = headerRef.current.offsetHeight;
-        if (newTab === 'products') {
-          // For products tab, scroll to show hero banner
-          window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-          });
-        } else {
-          // For other tabs, scroll to just below header where content starts
-          window.scrollTo({
-            top: headerHeight + (tabsHeight || 60),
-            behavior: 'smooth'
-          });
-        }
-      }
-      return;
-    }
-
-    // Change to the new tab
     setActiveTab(newTab);  
 
-    // Use a small delay to ensure DOM updates before scrolling
-    setTimeout(() => {
-      if (!headerRef.current) return;
-      
-      const headerHeight = headerRef.current.offsetHeight;
-      
-      if (newTab === 'products') {
-        // For products tab, scroll to top to show hero banner
-        window.scrollTo({
-          top: 0,
-          behavior: 'smooth'
-        });
-      } else {
-        // For other tabs, scroll to just below header + tabs height
-        const scrollTarget = headerHeight + (tabsHeight || 60);
-        window.scrollTo({
-          top: scrollTarget,
-          behavior: 'smooth'
-        });
-      }
-    }, 50);
+    // Only scroll if changing to products tab (to show hero banner)
+    if (newTab === 'products') {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
   };  
 
   // Loading state  
@@ -1320,15 +1260,12 @@ const SellerPage: React.FC = () => {
 
         <nav   
           ref={tabsRef}  
-          className={`bg-white border-b transition-all duration-200 ease-out ${  
+          className={`bg-white border-b transition-all duration-200 ${  
             isTabsSticky   
-              ? 'fixed top-0 left-0 right-0 z-40'   
+              ? 'fixed top-0 left-0 right-0 z-40 shadow-sm'   
               : 'relative'  
           }`}  
-          style={isTabsSticky ? { 
-            top: `${headerHeight}px`,
-            transform: isTabsSticky ? 'translateZ(0)' : 'none' // GPU acceleration for smoother animation
-          } : undefined}  
+          style={isTabsSticky ? { top: `${headerHeight}px` } : undefined}  
         >  
           <TabsNavigation  
             tabs={tabs}  
@@ -1337,22 +1274,15 @@ const SellerPage: React.FC = () => {
           />  
         </nav>  
 
-        {/* Spacer div when tabs are sticky to prevent content jumping */}  
-        {isTabsSticky && (
-          <div 
-            className="transition-all duration-200 ease-out"
-            style={{ height: `${tabsHeight}px` }} 
-          />
-        )}
+        {/* Simple spacer when tabs are sticky */}  
+        {isTabsSticky && <div style={{ height: `${tabsHeight}px` }} />}
 
         <div   
           ref={mainContentRef}  
-          className="container mx-auto px-4 py-6 tab-content-container"  
+          className="container mx-auto px-4 py-6"  
           style={{
-            minHeight: activeTab !== 'products' 
-              ? `calc(100vh - ${headerHeight}px - ${tabsHeight}px)` 
-              : 'auto',
-            paddingTop: activeTab !== 'products' && isTabsSticky ? `${tabsHeight + 24}px` : '24px'
+            minHeight: 'calc(100vh - 200px)',
+            paddingTop: isTabsSticky ? '24px' : '24px'
           }}
         >  
           {activeTab === 'products' && (  
