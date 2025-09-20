@@ -1305,6 +1305,7 @@ const SellerPage: React.FC = () => {
   const headerHeight = headerRef.current?.offsetHeight || 0;
   const tabs = [
     { id: 'products', label: 'Products' },
+    { id: 'posts', label: 'Posts' },
     { id: 'categories', label: 'Categories' },
     { id: 'reels', label: 'Reels' },
     { id: 'about', label: 'About' },
@@ -1410,6 +1411,10 @@ const SellerPage: React.FC = () => {
               setSearchQuery={setSearchQuery}
               navigate={navigate}
             />
+          )}
+
+          {activeTab === 'posts' && (
+            <SellerPostsTab />
           )}
 
           {activeTab === 'categories' && (
