@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, forwardRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import CustomerReviewsEnhanced from '@/components/product/CustomerReviewsEnhanced';
 import ProductQA from '@/components/product/ProductQA';
@@ -627,7 +627,7 @@ const ReelsTab: React.FC<{ sellerId: string }> = ({ sellerId }) => {
   const { data: reels = [], isLoading } = useSellerReels(sellerId);
 
   // Function to format numbers to K/M/B
-  const formatCount = (count) => {
+  const formatCount = (count: number) => {
     if (count >= 1000000000) {
       return (count / 1000000000).toFixed(1) + 'B';
     }
@@ -637,7 +637,7 @@ const ReelsTab: React.FC<{ sellerId: string }> = ({ sellerId }) => {
     if (count >= 1000) {
       return (count / 1000).toFixed(1) + 'K';
     }
-    return count;
+    return count.toString();
   };
 
   if (isLoading) {
@@ -991,7 +991,7 @@ const CategoriesTab: React.FC<{ sellerId: string }> = ({ sellerId }) => {
       id: '2', 
       name: 'Fashion',
       description: 'Clothing, shoes, and accessories',
-      image_url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop',
+      image_url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w-400&h=300&fit=crop',
       product_count: 15,
       created_at: '2024-01-10T00:00:00Z'
     },
@@ -999,7 +999,7 @@ const CategoriesTab: React.FC<{ sellerId: string }> = ({ sellerId }) => {
       id: '3',
       name: 'Home & Garden',
       description: 'Furniture, decor, and outdoor items',
-      image_url: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h-300&fit=crop',
+      image_url: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop',
       product_count: 18,
       created_at: '2024-01-05T00:00:00Z'
     },
@@ -1007,7 +1007,7 @@ const CategoriesTab: React.FC<{ sellerId: string }> = ({ sellerId }) => {
       id: '4',
       name: 'Sports & Fitness',
       description: 'Equipment, apparel, and accessories',
-      image_url: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h-300&fit=crop',
+      image_url: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop',
       product_count: 12,
       created_at: '2024-01-01T00:00:00Z'
     }
@@ -1071,8 +1071,6 @@ const CategoriesTab: React.FC<{ sellerId: string }> = ({ sellerId }) => {
   );
 };
 
-
-
 // Main SellerPage Component  
 const SellerPage: React.FC = () => {  
   const { sellerId } = useParams<{ sellerId: string }>();  
@@ -1114,63 +1112,59 @@ const SellerPage: React.FC = () => {
     return <ErrorMessage message="Failed to load products" />;  
   }  
 
-  const headerHeight = headerRef.current?.offsetHeight || 0;  
-
   // Improved scroll handling effect for sticky tabs  
-  // Fixed scroll handling effect for sticky tabs  
-useEffect(() => {
-  const handleScroll = () => {  
-    if (!headerRef.current || !tabsRef.current) return;  
+  useEffect(() => {
+    const handleScroll = () => {  
+      if (!headerRef.current || !tabsRef.current || !heroBannerRef.current) return;  
 
-    const scrollY = window.scrollY;  
-    const headerHeight = headerRef.current.offsetHeight;  
+      const scrollY = window.scrollY;  
+      const headerHeight = headerRef.current.offsetHeight;  
+      const heroBannerHeight = heroBannerRef.current.offsetHeight;
 
-    // Calculate the original position of tabs based on current tab
-    let originalTabsOffsetTop = headerHeight; // Start with header height
+      // Calculate the original position of tabs based on current tab
+      let originalTabsOffsetTop = heroBannerHeight;
 
-    if (activeTab === 'products') {
-      // For products tab, tabs come after header + hero banner + seller info
-      const heroBannerHeight = heroBannerRef.current?.offsetHeight || 0;
-      const sellerInfoHeight = sellerInfoRef.current?.offsetHeight || 0;
-      originalTabsOffsetTop += heroBannerHeight + sellerInfoHeight;
-    }
-    // For other tabs, tabs come right after header (already included in originalTabsOffsetTop)
+      if (activeTab === 'products' && sellerInfoRef.current) {
+        // For products tab, tabs come after header + hero banner + seller info
+        const sellerInfoHeight = sellerInfoRef.current.offsetHeight;
+        originalTabsOffsetTop += sellerInfoHeight;
+      }
 
-    // Store tabs height for spacer
-    const currentTabsHeight = tabsRef.current.offsetHeight;
-    if (currentTabsHeight !== tabsHeight) {
-      setTabsHeight(currentTabsHeight);
-    }
+      // Store tabs height for spacer
+      const currentTabsHeight = tabsRef.current.offsetHeight;
+      if (currentTabsHeight !== tabsHeight) {
+        setTabsHeight(currentTabsHeight);
+      }
 
-    // Determine if tabs should be sticky
-    // They become sticky when they would scroll past the header bottom
-    const shouldBeSticky = scrollY >= (originalTabsOffsetTop - headerHeight);
+      // Determine if tabs should be sticky
+      // They become sticky when they would scroll past the header
+      const shouldBeSticky = scrollY >= (originalTabsOffsetTop - headerHeight);
 
-    // Only update state if it changed to prevent unnecessary re-renders
-    if (shouldBeSticky !== isTabsSticky) {
-      setIsTabsSticky(shouldBeSticky);
-    }
-  };  
+      // Only update state if it changed to prevent unnecessary re-renders
+      if (shouldBeSticky !== isTabsSticky) {
+        setIsTabsSticky(shouldBeSticky);
+      }
+    };  
 
-  // Use RAF for smoother scrolling performance
-  let rafId: number;
-  const throttledHandleScroll = () => {
-    cancelAnimationFrame(rafId);
-    rafId = requestAnimationFrame(handleScroll);
-  };
+    // Use RAF for smoother scrolling performance
+    let rafId: number;
+    const throttledHandleScroll = () => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(handleScroll);
+    };
 
-  // Initial setup with delay to ensure DOM is ready
-  const timeoutId = setTimeout(() => {
-    handleScroll(); // Set initial state
-    window.addEventListener('scroll', throttledHandleScroll, { passive: true });
-  }, 200);  
+    // Initial setup with delay to ensure DOM is ready
+    const timeoutId = setTimeout(() => {
+      handleScroll(); // Set initial state
+      window.addEventListener('scroll', throttledHandleScroll, { passive: true });
+    }, 200);  
 
-  return () => {  
-    clearTimeout(timeoutId);
-    if (rafId) cancelAnimationFrame(rafId);
-    window.removeEventListener('scroll', throttledHandleScroll);  
-  };  
-}, [activeTab, seller, isTabsSticky, tabsHeight]);
+    return () => {  
+      clearTimeout(timeoutId);
+      if (rafId) cancelAnimationFrame(rafId);
+      window.removeEventListener('scroll', throttledHandleScroll);  
+    };  
+  }, [activeTab, seller, isTabsSticky, tabsHeight]); // Include dependencies
 
   // Example effect to simulate real-time online status updates  
   useEffect(() => {  
@@ -1239,19 +1233,19 @@ useEffect(() => {
 
     // Force recalculation after DOM updates
     setTimeout(() => {
-      if (headerRef.current && tabsRef.current) {
+      if (headerRef.current && tabsRef.current && heroBannerRef.current) {
         const scrollY = window.scrollY;
         const headerHeight = headerRef.current.offsetHeight;
+        const heroBannerHeight = heroBannerRef.current.offsetHeight;
+        
+        let originalTabsOffsetTop = heroBannerHeight;
 
-        let originalTabsOffsetTop = headerHeight;
-
-        if (newTab === 'products') {
-          const heroBannerHeight = heroBannerRef.current?.offsetHeight || 0;
-          const sellerInfoHeight = sellerInfoRef.current?.offsetHeight || 0;
-          originalTabsOffsetTop += heroBannerHeight + sellerInfoHeight;
+        if (newTab === 'products' && sellerInfoRef.current) {
+          const sellerInfoHeight = sellerInfoRef.current.offsetHeight;
+          originalTabsOffsetTop += sellerInfoHeight;
         }
 
-        const shouldBeSticky = scrollY > (originalTabsOffsetTop - headerHeight);
+        const shouldBeSticky = scrollY >= (originalTabsOffsetTop - headerHeight);
         setIsTabsSticky(shouldBeSticky);
       }
     }, 300);
@@ -1261,7 +1255,8 @@ useEffect(() => {
   if (sellerLoading || !seller) {  
     return <LoadingSpinner />;  
   }  
-  
+
+  const headerHeight = headerRef.current?.offsetHeight || 0;  
   const tabs = [  
     { id: 'products', label: 'Products' },  
     { id: 'categories', label: 'Categories' },  
@@ -1272,35 +1267,40 @@ useEffect(() => {
     { id: 'contact', label: 'Contact' },  
   ];
 
-         return (  
+  return (  
     <div className="min-h-screen bg-white">  
-      <header   
-        ref={headerRef}  
-        className="fixed top-0 left-0 right-0 z-50 bg-white"  
-      >  
-        <SellerHeader  
-          activeTab={activeTab}  
-          onTabChange={handleTabChange}  
-          isFollowing={isFollowing}  
-          onFollow={handleFollow}  
-          onMessage={handleMessage}  
-          actionButtons={[  
-            {  
-              Icon: Heart,  
-              active: isFollowing,  
-              onClick: handleFollow,  
-              activeColor: "#f43f5e"  
-            },  
-            {  
-              Icon: MessageCircle,  
-              onClick: handleMessage  
-            }  
-          ]}  
-          forceScrolledState={true}  
-        />  
-      </header>  
+      <SellerHeader  
+        ref={headerRef}
+        activeTab={activeTab}  
+        onTabChange={handleTabChange}  
+        seller={seller}
+        isFollowing={isFollowing}  
+        onFollow={handleFollow}  
+        onMessage={handleMessage}
+        onShare={handleShare}
+        customScrollProgress={scrollProgress}
+        onlineStatus={onlineStatus}
+        actionButtons={[  
+          {  
+            Icon: Heart,  
+            active: isFollowing,  
+            onClick: handleFollow,  
+            activeColor: "#f43f5e"  
+          },  
+          {  
+            Icon: Share,  
+            onClick: handleShare  
+          }  
+        ]}  
+      />  
 
-      <main style={{ paddingTop: headerHeight }}>  
+      <main>  
+        <SellerHeroBanner 
+          ref={heroBannerRef}
+          seller={seller} 
+          onScrollProgress={handleScrollProgress}
+        />
+
         {activeTab === 'products' && (  
           <div ref={sellerInfoRef}>
             <SellerInfoSection   
@@ -1315,7 +1315,7 @@ useEffect(() => {
           ref={tabsRef}  
           className={`bg-white border-b transition-all duration-200 ease-out ${  
             isTabsSticky   
-              ? 'fixed top-0 left-0 right-0 z-40'   
+              ? 'fixed top-0 left-0 right-0 z-40 shadow-md'   
               : 'relative'  
           }`}  
           style={isTabsSticky ? { 
@@ -1381,4 +1381,4 @@ useEffect(() => {
   );  
 };
 
-export default SellerPage
+export default SellerPage;
