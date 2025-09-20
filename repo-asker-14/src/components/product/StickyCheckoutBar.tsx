@@ -318,8 +318,8 @@ const StickyCheckoutBar = ({
     if (typeof onViewCart === 'function') {
       onViewCart();
     } else {
-      // Default navigation to cart page using React Router
-      window.location.pathname = '/cart';
+      // Default navigation to cart page
+      window.location.href = '/cart';
     }
   };
 
