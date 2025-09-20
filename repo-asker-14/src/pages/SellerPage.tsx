@@ -1384,6 +1384,9 @@ const SellerPage: React.FC = () => {
         <div
           ref={mainContentRef}
           className="container mx-auto px-4 py-6 tab-content-container"
+          style={isTabsSticky ? {
+            paddingTop: `${headerHeight + tabsHeight + 24}px` // 24px for original py-6
+          } : undefined}
         >
           {activeTab === 'products' && (
             <ProductsTab
