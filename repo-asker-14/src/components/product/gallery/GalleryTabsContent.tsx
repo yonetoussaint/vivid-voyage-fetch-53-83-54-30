@@ -26,7 +26,6 @@ interface GalleryTabsContentProps {
   onImageSelect: (imageUrl: string, variantName: string) => void;
   onConfigurationChange: (configData: any) => void;
   onBuyNow?: () => void;
-  onViewCart?: () => void;
 }
 
 const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
@@ -41,17 +40,12 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
   onThumbnailClick,
   onImageSelect,
   onConfigurationChange,
-  onBuyNow,
-  onViewCart
+  onBuyNow
 }) => {
   const navigate = useNavigate();
 
   const handleViewCart = () => {
-    if (onViewCart) {
-      onViewCart();
-    } else {
-      navigate('/cart');
-    }
+    navigate('/cart');
   };
 
   // Only show tabs when there's more than 1 item OR when there's a 3D model
