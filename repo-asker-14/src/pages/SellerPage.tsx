@@ -1146,10 +1146,12 @@ const SellerPage: React.FC = () => {
       
       if (activeTab === 'products') {
         // For products tab, calculate exact position where tabs would naturally become sticky
+        // Since hero banner now sits behind the header, we only need seller info height
         if (sellerInfoRef.current && heroBannerRef.current) {
           const heroBannerHeight = heroBannerRef.current.offsetHeight;
           const sellerInfoHeight = sellerInfoRef.current.offsetHeight;
-          stickyThreshold = heroBannerHeight + sellerInfoHeight;
+          // Hero banner sits behind header, so subtract header height from the calculation
+          stickyThreshold = heroBannerHeight + sellerInfoHeight - headerHeight;
         }
         
         // Calculate scroll progress for header transitions
