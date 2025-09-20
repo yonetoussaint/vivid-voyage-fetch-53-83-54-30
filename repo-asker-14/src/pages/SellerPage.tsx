@@ -1383,6 +1383,11 @@ const SellerPage: React.FC = () => {
           />
         )}
 
+        {/* Additional top padding for non-products tabs to account for header + tabs height */}
+        {activeTab !== 'products' && isTabsSticky && (
+          <div style={{ height: `${headerHeight}px` }} />
+        )}
+
         <div
           ref={mainContentRef}
           className="container mx-auto px-4 py-6 tab-content-container"
