@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { GalleryThumbnails } from '@/components/product/GalleryThumbnails';
 import ProductVariants from '@/components/product/ProductVariants';
 import CustomerReviewsEnhanced from '@/components/product/CustomerReviewsEnhanced';
@@ -41,6 +42,12 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
   onConfigurationChange,
   onBuyNow
 }) => {
+  const navigate = useNavigate();
+
+  const handleViewCart = () => {
+    navigate('/cart');
+  };
+
   // Only show tabs when there's more than 1 item OR when there's a 3D model
   if (!(totalItems > 1 || galleryItems.some(item => item.type === 'model3d'))) {
     return null;
@@ -104,6 +111,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
       <StickyCheckoutBar
         product={product}
         onBuyNow={onBuyNow}
+        onViewCart={handleViewCart}
         selectedColor=""
         selectedStorage=""
         selectedNetwork=""
