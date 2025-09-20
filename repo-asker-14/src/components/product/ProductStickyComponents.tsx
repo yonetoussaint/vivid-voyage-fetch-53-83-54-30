@@ -5,6 +5,7 @@ import SocialSharePanel from "@/components/product/SocialSharePanel";
 interface ProductStickyComponentsProps {
   product: any;
   onBuyNow: () => void;
+  onViewCart?: () => void;
   sharePanelOpen: boolean;
   setSharePanelOpen: (open: boolean) => void;
   hideCheckoutBar?: boolean; // Added this prop based on the changes
@@ -13,6 +14,7 @@ interface ProductStickyComponentsProps {
 const ProductStickyComponents: React.FC<ProductStickyComponentsProps> = ({
   product,
   onBuyNow,
+  onViewCart,
   sharePanelOpen,
   setSharePanelOpen,
   hideCheckoutBar = false // Default value for the new prop
@@ -23,6 +25,7 @@ const ProductStickyComponents: React.FC<ProductStickyComponentsProps> = ({
         <StickyCheckoutBar 
           product={product}
           onBuyNow={onBuyNow}
+          onViewCart={onViewCart}
           selectedColor=""
           selectedStorage=""
           selectedNetwork=""
