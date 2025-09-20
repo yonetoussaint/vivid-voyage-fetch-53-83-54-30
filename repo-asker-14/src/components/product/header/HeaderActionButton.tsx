@@ -52,9 +52,10 @@ const HeaderActionButton = ({
   if (count !== undefined && progress < expandedThreshold) {
     return (
       <div 
-        className="flex items-center gap-1.5 px-2.5 h-7 rounded-full transition-all duration-500 ease-out hover-scale"
+        className="flex items-center gap-1.5 px-2.5 h-7 rounded-full transition-all duration-500 ease-out hover-scale border border-white/20"
         style={{ 
-          backgroundColor: `rgba(0, 0, 0, ${0.15 * (1 - progress)})`,
+          backgroundColor: `rgba(255, 255, 255, ${0.15 * (1 - progress)})`,
+          backdropFilter: `blur(${8 * (1 - progress)}px)`,
           transform: `scale(${1 - progress * 0.1})`,
         }}
       >
@@ -91,9 +92,10 @@ const HeaderActionButton = ({
 
     return (
       <div 
-        className="flex items-center rounded-full transition-all duration-500 ease-out"
+        className="flex items-center rounded-full transition-all duration-500 ease-out border border-white/10"
         style={{ 
-          backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - progress)})`,
+          backgroundColor: `rgba(255, 255, 255, ${0.1 * (1 - progress)})`,
+          backdropFilter: `blur(${6 * (1 - progress)}px)`,
           paddingLeft: `${12 - (transitionProgress * 8)}px`,
           paddingRight: `${12 - (transitionProgress * 8)}px`,
           paddingTop: `${6 - (transitionProgress * 2)}px`,
@@ -141,9 +143,10 @@ const HeaderActionButton = ({
   // Compact circular button state
   return (
     <div 
-      className="rounded-full transition-all duration-500 ease-out hover-scale"
+      className="rounded-full transition-all duration-500 ease-out hover-scale border border-white/10"
       style={{ 
-        backgroundColor: transform ? 'transparent' : `rgba(0, 0, 0, ${0.1 * (1 - progress)})`,
+        backgroundColor: transform ? 'transparent' : `rgba(255, 255, 255, ${0.1 * (1 - progress)})`,
+        backdropFilter: transform ? 'none' : `blur(${4 * (1 - progress)}px)`,
       }}
     >
       <button
