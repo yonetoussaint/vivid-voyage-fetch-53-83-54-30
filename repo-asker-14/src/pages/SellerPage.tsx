@@ -1142,10 +1142,9 @@ const SellerPage: React.FC = () => {
         // For products tab, use the calculated offset (after hero banner + seller info)
         shouldBeSticky = scrollY > (originalTabsOffsetTop - headerHeight);
       } else {
-        // For other tabs, tabs should be sticky when scrolled past their natural position
+        // For other tabs, tabs should always be sticky to remain constantly visible
         // Since other tabs don't have hero banner/seller info, they appear right after header
-        // They should become sticky when scrolled past where they would naturally be
-        shouldBeSticky = scrollY > 0;
+        shouldBeSticky = true;
       }
 
       // Only update state if it changed to prevent unnecessary re-renders
@@ -1165,6 +1164,12 @@ const SellerPage: React.FC = () => {
     const timeoutId = setTimeout(() => {
       calculateOriginalPosition();
       handleScroll(); // Set initial state
+      
+      // For non-products tabs, ensure tabs are sticky from the start
+      if (activeTab !== 'products') {
+        setIsTabsSticky(true);
+      }
+      
       window.addEventListener('scroll', throttledHandleScroll, { passive: true });
     }, 100);
 
@@ -1244,8 +1249,15 @@ const SellerPage: React.FC = () => {
 
     // Otherwise, change to the new tab
     setActiveTab(newTab);
-    // Reset sticky state when changing tabs to recalculate positions
-    setIsTabsSticky(false);
+    
+    // Set sticky state based on tab type immediately
+    if (newTab === 'products') {
+      // Reset sticky state for products tab to recalculate positions
+      setIsTabsSticky(false);
+    } else {
+      // For non-products tabs, make them sticky immediately
+      setIsTabsSticky(true);
+    }
 
     // Scroll to top for new tab
     window.scrollTo({
@@ -1273,8 +1285,8 @@ const SellerPage: React.FC = () => {
         if (newTab === 'products') {
           shouldBeSticky = scrollY > (originalTabsOffsetTop - headerHeight);
         } else {
-          // For other tabs, they become sticky when scrolled past their natural position
-          shouldBeSticky = scrollY > 0;
+          // For other tabs, they should always be sticky to remain constantly visible
+          shouldBeSticky = true;
         }
         setIsTabsSticky(shouldBeSticky);
       }
