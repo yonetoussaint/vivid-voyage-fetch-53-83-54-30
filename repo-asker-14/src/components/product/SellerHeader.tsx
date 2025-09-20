@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Heart, MessageCircle, Search, ChevronRight, Share, CheckCircle } from "lucide-react";
+import { Heart, MessageCircle, Search, ChevronRight, Share, CheckCircle, ShoppingCart, MoreHorizontal } from "lucide-react";
 import { useScrollProgress } from "./header/useScrollProgress";
 import BackButton from "./header/BackButton";
 import HeaderActionButton from "./header/HeaderActionButton";
@@ -8,6 +8,8 @@ import { useNavigationLoading } from '@/hooks/useNavigationLoading';
 import SearchPageSkeleton from '@/components/search/SearchPageSkeleton';
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import SearchBar from "./header/SearchBar";
+
 
 interface ActionButton {
   Icon: any;
@@ -56,9 +58,14 @@ const SellerHeader = React.forwardRef<HTMLDivElement, SellerHeaderProps>(({
 
   // Use custom progress if provided, otherwise use internal progress
   const progress = customScrollProgress !== undefined ? customScrollProgress : internalProgress;
-  
+
+  // Determine if the scrolled state should be forced
+  // Force scrolled state if activeTab is not 'products' or if forceScrolledState prop is true
+  const shouldForceScrolledState = activeTab !== "products" || forceScrolledState;
+
   // Use forced state or actual scroll progress
-  const displayProgress = forceScrolledState ? 1 : progress;
+  const displayProgress = shouldForceScrolledState ? 1 : progress;
+
 
   if (isLoading) {
     return <SearchPageSkeleton />;
@@ -66,7 +73,7 @@ const SellerHeader = React.forwardRef<HTMLDivElement, SellerHeaderProps>(({
 
   const getStatusText = () => {
     if (!onlineStatus) return null;
-    
+
     if (onlineStatus.isOnline) return "Online now";
     if (onlineStatus.lastSeen) {
       const now = new Date();
@@ -130,9 +137,9 @@ const SellerHeader = React.forwardRef<HTMLDivElement, SellerHeaderProps>(({
             )}
           </div>
 
-          {/* Center - Search bar when scrolled */}
+          {/* Center - Search bar or search icon */}
           <div className="flex-1 mx-4">
-            {displayProgress >= 0.5 && (
+            {displayProgress >= 0.5 ? (
               <div className="flex-1 relative max-w-md mx-auto">
                 <input
                   type="text"
@@ -148,6 +155,14 @@ const SellerHeader = React.forwardRef<HTMLDivElement, SellerHeaderProps>(({
                 />
                 <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-600 font-bold" />
               </div>
+            ) : (
+               <HeaderActionButton
+                  Icon={Search}
+                  onClick={() => {
+                    startLoading();
+                    navigate('/search');
+                  }}
+                />
             )}
           </div>
 

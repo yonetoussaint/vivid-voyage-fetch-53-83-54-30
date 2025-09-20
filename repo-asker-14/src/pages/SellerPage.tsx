@@ -1320,7 +1320,8 @@ const SellerPage: React.FC = () => {
         onFollow={handleFollow}
         onMessage={handleMessage}
         onShare={handleShare}
-        customScrollProgress={scrollProgress}
+        customScrollProgress={activeTab === 'products' ? scrollProgress : 1}
+        forceScrolledState={activeTab !== 'products'}
         onlineStatus={onlineStatus}
         actionButtons={[
           {
