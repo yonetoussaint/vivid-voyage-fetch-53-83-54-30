@@ -1,5 +1,5 @@
 entrypoint = "index.html"
-modules = ["web"]
+modules = ["web", "nodejs-20"]
 
 [nix]
 channel = "stable-24_11"
