@@ -1122,12 +1122,13 @@ const SellerPage: React.FC = () => {
       // Calculate the original position of tabs in the document flow
       const headerHeight = headerRef.current.offsetHeight;
 
-      if (activeTab === 'products' && sellerInfoRef.current) {
-        // For products tab, tabs come after header + seller info
+      if (activeTab === 'products' && sellerInfoRef.current && heroBannerRef.current) {
+        // For products tab, tabs come after header + hero banner + seller info
+        const heroBannerHeight = heroBannerRef.current.offsetHeight;
         const sellerInfoHeight = sellerInfoRef.current.offsetHeight;
-        originalTabsOffsetTop = headerHeight + sellerInfoHeight;
+        originalTabsOffsetTop = headerHeight + heroBannerHeight + sellerInfoHeight;
       } else {
-        // For other tabs, tabs come right after header
+        // For other tabs, tabs come right after header (no hero banner or seller info)
         originalTabsOffsetTop = headerHeight;
       }
     };
@@ -1248,9 +1249,10 @@ const SellerPage: React.FC = () => {
         const headerHeight = headerRef.current.offsetHeight;
         let originalTabsOffsetTop = 0;
 
-        if (newTab === 'products' && sellerInfoRef.current) {
+        if (newTab === 'products' && sellerInfoRef.current && heroBannerRef.current) {
+          const heroBannerHeight = heroBannerRef.current.offsetHeight;
           const sellerInfoHeight = sellerInfoRef.current.offsetHeight;
-          originalTabsOffsetTop = headerHeight + sellerInfoHeight;
+          originalTabsOffsetTop = headerHeight + heroBannerHeight + sellerInfoHeight;
         } else {
           originalTabsOffsetTop = headerHeight;
         }
