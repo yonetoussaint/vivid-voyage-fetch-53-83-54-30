@@ -45,7 +45,6 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
   const navigate = useNavigate();
 
   const handleViewCart = () => {
-    console.log('🛒 GalleryTabsContent: Navigating to cart page');
     navigate('/cart');
   };
 
@@ -108,10 +107,10 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
     </ProductSectionWrapper>
 
     {/* Sticky Checkout Bar for Overview Tab */}
-    {product && (
+    {product && onBuyNow && (
       <StickyCheckoutBar
         product={product}
-        onBuyNow={onBuyNow || (() => console.log('No onBuyNow handler provided'))}
+        onBuyNow={onBuyNow}
         onViewCart={handleViewCart}
         selectedColor=""
         selectedStorage=""

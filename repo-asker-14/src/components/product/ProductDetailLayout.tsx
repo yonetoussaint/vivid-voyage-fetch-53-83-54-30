@@ -119,12 +119,6 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     navigate(`/product-checkout?${checkoutParams.toString()}`);
   };
 
-  // Handle view cart navigation
-  const handleViewCart = () => {
-    console.log('🛒 ProductDetailLayout: Navigating to cart page');
-    navigate('/cart');
-  };
-
   return (
     <div className="flex flex-col min-h-0 bg-white overscroll-none pb-20" ref={refs.contentRef}>
       {/* Header Section - Conditionally rendered */}
@@ -165,7 +159,6 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
             console.error('❌ No seller ID found');
           }
         }}
-        onBuyNow={buyNow}
       />
 
       {/* Sticky Tabs Navigation - Moved back to main layout */}
@@ -208,7 +201,6 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
       <ProductStickyComponents
         product={product}
         onBuyNow={buyNow}
-        onViewCart={handleViewCart}
         sharePanelOpen={state.sharePanelOpen}
         setSharePanelOpen={state.setSharePanelOpen}
         hideCheckoutBar={true} // Hide checkout bar since it's now in overview tab

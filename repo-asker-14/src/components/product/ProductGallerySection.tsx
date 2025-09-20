@@ -29,7 +29,7 @@ const ProductGallerySection = React.forwardRef<HTMLDivElement, ProductGallerySec
 }, ref) => {
   return (
     <div className="relative z-0 w-full bg-transparent" ref={ref} onClick={() => { if (focusMode) onFocusModeChange(false); }}>
-      <ProductImageGallery
+      <ProductImageGallery 
         ref={galleryRef}
         images={displayImages.length > 0 ? displayImages : ["/placeholder.svg"]}
         videos={product?.product_videos || []}

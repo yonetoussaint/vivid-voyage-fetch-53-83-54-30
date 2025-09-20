@@ -38,7 +38,7 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
     onVariantImageChange,
     configurationData,
     activeTab = 'overview', // Add activeTab prop with default value
-    onBuyNow // Added onBuyNow prop
+    onBuyNow
   }, ref) => {
 
   // Use the custom hook for state management
@@ -420,12 +420,12 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
         currentIndex={currentIndex}
         isPlaying={isPlaying}
         videoIndices={videoIndices}
-        productId={productId}
+        productId={product?.id}
         product={product}
         onThumbnailClick={handleThumbnailClick}
-        onImageSelect={onImageSelect}
-        onConfigurationChange={onConfigurationChange}
-        onBuyNow={onBuyNow} // Passed onBuyNow prop
+        onImageSelect={handleVariantImageChange}
+        onConfigurationChange={setInternalConfigData}
+        onBuyNow={onBuyNow}
       />
 
       <FullscreenGallery
@@ -473,7 +473,6 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
           selectedNetwork=""
           selectedCondition=""
           className=""
-          onViewCart={() => console.log("View Cart Clicked from StickyCheckoutBar")} // Placeholder for onViewCart
         />
       )}
     </div>

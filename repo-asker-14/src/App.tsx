@@ -161,8 +161,8 @@ function App() {
                               <Route path="signup" element={<SimpleAuthPage />} />
                               <Route path="auth/callback" element={<ForYou />} />
                               <Route path="seller-dashboard/*" element={<SellerDashboard />} />
-                              <Route path="cart" element={<CartPage />} />
                               <Route path="*" element={<NotFound />} />
+                              <Route path="/cart" element={<CartPage />} />
                             </Route>
                           </Routes>
                           <Toaster />
