@@ -6,6 +6,7 @@ import { setupStorageBuckets } from "@/integrations/supabase/setupStorage";
 import { toast } from "sonner";
 import BannerSlides from '../home/hero/BannerSlides';
 import BannerControls from '../home/hero/BannerControls';
+import NewsTicker from '../home/hero/NewsTicker';
 import FloatingVideo from '../hero/FloatingVideo';
 import { BannerType } from '../home/hero/types';
 
@@ -17,6 +18,7 @@ interface SellerHeroBannerProps {
 const SellerHeroBanner = React.forwardRef<HTMLDivElement, SellerHeroBannerProps>(({ seller, onScrollProgress }, ref) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [previousIndex, setPreviousIndex] = useState<number | null>(null);
+  const [showNews, setShowNews] = useState(true);
   const [progress, setProgress] = useState(0);
   const [offset, setOffset] = useState<number>(0);
   const [videoDurations, setVideoDurations] = useState<{[key: number]: number}>({});
@@ -225,6 +227,7 @@ const SellerHeroBanner = React.forwardRef<HTMLDivElement, SellerHeroBannerProps>
           progress={progress}
         />
       </div>
+      {showNews && <NewsTicker />}
       
       {/* Floating Video */}
       {showFloatingVideo && currentSlide && currentSlide.type === "video" && (
