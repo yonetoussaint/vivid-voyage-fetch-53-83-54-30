@@ -276,23 +276,23 @@ const ProductQA = ({
             <div className="text-xl font-bold text-gray-900">{qaStats.count}</div>
             <div className="text-xs text-muted-foreground" style={{color: '#666'}}>Questions</div>
           </div>
-          
+
           <div className="text-center">
             <div className="text-xl font-bold text-green-600">{qaStats.answeredCount}</div>
             <div className="text-xs text-muted-foreground" style={{color: '#666'}}>Answered</div>
           </div>
-          
+
           <div className="text-center">
             <div className="text-xl font-bold text-orange-600">{qaStats.count - qaStats.answeredCount}</div>
             <div className="text-xs text-muted-foreground" style={{color: '#666'}}>Pending</div>
           </div>
-          
+
           <div className="text-center">
             <div className="text-xl font-bold text-blue-600">{Math.round(qaStats.count > 0 ? (qaStats.answeredCount / qaStats.count) * 100 : 0)}%</div>
             <div className="text-xs text-muted-foreground" style={{color: '#666'}}>Response Rate</div>
           </div>
         </div>
-        
+
         <div className="mt-3 pt-3 border-t border-gray-200">
           <div className="text-center text-xs text-muted-foreground" style={{color: '#666'}}>
             {qaStats.helpfulCount} helpful votes from the community
@@ -417,7 +417,7 @@ const ProductQA = ({
                               </button>
                             )}
                           </div>
-                          
+
                           {/* Media Section for Official Answer */}
                           {qa.media && qa.media.length > 0 && (
                             <div className="mt-3">
@@ -455,7 +455,7 @@ const ProductQA = ({
                       </div>
                     </div>
                   )}
-                  
+
                   {/* Regular Replies */}
                   {qa.replies && qa.replies.length > 0 && (
                     <>
@@ -500,7 +500,6 @@ const ProductQA = ({
                   )}
                 </div>
               )}
-              </div>
               
               {/* Insert SearchInfoComponent after the second question (index 1) */}
               {index === 1 && (
