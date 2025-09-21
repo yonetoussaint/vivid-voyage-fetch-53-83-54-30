@@ -2,7 +2,17 @@ import React, { useState } from 'react';
 import { Star, X, ChevronLeft, ChevronRight, Play } from 'lucide-react';
 import SearchInfoHeader from '@/components/shared/SearchInfoHeader';
 
-const ReviewGallery = () => {
+interface ReviewGalleryProps {
+  showViewMore?: boolean;
+  onViewMoreClick?: () => void;
+  viewMoreText?: string;
+}
+
+const ReviewGallery: React.FC<ReviewGalleryProps> = ({
+  showViewMore = true,
+  onViewMoreClick = () => console.log('View More clicked!'),
+  viewMoreText = "View More"
+}) => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(null);
 
   const reviews = [
@@ -125,10 +135,12 @@ const ReviewGallery = () => {
   return (
     <>
       <div className="w-full bg-white">
-        {/* Header */}
+        {/* Header with integrated View More button */}
         <SearchInfoHeader 
           title="Review Gallery"
-          className="mb-4"
+          showViewMore={showViewMore}
+          onViewMoreClick={onViewMoreClick}
+          viewMoreText={viewMoreText}
         />
 
         {/* Ultra Clean Flat Gallery - 3 per view */}
@@ -151,15 +163,6 @@ const ReviewGallery = () => {
                       alt={review.alt}
                       className="w-full h-full object-cover"
                     />
-
-                    {/* Play icon for videos in thumbnail strip */}
-                    {review.type === 'video' && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="bg-white bg-opacity-90 rounded-full p-1">
-                          <Play className="w-2 h-2 text-gray-900 fill-current ml-px" />
-                        </div>
-                      </div>
-                    )}
 
                     {/* Play icon for videos - centered */}
                     {review.type === 'video' && (
@@ -275,6 +278,8 @@ const ReviewGallery = () => {
           </div>
         </div>
       )}
+
+
     </>
   );
 };

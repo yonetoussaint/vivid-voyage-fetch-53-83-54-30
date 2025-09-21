@@ -411,7 +411,7 @@ export default function ProductVariants({
   const ConditionIcon = () => <CircleFadingArrowUp className="w-7 h-7 text-gray-600" />;
 
   return (
-    <div className="w-screen -mx-2 bg-white overflow-x-hidden">
+      <div className="w-full bg-white overflow-x-hidden">
       {/* Color Variants Section */}
       {isVariableProduct && colorVariants.length > 0 && (
         <VariantSection
