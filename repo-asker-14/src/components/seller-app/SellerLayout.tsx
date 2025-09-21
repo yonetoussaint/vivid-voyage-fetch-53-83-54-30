@@ -145,6 +145,9 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
     console.log('🎯 Header height state changed to:', headerHeight);
   }, [headerHeight]);
 
+  // Determine header mode based on scroll progress
+  const isScrolledState = scrollProgress > 0.3; // Show scrolled state after 30% scroll
+
   // Scroll handling for sticky tabs
   useEffect(() => {
     const handleScroll = () => {
@@ -202,21 +205,80 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
     <div className="min-h-screen bg-white">
       {/* Fixed Header - same pattern as SearchPage */}
       <div ref={headerRef} className="fixed top-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-sm">
-        <ProductHeader
-          sellerMode={true}
-          seller={mockSeller}
-          showCloseIcon={true}
-          onCloseClick={handleBackClick}
-          customScrollProgress={scrollProgress}
-          inPanel={true}  // Make header relative within fixed wrapper
-          actionButtons={[
-            {
-              Icon: Bell,
-              onClick: () => {},
-              count: 3
-            }
-          ]}
-        />
+        {!isScrolledState ? (
+          // Initial state - show seller info with search icon
+          <div className="px-4 py-2">
+            <div className="flex items-center justify-between">
+              {/* Left side - Back button and seller info */}
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={handleBackClick}
+                  className="h-8 w-8 rounded-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <div className="flex items-center gap-2">
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage src={mockSeller.logo_url} />
+                    <AvatarFallback>JS</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h1 className="text-sm font-semibold">{mockSeller.business_name}</h1>
+                    <p className="text-xs text-gray-500">Premium Seller</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right side - Search icon */}
+              <button className="h-8 w-8 rounded-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        ) : (
+          // Scrolled state - show X button, search bar, and notifications
+          <div className="px-4 py-2">
+            <div className="flex items-center gap-3">
+              {/* Left side - X button */}
+              <button 
+                onClick={handleBackClick}
+                className="h-8 w-8 rounded-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+
+              {/* Middle - Search bar */}
+              <div className="flex-1 relative">
+                <div className="relative flex items-center h-8 rounded-full bg-gray-100">
+                  <div className="absolute left-3 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search in store..."
+                    className="bg-transparent w-full h-full pl-10 pr-3 py-1 text-sm rounded-full outline-none text-gray-700 placeholder-gray-500"
+                  />
+                </div>
+              </div>
+
+              {/* Right side - Notifications */}
+              <button className="h-8 w-8 rounded-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors relative">
+                <Bell className="w-5 h-5" />
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                  3
+                </span>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Main Content Area - Dynamic padding based on actual header height */}
