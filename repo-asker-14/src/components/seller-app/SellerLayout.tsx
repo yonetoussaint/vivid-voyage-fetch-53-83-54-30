@@ -227,7 +227,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
             willChange: isTabsSticky ? 'transform' : 'auto',
             backfaceVisibility: 'hidden'
           }}
-        ></nav>
+        >
           <TabsNavigation
             tabs={tabs}
             activeTab={activeTab}
