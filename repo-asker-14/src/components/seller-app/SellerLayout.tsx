@@ -3,12 +3,10 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, Package, ShoppingCart, Users, BarChart3, 
   Warehouse, DollarSign, Megaphone, HelpCircle, Settings,
-  Bell, Store, Heart, Share
+  Bell, Store
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useIsMobile } from '@/hooks/use-mobile';
-import ProductHeader from '@/components/product/ProductHeader';
 import TabsNavigation from '@/components/home/TabsNavigation';
 
 interface SellerLayoutProps {
@@ -40,6 +38,11 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
   };
 
   const [activeTab, setActiveTab] = useState(getCurrentTab());
+
+  // Check if we're on the overview tab
+  const isOverviewTab = location.pathname === '/seller-dashboard/overview' || 
+                        location.pathname === '/seller-dashboard' ||
+                        location.pathname.endsWith('/seller-dashboard/');
 
   const navigationItems = [
     { id: 'overview', name: 'Overview', href: '/seller-dashboard/overview', icon: LayoutDashboard },
@@ -83,32 +86,21 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
     followers_count: 1250
   };
 
-  // Header height calculation for positioning elements - same pattern as SearchPage
+  // Header height calculation for positioning elements
   useLayoutEffect(() => {
     const updateHeight = () => {
       if (headerRef.current) {
         const height = headerRef.current.offsetHeight;
-        console.log('🔍 Attempting to measure header height:', height);
-
         if (height > 0) {
-          console.log('✅ Setting header height to:', height);
           setHeaderHeight(height);
-        } else {
-          console.log('❌ Header height is 0 or invalid');
         }
-      } else {
-        console.log('❌ Header ref not available');
       }
     };
 
     // Force multiple measurement attempts to ensure we catch it
     const measureMultipleTimes = () => {
       updateHeight();
-
-      // Immediate next frame
       requestAnimationFrame(updateHeight);
-
-      // Small delays to catch late renders
       setTimeout(updateHeight, 0);
       setTimeout(updateHeight, 10);
       setTimeout(updateHeight, 50);
@@ -122,10 +114,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
       resizeObserverRef.current = new ResizeObserver((entries) => {
         for (let entry of entries) {
           const height = entry.contentRect.height;
-          console.log('📐 ResizeObserver detected height change:', height);
-
           if (height > 0 && height !== headerHeight) {
-            console.log('🔄 Updating height via ResizeObserver:', height);
             setHeaderHeight(height);
           }
         }
@@ -138,15 +127,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
         resizeObserverRef.current.disconnect();
       }
     };
-  }, []); // No dependencies to avoid re-running
-
-  // Debug effect to track when headerHeight changes
-  useEffect(() => {
-    console.log('🎯 Header height state changed to:', headerHeight);
-  }, [headerHeight]);
-
-  // Determine header mode based on scroll progress
-  const isScrolledState = scrollProgress > 0.3; // Show scrolled state after 30% scroll
+  }, []);
 
   // Scroll handling for sticky tabs
   useEffect(() => {
@@ -157,22 +138,22 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
 
       // Get current dimensions
       const currentTabsHeight = tabsRef.current.offsetHeight;
-      const sellerInfoHeight = sellerInfoRef.current?.offsetHeight || 0;
+
+      // For non-overview tabs, we don't have seller info, so use a smaller threshold
+      const sellerInfoHeight = isOverviewTab ? (sellerInfoRef.current?.offsetHeight || 0) : 0;
 
       // Update tabs height if it changed
       if (currentTabsHeight !== tabsHeight) {
         setTabsHeight(currentTabsHeight);
       }
 
-      // Simple sticky threshold - tabs stick when seller info section scrolls out
-      const stickyThreshold = sellerInfoHeight;
-
       // Calculate scroll progress for header transitions
-      const calculatedProgress = Math.min(1, Math.max(0, scrollY / Math.max(stickyThreshold, 100)));
+      const calculatedProgress = Math.min(1, Math.max(0, scrollY / Math.max(sellerInfoHeight, 100)));
       setScrollProgress(calculatedProgress);
 
       // Determine if tabs should be sticky
-      const shouldBeSticky = scrollY >= stickyThreshold;
+      // For non-overview tabs, always make tabs sticky since there's no seller info
+      const shouldBeSticky = !isOverviewTab || scrollY >= sellerInfoHeight;
 
       // Only update state if it changed
       if (shouldBeSticky !== isTabsSticky) {
@@ -199,12 +180,15 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
         cancelAnimationFrame(rafId);
       }
     };
-  }, [isTabsSticky, tabsHeight, headerHeight]);
+  }, [isTabsSticky, tabsHeight, headerHeight, isOverviewTab]);
+
+  // Determine header mode based on scroll progress
+  const isScrolledState = scrollProgress > 0.3;
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Fixed Header - same pattern as SearchPage */}
-      <div ref={headerRef} className="fixed top-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-sm">
+      {/* Fixed Header */}
+      <div ref={headerRef} className="fixed top-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-200">
         {!isScrolledState ? (
           // Initial state - show seller info with search icon
           <div className="px-4 py-2">
@@ -285,41 +269,42 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
       <div 
         className="relative"
         style={{
-          paddingTop: headerHeight !== null ? `${headerHeight}px` : '0px', // No padding until we have real height
-          minHeight: '100vh' // Ensure content takes full height
+          paddingTop: headerHeight !== null ? `${headerHeight}px` : '0px',
+          minHeight: '100vh'
         }}
-        onLoad={() => console.log('📱 Content rendered with header height:', headerHeight)}
       >
         <main>
-          {/* Seller Info Section */}
-          <div ref={sellerInfoRef} className="w-full bg-white border-b">
-            <div className="container mx-auto px-4 py-6 max-w-6xl">
-              <div className="flex items-center gap-4">
-                {/* Profile Picture */}
-                <Avatar className="w-16 h-16 flex-shrink-0">
-                  <AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face" />
-                  <AvatarFallback>JS</AvatarFallback>
-                </Avatar>
+          {/* Seller Info Section - Only show on overview tab */}
+          {isOverviewTab && (
+            <div ref={sellerInfoRef} className="w-full bg-white border-b">
+              <div className="px-4 py-4">
+                <div className="flex items-center gap-4">
+                  {/* Profile Picture */}
+                  <Avatar className="w-16 h-16 flex-shrink-0">
+                    <AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face" />
+                    <AvatarFallback>JS</AvatarFallback>
+                  </Avatar>
 
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-1">
-                    <div className="w-6 h-6 bg-primary rounded-lg flex items-center justify-center">
-                      <Store className="w-4 h-4 text-primary-foreground" />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-1">
+                      <div className="w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <Store className="w-4 h-4 text-white" />
+                      </div>
+                      <h1 className="text-xl font-bold text-gray-900">John's Store</h1>
                     </div>
-                    <h1 className="text-xl font-bold text-foreground">John's Store</h1>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-2">Premium Seller Dashboard</p>
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <span>⭐ Premium Account</span>
-                    <span>📊 Dashboard Analytics</span>
-                    <span>🛡️ Verified Business</span>
+                    <p className="text-sm text-gray-500 mb-2">Premium Seller Dashboard</p>
+                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <span>⭐ Premium Account</span>
+                      <span>📊 Dashboard Analytics</span>
+                      <span>🛡️ Verified Business</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
-        {/* Tabs Navigation with improved sticky behavior */}
+          {/* Tabs Navigation with improved sticky behavior */}
           <nav
             ref={tabsRef}
             className={`bg-white border-b transition-all duration-200 ease-out ${
@@ -349,7 +334,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
           )}
 
           {/* Main Content */}
-          <div className="container mx-auto px-4 py-6 max-w-6xl">
+          <div className="w-full">
             {children}
           </div>
         </main>

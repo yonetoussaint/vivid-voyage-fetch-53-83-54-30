@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { 
   Search, Filter, MoreHorizontal, Package, Truck, 
   CheckCircle, Clock, AlertCircle, Eye, MessageCircle,
-  Download, RefreshCw 
+  Download, RefreshCw, Plus
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -111,7 +111,7 @@ const SellerOrders = () => {
     }
   ];
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status) => {
     switch (status) {
       case 'Completed': return 'bg-green-100 text-green-800';
       case 'Processing': return 'bg-blue-100 text-blue-800';
@@ -119,17 +119,6 @@ const SellerOrders = () => {
       case 'Pending': return 'bg-yellow-100 text-yellow-800';
       case 'Cancelled': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'Completed': return CheckCircle;
-      case 'Processing': return RefreshCw;
-      case 'Shipped': return Truck;
-      case 'Pending': return Clock;
-      case 'Cancelled': return AlertCircle;
-      default: return Package;
     }
   };
 
@@ -141,144 +130,97 @@ const SellerOrders = () => {
   });
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Orders</h1>
-          <p className="text-muted-foreground">Manage and track all your orders</p>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
-          <Button variant="outline">
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
-          </Button>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Orders</p>
-                <h3 className="text-2xl font-bold text-foreground mt-2">1,247</h3>
-              </div>
-              <Package className="w-8 h-8 text-blue-600" />
+    <div className="space-y-4 bg-gray-50 min-h-screen">
+      {/* Compact Header & Stats */}
+      <div className="bg-white border-b">
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h1 className="text-lg font-bold text-foreground">Orders</h1>
+              <p className="text-xs text-muted-foreground">Manage your orders</p>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Pending</p>
-                <h3 className="text-2xl font-bold text-foreground mt-2">23</h3>
-              </div>
-              <Clock className="w-8 h-8 text-yellow-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Processing</p>
-                <h3 className="text-2xl font-bold text-foreground mt-2">89</h3>
-              </div>
-              <RefreshCw className="w-8 h-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Shipped</p>
-                <h3 className="text-2xl font-bold text-foreground mt-2">156</h3>
-              </div>
-              <Truck className="w-8 h-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Completed</p>
-                <h3 className="text-2xl font-bold text-foreground mt-2">979</h3>
-              </div>
-              <CheckCircle className="w-8 h-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <Card className="border-0 shadow-sm">
-        <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search orders..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="Pending">Pending</SelectItem>
-                <SelectItem value="Processing">Processing</SelectItem>
-                <SelectItem value="Shipped">Shipped</SelectItem>
-                <SelectItem value="Completed">Completed</SelectItem>
-                <SelectItem value="Cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline">
-              <Filter className="w-4 h-4 mr-2" />
-              More Filters
+            <Button size="sm">
+              <Plus className="w-4 h-4 mr-1" />
+              New Order
             </Button>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Orders List */}
-      <div className="space-y-4">
-        {filteredOrders.map((order) => {
-          const StatusIcon = getStatusIcon(order.status);
-          return (
-            <Card key={order.id} className="border-0 shadow-sm">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <StatusIcon className="w-5 h-5 text-muted-foreground" />
-                      <span className="font-semibold text-lg">{order.id}</span>
-                    </div>
+          {/* Ultra compact stats */}
+          <div className="grid grid-cols-5 gap-3">
+            <div className="text-center">
+              <div className="text-lg font-bold text-blue-600">1,247</div>
+              <div className="text-xs text-muted-foreground">Total</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-yellow-600">23</div>
+              <div className="text-xs text-muted-foreground">Pending</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-blue-600">89</div>
+              <div className="text-xs text-muted-foreground">Processing</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-purple-600">156</div>
+              <div className="text-xs text-muted-foreground">Shipped</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-green-600">979</div>
+              <div className="text-xs text-muted-foreground">Completed</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Compact Filters */}
+      <div className="bg-white border-b px-4 py-3">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search orders..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-9"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-40 h-9">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="Pending">Pending</SelectItem>
+              <SelectItem value="Processing">Processing</SelectItem>
+              <SelectItem value="Shipped">Shipped</SelectItem>
+              <SelectItem value="Completed">Completed</SelectItem>
+              <SelectItem value="Cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="sm">
+            <Filter className="w-4 h-4 mr-1" />
+            Filter
+          </Button>
+        </div>
+      </div>
+
+      {/* Orders Grid */}
+      <div className="p-3">
+        <div className="grid grid-cols-1 gap-3">
+          {filteredOrders.map((order) => (
+            <Card key={order.id} className="overflow-hidden">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <span className="font-semibold text-foreground">{order.id}</span>
                     <Badge variant="secondary" className={getStatusColor(order.status)}>
                       {order.status}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">{order.date}</span>
+                    <span className="text-xs text-muted-foreground">{order.date}</span>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                           <MoreHorizontal className="w-4 h-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -300,26 +242,23 @@ const SellerOrders = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Customer Info */}
-                  <div>
-                    <h4 className="font-semibold text-foreground mb-3">Customer</h4>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="w-10 h-10">
-                        <AvatarImage src={order.customer.avatar} />
-                        <AvatarFallback>{order.customer.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium text-foreground">{order.customer.name}</p>
-                        <p className="text-sm text-muted-foreground">{order.customer.email}</p>
-                      </div>
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-10 h-10">
+                      <AvatarImage src={order.customer.avatar} />
+                      <AvatarFallback>{order.customer.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{order.customer.name}</p>
+                      <p className="text-xs text-muted-foreground">{order.customer.email}</p>
                     </div>
                   </div>
 
                   {/* Products */}
                   <div>
-                    <h4 className="font-semibold text-foreground mb-3">Products</h4>
-                    <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground mb-1">Products</p>
+                    <div className="space-y-1">
                       {order.products.map((product, index) => (
                         <div key={index} className="flex justify-between text-sm">
                           <span>{product.quantity}x {product.name}</span>
@@ -331,22 +270,37 @@ const SellerOrders = () => {
 
                   {/* Order Total */}
                   <div>
-                    <h4 className="font-semibold text-foreground mb-3">Order Total</h4>
-                    <div className="text-2xl font-bold text-foreground">${order.total.toFixed(2)}</div>
-                    <p className="text-sm text-muted-foreground mt-1">{order.paymentMethod}</p>
+                    <p className="text-xs text-muted-foreground mb-1">Order Total</p>
+                    <div className="text-lg font-bold text-foreground">${order.total.toFixed(2)}</div>
+                    <p className="text-xs text-muted-foreground mt-1">{order.paymentMethod}</p>
                   </div>
                 </div>
 
                 {/* Shipping Address */}
-                <div className="mt-4 pt-4 border-t border-border">
-                  <h4 className="font-semibold text-foreground mb-2">Shipping Address</h4>
-                  <p className="text-sm text-muted-foreground">{order.shippingAddress}</p>
+                <div className="mt-3 pt-3 border-t border-border">
+                  <p className="text-xs text-muted-foreground mb-1">Shipping Address</p>
+                  <p className="text-sm text-foreground">{order.shippingAddress}</p>
                 </div>
               </CardContent>
             </Card>
-          );
-        })}
+          ))}
+        </div>
       </div>
+
+      {/* Empty State */}
+      {filteredOrders.length === 0 && (
+        <div className="p-8 text-center">
+          <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">No orders found</h3>
+          <p className="text-muted-foreground mb-4">
+            Try adjusting your search terms or filters.
+          </p>
+          <Button size="sm">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh Orders
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

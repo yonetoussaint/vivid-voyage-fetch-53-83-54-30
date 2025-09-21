@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { 
   Search, Filter, MoreHorizontal, Mail, Phone, 
-  MapPin, Star, ShoppingBag, Calendar, Eye 
+  MapPin, Star, ShoppingBag, Calendar, Eye, Plus
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -99,7 +99,7 @@ const SellerCustomers = () => {
     }
   ];
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status) => {
     switch (status) {
       case 'VIP': return 'bg-purple-100 text-purple-800';
       case 'Active': return 'bg-green-100 text-green-800';
@@ -117,191 +117,171 @@ const SellerCustomers = () => {
   });
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Customers</h1>
-          <p className="text-muted-foreground">Manage your customer relationships</p>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="outline">Export List</Button>
-          <Button>Send Newsletter</Button>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Customers</p>
-                <h3 className="text-2xl font-bold text-foreground mt-2">892</h3>
-              </div>
-              <div className="p-3 bg-blue-50 rounded-lg">
-                <ShoppingBag className="w-6 h-6 text-blue-600" />
-              </div>
+    <div className="space-y-4 bg-gray-50 min-h-screen">
+      {/* Compact Header & Stats */}
+      <div className="bg-white border-b">
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h1 className="text-lg font-bold text-foreground">Customers</h1>
+              <p className="text-xs text-muted-foreground">Manage your customer relationships</p>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Active</p>
-                <h3 className="text-2xl font-bold text-foreground mt-2">743</h3>
-              </div>
-              <div className="p-3 bg-green-50 rounded-lg">
-                <Star className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">VIP</p>
-                <h3 className="text-2xl font-bold text-foreground mt-2">67</h3>
-              </div>
-              <div className="p-3 bg-purple-50 rounded-lg">
-                <Star className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">New This Month</p>
-                <h3 className="text-2xl font-bold text-foreground mt-2">34</h3>
-              </div>
-              <div className="p-3 bg-orange-50 rounded-lg">
-                <Calendar className="w-6 h-6 text-orange-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <Card className="border-0 shadow-sm">
-        <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search customers..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Filter by type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Customers</SelectItem>
-                <SelectItem value="VIP">VIP</SelectItem>
-                <SelectItem value="Active">Active</SelectItem>
-                <SelectItem value="New">New</SelectItem>
-                <SelectItem value="Inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline">
-              <Filter className="w-4 h-4 mr-2" />
-              More Filters
+            <Button size="sm">
+              <Plus className="w-4 h-4 mr-1" />
+              Add Customer
             </Button>
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Ultra compact stats */}
+          <div className="grid grid-cols-4 gap-3">
+            <div className="text-center">
+              <div className="text-lg font-bold text-blue-600">892</div>
+              <div className="text-xs text-muted-foreground">Total</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-green-600">743</div>
+              <div className="text-xs text-muted-foreground">Active</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-purple-600">67</div>
+              <div className="text-xs text-muted-foreground">VIP</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-orange-600">34</div>
+              <div className="text-xs text-muted-foreground">New</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Compact Filters */}
+      <div className="bg-white border-b px-4 py-3">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search customers..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-9"
+            />
+          </div>
+          <Select value={filterType} onValueChange={setFilterType}>
+            <SelectTrigger className="w-full sm:w-40 h-9">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Customers</SelectItem>
+              <SelectItem value="VIP">VIP</SelectItem>
+              <SelectItem value="Active">Active</SelectItem>
+              <SelectItem value="New">New</SelectItem>
+              <SelectItem value="Inactive">Inactive</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="sm">
+            <Filter className="w-4 h-4 mr-1" />
+            Filter
+          </Button>
+        </div>
+      </div>
 
       {/* Customers Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {filteredCustomers.map((customer) => (
-          <Card key={customer.id} className="border-0 shadow-sm">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-4">
-                  <Avatar className="w-12 h-12">
-                    <AvatarImage src={customer.avatar} />
-                    <AvatarFallback>{customer.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="font-semibold text-foreground">{customer.name}</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="secondary" className={getStatusColor(customer.status)}>
-                        {customer.status}
-                      </Badge>
-                      <div className="flex items-center gap-1">
-                        <Star className="w-3 h-3 text-yellow-500 fill-current" />
-                        <span className="text-sm text-muted-foreground">{customer.rating}</span>
+      <div className="p-3">
+        <div className="grid grid-cols-1 gap-3">
+          {filteredCustomers.map((customer) => (
+            <Card key={customer.id} className="overflow-hidden">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-10 h-10">
+                      <AvatarImage src={customer.avatar} />
+                      <AvatarFallback>{customer.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground">{customer.name}</h3>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge variant="secondary" className={`${getStatusColor(customer.status)} text-xs`}>
+                          {customer.status}
+                        </Badge>
+                        <div className="flex items-center gap-1">
+                          <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                          <span className="text-xs text-muted-foreground">{customer.rating}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <MoreHorizontal className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem>
+                        <Eye className="w-4 h-4 mr-2" />
+                        View Profile
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Mail className="w-4 h-4 mr-2" />
+                        Send Email
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Phone className="w-4 h-4 mr-2" />
+                        Call Customer
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <MoreHorizontal className="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
-                      <Eye className="w-4 h-4 mr-2" />
-                      View Profile
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Mail className="w-4 h-4 mr-2" />
-                      Send Email
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Phone className="w-4 h-4 mr-2" />
-                      Call Customer
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
 
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Mail className="w-4 h-4" />
-                  {customer.email}
+                <div className="space-y-2 mb-3">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Mail className="w-3 h-3" />
+                    {customer.email}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Phone className="w-3 h-3" />
+                    {customer.phone}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <MapPin className="w-3 h-3" />
+                    {customer.location}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Phone className="w-4 h-4" />
-                  {customer.phone}
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <MapPin className="w-4 h-4" />
-                  {customer.location}
-                </div>
-              </div>
 
-              <div className="flex justify-between items-center mt-4 pt-4 border-t border-border">
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Orders</p>
-                  <p className="font-semibold text-foreground">{customer.totalOrders}</p>
+                <div className="flex justify-between items-center pt-3 border-t border-border">
+                  <div className="text-center">
+                    <p className="text-xs text-muted-foreground">Orders</p>
+                    <p className="text-sm font-semibold text-foreground">{customer.totalOrders}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-muted-foreground">Spent</p>
+                    <p className="text-sm font-semibold text-foreground">${customer.totalSpent.toFixed(2)}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-muted-foreground">Last Order</p>
+                    <p className="text-sm font-semibold text-foreground">{customer.lastOrder}</p>
+                  </div>
                 </div>
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Total Spent</p>
-                  <p className="font-semibold text-foreground">${customer.totalSpent.toFixed(2)}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Last Order</p>
-                  <p className="font-semibold text-foreground">{customer.lastOrder}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
+
+      {/* Empty State */}
+      {filteredCustomers.length === 0 && (
+        <div className="p-8 text-center">
+          <ShoppingBag className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">No customers found</h3>
+          <p className="text-muted-foreground mb-4">
+            Try adjusting your search terms or filters.
+          </p>
+          <Button size="sm">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Customer
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

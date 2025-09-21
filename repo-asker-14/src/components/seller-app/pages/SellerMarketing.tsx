@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { 
   Megaphone, Mail, Users, TrendingUp, 
   Plus, Eye, Edit, Calendar, Target, 
-  BarChart3, Share2, Gift, Zap 
+  BarChart3, Share2, Gift, Zap, Filter, Search
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -18,9 +18,17 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
 
 const SellerMarketing = () => {
   const [activeTab, setActiveTab] = useState('campaigns');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   const campaigns = [
     {
@@ -107,7 +115,7 @@ const SellerMarketing = () => {
     }
   ];
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status) => {
     switch (status) {
       case 'Active': return 'bg-green-100 text-green-800';
       case 'Scheduled': return 'bg-blue-100 text-blue-800';
@@ -117,7 +125,7 @@ const SellerMarketing = () => {
     }
   };
 
-  const getTypeColor = (type: string) => {
+  const getTypeColor = (type) => {
     switch (type) {
       case 'Discount': return 'bg-purple-100 text-purple-800';
       case 'Shipping': return 'bg-blue-100 text-blue-800';
@@ -129,353 +137,226 @@ const SellerMarketing = () => {
     }
   };
 
+  const filteredCampaigns = campaigns.filter(campaign => {
+    const matchesSearch = campaign.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || campaign.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Marketing</h1>
-          <p className="text-muted-foreground">Create and manage your marketing campaigns</p>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="outline">
-            <BarChart3 className="w-4 h-4 mr-2" />
-            Analytics
-          </Button>
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            Create Campaign
-          </Button>
+    <div className="space-y-4 bg-gray-50 min-h-screen">
+      {/* Compact Header & Stats */}
+      <div className="bg-white border-b">
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h1 className="text-lg font-bold text-foreground">Marketing</h1>
+              <p className="text-xs text-muted-foreground">Create and manage campaigns</p>
+            </div>
+            <Button size="sm">
+              <Plus className="w-4 h-4 mr-1" />
+              Create
+            </Button>
+          </div>
+
+          {/* Ultra compact stats */}
+          <div className="grid grid-cols-4 gap-3">
+            <div className="text-center">
+              <div className="text-lg font-bold text-blue-600">5</div>
+              <div className="text-xs text-muted-foreground">Active</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-green-600">2,456</div>
+              <div className="text-xs text-muted-foreground">Clicks</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-purple-600">189</div>
+              <div className="text-xs text-muted-foreground">Conversions</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-orange-600">$8,901</div>
+              <div className="text-xs text-muted-foreground">Revenue</div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Campaigns</p>
-                <h3 className="text-2xl font-bold text-foreground mt-2">5</h3>
-              </div>
-              <div className="p-3 bg-blue-50 rounded-lg">
-                <Megaphone className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Clicks</p>
-                <h3 className="text-2xl font-bold text-foreground mt-2">2,456</h3>
-              </div>
-              <div className="p-3 bg-green-50 rounded-lg">
-                <Eye className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Conversions</p>
-                <h3 className="text-2xl font-bold text-foreground mt-2">189</h3>
-              </div>
-              <div className="p-3 bg-purple-50 rounded-lg">
-                <Target className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Revenue Generated</p>
-                <h3 className="text-2xl font-bold text-foreground mt-2">$8,901</h3>
-              </div>
-              <div className="p-3 bg-orange-50 rounded-lg">
-                <TrendingUp className="w-6 h-6 text-orange-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Compact Filters */}
+      <div className="bg-white border-b px-4 py-3">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search campaigns..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-9"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-40 h-9">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="Active">Active</SelectItem>
+              <SelectItem value="Scheduled">Scheduled</SelectItem>
+              <SelectItem value="Ended">Ended</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="sm">
+            <Filter className="w-4 h-4 mr-1" />
+            Filter
+          </Button>
+        </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex space-x-1 bg-muted p-1 rounded-lg w-fit">
-        <Button
-          variant={activeTab === 'campaigns' ? 'default' : 'ghost'}
-          size="sm"
-          onClick={() => setActiveTab('campaigns')}
-        >
-          Campaigns
-        </Button>
-        <Button
-          variant={activeTab === 'promotions' ? 'default' : 'ghost'}
-          size="sm"
-          onClick={() => setActiveTab('promotions')}
-        >
-          Promotions
-        </Button>
-        <Button
-          variant={activeTab === 'create' ? 'default' : 'ghost'}
-          size="sm"
-          onClick={() => setActiveTab('create')}
-        >
-          Create New
-        </Button>
+      <div className="px-3">
+        <div className="flex space-x-1 bg-muted p-1 rounded-lg w-fit">
+          <Button
+            variant={activeTab === 'campaigns' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setActiveTab('campaigns')}
+            className="text-xs h-7"
+          >
+            Campaigns
+          </Button>
+          <Button
+            variant={activeTab === 'promotions' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setActiveTab('promotions')}
+            className="text-xs h-7"
+          >
+            Promotions
+          </Button>
+        </div>
       </div>
 
       {/* Campaigns Tab */}
       {activeTab === 'campaigns' && (
-        <Card className="border-0 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">Marketing Campaigns</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left p-3 font-medium text-muted-foreground">Campaign</th>
-                    <th className="text-left p-3 font-medium text-muted-foreground">Type</th>
-                    <th className="text-left p-3 font-medium text-muted-foreground">Status</th>
-                    <th className="text-left p-3 font-medium text-muted-foreground">Performance</th>
-                    <th className="text-left p-3 font-medium text-muted-foreground">Revenue</th>
-                    <th className="text-left p-3 font-medium text-muted-foreground">Duration</th>
-                    <th className="text-right p-3 font-medium text-muted-foreground">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {campaigns.map((campaign) => (
-                    <tr key={campaign.id} className="border-b border-border hover:bg-muted/30">
-                      <td className="p-3">
-                        <div>
-                          <p className="font-medium text-foreground">{campaign.name}</p>
-                          <p className="text-sm text-muted-foreground">{campaign.discount}</p>
-                        </div>
-                      </td>
-                      <td className="p-3">
-                        <Badge variant="secondary" className={getTypeColor(campaign.type)}>
-                          {campaign.type}
-                        </Badge>
-                      </td>
-                      <td className="p-3">
-                        <Badge variant="secondary" className={getStatusColor(campaign.status)}>
-                          {campaign.status}
-                        </Badge>
-                      </td>
-                      <td className="p-3">
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-sm">
-                            <span>CTR: {campaign.clicks > 0 ? ((campaign.clicks / campaign.views) * 100).toFixed(1) : '0'}%</span>
-                          </div>
-                          <Progress 
-                            value={campaign.clicks > 0 ? (campaign.clicks / campaign.views) * 100 : 0} 
-                            className="h-2" 
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            {campaign.views} views • {campaign.conversions} conversions
-                          </p>
-                        </div>
-                      </td>
-                      <td className="p-3">
-                        <span className="font-semibold text-green-600">
-                          ${campaign.revenue.toFixed(2)}
-                        </span>
-                      </td>
-                      <td className="p-3">
-                        <div className="text-sm">
-                          <p>{campaign.startDate}</p>
-                          <p className="text-muted-foreground">to {campaign.endDate}</p>
-                        </div>
-                      </td>
-                      <td className="p-3">
-                        <div className="flex gap-2 justify-end">
-                          <Button variant="ghost" size="sm">
-                            <Eye className="w-4 h-4" />
+        <div className="p-3">
+          <div className="grid grid-cols-1 gap-3">
+            {filteredCampaigns.map((campaign) => (
+              <Card key={campaign.id} className="overflow-hidden">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground">{campaign.name}</h3>
+                      <p className="text-xs text-muted-foreground">{campaign.discount}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className={`${getTypeColor(campaign.type)} text-xs`}>
+                        {campaign.type}
+                      </Badge>
+                      <Badge variant="secondary" className={`${getStatusColor(campaign.status)} text-xs`}>
+                        {campaign.status}
+                      </Badge>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                            <Edit className="w-3 h-3" />
                           </Button>
-                          <Button variant="ghost" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem>
+                            <Eye className="w-4 h-4 mr-2" />
+                            View
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Edit className="w-4 h-4 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Duration</p>
+                      <p className="text-xs font-medium">{campaign.startDate} to {campaign.endDate}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Revenue</p>
+                      <p className="text-xs font-medium text-green-600">${campaign.revenue.toFixed(2)}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs">
+                      <span>CTR: {campaign.clicks > 0 ? ((campaign.clicks / campaign.views) * 100).toFixed(1) : '0'}%</span>
+                      <span>{campaign.views} views • {campaign.conversions} conversions</span>
+                    </div>
+                    <Progress 
+                      value={campaign.clicks > 0 ? (campaign.clicks / campaign.views) * 100 : 0} 
+                      className="h-1.5" 
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Promotions Tab */}
       {activeTab === 'promotions' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {promotions.map((promotion) => (
-            <Card key={promotion.id} className="border-0 shadow-sm">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-foreground mb-2">{promotion.title}</h3>
-                    <p className="text-sm text-muted-foreground mb-3">{promotion.description}</p>
-                  </div>
-                  <Badge variant="secondary" className={getTypeColor(promotion.type)}>
-                    {promotion.type}
-                  </Badge>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Discount:</span>
-                    <span className="font-semibold text-green-600">{promotion.discount}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Expires:</span>
-                    <span className="text-sm">{promotion.expiry}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Status:</span>
-                    <Badge variant="secondary" className={getStatusColor(promotion.status)}>
-                      {promotion.status}
+        <div className="p-3">
+          <div className="grid grid-cols-1 gap-3">
+            {promotions.map((promotion) => (
+              <Card key={promotion.id} className="overflow-hidden">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground">{promotion.title}</h3>
+                      <p className="text-xs text-muted-foreground">{promotion.description}</p>
+                    </div>
+                    <Badge variant="secondary" className={`${getTypeColor(promotion.type)} text-xs`}>
+                      {promotion.type}
                     </Badge>
                   </div>
-                </div>
 
-                <div className="flex gap-2 mt-4">
-                  <Button variant="outline" size="sm" className="flex-1">
-                    <Edit className="w-4 h-4 mr-2" />
-                    Edit
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex-1">
-                    <Share2 className="w-4 h-4 mr-2" />
-                    Share
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Discount</p>
+                      <p className="text-xs font-medium text-green-600">{promotion.discount}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Expires</p>
+                      <p className="text-xs font-medium">{promotion.expiry}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="flex-1 text-xs h-7">
+                      <Edit className="w-3 h-3 mr-1" />
+                      Edit
+                    </Button>
+                    <Button variant="outline" size="sm" className="flex-1 text-xs h-7">
+                      <Share2 className="w-3 h-3 mr-1" />
+                      Share
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       )}
 
-      {/* Create New Tab */}
-      {activeTab === 'create' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="border-0 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">Create New Campaign</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="campaignName">Campaign Name</Label>
-                <Input id="campaignName" placeholder="Enter campaign name" />
-              </div>
-
-              <div>
-                <Label htmlFor="campaignType">Campaign Type</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select campaign type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="discount">Discount Campaign</SelectItem>
-                    <SelectItem value="shipping">Free Shipping</SelectItem>
-                    <SelectItem value="bundle">Bundle Deal</SelectItem>
-                    <SelectItem value="loyalty">Loyalty Rewards</SelectItem>
-                    <SelectItem value="flash">Flash Sale</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="startDate">Start Date</Label>
-                  <Input id="startDate" type="date" />
-                </div>
-                <div>
-                  <Label htmlFor="endDate">End Date</Label>
-                  <Input id="endDate" type="date" />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="discount">Discount Value</Label>
-                <Input id="discount" placeholder="e.g., 25% or $50" />
-              </div>
-
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Textarea 
-                  id="description" 
-                  placeholder="Describe your campaign..." 
-                  rows={3}
-                />
-              </div>
-
-              <Button className="w-full">
-                <Plus className="w-4 h-4 mr-2" />
-                Create Campaign
-              </Button>
-            </CardContent>
-          </Card>
-
-          <div className="space-y-6">
-            {/* Quick Campaign Templates */}
-            <Card className="border-0 shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold">Quick Templates</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button variant="outline" className="w-full justify-start">
-                  <Zap className="w-4 h-4 mr-2" />
-                  Flash Sale (24 Hours)
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <Gift className="w-4 h-4 mr-2" />
-                  Buy 2 Get 1 Free
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <Users className="w-4 h-4 mr-2" />
-                  New Customer Discount
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <Mail className="w-4 h-4 mr-2" />
-                  Email Newsletter Campaign
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Tips */}
-            <Card className="border-0 shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold">Marketing Tips</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    <strong>Tip:</strong> Flash sales create urgency and can boost conversions by up to 35%.
-                  </p>
-                </div>
-                <div className="p-3 bg-green-50 rounded-lg">
-                  <p className="text-sm text-green-800">
-                    <strong>Tip:</strong> Offering free shipping on orders over $50 increases average order value.
-                  </p>
-                </div>
-                <div className="p-3 bg-purple-50 rounded-lg">
-                  <p className="text-sm text-purple-800">
-                    <strong>Tip:</strong> Bundle deals work best for complementary products.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+      {/* Empty State */}
+      {activeTab === 'campaigns' && filteredCampaigns.length === 0 && (
+        <div className="p-8 text-center">
+          <Megaphone className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">No campaigns found</h3>
+          <p className="text-muted-foreground mb-4">
+            Try adjusting your search terms or filters.
+          </p>
+          <Button size="sm">
+            <Plus className="w-4 h-4 mr-2" />
+            Create Campaign
+          </Button>
         </div>
       )}
     </div>
