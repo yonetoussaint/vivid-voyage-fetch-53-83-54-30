@@ -285,6 +285,7 @@ const SearchPage = () => {
             setTimeout(() => setIsSearchFocused(false), 200);
           }}
           onSearch={handleSearch}
+          stickyMode={true}
         />
       </div>
 
