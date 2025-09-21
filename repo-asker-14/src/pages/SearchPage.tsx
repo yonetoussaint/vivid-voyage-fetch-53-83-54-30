@@ -13,6 +13,7 @@ import VoiceSearchOverlay from '@/components/search/VoiceSearchOverlay';
 import SearchPageSkeleton from '@/components/search/SearchPageSkeleton';
 import RecentlyViewed from '@/components/home/RecentlyViewed';
 import SearchResults from '@/components/search/SearchResults';
+import SearchSuggestions from '@/components/search/SearchSuggestions';
 
 const SearchPage = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -29,8 +30,13 @@ const SearchPage = () => {
     ratings: [] as number[],
     freeShipping: false,
   });
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [liveSearchResults, setLiveSearchResults] = useState<any[]>([]);
+  const [isLiveSearching, setIsLiveSearching] = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [recentSearches, setRecentSearches] = useState([
     'iPhone 15 Pro Max',
     'Wireless headphones',
@@ -106,6 +112,7 @@ const SearchPage = () => {
     if (query) {
       setSearchQuery(query);
       setShowResults(true);
+      setShowSuggestions(false);
     } else {
       setShowResults(false);
     }
@@ -117,6 +124,47 @@ const SearchPage = () => {
 
     return () => clearTimeout(timer);
   }, [searchParams]);
+
+  // Live search effect
+  useEffect(() => {
+    if (searchQuery.trim() && isSearchFocused && !showResults) {
+      setIsLiveSearching(true);
+      
+      // Clear previous timeout
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+      
+      // Debounce search
+      searchTimeoutRef.current = setTimeout(() => {
+        // Mock live search results
+        const mockResults = Array(6).fill(null).map((_, index) => ({
+          id: `live-${index}`,
+          name: `${searchQuery} Product ${index + 1}`,
+          price: Math.floor(Math.random() * 200) + 19.99,
+          originalPrice: Math.random() > 0.5 ? Math.floor(Math.random() * 300) + 59.99 : undefined,
+          image: `https://picsum.photos/150/150?random=${Date.now() + index}`,
+          rating: Math.floor(Math.random() * 2) + 4,
+          reviews: Math.floor(Math.random() * 1000) + 10,
+          freeShipping: Math.random() > 0.3,
+        }));
+        
+        setLiveSearchResults(mockResults);
+        setIsLiveSearching(false);
+        setShowSuggestions(true);
+      }, 300);
+    } else if (!searchQuery.trim() || showResults) {
+      setShowSuggestions(false);
+      setLiveSearchResults([]);
+      setIsLiveSearching(false);
+    }
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery, isSearchFocused, showResults]);
 
   const handleSearch = (query: string) => {
     if (query.trim()) {
@@ -225,8 +273,98 @@ const SearchPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
       <div ref={headerRef} className="fixed top-0 left-0 right-0 z-30">
-        <ProductHeader forceScrolledState={true} actionButtons={searchActionButtons} />
+        <ProductHeader 
+          forceScrolledState={true} 
+          actionButtons={searchActionButtons}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          onSearchFocus={() => setIsSearchFocused(true)}
+          onSearchBlur={() => {
+            // Delay hiding suggestions to allow for clicks
+            setTimeout(() => setIsSearchFocused(false), 200);
+          }}
+          onSearch={handleSearch}
+        />
       </div>
+
+      {/* Search Suggestions Overlay */}
+      {showSuggestions && isSearchFocused && (
+        <div 
+          className="fixed left-0 right-0 bg-white shadow-lg border-t z-20"
+          style={{ top: `${Math.max(headerHeight, 60)}px` }}
+        >
+          <div className="max-w-md mx-auto">
+            <SearchSuggestions
+              query={searchQuery}
+              onSelectSuggestion={(suggestion) => {
+                setSearchQuery(suggestion);
+                handleSearch(suggestion);
+                setIsSearchFocused(false);
+                setShowSuggestions(false);
+              }}
+              onClose={() => {
+                setIsSearchFocused(false);
+                setShowSuggestions(false);
+              }}
+            />
+            
+            {/* Live Search Results */}
+            {(liveSearchResults.length > 0 || isLiveSearching) && (
+              <div className="border-t bg-gray-50 p-4">
+                <h4 className="text-sm font-medium mb-3 text-gray-700">Products</h4>
+                {isLiveSearching ? (
+                  <div className="flex items-center justify-center py-4">
+                    <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                    <span className="ml-2 text-sm text-gray-500">Searching...</span>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    {liveSearchResults.slice(0, 4).map((product) => (
+                      <div
+                        key={product.id}
+                        className="bg-white rounded-lg p-2 border cursor-pointer hover:shadow-md transition-shadow"
+                        onClick={() => {
+                          handleProductClick(product.id);
+                          setIsSearchFocused(false);
+                          setShowSuggestions(false);
+                        }}
+                      >
+                        <img 
+                          src={product.image} 
+                          alt={product.name} 
+                          className="w-full aspect-square object-cover rounded mb-2"
+                        />
+                        <h5 className="text-xs font-medium line-clamp-2 mb-1">{product.name}</h5>
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm font-semibold text-red-500">${product.price.toFixed(2)}</span>
+                          {product.originalPrice && (
+                            <span className="text-xs text-gray-400 line-through">${product.originalPrice.toFixed(2)}</span>
+                          )}
+                        </div>
+                        {product.freeShipping && (
+                          <div className="text-xs text-green-600 mt-1">Free Shipping</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {liveSearchResults.length > 4 && !isLiveSearching && (
+                  <button 
+                    className="w-full mt-3 py-2 text-sm text-blue-600 font-medium border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+                    onClick={() => {
+                      handleSearch(searchQuery);
+                      setIsSearchFocused(false);
+                      setShowSuggestions(false);
+                    }}
+                  >
+                    View all {liveSearchResults.length} results
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Content with proper top spacing to account for fixed header */}
       <div 
