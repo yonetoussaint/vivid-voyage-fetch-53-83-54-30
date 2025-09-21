@@ -69,6 +69,12 @@ const ProductHeaderSection: React.FC<ProductHeaderSectionProps> = ({
     }
   };
 
+  const handleSearchFocus = () => {
+    // Navigate to search page when clicking on search bar in product detail
+    startLoading();
+    navigate('/search');
+  };
+
   return (
     <div ref={ref} className="relative z-50">
       <ProductHeader
@@ -80,17 +86,10 @@ const ProductHeaderSection: React.FC<ProductHeaderSectionProps> = ({
         currentImageIndex={currentImageIndex}
         totalImages={totalImages}
         onShareClick={handleShare}
-        // These props are commented out as they were not present in the original ProductHeaderSection interface
-        // forceScrolledState={forceScrolledState}
-        // actionButtons={actionButtons}
-        // inPanel={inPanel}
-        // customScrollProgress={customScrollProgress}
-        // showCloseIcon={showCloseIcon}
-        // onCloseClick={onCloseClick}
-        // stickyMode={stickyMode}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         onSearch={handleSearch}
+        onSearchFocus={handleSearchFocus}
         inPanel={false}
       />
     </div>
