@@ -3,18 +3,12 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, Package, ShoppingCart, Users, BarChart3, 
   Warehouse, DollarSign, Megaphone, HelpCircle, Settings,
-  Menu, X, Bell, Search, Store, User, LogOut
+  Menu, Bell, Store, X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
 import { useIsMobile } from '@/hooks/use-mobile';
+import ProductHeader from '@/components/product/ProductHeader';
 
 interface SellerLayoutProps {
   children: React.ReactNode;
@@ -22,10 +16,13 @@ interface SellerLayoutProps {
 
 const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+
+  const handleBackClick = () => {
+    navigate('/profile');
+  };
 
   const navigationItems = [
     { name: 'Overview', href: '/seller-dashboard/overview', icon: LayoutDashboard },
@@ -118,105 +115,38 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
 
       {/* Main content */}
       <div className="lg:pl-64">
-        {/* Top bar */}
-        <header className="h-16 bg-card border-b border-border flex items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-2 sm:gap-4 flex-1">
+        {/* Product Header */}
+        <ProductHeader
+          forceScrolledState={true}
+          showCloseIcon={true}
+          onCloseClick={handleBackClick}
+          stickyMode={true}
+          actionButtons={[
+            {
+              Icon: Bell,
+              onClick: () => {},
+              count: 3
+            }
+          ]}
+        />
+        
+        {/* Mobile Sidebar Toggle - Show on mobile when header is present */}
+        {isMobile && (
+          <div className="fixed top-2 left-2 z-40">
             <Button
               variant="ghost"
               size="sm"
-              className="lg:hidden h-10 w-10 flex-shrink-0"
+              className="h-8 w-8 bg-white/80 backdrop-blur-sm border"
               onClick={() => setSidebarOpen(true)}
             >
-              <Menu className="w-5 h-5" />
+              <Menu className="w-4 h-4" />
             </Button>
-
-            {/* Search - Desktop */}
-            <div className="relative hidden sm:block">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search orders, products..."
-                className="w-80 pl-10 pr-4 py-2 bg-muted border-0 rounded-lg text-sm placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-
-            {/* Mobile Search Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="sm:hidden h-10 w-10 flex-shrink-0"
-              onClick={() => setSearchOpen(true)}
-            >
-              <Search className="w-5 h-5" />
-            </Button>
-          </div>
-
-          <div className="flex items-center gap-2 sm:gap-4">
-            {/* Notifications */}
-            <Button variant="ghost" size="sm" className="relative h-10 w-10">
-              <Bell className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full"></span>
-            </Button>
-
-            {/* Profile dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face" />
-                    <AvatarFallback>JS</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end">
-                <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </header>
-
-        {/* Mobile Search Overlay */}
-        {searchOpen && (
-          <div className="fixed inset-0 z-50 bg-background p-4 sm:hidden">
-            <div className="flex items-center gap-3 mb-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-10 w-10"
-                onClick={() => setSearchOpen(false)}
-              >
-                <X className="w-5 h-5" />
-              </Button>
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder="Search orders, products..."
-                  className="w-full pl-10 pr-4 py-3 bg-muted border-0 rounded-lg text-base placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  autoFocus
-                />
-              </div>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              Recent searches and suggestions would appear here...
-            </div>
           </div>
         )}
 
+
         {/* Page content */}
-        <main className="flex-1 p-4 sm:p-6">
+        <main className="flex-1 p-4 sm:p-6 pt-20">
           {children}
         </main>
       </div>

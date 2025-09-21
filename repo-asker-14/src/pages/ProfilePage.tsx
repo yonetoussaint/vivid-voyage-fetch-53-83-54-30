@@ -13,9 +13,7 @@ import { Edit, Settings, ShoppingBag, Store, Heart, Package, User, Star, LogOut,
 import ProfileOrders from "@/components/profile/ProfileOrders";
 import ProfileWishlist from "@/components/profile/ProfileWishlist";
 import ProfileSettings from "@/components/profile/ProfileSettings";
-import ProfileProducts from "@/components/profile/ProfileProducts";
 import ProfileDashboard from "@/components/profile/ProfileDashboard";
-import ProfileAnalytics from "@/components/profile/ProfileAnalytics";
 import { Navigate, useNavigate } from "react-router-dom";
 import { PageContainer } from "@/components/layout/PageContainer";
 
@@ -23,7 +21,6 @@ export default function ProfilePage() {
   const { user, logout, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [profileData, setProfileData] = useState<any>(null);
-  const [sellerData, setSellerData] = useState<any>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -49,10 +46,6 @@ export default function ProfilePage() {
           toast.error("Could not load profile data");
         } else {
           setProfileData(profile);
-          // Set seller data if it exists
-          if (profile?.sellers) {
-            setSellerData(profile.sellers);
-          }
         }
       } catch (error) {
         console.error("Profile fetch error:", error);
