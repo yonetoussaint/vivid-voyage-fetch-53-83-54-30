@@ -20,8 +20,7 @@ const SearchPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isVoiceActive, setIsVoiceActive] = useState(false);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
-  const [headerHeight, setHeaderHeight] = useState(60); // Start with fallback height
-  const [adaptiveFallback, setAdaptiveFallback] = useState(60); // Dynamic fallback that adapts
+  const [headerHeight, setHeaderHeight] = useState(0);
   const [showResults, setShowResults] = useState(false);
   const [sortBy, setSortBy] = useState('relevance');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -55,24 +54,14 @@ const SearchPage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Dynamic header height calculation with adaptive fallback for SearchPage
+  // Dynamic header height calculation for SearchPage
   useLayoutEffect(() => {
     const updateHeight = () => {
       if (headerRef.current) {
         const height = headerRef.current.getBoundingClientRect().height;
         console.log('Header height dynamically calculated:', height);
-        
-        // Update adaptive fallback when we get a valid measurement
-        if (height > 0) {
-          setAdaptiveFallback(height);
-          setHeaderHeight(height);
-          document.documentElement.style.setProperty('--header-height', `${height}px`);
-        } else {
-          // Use current adaptive fallback when measurement fails
-          console.log('Using adaptive fallback:', adaptiveFallback);
-          setHeaderHeight(adaptiveFallback);
-          document.documentElement.style.setProperty('--header-height', `${adaptiveFallback}px`);
-        }
+        setHeaderHeight(height);
+        document.documentElement.style.setProperty('--header-height', `${height}px`);
       }
     };
 
@@ -85,17 +74,8 @@ const SearchPage = () => {
         for (let entry of entries) {
           const height = entry.contentRect.height;
           console.log('Header height updated via ResizeObserver:', height);
-          
-          if (height > 0) {
-            // Update both current height and adaptive fallback
-            setAdaptiveFallback(height);
-            setHeaderHeight(height);
-            document.documentElement.style.setProperty('--header-height', `${height}px`);
-          } else {
-            // Use current adaptive fallback
-            setHeaderHeight(adaptiveFallback);
-            document.documentElement.style.setProperty('--header-height', `${adaptiveFallback}px`);
-          }
+          setHeaderHeight(height);
+          document.documentElement.style.setProperty('--header-height', `${height}px`);
         }
       });
       resizeObserverRef.current.observe(headerRef.current);
@@ -111,7 +91,7 @@ const SearchPage = () => {
       }
       window.removeEventListener('resize', updateHeight);
     };
-  }, [adaptiveFallback]); // Include adaptiveFallback in dependencies
+  }, []);
 
 
   useEffect(() => {
@@ -279,7 +259,7 @@ const SearchPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
-      <div ref={headerRef} className="fixed top-0 left-0 right-0 z-30">
+      <div ref={headerRef} className="sticky top-0 left-0 right-0 z-30">
         <ProductHeader 
           forceScrolledState={true} 
           actionButtons={searchActionButtons}
@@ -297,8 +277,7 @@ const SearchPage = () => {
       {/* Search Suggestions Overlay */}
       {showSuggestions && isSearchFocused && (
         <div 
-          className="fixed left-0 right-0 bg-white shadow-lg border-t z-20"
-          style={{ top: `${headerHeight}px` }}
+          className="absolute left-0 right-0 bg-white shadow-lg border-t z-20"
         >
           <div className="max-w-md mx-auto">
             <SearchSuggestions
@@ -373,13 +352,8 @@ const SearchPage = () => {
         </div>
       )}
 
-      {/* Content with proper top spacing to account for fixed header */}
-      <div 
-        style={{ 
-          paddingTop: `${headerHeight}px`,
-          minHeight: `calc(100vh - ${headerHeight}px)`
-        }} 
-        className="relative transition-all duration-300 ease-in-out"
+      {/* Content area */}
+      <div className="relative"
       >
         <div className="space-y-6">
           {showResults ? (
