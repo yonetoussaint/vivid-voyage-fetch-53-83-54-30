@@ -82,28 +82,10 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
     followers_count: 1250
   };
 
-  // Scroll handling for sticky tabs (exact same logic as SellerPage)
+  // Scroll handling for sticky tabs - simplified to work like SellerPage
   useEffect(() => {
-    let isCalculating = false;
-
-    const calculateOriginalPosition = () => {
-      if (isCalculating || !headerRef.current || !tabsRef.current) return;
-      
-      isCalculating = true;
-      
-      requestAnimationFrame(() => {
-        try {
-          // For seller dashboard, tabs come right after header + seller info
-          const headerHeight = headerRef.current?.offsetHeight || 0;
-          const sellerInfoHeight = sellerInfoRef.current?.offsetHeight || 0;
-        } finally {
-          isCalculating = false;
-        }
-      });
-    };
-
     const handleScroll = () => {
-      if (!headerRef.current || !tabsRef.current || isCalculating) return;
+      if (!headerRef.current || !tabsRef.current) return;
 
       const scrollY = window.scrollY;
       const headerHeight = headerRef.current.offsetHeight;
@@ -114,45 +96,36 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
         setTabsHeight(tabsCurrentHeight);
       }
 
-      // Calculate sticky threshold - tabs should stick when seller info scrolls out
+      // Simple sticky threshold - tabs stick when seller info section scrolls out
       let stickyThreshold = 0;
       if (sellerInfoRef.current) {
-        const sellerInfoRect = sellerInfoRef.current.getBoundingClientRect();
-        const sellerInfoTop = sellerInfoRect.top + scrollY;
         const sellerInfoHeight = sellerInfoRef.current.offsetHeight;
-        stickyThreshold = sellerInfoTop + sellerInfoHeight - headerHeight;
+        stickyThreshold = sellerInfoHeight;
       }
 
       // Calculate scroll progress for header transitions
-      const maxScrollForProgress = Math.max(stickyThreshold, 100); // Prevent division by 0
-      const calculatedProgress = Math.min(1, Math.max(0, scrollY / maxScrollForProgress));
+      const calculatedProgress = Math.min(1, Math.max(0, scrollY / Math.max(stickyThreshold, 100)));
       setScrollProgress(calculatedProgress);
 
-      // Determine if tabs should be sticky - tabs stick when they would scroll past header
-      const shouldBeSticky = scrollY > stickyThreshold;
+      // Determine if tabs should be sticky
+      const shouldBeSticky = scrollY >= stickyThreshold;
 
-      // Only update state if it changed to prevent unnecessary re-renders
+      // Only update state if it changed
       if (shouldBeSticky !== isTabsSticky) {
         setIsTabsSticky(shouldBeSticky);
       }
     };
 
-    // Use RAF for smoother scrolling performance (same as SellerPage)
+    // Use RAF for smooth performance
     let rafId: number;
     const smoothScrollHandler = () => {
       rafId = requestAnimationFrame(handleScroll);
     };
 
-    // Initial setup with proper timing (same as SellerPage)
+    // Initial setup
     const setupTimeout = setTimeout(() => {
-      calculateOriginalPosition();
-      
-      const initialCheckTimeout = setTimeout(() => {
-        handleScroll();
-        window.addEventListener('scroll', smoothScrollHandler, { passive: true });
-      }, 50);
-
-      return () => clearTimeout(initialCheckTimeout);
+      handleScroll();
+      window.addEventListener('scroll', smoothScrollHandler, { passive: true });
     }, 100);
 
     return () => {
