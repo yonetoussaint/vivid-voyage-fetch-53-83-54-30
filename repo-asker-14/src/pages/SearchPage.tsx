@@ -35,16 +35,23 @@ const SearchPage = () => {
 
   // Calculate header height with ResizeObserver for better accuracy
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
     const updateHeight = () => {
-      if (headerRef.current) {
-        const height = headerRef.current.offsetHeight;
-        console.log('Header height calculated:', height);
-        setHeaderHeight(height);
-      }
+      // Debounce rapid updates
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        if (headerRef.current) {
+          const height = headerRef.current.offsetHeight;
+          console.log('Header height calculated:', height);
+          // Only update if the height actually changed to prevent unnecessary re-renders
+          setHeaderHeight(prevHeight => prevHeight !== height ? height : prevHeight);
+        }
+      }, 50);
     };
 
-    // Initial measurement
-    updateHeight();
+    // Initial measurement with a slight delay to ensure DOM is ready
+    const initialTimeout = setTimeout(updateHeight, 100);
 
     // Use ResizeObserver to track changes in header size
     if (headerRef.current) {
@@ -53,13 +60,20 @@ const SearchPage = () => {
     }
 
     // Also update on window resize to catch any layout changes
-    window.addEventListener('resize', updateHeight);
+    const debouncedResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(updateHeight, 150);
+    };
+    
+    window.addEventListener('resize', debouncedResize);
 
     return () => {
+      clearTimeout(initialTimeout);
+      clearTimeout(timeoutId);
       if (resizeObserverRef.current) {
         resizeObserverRef.current.disconnect();
       }
-      window.removeEventListener('resize', updateHeight);
+      window.removeEventListener('resize', debouncedResize);
     };
   }, []);
 
@@ -198,43 +212,51 @@ const SearchPage = () => {
       </div>
 
       {/* Content with proper top spacing to account for fixed header */}
-      <div style={{ paddingTop: `${headerHeight}px` }} className="relative">
-        <SpaceSavingCategories
-          onCategorySelect={handleCategorySelect}
-          showHeader={true}
-          headerTitle="Shop by Category"
-          headerSubtitle="Browse popular categories"
-          headerIcon={Grid}
-          headerViewAllLink="/categories"
-          headerViewAllText="View All"
-          headerTitleTransform="uppercase"
-        />
+      <div 
+        style={{ 
+          paddingTop: `${Math.max(headerHeight, 60)}px`,
+          minHeight: `calc(100vh - ${Math.max(headerHeight, 60)}px)`
+        }} 
+        className="relative transition-all duration-300 ease-in-out"
+      >
+        <div className="space-y-6">
+          <SpaceSavingCategories
+            onCategorySelect={handleCategorySelect}
+            showHeader={true}
+            headerTitle="Shop by Category"
+            headerSubtitle="Browse popular categories"
+            headerIcon={Grid}
+            headerViewAllLink="/categories"
+            headerViewAllText="View All"
+            headerTitleTransform="uppercase"
+          />
 
-        <RecentlyViewed 
-          showHeader={true}
-          headerTitle="Recently Viewed"
-          headerIcon={Clock}
-          headerViewAllLink="/recently-viewed"
-          headerViewAllText="View All"
-          headerTitleTransform="uppercase"
-          showClearButton={true}
-          clearButtonText="× Clear"
-          onClearClick={() => toast({ title: "Cleared", description: "Recently viewed items cleared" })}
-        />
+          <RecentlyViewed 
+            showHeader={true}
+            headerTitle="Recently Viewed"
+            headerIcon={Clock}
+            headerViewAllLink="/recently-viewed"
+            headerViewAllText="View All"
+            headerTitleTransform="uppercase"
+            showClearButton={true}
+            clearButtonText="× Clear"
+            onClearClick={() => toast({ title: "Cleared", description: "Recently viewed items cleared" })}
+          />
 
-        <TopVendorsCompact/>
+          <TopVendorsCompact/>
 
-        <SearchRecent
-          searches={recentSearches}
-          onSearchSelect={handleRecentSearchSelect}
-          onRemoveSearch={handleRemoveRecentSearch}
-          onClearAll={handleClearAllRecent}
-          headerTitleTransform="uppercase"
-        />
+          <SearchRecent
+            searches={recentSearches}
+            onSearchSelect={handleRecentSearchSelect}
+            onRemoveSearch={handleRemoveRecentSearch}
+            onClearAll={handleClearAllRecent}
+            headerTitleTransform="uppercase"
+          />
 
-        <PopularSearches />
+          <PopularSearches />
 
-        <BookGenreFlashDeals />
+          <BookGenreFlashDeals />
+        </div>
 
         <VoiceSearchOverlay
           isActive={isVoiceActive}
