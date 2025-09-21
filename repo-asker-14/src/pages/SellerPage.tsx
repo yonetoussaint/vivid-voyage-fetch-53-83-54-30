@@ -1366,7 +1366,7 @@ const SellerPage: React.FC = () => {
           ref={tabsRef}
           className={`bg-white border-b transition-all duration-300 ease-out ${
             isTabsSticky
-              ? 'fixed top-0 left-0 right-0 z-40 shadow-sm'
+              ? 'fixed top-0 left-0 right-0 z-40'
               : 'relative'
           }`}
           style={{
