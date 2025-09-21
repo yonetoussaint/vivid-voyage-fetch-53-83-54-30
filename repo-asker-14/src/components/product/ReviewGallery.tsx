@@ -1,20 +1,6 @@
 import React, { useState } from 'react';
 import { Star, X, ChevronLeft, ChevronRight, Play } from 'lucide-react';
-
-// Mock SectionHeader component
-const SectionHeader = ({ title, showViewAll, onViewAllClick, className }) => (
-  <div className={`flex justify-between items-center ${className}`}>
-    <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
-    {showViewAll && (
-      <button 
-        onClick={onViewAllClick}
-        className="text-blue-600 hover:text-blue-700 font-medium"
-      >
-        View All
-      </button>
-    )}
-  </div>
-);
+import SearchInfoHeader from '@/components/shared/SearchInfoHeader';
 
 const ReviewGallery = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(null);
@@ -140,10 +126,8 @@ const ReviewGallery = () => {
     <>
       <div className="w-full bg-white">
         {/* Header */}
-        <SectionHeader 
+        <SearchInfoHeader 
           title="Review Gallery"
-          showViewAll={true}
-          onViewAllClick={() => {/* Handle view all click */}}
           className="mb-4"
         />
 
