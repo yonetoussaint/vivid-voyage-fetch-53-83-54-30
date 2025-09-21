@@ -245,10 +245,18 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
                   placeholder={sellerMode ? "Search seller products..." : "Search products..."}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onClick={() => {
+                    if (onSearchFocus) {
+                      // If onSearchFocus is provided, navigate immediately on click
+                      onSearchFocus();
+                      return;
+                    }
+                  }}
                   onFocus={() => {
                     if (onSearchFocus) {
-                      // If onSearchFocus is provided (like in product detail), navigate instead of showing suggestions
+                      // If onSearchFocus is provided (like in product detail), navigate immediately
                       onSearchFocus();
+                      return; // Prevent any other focus handling
                     } else {
                       // Only show suggestions if no navigation handler is provided
                       setIsSearchFocused(true);
