@@ -118,7 +118,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
       let stickyThreshold = 0;
       if (sellerInfoRef.current) {
         const sellerInfoHeight = sellerInfoRef.current.offsetHeight;
-        stickyThreshold = sellerInfoHeight - headerHeight;
+        stickyThreshold = sellerInfoHeight;
       }
 
       // Calculate scroll progress for header transitions (same as SellerPage)
@@ -218,7 +218,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
           ref={tabsRef}
           className={`bg-white border-b transition-all duration-300 ease-out ${
             isTabsSticky
-              ? 'fixed top-0 left-0 right-0 z-40'
+              ? 'fixed left-0 right-0 z-40'
               : 'relative'
           }`}
           style={{
@@ -227,7 +227,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
             willChange: isTabsSticky ? 'transform' : 'auto',
             backfaceVisibility: 'hidden'
           }}
-        >
+        ></nav>
           <TabsNavigation
             tabs={tabs}
             activeTab={activeTab}
