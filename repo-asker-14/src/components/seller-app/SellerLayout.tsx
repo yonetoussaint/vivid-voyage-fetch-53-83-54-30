@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -26,6 +25,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
 
   const [isTabsSticky, setIsTabsSticky] = useState(false);
   const [tabsHeight, setTabsHeight] = useState(0);
+  const [headerHeight, setHeaderHeight] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
 
   const handleBackClick = () => {
@@ -82,67 +82,69 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
     followers_count: 1250
   };
 
-  // Scroll handling for sticky tabs - simplified to work like SellerPage
+  // Improved scroll handling for sticky tabs
   useEffect(() => {
     const handleScroll = () => {
-      if (!headerRef.current || !tabsRef.current) return;
-
       const scrollY = window.scrollY;
-      const headerHeight = headerRef.current.offsetHeight;
-      const tabsCurrentHeight = tabsRef.current.offsetHeight;
 
-      // Update tabs height if changed
-      if (tabsCurrentHeight !== tabsHeight) {
-        setTabsHeight(tabsCurrentHeight);
+      // Get current dimensions
+      const currentHeaderHeight = headerRef.current?.offsetHeight || 0;
+      const currentTabsHeight = tabsRef.current?.offsetHeight || 0;
+      const sellerInfoHeight = sellerInfoRef.current?.offsetHeight || 0;
+
+      // Update heights if they changed
+      if (currentHeaderHeight !== headerHeight) {
+        setHeaderHeight(currentHeaderHeight);
+      }
+      if (currentTabsHeight !== tabsHeight) {
+        setTabsHeight(currentTabsHeight);
       }
 
-      // Simple sticky threshold - tabs stick when seller info section scrolls out
-      let stickyThreshold = 0;
-      if (sellerInfoRef.current) {
-        const sellerInfoHeight = sellerInfoRef.current.offsetHeight;
-        stickyThreshold = sellerInfoHeight;
-      }
+      // Calculate the position where tabs should become sticky
+      // This is when the seller info section starts to scroll out of view
+      const stickyThreshold = sellerInfoHeight;
 
       // Calculate scroll progress for header transitions
-      const calculatedProgress = Math.min(1, Math.max(0, scrollY / Math.max(stickyThreshold, 100)));
-      setScrollProgress(calculatedProgress);
+      const progress = Math.min(1, Math.max(0, scrollY / Math.max(stickyThreshold, 1)));
+      setScrollProgress(progress);
 
       // Determine if tabs should be sticky
       const shouldBeSticky = scrollY >= stickyThreshold;
 
-      // Only update state if it changed
+      // Update sticky state
       if (shouldBeSticky !== isTabsSticky) {
         setIsTabsSticky(shouldBeSticky);
       }
     };
 
-    // Use RAF for smooth performance
-    let rafId: number;
-    const smoothScrollHandler = () => {
-      rafId = requestAnimationFrame(handleScroll);
+    // Initial calculation
+    handleScroll();
+
+    // Add scroll listener with throttling for better performance
+    let ticking = false;
+    const scrollListener = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          handleScroll();
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
 
-    // Initial setup
-    const setupTimeout = setTimeout(() => {
-      handleScroll();
-      window.addEventListener('scroll', smoothScrollHandler, { passive: true });
-    }, 100);
+    window.addEventListener('scroll', scrollListener, { passive: true });
+    window.addEventListener('resize', handleScroll, { passive: true });
 
     return () => {
-      clearTimeout(setupTimeout);
-      if (rafId) {
-        cancelAnimationFrame(rafId);
-      }
-      window.removeEventListener('scroll', smoothScrollHandler);
+      window.removeEventListener('scroll', scrollListener);
+      window.removeEventListener('resize', handleScroll);
     };
-  }, [activeTab, isTabsSticky, tabsHeight]);
-
-  const headerHeight = headerRef.current?.offsetHeight || 0;
+  }, [isTabsSticky, tabsHeight, headerHeight]);
 
   return (
     <div className="min-h-screen bg-white">
-      {/* ProductHeader with seller mode - same as SellerPage */}
-      <div ref={headerRef}>
+      {/* ProductHeader with seller mode */}
+      <div ref={headerRef} className="relative z-50">
         <ProductHeader
           sellerMode={true}
           seller={mockSeller}
@@ -160,7 +162,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
       </div>
 
       <main>
-        {/* Seller Info Section - same structure as SellerPage */}
+        {/* Seller Info Section */}
         <div ref={sellerInfoRef} className="w-full bg-white border-b">
           <div className="container mx-auto px-4 py-6 max-w-6xl">
             <div className="flex items-center gap-4">
@@ -188,19 +190,16 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
           </div>
         </div>
 
-        {/* Tabs Navigation - same sticky behavior as SellerPage */}
+        {/* Tabs Navigation with improved sticky behavior */}
         <nav
           ref={tabsRef}
-          className={`bg-white border-b transition-all duration-300 ease-out ${
+          className={`bg-white border-b transition-all duration-200 ease-out ${
             isTabsSticky
-              ? 'fixed left-0 right-0 z-40'
+              ? 'fixed left-0 right-0 z-40 shadow-sm'
               : 'relative'
           }`}
           style={{
             top: isTabsSticky ? `${headerHeight}px` : 'auto',
-            transform: 'translateZ(0)',
-            willChange: isTabsSticky ? 'transform' : 'auto',
-            backfaceVisibility: 'hidden'
           }}
         >
           <TabsNavigation
@@ -210,15 +209,13 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
           />
         </nav>
 
-        {/* Spacer div when tabs are sticky to prevent content jumping - same as SellerPage */}
+        {/* Spacer div when tabs are sticky to prevent content jumping */}
         {isTabsSticky && (
           <div
-            className="transition-all duration-300 ease-out"
             style={{ 
               height: `${tabsHeight}px`,
-              opacity: isTabsSticky ? 1 : 0,
-              transform: 'translateZ(0)'
             }}
+            aria-hidden="true"
           />
         )}
 
