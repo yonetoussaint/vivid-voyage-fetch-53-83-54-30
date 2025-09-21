@@ -273,7 +273,7 @@ const SearchPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
-      <div ref={headerRef} className="sticky top-0 left-0 right-0 z-30">
+      <div ref={headerRef}>
         <ProductHeader 
           forceScrolledState={true} 
           actionButtons={searchActionButtons}
@@ -285,7 +285,6 @@ const SearchPage = () => {
             setTimeout(() => setIsSearchFocused(false), 200);
           }}
           onSearch={handleSearch}
-          stickyMode={true}
         />
       </div>
 
