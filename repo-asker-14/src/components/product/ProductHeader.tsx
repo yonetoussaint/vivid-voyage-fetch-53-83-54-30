@@ -243,7 +243,7 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
                     setOpen(false);
                     onSearchBlur?.();
                   }}
-                  className="w-full px-3 py-1 text-sm font-medium border-2 border-gray-800 rounded-full focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-300 bg-white shadow-sm cursor-text"
+                  className="w-full h-7 px-3 py-1 text-sm font-medium border-2 border-gray-800 rounded-full focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-300 bg-white shadow-sm cursor-text"
                   readOnly={!window.location.pathname.includes('/search')}
                 />
                 <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-600 font-bold" />
