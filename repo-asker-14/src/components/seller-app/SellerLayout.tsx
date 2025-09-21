@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -81,7 +82,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
     followers_count: 1250
   };
 
-  // Scroll handling for sticky tabs (same logic as SellerPage)
+  // Scroll handling for sticky tabs (exact same logic as SellerPage)
   useEffect(() => {
     let isCalculating = false;
 
@@ -113,19 +114,19 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
         setTabsHeight(tabsCurrentHeight);
       }
 
-      // Calculate sticky threshold
+      // Calculate sticky threshold - exact same logic as SellerPage
       let stickyThreshold = 0;
       if (sellerInfoRef.current) {
         const sellerInfoHeight = sellerInfoRef.current.offsetHeight;
         stickyThreshold = sellerInfoHeight - headerHeight;
       }
 
-      // Calculate scroll progress for header transitions
+      // Calculate scroll progress for header transitions (same as SellerPage)
       const maxScrollForProgress = stickyThreshold;
       const calculatedProgress = Math.min(1, Math.max(0, scrollY / maxScrollForProgress));
       setScrollProgress(calculatedProgress);
 
-      // Determine if tabs should be sticky
+      // Determine if tabs should be sticky (same logic as SellerPage)
       const shouldBeSticky = scrollY >= stickyThreshold;
 
       // Only update state if it changed to prevent unnecessary re-renders
@@ -134,13 +135,13 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
       }
     };
 
-    // Use RAF for smoother scrolling performance
+    // Use RAF for smoother scrolling performance (same as SellerPage)
     let rafId: number;
     const smoothScrollHandler = () => {
       rafId = requestAnimationFrame(handleScroll);
     };
 
-    // Initial setup with proper timing
+    // Initial setup with proper timing (same as SellerPage)
     const setupTimeout = setTimeout(() => {
       calculateOriginalPosition();
       
@@ -234,7 +235,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
           />
         </nav>
 
-        {/* Spacer div when tabs are sticky to prevent content jumping */}
+        {/* Spacer div when tabs are sticky to prevent content jumping - same as SellerPage */}
         {isTabsSticky && (
           <div
             className="transition-all duration-300 ease-out"
