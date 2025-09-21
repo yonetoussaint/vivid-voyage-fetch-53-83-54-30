@@ -83,35 +83,89 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
     followers_count: 1250
   };
 
-  // No need for header height calculation in SellerLayout since we use fixed header positioning
+  // Header height calculation for positioning elements - same pattern as SearchPage
+  useLayoutEffect(() => {
+    const updateHeight = () => {
+      if (headerRef.current) {
+        const height = headerRef.current.offsetHeight;
+        console.log('🔍 Attempting to measure header height:', height);
 
-  // Scroll handling for sticky tabs - same pattern as SellerPage
+        if (height > 0) {
+          console.log('✅ Setting header height to:', height);
+          setHeaderHeight(height);
+        } else {
+          console.log('❌ Header height is 0 or invalid');
+        }
+      } else {
+        console.log('❌ Header ref not available');
+      }
+    };
+
+    // Force multiple measurement attempts to ensure we catch it
+    const measureMultipleTimes = () => {
+      updateHeight();
+
+      // Immediate next frame
+      requestAnimationFrame(updateHeight);
+
+      // Small delays to catch late renders
+      setTimeout(updateHeight, 0);
+      setTimeout(updateHeight, 10);
+      setTimeout(updateHeight, 50);
+      setTimeout(updateHeight, 100);
+    };
+
+    measureMultipleTimes();
+
+    // Use ResizeObserver for ongoing updates
+    if (headerRef.current) {
+      resizeObserverRef.current = new ResizeObserver((entries) => {
+        for (let entry of entries) {
+          const height = entry.contentRect.height;
+          console.log('📐 ResizeObserver detected height change:', height);
+
+          if (height > 0 && height !== headerHeight) {
+            console.log('🔄 Updating height via ResizeObserver:', height);
+            setHeaderHeight(height);
+          }
+        }
+      });
+      resizeObserverRef.current.observe(headerRef.current);
+    }
+
+    return () => {
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+      }
+    };
+  }, []); // No dependencies to avoid re-running
+
+  // Debug effect to track when headerHeight changes
   useEffect(() => {
-    let isCalculating = false;
+    console.log('🎯 Header height state changed to:', headerHeight);
+  }, [headerHeight]);
 
+  // Scroll handling for sticky tabs
+  useEffect(() => {
     const handleScroll = () => {
-      if (!headerRef.current || !tabsRef.current || isCalculating) return;
+      if (!headerRef.current || !tabsRef.current) return;
 
       const scrollY = window.scrollY;
-      const headerHeight = headerRef.current.offsetHeight;
-      const tabsCurrentHeight = tabsRef.current.offsetHeight;
 
-      // Update tabs height if changed
-      if (tabsCurrentHeight !== tabsHeight) {
-        setTabsHeight(tabsCurrentHeight);
+      // Get current dimensions
+      const currentTabsHeight = tabsRef.current.offsetHeight;
+      const sellerInfoHeight = sellerInfoRef.current?.offsetHeight || 0;
+
+      // Update tabs height if it changed
+      if (currentTabsHeight !== tabsHeight) {
+        setTabsHeight(currentTabsHeight);
       }
 
-      // Calculate sticky threshold - tabs stick when seller info section scrolls out
-      let stickyThreshold = 0;
-      if (sellerInfoRef.current) {
-        const sellerInfoHeight = sellerInfoRef.current.offsetHeight;
-        // Since header is fixed, we only need the seller info height
-        stickyThreshold = sellerInfoHeight;
-      }
+      // Simple sticky threshold - tabs stick when seller info section scrolls out
+      const stickyThreshold = sellerInfoHeight;
 
       // Calculate scroll progress for header transitions
-      const maxScrollForProgress = stickyThreshold;
-      const calculatedProgress = Math.min(1, Math.max(0, scrollY / Math.max(maxScrollForProgress, 100)));
+      const calculatedProgress = Math.min(1, Math.max(0, scrollY / Math.max(stickyThreshold, 100)));
       setScrollProgress(calculatedProgress);
 
       // Determine if tabs should be sticky
@@ -129,7 +183,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
       rafId = requestAnimationFrame(handleScroll);
     };
 
-    // Initial setup with proper timing
+    // Initial setup
     const setupTimeout = setTimeout(() => {
       handleScroll();
       window.addEventListener('scroll', smoothScrollHandler, { passive: true });
@@ -142,30 +196,38 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
         cancelAnimationFrame(rafId);
       }
     };
-  }, [isTabsSticky, tabsHeight]);
+  }, [isTabsSticky, tabsHeight, headerHeight]);
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Fixed Header - same pattern as SellerPage */}
-      <ProductHeader
-        ref={headerRef}
-        sellerMode={true}
-        seller={mockSeller}
-        showCloseIcon={true}
-        onCloseClick={handleBackClick}
-        customScrollProgress={scrollProgress}
-        forceScrolledState={false}
-        actionButtons={[
-          {
-            Icon: Bell,
-            onClick: () => {},
-            count: 3
-          }
-        ]}
-      />
+      {/* Fixed Header - same pattern as SearchPage */}
+      <div ref={headerRef} className="fixed top-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-sm">
+        <ProductHeader
+          sellerMode={true}
+          seller={mockSeller}
+          showCloseIcon={true}
+          onCloseClick={handleBackClick}
+          customScrollProgress={scrollProgress}
+          inPanel={true}  // Make header relative within fixed wrapper
+          actionButtons={[
+            {
+              Icon: Bell,
+              onClick: () => {},
+              count: 3
+            }
+          ]}
+        />
+      </div>
 
-      {/* Main Content Area */}
-      <div className="relative">
+      {/* Main Content Area - Dynamic padding based on actual header height */}
+      <div 
+        className="relative"
+        style={{
+          paddingTop: headerHeight !== null ? `${headerHeight}px` : '0px', // No padding until we have real height
+          minHeight: '100vh' // Ensure content takes full height
+        }}
+        onLoad={() => console.log('📱 Content rendered with header height:', headerHeight)}
+      >
         <main>
           {/* Seller Info Section */}
           <div ref={sellerInfoRef} className="w-full bg-white border-b">
@@ -195,19 +257,16 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
             </div>
           </div>
 
-        {/* Tabs Navigation - same pattern as SellerPage */}
+        {/* Tabs Navigation with improved sticky behavior */}
           <nav
             ref={tabsRef}
-            className={`bg-white border-b transition-all duration-300 ease-out ${
+            className={`bg-white border-b transition-all duration-200 ease-out ${
               isTabsSticky
-                ? 'fixed top-0 left-0 right-0 z-40'
+                ? 'fixed left-0 right-0 z-40 shadow-sm'
                 : 'relative'
             }`}
             style={{
-              top: isTabsSticky ? `${headerRef.current?.offsetHeight || 0}px` : 'auto',
-              transform: 'translateZ(0)', // GPU acceleration
-              willChange: isTabsSticky ? 'transform' : 'auto',
-              backfaceVisibility: 'hidden' // Prevent flickering
+              top: isTabsSticky ? `${headerHeight || 0}px` : 'auto',
             }}
           >
             <TabsNavigation
@@ -220,11 +279,8 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
           {/* Spacer div when tabs are sticky to prevent content jumping */}
           {isTabsSticky && (
             <div
-              className="transition-all duration-300 ease-out"
               style={{ 
                 height: `${tabsHeight}px`,
-                opacity: isTabsSticky ? 1 : 0,
-                transform: 'translateZ(0)'
               }}
               aria-hidden="true"
             />
