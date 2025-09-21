@@ -8,14 +8,14 @@ import { Button } from '@/components/ui/button';
 import ProductVariants from './ProductVariants';
 
 // Payment Method Component
-const PaymentMethod = ({ 
-  method, 
-  isSelected, 
-  onSelect, 
-  icon, 
-  title, 
-  description, 
-  borderColor = 'blue' 
+const PaymentMethod = ({
+  method,
+  isSelected,
+  onSelect,
+  icon,
+  title,
+  description,
+  borderColor = 'blue'
 }) => {
   const borderColors = {
     blue: 'border-blue-500 bg-blue-50',
@@ -29,7 +29,7 @@ const PaymentMethod = ({
   };
 
   return (
-    <div 
+    <div
       className={`border rounded-lg p-4 cursor-pointer transition-colors ${
         isSelected ? borderColors[borderColor] : 'border-gray-200 hover:border-gray-300'
       }`}
@@ -46,8 +46,8 @@ const PaymentMethod = ({
           </div>
         </div>
         <div className={`w-4 h-4 rounded-full border-2 ${
-          isSelected 
-            ? `border-${borderColor}-500 bg-${borderColor}-500` 
+          isSelected
+            ? `border-${borderColor}-500 bg-${borderColor}-500`
             : 'border-gray-300'
         }`}>
           {isSelected && (
@@ -62,21 +62,21 @@ const PaymentMethod = ({
 
 
 // Product Info Component
-const ProductInfo = ({ 
-  product = { image: '', name: '' }, 
-  selectedColor, 
-  selectedStorage, 
-  selectedNetwork, 
-  selectedCondition, 
-  selectedColorImage, 
-  quantity = 1, 
-  currencySymbol = "$", 
-  formatPrice = (price) => price?.toFixed(2) || "0.00", 
-  unitPrice = 0 
+const ProductInfo = ({
+  product = { image: '', name: '' },
+  selectedColor,
+  selectedStorage,
+  selectedNetwork,
+  selectedCondition,
+  selectedColorImage,
+  quantity = 1,
+  currencySymbol = "$",
+  formatPrice = (price) => price?.toFixed(2) || "0.00",
+  unitPrice = 0
 }) => {
   return (
     <div className="flex items-center gap-3">
-      <img 
+      <img
         src={selectedColorImage || product.image || "/placeholder.svg"}
         alt={product.name || "Product"}
         className="w-16 h-16 rounded-lg object-cover flex-shrink-0 shadow-sm"
@@ -143,9 +143,9 @@ const MockPaymentDialog = ({ open, onOpenChange, product, quantity, totalPrice, 
             isSelected={selectedPaymentMethod === 'moncash'}
             onSelect={setSelectedPaymentMethod}
             icon={
-              <img 
-                src="/lovable-uploads/26276fb9-2443-4215-a6ae-d1d16e6c2f92.png" 
-                alt="MonCash" 
+              <img
+                src="/lovable-uploads/26276fb9-2443-4215-a6ae-d1d16e6c2f92.png"
+                alt="MonCash"
                 className="w-full h-full object-cover"
               />
             }
@@ -157,7 +157,7 @@ const MockPaymentDialog = ({ open, onOpenChange, product, quantity, totalPrice, 
 
         {/* Action Buttons */}
         <div className="flex gap-3">
-          <button 
+          <button
             onClick={() => {
               onOpenChange(false);
               setSelectedPaymentMethod('');
@@ -166,7 +166,7 @@ const MockPaymentDialog = ({ open, onOpenChange, product, quantity, totalPrice, 
           >
             Cancel
           </button>
-          <button 
+          <button
             onClick={handlePayment}
             disabled={!selectedPaymentMethod}
             className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -183,7 +183,7 @@ const MockPaymentDialog = ({ open, onOpenChange, product, quantity, totalPrice, 
   );
 };
 
-const StickyCheckoutBar = ({ 
+const StickyCheckoutBar = ({
   product,
   quantity = 1,
   onQuantityChange = (newQuantity) => {},
@@ -207,7 +207,6 @@ const StickyCheckoutBar = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [showPaymentMethods, setShowPaymentMethods] = useState(false);
-  const [showVariants, setShowVariants] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
   const [variantConfig, setVariantConfig] = useState(null);
   const { isAuthenticated } = useAuth();
@@ -240,7 +239,7 @@ const StickyCheckoutBar = ({
   // Use current stock from selected variant or product inventory
   const stockLeft = currentStock !== null ? currentStock : (product?.inventory || 0);
 
-  
+
 
   // Price calculations using shared currency context
   const basePrice = currentPrice || (() => {
@@ -266,7 +265,7 @@ const StickyCheckoutBar = ({
       setIsExpanded(false);
       return;
     }
-    
+
     // Show variants panel when Add to Cart is clicked
     setIsExpanded(true);
     setShowVariants(true);
@@ -382,7 +381,7 @@ const StickyCheckoutBar = ({
     <>
       {/* Overlay when expanded */}
       {isExpanded && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-20 z-40 transition-opacity duration-300"
           onClick={() => setIsExpanded(false)}
         />
@@ -394,7 +393,7 @@ const StickyCheckoutBar = ({
         {!isExpanded && (
           <div className="p-2 bg-white border-t border-gray-200 flex gap-2">
             {/* Cart Button with Item Count */}
-            <button 
+            <button
               onClick={handleViewCart}
               className="relative w-10 h-10 bg-white border border-gray-300 text-gray-800 rounded-full font-semibold hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center"
             >
@@ -407,7 +406,7 @@ const StickyCheckoutBar = ({
             </button>
 
             {/* Add to Cart Button - Now expands the panel */}
-            <button 
+            <button
               onClick={handleAddToCartClick}
               className="flex-1 py-2 bg-white border border-gray-300 text-gray-800 rounded-full font-semibold text-sm hover:bg-gray-50 transition-colors shadow-sm"
             >
@@ -415,7 +414,7 @@ const StickyCheckoutBar = ({
             </button>
 
             {/* Checkout Button - Now expands the panel */}
-            <button 
+            <button
               onClick={() => setIsExpanded(true)}
               className="flex-1 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full font-semibold text-sm hover:opacity-90 transition-opacity shadow-lg"
             >
@@ -426,9 +425,9 @@ const StickyCheckoutBar = ({
 
         {/* Expanded Panel */}
         {isExpanded && (
-          <div 
+          <div
             className="bg-white rounded-t-2xl shadow-2xl"
-            style={{ 
+            style={{
               boxShadow: '0 -10px 25px -5px rgba(0, 0, 0, 0.1)'
             }}
           >
@@ -464,17 +463,17 @@ const StickyCheckoutBar = ({
                     />
                   </div>
 
-                  
+
 
                   {/* Action Buttons */}
                   <div className="flex gap-2">
-                    <button 
+                    <button
                       onClick={handleFinalAddToCart}
                       className="flex-1 bg-white border border-gray-300 text-gray-800 py-2 rounded-full font-semibold text-sm hover:bg-gray-50 transition-colors"
                     >
                       Add to Cart
                     </button>
-                    <button 
+                    <button
                       onClick={handleProceedToPayment}
                       className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 text-white py-2 rounded-full font-semibold text-sm hover:opacity-90 shadow-lg"
                     >
@@ -486,7 +485,7 @@ const StickyCheckoutBar = ({
                 <>
                   {/* Payment Methods */}
                   <div className="space-y-3">
-                    
+
                     <PaymentMethod
                       method="wallet"
                       isSelected={selectedPaymentMethod === 'wallet'}
@@ -506,9 +505,9 @@ const StickyCheckoutBar = ({
                       isSelected={selectedPaymentMethod === 'moncash'}
                       onSelect={setSelectedPaymentMethod}
                       icon={
-                        <img 
-                          src="/lovable-uploads/26276fb9-2443-4215-a6ae-d1d16e6c2f92.png" 
-                          alt="MonCash" 
+                        <img
+                          src="/lovable-uploads/26276fb9-2443-4215-a6ae-d1d16e6c2f92.png"
+                          alt="MonCash"
                           className="w-full h-full object-cover"
                         />
                       }
@@ -519,7 +518,7 @@ const StickyCheckoutBar = ({
                   </div>
 
                   {/* Continue Payment Button */}
-                  <button 
+                  <button
                     onClick={handleContinuePayment}
                     disabled={!selectedPaymentMethod}
                     className={`w-full py-2 rounded-full font-medium text-sm transition-colors ${
@@ -536,13 +535,13 @@ const StickyCheckoutBar = ({
                   {/* Default: Action Buttons */}
 
                   <div className="flex gap-2">
-                    <button 
+                    <button
                       onClick={handleFinalAddToCart}
                       className="flex-1 bg-white border border-gray-300 text-gray-800 py-2 rounded-full font-semibold text-sm hover:bg-gray-50 transition-colors"
                     >
                       Add to Cart
                     </button>
-                    <button 
+                    <button
                       onClick={handleBuyNow}
                       className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 text-white py-2 rounded-full font-semibold text-sm hover:opacity-90 shadow-lg"
                     >
