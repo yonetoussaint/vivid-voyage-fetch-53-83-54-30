@@ -1,4 +1,4 @@
-import React, { useState, forwardRef } from 'react';
+import React, { useState } from 'react';
 import { Heart, Share } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -6,6 +6,7 @@ import { useNavigationLoading } from '@/hooks/useNavigationLoading';
 import ProductHeader from './ProductHeader';
 
 interface ProductHeaderSectionProps {
+  ref: React.RefObject<HTMLDivElement>;
   activeSection: string;
   onTabChange: (section: string) => void;
   focusMode: boolean;
@@ -16,7 +17,8 @@ interface ProductHeaderSectionProps {
   onShareClick: () => void;
 }
 
-const ProductHeaderSection = forwardRef<HTMLDivElement, ProductHeaderSectionProps>(({
+const ProductHeaderSection: React.FC<ProductHeaderSectionProps> = ({
+  ref,
   activeSection,
   onTabChange,
   focusMode,
@@ -25,7 +27,7 @@ const ProductHeaderSection = forwardRef<HTMLDivElement, ProductHeaderSectionProp
   currentImageIndex,
   totalImages,
   onShareClick
-}, ref) => {
+}) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { startLoading } = useNavigationLoading();
@@ -92,8 +94,6 @@ const ProductHeaderSection = forwardRef<HTMLDivElement, ProductHeaderSectionProp
       />
     </div>
   );
-});
-
-ProductHeaderSection.displayName = 'ProductHeaderSection';
+};
 
 export default ProductHeaderSection;
