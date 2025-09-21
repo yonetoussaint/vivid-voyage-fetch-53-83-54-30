@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronDown, ChevronUp, Minus, Plus, CreditCard, LogIn, ShoppingCart } from 'lucide-react';
+import { ChevronDown, ChevronUp, CreditCard, LogIn, ShoppingCart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCurrency, currencies, currencyToCountry } from '@/contexts/CurrencyContext';
 import { useAuth } from '@/contexts/auth/AuthContext';
@@ -59,34 +59,7 @@ const PaymentMethod = ({
   );
 };
 
-// Quantity Controls Component
-const QuantityControls = ({ quantity, stockLeft, onDecrease, onIncrease }) => {
-  return (
-    <div className="flex items-center justify-center gap-4">
-      <span className="text-sm font-medium text-gray-700">Quantity:</span>
-      <div className="flex items-center bg-gray-100 rounded-full px-2 py-1">
-        <button
-          onClick={onDecrease}
-          disabled={quantity <= 1}
-          className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          <Minus className="w-4 h-4 text-black" />
-        </button>
-        <span className="text-base font-medium px-3 text-gray-900">{quantity}</span>
-        <button
-          onClick={onIncrease}
-          disabled={quantity >= stockLeft}
-          className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          <Plus className="w-4 h-4 text-black" />
-        </button>
-      </div>
-      <span className="text-xs text-gray-500">
-        ({stockLeft} available)
-      </span>
-    </div>
-  );
-};
+
 
 // Product Info Component
 const ProductInfo = ({ 
@@ -267,18 +240,7 @@ const StickyCheckoutBar = ({
   // Use current stock from selected variant or product inventory
   const stockLeft = currentStock !== null ? currentStock : (product?.inventory || 0);
 
-  // Quantity handlers
-  const increaseQuantity = () => {
-    if (quantity < stockLeft && typeof onQuantityChange === 'function') {
-      onQuantityChange(quantity + 1);
-    }
-  };
-
-  const decreaseQuantity = () => {
-    if (quantity > 1 && typeof onQuantityChange === 'function') {
-      onQuantityChange(quantity - 1);
-    }
-  };
+  
 
   // Price calculations using shared currency context
   const basePrice = currentPrice || (() => {
@@ -502,13 +464,7 @@ const StickyCheckoutBar = ({
                     />
                   </div>
 
-                  {/* Quantity Controls */}
-                  <QuantityControls
-                    quantity={quantity}
-                    stockLeft={stockLeft}
-                    onDecrease={decreaseQuantity}
-                    onIncrease={increaseQuantity}
-                  />
+                  
 
                   {/* Action Buttons */}
                   <div className="flex gap-2">
@@ -577,13 +533,7 @@ const StickyCheckoutBar = ({
                 </>
               ) : (
                 <>
-                  {/* Default: Quantity Controls and Action Buttons */}
-                  <QuantityControls
-                    quantity={quantity}
-                    stockLeft={stockLeft}
-                    onDecrease={decreaseQuantity}
-                    onIncrease={increaseQuantity}
-                  />
+                  {/* Default: Action Buttons */}
 
                   <div className="flex gap-2">
                     <button 
