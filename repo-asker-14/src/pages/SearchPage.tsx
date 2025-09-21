@@ -21,6 +21,7 @@ const SearchPage = () => {
   const [isVoiceActive, setIsVoiceActive] = useState(false);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [headerHeight, setHeaderHeight] = useState(60); // Start with fallback height
+  const [adaptiveFallback, setAdaptiveFallback] = useState(60); // Dynamic fallback that adapts
   const [showResults, setShowResults] = useState(false);
   const [sortBy, setSortBy] = useState('relevance');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -54,17 +55,24 @@ const SearchPage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Dynamic header height calculation with fallback for SearchPage
+  // Dynamic header height calculation with adaptive fallback for SearchPage
   useLayoutEffect(() => {
     const updateHeight = () => {
       if (headerRef.current) {
         const height = headerRef.current.getBoundingClientRect().height;
         console.log('Header height dynamically calculated:', height);
         
-        // Use fallback height if calculation returns 0 (common on initial render)
-        const finalHeight = height > 0 ? height : 60; // 60px fallback for search header
-        setHeaderHeight(finalHeight);
-        document.documentElement.style.setProperty('--header-height', `${finalHeight}px`);
+        // Update adaptive fallback when we get a valid measurement
+        if (height > 0) {
+          setAdaptiveFallback(height);
+          setHeaderHeight(height);
+          document.documentElement.style.setProperty('--header-height', `${height}px`);
+        } else {
+          // Use current adaptive fallback when measurement fails
+          console.log('Using adaptive fallback:', adaptiveFallback);
+          setHeaderHeight(adaptiveFallback);
+          document.documentElement.style.setProperty('--header-height', `${adaptiveFallback}px`);
+        }
       }
     };
 
@@ -77,9 +85,17 @@ const SearchPage = () => {
         for (let entry of entries) {
           const height = entry.contentRect.height;
           console.log('Header height updated via ResizeObserver:', height);
-          const finalHeight = height > 0 ? height : 60;
-          setHeaderHeight(finalHeight);
-          document.documentElement.style.setProperty('--header-height', `${finalHeight}px`);
+          
+          if (height > 0) {
+            // Update both current height and adaptive fallback
+            setAdaptiveFallback(height);
+            setHeaderHeight(height);
+            document.documentElement.style.setProperty('--header-height', `${height}px`);
+          } else {
+            // Use current adaptive fallback
+            setHeaderHeight(adaptiveFallback);
+            document.documentElement.style.setProperty('--header-height', `${adaptiveFallback}px`);
+          }
         }
       });
       resizeObserverRef.current.observe(headerRef.current);
@@ -95,7 +111,7 @@ const SearchPage = () => {
       }
       window.removeEventListener('resize', updateHeight);
     };
-  }, []);
+  }, [adaptiveFallback]); // Include adaptiveFallback in dependencies
 
 
   useEffect(() => {
