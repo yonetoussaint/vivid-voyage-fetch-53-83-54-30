@@ -20,7 +20,7 @@ const SearchPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isVoiceActive, setIsVoiceActive] = useState(false);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
-  const [headerHeight, setHeaderHeight] = useState(0);
+  const [headerHeight, setHeaderHeight] = useState(60); // Start with fallback height
   const [showResults, setShowResults] = useState(false);
   const [sortBy, setSortBy] = useState('relevance');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -54,20 +54,22 @@ const SearchPage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Dynamic header height calculation - no fallbacks, handles all header types
+  // Dynamic header height calculation with fallback for SearchPage
   useLayoutEffect(() => {
     const updateHeight = () => {
       if (headerRef.current) {
         const height = headerRef.current.getBoundingClientRect().height;
         console.log('Header height dynamically calculated:', height);
-        setHeaderHeight(height);
-        // Use consistent CSS variable name for all components
-        document.documentElement.style.setProperty('--header-height', `${height}px`);
+        
+        // Use fallback height if calculation returns 0 (common on initial render)
+        const finalHeight = height > 0 ? height : 60; // 60px fallback for search header
+        setHeaderHeight(finalHeight);
+        document.documentElement.style.setProperty('--header-height', `${finalHeight}px`);
       }
     };
 
-    // Initial measurement using useLayoutEffect to prevent layout shift
-    updateHeight();
+    // Use a small delay to ensure DOM is fully rendered
+    const timeoutId = setTimeout(updateHeight, 50);
 
     // Use ResizeObserver for real-time updates
     if (headerRef.current) {
@@ -75,8 +77,9 @@ const SearchPage = () => {
         for (let entry of entries) {
           const height = entry.contentRect.height;
           console.log('Header height updated via ResizeObserver:', height);
-          setHeaderHeight(height);
-          document.documentElement.style.setProperty('--header-height', `${height}px`);
+          const finalHeight = height > 0 ? height : 60;
+          setHeaderHeight(finalHeight);
+          document.documentElement.style.setProperty('--header-height', `${finalHeight}px`);
         }
       });
       resizeObserverRef.current.observe(headerRef.current);
@@ -86,6 +89,7 @@ const SearchPage = () => {
     window.addEventListener('resize', updateHeight);
 
     return () => {
+      clearTimeout(timeoutId);
       if (resizeObserverRef.current) {
         resizeObserverRef.current.disconnect();
       }
