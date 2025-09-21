@@ -12,7 +12,7 @@ import { useProduct } from '@/hooks/useProduct';
 import CategoryTabs from "../home/header/CategoryTabs";
 import { Separator } from "@/components/ui/separator";
 import PriceInfo, { CurrencySwitcher } from "./PriceInfo";
-import { Input } from "@/components/ui/input"; // Assuming Input is from shadcn/ui
+
 
 interface ActionButton {
   Icon: any;
@@ -139,26 +139,7 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
     return 'fixed top-0 left-0 right-0';
   };
 
-  // Placeholder for search activation logic (e.g., expanding search bar)
-  const activateSearch = () => {
-    // Implement search activation logic if needed
-  };
-
-  // Placeholder for search input ref and open state
-  const searchInputRef = React.useRef<HTMLInputElement>(null);
-  const [open, setOpen] = useState(false);
-
-  // Update search handler to use external onSearch if provided
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      if (onSearch) {
-        onSearch(searchQuery.trim());
-      } else {
-        navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      }
-    }
-  };
+  
 
   return (
     <div
@@ -212,49 +193,23 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
           <div className="flex-1 mx-4">
             {displayProgress >= 0.5 && (
               <div className="flex-1 relative max-w-md mx-auto">
-                <Input
-                  ref={searchInputRef}
+                <input
                   type="text"
                   placeholder={sellerMode ? "Search seller products..." : "Search products..."}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      handleSearch(e as any); // Pass event to handleSearch
-                    }
-                  }}
                   onClick={() => {
-                    // Only redirect if not already on search page
-                    if (!window.location.pathname.includes('/search')) {
-                      startLoading();
-                      if (sellerMode && seller) {
-                        navigate(`/seller/${seller.id}/search${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ''}`);
-                      } else {
-                        navigate(`/search${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ''}`);
-                      }
+                    startLoading();
+                    if (sellerMode && seller) {
+                      navigate(`/seller/${seller.id}/search${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ''}`);
+                    } else {
+                      navigate(`/search${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ''}`);
                     }
                   }}
-                  onFocus={() => {
-                    activateSearch();
-                    setOpen(true);
-                    onSearchFocus?.();
-                  }}
-                  onBlur={() => {
-                    setOpen(false);
-                    onSearchBlur?.();
-                  }}
-                  className="w-full h-7 px-3 py-1 text-sm font-medium border-2 border-gray-800 rounded-full focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-300 bg-white shadow-sm cursor-text"
-                  readOnly={!window.location.pathname.includes('/search')}
+                  className="w-full px-3 py-1 text-sm font-medium border-2 border-gray-800 rounded-full focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-300 bg-white shadow-sm cursor-pointer"
+                  readOnly
                 />
                 <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-600 font-bold" />
-
-                {/* TODO: Implement actual search suggestions and product results display */}
-                {open && searchQuery && (
-                  <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 p-2 z-10">
-                    {/* Placeholder for search suggestions and product results */}
-                    <p className="text-sm text-gray-500">Suggestions and products will appear here...</p>
-                  </div>
-                )}
               </div>
             )}
           </div>
