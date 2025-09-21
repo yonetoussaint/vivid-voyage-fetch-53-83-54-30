@@ -246,9 +246,14 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => {
-                    setIsSearchFocused(true);
-                    setShowSuggestions(true);
-                    onSearchFocus?.();
+                    if (onSearchFocus) {
+                      // If onSearchFocus is provided (like in product detail), navigate instead of showing suggestions
+                      onSearchFocus();
+                    } else {
+                      // Only show suggestions if no navigation handler is provided
+                      setIsSearchFocused(true);
+                      setShowSuggestions(true);
+                    }
                   }}
                   onBlur={() => {
                     // Delay hiding suggestions to allow clicking on them
@@ -274,7 +279,7 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
                 <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-600 font-bold" />
                 
                 {/* Search Suggestions Dropdown */}
-                {showSuggestions && isSearchFocused && (
+                {showSuggestions && isSearchFocused && !onSearchFocus && (
                   <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 z-50 max-h-96 overflow-hidden">
                     <SearchSuggestions
                       query={searchQuery}
