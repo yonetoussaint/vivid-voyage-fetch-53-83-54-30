@@ -38,23 +38,28 @@ args = "Development Server"
 name = "Development Server"
 author = "agent"
 
+[workflows.workflow.metadata]
+outputType = "webview"
+
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd repo-asker-14 && npm run dev"
 waitForPort = 5000
-
-[workflows.workflow.metadata]
-outputType = "webview"
 
 [[ports]]
 localPort = 80
 
 [[ports]]
 localPort = 5000
+externalPort = 80
+
+[[ports]]
+localPort = 5001
 externalPort = 3000
 
 [[ports]]
-localPort = 32861
+localPort = 44121
+externalPort = 3001
 
 [agent]
 expertMode = true
