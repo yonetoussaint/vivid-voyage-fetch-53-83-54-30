@@ -9,9 +9,10 @@ interface SearchSuggestionsProps {
   query: string;
   onSelectSuggestion: (suggestion: string) => void;
   onClose: () => void;
+  liveResults?: any[];
 }
 
-const SearchSuggestions = ({ query, onSelectSuggestion, onClose }: SearchSuggestionsProps) => {
+const SearchSuggestions = ({ query, onSelectSuggestion, onClose, liveResults = [] }: SearchSuggestionsProps) => {
   // Mock data
   const recentSearches = ['wireless earbuds', 'smartphone case', 'smart watch'];
   
@@ -103,6 +104,41 @@ const SearchSuggestions = ({ query, onSelectSuggestion, onClose }: SearchSuggest
             <ArrowUpRight className="h-3.5 w-3.5 text-gray-400" />
           </motion.div>
         </motion.div>
+      )}
+
+      {/* Live Product Results */}
+      {liveResults.length > 0 && (
+        <div className="mb-4">
+          <h4 className="text-xs text-gray-500 mb-2">Products</h4>
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="space-y-2"
+          >
+            {liveResults.map((product, index) => (
+              <motion.div 
+                key={product.id || index} 
+                variants={itemVariants}
+                className="flex space-x-3 p-2 hover:bg-gray-50 rounded-md cursor-pointer"
+                onClick={() => onSelectSuggestion(product.name)}
+              >
+                <img 
+                  src={product.image} 
+                  alt={product.name} 
+                  className="w-12 h-12 rounded-md object-cover flex-shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm line-clamp-2 text-gray-900">{product.name}</p>
+                  <div className="flex items-center mt-1">
+                    <span className="text-sm text-red-500 font-medium">${product.price}</span>
+                  </div>
+                </div>
+                <ArrowUpRight className="h-4 w-4 text-gray-400 flex-shrink-0 mt-1" />
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
       )}
       
       {/* Recent searches */}
