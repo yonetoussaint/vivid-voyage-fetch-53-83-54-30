@@ -232,6 +232,19 @@ const StickyCheckoutBar = ({
     };
   }, [barRef.current, isExpanded, showPaymentMethods]);
 
+  // Prevent body scrolling when panel is expanded
+  useEffect(() => {
+    if (isExpanded) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isExpanded]);
+
   // Toggle expanded state
   const toggleExpanded = () => {
     setIsExpanded(!isExpanded);
@@ -383,13 +396,13 @@ const StickyCheckoutBar = ({
       {/* Overlay when expanded */}
       {isExpanded && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-20 z-40 transition-opacity duration-300"
+          className="fixed inset-0 bg-black bg-opacity-20 z-50 transition-opacity duration-300"
           onClick={() => setIsExpanded(false)}
         />
       )}
 
       {/* Sticky Bottom Bar - Three Buttons */}
-      <div ref={barRef} className={`fixed bottom-0 left-0 right-0 z-[45] transition-all duration-300 ease-out ${className}`}>
+      <div ref={barRef} className={`fixed bottom-0 left-0 right-0 z-[60] transition-all duration-300 ease-out ${className}`}>
         {/* Three Button Layout */}
         {!isExpanded && (
           <div className="p-2 bg-white border-t border-gray-200 flex gap-2">
@@ -427,18 +440,18 @@ const StickyCheckoutBar = ({
         {/* Expanded Panel */}
         {isExpanded && (
           <div 
-            className="bg-white rounded-t-2xl shadow-2xl"
+            className="bg-white rounded-t-2xl shadow-2xl max-h-[80vh] flex flex-col"
             style={{ 
               boxShadow: '0 -10px 25px -5px rgba(0, 0, 0, 0.1)'
             }}
           >
             {/* Close handle */}
-            <div className="flex justify-center pt-3 pb-2">
+            <div className="flex justify-center pt-3 pb-2 flex-shrink-0">
               <div className="w-12 h-1 bg-gray-300 rounded-full"></div>
             </div>
 
-            {/* Product Info Section */}
-            <div className="px-4 pb-4 space-y-4">
+            {/* Product Info Section - Scrollable */}
+            <div className="px-4 pb-4 space-y-4 overflow-y-auto flex-1">
               <ProductInfo
                 product={product}
                 selectedColor={selectedColor}
