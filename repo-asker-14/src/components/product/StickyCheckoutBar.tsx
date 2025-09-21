@@ -450,119 +450,118 @@ const StickyCheckoutBar = ({
               <div className="w-12 h-1 bg-gray-300 rounded-full"></div>
             </div>
 
-            {/* Product Info Section - Scrollable */}
-            <div className="px-4 pb-4 space-y-4 overflow-y-auto flex-1">
-              <ProductInfo
-                product={product}
-                selectedColor={selectedColor}
-                selectedStorage={selectedStorage}
-                selectedNetwork={selectedNetwork}
-                selectedCondition={selectedCondition}
-                selectedColorImage={selectedColorImage}
-                quantity={quantity}
-                currencySymbol={currencies[currentCurrency]}
-                formatPrice={formatPrice}
-                unitPrice={unitPrice}
-              />
+            {/* Scrollable Content Area */}
+            <div className="flex-1 overflow-y-auto px-4">
+              <div className="space-y-4 pb-4">
+                {/* Product Info */}
+                <ProductInfo
+                  product={product}
+                  selectedColor={selectedColor}
+                  selectedStorage={selectedStorage}
+                  selectedNetwork={selectedNetwork}
+                  selectedCondition={selectedCondition}
+                  selectedColorImage={selectedColorImage}
+                  quantity={quantity}
+                  currencySymbol={currencies[currentCurrency]}
+                  formatPrice={formatPrice}
+                  unitPrice={unitPrice}
+                />
 
+                {showVariants ? (
+                  <>
+                    {/* Product Variants Section */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3 text-gray-900">Choose your options</h3>
+                      <ProductVariants
+                        productId={product?.id}
+                        onImageSelect={onImageSelect}
+                        onConfigurationChange={() => {}}
+                      />
+                    </div>
+                  </>
+                ) : showPaymentMethods ? (
+                  <>
+                    {/* Payment Methods */}
+                    <div className="space-y-3">
+                      <PaymentMethod
+                        method="wallet"
+                        isSelected={selectedPaymentMethod === 'wallet'}
+                        onSelect={setSelectedPaymentMethod}
+                        icon={
+                          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                          </svg>
+                        }
+                        title="Pay with Wallet"
+                        description="Use your digital wallet"
+                        borderColor="blue"
+                      />
+
+                      <PaymentMethod
+                        method="moncash"
+                        isSelected={selectedPaymentMethod === 'moncash'}
+                        onSelect={setSelectedPaymentMethod}
+                        icon={
+                          <img 
+                            src="/lovable-uploads/26276fb9-2443-4215-a6ae-d1d16e6c2f92.png" 
+                            alt="MonCash" 
+                            className="w-full h-full object-cover"
+                          />
+                        }
+                        title="Pay with Moncash"
+                        description="Mobile money payment"
+                        borderColor="orange"
+                      />
+                    </div>
+                  </>
+                ) : null}
+              </div>
+            </div>
+
+            {/* Fixed Bottom Action Buttons */}
+            <div className="flex-shrink-0 px-4 pb-4">
               {showVariants ? (
-                <>
-                  {/* Product Variants Section */}
-                  <div className="mb-4">
-                    <h3 className="text-lg font-semibold mb-3 text-gray-900">Choose your options</h3>
-                    <ProductVariants
-                      productId={product?.id}
-                      onImageSelect={onImageSelect}
-                      onConfigurationChange={() => {}}
-                    />
-                  </div>
-
-                  
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={handleFinalAddToCart}
-                      className="flex-1 bg-white border border-gray-300 text-gray-800 py-2 rounded-full font-semibold text-sm hover:bg-gray-50 transition-colors"
-                    >
-                      Add to Cart
-                    </button>
-                    <button 
-                      onClick={handleProceedToPayment}
-                      className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 text-white py-2 rounded-full font-semibold text-sm hover:opacity-90 shadow-lg"
-                    >
-                      Continue to Payment
-                    </button>
-                  </div>
-                </>
-              ) : showPaymentMethods ? (
-                <>
-                  {/* Payment Methods */}
-                  <div className="space-y-3">
-                    
-                    <PaymentMethod
-                      method="wallet"
-                      isSelected={selectedPaymentMethod === 'wallet'}
-                      onSelect={setSelectedPaymentMethod}
-                      icon={
-                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                        </svg>
-                      }
-                      title="Pay with Wallet"
-                      description="Use your digital wallet"
-                      borderColor="blue"
-                    />
-
-                    <PaymentMethod
-                      method="moncash"
-                      isSelected={selectedPaymentMethod === 'moncash'}
-                      onSelect={setSelectedPaymentMethod}
-                      icon={
-                        <img 
-                          src="/lovable-uploads/26276fb9-2443-4215-a6ae-d1d16e6c2f92.png" 
-                          alt="MonCash" 
-                          className="w-full h-full object-cover"
-                        />
-                      }
-                      title="Pay with Moncash"
-                      description="Mobile money payment"
-                      borderColor="orange"
-                    />
-                  </div>
-
-                  {/* Continue Payment Button */}
+                <div className="flex gap-2">
                   <button 
-                    onClick={handleContinuePayment}
-                    disabled={!selectedPaymentMethod}
-                    className={`w-full py-2 rounded-full font-medium text-sm transition-colors ${
-                      selectedPaymentMethod
-                        ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white hover:opacity-90'
-                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    }`}
+                    onClick={handleFinalAddToCart}
+                    className="flex-1 bg-white border border-gray-300 text-gray-800 py-2 rounded-full font-semibold text-sm hover:bg-gray-50 transition-colors"
                   >
-                    Continue Payment
+                    Add to Cart
                   </button>
-                </>
+                  <button 
+                    onClick={handleProceedToPayment}
+                    className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 text-white py-2 rounded-full font-semibold text-sm hover:opacity-90 shadow-lg"
+                  >
+                    Continue to Payment
+                  </button>
+                </div>
+              ) : showPaymentMethods ? (
+                <button 
+                  onClick={handleContinuePayment}
+                  disabled={!selectedPaymentMethod}
+                  className={`w-full py-2 rounded-full font-medium text-sm transition-colors ${
+                    selectedPaymentMethod
+                      ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white hover:opacity-90'
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  }`}
+                >
+                  Continue Payment
+                </button>
               ) : (
-                <>
-                  {/* Default: Action Buttons */}
-
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={handleFinalAddToCart}
-                      className="flex-1 bg-white border border-gray-300 text-gray-800 py-2 rounded-full font-semibold text-sm hover:bg-gray-50 transition-colors"
-                    >
-                      Add to Cart
-                    </button>
-                    <button 
-                      onClick={handleBuyNow}
-                      className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 text-white py-2 rounded-full font-semibold text-sm hover:opacity-90 shadow-lg"
-                    >
-                      Checkout
-                    </button>
-                  </div>
-                </>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={handleFinalAddToCart}
+                    className="flex-1 bg-white border border-gray-300 text-gray-800 py-2 rounded-full font-semibold text-sm hover:bg-gray-50 transition-colors"
+                  >
+                    Add to Cart
+                  </button>
+                  <button 
+                    onClick={handleBuyNow}
+                    className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 text-white py-2 rounded-full font-semibold text-sm hover:opacity-90 shadow-lg"
+                  >
+                    Checkout
+                  </button>
+                </div>
               )}
             </div>
           </div>
