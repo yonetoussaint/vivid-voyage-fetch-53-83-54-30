@@ -117,6 +117,8 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
         selectedNetwork=""
         selectedCondition=""
         className=""
+        onImageSelect={onImageSelect}
+        onConfigurationChange={onConfigurationChange}
       />
     )}
   </div>

@@ -5,6 +5,7 @@ import { useCurrency, currencies, currencyToCountry } from '@/contexts/CurrencyC
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useAuthOverlay } from '@/context/AuthOverlayContext';
 import { Button } from '@/components/ui/button';
+import ProductVariants from './ProductVariants';
 
 // Payment Method Component
 const PaymentMethod = ({ 
@@ -226,12 +227,16 @@ const StickyCheckoutBar = ({
   onViewCart = () => {},
   currentPrice = null,
   currentStock = null,
-  className = ''
+  className = '',
+  onImageSelect = (imageUrl: string, variantName: string) => {},
+  onConfigurationChange = (configData: any) => {}
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [showPaymentMethods, setShowPaymentMethods] = useState(false);
+  const [showVariants, setShowVariants] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
+  const [variantConfig, setVariantConfig] = useState(null);
   const { isAuthenticated } = useAuth();
   const { openAuthOverlay } = useAuthOverlay();
   const { currentCurrency, formatPrice, convertPrice } = useCurrency();
@@ -293,18 +298,34 @@ const StickyCheckoutBar = ({
   const discountAmount = totalOriginalPrice - totalPrice;
 
   // Action handlers
-  const handleAddToCart = () => {
+  const handleAddToCartClick = () => {
     if (!isAuthenticated) {
       openAuthOverlay();
       setIsExpanded(false);
       return;
     }
+    
+    // Show variants panel when Add to Cart is clicked
+    setIsExpanded(true);
+    setShowVariants(true);
+    setShowPaymentMethods(false);
+  };
 
+  const handleVariantConfigChange = (configData) => {
+    setVariantConfig(configData);
+  };
+
+  const handleFinalAddToCart = () => {
     if (typeof onAddToCart === 'function') {
       onAddToCart();
     }
-
     setIsExpanded(false);
+    setShowVariants(false);
+  };
+
+  const handleProceedToPayment = () => {
+    setShowVariants(false);
+    setShowPaymentMethods(true);
   };
 
   const handleBuyNow = () => {
@@ -425,7 +446,7 @@ const StickyCheckoutBar = ({
 
             {/* Add to Cart Button - Now expands the panel */}
             <button 
-              onClick={() => setIsExpanded(true)}
+              onClick={handleAddToCartClick}
               className="flex-1 py-2 bg-white border border-gray-300 text-gray-800 rounded-full font-semibold text-sm hover:bg-gray-50 transition-colors shadow-sm"
             >
               Add to Cart
@@ -469,8 +490,18 @@ const StickyCheckoutBar = ({
                 unitPrice={unitPrice}
               />
 
-              {!showPaymentMethods ? (
+              {showVariants ? (
                 <>
+                  {/* Product Variants Section */}
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold mb-3 text-gray-900">Choose your options</h3>
+                    <ProductVariants
+                      productId={product?.id}
+                      onImageSelect={onImageSelect}
+                      onConfigurationChange={() => {}}
+                    />
+                  </div>
+
                   {/* Quantity Controls */}
                   <QuantityControls
                     quantity={quantity}
@@ -482,20 +513,20 @@ const StickyCheckoutBar = ({
                   {/* Action Buttons */}
                   <div className="flex gap-2">
                     <button 
-                      onClick={handleAddToCart}
+                      onClick={handleFinalAddToCart}
                       className="flex-1 bg-white border border-gray-300 text-gray-800 py-2 rounded-full font-semibold text-sm hover:bg-gray-50 transition-colors"
                     >
                       Add to Cart
                     </button>
                     <button 
-                      onClick={handleBuyNow}
+                      onClick={handleProceedToPayment}
                       className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 text-white py-2 rounded-full font-semibold text-sm hover:opacity-90 shadow-lg"
                     >
-                      Checkout
+                      Continue to Payment
                     </button>
                   </div>
                 </>
-              ) : (
+              ) : showPaymentMethods ? (
                 <>
                   {/* Payment Methods */}
                   <div className="space-y-3">
@@ -543,6 +574,31 @@ const StickyCheckoutBar = ({
                   >
                     Continue Payment
                   </button>
+                </>
+              ) : (
+                <>
+                  {/* Default: Quantity Controls and Action Buttons */}
+                  <QuantityControls
+                    quantity={quantity}
+                    stockLeft={stockLeft}
+                    onDecrease={decreaseQuantity}
+                    onIncrease={increaseQuantity}
+                  />
+
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={handleFinalAddToCart}
+                      className="flex-1 bg-white border border-gray-300 text-gray-800 py-2 rounded-full font-semibold text-sm hover:bg-gray-50 transition-colors"
+                    >
+                      Add to Cart
+                    </button>
+                    <button 
+                      onClick={handleBuyNow}
+                      className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 text-white py-2 rounded-full font-semibold text-sm hover:opacity-90 shadow-lg"
+                    >
+                      Checkout
+                    </button>
+                  </div>
                 </>
               )}
             </div>

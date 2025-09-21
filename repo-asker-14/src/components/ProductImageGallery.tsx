@@ -473,6 +473,13 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
           selectedNetwork=""
           selectedCondition=""
           className=""
+          onImageSelect={onVariantImageChange}
+          onConfigurationChange={(configData) => {
+            // Handle configuration change with single parameter
+            if (onVariantChange && configData) {
+              onVariantChange(0, configData);
+            }
+          }}
         />
       )}
     </div>
