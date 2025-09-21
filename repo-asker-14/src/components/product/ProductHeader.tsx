@@ -181,17 +181,29 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
                   placeholder={sellerMode ? "Search seller products..." : "Search products..."}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  onClick={() => {
-                    startLoading();
-                    if (sellerMode && seller) {
-                      // In seller mode, you might want to search within seller's products
-                      navigate(`/seller/${seller.id}/search${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ''}`);
-                    } else {
-                      navigate(`/search${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ''}`);
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && searchQuery.trim()) {
+                      startLoading();
+                      if (sellerMode && seller) {
+                        navigate(`/seller/${seller.id}/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                      } else {
+                        navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                      }
                     }
                   }}
-                  className="w-full px-3 py-1 text-sm font-medium border-2 border-gray-800 rounded-full focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-300 bg-white shadow-sm cursor-pointer"
-                  readOnly
+                  onClick={() => {
+                    // Only redirect if not already on search page
+                    if (!window.location.pathname.includes('/search')) {
+                      startLoading();
+                      if (sellerMode && seller) {
+                        navigate(`/seller/${seller.id}/search${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ''}`);
+                      } else {
+                        navigate(`/search${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ''}`);
+                      }
+                    }
+                  }}
+                  className="w-full px-3 py-1 text-sm font-medium border-2 border-gray-800 rounded-full focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-300 bg-white shadow-sm cursor-text"
+                  readOnly={!window.location.pathname.includes('/search')}
                 />
                 <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-600 font-bold" />
               </div>

@@ -12,6 +12,7 @@ import BookGenreFlashDeals from '@/components/home/BookGenreFlashDeals';
 import VoiceSearchOverlay from '@/components/search/VoiceSearchOverlay';
 import SearchPageSkeleton from '@/components/search/SearchPageSkeleton';
 import RecentlyViewed from '@/components/home/RecentlyViewed';
+import SearchResults from '@/components/search/SearchResults';
 
 const SearchPage = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -19,6 +20,15 @@ const SearchPage = () => {
   const [isVoiceActive, setIsVoiceActive] = useState(false);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [headerHeight, setHeaderHeight] = useState(0);
+  const [showResults, setShowResults] = useState(false);
+  const [sortBy, setSortBy] = useState('relevance');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [filters, setFilters] = useState({
+    priceRange: [0, 1000] as [number, number],
+    categories: [] as string[],
+    ratings: [] as number[],
+    freeShipping: false,
+  });
   const headerRef = useRef<HTMLDivElement>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const [recentSearches, setRecentSearches] = useState([
@@ -95,6 +105,9 @@ const SearchPage = () => {
     const query = searchParams.get('q');
     if (query) {
       setSearchQuery(query);
+      setShowResults(true);
+    } else {
+      setShowResults(false);
     }
 
     // Simulate loading time
@@ -114,7 +127,11 @@ const SearchPage = () => {
         ...prev.filter(s => s !== newSearch)
       ].slice(0, 5));
 
-      navigate(`/search?q=${encodeURIComponent(newSearch)}`);
+      // Update URL with new search query
+      const newUrl = `/search?q=${encodeURIComponent(newSearch)}`;
+      if (window.location.pathname + window.location.search !== newUrl) {
+        navigate(newUrl);
+      }
 
       toast({
         title: "Searching...",
@@ -220,42 +237,79 @@ const SearchPage = () => {
         className="relative transition-all duration-300 ease-in-out"
       >
         <div className="space-y-6">
-          <SpaceSavingCategories
-            onCategorySelect={handleCategorySelect}
-            showHeader={true}
-            headerTitle="Shop by Category"
-            headerSubtitle="Browse popular categories"
-            headerIcon={Grid}
-            headerViewAllLink="/categories"
-            headerViewAllText="View All"
-            headerTitleTransform="uppercase"
-          />
+          {showResults ? (
+            <div className="px-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-medium">
+                  Search results for "{searchQuery}"
+                </h2>
+                <div className="flex items-center gap-2">
+                  <select 
+                    value={sortBy} 
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="text-sm border rounded px-2 py-1"
+                  >
+                    <option value="relevance">Relevance</option>
+                    <option value="popular">Most Popular</option>
+                    <option value="newest">Newest</option>
+                    <option value="price_low">Price: Low to High</option>
+                    <option value="price_high">Price: High to Low</option>
+                    <option value="rating">Highest Rated</option>
+                  </select>
+                  <button
+                    onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                    className="p-1 border rounded"
+                  >
+                    {viewMode === 'grid' ? '☰' : '⊞'}
+                  </button>
+                </div>
+              </div>
+              <SearchResults 
+                viewMode={viewMode}
+                sortBy={sortBy}
+                filters={filters}
+              />
+            </div>
+          ) : (
+            <>
+              <SpaceSavingCategories
+                onCategorySelect={handleCategorySelect}
+                showHeader={true}
+                headerTitle="Shop by Category"
+                headerSubtitle="Browse popular categories"
+                headerIcon={Grid}
+                headerViewAllLink="/categories"
+                headerViewAllText="View All"
+                headerTitleTransform="uppercase"
+              />
 
-          <RecentlyViewed 
-            showHeader={true}
-            headerTitle="Recently Viewed"
-            headerIcon={Clock}
-            headerViewAllLink="/recently-viewed"
-            headerViewAllText="View All"
-            headerTitleTransform="uppercase"
-            showClearButton={true}
-            clearButtonText="× Clear"
-            onClearClick={() => toast({ title: "Cleared", description: "Recently viewed items cleared" })}
-          />
+              <RecentlyViewed 
+                showHeader={true}
+                headerTitle="Recently Viewed"
+                headerIcon={Clock}
+                headerViewAllLink="/recently-viewed"
+                headerViewAllText="View All"
+                headerTitleTransform="uppercase"
+                showClearButton={true}
+                clearButtonText="× Clear"
+                onClearClick={() => toast({ title: "Cleared", description: "Recently viewed items cleared" })}
+              />
 
-          <TopVendorsCompact/>
+              <TopVendorsCompact/>
 
-          <SearchRecent
-            searches={recentSearches}
-            onSearchSelect={handleRecentSearchSelect}
-            onRemoveSearch={handleRemoveRecentSearch}
-            onClearAll={handleClearAllRecent}
-            headerTitleTransform="uppercase"
-          />
+              <SearchRecent
+                searches={recentSearches}
+                onSearchSelect={handleRecentSearchSelect}
+                onRemoveSearch={handleRemoveRecentSearch}
+                onClearAll={handleClearAllRecent}
+                headerTitleTransform="uppercase"
+              />
 
-          <PopularSearches />
+              <PopularSearches />
 
-          <BookGenreFlashDeals />
+              <BookGenreFlashDeals />
+            </>
+          )}
         </div>
 
         <VoiceSearchOverlay
