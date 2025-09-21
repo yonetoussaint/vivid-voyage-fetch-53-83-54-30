@@ -239,7 +239,7 @@ const StickyCheckoutBar = ({
     } else {
       document.body.style.overflow = 'unset';
     }
-    
+
     return () => {
       document.body.style.overflow = 'unset';
     };
@@ -253,7 +253,7 @@ const StickyCheckoutBar = ({
   // Use current stock from selected variant or product inventory
   const stockLeft = currentStock !== null ? currentStock : (product?.inventory || 0);
 
-  
+
 
   // Price calculations using shared currency context
   const basePrice = currentPrice || (() => {
@@ -279,7 +279,7 @@ const StickyCheckoutBar = ({
       setIsExpanded(false);
       return;
     }
-    
+
     // Show variants panel when Add to Cart is clicked
     setIsExpanded(true);
     setShowVariants(true);
@@ -440,7 +440,7 @@ const StickyCheckoutBar = ({
         {/* Expanded Panel */}
         {isExpanded && (
           <div 
-            className="bg-white rounded-t-2xl shadow-2xl max-h-[80vh] flex flex-col"
+            className="bg-white rounded-t-2xl shadow-2xl h-[80vh] flex flex-col"
             style={{ 
               boxShadow: '0 -10px 25px -5px rgba(0, 0, 0, 0.1)'
             }}
@@ -451,75 +451,79 @@ const StickyCheckoutBar = ({
             </div>
 
             {/* Scrollable Content Area */}
-            <div className="flex-1 overflow-y-auto px-4">
-              <div className="space-y-4 pb-4">
-                {/* Product Info */}
-                <ProductInfo
-                  product={product}
-                  selectedColor={selectedColor}
-                  selectedStorage={selectedStorage}
-                  selectedNetwork={selectedNetwork}
-                  selectedCondition={selectedCondition}
-                  selectedColorImage={selectedColorImage}
-                  quantity={quantity}
-                  currencySymbol={currencies[currentCurrency]}
-                  formatPrice={formatPrice}
-                  unitPrice={unitPrice}
-                />
+            <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+              <div className="flex-1 overflow-y-auto px-4">
+                <div className="space-y-4 pb-4">
+                  {/* Product Info */}
+                  <ProductInfo
+                    product={product}
+                    selectedColor={selectedColor}
+                    selectedStorage={selectedStorage}
+                    selectedNetwork={selectedNetwork}
+                    selectedCondition={selectedCondition}
+                    selectedColorImage={selectedColorImage}
+                    quantity={quantity}
+                    currencySymbol={currencies[currentCurrency]}
+                    formatPrice={formatPrice}
+                    unitPrice={unitPrice}
+                  />
 
-                {showVariants ? (
-                  <>
-                    {/* Product Variants Section */}
-                    <div>
-                      <h3 className="text-lg font-semibold mb-3 text-gray-900">Choose your options</h3>
-                      <ProductVariants
-                        productId={product?.id}
-                        onImageSelect={onImageSelect}
-                        onConfigurationChange={() => {}}
-                      />
-                    </div>
-                  </>
-                ) : showPaymentMethods ? (
-                  <>
-                    {/* Payment Methods */}
-                    <div className="space-y-3">
-                      <PaymentMethod
-                        method="wallet"
-                        isSelected={selectedPaymentMethod === 'wallet'}
-                        onSelect={setSelectedPaymentMethod}
-                        icon={
-                          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                          </svg>
-                        }
-                        title="Pay with Wallet"
-                        description="Use your digital wallet"
-                        borderColor="blue"
-                      />
-
-                      <PaymentMethod
-                        method="moncash"
-                        isSelected={selectedPaymentMethod === 'moncash'}
-                        onSelect={setSelectedPaymentMethod}
-                        icon={
-                          <img 
-                            src="/lovable-uploads/26276fb9-2443-4215-a6ae-d1d16e6c2f92.png" 
-                            alt="MonCash" 
-                            className="w-full h-full object-cover"
+                  {showVariants ? (
+                    <>
+                      {/* Product Variants Section */}
+                      <div>
+                        <h3 className="text-lg font-semibold mb-3 text-gray-900">Choose your options</h3>
+                        <div className="overflow-hidden">
+                          <ProductVariants
+                            productId={product?.id}
+                            onImageSelect={onImageSelect}
+                            onConfigurationChange={() => {}}
                           />
-                        }
-                        title="Pay with Moncash"
-                        description="Mobile money payment"
-                        borderColor="orange"
-                      />
-                    </div>
-                  </>
-                ) : null}
+                        </div>
+                      </div>
+                    </>
+                  ) : showPaymentMethods ? (
+                    <>
+                      {/* Payment Methods */}
+                      <div className="space-y-3">
+                        <PaymentMethod
+                          method="wallet"
+                          isSelected={selectedPaymentMethod === 'wallet'}
+                          onSelect={setSelectedPaymentMethod}
+                          icon={
+                            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                            </svg>
+                          }
+                          title="Pay with Wallet"
+                          description="Use your digital wallet"
+                          borderColor="blue"
+                        />
+
+                        <PaymentMethod
+                          method="moncash"
+                          isSelected={selectedPaymentMethod === 'moncash'}
+                          onSelect={setSelectedPaymentMethod}
+                          icon={
+                            <img 
+                              src="/lovable-uploads/26276fb9-2443-4215-a6ae-d1d16e6c2f92.png" 
+                              alt="MonCash" 
+                              className="w-full h-full object-cover"
+                            />
+                          }
+                          title="Pay with Moncash"
+                          description="Mobile money payment"
+                          borderColor="orange"
+                        />
+                      </div>
+                    </>
+                  ) : null}
+                </div>
               </div>
             </div>
 
             {/* Fixed Bottom Action Buttons */}
-            <div className="flex-shrink-0 px-4 pb-4">
+            <div className="flex-shrink-0 px-4 pb-4 border-t bg-white">
               {showVariants ? (
                 <div className="flex gap-2">
                   <button 
