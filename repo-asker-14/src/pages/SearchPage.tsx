@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ScanLine, Grid, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -54,63 +54,45 @@ const SearchPage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Calculate header height with ResizeObserver for better accuracy
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-    
+  // Dynamic header height calculation - no fallbacks, handles all header types
+  useLayoutEffect(() => {
     const updateHeight = () => {
-      // Debounce rapid updates
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        if (headerRef.current) {
-          const height = headerRef.current.offsetHeight;
-          console.log('Header height calculated:', height);
-          // Only update if the height actually changed to prevent unnecessary re-renders
-          setHeaderHeight(prevHeight => prevHeight !== height ? height : prevHeight);
-        }
-      }, 50);
+      if (headerRef.current) {
+        const height = headerRef.current.getBoundingClientRect().height;
+        console.log('Header height dynamically calculated:', height);
+        setHeaderHeight(height);
+        // Use consistent CSS variable name for all components
+        document.documentElement.style.setProperty('--header-height', `${height}px`);
+      }
     };
 
-    // Initial measurement with a slight delay to ensure DOM is ready
-    const initialTimeout = setTimeout(updateHeight, 100);
+    // Initial measurement using useLayoutEffect to prevent layout shift
+    updateHeight();
 
-    // Use ResizeObserver to track changes in header size
+    // Use ResizeObserver for real-time updates
     if (headerRef.current) {
-      resizeObserverRef.current = new ResizeObserver(updateHeight);
+      resizeObserverRef.current = new ResizeObserver((entries) => {
+        for (let entry of entries) {
+          const height = entry.contentRect.height;
+          console.log('Header height updated via ResizeObserver:', height);
+          setHeaderHeight(height);
+          document.documentElement.style.setProperty('--header-height', `${height}px`);
+        }
+      });
       resizeObserverRef.current.observe(headerRef.current);
     }
 
-    // Also update on window resize to catch any layout changes
-    const debouncedResize = () => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(updateHeight, 150);
-    };
-    
-    window.addEventListener('resize', debouncedResize);
+    // Also listen for window resize as backup
+    window.addEventListener('resize', updateHeight);
 
     return () => {
-      clearTimeout(initialTimeout);
-      clearTimeout(timeoutId);
       if (resizeObserverRef.current) {
         resizeObserverRef.current.disconnect();
       }
-      window.removeEventListener('resize', debouncedResize);
+      window.removeEventListener('resize', updateHeight);
     };
   }, []);
 
-  // Additional check after content loads
-  useEffect(() => {
-    if (!isLoading) {
-      // Small delay to ensure DOM is fully rendered
-      const timer = setTimeout(() => {
-        if (headerRef.current) {
-          const height = headerRef.current.offsetHeight;
-          setHeaderHeight(height);
-        }
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading]);
 
   useEffect(() => {
     const query = searchParams.get('q');
@@ -296,7 +278,7 @@ const SearchPage = () => {
       {showSuggestions && isSearchFocused && (
         <div 
           className="fixed left-0 right-0 bg-white shadow-lg border-t z-20"
-          style={{ top: `${Math.max(headerHeight, 60)}px` }}
+          style={{ top: `${headerHeight}px` }}
         >
           <div className="max-w-md mx-auto">
             <SearchSuggestions
@@ -374,8 +356,8 @@ const SearchPage = () => {
       {/* Content with proper top spacing to account for fixed header */}
       <div 
         style={{ 
-          paddingTop: `${Math.max(headerHeight, 60)}px`,
-          minHeight: `calc(100vh - ${Math.max(headerHeight, 60)}px)`
+          paddingTop: `${headerHeight}px`,
+          minHeight: `calc(100vh - ${headerHeight}px)`
         }} 
         className="relative transition-all duration-300 ease-in-out"
       >
