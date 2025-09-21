@@ -49,6 +49,11 @@ const SearchPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // Calculate header height with ResizeObserver for better accuracy
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
