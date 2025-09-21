@@ -254,7 +254,7 @@ export default function ProfilePage() {
       <div className="px-4 pb-20">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsContent value="dashboard" className="mt-0">
-            <ProfileDashboard user={user} profile={profileData} />
+            <ProfileDashboard user={user} profile={profileData} viewMode={viewMode} />
           </TabsContent>
           
           {viewMode === "buyer" && (
