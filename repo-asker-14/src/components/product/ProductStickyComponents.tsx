@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import StickyCheckoutBar from '@/components/product/StickyCheckoutBar';
 import SocialSharePanel from "@/components/product/SocialSharePanel";
 
@@ -17,12 +18,19 @@ const ProductStickyComponents: React.FC<ProductStickyComponentsProps> = ({
   setSharePanelOpen,
   hideCheckoutBar = false // Default value for the new prop
 }) => {
+  const navigate = useNavigate();
+
+  const handleViewCart = () => {
+    console.log('🛒 Navigating to cart page from ProductStickyComponents');
+    navigate('/cart');
+  };
   return (
     <>
       {!hideCheckoutBar && (
         <StickyCheckoutBar 
           product={product}
           onBuyNow={onBuyNow}
+          onViewCart={handleViewCart}
           selectedColor=""
           selectedStorage=""
           selectedNetwork=""

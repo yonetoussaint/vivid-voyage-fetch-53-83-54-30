@@ -1,7 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Edit, Truck, Tag, ChevronDown, Plus, Minus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Edit, Truck, Tag, Plus, Minus, ChevronLeft, ChevronRight, ShoppingCart } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import ProductHeader from '@/components/product/ProductHeader';
 
-export default function ShoppingCart() {
+export default function CartPage() {
+  const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([
     {
       id: 1,
@@ -88,8 +91,34 @@ export default function ShoppingCart() {
     );
   };
 
+  const handleBackClick = () => {
+    navigate(-1); // Go back to previous page
+  };
+
+  const cartActionButtons = [
+    {
+      Icon: ShoppingCart,
+      count: cartItems.length,
+      active: true,
+      activeColor: "#f97316", // Orange color to match the cart theme
+      onClick: () => {
+        // Already on cart page, could scroll to top or show cart summary
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+  ];
+
   return (
     <div className="max-w-sm mx-auto bg-white min-h-screen flex flex-col">
+      {/* Cart Header */}
+      <ProductHeader
+        forceScrolledState={true}
+        showCloseIcon={true}
+        onCloseClick={handleBackClick}
+        actionButtons={cartActionButtons}
+        stickyMode={true}
+      />
+      
       {/* Pickup Station */}
       <div className="bg-white px-4 py-2 border-b border-gray-100">
         <div className="flex items-center justify-between text-xs">

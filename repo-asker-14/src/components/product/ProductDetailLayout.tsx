@@ -203,7 +203,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
         onBuyNow={buyNow}
         sharePanelOpen={state.sharePanelOpen}
         setSharePanelOpen={state.setSharePanelOpen}
-        hideCheckoutBar={true} // Hide checkout bar since it's now in overview tab
+        hideCheckoutBar={false} // Enable checkout bar for cart functionality
       />
     </div>
   );
