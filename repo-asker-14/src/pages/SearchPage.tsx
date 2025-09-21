@@ -54,59 +54,79 @@ const SearchPage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Dynamic header height calculation for SearchPage
+  // Header height calculation for positioning elements
   useLayoutEffect(() => {
     const updateHeight = () => {
       if (headerRef.current) {
-        // For sticky elements, use offsetHeight instead of getBoundingClientRect
         const height = headerRef.current.offsetHeight;
-        console.log('Header height calculated (sticky):', height);
-        
+        console.log('🔍 Attempting to measure header height:', height);
+
         if (height > 0) {
+          console.log('✅ Setting header height to:', height);
           setHeaderHeight(height);
-          document.documentElement.style.setProperty('--header-height', `${height}px`);
+        } else {
+          console.log('❌ Header height is 0 or invalid');
         }
+      } else {
+        console.log('❌ Header ref not available');
       }
     };
 
-    // Multiple measurement attempts for reliability
-    const measureWithDelay = () => {
-      updateHeight(); // Immediate
-      setTimeout(updateHeight, 10); // Short delay
-      setTimeout(updateHeight, 100); // Medium delay
-      requestAnimationFrame(updateHeight); // Next frame
+    // Force multiple measurement attempts to ensure we catch it
+    const measureMultipleTimes = () => {
+      updateHeight();
+
+      // Immediate next frame
+      requestAnimationFrame(updateHeight);
+
+      // Small delays to catch late renders
+      setTimeout(updateHeight, 0);
+      setTimeout(updateHeight, 10);
+      setTimeout(updateHeight, 50);
+      setTimeout(updateHeight, 100);
     };
 
-    measureWithDelay();
+    measureMultipleTimes();
 
-    // Use ResizeObserver for real-time updates
+    // Use ResizeObserver for ongoing updates
     if (headerRef.current) {
       resizeObserverRef.current = new ResizeObserver((entries) => {
         for (let entry of entries) {
-          // Use contentRect height for ResizeObserver
           const height = entry.contentRect.height;
-          console.log('Header height updated via ResizeObserver:', height);
-          
-          if (height > 0) {
+          console.log('📐 ResizeObserver detected height change:', height);
+
+          if (height > 0 && height !== headerHeight) {
+            console.log('🔄 Updating height via ResizeObserver:', height);
             setHeaderHeight(height);
-            document.documentElement.style.setProperty('--header-height', `${height}px`);
           }
         }
       });
       resizeObserverRef.current.observe(headerRef.current);
     }
 
-    // Window resize backup
-    window.addEventListener('resize', updateHeight);
-
     return () => {
       if (resizeObserverRef.current) {
         resizeObserverRef.current.disconnect();
       }
-      window.removeEventListener('resize', updateHeight);
     };
-  }, []);
+  }, [isLoading]); // Depend on loading state
 
+  // Force recalculation after everything has loaded
+  useLayoutEffect(() => {
+    if (!isLoading && headerRef.current) {
+      console.log('🚀 Post-loading height measurement attempt');
+      const height = headerRef.current.offsetHeight;
+      console.log('🚀 Post-loading height:', height);
+      if (height > 0) {
+        setHeaderHeight(height);
+      }
+    }
+  }, [isLoading]);
+
+  // Debug effect to track when headerHeight changes
+  useEffect(() => {
+    console.log('🎯 Header height state changed to:', headerHeight);
+  }, [headerHeight]);
 
   useEffect(() => {
     const query = searchParams.get('q');
@@ -130,12 +150,12 @@ const SearchPage = () => {
   useEffect(() => {
     if (searchQuery.trim() && isSearchFocused && !showResults) {
       setIsLiveSearching(true);
-      
+
       // Clear previous timeout
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
       }
-      
+
       // Debounce search
       searchTimeoutRef.current = setTimeout(() => {
         // Mock live search results
@@ -149,7 +169,7 @@ const SearchPage = () => {
           reviews: Math.floor(Math.random() * 1000) + 10,
           freeShipping: Math.random() > 0.3,
         }));
-        
+
         setLiveSearchResults(mockResults);
         setIsLiveSearching(false);
         setShowSuggestions(true);
@@ -273,10 +293,12 @@ const SearchPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
-      <div ref={headerRef}>
+      {/* Fixed Header - back to fixed positioning for reliability */}
+      <div ref={headerRef} className="fixed top-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-sm">
         <ProductHeader 
           forceScrolledState={true} 
           actionButtons={searchActionButtons}
+          inPanel={true}  // Make header relative within fixed wrapper
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           onSearchFocus={() => setIsSearchFocused(true)}
@@ -288,10 +310,13 @@ const SearchPage = () => {
         />
       </div>
 
-      {/* Search Suggestions Overlay */}
+      {/* Search Suggestions Overlay - positioned below sticky header */}
       {showSuggestions && isSearchFocused && (
         <div 
           className="absolute left-0 right-0 bg-white shadow-lg border-t z-20"
+          style={{ 
+            top: headerHeight !== null ? `${headerHeight}px` : '60px' // Use fallback only for overlay positioning
+          }}
         >
           <div className="max-w-md mx-auto">
             <SearchSuggestions
@@ -307,7 +332,7 @@ const SearchPage = () => {
                 setShowSuggestions(false);
               }}
             />
-            
+
             {/* Live Search Results */}
             {(liveSearchResults.length > 0 || isLiveSearching) && (
               <div className="border-t bg-gray-50 p-4">
@@ -366,12 +391,14 @@ const SearchPage = () => {
         </div>
       )}
 
-      {/* Content area */}
+      {/* Main Content Area - Dynamic padding based on actual header height */}
       <div 
         className="relative"
         style={{
-          paddingTop: headerHeight ? `${headerHeight}px` : undefined
+          paddingTop: headerHeight !== null ? `${headerHeight}px` : '0px', // No padding until we have real height
+          minHeight: '100vh' // Ensure content takes full height
         }}
+        onLoad={() => console.log('📱 Content rendered with header height:', headerHeight)}
       >
         <div className="space-y-6">
           {showResults ? (
