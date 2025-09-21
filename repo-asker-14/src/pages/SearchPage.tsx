@@ -20,7 +20,7 @@ const SearchPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isVoiceActive, setIsVoiceActive] = useState(false);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
-  const [headerHeight, setHeaderHeight] = useState(0);
+  const [headerHeight, setHeaderHeight] = useState<number | null>(null);
   const [showResults, setShowResults] = useState(false);
   const [sortBy, setSortBy] = useState('relevance');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -58,34 +58,48 @@ const SearchPage = () => {
   useLayoutEffect(() => {
     const updateHeight = () => {
       if (headerRef.current) {
-        const height = headerRef.current.getBoundingClientRect().height;
-        console.log('Header height dynamically calculated:', height);
-        setHeaderHeight(height);
-        document.documentElement.style.setProperty('--header-height', `${height}px`);
+        // For sticky elements, use offsetHeight instead of getBoundingClientRect
+        const height = headerRef.current.offsetHeight;
+        console.log('Header height calculated (sticky):', height);
+        
+        if (height > 0) {
+          setHeaderHeight(height);
+          document.documentElement.style.setProperty('--header-height', `${height}px`);
+        }
       }
     };
 
-    // Use a small delay to ensure DOM is fully rendered
-    const timeoutId = setTimeout(updateHeight, 50);
+    // Multiple measurement attempts for reliability
+    const measureWithDelay = () => {
+      updateHeight(); // Immediate
+      setTimeout(updateHeight, 10); // Short delay
+      setTimeout(updateHeight, 100); // Medium delay
+      requestAnimationFrame(updateHeight); // Next frame
+    };
+
+    measureWithDelay();
 
     // Use ResizeObserver for real-time updates
     if (headerRef.current) {
       resizeObserverRef.current = new ResizeObserver((entries) => {
         for (let entry of entries) {
+          // Use contentRect height for ResizeObserver
           const height = entry.contentRect.height;
           console.log('Header height updated via ResizeObserver:', height);
-          setHeaderHeight(height);
-          document.documentElement.style.setProperty('--header-height', `${height}px`);
+          
+          if (height > 0) {
+            setHeaderHeight(height);
+            document.documentElement.style.setProperty('--header-height', `${height}px`);
+          }
         }
       });
       resizeObserverRef.current.observe(headerRef.current);
     }
 
-    // Also listen for window resize as backup
+    // Window resize backup
     window.addEventListener('resize', updateHeight);
 
     return () => {
-      clearTimeout(timeoutId);
       if (resizeObserverRef.current) {
         resizeObserverRef.current.disconnect();
       }
@@ -353,7 +367,11 @@ const SearchPage = () => {
       )}
 
       {/* Content area */}
-      <div className="relative"
+      <div 
+        className="relative"
+        style={{
+          paddingTop: headerHeight ? `${headerHeight}px` : undefined
+        }}
       >
         <div className="space-y-6">
           {showResults ? (
