@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from 'react-i18next';
 import { fetchAllProducts } from "@/integrations/supabase/products";
+import AliExpressHeader from '@/components/home/AliExpressHeader';
 
 import { PageContainer } from "@/components/layout/PageContainer";
 import SuperDealsSection from "@/components/home/SuperDealsSection";
@@ -220,10 +221,14 @@ export default function HomeLivingPage() {
   }
 
   return (
-    <PageContainer className="overflow-hidden pb-16 relative">
-      {/* Hero Banner - shown once at the top */}
-      <HomeHeroBanner />
-      <HomeSubcategories />
+    <div className="max-w-screen overflow-hidden pb-16 relative">
+      {/* Header with the correct active tab */}
+      <AliExpressHeader activeTabId="home" />
+      
+      <PageContainer className="overflow-hidden pb-16 relative">
+        {/* Hero Banner - shown once at the top */}
+        <HomeHeroBanner />
+        <HomeSubcategories />
       
 
       {/* Endless feed content */}
@@ -239,11 +244,12 @@ export default function HomeLivingPage() {
       </div>
 
       {/* Product Semi Panel */}
-      <ProductSemiPanel
-        productId={selectedProductId}
-        isOpen={isPanelOpen}
-        onClose={handlePanelClose}
-      />
-    </PageContainer>
+        <ProductSemiPanel
+          productId={selectedProductId}
+          isOpen={isPanelOpen}
+          onClose={handlePanelClose}
+        />
+      </PageContainer>
+    </div>
   );
 }

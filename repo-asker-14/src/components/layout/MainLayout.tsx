@@ -125,7 +125,14 @@ export default function MainLayout() {
           pathname === '/friends' || 
           pathname === '/shopping' || 
           pathname === '/settings' ||
-          pathname === '/wallet'
+          pathname === '/wallet' ||
+          pathname === '/categories/electronics' ||
+          pathname === '/categories/home-living' ||
+          pathname === '/categories/fashion' ||
+          pathname === '/categories/entertainment' ||
+          pathname === '/categories/kids-hobbies' ||
+          pathname === '/categories/sports-outdoors' ||
+          pathname === '/categories/automotive'
         ) && (
 <div className=" z-30">
           <IndexBottomNav />
