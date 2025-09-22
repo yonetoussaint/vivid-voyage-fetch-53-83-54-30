@@ -139,25 +139,24 @@ export default function FlashDeals({ productType }: FlashDealsProps) {
   return (
     <>
       <div className="w-full bg-white">
-        {/* Header Row with Gradient Background - Flash Deals Specific */}
+        {/* Header Row with Gradient Background */}
         <div className="bg-gradient-to-r from-orange-400 via-orange-500 to-red-500 text-white">
           <SectionHeader
             title="SPECIAL CATEGORIES"
             icon={Zap}
             viewAllLink="/search?category=flash-deals"
             viewAllText="View All"
-            // Don't show tabs in SectionHeader for this case
             showTabs={false}
           />
         </div>
 
-        {/* Tabs Navigation - Outside gradient, on white background */}
+        {/* Tabs Navigation */}
         <div className="bg-white">
           <TabsNavigation
             tabs={tabs}
             activeTab={activeTab}
             onTabChange={setActiveTab}
-            className="-mx-2"
+            edgeToEdge={true}
             style={{ backgroundColor: 'white' }}
           />
         </div>
