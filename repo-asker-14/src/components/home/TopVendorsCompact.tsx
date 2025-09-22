@@ -114,6 +114,11 @@ const VendorCard = ({ vendor, onProductClick }) => {
     onProductClick(productId);
   };
 
+  const handleSellerClick = () => {
+    if (!vendor?.id) return;
+    navigate(`/seller/${vendor.id}`);
+  };
+
   return (
     <div className="w-full">
       <div className="bg-white rounded-2xl border border-gray-300 overflow-hidden hover:border-gray-400 transition-all duration-300">
@@ -200,7 +205,10 @@ const VendorCard = ({ vendor, onProductClick }) => {
 
         {/* Action Buttons */}  
         <div className="px-2 pb-2 grid grid-cols-2 gap-2">  
-          <button className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white text-xs font-medium py-1.5 px-2 rounded-full transition-colors">  
+          <button 
+            className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white text-xs font-medium py-1.5 px-2 rounded-full transition-colors"
+            onClick={handleSellerClick}
+          >  
             Visit Store  
           </button>  
           <button   
