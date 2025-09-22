@@ -151,7 +151,7 @@ const SellerSemiPanel: React.FC<SellerSemiPanelProps> = ({
         {/* Seller Header - with scroll-based behavior */}
         <div 
           ref={headerRef} 
-          className="absolute top-0 left-0 right-0 z-50"
+          className="relative w-full z-10 flex-shrink-0"
         >
           <SellerHeader 
             inPanel={true} // Enable panel behavior
