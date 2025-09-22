@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useScrollProgress } from '@/hooks/useScrollProgress';
 import { Home, Search, ShoppingBag, Tv, Sofa, ShoppingCart, Car, Gamepad2 } from 'lucide-react';
 import HeaderSearchBar from './header/HeaderSearchBar';
@@ -90,7 +90,7 @@ export default function AliExpressHeader({ activeTabId = 'recommendations' }: Al
   // Determine if we should show icons only in the tabs
   const showIconsOnly = !isForYouPage;
 
-  const categories = [
+  const categories = useMemo(() => [
     { id: 'recommendations', name: t('forYou', { ns: 'home' }), icon: <Home className="h-3 w-3" />, path: '/for-you' },
     { id: 'electronics', name: t('electronics', { ns: 'categories' }), icon: <Tv className="h-3 w-3" />, path: '/categories/electronics' },
     { id: 'home', name: t('homeLiving', { ns: 'categories' }), icon: <Sofa className="h-3 w-3" />, path: '/categories/home-living' },
@@ -99,7 +99,7 @@ export default function AliExpressHeader({ activeTabId = 'recommendations' }: Al
     { id: 'kids', name: t('kidsHobbies', { ns: 'categories' }), icon: <ShoppingCart className="h-3 w-3" />, path: '/categories/kids-hobbies' },
     { id: 'sports', name: t('sports', { ns: 'categories' }), icon: <ShoppingBag className="h-3 w-3" />, path: '/categories/sports-outdoors' },
     { id: 'automotive', name: t('automotive', { ns: 'categories' }), icon: <Car className="h-3 w-3" />, path: '/categories/automotive' },
-  ];
+  ], [t]);
 
   const currentCategories = categories;
 
@@ -111,7 +111,7 @@ export default function AliExpressHeader({ activeTabId = 'recommendations' }: Al
     } else if (location.pathname === '/' || location.pathname === '/for-you') {
       setActiveTab('recommendations');
     }
-  }, [activeTabId, location.pathname, currentCategories, homepageType]);
+  }, [activeTabId, location.pathname, currentCategories]);
 
   // Cycle through popular searches
   useEffect(() => {
