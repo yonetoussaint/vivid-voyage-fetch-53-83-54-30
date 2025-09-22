@@ -22,6 +22,7 @@ import ProductSemiPanel from "@/components/home/ProductSemiPanel";
 import NewArrivals from "@/components/home/NewArrivals";
 import NewArrivalsSection from "@/components/home/NewArrivalsSection";
 import HeroBanner from "@/components/home/HeroBanner";
+import BookGenreFlashDeals from "@/components/home/BookGenreFlashDeals";
 
 import { 
   Smartphone, 
@@ -228,6 +229,11 @@ export default function ForYou() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         )}
+      </div>
+
+      {/* Book Genre Flash Deals - Final component */}
+      <div className="mt-4">
+        <BookGenreFlashDeals />
       </div>
 
       {/* Product Semi Panel */}
