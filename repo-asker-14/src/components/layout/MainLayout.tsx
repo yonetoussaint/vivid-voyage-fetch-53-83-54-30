@@ -118,6 +118,7 @@ export default function MainLayout() {
           pathname === '/messages' || 
           pathname === '/more-menu' || 
           pathname === '/profile' || 
+          pathname.startsWith('/profile/') ||
           pathname === '/videos' || 
           pathname === '/notifications' || 
           pathname === '/bookmarks' || 
