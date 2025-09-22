@@ -158,9 +158,9 @@ export default function BookGenreFlashDeals({
       
       // Add products chunk
       elements.push(
-        <div key={`products-${i}`} className="grid grid-cols-2 gap-3">
+        <div key={`products-${i}`} className="grid grid-cols-2 gap-4 mb-2">
           {chunk.map((product) => (
-            <div key={product.id} className="space-y-2">
+            <div key={product.id} className="space-y-2 p-2 bg-white rounded-lg border border-gray-100 hover:shadow-sm transition-shadow">
               <Link 
                 to={`/product/${product.id}`}
                 onClick={() => trackProductView(product.id)}
@@ -225,8 +225,18 @@ export default function BookGenreFlashDeals({
       // Add reels after each chunk (except the last one if it's incomplete)
       if (i + chunkSize < productsToShow.length) {
         elements.push(
-          <div key={`reels-${i}`} className="my-4">
+          <div key={`separator-${i}`} className="my-6">
+            <div className="w-full h-px bg-gray-200"></div>
+          </div>
+        );
+        elements.push(
+          <div key={`reels-${i}`} className="mb-6">
             <MobileOptimizedReels />
+          </div>
+        );
+        elements.push(
+          <div key={`separator-after-${i}`} className="mb-4">
+            <div className="w-full h-px bg-gray-200"></div>
           </div>
         );
       }
@@ -293,7 +303,7 @@ export default function BookGenreFlashDeals({
             ))}
           </div>
         ) : processedProducts.length > 0 ? (
-          <div className="space-y-0">
+          <div className="space-y-4 pb-4">
             {createProductsWithReels()}
           </div>
         ) : (
