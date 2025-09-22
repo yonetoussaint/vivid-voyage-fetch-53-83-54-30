@@ -11,10 +11,10 @@ import HeaderLogoToggle from './header/HeaderLogoToggle';
 import HomepageDropdown from './header/HomepageDropdown';
 import { useAuthOverlay } from '@/context/AuthOverlayContext';
 import { useLanguageSwitcher } from '@/hooks/useLanguageSwitcher';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useHomepage } from '@/context/HomepageContext';
-import { BookOpen, Heart, Users, TrendingUp, Sparkles, GraduationCap, Briefcase } from 'lucide-react';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 interface AliExpressHeaderProps {
   activeTabId?: string;
@@ -23,9 +23,11 @@ interface AliExpressHeaderProps {
 export default function AliExpressHeader({ activeTabId = 'recommendations' }: AliExpressHeaderProps) {
   const { progress } = useScrollProgress();
   const { currentLanguage } = useLanguageSwitcher();
-  const { homepageType } = useHomepage();
   const { t } = useTranslation();
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const homepageType = 'marketplace'; // Fixed to marketplace
 
   const HeaderLocation = () => (
     <select className="text-xs border rounded px-2 py-1 bg-white">
@@ -99,18 +101,7 @@ export default function AliExpressHeader({ activeTabId = 'recommendations' }: Al
     { id: 'automotive', name: t('automotive', { ns: 'categories' }), icon: <Car className="h-3 w-3" />, path: '/categories/automotive' },
   ];
 
-  const bookCategories = [
-    { id: 'foryou', name: 'For You', icon: <Home className="h-3 w-3" />, path: '/for-you' },
-    { id: 'fiction', name: 'Fiction', icon: <BookOpen className="h-3 w-3" />, path: '/books/fiction' },
-    { id: 'non-fiction', name: 'Non-Fiction', icon: <GraduationCap className="h-3 w-3" />, path: '/books/non-fiction' },
-    { id: 'self-help', name: 'Self-Help', icon: <Users className="h-3 w-3" />, path: '/books/self-help' },
-    { id: 'business', name: 'Business', icon: <Briefcase className="h-3 w-3" />, path: '/books/business' },
-    { id: 'romance', name: 'Romance', icon: <Heart className="h-3 w-3" />, path: '/books/romance' },
-    { id: 'fantasy', name: 'Fantasy', icon: <Sparkles className="h-3 w-3" />, path: '/books/fantasy' },
-    { id: 'bestsellers', name: 'Bestsellers', icon: <TrendingUp className="h-3 w-3" />, path: '/books/bestsellers' },
-  ];
-
-  const currentCategories = homepageType === 'books' ? bookCategories : categories;
+  const currentCategories = categories;
 
   // Update active tab when prop changes or route changes
   useEffect(() => {
@@ -118,7 +109,7 @@ export default function AliExpressHeader({ activeTabId = 'recommendations' }: Al
     if (currentCategory) {
       setActiveTab(currentCategory.id);
     } else if (location.pathname === '/' || location.pathname === '/for-you') {
-      setActiveTab(homepageType === 'books' ? 'foryou' : 'recommendations');
+      setActiveTab('recommendations');
     }
   }, [activeTabId, location.pathname, currentCategories, homepageType]);
 
@@ -194,9 +185,28 @@ export default function AliExpressHeader({ activeTabId = 'recommendations' }: Al
             {/* Spacer */}
             <div className="flex-1"></div>
 
-            {/* Right: Homepage Dropdown */}
+            {/* Right: Profile Picture */}
             <div className="flex items-center">
-              <HomepageDropdown />
+              {user ? (
+                <button
+                  onClick={() => navigate('/seller-dashboard/overview')}
+                  className="hover:ring-2 hover:ring-blue-500 hover:ring-offset-1 transition-all duration-200 rounded-full"
+                >
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.email}`} alt="Profile" />
+                    <AvatarFallback className="text-xs font-medium bg-gray-200 text-gray-700">
+                      {user.email?.slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
+              ) : (
+                <button
+                  onClick={() => navigate('/auth')}
+                  className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300 transition-colors"
+                >
+                  <span className="text-xs font-medium text-gray-600">?</span>
+                </button>
+              )}
             </div>
           </>
         )}
