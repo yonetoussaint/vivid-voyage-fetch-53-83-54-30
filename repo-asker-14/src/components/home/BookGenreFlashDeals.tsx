@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchAllProducts, trackProductView } from "@/integrations/supabase/products";
 import SectionHeader from "./SectionHeader";
 import TabsNavigation from "./TabsNavigation";
+import MobileOptimizedReels from "./MobileOptimizedReels";
 
 interface GenreFlashDealsProps {
   productType?: string;
@@ -146,8 +147,96 @@ export default function BookGenreFlashDeals({
     setDisplayCount(8);
   }, [processedProducts.length]);
 
+  // Create chunks of products with reels inserted after every 5 rows (10 products)
+  const createProductsWithReels = () => {
+    const productsToShow = processedProducts.slice(0, displayCount);
+    const elements = [];
+    const chunkSize = 10; // 5 rows × 2 columns = 10 products
+
+    for (let i = 0; i < productsToShow.length; i += chunkSize) {
+      const chunk = productsToShow.slice(i, i + chunkSize);
+      
+      // Add products chunk
+      elements.push(
+        <div key={`products-${i}`} className="grid grid-cols-2 gap-3">
+          {chunk.map((product) => (
+            <div key={product.id} className="space-y-2">
+              <Link 
+                to={`/product/${product.id}`}
+                onClick={() => trackProductView(product.id)}
+                className="block"
+              >
+                <div className="relative aspect-[3:4] overflow-hidden bg-gray-50 rounded-md">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="h-full w-full object-cover hover:scale-105 transition-transform duration-300"
+                    loading="lazy"
+                  />
+
+                  {/* Discount badge */}
+                  {product.discountPercentage > 0 && (
+                    <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded font-medium">
+                      -{product.discountPercentage}%
+                    </div>
+                  )}
+
+                  {/* Timer overlay */}
+                  {timeLeft.hours > 0 || timeLeft.minutes > 0 || timeLeft.seconds > 0 ? (
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs flex items-center justify-center py-1 gap-1">
+                      <Timer className="w-3 h-3" />
+                      {[timeLeft.hours, timeLeft.minutes, timeLeft.seconds].map((unit, i) => (
+                        <span key={i}>
+                          {unit.toString().padStart(2, "0")}
+                          {i < 2 && <span className="mx-0.5">:</span>}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+
+                {/* Product info */}
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium line-clamp-2 text-gray-900">
+                    {product.name}
+                  </h4>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-red-500 font-semibold text-base">
+                      ${Number(product.discount_price || product.price).toFixed(2)}
+                    </span>
+                    {product.discount_price && (
+                      <span className="text-xs text-gray-500 line-through">
+                        ${Number(product.price).toFixed(2)}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="text-xs text-gray-500">
+                    {product.stock} in stock
+                  </div>
+                </div>
+              </Link>
+            </div>
+          ))}
+        </div>
+      );
+
+      // Add reels after each chunk (except the last one if it's incomplete)
+      if (i + chunkSize < productsToShow.length) {
+        elements.push(
+          <div key={`reels-${i}`} className="my-4">
+            <MobileOptimizedReels />
+          </div>
+        );
+      }
+    }
+
+    return elements;
+  };
+
   return (
-    <div className={`w-full ${compact ? '' : 'bg-white'} ${className} border-2 border-red-500 min-h-[200px]`}>
+    <div className={`w-full ${compact ? '' : 'bg-white'} ${className}`}>
       {/* Header Row with Gradient Background - Only show if not compact or showHeader is true */}
       {showHeader && !compact && (
         <div className={`bg-gradient-to-r ${headerGradient} text-white`}>
@@ -204,67 +293,8 @@ export default function BookGenreFlashDeals({
             ))}
           </div>
         ) : processedProducts.length > 0 ? (
-          <div className="grid grid-cols-2 gap-3">
-            {processedProducts.slice(0, displayCount).map((product) => (
-              <div key={product.id} className="space-y-2">
-                <Link 
-                  to={`/product/${product.id}`}
-                  onClick={() => trackProductView(product.id)}
-                  className="block"
-                >
-                  <div className="relative aspect-[3:4] overflow-hidden bg-gray-50 rounded-md">
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="h-full w-full object-cover hover:scale-105 transition-transform duration-300"
-                      loading="lazy"
-                    />
-
-                    {/* Discount badge */}
-                    {product.discountPercentage > 0 && (
-                      <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded font-medium">
-                        -{product.discountPercentage}%
-                      </div>
-                    )}
-
-                    {/* Timer overlay */}
-                    {timeLeft.hours > 0 || timeLeft.minutes > 0 || timeLeft.seconds > 0 ? (
-                      <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs flex items-center justify-center py-1 gap-1">
-                        <Timer className="w-3 h-3" />
-                        {[timeLeft.hours, timeLeft.minutes, timeLeft.seconds].map((unit, i) => (
-                          <span key={i}>
-                            {unit.toString().padStart(2, "0")}
-                            {i < 2 && <span className="mx-0.5">:</span>}
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-
-                  {/* Product info */}
-                  <div className="space-y-1">
-                    <h4 className="text-sm font-medium line-clamp-2 text-gray-900">
-                      {product.name}
-                    </h4>
-
-                    <div className="flex items-center gap-2">
-                      <span className="text-red-500 font-semibold text-base">
-                        ${Number(product.discount_price || product.price).toFixed(2)}
-                      </span>
-                      {product.discount_price && (
-                        <span className="text-xs text-gray-500 line-through">
-                          ${Number(product.price).toFixed(2)}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="text-xs text-gray-500">
-                      {product.stock} in stock
-                    </div>
-                  </div>
-                </Link>
-              </div>
-            ))}
+          <div className="space-y-0">
+            {createProductsWithReels()}
           </div>
         ) : (
           <div className="text-center py-8 text-gray-500">
