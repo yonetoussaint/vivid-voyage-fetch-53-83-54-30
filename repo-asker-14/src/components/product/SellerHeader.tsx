@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Heart, MessageCircle, Search, ChevronRight, Share, CheckCircle, ShoppingCart, MoreHorizontal } from "lucide-react";
+import { Heart, MessageCircle, Search, ChevronRight, Share, CheckCircle, ShoppingCart, MoreHorizontal, X } from "lucide-react";
 import { useScrollProgress } from "./header/useScrollProgress";
 import BackButton from "./header/BackButton";
 import HeaderActionButton from "./header/HeaderActionButton";
@@ -37,6 +37,9 @@ interface SellerHeaderProps {
   onShare?: () => void;
   customScrollProgress?: number;
   onlineStatus?: OnlineStatus;
+  inPanel?: boolean;
+  showCloseIcon?: boolean;
+  onCloseClick?: () => void;
 }
 
 const SellerHeader = React.forwardRef<HTMLDivElement, SellerHeaderProps>(({ 
@@ -50,7 +53,10 @@ const SellerHeader = React.forwardRef<HTMLDivElement, SellerHeaderProps>(({
   onMessage,
   onShare,
   customScrollProgress,
-  onlineStatus
+  onlineStatus,
+  inPanel = false,
+  showCloseIcon = false,
+  onCloseClick
 }, ref) => {
   const { progress: internalProgress } = useScrollProgress();
   const [searchQuery, setSearchQuery] = useState("");
@@ -95,7 +101,7 @@ const SellerHeader = React.forwardRef<HTMLDivElement, SellerHeaderProps>(({
     <div 
       ref={ref}
       id="seller-header"
-      className="fixed top-0 left-0 right-0 z-30 flex flex-col transition-all duration-300"
+      className={`${inPanel ? 'relative' : 'fixed top-0 left-0 right-0'} z-30 flex flex-col transition-all duration-300`}
     >
       {/* Main Header */}
       <div 
@@ -150,7 +156,7 @@ const SellerHeader = React.forwardRef<HTMLDivElement, SellerHeaderProps>(({
           <div className="flex-1 mx-4">
           </div>
 
-          {/* Right side - Search and Share buttons */}
+          {/* Right side - Search, Share and Close buttons */}
           <div className="flex items-center gap-2">
             {/* Search button - always visible */}
             <HeaderActionButton
@@ -168,6 +174,15 @@ const SellerHeader = React.forwardRef<HTMLDivElement, SellerHeaderProps>(({
               progress={displayProgress}
               onClick={onShare}
             />
+
+            {/* Close button - only in panel mode */}
+            {inPanel && showCloseIcon && (
+              <HeaderActionButton
+                Icon={X}
+                onClick={onCloseClick}
+                progress={displayProgress}
+              />
+            )}
           </div>
         </div>
       </div>
