@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import SellerPage from '@/pages/SellerPage';
 import SellerHeader from '@/components/product/SellerHeader';
+import SellerPanelStickyTabs from '@/components/seller/SellerPanelStickyTabs';
 import { useScreenOverlay } from "@/context/ScreenOverlayContext";
 import { Heart, Share } from 'lucide-react';
 import { useQuery } from "@tanstack/react-query";
@@ -181,6 +182,16 @@ const SellerSemiPanel: React.FC<SellerSemiPanelProps> = ({
             ]}
           />
         </div>
+
+        {/* Sticky Tabs Navigation - rendered outside scrollable content */}
+        <SellerPanelStickyTabs
+          headerHeight={panelHeaderHeight}
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          inPanel={true}
+          scrollContainerRef={scrollContainerRef}
+          stickyTopOffset={panelHeaderHeight}
+        />
 
         {/* Scrollable Content with header space */}
         {sellerId ? (

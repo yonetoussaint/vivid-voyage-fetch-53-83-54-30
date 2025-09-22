@@ -1384,6 +1384,7 @@ const SellerPage: React.FC<SellerPageProps> = ({
 
         <nav
           ref={tabsRef}
+          data-testid="seller-tabs-navigation"
           className={`bg-white border-b transition-all duration-300 ease-out ${
             isTabsSticky
               ? 'fixed top-0 left-0 right-0 z-40'
