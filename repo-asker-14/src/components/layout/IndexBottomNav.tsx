@@ -199,22 +199,15 @@ export default function BottomNav() {
                 )}
               >
                 <div className="relative flex items-center justify-center">
-                  {item.isAvatar && user ? (
-                    <Avatar className="w-5 h-5 border">
-                      <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.email}`} alt="User" />
-                      <AvatarFallback className="text-xs">{user.email?.slice(0, 2).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                   ) : (
-                   <Icon
-                      className={cn(
-                        'transition-transform duration-300',
-                        'w-5 h-5',
-                        isActive ? 'scale-110' : 'scale-100'
-                      )}
-                      width={20}
-                      height={20}
-                    />
-                  )}
+                  <Icon
+                    className={cn(
+                      'transition-transform duration-300',
+                      'w-5 h-5',
+                      isActive ? 'scale-110' : 'scale-100'
+                    )}
+                    width={20}
+                    height={20}
+                  />
                   {item.badge && (
                     <motion.div
                       initial={{ scale: 0 }}
