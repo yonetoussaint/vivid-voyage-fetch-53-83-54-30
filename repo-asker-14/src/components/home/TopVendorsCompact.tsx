@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import SectionHeader from './SectionHeader';
 import VerificationBadge from "@/components/shared/VerificationBadge";
 import ProductSemiPanel from './ProductSemiPanel';
+import SellerSemiPanel from './SellerSemiPanel';
 
 
 // Utility functions
@@ -104,10 +105,9 @@ const DefaultProfileAvatar = ({ className = "w-6 h-6" }) => (
 
 
 // Vendor Card Component
-const VendorCard = ({ vendor, onProductClick }) => {
+const VendorCard = ({ vendor, onProductClick, onSellerClick }) => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const navigate = useNavigate();
   const displayProducts = vendor.products.slice(0, 4);
 
   const handleProductClick = (productId) => {
@@ -116,7 +116,7 @@ const VendorCard = ({ vendor, onProductClick }) => {
 
   const handleSellerClick = () => {
     if (!vendor?.id) return;
-    navigate(`/seller/${vendor.id}`);
+    onSellerClick(vendor.id);
   };
 
   return (
@@ -247,6 +247,8 @@ const VendorCarousel = () => {
   const scrollContainerRef = useRef(null);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [selectedSellerId, setSelectedSellerId] = useState<string | null>(null);
+  const [isSellerPanelOpen, setIsSellerPanelOpen] = useState(false);
 
   const handleProductClick = (productId: string) => {
     setSelectedProductId(productId);
@@ -256,6 +258,16 @@ const VendorCarousel = () => {
   const handleClosePanel = () => {
     setIsPanelOpen(false);
     setSelectedProductId(null);
+  };
+
+  const handleSellerClick = (sellerId: string) => {
+    setSelectedSellerId(sellerId);
+    setIsSellerPanelOpen(true);
+  };
+
+  const handleCloseSellerPanel = () => {
+    setIsSellerPanelOpen(false);
+    setSelectedSellerId(null);
   };
 
   const { data: sellers = [], isLoading: sellersLoading } = useQuery({
@@ -371,7 +383,7 @@ const VendorCarousel = () => {
               scrollSnapAlign: 'start'
             }}
           >
-            <VendorCard vendor={vendor} onProductClick={handleProductClick} />
+            <VendorCard vendor={vendor} onProductClick={handleProductClick} onSellerClick={handleSellerClick} />
           </div>
         ))}
 
@@ -383,6 +395,13 @@ const VendorCarousel = () => {
         productId={selectedProductId}
         isOpen={isPanelOpen}
         onClose={handleClosePanel}
+      />
+
+      {/* Seller Semi Panel */}
+      <SellerSemiPanel
+        sellerId={selectedSellerId}
+        isOpen={isSellerPanelOpen}
+        onClose={handleCloseSellerPanel}
       />
     </div>
   );
