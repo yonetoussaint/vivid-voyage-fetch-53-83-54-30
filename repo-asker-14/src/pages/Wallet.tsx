@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   CreditCard, 
   Wallet, 
@@ -39,7 +39,10 @@ export default function Wallet() {
 
   // Trigger balance animation on mount
   useEffect(() => {
-    setBalanceAnimation(true);
+    const timer = setTimeout(() => {
+      setBalanceAnimation(true);
+    }, 100);
+    return () => clearTimeout(timer);
   }, []);
 
   const recentTransactions: Transaction[] = [
@@ -99,7 +102,7 @@ export default function Wallet() {
 
   const totalBalance = purchaseBalance + salesBalance;
 
-  const getFilteredTransactions = () => {
+  const getFilteredTransactions = useMemo(() => {
     let filtered = recentTransactions;
 
     if (activeTab !== 'all') {
@@ -119,9 +122,9 @@ export default function Wallet() {
     }
 
     return filtered;
-  };
+  }, [activeTab, searchQuery]);
 
-  const getTransactionIcon = (type: string) => {
+  const getTransactionIcon = useCallback((type: string) => {
     switch (type) {
       case 'sale':
         return <TrendingUp className="h-4 w-4 text-green-600" />;
@@ -134,9 +137,9 @@ export default function Wallet() {
       default:
         return <Wallet className="h-4 w-4 text-gray-600" />;
     }
-  };
+  }, []);
 
-  const getTransactionBg = (type: string) => {
+  const getTransactionBg = useCallback((type: string) => {
     switch (type) {
       case 'sale':
         return 'bg-green-100 dark:bg-green-900/20';
@@ -149,7 +152,7 @@ export default function Wallet() {
       default:
         return 'bg-gray-100 dark:bg-gray-900/20';
     }
-  };
+  }, []);
 
   const tabs = [
     { id: 'all', label: 'All', count: recentTransactions.length },
@@ -279,7 +282,7 @@ export default function Wallet() {
       <div className="px-4 pb-20">
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
           <div className="divide-y divide-gray-100 dark:divide-gray-800">
-            {getFilteredTransactions().map((transaction, index) => (
+            {getFilteredTransactions.map((transaction, index) => (
               <div 
                 key={transaction.id} 
                 className="p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200 active:bg-gray-100 dark:active:bg-gray-700"
@@ -333,7 +336,7 @@ export default function Wallet() {
             ))}
           </div>
 
-          {getFilteredTransactions().length === 0 && (
+          {getFilteredTransactions.length === 0 && (
             <div className="p-8 text-center">
               <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Search className="h-6 w-6 text-gray-400" />
@@ -344,7 +347,7 @@ export default function Wallet() {
             </div>
           )}
 
-          {getFilteredTransactions().length > 0 && (
+          {getFilteredTransactions.length > 0 && (
             <div className="p-4 border-t border-gray-100 dark:border-gray-800 text-center">
               <button className="text-blue-600 hover:text-blue-700 text-sm font-medium py-2 px-4 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
                 Load More
