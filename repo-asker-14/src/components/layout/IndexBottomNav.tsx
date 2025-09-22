@@ -33,7 +33,7 @@ const navItems: BottomNavTab[] = [
   { id: 'shorts', nameKey: 'navigation.shorts', icon: Zap, path: '/reels' },
   { id: 'categories', nameKey: 'navigation.categories', icon: LayoutGrid, path: '/posts' },
   { id: 'wallet', nameKey: 'navigation.wallet', icon: Wallet, path: '/wallet' },
-  { id: 'more', nameKey: 'navigation.more', icon: MoreHorizontal, path: '#' },
+  { id: 'profile', nameKey: 'navigation.account', icon: User, path: '/profile/dashboard', isAvatar: true },
 ];
 
 // More menu items that will appear in the side panel
@@ -104,11 +104,6 @@ export default function BottomNav() {
 
   // Handle tab click navigation
   const handleTabClick = (item: BottomNavTab) => {
-    if (item.id === 'more') {
-      navigate('/menu');
-      return;
-    }
-
     if (item.path === '#') return;
 
     setActiveTab(item.id);
