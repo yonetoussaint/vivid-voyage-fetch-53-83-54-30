@@ -81,7 +81,6 @@ interface ForYouContentProps {
 
 const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   const [feedItems, setFeedItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["products", category],
@@ -116,38 +115,13 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
     return items;
   }, []);
 
-  // Initialize feed when category or products change
+  // Initialize finite feed when category or products change
   useEffect(() => {
     if (products) {
-      setFeedItems(generateFeedItems(15, 0));
+      // Generate a finite set of feed items (20 items total)
+      setFeedItems(generateFeedItems(20, 0));
     }
   }, [products, generateFeedItems, category]);
-
-  // Infinite scroll handler
-  const handleScroll = useCallback(() => {
-    if (loading) return;
-
-    const scrollHeight = document.documentElement.scrollHeight;
-    const scrollTop = document.documentElement.scrollTop;
-    const clientHeight = document.documentElement.clientHeight;
-
-    if (scrollTop + clientHeight >= scrollHeight - 1000) {
-      setLoading(true);
-
-      setTimeout(() => {
-        setFeedItems(prev => [
-          ...prev,
-          ...generateFeedItems(10, prev.length)
-        ]);
-        setLoading(false);
-      }, 500);
-    }
-  }, [loading, generateFeedItems]);
-
-  useEffect(() => {
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [handleScroll]);
 
   // Render component based on type
   const renderFeedItem = (item: any) => {
@@ -205,16 +179,9 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       {/* Show different category components based on active category */}
       {category === 'electronics' ? <ElectronicsSubcategories /> : <SpaceSavingCategories />}
 
-      {/* Endless feed content */}
+      {/* Finite feed content */}
       <div className="space-y-2">
         {feedItems.map(renderFeedItem)}
-
-        {/* Loading indicator */}
-        {loading && (
-          <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        )}
       </div>
     </PageContainer>
   );
