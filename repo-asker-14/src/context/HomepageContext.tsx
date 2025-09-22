@@ -10,7 +10,7 @@ interface HomepageContextType {
 const HomepageContext = createContext<HomepageContextType | undefined>(undefined);
 
 export const HomepageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [homepageType, setHomepageTypeState] = useState<HomepageType>('books');
+  const [homepageType, setHomepageTypeState] = useState<HomepageType>('marketplace');
 
   // Load preference from localStorage on mount
   useEffect(() => {
@@ -18,7 +18,7 @@ export const HomepageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (saved === 'books' || saved === 'marketplace') {
       setHomepageTypeState(saved);
     } else {
-      setHomepageTypeState('books');
+      setHomepageTypeState('marketplace');
     }
   }, []);
 
