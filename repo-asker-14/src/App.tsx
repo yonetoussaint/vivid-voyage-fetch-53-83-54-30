@@ -115,7 +115,7 @@ function App() {
                               <Route path="reels/:mode" element={<Reels />} />
                               <Route path="trending" element={<Trending />} />
                               <Route path="wallet" element={<Wallet />} />
-                              <Route path="profile" element={<ProfilePage />} />
+                              <Route path="profile/*" element={<ProfilePage />} />
                               <Route path="more" element={<MoreMenu />} />
                               <Route path="more-menu" element={<MoreMenu />} />
                               <Route path="auth" element={<SimpleAuthPage />} />
