@@ -117,10 +117,10 @@ export default function BookGenreFlashDeals({
     };
   });
 
-  // Don't render if no products available
-  if (!isLoading && processedProducts.length === 0) {
-    return null;
-  }
+  // Always render the component, even if no products (for debugging)
+  // if (!isLoading && processedProducts.length === 0) {
+  //   return null;
+  // }
 
   // Infinite scroll logic
   useEffect(() => {
@@ -147,7 +147,7 @@ export default function BookGenreFlashDeals({
   }, [processedProducts.length]);
 
   return (
-    <div className={`w-full ${compact ? '' : 'bg-white'} ${className}`}>
+    <div className={`w-full ${compact ? '' : 'bg-white'} ${className} border-2 border-red-500 min-h-[200px]`}>
       {/* Header Row with Gradient Background - Only show if not compact or showHeader is true */}
       {showHeader && !compact && (
         <div className={`bg-gradient-to-r ${headerGradient} text-white`}>

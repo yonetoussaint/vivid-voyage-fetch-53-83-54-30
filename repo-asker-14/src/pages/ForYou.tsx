@@ -196,7 +196,7 @@ export default function ForYou() {
       </div>
 
       {/* Book Genre Flash Deals - Final component */}
-      <div className="mt-4">
+      <div className="mt-6 mb-4">
         <BookGenreFlashDeals />
       </div>
 
