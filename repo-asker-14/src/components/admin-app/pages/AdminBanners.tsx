@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,7 +56,6 @@ const AdminBanners = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
-  const [showFilters, setShowFilters] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -120,22 +118,22 @@ const AdminBanners = () => {
   const handleMoveBanner = async (id: string, currentPosition: number, direction: 'up' | 'down') => {
     const sortedBanners = [...transformedBanners].sort((a, b) => (a.position || 0) - (b.position || 0));
     const currentIndex = sortedBanners.findIndex(banner => banner.id === id);
-    
+
     if (currentIndex === -1) return;
-    
+
     const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-    
+
     if (newIndex < 0 || newIndex >= sortedBanners.length) return;
-    
+
     const otherBanner = sortedBanners[newIndex];
     const otherPosition = otherBanner.position || 0;
-    
+
     try {
       await Promise.all([
         updateHeroBannerPosition(id, otherPosition),
         updateHeroBannerPosition(otherBanner.id, currentPosition)
       ]);
-      
+
       queryClient.invalidateQueries({ queryKey: ["hero-banners"] });
       toast.success("Position updated");
     } catch (error) {
@@ -150,20 +148,20 @@ const AdminBanners = () => {
 
   const getStatusInfo = (status: string) => {
     switch (status) {
-      case 'active': return { color: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: CheckCircle };
-      case 'pending': return { color: 'bg-amber-50 text-amber-700 border-amber-200', icon: AlertTriangle };
-      case 'rejected': return { color: 'bg-red-50 text-red-700 border-red-200', icon: X };
-      default: return { color: 'bg-gray-50 text-gray-700 border-gray-200', icon: AlertTriangle };
+      case 'active': return { color: 'bg-emerald-100 text-emerald-800', icon: CheckCircle };
+      case 'pending': return { color: 'bg-amber-100 text-amber-800', icon: AlertTriangle };
+      case 'rejected': return { color: 'bg-red-100 text-red-800', icon: X };
+      default: return { color: 'bg-gray-100 text-gray-800', icon: AlertTriangle };
     }
   };
 
   const getTypeInfo = (type: string) => {
     switch (type) {
-      case 'system': return { color: 'bg-blue-50 text-blue-700', icon: Globe, label: 'System' };
-      case 'seller_premium': return { color: 'bg-purple-50 text-purple-700', icon: Crown, label: 'Premium' };
-      case 'seller_standard': return { color: 'bg-green-50 text-green-700', icon: User, label: 'Standard' };
-      case 'promotional': return { color: 'bg-orange-50 text-orange-700', icon: DollarSign, label: 'Promo' };
-      default: return { color: 'bg-gray-50 text-gray-700', icon: Building, label: 'Other' };
+      case 'system': return { color: 'bg-blue-100 text-blue-800', icon: Globe, label: 'System' };
+      case 'seller_premium': return { color: 'bg-purple-100 text-purple-800', icon: Crown, label: 'Premium' };
+      case 'seller_standard': return { color: 'bg-green-100 text-green-800', icon: User, label: 'Standard' };
+      case 'promotional': return { color: 'bg-orange-100 text-orange-800', icon: DollarSign, label: 'Promo' };
+      default: return { color: 'bg-gray-100 text-gray-800', icon: Building, label: 'Other' };
     }
   };
 
@@ -191,12 +189,12 @@ const AdminBanners = () => {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-6">
+      <div className="space-y-4 bg-gray-50 min-h-screen p-3">
         <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-48 mb-4"></div>
-          <div className="space-y-4">
+          <div className="h-6 bg-gray-200 rounded w-32 mb-3"></div>
+          <div className="space-y-3">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-20 bg-gray-100 rounded-xl"></div>
+              <div key={i} className="h-16 bg-gray-100 rounded-md"></div>
             ))}
           </div>
         </div>
@@ -206,12 +204,12 @@ const AdminBanners = () => {
 
   if (error) {
     return (
-      <div className="p-6">
+      <div className="space-y-4 bg-gray-50 min-h-screen p-3">
         <Card className="border-red-200 bg-red-50">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <AlertTriangle className="w-12 h-12 text-red-500 mb-4" />
-            <p className="text-red-700 mb-4">Failed to load banners</p>
-            <Button onClick={() => refetch()} variant="outline" className="border-red-200">
+          <CardContent className="flex flex-col items-center justify-center py-8">
+            <AlertTriangle className="w-8 h-8 text-red-500 mb-2" />
+            <p className="text-red-700 text-sm mb-3">Failed to load banners</p>
+            <Button onClick={() => refetch()} variant="outline" size="sm" className="border-red-200 text-xs">
               Try Again
             </Button>
           </CardContent>
@@ -221,110 +219,101 @@ const AdminBanners = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200/60">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
+    <div className="space-y-4 bg-gray-50 min-h-screen">
+      {/* Compact Header & Stats */}
+      <div className="bg-white border-b">
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between mb-3">
             <div>
-              <h1 className="text-2xl font-semibold text-gray-900 mb-1">Banner Management</h1>
-              <p className="text-gray-600 text-sm">
-                {stats.total} banners • {stats.active} active • ${stats.revenue.toFixed(0)} revenue
-              </p>
+              <h1 className="text-lg font-bold text-foreground">Banner Management</h1>
+              <p className="text-xs text-muted-foreground">Manage hero banners and promotions</p>
             </div>
-            <Button 
-              onClick={() => setIsUploadDialogOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700 shadow-sm"
-            >
-              <Plus className="w-4 h-4 mr-2" />
+            <Button size="sm" onClick={() => setIsUploadDialogOpen(true)}>
+              <Plus className="w-4 h-4 mr-1" />
               Add Banner
             </Button>
           </div>
 
-          {/* Search and Filters */}
-          <div className="space-y-4">
-            <div className="relative max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
-                placeholder="Search banners..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 border-gray-200 focus:border-blue-300 focus:ring-blue-100"
-              />
+          {/* Ultra compact stats */}
+          <div className="grid grid-cols-4 gap-3">
+            <div className="text-center">
+              <div className="text-lg font-bold text-blue-600">{stats.total}</div>
+              <div className="text-xs text-muted-foreground">Total</div>
             </div>
-
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowFilters(!showFilters)}
-                className="border-gray-200 text-gray-600"
-              >
-                <Filter className="w-4 h-4 mr-2" />
-                Filters
-              </Button>
-
-              {showFilters && (
-                <>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-40 border-gray-200">
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="rejected">Rejected</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={typeFilter} onValueChange={setTypeFilter}>
-                    <SelectTrigger className="w-40 border-gray-200">
-                      <SelectValue placeholder="Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="system">System</SelectItem>
-                      <SelectItem value="seller_premium">Premium</SelectItem>
-                      <SelectItem value="seller_standard">Standard</SelectItem>
-                      <SelectItem value="promotional">Promotional</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </>
-              )}
+            <div className="text-center">
+              <div className="text-lg font-bold text-green-600">{stats.active}</div>
+              <div className="text-xs text-muted-foreground">Active</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-yellow-600">{stats.pending}</div>
+              <div className="text-xs text-muted-foreground">Pending</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-purple-600">${stats.revenue.toFixed(0)}</div>
+              <div className="text-xs text-muted-foreground">Revenue</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Banner List */}
-      <div className="p-6">
-        {filteredBanners.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Image className="w-8 h-8 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No banners found</h3>
-            <p className="text-gray-500 mb-6">Get started by adding your first banner</p>
-            <Button onClick={() => setIsUploadDialogOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Banner
-            </Button>
+      {/* Compact Filters */}
+      <div className="bg-white border-b px-4 py-3">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search banners..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-9"
+            />
           </div>
-        ) : (
-          <div className="space-y-3">
-            {filteredBanners.map((banner, index) => {
-              const statusInfo = getStatusInfo(banner.status || 'active');
-              const typeInfo = getTypeInfo(banner.banner_type || 'system');
-              const StatusIcon = statusInfo.icon;
-              const TypeIcon = typeInfo.icon;
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-40 h-9">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="w-full sm:w-40 h-9">
+              <SelectValue placeholder="Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="system">System</SelectItem>
+              <SelectItem value="seller_premium">Premium</SelectItem>
+              <SelectItem value="seller_standard">Standard</SelectItem>
+              <SelectItem value="promotional">Promotional</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="sm">
+            <Filter className="w-4 h-4 mr-1" />
+            Filter
+          </Button>
+        </div>
+      </div>
 
-              return (
-                <Card key={banner.id} className="border-gray-200/60 shadow-sm hover:shadow-md transition-all duration-200 bg-white">
-                  <CardContent className="p-5">
-                    <div className="flex items-center gap-4">
+      {/* Banners Grid */}
+      <div className="p-3">
+        <div className="grid grid-cols-1 gap-3">
+          {filteredBanners.map((banner, index) => {
+            const statusInfo = getStatusInfo(banner.status || 'active');
+            const typeInfo = getTypeInfo(banner.banner_type || 'system');
+            const StatusIcon = statusInfo.icon;
+            const TypeIcon = typeInfo.icon;
+
+            return (
+              <Card key={banner.id} className="overflow-hidden">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
                       {/* Banner Preview */}
-                      <div className="relative w-20 h-14 rounded-lg overflow-hidden bg-gray-50 flex-shrink-0 border border-gray-200/50">
+                      <div className="relative w-16 h-12 rounded-md overflow-hidden bg-gray-50 flex-shrink-0 border">
                         {getFileType(banner.image) === 'video' ? (
                           <video 
                             src={banner.image}
@@ -341,113 +330,128 @@ const AdminBanners = () => {
                             }}
                           />
                         )}
-                        <div className="absolute top-1 right-1 bg-black/50 text-white text-xs px-1.5 py-0.5 rounded">
+                        <div className="absolute top-1 right-1 bg-black/50 text-white text-xs px-1 py-0 rounded">
                           #{banner.position}
                         </div>
                       </div>
 
-                      <div className="flex-1 min-w-0">
-                        {/* Title and badges */}
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-medium text-gray-900 truncate">{banner.alt}</h3>
-                          <Badge className={`${typeInfo.color} border text-xs px-2 py-1`}>
+                      <div>
+                        <h3 className="text-sm font-semibold text-foreground line-clamp-1">{banner.alt}</h3>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="secondary" className={`${typeInfo.color} text-xs`}>
                             <TypeIcon className="w-3 h-3 mr-1" />
                             {typeInfo.label}
                           </Badge>
-                          <Badge className={`${statusInfo.color} border text-xs px-2 py-1`}>
+                          <Badge variant="secondary" className={`${statusInfo.color} text-xs`}>
                             <StatusIcon className="w-3 h-3 mr-1" />
                             {banner.status}
                           </Badge>
                         </div>
-
-                        {/* Details */}
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                           {banner.seller_name && (
                             <span>by {banner.seller_name}</span>
                           )}
                           {banner.price_paid && (
                             <span className="text-green-600 font-medium">${banner.price_paid}</span>
                           )}
-                          <span>{banner.duration / 1000}s duration</span>
                         </div>
                       </div>
-
-                      {/* Actions */}
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleMoveBanner(banner.id, banner.position || 0, 'up')}
-                          disabled={index === 0}
-                          className="w-8 h-8 p-0 border-gray-200"
-                        >
-                          <ArrowUp className="w-3 h-3" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleMoveBanner(banner.id, banner.position || 0, 'down')}
-                          disabled={index === filteredBanners.length - 1}
-                          className="w-8 h-8 p-0 border-gray-200"
-                        >
-                          <ArrowDown className="w-3 h-3" />
-                        </Button>
-
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="w-8 h-8 p-0 border-gray-200">
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem>
-                              <Eye className="w-4 h-4 mr-2" />
-                              Preview
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Edit className="w-4 h-4 mr-2" />
-                              Edit
-                            </DropdownMenuItem>
-                            
-                            {banner.status === 'pending' && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem 
-                                  className="text-green-600"
-                                  onClick={() => handleStatusChange(banner.id, 'approved')}
-                                >
-                                  <CheckCircle className="w-4 h-4 mr-2" />
-                                  Approve
-                                </DropdownMenuItem>
-                                <DropdownMenuItem 
-                                  className="text-red-600"
-                                  onClick={() => handleStatusChange(banner.id, 'rejected')}
-                                >
-                                  <X className="w-4 h-4 mr-2" />
-                                  Reject
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                            
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              className="text-red-600"
-                              onClick={() => handleDeleteBanner(banner.id, banner.image)}
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        )}
+
+                    <div className="flex items-center gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleMoveBanner(banner.id, banner.position || 0, 'up')}
+                        disabled={index === 0}
+                        className="h-7 w-7 p-0"
+                      >
+                        <ArrowUp className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleMoveBanner(banner.id, banner.position || 0, 'down')}
+                        disabled={index === filteredBanners.length - 1}
+                        className="h-7 w-7 p-0"
+                      >
+                        <ArrowDown className="w-3 h-3" />
+                      </Button>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem>
+                            <Eye className="w-4 h-4 mr-2" />
+                            Preview
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Edit className="w-4 h-4 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+
+                          {banner.status === 'pending' && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                className="text-green-600"
+                                onClick={() => handleStatusChange(banner.id, 'approved')}
+                              >
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Approve
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                className="text-red-600"
+                                onClick={() => handleStatusChange(banner.id, 'rejected')}
+                              >
+                                <X className="w-4 h-4 mr-2" />
+                                Reject
+                              </DropdownMenuItem>
+                            </>
+                          )}
+
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            className="text-red-600"
+                            onClick={() => handleDeleteBanner(banner.id, banner.image)}
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{banner.duration / 1000}s duration</span>
+                    <span>Updated: {new Date(banner.updated_at).toLocaleDateString()}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       </div>
+
+      {/* Empty State */}
+      {filteredBanners.length === 0 && (
+        <div className="p-8 text-center">
+          <Image className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">No banners found</h3>
+          <p className="text-muted-foreground mb-4">
+            Try adjusting your search terms or filters.
+          </p>
+          <Button size="sm" onClick={() => setIsUploadDialogOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Banner
+          </Button>
+        </div>
+      )}
 
       {/* Upload Dialog */}
       <HeroBannerUploadDialog 
