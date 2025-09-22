@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from 'react-i18next';
@@ -81,7 +80,7 @@ export default function ForYou() {
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const { t } = useTranslation(['product', 'categories']);
-  
+
   const { data: products, isLoading } = useQuery({
     queryKey: ["products"],
     queryFn: fetchAllProducts,
@@ -92,11 +91,11 @@ export default function ForYou() {
   // Generate initial feed
   const generateFeedItems = useCallback((count: number, startIndex: number = 0) => {
     const items = [];
-    
+
     for (let i = 0; i < count; i++) {
       const index = (startIndex + i) % feedComponents.length;
       const componentType = feedComponents[index];
-      
+
       if (componentType === 'SimpleFlashDeals') {
         const categoryIndex = (startIndex + i) % flashDealsCategories.length;
         items.push({
@@ -111,7 +110,7 @@ export default function ForYou() {
         });
       }
     }
-    
+
     return items;
   }, []);
 
@@ -129,14 +128,14 @@ export default function ForYou() {
   // Infinite scroll handler
   const handleScroll = useCallback(() => {
     if (loading) return;
-    
+
     const scrollHeight = document.documentElement.scrollHeight;
     const scrollTop = document.documentElement.scrollTop;
     const clientHeight = document.documentElement.clientHeight;
-    
+
     if (scrollTop + clientHeight >= scrollHeight - 1000) {
       setLoading(true);
-      
+
       setTimeout(() => {
         setFeedItems(prev => [
           ...prev,
@@ -167,7 +166,7 @@ export default function ForYou() {
   // Render component based on type
   const renderFeedItem = (item: any) => {
     const { type, category, id } = item;
-    
+
     switch (type) {
       case 'FlashDeals':
         return <FlashDeals key={id} />;
@@ -204,7 +203,7 @@ export default function ForYou() {
         return <TopBrands key={id} />;
       case 'BenefitsBanner':
         return <BenefitsBanner key={id} />;
-      
+
       default:
         return null;
     }
@@ -217,12 +216,12 @@ export default function ForYou() {
       {/* Hero Banner - shown once at the top */}
       <HeroBanner />
       <SpaceSavingCategories />
-      
+
 
       {/* Endless feed content */}
       <div className="space-y-2">
         {feedItems.map(renderFeedItem)}
-        
+
         {/* Loading indicator */}
         {loading && (
           <div className="flex justify-center py-8">

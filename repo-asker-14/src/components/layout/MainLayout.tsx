@@ -91,8 +91,16 @@ export default function MainLayout() {
     <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
         <style dangerouslySetInnerHTML={{ __html: headerHeightStyle }} />
 
-        {/* Show AliExpressHeader only on the For You page */}
-        {isForYouPage && (
+        {/* Show AliExpressHeader on For You and category pages */}
+        {(isForYouPage || 
+          pathname === '/categories/electronics' ||
+          pathname === '/categories/home-living' ||
+          pathname === '/categories/fashion' ||
+          pathname === '/categories/entertainment' ||
+          pathname === '/categories/kids-hobbies' ||
+          pathname === '/categories/sports-outdoors' ||
+          pathname === '/categories/automotive'
+        ) && (
           <AliExpressHeader activeTabId={isRootHomePage ? "recommendations" : ""} />
         )}
 
