@@ -68,6 +68,7 @@ export default function BottomNav() {
   const [showProductUpload, setShowProductUpload] = useState(false);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [showSignInBanner, setShowSignInBanner] = useState(true);
+  const [showMorePanel, setShowMorePanel] = useState(false);
   
   const [reorderedNavItems, setReorderedNavItems] = useState(navItems);
   const [selectedMoreItem, setSelectedMoreItem] = useState(() => t('navigation.more'));
