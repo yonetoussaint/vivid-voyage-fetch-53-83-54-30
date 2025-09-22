@@ -163,6 +163,7 @@ function App() {
                               <Route path="seller-dashboard/*" element={<SellerDashboard />} />
                               <Route path="*" element={<NotFound />} />
                               <Route path="/cart" element={<CartPage />} />
+                              <Route path="/menu" element={<MenuPage />} />
                             </Route>
                           </Routes>
                           <Toaster />

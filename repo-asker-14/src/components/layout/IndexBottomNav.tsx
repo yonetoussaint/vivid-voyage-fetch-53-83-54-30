@@ -11,7 +11,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import ProductUploadOverlay from '@/components/product/ProductUploadOverlay';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+
 import SimpleAuthPage from '@/pages/SimpleAuthPage';
 import SignInBanner from './SignInBanner';
 import { useAuth } from '@/contexts/auth/AuthContext';
@@ -68,7 +68,7 @@ export default function BottomNav() {
   const [showProductUpload, setShowProductUpload] = useState(false);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [showSignInBanner, setShowSignInBanner] = useState(true);
-  const [showMorePanel, setShowMorePanel] = useState(false);
+  
   const [reorderedNavItems, setReorderedNavItems] = useState(navItems);
   const [selectedMoreItem, setSelectedMoreItem] = useState(() => t('navigation.more'));
 
@@ -105,7 +105,7 @@ export default function BottomNav() {
   // Handle tab click navigation
   const handleTabClick = (item: BottomNavTab) => {
     if (item.id === 'more') {
-      setShowMorePanel(true);
+      navigate('/menu');
       return;
     }
 
@@ -170,63 +170,7 @@ export default function BottomNav() {
         onClose={() => setShowProductUpload(false)}
       />
 
-      {/* More Panel Sheet */}
-      <Sheet open={showMorePanel} onOpenChange={setShowMorePanel}>
-        <SheetContent side="right" className="w-80 p-0">
-          <SheetHeader className="p-6 pb-4 border-b">
-            <SheetTitle className="text-xl font-bold">Menu</SheetTitle>
-          </SheetHeader>
-          
-          {/* User Profile Section */}
-          {user && (
-            <div className="p-4 border-b bg-gray-50 dark:bg-gray-800/50">
-              <div className="flex items-center space-x-3">
-                <Avatar className="w-12 h-12">
-                  <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.email}`} alt="User" />
-                  <AvatarFallback className="text-sm font-medium">{user.email?.slice(0, 2).toUpperCase()}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                    {user.user_metadata?.name || user.email}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">View your profile</p>
-                </div>
-                <ChevronDown className="w-4 h-4 text-gray-400" />
-              </div>
-            </div>
-          )}
-          
-          {/* Menu Items Grid */}
-          <div className="p-4 grid grid-cols-2 gap-3 max-h-[70vh] overflow-y-auto">
-            {moreMenuItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleMoreItemClick(item)}
-                  className="flex flex-col items-center justify-center p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors relative"
-                >
-                  <div className="relative mb-2">
-                    <div className="p-3 rounded-full bg-primary/10">
-                      <Icon className="w-6 h-6 text-primary" />
-                    </div>
-                    {item.badge && (
-                      <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-1.5 rounded-full min-w-[20px] h-5 flex items-center justify-center">
-                        {item.badge}
-                      </div>
-                    )}
-                  </div>
-                  <span className="text-center text-sm font-medium text-gray-900 dark:text-gray-100 leading-tight">
-                    {typeof item.nameKey === 'string' && item.nameKey.startsWith('navigation.') 
-                      ? t(item.nameKey) 
-                      : item.nameKey}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </SheetContent>
-      </Sheet>
+      
 
       <motion.div
         initial={{ y: 100 }}
