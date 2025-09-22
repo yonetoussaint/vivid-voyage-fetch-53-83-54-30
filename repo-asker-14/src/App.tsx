@@ -35,6 +35,7 @@ import AutomotivePage from "./pages/AutomotivePage";
 import KidsHobbiesPage from "./pages/KidsHobbiesPage";
 import EntertainmentPage from "./pages/EntertainmentPage";
 import AdminPanel from "./pages/AdminPanel";
+import AdminDashboard from "./pages/AdminDashboard";
 import SellerPage from "./pages/SellerPage";
 import Checkout from "./pages/Checkout";
 import PayPalCheckout from "./pages/PayPalCheckout";
@@ -130,6 +131,7 @@ function App() {
                               <Route path="categories/kids-hobbies" element={<KidsHobbiesPage />} />
                               <Route path="categories/entertainment" element={<EntertainmentPage />} />
                               <Route path="admin" element={<AdminPanel />} />
+              <Route path="admin-dashboard/*" element={<AdminDashboard />} />
                               <Route path="seller/:sellerId" element={<SellerPage />} />
                               <Route path="product/:productId/edit" element={<ProductEditNavigationPage />} />
                               <Route path="product/:productId/edit/basic" element={<ProductEditBasicPage />} />
