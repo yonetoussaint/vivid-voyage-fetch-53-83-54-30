@@ -1072,9 +1072,27 @@ const CategoriesTab: React.FC<{ sellerId: string }> = ({ sellerId }) => {
   );
 };
 
+// SellerPage Props Interface
+interface SellerPageProps {
+  sellerId?: string; // Make it optional so it can work with router params too
+  hideHeader?: boolean; // New prop to hide header when used in panels
+  // Panel context props
+  inPanel?: boolean;
+  scrollContainerRef?: React.RefObject<HTMLDivElement>;
+  stickyTopOffset?: number;
+}
+
 // Main SellerPage Component
-const SellerPage: React.FC = () => {
-  const { sellerId } = useParams<{ sellerId: string }>();
+const SellerPage: React.FC<SellerPageProps> = ({
+  sellerId: propSellerId,
+  hideHeader = false,
+  inPanel = false,
+  scrollContainerRef,
+  stickyTopOffset
+}) => {
+  const { sellerId: paramSellerId } = useParams<{ sellerId: string }>();
+  // Use prop sellerId if provided, otherwise use router param
+  const sellerId = propSellerId || paramSellerId;
   const navigate = useNavigate();
   const headerRef = useRef<HTMLDivElement>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
@@ -1317,31 +1335,33 @@ const SellerPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <SellerHeader
-        ref={headerRef}
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-        seller={seller}
-        isFollowing={isFollowing}
-        onFollow={handleFollow}
-        onMessage={handleMessage}
-        onShare={handleShare}
-        customScrollProgress={activeTab === 'products' ? (isTabsSticky ? Math.max(0.8, scrollProgress) : scrollProgress) : 1}
-        forceScrolledState={activeTab !== 'products'}
-        onlineStatus={onlineStatus}
-        actionButtons={[
-          {
-            Icon: Heart,
-            active: isFollowing,
-            onClick: handleFollow,
-            activeColor: "#f43f5e"
-          },
-          {
-            Icon: Share,
-            onClick: handleShare
-          }
-        ]}
-      />
+      {!hideHeader && (
+        <SellerHeader
+          ref={headerRef}
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          seller={seller}
+          isFollowing={isFollowing}
+          onFollow={handleFollow}
+          onMessage={handleMessage}
+          onShare={handleShare}
+          customScrollProgress={activeTab === 'products' ? (isTabsSticky ? Math.max(0.8, scrollProgress) : scrollProgress) : 1}
+          forceScrolledState={activeTab !== 'products'}
+          onlineStatus={onlineStatus}
+          actionButtons={[
+            {
+              Icon: Heart,
+              active: isFollowing,
+              onClick: handleFollow,
+              activeColor: "#f43f5e"
+            },
+            {
+              Icon: Share,
+              onClick: handleShare
+            }
+          ]}
+        />
+      )}
 
       <main>
         {/* Hero Banner - only show for products tab */}
