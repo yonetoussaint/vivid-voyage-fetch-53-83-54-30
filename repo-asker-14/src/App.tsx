@@ -76,6 +76,7 @@ import { AuthOverlayProvider } from "./context/AuthOverlayContext";
 import { ScreenOverlayProvider } from "./context/ScreenOverlayContext"; // SINGLE IMPORT
 import { AuthProvider } from "./contexts/auth/AuthContext";
 import CartPage from '@/pages/CartPage';
+import MenuPage from '@/pages/MenuPage';
 
 import "./App.css";
 

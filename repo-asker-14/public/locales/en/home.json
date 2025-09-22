@@ -24,6 +24,12 @@
     "bookmarks": "Bookmarks",
     "friends": "Friends",
     "shopping": "Shopping",
-    "settings": "Settings"
+    "settings": "Settings",
+    "events": "Events",
+    "memories": "Memories",
+    "groups": "Groups",
+    "pages": "Pages",
+    "live": "Live",
+    "help": "Help"
   }
 }

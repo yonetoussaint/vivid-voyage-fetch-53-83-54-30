@@ -39,20 +39,20 @@ const navItems: BottomNavTab[] = [
 // More menu items that will appear in the side panel
 const moreMenuItems = [
   { id: 'account', nameKey: 'navigation.account', icon: User, path: '/profile' },
-  { id: 'messages', nameKey: 'Messages', icon: MessageCircle, path: '/messages' },
+  { id: 'messages', nameKey: 'navigation.messages', icon: MessageCircle, path: '/messages' },
   { id: 'videos', nameKey: 'navigation.videos', icon: Tv, path: '/videos' },
-  { id: 'reels', nameKey: 'Reels', icon: Film, path: '/reels' },
-  { id: 'marketplace', nameKey: 'Marketplace', icon: ShoppingBag, path: '/shopping' },
-  { id: 'events', nameKey: 'Events', icon: Calendar, path: '/events' },
-  { id: 'memories', nameKey: 'Memories', icon: Camera, path: '/memories' },
-  { id: 'saved', nameKey: 'Saved', icon: Bookmark, path: '/bookmarks' },
-  { id: 'groups', nameKey: 'Groups', icon: Users, path: '/groups' },
-  { id: 'pages', nameKey: 'Pages', icon: Star, path: '/pages' },
-  { id: 'live', nameKey: 'Live Videos', icon: PlayCircle, path: '/live' },
+  { id: 'reels', nameKey: 'navigation.shorts', icon: Film, path: '/reels' },
+  { id: 'marketplace', nameKey: 'navigation.shopping', icon: ShoppingBag, path: '/shopping' },
+  { id: 'events', nameKey: 'navigation.events', icon: Calendar, path: '/events' },
+  { id: 'memories', nameKey: 'navigation.memories', icon: Camera, path: '/memories' },
+  { id: 'saved', nameKey: 'navigation.bookmarks', icon: Bookmark, path: '/bookmarks' },
+  { id: 'groups', nameKey: 'navigation.groups', icon: Users, path: '/groups' },
+  { id: 'pages', nameKey: 'navigation.pages', icon: Star, path: '/pages' },
+  { id: 'live', nameKey: 'navigation.live', icon: PlayCircle, path: '/live' },
   { id: 'notifications', nameKey: 'navigation.notifications', icon: Bell, path: '/notifications', badge: 12 },
   { id: 'friends', nameKey: 'navigation.friends', icon: Users, path: '/friends', badge: 3 },
   { id: 'settings', nameKey: 'navigation.settings', icon: Settings, path: '/settings' },
-  { id: 'help', nameKey: 'Help & Support', icon: HelpCircle, path: '/help' },
+  { id: 'help', nameKey: 'navigation.help', icon: HelpCircle, path: '/help' },
 ];
 
 export default function BottomNav() {
