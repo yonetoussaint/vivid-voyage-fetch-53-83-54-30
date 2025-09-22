@@ -1,6 +1,10 @@
 import React, { useRef, useState, useEffect } from 'react';
 import SellerPage from '@/pages/SellerPage';
+import SellerHeader from '@/components/product/SellerHeader';
 import { useScreenOverlay } from "@/context/ScreenOverlayContext";
+import { Heart, Share } from 'lucide-react';
+import { useQuery } from "@tanstack/react-query";
+import { fetchSellerById } from "@/integrations/supabase/sellers";
 
 // Custom hook for panel scroll progress (reused from ProductSemiPanel)
 const usePanelScrollProgress = (scrollContainerRef: React.RefObject<HTMLDivElement>, isOpen: boolean) => {
@@ -59,10 +63,19 @@ const SellerSemiPanel: React.FC<SellerSemiPanelProps> = ({
   const headerRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [panelHeaderHeight, setPanelHeaderHeight] = useState(60); // Default header height
+  const [activeTab, setActiveTab] = useState("products");
+  const [isFollowing, setIsFollowing] = useState(false);
   const { setHasActiveOverlay } = useScreenOverlay();
 
   // Get scroll progress for the panel
   const { progress: scrollProgress, scrollY } = usePanelScrollProgress(scrollContainerRef, isOpen);
+
+  // Fetch seller data
+  const { data: seller, isLoading: sellerLoading } = useQuery({
+    queryKey: ['seller', sellerId],
+    queryFn: () => fetchSellerById(sellerId!),
+    enabled: !!sellerId,
+  });
 
   // Measure panel header height
   React.useEffect(() => {
@@ -80,40 +93,22 @@ const SellerSemiPanel: React.FC<SellerSemiPanelProps> = ({
         const container = scrollContainerRef.current;
         if (container) {
           container.scrollTop = 0;
-          console.log('🎯 Seller Panel opened - container setup:', {
-            hasContainer: true,
-            scrollTop: container.scrollTop,
-            clientHeight: container.clientHeight,
-            scrollHeight: container.scrollHeight,
-            overflow: getComputedStyle(container).overflow
-          });
-
           // Force a scroll event to initialize progress
           const scrollEvent = new Event('scroll', { bubbles: true });
           container.dispatchEvent(scrollEvent);
-        } else {
-          console.log('❌ Seller Panel opened but no scroll container found');
         }
-      }, 100); // Increased delay for better reliability
+      }, 100);
 
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
 
-  // Debug logging for panel scroll progress
-  React.useEffect(() => {
-    console.log('📋 Seller Panel Scroll Debug:', {
-      scrollY,
-      scrollProgress,
-      hasContainer: !!scrollContainerRef.current,
-      panelHeaderHeight,
-      maxScroll: 120,
-      progressCalculation: `${scrollY}/120 = ${scrollProgress}`,
-      isOpen,
-      containerScrollTop: scrollContainerRef.current?.scrollTop || 0,
-      shouldShowScrolledState: scrollProgress > 0.5
-    });
-  }, [scrollY, scrollProgress, panelHeaderHeight, isOpen]);
+  // Reset active tab when seller changes
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab("products");
+    }
+  }, [sellerId, isOpen]);
 
   // Handle panel state changes to control bottom nav visibility
   useEffect(() => {
@@ -124,6 +119,22 @@ const SellerSemiPanel: React.FC<SellerSemiPanelProps> = ({
   }, [isOpen, setHasActiveOverlay]);
 
   if (!isOpen) return null;
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+  };
+
+  const handleShareClick = () => {
+    console.log('Share seller clicked in panel');
+  };
+
+  const handleFollowClick = () => {
+    setIsFollowing(!isFollowing);
+  };
+
+  const handleMessageClick = () => {
+    console.log('Message seller clicked in panel');
+  };
 
   return (
     <>
@@ -136,6 +147,40 @@ const SellerSemiPanel: React.FC<SellerSemiPanelProps> = ({
 
       {/* Semi Panel with increased height (85vh) */}
       <div className="fixed bottom-0 left-0 right-0 h-[85vh] bg-white z-[9999] rounded-t-lg shadow-xl overflow-hidden flex flex-col">
+
+        {/* Seller Header - with scroll-based behavior */}
+        <div 
+          ref={headerRef} 
+          className="absolute top-0 left-0 right-0 z-50"
+        >
+          <SellerHeader 
+            inPanel={true} // Enable panel behavior
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            seller={seller}
+            isFollowing={isFollowing}
+            onFollow={handleFollowClick}
+            onMessage={handleMessageClick}
+            onShare={handleShareClick}
+            forceScrolledState={false}
+            customScrollProgress={scrollProgress}
+            showCloseIcon={true} // Show X icon in panel
+            onCloseClick={onClose} // Handle close click
+            onlineStatus={{ isOnline: seller?.status === 'active', lastSeen: seller?.last_seen }}
+            actionButtons={[
+              {
+                Icon: Heart,
+                active: isFollowing,
+                onClick: handleFollowClick,
+                activeColor: "#f43f5e"
+              },
+              {
+                Icon: Share,
+                onClick: handleShareClick
+              }
+            ]}
+          />
+        </div>
 
         {/* Scrollable Content with header space */}
         {sellerId ? (
@@ -157,7 +202,7 @@ const SellerSemiPanel: React.FC<SellerSemiPanelProps> = ({
         ) : (
           <div className="flex items-center justify-center h-full">
             <div className="text-center text-gray-500">
-              No seller selected
+              {sellerLoading ? "Loading seller..." : "No seller selected"}
             </div>
           </div>
         )}
