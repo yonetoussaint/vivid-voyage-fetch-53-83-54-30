@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +8,8 @@ import {
   Search, Filter, MoreVertical, Image, 
   Plus, ArrowUp, ArrowDown, Trash2, 
   Eye, Edit, Calendar, Clock, CheckCircle,
-  AlertTriangle, ChevronDown
+  AlertTriangle, ChevronDown, DollarSign,
+  User, Building, Globe, Crown
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -42,10 +44,21 @@ interface Banner {
   duration: number;
   created_at: string;
   updated_at: string;
+  banner_type?: 'system' | 'seller_premium' | 'seller_standard' | 'promotional';
+  status?: 'active' | 'pending' | 'approved' | 'rejected' | 'expired' | 'scheduled';
+  seller_id?: string;
+  seller_name?: string;
+  payment_status?: 'paid' | 'pending' | 'failed' | 'refunded';
+  promotion_start?: string;
+  promotion_end?: string;
+  price_paid?: number;
 }
 
 const AdminBanners = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [bannerTypeFilter, setBannerTypeFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('position');
   const [showFilters, setShowFilters] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
@@ -59,6 +72,24 @@ const AdminBanners = () => {
     refetchInterval: 30000,
   });
 
+  // Transform banners to include mock data for demonstration
+  const transformedBanners: Banner[] = banners.map((banner, index) => ({
+    ...banner,
+    banner_type: index % 4 === 0 ? 'system' : 
+                index % 4 === 1 ? 'seller_premium' : 
+                index % 4 === 2 ? 'seller_standard' : 'promotional',
+    status: index % 5 === 0 ? 'pending' : 
+           index % 5 === 1 ? 'approved' : 
+           index % 5 === 2 ? 'rejected' : 
+           index % 5 === 3 ? 'expired' : 'active',
+    seller_id: index % 4 !== 0 ? `seller_${index}` : undefined,
+    seller_name: index % 4 !== 0 ? `Seller ${index + 1}` : undefined,
+    payment_status: index % 4 !== 0 ? (index % 3 === 0 ? 'paid' : index % 3 === 1 ? 'pending' : 'failed') : undefined,
+    promotion_start: index % 4 !== 0 ? new Date().toISOString() : undefined,
+    promotion_end: index % 4 !== 0 ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() : undefined,
+    price_paid: index % 4 !== 0 ? (index % 4 === 1 ? 299.99 : 99.99) : undefined
+  }));
+
   const handleRefreshData = () => {
     queryClient.invalidateQueries({ queryKey: ["hero-banners"] });
     toast.success("Data refreshed");
@@ -66,25 +97,21 @@ const AdminBanners = () => {
 
   const handleDeleteBanner = async (id: string, imagePath: string) => {
     try {
-      // Extract just the filename if it's a full URL
       let filename = imagePath;
       if (imagePath.includes('/')) {
         try {
           const url = new URL(imagePath);
           filename = url.pathname.split('/').pop() || imagePath;
         } catch (e) {
-          // If not a valid URL, try to extract the filename from the path
           filename = imagePath.split('/').pop() || imagePath;
         }
       }
 
       console.log(`Deleting banner ${id} with image: ${filename}`);
 
-      // Delete from database
       await deleteHeroBanner(id);
 
       try {
-        // Try to delete from storage
         await supabase.storage
           .from('hero-banners')
           .remove([filename]);
@@ -102,7 +129,7 @@ const AdminBanners = () => {
   };
 
   const handleMoveBanner = async (id: string, currentPosition: number, direction: 'up' | 'down') => {
-    const sortedBanners = [...banners].sort((a, b) => (a.position || 0) - (b.position || 0));
+    const sortedBanners = [...transformedBanners].sort((a, b) => (a.position || 0) - (b.position || 0));
     const currentIndex = sortedBanners.findIndex(banner => banner.id === id);
     
     if (currentIndex === -1) return;
@@ -128,6 +155,11 @@ const AdminBanners = () => {
     }
   };
 
+  const handleStatusChange = async (bannerId: string, newStatus: string) => {
+    // This would be implemented with actual API calls
+    toast.success(`Banner status updated to ${newStatus}`);
+  };
+
   const getFileType = (url: string) => {
     const extension = url.split('.').pop()?.toLowerCase();
     if (['mp4', 'webm', 'mov'].includes(extension || '')) return 'video';
@@ -142,11 +174,58 @@ const AdminBanners = () => {
     return `${duration}ms`;
   };
 
-  const filteredAndSortedBanners = banners
-    .filter(banner => 
-      banner.alt.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      banner.image.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+  const getBannerTypeColor = (type: string) => {
+    switch (type) {
+      case 'system': return 'bg-blue-100 text-blue-800';
+      case 'seller_premium': return 'bg-purple-100 text-purple-800';
+      case 'seller_standard': return 'bg-green-100 text-green-800';
+      case 'promotional': return 'bg-orange-100 text-orange-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getBannerTypeIcon = (type: string) => {
+    switch (type) {
+      case 'system': return <Globe className="w-3 h-3" />;
+      case 'seller_premium': return <Crown className="w-3 h-3" />;
+      case 'seller_standard': return <User className="w-3 h-3" />;
+      case 'promotional': return <DollarSign className="w-3 h-3" />;
+      default: return <Building className="w-3 h-3" />;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'approved': return 'bg-blue-100 text-blue-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
+      case 'expired': return 'bg-gray-100 text-gray-800';
+      case 'scheduled': return 'bg-purple-100 text-purple-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getPaymentStatusColor = (status: string) => {
+    switch (status) {
+      case 'paid': return 'bg-green-100 text-green-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'failed': return 'bg-red-100 text-red-800';
+      case 'refunded': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const filteredAndSortedBanners = transformedBanners
+    .filter(banner => {
+      const matchesSearch = banner.alt.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           banner.image.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           (banner.seller_name && banner.seller_name.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesBannerType = bannerTypeFilter === 'all' || banner.banner_type === bannerTypeFilter;
+      const matchesStatus = statusFilter === 'all' || banner.status === statusFilter;
+      const matchesPaymentStatus = paymentStatusFilter === 'all' || banner.payment_status === paymentStatusFilter;
+      return matchesSearch && matchesBannerType && matchesStatus && matchesPaymentStatus;
+    })
     .sort((a, b) => {
       switch (sortBy) {
         case 'position':
@@ -155,16 +234,24 @@ const AdminBanners = () => {
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         case 'name':
           return a.alt.localeCompare(b.alt);
+        case 'seller':
+          return (a.seller_name || '').localeCompare(b.seller_name || '');
+        case 'price':
+          return (b.price_paid || 0) - (a.price_paid || 0);
         default:
           return (a.position || 0) - (b.position || 0);
       }
     });
 
   const stats = {
-    total: banners.length,
-    images: banners.filter(b => getFileType(b.image) === 'image').length,
-    videos: banners.filter(b => getFileType(b.image) === 'video').length,
-    gifs: banners.filter(b => getFileType(b.image) === 'gif').length
+    total: transformedBanners.length,
+    system: transformedBanners.filter(b => b.banner_type === 'system').length,
+    sellerPremium: transformedBanners.filter(b => b.banner_type === 'seller_premium').length,
+    sellerStandard: transformedBanners.filter(b => b.banner_type === 'seller_standard').length,
+    promotional: transformedBanners.filter(b => b.banner_type === 'promotional').length,
+    pending: transformedBanners.filter(b => b.status === 'pending').length,
+    active: transformedBanners.filter(b => b.status === 'active').length,
+    revenue: transformedBanners.filter(b => b.payment_status === 'paid').reduce((sum, b) => sum + (b.price_paid || 0), 0)
   };
 
   if (isLoading) {
@@ -200,7 +287,7 @@ const AdminBanners = () => {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-xl font-semibold text-gray-900">Banner Management</h1>
-              <p className="text-sm text-gray-600">{stats.total} total banners</p>
+              <p className="text-sm text-gray-600">{stats.total} total banners • ${stats.revenue.toFixed(2)} revenue</p>
             </div>
             <div className="flex space-x-2">
               <Button variant="outline" size="sm" onClick={handleRefreshData}>
@@ -213,19 +300,35 @@ const AdminBanners = () => {
             </div>
           </div>
 
-          {/* Compact Stats */}
-          <div className="flex space-x-4 mb-4">
+          {/* Enhanced Stats */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 mb-4">
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <span className="text-sm text-gray-600">{stats.images} Images</span>
+              <span className="text-sm text-gray-600">{stats.system} System</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+              <span className="text-sm text-gray-600">{stats.sellerPremium} Premium</span>
             </div>
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm text-gray-600">{stats.videos} Videos</span>
+              <span className="text-sm text-gray-600">{stats.sellerStandard} Standard</span>
             </div>
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-              <span className="text-sm text-gray-600">{stats.gifs} GIFs</span>
+              <span className="text-sm text-gray-600">{stats.promotional} Promo</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+              <span className="text-sm text-gray-600">{stats.pending} Pending</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+              <span className="text-sm text-gray-600">{stats.active} Active</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <DollarSign className="w-3 h-3 text-green-600" />
+              <span className="text-sm text-gray-600">${stats.revenue.toFixed(0)}</span>
             </div>
           </div>
 
@@ -234,7 +337,7 @@ const AdminBanners = () => {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
-                placeholder="Search banners..."
+                placeholder="Search banners, sellers..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 h-9"
@@ -255,7 +358,48 @@ const AdminBanners = () => {
             </div>
 
             {showFilters && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 pt-2 border-t">
+                <Select value={bannerTypeFilter} onValueChange={setBannerTypeFilter}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Banner Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="system">System</SelectItem>
+                    <SelectItem value="seller_premium">Seller Premium</SelectItem>
+                    <SelectItem value="seller_standard">Seller Standard</SelectItem>
+                    <SelectItem value="promotional">Promotional</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="approved">Approved</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                    <SelectItem value="expired">Expired</SelectItem>
+                    <SelectItem value="scheduled">Scheduled</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={paymentStatusFilter} onValueChange={setPaymentStatusFilter}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Payment" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Payments</SelectItem>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="failed">Failed</SelectItem>
+                    <SelectItem value="refunded">Refunded</SelectItem>
+                  </SelectContent>
+                </Select>
+
                 <Select value={sortBy} onValueChange={setSortBy}>
                   <SelectTrigger className="h-8 text-xs">
                     <SelectValue placeholder="Sort by" />
@@ -264,6 +408,8 @@ const AdminBanners = () => {
                     <SelectItem value="position">Position</SelectItem>
                     <SelectItem value="created">Date Created</SelectItem>
                     <SelectItem value="name">Name</SelectItem>
+                    <SelectItem value="seller">Seller</SelectItem>
+                    <SelectItem value="price">Price</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -315,23 +461,46 @@ const AdminBanners = () => {
                       {/* Name and badges */}
                       <div className="flex items-center space-x-2 mb-1">
                         <h3 className="font-medium text-gray-900 truncate text-sm">{banner.alt}</h3>
-                        <Badge variant="outline" className="text-xs px-1.5 py-0.5">
-                          {getFileType(banner.image)}
-                        </Badge>
+                        <div className="flex items-center space-x-1">
+                          {getBannerTypeIcon(banner.banner_type || 'system')}
+                          <Badge className={`${getBannerTypeColor(banner.banner_type || 'system')} text-xs px-1.5 py-0.5`}>
+                            {banner.banner_type?.replace('_', ' ') || 'system'}
+                          </Badge>
+                        </div>
                         <Badge className="bg-gray-100 text-gray-700 text-xs px-1.5 py-0.5">
                           Pos: {banner.position}
                         </Badge>
                       </div>
 
-                      {/* URL and info */}
+                      {/* Seller info and file info */}
                       <div className="flex items-center space-x-3 text-xs text-gray-500 mb-2">
+                        {banner.seller_name && (
+                          <>
+                            <span className="truncate">by {banner.seller_name}</span>
+                            <span>•</span>
+                          </>
+                        )}
                         <span className="truncate max-w-xs">{banner.image.split('/').pop()}</span>
                         <span className="hidden sm:block">•</span>
                         <span className="hidden sm:block">{formatDuration(banner.duration)}</span>
                       </div>
 
-                      {/* Actions and date */}
+                      {/* Status and actions */}
                       <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Badge className={`${getStatusColor(banner.status || 'active')} text-xs px-2 py-0.5`}>
+                            {banner.status || 'active'}
+                          </Badge>
+                          {banner.payment_status && (
+                            <Badge className={`${getPaymentStatusColor(banner.payment_status)} text-xs px-2 py-0.5`}>
+                              {banner.payment_status}
+                            </Badge>
+                          )}
+                          {banner.price_paid && (
+                            <span className="text-xs text-green-600 font-medium">${banner.price_paid}</span>
+                          )}
+                        </div>
+
                         <div className="flex items-center space-x-2">
                           <Button
                             size="sm"
@@ -352,11 +521,6 @@ const AdminBanners = () => {
                             <ArrowDown className="w-3 h-3" />
                           </Button>
                         </div>
-
-                        <div className="flex items-center space-x-2 text-xs text-gray-500">
-                          <Calendar className="w-3 h-3" />
-                          <span>{new Date(banner.created_at).toLocaleDateString()}</span>
-                        </div>
                       </div>
                     </div>
 
@@ -376,6 +540,37 @@ const AdminBanners = () => {
                           <Edit className="w-4 h-4 mr-2" />
                           Edit Details
                         </DropdownMenuItem>
+                        {banner.status === 'pending' && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              className="text-green-600"
+                              onClick={() => handleStatusChange(banner.id, 'approved')}
+                            >
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              Approve Banner
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="text-red-600"
+                              onClick={() => handleStatusChange(banner.id, 'rejected')}
+                            >
+                              <AlertTriangle className="w-4 h-4 mr-2" />
+                              Reject Banner
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                        {banner.payment_status === 'pending' && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              className="text-green-600"
+                              onClick={() => handleStatusChange(banner.id, 'payment_confirmed')}
+                            >
+                              <DollarSign className="w-4 h-4 mr-2" />
+                              Confirm Payment
+                            </DropdownMenuItem>
+                          </>
+                        )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem 
                           className="text-red-600"
@@ -405,3 +600,4 @@ const AdminBanners = () => {
 };
 
 export default AdminBanners;
+
