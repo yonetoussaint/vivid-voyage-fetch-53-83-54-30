@@ -2,13 +2,16 @@ import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Home, Zap, Rss, Wallet, Tv, LayoutGrid, X, MoreHorizontal,
-  Settings, Bell, Bookmark, Star, Users, ShoppingBag, ChevronDown, User
+  Settings, Bell, Bookmark, Star, Users, ShoppingBag, ChevronDown, User,
+  MessageCircle, Film, Calendar, Gift, Camera, PlayCircle, 
+  MapPin, Heart, HelpCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import ProductUploadOverlay from '@/components/product/ProductUploadOverlay';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import SimpleAuthPage from '@/pages/SimpleAuthPage';
 import SignInBanner from './SignInBanner';
 import { useAuth } from '@/contexts/auth/AuthContext';
@@ -30,13 +33,26 @@ const navItems: BottomNavTab[] = [
   { id: 'shorts', nameKey: 'navigation.shorts', icon: Zap, path: '/reels' },
   { id: 'categories', nameKey: 'navigation.categories', icon: LayoutGrid, path: '/posts' },
   { id: 'wallet', nameKey: 'navigation.wallet', icon: Wallet, path: '/wallet' },
+  { id: 'more', nameKey: 'navigation.more', icon: MoreHorizontal, path: '#' },
+];
+
+// More menu items that will appear in the side panel
+const moreMenuItems = [
   { id: 'account', nameKey: 'navigation.account', icon: User, path: '/profile' },
+  { id: 'messages', nameKey: 'Messages', icon: MessageCircle, path: '/messages' },
   { id: 'videos', nameKey: 'navigation.videos', icon: Tv, path: '/videos' },
+  { id: 'reels', nameKey: 'Reels', icon: Film, path: '/reels' },
+  { id: 'marketplace', nameKey: 'Marketplace', icon: ShoppingBag, path: '/shopping' },
+  { id: 'events', nameKey: 'Events', icon: Calendar, path: '/events' },
+  { id: 'memories', nameKey: 'Memories', icon: Camera, path: '/memories' },
+  { id: 'saved', nameKey: 'Saved', icon: Bookmark, path: '/bookmarks' },
+  { id: 'groups', nameKey: 'Groups', icon: Users, path: '/groups' },
+  { id: 'pages', nameKey: 'Pages', icon: Star, path: '/pages' },
+  { id: 'live', nameKey: 'Live Videos', icon: PlayCircle, path: '/live' },
   { id: 'notifications', nameKey: 'navigation.notifications', icon: Bell, path: '/notifications', badge: 12 },
-  { id: 'bookmarks', nameKey: 'navigation.bookmarks', icon: Bookmark, path: '/bookmarks' },
   { id: 'friends', nameKey: 'navigation.friends', icon: Users, path: '/friends', badge: 3 },
-  { id: 'shopping', nameKey: 'navigation.shopping', icon: ShoppingBag, path: '/shopping' },
   { id: 'settings', nameKey: 'navigation.settings', icon: Settings, path: '/settings' },
+  { id: 'help', nameKey: 'Help & Support', icon: HelpCircle, path: '/help' },
 ];
 
 export default function BottomNav() {
@@ -52,7 +68,7 @@ export default function BottomNav() {
   const [showProductUpload, setShowProductUpload] = useState(false);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [showSignInBanner, setShowSignInBanner] = useState(true);
-  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showMorePanel, setShowMorePanel] = useState(false);
   const [reorderedNavItems, setReorderedNavItems] = useState(navItems);
   const [selectedMoreItem, setSelectedMoreItem] = useState(() => t('navigation.more'));
 
@@ -86,148 +102,8 @@ export default function BottomNav() {
     };
   }, []);
 
-  // Overflow management - show 5 items total
-  const MAX_VISIBLE_ITEMS = 5;
-  const visibleItems = reorderedNavItems.slice(0, MAX_VISIBLE_ITEMS);
-  const hiddenItems = reorderedNavItems.slice(MAX_VISIBLE_ITEMS);
-  const showMoreButton = false; // Disable the overflow more button since we have a dedicated More button
-
-  // Function to swap a hidden item to visible position
-  const swapItemToVisible = (selectedItem) => {
-    const newNavItems = [...reorderedNavItems];
-    const selectedIndex = newNavItems.findIndex(item => item.id === selectedItem.id);
-    const lastVisibleIndex = MAX_VISIBLE_ITEMS - 2; // -2 because we need space for More button
-
-    if (selectedIndex > lastVisibleIndex) {
-      // Remove the selected item from its current position
-      const [movedItem] = newNavItems.splice(selectedIndex, 1);
-      // Insert it at the last visible position
-      newNavItems.splice(lastVisibleIndex, 0, movedItem);
-      setReorderedNavItems(newNavItems);
-    }
-  };
-
-  useEffect(() => {
-    const path = location.pathname;
-    const savedSelectedItem = localStorage.getItem('selectedMoreItem');
-
-    if (path.startsWith('/for-you')) setActiveTab('home');
-    else if (path.startsWith('/shorts')) setActiveTab('shorts');
-    else if (path.startsWith('/posts')) setActiveTab('categories');
-    else if (path.startsWith('/wallet')) setActiveTab('wallet');
-    else if (path.startsWith('/videos')) setActiveTab('videos');
-    else if (path.startsWith('/profile')) setActiveTab('account');
-    // Handle more menu items - check if current path matches a more menu item
-    else if (path.startsWith('/notifications') || 
-             path.startsWith('/bookmarks') || 
-             path.startsWith('/friends') || 
-             path.startsWith('/shopping') || 
-             path.startsWith('/settings') ||
-             path.startsWith('/transfer') ||
-             path.startsWith('/topup') ||
-             path.startsWith('/netflix') ||
-             path.startsWith('/paypal-checkout') ||
-              path.startsWith('/favorites')) {
-      // For these routes, don't set any tab as active since there's no more menu
-      setActiveTab('');
-    }
-  }, [location.pathname]);
-
-  const handleTabClick = (item) => {
-    if (animating) return;
-
-    // If clicking the same item that's already active, do nothing
-    if (item.id === activeTab) return;
-
-    setAnimating(true);
-    setPreviousTab(activeTab);
-    setActiveTab(item.id);
-    navigate(item.path);
-    setShowMoreMenu(false); // Close more menu when selecting an item
-
-    // If the clicked item is from the dropdown (hidden items), swap it with the last visible item
-    if (hiddenItems.some(hiddenItem => hiddenItem.id === item.id)) {
-      swapItemToVisible(item);
-    }
-
-    setTimeout(() => {
-      setAnimating(false);
-      setPreviousTab(null);
-    }, 300);
-  };
-
-  const handleMoreClick = () => {
-    const savedSelectedItem = localStorage.getItem('selectedMoreItem');
-
-    // If a more item has been selected and is not the default "More"
-    if (savedSelectedItem && savedSelectedItem !== t('navigation.more')) {
-      const selectedItem = navItems.find(item => t(item.nameKey) === savedSelectedItem);
-
-      if (selectedItem) {
-        // If we're currently on the selected item's route, go to more menu
-        if (location.pathname.startsWith(selectedItem.path.split('?')[0])) {
-          navigate('/more-menu');
-        } else {
-          // If we're on a different route, go to the selected item
-          navigate(selectedItem.path);
-        }
-        return;
-      }
-    }
-
-    // Default behavior: go to more menu
-    navigate('/more-menu');
-  };
-
-  const handleMoreItemSelect = (itemName) => {
-    setSelectedMoreItem(itemName);
-  };
-
-  const MoreMenu = () => (
-    <AnimatePresence>
-      {showMoreMenu && (
-        <motion.div
-          initial={{ opacity: 0, y: 20, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 20, scale: 0.9 }}
-          transition={{ duration: 0.2 }}
-          className="absolute bottom-full right-2 mb-2 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-lg py-2 min-w-48"
-        >
-          {hiddenItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-
-            return (
-              <button
-                key={item.id}
-                onClick={() => handleTabClick(item)}
-                className={`w-full flex items-center px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors ${
-                  isActive ? 'bg-red-50 dark:bg-red-900/20 text-red-600' : 'text-gray-700 dark:text-gray-300'
-                }`}
-              >
-                <div className="relative flex items-center">
-                  {item.isAvatar && user ? (
-                    <Avatar className="w-5 h-5 border mr-3">
-                      <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.email}`} alt="User" />
-                      <AvatarFallback className="text-xs">{user.email?.slice(0, 2).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                  ) : (
-                    <Icon className="w-5 h-5 mr-3" />
-                  )}
-                  <span className="font-medium">{t(item.nameKey)}</span>
-                  {item.badge && (
-                    <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-1.5 rounded-full">
-                      {item.badge}
-                    </span>
-                  )}
-                </div>
-              </button>
-            );
-          })}
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
+  // All navigation items are now visible, no overflow management needed
+  const visibleItems = navItems;
 
   // Don't render if overlay screens are active
   if (hasActiveOverlay) {
@@ -258,6 +134,64 @@ export default function BottomNav() {
         onClose={() => setShowProductUpload(false)}
       />
 
+      {/* More Panel Sheet */}
+      <Sheet open={showMorePanel} onOpenChange={setShowMorePanel}>
+        <SheetContent side="right" className="w-80 p-0">
+          <SheetHeader className="p-6 pb-4 border-b">
+            <SheetTitle className="text-xl font-bold">Menu</SheetTitle>
+          </SheetHeader>
+          
+          {/* User Profile Section */}
+          {user && (
+            <div className="p-4 border-b bg-gray-50 dark:bg-gray-800/50">
+              <div className="flex items-center space-x-3">
+                <Avatar className="w-12 h-12">
+                  <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.email}`} alt="User" />
+                  <AvatarFallback className="text-sm font-medium">{user.email?.slice(0, 2).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                    {user.user_metadata?.name || user.email}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">View your profile</p>
+                </div>
+                <ChevronDown className="w-4 h-4 text-gray-400" />
+              </div>
+            </div>
+          )}
+          
+          {/* Menu Items Grid */}
+          <div className="p-4 grid grid-cols-2 gap-3 max-h-[70vh] overflow-y-auto">
+            {moreMenuItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleMoreItemClick(item)}
+                  className="flex flex-col items-center justify-center p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors relative"
+                >
+                  <div className="relative mb-2">
+                    <div className="p-3 rounded-full bg-primary/10">
+                      <Icon className="w-6 h-6 text-primary" />
+                    </div>
+                    {item.badge && (
+                      <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-1.5 rounded-full min-w-[20px] h-5 flex items-center justify-center">
+                        {item.badge}
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-center text-sm font-medium text-gray-900 dark:text-gray-100 leading-tight">
+                    {typeof item.nameKey === 'string' && item.nameKey.startsWith('navigation.') 
+                      ? t(item.nameKey) 
+                      : item.nameKey}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </SheetContent>
+      </Sheet>
+
       <motion.div
         initial={{ y: 100 }}
         animate={{ y: 0 }}
@@ -273,9 +207,7 @@ export default function BottomNav() {
           {/* Render visible items */}
           {visibleItems.map((item) => {
             const Icon = item.icon;
-            // Visible items should only be active if the activeTab is exactly their ID
-            // AND the activeTab is not in hiddenItems
-            const isActive = activeTab === item.id && !hiddenItems.some(hiddenItem => hiddenItem.id === activeTab);
+            const isActive = activeTab === item.id;
             const wasActive = previousTab === item.id;
 
             return (
@@ -326,61 +258,6 @@ export default function BottomNav() {
               </button>
             );
           })}
-
-          {/* More button when there are hidden items */}
-          {showMoreButton && (
-            <div className="relative">
-              <MoreMenu />
-              <button
-                onClick={handleMoreClick}
-                className={cn(
-                  'flex items-center justify-center relative transition-all duration-300 ease-out transform px-3 py-1 rounded-full',
-                  activeTab === 'more'
-                    ? 'bg-red-600 text-white shadow-md scale-105'
-                    : 'scale-100 text-gray-500'
-                )}
-              >
-                <div className="relative flex items-center justify-center">
-                  <LayoutGrid
-                    className={cn(
-                      'transition-transform duration-300',
-                      'w-4 h-4 mr-1',
-                      activeTab === 'more' ? 'scale-110' : 'scale-100'
-                    )}
-                    width={16}
-                    height={16}
-                  />
-                  <ChevronDown
-                    className={cn(
-                      'transition-transform duration-300',
-                      'w-3 h-3',
-                      activeTab === 'more' ? 'scale-110' : 'scale-100'
-                    )}
-                    width={12}
-                    height={12}
-                  />
-                  {/* Show total badges from hidden items */}
-                  {hiddenItems.some(item => item.badge) && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 rounded-full"
-                    >
-                      {hiddenItems.reduce((total, item) => {
-                        const badgeNum = item.badge || 0;
-                        return total + badgeNum;
-                      }, 0)}
-                    </motion.div>
-                  )}
-                  {activeTab === 'more' && (
-                    <span className="ml-2 font-medium whitespace-nowrap max-w-[80px] overflow-hidden">
-                      {selectedMoreItem}
-                    </span>
-                  )}
-                </div>
-              </button>
-            </div>
-          )}
         </div>
       </motion.div>
     </>
