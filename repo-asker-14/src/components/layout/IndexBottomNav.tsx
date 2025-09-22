@@ -65,6 +65,15 @@ export default function BottomNav() {
   const [activeTab, setActiveTab] = useState('home');
   const [previousTab, setPreviousTab] = useState(null);
   const [animating, setAnimating] = useState(false);
+
+  // Sync activeTab with current route
+  useEffect(() => {
+    const currentPath = location.pathname;
+    const matchingItem = navItems.find(item => item.path === currentPath);
+    if (matchingItem) {
+      setActiveTab(matchingItem.id);
+    }
+  }, [location.pathname]);
   const [showProductUpload, setShowProductUpload] = useState(false);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [showSignInBanner, setShowSignInBanner] = useState(true);
