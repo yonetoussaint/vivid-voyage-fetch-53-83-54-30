@@ -20,6 +20,7 @@ import PopularSearches from "@/components/home/PopularSearches";
 import NewArrivals from "@/components/home/NewArrivals";
 import NewArrivalsSection from "@/components/home/NewArrivalsSection";
 import HeroBanner from "@/components/home/HeroBanner";
+import BookGenreFlashDeals from "@/components/home/BookGenreFlashDeals";
 
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -182,6 +183,11 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       {/* Finite feed content */}
       <div className="space-y-2">
         {feedItems.map(renderFeedItem)}
+      </div>
+
+      {/* Book Genre Flash Deals - Final component */}
+      <div className="mt-6 mb-4">
+        <BookGenreFlashDeals />
       </div>
     </PageContainer>
   );
