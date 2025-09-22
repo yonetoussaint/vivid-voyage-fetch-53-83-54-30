@@ -1,11 +1,11 @@
-
 import React, { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import Footer from "@/components/layout/Footer";
 import IndexBottomNav from "@/components/layout/IndexBottomNav";
 import { Outlet, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import AliExpressHeader from "@/components/home/AliExpressHeader";
+// Remove this import since we're handling headers in individual components
+// import AliExpressHeader from "@/components/home/AliExpressHeader";
 import { useAuthOverlay } from "@/context/AuthOverlayContext";
 
 import { useScreenOverlay } from "@/context/ScreenOverlayContext";
@@ -91,18 +91,7 @@ export default function MainLayout() {
     <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
         <style dangerouslySetInnerHTML={{ __html: headerHeightStyle }} />
 
-        {/* Show AliExpressHeader on For You and category pages */}
-        {(isForYouPage || 
-          pathname === '/categories/electronics' ||
-          pathname === '/categories/home-living' ||
-          pathname === '/categories/fashion' ||
-          pathname === '/categories/entertainment' ||
-          pathname === '/categories/kids-hobbies' ||
-          pathname === '/categories/sports-outdoors' ||
-          pathname === '/categories/automotive'
-        ) && (
-          <AliExpressHeader activeTabId={isRootHomePage ? "recommendations" : ""} />
-        )}
+        {/* Remove AliExpressHeader from here - let individual pages handle their own headers */}
 
         <main className="flex-grow relative">
           <Outlet />
