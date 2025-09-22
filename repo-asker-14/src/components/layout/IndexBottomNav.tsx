@@ -102,6 +102,42 @@ export default function BottomNav() {
     };
   }, []);
 
+  // Handle tab click navigation
+  const handleTabClick = (item: BottomNavTab) => {
+    if (item.id === 'more') {
+      setShowMorePanel(true);
+      return;
+    }
+
+    if (item.path === '#') return;
+
+    setActiveTab(item.id);
+    setPreviousTab(activeTab);
+    setAnimating(true);
+
+    // Navigate to the path
+    navigate(item.path);
+
+    setTimeout(() => {
+      setAnimating(false);
+      setPreviousTab(null);
+    }, 300);
+  };
+
+  // Handle more menu item click
+  const handleMoreItemClick = (item: any) => {
+    // Store the selected item name in localStorage so the bottom nav can access it
+    localStorage.setItem('selectedMoreItem', item.nameKey);
+    
+    // Close the more panel
+    setShowMorePanel(false);
+    
+    // Navigate to the item's link
+    if (item.path !== "#") {
+      navigate(item.path);
+    }
+  };
+
   // All navigation items are now visible, no overflow management needed
   const visibleItems = navItems;
 
