@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import {
   MessageCircle, Users, Film, PlayCircle, ShoppingBag, Star,
   Bookmark, Gift, Calendar, CheckCircle, Camera, Clock,
-  Heart, HelpCircle, Settings, Bell
+  Heart, HelpCircle, Settings, Bell, Store
 } from 'lucide-react';
 
 const MenuPage = () => {
@@ -16,6 +16,24 @@ const MenuPage = () => {
   const { user } = useAuth();
 
   const menuItems = [
+    {
+      id: 'profile-dashboard',
+      title: 'Profile Dashboard',
+      icon: Users,
+      color: 'bg-blue-600',
+      iconColor: 'text-white',
+      path: '/profile/dashboard',
+      fullWidth: true
+    },
+    {
+      id: 'seller-dashboard',
+      title: 'Seller Dashboard',
+      icon: Store,
+      color: 'bg-green-600',
+      iconColor: 'text-white',
+      path: '/seller-dashboard/overview',
+      fullWidth: true
+    },
     {
       id: 'invite',
       title: 'Invite friends',
@@ -151,7 +169,7 @@ const MenuPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 shadow-sm">
         <div className="flex items-center justify-between p-4">
           <button 
             onClick={handleBack}
