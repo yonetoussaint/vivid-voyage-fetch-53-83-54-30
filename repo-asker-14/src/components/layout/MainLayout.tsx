@@ -123,7 +123,6 @@ export default function MainLayout() {
           pathname === '/shopping' || 
           pathname === '/settings' ||
           pathname === '/wallet' ||
-          pathname.startsWith('/wallet') ||
           pathname === '/categories/electronics' ||
           pathname === '/categories/home-living' ||
           pathname === '/categories/fashion' ||
@@ -132,10 +131,10 @@ export default function MainLayout() {
           pathname === '/categories/sports-outdoors' ||
           pathname === '/categories/automotive'
         ) && (
-<div className="z-30">
+<div className=" z-30">
           <IndexBottomNav />
 </div>
-        )}</div>
+        )}
 
         {/* Product Upload Overlay */}
         <ProductUploadOverlay
