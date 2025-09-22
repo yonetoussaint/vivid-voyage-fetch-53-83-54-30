@@ -9,6 +9,7 @@ import AdminProducts from '@/components/admin-app/pages/AdminProducts';
 import AdminOrders from '@/components/admin-app/pages/AdminOrders';
 import AdminReports from '@/components/admin-app/pages/AdminReports';
 import AdminAnalytics from '@/components/admin-app/pages/AdminAnalytics';
+import AdminBanners from '@/components/admin-app/pages/AdminBanners';
 
 const AdminDashboard = () => {
   return (
@@ -21,6 +22,7 @@ const AdminDashboard = () => {
         <Route path="/products" element={<AdminProducts />} />
         <Route path="/orders" element={<AdminOrders />} />
         <Route path="/reports" element={<AdminReports />} />
+        <Route path="/banners" element={<AdminBanners />} />
         <Route path="/content" element={<div className="p-4">Content management coming soon</div>} />
         <Route path="/analytics" element={<AdminAnalytics />} />
         <Route path="/payments" element={<div className="p-4">Payments management coming soon</div>} />

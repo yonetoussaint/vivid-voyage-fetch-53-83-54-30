@@ -56,6 +56,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     { id: 'products', name: 'Products', href: '/admin-dashboard/products', icon: Package },
     { id: 'orders', name: 'Orders', href: '/admin-dashboard/orders', icon: ShoppingCart },
     { id: 'reports', name: 'Reports', href: '/admin-dashboard/reports', icon: AlertTriangle },
+    { id: 'banners', name: 'Banners', href: '/admin-dashboard/banners', icon: MessageSquare },
     { id: 'content', name: 'Content', href: '/admin-dashboard/content', icon: MessageSquare },
     { id: 'analytics', name: 'Analytics', href: '/admin-dashboard/analytics', icon: BarChart3 },
     { id: 'payments', name: 'Payments', href: '/admin-dashboard/payments', icon: DollarSign },
