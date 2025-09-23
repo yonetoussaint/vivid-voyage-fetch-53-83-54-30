@@ -1,25 +1,12 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
-import { BookOpen, Timer, LucideIcon, Smartphone, ShoppingBag, Shirt, Baby, Home, Dumbbell, Sparkles, Car, Gamepad2, Watch, Headphones, Camera, Laptop, Coffee } from "lucide-react";
+import { BookOpen, Timer, LucideIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllProducts, trackProductView } from "@/integrations/supabase/products";
 import SectionHeader from "./SectionHeader";
 import TabsNavigation from "./TabsNavigation";
 import MobileOptimizedReels from "./MobileOptimizedReels";
-import { PageContainer } from "@/components/layout/PageContainer";
-import PageSkeleton from "@/components/skeletons/PageSkeleton";
-import SuperDealsSection from "@/components/home/SuperDealsSection";
-import FlashDeals from "@/components/home/FlashDeals";
-import SimpleFlashDeals from "@/components/home/SimpleFlashDeals";
-import ElectronicsSubcategories from "@/components/home/ElectronicsSubcategories";
-import TopBrands from "@/components/home/TopBrands";
-import VendorProductCarousel from "@/components/home/VendorProductCarousel";
-import BenefitsBanner from "@/components/home/BenefitsBanner";
-import TopVendorsCompact from "@/components/home/TopVendorsCompact";
-import PopularSearches from "@/components/home/PopularSearches";
-import NewArrivalsSection from "@/components/home/NewArrivalsSection";
 
 interface GenreFlashDealsProps {
   productType?: string;
@@ -33,10 +20,9 @@ interface GenreFlashDealsProps {
   compact?: boolean;
   showHeader?: boolean;
   className?: string;
-  category?: string;
 }
 
-function BookGenreFlashDealsContent({ 
+export default function BookGenreFlashDeals({ 
   productType = undefined,
   excludeTypes = [],
   title = 'BOOK GENRES',
@@ -132,6 +118,11 @@ function BookGenreFlashDealsContent({
     };
   });
 
+  // Always render the component, even if no products (for debugging)
+  // if (!isLoading && processedProducts.length === 0) {
+  //   return null;
+  // }
+
   // Infinite scroll logic
   useEffect(() => {
     const handleScroll = () => {
@@ -156,23 +147,11 @@ function BookGenreFlashDealsContent({
     setDisplayCount(8);
   }, [processedProducts.length]);
 
-  // Create chunks of products with components inserted after every 4 rows (8 products)
-  const createProductsWithComponents = () => {
+  // Create chunks of products with reels inserted after every 5 rows (10 products)
+  const createProductsWithReels = () => {
     const productsToShow = processedProducts.slice(0, displayCount);
     const elements = [];
-    const chunkSize = 8; // 4 rows × 2 columns = 8 products
-
-    // Define components to rotate through
-    const componentCycle = [
-      () => <MobileOptimizedReels />,
-      () => <SuperDealsSection products={processedProducts.slice(0, 6)} />,
-      () => <TopVendorsCompact />,
-      () => <NewArrivalsSection />,
-      () => <PopularSearches />,
-      () => <TopBrands />
-    ];
-
-    let componentIndex = 0;
+    const chunkSize = 10; // 5 rows × 2 columns = 10 products
 
     for (let i = 0; i < productsToShow.length; i += chunkSize) {
       const chunk = productsToShow.slice(i, i + chunkSize);
@@ -243,18 +222,16 @@ function BookGenreFlashDealsContent({
         </div>
       );
 
-      // Add component after each chunk (except the last one if it's incomplete)
+      // Add reels after each chunk (except the last one if it's incomplete)
       if (i + chunkSize < productsToShow.length) {
-        const CurrentComponent = componentCycle[componentIndex % componentCycle.length];
-        
         elements.push(
           <div key={`separator-${i}`} className="my-6">
             <div className="w-full h-px bg-gray-200"></div>
           </div>
         );
         elements.push(
-          <div key={`component-${i}`} className="mb-6">
-            <CurrentComponent />
+          <div key={`reels-${i}`} className="mb-6">
+            <MobileOptimizedReels />
           </div>
         );
         elements.push(
@@ -262,8 +239,6 @@ function BookGenreFlashDealsContent({
             <div className="w-full h-px bg-gray-200"></div>
           </div>
         );
-        
-        componentIndex++;
       }
     }
 
@@ -329,7 +304,7 @@ function BookGenreFlashDealsContent({
           </div>
         ) : processedProducts.length > 0 ? (
           <div className="space-y-4 pb-4">
-            {createProductsWithComponents()}
+            {createProductsWithReels()}
           </div>
         ) : (
           <div className="text-center py-8 text-gray-500">
@@ -339,69 +314,4 @@ function BookGenreFlashDealsContent({
       </div>
     </div>
   );
-}
-
-interface ForYouContentProps {
-  category: string;
-}
-
-const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
-  const { data: products, isLoading } = useQuery({
-    queryKey: ["products", category],
-    queryFn: fetchAllProducts,
-    staleTime: 60000,
-    refetchOnWindowFocus: true,
-  });
-
-  if (isLoading) {
-    return <PageSkeleton />;
-  }
-
-  return (
-    <PageContainer className="overflow-hidden pb-16 relative">
-      {/* Show ElectronicsSubcategories only for electronics category */}
-      {category === 'electronics' && <ElectronicsSubcategories />}
-
-      {/* Traditional component layout - each shows only once */}
-      <div className="space-y-2">
-        <FlashDeals />
-
-        {products && products.length > 0 && (
-          <VendorProductCarousel
-            title="Trending Products"
-            products={products.slice(0, 10)}
-          />
-        )}
-
-        <SimpleFlashDeals
-          title="ELECTRONICS"
-          icon={Smartphone}
-        />
-
-        <BenefitsBanner />
-      </div>
-
-      {/* Book Genre Flash Deals - Final component */}
-      <div className="mt-6 mb-4">
-        <BookGenreFlashDealsContent />
-      </div>
-    </PageContainer>
-  );
-};
-
-export default function BookGenreFlashDeals({ category = 'recommendations' }: { category?: string }) {
-  const [activeCategory, setActiveCategory] = useState(category);
-
-  // Listen for category changes from header
-  useEffect(() => {
-    const handleCategoryChange = (event: CustomEvent) => {
-      console.log('Category changed to:', event.detail.category);
-      setActiveCategory(event.detail.category);
-    };
-
-    window.addEventListener('categoryChange', handleCategoryChange as EventListener);
-    return () => window.removeEventListener('categoryChange', handleCategoryChange as EventListener);
-  }, []);
-
-  return <ForYouContent category={activeCategory} />;
 }
