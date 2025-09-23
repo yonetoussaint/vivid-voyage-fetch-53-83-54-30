@@ -7,6 +7,7 @@ import BannerSlides from './hero/BannerSlides';
 import BannerControls from './hero/BannerControls';
 import NewsTicker from './hero/NewsTicker';
 import FloatingVideo from '../hero/FloatingVideo';
+import SellerInfoOverlay from '../product/SellerInfoOverlay';
 import { BannerType } from './hero/types';
 
 export default function HeroBanner() {
@@ -72,7 +73,7 @@ export default function HeroBanner() {
   // Removed fallback banners - only use database banners
 
   // Transform banners to match BannerType interface
-  const transformedBanners: BannerType[] = banners?.map(banner => {
+  const transformedBanners: BannerType[] = banners?.map((banner, index) => {
     // Detect if it's a video file based on extension or URL path
     // Handle both encoded and non-encoded URLs
     const decodedUrl = decodeURIComponent(banner.image);
@@ -81,10 +82,20 @@ export default function HeroBanner() {
     
     console.log(`Banner ${banner.id}: ${banner.image} -> isVideo: ${isVideo}`);
     
+    // Add mock seller data for demonstration (first 2 banners)
+    const mockSeller = index < 2 ? {
+      id: `seller_${index + 1}`,
+      name: index === 0 ? "TechStore Pro" : "FashionHub",
+      image_url: index === 0 ? "tech-store-logo.png" : "fashion-hub-logo.png",
+      verified: true,
+      followers_count: index === 0 ? 25400 : 18200
+    } : undefined;
+    
     return {
       ...banner,
       type: isVideo ? "video" as const : "image" as const,
-      duration: banner.duration || (isVideo ? 10000 : 5000) // Use database duration or default
+      duration: banner.duration || (isVideo ? 10000 : 5000), // Use database duration or default
+      seller: mockSeller
     };
   }) || [];
   
@@ -224,6 +235,17 @@ export default function HeroBanner() {
           setPreviousIndex={setPreviousIndex}
           progress={progress}
         />
+        
+        {/* Seller Info Overlay */}
+        {currentSlide?.seller && (
+          <SellerInfoOverlay
+            seller={currentSlide.seller}
+            onSellerClick={() => {
+              console.log('Seller clicked:', currentSlide.seller);
+              // Navigate to seller page - implement based on your routing
+            }}
+          />
+        )}
       </div>
       {showNews && <NewsTicker />}
       
