@@ -38,66 +38,6 @@ import {
 import { useLocation } from 'react-router-dom';
 import AliExpressHeader from '@/components/home/AliExpressHeader';
 
-interface ForYouContentProps {
-  category: string;
-}
-
-const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
-  const { data: products, isLoading } = useQuery({
-    queryKey: ["products", category],
-    queryFn: fetchAllProducts,
-    staleTime: 60000,
-    refetchOnWindowFocus: true,
-  });
-
-  if (isLoading) {
-    return <PageSkeleton />;
-  }
-
-  return (
-    <PageContainer className="overflow-hidden pb-16 relative">
-      {/* Hero Banner - shown once at the top */}
-      <HeroBanner />
-
-      {/* Show ElectronicsSubcategories only for electronics category */}
-      {category === 'electronics' && <ElectronicsSubcategories />}
-
-      {/* Traditional component layout - each shows only once */}
-      <div className="space-y-2">
-        <FlashDeals />
-        <MobileOptimizedReels />
-        <TopVendorsCompact />
-        <NewArrivalsSection />
-
-        {products && products.length > 0 && (
-          <SuperDealsSection products={products} />
-        )}
-
-        {products && products.length > 0 && (
-          <VendorProductCarousel
-            title="Trending Products"
-            products={products.slice(0, 10)}
-          />
-        )}
-
-        <SimpleFlashDeals
-          title="ELECTRONICS"
-          icon={Smartphone}
-        />
-
-        <PopularSearches />
-        <TopBrands />
-        <BenefitsBanner />
-      </div>
-
-      {/* Book Genre Flash Deals - Final component */}
-      <div className="mt-6 mb-4">
-        <BookGenreFlashDeals category={category} />
-      </div>
-    </PageContainer>
-  );
-};
-
 // Define categories for marketplace homepage
 const categories = [
   { id: 'recommendations', name: 'For You', icon: <Home className="h-3 w-3" />, path: '/for-you' },
@@ -161,7 +101,12 @@ export default function Index() {
           activeTab={activeTab}
           setActiveTab={setActiveTab}
         />
-        <ForYouContent category={activeCategory} />
+
+        {/* Hero Banner - shown once at the top */}
+        <HeroBanner />
+
+        {/* Book Genre Flash Deals - Contains all other components */}
+        <BookGenreFlashDeals category={activeCategory} />
       </motion.div>
     </AnimatePresence>
   );

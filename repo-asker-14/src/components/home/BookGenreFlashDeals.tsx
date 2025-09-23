@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { BookOpen, Timer, LucideIcon, Smartphone, ShoppingBag, Shirt, Baby, Home, Dumbbell, Sparkles, Car, Gamepad2, Watch, Headphones, Camera, Laptop, Coffee } from "lucide-react";
@@ -19,63 +20,6 @@ import BenefitsBanner from "@/components/home/BenefitsBanner";
 import TopVendorsCompact from "@/components/home/TopVendorsCompact";
 import PopularSearches from "@/components/home/PopularSearches";
 import NewArrivalsSection from "@/components/home/NewArrivalsSection";
-
-interface ForYouContentProps {
-  category: string;
-}
-
-const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
-  const { data: products, isLoading } = useQuery({
-    queryKey: ["products", category],
-    queryFn: fetchAllProducts,
-    staleTime: 60000,
-    refetchOnWindowFocus: true,
-  });
-
-  if (isLoading) {
-    return <PageSkeleton />;
-  }
-
-  return (
-    <PageContainer className="overflow-hidden pb-16 relative">
-      {/* Show ElectronicsSubcategories only for electronics category */}
-      {category === 'electronics' && <ElectronicsSubcategories />}
-
-      {/* Traditional component layout - each shows only once */}
-      <div className="space-y-2">
-        <FlashDeals />
-        <MobileOptimizedReels />
-        <TopVendorsCompact />
-        <NewArrivalsSection />
-
-        {products && products.length > 0 && (
-          <SuperDealsSection products={products} />
-        )}
-
-        {products && products.length > 0 && (
-          <VendorProductCarousel
-            title="Trending Products"
-            products={products.slice(0, 10)}
-          />
-        )}
-
-        <SimpleFlashDeals
-          title="ELECTRONICS"
-          icon={Smartphone}
-        />
-
-        <PopularSearches />
-        <TopBrands />
-        <BenefitsBanner />
-      </div>
-
-      {/* Book Genre Flash Deals - Final component */}
-      <div className="mt-6 mb-4">
-        <BookGenreFlashDealsContent />
-      </div>
-    </PageContainer>
-  );
-};
 
 interface GenreFlashDealsProps {
   productType?: string;
@@ -187,11 +131,6 @@ function BookGenreFlashDealsContent({
       image: product.product_images?.[0]?.src || "https://placehold.co/300x300?text=No+Image"
     };
   });
-
-  // Always render the component, even if no products (for debugging)
-  // if (!isLoading && processedProducts.length === 0) {
-  //   return null;
-  // }
 
   // Infinite scroll logic
   useEffect(() => {
@@ -386,17 +325,62 @@ function BookGenreFlashDealsContent({
   );
 }
 
-// Define categories for marketplace homepage
-const categories = [
-  { id: 'recommendations', name: 'For You', icon: <Home className="h-3 w-3" />, path: '/for-you' },
-  { id: 'electronics', name: 'Electronics', icon: <Smartphone className="h-3 w-3" />, path: '/electronics' },
-  { id: 'fashion', name: 'Fashion', icon: <Shirt className="h-3 w-3" />, path: '/fashion' },
-  { id: 'kids', name: 'Kids', icon: <Baby className="h-3 w-3" />, path: '/kids' },
-  { id: 'home', name: 'Home & Garden', icon: <Home className="h-3 w-3" />, path: '/home-garden' },
-  { id: 'sports', name: 'Sports', icon: <Dumbbell className="h-3 w-3" />, path: '/sports' },
-  { id: 'beauty', name: 'Beauty', icon: <Sparkles className="h-3 w-3" />, path: '/beauty' },
-  { id: 'automotive', name: 'Automotive', icon: <Car className="h-3 w-3" />, path: '/automotive' },
-];
+interface ForYouContentProps {
+  category: string;
+}
+
+const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
+  const { data: products, isLoading } = useQuery({
+    queryKey: ["products", category],
+    queryFn: fetchAllProducts,
+    staleTime: 60000,
+    refetchOnWindowFocus: true,
+  });
+
+  if (isLoading) {
+    return <PageSkeleton />;
+  }
+
+  return (
+    <PageContainer className="overflow-hidden pb-16 relative">
+      {/* Show ElectronicsSubcategories only for electronics category */}
+      {category === 'electronics' && <ElectronicsSubcategories />}
+
+      {/* Traditional component layout - each shows only once */}
+      <div className="space-y-2">
+        <FlashDeals />
+        <MobileOptimizedReels />
+        <TopVendorsCompact />
+        <NewArrivalsSection />
+
+        {products && products.length > 0 && (
+          <SuperDealsSection products={products} />
+        )}
+
+        {products && products.length > 0 && (
+          <VendorProductCarousel
+            title="Trending Products"
+            products={products.slice(0, 10)}
+          />
+        )}
+
+        <SimpleFlashDeals
+          title="ELECTRONICS"
+          icon={Smartphone}
+        />
+
+        <PopularSearches />
+        <TopBrands />
+        <BenefitsBanner />
+      </div>
+
+      {/* Book Genre Flash Deals - Final component */}
+      <div className="mt-6 mb-4">
+        <BookGenreFlashDealsContent />
+      </div>
+    </PageContainer>
+  );
+};
 
 export default function BookGenreFlashDeals({ category = 'recommendations' }: { category?: string }) {
   const [activeCategory, setActiveCategory] = useState(category);
