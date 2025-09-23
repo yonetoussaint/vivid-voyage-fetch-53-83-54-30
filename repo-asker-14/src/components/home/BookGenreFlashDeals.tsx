@@ -156,11 +156,23 @@ function BookGenreFlashDealsContent({
     setDisplayCount(8);
   }, [processedProducts.length]);
 
-  // Create chunks of products with reels inserted after every 5 rows (10 products)
-  const createProductsWithReels = () => {
+  // Create chunks of products with components inserted after every 4 rows (8 products)
+  const createProductsWithComponents = () => {
     const productsToShow = processedProducts.slice(0, displayCount);
     const elements = [];
-    const chunkSize = 10; // 5 rows × 2 columns = 10 products
+    const chunkSize = 8; // 4 rows × 2 columns = 8 products
+
+    // Define components to rotate through
+    const componentCycle = [
+      () => <MobileOptimizedReels />,
+      () => <SuperDealsSection products={processedProducts.slice(0, 6)} />,
+      () => <TopVendorsCompact />,
+      () => <NewArrivalsSection />,
+      () => <PopularSearches />,
+      () => <TopBrands />
+    ];
+
+    let componentIndex = 0;
 
     for (let i = 0; i < productsToShow.length; i += chunkSize) {
       const chunk = productsToShow.slice(i, i + chunkSize);
@@ -231,16 +243,18 @@ function BookGenreFlashDealsContent({
         </div>
       );
 
-      // Add reels after each chunk (except the last one if it's incomplete)
+      // Add component after each chunk (except the last one if it's incomplete)
       if (i + chunkSize < productsToShow.length) {
+        const CurrentComponent = componentCycle[componentIndex % componentCycle.length];
+        
         elements.push(
           <div key={`separator-${i}`} className="my-6">
             <div className="w-full h-px bg-gray-200"></div>
           </div>
         );
         elements.push(
-          <div key={`reels-${i}`} className="mb-6">
-            <MobileOptimizedReels />
+          <div key={`component-${i}`} className="mb-6">
+            <CurrentComponent />
           </div>
         );
         elements.push(
@@ -248,6 +262,8 @@ function BookGenreFlashDealsContent({
             <div className="w-full h-px bg-gray-200"></div>
           </div>
         );
+        
+        componentIndex++;
       }
     }
 
@@ -313,7 +329,7 @@ function BookGenreFlashDealsContent({
           </div>
         ) : processedProducts.length > 0 ? (
           <div className="space-y-4 pb-4">
-            {createProductsWithReels()}
+            {createProductsWithComponents()}
           </div>
         ) : (
           <div className="text-center py-8 text-gray-500">
@@ -349,13 +365,6 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       {/* Traditional component layout - each shows only once */}
       <div className="space-y-2">
         <FlashDeals />
-        <MobileOptimizedReels />
-        <TopVendorsCompact />
-        <NewArrivalsSection />
-
-        {products && products.length > 0 && (
-          <SuperDealsSection products={products} />
-        )}
 
         {products && products.length > 0 && (
           <VendorProductCarousel
@@ -369,8 +378,6 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
           icon={Smartphone}
         />
 
-        <PopularSearches />
-        <TopBrands />
         <BenefitsBanner />
       </div>
 
