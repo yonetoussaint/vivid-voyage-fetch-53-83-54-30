@@ -1,12 +1,81 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { BookOpen, Timer, LucideIcon } from "lucide-react";
+import { BookOpen, Timer, LucideIcon, Smartphone, ShoppingBag, Shirt, Baby, Home, Dumbbell, Sparkles, Car, Gamepad2, Watch, Headphones, Camera, Laptop, Coffee } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllProducts, trackProductView } from "@/integrations/supabase/products";
 import SectionHeader from "./SectionHeader";
 import TabsNavigation from "./TabsNavigation";
 import MobileOptimizedReels from "./MobileOptimizedReels";
+import { PageContainer } from "@/components/layout/PageContainer";
+import PageSkeleton from "@/components/skeletons/PageSkeleton";
+import SuperDealsSection from "@/components/home/SuperDealsSection";
+import FlashDeals from "@/components/home/FlashDeals";
+import SimpleFlashDeals from "@/components/home/SimpleFlashDeals";
+import ElectronicsSubcategories from "@/components/home/ElectronicsSubcategories";
+import TopBrands from "@/components/home/TopBrands";
+import VendorProductCarousel from "@/components/home/VendorProductCarousel";
+import BenefitsBanner from "@/components/home/BenefitsBanner";
+import TopVendorsCompact from "@/components/home/TopVendorsCompact";
+import PopularSearches from "@/components/home/PopularSearches";
+import NewArrivalsSection from "@/components/home/NewArrivalsSection";
+
+interface ForYouContentProps {
+  category: string;
+}
+
+const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
+  const { data: products, isLoading } = useQuery({
+    queryKey: ["products", category],
+    queryFn: fetchAllProducts,
+    staleTime: 60000,
+    refetchOnWindowFocus: true,
+  });
+
+  if (isLoading) {
+    return <PageSkeleton />;
+  }
+
+  return (
+    <PageContainer className="overflow-hidden pb-16 relative">
+      {/* Show ElectronicsSubcategories only for electronics category */}
+      {category === 'electronics' && <ElectronicsSubcategories />}
+
+      {/* Traditional component layout - each shows only once */}
+      <div className="space-y-2">
+        <FlashDeals />
+        <MobileOptimizedReels />
+        <TopVendorsCompact />
+        <NewArrivalsSection />
+
+        {products && products.length > 0 && (
+          <SuperDealsSection products={products} />
+        )}
+
+        {products && products.length > 0 && (
+          <VendorProductCarousel
+            title="Trending Products"
+            products={products.slice(0, 10)}
+          />
+        )}
+
+        <SimpleFlashDeals
+          title="ELECTRONICS"
+          icon={Smartphone}
+        />
+
+        <PopularSearches />
+        <TopBrands />
+        <BenefitsBanner />
+      </div>
+
+      {/* Book Genre Flash Deals - Final component */}
+      <div className="mt-6 mb-4">
+        <BookGenreFlashDealsContent />
+      </div>
+    </PageContainer>
+  );
+};
 
 interface GenreFlashDealsProps {
   productType?: string;
@@ -20,9 +89,10 @@ interface GenreFlashDealsProps {
   compact?: boolean;
   showHeader?: boolean;
   className?: string;
+  category?: string;
 }
 
-export default function BookGenreFlashDeals({ 
+function BookGenreFlashDealsContent({ 
   productType = undefined,
   excludeTypes = [],
   title = 'BOOK GENRES',
@@ -314,4 +384,33 @@ export default function BookGenreFlashDeals({
       </div>
     </div>
   );
+}
+
+// Define categories for marketplace homepage
+const categories = [
+  { id: 'recommendations', name: 'For You', icon: <Home className="h-3 w-3" />, path: '/for-you' },
+  { id: 'electronics', name: 'Electronics', icon: <Smartphone className="h-3 w-3" />, path: '/electronics' },
+  { id: 'fashion', name: 'Fashion', icon: <Shirt className="h-3 w-3" />, path: '/fashion' },
+  { id: 'kids', name: 'Kids', icon: <Baby className="h-3 w-3" />, path: '/kids' },
+  { id: 'home', name: 'Home & Garden', icon: <Home className="h-3 w-3" />, path: '/home-garden' },
+  { id: 'sports', name: 'Sports', icon: <Dumbbell className="h-3 w-3" />, path: '/sports' },
+  { id: 'beauty', name: 'Beauty', icon: <Sparkles className="h-3 w-3" />, path: '/beauty' },
+  { id: 'automotive', name: 'Automotive', icon: <Car className="h-3 w-3" />, path: '/automotive' },
+];
+
+export default function BookGenreFlashDeals({ category = 'recommendations' }: { category?: string }) {
+  const [activeCategory, setActiveCategory] = useState(category);
+
+  // Listen for category changes from header
+  useEffect(() => {
+    const handleCategoryChange = (event: CustomEvent) => {
+      console.log('Category changed to:', event.detail.category);
+      setActiveCategory(event.detail.category);
+    };
+
+    window.addEventListener('categoryChange', handleCategoryChange as EventListener);
+    return () => window.removeEventListener('categoryChange', handleCategoryChange as EventListener);
+  }, []);
+
+  return <ForYouContent category={activeCategory} />;
 }

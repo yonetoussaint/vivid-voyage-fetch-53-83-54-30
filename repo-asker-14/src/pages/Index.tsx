@@ -92,7 +92,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
 
       {/* Book Genre Flash Deals - Final component */}
       <div className="mt-6 mb-4">
-        <BookGenreFlashDeals />
+        <BookGenreFlashDeals category={category} />
       </div>
     </PageContainer>
   );
@@ -113,6 +113,7 @@ const categories = [
 export default function Index() {
   const [activeCategory, setActiveCategory] = useState('recommendations');
   const [activeTab, setActiveTab] = useState('recommendations');
+  const location = useLocation();
 
   // Listen for category changes from header
   useEffect(() => {
@@ -155,10 +156,10 @@ export default function Index() {
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
       >
-        <AliExpressHeader 
-          categories={categories} 
-          activeTab={activeTab} 
-          setActiveTab={setActiveTab} 
+        <AliExpressHeader
+          categories={categories}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
         />
         <ForYouContent category={activeCategory} />
       </motion.div>
