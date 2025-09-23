@@ -26,7 +26,16 @@ export const fetchHeroBanners = async (): Promise<HeroBanner[]> => {
     // Need to explicitly type the response to avoid type errors
     const { data, error } = await supabase
       .from('hero_banners')
-      .select('*')
+      .select(`
+        *,
+        seller:seller_id (
+          id,
+          name,
+          image_url,
+          verified,
+          followers_count
+        )
+      `)
       .order('position', { ascending: true }) as { 
         data: HeroBanner[] | null; 
         error: any; 
