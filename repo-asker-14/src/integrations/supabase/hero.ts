@@ -9,6 +9,14 @@ export interface HeroBanner {
   duration?: number;
   created_at?: string;
   updated_at?: string;
+  seller_id?: string | null;
+  seller?: {
+    id: string;
+    name: string;
+    image_url?: string;
+    verified: boolean;
+    followers_count: number;
+  };
 }
 
 export const fetchHeroBanners = async (): Promise<HeroBanner[]> => {

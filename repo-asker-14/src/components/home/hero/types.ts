@@ -7,4 +7,12 @@ export interface BannerType {
   created_at?: string;
   updated_at?: string;
   duration?: number; // Optional: time in ms to show this slide before transitioning
+  seller_id?: string | null;
+  seller?: {
+    id: string;
+    name: string;
+    image_url?: string;
+    verified: boolean;
+    followers_count: number;
+  };
 }
