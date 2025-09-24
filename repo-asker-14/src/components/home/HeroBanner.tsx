@@ -222,7 +222,7 @@ export default function HeroBanner({ asCarousel = false }: HeroBannerProps) {
           }}
           onScroll={handleCarouselScroll}
         >
-          <div className="flex"></div>
+          <div className="flex">
           {slidesToShow.map((slide, index) => (
             <div
               key={`carousel-${slide.id}-${index}`}
