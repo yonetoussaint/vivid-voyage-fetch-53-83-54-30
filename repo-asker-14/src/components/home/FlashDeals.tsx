@@ -1,10 +1,9 @@
-import { ArrowRight, Zap, Bolt, Timer } from "lucide-react";
+import { Timer, Zap } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
 import { fetchFlashDeals, trackProductView } from "@/integrations/supabase/products";
 import SectionHeader from "./SectionHeader";
-import TabsNavigation from "./TabsNavigation";
 import ProductSemiPanel from "./ProductSemiPanel";
 import { useScreenOverlay } from "@/context/ScreenOverlayContext";
 
@@ -21,25 +20,9 @@ export default function FlashDeals({ productType }: FlashDealsProps) {
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
-  // Define your tabs - modify these based on your categories
-  const tabs = [
-    { id: 'new-arrivals', label: 'New Arrivals' },
-    { id: 'bestsellers', label: 'Bestsellers' },
-    { id: 'deals', label: "Today's Deals" },
-    { id: 'trending', label: 'Trending Now' },
-    { id: 'staff-picks', label: 'Staff Picks' },
-    { id: 'clearance', label: 'Clearance' },
-    { id: 'under-25', label: 'Under $25' },
-    { id: 'gift-ideas', label: 'Gift Ideas' },
-    { id: 'seasonal', label: 'Seasonal Picks' },
-    { id: 'premium', label: 'Premium Selection' }
-  ];
-
-  const [activeTab, setActiveTab] = useState(tabs[0]?.id || 'new-arrivals');
-
   const { data: flashProducts = [], isLoading } = useQuery({
-    queryKey: ['flash-deals', activeTab, productType],
-    queryFn: () => fetchFlashDeals(productType ? undefined : activeTab, productType),
+    queryKey: ['flash-deals', productType],
+    queryFn: () => fetchFlashDeals(undefined, productType),
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   });
 
@@ -117,19 +100,7 @@ export default function FlashDeals({ productType }: FlashDealsProps) {
     setSelectedProductId(null);
   };
 
-  const middleElement = (
-    <div className="flex items-center gap-1.5 bg-white/20 text-white text-xs font-medium px-3 py-0.5 rounded-full backdrop-blur-sm">
-      <Timer className="w-4 h-4 shrink-0" />
-      <span className="whitespace-nowrap">
-        {[timeLeft.hours, timeLeft.minutes, timeLeft.seconds].map((unit, i) => (
-          <span key={i}>
-            {unit.toString().padStart(2, "0")}
-            {i < 2 && <span className="mx-0.5">:</span>}
-          </span>
-        ))}
-      </span>
-    </div>
-  );
+  
 
   // Don't render the component if no products are available
   if (!isLoading && processedProducts.length === 0) {
@@ -139,27 +110,12 @@ export default function FlashDeals({ productType }: FlashDealsProps) {
   return (
     <>
       <div className="w-full bg-white">
-        {/* Header Row with Gradient Background */}
-        <div className="bg-gradient-to-r from-orange-400 via-orange-500 to-red-500 text-white">
-          <SectionHeader
-            title="SPECIAL CATEGORIES"
-            icon={Zap}
-            viewAllLink="/search?category=flash-deals"
-            viewAllText="View All"
-            showTabs={false}
-          />
-        </div>
-
-        {/* Tabs Navigation */}
-        <div className="bg-white">
-          <TabsNavigation
-            tabs={tabs}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            edgeToEdge={true}
-            style={{ backgroundColor: 'white' }}
-          />
-        </div>
+        <SectionHeader
+          title="FLASH DEALS"
+          icon={Zap}
+          viewAllLink="/search?category=flash-deals"
+          viewAllText="View All"
+        /></div>
 
         <div className="relative pt-4">
           {isLoading ? (
@@ -237,7 +193,7 @@ export default function FlashDeals({ productType }: FlashDealsProps) {
             </div>
           ) : (
             <div className="text-center py-8 text-gray-500">
-              No flash deals available for {tabs.find(tab => tab.id === activeTab)?.label}
+              No flash deals available
             </div>
           )}
         </div>
