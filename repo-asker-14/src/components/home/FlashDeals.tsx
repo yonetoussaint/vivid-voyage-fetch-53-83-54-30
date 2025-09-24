@@ -9,9 +9,11 @@ import { useScreenOverlay } from "@/context/ScreenOverlayContext";
 
 interface FlashDealsProps {
   productType?: string;
+  title?: string;
+  icon?: React.ComponentType<any>;
 }
 
-export default function FlashDeals({ productType }: FlashDealsProps) {
+export default function FlashDeals({ productType, title = "FLASH DEALS", icon = Zap }: FlashDealsProps) {
   const isMobile = useIsMobile();
   const scrollRef = useRef(null);
   const { setHasActiveOverlay } = useScreenOverlay(); // Add this
@@ -111,8 +113,8 @@ export default function FlashDeals({ productType }: FlashDealsProps) {
     <>
       <div className="w-full bg-white">
         <SectionHeader
-          title="FLASH DEALS"
-          icon={Zap}
+          title={title}
+          icon={icon}
           viewAllLink="/search?category=flash-deals"
           viewAllText="View All"
         />

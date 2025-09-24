@@ -15,7 +15,7 @@ import MobileOptimizedReels from "@/components/home/MobileOptimizedReels";
 import PopularSearches from "@/components/home/PopularSearches";
 import NewArrivalsSection from "@/components/home/NewArrivalsSection";
 import HeroBanner from "@/components/home/HeroBanner";
-import RecentlyViewed from "@/components/home/RecentlyViewed";
+import FlashDeals from "@/components/home/FlashDeals";
 
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -33,7 +33,8 @@ import {
   Headphones,
   Camera,
   Laptop,
-  Coffee
+  Coffee,
+  Clock
 } from "lucide-react";
 import { useLocation } from 'react-router-dom';
 import AliExpressHeader from '@/components/home/AliExpressHeader';
@@ -92,7 +93,10 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
 
       {/* Recently Viewed - Final component */}
       <div className="mt-6 mb-4">
-        <RecentlyViewed />
+        <FlashDeals 
+          title="RECENTLY VIEWED"
+          icon={Clock}
+        />
       </div>
     </PageContainer>
   );
