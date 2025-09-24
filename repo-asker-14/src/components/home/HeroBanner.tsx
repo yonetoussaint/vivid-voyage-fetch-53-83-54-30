@@ -218,18 +218,16 @@ export default function HeroBanner({ asCarousel = false }: HeroBannerProps) {
             WebkitOverflowScrolling: 'touch',
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
-            scrollSnapType: 'x mandatory',
-            scrollPaddingLeft: '16px'
+            scrollSnapType: 'x mandatory'
           }}
           onScroll={handleCarouselScroll}
         >
-          <div className="flex gap-4 px-4">
+          <div className="flex"></div>
           {slidesToShow.map((slide, index) => (
             <div
               key={`carousel-${slide.id}-${index}`}
-              className="flex-shrink-0 relative snap-start"
+              className="flex-shrink-0 relative snap-start w-full"
               style={{ 
-                minWidth: '320px',
                 scrollSnapAlign: 'start'
               }}
             >
@@ -237,7 +235,7 @@ export default function HeroBanner({ asCarousel = false }: HeroBannerProps) {
                 <video
                   src={slide.image}
                   alt={slide.alt}
-                  className="w-80 h-64 object-cover rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300"
+                  className="w-full h-auto object-cover rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300"
                   autoPlay
                   muted
                   loop
@@ -252,7 +250,7 @@ export default function HeroBanner({ asCarousel = false }: HeroBannerProps) {
                 <img
                   src={slide.image}
                   alt={slide.alt}
-                  className="w-80 h-64 object-cover rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300"
+                  className="w-full h-auto object-cover rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300"
                   loading="lazy"
                 />
               )}
