@@ -117,7 +117,7 @@ export default function FlashDeals({ productType }: FlashDealsProps) {
           viewAllText="View All"
         />
         
-        <div className="relative pt-4"></div>
+        <div className="relative pt-4">
           {isLoading ? (
             <div className="pl-2 flex overflow-x-hidden">
               {[1, 2, 3].map((_, index) => (
