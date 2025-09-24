@@ -3,8 +3,6 @@ import { useState, useEffect, useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
 import { fetchFlashDeals, trackProductView } from "@/integrations/supabase/products";
-import SectionHeader from "./SectionHeader";
-import TabsNavigation from "./TabsNavigation";
 import ProductSemiPanel from "./ProductSemiPanel";
 import { useScreenOverlay } from "@/context/ScreenOverlayContext";
 
@@ -21,21 +19,7 @@ export default function FlashDeals({ productType }: FlashDealsProps) {
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
-  // Define your tabs - modify these based on your categories
-  const tabs = [
-    { id: 'new-arrivals', label: 'New Arrivals' },
-    { id: 'bestsellers', label: 'Bestsellers' },
-    { id: 'deals', label: "Today's Deals" },
-    { id: 'trending', label: 'Trending Now' },
-    { id: 'staff-picks', label: 'Staff Picks' },
-    { id: 'clearance', label: 'Clearance' },
-    { id: 'under-25', label: 'Under $25' },
-    { id: 'gift-ideas', label: 'Gift Ideas' },
-    { id: 'seasonal', label: 'Seasonal Picks' },
-    { id: 'premium', label: 'Premium Selection' }
-  ];
-
-  const [activeTab, setActiveTab] = useState(tabs[0]?.id || 'new-arrivals');
+  const [activeTab] = useState('new-arrivals');
 
   const { data: flashProducts = [], isLoading } = useQuery({
     queryKey: ['flash-deals', activeTab, productType],
@@ -139,27 +123,6 @@ export default function FlashDeals({ productType }: FlashDealsProps) {
   return (
     <>
       <div className="w-full bg-white">
-        {/* Header Row with Gradient Background */}
-        <div className="bg-gradient-to-r from-orange-400 via-orange-500 to-red-500 text-white">
-          <SectionHeader
-            title="SPECIAL CATEGORIES"
-            icon={Zap}
-            viewAllLink="/search?category=flash-deals"
-            viewAllText="View All"
-            showTabs={false}
-          />
-        </div>
-
-        {/* Tabs Navigation */}
-        <div className="bg-white">
-          <TabsNavigation
-            tabs={tabs}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            edgeToEdge={true}
-            style={{ backgroundColor: 'white' }}
-          />
-        </div>
 
         <div className="relative pt-4">
           {isLoading ? (
