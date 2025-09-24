@@ -1,31 +1,14 @@
 
-import React, { useRef, useState } from 'react';
-import { Store, Users, Zap, ArrowRight, Timer } from 'lucide-react';
+import React, { useRef } from 'react';
+import { Store, Users, Zap, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import SectionHeader from './SectionHeader';
-import TabsNavigation from './TabsNavigation';
 import { useVideos } from '@/hooks/useVideos';
 
 const MobileOptimizedReels = () => {
   const scrollContainerRef = useRef(null);
   const navigate = useNavigate();
   const { data: videos, isLoading } = useVideos(6);
-
-  // Define tabs for the reels section
-  const tabs = [
-    { id: 'new-arrivals', label: 'New Arrivals' },
-    { id: 'bestsellers', label: 'Bestsellers' },
-    { id: 'deals', label: "Today's Deals" },
-    { id: 'trending', label: 'Trending Now' },
-    { id: 'staff-picks', label: 'Staff Picks' },
-    { id: 'clearance', label: 'Clearance' },
-    { id: 'under-25', label: 'Under $25' },
-    { id: 'gift-ideas', label: 'Gift Ideas' },
-    { id: 'seasonal', label: 'Seasonal Picks' },
-    { id: 'premium', label: 'Premium Selection' }
-  ];
-
-  const [activeTab, setActiveTab] = useState(tabs[0]?.id || 'new-arrivals');
 
   const formatViews = (views: number) => {
     if (views >= 1000000) {
@@ -75,34 +58,19 @@ const MobileOptimizedReels = () => {
 
   const middleElement = (
     <div className="flex items-center gap-1.5 bg-white/20 text-white text-xs font-medium px-3 py-0.5 rounded-full backdrop-blur-sm">
-      <Timer className="w-4 h-4 shrink-0" />
-      <span className="whitespace-nowrap">Live Content</span>
+      <Users className="w-4 h-4 shrink-0" />
+      <span className="whitespace-nowrap">2M+ Watching</span>
     </div>
   );
 
   return (
     <div className="w-full overflow-hidden">
-      {/* Header Row with Gradient Background */}
-      <div className="bg-gradient-to-r from-orange-400 via-orange-500 to-red-500 text-white">
-        <SectionHeader
-          title="SPECIAL CATEGORIES"
-          icon={Zap}
-          viewAllLink="/search?category=flash-deals"
-          viewAllText="View All"
-          showTabs={false}
-        />
-      </div>
-
-      {/* Tabs Navigation */}
-      <div className="bg-white">
-        <TabsNavigation
-          tabs={tabs}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          edgeToEdge={true}
-          style={{ backgroundColor: 'white' }}
-        />
-      </div>
+      <SectionHeader
+        title="SHORTS"
+        icon={Zap}
+        viewAllLink="/reels"
+        viewAllText="View All"
+      />
 
       {/* Edge-to-edge container for scrolling, with left padding pl-2 */}
       <div 
