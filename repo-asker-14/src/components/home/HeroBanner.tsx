@@ -212,20 +212,24 @@ export default function HeroBanner({ asCarousel = false }: HeroBannerProps) {
       <div className="w-full">
         <div
           ref={carouselRef}
-          className="flex gap-4 overflow-x-auto scrollbar-hide py-6 px-4"
+          className="flex gap-4 overflow-x-auto scrollbar-hide py-6 px-4 snap-x snap-mandatory"
           style={{
             scrollBehavior: 'smooth',
             WebkitOverflowScrolling: 'touch',
             scrollbarWidth: 'none',
-            msOverflowStyle: 'none'
+            msOverflowStyle: 'none',
+            scrollSnapType: 'x mandatory'
           }}
           onScroll={handleCarouselScroll}
         >
           {slidesToShow.map((slide, index) => (
             <div
               key={`carousel-${slide.id}-${index}`}
-              className="flex-shrink-0 relative"
-              style={{ minWidth: '320px' }} // Fixed width to prevent layout shifts
+              className="flex-shrink-0 relative snap-start"
+              style={{ 
+                minWidth: '320px',
+                scrollSnapAlign: 'start'
+              }}
             >
               {slide.type === "video" ? (
                 <video
