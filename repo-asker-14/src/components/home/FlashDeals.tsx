@@ -115,9 +115,9 @@ export default function FlashDeals({ productType }: FlashDealsProps) {
           icon={Zap}
           viewAllLink="/search?category=flash-deals"
           viewAllText="View All"
-        /></div>
-
-        <div className="relative pt-4">
+        />
+        
+        <div className="relative pt-4"></div>
           {isLoading ? (
             <div className="pl-2 flex overflow-x-hidden">
               {[1, 2, 3].map((_, index) => (
