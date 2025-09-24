@@ -212,16 +212,18 @@ export default function HeroBanner({ asCarousel = false }: HeroBannerProps) {
       <div className="w-full">
         <div
           ref={carouselRef}
-          className="flex gap-4 overflow-x-auto scrollbar-hide py-6 px-4 snap-x snap-mandatory"
+          className="overflow-x-auto scrollbar-hide snap-x snap-mandatory py-6"
           style={{
             scrollBehavior: 'smooth',
             WebkitOverflowScrolling: 'touch',
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
-            scrollSnapType: 'x mandatory'
+            scrollSnapType: 'x mandatory',
+            scrollPaddingLeft: '16px'
           }}
           onScroll={handleCarouselScroll}
         >
+          <div className="flex gap-4 px-4">
           {slidesToShow.map((slide, index) => (
             <div
               key={`carousel-${slide.id}-${index}`}
@@ -307,6 +309,7 @@ export default function HeroBanner({ asCarousel = false }: HeroBannerProps) {
               )}
             </div>
           ))}
+          </div>
         </div>
       </div>
     );
