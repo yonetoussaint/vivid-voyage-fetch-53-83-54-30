@@ -25,9 +25,6 @@ export default function HeroBanner({ asCarousel = false }: HeroBannerProps) {
   const [videoCurrentTime, setVideoCurrentTime] = useState(0);
   const heroBannerRef = useRef<HTMLDivElement>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
-  const scrollPosition = useRef<number>(0);
-  const isScrolling = useRef<boolean>(false);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Dynamically measure header height
   useEffect(() => {
@@ -204,40 +201,10 @@ export default function HeroBanner({ asCarousel = false }: HeroBannerProps) {
 
   const currentSlide = slidesToShow[activeIndex];
 
-  // Handle carousel scroll to prevent snapping
+  // Simple carousel scroll handler (no position restoration to prevent snapping)
   const handleCarouselScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    if (!asCarousel || !carouselRef.current) return;
-
-    const target = e.target as HTMLDivElement;
-    scrollPosition.current = target.scrollLeft;
-
-    // Set scrolling flag to prevent interference
-    isScrolling.current = true;
-
-    // Clear previous timeout
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-    }
-
-    // Reset flag after scroll ends
-    scrollTimeoutRef.current = setTimeout(() => {
-      isScrolling.current = false;
-    }, 150);
-  }, [asCarousel]);
-
-  // Restore scroll position on re-render
-  useEffect(() => {
-    if (!asCarousel || !carouselRef.current || isScrolling.current) return;
-
-    const restoreScrollPosition = () => {
-      if (carouselRef.current && scrollPosition.current !== carouselRef.current.scrollLeft) {
-        carouselRef.current.scrollLeft = scrollPosition.current;
-      }
-    };
-
-    // Use requestAnimationFrame for smoother restoration
-    requestAnimationFrame(restoreScrollPosition);
-  });
+    // Allow natural scrolling without any position restoration
+  }, []);
 
   // Carousel component as JSX - memoized to prevent re-renders
   const CarouselBanners = useMemo(() => {
@@ -247,8 +214,10 @@ export default function HeroBanner({ asCarousel = false }: HeroBannerProps) {
           ref={carouselRef}
           className="flex gap-4 overflow-x-auto scrollbar-hide py-6 px-4"
           style={{
-            scrollBehavior: 'auto', // Changed to 'auto' for better control
-            WebkitOverflowScrolling: 'touch'
+            scrollBehavior: 'smooth',
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none'
           }}
           onScroll={handleCarouselScroll}
         >
@@ -339,14 +308,6 @@ export default function HeroBanner({ asCarousel = false }: HeroBannerProps) {
     );
   }, [slidesToShow, handleCarouselScroll, handleVideoDurationChange]);
 
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-    };
-  }, []);
 
   return (
     <>
