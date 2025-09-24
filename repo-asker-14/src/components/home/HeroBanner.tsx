@@ -222,14 +222,14 @@ export default function HeroBanner({ asCarousel = false }: HeroBannerProps) {
           }}
           onScroll={handleCarouselScroll}
         >
-          <div className="flex">
+          <div className="flex gap-4 px-4">
           {slidesToShow.map((slide, index) => (
             <div
               key={`carousel-${slide.id}-${index}`}
               className="flex-shrink-0 relative snap-start"
               style={{ 
                 scrollSnapAlign: 'start',
-                width: '150vw'
+                width: 'calc(100vw - 60px)'
               }}
             >
               {slide.type === "video" ? (
