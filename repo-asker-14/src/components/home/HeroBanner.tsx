@@ -236,7 +236,7 @@ export default function HeroBanner({ asCarousel = false }: HeroBannerProps) {
                 <video
                   src={slide.image}
                   alt={slide.alt}
-                  className="w-full h-auto object-cover rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300"
+                  className="w-full h-auto object-cover rounded-2xl"
                   autoPlay
                   muted
                   loop
@@ -251,7 +251,7 @@ export default function HeroBanner({ asCarousel = false }: HeroBannerProps) {
                 <img
                   src={slide.image}
                   alt={slide.alt}
-                  className="w-full h-auto object-cover rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300"
+                  className="w-full h-auto object-cover rounded-2xl"
                   loading="lazy"
                 />
               )}
