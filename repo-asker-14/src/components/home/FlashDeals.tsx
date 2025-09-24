@@ -136,15 +136,22 @@ export default function FlashDeals({ productType }: FlashDealsProps) {
               ref={scrollRef}
               className="overflow-x-auto scroll-smooth scrollbar-hide snap-x snap-mandatory"
               style={{
-                scrollPaddingLeft: "1rem",
-                WebkitOverflowScrolling: "touch"
+                scrollPaddingLeft: "8px",
+                WebkitOverflowScrolling: "touch",
+                scrollbarWidth: 'none', 
+                msOverflowStyle: 'none',
+                scrollSnapType: 'x mandatory'
               }}
             >
               <div className="flex pl-2">
                 {processedProducts.map((product) => (
                   <div
                     key={product.id}
-                    className="w-[calc(100%/3.5)] flex-shrink-0 snap-start mr-2"
+                    className="w-[calc(100%/3.5)] flex-shrink-0 snap-start mr-[3vw]"
+                    style={{ 
+                      maxWidth: '160px',
+                      scrollSnapAlign: 'start'
+                    }}
                   >
                     <div 
                       onClick={() => handleProductClick(product.id)}
@@ -188,7 +195,9 @@ export default function FlashDeals({ productType }: FlashDealsProps) {
                     </div>
                   </div>
                 ))}
-                <div className="flex-none w-4" />
+
+                {/* Add right spacing for proper scrolling to the end */}
+                <div className="flex-shrink-0 w-2"></div>
               </div>
             </div>
           ) : (
