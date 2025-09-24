@@ -15,7 +15,7 @@ import MobileOptimizedReels from "@/components/home/MobileOptimizedReels";
 import PopularSearches from "@/components/home/PopularSearches";
 import NewArrivalsSection from "@/components/home/NewArrivalsSection";
 import HeroBanner from "@/components/home/HeroBanner";
-import BookGenreFlashDeals from "@/components/home/BookGenreFlashDeals";
+import RecentlyViewed from "@/components/home/RecentlyViewed";
 
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -90,9 +90,9 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
         <BenefitsBanner />
       </div>
 
-      {/* Book Genre Flash Deals - Final component */}
+      {/* Recently Viewed - Final component */}
       <div className="mt-6 mb-4">
-        <BookGenreFlashDeals />
+        <RecentlyViewed />
       </div>
     </PageContainer>
   );
