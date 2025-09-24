@@ -1,66 +1,33 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { BookOpen, Timer, LucideIcon } from "lucide-react";
+import { Timer } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllProducts, trackProductView } from "@/integrations/supabase/products";
-import SectionHeader from "./SectionHeader";
-import TabsNavigation from "./TabsNavigation";
-import MobileOptimizedReels from "./MobileOptimizedReels";
+import SuperDealsSection from "@/components/home/SuperDealsSection";
+import FlashDeals from "@/components/home/FlashDeals";
+import VendorProductCarousel from "@/components/home/VendorProductCarousel";
+import TopVendorsCompact from "@/components/home/TopVendorsCompact";
+import MobileOptimizedReels from "@/components/home/MobileOptimizedReels";
+import HeroBanner from "@/components/home/HeroBanner";
 
 interface GenreFlashDealsProps {
   productType?: string;
   excludeTypes?: string[];
-  title?: string;
-  icon?: LucideIcon;
-  headerGradient?: string;
-  categories?: Array<{ id: string; label: string }>;
-  viewAllLink?: string;
-  viewAllText?: string;
-  compact?: boolean;
-  showHeader?: boolean;
   className?: string;
 }
 
 export default function BookGenreFlashDeals({ 
   productType = undefined,
   excludeTypes = [],
-  title = 'BOOK GENRES',
-  icon = BookOpen,
-  headerGradient = 'from-blue-500 via-purple-500 to-indigo-600',
-  categories,
-  viewAllLink,
-  viewAllText = 'View All',
-  compact = false,
-  showHeader = true,
   className = ''
 }: GenreFlashDealsProps) {
-  // Define default book genre tabs
-  const defaultBookTabs = [
-    { id: 'all', label: 'All Products' },
-    { id: 'fiction', label: 'Fiction' },
-    { id: 'science-fiction', label: 'Sci-Fi' },
-    { id: 'fantasy', label: 'Fantasy' },
-    { id: 'romance', label: 'Romance' },
-    { id: 'mystery', label: 'Mystery' },
-    { id: 'thriller', label: 'Thriller' },
-    { id: 'non-fiction', label: 'Non-Fiction' },
-    { id: 'biography', label: 'Biography' },
-    { id: 'business', label: 'Business' },
-    { id: 'self-help', label: 'Self-Help' },
-    { id: 'history', label: 'History' },
-    { id: 'cooking', label: 'Cooking' }
-  ];
-
-  const genreTabs = categories || defaultBookTabs;
-
-  const [activeTab, setActiveTab] = useState(genreTabs[0]?.id || 'all');
   const [displayCount, setDisplayCount] = useState(8);
 
   // Fetch ALL products without any filtering
   const { data: allProducts = [], isLoading } = useQuery({
     queryKey: ['all-products'],
-    queryFn: () => fetchAllProducts(), // This should fetch all products without filters
+    queryFn: () => fetchAllProducts(),
     refetchInterval: 5 * 60 * 1000,
   });
 
@@ -118,27 +85,24 @@ export default function BookGenreFlashDeals({
     };
   });
 
-  // Always render the component, even if no products (for debugging)
-  // if (!isLoading && processedProducts.length === 0) {
-  //   return null;
-  // }
-
   // Infinite scroll logic
   useEffect(() => {
     const handleScroll = () => {
       if (displayCount >= processedProducts.length) return;
-      
+
+      // Only handle vertical scrolling (window/document scroll)
       const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
       const windowHeight = window.innerHeight;
       const documentHeight = document.documentElement.scrollHeight;
-      
+
       // Load more when user is 200px from bottom
       if (scrollTop + windowHeight >= documentHeight - 200) {
         setDisplayCount(prev => Math.min(prev + 8, processedProducts.length));
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
+    // Only listen to window scroll events, not all scroll events
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [displayCount, processedProducts.length]);
 
@@ -147,7 +111,17 @@ export default function BookGenreFlashDeals({
     setDisplayCount(8);
   }, [processedProducts.length]);
 
-  // Create chunks of products with reels inserted after every 5 rows (10 products)
+  // Memoize rotating components to prevent re-creation on every render
+  const rotatingComponents = React.useMemo(() => [
+    React.memo((props) => <SuperDealsSection {...props} />),
+    React.memo((props) => <FlashDeals {...props} />), 
+    React.memo((props) => <VendorProductCarousel {...props} />),
+    React.memo((props) => <TopVendorsCompact {...props} />),
+    React.memo((props) => <MobileOptimizedReels {...props} />),
+    React.memo(() => <HeroBanner />)
+  ], []);
+
+  // Create chunks of products with rotating components inserted after every 5 rows (10 products)
   const createProductsWithReels = () => {
     const productsToShow = processedProducts.slice(0, displayCount);
     const elements = [];
@@ -155,65 +129,82 @@ export default function BookGenreFlashDeals({
 
     for (let i = 0; i < productsToShow.length; i += chunkSize) {
       const chunk = productsToShow.slice(i, i + chunkSize);
-      
+
       // Add products chunk
       elements.push(
-        <div key={`products-${i}`} className="grid grid-cols-2 gap-4 mb-2">
+        <div key={`products-${i}`} className="grid grid-cols-2 gap-2">
           {chunk.map((product) => (
-            <div key={product.id} className="space-y-2 p-2 bg-white rounded-lg border border-gray-100 hover:shadow-sm transition-shadow">
+            <div key={product.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-200">
               <Link 
                 to={`/product/${product.id}`}
                 onClick={() => trackProductView(product.id)}
                 className="block"
               >
-                <div className="relative aspect-[3:4] overflow-hidden bg-gray-50 rounded-md">
+                {/* Fixed 1:1 aspect ratio container */}
+                <div className="relative aspect-square overflow-hidden bg-gray-50">
                   <img
                     src={product.image}
                     alt={product.name}
-                    className="h-full w-full object-cover hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                     loading="lazy"
+                    style={{ 
+                      objectFit: 'cover',
+                      aspectRatio: '1/1'
+                    }}
+                    onError={(e) => {
+                      e.currentTarget.src = "https://placehold.co/300x300?text=No+Image";
+                    }}
                   />
 
                   {/* Discount badge */}
                   {product.discountPercentage > 0 && (
-                    <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded font-medium">
+                    <div className="absolute top-3 left-3 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold shadow-sm z-10">
                       -{product.discountPercentage}%
                     </div>
                   )}
 
                   {/* Timer overlay */}
                   {timeLeft.hours > 0 || timeLeft.minutes > 0 || timeLeft.seconds > 0 ? (
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs flex items-center justify-center py-1 gap-1">
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent text-white text-xs flex items-center justify-center py-3 gap-1 z-10">
                       <Timer className="w-3 h-3" />
-                      {[timeLeft.hours, timeLeft.minutes, timeLeft.seconds].map((unit, i) => (
-                        <span key={i}>
-                          {unit.toString().padStart(2, "0")}
-                          {i < 2 && <span className="mx-0.5">:</span>}
-                        </span>
-                      ))}
+                      <span className="font-mono">
+                        {[timeLeft.hours, timeLeft.minutes, timeLeft.seconds].map((unit, i) => (
+                          <span key={i}>
+                            {unit.toString().padStart(2, "0")}
+                            {i < 2 && <span className="mx-0.5">:</span>}
+                          </span>
+                        ))}
+                      </span>
                     </div>
                   ) : null}
                 </div>
 
                 {/* Product info */}
-                <div className="space-y-1">
-                  <h4 className="text-sm font-medium line-clamp-2 text-gray-900">
+                <div className="p-3 space-y-2">
+                  <h4 className="text-sm font-medium line-clamp-2 text-gray-900 leading-tight">
                     {product.name}
                   </h4>
 
-                  <div className="flex items-center gap-2">
-                    <span className="text-red-500 font-semibold text-base">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-red-600 font-bold text-base">
                       ${Number(product.discount_price || product.price).toFixed(2)}
                     </span>
                     {product.discount_price && (
-                      <span className="text-xs text-gray-500 line-through">
+                      <span className="text-xs text-gray-400 line-through">
                         ${Number(product.price).toFixed(2)}
                       </span>
                     )}
                   </div>
 
-                  <div className="text-xs text-gray-500">
-                    {product.stock} in stock
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs text-gray-500">
+                      {product.stock} in stock
+                    </div>
+                    {product.discountPercentage > 0 && (
+                      <div className="text-xs text-green-600 font-medium">
+                        Save ${(product.price - (product.discount_price || product.price)).toFixed(2)}
+                      </div>
+                    )}
                   </div>
                 </div>
               </Link>
@@ -222,21 +213,19 @@ export default function BookGenreFlashDeals({
         </div>
       );
 
-      // Add reels after each chunk (except the last one if it's incomplete)
+      // Add rotating component after each chunk (except the last one if it's incomplete)
       if (i + chunkSize < productsToShow.length) {
+        const componentIndex = Math.floor(i / chunkSize) % rotatingComponents.length;
+        const RotatingComponent = rotatingComponents[componentIndex];
+
+        // Debug: Log products being passed
+        console.log('Passing products to rotating component:', processedProducts.length, 'products');
+        console.log('Products with discount_price:', processedProducts.filter(p => p.discount_price !== null).length);
+        console.log('Products with images:', processedProducts.filter(p => p.product_images?.length > 0).length);
+
         elements.push(
-          <div key={`separator-${i}`} className="my-6">
-            <div className="w-full h-px bg-gray-200"></div>
-          </div>
-        );
-        elements.push(
-          <div key={`reels-${i}`} className="mb-6">
-            <MobileOptimizedReels />
-          </div>
-        );
-        elements.push(
-          <div key={`separator-after-${i}`} className="mb-4">
-            <div className="w-full h-px bg-gray-200"></div>
+          <div key={`rotating-component-${i}`} className="-mx-2 mb-8">
+            <RotatingComponent products={processedProducts} />
           </div>
         );
       }
@@ -246,69 +235,29 @@ export default function BookGenreFlashDeals({
   };
 
   return (
-    <div className={`w-full ${compact ? '' : 'bg-white'} ${className}`}>
-      {/* Header Row with Gradient Background - Only show if not compact or showHeader is true */}
-      {showHeader && !compact && (
-        <div className={`bg-gradient-to-r ${headerGradient} text-white`}>
-          <SectionHeader
-            title={title}
-            icon={icon}
-            viewAllLink={viewAllLink || `/search`}
-            viewAllText={viewAllText}
-            showTabs={false}
-          />
-        </div>
-      )}
-
-      {/* Compact header for embedded use */}
-      {compact && showHeader && (
-        <div className="px-4 py-3 bg-gray-50 border-b">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {React.createElement(icon, { size: 16, className: "text-gray-600" })}
-              <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
-            </div>
-            {viewAllLink && (
-              <Link 
-                to={viewAllLink}
-                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
-              >
-                {viewAllText}
-              </Link>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Tabs Navigation - Display but don't filter */}
-      <div className={compact ? "bg-gray-50" : "bg-white"}>
-        <TabsNavigation
-          tabs={genreTabs}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          edgeToEdge={!compact}
-          style={{ backgroundColor: compact ? '#f9fafb' : 'white' }}
-        />
-      </div>
-
-      <div className={`relative ${compact ? 'pt-2 px-2' : 'pt-4 px-2'}`}>
+    <div className={`w-full bg-white ${className}`}>
+      <div className="px-2 py-4">
         {isLoading ? (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             {[1, 2, 3, 4, 5, 6].map((_, index) => (
-              <div key={index} className="space-y-2">
-                <div className="aspect-[3:4] bg-gray-200 animate-pulse rounded-md"></div>
-                <div className="h-4 w-3/4 bg-gray-200 animate-pulse rounded"></div>
-                <div className="h-3 w-1/2 bg-gray-200 animate-pulse rounded"></div>
+              <div key={index} className="bg-white rounded-xl overflow-hidden shadow-sm">
+                <div className="aspect-square bg-gray-200 animate-pulse"></div>
+                <div className="p-3 space-y-2">
+                  <div className="h-4 w-3/4 bg-gray-200 animate-pulse rounded"></div>
+                  <div className="h-3 w-1/2 bg-gray-200 animate-pulse rounded"></div>
+                  <div className="h-3 w-1/3 bg-gray-200 animate-pulse rounded"></div>
+                </div>
               </div>
             ))}
           </div>
         ) : processedProducts.length > 0 ? (
-          <div className="space-y-4 pb-4">
+          <div className="space-y-6">
             {createProductsWithReels()}
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500">
-            No products available
+          <div className="text-center py-12 text-gray-500">
+            <div className="text-lg font-medium">No products available</div>
+            <div className="text-sm mt-1">Check back later for new deals</div>
           </div>
         )}
       </div>

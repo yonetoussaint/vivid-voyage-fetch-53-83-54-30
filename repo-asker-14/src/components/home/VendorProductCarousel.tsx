@@ -1,16 +1,16 @@
 import React, { useState, useRef } from 'react';
-import { ThumbsUp, MessageSquare, Share, MoreHorizontal, Store } from 'lucide-react';
+import { ThumbsUp, MessageSquare, Share, MoreHorizontal, Store, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import SectionHeader from './SectionHeader';
 
 const PostCard = ({
-  vendorData,
   title,
   postDescription,
   displayProducts,
   likeCount,
   commentCount,
-  shareCount
+  shareCount,
+  onProductClick
 }) => {
   const [liked, setLiked] = useState(false);
   const carouselRef = useRef(null);
@@ -18,17 +18,6 @@ const PostCard = ({
   const handleLike = () => setLiked(!liked);
   const handleComment = () => console.log('Comment clicked');
   const handleShare = () => console.log('Share clicked');
-
-  const timeAgo = (date: string) => {
-    const now = new Date();
-    const postDate = new Date(date);
-    const diffInHours = Math.floor((now.getTime() - postDate.getTime()) / (1000 * 60 * 60));
-
-    if (diffInHours < 1) return 'Just now';
-    if (diffInHours < 24) return `${diffInHours}h ago`;
-    const diffInDays = Math.floor(diffInHours / 24);
-    return `${diffInDays}d ago`;
-  };
 
   const Button = ({ variant, size, className, children, ...props }) => (
     <button
@@ -40,47 +29,14 @@ const PostCard = ({
   );
 
   return (
-    <div className="w-full flex-shrink-0 overflow-hidden bg-white rounded-lg shadow-sm border border-gray-200">
-      {/* Vendor Info Header */}
-      <div className="flex items-center p-3 border-b border-gray-100">
-        <div className="flex-shrink-0 mr-2 rounded-full overflow-hidden w-8 h-8">
-          <img
-            src={vendorData.profilePic}
-            alt={vendorData.vendorName}
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1">
-            <h3 className="font-bold text-gray-800 text-sm truncate">
-              {title || vendorData.vendorName}
-            </h3>
-            {vendorData.verified && (
-              <svg className="w-3 h-3 text-blue-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-            )}
-          </div>
-          <p className="text-gray-500 text-xs truncate">
-            {vendorData.followers} followers • {timeAgo(vendorData.publishedAt)}
-          </p>
-        </div>
-        <button className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded-full text-xs font-medium">
-          Follow
-        </button>
-        <Button variant="ghost" size="icon" className="ml-1 rounded-full h-6 w-6">
-          <MoreHorizontal className="text-gray-600 h-3 w-3" />
-        </Button>
-      </div>
-
+    <div className="w-full flex-shrink-0 overflow-hidden">
       {/* Post Description */}
       <div className="px-3 py-2 text-gray-800 text-sm">
         <p className="whitespace-pre-line line-clamp-3">{postDescription}</p>
       </div>
 
       {/* Products Carousel */}
-      <div className="relative w-full px-1 py-2 bg-gray-50">
+      <div className="relative w-full px-1 py-2">
         <div
           className="flex overflow-x-auto gap-2 pb-2 pt-1 snap-x snap-mandatory"
           ref={carouselRef}
@@ -189,12 +145,14 @@ interface VendorProductCarouselProps {
   title: string;
   products: any[];
   onProductClick?: (productId: string) => void;
+  posts?: any[]; // Allow passing custom posts
 }
 
 const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
   title,
   products,
   onProductClick,
+  posts: customPosts // Optional custom posts prop
 }) => {
   // Helper function to get seller logo URL from Supabase storage
   const getSellerLogoUrl = (imagePath?: string): string => {
@@ -218,8 +176,13 @@ const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
     return data.publicUrl;
   };
 
-  // Sample data with Supabase storage URLs
-  const posts = [
+  const handleFollowClick = () => {
+    console.log('Follow button clicked');
+    // Add your follow logic here
+  };
+
+  // Use custom posts if provided, otherwise use default posts
+  const posts = customPosts || [
     {
       id: 1,
       vendorData: {
@@ -245,12 +208,6 @@ const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
           discount: "15%",
           currentPrice: "$599",
           originalPrice: "$699"
-        },
-        {
-          id: 3,
-          image: getProductImageUrl("b6e05212-a0ba-4958-8b95-858f72d907a8/1753454025995-2-1000235213.webp"),
-          currentPrice: "$199",
-          originalPrice: null
         }
       ],
       likeCount: 245,
@@ -275,12 +232,6 @@ const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
           discount: "30%",
           currentPrice: "$79",
           originalPrice: "$115"
-        },
-        {
-          id: 5,
-          image: getProductImageUrl("8e799c18-6619-4ae5-92cf-b433ebe65f14/1753453798075-0-1000235205.webp"),
-          currentPrice: "$129",
-          originalPrice: null
         }
       ],
       likeCount: 189,
@@ -305,19 +256,6 @@ const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
           discount: "25%",
           currentPrice: "$149",
           originalPrice: "$199"
-        },
-        {
-          id: 7,
-          image: getProductImageUrl("51e6186d-dba4-46b2-a4bd-df91caa67f18/1746944042020-0-1000160403.jpg"),
-          currentPrice: "$89",
-          originalPrice: null
-        },
-        {
-          id: 8,
-          image: getProductImageUrl("ea4313bd-c64d-4787-8945-e509afe0fecd/1746940357735-4-1000157152.jpg"),
-          discount: "10%",
-          currentPrice: "$259",
-          originalPrice: "$289"
         }
       ],
       likeCount: 156,
@@ -326,57 +264,28 @@ const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
     }
   ];
 
+  // Show only the first post instead of carousel
+  const currentPost = posts[0];
+
   return (
-    <div className="w-full bg-white">
+    <div className="w-full bg-white mb-4">
+      {/* SectionHeader for the post with vendor data */}
       <SectionHeader
-        title="Vendor Posts"
-        icon={Store}
-        viewAllLink="/vendors"
-        viewAllText="View All Vendors"
+        title={currentPost.title}
+        showVendorHeader={true}
+        vendorData={currentPost.vendorData}
+        onFollowClick={handleFollowClick}
       />
 
-      {/* Edge-to-edge container for scrolling, with left padding pl-2 */}
-      <div
-        className="flex overflow-x-auto pl-2 scrollbar-none w-full"
-        style={{
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
-          scrollSnapType: 'x mandatory',
-          scrollPaddingLeft: '8px'
-        }}
-      >
-        {posts.map((post) => (
-          <div
-            key={post.id}
-            className="flex-shrink-0 mr-[3vw]"
-            style={{
-              width: 'calc(100vw - 3rem)',
-              maxWidth: '320px',
-              scrollSnapAlign: 'start'
-            }}
-          >
-            <PostCard
-              vendorData={post.vendorData}
-              title={post.title}
-              postDescription={post.postDescription}
-              displayProducts={post.displayProducts}
-              likeCount={post.likeCount}
-              commentCount={post.commentCount}
-              shareCount={post.shareCount}
-            />
-          </div>
-        ))}
-
-        {/* Add right spacing for proper scrolling to the end */}
-        <div className="flex-shrink-0 w-2"></div>
-      </div>
-
-      {/* Hide scrollbar for webkit browsers */}
-      <style>{`
-        .flex.overflow-x-auto::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
+      <PostCard
+        title={currentPost.title}
+        postDescription={currentPost.postDescription}
+        displayProducts={currentPost.displayProducts}
+        likeCount={currentPost.likeCount}
+        commentCount={currentPost.commentCount}
+        shareCount={currentPost.shareCount}
+        onProductClick={onProductClick}
+      />
     </div>
   );
 };

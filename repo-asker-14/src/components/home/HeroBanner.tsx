@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useQuery } from "@tanstack/react-query";
 import { fetchHeroBanners } from "@/integrations/supabase/hero";
 import { setupStorageBuckets } from "@/integrations/supabase/setupStorage";
@@ -10,7 +10,11 @@ import FloatingVideo from '../hero/FloatingVideo';
 import SellerInfoOverlay from '../product/SellerInfoOverlay';
 import { BannerType } from './hero/types';
 
-export default function HeroBanner() {
+interface HeroBannerProps {
+  asCarousel?: boolean;
+}
+
+export default function HeroBanner({ asCarousel = false }: HeroBannerProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [previousIndex, setPreviousIndex] = useState<number | null>(null);
   const [showNews, setShowNews] = useState(true);
@@ -20,6 +24,10 @@ export default function HeroBanner() {
   const [showFloatingVideo, setShowFloatingVideo] = useState(false);
   const [videoCurrentTime, setVideoCurrentTime] = useState(0);
   const heroBannerRef = useRef<HTMLDivElement>(null);
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const scrollPosition = useRef<number>(0);
+  const isScrolling = useRef<boolean>(false);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Dynamically measure header height
   useEffect(() => {
@@ -70,19 +78,14 @@ export default function HeroBanner() {
     }
   }, [banners]);
 
-  // Removed fallback banners - only use database banners
-
   // Transform banners to match BannerType interface
-  const transformedBanners: BannerType[] = banners?.map((banner, index) => {
-    // Detect if it's a video file based on extension or URL path
-    // Handle both encoded and non-encoded URLs
+  const transformedBanners: BannerType[] = useMemo(() => banners?.map((banner, index) => {
     const decodedUrl = decodeURIComponent(banner.image);
     const isVideo = /\.(mp4|webm|ogg|mov|avi)$/i.test(decodedUrl) || 
                     /\.(mp4|webm|ogg|mov|avi)$/i.test(banner.image);
-    
+
     console.log(`Banner ${banner.id}: ${banner.image} -> isVideo: ${isVideo}`);
-    
-    // Add mock seller data for demonstration (first 2 banners)
+
     const mockSeller = index < 2 ? {
       id: `seller_${index + 1}`,
       name: index === 0 ? "TechStore Pro" : "FashionHub",
@@ -90,40 +93,38 @@ export default function HeroBanner() {
       verified: true,
       followers_count: index === 0 ? 25400 : 18200
     } : undefined;
-    
+
     return {
       ...banner,
       type: isVideo ? "video" as const : "image" as const,
-      duration: banner.duration || (isVideo ? 10000 : 5000), // Use database duration or default
+      duration: banner.duration || (isVideo ? 10000 : 5000),
       seller: mockSeller
     };
-  }) || [];
-  
+  }) || [], [banners]);
+
   const slidesToShow = transformedBanners;
 
   // Handle video duration updates
-  const handleVideoDurationChange = (index: number, duration: number) => {
+  const handleVideoDurationChange = useCallback((index: number, duration: number) => {
     setVideoDurations(prev => ({ ...prev, [index]: duration }));
-  };
+  }, []);
 
-  // Get duration for current slide (use video duration if available, otherwise default)
-  const getCurrentSlideDuration = () => {
+  // Get duration for current slide
+  const getCurrentSlideDuration = useCallback(() => {
     const slide = slidesToShow[activeIndex];
     if (!slide) return 5000;
-    
-    // If it's a video and we have its duration, use that
+
     if (slide.type === "video" && videoDurations[activeIndex]) {
       return videoDurations[activeIndex];
     }
-    
-    // Otherwise use the slide's duration or default
-    return slide.duration || 5000;
-  };
 
-  // Banner rotation with dynamic video duration
+    return slide.duration || 5000;
+  }, [activeIndex, slidesToShow, videoDurations]);
+
+  // Banner rotation (disabled for carousel mode)
   useEffect(() => {
-    if (slidesToShow.length <= 1) return;
-    
+    if (asCarousel || slidesToShow.length <= 1) return;
+
     let timeoutRef: ReturnType<typeof setTimeout> | null = null;
     let progressIntervalRef: ReturnType<typeof setInterval> | null = null;
 
@@ -152,13 +153,15 @@ export default function HeroBanner() {
       if (timeoutRef) clearTimeout(timeoutRef);
       if (progressIntervalRef) clearInterval(progressIntervalRef);
     };
-  }, [activeIndex, slidesToShow.length, videoDurations]); // Include videoDurations in dependencies
+  }, [activeIndex, slidesToShow.length, videoDurations, asCarousel, getCurrentSlideDuration]);
 
-  // Scroll detection for floating video
+  // Scroll detection for floating video (disabled for carousel mode)
   useEffect(() => {
+    if (asCarousel) return;
+
     const handleScroll = () => {
       if (!heroBannerRef.current) return;
-      
+
       const currentSlide = slidesToShow[activeIndex];
       if (!currentSlide || currentSlide.type !== "video") {
         setShowFloatingVideo(false);
@@ -167,19 +170,17 @@ export default function HeroBanner() {
 
       const rect = heroBannerRef.current.getBoundingClientRect();
       const isVisible = rect.bottom > 0 && rect.top < window.innerHeight;
-      
+
       if (!isVisible && !showFloatingVideo) {
-        // Get current video time and pause the main video for perfect sync
         const videoElement = heroBannerRef.current.querySelector('video');
         if (videoElement && !videoElement.paused) {
           const exactTime = videoElement.currentTime;
-          videoElement.pause(); // Pause main video to prevent drift
-          videoElement.muted = true; // Mute main video when floating appears
+          videoElement.pause();
+          videoElement.muted = true;
           setVideoCurrentTime(exactTime);
           setShowFloatingVideo(true);
         }
       } else if (isVisible && showFloatingVideo) {
-        // Resume main video when returning to hero banner
         const videoElement = heroBannerRef.current.querySelector('video');
         if (videoElement && videoElement.paused) {
           videoElement.play().catch(console.error);
@@ -190,67 +191,207 @@ export default function HeroBanner() {
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [activeIndex, slidesToShow, showFloatingVideo]);
+  }, [activeIndex, slidesToShow, showFloatingVideo, asCarousel]);
 
-  // Continuously sync video time while floating video is visible
-  useEffect(() => {
-    if (!showFloatingVideo || !heroBannerRef.current) return;
-
-    // Remove the continuous sync that was causing the scratching effect
-    // The floating video will now play independently after initial sync
-  }, [showFloatingVideo]);
-
-  const handleCloseFloatingVideo = () => {
+  const handleCloseFloatingVideo = useCallback(() => {
     setShowFloatingVideo(false);
-  };
+  }, []);
 
-  const handleExpandFloatingVideo = () => {
+  const handleExpandFloatingVideo = useCallback(() => {
     setShowFloatingVideo(false);
-    // Scroll back to hero banner
     heroBannerRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, []);
 
   const currentSlide = slidesToShow[activeIndex];
 
-  // Removed loading state - show content immediately
+  // Handle carousel scroll to prevent snapping
+  const handleCarouselScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    if (!asCarousel || !carouselRef.current) return;
+
+    const target = e.target as HTMLDivElement;
+    scrollPosition.current = target.scrollLeft;
+
+    // Set scrolling flag to prevent interference
+    isScrolling.current = true;
+
+    // Clear previous timeout
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+
+    // Reset flag after scroll ends
+    scrollTimeoutRef.current = setTimeout(() => {
+      isScrolling.current = false;
+    }, 150);
+  }, [asCarousel]);
+
+  // Restore scroll position on re-render
+  useEffect(() => {
+    if (!asCarousel || !carouselRef.current || isScrolling.current) return;
+
+    const restoreScrollPosition = () => {
+      if (carouselRef.current && scrollPosition.current !== carouselRef.current.scrollLeft) {
+        carouselRef.current.scrollLeft = scrollPosition.current;
+      }
+    };
+
+    // Use requestAnimationFrame for smoother restoration
+    requestAnimationFrame(restoreScrollPosition);
+  });
+
+  // Carousel component as JSX - memoized to prevent re-renders
+  const CarouselBanners = useMemo(() => {
+    return (
+      <div className="w-full">
+        <div
+          ref={carouselRef}
+          className="flex gap-4 overflow-x-auto scrollbar-hide py-6 px-4"
+          style={{
+            scrollBehavior: 'auto', // Changed to 'auto' for better control
+            WebkitOverflowScrolling: 'touch'
+          }}
+          onScroll={handleCarouselScroll}
+        >
+          {slidesToShow.map((slide, index) => (
+            <div
+              key={`carousel-${slide.id}-${index}`}
+              className="flex-shrink-0 relative"
+              style={{ minWidth: '320px' }} // Fixed width to prevent layout shifts
+            >
+              {slide.type === "video" ? (
+                <video
+                  src={slide.image}
+                  alt={slide.alt}
+                  className="w-80 h-64 object-cover rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  onLoadedMetadata={(e) => {
+                    const video = e.target as HTMLVideoElement;
+                    const durationMs = video.duration * 1000;
+                    handleVideoDurationChange(index, durationMs);
+                  }}
+                />
+              ) : (
+                <img
+                  src={slide.image}
+                  alt={slide.alt}
+                  className="w-80 h-64 object-cover rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300"
+                  loading="lazy"
+                />
+              )}
+
+              {/* Gradient overlay for better text readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-2xl pointer-events-none" />
+
+              {/* Content overlay */}
+              {(slide.title || slide.subtitle) && (
+                <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-none">
+                  {slide.title && (
+                    <h3 className="text-white font-semibold text-lg mb-1 line-clamp-2">
+                      {slide.title}
+                    </h3>
+                  )}
+                  {slide.subtitle && (
+                    <p className="text-white/80 text-sm line-clamp-2">
+                      {slide.subtitle}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Seller info for carousel */}
+              {slide.seller && (
+                <div className="absolute top-4 left-4 pointer-events-auto">
+                  <div 
+                    className="bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center space-x-2 shadow-lg cursor-pointer hover:bg-white transition-colors duration-200"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log('Seller clicked:', slide.seller);
+                    }}
+                  >
+                    <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">
+                        {slide.seller.name.charAt(0)}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-800">
+                        {slide.seller.name}
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        {slide.seller.followers_count.toLocaleString()} followers
+                      </p>
+                    </div>
+                    {slide.seller.verified && (
+                      <div className="w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
+                        <span className="text-white text-xs">✓</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }, [slidesToShow, handleCarouselScroll, handleVideoDurationChange]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <>
       <div
         ref={heroBannerRef}
-        className="relative overflow-hidden w-full"
-        style={{ marginTop: offset }}
+        className={`relative overflow-hidden w-full ${asCarousel ? '' : ''}`}
+        style={{ marginTop: asCarousel ? 0 : offset }}
       >
-        <BannerSlides 
-          slides={slidesToShow}
-          activeIndex={activeIndex}
-          previousIndex={previousIndex}
-          onVideoDurationChange={handleVideoDurationChange}
-        />
-        <BannerControls
-          slidesCount={slidesToShow.length}
-          activeIndex={activeIndex}
-          previousIndex={previousIndex}
-          setActiveIndex={setActiveIndex}
-          setPreviousIndex={setPreviousIndex}
-          progress={progress}
-        />
-        
-        {/* Seller Info Overlay */}
-        {currentSlide?.seller && (
-          <SellerInfoOverlay
-            seller={currentSlide.seller}
-            onSellerClick={() => {
-              console.log('Seller clicked:', currentSlide.seller);
-              // Navigate to seller page - implement based on your routing
-            }}
-          />
+        {asCarousel ? (
+          CarouselBanners
+        ) : (
+          <>
+            <BannerSlides 
+              slides={slidesToShow}
+              activeIndex={activeIndex}
+              previousIndex={previousIndex}
+              onVideoDurationChange={handleVideoDurationChange}
+            />
+            <BannerControls
+              slidesCount={slidesToShow.length}
+              activeIndex={activeIndex}
+              previousIndex={previousIndex}
+              setActiveIndex={setActiveIndex}
+              setPreviousIndex={setPreviousIndex}
+              progress={progress}
+            />
+
+            {/* Seller Info Overlay */}
+            {currentSlide?.seller && (
+              <SellerInfoOverlay
+                seller={currentSlide.seller}
+                onSellerClick={() => {
+                  console.log('Seller clicked:', currentSlide.seller);
+                }}
+              />
+            )}
+          </>
         )}
       </div>
-      {showNews && <NewsTicker />}
-      
-      {/* Floating Video */}
-      {showFloatingVideo && currentSlide && currentSlide.type === "video" && (
+
+      {/* News ticker only shows in non-carousel mode */}
+      {!asCarousel && showNews && <NewsTicker />}
+
+      {/* Floating Video only in non-carousel mode */}
+      {!asCarousel && showFloatingVideo && currentSlide && currentSlide.type === "video" && (
         <FloatingVideo
           src={currentSlide.image}
           alt={currentSlide.alt}
