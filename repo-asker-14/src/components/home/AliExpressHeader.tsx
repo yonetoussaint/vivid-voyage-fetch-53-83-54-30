@@ -528,21 +528,24 @@ interface AliExpressHeaderProps {
       )}
 
       {/* Conditional rendering with smooth transition: ProductFilterBar or CategoryTabs */}
-      <div className="relative overflow-hidden">
+      <div className="relative h-10 overflow-hidden">
+        {/* ProductFilterBar - slides in from top when showFilterBar is true */}
         <div 
-          className={`transition-all duration-300 ease-in-out ${
+          className={`absolute inset-x-0 transition-all duration-500 ease-in-out ${
             showFilterBar 
               ? 'opacity-100 transform translate-y-0' 
-              : 'opacity-0 transform -translate-y-full absolute inset-x-0'
+              : 'opacity-0 transform -translate-y-full'
           }`}
         >
           <ProductFilterBar />
         </div>
+        
+        {/* CategoryTabs - slides out to top when showFilterBar is true */}
         <div 
-          className={`transition-all duration-300 ease-in-out ${
+          className={`absolute inset-x-0 transition-all duration-500 ease-in-out ${
             !showFilterBar 
               ? 'opacity-100 transform translate-y-0' 
-              : 'opacity-0 transform -translate-y-full absolute inset-x-0'
+              : 'opacity-0 transform -translate-y-full'
           }`}
         >
           <CategoryTabs 

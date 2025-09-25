@@ -129,73 +129,64 @@ export default function ElectronicsPage() {
 
   // Use Intersection Observer to detect when filter bar in HeroBanner scrolls out of view
   useEffect(() => {
-    // Wait for DOM to be ready and components to render
     const setupObserver = () => {
-      // Look for the ProductFilterBar inside the HeroBanner specifically
-      const heroBannerElement = document.querySelector('[data-testid="hero-banner"]') || 
-                               document.querySelector('.hero-banner') ||
-                               document.querySelector('div[class*="hero"]');
-      
-      let filterBarElement = null;
-      
-      if (heroBannerElement) {
-        filterBarElement = heroBannerElement.querySelector('.product-filter-bar');
-      }
-      
-      // Fallback to any ProductFilterBar if not found in HeroBanner
-      if (!filterBarElement) {
-        filterBarElement = document.querySelector('.product-filter-bar');
-      }
-
-      if (!filterBarElement) {
-        console.log('❌ No filter bar element found, retrying...');
-        // Retry after a short delay as components might still be rendering
-        setTimeout(setupObserver, 500);
-        return;
-      }
-
-      console.log('✅ Filter bar element found:', filterBarElement);
-
-      const observer = new IntersectionObserver(
-        ([entry]) => {
-          // Show filter bar in header when the actual filter bar is not fully visible
-          // Use a threshold that accounts for the header height
-          const isFilterBarVisible = entry.intersectionRatio > 0.1;
-          const shouldShowFilterBar = !isFilterBarVisible;
-          
-          console.log('🎯 Filter bar intersection:', entry.intersectionRatio, 'Show in header:', shouldShowFilterBar);
-
-          if (shouldShowFilterBar !== showFilterBarInHeader) {
-            setShowFilterBarInHeader(shouldShowFilterBar);
+      // Wait a bit for the HeroBanner to render the ProductFilterBar
+      setTimeout(() => {
+        // Look for ProductFilterBar that comes after the HeroBanner (not inside it)
+        const allFilterBars = document.querySelectorAll('.product-filter-bar');
+        
+        // The ProductFilterBar we want to track should be the one that appears after HeroBanner
+        // It should be the second one if there are multiple (first would be in header when shown)
+        let targetFilterBar = null;
+        
+        if (allFilterBars.length >= 1) {
+          // Find the filter bar that's not in the header
+          for (let i = 0; i < allFilterBars.length; i++) {
+            const filterBar = allFilterBars[i];
+            const rect = filterBar.getBoundingClientRect();
+            // The target filter bar should be positioned below the header area (>100px from top)
+            if (rect.top > 100) {
+              targetFilterBar = filterBar;
+              break;
+            }
           }
-        },
-        {
-          root: null,
-          // Offset by header height (approximately 80px) to trigger when filter bar reaches header
-          rootMargin: '-80px 0px 0px 0px',
-          threshold: [0, 0.1, 0.5, 1] // Multiple thresholds for better detection
         }
-      );
 
-      observer.observe(filterBarElement);
+        if (!targetFilterBar) {
+          console.log('❌ Target filter bar not found, retrying...');
+          setTimeout(setupObserver, 200);
+          return;
+        }
 
-      // Return cleanup function
-      return () => {
-        observer.disconnect();
-      };
+        console.log('✅ Found target filter bar:', targetFilterBar);
+
+        const observer = new IntersectionObserver(
+          ([entry]) => {
+            // When the filter bar is not visible (scrolled past), show it in header
+            const isVisible = entry.intersectionRatio > 0;
+            const shouldShowInHeader = !isVisible;
+            
+            console.log('🎯 Filter bar intersection:', entry.intersectionRatio, 'Show in header:', shouldShowInHeader);
+
+            setShowFilterBarInHeader(shouldShowInHeader);
+          },
+          {
+            root: null,
+            rootMargin: '0px',
+            threshold: [0, 0.1]
+          }
+        );
+
+        observer.observe(targetFilterBar);
+
+        // Return cleanup function
+        return () => observer.disconnect();
+      }, 300); // Give components time to render
     };
 
-    // Initial setup with delay to ensure components are rendered
-    const timeoutId = setTimeout(setupObserver, 100);
-    
-    // Also try when components update
     const cleanup = setupObserver();
-
-    return () => {
-      clearTimeout(timeoutId);
-      if (cleanup) cleanup();
-    };
-  }, [showFilterBarInHeader, isContentReady]); // Add isContentReady dependency to retry when content loads
+    return cleanup;
+  }, [isContentReady])
 
   // Handle product click to open semi panel
   const handleProductClick = useCallback((productId: string) => {
