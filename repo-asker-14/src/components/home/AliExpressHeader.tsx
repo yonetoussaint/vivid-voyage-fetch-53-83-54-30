@@ -304,7 +304,7 @@ interface AliExpressHeaderProps {
   }, [showSettingsPanel]);
 
   return (
-    <header id="ali-header" className="fixed top-0 w-full z-40 bg-white shadow-sm">
+    <header id="ali-header" className="fixed top-0 w-full z-40 bg-white m-0 p-0" style={{ boxShadow: 'none' }}>
       {/* Location Screen Overlay */}
       {showLocationScreen && <LocationScreen onClose={handleCloseLocationScreen} />}
 
@@ -539,7 +539,7 @@ interface AliExpressHeaderProps {
         >
           <ProductFilterBar />
         </div>
-        
+
         {/* CategoryTabs - slides out to top when showFilterBar is true */}
         <div 
           className={`absolute inset-x-0 transition-all duration-500 ease-in-out ${
@@ -556,7 +556,7 @@ interface AliExpressHeaderProps {
           />
         </div>
       </div>
-      
+
       {/* Category Panel - Always show */}
       <CategoryPanel 
         progress={1}
