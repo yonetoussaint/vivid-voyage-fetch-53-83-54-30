@@ -129,6 +129,8 @@ export default function ElectronicsPage() {
 
   // Use Intersection Observer to detect when filter bar in HeroBanner scrolls out of view
   useEffect(() => {
+    let debounceTimeout: NodeJS.Timeout;
+    
     const setupObserver = () => {
       // Wait a bit for the HeroBanner to render the ProductFilterBar
       setTimeout(() => {
@@ -162,30 +164,48 @@ export default function ElectronicsPage() {
 
         const observer = new IntersectionObserver(
           ([entry]) => {
-            // When the filter bar is not visible (scrolled past), show it in header
-            const isVisible = entry.intersectionRatio > 0;
-            const shouldShowInHeader = !isVisible;
+            // Clear any existing timeout
+            clearTimeout(debounceTimeout);
             
-            console.log('🎯 Filter bar intersection:', entry.intersectionRatio, 'Show in header:', shouldShowInHeader);
+            // Debounce the state change to prevent rapid toggling
+            debounceTimeout = setTimeout(() => {
+              // Use a more stable threshold - completely out of view vs partially visible
+              const isVisible = entry.intersectionRatio > 0.5; // Higher threshold for stability
+              const shouldShowInHeader = !isVisible;
+              
+              console.log('🎯 Filter bar intersection:', entry.intersectionRatio, 'Show in header:', shouldShowInHeader);
 
-            setShowFilterBarInHeader(shouldShowInHeader);
+              // Only update if the state actually needs to change
+              setShowFilterBarInHeader(prev => {
+                if (prev !== shouldShowInHeader) {
+                  return shouldShowInHeader;
+                }
+                return prev;
+              });
+            }, 100); // 100ms debounce to prevent rapid changes
           },
           {
             root: null,
-            rootMargin: '0px',
-            threshold: [0, 0.1]
+            rootMargin: '-20px 0px -20px 0px', // Add some margin to prevent edge cases
+            threshold: [0, 0.1, 0.5, 1] // More granular thresholds
           }
         );
 
         observer.observe(targetFilterBar);
 
         // Return cleanup function
-        return () => observer.disconnect();
+        return () => {
+          observer.disconnect();
+          clearTimeout(debounceTimeout);
+        };
       }, 300); // Give components time to render
     };
 
     const cleanup = setupObserver();
-    return cleanup;
+    return () => {
+      if (cleanup) cleanup();
+      clearTimeout(debounceTimeout);
+    };
   }, [isContentReady])
 
   // Handle product click to open semi panel
