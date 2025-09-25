@@ -304,7 +304,7 @@ interface AliExpressHeaderProps {
   }, [showSettingsPanel]);
 
   return (
-    <header id="ali-header" className="fixed top-0 w-full z-40 bg-white m-0 p-0" style={{ boxShadow: 'none' }}>
+    <header id="ali-header" className="fixed top-0 w-full z-40 bg-whit m-0 p-0" style={{ boxShadow: 'none' }}>
       {/* Location Screen Overlay */}
       {showLocationScreen && <LocationScreen onClose={handleCloseLocationScreen} />}
 
