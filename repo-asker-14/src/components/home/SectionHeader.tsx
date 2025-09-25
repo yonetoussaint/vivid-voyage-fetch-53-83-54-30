@@ -7,7 +7,7 @@ import TabsNavigation from "./TabsNavigation";
 interface SectionHeaderProps {
   title: string;
   subtitle?: string;
-  icon?: LucideIcon;
+  icon?: React.ComponentType<{ className?: string }>;
   viewAllLink?: string;
   viewAllText?: string;
   titleTransform?: "uppercase" | "capitalize" | "none";
@@ -31,6 +31,9 @@ interface SectionHeaderProps {
     publishedAt: string;
   };
   onFollowClick?: () => void;
+  // New countdown props
+  showCountdown?: boolean;
+  countdown?: string;
 }
 
 export default function SectionHeader({
@@ -53,11 +56,13 @@ export default function SectionHeader({
   // Vendor header props
   showVendorHeader = false,
   vendorData,
-  onFollowClick
+  onFollowClick,
+  // Countdown props
+  showCountdown = false,
+  countdown
 }: SectionHeaderProps) {
-  const { t } = useTranslation('product');
 
-  const defaultViewAllText = viewAllText || t('viewAll');
+  const defaultViewAllText = viewAllText || 'View All';
 
   const timeAgo = (date: string) => {
     const now = new Date();
@@ -123,10 +128,20 @@ export default function SectionHeader({
       {!showVendorHeader && (
         <div className="h-7 flex items-center px-2">
           <div className="flex items-center justify-between w-full">
-            {/* First element (Title with Icon) */}
+            {/* First element (Title with Icon and optional Countdown) */}
             <div className={`flex items-center gap-1 text-xs font-bold tracking-wide ${titleTransform === 'uppercase' ? 'uppercase' : titleTransform === 'capitalize' ? 'capitalize' : ''}`}>
               {Icon && <Icon className="w-4 h-4" />}
               {title}
+              {showCountdown && countdown && (
+                <>
+                  <span className="text-gray-400 mx-1">|</span>
+                  <span className={`font-bold text-sm transition-colors duration-300 ${
+                    countdown < 10 ? 'text-red-600 animate-bounce' : 'text-red-500'
+                  }`}>
+                    {countdown}
+                  </span>
+                </>
+              )}
             </div>
 
             {/* Last element (Clear button and View All) */}
@@ -140,13 +155,13 @@ export default function SectionHeader({
                 </button>
               )}
               {viewAllLink && (
-                <Link
-                  to={viewAllLink}
+                <a
+                  href={viewAllLink}
                   className="text-xs hover:underline flex items-center font-medium transition-colors"
                 >
                   {defaultViewAllText}
                   <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
-                </Link>
+                </a>
               )}
             </div>
           </div>
@@ -156,14 +171,21 @@ export default function SectionHeader({
       {/* Tabs Navigation - Outside the padded container for edge-to-edge scrolling */}
       {showTabs && tabs.length > 0 && activeTab && onTabChange && (
         <div className={tabsStyle === "glassmorphic" ? "mt-1" : "mt-2"}>
-          <TabsNavigation
-            tabs={tabs}
-            activeTab={activeTab}
-            onTabChange={onTabChange}
-            style={tabsStyle === "glassmorphic" ? {
-              backgroundColor: 'white',
-            } : undefined}
-          />
+          <div className="flex space-x-4 px-2">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => onTabChange(tab.id)}
+                className={`px-3 py-1 text-sm font-medium transition-colors ${
+                  activeTab === tab.id
+                    ? 'text-blue-600 border-b-2 border-blue-600'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>

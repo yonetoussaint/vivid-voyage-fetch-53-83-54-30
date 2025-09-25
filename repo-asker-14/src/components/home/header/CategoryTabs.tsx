@@ -118,7 +118,7 @@ const CategoryTabs = ({
   };
 
   const handleCategoriesClick = () => {
-    navigate('/all-categories');
+    navigate('/search');
   };
 
   return (
@@ -131,10 +131,10 @@ const CategoryTabs = ({
       }}
     >
       {/* Tabs List */}
-      <div className={`h-full w-full ${showCategoriesButton ? 'pr-[48px]' : ''}`}>
+        <div className="h-full w-full">
         <div
           ref={scrollContainerRef}
-          className="flex items-center gap-2 overflow-x-auto no-scrollbar h-full w-full relative px-2"
+          className="flex items-center gap-2 overflow-x-auto no-scrollbar h-full w-full relative"
           style={{ 
             scrollbarWidth: 'none', 
             msOverflowStyle: 'none',
@@ -173,12 +173,7 @@ const CategoryTabs = ({
 
       {/* Icon Button on Right */}
       {showCategoriesButton && (
-        <div 
-          className="absolute top-0 right-0 h-full flex items-center pl-1 pr-1 z-10 space-x-1"
-          style={{
-            backgroundColor: 'white',
-          }}
-        >
+        <div className="absolute top-0 right-0 h-full flex items-center z-20 bg-white">
           <div className="h-6 w-px bg-gray-200 opacity-50" />
           <button
             type="button"

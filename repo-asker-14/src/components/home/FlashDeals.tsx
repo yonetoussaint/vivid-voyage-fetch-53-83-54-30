@@ -115,6 +115,8 @@ export default function FlashDeals({ productType, title = "FLASH DEALS", icon = 
         <SectionHeader
           title={title}
           icon={icon}
+          showCountdown={true}
+  countdown="02:45:30"
           viewAllLink="/search?category=flash-deals"
           viewAllText="View All"
         />

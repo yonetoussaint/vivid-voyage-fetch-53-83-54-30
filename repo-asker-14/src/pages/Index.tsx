@@ -188,6 +188,18 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
           title="Home Essentials"
           products={products?.slice(10, 15) || []}
         />
+        
+<MobileOptimizedReels 
+  title="LIVE NOW"
+  viewAllLink="/trending"
+  isLive={true}
+/>
+
+        <FlashDeals 
+          title="STAFF PICKS"
+          icon={Clock}
+        />
+        
       </div>
     </PageContainer>
   );

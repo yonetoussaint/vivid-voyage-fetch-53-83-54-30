@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from 'react-i18next';
 import { fetchAllProducts } from "@/integrations/supabase/products";
@@ -81,23 +80,27 @@ export default function ElectronicsPage() {
   const [isContentReady, setIsContentReady] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [showFilterBarInHeader, setShowFilterBarInHeader] = useState(false);
   const { t } = useTranslation(['product', 'categories']);
-  
+
+  const heroBannerRef = useRef<HTMLDivElement>(null);
+  const filterBarRef = useRef<HTMLDivElement>(null);
+
   const { data: products, isLoading } = useQuery({
     queryKey: ["products"],
     queryFn: fetchAllProducts,
-    staleTime: 60000, // 1 minute
+    staleTime: 60000,
     refetchOnWindowFocus: true,
   });
 
   // Generate initial feed
   const generateFeedItems = useCallback((count: number, startIndex: number = 0) => {
     const items = [];
-    
+
     for (let i = 0; i < count; i++) {
       const index = (startIndex + i) % feedComponents.length;
       const componentType = feedComponents[index];
-      
+
       if (componentType === 'SimpleFlashDeals') {
         const categoryIndex = (startIndex + i) % flashDealsCategories.length;
         items.push({
@@ -112,46 +115,50 @@ export default function ElectronicsPage() {
         });
       }
     }
-    
+
     return items;
   }, []);
 
-  // Initialize feed and mark content as ready
+  // Initialize feed immediately - don't wait for products
   useEffect(() => {
-    if (products) {
-      setFeedItems(generateFeedItems(15, 0));
-      // Add a small delay to ensure all components have time to render
-      setTimeout(() => {
-        setIsContentReady(true);
-      }, 800);
-    }
-  }, [products, generateFeedItems]);
+    setFeedItems(generateFeedItems(10, 0));
+    setTimeout(() => {
+      setIsContentReady(true);
+    }, 800);
+  }, [generateFeedItems]);
 
-  // Infinite scroll handler
-  const handleScroll = useCallback(() => {
-    if (loading) return;
-    
-    const scrollHeight = document.documentElement.scrollHeight;
-    const scrollTop = document.documentElement.scrollTop;
-    const clientHeight = document.documentElement.clientHeight;
-    
-    if (scrollTop + clientHeight >= scrollHeight - 1000) {
-      setLoading(true);
-      
-      setTimeout(() => {
-        setFeedItems(prev => [
-          ...prev,
-          ...generateFeedItems(10, prev.length)
-        ]);
-        setLoading(false);
-      }, 500);
-    }
-  }, [loading, generateFeedItems]);
-
+  // Use Intersection Observer to detect when filter bar scrolls out of view
   useEffect(() => {
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [handleScroll]);
+    const filterBarElement = document.querySelector('.product-filter-bar');
+
+    if (!filterBarElement) {
+      console.log('❌ No filter bar element found');
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // Show filter bar in header when the actual filter bar leaves the viewport
+        const shouldShowFilterBar = entry.intersectionRatio < 1;
+        console.log('🎯 Filter bar visibility:', entry.intersectionRatio, 'Show in header:', shouldShowFilterBar);
+
+        if (shouldShowFilterBar !== showFilterBarInHeader) {
+          setShowFilterBarInHeader(shouldShowFilterBar);
+        }
+      },
+      {
+        root: null,
+        rootMargin: '-60px 0px 0px 0px', // Offset by header height
+        threshold: [0, 1] // Trigger when fully visible and when starts leaving
+      }
+    );
+
+    observer.observe(filterBarElement);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [showFilterBarInHeader]);
 
   // Handle product click to open semi panel
   const handleProductClick = useCallback((productId: string) => {
@@ -168,7 +175,7 @@ export default function ElectronicsPage() {
   // Render component based on type
   const renderFeedItem = (item: any) => {
     const { type, category, id } = item;
-    
+
     switch (type) {
       case 'FlashDeals':
         return <FlashDeals key={id} />;
@@ -181,7 +188,11 @@ export default function ElectronicsPage() {
       case 'SuperDealsSection':
         return products && products.length > 0 ? (
           <SuperDealsSection key={id} products={products} onProductClick={handleProductClick} />
-        ) : null;
+        ) : (
+          <div key={id} className="h-64 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        );
       case 'VendorProductCarousel':
         return products && products.length > 0 ? (
           <VendorProductCarousel 
@@ -190,7 +201,11 @@ export default function ElectronicsPage() {
             products={products.slice(0, 10)} 
             onProductClick={handleProductClick}
           />
-        ) : null;
+        ) : (
+          <div key={id} className="h-64 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        );
       case 'SimpleFlashDeals':
         return (
           <SimpleFlashDeals 
@@ -205,7 +220,6 @@ export default function ElectronicsPage() {
         return <TopBrands key={id} />;
       case 'BenefitsBanner':
         return <BenefitsBanner key={id} />;
-      
       default:
         return null;
     }
@@ -213,18 +227,24 @@ export default function ElectronicsPage() {
 
   return (
     <PageContainer className="overflow-hidden pb-16 relative">
-      {/* Header with the correct active tab */}
-      <AliExpressHeader activeTabId="electronics" />
-      
-      {/* Hero Banner - shown once at the top */}
-      <HeroBanner />
+      {/* Header - shows CategoryTabs by default, ProductFilterBar when scrolled */}
+      <AliExpressHeader 
+        activeTabId="electronics" 
+        showFilterBar={showFilterBarInHeader}
+      />
+
+      {/* Hero Banner with the actual ProductFilterBar */}
+      <div ref={heroBannerRef}>
+        <HeroBanner showNewsTicker={false} />
+      </div>
+
+      {/* SpaceSavingCategories - Always visible */}
       <SpaceSavingCategories />
-      
 
       {/* Endless feed content */}
       <div className="space-y-2">
         {feedItems.map(renderFeedItem)}
-        
+
         {/* Loading indicator */}
         {loading && (
           <div className="flex justify-center py-8">
@@ -239,6 +259,11 @@ export default function ElectronicsPage() {
         isOpen={isPanelOpen}
         onClose={handlePanelClose}
       />
+
+      {/* Debug indicator */}
+      <div className="fixed top-20 right-4 z-50 bg-red-500 text-white p-2 rounded text-xs">
+        Filter in Header: {showFilterBarInHeader ? 'YES' : 'NO'}
+      </div>
     </PageContainer>
   );
 }

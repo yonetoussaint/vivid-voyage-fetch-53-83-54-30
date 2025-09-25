@@ -1,17 +1,20 @@
 {
-  "electronics": "Electronics & Tech",
-  "homeLiving": "Home & Living",
-  "fashion": "Fashion & Accessories",
+  "electronics": "Electronics",
+  "homeLiving": "Home",
+  "fashion": "Fashion",
   "entertainment": "Entertainment",
-  "kidsHobbies": "Kids & Hobbies",
-  "sports": "Sports & Outdoors",
+  "kidsHobbies": "Kids",
+  "sports": "Sports",
   "automotive": "Automotive",
   "home": "Home",
   "tools": "Tools",
   "gaming": "Gaming",
   "baby": "Baby",
   "auto": "Auto",
+  "women": "Women",
+  "men": "Men",
+  "books": "Books",
   "allCategories": "All Categories",
   "browseBy": "Browse by",
-  "beauty": "Beauty & Health"
+  "beauty": "Beauty"
 }

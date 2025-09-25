@@ -1,14 +1,35 @@
-
 import React, { useRef } from 'react';
 import { Store, Users, Zap, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import SectionHeader from './SectionHeader';
 import { useVideos } from '@/hooks/useVideos';
 
-const MobileOptimizedReels = () => {
+interface MobileOptimizedReelsProps {
+  title?: string;
+  icon?: Icon;
+  viewAllLink?: string;
+  viewAllText?: string;
+  videoCount?: number;
+  category?: string;
+  showLiveCount?: boolean;
+  customClass?: string;
+  isLive?: boolean;
+}
+
+const MobileOptimizedReels: React.FC<MobileOptimizedReelsProps> = ({
+  title = "SHORTS",
+  icon = Zap,
+  viewAllLink = "/reels",
+  viewAllText = "View All",
+  videoCount = 6,
+  category = "",
+  showLiveCount = false,
+  customClass = "",
+  isLive = false
+}) => {
   const scrollContainerRef = useRef(null);
   const navigate = useNavigate();
-  const { data: videos, isLoading } = useVideos(6);
+  const { data: videos, isLoading } = useVideos(videoCount, category);
 
   const formatViews = (views: number) => {
     if (views >= 1000000) {
@@ -64,12 +85,12 @@ const MobileOptimizedReels = () => {
   );
 
   return (
-    <div className="w-full overflow-hidden">
+    <div className={`w-full overflow-hidden ${customClass}`}>
       <SectionHeader
-        title="SHORTS"
-        icon={Zap}
-        viewAllLink="/reels"
-        viewAllText="View All"
+        title={title}
+        icon={icon}
+        viewAllLink={viewAllLink}
+        viewAllText={viewAllText}
       />
 
       {/* Edge-to-edge container for scrolling, with left padding pl-2 */}
@@ -106,16 +127,39 @@ const MobileOptimizedReels = () => {
                 preload="metadata"
               />
 
-              {/* Video duration indicator */}
-              <div className="absolute top-2 right-2 bg-black bg-opacity-60 text-white text-xs px-1.5 py-0.5 rounded">
-                {formatDuration(video.duration)}
-              </div>
+              {/* Live indicator with animated red bars */}
+              {isLive && (
+                <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded-full">
+                  {/* Animated red bars */}
+                  <div className="flex items-center gap-0.5">
+                    <div className="w-1 h-3 bg-white animate-pulse" style={{ animationDelay: '0s' }}></div>
+                    <div className="w-1 h-3 bg-white animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="w-1 h-3 bg-white animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                  </div>
+                  <span>LIVE</span>
+                </div>
+              )}
+
+              {/* Video duration indicator - only show if not live */}
+              {!isLive && (
+                <div className="absolute top-2 right-2 bg-black bg-opacity-60 text-white text-xs px-1.5 py-0.5 rounded">
+                  {formatDuration(video.duration)}
+                </div>
+              )}
 
               {/* Info overlay */}
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-3">
                 <h3 className="hidden"></h3>
                 <div className="flex items-center text-gray-300 text-xs">
-                  <span>{formatViews(video.views)} views</span>
+                  {/* Show live viewers count if live, otherwise show regular views */}
+                  {isLive ? (
+                    <span className="flex items-center gap-1">
+                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                      {formatViews(video.views)} watching
+                    </span>
+                  ) : (
+                    <span>{formatViews(video.views)} views</span>
+                  )}
                 </div>
               </div>
             </div>
