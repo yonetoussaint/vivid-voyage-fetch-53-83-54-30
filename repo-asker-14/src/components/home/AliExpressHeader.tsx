@@ -527,17 +527,32 @@ interface AliExpressHeaderProps {
         </>
       )}
 
-      {/* Conditional rendering: ProductFilterBar or CategoryTabs */}
-      {showFilterBar ? (
-        <ProductFilterBar />
-      ) : (
-        <CategoryTabs 
-          progress={1}
-          activeTab={activeTab}
-          setActiveTab={handleTabChange}
-          categories={currentCategories}
-        />
-      )}
+      {/* Conditional rendering with smooth transition: ProductFilterBar or CategoryTabs */}
+      <div className="relative overflow-hidden">
+        <div 
+          className={`transition-all duration-300 ease-in-out ${
+            showFilterBar 
+              ? 'opacity-100 transform translate-y-0' 
+              : 'opacity-0 transform -translate-y-full absolute inset-x-0'
+          }`}
+        >
+          <ProductFilterBar />
+        </div>
+        <div 
+          className={`transition-all duration-300 ease-in-out ${
+            !showFilterBar 
+              ? 'opacity-100 transform translate-y-0' 
+              : 'opacity-0 transform -translate-y-full absolute inset-x-0'
+          }`}
+        >
+          <CategoryTabs 
+            progress={1}
+            activeTab={activeTab}
+            setActiveTab={handleTabChange}
+            categories={currentCategories}
+          />
+        </div>
+      </div>
       
       {/* Category Panel - Always show */}
       <CategoryPanel 

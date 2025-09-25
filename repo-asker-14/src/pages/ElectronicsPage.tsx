@@ -127,38 +127,75 @@ export default function ElectronicsPage() {
     }, 800);
   }, [generateFeedItems]);
 
-  // Use Intersection Observer to detect when filter bar scrolls out of view
+  // Use Intersection Observer to detect when filter bar in HeroBanner scrolls out of view
   useEffect(() => {
-    const filterBarElement = document.querySelector('.product-filter-bar');
-
-    if (!filterBarElement) {
-      console.log('❌ No filter bar element found');
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        // Show filter bar in header when the actual filter bar leaves the viewport
-        const shouldShowFilterBar = entry.intersectionRatio < 1;
-        console.log('🎯 Filter bar visibility:', entry.intersectionRatio, 'Show in header:', shouldShowFilterBar);
-
-        if (shouldShowFilterBar !== showFilterBarInHeader) {
-          setShowFilterBarInHeader(shouldShowFilterBar);
-        }
-      },
-      {
-        root: null,
-        rootMargin: '-60px 0px 0px 0px', // Offset by header height
-        threshold: [0, 1] // Trigger when fully visible and when starts leaving
+    // Wait for DOM to be ready and components to render
+    const setupObserver = () => {
+      // Look for the ProductFilterBar inside the HeroBanner specifically
+      const heroBannerElement = document.querySelector('[data-testid="hero-banner"]') || 
+                               document.querySelector('.hero-banner') ||
+                               document.querySelector('div[class*="hero"]');
+      
+      let filterBarElement = null;
+      
+      if (heroBannerElement) {
+        filterBarElement = heroBannerElement.querySelector('.product-filter-bar');
       }
-    );
+      
+      // Fallback to any ProductFilterBar if not found in HeroBanner
+      if (!filterBarElement) {
+        filterBarElement = document.querySelector('.product-filter-bar');
+      }
 
-    observer.observe(filterBarElement);
+      if (!filterBarElement) {
+        console.log('❌ No filter bar element found, retrying...');
+        // Retry after a short delay as components might still be rendering
+        setTimeout(setupObserver, 500);
+        return;
+      }
+
+      console.log('✅ Filter bar element found:', filterBarElement);
+
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          // Show filter bar in header when the actual filter bar is not fully visible
+          // Use a threshold that accounts for the header height
+          const isFilterBarVisible = entry.intersectionRatio > 0.1;
+          const shouldShowFilterBar = !isFilterBarVisible;
+          
+          console.log('🎯 Filter bar intersection:', entry.intersectionRatio, 'Show in header:', shouldShowFilterBar);
+
+          if (shouldShowFilterBar !== showFilterBarInHeader) {
+            setShowFilterBarInHeader(shouldShowFilterBar);
+          }
+        },
+        {
+          root: null,
+          // Offset by header height (approximately 80px) to trigger when filter bar reaches header
+          rootMargin: '-80px 0px 0px 0px',
+          threshold: [0, 0.1, 0.5, 1] // Multiple thresholds for better detection
+        }
+      );
+
+      observer.observe(filterBarElement);
+
+      // Return cleanup function
+      return () => {
+        observer.disconnect();
+      };
+    };
+
+    // Initial setup with delay to ensure components are rendered
+    const timeoutId = setTimeout(setupObserver, 100);
+    
+    // Also try when components update
+    const cleanup = setupObserver();
 
     return () => {
-      observer.disconnect();
+      clearTimeout(timeoutId);
+      if (cleanup) cleanup();
     };
-  }, [showFilterBarInHeader]);
+  }, [showFilterBarInHeader, isContentReady]); // Add isContentReady dependency to retry when content loads
 
   // Handle product click to open semi panel
   const handleProductClick = useCallback((productId: string) => {
@@ -260,10 +297,7 @@ export default function ElectronicsPage() {
         onClose={handlePanelClose}
       />
 
-      {/* Debug indicator */}
-      <div className="fixed top-20 right-4 z-50 bg-red-500 text-white p-2 rounded text-xs">
-        Filter in Header: {showFilterBarInHeader ? 'YES' : 'NO'}
-      </div>
+      
     </PageContainer>
   );
 }
