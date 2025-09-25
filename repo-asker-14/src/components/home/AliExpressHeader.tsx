@@ -528,7 +528,7 @@ interface AliExpressHeaderProps {
       )}
 
       {/* Conditional rendering with smooth transition: ProductFilterBar or CategoryTabs */}
-      <div className="relative overflow-hidden">
+      <div className="relative overflow-hidden min-h-[40px]">
         {/* ProductFilterBar - slides in from top when showFilterBar is true */}
         <div 
           className={`absolute inset-x-0 transition-all duration-500 ease-in-out ${
