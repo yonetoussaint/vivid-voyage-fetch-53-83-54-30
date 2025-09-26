@@ -37,11 +37,27 @@ export default function HeroBanner({ asCarousel = false, showNewsTicker = true }
   useEffect(() => {
     function updateOffset() {
       const header = document.getElementById("ali-header");
-      setOffset(header ? header.offsetHeight : 0);
+      if (header) {
+        // Get the actual rendered height including borders and padding
+        const computedStyle = window.getComputedStyle(header);
+        const height = header.getBoundingClientRect().height;
+        setOffset(Math.ceil(height));
+      } else {
+        setOffset(0);
+      }
     }
+    
+    // Initial calculation
     updateOffset();
+    
+    // Recalculate on resize and after a short delay to ensure DOM is ready
+    const timeoutId = setTimeout(updateOffset, 100);
     window.addEventListener('resize', updateOffset);
-    return () => window.removeEventListener('resize', updateOffset);
+    
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', updateOffset);
+    };
   }, []);
 
   // Initialize storage buckets if needed
