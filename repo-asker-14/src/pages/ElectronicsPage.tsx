@@ -278,8 +278,7 @@ export default function ElectronicsPage() {
         <HeroBanner showNewsTicker={false} />
       </div>
 
-      {/* SpaceSavingCategories - Always visible */}
-      <SpaceSavingCategories />
+      
 
       {/* Endless feed content */}
       <div className="space-y-2">
