@@ -129,82 +129,74 @@ export default function ElectronicsPage() {
 
   // Use Intersection Observer to detect when filter bar in HeroBanner scrolls out of view
   useEffect(() => {
+    let observer: IntersectionObserver | null = null;
     let debounceTimeout: NodeJS.Timeout;
+    let setupTimer: NodeJS.Timeout;
+    let retryTimer: NodeJS.Timeout;
     
     const setupObserver = () => {
-      // Wait a bit for the HeroBanner to render the ProductFilterBar
-      setTimeout(() => {
-        // Look for ProductFilterBar that comes after the HeroBanner (not inside it)
-        const allFilterBars = document.querySelectorAll('.product-filter-bar');
+      // Disconnect any existing observer first
+      if (observer) {
+        observer.disconnect();
+        observer = null;
+      }
+      
+      // Get header height for proper root margin
+      const header = document.getElementById("ali-header");
+      const headerHeight = header ? header.offsetHeight : 76; // fallback to typical header height
+      
+      // Wait for HeroBanner and ProductFilterBar to render
+      setupTimer = setTimeout(() => {
+        // Scope the query to the hero banner to ensure we get the correct ProductFilterBar
+        const filterBar = heroBannerRef.current?.querySelector('.product-filter-bar');
         
-        // The ProductFilterBar we want to track should be the one that appears after HeroBanner
-        // It should be the second one if there are multiple (first would be in header when shown)
-        let targetFilterBar = null;
-        
-        if (allFilterBars.length >= 1) {
-          // Find the filter bar that's not in the header
-          for (let i = 0; i < allFilterBars.length; i++) {
-            const filterBar = allFilterBars[i];
-            const rect = filterBar.getBoundingClientRect();
-            // The target filter bar should be positioned below the header area (>100px from top)
-            if (rect.top > 100) {
-              targetFilterBar = filterBar;
-              break;
-            }
-          }
-        }
-
-        if (!targetFilterBar) {
-          console.log('❌ Target filter bar not found, retrying...');
-          setTimeout(setupObserver, 200);
+        if (!filterBar) {
+          console.log('❌ ProductFilterBar not found in HeroBanner, retrying...');
+          retryTimer = setTimeout(setupObserver, 200);
           return;
         }
 
-        console.log('✅ Found target filter bar:', targetFilterBar);
+        console.log('✅ Found ProductFilterBar in HeroBanner:', filterBar);
 
-        const observer = new IntersectionObserver(
+        observer = new IntersectionObserver(
           ([entry]) => {
-            // Clear any existing timeout
             clearTimeout(debounceTimeout);
             
-            // Debounce the state change to prevent rapid toggling
             debounceTimeout = setTimeout(() => {
-              // Use a more stable threshold - completely out of view vs partially visible
-              const isVisible = entry.intersectionRatio > 0.5; // Higher threshold for stability
-              const shouldShowInHeader = !isVisible;
+              // Show filter bar in header when the hero filter bar is not intersecting (hidden by header)
+              const shouldShowInHeader = !entry.isIntersecting;
               
-              console.log('🎯 Filter bar intersection:', entry.intersectionRatio, 'Show in header:', shouldShowInHeader);
+              console.log('🎯 Filter bar intersection:', entry.isIntersecting, 'Show in header:', shouldShowInHeader);
 
-              // Only update if the state actually needs to change
               setShowFilterBarInHeader(prev => {
                 if (prev !== shouldShowInHeader) {
                   return shouldShowInHeader;
                 }
                 return prev;
               });
-            }, 100); // 100ms debounce to prevent rapid changes
+            }, 50);
           },
           {
             root: null,
-            rootMargin: '-20px 0px -20px 0px', // Add some margin to prevent edge cases
-            threshold: [0, 0.1, 0.5, 1] // More granular thresholds
+            rootMargin: `-${headerHeight}px 0px 0px 0px`, // Account for header height for snappier transitions
+            threshold: [0, 1]
           }
         );
 
-        observer.observe(targetFilterBar);
-
-        // Return cleanup function
-        return () => {
-          observer.disconnect();
-          clearTimeout(debounceTimeout);
-        };
-      }, 300); // Give components time to render
+        observer.observe(filterBar);
+      }, 300);
     };
 
-    const cleanup = setupObserver();
+    setupObserver();
+
     return () => {
-      if (cleanup) cleanup();
+      // Clear all timers and observers
+      clearTimeout(setupTimer);
+      clearTimeout(retryTimer);
       clearTimeout(debounceTimeout);
+      if (observer) {
+        observer.disconnect();
+      }
     };
   }, [isContentReady])
 

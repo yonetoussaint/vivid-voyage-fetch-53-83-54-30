@@ -537,7 +537,9 @@ interface AliExpressHeaderProps {
               : 'opacity-0 transform -translate-y-full'
           }`}
         >
-          <ProductFilterBar />
+          <div data-header="true">
+            <ProductFilterBar />
+          </div>
         </div>
 
         {/* CategoryTabs - slides out to top when showFilterBar is true */}
