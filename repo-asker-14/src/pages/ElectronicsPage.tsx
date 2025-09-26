@@ -145,18 +145,34 @@ export default function ElectronicsPage() {
       const header = document.getElementById("ali-header");
       const headerHeight = header ? header.offsetHeight : 76; // fallback to typical header height
       
-      // Wait for HeroBanner and ProductFilterBar to render
+      // Wait for HeroBanner and ProductFilterBar to render AND be visible
       setupTimer = setTimeout(() => {
-        // Scope the query to the hero banner to ensure we get the correct ProductFilterBar
-        const filterBar = heroBannerRef.current?.querySelector('.product-filter-bar');
-        
-        if (!filterBar) {
-          console.log('❌ ProductFilterBar not found in HeroBanner, retrying...');
+        // First check if HeroBanner exists
+        if (!heroBannerRef.current) {
+          console.log('❌ HeroBanner ref not found, retrying...');
           retryTimer = setTimeout(setupObserver, 200);
           return;
         }
 
-        console.log('✅ Found ProductFilterBar in HeroBanner:', filterBar);
+        // Check if ProductFilterBar should be visible (showNewsTicker is false)
+        // We can determine this by checking if ProductFilterBar is actually rendered and visible
+        const filterBar = heroBannerRef.current?.querySelector('.product-filter-bar');
+        
+        if (!filterBar) {
+          console.log('❌ ProductFilterBar not found or not visible in HeroBanner, retrying...');
+          retryTimer = setTimeout(setupObserver, 200);
+          return;
+        }
+
+        // Additional check: make sure the element is actually visible (not hidden)
+        const computedStyle = window.getComputedStyle(filterBar);
+        if (computedStyle.display === 'none' || computedStyle.visibility === 'hidden' || computedStyle.opacity === '0') {
+          console.log('❌ ProductFilterBar is hidden, retrying...');
+          retryTimer = setTimeout(setupObserver, 200);
+          return;
+        }
+
+        console.log('✅ Found visible ProductFilterBar in HeroBanner:', filterBar);
 
         observer = new IntersectionObserver(
           ([entry]) => {
@@ -184,7 +200,7 @@ export default function ElectronicsPage() {
         );
 
         observer.observe(filterBar);
-      }, 300);
+      }, 500); // Increased timeout to allow for proper rendering
     };
 
     setupObserver();

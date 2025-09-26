@@ -506,7 +506,9 @@ export default function HeroBanner({ asCarousel = false, showNewsTicker = true }
         showNews ? (
           <NewsTicker />
         ) : (
-          <ProductFilterBar />
+          <div key="product-filter-bar-container">
+            <ProductFilterBar />
+          </div>
         )
       )}
 
