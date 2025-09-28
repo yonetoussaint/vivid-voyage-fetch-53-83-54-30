@@ -56,7 +56,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
 
   return (
     <div className="mt-1 w-full">
-     {activeTab === 'overview' && (
+     {(activeTab === 'overview' || !activeTab) && (
   <div className="space-y-4">
     <GalleryThumbnails
       images={galleryItems.map(item => item.src)}
@@ -67,7 +67,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
       galleryItems={galleryItems}
     />
 
-<iPhoneXRListing/>
+    <iPhoneXRListing/>
     
     {/* Search Info Component moved to description's original position */}
     {productId && (
