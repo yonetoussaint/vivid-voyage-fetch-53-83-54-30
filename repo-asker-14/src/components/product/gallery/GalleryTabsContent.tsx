@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GalleryThumbnails } from '@/components/product/GalleryThumbnails';
 import ProductVariants from '@/components/product/ProductVariants';
-import iPhoneXRListing from '@/components/product/iPhoneXRListing';
+import { IPhoneXRListing } from '@/components/product/iPhoneXRListing';
 import CustomerReviewsEnhanced from '@/components/product/CustomerReviewsEnhanced';
 import ProductQA from '@/components/product/ProductQA';
 import { GalleryItem } from './types';
@@ -67,7 +67,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
       galleryItems={galleryItems}
     />
 
-    <iPhoneXRListing/>
+    <IPhoneXRListing />
     
     {/* Search Info Component moved to description's original position */}
     {productId && (
@@ -96,16 +96,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
 
     <ProductSectionWrapper>
       <BookGenreFlashDeals 
-        compact={true}
-        showHeader={true}
-        title="More Products"
         className="border border-gray-200 rounded-lg overflow-hidden"
-        categories={[
-          { id: 'all', label: 'All' },
-          { id: 'related', label: 'Related' },
-          { id: 'similar', label: 'Similar' },
-          { id: 'bestsellers', label: 'Bestsellers' }
-        ]}
       />
     </ProductSectionWrapper>
 
@@ -204,16 +195,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
       {activeTab === 'recommendations' && (
         <ProductSectionWrapper>
           <BookGenreFlashDeals 
-            compact={true}
-            showHeader={true}
-            title="Recommended Products"
             className="border border-gray-200 rounded-lg overflow-hidden"
-            categories={[
-              { id: 'recommended', label: 'For You' },
-              { id: 'trending', label: 'Trending' },
-              { id: 'popular', label: 'Popular' },
-              { id: 'new', label: 'New Arrivals' }
-            ]}
           />
         </ProductSectionWrapper>
       )}

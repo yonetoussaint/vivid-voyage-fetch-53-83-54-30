@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, Shield, Star, User } from 'lucide-react';
 
-  export function iPhoneXRListing() {
+  export function IPhoneXRListing() {
   const [liveViews, setLiveViews] = useState(847);
 
   useEffect(() => {
