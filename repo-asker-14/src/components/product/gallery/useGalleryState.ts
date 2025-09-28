@@ -14,7 +14,7 @@ export const useGalleryState = (
 ) => {
   // Gallery state
   const [displayImages, setDisplayImages] = useState<string[]>(images);
-  
+
   // Create gallery items whenever displayImages, videos, or model3dUrl change
   const galleryItems = createGalleryItems(displayImages, videos, model3dUrl);
   const totalItems = galleryItems.length;
@@ -84,17 +84,17 @@ export const useGalleryState = (
   // Handle variant image selection
   const handleVariantImageChange = useCallback((imageUrl: string, variantName: string) => {
     console.log('📷 Variant image selected:', imageUrl, variantName);
-    
+
     const newImages = [imageUrl, ...images.filter(img => img !== imageUrl)];
     setDisplayImages(newImages);
-    
+
     setTimeout(() => {
       if (api) {
         api.scrollTo(0);
       }
       setCurrentIndex(0);
     }, 100);
-    
+
     if (onVariantImageChange) {
       onVariantImageChange(imageUrl, variantName);
     }
@@ -236,7 +236,7 @@ export const useGalleryState = (
     totalItems,
     videoIndices,
     galleryItems, // Add galleryItems to return
-    
+
     // Setters
     setDisplayImages,
     setCurrentIndex,
@@ -250,14 +250,14 @@ export const useGalleryState = (
     setCurrentTime,
     setDuration,
     setBufferedTime,
-    
+
     // Refs
     containerRef,
     imageRef,
     videoRef,
     fullscreenRef,
     tabsContainerRef,
-    
+
     // Handlers
     onApiChange,
     handleVariantImageChange,

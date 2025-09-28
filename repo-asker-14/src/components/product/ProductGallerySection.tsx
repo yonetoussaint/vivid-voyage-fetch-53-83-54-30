@@ -42,6 +42,7 @@ const ProductGallerySection = React.forwardRef<HTMLDivElement, ProductGallerySec
         onProductDetailsClick={onProductDetailsClick}
         onImageIndexChange={onImageIndexChange}
         onVariantImageChange={onVariantImageChange}
+        activeTab="overview"
         onBuyNow={onBuyNow}
       />
     </div>
