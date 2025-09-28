@@ -11,12 +11,20 @@ interface FlashDealsProps {
   productType?: string;
   title?: string;
   icon?: React.ComponentType<any>;
+  customCountdown?: string; // Custom countdown value
+  showCountdown?: boolean; // Force show/hide
 }
 
-export default function FlashDeals({ productType, title = "FLASH DEALS", icon = Zap }: FlashDealsProps) {
+export default function FlashDeals({ 
+  productType, 
+  title = "FLASH DEALS", 
+  icon = Zap,
+  customCountdown,
+  showCountdown
+}: FlashDealsProps) { // REMOVED THE EXTRA } FROM HERE
   const isMobile = useIsMobile();
   const scrollRef = useRef(null);
-  const { setHasActiveOverlay } = useScreenOverlay(); // Add this
+  const { setHasActiveOverlay } = useScreenOverlay();
 
   // State for managing the semi panel
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
@@ -102,12 +110,18 @@ export default function FlashDeals({ productType, title = "FLASH DEALS", icon = 
     setSelectedProductId(null);
   };
 
-  
-
   // Don't render the component if no products are available
   if (!isLoading && processedProducts.length === 0) {
     return null;
   }
+
+  // Determine countdown display
+  const displayCountdown = customCountdown || 
+    `${timeLeft.hours.toString().padStart(2, "0")}:${timeLeft.minutes.toString().padStart(2, "0")}:${timeLeft.seconds.toString().padStart(2, "0")}`;
+
+  const shouldShowCountdown = showCountdown !== undefined 
+    ? showCountdown 
+    : (timeLeft.hours > 0 || timeLeft.minutes > 0 || timeLeft.seconds > 0);
 
   return (
     <>
@@ -115,12 +129,12 @@ export default function FlashDeals({ productType, title = "FLASH DEALS", icon = 
         <SectionHeader
           title={title}
           icon={icon}
-          showCountdown={true}
-  countdown="02:45:30"
+          showCountdown={shouldShowCountdown}
+          countdown={displayCountdown}
           viewAllLink="/search?category=flash-deals"
           viewAllText="View All"
         />
-        
+
         <div className="relative">
           {isLoading ? (
             <div className="pl-2 flex overflow-x-hidden">

@@ -7,8 +7,8 @@ import { useTranslation } from 'react-i18next';
 interface CategoryTab {
   id: string;
   name: string;
-  icon: ReactNode;
-  path: string;
+  icon?: ReactNode;  // Add ? to make it optional
+  path?: string;
 }
 
 interface CategoryTabsProps {
@@ -17,6 +17,7 @@ interface CategoryTabsProps {
   setActiveTab: (tab: string) => void;
   categories: CategoryTab[];
   showCategoriesButton?: boolean;
+  isSearchOverlayActive?: boolean;
 }
 
 const CategoryTabs = ({
@@ -25,6 +26,7 @@ const CategoryTabs = ({
   setActiveTab,
   categories,
   showCategoriesButton = true,
+  isSearchOverlayActive = false,
 }: CategoryTabsProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -108,12 +110,20 @@ const CategoryTabs = ({
     return () => unsubscribe();
   }, [scrollX]);
 
-  const handleTabClick = (id: string, path: string) => {
+  const handleTabClick = (id: string, path?: string) => {
     console.log('Tab clicked:', id, 'Navigating to:', path);
     setActiveTab(id);
-    // Only navigate if path doesn't start with # (for product sections)
-    if (!path.startsWith('#')) {
+
+    // Only navigate if it's a regular category tab with a path and search overlay is not active
+    if (path && !isSearchOverlayActive && !path.startsWith('#')) {
       navigate(path);
+    }
+
+    // For search tabs or when search overlay is active, handle search filtering
+    if (isSearchOverlayActive) {
+      console.log(`Search tab selected: ${id}`);
+      // Implement search filtering logic here based on the tab
+      // You can dispatch an event or call a callback function
     }
   };
 
@@ -132,15 +142,16 @@ const CategoryTabs = ({
     >
       {/* Tabs List */}
         <div className="h-full w-full">
-        <div
-          ref={scrollContainerRef}
-          className="flex items-center gap-2 overflow-x-auto no-scrollbar h-full w-full relative"
-          style={{ 
-            scrollbarWidth: 'none', 
-            msOverflowStyle: 'none',
-            WebkitOverflowScrolling: 'touch'
-          }}
-        >
+          <div
+            ref={scrollContainerRef}
+            className="flex items-center gap-2 overflow-x-auto no-scrollbar h-full w-full relative"
+            style={{ 
+              scrollbarWidth: 'none', 
+              msOverflowStyle: 'none',
+              WebkitOverflowScrolling: 'touch',
+              paddingRight: isSearchOverlayActive ? '0px' : '2.5rem' // 2.5rem = pr-10
+            }}
+          >
           {categories.map(({ id, name, icon, path }, index) => (
             <button
               key={id}
@@ -153,6 +164,7 @@ const CategoryTabs = ({
                   : 'text-gray-700 hover:text-red-600'
               }`}
             >
+              
               <span className="font-medium">{name}</span>
             </button>
           ))}
@@ -172,7 +184,7 @@ const CategoryTabs = ({
       </div>
 
       {/* Icon Button on Right */}
-      {showCategoriesButton && (
+      {showCategoriesButton && !isSearchOverlayActive && (
         <div className="absolute top-0 right-0 h-full flex items-center z-20 bg-white">
           <div className="h-6 w-px bg-gray-200 opacity-50" />
           <button

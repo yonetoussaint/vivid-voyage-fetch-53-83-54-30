@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GalleryThumbnails } from '@/components/product/GalleryThumbnails';
 import ProductVariants from '@/components/product/ProductVariants';
+import iPhoneXRListing from '@/components/product/iPhoneXRListing';
 import CustomerReviewsEnhanced from '@/components/product/CustomerReviewsEnhanced';
 import ProductQA from '@/components/product/ProductQA';
 import { GalleryItem } from './types';
@@ -66,6 +67,8 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
       galleryItems={galleryItems}
     />
 
+<iPhoneXRListing/>
+    
     {/* Search Info Component moved to description's original position */}
     {productId && (
       <ProductSectionWrapper>

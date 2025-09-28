@@ -21,7 +21,7 @@ export const ReelsHeader: React.FC<ReelsHeaderProps> = ({ isModalMode = false, o
       ) : (
         <div className="w-6"></div>
       )}
-      
+
       <div className="flex">
         <div 
           className={`px-3 py-2 text-sm font-bold relative ${
@@ -34,7 +34,7 @@ export const ReelsHeader: React.FC<ReelsHeaderProps> = ({ isModalMode = false, o
             <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-white"></div>
           )}
         </div>
-        
+
         <div 
           className={`px-3 py-2 text-sm font-bold relative ${
             activeTab === 'following' ? 'text-white' : 'text-white/50'
@@ -46,21 +46,21 @@ export const ReelsHeader: React.FC<ReelsHeaderProps> = ({ isModalMode = false, o
             <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-white"></div>
           )}
         </div>
-        
+
         <div 
           className={`px-3 py-2 text-sm font-bold relative flex items-center gap-1 ${
-            activeTab === 'live' ? 'text-red-500' : 'text-red-400/80'
+            activeTab === 'live' ? 'text-white' : 'text-white/50'
           }`}
           onClick={() => setActiveTab('live')}
         >
           <Radio className="h-4 w-4" />
           Live
           {activeTab === 'live' && (
-            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-red-500"></div>
+            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-8 h-0.5 bg-white"></div>
           )}
         </div>
       </div>
-      
+
       <button className="text-white p-1">
         <Search className="h-6 w-6" />
       </button>

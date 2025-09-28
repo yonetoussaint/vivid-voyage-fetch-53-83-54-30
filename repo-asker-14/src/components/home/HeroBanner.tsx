@@ -9,14 +9,37 @@ import NewsTicker from './hero/NewsTicker';
 import FloatingVideo from '../hero/FloatingVideo';
 import SellerInfoOverlay from '../product/SellerInfoOverlay';
 import { BannerType } from './hero/types';
-import ProductFilterBar from './ProductFilterBar'; // Import the ProductFilterBar
+import ProductFilterBar from './ProductFilterBar';
 
 interface HeroBannerProps {
   asCarousel?: boolean;
   showNewsTicker?: boolean;
+  // Filter props
+  filterCategories?: Array<{
+    id: string;
+    label: string;
+    options: string[];
+  }>;
+  selectedFilters?: Record<string, string>;
+  onFilterSelect?: (filterId: string, option: string) => void;
+  onFilterClear?: (filterId: string) => void;
+  onClearAll?: () => void;
+  onFilterButtonClick?: (filterId: string) => void;
+  isFilterDisabled?: (filterId: string) => boolean;
 }
 
-export default function HeroBanner({ asCarousel = false, showNewsTicker = true }: HeroBannerProps) {
+export default function HeroBanner({ 
+  asCarousel = false, 
+  showNewsTicker = true,
+  // Filter props with defaults
+  filterCategories = [],
+  selectedFilters = {},
+  onFilterSelect = () => {},
+  onFilterClear = () => {},
+  onClearAll = () => {},
+  onFilterButtonClick = () => {},
+  isFilterDisabled = () => false
+}: HeroBannerProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [previousIndex, setPreviousIndex] = useState<number | null>(null);
   const [showNews, setShowNews] = useState(showNewsTicker);
@@ -46,14 +69,14 @@ export default function HeroBanner({ asCarousel = false, showNewsTicker = true }
         setOffset(0);
       }
     }
-    
+
     // Initial calculation
     updateOffset();
-    
+
     // Recalculate on resize and after a short delay to ensure DOM is ready
     const timeoutId = setTimeout(updateOffset, 100);
     window.addEventListener('resize', updateOffset);
-    
+
     return () => {
       clearTimeout(timeoutId);
       window.removeEventListener('resize', updateOffset);
@@ -320,7 +343,6 @@ export default function HeroBanner({ asCarousel = false, showNewsTicker = true }
         </div>
         {/* Action buttons */}
         <div className="flex gap-2 flex-shrink-0">
-
           <button
             className="bg-black text-white px-3 py-2 rounded-lg font-medium text-xs transition-colors duration-200 whitespace-nowrap"
             onClick={() => console.log('View profile:', slide.seller)}
@@ -496,7 +518,8 @@ export default function HeroBanner({ asCarousel = false, showNewsTicker = true }
             />
 
             {/* Seller Info Overlay */}
-
+            {/* Uncomment if needed */}
+            {/* <SellerInfoOverlay /> */}
           </>
         )}
       </div>
@@ -507,7 +530,15 @@ export default function HeroBanner({ asCarousel = false, showNewsTicker = true }
           <NewsTicker />
         ) : (
           <div key="product-filter-bar-container">
-            <ProductFilterBar />
+            <ProductFilterBar 
+              filterCategories={filterCategories}
+              selectedFilters={selectedFilters}
+              onFilterSelect={onFilterSelect}
+              onFilterClear={onFilterClear}
+              onClearAll={onClearAll}
+              onFilterButtonClick={onFilterButtonClick}
+              isFilterDisabled={isFilterDisabled}
+            />
           </div>
         )
       )}

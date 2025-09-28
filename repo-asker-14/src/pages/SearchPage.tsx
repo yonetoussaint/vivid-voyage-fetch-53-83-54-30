@@ -436,30 +436,10 @@ const SearchPage = () => {
             </div>
           ) : (
             <>
-              <SpaceSavingCategories
-                onCategorySelect={handleCategorySelect}
-                showHeader={true}
-                headerTitle="Shop by Category"
-                headerSubtitle="Browse popular categories"
-                headerIcon={Grid}
-                headerViewAllLink="/categories"
-                headerViewAllText="View All"
-                headerTitleTransform="uppercase"
-              />
+              
+              
 
-              <RecentlyViewed 
-                showHeader={true}
-                headerTitle="Recently Viewed"
-                headerIcon={Clock}
-                headerViewAllLink="/recently-viewed"
-                headerViewAllText="View All"
-                headerTitleTransform="uppercase"
-                showClearButton={true}
-                clearButtonText="× Clear"
-                onClearClick={() => toast({ title: "Cleared", description: "Recently viewed items cleared" })}
-              />
-
-              <TopVendorsCompact/>
+              
 
               <SearchRecent
                 searches={recentSearches}

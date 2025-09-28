@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllProducts } from "@/integrations/supabase/products";
 import PageSkeleton from "@/components/skeletons/PageSkeleton";
@@ -27,6 +28,7 @@ import {
   Dumbbell,
   Sparkles,
   Car,
+  Play,
   BookOpen,
   Gamepad2,
   Watch,
@@ -43,15 +45,81 @@ interface ForYouContentProps {
   category: string;
 }
 
-// ... existing imports ...
-
 const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
+  const navigate = useNavigate();
+
+  // State for filter functionality
+  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
+
   const { data: products, isLoading } = useQuery({
     queryKey: ["products", category],
     queryFn: fetchAllProducts,
     staleTime: 60000,
     refetchOnWindowFocus: true,
   });
+
+  // Define filter categories
+  const filterCategories = [
+    {
+      id: 'category',
+      label: 'Category',
+      options: ['Electronics', 'Fashion', 'Home & Garden', 'Sports', 'Beauty', 'Automotive', 'Kids']
+    },
+    {
+      id: 'price',
+      label: 'Price Range',
+      options: ['Under $25', '$25-$50', '$50-$100', '$100-$200', 'Over $200']
+    },
+    {
+      id: 'rating',
+      label: 'Rating',
+      options: ['4+ Stars', '3+ Stars', '2+ Stars', 'Any Rating']
+    },
+    {
+      id: 'shipping',
+      label: 'Shipping',
+      options: ['Free Shipping', 'Fast Delivery', 'Local Seller']
+    },
+    {
+      id: 'sort',
+      label: 'Sort By',
+      options: ['Popularity', 'Price: Low to High', 'Price: High to Low', 'Newest', 'Best Rating']
+    }
+  ];
+
+  // Filter handler functions
+  const handleFilterSelect = (filterId: string, option: string) => {
+    setSelectedFilters(prev => ({ ...prev, [filterId]: option }));
+    console.log('Filter selected:', filterId, option);
+  };
+
+  const handleFilterClear = (filterId: string) => {
+    setSelectedFilters(prev => {
+      const newFilters = { ...prev };
+      delete newFilters[filterId];
+      console.log('Filter cleared:', filterId);
+      return newFilters;
+    });
+  };
+
+  const handleClearAll = () => {
+    setSelectedFilters({});
+    console.log('All filters cleared');
+  };
+
+  const handleFilterButtonClick = (filterId: string) => {
+    console.log('Filter button clicked:', filterId);
+  };
+
+  const isFilterDisabled = (filterId: string) => {
+    // Example: disable price filter if no products are available
+    return false; // You can add custom logic here
+  };
+
+  // Custom handler function
+  const yourCustomHandler = () => {
+    navigate('/reels');
+  };
 
   if (isLoading) {
     return <PageSkeleton />;
@@ -110,44 +178,53 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
 
   return (
     <PageContainer className="overflow-hidden pb-16 relative">
-      {/* Hero Banner - shown once at the top */}
-      <HeroBanner />
+      {/* Hero Banner with filter props */}
+      <HeroBanner 
+      
+      />
 
       {/* Show ElectronicsSubcategories only for electronics category */}
       {category === 'electronics' && <ElectronicsSubcategories />}
 
       {/* Traditional component layout - each shows only once */}
       <div className="space-y-2">
-        <FlashDeals />
-        <MobileOptimizedReels />
+        <FlashDeals
+          showCountdown={true}
+          />
+        <MobileOptimizedReels 
+          showCustomButton={true}
+          customButtonText="Watch All"
+          customButtonIcon={Play}
+          onCustomButtonClick={yourCustomHandler}
+        />
         <FlashDeals 
           title="SPONSORED DEALS"
           icon={Clock}
         />
-        
+
         {products && products.length > 0 && (
           <SuperDealsSection products={products} />
         )}
-        
+
         <FlashDeals 
           title="RECENTLY VIEWED"
           icon={Clock}
         />
-        
+
         <TopVendorsCompact />
-        
+
         {/* First Vendor Post */}
         <VendorProductCarousel
           title="Tech Deals"
           products={products?.slice(0, 5) || []}
-          posts={[techPost]} // Pass custom post
+          posts={[techPost]}
         />
 
         <FlashDeals 
           title="NEW ARRIVALS"
           icon={Clock}
         />
-        
+
         {products && products.length > 0 && (
           <SuperDealsSection products={products} />
         )}
@@ -161,7 +238,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
         <VendorProductCarousel
           title="Fashion Trends"
           products={products?.slice(5, 10) || []}
-          posts={[fashionPost]} // Pass different post
+          posts={[fashionPost]}
         />
 
         <FlashDeals 
@@ -188,24 +265,21 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
           title="Home Essentials"
           products={products?.slice(10, 15) || []}
         />
-        
-<MobileOptimizedReels 
-  title="LIVE NOW"
-  viewAllLink="/trending"
-  isLive={true}
-/>
+
+        <MobileOptimizedReels 
+          title="LIVE NOW"
+          viewAllLink="/trending"
+          isLive={true}
+        />
 
         <FlashDeals 
           title="STAFF PICKS"
           icon={Clock}
         />
-        
       </div>
     </PageContainer>
   );
 };
-
-// ... rest of the file remains the same ...
 
 // Define categories for marketplace homepage
 const categories = [
@@ -222,6 +296,7 @@ const categories = [
 export default function Index() {
   const [activeCategory, setActiveCategory] = useState('recommendations');
   const [activeTab, setActiveTab] = useState('recommendations');
+  const location = useLocation();
 
   // Listen for category changes from header
   useEffect(() => {

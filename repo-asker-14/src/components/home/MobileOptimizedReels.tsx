@@ -1,5 +1,6 @@
+// MobileOptimizedReels.tsx
 import React, { useRef } from 'react';
-import { Store, Users, Zap, ArrowRight } from 'lucide-react';
+import { Store, Users, Zap, ArrowRight, Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import SectionHeader from './SectionHeader';
 import { useVideos } from '@/hooks/useVideos';
@@ -14,6 +15,9 @@ interface MobileOptimizedReelsProps {
   showLiveCount?: boolean;
   customClass?: string;
   isLive?: boolean;
+  // New props for custom button
+  showCustomButton?: boolean;
+  onCustomButtonClick?: () => void;
 }
 
 const MobileOptimizedReels: React.FC<MobileOptimizedReelsProps> = ({
@@ -25,7 +29,10 @@ const MobileOptimizedReels: React.FC<MobileOptimizedReelsProps> = ({
   category = "",
   showLiveCount = false,
   customClass = "",
-  isLive = false
+  isLive = false,
+  // New props
+  showCustomButton = false,
+  onCustomButtonClick
 }) => {
   const scrollContainerRef = useRef(null);
   const navigate = useNavigate();
@@ -50,6 +57,12 @@ const MobileOptimizedReels: React.FC<MobileOptimizedReelsProps> = ({
     navigate(`/reels?video=${videoId}`);
   };
 
+  // Default handler for custom button if not provided
+  const handleCustomButtonClick = () => {
+    // Navigate to reels page or implement auto-play all functionality
+    navigate('/reels');
+  };
+
   if (isLoading) {
     return (
       <div className="w-full overflow-hidden">
@@ -58,6 +71,8 @@ const MobileOptimizedReels: React.FC<MobileOptimizedReelsProps> = ({
           icon={Zap}
           viewAllLink="/reels"
           viewAllText="View All"
+          showCustomButton={showCustomButton}
+          onCustomButtonClick={handleCustomButtonClick}
         />
         <div className="flex overflow-x-auto pl-2 scrollbar-none w-full">
           {Array(6).fill(0).map((_, i) => (
@@ -89,8 +104,12 @@ const MobileOptimizedReels: React.FC<MobileOptimizedReelsProps> = ({
       <SectionHeader
         title={title}
         icon={icon}
-        viewAllLink={viewAllLink}
+        viewAllLink={showCustomButton ? undefined : viewAllLink} // Only pass viewAllLink if not showing custom button
         viewAllText={viewAllText}
+        showCustomButton={showCustomButton}
+        customButtonText="Tout regarder"
+        customButtonIcon={Play}
+        onCustomButtonClick={onCustomButtonClick || handleCustomButtonClick}
       />
 
       {/* Edge-to-edge container for scrolling, with left padding pl-2 */}
@@ -150,16 +169,10 @@ const MobileOptimizedReels: React.FC<MobileOptimizedReelsProps> = ({
               {/* Info overlay */}
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-3">
                 <h3 className="hidden"></h3>
-                <div className="flex items-center text-gray-300 text-xs">
-                  {/* Show live viewers count if live, otherwise show regular views */}
-                  {isLive ? (
-                    <span className="flex items-center gap-1">
-                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                      {formatViews(video.views)} watching
-                    </span>
-                  ) : (
-                    <span>{formatViews(video.views)} views</span>
-                  )}
+                <div className="flex items-center text-gray-300 text-xs gap-1">
+                  {/* Updated: Play icon + views counter */}
+                  <Play className="w-3 h-3" />
+                  <span>{formatViews(video.views)}</span>
                 </div>
               </div>
             </div>

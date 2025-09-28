@@ -1,6 +1,7 @@
+// SectionHeader.tsx
 import React from "react";
 import { Link } from "react-router-dom";
-import { ChevronRight, LucideIcon, MoreHorizontal } from "lucide-react"; // Added MoreHorizontal
+import { ChevronRight, LucideIcon, MoreHorizontal, Play } from "lucide-react"; // Added Play icon
 import { useTranslation } from 'react-i18next';
 import TabsNavigation from "./TabsNavigation";
 
@@ -34,6 +35,11 @@ interface SectionHeaderProps {
   // New countdown props
   showCountdown?: boolean;
   countdown?: string;
+  // New props for custom button
+  showCustomButton?: boolean;
+  customButtonText?: string;
+  customButtonIcon?: React.ComponentType<{ className?: string }>;
+  onCustomButtonClick?: () => void;
 }
 
 export default function SectionHeader({
@@ -59,7 +65,12 @@ export default function SectionHeader({
   onFollowClick,
   // Countdown props
   showCountdown = false,
-  countdown
+  countdown,
+  // Custom button props
+  showCustomButton = false,
+  customButtonText = "Tout regarder",
+  customButtonIcon: CustomIcon = Play,
+  onCustomButtonClick
 }: SectionHeaderProps) {
 
   const defaultViewAllText = viewAllText || 'View All';
@@ -144,7 +155,7 @@ export default function SectionHeader({
               )}
             </div>
 
-            {/* Last element (Clear button and View All) */}
+            {/* Last element (Clear button and View All or Custom Button) */}
             <div className="flex items-center gap-2">
               {showClearButton && onClearClick && (
                 <button 
@@ -154,14 +165,29 @@ export default function SectionHeader({
                   {clearButtonText}
                 </button>
               )}
-              {viewAllLink && (
-                <a
-                  href={viewAllLink}
-                  className="text-xs hover:underline flex items-center font-medium transition-colors"
+
+              {/* Show custom button if enabled, otherwise show regular view all link */}
+              {showCustomButton ? (
+                <button 
+                  onClick={onCustomButtonClick}
+                  className="text-xs flex items-center font-medium transition-colors text-black"
                 >
-                  {defaultViewAllText}
-                  <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
-                </a>
+                  <CustomIcon className="h-3.5 w-3.5 mr-1" 
+                    fill="currentColor"/>
+
+                  
+                  {customButtonText}
+                </button>
+              ) : (
+                viewAllLink && (
+                  <a
+                    href={viewAllLink}
+                    className="text-xs hover:underline flex items-center font-medium transition-colors"
+                  >
+                    {defaultViewAllText}
+                    <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
+                  </a>
+                )
               )}
             </div>
           </div>

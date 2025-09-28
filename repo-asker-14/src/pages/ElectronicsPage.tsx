@@ -74,6 +74,35 @@ const feedComponents = [
   'BenefitsBanner',
 ];
 
+// Filter categories configuration
+const filterCategories = [
+  {
+    id: 'brand',
+    label: 'Brand',
+    options: ['Apple', 'Samsung', 'Sony', 'LG', 'Dell', 'HP', 'Canon', 'Nikon']
+  },
+  {
+    id: 'price',
+    label: 'Price',
+    options: ['Under $50', '$50-$100', '$100-$500', '$500-$1000', 'Over $1000']
+  },
+  {
+    id: 'category',
+    label: 'Category',
+    options: ['Smartphones', 'Laptops', 'Headphones', 'Cameras', 'Gaming', 'Smart Home']
+  },
+  {
+    id: 'condition',
+    label: 'Condition',
+    options: ['New', 'Refurbished', 'Used']
+  },
+  {
+    id: 'shipping',
+    label: 'Shipping',
+    options: ['Free Shipping', 'Fast Delivery', 'Local Pickup']
+  }
+];
+
 export default function ElectronicsPage() {
   const [feedItems, setFeedItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -81,10 +110,15 @@ export default function ElectronicsPage() {
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [showFilterBarInHeader, setShowFilterBarInHeader] = useState(false);
+
+  // Filter state
+  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
+
   const { t } = useTranslation(['product', 'categories']);
 
   const heroBannerRef = useRef<HTMLDivElement>(null);
   const filterBarRef = useRef<HTMLDivElement>(null);
+  const lastScrollY = useRef(0);
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["products"],
@@ -127,94 +161,97 @@ export default function ElectronicsPage() {
     }, 800);
   }, [generateFeedItems]);
 
-  // Use Intersection Observer to detect when filter bar in HeroBanner scrolls out of view
+  // Scroll-based detection for precise filter bar replacement
   useEffect(() => {
-    let observer: IntersectionObserver | null = null;
-    let debounceTimeout: NodeJS.Timeout;
-    let setupTimer: NodeJS.Timeout;
-    let retryTimer: NodeJS.Timeout;
-    
-    const setupObserver = () => {
-      // Disconnect any existing observer first
-      if (observer) {
-        observer.disconnect();
-        observer = null;
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          lastScrollY.current = currentScrollY;
+
+          // Get header element and its height
+          const header = document.getElementById("ali-header");
+          if (!header) return;
+
+          const headerHeight = header.getBoundingClientRect().height;
+
+          // Find the filter bar in the hero banner
+          const filterBar = heroBannerRef.current?.querySelector('.product-filter-bar');
+          if (!filterBar) return;
+
+          // Get the filter bar's position relative to the viewport
+          const filterBarRect = filterBar.getBoundingClientRect();
+
+          // Calculate if filter bar is being covered by header
+          // Show header filter bar when hero filter bar's bottom edge reaches header bottom
+          const shouldShowInHeader = filterBarRect.bottom <= headerHeight;
+
+          // Update state only if there's a change
+          setShowFilterBarInHeader(prev => {
+            if (prev !== shouldShowInHeader) {
+              console.log('Filter bar bottom:', Math.round(filterBarRect.bottom), 'Header height:', Math.round(headerHeight), 'Show in header:', shouldShowInHeader);
+              return shouldShowInHeader;
+            }
+            return prev;
+          });
+
+          ticking = false;
+        });
+
+        ticking = true;
       }
-      
-      // Get header height for proper root margin
-      const header = document.getElementById("ali-header");
-      const headerHeight = header ? header.offsetHeight : 76; // fallback to typical header height
-      
-      // Wait for HeroBanner and ProductFilterBar to render AND be visible
-      setupTimer = setTimeout(() => {
-        // First check if HeroBanner exists
-        if (!heroBannerRef.current) {
-          console.log('❌ HeroBanner ref not found, retrying...');
-          retryTimer = setTimeout(setupObserver, 200);
-          return;
-        }
-
-        // Check if ProductFilterBar should be visible (showNewsTicker is false)
-        // We can determine this by checking if ProductFilterBar is actually rendered and visible
-        const filterBar = heroBannerRef.current?.querySelector('.product-filter-bar');
-        
-        if (!filterBar) {
-          console.log('❌ ProductFilterBar not found or not visible in HeroBanner, retrying...');
-          retryTimer = setTimeout(setupObserver, 200);
-          return;
-        }
-
-        // Additional check: make sure the element is actually visible (not hidden)
-        const computedStyle = window.getComputedStyle(filterBar);
-        if (computedStyle.display === 'none' || computedStyle.visibility === 'hidden' || computedStyle.opacity === '0') {
-          console.log('❌ ProductFilterBar is hidden, retrying...');
-          retryTimer = setTimeout(setupObserver, 200);
-          return;
-        }
-
-        console.log('✅ Found visible ProductFilterBar in HeroBanner:', filterBar);
-
-        observer = new IntersectionObserver(
-          ([entry]) => {
-            clearTimeout(debounceTimeout);
-            
-            debounceTimeout = setTimeout(() => {
-              // Show filter bar in header when the hero filter bar is not intersecting (hidden by header)
-              const shouldShowInHeader = !entry.isIntersecting;
-              
-              console.log('🎯 Filter bar intersection:', entry.isIntersecting, 'Show in header:', shouldShowInHeader);
-
-              setShowFilterBarInHeader(prev => {
-                if (prev !== shouldShowInHeader) {
-                  return shouldShowInHeader;
-                }
-                return prev;
-              });
-            }, 50);
-          },
-          {
-            root: null,
-            rootMargin: `-${headerHeight}px 0px 0px 0px`, // Account for header height for snappier transitions
-            threshold: [0, 1]
-          }
-        );
-
-        observer.observe(filterBar);
-      }, 500); // Increased timeout to allow for proper rendering
     };
 
-    setupObserver();
+    // Add scroll listener only after content is ready
+    if (isContentReady) {
+      window.addEventListener('scroll', handleScroll, { passive: true });
+
+      // Initial check
+      handleScroll();
+    }
 
     return () => {
-      // Clear all timers and observers
-      clearTimeout(setupTimer);
-      clearTimeout(retryTimer);
-      clearTimeout(debounceTimeout);
-      if (observer) {
-        observer.disconnect();
-      }
+      window.removeEventListener('scroll', handleScroll);
     };
-  }, [isContentReady])
+  }, [isContentReady]);
+
+  // Filter handlers
+  const handleFilterSelect = useCallback((filterId: string, option: string) => {
+    setSelectedFilters(prev => ({
+      ...prev,
+      [filterId]: option
+    }));
+    console.log('Filter selected:', filterId, option);
+  }, []);
+
+  const handleFilterClear = useCallback((filterId: string) => {
+    setSelectedFilters(prev => {
+      const newFilters = { ...prev };
+      delete newFilters[filterId];
+      return newFilters;
+    });
+    console.log('Filter cleared:', filterId);
+  }, []);
+
+  const handleClearAllFilters = useCallback(() => {
+    setSelectedFilters({});
+    console.log('All filters cleared');
+  }, []);
+
+  const handleFilterButtonClick = useCallback((filterId: string) => {
+    console.log('Filter button clicked:', filterId);
+    // Handle filter button click (e.g., open dropdown)
+  }, []);
+
+  const isFilterDisabled = useCallback((filterId: string) => {
+    // Example logic: disable price filter if no category is selected
+    if (filterId === 'price' && !selectedFilters.category) {
+      return false; // Change to true to actually disable
+    }
+    return false;
+  }, [selectedFilters]);
 
   // Handle product click to open semi panel
   const handleProductClick = useCallback((productId: string) => {
@@ -287,14 +324,29 @@ export default function ElectronicsPage() {
       <AliExpressHeader 
         activeTabId="electronics" 
         showFilterBar={showFilterBarInHeader}
+        // Pass filter props to header if needed
+        filterCategories={filterCategories}
+        selectedFilters={selectedFilters}
+        onFilterSelect={handleFilterSelect}
+        onFilterClear={handleFilterClear}
+        onClearAll={handleClearAllFilters}
+        onFilterButtonClick={handleFilterButtonClick}
+        isFilterDisabled={isFilterDisabled}
       />
 
-      {/* Hero Banner with the actual ProductFilterBar */}
+      {/* Hero Banner with the ProductFilterBar integrated */}
       <div ref={heroBannerRef}>
-        <HeroBanner showNewsTicker={false} />
+        <HeroBanner 
+          showNewsTicker={false}
+          filterCategories={filterCategories}
+          selectedFilters={selectedFilters}
+          onFilterSelect={handleFilterSelect}
+          onFilterClear={handleFilterClear}
+          onClearAll={handleClearAllFilters}
+          onFilterButtonClick={handleFilterButtonClick}
+          isFilterDisabled={isFilterDisabled}
+        />
       </div>
-
-      
 
       {/* Endless feed content */}
       <div className="space-y-2">
@@ -314,8 +366,6 @@ export default function ElectronicsPage() {
         isOpen={isPanelOpen}
         onClose={handlePanelClose}
       />
-
-      
     </PageContainer>
   );
 }

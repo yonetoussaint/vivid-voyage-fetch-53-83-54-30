@@ -31,7 +31,7 @@ interface BottomNavTab {
 const navItems: BottomNavTab[] = [
   { id: 'home', nameKey: 'navigation.home', icon: Logo, path: '/for-you' }, 
   { id: 'shorts', nameKey: 'navigation.shorts', icon: Zap, path: '/reels' },
-  { id: 'categories', nameKey: 'navigation.categories', icon: LayoutGrid, path: '/posts' },
+  { id: 'categories', nameKey: 'navigation.categories', icon: LayoutGrid, path: '/search' },
   { id: 'wallet', nameKey: 'navigation.wallet', icon: Wallet, path: '/wallet' },
   { id: 'profile', nameKey: 'navigation.account', icon: User, path: '/profile/dashboard', isAvatar: true },
 ];

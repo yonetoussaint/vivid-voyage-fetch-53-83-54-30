@@ -1,87 +1,81 @@
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 
-const ProductFilterBar = () => {
-  const [openDropdown, setOpenDropdown] = useState(null);
-  const [selectedFilters, setSelectedFilters] = useState({});
+interface ProductFilterBarProps {
+  filterCategories?: Array<{
+    id: string;
+    label: string;
+    options: string[];
+  }>;
+  selectedFilters?: Record<string, string>;
+  onFilterSelect?: (filterId: string, option: string) => void;
+  onFilterClear?: (filterId: string) => void;
+  onClearAll?: () => void;
+  onFilterButtonClick?: (filterId: string) => void;
+  isFilterDisabled?: (filterId: string) => boolean;
+}
 
-  const filterCategories = [
-    {
-      id: 'category',
-      label: 'Category',
-      options: ['Electronics', 'Clothing', 'Home & Garden', 'Sports', 'Books', 'Toys']
-    },
-    {
-      id: 'brand',
-      label: 'Brand',
-      options: ['Apple', 'Samsung', 'Nike', 'Adidas', 'Sony', 'Canon']
-    },
-    {
-      id: 'price',
-      label: 'Price Range',
-      options: ['Under $25', '$25-$50', '$50-$100', '$100-$250', '$250+']
-    },
-    {
-      id: 'rating',
-      label: 'Rating',
-      options: ['4+ Stars', '3+ Stars', '2+ Stars', 'All Ratings']
-    },
-    {
-      id: 'availability',
-      label: 'Availability',
-      options: ['In Stock', 'Out of Stock', 'Pre-order', 'All']
-    },
-    {
-      id: 'color',
-      label: 'Color',
-      options: ['Black', 'White', 'Blue', 'Red', 'Green', 'Gray', 'Brown']
-    }
-  ];
+const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
+  filterCategories = [], // Default empty array
+  selectedFilters = {}, // Default empty object
+  onFilterSelect = () => {}, // Default empty function
+  onFilterClear = () => {},
+  onClearAll = () => {},
+  onFilterButtonClick = () => {},
+  isFilterDisabled
+}) => {
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
-  const handleDropdownToggle = (filterId) => {
+  // Rest of your component remains the same...
+  // The map function will now work on the empty array instead of undefined
+
+  const handleDropdownToggle = (filterId: string) => {
+    if (isFilterDisabled && isFilterDisabled(filterId)) return;
     setOpenDropdown(prev => prev === filterId ? null : filterId);
   };
 
-  const handleOptionSelect = (filterId, option) => {
-    setSelectedFilters(prev => ({
-      ...prev,
-      [filterId]: option
-    }));
+  const handleOptionSelect = (filterId: string, option: string) => {
+    onFilterSelect(filterId, option);
     setOpenDropdown(null);
   };
 
-  const clearFilter = (filterId) => {
-    const newFilters = { ...selectedFilters };
-    delete newFilters[filterId];
-    setSelectedFilters(newFilters);
+  const clearFilter = (filterId: string) => {
+    onFilterClear(filterId);
   };
 
   return (
-    <div className="product-filter-bar w-full bg-white"> {/* ← ADD THIS CLASS */}
+    <div className="product-filter-bar w-full bg-white">
       {/* Main filter bar */}
       <div className="border-b border-gray-200">
         <div className="overflow-x-auto scrollbar-hide">
-          <div className="flex min-w-max relative">
+          <div className="flex justify-start">
             {filterCategories.map((filter, index) => (
-              <div key={filter.id} className="relative flex">
+              <div key={filter.id} className="relative flex flex-1">
                 {/* Vertical separator */}
                 {index > 0 && (
                   <div className="w-px bg-gray-200 h-full" />
                 )}
 
                 {/* Filter button */}
-                <div className="relative">
+                <div className="relative flex-1">
                   <button
                     type="button"
-                    onClick={() => handleDropdownToggle(filter.id)}
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors whitespace-nowrap border-0 bg-transparent"
+                    onClick={() => onFilterButtonClick(filter.id)}
+                    disabled={isFilterDisabled && isFilterDisabled(filter.id)}
+                    className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap border-0 bg-transparent w-full ${
+                      isFilterDisabled && isFilterDisabled(filter.id)
+                        ? 'text-gray-400 cursor-not-allowed'
+                        : selectedFilters[filter.id]
+                        ? 'text-orange-600 hover:text-orange-700'
+                        : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                    }`}
                   >
-                    <span>
+                    <span className="truncate">
                       {selectedFilters[filter.id] || filter.label}
                     </span>
                     <ChevronDown 
                       size={14} 
-                      className={`transition-transform duration-200 ${
+                      className={`transition-transform duration-200 flex-shrink-0 ${
                         openDropdown === filter.id ? 'rotate-180' : ''
                       }`}
                     />
@@ -98,7 +92,7 @@ const ProductFilterBar = () => {
                             onClick={() => handleOptionSelect(filter.id, option)}
                             className={`w-full px-4 py-2 text-left text-sm transition-colors ${
                               selectedFilters[filter.id] === option
-                                ? 'bg-blue-50 text-blue-700 font-medium'
+                                ? 'bg-orange-50 text-orange-700 font-medium'
                                 : 'text-gray-700 hover:bg-gray-50'
                             }`}
                           >
@@ -131,13 +125,13 @@ const ProductFilterBar = () => {
             {Object.entries(selectedFilters).map(([filterId, value]) => (
               <span
                 key={filterId}
-                className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full"
+                className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-800 rounded-full"
               >
                 {value}
                 <button
                   type="button"
                   onClick={() => clearFilter(filterId)}
-                  className="hover:text-blue-900 font-bold"
+                  className="hover:text-orange-900 font-bold"
                 >
                   ×
                 </button>
@@ -145,7 +139,7 @@ const ProductFilterBar = () => {
             ))}
             <button
               type="button"
-              onClick={() => setSelectedFilters({})}
+              onClick={onClearAll}
               className="text-gray-500 hover:text-gray-700 underline"
             >
               Clear all

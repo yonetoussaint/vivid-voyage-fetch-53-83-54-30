@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from 'react-i18next';
 import { fetchAllProducts } from "@/integrations/supabase/products";
@@ -19,9 +18,11 @@ import MobileOptimizedReels from "@/components/home/MobileOptimizedReels";
 import Newsletter from "@/components/home/Newsletter";
 import PopularSearches from "@/components/home/PopularSearches";
 import ProductSemiPanel from "@/components/home/ProductSemiPanel";
+
+import NewArrivals from "@/components/home/NewArrivals";
 import NewArrivalsSection from "@/components/home/NewArrivalsSection";
-import HomeHeroBanner from "@/components/home/HomeHeroBanner";
-import HomeSubcategories from "@/components/home/HomeSubcategories";
+import HeroBanner from "@/components/home/HeroBanner";
+import AliExpressHeader from "@/components/home/AliExpressHeader";
 
 import { 
   Smartphone, 
@@ -43,21 +44,21 @@ import {
 
 // Component patterns for endless feed
 const flashDealsCategories = [
-  { title: "FURNITURE", icon: Home },
-  { title: "KITCHEN & DINING", icon: Coffee },
-  { title: "BEDDING", icon: Shirt },
-  { title: "BATHROOM", icon: Sparkles },
-  { title: "LIGHTING", icon: Laptop },
-  { title: "STORAGE", icon: ShoppingBag },
-  { title: "GARDEN & OUTDOOR", icon: Dumbbell },
-  { title: "APPLIANCES", icon: Smartphone },
-  { title: "HOME DECOR", icon: Camera },
-  { title: "CLEANING", icon: Headphones },
-  { title: "SMART HOME", icon: Watch },
-  { title: "TEXTILES", icon: Baby },
-  { title: "ORGANIZATION", icon: BookOpen },
-  { title: "SEASONAL", icon: Gamepad2 },
-  { title: "OFFICE", icon: Car },
+  { title: "ELECTRONICS", icon: Smartphone },
+  { title: "WOMEN'S FASHION", icon: ShoppingBag },
+  { title: "MEN'S FASHION", icon: Shirt },
+  { title: "KIDS & TOYS", icon: Baby },
+  { title: "HOME & GARDEN", icon: Home },
+  { title: "SPORTS & FITNESS", icon: Dumbbell },
+  { title: "BEAUTY & HEALTH", icon: Sparkles },
+  { title: "AUTOMOTIVE", icon: Car },
+  { title: "BOOKS & MEDIA", icon: BookOpen },
+  { title: "GAMING", icon: Gamepad2 },
+  { title: "WATCHES", icon: Watch },
+  { title: "AUDIO", icon: Headphones },
+  { title: "PHOTOGRAPHY", icon: Camera },
+  { title: "COMPUTERS", icon: Laptop },
+  { title: "COFFEE & TEA", icon: Coffee },
 ];
 
 const feedComponents = [
@@ -73,29 +74,34 @@ const feedComponents = [
   'BenefitsBanner',
 ];
 
-export default function HomeLivingPage() {
+export default function ElectronicsPage() {
   const [feedItems, setFeedItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [isContentReady, setIsContentReady] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [showFilterBarInHeader, setShowFilterBarInHeader] = useState(false);
   const { t } = useTranslation(['product', 'categories']);
-  
+
+  const heroBannerRef = useRef<HTMLDivElement>(null);
+  const filterBarRef = useRef<HTMLDivElement>(null);
+  const lastScrollY = useRef(0);
+
   const { data: products, isLoading } = useQuery({
     queryKey: ["products"],
     queryFn: fetchAllProducts,
-    staleTime: 60000, // 1 minute
+    staleTime: 60000,
     refetchOnWindowFocus: true,
   });
 
   // Generate initial feed
   const generateFeedItems = useCallback((count: number, startIndex: number = 0) => {
     const items = [];
-    
+
     for (let i = 0; i < count; i++) {
       const index = (startIndex + i) % feedComponents.length;
       const componentType = feedComponents[index];
-      
+
       if (componentType === 'SimpleFlashDeals') {
         const categoryIndex = (startIndex + i) % flashDealsCategories.length;
         items.push({
@@ -110,46 +116,73 @@ export default function HomeLivingPage() {
         });
       }
     }
-    
+
     return items;
   }, []);
 
-  // Initialize feed and mark content as ready
+  // Initialize feed immediately - don't wait for products
   useEffect(() => {
-    if (products) {
-      setFeedItems(generateFeedItems(15, 0));
-      // Add a small delay to ensure all components have time to render
-      setTimeout(() => {
-        setIsContentReady(true);
-      }, 800);
-    }
-  }, [products, generateFeedItems]);
+    setFeedItems(generateFeedItems(10, 0));
+    setTimeout(() => {
+      setIsContentReady(true);
+    }, 800);
+  }, [generateFeedItems]);
 
-  // Infinite scroll handler
-  const handleScroll = useCallback(() => {
-    if (loading) return;
-    
-    const scrollHeight = document.documentElement.scrollHeight;
-    const scrollTop = document.documentElement.scrollTop;
-    const clientHeight = document.documentElement.clientHeight;
-    
-    if (scrollTop + clientHeight >= scrollHeight - 1000) {
-      setLoading(true);
-      
-      setTimeout(() => {
-        setFeedItems(prev => [
-          ...prev,
-          ...generateFeedItems(10, prev.length)
-        ]);
-        setLoading(false);
-      }, 500);
-    }
-  }, [loading, generateFeedItems]);
-
+  // Scroll-based detection for precise filter bar replacement
   useEffect(() => {
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [handleScroll]);
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          lastScrollY.current = currentScrollY;
+
+          // Get header element and its height
+          const header = document.getElementById("ali-header");
+          if (!header) return;
+
+          const headerHeight = header.getBoundingClientRect().height;
+
+          // Find the filter bar in the hero banner
+          const filterBar = heroBannerRef.current?.querySelector('.product-filter-bar');
+          if (!filterBar) return;
+
+          // Get the filter bar's position relative to the viewport
+          const filterBarRect = filterBar.getBoundingClientRect();
+
+          // Calculate if filter bar is being covered by header
+          // Show header filter bar when hero filter bar's bottom edge reaches header bottom
+          const shouldShowInHeader = filterBarRect.bottom <= headerHeight;
+
+          // Update state only if there's a change
+          setShowFilterBarInHeader(prev => {
+            if (prev !== shouldShowInHeader) {
+              console.log('Filter bar bottom:', Math.round(filterBarRect.bottom), 'Header height:', Math.round(headerHeight), 'Show in header:', shouldShowInHeader);
+              return shouldShowInHeader;
+            }
+            return prev;
+          });
+
+          ticking = false;
+        });
+
+        ticking = true;
+      }
+    };
+
+    // Add scroll listener only after content is ready
+    if (isContentReady) {
+      window.addEventListener('scroll', handleScroll, { passive: true });
+
+      // Initial check
+      handleScroll();
+    }
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [isContentReady]);
 
   // Handle product click to open semi panel
   const handleProductClick = useCallback((productId: string) => {
@@ -166,7 +199,7 @@ export default function HomeLivingPage() {
   // Render component based on type
   const renderFeedItem = (item: any) => {
     const { type, category, id } = item;
-    
+
     switch (type) {
       case 'FlashDeals':
         return <FlashDeals key={id} />;
@@ -179,7 +212,11 @@ export default function HomeLivingPage() {
       case 'SuperDealsSection':
         return products && products.length > 0 ? (
           <SuperDealsSection key={id} products={products} onProductClick={handleProductClick} />
-        ) : null;
+        ) : (
+          <div key={id} className="h-64 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        );
       case 'VendorProductCarousel':
         return products && products.length > 0 ? (
           <VendorProductCarousel 
@@ -188,7 +225,11 @@ export default function HomeLivingPage() {
             products={products.slice(0, 10)} 
             onProductClick={handleProductClick}
           />
-        ) : null;
+        ) : (
+          <div key={id} className="h-64 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        );
       case 'SimpleFlashDeals':
         return (
           <SimpleFlashDeals 
@@ -203,33 +244,28 @@ export default function HomeLivingPage() {
         return <TopBrands key={id} />;
       case 'BenefitsBanner':
         return <BenefitsBanner key={id} />;
-      
       default:
         return null;
     }
   };
 
-  if (isLoading) {
-    return (
-      <PageContainer className="overflow-hidden pb-16 relative">
-        <div className="flex justify-center items-center min-h-screen">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      </PageContainer>
-    );
-  }
-
   return (
     <PageContainer className="overflow-hidden pb-16 relative">
-      {/* Hero Banner - shown once at the top */}
-      <HomeHeroBanner />
-      <HomeSubcategories />
-      
+      {/* Header - shows CategoryTabs by default, ProductFilterBar when scrolled */}
+      <AliExpressHeader 
+        activeTabId="electronics" 
+        showFilterBar={showFilterBarInHeader}
+      />
+
+      {/* Hero Banner with the actual ProductFilterBar */}
+      <div ref={heroBannerRef}>
+        <HeroBanner showNewsTicker={false} />
+      </div>
 
       {/* Endless feed content */}
       <div className="space-y-2">
         {feedItems.map(renderFeedItem)}
-        
+
         {/* Loading indicator */}
         {loading && (
           <div className="flex justify-center py-8">

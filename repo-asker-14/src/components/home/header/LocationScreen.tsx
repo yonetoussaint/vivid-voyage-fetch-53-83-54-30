@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Globe, Check, X, Search, ChevronLeft, MapPin, Loader2, Navigation, ChevronDown, Star, HelpCircle } from 'lucide-react';
+import { Globe, Check, X, Search, MapPin, Loader2, Navigation } from 'lucide-react';
 import { useLanguageSwitcher } from '@/hooks/useLanguageSwitcher';
 import { useTranslation } from 'react-i18next';
 import { useScreenOverlay } from '@/context/ScreenOverlayContext';
@@ -17,6 +17,7 @@ import {
   Section,
   Quartier
 } from '@/data/haitiLocations';
+import ProductFilterBar from '@/components/home/ProductFilterBar'; // Import the filter bar
 
 interface LocationScreenProps {
   onClose: () => void;
@@ -38,7 +39,6 @@ const LocationScreen: React.FC<LocationScreenProps> = ({ onClose, showHeader = t
 
     if (!hasSeenTip) {
       setShowLocationTip(true);
-      // Mark as seen permanently
       localStorage.setItem('hasSeenLocationTip', 'true');
     }
   }, []);
@@ -52,7 +52,6 @@ const LocationScreen: React.FC<LocationScreenProps> = ({ onClose, showHeader = t
     };
 
     if (showLocationTip) {
-      // Set timer to auto-dismiss after 3 seconds
       dismissTimerRef.current = setTimeout(() => {
         dismissTip();
       }, 3000);
@@ -77,100 +76,118 @@ const LocationScreen: React.FC<LocationScreenProps> = ({ onClose, showHeader = t
 
   // Pre-select Haiti as the only country
   const haitiCountry = countries.find(country => country.code === 'HT') || countries[4];
-  const [locationLevel, setLocationLevel] = useState<'countries' | 'states' | 'cities' | 'sections' | 'quartiers'>('states');
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(haitiCountry);
   const [selectedState, setSelectedState] = useState<Department | null>(null);
   const [selectedCity, setSelectedCity] = useState<Commune | null>(null);
-  const [selectedSection, setSelectedSection] = useState<Section | null>(null);
   const [selectedQuartier, setSelectedQuartier] = useState<Quartier | null>(null);
-  const [breadcrumb, setBreadcrumb] = useState<string[]>([haitiCountry?.name || 'Haiti']);
   const [isGeolocating, setIsGeolocating] = useState(false);
   const [geoError, setGeoError] = useState<string | null>(null);
 
-  // Dropdown states
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
-  const [sectionDropdownOpen, setSectionDropdownOpen] = useState(false);
-  const [quartierDropdownOpen, setQuartierDropdownOpen] = useState(false);
+  // Filter categories for the ProductFilterBar
+  const filterCategories = [
+    {
+      id: 'department',
+      label: t('department'),
+      options: departments.map(dept => dept.name)
+    },
+    {
+      id: 'commune',
+      label: t('commune'),
+      options: selectedState ? getCommunesByDepartment(selectedState.code).map(commune => commune.name) : []
+    }
+  ];
 
-  // Step configuration
-  const stepConfig = {
-    states: {
-      question: t('questionDepartment'),
-      subtitle: t('subtitleDepartment')
-    },
-    cities: {
-      question: t('questionCommune'),
-      subtitle: `${t('subtitleCommune')} ${selectedState?.name}.`
-    },
-    sections: {
-      question: t('questionSection'),
-      subtitle: `${t('subtitleSection')} ${selectedCity?.name}.`
-    },
-    quartiers: {
-      question: t('questionQuartier'),
-      subtitle: `${t('subtitleQuartier')} ${selectedSection?.name}.`
+  const [selectedFilters, setSelectedFilters] = useState({});
+
+  // Helper function to get all quartiers for a commune
+  const getQuartiersByCommune = (communeCode: string): Quartier[] => {
+    const communeSections = getSectionsByCommune(communeCode);
+    const allQuartiers: Quartier[] = [];
+
+    communeSections.forEach(section => {
+      const sectionQuartiers = getQuartiersBySection(section.code);
+      allQuartiers.push(...sectionQuartiers);
+    });
+
+    return allQuartiers;
+  };
+
+  // Handle filter selection from ProductFilterBar
+  const handleFilterSelect = (filterId: string, option: string) => {
+    if (filterId === 'department') {
+      const selectedDept = departments.find(dept => dept.name === option);
+      if (selectedDept) {
+        setSelectedState(selectedDept);
+        setSelectedCity(null);
+        setSelectedQuartier(null);
+        setSelectedFilters(prev => ({
+          ...prev,
+          department: option,
+          commune: '' // Reset commune when department changes
+        }));
+      }
+    } else if (filterId === 'commune' && selectedState) {
+      const communesList = getCommunesByDepartment(selectedState.code);
+      const selectedCommune = communesList.find(commune => commune.name === option);
+      if (selectedCommune) {
+        setSelectedCity(selectedCommune);
+        setSelectedQuartier(null);
+        setSelectedFilters(prev => ({
+          ...prev,
+          commune: option
+        }));
+      }
     }
   };
 
-  // Modified handlers - only set selection, don't advance automatically
-  const handleStateSelect = (state: Department) => {
-    setSelectedState(state);
-    setLocationQuery('');
-    setDropdownOpen(false);
-    setBreadcrumb([selectedCountry?.name || '', state.name]);
-    // Removed auto-advance: setLocationLevel('cities');
+  // Handle filter clearing from ProductFilterBar
+  const handleFilterClear = (filterId: string) => {
+    if (filterId === 'department') {
+      setSelectedState(null);
+      setSelectedCity(null);
+      setSelectedQuartier(null);
+      const newFilters = { ...selectedFilters };
+      delete newFilters.department;
+      delete newFilters.commune;
+      setSelectedFilters(newFilters);
+    } else if (filterId === 'commune') {
+      setSelectedCity(null);
+      setSelectedQuartier(null);
+      const newFilters = { ...selectedFilters };
+      delete newFilters.commune;
+      setSelectedFilters(newFilters);
+    }
   };
 
-  const handleCitySelect = (city: Commune) => {
-    setSelectedCity(city);
-    setLocationQuery('');
-    setCityDropdownOpen(false);
-    setBreadcrumb([selectedCountry?.name || '', selectedState?.name || '', city.name]);
-    // Removed auto-advance: setLocationLevel('sections');
+  // Handle clear all filters from ProductFilterBar
+  const handleClearAllFilters = () => {
+    setSelectedState(null);
+    setSelectedCity(null);
+    setSelectedQuartier(null);
+    setSelectedFilters({});
   };
 
-  const handleSectionSelect = (section: Section) => {
-    setSelectedSection(section);
-    setLocationQuery('');
-    setSectionDropdownOpen(false);
-    setBreadcrumb([selectedCountry?.name || '', selectedState?.name || '', selectedCity?.name || '', section.name]);
-    // Removed auto-advance: setLocationLevel('quartiers');
+  // Custom handler for when filter buttons are clicked (to open location list screens)
+  const handleFilterButtonClick = (filterId: string) => {
+    if (filterId === 'department') {
+      setLocationListScreenOpen(true, {
+        title: t('chooseDepartmentTitle'),
+        items: departments,
+        onSelect: (dept: Department) => handleFilterSelect('department', dept.name),
+        searchPlaceholder: t('searchDepartments')
+      });
+    } else if (filterId === 'commune' && selectedState) {
+      setLocationListScreenOpen(true, {
+        title: t('chooseCommuneTitle'),
+        items: getCommunesByDepartment(selectedState.code),
+        onSelect: (commune: Commune) => handleFilterSelect('commune', commune.name),
+        searchPlaceholder: t('searchCommunes')
+      });
+    }
   };
 
   const handleQuartierSelect = (quartier: Quartier) => {
     setSelectedQuartier(quartier);
-    setQuartierDropdownOpen(false);
-
-    // Complete location selection
-    const location = {
-      code: `${selectedCity?.code}-${quartier.code}`,
-      name: `${quartier.name}, ${selectedSection?.name}, ${selectedCity?.name}, ${selectedState?.name}`,
-      flag: selectedCountry?.flag || 'ht'
-    };
-    setLocation(location);
-    onClose();
-  };
-
-  const goBack = () => {
-    if (locationLevel === 'quartiers') {
-      setLocationLevel('sections');
-      setSelectedQuartier(null);
-      setLocationQuery('');
-      setBreadcrumb([selectedCountry?.name || '', selectedState?.name || '', selectedCity?.name || '']);
-    } else if (locationLevel === 'sections') {
-      setLocationLevel('cities');
-      setSelectedSection(null);
-      setLocationQuery('');
-      setBreadcrumb([selectedCountry?.name || '', selectedState?.name || '']);
-    } else if (locationLevel === 'cities') {
-      setLocationLevel('states');
-      setSelectedCity(null);
-      setLocationQuery('');
-      setBreadcrumb([selectedCountry?.name || '']);
-    } else if (locationLevel === 'states') {
-      onClose();
-    }
   };
 
   const handleUseMyLocation = () => {
@@ -243,401 +260,187 @@ const LocationScreen: React.FC<LocationScreenProps> = ({ onClose, showHeader = t
     );
   };
 
-  const filteredStates = useMemo(() => {
-    if (!locationQuery) return departments;
-    return departments.filter(dept => 
-      dept.name.toLowerCase().includes(locationQuery.toLowerCase())
-    );
-  }, [locationQuery]);
-
-  const filteredCities = useMemo(() => {
-    if (!selectedState) return [];
-    const deptCommunes = getCommunesByDepartment(selectedState.code);
-    if (!locationQuery) return deptCommunes;
-    return deptCommunes.filter(commune =>
-      commune.name.toLowerCase().includes(locationQuery.toLowerCase())
-    );
-  }, [selectedState, locationQuery]);
-
-  const filteredSections = useMemo(() => {
-    if (!selectedCity) return [];
-    const communeSections = getSectionsByCommune(selectedCity.code);
-    if (!locationQuery) return communeSections;
-    return communeSections.filter(section =>
-      section.name.toLowerCase().includes(locationQuery.toLowerCase())
-    );
-  }, [selectedCity, locationQuery]);
-
-  const filteredQuartiers = useMemo(() => {
-    if (!selectedSection) return [];
-    const sectionQuartiers = getQuartiersBySection(selectedSection.code);
-    if (!locationQuery) return sectionQuartiers;
-    return sectionQuartiers.filter(quartier =>
-      quartier.name.toLowerCase().includes(locationQuery.toLowerCase())
-    );
-  }, [selectedSection, locationQuery]);
-
-  const getCurrentStep = () => {
-    switch (locationLevel) {
-      case 'states':
-        return 1;
-      case 'cities':
-        return 2;
-      case 'sections':
-        return 3;
-      case 'quartiers':
-        return 4;
-      default:
-        return 1;
+  const handleApplyLocation = () => {
+    if (selectedQuartier && selectedCity && selectedState) {
+      const location = {
+        code: `${selectedCity.code}-${selectedQuartier.code}`,
+        name: `${selectedQuartier.name}, ${selectedCity.name}, ${selectedState.name}`,
+        flag: selectedCountry?.flag || 'ht'
+      };
+      setLocation(location);
+      onClose();
     }
   };
 
-  const ProgressBar = () => {
-    const currentStep = getCurrentStep();
-    const totalSteps = 4;
-
-
-    return (
-      <div className="flex gap-2 mt-3">
-        {Array.from({ length: totalSteps }, (_, index) => {
-          const stepNumber = index + 1;
-          const isActive = stepNumber <= currentStep;
-
-          return (
-            <div
-              key={stepNumber}
-              className={`
-                flex-1 h-1 rounded-full transition-colors duration-300
-                ${isActive ? 'bg-orange-500' : 'bg-gray-200'}
-              `}
-            />
-          );
-        })}
-      </div>
+  const filteredQuartiers = useMemo(() => {
+    if (!selectedCity) return [];
+    const communeQuartiers = getQuartiersByCommune(selectedCity.code);
+    if (!locationQuery) return communeQuartiers;
+    return communeQuartiers.filter(quartier =>
+      quartier.name.toLowerCase().includes(locationQuery.toLowerCase())
     );
-  };
+  }, [selectedCity, locationQuery]);
 
   return (
-   <div className={showHeader ? "fixed inset-0 bg-white z-50 flex flex-col h-screen" : "flex flex-col h-full"}>
+    <div className={showHeader ? "fixed inset-0 bg-white z-50 flex flex-col h-screen" : "flex flex-col h-full"}>
       {showHeader && (
-        <div className="bg-white p-3">
-          <div className="relative flex items-center justify-center">
+        <div className="bg-white p-3 border-b border-gray-200">
+          <div className="relative flex items-center justify-between">
             <button
-              onClick={locationLevel === 'states' ? onClose : goBack}
-              className="absolute left-0 text-gray-600 hover:text-gray-900 transition-colors"
+              onClick={onClose}
+              className="text-gray-600 hover:text-gray-900 transition-colors"
             >
-              {locationLevel === 'states' ? (
-                <X className="h-5 w-5" />
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="flex-1 mx-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder={t('searchLocation')}
+                  value={locationQuery}
+                  onChange={(e) => setLocationQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+              </div>
+            </div>
+
+            <button 
+              onClick={handleUseMyLocation}
+              disabled={isGeolocating}
+              className="text-gray-600 hover:text-gray-900 disabled:text-gray-400 transition-colors"
+              id="location-icon"
+            >
+              {isGeolocating ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
-                <ChevronLeft className="h-5 w-5" />
+                <Navigation className="h-5 w-5" />
               )}
             </button>
-            <h1 className="text-lg font-semibold text-gray-900">
-              {t('locationSetup')}
-            </h1>
-             <div className="absolute right-0">
-              <button 
-                onClick={handleUseMyLocation}
-                disabled={isGeolocating}
-                className="text-gray-600 hover:text-gray-900 disabled:text-gray-400 transition-colors"
-                id="location-icon"
-              >
-                {isGeolocating ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <Navigation className="h-5 w-5" />
-                )}
-              </button>
 
-              {/* Location Tip Bubble */}
-              {showLocationTip && locationLevel === 'states' && (
-                <div 
-                  ref={tipRef}
-                  className="absolute right-0 top-full mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-50 animate-fade-in"
-                  style={{
-                    transform: 'translateX(10px)'
-                  }}
-                >
-                  <div className="absolute -top-2 right-3 w-4 h-4 bg-white border-t border-l border-gray-200 transform rotate-45"></div>
-                  <div className="flex items-start gap-2">
-                    <Navigation className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{t('quickTip')}</p>
-                      <p className="text-xs text-gray-600">
-                        {t('gpsTip')}
-                      </p>
-                    </div>
-                    <button 
-                      onClick={dismissTip}
-                      className="ml-auto text-gray-400 hover:text-gray-600"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
+            {showLocationTip && (
+              <div 
+                ref={tipRef}
+                className="absolute right-0 top-full mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-50 animate-fade-in"
+                style={{ transform: 'translateX(10px)' }}
+              >
+                <div className="absolute -top-2 right-3 w-4 h-4 bg-white border-t border-l border-gray-200 transform rotate-45"></div>
+                <div className="flex items-start gap-2">
+                  <Navigation className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{t('quickTip')}</p>
+                    <p className="text-xs text-gray-600">{t('gpsTip')}</p>
                   </div>
+                  <button 
+                    onClick={dismissTip}
+                    className="ml-auto text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
-          <ProgressBar />
         </div>
       )}
 
+      {/* Use ProductFilterBar directly with custom handlers */}
+      <ProductFilterBar 
+        filterCategories={filterCategories}
+        selectedFilters={selectedFilters}
+        onFilterSelect={handleFilterSelect}
+        onFilterClear={handleFilterClear}
+        onClearAll={handleClearAllFilters}
+        onFilterButtonClick={handleFilterButtonClick}
+        isFilterDisabled={(filterId) => filterId === 'commune' && !selectedState}
+      />
+
       <div className="flex-1 overflow-y-auto px-4 pb-20">
-        <div className="mt-6 mb-6 text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            {stepConfig[locationLevel]?.question}
-          </h2>
-          <p className="text-gray-600 text-sm">
-            {stepConfig[locationLevel]?.subtitle}
-          </p>
+        {/* Current Location Display */}
+        <div className="mt-6 mb-6 p-4 bg-gray-100 rounded-lg">
+          <div className="flex items-center gap-3">
+            <MapPin className="h-5 w-5 text-gray-600" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-900">{t('currentLocation', { defaultValue: 'Current Location' })}</p>
+              <p className="text-sm text-gray-600">{currentLocation.name}</p>
+            </div>
+          </div>
         </div>
 
-        {locationLevel === 'states' && (
-          <>
-            {/* Current Location Display */}
-            <div className="mb-6 p-4 bg-gray-100 rounded-lg">
-              <div className="flex items-center gap-3">
-                <MapPin className="h-5 w-5 text-gray-600" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">{t('currentLocation', { defaultValue: 'Current Location' })}</p>
-                  <p className="text-sm text-gray-600">{currentLocation.name}</p>
+        {geoError && (
+          <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-600">{geoError}</p>
+          </div>
+        )}
+
+        {/* Quartiers List */}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            {selectedCity 
+              ? `${t('quartiersIn')} ${selectedCity.name}`
+              : selectedState
+              ? `${t('selectCommuneFirst')}`
+              : `${t('selectDepartmentFirst')}`
+            }
+          </h3>
+
+          {!selectedState && (
+            <div className="text-center py-8">
+              <Globe className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500">{t('selectDepartmentToStart')}</p>
+            </div>
+          )}
+
+          {selectedState && !selectedCity && (
+            <div className="text-center py-8">
+              <MapPin className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500">{t('selectCommuneToViewQuartiers')}</p>
+            </div>
+          )}
+
+          {selectedCity && (
+            <div className="grid gap-2">
+              {filteredQuartiers.length === 0 ? (
+                <div className="text-center py-8">
+                  <Search className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500">{t('noQuartiersFound')}</p>
                 </div>
-              </div>
-            </div>
-
-            {geoError && (
-              <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-600">{geoError}</p>
-              </div>
-            )}
-
-            <div className="mb-6">
-              <div className="relative">
-                <button
-                  onClick={() => {
-                    setLocationListScreenOpen(true, {
-                      title: t('chooseDepartmentTitle'),
-                      items: filteredStates,
-                      onSelect: handleStateSelect,
-                      searchPlaceholder: t('searchDepartments')
-                    });
-                  }}
-                  className="w-full p-3 text-left bg-white border border-gray-300 rounded-lg hover:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className={selectedState ? "text-gray-900" : "text-gray-500"}>
-                      {selectedState ? selectedState.name : t('chooseDepartment')}
-                    </span>
-                    <ChevronDown className="h-4 w-4 text-gray-400" />
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-center gap-2 mb-3">
-                <Star className="h-4 w-4 text-gray-600" />
-                <h3 className="text-sm font-medium text-gray-700">{t('popularDepartments')}</h3>
-              </div>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {filteredStates.map((state) => (
-                  <button
-                    key={state.code}
-                    onClick={() => handleStateSelect(state)}
-                    className={`px-4 py-2 border rounded-full text-sm transition-colors ${
-                      selectedState?.code === state.code
-                        ? 'border-orange-500 text-orange-600 bg-orange-50'
-                        : 'border-gray-300 text-gray-700 hover:border-orange-500 hover:text-orange-600'
-                    }`}
-                  >
-                    {state.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-
-        {locationLevel === 'cities' && (
-          <>
-            <div className="mb-6">
-              <div className="relative">
-                <button
-                  onClick={() => {
-                    setLocationListScreenOpen(true, {
-                      title: t('chooseCommuneTitle'),
-                      items: filteredCities,
-                      onSelect: handleCitySelect,
-                      searchPlaceholder: t('searchCommunes')
-                    });
-                  }}
-                  className="w-full p-3 text-left bg-white border border-gray-300 rounded-lg hover:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className={selectedCity ? "text-gray-900" : "text-gray-500"}>
-                      {selectedCity ? selectedCity.name : t('chooseCommune')}
-                    </span>
-                    <ChevronDown className="h-4 w-4 text-gray-400" />
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-center gap-2 mb-3">
-                <Star className="h-4 w-4 text-gray-600" />
-                <h3 className="text-sm font-medium text-gray-700">{t('popularCommunes')}</h3>
-              </div>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {filteredCities.map((city) => (
-                  <button
-                    key={city.code}
-                    onClick={() => handleCitySelect(city)}
-                    className={`px-4 py-2 border rounded-full text-sm transition-colors ${
-                      selectedCity?.code === city.code
-                        ? 'border-orange-500 text-orange-600 bg-orange-50'
-                        : 'border-gray-300 text-gray-700 hover:border-orange-500 hover:text-orange-600'
-                    }`}
-                  >
-                    {city.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-
-        {locationLevel === 'sections' && (
-          <>
-            <div className="mb-6">
-              <div className="relative">
-                <button
-                  onClick={() => {
-                    setLocationListScreenOpen(true, {
-                      title: t('chooseSectionTitle'),
-                      items: filteredSections,
-                      onSelect: handleSectionSelect,
-                      searchPlaceholder: t('searchSections')
-                    });
-                  }}
-                  className="w-full p-3 text-left bg-white border border-gray-300 rounded-lg hover:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className={selectedSection ? "text-gray-900" : "text-gray-500"}>
-                      {selectedSection ? selectedSection.name : t('chooseSectionCommunale')}
-                    </span>
-                    <ChevronDown className="h-4 w-4 text-gray-400" />
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-center gap-2 mb-3">
-                <Star className="h-4 w-4 text-gray-600" />
-                <h3 className="text-sm font-medium text-gray-700">{t('popularSections')}</h3>
-              </div>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {filteredSections.map((section) => (
-                  <button
-                    key={section.code}
-                    onClick={() => handleSectionSelect(section)}
-                    className={`px-4 py-2 border rounded-full text-sm transition-colors ${
-                      selectedSection?.code === section.code
-                        ? 'border-orange-500 text-orange-600 bg-orange-50'
-                        : 'border-gray-300 text-gray-700 hover:border-orange-500 hover:text-orange-600'
-                    }`}
-                  >
-                    {section.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-
-        {locationLevel === 'quartiers' && (
-          <>
-            <div className="mb-6">
-              <div className="relative">
-                <button
-                  onClick={() => {
-                    setLocationListScreenOpen(true, {
-                      title: t('chooseQuartierTitle'),
-                      items: filteredQuartiers,
-                      onSelect: handleQuartierSelect,
-                      searchPlaceholder: t('searchQuartiers')
-                    });
-                  }}
-                  className="w-full p-3 text-left bg-white border border-gray-300 rounded-lg hover:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className={selectedQuartier ? "text-gray-900" : "text-gray-500"}>
-                      {selectedQuartier ? selectedQuartier.name : t('chooseQuartier')}
-                    </span>
-                    <ChevronDown className="h-4 w-4 text-gray-400" />
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-center gap-2 mb-3">
-                <Star className="h-4 w-4 text-gray-600" />
-                <h3 className="text-sm font-medium text-gray-700">{t('popularQuartiers')}</h3>
-              </div>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {filteredQuartiers.map((quartier) => (
+              ) : (
+                filteredQuartiers.map((quartier) => (
                   <button
                     key={quartier.code}
                     onClick={() => handleQuartierSelect(quartier)}
-                    className={`px-4 py-2 border rounded-full text-sm transition-colors ${
+                    className={`w-full p-3 text-left rounded-lg border transition-colors ${
                       selectedQuartier?.code === quartier.code
-                        ? 'border-orange-500 text-orange-600 bg-orange-50'
-                        : 'border-gray-300 text-gray-700 hover:border-orange-500 hover:text-orange-600'
+                        ? 'border-orange-500 bg-orange-50 text-orange-600'
+                        : 'border-gray-200 hover:border-orange-500 hover:bg-orange-50'
                     }`}
                   >
-                    {quartier.name}
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{quartier.name}</span>
+                      {selectedQuartier?.code === quartier.code && (
+                        <Check className="h-4 w-4" />
+                      )}
+                    </div>
                   </button>
-                ))}
-              </div>
+                ))
+              )}
             </div>
-          </>
-        )}
+          )}
+        </div>
       </div>
 
-     {/* Sticky Continue Button - Border Removed */}
-<div className="bg-white p-4 sticky bottom-0"> {/* Removed border classes here */}
-  <button
-    onClick={() => {
-      if (locationLevel === 'states' && selectedState) {
-        setLocationLevel('cities');
-        setLocationQuery('');
-      } else if (locationLevel === 'cities' && selectedCity) {
-        setLocationLevel('sections');
-        setLocationQuery('');
-      } else if (locationLevel === 'sections' && selectedSection) {
-        setLocationLevel('quartiers');
-        setLocationQuery('');
-      } else if (locationLevel === 'quartiers' && selectedQuartier) {
-        const location = {
-          code: `${selectedCity?.code}-${selectedQuartier.code}`,
-          name: `${selectedQuartier.name}, ${selectedSection?.name}, ${selectedCity?.name}, ${selectedState?.name}`,
-          flag: selectedCountry?.flag || 'ht'
-        };
-        setLocation(location);
-        onClose();
-      }
-    }}
-    disabled={(locationLevel === 'states' && !selectedState) || 
-             (locationLevel === 'cities' && !selectedCity) || 
-             (locationLevel === 'sections' && !selectedSection) ||
-             (locationLevel === 'quartiers' && !selectedQuartier)}
-    className="w-full py-3 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:text-gray-500 rounded-lg transition-colors"
-  >
-    {locationLevel === 'quartiers' ? t('header.finish', { ns: 'common' }) : t('header.continue', { ns: 'common' })}
-  </button>
-</div>
+      {/* Sticky Apply Button */}
+      <div className="bg-white p-4 sticky bottom-0 border-t border-gray-200">
+        <button
+          onClick={handleApplyLocation}
+          disabled={!selectedQuartier}
+          className="w-full py-3 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:text-gray-500 rounded-lg transition-colors"
+        >
+          {t('applyLocation')}
+        </button>
+      </div>
     </div>
   );
 };
