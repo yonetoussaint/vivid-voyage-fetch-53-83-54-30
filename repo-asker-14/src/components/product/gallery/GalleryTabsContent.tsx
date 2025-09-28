@@ -67,7 +67,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
       galleryItems={galleryItems}
     />
 
-    <IPhoneXRListing />
+    <IPhoneXRListing product={product} />
     
     {/* Search Info Component moved to description's original position */}
     {productId && (
