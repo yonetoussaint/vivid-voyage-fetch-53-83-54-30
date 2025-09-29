@@ -14,6 +14,7 @@ import BookGenreFlashDeals from '@/components/home/BookGenreFlashDeals';
 import StickyCheckoutBar from '@/components/product/StickyCheckoutBar';
 import ProductSectionWrapper from '@/components/product/ProductSectionWrapper';
 import FullDescription from '@/components/product/FullDescription';
+import ProductSpecifications from '@/components/product/ProductSpecifications';
 
 interface GalleryTabsContentProps {
   activeTab: string;
@@ -82,6 +83,8 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
           {/* Description Component moved before BookGenreFlashDeals */}
           
           <FullDescription productId={productId} />
+
+          <ProductSpecifications productId={productId} />
           
           <BookGenreFlashDeals 
             className="border border-gray-200 rounded-lg overflow-hidden"
