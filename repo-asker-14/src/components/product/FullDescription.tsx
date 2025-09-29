@@ -117,7 +117,7 @@ export default function FullDescription({
         compact={compact}
       />
       
-      <div className={`${compact ? 'mt-1' : 'mt-3'}`}>
+      <div className={`px-2 ${compact ? 'mt-1' : 'mt-3'}`}>
         <p className="text-gray-600 leading-relaxed text-sm">
           {descriptionContent}
         </p>
