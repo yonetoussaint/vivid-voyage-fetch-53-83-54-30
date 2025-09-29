@@ -27,7 +27,7 @@ export default function FullDescription({
   compact = false,
   className = ""
 }: FullDescriptionProps) {
-  const { product, loading, error } = useProduct(productId);
+  const { data: product, isLoading: loading, error } = useProduct(productId);
 
   console.log('🔍 FullDescription Debug:', {
     productId,
