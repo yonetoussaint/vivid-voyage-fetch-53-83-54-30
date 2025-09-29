@@ -3,6 +3,7 @@ export interface Product {
   id: string;
   name: string;
   description: string;
+  short_description?: string; // Added short description field
   price: number;
   discount_price?: number | null;
   category?: string;
@@ -154,6 +155,7 @@ export async function createProduct(productData: Partial<Product>): Promise<Prod
     id: Math.random().toString(36).substring(2, 9),
     name: productData.name || "New Product",
     description: productData.description || "",
+    short_description: productData.short_description || "", // Include short description
     price: productData.price ?? 0,
     discount_price: productData.discount_price ?? null,
     category: productData.category || "",
@@ -218,7 +220,7 @@ export async function fetchProductById(productId: string): Promise<Product> {
   const { supabase } = await import('./client');
 
   console.log(`🔍 fetchProductById: Starting fetch for productId: ${productId}`);
-  
+
   const { data, error } = await supabase
     .from('products')
     .select(`
@@ -275,7 +277,7 @@ export async function fetchProductById(productId: string): Promise<Product> {
 // --- Track product view ---
 export async function trackProductView(productId: string): Promise<void> {
   console.log(`🔍 trackProductView: Starting view tracking for product ${productId}`);
-  
+
   try {
     const { supabase } = await import('./client');
 

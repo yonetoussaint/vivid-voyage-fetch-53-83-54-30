@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useProduct } from '@/hooks/useProduct';
-import SearchInfoHeader from '@/components/shared/SearchInfoHeader';
+import SectionHeader from '@/components/home/SectionHeader';
 
 interface SearchInfoComponentProps {
   productId: string;
@@ -10,15 +10,15 @@ export default function SearchInfoComponent({ productId }: SearchInfoComponentPr
   const [query, setQuery] = useState('');
   const [response, setResponse] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const { data: product } = useProduct(productId);
 
   const handleSubmit = async (questionText: string) => {
     if (!questionText.trim()) return;
-    
+
     setIsLoading(true);
     setResponse('');
-    
+
     try {
       // Create context about the product for the AI
       let productContext = '';
@@ -37,7 +37,7 @@ User Question: ${questionText}
 Please answer the user's question specifically about this product based on the information provided. If the information needed to answer the question is not available in the product details, please say so clearly.`;
       } else {
         productContext = `The user is asking: ${questionText}
-        
+
 Note: Product information is not currently available. Please let the user know that product details are loading and ask them to try again in a moment.`;
       }
 
@@ -83,13 +83,25 @@ Note: Product information is not currently available. Please let the user know t
     handleSubmit(suggestion);
   };
 
+  // Updated custom icon component to match ReviewGallery sizing
+  const SearchInfoIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+    <div className={`relative ${className}`}>
+      <div className="w-4 h-4 bg-orange-500 rounded-full"></div>
+      <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-500 rounded-full"></div>
+    </div>
+  );
+
   return (
-    <div className="w-full bg-white">
-      {/* Header */}
-      <SearchInfoHeader />
+    <div className="w-full bg-white space-y-2">
+      {/* Header using SectionHeader with consistent spacing */}
+      <SectionHeader
+        title="Looking for Specific Info?"
+        icon={SearchInfoIcon}
+        titleTransform="uppercase"
+        />
 
       {/* Search Input */}
-      <div className="mb-4">
+      <div className="px-2"> {/* Consistent 16px bottom margin */}
         <form onSubmit={handleInputSubmit} className="relative">
           <input
             type="text"
@@ -127,15 +139,17 @@ Note: Product information is not currently available. Please let the user know t
 
       {/* Response Area */}
       {response && (
-        <div className="mb-4 p-3 bg-gray-50 rounded-lg border">
-          <div className="text-sm text-gray-800 whitespace-pre-wrap">{response}</div>
+        <div className="px-2"> {/* Consistent 16px bottom margin and horizontal padding */}
+          <div className="p-3 bg-gray-50 rounded-lg border">
+            <div className="text-sm text-gray-800 whitespace-pre-wrap">{response}</div>
+          </div>
         </div>
       )}
 
       {/* Suggestion Pills - Horizontally Scrollable */}
-      <div className="-mx-4">
-        <div className="overflow-x-auto scrollbar-hide px-4">
-          <div className="flex gap-2 pb-2">
+      <div className="w-full"> {/* Consistent horizontal padding */}
+        <div className="overflow-x-auto scrollbar-hide px-2 ">
+          <div className="flex gap-2 pb-1"> {/* Consistent gap and reduced bottom padding */}
             <button 
               onClick={() => handleSuggestionClick('Does it have facial recognition?')}
               disabled={isLoading}

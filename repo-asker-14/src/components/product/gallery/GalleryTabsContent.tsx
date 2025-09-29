@@ -13,6 +13,7 @@ import ReviewGallery from '@/components/product/ReviewGallery';
 import BookGenreFlashDeals from '@/components/home/BookGenreFlashDeals';
 import StickyCheckoutBar from '@/components/product/StickyCheckoutBar';
 import ProductSectionWrapper from '@/components/product/ProductSectionWrapper';
+import FullDescription from '@/components/product/FullDescription';
 
 interface GalleryTabsContentProps {
   activeTab: string;
@@ -56,67 +57,54 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
 
   return (
     <div className="mt-1 w-full">
-     {(activeTab === 'overview' || !activeTab) && (
-  <div className="space-y-4">
-    <GalleryThumbnails
-      images={galleryItems.map(item => item.src)}
-      currentIndex={currentIndex}
-      onThumbnailClick={onThumbnailClick}
-      isPlaying={isPlaying}
-      videoIndices={videoIndices}
-      galleryItems={galleryItems}
-    />
-
-    <IPhoneXRListing product={product} />
-    
-    {/* Search Info Component moved to description's original position */}
-    {productId && (
-      <ProductSectionWrapper>
-        <SearchInfoComponent productId={productId} />
-      </ProductSectionWrapper>
-    )}
-
-    <ProductSectionWrapper>
-      <ReviewGallery />
-    </ProductSectionWrapper>
-
-    {/* Description Component moved before BookGenreFlashDeals */}
-    {product && product.description && (
-      <ProductSectionWrapper>
-        <div className="bg-gray-50 rounded-lg p-4">
-          <SectionHeader 
-            title="Description"
-            showViewAll={false}
-            className="mb-4"
+      {(activeTab === 'overview' || !activeTab) && (
+        <div className="space-y-3"> {/* Increased from space-y-0 */}
+          <GalleryThumbnails
+            images={galleryItems.map(item => item.src)}
+            currentIndex={currentIndex}
+            onThumbnailClick={onThumbnailClick}
+            isPlaying={isPlaying}
+            videoIndices={videoIndices}
+            galleryItems={galleryItems}
           />
-          <p className="text-gray-600 leading-relaxed">{product.description}</p>
+
+          <IPhoneXRListing product={product} />
+
+          {/* Search Info Component moved to description's original position */}
+          {productId && (
+              <SearchInfoComponent productId={productId} />
+          )}
+
+
+            <ReviewGallery />
+
+
+          {/* Description Component moved before BookGenreFlashDeals */}
+          
+<FullDescription/>
+          
+            <BookGenreFlashDeals 
+              className="border border-gray-200 rounded-lg overflow-hidden"
+            />
+          
+
+          {/* Sticky Checkout Bar for Overview Tab */}
+          {product && onBuyNow && (
+            <StickyCheckoutBar
+              product={product}
+              onBuyNow={onBuyNow}
+              onViewCart={handleViewCart}
+              selectedColor=""
+              selectedStorage=""
+              selectedNetwork=""
+              selectedCondition=""
+              className=""
+              onImageSelect={onImageSelect}
+              onConfigurationChange={onConfigurationChange}
+            />
+          )}
         </div>
-      </ProductSectionWrapper>
-    )}
-
-    <ProductSectionWrapper>
-      <BookGenreFlashDeals 
-        className="border border-gray-200 rounded-lg overflow-hidden"
-      />
-    </ProductSectionWrapper>
-
-    {/* Sticky Checkout Bar for Overview Tab */}
-    {product && onBuyNow && (
-      <StickyCheckoutBar
-        product={product}
-        onBuyNow={onBuyNow}
-        onViewCart={handleViewCart}
-        selectedColor=""
-        selectedStorage=""
-        selectedNetwork=""
-        selectedCondition=""
-        className=""
-        onImageSelect={onImageSelect}
-        onConfigurationChange={onConfigurationChange}
-      />
-    )}
-  </div>
-)}
+      )}
 
       {activeTab === 'variants' && (
         <ProductSectionWrapper>

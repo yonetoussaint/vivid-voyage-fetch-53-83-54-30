@@ -1,96 +1,127 @@
-import React, { useState } from 'react';
-import { Star, X, ChevronLeft, ChevronRight, Play } from 'lucide-react';
-import SearchInfoHeader from '@/components/shared/SearchInfoHeader';
+import React, { useRef, useState } from 'react';
+import { Star, Play, ChevronLeft, ChevronRight, X, Image as ImageIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import SectionHeader from '@/components/home/SectionHeader';
 
 interface ReviewGalleryProps {
+  title?: string;
+  viewAllLink?: string;
+  viewAllText?: string;
   showViewMore?: boolean;
   onViewMoreClick?: () => void;
   viewMoreText?: string;
+  customClass?: string;
+}
+
+interface Review {
+  id: string;
+  rating: number;
+  type: 'video' | 'image';
+  image: string;
+  thumbnail: string;
+  alt: string;
+  views?: number;
+  duration?: number;
 }
 
 const ReviewGallery: React.FC<ReviewGalleryProps> = ({
+  title = "Review Gallery",
+  viewAllLink = "/reviews",
+  viewAllText = "View All",
   showViewMore = true,
   onViewMoreClick = () => console.log('View More clicked!'),
-  viewMoreText = "View More"
+  viewMoreText = "View More",
+  customClass = "",
 }) => {
-  const [selectedImageIndex, setSelectedImageIndex] = useState(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
 
-  const reviews = [
+  const reviews: Review[] = [
     {
-      id: 1,
+      id: '1',
       rating: 5.0,
       type: 'video',
       image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=711&fit=crop&crop=face",
       thumbnail: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=356&fit=crop&crop=face",
-      alt: "Happy customer review video"
+      alt: "Happy customer review video",
+      views: 125000,
+      duration: 45
     },
     {
-      id: 2,
+      id: '2',
       rating: 4.0,
       type: 'image',
       image: "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=400&h=711&fit=crop",
       thumbnail: "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=200&h=356&fit=crop",
-      alt: "Product in use"
+      alt: "Product in use",
+      views: 89000
     },
     {
-      id: 3,
+      id: '3',
       rating: 3.0,
       type: 'video',
       image: "https://images.unsplash.com/photo-1574169208507-84376144848b?w=400&h=711&fit=crop",
       thumbnail: "https://images.unsplash.com/photo-1574169208507-84376144848b?w=200&h=356&fit=crop",
-      alt: "Product demonstration video"
+      alt: "Product demonstration video",
+      views: 156000,
+      duration: 62
     },
     {
-      id: 4,
+      id: '4',
       rating: 4.5,
       type: 'image',
       image: "https://images.unsplash.com/photo-1494790108755-2616b332c851?w=400&h=711&fit=crop&crop=face",
       thumbnail: "https://images.unsplash.com/photo-1494790108755-2616b332c851?w=200&h=356&fit=crop&crop=face",
-      alt: "Satisfied customer"
+      alt: "Satisfied customer",
+      views: 72000
     },
     {
-      id: 5,
+      id: '5',
       rating: 5.0,
       type: 'video',
       image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=711&fit=crop&crop=face",
       thumbnail: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=356&fit=crop&crop=face",
-      alt: "Customer testimonial video"
+      alt: "Customer testimonial video",
+      views: 203000,
+      duration: 38
     },
     {
-      id: 6,
+      id: '6',
       rating: 4.0,
       type: 'image',
       image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=711&fit=crop&crop=face",
       thumbnail: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=356&fit=crop&crop=face",
-      alt: "Review photo"
-    },
-    {
-      id: 7,
-      rating: 3.5,
-      type: 'video',
-      image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=711&fit=crop&crop=face",
-      thumbnail: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=356&fit=crop&crop=face",
-      alt: "Customer experience video"
-    },
-    {
-      id: 8,
-      rating: 5.0,
-      type: 'image',
-      image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=711&fit=crop&crop=face",
-      thumbnail: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=356&fit=crop&crop=face",
-      alt: "Product review"
-    },
-    {
-      id: 9,
-      rating: 4.5,
-      type: 'video',
-      image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=711&fit=crop&crop=face",
-      thumbnail: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=356&fit=crop&crop=face",
-      alt: "User feedback video"
+      alt: "Review photo",
+      views: 54000
     }
   ];
 
-  const openImageViewer = (index) => {
+  const formatViews = (views: number) => {
+    if (views >= 1000000) {
+      return `${(views / 1000000).toFixed(1)}M`;
+    } else if (views >= 1000) {
+      return `${(views / 1000).toFixed(0)}K`;
+    }
+    return views.toString();
+  };
+
+  const formatDuration = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  const handleReviewClick = (reviewId: string, index: number) => {
+    const review = reviews[index];
+    if (review.type === 'video') {
+      navigate(`/reviews?video=${reviewId}`);
+    } else {
+      openImageViewer(index);
+    }
+  };
+
+  const openImageViewer = (index: number) => {
     setSelectedImageIndex(index);
     document.body.style.overflow = 'hidden';
   };
@@ -112,7 +143,7 @@ const ReviewGallery: React.FC<ReviewGalleryProps> = ({
     );
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: KeyboardEvent) => {
     if (selectedImageIndex !== null) {
       if (e.key === 'Escape') {
         closeImageViewer();
@@ -125,80 +156,92 @@ const ReviewGallery: React.FC<ReviewGalleryProps> = ({
   };
 
   React.useEffect(() => {
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keydown', handleKeyDown as any);
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keydown', handleKeyDown as any);
       document.body.style.overflow = 'unset';
     };
   }, [selectedImageIndex]);
 
   return (
     <>
-      <div className="w-full bg-white">
-        {/* Header with integrated View More button */}
-        <SearchInfoHeader 
-          title="Review Gallery"
-          showViewMore={showViewMore}
-          onViewMoreClick={onViewMoreClick}
-          viewMoreText={viewMoreText}
+      <div className={`w-full overflow-hidden space-y-2 ${customClass}`}>
+        <SectionHeader
+          title={title}
+          icon={Star}
+          viewAllLink={viewAllLink}
+          viewAllText={viewAllText}
+          showCustomButton={showViewMore}
+          customButtonText={viewMoreText}
+          customButtonIcon={Play}
+          onCustomButtonClick={onViewMoreClick}
+          titleTransform="uppercase"
+          
         />
 
-        {/* Ultra Clean Flat Gallery - 3 per view */}
-        <div className="relative">
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-4 px-4">
-            <div className="flex gap-2 pb-2">
-              {reviews.map((review, index) => (
-                <div 
-                  key={review.id} 
-                  className="flex-none relative cursor-pointer"
-                  style={{
-                    width: '100px',
-                    height: '178px', // 9:16 aspect ratio (100 * 16 / 9 ≈ 178)
-                  }}
-                  onClick={() => openImageViewer(index)}
-                >
-                  <div className="w-full h-full rounded-lg overflow-hidden bg-gray-100">
-                    <img
-                      src={review.thumbnail}
-                      alt={review.alt}
-                      className="w-full h-full object-cover"
-                    />
+        {/* Edge-to-edge container for scrolling with same layout as MobileOptimizedReels */}
+        <div 
+          ref={scrollContainerRef}
+          className="reels-container flex overflow-x-auto pl-2 scrollbar-none w-full"
+          style={{ 
+            scrollbarWidth: 'none', 
+            msOverflowStyle: 'none',
+            scrollSnapType: 'x mandatory',
+            scrollPaddingLeft: '8px'
+          }}
+        >
+          {reviews.map((review, index) => (
+            <div 
+              key={review.id} 
+              className="flex-shrink-0 rounded-lg overflow-hidden shadow-lg bg-black relative mr-[3vw] cursor-pointer"
+              style={{ 
+                width: '35vw', 
+                maxWidth: '160px',
+                scrollSnapAlign: 'start'
+              }}
+              onClick={() => handleReviewClick(review.id, index)}
+            >
+              {/* Review image/video preview */}
+              <div className="relative bg-gray-200" style={{ height: '49vw', maxHeight: '220px' }}>
+                <img
+                  src={review.thumbnail}
+                  alt={review.alt}
+                  className="w-full h-full object-cover"
+                />
 
-                    {/* Play icon for videos - centered */}
-                    {review.type === 'video' && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="bg-white bg-opacity-90 rounded-full p-2">
-                          <Play className="w-4 h-4 text-gray-900 fill-current ml-0.5" />
-                        </div>
-                      </div>
-                    )}
+                {/* Duration indicator for videos */}
+                {review.type === 'video' && review.duration && (
+                  <div className="absolute top-2 right-2 bg-black bg-opacity-60 text-white text-xs px-1.5 py-0.5 rounded">
+                    {formatDuration(review.duration)}
+                  </div>
+                )}
 
-                    {/* Rating overlay - minimal flat design */}
-                    <div className="absolute top-2 right-2 flex items-center bg-white rounded px-1.5 py-0.5">
-                      <Star className="w-2.5 h-2.5 text-yellow-500 fill-current mr-1" />
-                      <span className="text-gray-900 text-xs font-medium">
-                        {review.rating.toFixed(1)}
-                      </span>
+                {/* Info overlay */}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center text-gray-300 text-xs gap-1">
+                      {/* Conditional icon based on review type */}
+                      {review.type === 'video' ? (
+                        <Play className="w-3 h-3" />
+                      ) : (
+                        <ImageIcon className="w-3 h-3" />
+                      )}
+                      <span>{formatViews(review.views || 0)}</span>
+                    </div>
+
+                    {/* Rating moved to bottom right */}
+                    <div className="flex items-center text-white text-xs rounded">
+                      <Star className="w-3 h-3 text-yellow-400 fill-current mr-1" />
+                      <span>{review.rating.toFixed(1)}</span>
                     </div>
                   </div>
                 </div>
-              ))}
+              </div>
             </div>
-          </div>
-        </div>
+          ))}
 
-        {/* Minimal scroll indicator */}
-        <div className="flex justify-center mt-3">
-          <div className="flex space-x-1">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <div
-                key={index}
-                className={`w-1.5 h-1.5 rounded-full ${
-                  index === 0 ? 'bg-gray-900' : 'bg-gray-300'
-                }`}
-              />
-            ))}
-          </div>
+          {/* Add right spacing for proper scrolling to the end */}
+          <div className="flex-shrink-0 w-2"></div>
         </div>
       </div>
 
@@ -228,7 +271,7 @@ const ReviewGallery: React.FC<ReviewGalleryProps> = ({
             <ChevronRight className="w-8 h-8" />
           </button>
 
-          {/* Main Image - Clean minimal display */}
+          {/* Main Image */}
           <div className="max-w-xs max-h-[85vh] mx-auto px-16">
             <img
               src={reviews[selectedImageIndex].image}
@@ -236,7 +279,7 @@ const ReviewGallery: React.FC<ReviewGalleryProps> = ({
               className="w-full h-full object-contain rounded"
             />
 
-            {/* Minimal image info */}
+            {/* Image info */}
             <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex items-center bg-white rounded px-3 py-1.5">
               <Star className="w-3.5 h-3.5 text-yellow-500 fill-current mr-1.5" />
               <span className="text-gray-900 font-medium mr-3">
@@ -248,7 +291,7 @@ const ReviewGallery: React.FC<ReviewGalleryProps> = ({
             </div>
           </div>
 
-          {/* Clean thumbnail strip */}
+          {/* Thumbnail strip */}
           <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 w-full max-w-4xl">
             <div className="overflow-x-auto">
               <div className="flex gap-1.5 px-4 justify-center">
@@ -263,7 +306,7 @@ const ReviewGallery: React.FC<ReviewGalleryProps> = ({
                     }`}
                     style={{
                       width: '24px',
-                      height: '43px', // 9:16 aspect ratio for thumbnails
+                      height: '43px',
                     }}
                   >
                     <img
@@ -278,8 +321,6 @@ const ReviewGallery: React.FC<ReviewGalleryProps> = ({
           </div>
         </div>
       )}
-
-
     </>
   );
 };

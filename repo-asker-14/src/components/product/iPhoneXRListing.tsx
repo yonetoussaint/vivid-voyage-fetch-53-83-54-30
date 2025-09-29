@@ -27,6 +27,9 @@ export function IPhoneXRListing({ product }: IPhoneXRListingProps) {
     return () => clearInterval(interval);
   }, [product?.views]);
 
+  // Use short_description if available, otherwise fall back to description
+  const displayDescription = product?.short_description || product?.description || 'Product description not available.';
+
   return (
     <div className="w-full px-2 bg-white">
       {/* Header with live views */}
@@ -38,18 +41,16 @@ export function IPhoneXRListing({ product }: IPhoneXRListingProps) {
         </div>
         <div className="w-px h-5 bg-gray-300 mr-3"></div>
         <div className="flex items-center gap-1 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded flex-shrink-0">
-          <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
-          <span>{liveViews.toLocaleString()} viewing</span>
+          <div className="w-1.5 h-1.5 bg-red-400 rounded-full animate-pulse"></div>        <span>{liveViews.toLocaleString()} viewing</span>
         </div>
       </div>
 
-      {/* Description */}
-      <p className="text-sm text-gray-600 leading-relaxed mb-3">
-        {product?.description || 'Product description not available.'}
+      {/* Description - Now using short_description */}
+        <p className="text-base text-gray-600 leading-relaxed mb-3">
+        {displayDescription}
       </p>
 
-
-
+      {/* Rest of your component remains the same */}
       {/* Rating section */}
       <div className="flex items-center justify-between mb-4 py-2 border-y border-gray-100">
         <div className="flex items-center gap-1">
@@ -74,8 +75,6 @@ export function IPhoneXRListing({ product }: IPhoneXRListingProps) {
         </div>
       </div>
 
-
-
       {/* Stock and activity */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -96,7 +95,7 @@ export function IPhoneXRListing({ product }: IPhoneXRListingProps) {
             <span className="text-gray-400 text-sm ml-1">left</span>
           </div>
         </div>
-        
+
         <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
           <div 
             className={`h-full rounded-full ${

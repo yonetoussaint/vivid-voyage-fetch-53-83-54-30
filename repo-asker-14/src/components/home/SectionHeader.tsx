@@ -3,7 +3,6 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight, LucideIcon, MoreHorizontal, Play } from "lucide-react"; // Added Play icon
 import { useTranslation } from 'react-i18next';
-import TabsNavigation from "./TabsNavigation";
 
 interface SectionHeaderProps {
   title: string;
@@ -12,12 +11,14 @@ interface SectionHeaderProps {
   viewAllLink?: string;
   viewAllText?: string;
   titleTransform?: "uppercase" | "capitalize" | "none";
+  titleSize?: "xs" | "sm" | "base" | "lg" | "xl"; // New title size prop
   // Clear button props
   showClearButton?: boolean;
   clearButtonText?: string;
   onClearClick?: () => void;
   // New props for tabs functionality
   showTabs?: boolean;
+  compact?: boolean;
   tabs?: Array<{ id: string; label: string }>;
   activeTab?: string;
   onTabChange?: (tabId: string) => void;
@@ -49,12 +50,14 @@ export default function SectionHeader({
   viewAllLink,
   viewAllText,
   titleTransform = "uppercase",
+  titleSize = "xs", // Default size
   // Clear button props
   showClearButton = false,
   clearButtonText = "× Clear",
   onClearClick,
   // Tabs props
   showTabs = false,
+  compact = false,
   tabs = [],
   activeTab,
   onTabChange,
@@ -94,6 +97,22 @@ export default function SectionHeader({
       {children}
     </button>
   );
+
+  // Size mapping for title
+  const titleSizeClass = 
+    titleSize === 'xs' ? 'text-xs' :
+    titleSize === 'sm' ? 'text-sm' :
+    titleSize === 'base' ? 'text-base' :
+    titleSize === 'lg' ? 'text-lg' :
+    'text-xl';
+
+  // Size mapping for countdown (slightly larger than title)
+  const countdownSizeClass = 
+    titleSize === 'xs' ? 'text-sm' :
+    titleSize === 'sm' ? 'text-base' :
+    titleSize === 'base' ? 'text-lg' :
+    titleSize === 'lg' ? 'text-xl' :
+    'text-2xl';
 
   return (
     <div className="flex flex-col">
@@ -137,18 +156,22 @@ export default function SectionHeader({
 
       {/* Original Header section with padding - Only shown when NOT showing vendor header */}
       {!showVendorHeader && (
-        <div className="h-7 flex items-center px-2">
+          <div className={` flex items-center px-2 ${compact ? 'py-0' : 'py-0'}`}>
           <div className="flex items-center justify-between w-full">
             {/* First element (Title with Icon and optional Countdown) */}
-            <div className={`flex items-center gap-1 text-xs font-bold tracking-wide ${titleTransform === 'uppercase' ? 'uppercase' : titleTransform === 'capitalize' ? 'capitalize' : ''}`}>
-              {Icon && <Icon className="w-4 h-4" />}
-              {title}
+            <div className={`flex items-center gap-1 font-bold tracking-wide ${titleSizeClass} ${titleTransform === 'uppercase' ? 'uppercase' : titleTransform === 'capitalize' ? 'capitalize' : ''}`}>
+              {Icon && <Icon className="w-4 h-4 flex-shrink-0" />}
+              <span className="h-4 flex items-center justify-center">
+                <span className="leading-none">
+                  {title}
+                </span>
+              </span>
               {showCountdown && countdown && (
                 <>
-                  <span className="text-gray-400 mx-1">|</span>
-                  <span className={`font-bold text-sm transition-colors duration-300 ${
+                  <span className="text-gray-400 mx-1 flex-shrink-0">|</span>
+                  <span className={`font-bold transition-colors duration-300 flex-shrink-0 ${
                     countdown < 10 ? 'text-red-600 animate-bounce' : 'text-red-500'
-                  }`}>
+                  } ${countdownSizeClass}`}>
                     {countdown}
                   </span>
                 </>
@@ -175,7 +198,7 @@ export default function SectionHeader({
                   <CustomIcon className="h-3.5 w-3.5 mr-1" 
                     fill="currentColor"/>
 
-                  
+
                   {customButtonText}
                 </button>
               ) : (
@@ -190,27 +213,6 @@ export default function SectionHeader({
                 )
               )}
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Tabs Navigation - Outside the padded container for edge-to-edge scrolling */}
-      {showTabs && tabs.length > 0 && activeTab && onTabChange && (
-        <div className={tabsStyle === "glassmorphic" ? "mt-1" : "mt-2"}>
-          <div className="flex space-x-4 px-2">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => onTabChange(tab.id)}
-                className={`px-3 py-1 text-sm font-medium transition-colors ${
-                  activeTab === tab.id
-                    ? 'text-blue-600 border-b-2 border-blue-600'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
           </div>
         </div>
       )}
