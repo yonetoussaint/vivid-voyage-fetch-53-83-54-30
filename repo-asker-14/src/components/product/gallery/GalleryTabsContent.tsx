@@ -81,11 +81,11 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
 
           {/* Description Component moved before BookGenreFlashDeals */}
           
-<FullDescription/>
+          <FullDescription productId={productId} />
           
-            <BookGenreFlashDeals 
-              className="border border-gray-200 rounded-lg overflow-hidden"
-            />
+          <BookGenreFlashDeals 
+            className="border border-gray-200 rounded-lg overflow-hidden"
+          />
           
 
           {/* Sticky Checkout Bar for Overview Tab */}
