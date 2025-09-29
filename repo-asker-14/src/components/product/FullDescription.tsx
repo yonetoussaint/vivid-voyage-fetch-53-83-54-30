@@ -29,6 +29,15 @@ export default function FullDescription({
 }: FullDescriptionProps) {
   const { product, loading, error } = useProduct(productId);
 
+  console.log('🔍 FullDescription Debug:', {
+    productId,
+    hasProduct: !!product,
+    hasDescription: !!product?.description,
+    hasShortDescription: !!product?.short_description,
+    loading,
+    error
+  });
+
   // Show loading state
   if (loading) {
     return (
@@ -62,10 +71,38 @@ export default function FullDescription({
     );
   }
 
-  // Don't render anything if no product or description
-  if (!product || !product.description) {
-    return null;
+  // Check if we have product but no productId was provided
+  if (!productId) {
+    return (
+      <div className={className}>
+        <SectionHeader
+          title={title}
+          titleTransform={titleTransform}
+          titleSize={titleSize}
+          icon={FileText}
+        />
+        <p className="text-yellow-600 text-sm mt-2">No product ID provided</p>
+      </div>
+    );
   }
+
+  // Don't render anything if no product
+  if (!product) {
+    return (
+      <div className={className}>
+        <SectionHeader
+          title={title}
+          titleTransform={titleTransform}
+          titleSize={titleSize}
+          icon={FileText}
+        />
+        <p className="text-gray-500 text-sm mt-2">Product not found</p>
+      </div>
+    );
+  }
+
+  // Get description content - prioritize description over short_description for full view
+  const descriptionContent = product.description || product.short_description || 'No description available for this product.';
 
   return (
     <section className={className}>
@@ -82,7 +119,7 @@ export default function FullDescription({
       
       <div className={`${compact ? 'mt-1' : 'mt-3'}`}>
         <p className="text-gray-600 leading-relaxed text-sm">
-          {product.description}
+          {descriptionContent}
         </p>
       </div>
     </section>
