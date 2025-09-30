@@ -1,9 +1,0 @@
-#card-number,
-#cvv,
-#expiration-date {
-  border: 1px solid #606060;
-  padding: 8px;
-  margin: 8px 0;
-  width: 100%;
-  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
-}

@@ -1,18 +1,10 @@
 {
-  "name": "workspace",
-  "version": "1.0.0",
-  "main": "index.js",
-  "directories": {
-    "lib": "lib"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
-    "html2canvas": "^1.4.1"
+    "@capacitor/app": "^7.1.0",
+    "@capacitor/cli": "^7.4.3",
+    "@capacitor/core": "^7.4.3",
+    "@capacitor/device": "^7.0.2",
+    "@capacitor/keyboard": "^7.0.3",
+    "@capacitor/status-bar": "^7.0.3"
   }
 }

@@ -1,5 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import TransferApp from "@/components/transfer-app/TransferApp";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -51,13 +52,12 @@ import TopUpPage from "./pages/TopUpPage";
 import NetflixPage from "./pages/NetflixPage";
 import TransferPage from "./pages/TransferPage";
 import TransferHomePage from "./pages/TransferHomePage";
-import MultiStepTransferPage from "./pages/MultiStepTransferPage";
-import MultiStepTransferSheetPage from "./pages/MultiStepTransferSheetPage";
+
 import ProductCommentsPage from "./pages/ProductCommentsPage";
 import ProductReviewsPage from "./pages/ProductReviewsPage";
 import ProductQAPage from "./pages/ProductQAPage";
 import AskQuestionPage from "./pages/AskQuestionPage";
-import ProductEditPage from "./pages/ProductEditNavigationPage";
+import ProductEditPage from "./pages/ProductEditPage";
 import ProductEditNavigationPage from "./pages/ProductEditNavigationPage";
 import ProductEditBasicPage from "./pages/ProductEditBasicPage";
 import ProductEditCategoryPage from "./pages/ProductEditCategoryPage";
@@ -72,13 +72,6 @@ import ProductEditDetailsPage from "./pages/ProductEditDetailsPage";
 import ProductEditDescriptionPage from "./pages/ProductEditDescriptionPage";
 import ComponentTestPage from "./pages/ComponentTestPage";
 import SellerDashboard from "./pages/SellerDashboard";
-import TransferHistoryPage from "./pages/TransferHistoryPage";
-import TransferDetailsPage from "./pages/TransferDetailsPage";
-import TrackTransferPage from "./pages/TrackTransferPage";
-import LocationsPage from "./pages/LocationsPage";
-import AccountPage from "./pages/AccountPage";
-import HelloPage from "./pages/HelloPage";
-import ComponentsPage from "./pages/ComponentsPage";
 
 import NotFound from "./pages/NotFound";
 import MainLayout from "./components/layout/MainLayout";
@@ -87,7 +80,6 @@ import { ScreenOverlayProvider } from "./context/ScreenOverlayContext"; // SINGL
 import { AuthProvider } from "./contexts/auth/AuthContext";
 import CartPage from '@/pages/CartPage';
 import MenuPage from '@/pages/MenuPage';
-import MobileMultiStepTransferSheetPage from "../../src/pages/MobileMultiStepTransferSheetPage";
 
 import "./App.css";
 
@@ -119,6 +111,8 @@ function App() {
                               <Route path="product/:id/qa" element={<ProductQAPage />} />
                               <Route path="product/:id/ask-question" element={<AskQuestionPage />} />
                               <Route path="single-product/:id" element={<SingleProductDetail />} />
+
+                              <Route path="transfer" element={<TransferApp />} />
                               <Route path="single-product/:id/comments" element={<ProductCommentsPage />} />
                               <Route path="single-product/:id/ask-question" element={<AskQuestionPage />} />
                               <Route path="posts" element={<CategoriesPage />} />
@@ -173,16 +167,9 @@ function App() {
                               <Route path="topup" element={<TopUpPage />} />
                               <Route path="netflix" element={<NetflixPage />} />
                               <Route path="transfer-old" element={<TransferPage />} />
-                              <Route path="transfer" element={<MobileMultiStepTransferSheetPage />} />
-                              <Route path="multi-step-transfer" element={<MultiStepTransferPage />} />
-                              <Route path="multi-step-transfer-page" element={<MultiStepTransferSheetPage />} />
-                              <Route path="transfer-history" element={<TransferHistoryPage />} />
-                              <Route path="transfer-history/:id" element={<TransferDetailsPage />} />
-                              <Route path="track-transfer" element={<TrackTransferPage />} />
-                              <Route path="locations" element={<LocationsPage />} />
-                              <Route path="account" element={<AccountPage />} />
-                              <Route path="components" element={<ComponentsPage />} />
-                              <Route path="hello" element={<HelloPage />} />
+                              
+
+                              
                               <Route path="component-test" element={<ComponentTestPage />} />
                               <Route path="signup" element={<SimpleAuthPage />} />
                               <Route path="auth/callback" element={<ForYou />} />

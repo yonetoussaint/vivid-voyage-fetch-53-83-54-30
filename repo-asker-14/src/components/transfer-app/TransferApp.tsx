@@ -5,14 +5,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "next-themes";
-import { AuthProvider } from "@/auth-sdk/contexts/AuthContext";
+import { AuthProvider } from "./auth-sdk/contexts/AuthContext";
 import SplashScreen from "./components/SplashScreen";
-import { useNativeCapabilities } from "@/hooks/useNativeCapabilities";
+import { useNativeCapabilities } from "./hooks/useNativeCapabilities";
 import "./App.css";
 
 const queryClient = new QueryClient();
 
-function App({ children }: { children: React.ReactNode }) {
+function TransferApp({ children }: { children: React.ReactNode }) {
   const { isNative } = useNativeCapabilities();
   const [showSplash, setShowSplash] = useState(() => {
     // Check if splash screen has been shown before
@@ -52,5 +52,5 @@ function App({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default App;
+export default TransferApp;
 
