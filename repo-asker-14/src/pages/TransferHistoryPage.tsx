@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from "react-router-dom";
-import PageHeader from "@/components/common/PageHeader";
+import PageHeader from "@/components/transfer-app/common/PageHeader";
 import { Search, ChevronRight } from 'lucide-react';
 
 type Transfer = {

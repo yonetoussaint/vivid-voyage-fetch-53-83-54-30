@@ -24,7 +24,7 @@ import {
   Route
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import PageHeader from "@/components/common/PageHeader";
+import PageHeader from "@/components/transfer-app/common/PageHeader";
 
 interface Transfer {
   id: string;

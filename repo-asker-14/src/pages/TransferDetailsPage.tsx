@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, useNavigate } from "react-router-dom";
-import PageHeader from "@/components/common/PageHeader";
+import PageHeader from "@/components/transfer-app/common/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Download, RefreshCcw, Share2, MessageCircle, ArrowLeft, Printer, AlertCircle, MapPin, User, CreditCard } from 'lucide-react';

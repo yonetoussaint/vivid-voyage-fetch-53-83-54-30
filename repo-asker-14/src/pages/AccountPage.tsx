@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import PageHeader from "@/components/common/PageHeader";
+import PageHeader from "@/components/transfer-app/common/PageHeader";
 
 interface UserData {
   id: string;

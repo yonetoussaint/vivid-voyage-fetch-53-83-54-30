@@ -1,6 +1,5 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import TransferApp from "@/components/transfer-app/TransferApp";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -52,7 +51,6 @@ import TopUpPage from "./pages/TopUpPage";
 import NetflixPage from "./pages/NetflixPage";
 import TransferPage from "./pages/TransferPage";
 import TransferHomePage from "./pages/TransferHomePage";
-
 import ProductCommentsPage from "./pages/ProductCommentsPage";
 import ProductReviewsPage from "./pages/ProductReviewsPage";
 import ProductQAPage from "./pages/ProductQAPage";
@@ -111,8 +109,6 @@ function App() {
                               <Route path="product/:id/qa" element={<ProductQAPage />} />
                               <Route path="product/:id/ask-question" element={<AskQuestionPage />} />
                               <Route path="single-product/:id" element={<SingleProductDetail />} />
-
-                              <Route path="transfer" element={<TransferApp />} />
                               <Route path="single-product/:id/comments" element={<ProductCommentsPage />} />
                               <Route path="single-product/:id/ask-question" element={<AskQuestionPage />} />
                               <Route path="posts" element={<CategoriesPage />} />
@@ -167,8 +163,7 @@ function App() {
                               <Route path="topup" element={<TopUpPage />} />
                               <Route path="netflix" element={<NetflixPage />} />
                               <Route path="transfer-old" element={<TransferPage />} />
-                              
-
+                              <Route path="transfer" element={<TransferHomePage />} />
                               
                               <Route path="component-test" element={<ComponentTestPage />} />
                               <Route path="signup" element={<SimpleAuthPage />} />

@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import PageHeader from "@/components/common/PageHeader";
+import PageHeader from "@/components/transfer-app/common/PageHeader";
 
 const locations = [
   {
