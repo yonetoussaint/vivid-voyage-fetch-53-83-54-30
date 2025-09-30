@@ -72,6 +72,13 @@ import ProductEditDetailsPage from "./pages/ProductEditDetailsPage";
 import ProductEditDescriptionPage from "./pages/ProductEditDescriptionPage";
 import ComponentTestPage from "./pages/ComponentTestPage";
 import SellerDashboard from "./pages/SellerDashboard";
+import TransferHistoryPage from "./pages/TransferHistoryPage";
+import TransferDetailsPage from "./pages/TransferDetailsPage";
+import TrackTransferPage from "./pages/TrackTransferPage";
+import LocationsPage from "./pages/LocationsPage";
+import AccountPage from "./pages/AccountPage";
+import HelloPage from "./pages/HelloPage";
+import ComponentsPage from "./pages/ComponentsPage";
 
 import NotFound from "./pages/NotFound";
 import MainLayout from "./components/layout/MainLayout";
@@ -168,6 +175,13 @@ function App() {
                               <Route path="transfer" element={<TransferHomePage />} />
                               <Route path="multi-step-transfer" element={<MultiStepTransferPage />} />
                               <Route path="multi-step-transfer-page" element={<MultiStepTransferSheetPage />} />
+                              <Route path="transfer-history" element={<TransferHistoryPage />} />
+                              <Route path="transfer-history/:id" element={<TransferDetailsPage />} />
+                              <Route path="track-transfer" element={<TrackTransferPage />} />
+                              <Route path="locations" element={<LocationsPage />} />
+                              <Route path="account" element={<AccountPage />} />
+                              <Route path="components" element={<ComponentsPage />} />
+                              <Route path="hello" element={<HelloPage />} />
                               <Route path="component-test" element={<ComponentTestPage />} />
                               <Route path="signup" element={<SimpleAuthPage />} />
                               <Route path="auth/callback" element={<ForYou />} />
