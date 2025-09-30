@@ -1,6 +1,6 @@
 
 import React from 'react';
-import ModernDropdownMenu from '@/components/ui/modern-dropdown-menu';
+import ModernDropdownMenu from '@/components/transfer-app/ui/modern-dropdown-menu';
 
 export default function ComponentsPage() {
   return (

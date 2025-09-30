@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, User, Clock, MapPin, Send, Settings, LogOut, CreditCard, Bell, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/auth-sdk/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 interface SubmenuItem {
   label: string;
