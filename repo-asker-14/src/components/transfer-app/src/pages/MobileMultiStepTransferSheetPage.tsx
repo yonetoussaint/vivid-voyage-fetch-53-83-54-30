@@ -6,7 +6,7 @@ import html2canvas from 'html2canvas';
 import TransferTypeSelector from '@/components/transfer/TransferTypeSelector';
 import { EmailNotificationService } from '../../../transfer-app/transfer/EmailNotificationService';
 import PaymentMethodSelector from '../../../transfer-app/transfer/PaymentMethodSelector';
-import PaymentLoadingOverlay from '@/components/transfer/PaymentLoadingOverlay';
+import PaymentLoadingOverlay from '../../../transfer-app/transfer/PaymentLoadingOverlay';
 
 import StepIndicator from '@/components/transfer/StepIndicator';
 import StepContent from '@/components/transfer/StepContent';
