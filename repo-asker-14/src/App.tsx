@@ -57,7 +57,7 @@ import ProductCommentsPage from "./pages/ProductCommentsPage";
 import ProductReviewsPage from "./pages/ProductReviewsPage";
 import ProductQAPage from "./pages/ProductQAPage";
 import AskQuestionPage from "./pages/AskQuestionPage";
-import ProductEditPage from "./pages/ProductEditPage";
+import ProductEditPage from "./pages/ProductEditNavigationPage";
 import ProductEditNavigationPage from "./pages/ProductEditNavigationPage";
 import ProductEditBasicPage from "./pages/ProductEditBasicPage";
 import ProductEditCategoryPage from "./pages/ProductEditCategoryPage";
@@ -87,6 +87,7 @@ import { ScreenOverlayProvider } from "./context/ScreenOverlayContext"; // SINGL
 import { AuthProvider } from "./contexts/auth/AuthContext";
 import CartPage from '@/pages/CartPage';
 import MenuPage from '@/pages/MenuPage';
+import MobileMultiStepTransferSheetPage from "./components/transfer-app/src/pages/MobileMultiStepTransferSheetPage";
 
 import "./App.css";
 
@@ -172,7 +173,7 @@ function App() {
                               <Route path="topup" element={<TopUpPage />} />
                               <Route path="netflix" element={<NetflixPage />} />
                               <Route path="transfer-old" element={<TransferPage />} />
-                              <Route path="transfer" element={<TransferHomePage />} />
+                              <Route path="transfer" element={<MobileMultiStepTransferSheetPage />} />
                               <Route path="multi-step-transfer" element={<MultiStepTransferPage />} />
                               <Route path="multi-step-transfer-page" element={<MultiStepTransferSheetPage />} />
                               <Route path="transfer-history" element={<TransferHistoryPage />} />
