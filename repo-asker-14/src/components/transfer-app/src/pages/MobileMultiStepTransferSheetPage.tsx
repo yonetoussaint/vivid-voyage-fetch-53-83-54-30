@@ -3,18 +3,18 @@ import React, { useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
-import TransferTypeSelector from '@/components/transfer/TransferTypeSelector';
+import TransferTypeSelector from '../../../transfer-app/transfer/TransferTypeSelector';
 import { EmailNotificationService } from '../../../transfer-app/transfer/EmailNotificationService';
 import PaymentMethodSelector from '../../../transfer-app/transfer/PaymentMethodSelector';
 import PaymentLoadingOverlay from '../../../transfer-app/transfer/PaymentLoadingOverlay';
 
-import StepIndicator from '@/components/transfer/StepIndicator';
-import StepContent from '@/components/transfer/StepContent';
-import NativeStepTransition from '@/components/transfer/NativeStepTransition';
-import TransferHistoryService from '@/services/transferHistoryService';
-import { usePersistedTransferState } from '@/hooks/usePersistedTransferState';
-import { useNativeGestures } from '@/hooks/useNativeGestures';
-import { useNativeCapabilities } from '@/hooks/useNativeCapabilities';
+import StepIndicator from '../../../transfer-app/transfer/StepIndicator';
+import StepContent from '../../../transfer-app/transfer/StepContent';
+import NativeStepTransition from '../../../transfer-app/transfer/NativeStepTransition';
+import TransferHistoryService from '../../../services/transferHistoryService';
+import { usePersistedTransferState } from '../../../hooks/usePersistedTransferState';
+import { useNativeGestures } from '../../../hooks/useNativeGestures';
+import { useNativeCapabilities } from '../../../hooks/useNativeCapabilities';
 import { useState } from 'react';
 
 export interface TransferData {
