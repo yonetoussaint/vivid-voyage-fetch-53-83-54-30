@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import TransferTypeSelector from '@/components/transfer/TransferTypeSelector';
 import { EmailNotificationService } from '../../../transfer-app/transfer/EmailNotificationService';
-import PaymentMethodSelector from '@/components/transfer/PaymentMethodSelector';
+import PaymentMethodSelector from '../../../transfer-app/transfer/PaymentMethodSelector';
 import PaymentLoadingOverlay from '@/components/transfer/PaymentLoadingOverlay';
 
 import StepIndicator from '@/components/transfer/StepIndicator';
