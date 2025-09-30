@@ -59,8 +59,9 @@ export default function BottomNav() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const { hasActiveOverlay } = useScreenOverlay(); // Use the context
+  const { hasActiveOverlay } = useScreenOverlay();
   const { t } = useTranslation('home');
+  const navRef = useRef<HTMLDivElement>(null); // Add ref
 
   const [activeTab, setActiveTab] = useState('home');
   const [previousTab, setPreviousTab] = useState(null);
@@ -74,6 +75,34 @@ export default function BottomNav() {
       setActiveTab(matchingItem.id);
     }
   }, [location.pathname]);
+
+  // Set CSS custom property for the nav height
+  useEffect(() => {
+    const updateNavHeight = () => {
+      if (navRef.current) {
+        const height = navRef.current.offsetHeight;
+        document.documentElement.style.setProperty('--bottom-nav-height', `${height}px`);
+      }
+    };
+
+    // Initial measurement
+    updateNavHeight();
+
+    // Re-measure on resize
+    window.addEventListener('resize', updateNavHeight);
+
+    // Use ResizeObserver for more accurate tracking
+    const resizeObserver = new ResizeObserver(updateNavHeight);
+    if (navRef.current) {
+      resizeObserver.observe(navRef.current);
+    }
+
+    return () => {
+      window.removeEventListener('resize', updateNavHeight);
+      resizeObserver.disconnect();
+    };
+  }, []);
+
   const [showProductUpload, setShowProductUpload] = useState(false);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [showSignInBanner, setShowSignInBanner] = useState(true);
@@ -99,7 +128,6 @@ export default function BottomNav() {
       }
     };
 
-    // Check for changes periodically
     const interval = setInterval(handleStorageChange, 100);
 
     window.addEventListener('storage', handleStorageChange);
@@ -120,7 +148,6 @@ export default function BottomNav() {
     setPreviousTab(activeTab);
     setAnimating(true);
 
-    // Navigate to the path
     navigate(item.path);
 
     setTimeout(() => {
@@ -131,19 +158,14 @@ export default function BottomNav() {
 
   // Handle more menu item click
   const handleMoreItemClick = (item: any) => {
-    // Store the selected item name in localStorage so the bottom nav can access it
     localStorage.setItem('selectedMoreItem', item.nameKey);
-    
-    // Close the more panel
     setShowMorePanel(false);
     
-    // Navigate to the item's link
     if (item.path !== "#") {
       navigate(item.path);
     }
   };
 
-  // All navigation items are now visible, no overflow management needed
   const visibleItems = navItems;
 
   // Don't render if overlay screens are active
@@ -175,9 +197,9 @@ export default function BottomNav() {
         onClose={() => setShowProductUpload(false)}
       />
 
-      
-
       <motion.div
+        ref={navRef} // Add ref here
+        data-bottom-nav // Add data attribute for the hook
         initial={{ y: 100 }}
         animate={{ y: 0 }}
         className="fixed bottom-0 left-0 right-0 z-50 shadow-lg"
@@ -186,10 +208,10 @@ export default function BottomNav() {
           backdropFilter: 'blur(12px)',
           borderTop: '1px solid rgba(255, 255, 255, 0.2)',
           boxShadow: '0 -8px 32px rgba(0, 0, 0, 0.1)',
+          paddingBottom: 'env(safe-area-inset-bottom)', // Add safe area support
         }}
       >
         <div className="flex justify-between items-center h-12 px-2 max-w-md mx-auto relative">
-          {/* Render visible items */}
           {visibleItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;

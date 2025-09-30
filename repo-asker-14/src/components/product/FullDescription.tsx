@@ -1,127 +1,124 @@
-// ProductDescriptionSection.tsx
-import React from "react";
-import SectionHeader from "@/components/home/SectionHeader"; // Adjust import path as needed
-import { useProduct } from "@/hooks/useProduct";
-import { FileText } from "lucide-react"; // Icon for description section
+import React from 'react';
+import SectionHeader from '@/components/home/SectionHeader'; // Adjust the import path as needed
+import { Star, Play } from 'lucide-react'; // Import icons from your icon library
 
-interface FullDescriptionProps {
-  productId?: string;
-  title?: string;
-  titleTransform?: "uppercase" | "capitalize" | "none";
-  titleSize?: "xs" | "sm" | "base" | "lg" | "xl";
-  showViewAll?: boolean;
-  viewAllLink?: string;
-  viewAllText?: string;
-  compact?: boolean;
-  className?: string;
-}
+export default function ScrollableCards() {
+  const cards = [
+    {
+      id: 1,
+      image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=600&fit=crop',
+      title: 'Mountain Vista',
+      description: 'Breathtaking views of mountains'
+    },
+    {
+      id: 2,
+      image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&h=600&fit=crop',
+      title: 'Ocean Waves',
+      description: 'Peaceful coastal ocean scenery'
+    },
+    {
+      id: 3,
+      image: 'https://images.unsplash.com/photo-1511593358241-7eea1f3c84e5?w=600&h=600&fit=crop',
+      title: 'Desert Dunes',
+      description: 'Endless golden desert sand dunes'
+    },
+    {
+      id: 4,
+      image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600&h=600&fit=crop',
+      title: 'Forest Path',
+      description: 'Lush green wilderness forest path'
+    },
+    {
+      id: 5,
+      image: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600&h=600&fit=crop',
+      title: 'Lake Reflection',
+      description: 'Serene water views and reflections'
+    },
+    {
+      id: 6,
+      image: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=600&h=600&fit=crop',
+      title: 'City Lights',
+      description: 'Urban night scenes with bright lights'
+    }
+  ];
 
-export default function FullDescription({
-  productId,
-  title = "Product Description",
-  titleTransform = "uppercase",
-  titleSize = "xs",
-  showViewAll = false,
-  viewAllLink = "#description",
-  viewAllText = "View Details",
-  compact = false,
-  className = ""
-}: FullDescriptionProps) {
-  const { data: product, isLoading: loading, error } = useProduct(productId);
+  // Define the props for SectionHeader
+  const title = "Featured Destinations";
+  const viewAllLink = "/all-destinations";
+  const viewAllText = "View All";
+  const showViewMore = true;
+  const viewMoreText = "Explore More";
 
-  console.log('🔍 FullDescription Debug:', {
-    productId,
-    hasProduct: !!product,
-    hasDescription: !!product?.description,
-    hasShortDescription: !!product?.short_description,
-    loading,
-    error
-  });
+  // Handler functions
+  const handleViewAllClick = () => {
+    console.log('View all clicked');
+    // Navigate to view all page or show more content
+  };
 
-  // Show loading state
-  if (loading) {
-    return (
-      <div className={`animate-pulse ${className}`}>
-        <SectionHeader
-          title={title}
-          titleTransform={titleTransform}
-          titleSize={titleSize}
-          icon={FileText}
-        />
-        <div className="space-y-2 mt-2">
-          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-        </div>
-      </div>
-    );
-  }
+  const onViewMoreClick = () => {
+    console.log('View more clicked');
+    // Handle view more action
+  };
 
-  // Show error state
-  if (error) {
-    return (
-      <div className={className}>
-        <SectionHeader
-          title={title}
-          titleTransform={titleTransform}
-          titleSize={titleSize}
-          icon={FileText}
-        />
-        <p className="text-red-500 text-sm mt-2">Failed to load product description</p>
-      </div>
-    );
-  }
-
-  // Check if we have product but no productId was provided
-  if (!productId) {
-    return (
-      <div className={className}>
-        <SectionHeader
-          title={title}
-          titleTransform={titleTransform}
-          titleSize={titleSize}
-          icon={FileText}
-        />
-        <p className="text-yellow-600 text-sm mt-2">No product ID provided</p>
-      </div>
-    );
-  }
-
-  // Don't render anything if no product
-  if (!product) {
-    return (
-      <div className={className}>
-        <SectionHeader
-          title={title}
-          titleTransform={titleTransform}
-          titleSize={titleSize}
-          icon={FileText}
-        />
-        <p className="text-gray-500 text-sm mt-2">Product not found</p>
-      </div>
-    );
-  }
-
-  // Get description content - prioritize description over short_description for full view
-  const descriptionContent = product.description || product.short_description || 'No description available for this product.';
+  const handleClearClick = () => {
+    console.log('Clear clicked');
+    // Clear filters or reset state
+  };
 
   return (
-    <section className={className}>
+    <div className="w-full">
+      {/* Using SectionHeader component with all required props */}
       <SectionHeader
         title={title}
-        subtitle="Learn more about this product"
-        icon={FileText}
-        viewAllLink={showViewAll ? viewAllLink : undefined}
+        icon={Star}
+        viewAllLink={viewAllLink}
         viewAllText={viewAllText}
-        titleTransform={titleTransform}
-        titleSize={titleSize}
-        compact={compact}
+        showCustomButton={showViewMore}
+        customButtonText={viewMoreText}
+        customButtonIcon={Play}
+        onCustomButtonClick={onViewMoreClick}
+        titleTransform="uppercase"
       />
-      
-      <div className={`px-2 ${compact ? 'mt-1' : 'mt-3'}`}>
-        <p className="text-gray-600 leading-relaxed text-sm">
-          {descriptionContent}
-        </p>
+
+      <div className="overflow-x-auto scrollbar-hide">
+        <div className="flex gap-3 px-2 pb-4">
+          {cards.map((card) => (
+            <div 
+              key={card.id} 
+              className="flex-shrink-0"
+              style={{ width: '70vw', maxWidth: '350px' }}
+            >
+              <div className="bg-white rounded-xl overflow-hidden border border-gray-200 duration-300">
+                <div className="w-full aspect-square relative overflow-hidden">
+                  <img 
+                    src={card.image} 
+                    alt={card.title}
+                    className="absolute inset-0 w-full h-full object-cover hover:scale-110 transition-transform duration-300"
+                  />
+                </div>
+                <div className="p-5">
+                  <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                    {card.title}
+                  </h3>
+                  <p className="text-gray-600 text-base">
+                    {card.description}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-    </section>
+
+      <style jsx>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
+    </div>
   );
 }

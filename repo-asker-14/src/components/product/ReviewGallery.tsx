@@ -165,7 +165,7 @@ const ReviewGallery: React.FC<ReviewGalleryProps> = ({
 
   return (
     <>
-      <div className={`w-full overflow-hidden space-y-2 ${customClass}`}>
+      <div className={`w-full overflow-hidden ${customClass}`}>
         <SectionHeader
           title={title}
           icon={Star}

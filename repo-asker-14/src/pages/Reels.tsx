@@ -3,15 +3,15 @@ import { useLocation, useNavigate } from "react-router-dom";
 import ReelsSkeleton from "@/components/skeletons/ReelsSkeleton";
 import { ReelsHeader } from "@/components/reels/ReelsHeader";
 import { ReelsVideoPlayer } from "@/components/reels/ReelsVideoPlayer";
-
 import { useReelsLogic } from "@/components/reels/hooks/useReelsLogic";
-
+import { useBottomNavHeight } from "@/hooks/useBottomNavHeight"; // Import the hook
 
 export default function Reels() {
   const location = useLocation();
   const navigate = useNavigate();
   const searchParams = new URLSearchParams(location.search);
-  const isModalMode = searchParams.has('video'); // Modal mode when opened from for-you page
+  const isModalMode = searchParams.has('video');
+  const bottomNavHeight = useBottomNavHeight(); // Get the bottom nav height
 
   const {
     videos,
@@ -26,10 +26,7 @@ export default function Reels() {
     currentVideoIndex,
   } = useReelsLogic();
 
-
-
   const handleClose = () => {
-    // Navigate to home page when closing modal
     navigate('/');
   };
 
@@ -54,10 +51,14 @@ export default function Reels() {
       <ReelsHeader isModalMode={isModalMode} onClose={handleClose} />
 
       <div 
-        className={`w-full ${isModalMode ? 'h-full' : 'h-screen'} overflow-y-auto snap-y snap-mandatory ${
-          isModalMode ? 'pb-0' : 'pb-12'
-        }`} 
+        className="w-full overflow-y-auto snap-y snap-mandatory"
         ref={containerRef}
+        style={{
+          height: isModalMode 
+            ? '100vh' 
+            : `calc(100vh - ${bottomNavHeight}px)`,
+          // Remove paddingBottom - it's not effective here
+        }}
       >
         {videos?.map((video, index) => (
           <ReelsVideoPlayer
@@ -70,11 +71,10 @@ export default function Reels() {
             onVideoClick={handleVideoClick}
             formatViews={formatViews}
             isModalMode={isModalMode}
+            bottomNavHeight={bottomNavHeight}
           />
         ))}
       </div>
-
-
     </div>
   );
 }

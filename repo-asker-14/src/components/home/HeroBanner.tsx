@@ -134,7 +134,7 @@ export default function HeroBanner({
     const mockSeller = {
       id: `seller_${index + 1}`,
       name: index === 0 ? "TechStore Pro" : "FashionHub",
-      image_url: index === 0 ? "/tech-store-logo.png" : "/fashion-hub-logo.png",
+      image_url: index === 0 ? "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=200&h=200&fit=crop&crop=center" : "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=200&h=200&fit=crop&crop=center",
       verified: true,
       followers_count: index === 0 ? 25400 : 18200
     };
@@ -143,9 +143,9 @@ export default function HeroBanner({
       id: `catalog_${index + 1}`,
       name: index === 0 ? "Summer Collection" : "Winter Essentials",
       images: [
-        "/product1.jpg",
-        "/product2.jpg",
-        "/product3.jpg"
+        "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop",
+        "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=400&h=300&fit=crop",
+        "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop"
       ],
       product_count: index === 0 ? 24 : 18
     };
@@ -154,7 +154,7 @@ export default function HeroBanner({
       id: `product_${index + 1}`,
       name: index === 0 ? "Wireless Headphones" : "Smart Watch",
       price: index === 0 ? 199.99 : 299.99,
-      image: index === 0 ? "/headphones.jpg" : "/watch.jpg"
+      image: index === 0 ? "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop&crop=center" : "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&h=300&fit=crop&crop=center"
     };
 
     return {
@@ -312,7 +312,7 @@ export default function HeroBanner({
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className="relative">
             <img
-              src={slide.seller?.image_url || "/placeholder-seller.jpg"}
+              src={slide.seller?.image_url || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face"}
               alt={slide.seller?.name || "Seller"}
               className="w-12 h-12 object-cover rounded-full flex-shrink-0"
               loading="lazy"
@@ -328,7 +328,7 @@ export default function HeroBanner({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1 mb-1">
               <h4 className="font-medium text-gray-900 text-sm truncate">
-                {slide.seller?.name || "Seller Name"}
+                {slide.seller?.name || "Sarah Johnson"}
               </h4>
               {slide.seller?.verified && (
                 <svg className="w-3 h-3 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -337,7 +337,7 @@ export default function HeroBanner({
               )}
             </div>
             <p className="text-gray-600 text-xs">
-              {slide.seller?.followers_count?.toLocaleString() || "0"} followers
+              {slide.seller?.followers_count?.toLocaleString() || "12.5K"} followers
             </p>
           </div>
         </div>
@@ -415,7 +415,7 @@ export default function HeroBanner({
       <div className="w-full">
         <div
           ref={carouselRef}
-          className="overflow-x-auto scroll-smooth scrollbar-hide snap-x snap-mandatory py-6"
+          className="overflow-x-auto scroll-smooth scrollbar-hide snap-x snap-mandatory py-2"
           style={{
             scrollPaddingLeft: "8px",
             WebkitOverflowScrolling: "touch",
@@ -435,48 +435,51 @@ export default function HeroBanner({
                   width: 'calc(100vw - 60px)'
                 }}
               >
-                {slide.type === "video" ? (
-                  <video
-                    src={slide.image}
-                    alt={slide.alt}
-                    className="w-full h-auto object-cover rounded-2xl"
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    onLoadedMetadata={(e) => {
-                      const video = e.target as HTMLVideoElement;
-                      const durationMs = video.duration * 1000;
-                      handleVideoDurationChange(index, durationMs);
-                    }}
-                  />
-                ) : (
-                  <img
-                    src={slide.image}
-                    alt={slide.alt}
-                    className="w-full h-auto object-cover rounded-2xl"
-                    loading="lazy"
-                  />
-                )}
+                {/* Fixed 2:1 aspect ratio container */}
+                <div className="relative w-full" style={{ aspectRatio: '2 / 1' }}>
+                  {slide.type === "video" ? (
+                    <video
+                      src={slide.image}
+                      alt={slide.alt}
+                      className="w-full h-full object-cover rounded-2xl"
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      onLoadedMetadata={(e) => {
+                        const video = e.target as HTMLVideoElement;
+                        const durationMs = video.duration * 1000;
+                        handleVideoDurationChange(index, durationMs);
+                      }}
+                    />
+                  ) : (
+                    <img
+                      src={slide.image}
+                      alt={slide.alt}
+                      className="w-full h-full object-cover rounded-2xl"
+                      loading="lazy"
+                    />
+                  )}
 
-                {/* Content overlay */}
-                {(slide.title || slide.subtitle) && (
-                  <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-none">
-                    {slide.title && (
-                      <h3 className="text-white font-semibold text-lg mb-1 line-clamp-2">
-                        {slide.title}
-                      </h3>
-                    )}
-                    {slide.subtitle && (
-                      <p className="text-white/80 text-sm line-clamp-2">
-                        {slide.subtitle}
-                      </p>
-                    )}
-                  </div>
-                )}
+                  {/* Content overlay */}
+                  {(slide.title || slide.subtitle) && (
+                    <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-none">
+                      {slide.title && (
+                        <h3 className="text-white font-semibold text-lg mb-1 line-clamp-2">
+                          {slide.title}
+                        </h3>
+                      )}
+                      {slide.subtitle && (
+                        <p className="text-white/80 text-sm line-clamp-2">
+                          {slide.subtitle}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
 
                 {/* Dynamic row below the carousel item */}
-                <div className="mt-3">
+                <div className="mt-2">
                   {renderRowContent(slide)}
                 </div>
               </div>
@@ -490,6 +493,7 @@ export default function HeroBanner({
     );
   }, [slidesToShow, handleCarouselScroll, handleVideoDurationChange]);
 
+  // In HeroBanner.tsx - restructure the return statement
   return (
     <>
       <div
@@ -502,46 +506,43 @@ export default function HeroBanner({
           CarouselBanners
         ) : (
           <>
-            <BannerSlides 
-              slides={slidesToShow}
-              activeIndex={activeIndex}
-              previousIndex={previousIndex}
-              onVideoDurationChange={handleVideoDurationChange}
-            />
-            <BannerControls
-              slidesCount={slidesToShow.length}
-              activeIndex={activeIndex}
-              previousIndex={previousIndex}
-              setActiveIndex={setActiveIndex}
-              setPreviousIndex={setPreviousIndex}
-              progress={progress}
-            />
+            {/* Main banner content with fixed 2:1 aspect ratio */}
+            <div className="relative w-full" style={{ aspectRatio: '2 / 1' }}>
+              <BannerSlides 
+                slides={slidesToShow}
+                activeIndex={activeIndex}
+                previousIndex={previousIndex}
+                onVideoDurationChange={handleVideoDurationChange}
+              />
+              <BannerControls
+                slidesCount={slidesToShow.length}
+                activeIndex={activeIndex}
+                previousIndex={previousIndex}
+                setActiveIndex={setActiveIndex}
+                setPreviousIndex={setPreviousIndex}
+                progress={progress}
+              />
+            </div>
 
-            {/* Seller Info Overlay */}
-            {/* Uncomment if needed */}
-            {/* <SellerInfoOverlay /> */}
+            {/* NewsTicker/FilterBar positioned below the banner content */}
+            <div className="relative z-10">
+              {showNews ? (
+                <NewsTicker />
+              ) : (
+                <ProductFilterBar 
+                  filterCategories={filterCategories}
+                  selectedFilters={selectedFilters}
+                  onFilterSelect={onFilterSelect}
+                  onFilterClear={onFilterClear}
+                  onClearAll={onClearAll}
+                  onFilterButtonClick={onFilterButtonClick}
+                  isFilterDisabled={isFilterDisabled}
+                />
+              )}
+            </div>
           </>
         )}
       </div>
-
-      {/* Conditional rendering based on showNewsTicker prop */}
-      {!asCarousel && (
-        showNews ? (
-          <NewsTicker />
-        ) : (
-          <div key="product-filter-bar-container">
-            <ProductFilterBar 
-              filterCategories={filterCategories}
-              selectedFilters={selectedFilters}
-              onFilterSelect={onFilterSelect}
-              onFilterClear={onFilterClear}
-              onClearAll={onClearAll}
-              onFilterButtonClick={onFilterButtonClick}
-              isFilterDisabled={isFilterDisabled}
-            />
-          </div>
-        )
-      )}
 
       {/* Floating Video only in non-carousel mode */}
       {!asCarousel && showFloatingVideo && currentSlide && currentSlide.type === "video" && (

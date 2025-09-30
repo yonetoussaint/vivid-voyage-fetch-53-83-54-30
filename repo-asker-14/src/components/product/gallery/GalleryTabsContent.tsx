@@ -59,7 +59,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
   return (
     <div className="mt-1 w-full">
       {(activeTab === 'overview' || !activeTab) && (
-        <div className="space-y-3"> {/* Increased from space-y-0 */}
+        <div className="space-y-4"> {/* Increased from space-y-0 */}
           <GalleryThumbnails
             images={galleryItems.map(item => item.src)}
             currentIndex={currentIndex}
@@ -82,7 +82,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
 
           {/* Description Component moved before BookGenreFlashDeals */}
           
-          <FullDescription productId={productId} />
+          <FullDescription/>
 
           <ProductSpecifications productId={productId} />
           

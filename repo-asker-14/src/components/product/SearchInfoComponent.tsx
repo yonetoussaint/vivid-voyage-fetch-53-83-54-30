@@ -92,7 +92,7 @@ Note: Product information is not currently available. Please let the user know t
   );
 
   return (
-    <div className="w-full bg-white space-y-2">
+    <div className="w-full bg-white">
       {/* Header using SectionHeader with consistent spacing */}
       <SectionHeader
         title="Looking for Specific Info?"
@@ -101,7 +101,7 @@ Note: Product information is not currently available. Please let the user know t
         />
 
       {/* Search Input */}
-      <div className="px-2"> {/* Consistent 16px bottom margin */}
+      <div className="px-2 mb-2"> {/* Consistent 16px bottom margin */}
         <form onSubmit={handleInputSubmit} className="relative">
           <input
             type="text"

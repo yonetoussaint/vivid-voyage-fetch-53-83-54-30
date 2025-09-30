@@ -86,10 +86,12 @@ const SuperDeals = ({ products = [], onProductClick }: SuperDealsProps) => {
   }
 
   // Function to render a product card
-  const renderProductCard = (deal) => (
+  const renderProductCard = (deal, index, array) => (
     // Modified to call onProductClick and prevent default navigation
     <div key={deal.id} onClick={() => onProductClick?.(deal.id)} className="block cursor-pointer">
-      <div className="border border-gray-200 rounded-lg mb-3 overflow-hidden hover:shadow-md transition-shadow">
+      <div className={`border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow ${
+        index !== array.length - 1 ? 'mb-3' : ''
+      }`}>
         <div className="flex items-center">
           <div className="relative">
             <div className="absolute top-0 left-0 bg-orange-500 text-white px-2 py-1 text-xs font-bold rounded-br">
@@ -183,7 +185,7 @@ const SuperDeals = ({ products = [], onProductClick }: SuperDealsProps) => {
             className="flex-shrink-0 w-64 mr-[3vw]"
             style={{ scrollSnapAlign: 'start' }}
           >
-            {column.map(deal => renderProductCard(deal))}
+            {column.map((deal, index, array) => renderProductCard(deal, index, array))}
           </div>
         ))}
 

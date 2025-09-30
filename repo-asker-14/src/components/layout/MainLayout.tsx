@@ -73,6 +73,7 @@ export default function MainLayout() {
     });
   };
 
+  // In MainLayout.tsx, update the headerHeightStyle to ensure bottom nav height is set correctly
   const headerHeightStyle = `
     :root {
       --header-height: ${isMobile ? '80px' : '120px'};

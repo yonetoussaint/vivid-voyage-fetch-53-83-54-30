@@ -156,7 +156,7 @@ export default function SectionHeader({
 
       {/* Original Header section with padding - Only shown when NOT showing vendor header */}
       {!showVendorHeader && (
-          <div className={` flex items-center px-2 ${compact ? 'py-0' : 'py-0'}`}>
+          <div className={` flex items-center px-2 mb-2 ${compact ? 'py-0' : 'py-0'}`}>
           <div className="flex items-center justify-between w-full">
             {/* First element (Title with Icon and optional Countdown) */}
             <div className={`flex items-center gap-1 font-bold tracking-wide ${titleSizeClass} ${titleTransform === 'uppercase' ? 'uppercase' : titleTransform === 'capitalize' ? 'capitalize' : ''}`}>

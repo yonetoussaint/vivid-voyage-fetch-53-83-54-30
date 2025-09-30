@@ -8,6 +8,7 @@ import SuperDealsSection from "@/components/home/SuperDealsSection";
 import BookGenreFlashDeals from "@/components/home/BookGenreFlashDeals";
 import FlashDeals from "@/components/home/FlashDeals";
 import SimpleFlashDeals from "@/components/home/SimpleFlashDeals";
+import SpaceSavingCategories from "@/components/home/SpaceSavingCategories"
 import ElectronicsSubcategories from "@/components/home/ElectronicsSubcategories";
 import TopBrands from "@/components/home/TopBrands";
 import VendorProductCarousel from "@/components/home/VendorProductCarousel";
@@ -178,19 +179,19 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
 
   return (
     <PageContainer className="overflow-hidden pb-16 relative">
-      {/* Hero Banner with filter props */}
-      <HeroBanner 
       
-      />
-
-      {/* Show ElectronicsSubcategories only for electronics category */}
-      {category === 'electronics' && <ElectronicsSubcategories />}
 
       {/* Traditional component layout - each shows only once */}
       <div className="space-y-2">
+
+        {/* Hero Banner with filter props */}
+      <HeroBanner />
+
+        <SpaceSavingCategories/>
+        
         <FlashDeals
           showCountdown={true}
-          />
+        />
         <MobileOptimizedReels 
           showCustomButton={true}
           customButtonText="Watch All"
