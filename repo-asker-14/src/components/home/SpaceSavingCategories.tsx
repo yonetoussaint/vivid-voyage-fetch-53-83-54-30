@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { LucideIcon } from 'lucide-react';
 import { 
   Sparkles, 
@@ -59,6 +60,16 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
   headerTitleTransform = "uppercase"
 }) => {
   const rowRef = useRef(null);
+  const navigate = useNavigate();
+
+  const handleCategorySelect = (categoryName: string) => {
+    if (categoryName === 'Shorts') {
+      // Open reels in modal mode
+      navigate('/reels?video=modal');
+    } else if (onCategorySelect) {
+      onCategorySelect(categoryName);
+    }
+  };
 
   // Top 10 product categories data
   const categories = [
@@ -174,7 +185,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
               className="flex-shrink-0 mr-[3vw]"
               style={{ scrollSnapAlign: 'start' }}
             >
-              <CategoryShortcut category={category} onCategorySelect={onCategorySelect} />
+              <CategoryShortcut category={category} onCategorySelect={handleCategorySelect} />
             </div>
           ))}
 

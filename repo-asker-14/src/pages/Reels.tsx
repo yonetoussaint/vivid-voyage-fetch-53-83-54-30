@@ -10,7 +10,7 @@ export default function Reels() {
   const location = useLocation();
   const navigate = useNavigate();
   const searchParams = new URLSearchParams(location.search);
-  const isModalMode = searchParams.has('video');
+  const isModalMode = searchParams.has('video') || searchParams.get('video') === 'modal';
   const bottomNavHeight = useBottomNavHeight(); // Get the bottom nav height
 
   const {
