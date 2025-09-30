@@ -87,7 +87,7 @@ import { ScreenOverlayProvider } from "./context/ScreenOverlayContext"; // SINGL
 import { AuthProvider } from "./contexts/auth/AuthContext";
 import CartPage from '@/pages/CartPage';
 import MenuPage from '@/pages/MenuPage';
-import MobileMultiStepTransferSheetPage from "./components/transfer-app/src/pages/MobileMultiStepTransferSheetPage";
+import MobileMultiStepTransferSheetPage from "../../src/pages/MobileMultiStepTransferSheetPage";
 
 import "./App.css";
 
