@@ -268,6 +268,19 @@ export default function BottomNav() {
                       {t(item.nameKey)}
                     </span>
                   )}
+                  {/* X button for My Store tab when active */}
+                  {isActive && item.id === 'home' && isSellerDashboard && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate('/');
+                        setActiveTab('home');
+                      }}
+                      className="ml-2 p-1 hover:bg-red-700 rounded-full transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
                 </div>
               </button>
             );
