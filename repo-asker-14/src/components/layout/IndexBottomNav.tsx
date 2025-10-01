@@ -270,16 +270,25 @@ export default function BottomNav() {
                   )}
                   {/* X button for My Store tab when active */}
                   {isActive && item.id === 'home' && isSellerDashboard && (
-                    <button
+                    <span
                       onClick={(e) => {
                         e.stopPropagation();
                         navigate('/');
                         setActiveTab('home');
                       }}
-                      className="ml-2 p-1 hover:bg-red-700 rounded-full transition-colors"
+                      className="ml-2 p-1 hover:bg-red-700 rounded-full transition-colors cursor-pointer inline-flex"
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.stopPropagation();
+                          navigate('/');
+                          setActiveTab('home');
+                        }
+                      }}
                     >
                       <X className="w-3 h-3" />
-                    </button>
+                    </span>
                   )}
                 </div>
               </button>

@@ -17,6 +17,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import ProductFilterBar from './ProductFilterBar';
 import LocationScreen from './header/LocationScreen';
 import SearchOverlay from './SearchOverlay';
+import ReusableSearchBar from '@/components/shared/ReusableSearchBar';
 
 interface AliExpressHeaderProps {
   activeTabId?: string;
@@ -414,6 +415,55 @@ export default function AliExpressHeader({
     };
   }, [showSettingsPanel]);
 
+  // Render the right icons based on state
+  const renderSearchIcons = () => {
+    if (showSearchOverlay && !searchQuery.trim()) {
+      // Close button when overlay is open and search is empty
+      return (
+        <button
+          type="button"
+          onClick={handleCloseSearchOverlay}
+          className="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full transition-colors hover:bg-gray-200"
+        >
+          Close
+        </button>
+      );
+    } else if (searchQuery.trim()) {
+      // Clear button when there's text
+      return (
+        <button
+          type="button"
+          onClick={handleClearSearch}
+          className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+        >
+          <X className="h-4 w-4 text-gray-600" />
+        </button>
+      );
+    } else if (showSearchBar) {
+      // Scan + Mic icons in scrolled state
+      return (
+        <>
+          <ScanLine className="h-4 w-4 text-gray-600 cursor-pointer hover:text-gray-800" />
+          <Mic 
+            className="h-4 w-4 text-gray-600 cursor-pointer hover:text-gray-800" 
+            onClick={handleVoiceSearch}
+          />
+        </>
+      );
+    } else {
+      // Settings text button in normal state (clean like Close button)
+      return (
+        <button
+          type="button"
+          onClick={toggleSettingsPanel}
+          className="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full transition-colors hover:bg-gray-200"
+        >
+          Settings
+        </button>
+      );
+    }
+  };
+
   return (
     <header 
       id="ali-header" 
@@ -431,102 +481,38 @@ export default function AliExpressHeader({
         activeTab={activeTab}
         onSearchQueryChange={handleSearchQueryChange}
       />
-      
+
       {/* Location Screen Overlay */}
       {showLocationScreen && <LocationScreen onClose={handleCloseLocationScreen} />}
 
-            {/* Top Bar */}
     
+      {/* Top Bar */}
+      <div 
+        className="flex items-center justify-between px-2 transition-all duration-500 ease-in-out bg-white"
+        style={{ height: '36px' }}
+      >
+        {/* Always show the full-width search bar */}
+        <ReusableSearchBar
+          placeholder={placeholder}
+          value={searchQuery}
+          onChange={setSearchQuery}
+          onSubmit={(query) => {
+            if (query.trim()) {
+              navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+              setShowSearchOverlay(false);
+            }
+          }}
+          onSearchFocus={handleSearchFocus}
+          // Pass the overlay state and close handler
+          isOverlayOpen={showSearchOverlay}
+          onCloseOverlay={handleCloseSearchOverlay}
+          // Conditional icon display
+          showScanMic={showSearchBar && !showSearchOverlay}
+          showSettingsButton={!showSearchBar && !showSearchOverlay}
+          onSettingsClick={toggleSettingsPanel}
+        />
+      </div>
 
-            {/* Top Bar - Single Full Width Layout */}
-            <div 
-              className="flex items-center justify-between px-2 transition-all duration-500 ease-in-out bg-white"
-              style={{ height: '36px' }}
-            >
-              {/* Left: User Avatar */}
-              <div className="flex items-center">
-                {user ? (
-                  <button
-                    onClick={() => navigate('/seller-dashboard/overview')}
-                    className="transition-all duration-200 rounded-full"
-                  >
-                    <Avatar className="w-[26px] h-[26px] min-w-[26px] min-h-[26px]" style={{ width: '26px', height: '26px' }}>
-                      <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.email}`} alt="Profile" />
-                      <AvatarFallback className="text-xs font-medium bg-gray-200 text-gray-700 w-[26px] h-[26px]">
-                        {user.email?.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => navigate('/auth')}
-                    className="w-[32px] h-[32px] rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300 transition-colors"
-                  >
-                    <span className="text-xs font-medium text-gray-600">?</span>
-                  </button>
-                )}
-              </div>
-
-              {/* Center: Full Width Search Bar */}
-              <div className="flex-1 mx-2 relative">
-                <form onSubmit={handleSearchSubmit}>
-                  <input
-                    type="text"
-                    placeholder={showSearchBar ? "Search or Ask Questions" : placeholder}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onFocus={handleSearchFocus}
-                    className="w-full px-3 py-1 pr-20 text-sm font-medium border-2 border-gray-800 rounded-full transition-all duration-300 bg-white shadow-sm"
-                    ref={searchRef}
-                  />
-                  <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
-                    {showSearchOverlay && !searchQuery.trim() ? (
-                      // Close button when overlay is open and search is empty
-                      <button
-                        type="button"
-                        onClick={handleCloseSearchOverlay}
-                        className="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full transition-colors hover:bg-gray-200"
-                      >
-                        Close
-                      </button>
-                    ) : searchQuery.trim() ? (
-                      // Clear button when there's text
-                      <button
-                        type="button"
-                        onClick={handleClearSearch}
-                        className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                      >
-                        <X className="h-4 w-4 text-gray-600" />
-                      </button>
-                    ) : showSearchBar ? (
-                      // Scrolled state: Show scan and mic icons
-                      <>
-                        <ScanLine className="h-4 w-4 text-gray-600 cursor-pointer hover:text-gray-800 p-1 hover:bg-gray-100 rounded" />
-                        <Mic 
-                          className="h-4 w-4 text-gray-600 cursor-pointer hover:text-gray-800 p-1 hover:bg-gray-100 rounded" 
-                          onClick={handleVoiceSearch}
-                        />
-                      </>
-                    ) : (
-                      // Normal state: Show settings icon
-                      <Settings 
-                        onClick={toggleSettingsPanel}
-                        className={`h-4 w-4 text-gray-600 cursor-pointer transition-colors p-1 rounded ${
-                          showSettingsPanel ? 'bg-gray-200' : 'hover:bg-gray-100'
-                        }`}
-                      />
-                    )}
-                  </div>
-                </form>
-              </div>
-
-              {/* Right: Empty space for balance */}
-              <div className="w-[32px]"></div>
-            </div>
-
-      
-
-      
       {/* Settings Panel */}
       {showSettingsPanel && !showLocationScreen && (
         <>

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   CreditCard, 
-  Wallet, 
+  Wallet as WalletIcon, 
   ArrowUpRight, 
   ArrowDownLeft, 
   Plus,
@@ -135,7 +135,7 @@ export default function Wallet() {
       case 'withdrawal':
         return <ArrowUpRight className="h-4 w-4 text-orange-600" />;
       default:
-        return <Wallet className="h-4 w-4 text-gray-600" />;
+        return <WalletIcon className="h-4 w-4 text-gray-600" />;
     }
   }, []);
 
@@ -181,7 +181,7 @@ export default function Wallet() {
         <div className="bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800 rounded-3xl p-6 text-white shadow-xl">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <Wallet className="h-6 w-6" />
+              <WalletIcon className="h-6 w-6" />
               <span className="font-medium">Total Balance</span>
             </div>
             <button 

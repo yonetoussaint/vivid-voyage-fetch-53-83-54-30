@@ -1,12 +1,14 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
-  LayoutDashboard, Package, ShoppingCart, Users, BarChart3, 
-  Warehouse, DollarSign, Megaphone, HelpCircle, Settings,
+  Package, ShoppingCart, Users, BarChart3, 
+  DollarSign, Megaphone, Settings,
   Bell, Store
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useIsMobile } from '@/hooks/use-mobile';
+import ReusableSearchBar from '@/components/shared/ReusableSearchBar';
+
 import TabsNavigation from '@/components/home/TabsNavigation';
 
 interface SellerLayoutProps {
@@ -31,29 +33,34 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
     navigate('/profile');
   };
 
-  // Extract current tab from pathname
+  // Extract current tab from pathname - Completely remove overview
   const getCurrentTab = () => {
     const path = location.pathname.split('/seller-dashboard/')[1];
-    return path || 'overview';
+    // If no specific tab is specified, it's the root, or it's overview, default to products
+    if (!path || path === '' || path === 'overview') {
+      // Redirect to products if on overview or root
+      if (location.pathname === '/seller-dashboard' || 
+          location.pathname === '/seller-dashboard/overview' ||
+          location.pathname.endsWith('/seller-dashboard/')) {
+        navigate('/seller-dashboard/products', { replace: true });
+      }
+      return 'products';
+    }
+    return path;
   };
 
   const [activeTab, setActiveTab] = useState(getCurrentTab());
 
-  // Check if we're on the overview tab
-  const isOverviewTab = location.pathname === '/seller-dashboard/overview' || 
-                        location.pathname === '/seller-dashboard' ||
-                        location.pathname.endsWith('/seller-dashboard/');
+  // Check if we're on the products tab
+  const isProductsTab = activeTab === 'products';
 
   const navigationItems = [
-    { id: 'overview', name: 'Overview', href: '/seller-dashboard/overview', icon: LayoutDashboard },
     { id: 'products', name: 'Products', href: '/seller-dashboard/products', icon: Package },
     { id: 'orders', name: 'Orders', href: '/seller-dashboard/orders', icon: ShoppingCart },
     { id: 'customers', name: 'Customers', href: '/seller-dashboard/customers', icon: Users },
     { id: 'analytics', name: 'Analytics', href: '/seller-dashboard/analytics', icon: BarChart3 },
-    { id: 'inventory', name: 'Inventory', href: '/seller-dashboard/inventory', icon: Warehouse },
     { id: 'finances', name: 'Finances', href: '/seller-dashboard/finances', icon: DollarSign },
     { id: 'marketing', name: 'Marketing', href: '/seller-dashboard/marketing', icon: Megaphone },
-    { id: 'support', name: 'Support', href: '/seller-dashboard/support', icon: HelpCircle },
     { id: 'settings', name: 'Settings', href: '/seller-dashboard/settings', icon: Settings },
   ];
 
@@ -129,6 +136,19 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
     };
   }, []);
 
+  // Update active tab when location changes and handle overview redirect
+  useEffect(() => {
+    const currentTab = getCurrentTab();
+    setActiveTab(currentTab);
+
+    // Ensure overview paths redirect to products
+    if (location.pathname === '/seller-dashboard' || 
+        location.pathname === '/seller-dashboard/overview' ||
+        location.pathname.endsWith('/seller-dashboard/')) {
+      navigate('/seller-dashboard/products', { replace: true });
+    }
+  }, [location.pathname]);
+
   // Scroll handling for sticky tabs
   useEffect(() => {
     const handleScroll = () => {
@@ -139,8 +159,8 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
       // Get current dimensions
       const currentTabsHeight = tabsRef.current.offsetHeight;
 
-      // For non-overview tabs, we don't have seller info, so use a smaller threshold
-      const sellerInfoHeight = isOverviewTab ? (sellerInfoRef.current?.offsetHeight || 0) : 0;
+      // For non-products tabs, we don't have seller info, so use a smaller threshold
+      const sellerInfoHeight = isProductsTab ? (sellerInfoRef.current?.offsetHeight || 0) : 0;
 
       // Update tabs height if it changed
       if (currentTabsHeight !== tabsHeight) {
@@ -152,8 +172,8 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
       setScrollProgress(calculatedProgress);
 
       // Determine if tabs should be sticky
-      // For non-overview tabs, always make tabs sticky since there's no seller info
-      const shouldBeSticky = !isOverviewTab || scrollY >= sellerInfoHeight;
+      // For non-products tabs, always make tabs sticky since there's no seller info
+      const shouldBeSticky = !isProductsTab || scrollY >= sellerInfoHeight;
 
       // Only update state if it changed
       if (shouldBeSticky !== isTabsSticky) {
@@ -180,89 +200,33 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
         cancelAnimationFrame(rafId);
       }
     };
-  }, [isTabsSticky, tabsHeight, headerHeight, isOverviewTab]);
+  }, [isTabsSticky, tabsHeight, headerHeight, isProductsTab]);
 
   // Determine header mode based on scroll progress
   const isScrolledState = scrollProgress > 0.3;
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Fixed Header */}
-      <div ref={headerRef} className="fixed top-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-200">
-        {!isScrolledState ? (
-          // Initial state - show seller info with search icon
-          <div className="px-4 py-2">
-            <div className="flex items-center justify-between">
-              {/* Left side - Back button and seller info */}
-              <div className="flex items-center gap-3">
-                <button 
-                  onClick={handleBackClick}
-                  className="h-8 w-8 rounded-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                <div className="flex items-center gap-2">
-                  <Avatar className="w-8 h-8">
-                    <AvatarImage src={mockSeller.logo_url} />
-                    <AvatarFallback>JS</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h1 className="text-sm font-semibold">{mockSeller.business_name}</h1>
-                    <p className="text-xs text-gray-500">Premium Seller</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right side - Search icon */}
-              <button className="h-8 w-8 rounded-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </button>
+      <div ref={headerRef} className="fixed top-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-sm border-gray-200">
+        <div className="px-1.5 py-1">
+          <div className="flex items-center justify-center">
+            {/* Full width search bar only */}
+            <div className="w-full max-w-2xl">
+              <ReusableSearchBar
+                placeholder="Search in store..."
+                showScanMic={true}
+                showSettingsButton={!isScrolledState}
+                onSettingsClick={() => console.log('Seller settings clicked')}
+                onSubmit={(query) => {
+                  // Implement seller-specific search
+                  console.log('Searching for:', query);
+                  // navigate(`/seller-dashboard/search?q=${encodeURIComponent(query)}`);
+                }}
+                onSearchClose={handleBackClick}
+              />
             </div>
           </div>
-        ) : (
-          // Scrolled state - show X button, search bar, and notifications
-          <div className="px-4 py-2">
-            <div className="flex items-center gap-3">
-              {/* Left side - X button */}
-              <button 
-                onClick={handleBackClick}
-                className="h-8 w-8 rounded-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-
-              {/* Middle - Search bar */}
-              <div className="flex-1 relative">
-                <div className="relative flex items-center h-8 rounded-full bg-gray-100">
-                  <div className="absolute left-3 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Search in store..."
-                    className="bg-transparent w-full h-full pl-10 pr-3 py-1 text-sm rounded-full outline-none text-gray-700 placeholder-gray-500"
-                  />
-                </div>
-              </div>
-
-              {/* Right side - Notifications */}
-              <button className="h-8 w-8 rounded-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors relative">
-                <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                  3
-                </span>
-              </button>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
 
       {/* Main Content Area - Dynamic padding based on actual header height */}
@@ -274,8 +238,8 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
         }}
       >
         <main>
-          {/* Seller Info Section - Only show on overview tab */}
-          {isOverviewTab && (
+          {/* Seller Info Section - Only show on products tab */}
+          {isProductsTab && (
             <div ref={sellerInfoRef} className="w-full bg-white border-b">
               <div className="px-4 py-4">
                 <div className="flex items-center gap-4">
