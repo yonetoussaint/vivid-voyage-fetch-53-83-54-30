@@ -14,7 +14,8 @@ import {
   Store,
   Zap,
   Crown,
-  Heart 
+  Heart,
+  ShoppingCart 
 } from 'lucide-react';
 import SectionHeader from "./SectionHeader";
 
@@ -105,9 +106,9 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       isSpecial: true
     },
     { 
-      id: 'clearance', 
-      name: 'Clearance', 
-      icon: Tag,
+      id: 'cart', 
+      name: 'Cart', 
+      icon: ShoppingCart,
       bgColor: 'bg-yellow-100', 
       iconBg: 'text-yellow-500',
       labelBg: 'bg-yellow-600/90',
