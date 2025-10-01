@@ -66,6 +66,9 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
     if (categoryName === 'Shorts') {
       // Open reels in modal mode
       navigate('/reels?video=modal');
+    } else if (categoryName === 'My Store') {
+      // Navigate to seller dashboard
+      navigate('/seller-dashboard');
     } else if (onCategorySelect) {
       onCategorySelect(categoryName);
     }
