@@ -117,42 +117,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       labelBg: 'bg-yellow-600/90',
       isSpecial: true
     },
-    { 
-      id: 'under-25', 
-      name: 'Under $25', 
-      icon: DollarSign,
-      bgColor: 'bg-green-100', 
-      iconBg: 'text-green-500',
-      labelBg: 'bg-green-600/90',
-      isSpecial: true
-    },
-    { 
-      id: 'gift-ideas', 
-      name: 'Gift Ideas', 
-      icon: Gift,
-      bgColor: 'bg-pink-100', 
-      iconBg: 'text-pink-400',
-      labelBg: 'bg-pink-500/90',
-      isSpecial: true
-    },
-    { 
-      id: 'seasonal', 
-      name: 'Seasonal Picks', 
-      icon: Leaf,
-      bgColor: 'bg-rose-100', 
-      iconBg: 'text-rose-500',
-      labelBg: 'bg-rose-600/90',
-      isSpecial: true
-    },
-    { 
-      id: 'premium', 
-      name: 'Premium Selection', 
-      icon: Crown,
-      bgColor: 'bg-amber-100', 
-      iconBg: 'text-amber-500',
-      labelBg: 'bg-amber-600/90',
-      isSpecial: true
-    },
+    
     { 
       id: 'notifications', 
       name: 'Notifications', 
