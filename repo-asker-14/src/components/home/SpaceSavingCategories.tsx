@@ -13,7 +13,8 @@ import {
   Leaf, 
   Store,
   Zap,
-  Crown 
+  Crown,
+  Heart 
 } from 'lucide-react';
 import SectionHeader from "./SectionHeader";
 
@@ -95,9 +96,9 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       isSpecial: true
     },
     { 
-      id: 'staff-picks', 
-      name: 'Staff Picks', 
-      icon: Star,
+      id: 'wishlist', 
+      name: 'Wishlist', 
+      icon: Heart,
       bgColor: 'bg-teal-100', 
       iconBg: 'text-teal-500',
       labelBg: 'bg-teal-600/90',
