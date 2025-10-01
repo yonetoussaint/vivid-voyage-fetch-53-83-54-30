@@ -46,8 +46,8 @@ const CategoryShortcut = ({ category, onCategorySelect }) => {
       <div className={`relative w-14 h-14 rounded-xl ${category.bgColor} flex items-center justify-center`}>
         <IconComponent className={`w-7 h-7 ${category.iconBg}`} />
       </div>
-      {/* CHANGED: Removed truncate and fixed width constraints */}
-      <span className="text-xs font-normal text-gray-800 text-center w-full mt-2 leading-tight px-1 break-words">
+      {/* Add ellipsis truncation to prevent line breaks */}
+      <span className="text-xs font-normal text-gray-800 text-center w-full mt-2 leading-tight px-1 truncate">
         {category.name}
       </span>
     </div>
