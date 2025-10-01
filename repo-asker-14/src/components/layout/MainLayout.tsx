@@ -130,7 +130,8 @@ export default function MainLayout() {
           pathname === '/categories/entertainment' ||
           pathname === '/categories/kids-hobbies' ||
           pathname === '/categories/sports-outdoors' ||
-          pathname === '/categories/automotive'
+          pathname === '/categories/automotive' ||
+          pathname.startsWith('/seller-dashboard')
         ) && (
 <div className=" z-30">
           <IndexBottomNav />
