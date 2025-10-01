@@ -86,15 +86,6 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       isSpecial: true
     },
     { 
-      id: 'deals', 
-      name: 'Transfer', 
-      icon: Percent,
-      bgColor: 'bg-orange-100', 
-      iconBg: 'text-orange-500',
-      labelBg: 'bg-orange-600/90',
-      isSpecial: true
-    },
-    { 
       id: 'trending', 
       name: 'My Store', 
       icon: Store,
