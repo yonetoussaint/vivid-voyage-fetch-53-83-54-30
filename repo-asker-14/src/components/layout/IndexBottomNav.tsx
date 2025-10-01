@@ -4,7 +4,7 @@ import {
   Home, Zap, Rss, Wallet, Tv, LayoutGrid, X, MoreHorizontal,
   Settings, Bell, Bookmark, Star, Users, ShoppingBag, ChevronDown, User,
   MessageCircle, Film, Calendar, Gift, Camera, PlayCircle, 
-  MapPin, Heart, HelpCircle
+  MapPin, Heart, HelpCircle, Store
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -28,8 +28,13 @@ interface BottomNavTab {
   badge?: number;
 }
 
-const navItems: BottomNavTab[] = [
-  { id: 'home', nameKey: 'navigation.home', icon: Logo, path: '/for-you' }, 
+const getNavItems = (isSellerDashboard: boolean): BottomNavTab[] => [
+  { 
+    id: 'home', 
+    nameKey: isSellerDashboard ? 'navigation.store' : 'navigation.home', 
+    icon: isSellerDashboard ? Store : Logo, 
+    path: isSellerDashboard ? '/seller-dashboard' : '/for-you' 
+  }, 
   { id: 'shorts', nameKey: 'navigation.shorts', icon: Zap, path: '/reels' },
   { id: 'categories', nameKey: 'navigation.categories', icon: LayoutGrid, path: '/search' },
   { id: 'wallet', nameKey: 'navigation.wallet', icon: Wallet, path: '/wallet' },
@@ -66,6 +71,10 @@ export default function BottomNav() {
   const [activeTab, setActiveTab] = useState('home');
   const [previousTab, setPreviousTab] = useState(null);
   const [animating, setAnimating] = useState(false);
+
+  // Check if we're in seller dashboard
+  const isSellerDashboard = location.pathname.startsWith('/seller-dashboard');
+  const navItems = getNavItems(isSellerDashboard);
 
   // Sync activeTab with current route
   useEffect(() => {
@@ -110,6 +119,11 @@ export default function BottomNav() {
   
   const [reorderedNavItems, setReorderedNavItems] = useState(navItems);
   const [selectedMoreItem, setSelectedMoreItem] = useState(() => t('navigation.more'));
+
+  // Update reorderedNavItems when navItems change
+  useEffect(() => {
+    setReorderedNavItems(navItems);
+  }, [isSellerDashboard]);
 
   // Load selected more item from localStorage on mount
   useEffect(() => {
