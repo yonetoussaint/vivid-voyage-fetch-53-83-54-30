@@ -15,7 +15,10 @@ import {
   Zap,
   Crown,
   Heart,
-  ShoppingCart 
+  ShoppingCart,
+  Bell,
+  MapPin,
+  HelpCircle 
 } from 'lucide-react';
 import SectionHeader from "./SectionHeader";
 
@@ -148,6 +151,33 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       bgColor: 'bg-amber-100', 
       iconBg: 'text-amber-500',
       labelBg: 'bg-amber-600/90',
+      isSpecial: true
+    },
+    { 
+      id: 'notifications', 
+      name: 'Notifications', 
+      icon: Bell,
+      bgColor: 'bg-blue-100', 
+      iconBg: 'text-blue-500',
+      labelBg: 'bg-blue-600/90',
+      isSpecial: true
+    },
+    { 
+      id: 'addresses', 
+      name: 'Addresses', 
+      icon: MapPin,
+      bgColor: 'bg-indigo-100', 
+      iconBg: 'text-indigo-500',
+      labelBg: 'bg-indigo-600/90',
+      isSpecial: true
+    },
+    { 
+      id: 'help', 
+      name: 'Help', 
+      icon: HelpCircle,
+      bgColor: 'bg-gray-100', 
+      iconBg: 'text-gray-500',
+      labelBg: 'bg-gray-600/90',
       isSpecial: true
     }
   ];
