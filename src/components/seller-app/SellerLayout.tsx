@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -97,10 +98,10 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
 
   // Get authenticated user
   const { user } = useAuth();
-  
+
   // Fetch seller data for the current user
   const { data: sellerData, isLoading: sellerLoading } = useSellerByUserId(user?.id || '');
-  
+
   // Get seller logo URL
   const getSellerLogoUrl = (imagePath?: string): string => {
     if (!imagePath) return "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face";
@@ -256,7 +257,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
           {/* Seller Info Section - Only show on products tab */}
           {isProductsTab && (
             <div ref={sellerInfoRef} className="w-full bg-white border-b">
-              <div className="px-4 py-4">
+              <div className=" px-2 py-2">
                 {sellerLoading ? (
                   <div className="flex items-center gap-4">
                     <div className="w-16 h-16 bg-gray-200 rounded-full animate-pulse" />
