@@ -29,7 +29,7 @@ export const useSellerByUserId = (userId: string) => {
       }
 
       if (!profileData.seller_id) {
-        console.log('❌ No seller_id found in profile');
+        console.log('ℹ️ User has no seller profile - this is normal for non-seller accounts');
         return null;
       }
 

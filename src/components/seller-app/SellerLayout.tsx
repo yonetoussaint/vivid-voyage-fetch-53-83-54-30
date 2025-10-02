@@ -296,8 +296,20 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center py-8 text-gray-500">
-                    <p>No seller profile found. Please set up your seller account.</p>
+                  <div className="flex flex-col items-center justify-center py-8 text-gray-500 space-y-4">
+                    <p className="text-lg font-medium">No seller profile found</p>
+                    <p className="text-sm">You need to create a seller account to access the dashboard.</p>
+                    <button
+                      onClick={() => {
+                        // TODO: Implement seller onboarding flow
+                        // This could open a dialog or navigate to a setup page
+                        console.log('Start seller onboarding');
+                        navigate('/seller-onboarding');
+                      }}
+                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Become a Seller
+                    </button>
                   </div>
                 )}
               </div>
