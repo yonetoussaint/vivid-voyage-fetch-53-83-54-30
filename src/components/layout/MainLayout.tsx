@@ -142,8 +142,6 @@ export default function MainLayout() {
         {shouldShowHeader && (
           <AliExpressHeader 
             activeTabId={activeTab}
-            // Electronics page will handle its own filter bar logic
-            showFilterBar={false}
           />
         )}
 

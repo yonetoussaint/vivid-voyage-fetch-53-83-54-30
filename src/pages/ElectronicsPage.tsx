@@ -320,20 +320,6 @@ export default function ElectronicsPage() {
 
   return (
     <PageContainer className="overflow-hidden pb-16 relative">
-      {/* Header - shows CategoryTabs by default, ProductFilterBar when scrolled */}
-      <AliExpressHeader 
-        activeTabId="electronics" 
-        showFilterBar={showFilterBarInHeader}
-        // Pass filter props to header if needed
-        filterCategories={filterCategories}
-        selectedFilters={selectedFilters}
-        onFilterSelect={handleFilterSelect}
-        onFilterClear={handleFilterClear}
-        onClearAll={handleClearAllFilters}
-        onFilterButtonClick={handleFilterButtonClick}
-        isFilterDisabled={isFilterDisabled}
-      />
-
       {/* Hero Banner with the ProductFilterBar integrated */}
       <div ref={heroBannerRef}>
         <HeroBanner 
