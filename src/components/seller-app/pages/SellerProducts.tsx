@@ -51,7 +51,7 @@ const SellerProductsPage: React.FC<SellerProductsPageProps> = ({
   const isLoading = sellerProductsLoading || allProductsLoading;
 
   return (
-    <div className="p-4">
+    <div className="p-2">
       <SellerProducts products={products} isLoading={isLoading} />
     </div>
   );
