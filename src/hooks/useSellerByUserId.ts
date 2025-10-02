@@ -9,30 +9,44 @@ export const useSellerByUserId = (userId: string) => {
 
       console.log('🔍 Fetching seller for user:', userId);
 
-      // First get the profile to find the seller_id
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('seller_id')
-        .eq('id', userId)
-        .single();
+      // First, try to get the user's auth data which might have seller_id
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log('👤 User auth data:', user);
 
-      if (profileError) {
-        console.log('❌ Profile not found:', profileError.message);
-        return null;
+      let sellerId: string | null = null;
+
+      // Check if seller_id exists in user metadata
+      if (user && (user as any).seller_id) {
+        sellerId = (user as any).seller_id;
+        console.log('✅ Found seller_id in user object:', sellerId);
+      } else {
+        // Fallback: Try to get from profiles table
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('seller_id')
+          .eq('id', userId)
+          .single();
+
+        if (profileError) {
+          console.log('❌ Profile query error:', profileError.message);
+        }
+
+        if (profileData?.seller_id) {
+          sellerId = profileData.seller_id;
+          console.log('✅ Found seller_id in profile:', sellerId);
+        }
       }
 
-      if (!profileData?.seller_id) {
-        console.log('❌ No seller_id found in profile');
+      if (!sellerId) {
+        console.log('❌ No seller_id found in user object or profile');
         return null;
       }
-
-      console.log('✅ Found seller_id:', profileData.seller_id);
 
       // Now fetch the seller data using the seller_id
       const { data: sellerData, error: sellerError } = await supabase
         .from('sellers')
         .select('*')
-        .eq('id', profileData.seller_id)
+        .eq('id', sellerId)
         .single();
 
       if (sellerError) {
