@@ -1,7 +1,8 @@
-
+// HeaderFilterContext.tsx
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface HeaderFilterContextType {
+  // Existing filter bar properties
   showFilterBar: boolean;
   setShowFilterBar: (show: boolean) => void;
   filterCategories: Array<{
@@ -26,12 +27,27 @@ interface HeaderFilterContextType {
   setOnFilterButtonClick: (handler: (filterId: string) => void) => void;
   isFilterDisabled?: (filterId: string) => boolean;
   setIsFilterDisabled: (handler: (filterId: string) => boolean) => void;
+
+  // New properties for news ticker
+  showNewsTicker: boolean;
+  setShowNewsTicker: (show: boolean) => void;
+  headerMode: 'categories' | 'news' | 'filters';
+  setHeaderMode: (mode: 'categories' | 'news' | 'filters') => void;
+  scrollDirection: 'up' | 'down' | null;
+  setScrollDirection: (direction: 'up' | 'down' | null) => void;
+  lastScrollY: number;
+  setLastScrollY: (position: number) => void;
 }
 
 const HeaderFilterContext = createContext<HeaderFilterContextType | undefined>(undefined);
 
 export const HeaderFilterProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [showFilterBar, setShowFilterBar] = useState(false);
+  const [showNewsTicker, setShowNewsTicker] = useState(false);
+  const [headerMode, setHeaderMode] = useState<'categories' | 'news' | 'filters'>('categories');
+  const [scrollDirection, setScrollDirection] = useState<'up' | 'down' | null>(null);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
   const [filterCategories, setFilterCategories] = useState<Array<{
     id: string;
     label: string;
@@ -63,6 +79,14 @@ export const HeaderFilterProvider: React.FC<{ children: ReactNode }> = ({ childr
         setOnFilterButtonClick,
         isFilterDisabled,
         setIsFilterDisabled,
+        showNewsTicker,
+        setShowNewsTicker,
+        headerMode,
+        setHeaderMode,
+        scrollDirection,
+        setScrollDirection,
+        lastScrollY,
+        setLastScrollY,
       }}
     >
       {children}

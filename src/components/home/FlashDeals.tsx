@@ -13,6 +13,7 @@ interface FlashDealsProps {
   icon?: React.ComponentType<any>;
   customCountdown?: string; // Custom countdown value
   showCountdown?: boolean; // Force show/hide
+  maxProducts?: number; // Add max products prop
 }
 
 export default function FlashDeals({ 
@@ -20,8 +21,9 @@ export default function FlashDeals({
   title = "FLASH DEALS", 
   icon = Zap,
   customCountdown,
-  showCountdown
-}: FlashDealsProps) { // REMOVED THE EXTRA } FROM HERE
+  showCountdown,
+  maxProducts = 20 // Default to 20 products
+}: FlashDealsProps) {
   const isMobile = useIsMobile();
   const scrollRef = useRef(null);
   const { setHasActiveOverlay } = useScreenOverlay();
@@ -31,8 +33,8 @@ export default function FlashDeals({
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
   const { data: flashProducts = [], isLoading } = useQuery({
-    queryKey: ['flash-deals', productType],
-    queryFn: () => fetchFlashDeals(undefined, productType),
+    queryKey: ['flash-deals', productType, maxProducts],
+    queryFn: () => fetchFlashDeals(undefined, productType, maxProducts), // Pass maxProducts to API
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
   });
 
@@ -84,18 +86,21 @@ export default function FlashDeals({
   }, [isPanelOpen, setHasActiveOverlay]);
 
   // Calculate discount percentage and real inventory for display
-  const processedProducts = flashProducts.map(product => {
-    const discountPercentage = product.discount_price 
-      ? Math.round(((product.price - product.discount_price) / product.price) * 100) 
-      : 0;
+  // Limit to maxProducts in case API returns more
+  const processedProducts = flashProducts
+    .slice(0, maxProducts)
+    .map(product => {
+      const discountPercentage = product.discount_price 
+        ? Math.round(((product.price - product.discount_price) / product.price) * 100) 
+        : 0;
 
-    return {
-      ...product,
-      discountPercentage,
-      stock: product.inventory ?? 0,  // Real stock from database
-      image: product.product_images?.[0]?.src || "https://placehold.co/300x300?text=No+Image"
-    };
-  });
+      return {
+        ...product,
+        discountPercentage,
+        stock: product.inventory ?? 0,  // Real stock from database
+        image: product.product_images?.[0]?.src || "https://placehold.co/300x300?text=No+Image"
+      };
+    });
 
   // Handle product click to open semi panel
   const handleProductClick = (productId: string) => {
@@ -138,7 +143,7 @@ export default function FlashDeals({
         <div className="relative">
           {isLoading ? (
             <div className="pl-2 flex overflow-x-hidden">
-              {[1, 2, 3].map((_, index) => (
+              {Array.from({ length: Math.min(8, maxProducts) }).map((_, index) => (
                 <div 
                   key={index} 
                   className="w-[calc(100%/3.5)] flex-shrink-0 mr-2"

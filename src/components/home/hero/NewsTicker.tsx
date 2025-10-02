@@ -16,7 +16,7 @@ export default function NewsTicker() {
   const newsRepeats = Array(5).fill(newsItems).flat();
 
   return (
-    <div className="bg-black">
+    <div className="news-ticker bg-black">
       <div className="max-w-screen-xl mx-auto">
         <div 
           className="relative overflow-hidden h-7 bg-black"

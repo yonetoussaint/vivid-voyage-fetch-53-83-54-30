@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { fetchAllProducts } from "@/integrations/supabase/products";
 
 import { PageContainer } from "@/components/layout/PageContainer";
+import { useHeaderFilter } from "@/contexts/HeaderFilterContext";
 import SuperDealsSection from "@/components/home/SuperDealsSection";
 import SecondaryHeroBanner from "@/components/home/SecondaryHeroBanner";
 import FlashDeals from "@/components/home/FlashDeals";
@@ -22,7 +23,6 @@ import ProductSemiPanel from "@/components/home/ProductSemiPanel";
 import NewArrivals from "@/components/home/NewArrivals";
 import NewArrivalsSection from "@/components/home/NewArrivalsSection";
 import HeroBanner from "@/components/home/HeroBanner";
-import AliExpressHeader from "@/components/home/AliExpressHeader";
 
 import { 
   Smartphone, 
@@ -74,14 +74,56 @@ const feedComponents = [
   'BenefitsBanner',
 ];
 
-export default function ElectronicsPage() {
+// Filter categories configuration for books
+const filterCategories = [
+  {
+    id: 'genre',
+    label: 'Genre',
+    options: ['Fiction', 'Non-Fiction', 'Science Fiction', 'Fantasy', 'Mystery', 'Romance', 'Biography', 'History']
+  },
+  {
+    id: 'format',
+    label: 'Format',
+    options: ['Paperback', 'Hardcover', 'E-book', 'Audiobook']
+  },
+  {
+    id: 'price',
+    label: 'Price',
+    options: ['Under $10', '$10-$20', '$20-$30', '$30-$50', 'Over $50']
+  },
+  {
+    id: 'condition',
+    label: 'Condition',
+    options: ['New', 'Like New', 'Good', 'Acceptable']
+  },
+  {
+    id: 'shipping',
+    label: 'Shipping',
+    options: ['Free Shipping', 'Fast Delivery', 'Local Pickup']
+  }
+];
+
+export default function BooksHomepage() {
   const [feedItems, setFeedItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [isContentReady, setIsContentReady] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [showFilterBarInHeader, setShowFilterBarInHeader] = useState(false);
+
+  // Filter state
+  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
+
   const { t } = useTranslation(['product', 'categories']);
+  const {
+    setShowFilterBar,
+    setFilterCategories,
+    setSelectedFilters: setContextSelectedFilters,
+    setOnFilterSelect,
+    setOnFilterClear,
+    setOnClearAll,
+    setOnFilterButtonClick,
+    setIsFilterDisabled
+  } = useHeaderFilter();
 
   const heroBannerRef = useRef<HTMLDivElement>(null);
   const filterBarRef = useRef<HTMLDivElement>(null);
@@ -128,6 +170,21 @@ export default function ElectronicsPage() {
     }, 800);
   }, [generateFeedItems]);
 
+  // Setup filter context on mount
+  useEffect(() => {
+    setFilterCategories(filterCategories);
+    setOnFilterSelect(() => handleFilterSelect);
+    setOnFilterClear(() => handleFilterClear);
+    setOnClearAll(() => handleClearAllFilters);
+    setOnFilterButtonClick(() => handleFilterButtonClick);
+    setIsFilterDisabled(() => isFilterDisabled);
+  }, [setFilterCategories, setOnFilterSelect, setOnFilterClear, setOnClearAll, setOnFilterButtonClick, setIsFilterDisabled]);
+
+  // Update context when selectedFilters change
+  useEffect(() => {
+    setContextSelectedFilters(selectedFilters);
+  }, [selectedFilters, setContextSelectedFilters]);
+
   // Scroll-based detection for precise filter bar replacement
   useEffect(() => {
     let ticking = false;
@@ -155,14 +212,8 @@ export default function ElectronicsPage() {
           // Show header filter bar when hero filter bar's bottom edge reaches header bottom
           const shouldShowInHeader = filterBarRect.bottom <= headerHeight;
 
-          // Update state only if there's a change
-          setShowFilterBarInHeader(prev => {
-            if (prev !== shouldShowInHeader) {
-              console.log('Filter bar bottom:', Math.round(filterBarRect.bottom), 'Header height:', Math.round(headerHeight), 'Show in header:', shouldShowInHeader);
-              return shouldShowInHeader;
-            }
-            return prev;
-          });
+          // Update context state only if there's a change
+          setShowFilterBar(shouldShowInHeader);
 
           ticking = false;
         });
@@ -184,6 +235,42 @@ export default function ElectronicsPage() {
     };
   }, [isContentReady]);
 
+  // Filter handlers
+  const handleFilterSelect = useCallback((filterId: string, option: string) => {
+    setSelectedFilters(prev => ({
+      ...prev,
+      [filterId]: option
+    }));
+    console.log('Filter selected:', filterId, option);
+  }, []);
+
+  const handleFilterClear = useCallback((filterId: string) => {
+    setSelectedFilters(prev => {
+      const newFilters = { ...prev };
+      delete newFilters[filterId];
+      return newFilters;
+    });
+    console.log('Filter cleared:', filterId);
+  }, []);
+
+  const handleClearAllFilters = useCallback(() => {
+    setSelectedFilters({});
+    console.log('All filters cleared');
+  }, []);
+
+  const handleFilterButtonClick = useCallback((filterId: string) => {
+    console.log('Filter button clicked:', filterId);
+    // Handle filter button click (e.g., open dropdown)
+  }, []);
+
+  const isFilterDisabled = useCallback((filterId: string) => {
+    // Example logic: disable price filter if no category is selected
+    if (filterId === 'price' && !selectedFilters.genre) {
+      return false; // Change to true to actually disable
+    }
+    return false;
+  }, [selectedFilters]);
+
   // Handle product click to open semi panel
   const handleProductClick = useCallback((productId: string) => {
     setSelectedProductId(productId);
@@ -203,10 +290,11 @@ export default function ElectronicsPage() {
     switch (type) {
       case 'FlashDeals':
         return <FlashDeals 
-         key={id} 
-         productType="books" 
-         showCountdown ={true} 
-         icon={BookOpen} />;
+          key={id} 
+          productType="books" 
+          showCountdown={true} 
+          icon={BookOpen} 
+        />;
       case 'MobileOptimizedReels':
         return <MobileOptimizedReels key={id} />;
       case 'TopVendorsCompact':
@@ -255,15 +343,18 @@ export default function ElectronicsPage() {
 
   return (
     <PageContainer className="overflow-hidden pb-16 relative">
-      {/* Header - shows CategoryTabs by default, ProductFilterBar when scrolled */}
-      <AliExpressHeader 
-        activeTabId="electronics" 
-        showFilterBar={showFilterBarInHeader}
-      />
-
-      {/* Hero Banner with the actual ProductFilterBar */}
+      {/* Hero Banner with the ProductFilterBar integrated */}
       <div ref={heroBannerRef}>
-        <HeroBanner showNewsTicker={false} />
+        <HeroBanner 
+          showNewsTicker={false}
+          filterCategories={filterCategories}
+          selectedFilters={selectedFilters}
+          onFilterSelect={handleFilterSelect}
+          onFilterClear={handleFilterClear}
+          onClearAll={handleClearAllFilters}
+          onFilterButtonClick={handleFilterButtonClick}
+          isFilterDisabled={isFilterDisabled}
+        />
       </div>
 
       {/* Endless feed content */}

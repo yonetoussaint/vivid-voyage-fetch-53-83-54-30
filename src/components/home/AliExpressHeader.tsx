@@ -19,6 +19,7 @@ import LocationScreen from './header/LocationScreen';
 import SearchOverlay from './SearchOverlay';
 import ReusableSearchBar from '@/components/shared/ReusableSearchBar';
 import SettingsPanel from './header/SettingsPanel';
+import { useHeaderFilter } from "@/contexts/HeaderFilterContext";
 
 interface AliExpressHeaderProps {
   activeTabId?: string;
@@ -54,6 +55,9 @@ export default function AliExpressHeader({
   const navigate = useNavigate();
   const { user } = useAuth();
   const homepageType = 'marketplace';
+
+  // Add this line to get headerMode from context
+  const { headerMode } = useHeaderFilter();
 
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(activeTabId);
@@ -489,7 +493,7 @@ export default function AliExpressHeader({
       {/* Location Screen Overlay */}
       {showLocationScreen && <LocationScreen onClose={handleCloseLocationScreen} />}
 
-    
+
       {/* Top Bar */}
       <div 
         className="flex items-center justify-between px-2 transition-all duration-500 ease-in-out bg-white"
@@ -537,6 +541,7 @@ export default function AliExpressHeader({
       />
 
       {/* Conditional rendering: ProductFilterBar or CategoryTabs */}
+
       <div className="relative overflow-hidden">
         {showFilterBar ? (
           <div data-header="true" className="product-filter-bar">
@@ -560,7 +565,6 @@ export default function AliExpressHeader({
           />
         )}
       </div>
-
       {/* Category Panel */}
       <CategoryPanel 
         progress={1}

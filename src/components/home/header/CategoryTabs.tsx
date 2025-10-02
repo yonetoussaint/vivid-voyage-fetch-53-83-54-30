@@ -1,13 +1,12 @@
 import { LayoutGrid } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ReactNode, useRef, useEffect, useState } from 'react';
-import { motion, useMotionValue, animate as fmAnimate } from 'framer-motion';
+import { ReactNode, useRef, useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface CategoryTab {
   id: string;
   name: string;
-  icon?: ReactNode;  // Add ? to make it optional
+  icon?: ReactNode;
   path?: string;
 }
 
@@ -33,164 +32,204 @@ const CategoryTabs = ({
   const location = useLocation();
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const scrollX = useMotionValue(0);
   const [underlineWidth, setUnderlineWidth] = useState(0);
   const [underlineLeft, setUnderlineLeft] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
 
+  // Memoize refs update
   useEffect(() => {
     tabRefs.current = tabRefs.current.slice(0, categories.length);
   }, [categories]);
 
-  // Function to update underline position and width
-  const updateUnderline = () => {
+  // Instant underline calculation
+  const updateUnderline = useCallback(() => {
     const activeTabIndex = categories.findIndex(cat => cat.id === activeTab);
+
+    if (activeTabIndex === -1) {
+      return;
+    }
+
     const activeTabElement = tabRefs.current[activeTabIndex];
     const containerElement = scrollContainerRef.current;
 
     if (activeTabElement && containerElement) {
-      // Get the text span element
-      const textSpan = activeTabElement.querySelector('span'); 
-
+      const textSpan = activeTabElement.querySelector('span');
       if (textSpan) {
-        // Calculate underline width based on text content
-        const textWidth = textSpan.offsetWidth;
-        const newWidth = Math.max(textWidth * 0.8, 20); // Minimum 20px width, 80% of text width
+        const textWidth = textSpan.getBoundingClientRect().width;
+        const newWidth = Math.max(textWidth * 0.8, 20);
 
-        // Calculate position relative to the button center 
         const buttonRect = activeTabElement.getBoundingClientRect();
         const containerRect = containerElement.getBoundingClientRect();
         const relativeLeft = buttonRect.left - containerRect.left + containerElement.scrollLeft;
-        const buttonCenter = relativeLeft + (activeTabElement.offsetWidth / 2);
+        const buttonCenter = relativeLeft + (buttonRect.width / 2);
         const underlineStart = buttonCenter - (newWidth / 2);
 
         setUnderlineWidth(newWidth);
         setUnderlineLeft(underlineStart);
+        setIsInitialized(true);
       }
     }
-  };
+  }, [activeTab, categories]);
 
+  // Update underline when activeTab changes AND when refs are available
   useEffect(() => {
-    const activeTabIndex = categories.findIndex(cat => cat.id === activeTab);
+    if (activeTab && categories.length > 0) {
+      // Try to update immediately
+      updateUnderline();
+
+      // If not initialized yet, try again after a short delay
+      if (!isInitialized) {
+        const timer = setTimeout(() => {
+          updateUnderline();
+        }, 10);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [activeTab, categories, updateUnderline, isInitialized]);
+
+  // Update on resize and scroll
+  useEffect(() => {
+    const handleResize = () => {
+      if (activeTab && categories.length > 0) {
+        updateUnderline();
+      }
+    };
+
+    const handleScroll = () => {
+      if (activeTab && categories.length > 0) {
+        updateUnderline();
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    const container = scrollContainerRef.current;
+    if (container) {
+      container.addEventListener('scroll', handleScroll);
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (container) {
+        container.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, [activeTab, categories, updateUnderline]);
+
+  // Tab click handler - UPDATED: with retry logic for first tab
+  const handleTabClick = useCallback((id: string, path?: string) => {
+    // First update the active tab
+    setActiveTab(id);
+
+    // Immediately calculate and update underline position
+    const activeTabIndex = categories.findIndex(cat => cat.id === id);
     const activeTabElement = tabRefs.current[activeTabIndex];
     const containerElement = scrollContainerRef.current;
 
     if (activeTabElement && containerElement) {
-      // Scroll to position the active tab at the left edge (with some padding)
-      const paddingLeft = 8; // Account for container padding
-      const newScrollLeft = activeTabElement.offsetLeft - paddingLeft;
+      const textSpan = activeTabElement.querySelector('span');
+      if (textSpan) {
+        const textWidth = textSpan.getBoundingClientRect().width;
+        const newWidth = Math.max(textWidth * 0.8, 20);
 
-      fmAnimate(scrollX, newScrollLeft, {
-        duration: 0.4,
-        ease: 'easeInOut',
+        const buttonRect = activeTabElement.getBoundingClientRect();
+        const containerRect = containerElement.getBoundingClientRect();
+        const relativeLeft = buttonRect.left - containerRect.left + containerElement.scrollLeft;
+        const buttonCenter = relativeLeft + (buttonRect.width / 2);
+        const underlineStart = buttonCenter - (newWidth / 2);
+
+        setUnderlineWidth(newWidth);
+        setUnderlineLeft(underlineStart);
+        setIsInitialized(true);
+      }
+    } else {
+      // If refs aren't available yet, retry after a short delay
+      setTimeout(() => {
+        updateUnderline();
+      }, 10);
+    }
+
+    if (path && !isSearchOverlayActive && !path.startsWith('#')) {
+      navigate(path, { 
+        preventScrollReset: true 
       });
     }
-  }, [activeTab, categories, scrollX]);
 
-  // Update underline when active tab changes
-  useEffect(() => {
-    if (activeTab) {
-      // Use setTimeout to ensure DOM is updated
-      setTimeout(updateUnderline, 0);
+    if (isSearchOverlayActive && process.env.NODE_ENV === 'development') {
+      console.log(`Search tab selected: ${id}`);
     }
-  }, [activeTab, categories]);
+  }, [setActiveTab, navigate, isSearchOverlayActive, categories, updateUnderline]);
 
-  // Set initial underline when component mounts
-  useEffect(() => {
-    if (activeTab && categories.length > 0) {
-      setTimeout(updateUnderline, 100); // Small delay to ensure fonts are loaded
-    }
+  const handleCategoriesClick = useCallback(() => {
+    navigate('/search', { preventScrollReset: true });
+  }, [navigate]);
+
+  // Tab styles
+  const getTabClassName = useCallback((isActive: boolean) => {
+    return `relative flex items-center px-3 py-2 text-sm font-medium whitespace-nowrap outline-none flex-shrink-0 ${
+      isActive
+        ? 'text-red-600'
+        : 'text-gray-700 hover:text-red-600'
+    }`;
   }, []);
 
-  useEffect(() => {
-    const unsubscribe = scrollX.on('change', latestValue => {
-      if (scrollContainerRef.current) {
-        scrollContainerRef.current.scrollLeft = latestValue;
-      }
-    });
-    return () => unsubscribe();
-  }, [scrollX]);
+  // Ref callback that updates underline when refs are set
+  const setTabRef = useCallback((el: HTMLButtonElement | null, index: number, id: string) => {
+    tabRefs.current[index] = el;
 
-  const handleTabClick = (id: string, path?: string) => {
-    console.log('Tab clicked:', id, 'Navigating to:', path);
-    setActiveTab(id);
-
-    // Only navigate if it's a regular category tab with a path and search overlay is not active
-    if (path && !isSearchOverlayActive && !path.startsWith('#')) {
-      navigate(path);
+    // If this is the active tab and we have the element, update underline
+    if (el && id === activeTab) {
+      setTimeout(() => {
+        updateUnderline();
+      }, 0);
     }
-
-    // For search tabs or when search overlay is active, handle search filtering
-    if (isSearchOverlayActive) {
-      console.log(`Search tab selected: ${id}`);
-      // Implement search filtering logic here based on the tab
-      // You can dispatch an event or call a callback function
-    }
-  };
-
-  const handleCategoriesClick = () => {
-    navigate('/search');
-  };
+  }, [activeTab, updateUnderline]);
 
   return (
-    <div
-      className="relative w-full transition-all duration-700 overflow-hidden"
-      style={{
-        maxHeight: '40px',
-        opacity: 1,
-        backgroundColor: 'white',
-      }}
-    >
-      {/* Tabs List */}
-        <div className="h-full w-full">
-          <div
-            ref={scrollContainerRef}
-            className="flex items-center gap-2 overflow-x-auto no-scrollbar h-full w-full relative"
-            style={{ 
-              scrollbarWidth: 'none', 
-              msOverflowStyle: 'none',
-              WebkitOverflowScrolling: 'touch',
-              paddingRight: isSearchOverlayActive ? '0px' : '2.5rem' // 2.5rem = pr-10
-            }}
-          >
+    <div className="relative w-full overflow-hidden bg-white" style={{ maxHeight: '40px' }}>
+      <div className="h-full w-full">
+        <div
+          ref={scrollContainerRef}
+          className="flex items-center gap-1 overflow-x-auto no-scrollbar h-full w-full relative"
+          style={{ 
+            scrollbarWidth: 'none', 
+            msOverflowStyle: 'none',
+            WebkitOverflowScrolling: 'touch',
+            paddingRight: isSearchOverlayActive ? '0px' : '2.5rem',
+          }}
+        >
           {categories.map(({ id, name, icon, path }, index) => (
             <button
               key={id}
-              ref={el => (tabRefs.current[index] = el)}
+              ref={el => setTabRef(el, index, id)}
               onClick={() => handleTabClick(id, path)}
               aria-pressed={activeTab === id}
-              className={`relative flex items-center px-2 py-2 text-sm font-medium whitespace-nowrap transition-all duration-200 ease-in-out outline-none flex-shrink-0 ${
-                activeTab === id
-                  ? 'text-red-600'
-                  : 'text-gray-700 hover:text-red-600'
-              }`}
+              className={getTabClassName(activeTab === id)}
             >
-              
-              <span className="font-medium">{name}</span>
+              {icon && <span className="mr-2">{icon}</span>}
+              <span className="font-medium select-none">{name}</span>
             </button>
           ))}
 
-          {/* Animated underline - positioned absolutely within the scroll container */}
-          {activeTab && (
+          {/* Static underline - no animation */}
+          {activeTab && underlineWidth > 0 && (
             <div
-              className="absolute bottom-0 h-1 bg-gradient-to-r from-red-500 to-red-600 rounded-full transition-all duration-300 ease-out"
+              className="absolute bottom-0 h-1 bg-gradient-to-r from-red-500 to-red-600 rounded-full"
               style={{ 
                 width: underlineWidth,
                 left: underlineLeft,
-                transform: 'translateZ(0)', // Hardware acceleration
               }}
             />
           )}
         </div>
       </div>
 
-      {/* Icon Button on Right */}
       {showCategoriesButton && !isSearchOverlayActive && (
         <div className="absolute top-0 right-0 h-full flex items-center z-20 bg-white">
           <div className="h-6 w-px bg-gray-200 opacity-50" />
           <button
             type="button"
             onClick={handleCategoriesClick}
-            className="p-2 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-all duration-200"
+            className="p-2 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-colors duration-150"
             aria-label={t('allCategories', { ns: 'categories' })}
           >
             <LayoutGrid className="h-5 w-5" />

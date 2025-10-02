@@ -15,9 +15,10 @@ import LocationListScreen from "@/components/home/header/LocationListScreen";
 import AuthOverlay from "@/components/auth/AuthOverlay";
 import { useAuth } from "@/contexts/auth/AuthContext";
 import { useTranslation } from 'react-i18next';
-import { useHeaderFilter } from "@/contexts/HeaderFilterContext";
+import { HeaderFilterProvider, useHeaderFilter } from "@/contexts/HeaderFilterContext";
 
-export default function MainLayout() {
+// Create a wrapper component that uses the hook
+function MainLayoutContent() {
   const isMobile = useIsMobile();
   const location = useLocation();
   const pathname = location.pathname;
@@ -203,9 +204,9 @@ export default function MainLayout() {
           pathname === '/categories/automotive' ||
           pathname.startsWith('/seller-dashboard')
         ) && (
-<div className=" z-30">
-          <IndexBottomNav />
-</div>
+          <div className="z-30">
+            <IndexBottomNav />
+          </div>
         )}
 
         {/* Product Upload Overlay */}
@@ -242,5 +243,14 @@ export default function MainLayout() {
           onClose={() => setIsAuthOverlayOpen(false)}
         />
       </div>
+  );
+}
+
+// Main export that wraps with provider
+export default function MainLayout() {
+  return (
+    <HeaderFilterProvider>
+      <MainLayoutContent />
+    </HeaderFilterProvider>
   );
 }

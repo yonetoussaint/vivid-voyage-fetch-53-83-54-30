@@ -1,15 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllProducts } from "@/integrations/supabase/products";
 import PageSkeleton from "@/components/skeletons/PageSkeleton";
 import { PageContainer } from "@/components/layout/PageContainer";
 import SuperDealsSection from "@/components/home/SuperDealsSection";
-import BookGenreFlashDeals from "@/components/home/BookGenreFlashDeals";
 import FlashDeals from "@/components/home/FlashDeals";
 import SimpleFlashDeals from "@/components/home/SimpleFlashDeals";
-import SpaceSavingCategories from "@/components/home/SpaceSavingCategories"
-import ElectronicsSubcategories from "@/components/home/ElectronicsSubcategories";
+import SpaceSavingCategories from "@/components/home/SpaceSavingCategories";
 import TopBrands from "@/components/home/TopBrands";
 import VendorProductCarousel from "@/components/home/VendorProductCarousel";
 import BenefitsBanner from "@/components/home/BenefitsBanner";
@@ -18,6 +16,7 @@ import MobileOptimizedReels from "@/components/home/MobileOptimizedReels";
 import PopularSearches from "@/components/home/PopularSearches";
 import NewArrivalsSection from "@/components/home/NewArrivalsSection";
 import HeroBanner from "@/components/home/HeroBanner";
+import { useHeaderFilter } from "@/contexts/HeaderFilterContext";
 
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -47,9 +46,16 @@ interface ForYouContentProps {
 
 const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   // State for filter functionality
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
+
+  // Header filter context for news ticker functionality
+  const {
+    setHeaderMode,
+    headerMode
+  } = useHeaderFilter();
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["products", category],
@@ -57,6 +63,12 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
     staleTime: 60000,
     refetchOnWindowFocus: true,
   });
+
+  // Scroll detection refs
+  const scrollY = useRef(0);
+  const ticking = useRef(false);
+  const heroBannerRef = useRef<HTMLDivElement>(null);
+  const newsTickerRef = useRef<HTMLDivElement>(null);
 
   // Define filter categories
   const filterCategories = [
@@ -112,14 +124,92 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   };
 
   const isFilterDisabled = (filterId: string) => {
-    // Example: disable price filter if no products are available
-    return false; // You can add custom logic here
+    return false;
   };
 
   // Custom handler function
   const yourCustomHandler = () => {
     navigate('/reels');
   };
+
+  // Improved scroll detection for header mode switching
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!ticking.current) {
+        requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          const scrollDelta = currentScrollY - scrollY.current;
+
+          // Get header element
+          const header = document.getElementById("ali-header");
+          if (!header) return;
+
+          const headerHeight = header.getBoundingClientRect().height;
+
+          // Find the news ticker element in the hero banner
+          const newsTicker = document.querySelector('.news-ticker');
+
+          if (newsTicker) {
+            const newsTickerRect = newsTicker.getBoundingClientRect();
+
+            // Calculate when news ticker reaches the bottom of the header
+            const newsTickerTopRelativeToHeader = newsTickerRect.top - headerHeight;
+
+            // More precise timing: switch to news when news ticker is about to be covered by header
+            const shouldShowNews = newsTickerTopRelativeToHeader <= 0;
+
+            // Determine scroll direction with threshold to prevent jitter
+            const scrollThreshold = 2; // pixels
+            const isScrollingDown = scrollDelta > scrollThreshold;
+            const isScrollingUp = scrollDelta < -scrollThreshold;
+
+            // Smart switching logic
+            if (shouldShowNews && isScrollingDown) {
+              // Scrolling down and news ticker is passing header - show news
+              setHeaderMode('news');
+            } else if (isScrollingUp) {
+              // Any significant scroll up - immediately show categories
+              setHeaderMode('categories');
+            } else if (currentScrollY <= headerHeight) {
+              // Near top of page - always show categories
+              setHeaderMode('categories');
+            }
+
+            console.log('Scroll detection:', {
+              currentScrollY,
+              scrollDelta,
+              shouldShowNews,
+              headerMode,
+              newsTickerTop: newsTickerRect.top,
+              headerHeight
+            });
+          }
+
+          scrollY.current = currentScrollY;
+          ticking.current = false;
+        });
+
+        ticking.current = true;
+      }
+    };
+
+    // Use passive scroll listener for better performance
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    // Initial check
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [setHeaderMode, headerMode]);
+
+  // Reset to categories when component unmounts
+  useEffect(() => {
+    return () => {
+      setHeaderMode('categories');
+    };
+  }, [setHeaderMode]);
 
   if (isLoading) {
     return <PageSkeleton />;
@@ -181,11 +271,15 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       {/* Traditional component layout - each shows only once */}
       <div className="space-y-2">
 
-        {/* Hero Banner with filter props */}
-      <HeroBanner />
+        {/* Hero Banner with news ticker */}
+        <div ref={heroBannerRef}>
+          <HeroBanner 
+            showNewsTicker={true}
+          />
+        </div>
 
         <SpaceSavingCategories/>
-        
+
         <FlashDeals
           showCountdown={true}
         />
