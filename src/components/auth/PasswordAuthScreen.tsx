@@ -41,20 +41,21 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
   const handleSignIn = async () => {
     if (!password.trim() || isLoading || authLoading) return;
 
-    console.log('PasswordAuthScreen: handleSignIn called');
+    console.log('PasswordAuthScreen: handleSignIn called for email:', email);
     setIsLoading(true);
     setError('');
 
     try {
-      const { error: loginError } = await login(email, password);
+      console.log('Calling login function...');
+      const { error: loginError } = await login(email.trim().toLowerCase(), password);
 
       if (loginError) {
-        console.error('Login error:', loginError);
-        setError(loginError || 'Invalid email or password. Please try again.');
+        console.error('Login error received:', loginError);
+        setError(loginError);
         setPassword('');
         setIsPasswordValid(false);
         passwordInputRef.current?.focus();
-        toast.error(loginError || 'Failed to sign in. Please check your credentials.');
+        toast.error(loginError);
         return;
       }
 

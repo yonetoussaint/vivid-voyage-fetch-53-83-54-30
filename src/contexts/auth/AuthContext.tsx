@@ -104,24 +104,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signup = async (email: string, password: string, fullName?: string) => {
     try {
+      console.log('Attempting to signup with email:', email);
+      
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: email.trim().toLowerCase(),
         password,
         options: {
           data: {
             full_name: fullName,
           },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 
       if (error) {
         console.error('Signup error:', error);
-        return { error: error.message };
+        
+        let errorMessage = error.message;
+        if (error.message.includes('already registered') || error.message.includes('already exists')) {
+          errorMessage = 'An account with this email already exists. Please sign in instead.';
+        } else if (error.message.includes('Password should be')) {
+          errorMessage = 'Password must be at least 6 characters long.';
+        }
+        
+        return { error: errorMessage };
       }
 
       if (data.user) {
         console.log('User signed up successfully:', data.user.email);
-        // Note: User may need to verify email depending on your Supabase settings
+        console.log('Confirmation required:', !data.session);
+        
+        if (!data.session) {
+          console.log('Email confirmation required - check your inbox');
+        }
       }
 
       return {};
@@ -133,22 +148,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     try {
+      console.log('Attempting to login with email:', email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim().toLowerCase(),
         password,
       });
 
       if (error) {
-        console.error('Login error:', error);
+        console.error('Login error details:', {
+          message: error.message,
+          status: error.status,
+          name: error.name
+        });
+        
         // Provide more specific error messages
         let errorMessage = error.message;
         
-        if (error.message.includes('Invalid login credentials')) {
+        if (error.message.includes('Invalid login credentials') || error.message.includes('Invalid')) {
           errorMessage = 'Invalid email or password. Please check your credentials and try again.';
-        } else if (error.message.includes('Email not confirmed')) {
-          errorMessage = 'Please verify your email address before logging in.';
-        } else if (error.message.includes('network')) {
+        } else if (error.message.includes('Email not confirmed') || error.message.includes('not confirmed')) {
+          errorMessage = 'Please verify your email address before logging in. Check your inbox for a confirmation email.';
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
           errorMessage = 'Network error. Please check your internet connection.';
+        } else if (error.message.includes('User not found')) {
+          errorMessage = 'No account found with this email. Please sign up first.';
         }
         
         return { error: errorMessage };
@@ -156,9 +180,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (data.user) {
         console.log('User logged in successfully:', data.user.email);
+        console.log('User data:', data.user);
         const userData = mapSupabaseUser(data.user);
         setUser(userData);
         setIsAuthenticated(true);
+      } else {
+        console.warn('Login succeeded but no user data returned');
+        return { error: 'Login failed. Please try again.' };
       }
 
       return {};
