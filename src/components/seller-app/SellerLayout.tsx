@@ -8,6 +8,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import ReusableSearchBar from '@/components/shared/ReusableSearchBar';
+import { useQuery } from '@tanstack/react-query';
+import { fetchAllProducts } from '@/integrations/supabase/products';
 
 import TabsNavigation from '@/components/home/TabsNavigation';
 
@@ -50,6 +52,12 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
   };
 
   const [activeTab, setActiveTab] = useState(getCurrentTab());
+
+  // Fetch products from database
+  const { data: products = [], isLoading: productsLoading } = useQuery({
+    queryKey: ['products', 'all'],
+    queryFn: fetchAllProducts,
+  });
 
   // Check if we're on the products tab
   const isProductsTab = activeTab === 'products';
@@ -299,7 +307,15 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
 
           {/* Main Content */}
           <div className="w-full">
-            {children}
+            {React.Children.map(children, child => {
+              if (React.isValidElement(child)) {
+                return React.cloneElement(child, { 
+                  products, 
+                  isLoading: productsLoading 
+                } as any);
+              }
+              return child;
+            })}
           </div>
         </main>
       </div>
