@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface User {
   id: string;
@@ -11,8 +13,9 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (userData: User, token: string) => void;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<{ error?: string }>;
+  signup: (email: string, password: string, fullName?: string) => Promise<{ error?: string }>;
+  logout: () => Promise<void>;
   checkAuthStatus: () => Promise<void>;
 }
 
@@ -31,143 +34,143 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const API_BASE_URL = 'https://supabase-y8ak.onrender.com/api';
+  // Convert Supabase user to our User type
+  const mapSupabaseUser = (supabaseUser: SupabaseUser): User => {
+    return {
+      id: supabaseUser.id,
+      email: supabaseUser.email || '',
+      full_name: supabaseUser.user_metadata?.full_name,
+      profile_picture: supabaseUser.user_metadata?.profile_picture,
+    };
+  };
 
   useEffect(() => {
-    // Check authentication status immediately on app load
+    // Check initial session
     checkAuthStatus();
 
-    // Listen for auth state changes from other components
-    const handleAuthChange = () => {
-      console.log('Auth state change event detected, rechecking auth status');
-      checkAuthStatus();
-    };
+    // Listen for auth changes (login, logout, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event);
 
-    window.addEventListener('authStateChanged', handleAuthChange);
+        if (session?.user) {
+          const userData = mapSupabaseUser(session.user);
+          setUser(userData);
+          setIsAuthenticated(true);
+        } else {
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+
+        setIsLoading(false);
+      }
+    );
 
     return () => {
-      window.removeEventListener('authStateChanged', handleAuthChange);
+      subscription.unsubscribe();
     };
   }, []);
 
   const checkAuthStatus = async () => {
     try {
       console.log('Checking authentication status...');
-      const token = localStorage.getItem('authToken');
+      const { data: { session }, error } = await supabase.auth.getSession();
 
-      // If no token exists, user is not authenticated
-      if (!token) {
-        console.log('No token found in localStorage');
+      if (error) {
+        console.error('Error getting session:', error);
         setUser(null);
         setIsAuthenticated(false);
-        setIsLoading(false);
         return;
       }
 
-      // Skip verification for temporary tokens (from success screen)
-      if (token.startsWith('authenticated_')) {
-        console.log('Found temporary token, checking for stored user info');
-        const userInfo = localStorage.getItem('userInfo') || localStorage.getItem('user');
-
-        if (userInfo) {
-          try {
-            const userData = JSON.parse(userInfo);
-            console.log('Using stored user data:', userData.email);
-            setUser(userData);
-            setIsAuthenticated(true);
-          } catch (error) {
-            console.error('Error parsing stored user data:', error);
-            clearAuthData();
-          }
-        } else {
-          console.log('No user info found with temporary token');
-          clearAuthData();
-        }
-        setIsLoading(false);
-        return;
-      }
-
-      // Verify real token with backend
-      console.log('Verifying token with backend...');
-      const response = await fetch(`${API_BASE_URL}/verify-token`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Token verification successful:', data.user?.email || 'Unknown user');
-
-        // Use backend user data if available
-        const userData = data.user || JSON.parse(localStorage.getItem('userInfo') || '{}');
+      if (session?.user) {
+        console.log('Session found for user:', session.user.email);
+        const userData = mapSupabaseUser(session.user);
         setUser(userData);
         setIsAuthenticated(true);
-
-        // Update stored user info with latest data from backend
-        if (data.user) {
-          localStorage.setItem('userInfo', JSON.stringify(data.user));
-        }
       } else {
-        console.log('Token verification failed, status:', response.status);
-        clearAuthData();
+        console.log('No active session');
+        setUser(null);
+        setIsAuthenticated(false);
       }
     } catch (error) {
       console.error('Error checking auth status:', error);
-      clearAuthData();
+      setUser(null);
+      setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const clearAuthData = () => {
-    console.log('Clearing authentication data');
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userInfo');
-    localStorage.removeItem('user');
-    localStorage.removeItem('isAuthenticated');
-    setUser(null);
-    setIsAuthenticated(false);
+  const signup = async (email: string, password: string, fullName?: string) => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
+        },
+      });
+
+      if (error) {
+        console.error('Signup error:', error);
+        return { error: error.message };
+      }
+
+      if (data.user) {
+        console.log('User signed up successfully:', data.user.email);
+        // Note: User may need to verify email depending on your Supabase settings
+      }
+
+      return {};
+    } catch (error: any) {
+      console.error('Signup exception:', error);
+      return { error: error.message || 'An error occurred during signup' };
+    }
   };
 
-  const login = (userData: User, token: string) => {
-    console.log('Logging in user:', userData.email);
-    localStorage.setItem('authToken', token);
-    localStorage.setItem('userInfo', JSON.stringify(userData));
-    localStorage.setItem('isAuthenticated', 'true');
-    setUser(userData);
-    setIsAuthenticated(true);
+  const login = async (email: string, password: string) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    // Trigger auth state change event
-    window.dispatchEvent(new Event('authStateChanged'));
+      if (error) {
+        console.error('Login error:', error);
+        return { error: error.message };
+      }
+
+      if (data.user) {
+        console.log('User logged in successfully:', data.user.email);
+        const userData = mapSupabaseUser(data.user);
+        setUser(userData);
+        setIsAuthenticated(true);
+      }
+
+      return {};
+    } catch (error: any) {
+      console.error('Login exception:', error);
+      return { error: error.message || 'An error occurred during login' };
+    }
   };
 
   const logout = async () => {
-    console.log('Logging out user');
-
     try {
-      const token = localStorage.getItem('authToken');
+      console.log('Logging out user');
+      const { error } = await supabase.auth.signOut();
 
-      // Notify backend about logout if we have a real token
-      if (token && !token.startsWith('authenticated_')) {
-        await fetch(`${API_BASE_URL}/auth/logout`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+      if (error) {
+        console.error('Logout error:', error);
       }
+
+      setUser(null);
+      setIsAuthenticated(false);
     } catch (error) {
-      console.error('Error notifying backend about logout:', error);
+      console.error('Logout exception:', error);
     }
-
-    clearAuthData();
-
-    // Trigger auth state change event
-    window.dispatchEvent(new Event('authStateChanged'));
   };
 
   return (
@@ -176,6 +179,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isAuthenticated,
       isLoading,
       login,
+      signup,
       logout,
       checkAuthStatus
     }}>

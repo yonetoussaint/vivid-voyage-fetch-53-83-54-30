@@ -266,6 +266,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
   };
 
   // Fetch real user data for counters
+  // Fetch real user data for counters
   const fetchUserDataCounts = async (userId: string) => {
     try {
       console.log('🔍 Fetching user data counts for user:', userId);
@@ -273,7 +274,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       // First, run debug to see what's in the database
       await debugDatabaseState(userId);
 
-      // Fetch all counts in parallel
+      // Fetch all counts in parallel with better error handling
       const [
         wishlistResult,
         cartResult,
@@ -283,28 +284,28 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       ] = await Promise.all([
         supabase
           .from('wishlist')
-          .select('id')
+          .select('id', { count: 'exact', head: true })
           .eq('user_id', userId),
 
         supabase
           .from('cart')
-          .select('id')
+          .select('id', { count: 'exact', head: true })
           .eq('user_id', userId),
 
         supabase
           .from('notifications')
-          .select('id')
+          .select('id', { count: 'exact', head: true })
           .eq('user_id', userId)
           .eq('is_read', false),
 
         supabase
           .from('user_addresses')
-          .select('id')
+          .select('id', { count: 'exact', head: true })
           .eq('user_id', userId),
 
         supabase
           .from('help_tickets')
-          .select('id')
+          .select('id', { count: 'exact', head: true })
           .eq('user_id', userId)
           .eq('status', 'open')
       ]);
@@ -313,12 +314,19 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       console.log('📊 Cart result:', cartResult);
       console.log('📊 Notifications result:', notificationsResult);
 
+      // Check for errors in each result
+      if (wishlistResult.error) console.error('Wishlist error:', wishlistResult.error);
+      if (cartResult.error) console.error('Cart error:', cartResult.error);
+      if (notificationsResult.error) console.error('Notifications error:', notificationsResult.error);
+      if (addressesResult.error) console.error('Addresses error:', addressesResult.error);
+      if (helpTicketsResult.error) console.error('Help tickets error:', helpTicketsResult.error);
+
       const counts = {
-        wishlist: wishlistResult.data?.length || 0,
-        cart: cartResult.data?.length || 0,
-        notifications: notificationsResult.data?.length || 0,
-        addresses: addressesResult.data?.length || 0,
-        help: helpTicketsResult.data?.length || 0
+        wishlist: wishlistResult.count || 0,
+        cart: cartResult.count || 0,
+        notifications: notificationsResult.count || 0,
+        addresses: addressesResult.count || 0,
+        help: helpTicketsResult.count || 0
       };
 
       console.log('✅ Final counts:', counts);
@@ -334,7 +342,6 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       };
     }
   };
-
   // Helper function to get count for specific category
   const getCountForCategory = (categoryId: string, userCounts: any): number => {
     try {
