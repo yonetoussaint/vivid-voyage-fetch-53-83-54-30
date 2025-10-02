@@ -40,7 +40,6 @@ import {
   Clock
 } from "lucide-react";
 import { useLocation } from 'react-router-dom';
-import AliExpressHeader from '@/components/home/AliExpressHeader';
 
 interface ForYouContentProps {
   category: string;
@@ -179,8 +178,6 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
 
   return (
     <PageContainer className="overflow-hidden pb-16 relative">
-      
-
       {/* Traditional component layout - each shows only once */}
       <div className="space-y-2">
 
@@ -282,22 +279,8 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   );
 };
 
-// Define categories for marketplace homepage
-const categories = [
-  { id: 'recommendations', name: 'For You', icon: <Home className="h-3 w-3" />, path: '/for-you' },
-  { id: 'electronics', name: 'Electronics', icon: <Smartphone className="h-3 w-3" />, path: '/electronics' },
-  { id: 'fashion', name: 'Fashion', icon: <Shirt className="h-3 w-3" />, path: '/fashion' },
-  { id: 'kids', name: 'Kids', icon: <Baby className="h-3 w-3" />, path: '/kids' },
-  { id: 'home', name: 'Home & Garden', icon: <Home className="h-3 w-3" />, path: '/home-garden' },
-  { id: 'sports', name: 'Sports', icon: <Dumbbell className="h-3 w-3" />, path: '/sports' },
-  { id: 'beauty', name: 'Beauty', icon: <Sparkles className="h-3 w-3" />, path: '/beauty' },
-  { id: 'automotive', name: 'Automotive', icon: <Car className="h-3 w-3" />, path: '/automotive' },
-];
-
 export default function Index() {
   const [activeCategory, setActiveCategory] = useState('recommendations');
-  const [activeTab, setActiveTab] = useState('recommendations');
-  const location = useLocation();
 
   // Listen for category changes from header
   useEffect(() => {
@@ -310,27 +293,6 @@ export default function Index() {
     return () => window.removeEventListener('categoryChange', handleCategoryChange as EventListener);
   }, []);
 
-  // Update active tab based on location
-  useEffect(() => {
-    if (location.pathname === '/electronics') {
-      setActiveTab('electronics');
-    } else if (location.pathname === '/fashion') {
-      setActiveTab('fashion');
-    } else if (location.pathname === '/kids') {
-      setActiveTab('kids');
-    } else if (location.pathname === '/home-garden') {
-      setActiveTab('home');
-    } else if (location.pathname === '/sports') {
-      setActiveTab('sports');
-    } else if (location.pathname === '/beauty') {
-      setActiveTab('beauty');
-    } else if (location.pathname === '/automotive') {
-      setActiveTab('automotive');
-    } else if (location.pathname === '/' || location.pathname === '/for-you') {
-      setActiveTab('recommendations');
-    }
-  }, [location.pathname]);
-
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -340,11 +302,6 @@ export default function Index() {
         exit={{ opacity: 0, y: -20 }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
       >
-        <AliExpressHeader 
-          categories={categories} 
-          activeTab={activeTab} 
-          setActiveTab={setActiveTab} 
-        />
         <ForYouContent category={activeCategory} />
       </motion.div>
     </AnimatePresence>

@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import Footer from "@/components/layout/Footer";
 import IndexBottomNav from "@/components/layout/IndexBottomNav";
 import { Outlet, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-// Remove this import since we're handling headers in individual components
-// import AliExpressHeader from "@/components/home/AliExpressHeader";
+import AliExpressHeader from "@/components/home/AliExpressHeader";
 import { useAuthOverlay } from "@/context/AuthOverlayContext";
-
+import { Home, Smartphone, Shirt, Baby, Dumbbell, Sparkles, Car, Book } from "lucide-react";
 import { useScreenOverlay } from "@/context/ScreenOverlayContext";
 import FloatingActionButton from "./FloatingActionButton";
 import ProductUploadOverlay from "@/components/product/ProductUploadOverlay";
@@ -15,6 +14,7 @@ import LocationScreen from "@/components/home/header/LocationScreen";
 import LocationListScreen from "@/components/home/header/LocationListScreen";
 import AuthOverlay from "@/components/auth/AuthOverlay";
 import { useAuth } from "@/contexts/auth/AuthContext";
+import { useTranslation } from 'react-i18next';
 
 export default function MainLayout() {
   const isMobile = useIsMobile();
@@ -31,10 +31,37 @@ export default function MainLayout() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showProductUpload, setShowProductUpload] = useState(false);
+  const [activeTab, setActiveTab] = useState('recommendations');
 
   const { openAuthOverlay, isAuthOverlayOpen, setIsAuthOverlayOpen } = useAuthOverlay();
   const { user } = useAuth();
   const { isLocationListScreenOpen, locationListScreenData, setLocationListScreenOpen, isLocationScreenOpen, setLocationScreenOpen } = useScreenOverlay();
+  const { t } = useTranslation();
+
+  // Define categories once at layout level
+  const categories = useMemo(() => [
+    { id: 'recommendations', name: t('forYou', { ns: 'home' }), path: '/for-you' },
+    { id: 'electronics', name: t('electronics', { ns: 'categories' }), path: '/categories/electronics' },
+    { id: 'home', name: t('homeLiving', { ns: 'categories' }), path: '/categories/home-living' },
+    { id: 'fashion', name: t('fashion', { ns: 'categories' }), path: '/categories/fashion' },
+    { id: 'entertainment', name: t('entertainment', { ns: 'categories' }), path: '/categories/entertainment' },
+    { id: 'kids', name: t('kidsHobbies', { ns: 'categories' }), path: '/categories/kids-hobbies' },
+    { id: 'sports', name: t('sports', { ns: 'categories' }), path: '/categories/sports-outdoors' },
+    { id: 'automotive', name: t('automotive', { ns: 'categories' }), path: '/categories/automotive' },
+    { id: 'women', name: t('women', { ns: 'categories' }), path: '/categories/women' },
+    { id: 'men', name: t('men', { ns: 'categories' }), path: '/categories/men' },
+    { id: 'books', name: t('books', { ns: 'categories' }), path: '/categories/books' },
+  ], [t]);
+
+  // Update active tab based on location
+  useEffect(() => {
+    const currentCategory = categories.find(cat => location.pathname === cat.path);
+    if (currentCategory) {
+      setActiveTab(currentCategory.id);
+    } else if (location.pathname === '/' || location.pathname === '/for-you') {
+      setActiveTab('recommendations');
+    }
+  }, [location.pathname, categories]);
 
   const toggleFavorite = () => {
     setIsFavorite(!isFavorite);
@@ -88,11 +115,32 @@ export default function MainLayout() {
     }
   }, [pathname, openAuthOverlay]);
 
+  // Determine if we should show the header
+  const shouldShowHeader = [
+    '/',
+    '/for-you',
+    '/categories/electronics',
+    '/categories/home-living',
+    '/categories/fashion',
+    '/categories/entertainment',
+    '/categories/kids-hobbies',
+    '/categories/sports-outdoors',
+    '/categories/automotive',
+    '/categories/women',
+    '/categories/men',
+    '/categories/books'
+  ].includes(pathname);
+
   return (
     <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
         <style dangerouslySetInnerHTML={{ __html: headerHeightStyle }} />
 
-        {/* Remove AliExpressHeader from here - let individual pages handle their own headers */}
+        {/* Show AliExpressHeader for category pages */}
+        {shouldShowHeader && (
+          <AliExpressHeader 
+            activeTabId={activeTab}
+          />
+        )}
 
         <main className="flex-grow relative">
           <Outlet />
