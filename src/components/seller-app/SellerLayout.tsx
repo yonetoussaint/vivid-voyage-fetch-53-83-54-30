@@ -10,6 +10,9 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import ReusableSearchBar from '@/components/shared/ReusableSearchBar';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAllProducts } from '@/integrations/supabase/products';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { useSellerByUserId } from '@/hooks/useSellerByUserId';
+import { supabase } from '@/integrations/supabase/client';
 
 import TabsNavigation from '@/components/home/TabsNavigation';
 
@@ -92,13 +95,25 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
     label: item.name
   }));
 
-  // Mock seller data - in real app this would come from context or props
-  const mockSeller = {
-    id: 'seller-123',
-    business_name: "John's Store",
-    full_name: 'John Doe',
-    logo_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-    followers_count: 1250
+  // Get authenticated user
+  const { user } = useAuth();
+  
+  // Fetch seller data for the current user
+  const { data: sellerData, isLoading: sellerLoading } = useSellerByUserId(user?.id || '');
+  
+  // Get seller logo URL
+  const getSellerLogoUrl = (imagePath?: string): string => {
+    if (!imagePath) return "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face";
+    const { data } = supabase.storage.from('seller-logos').getPublicUrl(imagePath);
+    return data.publicUrl;
+  };
+  
+  // Use real seller data or fallback
+  const seller = sellerData || {
+    id: user?.id || 'seller-123',
+    name: user?.full_name || "My Store",
+    image_url: undefined,
+    followers_count: 0
   };
 
   // Header height calculation for positioning elements
@@ -250,28 +265,45 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
           {isProductsTab && (
             <div ref={sellerInfoRef} className="w-full bg-white border-b">
               <div className="px-4 py-4">
-                <div className="flex items-center gap-4">
-                  {/* Profile Picture */}
-                  <Avatar className="w-16 h-16 flex-shrink-0">
-                    <AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face" />
-                    <AvatarFallback>JS</AvatarFallback>
-                  </Avatar>
-
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-1">
-                      <div className="w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center">
-                        <Store className="w-4 h-4 text-white" />
-                      </div>
-                      <h1 className="text-xl font-bold text-gray-900">John's Store</h1>
-                    </div>
-                    <p className="text-sm text-gray-500 mb-2">Premium Seller Dashboard</p>
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <span>⭐ Premium Account</span>
-                      <span>📊 Dashboard Analytics</span>
-                      <span>🛡️ Verified Business</span>
+                {sellerLoading ? (
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 bg-gray-200 rounded-full animate-pulse" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-6 bg-gray-200 rounded w-1/3 animate-pulse" />
+                      <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse" />
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="flex items-center gap-4">
+                    {/* Profile Picture */}
+                    <Avatar className="w-16 h-16 flex-shrink-0">
+                      <AvatarImage src={getSellerLogoUrl(seller.image_url)} />
+                      <AvatarFallback>{seller.name?.substring(0, 2).toUpperCase() || 'SE'}</AvatarFallback>
+                    </Avatar>
+
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-1">
+                        <div className="w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center">
+                          <Store className="w-4 h-4 text-white" />
+                        </div>
+                        <h1 className="text-xl font-bold text-gray-900">{seller.name}</h1>
+                        {sellerData?.verified && (
+                          <span className="text-blue-600">✓</span>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-500 mb-2">
+                        {sellerData?.verified ? 'Premium Seller Dashboard' : 'Seller Dashboard'}
+                      </p>
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <span>👥 {seller.followers_count} followers</span>
+                        {sellerData?.total_sales > 0 && (
+                          <span>📦 {sellerData.total_sales} sales</span>
+                        )}
+                        {sellerData?.verified && <span>✓ Verified</span>}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
