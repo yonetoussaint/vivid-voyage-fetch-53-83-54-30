@@ -131,6 +131,9 @@ export default function MainLayout() {
     '/categories/books'
   ].includes(pathname);
 
+  // Check if current page is electronics (has filter functionality)
+  const isElectronicsPage = pathname === '/categories/electronics';
+
   return (
     <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
         <style dangerouslySetInnerHTML={{ __html: headerHeightStyle }} />
@@ -139,6 +142,8 @@ export default function MainLayout() {
         {shouldShowHeader && (
           <AliExpressHeader 
             activeTabId={activeTab}
+            // Electronics page will handle its own filter bar logic
+            showFilterBar={false}
           />
         )}
 

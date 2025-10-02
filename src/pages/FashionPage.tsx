@@ -251,12 +251,6 @@ export default function ElectronicsPage() {
 
   return (
     <PageContainer className="overflow-hidden pb-16 relative">
-      {/* Header - shows CategoryTabs by default, ProductFilterBar when scrolled */}
-      <AliExpressHeader 
-        activeTabId="electronics" 
-        showFilterBar={showFilterBarInHeader}
-      />
-
       {/* Hero Banner with the actual ProductFilterBar */}
       <div ref={heroBannerRef}>
         <HeroBanner showNewsTicker={false} />
