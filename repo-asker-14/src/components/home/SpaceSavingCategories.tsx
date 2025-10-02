@@ -68,7 +68,7 @@ const CategoryShortcut = ({ category, onCategorySelect }) => {
           <IconComponent className={`w-7 h-7 ${category.iconBg}`} />
         </div>
 
-        {category.count !== undefined && category.count > 0 && (
+        {category.count !== undefined && (
           <div className="absolute -top-2 -right-2 min-w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-medium px-1 border-2 border-white shadow-sm z-10">
             {category.count > 99 ? '99+' : category.count}
           </div>
@@ -103,7 +103,7 @@ const DraggableCategoryItem = ({ category, index, isDragging, onDragStart, onDra
           <IconComponent className={`w-5 h-5 ${category.iconBg}`} />
         </div>
 
-        {category.count !== undefined && category.count > 0 && (
+        {category.count !== undefined && (
           <div className="absolute -top-2 -right-2 min-w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-medium px-1 border border-white z-10">
             {category.count > 99 ? '99+' : category.count}
           </div>
@@ -112,7 +112,7 @@ const DraggableCategoryItem = ({ category, index, isDragging, onDragStart, onDra
 
       <span className="text-sm font-medium text-gray-800 flex-grow">{category.name}</span>
 
-      {category.count !== undefined && category.count > 0 && (
+      {category.count !== undefined && (
         <div className="bg-red-500 text-white text-xs font-medium rounded-full min-w-5 h-5 flex items-center justify-center px-1">
           {category.count > 99 ? '99+' : category.count}
         </div>
