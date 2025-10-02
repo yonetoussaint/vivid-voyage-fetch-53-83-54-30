@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import SellerLayout from '@/components/seller-app/SellerLayout';
 import SellerOverview from '@/components/seller-app/pages/SellerOverview';
-import SellerProducts from '@/components/seller-app/pages/SellerProducts';
+import SellerProducts from '@/components/seller/SellerProducts';
 import SellerOrders from '@/components/seller-app/pages/SellerOrders';
 import SellerCustomers from '@/components/seller-app/pages/SellerCustomers';
 import SellerAnalytics from '@/components/seller-app/pages/SellerAnalytics';
