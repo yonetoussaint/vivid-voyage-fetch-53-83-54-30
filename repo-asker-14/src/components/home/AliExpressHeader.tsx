@@ -18,6 +18,7 @@ import ProductFilterBar from './ProductFilterBar';
 import LocationScreen from './header/LocationScreen';
 import SearchOverlay from './SearchOverlay';
 import ReusableSearchBar from '@/components/shared/ReusableSearchBar';
+import SettingsPanel from './header/SettingsPanel';
 
 interface AliExpressHeaderProps {
   activeTabId?: string;
@@ -220,8 +221,11 @@ export default function AliExpressHeader({
 
   // Language functionality
   const handleLanguageSelect = (language: any) => {
-    setLanguage(language.code);
+    // Make sure we're calling setLanguage correctly
+    setLanguage(language.code); // This should change the language
     setLanguageQuery('');
+    // You might want to close the panel after selection
+    // setShowSettingsPanel(false);
   };
 
   const toggleLanguagePin = (languageCode: string, event: React.MouseEvent) => {
@@ -513,119 +517,24 @@ export default function AliExpressHeader({
         />
       </div>
 
-      {/* Settings Panel */}
-      {showSettingsPanel && !showLocationScreen && (
-        <>
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 animate-in fade-in duration-300"
-            onClick={toggleSettingsPanel}
-          />
-
-          <div
-            ref={settingsPanelRef}
-            className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 rounded-t-2xl shadow-lg z-40 animate-in slide-in-from-bottom duration-300"
-            style={{
-              maxHeight: '90vh',
-              overflow: 'auto',
-              WebkitOverflowScrolling: 'touch',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="sticky top-0 bg-white z-10 flex items-center justify-between p-4 border-b border-gray-100">
-              <h3 className="font-medium text-gray-900">{t('settings', 'Settings')}</h3>
-              <button
-                onClick={toggleSettingsPanel}
-                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-              >
-                <X className="h-4 w-4 text-gray-600" />
-              </button>
-            </div>
-
-            <div className="p-4 space-y-6">
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2 text-gray-700">
-                  <Globe className="h-4 w-4" />
-                  <span className="font-medium">{t('language', 'Language')}</span>
-                </div>
-
-                <div className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <Languages className="h-5 w-5 text-orange-600" />
-                    <div className="text-left">
-                      <div className="font-medium text-gray-900">
-                        {currentLanguage.nativeName || currentLanguage.name || 'English'}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {currentLanguage.name || 'English'} • {currentLanguage.code.toUpperCase()}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    {pinnedLanguages.has(currentLanguage.code) && (
-                      <Pin className="h-4 w-4 text-orange-600 fill-current" />
-                    )}
-                    <Check className="h-4 w-4 text-orange-600" />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  {filteredLanguages.slice(0, 4).map((language) => (
-                    <button
-                      key={language.code}
-                      onClick={() => handleLanguageSelect(language)}
-                      className={`p-2 text-sm rounded-lg border transition-all flex items-center justify-between ${
-                        currentLanguage.code === language.code
-                          ? 'border-orange-500 bg-orange-50 text-orange-700'
-                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                      }`}
-                    >
-                      <span>{language.nativeName}</span>
-                      {pinnedLanguages.has(language.code) && (
-                        <Pin className="h-3 w-3 text-orange-600 fill-current ml-1" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2 text-gray-700">
-                  <MapPin className="h-4 w-4" />
-                  <span className="font-medium">{t('location', 'Location')}</span>
-                </div>
-
-                <button
-                  onClick={handleOpenLocationScreen}
-                  className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-orange-300 hover:bg-orange-50 transition-colors"
-                >
-                  <div className="flex items-center space-x-3">
-                    {currentLocation.flag ? (
-                      <img
-                        src={`https://flagcdn.com/${currentLocation.flag.toLowerCase()}.svg`}
-                        alt={currentLocation.name}
-                        className="h-5 w-5 rounded object-cover"
-                      />
-                    ) : (
-                      <MapPin className="h-5 w-5 text-orange-600" />
-                    )}
-                    <div className="text-left">
-                      <div className="font-medium text-gray-900">
-                        {currentLocation.name.split(',')[0]}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {currentLocation.name}
-                      </div>
-                    </div>
-                  </div>
-                  <Edit className="h-4 w-4 text-gray-400 hover:text-orange-600" />
-                </button>
-              </div>
-            </div>
-
-            <div className="h-4 bg-white" />
-          </div>
-        </>
-      )}
+      <SettingsPanel
+        isOpen={showSettingsPanel}
+        onClose={toggleSettingsPanel}
+        currentLanguage={currentLanguage}
+        currentLocation={currentLocation}
+        supportedLanguages={supportedLanguages}
+        onLanguageChange={(language) => {
+          // This should trigger the language change
+          setLanguage(language.code);
+          setLanguageQuery('');
+        }}
+        onOpenLocationScreen={handleOpenLocationScreen}
+        // Pass the missing props
+        languageQuery={languageQuery}
+        onLanguageQueryChange={setLanguageQuery}
+        pinnedLanguages={pinnedLanguages}
+        onToggleLanguagePin={toggleLanguagePin}
+      />
 
       {/* Conditional rendering: ProductFilterBar or CategoryTabs */}
       <div className="relative overflow-hidden">
