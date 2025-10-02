@@ -9,38 +9,32 @@ export const useSellerByUserId = (userId: string) => {
 
       console.log('🔍 Fetching seller for user:', userId);
 
-      // First, try to get the user's auth data which might have seller_id
-      const { data: { user } } = await supabase.auth.getUser();
-      console.log('👤 User auth data:', user);
+      // Query the profiles table to get the seller_id
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('seller_id')
+        .eq('id', userId)
+        .maybeSingle();
 
-      let sellerId: string | null = null;
+      console.log('📊 Profile query result:', { profileData, profileError });
 
-      // Check if seller_id exists in user metadata
-      if (user && (user as any).seller_id) {
-        sellerId = (user as any).seller_id;
-        console.log('✅ Found seller_id in user object:', sellerId);
-      } else {
-        // Fallback: Try to get from profiles table
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('seller_id')
-          .eq('id', userId)
-          .single();
-
-        if (profileError) {
-          console.log('❌ Profile query error:', profileError.message);
-        }
-
-        if (profileData?.seller_id) {
-          sellerId = profileData.seller_id;
-          console.log('✅ Found seller_id in profile:', sellerId);
-        }
-      }
-
-      if (!sellerId) {
-        console.log('❌ No seller_id found in user object or profile');
+      if (profileError) {
+        console.log('❌ Profile query error:', profileError);
         return null;
       }
+
+      if (!profileData) {
+        console.log('❌ No profile found for user:', userId);
+        return null;
+      }
+
+      if (!profileData.seller_id) {
+        console.log('❌ No seller_id found in profile');
+        return null;
+      }
+
+      const sellerId = profileData.seller_id;
+      console.log('✅ Found seller_id in profile:', sellerId);
 
       // Now fetch the seller data using the seller_id
       const { data: sellerData, error: sellerError } = await supabase
@@ -50,7 +44,7 @@ export const useSellerByUserId = (userId: string) => {
         .single();
 
       if (sellerError) {
-        console.log('❌ Seller not found:', sellerError.message);
+        console.log('❌ Seller not found:', sellerError);
         return null;
       }
 
