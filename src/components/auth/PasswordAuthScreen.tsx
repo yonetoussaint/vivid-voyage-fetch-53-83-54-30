@@ -50,11 +50,11 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
 
       if (loginError) {
         console.error('Login error:', loginError);
-        setError(loginError.message || 'Invalid email or password. Please try again.');
+        setError(loginError || 'Invalid email or password. Please try again.');
         setPassword('');
         setIsPasswordValid(false);
         passwordInputRef.current?.focus();
-        toast.error(loginError.message || 'Failed to sign in. Please check your credentials.');
+        toast.error(loginError || 'Failed to sign in. Please check your credentials.');
         return;
       }
 

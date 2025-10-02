@@ -140,7 +140,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         console.error('Login error:', error);
-        return { error: error.message };
+        // Provide more specific error messages
+        let errorMessage = error.message;
+        
+        if (error.message.includes('Invalid login credentials')) {
+          errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+        } else if (error.message.includes('Email not confirmed')) {
+          errorMessage = 'Please verify your email address before logging in.';
+        } else if (error.message.includes('network')) {
+          errorMessage = 'Network error. Please check your internet connection.';
+        }
+        
+        return { error: errorMessage };
       }
 
       if (data.user) {
@@ -153,7 +164,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return {};
     } catch (error: any) {
       console.error('Login exception:', error);
-      return { error: error.message || 'An error occurred during login' };
+      return { error: error.message || 'An error occurred during login. Please try again.' };
     }
   };
 
