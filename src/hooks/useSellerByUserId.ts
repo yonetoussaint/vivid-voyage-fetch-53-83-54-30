@@ -9,42 +9,22 @@ export const useSellerByUserId = (userId: string) => {
 
       console.log('🔍 Fetching seller for user:', userId);
 
-      // Query the profiles table to get the seller_id
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('seller_id')
-        .eq('id', userId)
-        .maybeSingle();
-
-      console.log('📊 Profile query result:', { profileData, profileError });
-
-      if (profileError) {
-        console.log('❌ Profile query error:', profileError);
-        return null;
-      }
-
-      if (!profileData) {
-        console.log('❌ No profile found for user:', userId);
-        return null;
-      }
-
-      if (!profileData.seller_id) {
-        console.log('ℹ️ User has no seller profile - this is normal for non-seller accounts');
-        return null;
-      }
-
-      const sellerId = profileData.seller_id;
-      console.log('✅ Found seller_id in profile:', sellerId);
-
-      // Now fetch the seller data using the seller_id
+      // Query the sellers table directly using user_id
       const { data: sellerData, error: sellerError } = await supabase
         .from('sellers')
         .select('*')
-        .eq('id', sellerId)
-        .single();
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      console.log('📊 Seller query result:', { sellerData, sellerError });
 
       if (sellerError) {
-        console.log('❌ Seller not found:', sellerError);
+        console.log('❌ Seller query error:', sellerError);
+        return null;
+      }
+
+      if (!sellerData) {
+        console.log('ℹ️ No seller profile found for user - this is normal for non-seller accounts');
         return null;
       }
 
