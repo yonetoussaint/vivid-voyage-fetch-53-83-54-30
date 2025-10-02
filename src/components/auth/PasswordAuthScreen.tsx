@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { ArrowLeft, Lock, Check, HelpCircle, Eye, EyeOff, Mail, Loader2 } from 'lucide-react';
 import { FAVICON_OVERRIDES } from '../../constants/email';
 import { useAuth } from '../../contexts/auth/AuthContext';
+import { toast } from 'sonner';
 
 interface PasswordAuthScreenProps {
   email: string;
@@ -20,6 +21,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
   isCompact = false,
   onExpand
 }) => {
+  const { login, isLoading: authLoading } = useAuth();
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isPasswordValid, setIsPasswordValid] = useState(false);
@@ -27,7 +29,6 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
   const [error, setError] = useState<string>('');
 
   const passwordInputRef = useRef<HTMLInputElement>(null);
-  const { login } = useAuth();
 
   const API_BASE_URL = 'https://supabase-y8ak.onrender.com/api';
 
@@ -38,48 +39,32 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
   };
 
   const handleSignIn = async () => {
-    if (!isPasswordValid || isLoading) return;
+    if (!password.trim() || isLoading || authLoading) return;
 
+    console.log('PasswordAuthScreen: handleSignIn called');
     setIsLoading(true);
     setError('');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/signin`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email,
-          password: password
-        }),
-      });
+      const { error: loginError } = await login(email, password);
 
-      const data = await response.json();
-
-      if (response.ok) {
-        console.log('Sign in successful, storing token and user data');
-        
-        // Use the login function from AuthContext to handle token storage
-        // and authentication state management
-        const userData = {
-          id: data.user?.id || data.id,
-          email: email,
-          full_name: data.user?.full_name || data.full_name,
-          profile_picture: data.user?.profile_picture || data.profile_picture
-        };
-        
-        login(userData, data.token);
-        onSignInSuccess();
-      } else {
-        setError(data.message || 'Invalid email or password. Please try again.');
+      if (loginError) {
+        console.error('Login error:', loginError);
+        setError(loginError.message || 'Invalid email or password. Please try again.');
         setPassword('');
         setIsPasswordValid(false);
         passwordInputRef.current?.focus();
+        toast.error(loginError.message || 'Failed to sign in. Please check your credentials.');
+        return;
       }
+
+      console.log('PasswordAuthScreen: Login successful, calling onSignInSuccess');
+      toast.success('Successfully signed in!');
+      onSignInSuccess();
     } catch (error) {
-      console.error('Error signing in:', error);
+      console.error('Sign in error:', error);
       setError('Network error. Please check your connection and try again.');
+      toast.error('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -95,7 +80,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
         <div className="pt-2 pb-3 flex items-center justify-between">
           <button
             onClick={onBack}
-            disabled={isLoading}
+            disabled={isLoading || authLoading}
             className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-full transition-colors active:scale-95 disabled:opacity-50"
             aria-label="Go back"
           >
@@ -111,7 +96,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
             aria-label="Help"
             onClick={() => alert('Need help? Contact support@example.com')}
             type="button"
-            disabled={isLoading}
+            disabled={isLoading || authLoading}
           >
             <HelpCircle className="w-5 h-5 text-gray-700" />
           </button>
@@ -158,7 +143,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
             </div>
             <button
               onClick={onBack}
-              disabled={isLoading}
+              disabled={isLoading || authLoading}
               className="text-red-500 font-medium hover:text-red-600 text-sm disabled:opacity-50"
               type="button"
             >
@@ -174,7 +159,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
         )}
 
         <div className="mb-6 relative">
-          
+
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
 
@@ -191,7 +176,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
               placeholder="Enter your password"
               autoComplete="current-password"
               ref={passwordInputRef}
-              disabled={isLoading}
+              disabled={isLoading || authLoading}
               className={`relative w-full pl-10 ${isPasswordValid && !error ? 'pr-20' : 'pr-12'} py-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors bg-white disabled:bg-gray-50 disabled:cursor-not-allowed ${
                 error 
                   ? 'border-red-300' 
@@ -202,7 +187,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              disabled={isLoading}
+              disabled={isLoading || authLoading}
               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:opacity-50"
               aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
@@ -217,34 +202,35 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
 
         <div className="space-y-3 mb-8">
           <button
-            disabled={!isPasswordValid || isLoading}
+            disabled={!isPasswordValid || isLoading || authLoading}
             onClick={handleSignIn}
             className={`w-full flex items-center justify-center gap-3 py-4 px-4 rounded-lg font-medium transition-all ${
-              isPasswordValid && !isLoading
+              isPasswordValid && !isLoading && !authLoading
                 ? 'bg-red-500 text-white hover:bg-red-600 active:scale-98'
                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'
             }`}
             type="button"
           >
-            {isLoading ? (
+            {isLoading || authLoading ? (
               <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
               <Lock className="w-5 h-5" />
             )}
             <span>
-              {isLoading ? 'Signing In...' : 'Sign In'}
+              {isLoading || authLoading ? 'Signing In...' : 'Sign In'}
             </span>
           </button>
         </div>
 
         <div className="text-center">
           <button 
-  className="text-red-500 font-medium hover:text-red-600 mb-4" 
-  type="button"
-  onClick={onForgotPasswordClick}
->
-  Forgot password?
-</button>
+            className="text-red-500 font-medium hover:text-red-600 mb-4" 
+            type="button"
+            onClick={onForgotPasswordClick}
+            disabled={isLoading || authLoading}
+          >
+            Forgot password?
+          </button>
 
           <div className="flex items-center justify-center gap-2">
             <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">

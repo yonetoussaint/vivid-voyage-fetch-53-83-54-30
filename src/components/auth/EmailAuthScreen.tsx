@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft, HelpCircle } from 'lucide-react';
 import { EmailAuthScreenProps } from '../../types/auth/email';
 import { useEmailValidation } from '../../hooks/auth/useEmailValidation';
+import { useAuth } from '../../contexts/auth/AuthContext';
 import EmailInput from './EmailInput';
 import DomainSuggestions from './DomainSuggestions';
 import EmailStatusMessage from './EmailStatusMessage';
@@ -18,6 +19,9 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   isCompact = false,
   onExpand,
 }) => {
+  // Get auth context
+  const { login, signup, isLoading: authLoading } = useAuth();
+  
   // Extract the new isUntrustedProvider value from the hook
   // This tells us when an email has valid format but uses an untrusted domain
   const { 
@@ -212,7 +216,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
             }}
             className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-full transition-colors active:scale-95"
             aria-label="Go back"
-            disabled={isLoading}
+            disabled={isLoading || authLoading}
           >
             <ArrowLeft className="w-5 h-5 text-gray-700" />
           </button>
@@ -226,7 +230,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
             aria-label="Help"
             onClick={() => alert('Need help? Contact support@example.com')}
             type="button"
-            disabled={isLoading}
+            disabled={isLoading || authLoading}
           >
             <HelpCircle className="w-5 h-5 text-gray-700" />
           </button>
@@ -273,7 +277,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   <EmailActionButtons
     isEmailValid={isEmailValid}
     emailCheckState={emailCheckState}
-    isLoading={isLoading}
+    isLoading={isLoading || authLoading}
     isUntrustedProvider={isUntrustedProvider}
     onContinueWithPassword={handleContinueWithPassword}
     onContinueWithCode={handleContinueWithCode}

@@ -3,6 +3,8 @@ import { ArrowLeft, Lock, Eye, EyeOff, Mail } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { FAVICON_OVERRIDES } from '../../constants/email';
+import { useAuth } from '../../contexts/auth/AuthContext';
+import { toast } from 'sonner';
 
 interface AccountCreationPasswordStepProps {
   email: string;
@@ -27,6 +29,7 @@ const AccountCreationPasswordStep: React.FC<AccountCreationPasswordStepProps> = 
   isCompact = false,
   onExpand
 }) => {
+  const { signup, isLoading: authLoading } = useAuth();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -51,33 +54,6 @@ const AccountCreationPasswordStep: React.FC<AccountCreationPasswordStepProps> = 
 
   const faviconUrl = getFaviconUrl(email);
 
-  const createAccount = async () => {
-    try {
-      const response = await fetch('https://supabase-y8ak.onrender.com/api/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email,
-          password: password,
-          full_name: `${firstName} ${lastName}`,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Account creation failed:', error);
-      throw error;
-    }
-  };
-
   const validatePassword = (pwd: string): string | null => {
     if (pwd.length < 8) {
       return 'Password must be at least 8 characters long';
@@ -94,52 +70,42 @@ const AccountCreationPasswordStep: React.FC<AccountCreationPasswordStepProps> = 
     return null;
   };
 
-  const handleContinue = async () => {
-    // Validate all required fields
-    if (!email || !password) {
-      onError('Email and password are required');
-      return;
-    }
+  const isFormValid = () => {
+    return (
+      password.length >= 8 &&
+      confirmPassword.length >= 8 &&
+      password === confirmPassword &&
+      validatePassword(password) === null
+    );
+  };
 
-    if (!firstName.trim() || !lastName.trim()) {
-      onError('Name information is missing. Please go back and enter your name.');
-      return;
-    }
+  const handleCreateAccount = async () => {
+    if (!isFormValid() || isLoading || authLoading) return;
 
-    // Validate password
-    const passwordError = validatePassword(password);
-    if (passwordError) {
-      onError(passwordError);
-      return;
-    }
-
-    // Check password confirmation
-    if (password !== confirmPassword) {
-      onError('Passwords do not match');
-      return;
-    }
-
+    console.log('AccountCreationPasswordStep: handleCreateAccount called');
     setIsLoading(true);
+
     try {
-      // Create the account
-      await createAccount();
-      
-      // If successful, proceed to success step
+      const { error } = await signup(email, password, `${firstName} ${lastName}`);
+
+      if (error) {
+        console.error('Signup error:', error);
+        toast.error(error || 'Failed to create account. Please try again.');
+        return;
+      }
+
+      console.log('AccountCreationPasswordStep: Account created successfully, calling onContinue');
+      toast.success('Account created successfully!');
       onContinue();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Account creation failed';
-      onError(errorMessage);
+      console.error('Account creation error:', error);
+      toast.error('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const loading = isLoading || parentLoading;
-  const isFormValid = 
-    password.length >= 8 && 
-    confirmPassword.length >= 8 && 
-    password === confirmPassword &&
-    validatePassword(password) === null;
+  const loading = isLoading || parentLoading || authLoading;
 
   return (
     <div className="min-h-screen bg-white flex flex-col px-4">
@@ -179,28 +145,27 @@ const AccountCreationPasswordStep: React.FC<AccountCreationPasswordStepProps> = 
         </div>
 
         {/* Account Info Summary */}
-        {/* Account Info Summary */}
-      <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 flex-shrink-0">
-            {faviconUrl ? (
-              <img
-                src={faviconUrl}
-                alt="Email provider favicon"
-                className="w-full h-full object-contain rounded"
-              />
-            ) : (
-              <Mail className="w-full h-full text-gray-400" />
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-gray-900 font-medium truncate">{email}</div>
-            <div className="text-gray-600 text-sm">
-              {firstName} {lastName}
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-8 h-8 flex-shrink-0">
+              {faviconUrl ? (
+                <img
+                  src={faviconUrl}
+                  alt="Email provider favicon"
+                  className="w-full h-full object-contain rounded"
+                />
+              ) : (
+                <Mail className="w-full h-full text-gray-400" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-gray-900 font-medium truncate">{email}</div>
+              <div className="text-gray-600 text-sm">
+                {firstName} {lastName}
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
         {/* Password Form */}
         <div className="space-y-4 mb-8">
@@ -261,8 +226,8 @@ const AccountCreationPasswordStep: React.FC<AccountCreationPasswordStepProps> = 
         </div>
 
         <Button
-          onClick={handleContinue}
-          disabled={!isFormValid || loading}
+          onClick={handleCreateAccount}
+          disabled={!isFormValid() || isLoading || authLoading}
           className="w-full mb-6"
           size="lg"
         >
