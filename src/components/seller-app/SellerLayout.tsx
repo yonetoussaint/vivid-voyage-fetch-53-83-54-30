@@ -107,14 +107,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
     const { data } = supabase.storage.from('seller-logos').getPublicUrl(imagePath);
     return data.publicUrl;
   };
-  
-  // Use real seller data or fallback
-  const seller = sellerData || {
-    id: user?.id || 'seller-123',
-    name: user?.full_name || "My Store",
-    image_url: undefined,
-    followers_count: 0
-  };
 
   // Header height calculation for positioning elements
   useLayoutEffect(() => {
@@ -273,12 +265,12 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
                       <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse" />
                     </div>
                   </div>
-                ) : (
+                ) : sellerData ? (
                   <div className="flex items-center gap-4">
                     {/* Profile Picture */}
                     <Avatar className="w-16 h-16 flex-shrink-0">
-                      <AvatarImage src={getSellerLogoUrl(seller.image_url)} />
-                      <AvatarFallback>{seller.name?.substring(0, 2).toUpperCase() || 'SE'}</AvatarFallback>
+                      <AvatarImage src={getSellerLogoUrl(sellerData.image_url)} />
+                      <AvatarFallback>{sellerData.name?.substring(0, 2).toUpperCase() || 'SE'}</AvatarFallback>
                     </Avatar>
 
                     <div className="flex-1">
@@ -286,22 +278,26 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
                         <div className="w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center">
                           <Store className="w-4 h-4 text-white" />
                         </div>
-                        <h1 className="text-xl font-bold text-gray-900">{seller.name}</h1>
-                        {sellerData?.verified && (
+                        <h1 className="text-xl font-bold text-gray-900">{sellerData.name}</h1>
+                        {sellerData.verified && (
                           <span className="text-blue-600">✓</span>
                         )}
                       </div>
                       <p className="text-sm text-gray-500 mb-2">
-                        {sellerData?.verified ? 'Premium Seller Dashboard' : 'Seller Dashboard'}
+                        {sellerData.verified ? 'Premium Seller Dashboard' : 'Seller Dashboard'}
                       </p>
                       <div className="flex items-center gap-4 text-xs text-gray-500">
-                        <span>👥 {seller.followers_count} followers</span>
-                        {sellerData?.total_sales > 0 && (
+                        <span>👥 {sellerData.followers_count || 0} followers</span>
+                        {sellerData.total_sales > 0 && (
                           <span>📦 {sellerData.total_sales} sales</span>
                         )}
-                        {sellerData?.verified && <span>✓ Verified</span>}
+                        {sellerData.verified && <span>✓ Verified</span>}
                       </div>
                     </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center py-8 text-gray-500">
+                    <p>No seller profile found. Please set up your seller account.</p>
                   </div>
                 )}
               </div>
