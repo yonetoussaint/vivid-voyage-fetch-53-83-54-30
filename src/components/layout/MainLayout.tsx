@@ -15,6 +15,7 @@ import LocationListScreen from "@/components/home/header/LocationListScreen";
 import AuthOverlay from "@/components/auth/AuthOverlay";
 import { useAuth } from "@/contexts/auth/AuthContext";
 import { useTranslation } from 'react-i18next';
+import { useHeaderFilter } from "@/contexts/HeaderFilterContext";
 
 export default function MainLayout() {
   const isMobile = useIsMobile();
@@ -37,6 +38,16 @@ export default function MainLayout() {
   const { user } = useAuth();
   const { isLocationListScreenOpen, locationListScreenData, setLocationListScreenOpen, isLocationScreenOpen, setLocationScreenOpen } = useScreenOverlay();
   const { t } = useTranslation();
+  const {
+    showFilterBar,
+    filterCategories,
+    selectedFilters,
+    onFilterSelect,
+    onFilterClear,
+    onClearAll,
+    onFilterButtonClick,
+    isFilterDisabled
+  } = useHeaderFilter();
 
   // Define categories once at layout level
   const categories = useMemo(() => [
@@ -142,6 +153,14 @@ export default function MainLayout() {
         {shouldShowHeader && (
           <AliExpressHeader 
             activeTabId={activeTab}
+            showFilterBar={showFilterBar}
+            filterCategories={filterCategories}
+            selectedFilters={selectedFilters}
+            onFilterSelect={onFilterSelect}
+            onFilterClear={onFilterClear}
+            onClearAll={onClearAll}
+            onFilterButtonClick={onFilterButtonClick}
+            isFilterDisabled={isFilterDisabled}
           />
         )}
 

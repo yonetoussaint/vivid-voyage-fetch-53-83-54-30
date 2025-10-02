@@ -76,6 +76,7 @@ import MainLayout from "./components/layout/MainLayout";
 import { AuthOverlayProvider } from "./context/AuthOverlayContext";
 import { ScreenOverlayProvider } from "./context/ScreenOverlayContext"; // SINGLE IMPORT
 import { AuthProvider } from "./contexts/auth/AuthContext";
+import { HeaderFilterProvider } from './contexts/HeaderFilterContext';
 import CartPage from '@/pages/CartPage';
 import MenuPage from '@/pages/MenuPage';
 
@@ -94,89 +95,91 @@ function App() {
                 <HomepageProvider>
                   <AuthProvider>
                     <AuthOverlayProvider>
-                      <ScreenOverlayProvider> {/* SINGLE PROVIDER WRAP */}
-                        <div className="App min-h-screen bg-background text-foreground">
-                          <Routes>
-                            <Route path="/" element={<MainLayout />}>
-                              <Route index element={<ConditionalHomepage />} />
-                              <Route path="for-you" element={<ConditionalHomepage />} />
-                              <Route path="index" element={<Index />} />
-                              <Route path="search" element={<SearchPage />} />
-                              <Route path="product/:id" element={<ProductDetail />} />
-                              <Route path="product/:id/description" element={<ProductDescriptionPage />} />
-                              <Route path="product/:id/comments" element={<ProductCommentsPage />} />
-                              <Route path="product/:id/reviews" element={<ProductReviewsPage />} />
-                              <Route path="product/:id/qa" element={<ProductQAPage />} />
-                              <Route path="product/:id/ask-question" element={<AskQuestionPage />} />
-                              <Route path="single-product/:id" element={<SingleProductDetail />} />
-                              <Route path="single-product/:id/comments" element={<ProductCommentsPage />} />
-                              <Route path="single-product/:id/ask-question" element={<AskQuestionPage />} />
-                              <Route path="posts" element={<CategoriesPage />} />
-                              <Route path="videos" element={<Videos />} />
-                              <Route path="reels" element={<Reels />} />
-                              <Route path="reels/:mode" element={<Reels />} />
-                              <Route path="trending" element={<Trending />} />
-                              <Route path="wallet" element={<Wallet />} />
-                              <Route path="profile/*" element={<ProfilePage />} />
-                              <Route path="more" element={<MoreMenu />} />
-                              <Route path="more-menu" element={<MoreMenu />} />
-                              <Route path="auth" element={<SimpleAuthPage />} />
-                              <Route path="signin" element={<AuthPage />} />
-                              <Route path="categories" element={<CategoriesPage />} />
-                              <Route path="categories/fashion" element={<FashionPage />} />
-                              <Route path="categories/electronics" element={<ElectronicsPage />} />
-                              <Route path="categories/home-living" element={<HomeLivingPage />} />
+                      <ScreenOverlayProvider>
+                        <HeaderFilterProvider>
+                          <div className="App min-h-screen bg-background text-foreground">
+                            <Routes>
+                              <Route path="/" element={<MainLayout />}>
+                                <Route index element={<ConditionalHomepage />} />
+                                <Route path="for-you" element={<ConditionalHomepage />} />
+                                <Route path="index" element={<Index />} />
+                                <Route path="search" element={<SearchPage />} />
+                                <Route path="product/:id" element={<ProductDetail />} />
+                                <Route path="product/:id/description" element={<ProductDescriptionPage />} />
+                                <Route path="product/:id/comments" element={<ProductCommentsPage />} />
+                                <Route path="product/:id/reviews" element={<ProductReviewsPage />} />
+                                <Route path="product/:id/qa" element={<ProductQAPage />} />
+                                <Route path="product/:id/ask-question" element={<AskQuestionPage />} />
+                                <Route path="single-product/:id" element={<SingleProductDetail />} />
+                                <Route path="single-product/:id/comments" element={<ProductCommentsPage />} />
+                                <Route path="single-product/:id/ask-question" element={<AskQuestionPage />} />
+                                <Route path="posts" element={<CategoriesPage />} />
+                                <Route path="videos" element={<Videos />} />
+                                <Route path="reels" element={<Reels />} />
+                                <Route path="reels/:mode" element={<Reels />} />
+                                <Route path="trending" element={<Trending />} />
+                                <Route path="wallet" element={<Wallet />} />
+                                <Route path="profile/*" element={<ProfilePage />} />
+                                <Route path="more" element={<MoreMenu />} />
+                                <Route path="more-menu" element={<MoreMenu />} />
+                                <Route path="auth" element={<SimpleAuthPage />} />
+                                <Route path="signin" element={<AuthPage />} />
+                                <Route path="categories" element={<CategoriesPage />} />
+                                <Route path="categories/fashion" element={<FashionPage />} />
+                                <Route path="categories/electronics" element={<ElectronicsPage />} />
+                                <Route path="categories/home-living" element={<HomeLivingPage />} />
 
-                              <Route path="categories/women" element={<WomenPage />} />
+                                <Route path="categories/women" element={<WomenPage />} />
 
-                              <Route path="categories/men" element={<MenPage />} />
+                                <Route path="categories/men" element={<MenPage />} />
 
-                              <Route path="categories/books" element={<BooksHomepage />} />
-                              <Route path="categories/sports-outdoors" element={<SportsOutdoorsPage />} />
-                              <Route path="categories/automotive" element={<AutomotivePage />} />
-                              <Route path="categories/kids-hobbies" element={<KidsHobbiesPage />} />
-                              <Route path="categories/entertainment" element={<EntertainmentPage />} />
-                              <Route path="admin" element={<AdminPanel />} />
-              <Route path="admin-dashboard/*" element={<AdminDashboard />} />
-                              <Route path="seller/:sellerId" element={<SellerPage />} />
-                              <Route path="product/:productId/edit" element={<ProductEditNavigationPage />} />
-                              <Route path="product/:productId/edit/basic" element={<ProductEditBasicPage />} />
-                              <Route path="product/:productId/edit/category" element={<ProductEditCategoryPage />} />
-                              <Route path="product/:productId/edit/media" element={<ProductEditMediaPage />} />
-                              <Route path="product/:productId/edit/shipping" element={<ProductEditShippingPage />} />
-                              <Route path="product/:productId/edit/deals" element={<ProductEditDealsPage />} />
-                              <Route path="product/:productId/edit/specifications" element={<ProductEditSpecsPage />} />
-                              <Route path="product/:productId/edit/variants" element={<ProductEditVariantsPage />} />
-                              <Route path="product/:productId/edit/variants/new" element={<ProductEditNewVariantPage />} />
+                                <Route path="categories/books" element={<BooksHomepage />} />
+                                <Route path="categories/sports-outdoors" element={<SportsOutdoorsPage />} />
+                                <Route path="categories/automotive" element={<AutomotivePage />} />
+                                <Route path="categories/kids-hobbies" element={<KidsHobbiesPage />} />
+                                <Route path="categories/entertainment" element={<EntertainmentPage />} />
+                                <Route path="admin" element={<AdminPanel />} />
+                <Route path="admin-dashboard/*" element={<AdminDashboard />} />
+                                <Route path="seller/:sellerId" element={<SellerPage />} />
+                                <Route path="product/:productId/edit" element={<ProductEditNavigationPage />} />
+                                <Route path="product/:productId/edit/basic" element={<ProductEditBasicPage />} />
+                                <Route path="product/:productId/edit/category" element={<ProductEditCategoryPage />} />
+                                <Route path="product/:productId/edit/media" element={<ProductEditMediaPage />} />
+                                <Route path="product/:productId/edit/shipping" element={<ProductEditShippingPage />} />
+                                <Route path="product/:productId/edit/deals" element={<ProductEditDealsPage />} />
+                                <Route path="product/:productId/edit/specifications" element={<ProductEditSpecsPage />} />
+                                <Route path="product/:productId/edit/variants" element={<ProductEditVariantsPage />} />
+                                <Route path="product/:productId/edit/variants/new" element={<ProductEditNewVariantPage />} />
 
-                              <Route path="product/:productId/edit/details" element={<ProductEditDetailsPage />} />
-                              <Route path="product/:productId/edit/description" element={<ProductEditDescriptionPage />} />
-                              <Route path="checkout" element={<Checkout />} />
-                              <Route path="product-checkout" element={<ProductCheckout />} />
-                              <Route path="paypal-checkout" element={<PayPalCheckout />} />
-                              <Route path="paypal-hosted-checkout" element={<PayPalHostedCheckout />} />
-                              <Route path="paypal-payment" element={<PayPalPayment />} />
-                              <Route path="dynamic-paypal-checkout" element={<DynamicPayPalCheckout />} />
-                              <Route path="paypal-deposit" element={<PayPalDepositPage />} />
-                              <Route path="deposit" element={<DepositPage />} />
-                              <Route path="nft-payment" element={<NFTPaymentPage />} />
-                              <Route path="topup" element={<TopUpPage />} />
-                              <Route path="netflix" element={<NetflixPage />} />
-                              <Route path="transfer-old" element={<TransferPage />} />
-                              <Route path="transfer" element={<TransferHomePage />} />
-                              
-                              <Route path="component-test" element={<ComponentTestPage />} />
-                              <Route path="signup" element={<SimpleAuthPage />} />
-                              <Route path="auth/callback" element={<ForYou />} />
-                              <Route path="seller-dashboard/*" element={<SellerDashboard />} />
-                              <Route path="*" element={<NotFound />} />
-                              <Route path="/cart" element={<CartPage />} />
-                              <Route path="/menu" element={<MenuPage />} />
-                            </Route>
-                          </Routes>
-                          <Toaster />
-                          <Sonner />
-                        </div>
+                                <Route path="product/:productId/edit/details" element={<ProductEditDetailsPage />} />
+                                <Route path="product/:productId/edit/description" element={<ProductEditDescriptionPage />} />
+                                <Route path="checkout" element={<Checkout />} />
+                                <Route path="product-checkout" element={<ProductCheckout />} />
+                                <Route path="paypal-checkout" element={<PayPalCheckout />} />
+                                <Route path="paypal-hosted-checkout" element={<PayPalHostedCheckout />} />
+                                <Route path="paypal-payment" element={<PayPalPayment />} />
+                                <Route path="dynamic-paypal-checkout" element={<DynamicPayPalCheckout />} />
+                                <Route path="paypal-deposit" element={<PayPalDepositPage />} />
+                                <Route path="deposit" element={<DepositPage />} />
+                                <Route path="nft-payment" element={<NFTPaymentPage />} />
+                                <Route path="topup" element={<TopUpPage />} />
+                                <Route path="netflix" element={<NetflixPage />} />
+                                <Route path="transfer-old" element={<TransferPage />} />
+                                <Route path="transfer" element={<TransferHomePage />} />
+
+                                <Route path="component-test" element={<ComponentTestPage />} />
+                                <Route path="signup" element={<SimpleAuthPage />} />
+                                <Route path="auth/callback" element={<ForYou />} />
+                                <Route path="seller-dashboard/*" element={<SellerDashboard />} />
+                                <Route path="*" element={<NotFound />} />
+                                <Route path="/cart" element={<CartPage />} />
+                                <Route path="/menu" element={<MenuPage />} />
+                              </Route>
+                            </Routes>
+                            <Toaster />
+                            <Sonner />
+                          </div>
+                        </HeaderFilterProvider>
                       </ScreenOverlayProvider>
                     </AuthOverlayProvider>
                   </AuthProvider>

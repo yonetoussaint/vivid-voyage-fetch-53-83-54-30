@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { fetchAllProducts } from "@/integrations/supabase/products";
 
 import { PageContainer } from "@/components/layout/PageContainer";
+import { useHeaderFilter } from "@/contexts/HeaderFilterContext";
 import SuperDealsSection from "@/components/home/SuperDealsSection";
 import SecondaryHeroBanner from "@/components/home/SecondaryHeroBanner";
 import FlashDeals from "@/components/home/FlashDeals";
@@ -109,12 +110,21 @@ export default function ElectronicsPage() {
   const [isContentReady, setIsContentReady] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [showFilterBarInHeader, setShowFilterBarInHeader] = useState(false);
 
   // Filter state
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
 
   const { t } = useTranslation(['product', 'categories']);
+  const {
+    setShowFilterBar,
+    setFilterCategories,
+    setSelectedFilters: setContextSelectedFilters,
+    setOnFilterSelect,
+    setOnFilterClear,
+    setOnClearAll,
+    setOnFilterButtonClick,
+    setIsFilterDisabled
+  } = useHeaderFilter();
 
   const heroBannerRef = useRef<HTMLDivElement>(null);
   const filterBarRef = useRef<HTMLDivElement>(null);
@@ -161,6 +171,21 @@ export default function ElectronicsPage() {
     }, 800);
   }, [generateFeedItems]);
 
+  // Setup filter context on mount
+  useEffect(() => {
+    setFilterCategories(filterCategories);
+    setOnFilterSelect(() => handleFilterSelect);
+    setOnFilterClear(() => handleFilterClear);
+    setOnClearAll(() => handleClearAllFilters);
+    setOnFilterButtonClick(() => handleFilterButtonClick);
+    setIsFilterDisabled(() => isFilterDisabled);
+  }, [setFilterCategories, setOnFilterSelect, setOnFilterClear, setOnClearAll, setOnFilterButtonClick, setIsFilterDisabled]);
+
+  // Update context when selectedFilters change
+  useEffect(() => {
+    setContextSelectedFilters(selectedFilters);
+  }, [selectedFilters, setContextSelectedFilters]);
+
   // Scroll-based detection for precise filter bar replacement
   useEffect(() => {
     let ticking = false;
@@ -188,14 +213,8 @@ export default function ElectronicsPage() {
           // Show header filter bar when hero filter bar's bottom edge reaches header bottom
           const shouldShowInHeader = filterBarRect.bottom <= headerHeight;
 
-          // Update state only if there's a change
-          setShowFilterBarInHeader(prev => {
-            if (prev !== shouldShowInHeader) {
-              console.log('Filter bar bottom:', Math.round(filterBarRect.bottom), 'Header height:', Math.round(headerHeight), 'Show in header:', shouldShowInHeader);
-              return shouldShowInHeader;
-            }
-            return prev;
-          });
+          // Update context state only if there's a change
+          setShowFilterBar(shouldShowInHeader);
 
           ticking = false;
         });
