@@ -6,9 +6,41 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export interface Database {
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "12.2.3 (519615d)"
+  }
   public: {
     Tables: {
+      cart: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          quantity: number | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          quantity?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          quantity?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       game_rooms: {
         Row: {
           board: Json
@@ -54,6 +86,33 @@ export interface Database {
         }
         Relationships: []
       }
+      help_tickets: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          status: string | null
+          subject: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          status?: string | null
+          subject: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          status?: string | null
+          subject?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       hero_banners: {
         Row: {
           alt: string
@@ -81,6 +140,36 @@ export interface Database {
           image?: string
           position?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean | null
+          message: string
+          title: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message: string
+          title: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          title?: string
+          type?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -319,6 +408,7 @@ export interface Database {
           saves: number | null
           seller_id: string | null
           seller_trust_score: number | null
+          short_description: string | null
           sold_count: number
           specifications: Json | null
           status: string | null
@@ -350,6 +440,7 @@ export interface Database {
           saves?: number | null
           seller_id?: string | null
           seller_trust_score?: number | null
+          short_description?: string | null
           sold_count?: number
           specifications?: Json | null
           status?: string | null
@@ -381,6 +472,7 @@ export interface Database {
           saves?: number | null
           seller_id?: string | null
           seller_trust_score?: number | null
+          short_description?: string | null
           sold_count?: number
           specifications?: Json | null
           status?: string | null
@@ -689,6 +781,69 @@ export interface Database {
         }
         Relationships: []
       }
+      user_addresses: {
+        Row: {
+          address_line1: string
+          address_line2: string | null
+          city: string
+          country: string | null
+          created_at: string
+          id: string
+          is_default: boolean | null
+          state: string
+          title: string
+          user_id: string | null
+          zip_code: string
+        }
+        Insert: {
+          address_line1: string
+          address_line2?: string | null
+          city: string
+          country?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          state: string
+          title: string
+          user_id?: string | null
+          zip_code: string
+        }
+        Update: {
+          address_line1?: string
+          address_line2?: string | null
+          city?: string
+          country?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          state?: string
+          title?: string
+          user_id?: string | null
+          zip_code?: string
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          created_at: string | null
+          shortcuts_order: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          shortcuts_order?: string[] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          shortcuts_order?: string[] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       verification_codes: {
         Row: {
           code: string
@@ -770,237 +925,26 @@ export interface Database {
         }
         Relationships: []
       }
-
-      // NEW TABLES ADDED HERE:
       wishlist: {
         Row: {
-          id: string
-          user_id: string
-          product_id: string
           created_at: string
+          id: string
+          product_id: string
+          user_id: string | null
         }
         Insert: {
-          id?: string
-          user_id: string
-          product_id: string
           created_at?: string
+          id?: string
+          product_id: string
+          user_id?: string | null
         }
         Update: {
+          created_at?: string
           id?: string
-          user_id?: string
           product_id?: string
-          created_at?: string
+          user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "wishlist_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "wishlist_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      cart: {
-        Row: {
-          id: string
-          user_id: string
-          product_id: string
-          quantity: number
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          product_id: string
-          quantity?: number
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          product_id?: string
-          quantity?: number
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "cart_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "cart_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      notifications: {
-        Row: {
-          id: string
-          user_id: string
-          title: string
-          message: string
-          type: string
-          is_read: boolean
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          title: string
-          message: string
-          type: string
-          is_read?: boolean
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          title?: string
-          message?: string
-          type?: string
-          is_read?: boolean
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "notifications_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      user_addresses: {
-        Row: {
-          id: string
-          user_id: string
-          title: string
-          address_line1: string
-          address_line2: string | null
-          city: string
-          state: string
-          zip_code: string
-          country: string
-          is_default: boolean
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          title: string
-          address_line1: string
-          address_line2?: string | null
-          city: string
-          state: string
-          zip_code: string
-          country?: string
-          is_default?: boolean
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          title?: string
-          address_line1?: string
-          address_line2?: string | null
-          city?: string
-          state?: string
-          zip_code?: string
-          country?: string
-          is_default?: boolean
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_addresses_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      help_tickets: {
-        Row: {
-          id: string
-          user_id: string
-          subject: string
-          message: string
-          status: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          subject: string
-          message: string
-          status?: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          subject?: string
-          message?: string
-          status?: string
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "help_tickets_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      user_preferences: {
-        Row: {
-          user_id: string
-          shortcuts_order: string[]
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          user_id: string
-          shortcuts_order?: string[]
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          user_id?: string
-          shortcuts_order?: string[]
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_preferences_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          }
-        ]
+        Relationships: []
       }
     }
     Views: {
@@ -1073,6 +1017,7 @@ export interface Database {
           saves: number | null
           seller_id: string | null
           seller_trust_score: number | null
+          short_description: string | null
           sold_count: number
           specifications: Json | null
           status: string | null
@@ -1095,27 +1040,127 @@ export interface Database {
   }
 }
 
-// KEEP THESE IMPORTANT TYPE HELPERS:
-export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row']
-export type InsertTables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Insert']
-export type UpdateTables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Update']
-export type Enums<T extends keyof Database['public']['Enums']> = Database['public']['Enums'][T]
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-// Alternative type helpers (choose one set or the other):
-type DefaultSchema = Database['public']
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
-export type Tables2<
-  TableName extends keyof DefaultSchema['Tables'],
-> = DefaultSchema['Tables'][TableName]['Row']
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
 
-export type InsertTables2<
-  TableName extends keyof DefaultSchema['Tables'],
-> = DefaultSchema['Tables'][TableName]['Insert']
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
 
-export type UpdateTables2<
-  TableName extends keyof DefaultSchema['Tables'],
-> = DefaultSchema['Tables'][TableName]['Update']
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
 
-export type Enums2<
-  EnumName extends keyof DefaultSchema['Enums'],
-> = DefaultSchema['Enums'][EnumName]
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      tournament_status: ["in-progress", "closed", "completed", "upcoming"],
+    },
+  },
+} as const
