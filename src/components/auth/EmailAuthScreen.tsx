@@ -3,6 +3,7 @@ import { ArrowLeft, HelpCircle } from 'lucide-react';
 import { EmailAuthScreenProps } from '../../types/auth/email';
 import { useEmailValidation } from '../../hooks/auth/useEmailValidation';
 import { useAuth } from '../../contexts/auth/AuthContext';
+import { toast } from 'sonner';
 import EmailInput from './EmailInput';
 import DomainSuggestions from './DomainSuggestions';
 import EmailStatusMessage from './EmailStatusMessage';
@@ -34,8 +35,6 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   
   const [isLoading, setIsLoading] = useState(false);
   const [showDomainSuggestions, setShowDomainSuggestions] = useState(false);
-
-  const API_BASE_URL = 'https://supabase-y8ak.onrender.com/api';
 
   const handleEmailChange = (value: string) => {
     setEmail(value);
@@ -157,31 +156,27 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     console.log('EmailAuthScreen: handleContinueWithCode called for email:', email);
     setIsLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/send-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email
-        }),
+      // Use Supabase's built-in OTP authentication
+      const { supabase } = await import('../../integrations/supabase/client');
+      
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email,
+        options: {
+          shouldCreateUser: true, // Allow new user creation with OTP
+        }
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        console.log('Verification code sent successfully');
-        console.log('EmailAuthScreen: Calling onContinueWithCode');
-        onContinueWithCode(email);
+      if (error) {
+        console.error('Failed to send OTP:', error);
+        toast.error(error.message || 'Failed to send verification code');
       } else {
-        console.error('Failed to send OTP:', data.message);
-        console.log('EmailAuthScreen: Calling onContinueWithCode (fallback)');
+        console.log('Verification code sent successfully via Supabase');
+        toast.success('Verification code sent to your email');
         onContinueWithCode(email);
       }
     } catch (error) {
       console.error('Error sending OTP:', error);
-      console.log('EmailAuthScreen: Calling onContinueWithCode (error fallback)');
-      onContinueWithCode(email);
+      toast.error('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }

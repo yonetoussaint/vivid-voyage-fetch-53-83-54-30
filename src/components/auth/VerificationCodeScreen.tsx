@@ -1,6 +1,6 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Key, Mail, HelpCircle, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { FAVICON_OVERRIDES } from '../../constants/email';
 
 interface VerificationCodeScreenProps {
@@ -11,9 +11,9 @@ interface VerificationCodeScreenProps {
   onExpand?: () => void;
 }
 
-const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({ 
-  email, 
-  onBack, 
+const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
+  email,
+  onBack,
   onVerificationSuccess,
   isCompact = false,
   onExpand
@@ -27,7 +27,7 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
   const [error, setError] = useState<string>('');
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const API_BASE_URL = 'https://supabase-y8ak.onrender.com/api';
+  // Removed API_BASE_URL as it's no longer needed
 
   useEffect(() => {
     if (timeLeft > 0) {
@@ -40,7 +40,7 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
 
   const handleCodeChange = (index: number, value: string) => {
     if (value.length > 1) return; // Only allow single digit
-    
+
     const newCode = [...code];
     newCode[index] = value;
     setCode(newCode);
@@ -62,21 +62,21 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
   const handleResendCode = async () => {
     setIsResending(true);
     setError('');
-    
+
     try {
-      const response = await fetch(`${API_BASE_URL}/send-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email
-        }),
+      // Use Supabase's resend email OTP functionality
+      const { supabase } = await import('../../integrations/supabase/client');
+
+      const { error: resendError } = await supabase.auth.resend({
+        email,
+        type: 'email',
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (resendError) {
+        console.error('Error resending OTP:', resendError);
+        setError(resendError.message || 'Failed to resend code. Please try again.');
+      } else {
+        toast.success('Verification code resent!');
         setTimeLeft(60);
         setCanResend(false);
         // Clear the code inputs
@@ -84,8 +84,6 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
         setIsComplete(false);
         // Focus first input
         inputRefs.current[0]?.focus();
-      } else {
-        setError(data.message || 'Failed to resend code. Please try again.');
       }
     } catch (error) {
       console.error('Error resending OTP:', error);
@@ -97,39 +95,38 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
 
   const handleVerifyCode = async () => {
     if (!isComplete) return;
-    
+
     setIsLoading(true);
     setError('');
-    
-    const otpCode = code.join('');
-    
+
+    const verificationCode = code.join(''); // Renamed from otpCode for clarity with Supabase
+
     try {
-      const response = await fetch(`${API_BASE_URL}/verify-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email,
-          otp: otpCode
-        }),
+      // Use Supabase's built-in OTP verification
+      const { supabase } = await import('../../integrations/supabase/client');
+
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token: verificationCode,
+        type: 'email'
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        onVerificationSuccess();
-      } else {
-        setError(data.message || 'Invalid verification code. Please try again.');
+      if (error) {
+        console.error('Verification failed:', error);
+        setError(error.message || 'Invalid verification code. Please try again.');
         // Clear the code inputs on error
         setCode(['', '', '', '', '', '']);
         setIsComplete(false);
         // Focus first input
         inputRefs.current[0]?.focus();
+      } else if (data.user) {
+        console.log('Verification successful');
+        toast.success('Email verified successfully!');
+        onVerificationSuccess();
       }
     } catch (error) {
-      console.error('Error verifying OTP:', error);
-      setError('Network error. Please check your connection and try again.');
+      console.error('Error during verification:', error);
+      setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -241,8 +238,8 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
                 onKeyDown={(e) => handleKeyDown(index, e)}
                 disabled={isLoading}
                 className={`w-12 h-12 text-center text-lg font-semibold border rounded-lg outline-none transition-colors ${
-                  error 
-                    ? 'border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500' 
+                  error
+                    ? 'border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500'
                     : 'border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500'
                 } ${isLoading ? 'bg-gray-50' : 'bg-white'}`}
               />

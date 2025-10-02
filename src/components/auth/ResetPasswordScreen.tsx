@@ -1,6 +1,6 @@
-
 import React, { useState } from 'react';
 import { ArrowLeft, HelpCircle, Mail } from 'lucide-react';
+import { toast } from 'sonner';
 import { FAVICON_OVERRIDES } from '../../constants/email';
 
 interface ResetPasswordScreenProps {
@@ -22,8 +22,6 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [resetState, setResetState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
-
-  const API_BASE_URL = 'https://supabase-y8ak.onrender.com/api';
 
   const isEmailValid = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -54,33 +52,32 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
 
     setIsLoading(true);
     setResetState('sending');
-    
+    setErrorMessage(''); // Clear previous error messages
+
     try {
-      const response = await fetch(`${API_BASE_URL}/request-password-reset`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email
-        }),
+      // Use Supabase's built-in password reset
+      const { supabase } = await import('../../integrations/supabase/client');
+
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password/new`,
       });
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
+      if (error) {
+        console.error('Failed to send reset email:', error);
+        setErrorMessage(error.message || 'Failed to send reset email. Please try again.');
+        setResetState('error');
+      } else {
+        console.log('Password reset email sent successfully');
+        toast.success('Password reset link sent to your email');
         setResetState('sent');
         setTimeout(() => {
           onResetSuccess(email);
         }, 2000);
-      } else {
-        setResetState('error');
-        setErrorMessage(data.message || 'Failed to send reset code. Please try again.');
       }
     } catch (error) {
-      console.error('Error sending reset code:', error);
+      console.error('Error sending reset email:', error);
+      setErrorMessage('An unexpected error occurred. Please try again.');
       setResetState('error');
-      setErrorMessage('Network error. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
