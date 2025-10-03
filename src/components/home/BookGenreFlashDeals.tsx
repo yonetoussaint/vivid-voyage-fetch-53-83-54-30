@@ -1,12 +1,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Timer, Package, CheckCircle, TrendingUp, AlertCircle } from "lucide-react";
+import { Timer } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllProducts, trackProductView } from "@/integrations/supabase/products";
 import { useAuth } from "@/contexts/auth/AuthContext";
 import { useSellerByUserId } from "@/hooks/useSellerByUserId";
 import { supabase } from "@/integrations/supabase/client";
+import SellerSummaryHeader from "@/components/seller-app/SellerSummaryHeader";
 
 interface Product {
   id: string;
@@ -185,49 +186,28 @@ export default function BookGenreFlashDeals({
     setDisplayCount(8);
   }, [processedProducts.length]);
 
+  const summaryHeaderStats = React.useMemo(() => {
+    if (isLoading || processedProducts.length === 0) return [];
+    
+    return [
+      { value: summaryStats.totalProducts, label: 'Total', color: 'text-blue-600' },
+      { value: summaryStats.inStock, label: 'In Stock', color: 'text-green-600' },
+      { value: summaryStats.onDiscount, label: 'On Discount', color: 'text-orange-600' },
+      { value: `$${summaryStats.totalValue.toFixed(0)}`, label: 'Total Value', color: 'text-purple-600' },
+      { value: summaryStats.lowStock, label: 'Low Stock', color: 'text-yellow-600' },
+      { value: summaryStats.outOfStock, label: 'Out of Stock', color: 'text-red-600' }
+    ];
+  }, [summaryStats, isLoading, processedProducts.length]);
+
   return (
     <div className={`w-full bg-white ${className}`}>
-      {/* Header & Stats Section - Matching SellerOrders style */}
-      <div className="bg-white border-b">
-        <div className="py-3">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h1 className="text-lg font-bold text-foreground">Products</h1>
-              <p className="text-xs text-muted-foreground">Manage all your products</p>
-            </div>
-          </div>
-
-          {/* Compact stats grid - Matching SellerOrders style */}
-          {!isLoading && processedProducts.length > 0 && (
-            <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-6 gap-3">
-              <div className="text-center">
-                <div className="text-lg font-bold text-blue-600">{summaryStats.totalProducts}</div>
-                <div className="text-xs text-muted-foreground">Total</div>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-bold text-green-600">{summaryStats.inStock}</div>
-                <div className="text-xs text-muted-foreground">In Stock</div>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-bold text-orange-600">{summaryStats.onDiscount}</div>
-                <div className="text-xs text-muted-foreground">On Discount</div>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-bold text-purple-600">${summaryStats.totalValue.toFixed(0)}</div>
-                <div className="text-xs text-muted-foreground">Total Value</div>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-bold text-yellow-600">{summaryStats.lowStock}</div>
-                <div className="text-xs text-muted-foreground">Low Stock</div>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-bold text-red-600">{summaryStats.outOfStock}</div>
-                <div className="text-xs text-muted-foreground">Out of Stock</div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Header & Stats Section */}
+      <SellerSummaryHeader
+        title="Products"
+        subtitle="Manage all your products"
+        stats={summaryHeaderStats}
+        showStats={!isLoading && processedProducts.length > 0}
+      />
 
       {/* Products Grid - Reverted to old version design */}
       <div className="py-4">
