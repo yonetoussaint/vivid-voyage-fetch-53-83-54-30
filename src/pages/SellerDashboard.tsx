@@ -29,10 +29,8 @@ const SellerDashboard = () => {
         <Route path="/orders" element={<SellerOrders />} />
         <Route path="/customers" element={<SellerCustomers />} />
         <Route path="/analytics" element={<SellerAnalytics />} />
-        <Route path="/inventory" element={<SellerInventory />} />
         <Route path="/finances" element={<SellerFinances />} />
         <Route path="/marketing" element={<SellerMarketing />} />
-        <Route path="/support" element={<SellerSupport />} />
         <Route path="/settings" element={<SellerSettings />} />
       </Routes>
     </SellerLayout>

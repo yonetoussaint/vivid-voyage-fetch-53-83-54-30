@@ -3,18 +3,12 @@ import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   Package, ShoppingCart, Users, BarChart3, 
-  DollarSign, Megaphone, Settings,
-  Bell, Store
+  DollarSign, Megaphone, Settings, Home
 } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import ReusableSearchBar from '@/components/shared/ReusableSearchBar';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAllProducts } from '@/integrations/supabase/products';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { useSellerByUserId } from '@/hooks/useSellerByUserId';
-import { supabase } from '@/integrations/supabase/client';
-
 import TabsNavigation from '@/components/home/TabsNavigation';
 
 interface SellerLayoutProps {
@@ -27,7 +21,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
   const isMobile = useIsMobile();
   const headerRef = useRef<HTMLDivElement>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
-  const sellerInfoRef = useRef<HTMLDivElement>(null);
 
   const [isTabsSticky, setIsTabsSticky] = useState(false);
   const [tabsHeight, setTabsHeight] = useState(0);
@@ -39,18 +32,15 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
     navigate('/profile');
   };
 
-  // Extract current tab from pathname - Completely remove overview
+  // Extract current tab from pathname
   const getCurrentTab = () => {
     const path = location.pathname.split('/seller-dashboard/')[1];
-    // If no specific tab is specified, it's the root, or it's overview, default to products
-    if (!path || path === '' || path === 'overview') {
-      // Redirect to products if on overview or root
+    if (!path || path === '') {
       if (location.pathname === '/seller-dashboard' || 
-          location.pathname === '/seller-dashboard/overview' ||
           location.pathname.endsWith('/seller-dashboard/')) {
-        navigate('/seller-dashboard/products', { replace: true });
+        navigate('/seller-dashboard/overview', { replace: true });
       }
-      return 'products';
+      return 'overview';
     }
     return path;
   };
@@ -63,10 +53,8 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
     queryFn: fetchAllProducts,
   });
 
-  // Check if we're on the products tab
-  const isProductsTab = activeTab === 'products';
-
   const navigationItems = [
+    { id: 'overview', name: 'Overview', href: '/seller-dashboard/overview', icon: Home },
     { id: 'products', name: 'Products', href: '/seller-dashboard/products', icon: Package },
     { id: 'orders', name: 'Orders', href: '/seller-dashboard/orders', icon: ShoppingCart },
     { id: 'customers', name: 'Customers', href: '/seller-dashboard/customers', icon: Users },
@@ -95,19 +83,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
     id: item.id,
     label: item.name
   }));
-
-  // Get authenticated user
-  const { user } = useAuth();
-
-  // Fetch seller data for the current user
-  const { data: sellerData, isLoading: sellerLoading } = useSellerByUserId(user?.id || '');
-
-  // Get seller logo URL
-  const getSellerLogoUrl = (imagePath?: string): string => {
-    if (!imagePath) return "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face";
-    const { data } = supabase.storage.from('seller-logos').getPublicUrl(imagePath);
-    return data.publicUrl;
-  };
 
   // Header height calculation for positioning elements
   useLayoutEffect(() => {
@@ -152,16 +127,15 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
     };
   }, []);
 
-  // Update active tab when location changes and handle overview redirect
+  // Update active tab when location changes
   useEffect(() => {
     const currentTab = getCurrentTab();
     setActiveTab(currentTab);
 
-    // Ensure overview paths redirect to products
+    // Ensure root paths redirect to overview
     if (location.pathname === '/seller-dashboard' || 
-        location.pathname === '/seller-dashboard/overview' ||
         location.pathname.endsWith('/seller-dashboard/')) {
-      navigate('/seller-dashboard/products', { replace: true });
+      navigate('/seller-dashboard/overview', { replace: true });
     }
   }, [location.pathname]);
 
@@ -175,21 +149,17 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
       // Get current dimensions
       const currentTabsHeight = tabsRef.current.offsetHeight;
 
-      // For non-products tabs, we don't have seller info, so use a smaller threshold
-      const sellerInfoHeight = isProductsTab ? (sellerInfoRef.current?.offsetHeight || 0) : 0;
-
       // Update tabs height if it changed
       if (currentTabsHeight !== tabsHeight) {
         setTabsHeight(currentTabsHeight);
       }
 
       // Calculate scroll progress for header transitions
-      const calculatedProgress = Math.min(1, Math.max(0, scrollY / Math.max(sellerInfoHeight, 100)));
+      const calculatedProgress = Math.min(1, Math.max(0, scrollY / 100));
       setScrollProgress(calculatedProgress);
 
-      // Determine if tabs should be sticky
-      // For non-products tabs, always make tabs sticky since there's no seller info
-      const shouldBeSticky = !isProductsTab || scrollY >= sellerInfoHeight;
+      // Determine if tabs should be sticky (always sticky on scroll)
+      const shouldBeSticky = scrollY > 0;
 
       // Only update state if it changed
       if (shouldBeSticky !== isTabsSticky) {
@@ -216,7 +186,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
         cancelAnimationFrame(rafId);
       }
     };
-  }, [isTabsSticky, tabsHeight, headerHeight, isProductsTab]);
+  }, [isTabsSticky, tabsHeight, headerHeight]);
 
   // Determine header mode based on scroll progress
   const isScrolledState = scrollProgress > 0.3;
@@ -254,70 +224,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
         }}
       >
         <main>
-          {/* Seller Info Section - Only show on products tab */}
-          {isProductsTab && (
-            <div ref={sellerInfoRef} className="w-full bg-white border-b">
-              <div className=" px-2 py-2">
-                {sellerLoading ? (
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-gray-200 rounded-full animate-pulse" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-6 bg-gray-200 rounded w-1/3 animate-pulse" />
-                      <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse" />
-                    </div>
-                  </div>
-                ) : sellerData ? (
-                  <div className="flex items-center gap-4">
-                    {/* Profile Picture */}
-                    <Avatar className="w-16 h-16 flex-shrink-0">
-                      <AvatarImage src={getSellerLogoUrl(sellerData.image_url)} />
-                      <AvatarFallback>{sellerData.name?.substring(0, 2).toUpperCase() || 'SE'}</AvatarFallback>
-                    </Avatar>
-
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-1">
-                        <div className="w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center">
-                          <Store className="w-4 h-4 text-white" />
-                        </div>
-                        <h1 className="text-xl font-bold text-gray-900">{sellerData.name}</h1>
-                        {sellerData.verified && (
-                          <span className="text-blue-600">✓</span>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-500 mb-2">
-                        {sellerData.verified ? 'Premium Seller Dashboard' : 'Seller Dashboard'}
-                      </p>
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
-                        <span>👥 {sellerData.followers_count || 0} followers</span>
-                        {sellerData.total_sales > 0 && (
-                          <span>📦 {sellerData.total_sales} sales</span>
-                        )}
-                        {sellerData.verified && <span>✓ Verified</span>}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-8 text-gray-500 space-y-4">
-                    <p className="text-lg font-medium">No seller profile found</p>
-                    <p className="text-sm">You need to create a seller account to access the dashboard.</p>
-                    <button
-                      onClick={() => {
-                        // TODO: Implement seller onboarding flow
-                        // This could open a dialog or navigate to a setup page
-                        console.log('Start seller onboarding');
-                        navigate('/seller-onboarding');
-                      }}
-                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      Become a Seller
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Tabs Navigation with improved sticky behavior */}
+          {/* Tabs Navigation - Directly below header */}
           <nav
             ref={tabsRef}
             className={`bg-white border-b transition-all duration-200 ease-out ${

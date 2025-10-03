@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Timer } from "lucide-react";
+import { Timer, Package, CheckCircle, TrendingUp, AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllProducts, trackProductView } from "@/integrations/supabase/products";
@@ -26,6 +26,15 @@ interface GenreFlashDealsProps {
   fetchSellerProducts?: boolean;
 }
 
+interface SummaryStats {
+  totalProducts: number;
+  inStock: number;
+  outOfStock: number;
+  onDiscount: number;
+  totalValue: number;
+  lowStock: number;
+}
+
 export default function BookGenreFlashDeals({ 
   productType = undefined,
   excludeTypes = [],
@@ -42,7 +51,7 @@ export default function BookGenreFlashDeals({
     queryKey: ['seller-products', sellerData?.id],
     queryFn: async () => {
       if (!sellerData?.id) return [];
-      
+
       const { data, error } = await supabase
         .from('products')
         .select(`
@@ -84,6 +93,25 @@ export default function BookGenreFlashDeals({
     seconds: 0
   });
 
+  // Calculate summary statistics
+  const summaryStats: SummaryStats = React.useMemo(() => {
+    const totalProducts = allProducts.length;
+    const inStock = allProducts.filter(product => (product.inventory || 0) > 0).length;
+    const outOfStock = allProducts.filter(product => (product.inventory || 0) === 0).length;
+    const onDiscount = allProducts.filter(product => product.discount_price && product.discount_price < product.price).length;
+    const totalValue = allProducts.reduce((sum, product) => sum + (product.discount_price || product.price), 0);
+    const lowStock = allProducts.filter(product => (product.inventory || 0) > 0 && (product.inventory || 0) <= 10).length;
+
+    return {
+      totalProducts,
+      inStock,
+      outOfStock,
+      onDiscount,
+      totalValue,
+      lowStock
+    };
+  }, [allProducts]);
+
   // Calculate time remaining for flash deals
   useEffect(() => {
     const calculateTimeLeft = () => {
@@ -118,19 +146,21 @@ export default function BookGenreFlashDeals({
     return () => clearInterval(timer);
   }, [allProducts]);
 
-  // Process products
-  const processedProducts = allProducts.map(product => {
-    const discountPercentage = product.discount_price 
-      ? Math.round(((product.price - product.discount_price) / product.price) * 100) 
-      : 0;
+  // Process products with memoization to prevent infinite re-renders
+  const processedProducts = React.useMemo(() => {
+    return allProducts.map(product => {
+      const discountPercentage = product.discount_price 
+        ? Math.round(((product.price - product.discount_price) / product.price) * 100) 
+        : 0;
 
-    return {
-      ...product,
-      discountPercentage,
-      stock: product.inventory ?? 0,
-      image: product.product_images?.[0]?.src || "https://placehold.co/300x300?text=No+Image"
-    };
-  });
+      return {
+        ...product,
+        discountPercentage,
+        stock: product.inventory ?? 0,
+        image: product.product_images?.[0]?.src || "https://placehold.co/300x300?text=No+Image"
+      };
+    });
+  }, [allProducts]);
 
   // Infinite scroll logic
   useEffect(() => {
@@ -157,6 +187,49 @@ export default function BookGenreFlashDeals({
 
   return (
     <div className={`w-full bg-white ${className}`}>
+      {/* Header & Stats Section - Matching SellerOrders style */}
+      <div className="bg-white border-b">
+        <div className="py-3">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h1 className="text-lg font-bold text-foreground">Products</h1>
+              <p className="text-xs text-muted-foreground">Manage all your products</p>
+            </div>
+          </div>
+
+          {/* Compact stats grid - Matching SellerOrders style */}
+          {!isLoading && processedProducts.length > 0 && (
+            <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-6 gap-3">
+              <div className="text-center">
+                <div className="text-lg font-bold text-blue-600">{summaryStats.totalProducts}</div>
+                <div className="text-xs text-muted-foreground">Total</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-green-600">{summaryStats.inStock}</div>
+                <div className="text-xs text-muted-foreground">In Stock</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-orange-600">{summaryStats.onDiscount}</div>
+                <div className="text-xs text-muted-foreground">On Discount</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-purple-600">${summaryStats.totalValue.toFixed(0)}</div>
+                <div className="text-xs text-muted-foreground">Total Value</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-yellow-600">{summaryStats.lowStock}</div>
+                <div className="text-xs text-muted-foreground">Low Stock</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-red-600">{summaryStats.outOfStock}</div>
+                <div className="text-xs text-muted-foreground">Out of Stock</div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Products Grid - Reverted to old version design */}
       <div className="py-4">
         {isLoading && !externalProducts ? (
           <div className="grid grid-cols-2 gap-2">
