@@ -4,6 +4,9 @@ import { Timer } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllProducts, trackProductView } from "@/integrations/supabase/products";
+import { useAuth } from "@/contexts/auth/AuthContext";
+import { useSellerByUserId } from "@/hooks/useSellerByUserId";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Product {
   id: string;
@@ -20,26 +23,60 @@ interface GenreFlashDealsProps {
   excludeTypes?: string[];
   className?: string;
   products?: Product[];
+  fetchSellerProducts?: boolean;
 }
 
 export default function BookGenreFlashDeals({ 
   productType = undefined,
   excludeTypes = [],
   className = '',
-  products: externalProducts
+  products: externalProducts,
+  fetchSellerProducts = false
 }: GenreFlashDealsProps) {
   const [displayCount, setDisplayCount] = useState(8);
+  const { user } = useAuth();
+  const { data: sellerData } = useSellerByUserId(fetchSellerProducts ? (user?.id || '') : '');
 
-  // Fetch ALL products only if no external products provided
-  const { data: fetchedProducts = [], isLoading } = useQuery({
+  // Fetch seller-specific products if requested
+  const { data: sellerProducts, isLoading: sellerProductsLoading } = useQuery({
+    queryKey: ['seller-products', sellerData?.id],
+    queryFn: async () => {
+      if (!sellerData?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          product_images (
+            id,
+            src,
+            alt
+          )
+        `)
+        .eq('seller_id', sellerData.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching seller products:', error);
+        throw error;
+      }
+
+      return data || [];
+    },
+    enabled: fetchSellerProducts && !!sellerData?.id,
+  });
+
+  // Fetch ALL products only if no external products provided and not fetching seller products
+  const { data: fetchedProducts = [], isLoading: allProductsLoading } = useQuery({
     queryKey: ['all-products'],
     queryFn: () => fetchAllProducts(),
     refetchInterval: 5 * 60 * 1000,
-    enabled: !externalProducts,
+    enabled: !externalProducts && !fetchSellerProducts,
   });
 
-  // Use external products if provided, otherwise use fetched products
-  const allProducts = externalProducts || fetchedProducts;
+  // Determine which products to use
+  const allProducts = externalProducts || (fetchSellerProducts ? sellerProducts : fetchedProducts) || [];
+  const isLoading = fetchSellerProducts ? sellerProductsLoading : allProductsLoading;
 
   const [timeLeft, setTimeLeft] = useState({
     hours: 0,
