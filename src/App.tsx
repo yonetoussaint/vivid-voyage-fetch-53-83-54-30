@@ -140,7 +140,7 @@ function App() {
                                 <Route path="categories/entertainment" element={<EntertainmentPage />} />
                                 <Route path="admin" element={<AdminPanel />} />
                 <Route path="admin-dashboard/*" element={<AdminDashboard />} />
-                                <Route path="seller/:sellerId" element={<SellerPage />} />
+                                <Route path="/seller/:sellerId/*" element={<SellerPage />} />
                                 <Route path="product/:productId/edit" element={<ProductEditNavigationPage />} />
                                 <Route path="product/:productId/edit/basic" element={<ProductEditBasicPage />} />
                                 <Route path="product/:productId/edit/category" element={<ProductEditCategoryPage />} />
