@@ -49,15 +49,20 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
   // Extract current tab from pathname
   const getCurrentTab = () => {
-    const path = location.pathname.split('/seller-dashboard/')[1];
-    if (!path || path === '') {
-      if (location.pathname === '/seller-dashboard' || 
-          location.pathname.endsWith('/seller-dashboard/')) {
-        navigate('/seller-dashboard/overview', { replace: true });
+    if (isDashboard) {
+      const path = location.pathname.split('/seller-dashboard/')[1];
+      if (!path || path === '') {
+        if (location.pathname === '/seller-dashboard' || 
+            location.pathname.endsWith('/seller-dashboard/')) {
+          navigate('/seller-dashboard/overview', { replace: true });
+        }
+        return 'overview';
       }
+      return path;
+    } else {
+      // For public seller pages, always show overview
       return 'overview';
     }
-    return path;
   };
 
   const [activeTab, setActiveTab] = useState(getCurrentTab());
@@ -71,7 +76,11 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   // Check if we're on the overview tab
   const isOverviewTab = activeTab === 'overview';
 
-  const navigationItems = [
+  // Determine if we're in dashboard or public seller page
+  const isDashboard = location.pathname.includes('/seller-dashboard');
+  const baseRoute = isDashboard ? '/seller-dashboard' : `/seller/${location.pathname.split('/seller/')[1]?.split('/')[0] || ''}`;
+
+  const navigationItems = isDashboard ? [
     { id: 'overview', name: 'Overview', href: '/seller-dashboard/overview', icon: Home },
     { id: 'products', name: 'Products', href: '/seller-dashboard/products', icon: Package },
     { id: 'orders', name: 'Orders', href: '/seller-dashboard/orders', icon: ShoppingCart },
@@ -81,6 +90,10 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     { id: 'marketing', name: 'Marketing', href: '/seller-dashboard/marketing', icon: Megaphone },
     { id: 'reels', name: 'Reels', href: '/seller-dashboard/reels', icon: Megaphone },
     { id: 'settings', name: 'Settings', href: '/seller-dashboard/settings', icon: Settings },
+  ] : [
+    { id: 'overview', name: 'Home', href: baseRoute, icon: Home },
+    { id: 'products', name: 'Products', href: baseRoute, icon: Package },
+    { id: 'reels', name: 'Reels', href: baseRoute, icon: Megaphone },
   ];
 
   const handleTabChange = (tabId: string) => {

@@ -1,21 +1,12 @@
 // components/seller-app/SellerPage.tsx
 import React, { useEffect } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import SellerLayout from '@/components/seller-app/SellerLayout';
 import SellerOverview from '@/components/seller-app/pages/SellerOverview';
-import SellerProducts from '@/components/seller/SellerProducts';
-import SellerOrders from '@/components/seller-app/pages/SellerOrders';
-import SellerReels from '@/components/seller-app/pages/SellerReels';
-import SellerCustomers from '@/components/seller-app/pages/SellerCustomers';
-import SellerAnalytics from '@/components/seller-app/pages/SellerAnalytics';
-import SellerInventory from '@/components/seller-app/pages/SellerInventory';
-import SellerFinances from '@/components/seller-app/pages/SellerFinances';
-import SellerSettings from '@/components/seller-app/pages/SellerSettings';
-import SellerMarketing from '@/components/seller-app/pages/SellerMarketing';
-import SellerSupport from '@/components/seller-app/pages/SellerSupport';
 
 const SellerPage = () => {
   const location = useLocation();
+  const { sellerId } = useParams();
 
   // Scroll to top when route changes
   useEffect(() => {
@@ -24,20 +15,7 @@ const SellerPage = () => {
 
   return (
     <SellerLayout showActionButtons={true}>
-      <Routes>
-        <Route path="/" element={<Navigate to="/seller/overview" replace />} />
-        <Route path="/overview" element={<SellerOverview />} />
-        <Route path="/products" element={<SellerProducts />} />
-        <Route path="/orders" element={<SellerOrders />} />
-        <Route path="/customers" element={<SellerCustomers />} />
-        <Route path="/reels" element={<SellerReels />} />
-        <Route path="/analytics" element={<SellerAnalytics />} />
-        <Route path="/inventory" element={<SellerInventory />} />
-        <Route path="/finances" element={<SellerFinances />} />
-        <Route path="/marketing" element={<SellerMarketing />} />
-        <Route path="/settings" element={<SellerSettings />} />
-        <Route path="/support" element={<SellerSupport />} />
-      </Routes>
+      <SellerOverview />
     </SellerLayout>
   );
 };
