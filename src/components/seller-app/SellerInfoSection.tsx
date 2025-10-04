@@ -201,10 +201,13 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
                 )}
               </div>
               <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                <span className="font-mono">ID: {sellerData?.id?.substring(0, 8)}</span>
+                <span className="font-mono">
+                  ID: {sellerData?.id?.replace(/-/g, '').substring(0, 8)}{safeSellerData.name.substring(0, 2).toUpperCase()}
+                </span>
                 <button
                   onClick={() => {
-                    navigator.clipboard.writeText(sellerData?.id || '');
+                    const sellerId = `${sellerData?.id?.replace(/-/g, '').substring(0, 8)}${safeSellerData.name.substring(0, 2).toUpperCase()}`;
+                    navigator.clipboard.writeText(sellerId);
                     // Optional: Add a toast notification here
                   }}
                   className="p-1 hover:bg-gray-100 rounded transition-colors"
