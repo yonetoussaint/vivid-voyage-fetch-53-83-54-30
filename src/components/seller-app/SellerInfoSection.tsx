@@ -80,7 +80,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
     return (
       <div className="bg-white text-gray-900">
         <div className="relative w-full h-32 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-pulse" />
-        
+
         <div className="px-3 -mt-12">
           <div className="flex items-end justify-between mb-3">
             <div className="flex items-end">
@@ -90,7 +90,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
                 </div>
               </div>
             </div>
-            
+
             <div className="flex gap-2 pb-2">
               <div className="px-4 h-9 rounded-full bg-gray-200 animate-pulse w-20" />
               <div className="w-9 h-9 rounded-full bg-gray-200 animate-pulse" />
@@ -202,11 +202,19 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
               </div>
               <div className="flex items-center gap-1.5 text-xs text-gray-500">
                 <span className="font-mono">
-                  ID: {sellerData?.id?.replace(/-/g, '').substring(0, 8)}{safeSellerData.name.substring(0, 2).toUpperCase()}
+                  ID: {(() => {
+                    const numericOnly = sellerData?.id?.replace(/\D/g, '') || '';
+                    const eightDigits = numericOnly.substring(0, 8).padEnd(8, '0');
+                    const twoLetters = safeSellerData.name.substring(0, 2).toUpperCase();
+                    return `${eightDigits}${twoLetters}`;
+                  })()}
                 </span>
                 <button
                   onClick={() => {
-                    const sellerId = `${sellerData?.id?.replace(/-/g, '').substring(0, 8)}${safeSellerData.name.substring(0, 2).toUpperCase()}`;
+                    const numericOnly = sellerData?.id?.replace(/\D/g, '') || '';
+                    const eightDigits = numericOnly.substring(0, 8).padEnd(8, '0');
+                    const twoLetters = safeSellerData.name.substring(0, 2).toUpperCase();
+                    const sellerId = `${eightDigits}${twoLetters}`;
                     navigator.clipboard.writeText(sellerId);
                     // Optional: Add a toast notification here
                   }}
