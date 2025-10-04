@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
-  Package, ShoppingCart, Users, BarChart3, ArrowLeft, DollarSign, Megaphone, Settings, Home, Share 
+  Package, ShoppingCart, Users, BarChart3, ArrowLeft, DollarSign, Megaphone, Settings, Home, Share, MessageCircle, MessageSquare 
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import ReusableSearchBar from '@/components/shared/ReusableSearchBar';
@@ -71,7 +71,11 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       }
       return path;
     } else {
-      // For public seller pages, always show overview
+      // For public seller pages, extract tab from path
+      const pathParts = location.pathname.split('/seller/')[1]?.split('/');
+      if (pathParts && pathParts.length > 1) {
+        return pathParts[1]; // Return the tab part (e.g., 'products', 'reels', etc.)
+      }
       return 'overview';
     }
   };
@@ -100,9 +104,12 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     { id: 'reels', name: 'Reels', href: '/seller-dashboard/reels', icon: Megaphone },
     { id: 'settings', name: 'Settings', href: '/seller-dashboard/settings', icon: Settings },
   ] : [
-    { id: 'overview', name: 'Home', href: baseRoute, icon: Home },
-    { id: 'products', name: 'Products', href: baseRoute, icon: Package },
-    { id: 'reels', name: 'Reels', href: baseRoute, icon: Megaphone },
+    { id: 'overview', name: 'Overview', href: baseRoute, icon: Home },
+    { id: 'products', name: 'Products', href: `${baseRoute}/products`, icon: Package },
+    { id: 'reels', name: 'Reels', href: `${baseRoute}/reels`, icon: Megaphone },
+    { id: 'posts', name: 'Posts', href: `${baseRoute}/posts`, icon: MessageCircle },
+    { id: 'qas', name: 'Q&As', href: `${baseRoute}/qas`, icon: MessageSquare },
+    { id: 'reviews', name: 'Reviews', href: `${baseRoute}/reviews`, icon: Star },
   ];
 
   const handleTabChange = (tabId: string) => {
