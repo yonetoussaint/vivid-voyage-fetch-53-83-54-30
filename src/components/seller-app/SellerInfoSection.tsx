@@ -191,13 +191,31 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
           </div>
 
           <div className="w-full">
-            <div className="flex items-center gap-1.5 mb-3">
-              <h1 className="text-xl font-bold">{safeSellerData.name}</h1>
-              {safeSellerData.verified && (
-                <svg className="w-5 h-5 flex-shrink-0 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-              )}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-1.5">
+                <h1 className="text-xl font-bold">{safeSellerData.name}</h1>
+                {safeSellerData.verified && (
+                  <svg className="w-5 h-5 flex-shrink-0 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                <span className="font-mono">ID: {sellerData?.id?.substring(0, 8)}</span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(sellerData?.id || '');
+                    // Optional: Add a toast notification here
+                  }}
+                  className="p-1 hover:bg-gray-100 rounded transition-colors"
+                  title="Copy seller ID"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
 
