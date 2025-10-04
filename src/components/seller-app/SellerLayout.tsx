@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
-  Package, ShoppingCart, Users, BarChart3, ArrowLeft, DollarSign, Megaphone, Settings, Home, Share, MessageCircle, MessageSquare 
+  Package, ShoppingCart, Users, BarChart3, ArrowLeft, DollarSign, Megaphone, Settings, Home, Share, MessageCircle, MessageSquare, Star 
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import ReusableSearchBar from '@/components/shared/ReusableSearchBar';
