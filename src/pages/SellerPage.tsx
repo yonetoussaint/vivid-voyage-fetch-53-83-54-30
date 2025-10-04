@@ -10,6 +10,7 @@ import CustomerReviewsEnhanced from '@/components/product/CustomerReviewsEnhance
 import SellerProductsTab from '@/components/seller/tabs/SellerProductsTab';
 import SellerReelsTab from '@/components/seller/tabs/SellerReelsTab';
 import SellerPostsTab from '@/components/seller/tabs/SellerPostsTab';
+import ProductSectionWrapper from '@/components/product/ProductSectionWrapper';
 import { fetchSellerById } from '@/integrations/supabase/sellers';
 import { fetchAllProducts } from '@/integrations/supabase/products';
 import { supabase } from '@/integrations/supabase/client';
@@ -109,17 +110,17 @@ const SellerPage = () => {
         <Route 
           path="/qas" 
           element={
-            <div className="p-4">
+            <ProductSectionWrapper>
               <ProductQA productId={sellerId} limit={null} />
-            </div>
+            </ProductSectionWrapper>
           } 
         />
         <Route 
           path="/reviews" 
           element={
-            <div className="p-4">
+            <ProductSectionWrapper>
               <CustomerReviewsEnhanced productId={sellerId} limit={null} />
-            </div>
+            </ProductSectionWrapper>
           } 
         />
       </Routes>
