@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 
-export default function TabsNavigation({ tabs, activeTab, onTabChange, className = "", style = {}, edgeToEdge = false }) {
+export default function TabsNavigation({ tabs, activeTab, onTabChange, className = "", style = {}, edgeToEdge = false, isLoading = false }) {
   const tabRefs = useRef([]);
   const scrollContainerRef = useRef(null);
   const [underlineWidth, setUnderlineWidth] = useState(0);
@@ -103,6 +103,39 @@ export default function TabsNavigation({ tabs, activeTab, onTabChange, className
 
   // Merge styles - passed style overrides default
   const finalStyle = { ...defaultStyle, ...style };
+
+  // Skeleton loading state
+  if (isLoading) {
+    return (
+      <div
+        className={`relative w-full transition-all duration-700 overflow-hidden ${className}`}
+        style={finalStyle}
+      >
+        <div className="h-full w-full">
+          <div
+            className="flex items-center overflow-x-auto no-scrollbar h-full w-full relative px-2 py-2"
+            style={{ 
+              scrollbarWidth: 'none', 
+              msOverflowStyle: 'none',
+              WebkitOverflowScrolling: 'touch'
+            }}
+          >
+            <div className="flex items-center space-x-7">
+              {tabs.map((tab, index) => {
+                const widths = ['w-16', 'w-20', 'w-16', 'w-20', 'w-20', 'w-16', 'w-20', 'w-16', 'w-20'];
+                const width = widths[index] || 'w-16';
+                return (
+                  <div key={tab.id} className="flex-shrink-0">
+                    <div className={`h-5 bg-gray-200 rounded ${width} animate-pulse`} />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
   <div
