@@ -15,11 +15,19 @@ import SellerInfoSection from './SellerInfoSection';
 interface SellerLayoutProps {
   children: React.ReactNode;
   showActionButtons?: boolean;
+  publicSellerData?: any;
+  publicSellerLoading?: boolean;
+  getSellerLogoUrl?: (imagePath?: string) => string;
+  isPublicPage?: boolean;
 }
 
 const SellerLayout: React.FC<SellerLayoutProps> = ({ 
   children, 
-  showActionButtons = true 
+  showActionButtons = true,
+  publicSellerData,
+  publicSellerLoading,
+  getSellerLogoUrl: externalGetSellerLogoUrl,
+  isPublicPage = false
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -117,7 +125,8 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
   const { user } = useAuth();
 
-  const { data: sellerData, isLoading: sellerLoading } = useQuery({
+  // Use public data if on public page, otherwise fetch authenticated seller data
+  const { data: privateSellerData, isLoading: privateSellerLoading } = useQuery({
     queryKey: ['seller', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
@@ -135,14 +144,18 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
       return data;
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && !isPublicPage,
   });
 
-  const getSellerLogoUrl = (imagePath?: string): string => {
+  // Use public or private seller data based on page type
+  const sellerData = isPublicPage ? publicSellerData : privateSellerData;
+  const sellerLoading = isPublicPage ? publicSellerLoading : privateSellerLoading;
+
+  const getSellerLogoUrl = externalGetSellerLogoUrl || ((imagePath?: string): string => {
     if (!imagePath) return "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face";
     const { data } = supabase.storage.from('seller-logos').getPublicUrl(imagePath);
     return data.publicUrl;
-  };
+  });
 
   // Measure heights with ResizeObserver
   useLayoutEffect(() => {
