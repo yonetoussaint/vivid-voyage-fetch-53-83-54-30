@@ -99,8 +99,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
           </div>
 
           <div className="w-full mb-3">
-            <div className="h-6 bg-gray-200 rounded w-1/2 animate-pulse mb-2" />
-            <div className="h-4 bg-gray-200 rounded w-1/3 animate-pulse" />
+            <div className="h-6 bg-gray-200 rounded w-1/2 animate-pulse" />
           </div>
 
           <div className="mb-3">
@@ -192,7 +191,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
           </div>
 
           <div className="w-full">
-            <div className="flex items-center gap-1.5 mb-1">
+            <div className="flex items-center gap-1.5 mb-3">
               <h1 className="text-xl font-bold">{safeSellerData.name}</h1>
               {safeSellerData.verified && (
                 <svg className="w-5 h-5 flex-shrink-0 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
@@ -200,7 +199,6 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
                 </svg>
               )}
             </div>
-            <p className="text-gray-500 text-sm mb-0">@{safeSellerData.username}</p>
           </div>
 
           {/* Bio */}
