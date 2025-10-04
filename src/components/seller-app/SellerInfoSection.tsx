@@ -99,13 +99,6 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
       <div className="bg-white text-gray-900">
         {/* Banner */}
         <div className="relative w-full h-32 bg-gradient-to-r from-purple-400 via-pink-500 to-orange-400">
-          {/* Back Button */}
-          <button 
-            onClick={onBack}
-            className="absolute top-4 left-4 w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors shadow-md"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-700" />
-          </button>
         </div>
 
         {/* Main Content - Fixed structure */}
