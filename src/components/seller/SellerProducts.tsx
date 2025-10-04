@@ -1,5 +1,7 @@
 import React from 'react';
 import BookGenreFlashDeals from '@/components/home/BookGenreFlashDeals';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { useSellerByUserId } from '@/hooks/useSellerByUserId';
 
 interface Product {
   id: string;
@@ -20,10 +22,13 @@ const SellerProducts: React.FC<SellerProductsProps> = ({
   products,
   isLoading
 }) => {
+  const { user } = useAuth();
+  const { data: sellerData } = useSellerByUserId(user?.id || '');
+
   return (
     <div>
       <BookGenreFlashDeals 
-        fetchSellerProducts={true}
+        sellerId={sellerData?.id}
         onAddProduct={() => {
           console.log("Add product clicked");
           // Or navigate to add product page:

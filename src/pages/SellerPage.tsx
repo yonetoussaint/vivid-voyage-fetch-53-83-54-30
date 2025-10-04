@@ -74,7 +74,7 @@ const SellerPage = () => {
           path="/products" 
           element={
             <BookGenreFlashDeals 
-              fetchSellerProducts={true}
+              sellerId={sellerId}
             />
           } 
         />

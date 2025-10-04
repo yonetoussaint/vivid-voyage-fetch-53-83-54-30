@@ -25,7 +25,7 @@ interface GenreFlashDealsProps {
   excludeTypes?: string[];
   className?: string;
   products?: Product[];
-  fetchSellerProducts?: boolean;
+  sellerId?: string;
   onAddProduct?: () => void; // Added prop for add product action
 }
 
@@ -43,12 +43,10 @@ export default function BookGenreFlashDeals({
   excludeTypes = [],
   className = '',
   products: externalProducts,
-  fetchSellerProducts = false,
+  sellerId,
   onAddProduct // Added prop
 }: GenreFlashDealsProps) {
   const [displayCount, setDisplayCount] = useState(8);
-  const { user } = useAuth();
-  const { data: sellerData } = useSellerByUserId(fetchSellerProducts ? (user?.id || '') : '');
 
   // Add filter state
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
@@ -102,46 +100,20 @@ export default function BookGenreFlashDeals({
     console.log('Filter button clicked:', filterId);
   };
 
-  // Fetch seller-specific products if requested
-  const { data: sellerProducts, isLoading: sellerProductsLoading } = useQuery({
-    queryKey: ['seller-products', sellerData?.id],
-    queryFn: async () => {
-      if (!sellerData?.id) return [];
-
-      const { data, error } = await supabase
-        .from('products')
-        .select(`
-          *,
-          product_images (
-            id,
-            src,
-            alt
-          )
-        `)
-        .eq('seller_id', sellerData.id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching seller products:', error);
-        throw error;
-      }
-
-      return data || [];
-    },
-    enabled: fetchSellerProducts && !!sellerData?.id,
-  });
-
-  // Fetch ALL products only if no external products provided and not fetching seller products
+  // Fetch ALL products only if no external products provided
   const { data: fetchedProducts = [], isLoading: allProductsLoading } = useQuery({
     queryKey: ['all-products'],
     queryFn: () => fetchAllProducts(),
     refetchInterval: 5 * 60 * 1000,
-    enabled: !externalProducts && !fetchSellerProducts,
+    enabled: !externalProducts,
   });
 
-  // Determine which products to use
-  const allProducts = externalProducts || (fetchSellerProducts ? sellerProducts : fetchedProducts) || [];
-  const isLoading = fetchSellerProducts ? sellerProductsLoading : allProductsLoading;
+  // Determine which products to use and filter by sellerId if provided
+  let allProducts = externalProducts || fetchedProducts || [];
+  if (sellerId && !externalProducts) {
+    allProducts = allProducts.filter(product => product.seller_id === sellerId);
+  }
+  const isLoading = allProductsLoading;
 
   const [timeLeft, setTimeLeft] = useState({
     hours: 0,
