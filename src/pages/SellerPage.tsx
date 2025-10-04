@@ -7,10 +7,10 @@ import SellerLayout from '@/components/seller-app/SellerLayout';
 import SellerOverview from '@/components/seller-app/pages/SellerOverview';
 import ProductQA from '@/components/product/ProductQA';
 import CustomerReviewsEnhanced from '@/components/product/CustomerReviewsEnhanced';
-import SellerProductsTab from '@/components/seller/tabs/SellerProductsTab';
 import SellerReelsTab from '@/components/seller/tabs/SellerReelsTab';
 import SellerPostsTab from '@/components/seller/tabs/SellerPostsTab';
 import ProductSectionWrapper from '@/components/product/ProductSectionWrapper';
+import BookGenreFlashDeals from '@/components/home/BookGenreFlashDeals';
 import { fetchSellerById } from '@/integrations/supabase/sellers';
 import { fetchAllProducts } from '@/integrations/supabase/products';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,12 +27,6 @@ const SellerPage = () => {
       return await fetchSellerById(sellerId);
     },
     enabled: !!sellerId,
-  });
-
-  // Fetch products for the products tab
-  const { data: products = [], isLoading: productsLoading } = useQuery({
-    queryKey: ['products', 'all'],
-    queryFn: fetchAllProducts,
   });
 
   // Mock videos data for reels tab
@@ -58,14 +52,6 @@ const SellerPage = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [location.pathname]);
 
-  const handleEditProduct = (product: any) => {
-    console.log('Edit product:', product);
-  };
-
-  const handleViewProduct = (productId: string) => {
-    console.log('View product:', productId);
-  };
-
   const handleVideoClick = (videoId: string) => {
     console.log('Video clicked:', videoId);
   };
@@ -87,11 +73,8 @@ const SellerPage = () => {
         <Route 
           path="/products" 
           element={
-            <SellerProductsTab
-              products={products}
-              isLoading={productsLoading}
-              onEditProduct={handleEditProduct}
-              onViewProduct={handleViewProduct}
+            <BookGenreFlashDeals 
+              fetchSellerProducts={true}
             />
           } 
         />
