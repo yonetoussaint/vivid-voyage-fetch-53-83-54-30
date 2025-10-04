@@ -47,6 +47,9 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     console.log('Share seller profile');
   };
 
+  // Determine if we're in dashboard or public seller page
+  const isDashboard = location.pathname.includes('/seller-dashboard');
+
   // Extract current tab from pathname
   const getCurrentTab = () => {
     if (isDashboard) {
@@ -76,8 +79,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   // Check if we're on the overview tab
   const isOverviewTab = activeTab === 'overview';
 
-  // Determine if we're in dashboard or public seller page
-  const isDashboard = location.pathname.includes('/seller-dashboard');
   const baseRoute = isDashboard ? '/seller-dashboard' : `/seller/${location.pathname.split('/seller/')[1]?.split('/')[0] || ''}`;
 
   const navigationItems = isDashboard ? [
