@@ -370,11 +370,27 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
               top: isTabsSticky ? `${headerHeight}px` : 'auto',
             }}
           >
-            <TabsNavigation
-              tabs={tabs}
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
-            />
+            {sellerLoading ? (
+              <div className="flex items-center overflow-x-auto no-scrollbar px-2 py-2 h-[40px]" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
+                <div className="flex items-center space-x-7">
+                  {navigationItems.map((item, index) => {
+                    const widths = ['w-16', 'w-20', 'w-16', 'w-20', 'w-20', 'w-16', 'w-20', 'w-16', 'w-20'];
+                    const width = widths[index] || 'w-16';
+                    return (
+                      <div key={item.id} className="flex-shrink-0">
+                        <div className={`h-5 bg-gray-200 rounded ${width} animate-pulse`} />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <TabsNavigation
+                tabs={tabs}
+                activeTab={activeTab}
+                onTabChange={handleTabChange}
+              />
+            )}
           </nav>
 
           {/* Spacer when tabs are sticky */}
@@ -387,18 +403,49 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
           {/* Main Content */}
           <div className="px-2">
-            {React.Children.map(children, child => {
-              if (React.isValidElement(child)) {
-                if (activeTab !== 'overview') {
-                  return React.cloneElement(child, { 
-                    products, 
-                    isLoading: productsLoading 
-                  } as any);
+            {sellerLoading ? (
+              <div className="py-4 space-y-4">
+                {/* Hero Banner Skeleton */}
+                <div className="w-full h-48 bg-gray-200 rounded-lg animate-pulse" />
+                
+                {/* Reels Section Skeleton */}
+                <div className="space-y-2">
+                  <div className="h-6 bg-gray-200 rounded w-32 animate-pulse" />
+                  <div className="flex gap-2 overflow-hidden">
+                    {[1, 2, 3].map((item) => (
+                      <div key={item} className="flex-shrink-0 w-32 h-56 bg-gray-200 rounded-lg animate-pulse" />
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Products Section Skeleton */}
+                <div className="space-y-2">
+                  <div className="h-6 bg-gray-200 rounded w-24 animate-pulse" />
+                  <div className="grid grid-cols-2 gap-2">
+                    {[1, 2, 3, 4].map((item) => (
+                      <div key={item} className="space-y-2">
+                        <div className="w-full aspect-square bg-gray-200 rounded-lg animate-pulse" />
+                        <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse" />
+                        <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              React.Children.map(children, child => {
+                if (React.isValidElement(child)) {
+                  if (activeTab !== 'overview') {
+                    return React.cloneElement(child, { 
+                      products, 
+                      isLoading: productsLoading 
+                    } as any);
+                  }
+                  return child;
                 }
                 return child;
-              }
-              return child;
-            })}
+              })
+            )}
           </div>
         </main>
       </div>
