@@ -206,7 +206,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
                     const numericOnly = sellerData?.id?.replace(/\D/g, '') || '';
                     const eightDigits = numericOnly.substring(0, 8).padEnd(8, '0');
                     const twoLetters = safeSellerData.name.substring(0, 2).toUpperCase();
-                    return `${eightDigits}${twoLetters}`;
+                    return `${twoLetters}${eightDigits}`;
                   })()}
                 </span>
                 <button
@@ -214,7 +214,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
                     const numericOnly = sellerData?.id?.replace(/\D/g, '') || '';
                     const eightDigits = numericOnly.substring(0, 8).padEnd(8, '0');
                     const twoLetters = safeSellerData.name.substring(0, 2).toUpperCase();
-                    const sellerId = `${eightDigits}${twoLetters}`;
+                    const sellerId = `${twoLetters}${eightDigits}`;
                     navigator.clipboard.writeText(sellerId);
                     // Optional: Add a toast notification here
                   }}
