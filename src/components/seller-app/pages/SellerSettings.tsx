@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   User, Store, Bell, Shield, CreditCard, 
   Truck, Globe, Palette, Save, Eye, EyeOff,
-  Search, Filter, Plus
+  ChevronDown, ChevronRight
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,7 +22,15 @@ import { Separator } from '@/components/ui/separator';
 
 const SellerSettings = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [activeTab, setActiveTab] = useState('profile');
+  const [expandedSections, setExpandedSections] = useState({
+    profile: true,
+    business: false,
+    shipping: false,
+    notifications: false,
+    security: false,
+    quickActions: false
+  });
+
   const [settings, setSettings] = useState({
     // Profile settings
     storeName: "John's Electronics Store",
@@ -53,7 +61,7 @@ const SellerSettings = () => {
     sessionTimeout: "30",
   });
 
-  const handleSettingChange = (key, value) => {
+  const handleSettingChange = (key: string, value: any) => {
     setSettings(prev => ({
       ...prev,
       [key]: value
@@ -61,16 +69,22 @@ const SellerSettings = () => {
   };
 
   const handleSave = () => {
-    // Save settings logic here
     console.log('Saving settings:', settings);
   };
 
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section as keyof typeof prev]
+    }));
+  };
+
   return (
-    <div className="space-y-4 bg-gray-50 min-h-screen">
-      {/* Compact Header */}
-      <div className="bg-white border-b">
+    <div className="w-full bg-white min-h-screen">
+      {/* Header */}
+      <div className="border-b border-gray-200">
         <div className="px-4 py-3">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between">
             <div>
               <h1 className="text-lg font-bold text-foreground">Settings</h1>
               <p className="text-xs text-muted-foreground">Manage your store settings</p>
@@ -83,64 +97,28 @@ const SellerSettings = () => {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="px-3">
-        <div className="flex space-x-1 bg-muted p-1 rounded-lg w-full overflow-x-auto">
-          <Button
-            variant={activeTab === 'profile' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setActiveTab('profile')}
-            className="text-xs h-7 flex-1 min-w-max"
-          >
-            <Store className="w-3 h-3 mr-1" />
-            Profile
-          </Button>
-          <Button
-            variant={activeTab === 'business' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setActiveTab('business')}
-            className="text-xs h-7 flex-1 min-w-max"
-          >
-            <Globe className="w-3 h-3 mr-1" />
-            Business
-          </Button>
-          <Button
-            variant={activeTab === 'shipping' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setActiveTab('shipping')}
-            className="text-xs h-7 flex-1 min-w-max"
-          >
-            <Truck className="w-3 h-3 mr-1" />
-            Shipping
-          </Button>
-          <Button
-            variant={activeTab === 'notifications' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setActiveTab('notifications')}
-            className="text-xs h-7 flex-1 min-w-max"
-          >
-            <Bell className="w-3 h-3 mr-1" />
-            Notifications
-          </Button>
-          <Button
-            variant={activeTab === 'security' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setActiveTab('security')}
-            className="text-xs h-7 flex-1 min-w-max"
-          >
-            <Shield className="w-3 h-3 mr-1" />
-            Security
-          </Button>
-        </div>
-      </div>
+      {/* Collapsible Sections */}
+      <div className="py-4">
+        <div className="space-y-3">
+          {/* Profile Section */}
+          <Card className="overflow-hidden border border-gray-200">
+            <button
+              onClick={() => toggleSection('profile')}
+              className="w-full p-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Store className="w-4 h-4 text-gray-600" />
+                <span className="text-sm font-semibold">Store Profile</span>
+              </div>
+              {expandedSections.profile ? (
+                <ChevronDown className="w-4 h-4 text-gray-500" />
+              ) : (
+                <ChevronRight className="w-4 h-4 text-gray-500" />
+              )}
+            </button>
 
-      {/* Settings Content */}
-      <div className="p-3">
-        {/* Profile Tab */}
-        {activeTab === 'profile' && (
-          <div className="space-y-3">
-            <Card className="overflow-hidden">
-              <CardContent className="p-4">
+            {expandedSections.profile && (
+              <CardContent className="p-4 pt-0 border-t">
                 <div className="flex items-center gap-3 mb-4">
                   <Avatar className="w-12 h-12">
                     <AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face" />
@@ -209,15 +187,28 @@ const SellerSettings = () => {
                   </div>
                 </div>
               </CardContent>
-            </Card>
-          </div>
-        )}
+            )}
+          </Card>
 
-        {/* Business Tab */}
-        {activeTab === 'business' && (
-          <div className="space-y-3">
-            <Card className="overflow-hidden">
-              <CardContent className="p-4">
+          {/* Business Section */}
+          <Card className="overflow-hidden border border-gray-200">
+            <button
+              onClick={() => toggleSection('business')}
+              className="w-full p-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Globe className="w-4 h-4 text-gray-600" />
+                <span className="text-sm font-semibold">Business Settings</span>
+              </div>
+              {expandedSections.business ? (
+                <ChevronDown className="w-4 h-4 text-gray-500" />
+              ) : (
+                <ChevronRight className="w-4 h-4 text-gray-500" />
+              )}
+            </button>
+
+            {expandedSections.business && (
+              <CardContent className="p-4 pt-0 border-t">
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
@@ -261,15 +252,28 @@ const SellerSettings = () => {
                   </div>
                 </div>
               </CardContent>
-            </Card>
-          </div>
-        )}
+            )}
+          </Card>
 
-        {/* Shipping Tab */}
-        {activeTab === 'shipping' && (
-          <div className="space-y-3">
-            <Card className="overflow-hidden">
-              <CardContent className="p-4">
+          {/* Shipping Section */}
+          <Card className="overflow-hidden border border-gray-200">
+            <button
+              onClick={() => toggleSection('shipping')}
+              className="w-full p-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Truck className="w-4 h-4 text-gray-600" />
+                <span className="text-sm font-semibold">Shipping Settings</span>
+              </div>
+              {expandedSections.shipping ? (
+                <ChevronDown className="w-4 h-4 text-gray-500" />
+              ) : (
+                <ChevronRight className="w-4 h-4 text-gray-500" />
+              )}
+            </button>
+
+            {expandedSections.shipping && (
+              <CardContent className="p-4 pt-0 border-t">
                 <div className="space-y-3">
                   <div className="grid grid-cols-3 gap-3">
                     <div>
@@ -302,15 +306,28 @@ const SellerSettings = () => {
                   </div>
                 </div>
               </CardContent>
-            </Card>
-          </div>
-        )}
+            )}
+          </Card>
 
-        {/* Notifications Tab */}
-        {activeTab === 'notifications' && (
-          <div className="space-y-3">
-            <Card className="overflow-hidden">
-              <CardContent className="p-4">
+          {/* Notifications Section */}
+          <Card className="overflow-hidden border border-gray-200">
+            <button
+              onClick={() => toggleSection('notifications')}
+              className="w-full p-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Bell className="w-4 h-4 text-gray-600" />
+                <span className="text-sm font-semibold">Notifications</span>
+              </div>
+              {expandedSections.notifications ? (
+                <ChevronDown className="w-4 h-4 text-gray-500" />
+              ) : (
+                <ChevronRight className="w-4 h-4 text-gray-500" />
+              )}
+            </button>
+
+            {expandedSections.notifications && (
+              <CardContent className="p-4 pt-0 border-t">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -361,15 +378,28 @@ const SellerSettings = () => {
                   </div>
                 </div>
               </CardContent>
-            </Card>
-          </div>
-        )}
+            )}
+          </Card>
 
-        {/* Security Tab */}
-        {activeTab === 'security' && (
-          <div className="space-y-3">
-            <Card className="overflow-hidden">
-              <CardContent className="p-4">
+          {/* Security Section */}
+          <Card className="overflow-hidden border border-gray-200">
+            <button
+              onClick={() => toggleSection('security')}
+              className="w-full p-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4 text-gray-600" />
+                <span className="text-sm font-semibold">Security</span>
+              </div>
+              {expandedSections.security ? (
+                <ChevronDown className="w-4 h-4 text-gray-500" />
+              ) : (
+                <ChevronRight className="w-4 h-4 text-gray-500" />
+              )}
+            </button>
+
+            {expandedSections.security && (
+              <CardContent className="p-4 pt-0 border-t">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -428,12 +458,28 @@ const SellerSettings = () => {
                   </div>
                 </div>
               </CardContent>
-            </Card>
+            )}
+          </Card>
 
-            {/* Quick Actions */}
-            <Card className="overflow-hidden">
-              <CardContent className="p-4">
-                <h3 className="text-sm font-semibold text-foreground mb-3">Quick Actions</h3>
+          {/* Quick Actions Section */}
+          <Card className="overflow-hidden border border-gray-200">
+            <button
+              onClick={() => toggleSection('quickActions')}
+              className="w-full p-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Palette className="w-4 h-4 text-gray-600" />
+                <span className="text-sm font-semibold">Quick Actions</span>
+              </div>
+              {expandedSections.quickActions ? (
+                <ChevronDown className="w-4 h-4 text-gray-500" />
+              ) : (
+                <ChevronRight className="w-4 h-4 text-gray-500" />
+              )}
+            </button>
+
+            {expandedSections.quickActions && (
+              <CardContent className="p-4 pt-0 border-t">
                 <div className="space-y-2">
                   <Button variant="outline" size="sm" className="w-full justify-start text-xs h-8">
                     <CreditCard className="w-3 h-3 mr-2" />
@@ -449,9 +495,9 @@ const SellerSettings = () => {
                   </Button>
                 </div>
               </CardContent>
-            </Card>
-          </div>
-        )}
+            )}
+          </Card>
+        </div>
       </div>
     </div>
   );

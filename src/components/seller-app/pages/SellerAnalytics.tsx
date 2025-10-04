@@ -14,9 +14,63 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
+import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
+import ProductFilterBar from '@/components/home/ProductFilterBar';
 
 const SellerAnalytics = () => {
   const [timeRange, setTimeRange] = useState('30days');
+  const [displayCount, setDisplayCount] = useState(8);
+
+  // Add filter state matching BookGenreFlashDeals
+  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
+
+  // Define filter categories matching BookGenreFlashDeals structure
+  const filterCategories = [
+    {
+      id: 'period',
+      label: 'Period',
+      options: ['Last 7 days', 'Last 30 days', 'Last 90 days', 'Last 12 months']
+    },
+    {
+      id: 'metric',
+      label: 'Metric',
+      options: ['Revenue', 'Orders', 'Customers', 'Page Views']
+    },
+    {
+      id: 'category',
+      label: 'Category',
+      options: ['All', 'Electronics', 'Accessories', 'Audio', 'Other']
+    },
+    {
+      id: 'trend',
+      label: 'Trend',
+      options: ['All', 'Growing', 'Declining', 'Stable']
+    }
+  ];
+
+  // Filter handler functions matching BookGenreFlashDeals
+  const handleFilterSelect = (filterId: string, option: string) => {
+    setSelectedFilters(prev => ({
+      ...prev,
+      [filterId]: option
+    }));
+  };
+
+  const handleFilterClear = (filterId: string) => {
+    setSelectedFilters(prev => {
+      const newFilters = { ...prev };
+      delete newFilters[filterId];
+      return newFilters;
+    });
+  };
+
+  const handleClearAll = () => {
+    setSelectedFilters({});
+  };
+
+  const handleFilterButtonClick = (filterId: string) => {
+    console.log('Filter button clicked:', filterId);
+  };
 
   const revenueData = [
     { name: 'Jan', revenue: 4000, orders: 24 },
@@ -44,94 +98,77 @@ const SellerAnalytics = () => {
 
   const stats = [
     {
-      title: 'Total Revenue',
       value: '$24,590',
-      change: '+12.5%',
-      trend: 'up',
-      icon: DollarSign,
-      color: 'text-green-600',
+      label: 'Total Revenue',
+      color: 'text-blue-600'
     },
     {
-      title: 'Total Orders',
       value: '1,247',
-      change: '+8.2%',
-      trend: 'up',
-      icon: ShoppingCart,
-      color: 'text-blue-600',
+      label: 'Total Orders',
+      color: 'text-green-600'
     },
     {
-      title: 'Customers',
       value: '892',
-      change: '+15.3%',
-      trend: 'up',
-      icon: Users,
-      color: 'text-purple-600',
+      label: 'Customers',
+      color: 'text-purple-600'
     },
     {
-      title: 'Page Views',
       value: '45,678',
-      change: '-2.1%',
-      trend: 'down',
-      icon: Eye,
-      color: 'text-orange-600',
+      label: 'Page Views',
+      color: 'text-orange-600'
     },
   ];
 
-  return (
-    <div className="space-y-4 bg-gray-50 min-h-screen">
-      {/* Compact Header & Stats */}
-      <div className="bg-white border-b">
-        <div className="px-4 py-3">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h1 className="text-lg font-bold text-foreground">Analytics</h1>
-              <p className="text-xs text-muted-foreground">Track your store performance</p>
-            </div>
-            <div className="flex gap-2">
-              <Select value={timeRange} onValueChange={setTimeRange}>
-                <SelectTrigger className="w-32 h-9">
-                  <SelectValue placeholder="Period" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="7days">Last 7 days</SelectItem>
-                  <SelectItem value="30days">Last 30 days</SelectItem>
-                  <SelectItem value="90days">Last 90 days</SelectItem>
-                  <SelectItem value="12months">Last 12 months</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button variant="outline" size="sm">
-                <Download className="w-4 h-4 mr-1" />
-                Export
-              </Button>
-            </div>
-          </div>
+  // Infinite scroll logic matching BookGenreFlashDeals
+  React.useEffect(() => {
+    const handleScroll = () => {
+      if (displayCount >= topProductsData.length) return;
 
-          {/* Ultra compact stats */}
-          <div className="grid grid-cols-4 gap-3">
-            {stats.map((stat) => (
-              <div key={stat.title} className="text-center">
-                <div className="text-lg font-bold">{stat.value}</div>
-                <div className="text-xs text-muted-foreground">{stat.title}</div>
-                <div className={`flex items-center justify-center text-xs mt-1 ${
-                  stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {stat.trend === 'up' ? 
-                    <ArrowUpRight className="w-3 h-3 mr-1" /> : 
-                    <ArrowDownRight className="w-3 h-3 mr-1" />
-                  }
-                  {stat.change}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+
+      if (scrollTop + windowHeight >= documentHeight - 200) {
+        setDisplayCount(prev => Math.min(prev + 8, topProductsData.length));
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [displayCount, topProductsData.length]);
+
+  return (
+    <div className="w-full bg-white">
+      {/* Header & Stats Section - Same structure as BookGenreFlashDeals */}
+      <SellerSummaryHeader
+        title="Analytics"
+        subtitle="Track your store performance"
+        stats={stats}
+        actionButton={{
+          label: 'Export',
+          icon: Download,
+          onClick: () => console.log('Export clicked')
+        }}
+        showStats={true}
+      />
+
+      {/* Filter Bar Section - Same as BookGenreFlashDeals */}
+      <div className="-mx-2">
+        <ProductFilterBar
+          filterCategories={filterCategories}
+          selectedFilters={selectedFilters}
+          onFilterSelect={handleFilterSelect}
+          onFilterClear={handleFilterClear}
+          onClearAll={handleClearAll}
+          onFilterButtonClick={handleFilterButtonClick}
+        />
       </div>
 
-      {/* Charts Grid */}
-      <div className="p-3">
+      {/* Charts Grid - Using same spacing and structure */}
+      <div className="py-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {/* Revenue Chart */}
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden border border-gray-200">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-foreground">Revenue Trend</h3>
@@ -167,7 +204,7 @@ const SellerAnalytics = () => {
           </Card>
 
           {/* Product Categories */}
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden border border-gray-200">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-foreground">Sales by Category</h3>
@@ -211,7 +248,7 @@ const SellerAnalytics = () => {
           </Card>
 
           {/* Orders Chart */}
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden border border-gray-200">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-foreground">Orders Over Time</h3>
@@ -241,7 +278,7 @@ const SellerAnalytics = () => {
           </Card>
 
           {/* Top Products */}
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden border border-gray-200">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-foreground">Top Products</h3>
@@ -250,7 +287,7 @@ const SellerAnalytics = () => {
                 </Button>
               </div>
               <div className="space-y-3">
-                {topProductsData.map((product, index) => (
+                {topProductsData.slice(0, displayCount).map((product, index) => (
                   <div key={product.name} className="flex items-center justify-between p-2 bg-muted/30 rounded-md">
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 bg-primary/10 rounded-md flex items-center justify-center">
@@ -274,8 +311,8 @@ const SellerAnalytics = () => {
       </div>
 
       {/* Recent Activity */}
-      <div className="p-3">
-        <Card className="overflow-hidden">
+      <div className="py-4">
+        <Card className="overflow-hidden border border-gray-200">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-foreground">Recent Activity</h3>

@@ -30,7 +30,7 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
   showStats = true
 }) => {
   return (
-    <div className="bg-white border-b">
+    <div className="bg-white">
       <div className="py-3">
         <div className="flex items-center justify-between mb-3">
           <div>
@@ -64,6 +64,9 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
           </div>
         )}
       </div>
+
+      {/* Apply -mx-2 only to the bottom border */}
+      <div className="border-b -mx-2"></div>
     </div>
   );
 };

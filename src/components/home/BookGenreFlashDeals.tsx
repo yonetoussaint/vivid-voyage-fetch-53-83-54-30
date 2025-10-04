@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Timer } from "lucide-react";
+import { Timer, Plus } from "lucide-react"; // Added Plus icon
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllProducts, trackProductView } from "@/integrations/supabase/products";
@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/auth/AuthContext";
 import { useSellerByUserId } from "@/hooks/useSellerByUserId";
 import { supabase } from "@/integrations/supabase/client";
 import SellerSummaryHeader from "@/components/seller-app/SellerSummaryHeader";
+import ProductFilterBar from "@/components/home/ProductFilterBar"; // Add this import
 
 interface Product {
   id: string;
@@ -25,6 +26,7 @@ interface GenreFlashDealsProps {
   className?: string;
   products?: Product[];
   fetchSellerProducts?: boolean;
+  onAddProduct?: () => void; // Added prop for add product action
 }
 
 interface SummaryStats {
@@ -41,11 +43,64 @@ export default function BookGenreFlashDeals({
   excludeTypes = [],
   className = '',
   products: externalProducts,
-  fetchSellerProducts = false
+  fetchSellerProducts = false,
+  onAddProduct // Added prop
 }: GenreFlashDealsProps) {
   const [displayCount, setDisplayCount] = useState(8);
   const { user } = useAuth();
   const { data: sellerData } = useSellerByUserId(fetchSellerProducts ? (user?.id || '') : '');
+
+  // Add filter state
+  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
+
+  // Define filter categories
+  const filterCategories = [
+    {
+      id: 'category',
+      label: 'Category',
+      options: ['All', 'Fiction', 'Non-Fiction', 'Science', 'Technology', 'Business']
+    },
+    {
+      id: 'price',
+      label: 'Price Range',
+      options: ['All', 'Under $10', '$10-$25', '$25-$50', 'Over $50']
+    },
+    {
+      id: 'availability',
+      label: 'Availability',
+      options: ['All', 'In Stock', 'Low Stock', 'Out of Stock']
+    },
+    {
+      id: 'discount',
+      label: 'Discount',
+      options: ['All', 'On Sale', 'No Discount']
+    }
+  ];
+
+  // Filter handler functions
+  const handleFilterSelect = (filterId: string, option: string) => {
+    setSelectedFilters(prev => ({
+      ...prev,
+      [filterId]: option
+    }));
+  };
+
+  const handleFilterClear = (filterId: string) => {
+    setSelectedFilters(prev => {
+      const newFilters = { ...prev };
+      delete newFilters[filterId];
+      return newFilters;
+    });
+  };
+
+  const handleClearAll = () => {
+    setSelectedFilters({});
+  };
+
+  const handleFilterButtonClick = (filterId: string) => {
+    // You can add custom logic here if needed
+    console.log('Filter button clicked:', filterId);
+  };
 
   // Fetch seller-specific products if requested
   const { data: sellerProducts, isLoading: sellerProductsLoading } = useQuery({
@@ -112,6 +167,17 @@ export default function BookGenreFlashDeals({
       lowStock
     };
   }, [allProducts]);
+
+  // Create action button configuration
+  const addProductButton = React.useMemo(() => {
+    if (!onAddProduct) return undefined;
+
+    return {
+      label: "Add Product",
+      icon: Plus,
+      onClick: onAddProduct
+    };
+  }, [onAddProduct]);
 
   // Calculate time remaining for flash deals
   useEffect(() => {
@@ -188,7 +254,7 @@ export default function BookGenreFlashDeals({
 
   const summaryHeaderStats = React.useMemo(() => {
     if (isLoading || processedProducts.length === 0) return [];
-    
+
     return [
       { value: summaryStats.totalProducts, label: 'Total', color: 'text-blue-600' },
       { value: summaryStats.inStock, label: 'In Stock', color: 'text-green-600' },
@@ -206,8 +272,21 @@ export default function BookGenreFlashDeals({
         title="Products"
         subtitle="Manage all your products"
         stats={summaryHeaderStats}
+        actionButton={addProductButton} // Pass the button here
         showStats={!isLoading && processedProducts.length > 0}
       />
+
+      {/* Filter Bar Section - Added right before the products grid */}
+      <div className="-mx-2">
+        <ProductFilterBar
+          filterCategories={filterCategories}
+          selectedFilters={selectedFilters}
+          onFilterSelect={handleFilterSelect}
+          onFilterClear={handleFilterClear}
+          onClearAll={handleClearAll}
+          onFilterButtonClick={handleFilterButtonClick}
+        />
+      </div>
 
       {/* Products Grid - Reverted to old version design */}
       <div className="py-4">

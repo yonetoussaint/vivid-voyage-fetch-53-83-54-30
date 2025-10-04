@@ -3,7 +3,7 @@ export interface Product {
   id: string;
   name: string;
   description: string;
-  short_description?: string; // Added short description field
+  short_description?: string;
   price: number;
   discount_price?: number | null;
   category?: string;
@@ -47,7 +47,7 @@ export interface Product {
   sellers?: {
     id: string;
     name: string;
-    description?: string;
+    bio?: string;  // ← CHANGED FROM description TO bio
     image_url?: string;
     verified: boolean;
     rating?: number;
@@ -93,7 +93,8 @@ export interface Product {
   }[];
   variant_names?: any[];
 }
-
+// --- Fetch all products from Supabase ---
+// --- Fetch all products from Supabase ---
 // --- Fetch all products from Supabase ---
 export async function fetchAllProducts(): Promise<Product[]> {
   const { supabase } = await import('./client');
@@ -117,13 +118,12 @@ export async function fetchAllProducts(): Promise<Product[]> {
       sellers (
         id,
         name,
-        description,
         image_url,
         verified,
         rating,
         total_sales,
         followers_count,
-        trust_score
+        bio
       )
     `)
     .order('created_at', { ascending: false });
@@ -141,6 +141,9 @@ export async function fetchAllProducts(): Promise<Product[]> {
     storage_variants: Array.isArray((product as any).storage_variants) ? (product as any).storage_variants as any[] : []
   })) as Product[];
 }
+
+// --- Fetch single product by ID ---
+
 
 // --- Fetch products for a specific user ---
 export async function fetchUserProducts(userId: string): Promise<Product[]> {
@@ -216,6 +219,7 @@ export async function updateProduct(productId: string, productData: Partial<Prod
 }
 
 // --- Fetch single product by ID ---
+// --- Fetch single product by ID ---
 export async function fetchProductById(productId: string): Promise<Product> {
   const { supabase } = await import('./client');
 
@@ -240,13 +244,12 @@ export async function fetchProductById(productId: string): Promise<Product> {
       sellers (
         id,
         name,
-        description,
         image_url,
         verified,
         rating,
         total_sales,
         followers_count,
-        trust_score
+        bio
       )
     `)
     .eq('id', productId)

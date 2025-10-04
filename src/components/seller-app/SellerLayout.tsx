@@ -1,35 +1,50 @@
-
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
-  Package, ShoppingCart, Users, BarChart3, 
-  DollarSign, Megaphone, Settings, Home
+  Package, ShoppingCart, Users, BarChart3, ArrowLeft, DollarSign, Megaphone, Settings, Home, Share 
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import ReusableSearchBar from '@/components/shared/ReusableSearchBar';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAllProducts } from '@/integrations/supabase/products';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import TabsNavigation from '@/components/home/TabsNavigation';
+import SellerInfoSection from './SellerInfoSection';
 
 interface SellerLayoutProps {
   children: React.ReactNode;
+  showActionButtons?: boolean;
 }
 
-const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
+const SellerLayout: React.FC<SellerLayoutProps> = ({ 
+  children, 
+  showActionButtons = true 
+}) => {
   const location = useLocation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const headerRef = useRef<HTMLDivElement>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
+  const sellerInfoRef = useRef<HTMLDivElement>(null);
 
   const [isTabsSticky, setIsTabsSticky] = useState(false);
   const [tabsHeight, setTabsHeight] = useState(0);
-  const [headerHeight, setHeaderHeight] = useState<number | null>(null);
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const [headerHeight, setHeaderHeight] = useState<number>(0);
+  const [sellerInfoHeight, setSellerInfoHeight] = useState<number>(0);
+  const [isTransparentHeader, setIsTransparentHeader] = useState(true);
 
   const handleBackClick = () => {
     navigate('/profile');
+  };
+
+  const handleBecomeSeller = () => {
+    console.log('Start seller onboarding');
+    navigate('/seller-onboarding');
+  };
+
+  const handleShareClick = () => {
+    console.log('Share seller profile');
   };
 
   // Extract current tab from pathname
@@ -53,6 +68,9 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
     queryFn: fetchAllProducts,
   });
 
+  // Check if we're on the overview tab
+  const isOverviewTab = activeTab === 'overview';
+
   const navigationItems = [
     { id: 'overview', name: 'Overview', href: '/seller-dashboard/overview', icon: Home },
     { id: 'products', name: 'Products', href: '/seller-dashboard/products', icon: Package },
@@ -61,6 +79,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
     { id: 'analytics', name: 'Analytics', href: '/seller-dashboard/analytics', icon: BarChart3 },
     { id: 'finances', name: 'Finances', href: '/seller-dashboard/finances', icon: DollarSign },
     { id: 'marketing', name: 'Marketing', href: '/seller-dashboard/marketing', icon: Megaphone },
+    { id: 'reels', name: 'Reels', href: '/seller-dashboard/reels', icon: Megaphone },
     { id: 'settings', name: 'Settings', href: '/seller-dashboard/settings', icon: Settings },
   ];
 
@@ -71,169 +90,250 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
       navigate(item.href);
     }
 
-    // Scroll to top smoothly when changing tabs
     window.scrollTo({
       top: 0,
       behavior: 'smooth'
     });
   };
 
-  // Convert navigation items to tabs format
   const tabs = navigationItems.map(item => ({
     id: item.id,
     label: item.name
   }));
 
-  // Header height calculation for positioning elements
+  const { user } = useAuth();
+
+  const { data: sellerData, isLoading: sellerLoading } = useQuery({
+    queryKey: ['seller', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+
+      const { data, error } = await supabase
+        .from('sellers')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching seller data:', error);
+        return null;
+      }
+
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  const getSellerLogoUrl = (imagePath?: string): string => {
+    if (!imagePath) return "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face";
+    const { data } = supabase.storage.from('seller-logos').getPublicUrl(imagePath);
+    return data.publicUrl;
+  };
+
+  // Measure heights with ResizeObserver
   useLayoutEffect(() => {
-    const updateHeight = () => {
+    const updateHeights = () => {
       if (headerRef.current) {
         const height = headerRef.current.offsetHeight;
         if (height > 0) {
           setHeaderHeight(height);
         }
       }
-    };
-
-    // Force multiple measurement attempts to ensure we catch it
-    const measureMultipleTimes = () => {
-      updateHeight();
-      requestAnimationFrame(updateHeight);
-      setTimeout(updateHeight, 0);
-      setTimeout(updateHeight, 10);
-      setTimeout(updateHeight, 50);
-      setTimeout(updateHeight, 100);
-    };
-
-    measureMultipleTimes();
-
-    // Use ResizeObserver for ongoing updates
-    if (headerRef.current) {
-      resizeObserverRef.current = new ResizeObserver((entries) => {
-        for (let entry of entries) {
-          const height = entry.contentRect.height;
-          if (height > 0 && height !== headerHeight) {
-            setHeaderHeight(height);
-          }
+      if (sellerInfoRef.current && isOverviewTab) {
+        const height = sellerInfoRef.current.offsetHeight;
+        if (height > 0) {
+          setSellerInfoHeight(height);
         }
-      });
-      resizeObserverRef.current.observe(headerRef.current);
+      }
+      if (tabsRef.current) {
+        const height = tabsRef.current.offsetHeight;
+        if (height > 0) {
+          setTabsHeight(height);
+        }
+      }
+    };
+
+    updateHeights();
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateHeights();
+    });
+
+    if (headerRef.current) {
+      resizeObserver.observe(headerRef.current);
+    }
+    if (sellerInfoRef.current && isOverviewTab) {
+      resizeObserver.observe(sellerInfoRef.current);
+    }
+    if (tabsRef.current) {
+      resizeObserver.observe(tabsRef.current);
     }
 
     return () => {
-      if (resizeObserverRef.current) {
-        resizeObserverRef.current.disconnect();
-      }
+      resizeObserver.disconnect();
     };
-  }, []);
+  }, [isOverviewTab]);
 
   // Update active tab when location changes
   useEffect(() => {
     const currentTab = getCurrentTab();
     setActiveTab(currentTab);
 
-    // Ensure root paths redirect to overview
     if (location.pathname === '/seller-dashboard' || 
         location.pathname.endsWith('/seller-dashboard/')) {
       navigate('/seller-dashboard/overview', { replace: true });
     }
-  }, [location.pathname]);
+  }, [location.pathname, navigate]);
 
-  // Scroll handling for sticky tabs
+  // Handle sticky tabs with scroll listener - PIXEL-PERFECT METHOD
   useEffect(() => {
     const handleScroll = () => {
-      if (!headerRef.current || !tabsRef.current) return;
+      if (!tabsRef.current || !headerRef.current) return;
 
+      const currentHeaderHeight = headerRef.current.offsetHeight;
       const scrollY = window.scrollY;
 
-      // Get current dimensions
-      const currentTabsHeight = tabsRef.current.offsetHeight;
+      if (isTabsSticky) {
+        // When tabs are sticky, check if we should unstick them
+        // We need to calculate where the tabs would be if they weren't sticky
+        let tabsNaturalTopInViewport;
 
-      // Update tabs height if it changed
-      if (currentTabsHeight !== tabsHeight) {
-        setTabsHeight(currentTabsHeight);
-      }
+        if (isOverviewTab) {
+          // Tabs naturally sit after seller info
+          // Their natural position from document top = sellerInfoHeight
+          // Their position in viewport = naturalPosition - scrollY
+          tabsNaturalTopInViewport = sellerInfoHeight - scrollY;
+        } else {
+          // Tabs naturally sit after the spacer (headerHeight)
+          // Their natural position from document top = headerHeight
+          // Their position in viewport = headerHeight - scrollY
+          tabsNaturalTopInViewport = headerHeight - scrollY;
+        }
 
-      // Calculate scroll progress for header transitions
-      const calculatedProgress = Math.min(1, Math.max(0, scrollY / 100));
-      setScrollProgress(calculatedProgress);
+        // Unstick when the natural position would be below the header's bottom
+        // This means we've scrolled back up enough that tabs should return to flow
+        if (tabsNaturalTopInViewport > currentHeaderHeight) {
+          setIsTabsSticky(false);
+        }
+      } else {
+        // When tabs are not sticky, check if they should become sticky
+        const tabsRect = tabsRef.current.getBoundingClientRect();
+        const tabsTopRelativeToViewport = tabsRect.top;
 
-      // Determine if tabs should be sticky (always sticky on scroll)
-      const shouldBeSticky = scrollY > 0;
-
-      // Only update state if it changed
-      if (shouldBeSticky !== isTabsSticky) {
-        setIsTabsSticky(shouldBeSticky);
+        // Tabs should become sticky when their top edge reaches the header's bottom edge
+        if (tabsTopRelativeToViewport <= currentHeaderHeight) {
+          setIsTabsSticky(true);
+        }
       }
     };
 
-    // Use RAF for smooth performance
-    let rafId: number;
-    const smoothScrollHandler = () => {
-      rafId = requestAnimationFrame(handleScroll);
-    };
+    // Initial check
+    handleScroll();
 
-    // Initial setup
-    const setupTimeout = setTimeout(() => {
-      handleScroll();
-      window.addEventListener('scroll', smoothScrollHandler, { passive: true });
-    }, 100);
+    // Add scroll listener with passive flag for better performance
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    // Also listen to resize in case header height changes
+    window.addEventListener('resize', handleScroll, { passive: true });
 
     return () => {
-      clearTimeout(setupTimeout);
-      window.removeEventListener('scroll', smoothScrollHandler);
-      if (rafId) {
-        cancelAnimationFrame(rafId);
-      }
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
     };
-  }, [isTabsSticky, tabsHeight, headerHeight]);
+  }, [isTabsSticky, isOverviewTab, sellerInfoHeight, headerHeight]);
 
-  // Determine header mode based on scroll progress
-  const isScrolledState = scrollProgress > 0.3;
+  // Handle header transparency for overview tab
+  useEffect(() => {
+    if (!isOverviewTab) {
+      setIsTransparentHeader(false);
+      return;
+    }
+
+    if (!headerHeight || !sellerInfoHeight) return;
+
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const transparencyThreshold = sellerInfoHeight * 0.3;
+
+      // Header is transparent when we haven't scrolled past 30% of seller info
+      setIsTransparentHeader(scrollY < transparencyThreshold);
+    };
+
+    handleScroll();
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [isOverviewTab, headerHeight, sellerInfoHeight]);
 
   return (
     <div className="min-h-screen bg-white">
-      <div ref={headerRef} className="fixed top-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-sm border-gray-200">
+      {/* Header */}
+      <div 
+        ref={headerRef} 
+        className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
+          isTransparentHeader 
+            ? 'bg-transparent' 
+            : 'bg-white/95 backdrop-blur-sm border-b border-gray-200'
+        }`}
+      >
         <div className="px-1.5 py-1">
           <div className="flex items-center justify-center">
-            {/* Full width search bar only */}
             <div className="w-full max-w-2xl">
               <ReusableSearchBar
                 placeholder="Search in store..."
-                showScanMic={true}
-                showSettingsButton={!isScrolledState}
+                showScanMic={!isTransparentHeader}
+                showSettingsButton={!isTransparentHeader}
                 onSettingsClick={() => console.log('Seller settings clicked')}
                 onSubmit={(query) => {
-                  // Implement seller-specific search
                   console.log('Searching for:', query);
-                  // navigate(`/seller-dashboard/search?q=${encodeURIComponent(query)}`);
                 }}
                 onSearchClose={handleBackClick}
+                isTransparent={isTransparentHeader}
+                onBackClick={handleBackClick}
+                onShareClick={handleShareClick}
               />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content Area - Dynamic padding based on actual header height */}
-      <div 
-        className="relative"
-        style={{
-          paddingTop: headerHeight !== null ? `${headerHeight}px` : '0px',
-          minHeight: '100vh'
-        }}
-      >
+      {/* Main Content Area */}
+      <div className="relative min-h-screen">
         <main>
-          {/* Tabs Navigation - Directly below header */}
+          {/* Seller Info Section - Only on overview tab */}
+          {isOverviewTab && (
+            <div 
+              ref={sellerInfoRef} 
+              className="w-full bg-black text-white relative z-30"
+            >
+              <SellerInfoSection
+                sellerData={sellerData}
+                sellerLoading={sellerLoading}
+                getSellerLogoUrl={getSellerLogoUrl}
+                onBecomeSeller={handleBecomeSeller}
+                onBack={handleBackClick}
+                showActionButtons={showActionButtons}
+              />
+            </div>
+          )}
+
+          {/* Spacer for non-overview tabs */}
+          {!isOverviewTab && (
+            <div style={{ height: `${headerHeight}px` }} />
+          )}
+
+          {/* Tabs Navigation */}
           <nav
             ref={tabsRef}
-            className={`bg-white border-b transition-all duration-200 ease-out ${
+            className={`bg-white border-b transition-all duration-200 ${
               isTabsSticky
                 ? 'fixed left-0 right-0 z-40 shadow-sm'
                 : 'relative'
             }`}
             style={{
-              top: isTabsSticky ? `${headerHeight || 0}px` : 'auto',
+              top: isTabsSticky ? `${headerHeight}px` : 'auto',
             }}
           >
             <TabsNavigation
@@ -243,24 +343,25 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({ children }) => {
             />
           </nav>
 
-          {/* Spacer div when tabs are sticky to prevent content jumping */}
+          {/* Spacer when tabs are sticky */}
           {isTabsSticky && (
             <div
-              style={{ 
-                height: `${tabsHeight}px`,
-              }}
+              style={{ height: `${tabsHeight}px` }}
               aria-hidden="true"
             />
           )}
 
           {/* Main Content */}
-          <div className="w-full">
+          <div className="px-2">
             {React.Children.map(children, child => {
               if (React.isValidElement(child)) {
-                return React.cloneElement(child, { 
-                  products, 
-                  isLoading: productsLoading 
-                } as any);
+                if (activeTab !== 'overview') {
+                  return React.cloneElement(child, { 
+                    products, 
+                    isLoading: productsLoading 
+                  } as any);
+                }
+                return child;
               }
               return child;
             })}

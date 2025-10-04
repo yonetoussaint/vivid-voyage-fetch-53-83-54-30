@@ -14,6 +14,8 @@ import ProductFilterBar from './ProductFilterBar';
 interface HeroBannerProps {
   asCarousel?: boolean;
   showNewsTicker?: boolean;
+  // New prop to control bottom row in carousel mode
+  showCarouselBottomRow?: boolean;
   // Filter props
   filterCategories?: Array<{
     id: string;
@@ -31,6 +33,8 @@ interface HeroBannerProps {
 export default function HeroBanner({ 
   asCarousel = false, 
   showNewsTicker = true,
+  // New prop - default to true for backward compatibility
+  showCarouselBottomRow = true,
   // Filter props with defaults
   filterCategories = [],
   selectedFilters = {},
@@ -478,10 +482,12 @@ export default function HeroBanner({
                   )}
                 </div>
 
-                {/* Dynamic row below the carousel item */}
-                <div className="mt-2">
-                  {renderRowContent(slide)}
-                </div>
+                {/* Dynamic row below the carousel item - conditionally rendered */}
+                {showCarouselBottomRow && (
+                  <div className="mt-2">
+                    {renderRowContent(slide)}
+                  </div>
+                )}
               </div>
             ))}
 
@@ -491,7 +497,7 @@ export default function HeroBanner({
         </div>
       </div>
     );
-  }, [slidesToShow, handleCarouselScroll, handleVideoDurationChange]);
+  }, [slidesToShow, handleCarouselScroll, handleVideoDurationChange, showCarouselBottomRow]);
 
   // In HeroBanner.tsx - restructure the return statement
   return (

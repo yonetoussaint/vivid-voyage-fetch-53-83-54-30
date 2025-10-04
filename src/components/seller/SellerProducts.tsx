@@ -21,11 +21,14 @@ const SellerProducts: React.FC<SellerProductsProps> = ({
   isLoading
 }) => {
   return (
-    <div className="p-2">
+    <div>
       <BookGenreFlashDeals 
-        products={products}
         fetchSellerProducts={true}
-        className="seller-products-view"
+        onAddProduct={() => {
+          console.log("Add product clicked");
+          // Or navigate to add product page:
+          // navigate('/add-product');
+        }}
       />
     </div>
   );

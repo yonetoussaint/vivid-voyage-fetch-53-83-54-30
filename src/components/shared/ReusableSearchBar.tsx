@@ -1,6 +1,6 @@
 // components/common/ReusableSearchBar.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, X, ScanLine, Mic } from 'lucide-react';
+import { Search, X, ScanLine, Mic, ArrowLeft, Share } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface ReusableSearchBarProps {
@@ -18,6 +18,10 @@ interface ReusableSearchBarProps {
   // Add these new props for close functionality
   isOverlayOpen?: boolean;
   onCloseOverlay?: () => void;
+  // New props for transparent state
+  isTransparent?: boolean;
+  onBackClick?: () => void;
+  onShareClick?: () => void;
 }
 
 const ReusableSearchBar: React.FC<ReusableSearchBarProps> = ({
@@ -34,7 +38,11 @@ const ReusableSearchBar: React.FC<ReusableSearchBarProps> = ({
   onSubmit,
   // New props
   isOverlayOpen = false,
-  onCloseOverlay
+  onCloseOverlay,
+  // Transparent state props
+  isTransparent = false,
+  onBackClick,
+  onShareClick
 }) => {
   const [searchQuery, setSearchQuery] = useState(value);
   const navigate = useNavigate();
@@ -79,7 +87,35 @@ const ReusableSearchBar: React.FC<ReusableSearchBarProps> = ({
     onCloseOverlay?.();
   };
 
+  const renderLeftIcons = () => {
+    if (isTransparent) {
+      return (
+        <button
+          type="button"
+          onClick={onBackClick}
+          className="p-1 hover:bg-white/20 rounded-full transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5 text-white" />
+        </button>
+      );
+    }
+    return null;
+  };
+
   const renderRightIcons = () => {
+    // Transparent state - show share icon
+    if (isTransparent) {
+      return (
+        <button
+          type="button"
+          onClick={onShareClick}
+          className="p-1 hover:bg-white/20 rounded-full transition-colors"
+        >
+          <Share className="h-5 w-5 text-white" />
+        </button>
+      );
+    }
+
     // When overlay is open and search is empty, show close button
     if (isOverlayOpen && !searchQuery.trim()) {
       return (
@@ -129,20 +165,40 @@ const ReusableSearchBar: React.FC<ReusableSearchBarProps> = ({
     return null;
   };
 
+  // Transparent state styles
+  const transparentStyles = isTransparent
+    ? 'bg-transparent border-white/30 text-white placeholder-white/70'
+    : 'bg-white border-gray-800 text-gray-900 placeholder-gray-500';
+
   return (
     <div className={`flex-1 relative max-w-full mx-auto ${className}`}>
       <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder={placeholder}
-          value={searchQuery}
-          onChange={handleInputChange}
-          onFocus={handleFocus}
-          className="w-full px-3 py-1 pr-16 text-sm font-medium border-2 border-gray-800 rounded-full transition-all duration-300 bg-white shadow-sm"
-          ref={searchRef}
-        />
-        <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
-          {renderRightIcons()}
+        <div className="relative">
+          <input
+            type="text"
+            placeholder={placeholder}
+            value={searchQuery}
+            onChange={handleInputChange}
+            onFocus={handleFocus}
+            className={`w-full px-3 py-1 text-sm font-medium border-2 rounded-full transition-all duration-300 shadow-sm ${
+              isTransparent ? 'pr-12 pl-10' : 'pr-16 pl-3'
+            } ${transparentStyles}`}
+            ref={searchRef}
+          />
+
+          {/* Left icons (back button in transparent mode) */}
+          {isTransparent && (
+            <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
+              {renderLeftIcons()}
+            </div>
+          )}
+
+          {/* Right icons */}
+          <div className={`absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center space-x-2 ${
+            isTransparent ? 'pr-1' : ''
+          }`}>
+            {renderRightIcons()}
+          </div>
         </div>
       </form>
     </div>

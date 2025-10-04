@@ -22,11 +22,65 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
+import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
+import ProductFilterBar from '@/components/home/ProductFilterBar';
 
 const SellerFinances = () => {
   const [timeRange, setTimeRange] = useState('30days');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [displayCount, setDisplayCount] = useState(8);
+
+  // Add filter state matching BookGenreFlashDeals
+  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
+
+  // Define filter categories matching BookGenreFlashDeals structure
+  const filterCategories = [
+    {
+      id: 'status',
+      label: 'Status',
+      options: ['All', 'Completed', 'Pending', 'Failed']
+    },
+    {
+      id: 'type',
+      label: 'Type',
+      options: ['All', 'Sale', 'Refund', 'Withdrawal']
+    },
+    {
+      id: 'amount',
+      label: 'Amount',
+      options: ['All', 'Under $50', '$50-$100', '$100-$200', 'Over $200']
+    },
+    {
+      id: 'date',
+      label: 'Date',
+      options: ['All', 'Today', 'This Week', 'This Month', 'Last 30 Days']
+    }
+  ];
+
+  // Filter handler functions matching BookGenreFlashDeals
+  const handleFilterSelect = (filterId: string, option: string) => {
+    setSelectedFilters(prev => ({
+      ...prev,
+      [filterId]: option
+    }));
+  };
+
+  const handleFilterClear = (filterId: string) => {
+    setSelectedFilters(prev => {
+      const newFilters = { ...prev };
+      delete newFilters[filterId];
+      return newFilters;
+    });
+  };
+
+  const handleClearAll = () => {
+    setSelectedFilters({});
+  };
+
+  const handleFilterButtonClick = (filterId: string) => {
+    console.log('Filter button clicked:', filterId);
+  };
 
   const revenueData = [
     { name: 'Jan', revenue: 4000, expenses: 2400, profit: 1600 },
@@ -98,36 +152,28 @@ const SellerFinances = () => {
 
   const stats = [
     {
-      title: 'Total Revenue',
       value: '$24,590',
-      change: '+12.5%',
-      trend: 'up',
-      icon: DollarSign,
+      label: 'Total Revenue',
+      color: 'text-blue-600'
     },
     {
-      title: 'Net Profit',
       value: '$16,280',
-      change: '+8.2%',
-      trend: 'up',
-      icon: TrendingUp,
+      label: 'Net Profit',
+      color: 'text-green-600'
     },
     {
-      title: 'Total Fees',
       value: '$1,247',
-      change: '+3.1%',
-      trend: 'up',
-      icon: Receipt,
+      label: 'Total Fees',
+      color: 'text-orange-600'
     },
     {
-      title: 'Available Balance',
       value: '$8,963',
-      change: '+5.7%',
-      trend: 'up',
-      icon: Banknote,
+      label: 'Available Balance',
+      color: 'text-purple-600'
     },
   ];
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'Completed': return 'bg-green-100 text-green-800';
       case 'Pending': return 'bg-yellow-100 text-yellow-800';
@@ -136,7 +182,7 @@ const SellerFinances = () => {
     }
   };
 
-  const getTypeColor = (type) => {
+  const getTypeColor = (type: string) => {
     switch (type) {
       case 'Sale': return 'text-green-600';
       case 'Refund': return 'text-red-600';
@@ -152,89 +198,61 @@ const SellerFinances = () => {
     return matchesSearch && matchesStatus;
   });
 
+  // Infinite scroll logic matching BookGenreFlashDeals
+  React.useEffect(() => {
+    const handleScroll = () => {
+      if (displayCount >= filteredTransactions.length) return;
+
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+
+      if (scrollTop + windowHeight >= documentHeight - 200) {
+        setDisplayCount(prev => Math.min(prev + 8, filteredTransactions.length));
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [displayCount, filteredTransactions.length]);
+
+  // Reset display count when transactions change
+  React.useEffect(() => {
+    setDisplayCount(8);
+  }, [filteredTransactions.length]);
+
   return (
-    <div className="space-y-4 bg-gray-50 min-h-screen">
-      {/* Compact Header & Stats */}
-      <div className="bg-white border-b">
-        <div className="px-4 py-3">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h1 className="text-lg font-bold text-foreground">Finances</h1>
-              <p className="text-xs text-muted-foreground">Track revenue and expenses</p>
-            </div>
-            <Button size="sm">
-              <Download className="w-4 h-4 mr-1" />
-              Export
-            </Button>
-          </div>
+    <div className="w-full bg-white">
+      {/* Header & Stats Section - Same structure as BookGenreFlashDeals */}
+      <SellerSummaryHeader
+        title="Finances"
+        subtitle="Track revenue and expenses"
+        stats={stats}
+        actionButton={{
+          label: 'Export',
+          icon: Download,
+          onClick: () => console.log('Export clicked')
+        }}
+        showStats={filteredTransactions.length > 0}
+      />
 
-          {/* Ultra compact stats */}
-          <div className="grid grid-cols-4 gap-3">
-            {stats.map((stat) => (
-              <div key={stat.title} className="text-center">
-                <div className="text-lg font-bold">{stat.value}</div>
-                <div className="text-xs text-muted-foreground">{stat.title}</div>
-                <div className={`flex items-center justify-center text-xs mt-1 ${
-                  stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {stat.trend === 'up' ? 
-                    <ArrowUpRight className="w-3 h-3 mr-1" /> : 
-                    <ArrowDownRight className="w-3 h-3 mr-1" />
-                  }
-                  {stat.change}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* Filter Bar Section - Same as BookGenreFlashDeals */}
+      <div className="-mx-2">
+        <ProductFilterBar
+          filterCategories={filterCategories}
+          selectedFilters={selectedFilters}
+          onFilterSelect={handleFilterSelect}
+          onFilterClear={handleFilterClear}
+          onClearAll={handleClearAll}
+          onFilterButtonClick={handleFilterButtonClick}
+        />
       </div>
 
-      {/* Compact Filters */}
-      <div className="bg-white border-b px-4 py-3">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search transactions..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-9"
-            />
-          </div>
-          <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-full sm:w-32 h-9">
-              <SelectValue placeholder="Period" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7days">Last 7 days</SelectItem>
-              <SelectItem value="30days">Last 30 days</SelectItem>
-              <SelectItem value="90days">Last 90 days</SelectItem>
-              <SelectItem value="12months">Last 12 months</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-40 h-9">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="Completed">Completed</SelectItem>
-              <SelectItem value="Pending">Pending</SelectItem>
-              <SelectItem value="Failed">Failed</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="sm">
-            <Filter className="w-4 h-4 mr-1" />
-            Filter
-          </Button>
-        </div>
-      </div>
-
-      {/* Charts Grid */}
-      <div className="p-3">
+      {/* Charts Grid - Using same spacing and structure */}
+      <div className="py-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {/* Revenue Chart */}
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden border border-gray-200">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-foreground">Revenue & Profit</h3>
@@ -279,7 +297,7 @@ const SellerFinances = () => {
           </Card>
 
           {/* Expenses Chart */}
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden border border-gray-200">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-foreground">Monthly Expenses</h3>
@@ -311,7 +329,7 @@ const SellerFinances = () => {
       </div>
 
       {/* Transactions List */}
-      <div className="p-3">
+      <div className="py-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-foreground">Recent Transactions</h3>
           <Button variant="ghost" size="sm" className="text-xs h-7">
@@ -319,82 +337,96 @@ const SellerFinances = () => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 gap-3">
-          {filteredTransactions.map((transaction) => (
-            <Card key={transaction.id} className="overflow-hidden">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h3 className="text-sm font-semibold text-foreground">{transaction.id}</h3>
-                    <p className="text-xs text-muted-foreground">{transaction.description}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className={`${getStatusColor(transaction.status)} text-xs`}>
-                      {transaction.status}
-                    </Badge>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                          <Receipt className="w-3 h-3" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <Download className="w-4 h-4 mr-2" />
-                          Download Receipt
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <CreditCard className="w-4 h-4 mr-2" />
-                          View Details
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
+        {filteredTransactions.length > 0 ? (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-3">
+              {filteredTransactions.slice(0, displayCount).map((transaction) => (
+                <Card key={transaction.id} className="overflow-hidden border border-gray-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h3 className="text-sm font-semibold text-foreground">{transaction.id}</h3>
+                        <p className="text-xs text-muted-foreground">{transaction.description}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className={`${getStatusColor(transaction.status)} text-xs`}>
+                          {transaction.status}
+                        </Badge>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                              <Receipt className="w-3 h-3" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>
+                              <Download className="w-4 h-4 mr-2" />
+                              Download Receipt
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <CreditCard className="w-4 h-4 mr-2" />
+                              View Details
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
 
-                <div className="grid grid-cols-2 gap-3 mb-3">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Type</p>
-                    <p className={`text-xs font-medium ${getTypeColor(transaction.type)}`}>
-                      {transaction.type}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Date</p>
-                    <p className="text-xs font-medium">{transaction.date}</p>
-                  </div>
-                </div>
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Type</p>
+                        <p className={`text-xs font-medium ${getTypeColor(transaction.type)}`}>
+                          {transaction.type}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Date</p>
+                        <p className="text-xs font-medium">{transaction.date}</p>
+                      </div>
+                    </div>
 
-                <div className="grid grid-cols-3 gap-3 pt-3 border-t border-border">
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground">Amount</p>
-                    <p className={`text-xs font-semibold ${transaction.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      ${Math.abs(transaction.amount).toFixed(2)}
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground">Fee</p>
-                    <p className="text-xs font-semibold">
-                      ${Math.abs(transaction.fee).toFixed(2)}
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground">Net</p>
-                    <p className={`text-xs font-semibold ${transaction.net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      ${transaction.net.toFixed(2)}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                    <div className="grid grid-cols-3 gap-3 pt-3 border-t border-border">
+                      <div className="text-center">
+                        <p className="text-xs text-muted-foreground">Amount</p>
+                        <p className={`text-xs font-semibold ${transaction.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          ${Math.abs(transaction.amount).toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xs text-muted-foreground">Fee</p>
+                        <p className="text-xs font-semibold">
+                          ${Math.abs(transaction.fee).toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xs text-muted-foreground">Net</p>
+                        <p className={`text-xs font-semibold ${transaction.net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          ${transaction.net.toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-12 text-gray-500">
+            <Receipt className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+            <div className="text-lg font-medium">No transactions found</div>
+            <div className="text-sm mt-1">Try adjusting your search terms or filters</div>
+            <Button size="sm" className="mt-4">
+              <Download className="w-4 h-4 mr-2" />
+              Export Report
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Quick Actions */}
-      <div className="p-3">
+      <div className="py-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <Card className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow">
+          <Card className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow border border-gray-200">
             <CardContent className="p-4 text-center">
               <div className="w-8 h-8 bg-blue-50 rounded-md flex items-center justify-center mx-auto mb-2">
                 <CreditCard className="w-4 h-4 text-blue-600" />
@@ -404,7 +436,7 @@ const SellerFinances = () => {
             </CardContent>
           </Card>
 
-          <Card className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow">
+          <Card className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow border border-gray-200">
             <CardContent className="p-4 text-center">
               <div className="w-8 h-8 bg-green-50 rounded-md flex items-center justify-center mx-auto mb-2">
                 <Receipt className="w-4 h-4 text-green-600" />
@@ -414,7 +446,7 @@ const SellerFinances = () => {
             </CardContent>
           </Card>
 
-          <Card className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow">
+          <Card className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow border border-gray-200">
             <CardContent className="p-4 text-center">
               <div className="w-8 h-8 bg-purple-50 rounded-md flex items-center justify-center mx-auto mb-2">
                 <Download className="w-4 h-4 text-purple-600" />
@@ -425,21 +457,6 @@ const SellerFinances = () => {
           </Card>
         </div>
       </div>
-
-      {/* Empty State */}
-      {filteredTransactions.length === 0 && (
-        <div className="p-8 text-center">
-          <Receipt className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">No transactions found</h3>
-          <p className="text-muted-foreground mb-4">
-            Try adjusting your search terms or filters.
-          </p>
-          <Button size="sm">
-            <Download className="w-4 h-4 mr-2" />
-            Export Report
-          </Button>
-        </div>
-      )}
     </div>
   );
 };

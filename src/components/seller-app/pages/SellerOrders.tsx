@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Search, Filter, MoreHorizontal, Eye, MessageCircle,
-  Download, Plus
+  Download, Plus, Package, RefreshCw
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,10 +22,63 @@ import {
 } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
+import ProductFilterBar from '@/components/home/ProductFilterBar';
 
 const SellerOrders = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [displayCount, setDisplayCount] = useState(8);
+
+  // Add filter state
+  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
+
+  // Define filter categories matching BookGenreFlashDeals structure
+  const filterCategories = [
+    {
+      id: 'status',
+      label: 'Status',
+      options: ['All', 'Pending', 'Processing', 'Shipped', 'Completed', 'Cancelled']
+    },
+    {
+      id: 'customer',
+      label: 'Customer',
+      options: ['All', 'New Customers', 'Returning Customers']
+    },
+    {
+      id: 'amount',
+      label: 'Order Amount',
+      options: ['All', 'Under $50', '$50-$100', '$100-$200', 'Over $200']
+    },
+    {
+      id: 'date',
+      label: 'Date',
+      options: ['All', 'Today', 'This Week', 'This Month', 'Last 30 Days']
+    }
+  ];
+
+  // Filter handler functions matching BookGenreFlashDeals
+  const handleFilterSelect = (filterId: string, option: string) => {
+    setSelectedFilters(prev => ({
+      ...prev,
+      [filterId]: option
+    }));
+  };
+
+  const handleFilterClear = (filterId: string) => {
+    setSelectedFilters(prev => {
+      const newFilters = { ...prev };
+      delete newFilters[filterId];
+      return newFilters;
+    });
+  };
+
+  const handleClearAll = () => {
+    setSelectedFilters({});
+  };
+
+  const handleFilterButtonClick = (filterId: string) => {
+    console.log('Filter button clicked:', filterId);
+  };
 
   const orders = [
     {
@@ -111,7 +164,7 @@ const SellerOrders = () => {
     }
   ];
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'Completed': return 'bg-green-100 text-green-800';
       case 'Processing': return 'bg-blue-100 text-blue-800';
@@ -137,9 +190,32 @@ const SellerOrders = () => {
     { value: '979', label: 'Completed', color: 'text-green-600' }
   ];
 
+  // Infinite scroll logic matching BookGenreFlashDeals
+  React.useEffect(() => {
+    const handleScroll = () => {
+      if (displayCount >= filteredOrders.length) return;
+
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+
+      if (scrollTop + windowHeight >= documentHeight - 200) {
+        setDisplayCount(prev => Math.min(prev + 8, filteredOrders.length));
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [displayCount, filteredOrders.length]);
+
+  // Reset display count when orders change
+  React.useEffect(() => {
+    setDisplayCount(8);
+  }, [filteredOrders.length]);
+
   return (
-    <div className="space-y-4 bg-gray-50 min-h-screen">
-      {/* Header & Stats */}
+    <div className="w-full bg-white">
+      {/* Header & Stats Section - Same structure as BookGenreFlashDeals */}
       <SellerSummaryHeader
         title="Orders"
         subtitle="Manage your orders"
@@ -149,138 +225,118 @@ const SellerOrders = () => {
           icon: Plus,
           onClick: () => console.log('New order clicked')
         }}
+        showStats={filteredOrders.length > 0}
       />
 
-      {/* Compact Filters */}
-      <div className="bg-white border-b px-4 py-3">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search orders..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-9"
-            />
-          </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-40 h-9">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="Pending">Pending</SelectItem>
-              <SelectItem value="Processing">Processing</SelectItem>
-              <SelectItem value="Shipped">Shipped</SelectItem>
-              <SelectItem value="Completed">Completed</SelectItem>
-              <SelectItem value="Cancelled">Cancelled</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="sm">
-            <Filter className="w-4 h-4 mr-1" />
-            Filter
-          </Button>
-        </div>
+      {/* Filter Bar Section - Same as BookGenreFlashDeals */}
+      <div className="-mx-2">
+        <ProductFilterBar
+          filterCategories={filterCategories}
+          selectedFilters={selectedFilters}
+          onFilterSelect={handleFilterSelect}
+          onFilterClear={handleFilterClear}
+          onClearAll={handleClearAll}
+          onFilterButtonClick={handleFilterButtonClick}
+        />
       </div>
 
-      {/* Orders Grid */}
-      <div className="p-3">
-        <div className="grid grid-cols-1 gap-3">
-          {filteredOrders.map((order) => (
-            <Card key={order.id} className="overflow-hidden">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <span className="font-semibold text-foreground">{order.id}</span>
-                    <Badge variant="secondary" className={getStatusColor(order.status)}>
-                      {order.status}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">{order.date}</span>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <Eye className="w-4 h-4 mr-2" />
-                          View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <MessageCircle className="w-4 h-4 mr-2" />
-                          Contact Customer
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Download className="w-4 h-4 mr-2" />
-                          Download Invoice
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Customer Info */}
-                  <div className="flex items-center gap-3">
-                    <Avatar className="w-10 h-10">
-                      <AvatarImage src={order.customer.avatar} />
-                      <AvatarFallback>{order.customer.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{order.customer.name}</p>
-                      <p className="text-xs text-muted-foreground">{order.customer.email}</p>
+      {/* Orders Grid - Using same spacing and structure as BookGenreFlashDeals */}
+      <div className="py-4">
+        {filteredOrders.length > 0 ? (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-3">
+              {filteredOrders.slice(0, displayCount).map((order) => (
+                <Card key={order.id} className="overflow-hidden border border-gray-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <span className="font-semibold text-foreground">{order.id}</span>
+                        <Badge variant="secondary" className={getStatusColor(order.status)}>
+                          {order.status}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">{order.date}</span>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>
+                              <Eye className="w-4 h-4 mr-2" />
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <MessageCircle className="w-4 h-4 mr-2" />
+                              Contact Customer
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Download className="w-4 h-4 mr-2" />
+                              Download Invoice
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Products */}
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Products</p>
-                    <div className="space-y-1">
-                      {order.products.map((product, index) => (
-                        <div key={index} className="flex justify-between text-sm">
-                          <span>{product.quantity}x {product.name}</span>
-                          <span className="font-medium">${(product.price * product.quantity).toFixed(2)}</span>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Customer Info */}
+                      <div className="flex items-center gap-3">
+                        <Avatar className="w-10 h-10">
+                          <AvatarImage src={order.customer.avatar} />
+                          <AvatarFallback>{order.customer.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{order.customer.name}</p>
+                          <p className="text-xs text-muted-foreground">{order.customer.email}</p>
                         </div>
-                      ))}
+                      </div>
+
+                      {/* Products */}
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Products</p>
+                        <div className="space-y-1">
+                          {order.products.map((product, index) => (
+                            <div key={index} className="flex justify-between text-sm">
+                              <span>{product.quantity}x {product.name}</span>
+                              <span className="font-medium">${(product.price * product.quantity).toFixed(2)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Order Total */}
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Order Total</p>
+                        <div className="text-lg font-bold text-foreground">${order.total.toFixed(2)}</div>
+                        <p className="text-xs text-muted-foreground mt-1">{order.paymentMethod}</p>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Order Total */}
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Order Total</p>
-                    <div className="text-lg font-bold text-foreground">${order.total.toFixed(2)}</div>
-                    <p className="text-xs text-muted-foreground mt-1">{order.paymentMethod}</p>
-                  </div>
-                </div>
-
-                {/* Shipping Address */}
-                <div className="mt-3 pt-3 border-t border-border">
-                  <p className="text-xs text-muted-foreground mb-1">Shipping Address</p>
-                  <p className="text-sm text-foreground">{order.shippingAddress}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                    {/* Shipping Address */}
+                    <div className="mt-3 pt-3 border-t border-border">
+                      <p className="text-xs text-muted-foreground mb-1">Shipping Address</p>
+                      <p className="text-sm text-foreground">{order.shippingAddress}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-12 text-gray-500">
+            <Package className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+            <div className="text-lg font-medium">No orders found</div>
+            <div className="text-sm mt-1">Try adjusting your search terms or filters</div>
+            <Button size="sm" className="mt-4">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh Orders
+            </Button>
+          </div>
+        )}
       </div>
-
-      {/* Empty State */}
-      {filteredOrders.length === 0 && (
-        <div className="p-8 text-center">
-          <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">No orders found</h3>
-          <p className="text-muted-foreground mb-4">
-            Try adjusting your search terms or filters.
-          </p>
-          <Button size="sm">
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh Orders
-          </Button>
-        </div>
-      )}
     </div>
   );
 };
