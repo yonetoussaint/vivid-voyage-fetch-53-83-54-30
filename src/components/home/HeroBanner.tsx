@@ -27,6 +27,8 @@ interface HeroBannerProps {
     type?: 'image' | 'video' | 'color';
     duration?: number;
   }>;
+  // Dots position prop
+  dotsPosition?: 'center' | 'right';
   // Filter props
   filterCategories?: Array<{
     id: string;
@@ -48,6 +50,8 @@ export default function HeroBanner({
   showCarouselBottomRow = true,
   // Custom banners
   customBanners,
+  // Dots position
+  dotsPosition = 'center',
   // Filter props with defaults
   filterCategories = [],
   selectedFilters = {},
@@ -568,6 +572,7 @@ export default function HeroBanner({
                 setActiveIndex={setActiveIndex}
                 setPreviousIndex={setPreviousIndex}
                 progress={progress}
+                dotsPosition={dotsPosition}
               />
             </div>
 

@@ -161,6 +161,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
             <HeroBanner 
               asCarousel={false}
               showNewsTicker={false}
+              dotsPosition="right"
               customBanners={[
                 {
                   id: 'seller-banner-1',
