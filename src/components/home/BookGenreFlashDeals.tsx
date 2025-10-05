@@ -51,6 +51,11 @@ export default function BookGenreFlashDeals({
   // Add filter state
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
 
+  // Helper function to check if an option is an "All" option
+  const isAllOption = (option: string) => {
+    return option.toLowerCase().startsWith('all');
+  };
+
   // Define filter categories
   const filterCategories = [
     {
@@ -200,12 +205,12 @@ export default function BookGenreFlashDeals({
       };
     });
 
-    // Apply filters
-    if (selectedFilters.category && selectedFilters.category !== 'All Categories') {
+    // Apply filters (skip if it's an "All" option)
+    if (selectedFilters.category && !isAllOption(selectedFilters.category)) {
       products = products.filter(p => p.category === selectedFilters.category);
     }
 
-    if (selectedFilters.price && selectedFilters.price !== 'All Prices') {
+    if (selectedFilters.price && !isAllOption(selectedFilters.price)) {
       products = products.filter(p => {
         const price = p.discount_price || p.price;
         switch (selectedFilters.price) {
@@ -218,7 +223,7 @@ export default function BookGenreFlashDeals({
       });
     }
 
-    if (selectedFilters.availability && selectedFilters.availability !== 'All Stock') {
+    if (selectedFilters.availability && !isAllOption(selectedFilters.availability)) {
       products = products.filter(p => {
         switch (selectedFilters.availability) {
           case 'In Stock': return (p.inventory ?? 0) > 0;
@@ -229,7 +234,7 @@ export default function BookGenreFlashDeals({
       });
     }
 
-    if (selectedFilters.discount && selectedFilters.discount !== 'All Discounts') {
+    if (selectedFilters.discount && !isAllOption(selectedFilters.discount)) {
       products = products.filter(p => {
         const discountPercentage = p.discount_price 
           ? Math.round(((p.price - p.discount_price) / p.price) * 100) 

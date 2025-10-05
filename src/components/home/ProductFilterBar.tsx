@@ -38,6 +38,11 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
     });
   }, []);
 
+  // Helper function to check if an option is an "All" option
+  const isAllOption = (option: string) => {
+    return option.toLowerCase().startsWith('all');
+  };
+
   const handleDropdownToggle = (filterId: string, event: React.MouseEvent<HTMLButtonElement>) => {
     if (isFilterDisabled && isFilterDisabled(filterId)) return;
     
@@ -132,13 +137,15 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
                     className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap border-0 bg-transparent w-full ${
                       isFilterDisabled && isFilterDisabled(filter.id)
                         ? 'text-gray-400 cursor-not-allowed'
-                        : selectedFilters[filter.id]
+                        : selectedFilters[filter.id] && !isAllOption(selectedFilters[filter.id])
                         ? 'text-orange-600 hover:text-orange-700'
                         : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                     }`}
                   >
                     <span className="truncate">
-                      {selectedFilters[filter.id] || filter.label}
+                      {selectedFilters[filter.id] && !isAllOption(selectedFilters[filter.id]) 
+                        ? selectedFilters[filter.id] 
+                        : filter.label}
                     </span>
                     <ChevronDown
                       size={14}
