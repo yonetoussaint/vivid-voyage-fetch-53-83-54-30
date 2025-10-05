@@ -161,50 +161,51 @@ export default function HeroBanner({
 
     // Otherwise use fetched banners
     return banners?.map((banner, index) => {
-    const decodedUrl = decodeURIComponent(banner.image);
-    const isVideo = /\.(mp4|webm|ogg|mov|avi)$/i.test(decodedUrl) || 
-                    /\.(mp4|webm|ogg|mov|avi)$/i.test(banner.image);
+      const decodedUrl = decodeURIComponent(banner.image);
+      const isVideo = /\.(mp4|webm|ogg|mov|avi)$/i.test(decodedUrl) || 
+                      /\.(mp4|webm|ogg|mov|avi)$/i.test(banner.image);
 
-    // Determine row type based on index or banner data
-    const rowTypes: ('product' | 'seller' | 'catalog')[] = ['product', 'seller', 'catalog'];
-    const rowType = rowTypes[index % 3] || 'product';
+      // Determine row type based on index or banner data
+      const rowTypes: ('product' | 'seller' | 'catalog')[] = ['product', 'seller', 'catalog'];
+      const rowType = rowTypes[index % 3] || 'product';
 
-    const mockSeller = {
-      id: `seller_${index + 1}`,
-      name: index === 0 ? "TechStore Pro" : "FashionHub",
-      image_url: index === 0 ? "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=200&h=200&fit=crop&crop=center" : "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=200&h=200&fit=crop&crop=center",
-      verified: true,
-      followers_count: index === 0 ? 25400 : 18200
-    };
+      const mockSeller = {
+        id: `seller_${index + 1}`,
+        name: index === 0 ? "TechStore Pro" : "FashionHub",
+        image_url: index === 0 ? "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=200&h=200&fit=crop&crop=center" : "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=200&h=200&fit=crop&crop=center",
+        verified: true,
+        followers_count: index === 0 ? 25400 : 18200
+      };
 
-    const mockCatalog = {
-      id: `catalog_${index + 1}`,
-      name: index === 0 ? "Summer Collection" : "Winter Essentials",
-      images: [
-        "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop",
-        "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=400&h=300&fit=crop",
-        "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop"
-      ],
-      product_count: index === 0 ? 24 : 18
-    };
+      const mockCatalog = {
+        id: `catalog_${index + 1}`,
+        name: index === 0 ? "Summer Collection" : "Winter Essentials",
+        images: [
+          "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop",
+          "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=400&h=300&fit=crop",
+          "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop"
+        ],
+        product_count: index === 0 ? 24 : 18
+      };
 
-    const mockProduct = {
-      id: `product_${index + 1}`,
-      name: index === 0 ? "Wireless Headphones" : "Smart Watch",
-      price: index === 0 ? 199.99 : 299.99,
-      image: index === 0 ? "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop&crop=center" : "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&h=300&fit=crop&crop=center"
-    };
+      const mockProduct = {
+        id: `product_${index + 1}`,
+        name: index === 0 ? "Wireless Headphones" : "Smart Watch",
+        price: index === 0 ? 199.99 : 299.99,
+        image: index === 0 ? "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop&crop=center" : "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&h=300&fit=crop&crop=center"
+      };
 
-    return {
-      ...banner,
-      type: isVideo ? "video" as const : "image" as const,
-      duration: banner.duration || (isVideo ? 10000 : 5000),
-      rowType,
-      seller: rowType === 'seller' ? mockSeller : undefined,
-      catalog: rowType === 'catalog' ? mockCatalog : undefined,
-      product: rowType === 'product' ? mockProduct : undefined
-    };
-  }) || [], [banners]);
+      return {
+        ...banner,
+        type: isVideo ? "video" as const : "image" as const,
+        duration: banner.duration || (isVideo ? 10000 : 5000),
+        rowType,
+        seller: rowType === 'seller' ? mockSeller : undefined,
+        catalog: rowType === 'catalog' ? mockCatalog : undefined,
+        product: rowType === 'product' ? mockProduct : undefined
+      };
+    }) || [];
+  }, [banners, customBanners]);
 
   const slidesToShow = transformedBanners;
 
