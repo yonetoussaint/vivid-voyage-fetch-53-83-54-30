@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import TabsNavigation from '@/components/home/TabsNavigation';
+import ReusableSearchBar from '@/components/shared/ReusableSearchBar';
 
 interface ProfileLayoutProps {
   children: React.ReactNode;
