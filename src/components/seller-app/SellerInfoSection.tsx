@@ -278,7 +278,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
           </div>
 
           {/* Additional Links */}
-          <div className="flex items-center gap-x-3 text-xs text-gray-500 mb-3">
+          <div className="flex items-center justify-between gap-x-3 text-xs text-gray-500 mb-3">
             <div className="flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5" />
               <span>Joined {safeSellerData.join_date}</span>
@@ -340,7 +340,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
           </div>
 
           {showBusinessHours && (
-            <div className="mb-4 p-3 bg-gray-50 rounded-lg space-y-1.5 text-xs">
+            <div className="mb-3 p-3 bg-gray-50 rounded-lg space-y-1.5 text-xs">
               {safeSellerData.business_hours && Object.keys(safeSellerData.business_hours).length > 0 ? (
                 Object.entries(safeSellerData.business_hours).map(([day, hours]) => (
                   <div key={day} className="flex justify-between text-gray-700">
