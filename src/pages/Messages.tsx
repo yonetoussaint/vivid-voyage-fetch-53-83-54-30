@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { MoreVertical } from 'lucide-react';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import ReusableSearchBar from '@/components/shared/ReusableSearchBar';
 
 interface Message {
   id: string;
@@ -68,17 +67,8 @@ export default function Messages() {
     <div className="min-h-screen bg-white">
       <PageContainer maxWidth="lg" padding="none">
         
-        {/* Search - Sticky */}
-        <div className="sticky top-0 bg-white z-10 px-4 py-3 border-b border-gray-100">
-          <ReusableSearchBar
-            placeholder="Search messages"
-            value={searchQuery}
-            onChange={setSearchQuery}
-          />
-        </div>
-
         {/* Conversations */}
-        <div className="pb-20">
+        <div className="pb-20 pt-4">
           {filteredConversations.map((conversation) => (
             <button
               key={conversation.id}

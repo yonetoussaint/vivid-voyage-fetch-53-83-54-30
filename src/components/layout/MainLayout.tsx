@@ -131,6 +131,7 @@ function MainLayoutContent() {
   const shouldShowHeader = [
     '/',
     '/for-you',
+    '/messages',
     '/categories/electronics',
     '/categories/home-living',
     '/categories/fashion',
