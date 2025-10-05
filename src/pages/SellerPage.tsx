@@ -135,9 +135,7 @@ const SellerPage = () => {
           path="/qas" 
           element={
             <div className="w-full bg-white">
-              <ProductSectionWrapper>
-                <ProductQA productId={sellerId} limit={null} />
-              </ProductSectionWrapper>
+              <ProductQA productId={sellerId} limit={null} />
             </div>
           } 
         />
@@ -145,9 +143,7 @@ const SellerPage = () => {
           path="/reviews" 
           element={
             <div className="w-full bg-white">
-              <ProductSectionWrapper>
-                <CustomerReviewsEnhanced productId={sellerId} limit={null} />
-              </ProductSectionWrapper>
+              <CustomerReviewsEnhanced productId={sellerId} limit={null} />
             </div>
           } 
         />

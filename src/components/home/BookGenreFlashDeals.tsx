@@ -74,13 +74,13 @@ export default function BookGenreFlashDeals({
     }
   ], []);
 
-  // Add filter state with initial "All" options - initialize directly
-  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({
+  // Add filter state with initial "All" options
+  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>(() => ({
     category: 'All Categories',
     price: 'All Prices',
     availability: 'All Stock',
     discount: 'All Discounts'
-  });
+  }));
 
   // Helper function to check if an option is an "All" option
   const isAllOption = (option: string) => {
