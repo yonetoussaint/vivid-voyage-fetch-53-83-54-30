@@ -77,15 +77,22 @@ const CategoryTabs = ({
       // Try to update immediately
       updateUnderline();
 
-      // If not initialized yet, try again after a short delay
-      if (!isInitialized) {
-        const timer = setTimeout(() => {
-          updateUnderline();
-        }, 10);
-        return () => clearTimeout(timer);
-      }
+      // Always retry to ensure proper positioning, especially for first tab
+      const timer = setTimeout(() => {
+        updateUnderline();
+      }, 0);
+      
+      // Additional retry for first tab initialization
+      const secondTimer = setTimeout(() => {
+        updateUnderline();
+      }, 50);
+      
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(secondTimer);
+      };
     }
-  }, [activeTab, categories, updateUnderline, isInitialized]);
+  }, [activeTab, categories, updateUnderline]);
 
   // Update on resize and scroll
   useEffect(() => {
@@ -176,11 +183,14 @@ const CategoryTabs = ({
   const setTabRef = useCallback((el: HTMLButtonElement | null, index: number, id: string) => {
     tabRefs.current[index] = el;
 
-    // If this is the active tab and we have the element, update underline
+    // If this is the active tab and we have the element, update underline immediately
     if (el && id === activeTab) {
-      setTimeout(() => {
+      // Force multiple updates to ensure proper positioning
+      requestAnimationFrame(() => {
         updateUnderline();
-      }, 0);
+        setTimeout(() => updateUnderline(), 0);
+        setTimeout(() => updateUnderline(), 50);
+      });
     }
   }, [activeTab, updateUnderline]);
 
