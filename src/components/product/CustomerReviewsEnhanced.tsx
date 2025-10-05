@@ -9,6 +9,7 @@ import {
   Play,
   Send
 } from 'lucide-react';
+import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
 
 // Mock Button component
 const Button = ({ children, variant, className, onClick }) => (
@@ -279,42 +280,21 @@ const CustomerReviews = ({
     return filtered;
   }, [reviews, sortBy, filterRating, limit]);
 
+  const summaryStats = [
+    { value: reviewStats.averageRating.toFixed(1), label: 'Average Rating', color: 'text-yellow-600' },
+    { value: reviewStats.count, label: 'Total Reviews', color: 'text-blue-600' },
+    { value: ratingCounts[0], label: '5 Stars', color: 'text-green-600' },
+    { value: ratingCounts[4], label: '1 Star', color: 'text-red-600' }
+  ];
+
   return (
     <div className="space-y-4 pb-20">
-      {/* Rating Summary */}
-      <div className="flex items-start gap-6 p-4 bg-muted/30 rounded-lg" style={{backgroundColor: 'rgba(0,0,0,0.03)'}}>
-        <div className="text-center">
-          <div className="text-3xl font-bold">{reviewStats.averageRating.toFixed(1)}</div>
-          <div className="flex items-center">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <Star 
-                key={star}
-                className={`w-4 h-4 ${star <= reviewStats.averageRating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`}
-              />
-            ))}
-          </div>
-          <div className="text-sm text-muted-foreground" style={{color: '#666'}}>{reviewStats.count} review{reviewStats.count !== 1 ? 's' : ''}</div>
-        </div>
-
-        <div className="flex-1 space-y-1">
-          {ratingCounts.map((count, index) => {
-            const rating = 5 - index;
-            const percentage = reviewStats.count > 0 ? (count / reviewStats.count) * 100 : 0;
-            return (
-              <div key={rating} className="flex items-center gap-2 text-sm">
-                <span className="w-8">{rating}★</span>
-                <div className="flex-1 bg-muted rounded-full h-2" style={{backgroundColor: 'rgba(0,0,0,0.1)'}}>
-                  <div 
-                    className="bg-yellow-500 h-2 rounded-full transition-all"
-                    style={{ width: `${percentage}%` }}
-                  />
-                </div>
-                <span className="w-8 text-muted-foreground" style={{color: '#666'}}>{count}</span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      <SellerSummaryHeader
+        title="Customer Reviews"
+        subtitle={`${reviewStats.count} review${reviewStats.count !== 1 ? 's' : ''} from verified customers`}
+        stats={summaryStats}
+        showStats={reviewStats.count > 0}
+      />
 
       {/* Filters */}
       <div className="flex items-center justify-center">

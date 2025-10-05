@@ -2,6 +2,7 @@
 import React from 'react';
 import { Image, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
 import VendorProductCarousel from '@/components/home/VendorProductCarousel';
 
 interface SellerPostsTabProps {
@@ -9,22 +10,24 @@ interface SellerPostsTabProps {
 }
 
 const SellerPostsTab: React.FC<SellerPostsTabProps> = ({ onCreatePost }) => {
+  const stats = [
+    { value: 3, label: 'Total Posts', color: 'text-blue-600' },
+    { value: 590, label: 'Total Likes', color: 'text-red-600' },
+    { value: 75, label: 'Comments', color: 'text-green-600' }
+  ];
+
   return (
     <div className="max-w-2xl mx-auto">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6 bg-white rounded-lg p-4 border border-gray-100">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-1">Posts</h2>
-          <p className="text-sm text-gray-600">Share updates, announcements, and photos with followers</p>
-        </div>
-        <Button
-          onClick={onCreatePost}
-          className="flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Create Post
-        </Button>
-      </div>
+      <SellerSummaryHeader
+        title="Posts"
+        subtitle="Share updates, announcements, and photos with followers"
+        stats={stats}
+        actionButton={{
+          label: "Create Post",
+          icon: Plus,
+          onClick: onCreatePost
+        }}
+      />
 
       {/* Vertical Posts Feed */}
       <div className="space-y-6">

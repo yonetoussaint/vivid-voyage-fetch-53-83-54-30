@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Play, Plus, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,22 +48,25 @@ const SellerReelsTab: React.FC<SellerReelsTabProps> = ({
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
+  const stats = [
+    { value: videos.length, label: 'Total Reels', color: 'text-blue-600' },
+    { value: videos.reduce((sum, v) => sum + (v.views || 0), 0), label: 'Total Views', color: 'text-green-600' },
+    { value: videos.reduce((sum, v) => sum + (v.likes || 0), 0), label: 'Total Likes', color: 'text-red-600' }
+  ];
+
   return (
     <div className="p-4">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-4 bg-white rounded-lg p-4 border border-gray-100">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-1">Reels</h2>
-          <p className="text-sm text-gray-600">Share engaging video content with your audience</p>
-        </div>
-        <Button
-          onClick={onUploadClick}
-          className="flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Upload Reel
-        </Button>
-      </div>
+      <SellerSummaryHeader
+        title="Reels"
+        subtitle="Share engaging video content with your audience"
+        stats={stats}
+        actionButton={{
+          label: "Upload Reel",
+          icon: Plus,
+          onClick: onUploadClick
+        }}
+        showStats={videos.length > 0}
+      />
 
       {/* Videos Grid */}
       {isLoading ? (

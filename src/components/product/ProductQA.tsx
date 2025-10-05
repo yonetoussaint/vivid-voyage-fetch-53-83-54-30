@@ -9,6 +9,7 @@ import {
   Play,
   Send
 } from 'lucide-react';
+import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
 import SearchInfoComponent from './SearchInfoComponent';
 
 // Mock Button component
@@ -267,38 +268,21 @@ const ProductQA = ({
     return filtered;
   }, [questions, sortBy, filterStatus, limit]);
 
+  const summaryStats = [
+    { value: qaStats.count, label: 'Questions', color: 'text-gray-900' },
+    { value: qaStats.answeredCount, label: 'Answered', color: 'text-green-600' },
+    { value: qaStats.count - qaStats.answeredCount, label: 'Pending', color: 'text-orange-600' },
+    { value: `${Math.round(qaStats.count > 0 ? (qaStats.answeredCount / qaStats.count) * 100 : 0)}%`, label: 'Response Rate', color: 'text-blue-600' }
+  ];
+
   return (
     <div className="space-y-4 pb-20">
-      {/* Q&A Summary */}
-      <div className="p-4 bg-muted/30 rounded-lg" style={{backgroundColor: 'rgba(0,0,0,0.03)'}}>
-        <div className="grid grid-cols-4 gap-4">
-          <div className="text-center">
-            <div className="text-xl font-bold text-gray-900">{qaStats.count}</div>
-            <div className="text-xs text-muted-foreground" style={{color: '#666'}}>Questions</div>
-          </div>
-
-          <div className="text-center">
-            <div className="text-xl font-bold text-green-600">{qaStats.answeredCount}</div>
-            <div className="text-xs text-muted-foreground" style={{color: '#666'}}>Answered</div>
-          </div>
-
-          <div className="text-center">
-            <div className="text-xl font-bold text-orange-600">{qaStats.count - qaStats.answeredCount}</div>
-            <div className="text-xs text-muted-foreground" style={{color: '#666'}}>Pending</div>
-          </div>
-
-          <div className="text-center">
-            <div className="text-xl font-bold text-blue-600">{Math.round(qaStats.count > 0 ? (qaStats.answeredCount / qaStats.count) * 100 : 0)}%</div>
-            <div className="text-xs text-muted-foreground" style={{color: '#666'}}>Response Rate</div>
-          </div>
-        </div>
-
-        <div className="mt-3 pt-3 border-t border-gray-200">
-          <div className="text-center text-xs text-muted-foreground" style={{color: '#666'}}>
-            {qaStats.helpfulCount} helpful votes from the community
-          </div>
-        </div>
-      </div>
+      <SellerSummaryHeader
+        title="Questions & Answers"
+        subtitle={`${qaStats.helpfulCount} helpful votes from the community`}
+        stats={summaryStats}
+        showStats={qaStats.count > 0}
+      />
 
       {/* Enhanced Filters */}
       <div className="flex items-center justify-center gap-4">
