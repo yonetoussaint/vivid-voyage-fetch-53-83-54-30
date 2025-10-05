@@ -83,24 +83,31 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
 
                   {/* Dropdown menu */}
                   {openDropdown === filter.id && (
-                    <div className="absolute top-full left-0 z-50 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg">
-                      <div className="py-2">
-                        {filter.options.map((option) => (
-                          <button
-                            key={option}
-                            type="button"
-                            onClick={() => handleOptionSelect(filter.id, option)}
-                            className={`w-full px-4 py-2 text-left text-sm transition-colors ${
-                              selectedFilters[filter.id] === option
-                                ? 'bg-orange-50 text-orange-700 font-medium'
-                                : 'text-gray-700 hover:bg-gray-50'
-                            }`}
-                          >
-                            {option}
-                          </button>
-                        ))}
+                    <>
+                      {/* Backdrop to close dropdown */}
+                      <div 
+                        className="fixed inset-0 z-40"
+                        onClick={() => setOpenDropdown(null)}
+                      />
+                      <div className="absolute top-full left-0 z-50 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg">
+                        <div className="py-2">
+                          {filter.options.map((option) => (
+                            <button
+                              key={option}
+                              type="button"
+                              onClick={() => handleOptionSelect(filter.id, option)}
+                              className={`w-full px-4 py-2 text-left text-sm transition-colors ${
+                                selectedFilters[filter.id] === option
+                                  ? 'bg-orange-50 text-orange-700 font-medium'
+                                  : 'text-gray-700 hover:bg-gray-50'
+                              }`}
+                            >
+                              {option}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    </>
                   )}
                 </div>
               </div>
@@ -108,14 +115,6 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Backdrop to close dropdowns */}
-      {openDropdown && (
-        <div 
-          className="fixed inset-0 z-40"
-          onClick={() => setOpenDropdown(null)}
-        />
-      )}
 
       {/* Selected filters */}
       {Object.keys(selectedFilters).length > 0 && (
