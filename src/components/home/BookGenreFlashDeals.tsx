@@ -29,6 +29,8 @@ interface GenreFlashDealsProps {
   products?: Product[];
   sellerId?: string;
   onAddProduct?: () => void; // Added prop for add product action
+  title?: string;
+  subtitle?: string;
 }
 
 interface SummaryStats {
@@ -46,7 +48,9 @@ export default function BookGenreFlashDeals({
   className = '',
   products: externalProducts,
   sellerId,
-  onAddProduct // Added prop
+  onAddProduct, // Added prop
+  title = "Products",
+  subtitle = "Manage all your products"
 }: GenreFlashDealsProps) {
   const [displayCount, setDisplayCount] = useState(8);
 
@@ -297,8 +301,8 @@ export default function BookGenreFlashDeals({
     <div className={`w-full bg-white ${className}`}>
       {/* Header & Stats Section */}
       <SellerSummaryHeader
-        title="Products"
-        subtitle="Manage all your products"
+        title={title}
+        subtitle={subtitle}
         stats={summaryHeaderStats}
         actionButton={addProductButton} // Pass the button here
         showStats={!isLoading && processedProducts.length > 0}

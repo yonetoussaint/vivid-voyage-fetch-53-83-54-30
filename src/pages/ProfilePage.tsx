@@ -24,7 +24,16 @@ const ProfilePage = () => {
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<ProfileDashboard />} />
         <Route path="orders" element={<ProfileOrders />} />
-        <Route path="wishlist" element={<BookGenreFlashDeals />} />
+        <Route 
+          path="wishlist" 
+          element={
+            <BookGenreFlashDeals 
+              title="My Wishlist"
+              subtitle="Items you've saved for later"
+              className="bg-gray-50"
+            />
+          } 
+        />
         <Route path="addresses" element={<ProfileAddresses />} />
         <Route path="payments" element={<ProfilePayments />} />
         <Route path="analytics" element={<ProfileAnalytics />} />
