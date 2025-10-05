@@ -19,6 +19,7 @@ interface HeroBannerProps {
   // Custom banners prop - allows passing custom banner data including colors
   customBanners?: Array<{
     id: string;
+    image?: string; // Image URL or gradient class
     color?: string; // Gradient or solid color
     alt: string;
     title?: string;
@@ -149,7 +150,7 @@ export default function HeroBanner({
         return {
           ...banner,
           image: banner.image || banner.color || '', // Use image field or fallback to color
-          type: (banner.type || 'color') as 'image' | 'video',
+          type: (banner.type || 'color') as 'image' | 'video' | 'color',
           duration: banner.duration || 5000,
           rowType,
           product: undefined,
@@ -479,7 +480,7 @@ export default function HeroBanner({
                   {slide.type === "video" ? (
                     <video
                       src={slide.image}
-                      alt={slide.alt}
+                      aria-label={slide.alt}
                       className="w-full h-full object-cover rounded-2xl"
                       autoPlay
                       muted

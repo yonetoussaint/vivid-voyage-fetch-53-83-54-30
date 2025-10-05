@@ -4,7 +4,7 @@ export interface BannerType {
   alt: string;
   title?: string;
   subtitle?: string;
-  type: 'image' | 'video';
+  type: 'image' | 'video' | 'color';
   duration?: number;
   rowType?: 'product' | 'seller' | 'catalog'; // Add this
   product?: {
