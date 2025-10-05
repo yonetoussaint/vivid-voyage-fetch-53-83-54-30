@@ -26,9 +26,6 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
 }) => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
-  // Rest of your component remains the same...
-  // The map function will now work on the empty array instead of undefined
-
   const handleDropdownToggle = (filterId: string) => {
     if (isFilterDisabled && isFilterDisabled(filterId)) return;
     setOpenDropdown(prev => prev === filterId ? null : filterId);
@@ -73,8 +70,8 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
                     <span className="truncate">
                       {selectedFilters[filter.id] || filter.label}
                     </span>
-                    <ChevronDown 
-                      size={14} 
+                    <ChevronDown
+                      size={14}
                       className={`transition-transform duration-200 flex-shrink-0 ${
                         openDropdown === filter.id ? 'rotate-180' : ''
                       }`}
@@ -85,7 +82,7 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
                   {openDropdown === filter.id && (
                     <>
                       {/* Backdrop to close dropdown */}
-                      <div 
+                      <div
                         className="fixed inset-0 z-40"
                         onClick={() => setOpenDropdown(null)}
                       />
