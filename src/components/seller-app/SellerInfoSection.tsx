@@ -4,6 +4,7 @@ import {
   Facebook, Instagram, Mail, Edit2, Share2, MoreVertical, Bell 
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import HeroBanner from '@/components/home/HeroBanner';
 
 interface SellerInfoSectionProps {
   sellerData: any;
@@ -154,8 +155,15 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
   if (safeSellerData) {
     return (
       <div className="bg-white text-gray-900">
-        {/* Banner */}
-        <div className="relative w-full h-32 bg-gradient-to-r from-purple-400 via-pink-500 to-orange-400">
+        {/* Banner with fixed height */}
+        <div className="relative w-full h-32 overflow-hidden">
+          <div className="absolute inset-0">
+            <HeroBanner 
+              asCarousel={true}
+              showNewsTicker={false}
+              showCarouselBottomRow={false}
+            />
+          </div>
         </div>
 
         {/* Main Content - Fixed structure */}
