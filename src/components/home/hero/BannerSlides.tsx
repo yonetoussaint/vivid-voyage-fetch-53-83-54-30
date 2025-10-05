@@ -29,14 +29,18 @@ export default function BannerSlides({
               isPrevious ? "-translate-y-full z-0 hidden" : "translate-y-full z-0 hidden"
             }`}
           >
-            <BannerImage
-              src={banner.image}
-              alt={banner.alt || "Banner image"}
-              type={banner.type} // "image" or "video"
-              isActive={isActive}
-              className="w-full h-[60vh]"
-              onVideoDurationChange={(duration) => onVideoDurationChange?.(index, duration)}
-            />
+            {banner.type === 'color' || banner.image.startsWith('from-') ? (
+              <div className={`w-full h-full bg-gradient-to-r ${banner.image}`} />
+            ) : (
+              <BannerImage
+                src={banner.image}
+                alt={banner.alt || "Banner image"}
+                type={banner.type} // "image" or "video"
+                isActive={isActive}
+                className="w-full h-[60vh]"
+                onVideoDurationChange={(duration) => onVideoDurationChange?.(index, duration)}
+              />
+            )}
           </div>
         );
       })}

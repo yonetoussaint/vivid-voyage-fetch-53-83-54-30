@@ -156,7 +156,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
     return (
       <div className="bg-white text-gray-900">
         {/* Banner with fixed height */}
-        <div className="relative w-full h-32 overflow-hidden">
+        <div className="relative w-full h-32 overflow-hidden z-0">
           <div className="absolute inset-0">
             <HeroBanner 
               asCarousel={false}
@@ -164,7 +164,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
               customBanners={[
                 {
                   id: 'seller-banner-1',
-                  color: 'bg-gradient-to-r from-purple-400 via-pink-500 to-orange-400',
+                  color: 'from-red-500 via-yellow-400 to-blue-500',
                   alt: 'Seller Banner',
                   type: 'color',
                   duration: 5000
@@ -175,7 +175,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
         </div>
 
         {/* Main Content - Fixed structure */}
-        <div className="px-3 -mt-12">
+        <div className="px-3 -mt-12 relative z-10">
           {/* Profile Info with Action Buttons */}
           <div className="flex items-end justify-between mb-3">
             <div className="flex items-end">
