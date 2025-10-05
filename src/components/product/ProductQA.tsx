@@ -276,8 +276,6 @@ const ProductQA = ({
     { value: `${Math.round(qaStats.count > 0 ? (qaStats.answeredCount / qaStats.count) * 100 : 0)}%`, label: 'Response Rate', color: 'text-blue-600' }
   ];
 
-  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
-
   const filterCategories = React.useMemo(() => [
     {
       id: 'status',
@@ -296,6 +294,13 @@ const ProductQA = ({
     }
   ], []);
 
+  // Initialize filters with "All" options directly in useState
+  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({
+    status: 'All Status',
+    sort: 'All Sorting',
+    topic: 'All Topics'
+  });
+
   const handleFilterSelect = (filterId: string, option: string) => {
     setSelectedFilters(prev => ({
       ...prev,
@@ -311,7 +316,7 @@ const ProductQA = ({
       };
       if (sortMap[option]) {
         setSortBy(sortMap[option]);
-      } else if (option === 'Unanswered First') { // Handling the case where original sort options might differ
+      } else if (option === 'Unanswered First') {
         setSortBy('unanswered');
       }
     } else if (filterId === 'status') {
@@ -339,7 +344,11 @@ const ProductQA = ({
   };
 
   const handleClearAll = () => {
-    setSelectedFilters({});
+    setSelectedFilters({
+      status: 'All Status',
+      sort: 'All Sorting',
+      topic: 'All Topics'
+    });
     setSortBy('recent');
     setFilterStatus('all');
   };
@@ -347,15 +356,6 @@ const ProductQA = ({
   const handleFilterButtonClick = (filterId: string) => {
     console.log('Filter button clicked:', filterId);
   };
-
-  // Initialize filters with "All" options on mount only
-  React.useEffect(() => {
-    const initialFilters: Record<string, string> = {};
-    filterCategories.forEach((filter) => {
-      initialFilters[filter.id] = filter.label; // Initialize with the descriptive label
-    });
-    setSelectedFilters(initialFilters);
-  }, []); // Empty dependency array - only run once on mount
 
 
   return (
