@@ -63,7 +63,7 @@ export default function Wallet() {
 
   return (
     <div className="min-h-screen bg-white">
-      <PageContainer maxWidth="lg" padding="default">
+      <PageContainer maxWidth="lg" padding="md">
         <div className="space-y-8 py-6">
           
           {/* Balance Card */}

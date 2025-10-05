@@ -36,7 +36,7 @@ const getNavItems = (isSellerDashboard: boolean): BottomNavTab[] => [
     path: isSellerDashboard ? '/seller-dashboard' : '/for-you' 
   }, 
   { id: 'shorts', nameKey: 'navigation.shorts', icon: Zap, path: '/reels' },
-  { id: 'categories', nameKey: 'navigation.categories', icon: LayoutGrid, path: '/search' },
+  { id: 'messages', nameKey: 'navigation.messages', icon: MessageCircle, path: '/messages' },
   { id: 'wallet', nameKey: 'navigation.wallet', icon: Wallet, path: '/wallet' },
   { id: 'profile', nameKey: 'navigation.account', icon: User, path: '/profile/dashboard', isAvatar: true },
 ];
