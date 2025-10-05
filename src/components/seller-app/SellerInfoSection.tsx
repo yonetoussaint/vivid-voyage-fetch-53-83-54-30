@@ -167,8 +167,8 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
 
         {/* Main Content - Fixed structure */}
         <div className="px-3 pt-3 relative z-10">
-          {/* Profile Info with Action Buttons */}
-          <div className="flex items-start justify-between mb-3">
+          {/* Profile Info */}
+          <div className="mb-3">
             {/* Profile Picture and Name Section */}
             <div className="flex items-start gap-3">
               <div className="relative">
@@ -224,19 +224,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-2">
-              <button className="px-4 h-9 rounded-full bg-white/95 backdrop-blur-sm flex items-center justify-center gap-2 hover:bg-white transition-colors shadow-md font-medium text-sm border border-gray-200">
-                <Edit2 className="w-4 h-4 text-gray-700" />
-                <span className="text-gray-700">Edit</span>
-              </button>
-              <button className="w-9 h-9 rounded-full bg-white/95 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors shadow-md border border-gray-200">
-                <Share2 className="w-4 h-4 text-gray-700" />
-              </button>
-              <button className="w-9 h-9 rounded-full bg-white/95 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors shadow-md border border-gray-200">
-                <MoreVertical className="w-4 h-4 text-gray-700" />
-              </button>
-            </div>
+            
           </div>
 
           {/* Bio */}
