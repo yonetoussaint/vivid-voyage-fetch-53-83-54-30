@@ -131,6 +131,7 @@ function MainLayoutContent() {
     '/',
     '/for-you',
     '/messages',
+    '/wallet',
     '/categories/electronics',
     '/categories/home-living',
     '/categories/fashion',
@@ -146,12 +147,14 @@ function MainLayoutContent() {
   // Check if current page is electronics (has filter functionality)
   const isElectronicsPage = pathname === '/categories/electronics';
 
-  // Check if current page is messages
+  // Check if current page is messages or wallet
   const isMessagesPage = pathname === '/messages';
+  const isWalletPage = pathname === '/wallet';
 
-  // Get filter from URL params for messages
+  // Get filter from URL params for messages and wallet
   const searchParams = new URLSearchParams(location.search);
   const messagesFilter = searchParams.get('filter') || 'all';
+  const walletFilter = searchParams.get('tab') || 'buyer';
 
   // Define custom tabs for messages page
   const messagesTabs = isMessagesPage ? [
@@ -161,6 +164,12 @@ function MainLayoutContent() {
     { id: 'archived', name: 'Archived', path: '/messages?filter=archived' }
   ] : undefined;
 
+  // Define custom tabs for wallet page
+  const walletTabs = isWalletPage ? [
+    { id: 'buyer', name: 'Buyer', path: '/wallet?tab=buyer' },
+    { id: 'seller', name: 'Seller', path: '/wallet?tab=seller' }
+  ] : undefined;
+
   return (
     <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
         <style dangerouslySetInnerHTML={{ __html: headerHeightStyle }} />
@@ -168,7 +177,7 @@ function MainLayoutContent() {
         {/* Show AliExpressHeader for category pages */}
         {shouldShowHeader && (
           <AliExpressHeader 
-            activeTabId={isMessagesPage ? messagesFilter : activeTab}
+            activeTabId={isMessagesPage ? messagesFilter : isWalletPage ? walletFilter : activeTab}
             showFilterBar={showFilterBar}
             filterCategories={filterCategories}
             selectedFilters={selectedFilters}
@@ -177,7 +186,7 @@ function MainLayoutContent() {
             onClearAll={onClearAll}
             onFilterButtonClick={onFilterButtonClick}
             isFilterDisabled={isFilterDisabled}
-            customTabs={messagesTabs}
+            customTabs={messagesTabs || walletTabs}
           />
         )}
 

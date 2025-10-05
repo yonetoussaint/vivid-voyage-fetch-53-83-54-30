@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   ArrowUpRight, 
   ArrowDownLeft, 
@@ -57,12 +58,25 @@ export default function Wallet() {
   const { user } = useAuth();
   const { data: sellerData } = useSellerByUserId(user?.id || '');
   const isSeller = !!sellerData;
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Get tab from URL params
+  const searchParams = new URLSearchParams(location.search);
+  const urlTab = searchParams.get('tab') as 'buyer' | 'seller' | null;
 
   const [buyerBalance] = useState(1247.50);
   const [sellerBalance] = useState(3124.75);
   const [showBalance, setShowBalance] = useState(true);
-  const [activeTab, setActiveTab] = useState<'buyer' | 'seller'>(isSeller ? 'seller' : 'buyer');
+  const [activeTab, setActiveTab] = useState<'buyer' | 'seller'>(urlTab || (isSeller ? 'seller' : 'buyer'));
   const [filterType, setFilterType] = useState<'all' | 'purchase' | 'deposit' | 'withdrawal' | 'payment_received' | 'payout'>('all');
+
+  // Update activeTab when URL changes
+  useEffect(() => {
+    if (urlTab && (urlTab === 'buyer' || urlTab === 'seller')) {
+      setActiveTab(urlTab);
+    }
+  }, [urlTab]);
 
   // Buyer Quick Actions
   const buyerActions: QuickAction[] = [
@@ -214,7 +228,10 @@ export default function Wallet() {
           {/* Tabs for Buyer/Seller */}
           {isSeller && (
             <div className="px-4">
-              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'buyer' | 'seller')}>
+              <Tabs value={activeTab} onValueChange={(v) => {
+                setActiveTab(v as 'buyer' | 'seller');
+                navigate(`/wallet?tab=${v}`);
+              }}>
                 <TabsList className="w-full grid grid-cols-2">
                   <TabsTrigger value="buyer" className="flex items-center gap-2">
                     <ShoppingCart className="h-4 w-4" />
