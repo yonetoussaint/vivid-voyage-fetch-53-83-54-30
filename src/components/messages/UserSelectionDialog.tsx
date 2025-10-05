@@ -80,10 +80,10 @@ export function UserSelectionDialog({ open, onOpenChange, currentUserId }: UserS
 
   const handleUserSelect = async (selectedUserId: string) => {
     try {
-      // First, check if a conversation already exists between these two users
+      // Get all conversations where current user is a participant
       const { data: myConversations, error: fetchError } = await supabase
         .from('conversation_participants')
-        .select('conversation_id, conversations!inner(*)')
+        .select('conversation_id')
         .eq('user_id', currentUserId);
 
       if (fetchError) {
@@ -93,25 +93,23 @@ export function UserSelectionDialog({ open, onOpenChange, currentUserId }: UserS
 
       // Check if any of my conversations includes the selected user
       if (myConversations && myConversations.length > 0) {
-        for (const conv of myConversations) {
-          const { data: otherParticipants, error: participantsError } = await supabase
-            .from('conversation_participants')
-            .select('user_id')
-            .eq('conversation_id', conv.conversation_id)
-            .neq('user_id', currentUserId);
+        const conversationIds = myConversations.map(c => c.conversation_id);
+        
+        // Find if selected user is in any of these conversations
+        const { data: sharedConversation, error: sharedError } = await supabase
+          .from('conversation_participants')
+          .select('conversation_id')
+          .eq('user_id', selectedUserId)
+          .in('conversation_id', conversationIds)
+          .limit(1)
+          .single();
 
-          if (participantsError) {
-            console.error('Error fetching participants:', participantsError);
-            continue;
-          }
-
-          if (otherParticipants?.some((p) => p.user_id === selectedUserId)) {
-            // Conversation exists, navigate to it
-            console.log('Existing conversation found:', conv.conversation_id);
-            navigate(`/messages/${conv.conversation_id}`);
-            onOpenChange(false);
-            return;
-          }
+        if (sharedConversation && !sharedError) {
+          // Conversation exists, navigate to it
+          console.log('Existing conversation found:', sharedConversation.conversation_id);
+          navigate(`/messages/${sharedConversation.conversation_id}`);
+          onOpenChange(false);
+          return;
         }
       }
 
