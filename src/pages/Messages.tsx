@@ -1,14 +1,18 @@
+import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { MessageCircle, Loader2 } from 'lucide-react';
+import { MessageCircle, Loader2, Plus } from 'lucide-react';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useConversations } from '@/hooks/useConversations';
 import { formatDistanceToNow } from 'date-fns';
+import { UserSelectionDialog } from '@/components/messages/UserSelectionDialog';
+import { motion } from 'framer-motion';
 
 export default function Messages() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const activeTab = (searchParams.get('filter') || 'all') as 'all' | 'unread' | 'blocked' | 'archived';
+  const [showUserSelection, setShowUserSelection] = useState(false);
   
   const currentUserId = '00000000-0000-0000-0000-000000000004';
   
@@ -102,6 +106,25 @@ export default function Messages() {
         </div>
 
       </PageContainer>
+
+      {/* Floating Action Button */}
+      <motion.button
+        className="fixed bottom-24 right-5 z-50 bg-black text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:bg-gray-800 transition-colors"
+        onClick={() => setShowUserSelection(true)}
+        whileTap={{ scale: 0.9 }}
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 300, damping: 15 }}
+      >
+        <Plus size={28} />
+      </motion.button>
+
+      {/* User Selection Dialog */}
+      <UserSelectionDialog
+        open={showUserSelection}
+        onOpenChange={setShowUserSelection}
+        currentUserId={currentUserId}
+      />
     </div>
   );
 }
