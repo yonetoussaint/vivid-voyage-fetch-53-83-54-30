@@ -10,6 +10,7 @@ import FloatingVideo from '../hero/FloatingVideo';
 import SellerInfoOverlay from '../product/SellerInfoOverlay';
 import { BannerType } from './hero/types';
 import ProductFilterBar from './ProductFilterBar';
+import { getGradientStyle } from '@/utils/gradientStyles';
 
 interface HeroBannerProps {
   asCarousel?: boolean;
@@ -502,8 +503,9 @@ export default function HeroBanner({
                     />
                   ) : slide.image.startsWith('linear-gradient') || slide.image.startsWith('from-') || slide.image.includes('gradient') ? (
                     <div
-                      className={`w-full h-full rounded-2xl ${slide.image}`}
+                      className="w-full h-full rounded-2xl"
                       aria-label={slide.alt}
+                      style={getGradientStyle(slide.image)}
                     />
                   ) : (
                     <img

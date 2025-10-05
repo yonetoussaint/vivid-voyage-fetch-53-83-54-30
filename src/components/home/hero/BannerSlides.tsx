@@ -1,6 +1,7 @@
 
 import { BannerType } from './types';
 import BannerImage from "@/components/hero/BannerImage";
+import { getGradientStyle } from '@/utils/gradientStyles';
 
 interface BannerSlidesProps {
   slides: BannerType[];
@@ -15,6 +16,7 @@ export default function BannerSlides({
   previousIndex,
   onVideoDurationChange
 }: BannerSlidesProps) {
+
   return (
     <div className="relative w-full h-full">
       {slides.map((banner, index) => {
@@ -30,7 +32,10 @@ export default function BannerSlides({
             }`}
           >
             {banner.type === 'color' || banner.image.startsWith('from-') || banner.image.includes('gradient') ? (
-              <div className={`w-full h-full bg-gradient-to-r ${banner.image}`} />
+              <div 
+                className="w-full h-full" 
+                style={getGradientStyle(banner.image)}
+              />
             ) : (
               <BannerImage
                 src={banner.image}
