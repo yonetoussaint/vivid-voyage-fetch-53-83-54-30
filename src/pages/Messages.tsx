@@ -33,6 +33,9 @@ export default function Messages() {
   };
 
   const handleConversationClick = (conversationId: string) => {
+    if (conversationId.startsWith('blocked-')) {
+      return;
+    }
     navigate(`/messages/${conversationId}`);
   };
 
@@ -76,7 +79,11 @@ export default function Messages() {
               <button
                 key={conversation.id}
                 onClick={() => handleConversationClick(conversation.id)}
-                className="w-full px-4 py-4 flex items-center gap-3 hover:bg-gray-50 transition-colors border-b border-gray-50 active:bg-gray-100"
+                className={`w-full px-4 py-4 flex items-center gap-3 transition-colors border-b border-gray-50 ${
+                  conversation.id.startsWith('blocked-') 
+                    ? 'cursor-default opacity-60' 
+                    : 'hover:bg-gray-50 active:bg-gray-100 cursor-pointer'
+                }`}
               >
                 <Avatar className="h-12 w-12 flex-shrink-0">
                   <AvatarImage src={conversation.other_user.avatar_url || ''} />

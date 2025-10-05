@@ -19,6 +19,7 @@ export function useMessages(conversationId: string | null, currentUserId: string
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
     if (!conversationId) {
@@ -27,8 +28,7 @@ export function useMessages(conversationId: string | null, currentUserId: string
       return;
     }
 
-    fetchMessages();
-    markMessagesAsRead();
+    fetchMessages(true);
 
     const channel = supabase
       .channel(`messages-${conversationId}`)
@@ -41,7 +41,7 @@ export function useMessages(conversationId: string | null, currentUserId: string
           filter: `conversation_id=eq.${conversationId}`,
         },
         (payload) => {
-          fetchMessages();
+          fetchMessages(false);
         }
       )
       .subscribe();
@@ -51,11 +51,13 @@ export function useMessages(conversationId: string | null, currentUserId: string
     };
   }, [conversationId, currentUserId]);
 
-  async function fetchMessages() {
+  async function fetchMessages(isInitial: boolean = false) {
     if (!conversationId) return;
 
     try {
-      setLoading(true);
+      if (isInitial) {
+        setLoading(true);
+      }
 
       const { data, error: fetchError } = await supabase
         .from('messages')
@@ -93,10 +95,15 @@ export function useMessages(conversationId: string | null, currentUserId: string
 
       setMessages(messagesWithSender);
       setError(null);
+      
+      await markMessagesAsRead();
     } catch (err) {
       setError(err as Error);
     } finally {
-      setLoading(false);
+      if (isInitial) {
+        setLoading(false);
+        setIsInitialLoad(false);
+      }
     }
   }
 
@@ -188,6 +195,6 @@ export function useMessages(conversationId: string | null, currentUserId: string
     sendMessage,
     blockUser,
     archiveConversation,
-    refetch: fetchMessages,
+    refetch: () => fetchMessages(true),
   };
 }

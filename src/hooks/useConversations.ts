@@ -23,6 +23,7 @@ export function useConversations(userId: string, filter: 'all' | 'unread' | 'blo
   const [conversations, setConversations] = useState<ConversationWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
     if (!userId) {
@@ -30,15 +31,15 @@ export function useConversations(userId: string, filter: 'all' | 'unread' | 'blo
       return;
     }
 
-    fetchConversations();
+    fetchConversations(true);
 
     const channel = supabase
       .channel('conversations-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
-        fetchConversations();
+        fetchConversations(false);
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, () => {
-        fetchConversations();
+        fetchConversations(false);
       })
       .subscribe();
 
@@ -47,9 +48,11 @@ export function useConversations(userId: string, filter: 'all' | 'unread' | 'blo
     };
   }, [userId, filter]);
 
-  async function fetchConversations() {
+  async function fetchConversations(isInitial: boolean = false) {
     try {
-      setLoading(true);
+      if (isInitial) {
+        setLoading(true);
+      }
 
       if (filter === 'blocked') {
         const { data: blockedUsers } = await supabase
@@ -58,7 +61,7 @@ export function useConversations(userId: string, filter: 'all' | 'unread' | 'blo
           .eq('blocker_id', userId);
 
         const blockedConversations: ConversationWithDetails[] = (blockedUsers || []).map((blocked: any) => ({
-          id: blocked.blocked_id,
+          id: `blocked-${blocked.blocked_id}`,
           last_message_at: new Date().toISOString(),
           is_archived: false,
           other_user: {
@@ -67,12 +70,19 @@ export function useConversations(userId: string, filter: 'all' | 'unread' | 'blo
             email: blocked.profiles.email || '',
             avatar_url: blocked.profiles.avatar_url,
           },
-          last_message: null,
+          last_message: {
+            content: 'User blocked',
+            created_at: new Date().toISOString(),
+            sender_id: userId,
+          },
           unread_count: 0,
         }));
 
         setConversations(blockedConversations);
-        setLoading(false);
+        if (isInitial) {
+          setLoading(false);
+          setIsInitialLoad(false);
+        }
         return;
       }
 
@@ -152,9 +162,12 @@ export function useConversations(userId: string, filter: 'all' | 'unread' | 'blo
     } catch (err) {
       setError(err as Error);
     } finally {
-      setLoading(false);
+      if (isInitial) {
+        setLoading(false);
+        setIsInitialLoad(false);
+      }
     }
   }
 
-  return { conversations, loading, error, refetch: fetchConversations };
+  return { conversations, loading, error, refetch: () => fetchConversations(true) };
 }
