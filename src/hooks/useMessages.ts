@@ -35,31 +35,23 @@ export function useMessages(conversationId: string | null, currentUserId: string
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'messages',
           filter: `conversation_id=eq.${conversationId}`,
         },
         (payload) => {
-          console.log('New message received:', payload);
-          fetchMessages(false);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'messages',
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        (payload) => {
-          console.log('Message updated:', payload);
+          console.log('Message change detected:', payload);
           fetchMessages(false);
         }
       )
       .subscribe((status) => {
-        console.log('Subscription status:', status);
+        console.log('Messages subscription status:', status, 'for conversation:', conversationId);
+        if (status === 'SUBSCRIBED') {
+          console.log('Successfully subscribed to messages for conversation:', conversationId);
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('Error subscribing to messages channel');
+        }
       });
 
     return () => {

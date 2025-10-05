@@ -36,31 +36,30 @@ export function useConversations(userId: string, filter: 'all' | 'unread' | 'blo
     const channel = supabase
       .channel(`conversations-${userId}`)
       .on('postgres_changes', { 
-        event: 'INSERT', 
+        event: '*', 
         schema: 'public', 
         table: 'messages' 
       }, (payload) => {
-        console.log('New message received in useConversations:', payload);
+        console.log('Message change detected in useConversations:', payload);
+        // Refetch conversations when any message is inserted or updated
         fetchConversations(false);
       })
       .on('postgres_changes', { 
-        event: 'UPDATE', 
+        event: '*', 
         schema: 'public', 
         table: 'conversations' 
       }, (payload) => {
-        console.log('Conversation updated in useConversations:', payload);
+        console.log('Conversation change detected:', payload);
         fetchConversations(false);
       })
-      .on('postgres_changes', { 
-        event: 'UPDATE', 
-        schema: 'public', 
-        table: 'conversation_participants',
-        filter: `user_id=eq.${userId}`
-      }, (payload) => {
-        console.log('Participant updated in useConversations:', payload);
-        fetchConversations(false);
-      })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Conversations subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('Successfully subscribed to conversations updates');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('Error subscribing to conversations channel');
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
