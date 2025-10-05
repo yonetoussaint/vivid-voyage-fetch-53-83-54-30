@@ -278,22 +278,28 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
           </div>
 
           {/* Additional Links */}
-          <div className="flex items-center justify-between text-xs text-gray-500 mb-3 px-1">
+          <div className="flex items-center gap-x-3 text-xs text-gray-500 mb-3">
             <div className="flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5" />
               <span>Joined {safeSellerData.join_date}</span>
             </div>
             {safeSellerData.location && (
-              <div className="flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5" />
-                <span>{safeSellerData.location}</span>
-              </div>
+              <>
+                <div className="text-gray-300">•</div>
+                <div className="flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5" />
+                  <span>{safeSellerData.location}</span>
+                </div>
+              </>
             )}
             {safeSellerData.business_type && (
-              <div className="flex items-center gap-1">
-                <Store className="w-3.5 h-3.5" />
-                <span>{safeSellerData.business_type}</span>
-              </div>
+              <>
+                <div className="text-gray-300">•</div>
+                <div className="flex items-center gap-1">
+                  <Store className="w-3.5 h-3.5" />
+                  <span>{safeSellerData.business_type}</span>
+                </div>
+              </>
             )}
           </div>
 
