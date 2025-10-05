@@ -6,14 +6,16 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useConversations } from '@/hooks/useConversations';
 import { formatDistanceToNow } from 'date-fns';
 import { UserSelectionDialog } from '@/components/messages/UserSelectionDialog';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 export default function Messages() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const activeTab = (searchParams.get('filter') || 'all') as 'all' | 'unread' | 'blocked' | 'archived';
   const [showUserSelection, setShowUserSelection] = useState(false);
+  const { user } = useAuth();
   
-  const currentUserId = '00000000-0000-0000-0000-000000000004';
+  const currentUserId = user?.id || '';
   
   const { conversations, loading } = useConversations(currentUserId, activeTab);
 

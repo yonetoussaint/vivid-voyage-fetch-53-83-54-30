@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useMessages } from '@/hooks/useMessages';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,8 +21,9 @@ export default function ConversationDetail() {
   const [otherUser, setOtherUser] = useState<any>(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
   
-  const currentUserId = '00000000-0000-0000-0000-000000000004';
+  const currentUserId = user?.id || '';
   
   const { messages, loading, sendMessage, blockUser, archiveConversation } = useMessages(
     conversationId || null,

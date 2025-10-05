@@ -41,8 +41,8 @@ export function UserSelectionDialog({ open, onOpenChange, currentUserId }: UserS
       setFilteredUsers(
         users.filter(
           (user) =>
-            user.full_name.toLowerCase().includes(query) ||
-            user.email.toLowerCase().includes(query)
+            (user.full_name || '').toLowerCase().includes(query) ||
+            (user.email || '').toLowerCase().includes(query)
         )
       );
     }
