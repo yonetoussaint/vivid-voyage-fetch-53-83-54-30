@@ -7,8 +7,11 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import ReusableSearchBar from '@/components/shared/ReusableSearchBar';
+import { useNavigate } from 'react-router-dom';
 
 const ProfileDashboard = () => {
+  const navigate = useNavigate();
   const stats = [
     {
       title: 'Total Orders',
@@ -77,17 +80,18 @@ const ProfileDashboard = () => {
 
   return (
     <div className="space-y-4 bg-gray-50 min-h-screen">
-      {/* Compact Header & Stats */}
+      {/* Header with Search Bar */}
       <div className="bg-white border-b">
         <div className="px-4 py-3">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h1 className="text-lg font-bold text-foreground">Dashboard</h1>
-              <p className="text-xs text-muted-foreground">Your account overview</p>
-            </div>
+          <div className="flex items-center gap-3 mb-3">
+            <ReusableSearchBar
+              placeholder="Search products, orders, reviews..."
+              onSubmit={(query) => navigate(`/search?q=${encodeURIComponent(query)}`)}
+              className="flex-1"
+            />
             <Button size="sm">
               <Plus className="w-3 h-3 mr-1" />
-              Browse Products
+              Browse
             </Button>
           </div>
 
