@@ -158,39 +158,10 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
         {/* Banner with custom height */}
         <div className="relative w-full overflow-hidden z-0">
           <HeroBanner 
-            asCarousel={false}
+            asCarousel={true}
             showNewsTicker={false}
             customHeight="128px"
-            customBanners={[
-              {
-                id: 'seller-banner-1',
-                image: 'from-red-500 via-yellow-400 to-blue-500',
-                alt: 'Seller Banner 1',
-                type: 'color',
-                duration: 5000
-              },
-              {
-                id: 'seller-banner-2',
-                image: 'from-purple-500 via-pink-500 to-red-500',
-                alt: 'Seller Banner 2',
-                type: 'color',
-                duration: 5000
-              },
-              {
-                id: 'seller-banner-3',
-                image: 'from-blue-500 via-teal-400 to-green-500',
-                alt: 'Seller Banner 3',
-                type: 'color',
-                duration: 5000
-              },
-              {
-                id: 'seller-banner-4',
-                image: 'from-indigo-500 via-purple-500 to-pink-500',
-                alt: 'Seller Banner 4',
-                type: 'color',
-                duration: 5000
-              }
-            ]}
+            sellerId={safeSellerData.id}
           />
         </div>
 
