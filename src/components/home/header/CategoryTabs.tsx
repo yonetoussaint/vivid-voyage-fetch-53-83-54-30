@@ -55,8 +55,10 @@ const CategoryTabs = ({
     if (activeTabElement && containerElement) {
       const textSpan = activeTabElement.querySelector('span');
       if (textSpan) {
-        const textWidth = textSpan.getBoundingClientRect().width;
-        const newWidth = Math.max(textWidth * 0.8, 20);
+        // Use scrollWidth for actual text content width (more accurate)
+        const textWidth = textSpan.scrollWidth;
+        // Make underline 60-70% of text width for a sleek look
+        const newWidth = Math.max(textWidth * 0.6, 20);
 
         const buttonRect = activeTabElement.getBoundingClientRect();
         const containerRect = containerElement.getBoundingClientRect();
@@ -144,8 +146,10 @@ const CategoryTabs = ({
     if (activeTabElement && containerElement) {
       const textSpan = activeTabElement.querySelector('span');
       if (textSpan) {
-        const textWidth = textSpan.getBoundingClientRect().width;
-        const newWidth = Math.max(textWidth * 0.8, 20);
+        // Use scrollWidth for actual text content width (more accurate)
+        const textWidth = textSpan.scrollWidth;
+        // Make underline 60-70% of text width for a sleek look
+        const newWidth = Math.max(textWidth * 0.6, 20);
 
         const buttonRect = activeTabElement.getBoundingClientRect();
         const containerRect = containerElement.getBoundingClientRect();
