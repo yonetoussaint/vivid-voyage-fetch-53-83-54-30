@@ -187,7 +187,7 @@ export default function BookGenreFlashDeals({
 
   // Process products with memoization to prevent infinite re-renders
   const processedProducts = React.useMemo(() => {
-    return allProducts.map(product => {
+    let products = allProducts.map(product => {
       const discountPercentage = product.discount_price 
         ? Math.round(((product.price - product.discount_price) / product.price) * 100) 
         : 0;
@@ -199,7 +199,53 @@ export default function BookGenreFlashDeals({
         image: product.product_images?.[0]?.src || "https://placehold.co/300x300?text=No+Image"
       };
     });
-  }, [allProducts]);
+
+    // Apply filters
+    if (selectedFilters.category && selectedFilters.category !== 'All') {
+      products = products.filter(p => p.category === selectedFilters.category);
+    }
+
+    if (selectedFilters.price && selectedFilters.price !== 'All') {
+      products = products.filter(p => {
+        const price = p.discount_price || p.price;
+        switch (selectedFilters.price) {
+          case 'Under $50': return price < 50;
+          case '$50 - $100': return price >= 50 && price <= 100;
+          case '$100 - $200': return price > 100 && price <= 200;
+          case 'Over $200': return price > 200;
+          default: return true;
+        }
+      });
+    }
+
+    if (selectedFilters.availability && selectedFilters.availability !== 'All') {
+      products = products.filter(p => {
+        switch (selectedFilters.availability) {
+          case 'In Stock': return (p.inventory ?? 0) > 0;
+          case 'Out of Stock': return (p.inventory ?? 0) === 0;
+          case 'Low Stock': return (p.inventory ?? 0) > 0 && (p.inventory ?? 0) <= 10;
+          default: return true;
+        }
+      });
+    }
+
+    if (selectedFilters.discount && selectedFilters.discount !== 'All') {
+      products = products.filter(p => {
+        const discountPercentage = p.discount_price 
+          ? Math.round(((p.price - p.discount_price) / p.price) * 100) 
+          : 0;
+        switch (selectedFilters.discount) {
+          case 'On Sale': return discountPercentage > 0;
+          case '10% or more': return discountPercentage >= 10;
+          case '25% or more': return discountPercentage >= 25;
+          case '50% or more': return discountPercentage >= 50;
+          default: return true;
+        }
+      });
+    }
+
+    return products;
+  }, [allProducts, selectedFilters]);
 
   // Infinite scroll logic
   useEffect(() => {
