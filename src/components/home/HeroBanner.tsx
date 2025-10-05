@@ -16,6 +16,16 @@ interface HeroBannerProps {
   showNewsTicker?: boolean;
   // New prop to control bottom row in carousel mode
   showCarouselBottomRow?: boolean;
+  // Custom banners prop - allows passing custom banner data including colors
+  customBanners?: Array<{
+    id: string;
+    color?: string; // Gradient or solid color
+    alt: string;
+    title?: string;
+    subtitle?: string;
+    type?: 'image' | 'video' | 'color';
+    duration?: number;
+  }>;
   // Filter props
   filterCategories?: Array<{
     id: string;
@@ -35,6 +45,8 @@ export default function HeroBanner({
   showNewsTicker = true,
   // New prop - default to true for backward compatibility
   showCarouselBottomRow = true,
+  // Custom banners
+  customBanners,
   // Filter props with defaults
   filterCategories = [],
   selectedFilters = {},
@@ -96,12 +108,13 @@ export default function HeroBanner({
     initStorage();
   }, []);
 
-  // Fetch banners from Supabase
+  // Fetch banners from Supabase only if customBanners is not provided
   const { data: banners, isLoading, error } = useQuery({
     queryKey: ["hero-banners"],
     queryFn: fetchHeroBanners,
     staleTime: 5000,
     refetchInterval: 10000,
+    enabled: !customBanners, // Only fetch if no custom banners provided
   });
 
   // Show error if banner fetch fails
@@ -126,7 +139,28 @@ export default function HeroBanner({
   }, [banners]);
 
   // Transform banners to match BannerType interface
-  const transformedBanners: BannerType[] = useMemo(() => banners?.map((banner, index) => {
+  const transformedBanners: BannerType[] = useMemo(() => {
+    // If customBanners provided, use those instead
+    if (customBanners) {
+      return customBanners.map((banner, index) => {
+        const rowTypes: ('product' | 'seller' | 'catalog')[] = ['product', 'seller', 'catalog'];
+        const rowType = rowTypes[index % 3] || 'product';
+
+        return {
+          ...banner,
+          image: banner.color || '', // Use color as image placeholder
+          type: (banner.type || 'color') as 'image' | 'video',
+          duration: banner.duration || 5000,
+          rowType,
+          product: undefined,
+          seller: undefined,
+          catalog: undefined,
+        };
+      });
+    }
+
+    // Otherwise use fetched banners
+    return banners?.map((banner, index) => {
     const decodedUrl = decodeURIComponent(banner.image);
     const isVideo = /\.(mp4|webm|ogg|mov|avi)$/i.test(decodedUrl) || 
                     /\.(mp4|webm|ogg|mov|avi)$/i.test(banner.image);
@@ -455,6 +489,11 @@ export default function HeroBanner({
                         const durationMs = video.duration * 1000;
                         handleVideoDurationChange(index, durationMs);
                       }}
+                    />
+                  ) : slide.image.startsWith('linear-gradient') || slide.image.startsWith('from-') || slide.image.includes('gradient') ? (
+                    <div
+                      className={`w-full h-full rounded-2xl ${slide.image}`}
+                      aria-label={slide.alt}
                     />
                   ) : (
                     <img

@@ -161,6 +161,15 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
             <HeroBanner 
               asCarousel={false}
               showNewsTicker={false}
+              customBanners={[
+                {
+                  id: 'seller-banner-1',
+                  color: 'bg-gradient-to-r from-purple-400 via-pink-500 to-orange-400',
+                  alt: 'Seller Banner',
+                  type: 'color',
+                  duration: 5000
+                }
+              ]}
             />
           </div>
         </div>
