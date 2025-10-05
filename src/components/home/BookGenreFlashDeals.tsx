@@ -305,7 +305,7 @@ export default function BookGenreFlashDeals({
       />
 
       {/* Filter Bar Section - Added right before the products grid */}
-      <div>
+      <div className="-mx-2">
         <ProductFilterBar
           filterCategories={filterCategories}
           selectedFilters={selectedFilters}
