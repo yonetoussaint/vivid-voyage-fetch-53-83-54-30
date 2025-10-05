@@ -59,7 +59,7 @@ export default function BookGenreFlashDeals({
   };
 
   // Define filter categories
-  const filterCategories = [
+  const filterCategories = React.useMemo(() => [
     {
       id: 'category',
       label: 'Category',
@@ -80,7 +80,16 @@ export default function BookGenreFlashDeals({
       label: 'Discount',
       options: ['All Discounts', 'On Sale', 'No Discount']
     }
-  ];
+  ], []);
+
+  // Initialize filters with "All" options on mount only
+  React.useEffect(() => {
+    const initialFilters: Record<string, string> = {};
+    filterCategories.forEach((filter) => {
+      initialFilters[filter.id] = filter.options[0];
+    });
+    setSelectedFilters(initialFilters);
+  }, []); // Empty dependency array - only run once on mount
 
   // Filter handler functions
   const handleFilterSelect = (filterId: string, option: string) => {

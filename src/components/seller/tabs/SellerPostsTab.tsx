@@ -54,22 +54,14 @@ const SellerPostsTab: React.FC<SellerPostsTabProps> = ({ onCreatePost }) => {
     console.log('Filter button clicked:', filterId);
   };
 
-  // Auto-select first option for each filter on mount
+  // Initialize filters with "All" options on mount only
   React.useEffect(() => {
     const initialFilters: Record<string, string> = {};
-    let hasChanges = false;
-    
     filterCategories.forEach((filter) => {
-      if (!selectedFilters[filter.id] && filter.options.length > 0) {
-        initialFilters[filter.id] = filter.options[0];
-        hasChanges = true;
-      }
+      initialFilters[filter.id] = filter.options[0];
     });
-    
-    if (hasChanges) {
-      setSelectedFilters(prev => ({ ...prev, ...initialFilters }));
-    }
-  }, []);
+    setSelectedFilters(initialFilters);
+  }, []); // Empty dependency array - only run once on mount
 
   const stats = [
     { value: 3, label: 'Total Posts', color: 'text-blue-600' },
