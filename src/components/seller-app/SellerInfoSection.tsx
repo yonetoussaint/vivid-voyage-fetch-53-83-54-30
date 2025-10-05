@@ -24,7 +24,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
   showActionButtons = true
 }) => {
   const [showBusinessHours, setShowBusinessHours] = useState(false);
-  
+
   console.log('[SellerInfoSection] Rendering with sellerData:', sellerData);
   console.log('[SellerInfoSection] showActionButtons:', showActionButtons);
 
@@ -82,7 +82,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
 
   // Always render the banner section first
   const bannerSection = (
-    <div className="relative w-full" style={{ height: '128px' }}>
+    <div className="relative w-full" style={{ height: '128px', minHeight: '128px' }}>
       <HeroBanner 
         asCarousel={false}
         showNewsTicker={false}

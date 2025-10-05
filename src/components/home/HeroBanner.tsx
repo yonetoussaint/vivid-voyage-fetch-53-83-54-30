@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useQuery } from "@tanstack/react-query";
 import { fetchHeroBanners } from "@/integrations/supabase/hero";
-import { setupStorageBuckets } from "@/integrations/supabase/setupStorage";
+import { setupStorageBuckets } from "@/integrations/supabase/setup";
 import { toast } from "sonner";
 import BannerSlides from './hero/BannerSlides';
 import BannerControls from './hero/BannerControls';
@@ -69,7 +69,7 @@ export default function HeroBanner({
   console.log('[HeroBanner] customBanners prop:', customBanners);
   console.log('[HeroBanner] customBanners type:', typeof customBanners);
   console.log('[HeroBanner] customBanners length:', customBanners?.length);
-  
+
   const [activeIndex, setActiveIndex] = useState(0);
   const [previousIndex, setPreviousIndex] = useState<number | null>(null);
   const [showNews, setShowNews] = useState(showNewsTicker);
@@ -571,7 +571,7 @@ export default function HeroBanner({
             {/* Main banner content with fixed 2:1 aspect ratio or full height */}
             <div 
               className={`relative w-full ${useContainerHeight ? 'h-full' : ''}`}
-              style={useContainerHeight ? undefined : { aspectRatio: '2 / 1' }}
+              style={useContainerHeight ? { height: '100%', minHeight: '100%' } : { aspectRatio: '2 / 1' }}
             >
               <BannerSlides 
                 slides={slidesToShow}
