@@ -56,22 +56,22 @@ export default function BookGenreFlashDeals({
     {
       id: 'category',
       label: 'Category',
-      options: ['All', 'Fiction', 'Non-Fiction', 'Science', 'Technology', 'Business']
+      options: ['All Categories', 'Fiction', 'Non-Fiction', 'Science', 'Technology', 'Business']
     },
     {
       id: 'price',
       label: 'Price Range',
-      options: ['All', 'Under $10', '$10-$25', '$25-$50', 'Over $50']
+      options: ['All Prices', 'Under $10', '$10-$25', '$25-$50', 'Over $50']
     },
     {
       id: 'availability',
       label: 'Availability',
-      options: ['All', 'In Stock', 'Low Stock', 'Out of Stock']
+      options: ['All Stock', 'In Stock', 'Low Stock', 'Out of Stock']
     },
     {
       id: 'discount',
       label: 'Discount',
-      options: ['All', 'On Sale', 'No Discount']
+      options: ['All Discounts', 'On Sale', 'No Discount']
     }
   ];
 
@@ -201,24 +201,24 @@ export default function BookGenreFlashDeals({
     });
 
     // Apply filters
-    if (selectedFilters.category && selectedFilters.category !== 'All') {
+    if (selectedFilters.category && selectedFilters.category !== 'All Categories') {
       products = products.filter(p => p.category === selectedFilters.category);
     }
 
-    if (selectedFilters.price && selectedFilters.price !== 'All') {
+    if (selectedFilters.price && selectedFilters.price !== 'All Prices') {
       products = products.filter(p => {
         const price = p.discount_price || p.price;
         switch (selectedFilters.price) {
-          case 'Under $50': return price < 50;
-          case '$50 - $100': return price >= 50 && price <= 100;
-          case '$100 - $200': return price > 100 && price <= 200;
-          case 'Over $200': return price > 200;
+          case 'Under $10': return price < 10;
+          case '$10-$25': return price >= 10 && price <= 25;
+          case '$25-$50': return price > 25 && price <= 50;
+          case 'Over $50': return price > 50;
           default: return true;
         }
       });
     }
 
-    if (selectedFilters.availability && selectedFilters.availability !== 'All') {
+    if (selectedFilters.availability && selectedFilters.availability !== 'All Stock') {
       products = products.filter(p => {
         switch (selectedFilters.availability) {
           case 'In Stock': return (p.inventory ?? 0) > 0;
@@ -229,16 +229,14 @@ export default function BookGenreFlashDeals({
       });
     }
 
-    if (selectedFilters.discount && selectedFilters.discount !== 'All') {
+    if (selectedFilters.discount && selectedFilters.discount !== 'All Discounts') {
       products = products.filter(p => {
         const discountPercentage = p.discount_price 
           ? Math.round(((p.price - p.discount_price) / p.price) * 100) 
           : 0;
         switch (selectedFilters.discount) {
           case 'On Sale': return discountPercentage > 0;
-          case '10% or more': return discountPercentage >= 10;
-          case '25% or more': return discountPercentage >= 25;
-          case '50% or more': return discountPercentage >= 50;
+          case 'No Discount': return discountPercentage === 0;
           default: return true;
         }
       });
