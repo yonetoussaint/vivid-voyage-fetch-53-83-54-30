@@ -169,33 +169,34 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
         <div className="px-3 pt-3 relative z-10">
           {/* Profile Info */}
           <div className="mb-3">
-            {/* Profile Picture and Name Section */}
-            <div className="flex items-start gap-3">
-              <div className="relative">
-                <div className="p-1 rounded-xl bg-gradient-to-tr from-purple-500 via-pink-500 to-orange-400">
-                  <div className="bg-white rounded-xl p-1">
-                    <Avatar className="w-16 h-16 flex-shrink-0 rounded-lg">
-                      <AvatarImage src={getSellerLogoUrl(safeSellerData.image_url)} className="rounded-lg" />
-                      <AvatarFallback className="rounded-lg">{safeSellerData.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+            {/* Single horizontal container with profile pic, name and ID */}
+            <div className="flex items-center gap-3">
+              <div className="relative flex-shrink-0">
+                <div className="p-0.5 rounded-lg bg-gradient-to-tr from-purple-500 via-pink-500 to-orange-400">
+                  <div className="bg-white rounded-lg p-0.5">
+                    <Avatar className="w-12 h-12 rounded-md">
+                      <AvatarImage src={getSellerLogoUrl(safeSellerData.image_url)} className="rounded-md" />
+                      <AvatarFallback className="rounded-md">{safeSellerData.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                   </div>
                   {/* Online Status Indicator */}
-                  <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                  <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></div>
                 </div>
               </div>
               
-              {/* Name and ID stacked */}
-              <div className="flex flex-col justify-center">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <h1 className="text-xl font-bold">{safeSellerData.name}</h1>
+              {/* Name and ID in single container */}
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <h1 className="text-lg font-bold truncate">{safeSellerData.name}</h1>
                   {safeSellerData.verified && (
-                    <svg className="w-5 h-5 flex-shrink-0 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
+                    <svg className="w-4 h-4 flex-shrink-0 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                   )}
                 </div>
+                <div className="h-4 w-px bg-gray-300"></div>
                 <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                  <span className="font-mono">
+                  <span className="font-mono whitespace-nowrap">
                     ID: {(() => {
                       const numericOnly = sellerData?.id?.replace(/\D/g, '') || '';
                       const eightDigits = numericOnly.substring(0, 8).padEnd(8, '0');
@@ -210,12 +211,11 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
                       const twoLetters = safeSellerData.name.substring(0, 2).toUpperCase();
                       const sellerId = `${twoLetters}${eightDigits}`;
                       navigator.clipboard.writeText(sellerId);
-                      // Optional: Add a toast notification here
                     }}
-                    className="p-1 hover:bg-gray-100 rounded transition-colors"
+                    className="p-0.5 hover:bg-gray-100 rounded transition-colors flex-shrink-0"
                     title="Copy seller ID"
                   >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                     </svg>
