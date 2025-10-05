@@ -8,7 +8,6 @@ import AliExpressHeader from "@/components/home/AliExpressHeader";
 import { useAuthOverlay } from "@/context/AuthOverlayContext";
 import { Home, Smartphone, Shirt, Baby, Dumbbell, Sparkles, Car, Book } from "lucide-react";
 import { useScreenOverlay } from "@/context/ScreenOverlayContext";
-import FloatingActionButton from "./FloatingActionButton";
 import ProductUploadOverlay from "@/components/product/ProductUploadOverlay";
 import LocationScreen from "@/components/home/header/LocationScreen";
 import LocationListScreen from "@/components/home/header/LocationListScreen";
@@ -146,14 +145,14 @@ function MainLayoutContent() {
 
   // Check if current page is electronics (has filter functionality)
   const isElectronicsPage = pathname === '/categories/electronics';
-  
+
   // Check if current page is messages
   const isMessagesPage = pathname === '/messages';
-  
+
   // Get filter from URL params for messages
   const searchParams = new URLSearchParams(location.search);
   const messagesFilter = searchParams.get('filter') || 'all';
-  
+
   // Define custom tabs for messages page
   const messagesTabs = isMessagesPage ? [
     { id: 'all', name: 'All', path: '/messages?filter=all' },
@@ -188,11 +187,6 @@ function MainLayoutContent() {
 
         {/* Show Footer only on non-mobile and on specific pages */}
         {!isMobile && !isRootHomePage && <Footer />}
-
-        {/* Floating action button - now excludes multi-step-transfer-page and shows only when authenticated */}
-        {user && !isMultiStepTransferPage && !isMultiStepTransferSheetPage && !isTransferOldPage && (
-          <FloatingActionButton onClick={() => setShowProductUpload(true)} />
-        )}
 
         {/* Show IndexBottomNav only on specific paths defined in the component */}
         {/* Don't show IndexBottomNav when reels is opened in modal mode (with video parameter) */}
