@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { 
-  Star, 
-  Filter, 
-  ChevronDown, 
-  Heart, 
+import {
+  Star,
+  Filter,
+  ChevronDown,
+  Heart,
   MessageCircle,
   Pen,
   Play,
@@ -15,7 +15,7 @@ import SearchInfoComponent from './SearchInfoComponent';
 
 // Mock Button component
 const Button = ({ children, variant, className, onClick }) => (
-  <button 
+  <button
     className={`px-4 py-2 rounded border ${variant === 'outline' ? 'border-gray-300 bg-white hover:bg-gray-50' : 'bg-blue-600 text-white hover:bg-blue-700'} ${className}`}
     onClick={onClick}
   >
@@ -172,11 +172,11 @@ const truncateText = (text, maxLength = 120) => {
   return text.slice(0, maxLength) + '...';
 };
 
-const ProductQA = ({ 
-  productId = "123", 
-  user = null, 
+const ProductQA = ({
+  productId = "123",
+  user = null,
   questions = mockQAs,
-  limit = null 
+  limit = null
 }) => {
   const [sortBy, setSortBy] = useState('recent');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -278,45 +278,55 @@ const ProductQA = ({
 
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
 
-  const filterCategories = [
-    {
-      id: 'sort',
-      label: 'Sort By',
-      options: ['All', 'Most Recent', 'Most Helpful', 'Answered First', 'Unanswered First']
-    },
+  const filterCategories = React.useMemo(() => [
     {
       id: 'status',
       label: 'Status',
-      options: ['All', 'Answered', 'Unanswered', 'Official Answers']
+      options: ['All Status', 'Answered', 'Unanswered']
+    },
+    {
+      id: 'sort',
+      label: 'Sort By',
+      options: ['All Sorting', 'Most Recent', 'Most Helpful', 'Most Answered']
+    },
+    {
+      id: 'topic',
+      label: 'Topic',
+      options: ['All Topics', 'Product Features', 'Shipping', 'Returns', 'Technical']
     }
-  ];
+  ], []);
 
   const handleFilterSelect = (filterId: string, option: string) => {
     setSelectedFilters(prev => ({
       ...prev,
       [filterId]: option
     }));
-    
+
     if (filterId === 'sort') {
       const sortMap: Record<string, string> = {
+        'All Sorting': 'recent',
         'Most Recent': 'recent',
         'Most Helpful': 'helpful',
-        'Answered First': 'answered',
-        'Unanswered First': 'unanswered'
+        'Most Answered': 'answered',
       };
       if (sortMap[option]) {
         setSortBy(sortMap[option]);
+      } else if (option === 'Unanswered First') { // Handling the case where original sort options might differ
+        setSortBy('unanswered');
       }
     } else if (filterId === 'status') {
       const statusMap: Record<string, string> = {
+        'All Status': 'all',
         'Answered': 'answered',
         'Unanswered': 'unanswered',
         'Official Answers': 'official',
-        'All': 'all'
       };
       if (statusMap[option]) {
         setFilterStatus(statusMap[option]);
       }
+    } else if (filterId === 'topic') {
+      // Placeholder for topic filtering logic if needed
+      console.log("Topic filter selected:", option);
     }
   };
 
@@ -342,10 +352,11 @@ const ProductQA = ({
   React.useEffect(() => {
     const initialFilters: Record<string, string> = {};
     filterCategories.forEach((filter) => {
-      initialFilters[filter.id] = filter.options[0];
+      initialFilters[filter.id] = filter.label; // Initialize with the descriptive label
     });
     setSelectedFilters(initialFilters);
   }, []); // Empty dependency array - only run once on mount
+
 
   return (
     <div className="w-full bg-white pb-20">
@@ -373,14 +384,25 @@ const ProductQA = ({
         {/* Sort Filter */}
         <div className="flex items-center gap-2 px-4 py-2 bg-muted/30 rounded-lg min-w-0" style={{backgroundColor: 'rgba(0,0,0,0.03)'}}>
           <Filter className="w-4 h-4 text-muted-foreground flex-shrink-0" style={{color: '#666'}} />
-          <select 
-            value={sortBy} 
-            onChange={(e) => setSortBy(e.target.value)}
+          <select
+            value={sortBy}
+            onChange={(e) => {
+              const selectedValue = e.target.value;
+              setSortBy(selectedValue);
+              // Update selectedFilters state to reflect the current dropdown selection
+              setSelectedFilters(prev => ({
+                ...prev,
+                sort: selectedValue === 'recent' ? 'Most Recent' :
+                      selectedValue === 'helpful' ? 'Most Helpful' :
+                      selectedValue === 'answered' ? 'Most Answered' :
+                      'All Sorting' // Default or fallback
+              }));
+            }}
             className="bg-transparent border-none outline-none text-sm font-medium cursor-pointer appearance-none min-w-0 flex-1"
           >
             <option value="recent">Most Recent</option>
             <option value="helpful">Most Helpful</option>
-            <option value="answered">Answered First</option>
+            <option value="answered">Most Answered</option>
             <option value="unanswered">Unanswered First</option>
           </select>
           <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" style={{color: '#666'}} />
@@ -389,14 +411,25 @@ const ProductQA = ({
         {/* Status Filter */}
         <div className="flex items-center gap-2 px-4 py-2 bg-muted/30 rounded-lg min-w-0" style={{backgroundColor: 'rgba(0,0,0,0.03)'}}>
           <MessageCircle className="w-4 h-4 text-muted-foreground flex-shrink-0" style={{color: '#666'}} />
-          <select 
-            value={filterStatus} 
-            onChange={(e) => setFilterStatus(e.target.value)}
+          <select
+            value={filterStatus}
+            onChange={(e) => {
+              const selectedValue = e.target.value;
+              setFilterStatus(selectedValue);
+              // Update selectedFilters state to reflect the current dropdown selection
+              setSelectedFilters(prev => ({
+                ...prev,
+                status: selectedValue === 'all' ? 'All Status' :
+                        selectedValue === 'answered' ? 'Answered' :
+                        selectedValue === 'unanswered' ? 'Unanswered' :
+                        'All Status' // Default or fallback
+              }));
+            }}
             className="bg-transparent border-none outline-none text-sm font-medium cursor-pointer appearance-none min-w-0 flex-1"
           >
-            <option value="all">All Questions</option>
-            <option value="answered">Answered Only</option>
-            <option value="unanswered">Unanswered Only</option>
+            <option value="all">All Status</option>
+            <option value="answered">Answered</option>
+            <option value="unanswered">Unanswered</option>
             <option value="official">Official Answers</option>
           </select>
           <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" style={{color: '#666'}} />
@@ -498,7 +531,7 @@ const ProductQA = ({
                                         onClick={() => window.open(item.url, '_blank')}
                                       />
                                     ) : item.type === 'video' ? (
-                                      <div 
+                                      <div
                                         className="w-24 h-24 relative cursor-pointer hover:opacity-90 transition-opacity rounded-lg overflow-hidden"
                                         onClick={() => window.open(item.url, '_blank')}
                                       >
@@ -556,8 +589,8 @@ const ProductQA = ({
                           onClick={() => toggleShowMoreReplies(qa.id)}
                           className="text-blue-600 hover:text-blue-800 text-sm font-medium ml-4 transition-colors"
                         >
-                          {expandedReplies.has(qa.id) 
-                            ? 'Show fewer replies' 
+                          {expandedReplies.has(qa.id)
+                            ? 'Show fewer replies'
                             : `Show ${qa.replies.length - 2} more replies`
                           }
                         </button>
@@ -566,7 +599,7 @@ const ProductQA = ({
                   )}
                 </div>
               )}
-              
+
               {/* Insert SearchInfoComponent after the second question (index 1) */}
               {index === 1 && (
                 <div className="my-6 px-2">
@@ -580,8 +613,8 @@ const ProductQA = ({
       </div>
 
       {limit && questions.length > limit && (
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           className="w-full mt-4"
           onClick={() => window.location.href = `/product/${productId}/questions`}
         >
@@ -604,7 +637,7 @@ const ProductQA = ({
               className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-full bg-gray-50 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               onKeyPress={(e) => e.key === 'Enter' && handleSubmitQuestion()}
             />
-            <button 
+            <button
               onClick={handleSubmitQuestion}
               className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 text-gray-400 hover:text-blue-600 transition-colors"
             >

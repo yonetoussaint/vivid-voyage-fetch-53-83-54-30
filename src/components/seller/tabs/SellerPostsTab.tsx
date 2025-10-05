@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Image, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,18 +17,23 @@ const SellerPostsTab: React.FC<SellerPostsTabProps> = ({ onCreatePost }) => {
     return option.toLowerCase().startsWith('all');
   };
 
-  const filterCategories = [
-    {
-      id: 'sort',
-      label: 'Sort By',
-      options: ['All', 'Most Recent', 'Most Liked', 'Most Commented']
-    },
+  const filterCategories = React.useMemo(() => [
     {
       id: 'type',
-      label: 'Post Type',
-      options: ['All', 'Announcements', 'Updates', 'Promotions']
+      label: 'Type',
+      options: ['All Types', 'Announcements', 'Updates', 'Promotions', 'Tips']
+    },
+    {
+      id: 'date',
+      label: 'Date',
+      options: ['All Dates', 'Today', 'This Week', 'This Month', 'Older']
+    },
+    {
+      id: 'engagement',
+      label: 'Engagement',
+      options: ['All Engagement', 'Most Liked', 'Most Commented', 'Most Shared']
     }
-  ];
+  ], []);
 
   const handleFilterSelect = (filterId: string, option: string) => {
     setSelectedFilters(prev => ({
@@ -292,7 +296,7 @@ const VendorPostCard = ({
                     </div>
                   )}
                 </div>
-                
+
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">

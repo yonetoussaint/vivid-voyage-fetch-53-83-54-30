@@ -235,7 +235,7 @@ const CustomerReviews = ({
     const count = reviews.length;
     const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
     const averageRating = count > 0 ? totalRating / count : 0;
-    
+
     return { count, averageRating };
   }, [reviews]);
 
@@ -253,7 +253,7 @@ const CustomerReviews = ({
   // Filter and sort reviews
   const finalReviews = useMemo(() => {
     let filtered = reviews;
-    
+
     // Filter by rating
     if (filterRating > 0) {
       filtered = filtered.filter(review => review.rating === filterRating);
@@ -295,18 +295,28 @@ const CustomerReviews = ({
     return option.toLowerCase().startsWith('all');
   };
 
-  const filterCategories = [
-    {
-      id: 'sort',
-      label: 'Sort By',
-      options: ['All Sorting', 'Most Recent', 'Most Helpful', 'Highest Rating']
-    },
+  const filterCategories = React.useMemo(() => [
     {
       id: 'rating',
       label: 'Rating',
       options: ['All Ratings', '5 Stars', '4 Stars', '3 Stars', '2 Stars', '1 Star']
+    },
+    {
+      id: 'verified',
+      label: 'Purchase',
+      options: ['All Purchases', 'Verified Purchase', 'Unverified']
+    },
+    {
+      id: 'media',
+      label: 'Media',
+      options: ['All Media', 'With Photos', 'With Videos', 'No Media']
+    },
+    {
+      id: 'time',
+      label: 'Time Period',
+      options: ['All Time', 'Last 30 Days', 'Last 6 Months', 'Last Year']
     }
-  ];
+  ], []);
 
   // Initialize filters with "All" options on mount only
   React.useEffect(() => {
@@ -322,7 +332,7 @@ const CustomerReviews = ({
       ...prev,
       [filterId]: option
     }));
-    
+
     if (filterId === 'sort') {
       // Reset to default if "All" option selected
       if (isAllOption(option)) {
@@ -568,7 +578,7 @@ const CustomerReviews = ({
                       </div>
                     </div>
                   ))}
-                  
+
                   {review.replies.length > 2 && (
                     <button
                       onClick={() => toggleShowMoreReplies(review.id)}
@@ -597,7 +607,7 @@ const CustomerReviews = ({
           View All {reviews.length} Reviews
         </Button>
       )}
-      
+
       {/* Sticky Review Input Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3">
         <div className="max-w-4xl mx-auto flex items-center gap-3">

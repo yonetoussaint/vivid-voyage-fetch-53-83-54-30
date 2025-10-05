@@ -65,18 +65,24 @@ const SellerReelsTab: React.FC<SellerReelsTabProps> = ({
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const filterCategories = [
+  // Define filter categories
+  const filterCategories = React.useMemo(() => [
     {
-      id: 'sort',
-      label: 'Sort By',
-      options: ['All', 'Most Recent', 'Most Viewed', 'Most Liked']
+      id: 'category',
+      label: 'Category',
+      options: ['All Categories', 'Product Reviews', 'Tutorials', 'Unboxing', 'Behind the Scenes']
     },
     {
       id: 'duration',
       label: 'Duration',
-      options: ['All', 'Under 30s', '30s-1m', 'Over 1m']
+      options: ['All Durations', 'Short (< 30s)', 'Medium (30s-1m)', 'Long (> 1m)']
+    },
+    {
+      id: 'popularity',
+      label: 'Popularity',
+      options: ['All Popularity', 'Most Viewed', 'Most Liked', 'Trending']
     }
-  ];
+  ], []);
 
   const handleFilterSelect = (filterId: string, option: string) => {
     setSelectedFilters(prev => ({
@@ -162,7 +168,7 @@ const SellerReelsTab: React.FC<SellerReelsTabProps> = ({
                     preload="metadata"
                     onClick={() => onVideoClick(video.id)}
                   />
-                  
+
                   {/* Action buttons overlay */}
                   <div className="absolute top-2 left-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     {onEditVideo && (
@@ -178,7 +184,7 @@ const SellerReelsTab: React.FC<SellerReelsTabProps> = ({
                         <Edit className="w-3.5 h-3.5 text-gray-700" />
                       </Button>
                     )}
-                    
+
                     {onDeleteVideo && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -221,7 +227,7 @@ const SellerReelsTab: React.FC<SellerReelsTabProps> = ({
                       <Play className="w-6 h-6 text-white ml-1" />
                     </div>
                   </div>
-                  
+
                   <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
                     {formatDuration(video.duration)}
                   </div>
