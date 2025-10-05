@@ -190,12 +190,18 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen bg-white">
       {/* Fixed Header */}
-      <div ref={headerRef} className="fixed top-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-200 p-1 ">
-        <ReusableSearchBar
-          placeholder="Search orders, products..."
-          onSubmit={(query) => navigate(`/search?q=${encodeURIComponent(query)}`)}
-          className="w-full"
-        />
+      <div ref={headerRef} className="fixed top-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-200">
+        <div className="px-1.5 py-1">
+          <div className="flex items-center justify-center">
+            <div className="w-full max-w-2xl">
+              <ReusableSearchBar
+                placeholder="Search orders, products..."
+                onSubmit={(query) => navigate(`/search?q=${encodeURIComponent(query)}`)}
+                className="w-full"
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Main Content Area - Dynamic padding based on actual header height */}
@@ -276,7 +282,7 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
           )}
 
           {/* Main Content */}
-          <div className="w-full">
+          <div className="px-2">
             {children}
           </div>
         </main>
