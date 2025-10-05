@@ -3,7 +3,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import ProfileLayout from '@/components/profile-app/ProfileLayout';
 import ProfileDashboard from '@/components/profile-app/pages/ProfileDashboard';
 import ProfileOrders from '@/components/profile-app/pages/ProfileOrders';
-import ProfileWishlist from '@/components/profile-app/pages/ProfileWishlist';
+import BookGenreFlashDeals from '@/components/home/BookGenreFlashDeals';
 import ProfileAddresses from '@/components/profile-app/pages/ProfileAddresses';
 import ProfilePayments from '@/components/profile-app/pages/ProfilePayments';
 import ProfileAnalytics from '@/components/profile-app/pages/ProfileAnalytics';
@@ -24,7 +24,7 @@ const ProfilePage = () => {
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<ProfileDashboard />} />
         <Route path="orders" element={<ProfileOrders />} />
-        <Route path="wishlist" element={<ProfileWishlist />} />
+        <Route path="wishlist" element={<BookGenreFlashDeals />} />
         <Route path="addresses" element={<ProfileAddresses />} />
         <Route path="payments" element={<ProfilePayments />} />
         <Route path="analytics" element={<ProfileAnalytics />} />
