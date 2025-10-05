@@ -241,21 +241,12 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
                 </svg>
               </button>
 
-              {/* Middle - Search bar */}
-              <div className="flex-1 relative">
-                <div className="relative flex items-center h-8 rounded-full bg-gray-100">
-                  <div className="absolute left-3 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Search orders, products..."
-                    className="bg-transparent w-full h-full pl-10 pr-3 py-1 text-sm rounded-full outline-none text-gray-700 placeholder-gray-500"
-                  />
-                </div>
-              </div>
+              {/* Middle - Reusable Search bar */}
+              <ReusableSearchBar
+                placeholder="Search orders, products..."
+                onSubmit={(query) => navigate(`/search?q=${encodeURIComponent(query)}`)}
+                className="flex-1"
+              />
 
               {/* Right side - Notifications */}
               <button className="h-8 w-8 rounded-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors relative">
