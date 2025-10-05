@@ -50,7 +50,7 @@ export default function BookGenreFlashDeals({
 }: GenreFlashDealsProps) {
   const [displayCount, setDisplayCount] = useState(8);
 
-  // Add filter state
+  // Add filter state with initial "All" options
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
 
   // Helper function to check if an option is an "All" option
@@ -89,7 +89,7 @@ export default function BookGenreFlashDeals({
       initialFilters[filter.id] = filter.options[0];
     });
     setSelectedFilters(initialFilters);
-  }, []); // Empty dependency array - only run once on mount
+  }, [filterCategories]); // Now depends on memoized filterCategories
 
   // Filter handler functions
   const handleFilterSelect = (filterId: string, option: string) => {
