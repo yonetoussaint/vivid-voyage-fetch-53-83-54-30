@@ -52,12 +52,16 @@ export default function BannerControls({
         </>
       )}
 
-      {/* Animated Dots */}
-      <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 z-20">
+      {/* Animated Dots - Responsive positioning */}
+      <div className="absolute left-0 right-0 flex justify-center gap-1.5 z-20" style={{ bottom: 'clamp(8px, 2%, 16px)' }}>
         {Array.from({ length: slidesCount }).map((_, index) => (
           <button
             key={index}
-            className="relative h-1 rounded-full bg-gray-300 w-5 overflow-hidden"
+            className="relative rounded-full bg-gray-300 overflow-hidden"
+            style={{ 
+              height: 'clamp(3px, 0.8vh, 6px)',
+              width: 'clamp(16px, 3vw, 24px)'
+            }}
             onClick={() => handleDotClick(index)}
           >
             <div className="absolute inset-0 bg-gray-300 rounded-full"></div>
