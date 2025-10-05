@@ -50,14 +50,6 @@ export default function BookGenreFlashDeals({
 }: GenreFlashDealsProps) {
   const [displayCount, setDisplayCount] = useState(8);
 
-  // Add filter state with initial "All" options
-  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
-
-  // Helper function to check if an option is an "All" option
-  const isAllOption = (option: string) => {
-    return option.toLowerCase().startsWith('all');
-  };
-
   // Define filter categories
   const filterCategories = React.useMemo(() => [
     {
@@ -82,14 +74,18 @@ export default function BookGenreFlashDeals({
     }
   ], []);
 
-  // Initialize filters with "All" options on mount only
-  React.useEffect(() => {
-    const initialFilters: Record<string, string> = {};
-    filterCategories.forEach((filter) => {
-      initialFilters[filter.id] = filter.options[0];
-    });
-    setSelectedFilters(initialFilters);
-  }, [filterCategories]); // Now depends on memoized filterCategories
+  // Add filter state with initial "All" options - initialize directly
+  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({
+    category: 'All Categories',
+    price: 'All Prices',
+    availability: 'All Stock',
+    discount: 'All Discounts'
+  });
+
+  // Helper function to check if an option is an "All" option
+  const isAllOption = (option: string) => {
+    return option.toLowerCase().startsWith('all');
+  }
 
   // Filter handler functions
   const handleFilterSelect = (filterId: string, option: string) => {
