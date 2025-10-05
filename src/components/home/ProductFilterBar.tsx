@@ -41,13 +41,13 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
   };
 
   return (
-    <div className="product-filter-bar w-full bg-white">
+    <div className="product-filter-bar w-full bg-white relative z-10">
       {/* Main filter bar */}
       <div className="border-b border-gray-200">
         <div className="overflow-x-auto scrollbar-hide">
           <div className="flex justify-start">
             {filterCategories.map((filter, index) => (
-              <div key={filter.id} className="relative flex flex-1">
+              <div key={filter.id} className="relative flex flex-1 z-20">
                 {/* Vertical separator */}
                 {index > 0 && (
                   <div className="w-px bg-gray-200 h-full" />
@@ -83,10 +83,10 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
                     <>
                       {/* Backdrop to close dropdown */}
                       <div
-                        className="fixed inset-0 z-40"
+                        className="fixed inset-0 z-[9998]"
                         onClick={() => setOpenDropdown(null)}
                       />
-                      <div className="absolute top-full left-0 z-50 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg">
+                      <div className="absolute top-full left-0 z-[9999] mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-2xl max-h-64 overflow-y-auto">
                         <div className="py-2">
                           {filter.options.map((option) => (
                             <button
