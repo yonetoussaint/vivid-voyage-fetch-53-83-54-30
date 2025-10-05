@@ -129,9 +129,9 @@ export default function ConversationDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="h-screen bg-white flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3">
+      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 flex-shrink-0">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/messages')}
@@ -180,7 +180,7 @@ export default function ConversationDetail() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4" style={{ overflowY: 'auto' }}>
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
@@ -226,7 +226,7 @@ export default function ConversationDetail() {
       </div>
 
       {/* Input */}
-      <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 py-3">
+      <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 py-3 flex-shrink-0">
         <div className="flex items-end gap-2">
           <textarea
             value={messageText}
