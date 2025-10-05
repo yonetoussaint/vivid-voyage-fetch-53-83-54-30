@@ -1,7 +1,5 @@
-
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { createPortal } from 'react-dom';
 
 interface ProductFilterBarProps {
   filterCategories?: Array<{
@@ -27,28 +25,18 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
   isFilterDisabled
 }) => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
-
-  
 
   // Helper function to check if an option is an "All" option
   const isAllOption = (option: string) => {
     return option.toLowerCase().startsWith('all');
   };
 
-  const handleDropdownToggle = (filterId: string, event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleDropdownToggle = (filterId: string) => {
     if (isFilterDisabled && isFilterDisabled(filterId)) return;
-    
+
     if (openDropdown === filterId) {
       setOpenDropdown(null);
-      setDropdownPosition(null);
     } else {
-      const rect = event.currentTarget.getBoundingClientRect();
-      setDropdownPosition({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
-        width: rect.width
-      });
       setOpenDropdown(filterId);
     }
   };
@@ -56,56 +44,6 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
   const handleOptionSelect = (filterId: string, option: string) => {
     onFilterSelect(filterId, option);
     setOpenDropdown(null);
-    setDropdownPosition(null);
-  };
-
-  const clearFilter = (filterId: string) => {
-    onFilterClear(filterId);
-  };
-
-  const renderDropdown = (filter: { id: string; label: string; options: string[] }) => {
-    if (openDropdown !== filter.id || !dropdownPosition) return null;
-
-    return createPortal(
-      <>
-        {/* Backdrop */}
-        <div
-          className="fixed inset-0 z-[9998]"
-          onClick={() => {
-            setOpenDropdown(null);
-            setDropdownPosition(null);
-          }}
-        />
-        {/* Dropdown */}
-        <div
-          className="fixed z-[9999] bg-white border border-gray-200 rounded-lg shadow-2xl max-h-64 overflow-y-auto"
-          style={{
-            top: `${dropdownPosition.top}px`,
-            left: `${dropdownPosition.left}px`,
-            minWidth: `${dropdownPosition.width}px`,
-            width: '192px'
-          }}
-        >
-          <div className="py-2">
-            {filter.options.map((option) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => handleOptionSelect(filter.id, option)}
-                className={`w-full px-4 py-2 text-left text-sm transition-colors ${
-                  selectedFilters[filter.id] === option
-                    ? 'bg-orange-50 text-orange-700 font-medium'
-                    : 'text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
-        </div>
-      </>,
-      document.body
-    );
   };
 
   return (
@@ -125,7 +63,7 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
                 <div className="relative flex-1">
                   <button
                     type="button"
-                    onClick={(e) => handleDropdownToggle(filter.id, e)}
+                    onClick={() => handleDropdownToggle(filter.id)}
                     disabled={isFilterDisabled && isFilterDisabled(filter.id)}
                     className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap border-0 bg-transparent w-full ${
                       isFilterDisabled && isFilterDisabled(filter.id)
@@ -145,9 +83,6 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
                       }`}
                     />
                   </button>
-
-                  {/* Render dropdown via portal */}
-                  {renderDropdown(filter)}
                 </div>
               </div>
             ))}
@@ -155,7 +90,29 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
         </div>
       </div>
 
-      
+      {/* Options grid below tabs */}
+      {openDropdown && (
+        <div className="bg-white border-b border-gray-200 p-4">
+          <div className="grid grid-cols-2 gap-2">
+            {filterCategories
+              .find(f => f.id === openDropdown)
+              ?.options.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => handleOptionSelect(openDropdown, option)}
+                  className={`px-4 py-2 text-sm text-left rounded-md transition-colors ${
+                    selectedFilters[openDropdown] === option
+                      ? 'bg-orange-50 text-orange-700 font-medium border border-orange-200'
+                      : 'text-gray-700 hover:bg-gray-50 border border-gray-200'
+                  }`}
+                >
+                  {option}
+                </button>
+              ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
