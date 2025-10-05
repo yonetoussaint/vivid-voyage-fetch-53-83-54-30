@@ -290,16 +290,21 @@ const CustomerReviews = ({
 
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
 
+  // Helper function to check if an option is an "All" option
+  const isAllOption = (option: string) => {
+    return option.toLowerCase().startsWith('all');
+  };
+
   const filterCategories = [
     {
       id: 'sort',
       label: 'Sort By',
-      options: ['All', 'Most Recent', 'Most Helpful', 'Highest Rating']
+      options: ['All Sorting', 'Most Recent', 'Most Helpful', 'Highest Rating']
     },
     {
       id: 'rating',
       label: 'Rating',
-      options: ['All', '5 Stars', '4 Stars', '3 Stars', '2 Stars', '1 Star']
+      options: ['All Ratings', '5 Stars', '4 Stars', '3 Stars', '2 Stars', '1 Star']
     }
   ];
 
@@ -310,25 +315,34 @@ const CustomerReviews = ({
     }));
     
     if (filterId === 'sort') {
-      const sortMap: Record<string, string> = {
-        'Most Recent': 'recent',
-        'Most Helpful': 'helpful',
-        'Highest Rating': 'rating'
-      };
-      if (sortMap[option]) {
-        setSortBy(sortMap[option]);
+      // Reset to default if "All" option selected
+      if (isAllOption(option)) {
+        setSortBy('recent');
+      } else {
+        const sortMap: Record<string, string> = {
+          'Most Recent': 'recent',
+          'Most Helpful': 'helpful',
+          'Highest Rating': 'rating'
+        };
+        if (sortMap[option]) {
+          setSortBy(sortMap[option]);
+        }
       }
     } else if (filterId === 'rating') {
-      const ratingMap: Record<string, number> = {
-        '5 Stars': 5,
-        '4 Stars': 4,
-        '3 Stars': 3,
-        '2 Stars': 2,
-        '1 Star': 1,
-        'All': 0
-      };
-      if (option in ratingMap) {
-        setFilterRating(ratingMap[option]);
+      // Reset to 0 if "All" option selected
+      if (isAllOption(option)) {
+        setFilterRating(0);
+      } else {
+        const ratingMap: Record<string, number> = {
+          '5 Stars': 5,
+          '4 Stars': 4,
+          '3 Stars': 3,
+          '2 Stars': 2,
+          '1 Star': 1
+        };
+        if (option in ratingMap) {
+          setFilterRating(ratingMap[option]);
+        }
       }
     }
   };
@@ -342,7 +356,12 @@ const CustomerReviews = ({
   };
 
   const handleClearAll = () => {
-    setSelectedFilters({});
+    // Reset to first "All" option for each filter
+    const resetFilters: Record<string, string> = {};
+    filterCategories.forEach(category => {
+      resetFilters[category.id] = category.options[0];
+    });
+    setSelectedFilters(resetFilters);
     setSortBy('recent');
     setFilterRating(0);
   };
