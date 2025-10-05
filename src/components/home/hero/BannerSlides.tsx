@@ -1,7 +1,6 @@
 
 import { BannerType } from './types';
 import BannerImage from "@/components/hero/BannerImage";
-import { getGradientStyle } from '@/utils/gradientStyles';
 
 interface BannerSlidesProps {
   slides: BannerType[];
@@ -16,22 +15,11 @@ export default function BannerSlides({
   previousIndex,
   onVideoDurationChange
 }: BannerSlidesProps) {
-
   return (
     <div className="relative w-full h-full">
       {slides.map((banner, index) => {
         const isActive = index === activeIndex;
         const isPrevious = index === previousIndex;
-        const gradientStyle = (banner.type === 'color' || banner.image.startsWith('from-') || banner.image.includes('gradient')) 
-          ? getGradientStyle(banner.image) 
-          : {};
-        
-        console.log(`[BannerSlides] Banner ${index}:`, {
-          type: banner.type,
-          image: banner.image,
-          gradientStyle,
-          isActive
-        });
         
         return (
           <div
@@ -42,10 +30,7 @@ export default function BannerSlides({
             }`}
           >
             {banner.type === 'color' || banner.image.startsWith('from-') || banner.image.includes('gradient') ? (
-              <div 
-                className="w-full h-full" 
-                style={gradientStyle}
-              />
+              <div className={`w-full h-full bg-gradient-to-r ${banner.image}`} />
             ) : (
               <BannerImage
                 src={banner.image}

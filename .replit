@@ -43,7 +43,7 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev"
+args = "npm run dev -- --host 0.0.0.0"
 waitForPort = 5000
 
 [[ports]]
@@ -76,10 +76,6 @@ externalPort = 5173
 [[ports]]
 localPort = 45453
 externalPort = 5000
-
-[[ports]]
-localPort = 45541
-externalPort = 3000
 
 [agent]
 expertMode = true

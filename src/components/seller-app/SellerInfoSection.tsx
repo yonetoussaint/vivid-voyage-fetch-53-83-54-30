@@ -25,9 +25,6 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
 }) => {
   const [showBusinessHours, setShowBusinessHours] = useState(false);
 
-  console.log('[SellerInfoSection] Rendering with sellerData:', sellerData);
-  console.log('[SellerInfoSection] showActionButtons:', showActionButtons);
-
   const formatDate = (dateString: string) => {
     if (!dateString) return '2008';
     try {
@@ -80,56 +77,10 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
         : []
   } : null;
 
-  // Create custom color gradient banners
-  const customColorBanners = [
-    {
-      id: 'color-1',
-      image: 'from-red-500 via-yellow-400 to-blue-500',
-      alt: 'Colorful gradient banner 1',
-      type: 'color' as const,
-      duration: 5000
-    },
-    {
-      id: 'color-2',
-      image: 'from-purple-500 via-pink-500 to-red-500',
-      alt: 'Colorful gradient banner 2',
-      type: 'color' as const,
-      duration: 5000
-    },
-    {
-      id: 'color-3',
-      image: 'from-green-400 via-blue-500 to-purple-600',
-      alt: 'Colorful gradient banner 3',
-      type: 'color' as const,
-      duration: 5000
-    },
-    {
-      id: 'color-4',
-      image: 'from-orange-400 via-red-500 to-pink-500',
-      alt: 'Colorful gradient banner 4',
-      type: 'color' as const,
-      duration: 5000
-    }
-  ];
-
-  console.log('[SellerInfoSection] customColorBanners:', customColorBanners);
-
-  // Always render the banner section first
-  const bannerSection = (
-    <div className="relative w-full" style={{ height: '128px', minHeight: '128px' }}>
-      <HeroBanner 
-        asCarousel={false}
-        showNewsTicker={false}
-        useContainerHeight={true}
-        customBanners={customColorBanners}
-      />
-    </div>
-  );
-
   if (sellerLoading) {
     return (
       <div className="bg-white text-gray-900">
-        {bannerSection}
+        <div className="relative w-full h-32 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-pulse" />
 
         <div className="px-3 -mt-12">
           <div className="flex items-end justify-between mb-3">
@@ -201,13 +152,50 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
     );
   }
 
-  // Main render
-  return (
-    <div className="bg-white text-gray-900">
-      {bannerSection}
+  if (safeSellerData) {
+    return (
+      <div className="bg-white text-gray-900">
+        {/* Banner with fixed height */}
+        <div className="relative w-full h-32 overflow-hidden z-0">
+          <div className="absolute inset-0">
+            <HeroBanner 
+              asCarousel={false}
+              showNewsTicker={false}
+              customBanners={[
+                {
+                  id: 'seller-banner-1',
+                  image: 'from-red-500 via-yellow-400 to-blue-500',
+                  alt: 'Seller Banner 1',
+                  type: 'color',
+                  duration: 5000
+                },
+                {
+                  id: 'seller-banner-2',
+                  image: 'from-purple-500 via-pink-500 to-red-500',
+                  alt: 'Seller Banner 2',
+                  type: 'color',
+                  duration: 5000
+                },
+                {
+                  id: 'seller-banner-3',
+                  image: 'from-blue-500 via-teal-400 to-green-500',
+                  alt: 'Seller Banner 3',
+                  type: 'color',
+                  duration: 5000
+                },
+                {
+                  id: 'seller-banner-4',
+                  image: 'from-indigo-500 via-purple-500 to-pink-500',
+                  alt: 'Seller Banner 4',
+                  type: 'color',
+                  duration: 5000
+                }
+              ]}
+            />
+          </div>
+        </div>
 
-      {/* Main Content - Fixed structure */}
-      {safeSellerData ? (
+        {/* Main Content - Fixed structure */}
         <div className="px-3 -mt-12 relative z-10">
           {/* Profile Info with Action Buttons */}
           <div className="flex items-end justify-between mb-3">
@@ -430,18 +418,20 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
             </div>
           )}
         </div>
-      ) : (
-        <div className="px-3 py-8 text-center space-y-4">
-          <p className="text-lg font-medium">No seller profile found</p>
-          <p className="text-sm text-gray-400">You need to create a seller account to access the dashboard.</p>
-          <button
-            onClick={onBecomeSeller}
-            className="px-6 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors font-bold"
-          >
-            Become a Seller
-          </button>
-        </div>
-      )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white text-gray-900 min-h-screen flex flex-col items-center justify-center py-8 px-4 text-center space-y-4">
+      <p className="text-lg font-medium">No seller profile found</p>
+      <p className="text-sm text-gray-400">You need to create a seller account to access the dashboard.</p>
+      <button
+        onClick={onBecomeSeller}
+        className="px-6 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors font-bold"
+      >
+        Become a Seller
+      </button>
     </div>
   );
 };

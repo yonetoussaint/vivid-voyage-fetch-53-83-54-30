@@ -9,7 +9,6 @@ interface BannerControlsProps {
   setActiveIndex: (index: number) => void;
   setPreviousIndex: (index: number | null) => void;
   progress: number;
-  dotsPosition?: 'center' | 'right';
 }
 
 export default function BannerControls({
@@ -18,8 +17,7 @@ export default function BannerControls({
   previousIndex,
   setActiveIndex,
   setPreviousIndex,
-  progress,
-  dotsPosition = 'center'
+  progress
 }: BannerControlsProps) {
   const isMobile = useIsMobile();
 
@@ -55,19 +53,17 @@ export default function BannerControls({
       )}
 
       {/* Animated Dots */}
-      <div className={`absolute bottom-2 flex gap-1.5 z-20 ${
-        dotsPosition === 'right' ? 'right-3' : 'left-0 right-0 justify-center'
-      }`}>
+      <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 z-20">
         {Array.from({ length: slidesCount }).map((_, index) => (
           <button
             key={index}
-            className="relative h-1 rounded-full bg-white/60 w-5 overflow-hidden"
+            className="relative h-1 rounded-full bg-gray-300 w-5 overflow-hidden"
             onClick={() => handleDotClick(index)}
           >
-            <div className="absolute inset-0 bg-white/60 rounded-full"></div>
+            <div className="absolute inset-0 bg-gray-300 rounded-full"></div>
             {activeIndex === index && (
               <div
-                className="absolute inset-0 bg-white rounded-full origin-left"
+                className="absolute inset-0 bg-orange-500 rounded-full origin-left"
                 style={{
                   width: `${progress}%`,
                   transition: 'width 0.05s linear'

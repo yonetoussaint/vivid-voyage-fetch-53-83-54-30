@@ -10,7 +10,6 @@ import FloatingVideo from '../hero/FloatingVideo';
 import SellerInfoOverlay from '../product/SellerInfoOverlay';
 import { BannerType } from './hero/types';
 import ProductFilterBar from './ProductFilterBar';
-import { getGradientStyle } from '@/utils/gradientStyles';
 
 interface HeroBannerProps {
   asCarousel?: boolean;
@@ -28,10 +27,6 @@ interface HeroBannerProps {
     type?: 'image' | 'video' | 'color';
     duration?: number;
   }>;
-  // Dots position prop
-  dotsPosition?: 'center' | 'right';
-  // Use container height instead of aspect ratio
-  useContainerHeight?: boolean;
   // Filter props
   filterCategories?: Array<{
     id: string;
@@ -53,10 +48,6 @@ export default function HeroBanner({
   showCarouselBottomRow = true,
   // Custom banners
   customBanners,
-  // Dots position
-  dotsPosition = 'center',
-  // Use container height
-  useContainerHeight = false,
   // Filter props with defaults
   filterCategories = [],
   selectedFilters = {},
@@ -66,10 +57,6 @@ export default function HeroBanner({
   onFilterButtonClick = () => {},
   isFilterDisabled = () => false
 }: HeroBannerProps) {
-  console.log('[HeroBanner] customBanners prop:', customBanners);
-  console.log('[HeroBanner] customBanners type:', typeof customBanners);
-  console.log('[HeroBanner] customBanners length:', customBanners?.length);
-
   const [activeIndex, setActiveIndex] = useState(0);
   const [previousIndex, setPreviousIndex] = useState<number | null>(null);
   const [showNews, setShowNews] = useState(showNewsTicker);
@@ -156,7 +143,7 @@ export default function HeroBanner({
   const transformedBanners: BannerType[] = useMemo(() => {
     // If customBanners provided, use those instead
     if (customBanners) {
-      const transformed = customBanners.map((banner, index) => {
+      return customBanners.map((banner, index) => {
         const rowTypes: ('product' | 'seller' | 'catalog')[] = ['product', 'seller', 'catalog'];
         const rowType = rowTypes[index % 3] || 'product';
 
@@ -171,7 +158,6 @@ export default function HeroBanner({
           catalog: undefined,
         };
       });
-      return transformed;
     }
 
     // Otherwise use fetched banners
@@ -508,9 +494,8 @@ export default function HeroBanner({
                     />
                   ) : slide.image.startsWith('linear-gradient') || slide.image.startsWith('from-') || slide.image.includes('gradient') ? (
                     <div
-                      className="w-full h-full rounded-2xl"
+                      className={`w-full h-full rounded-2xl ${slide.image}`}
                       aria-label={slide.alt}
-                      style={getGradientStyle(slide.image)}
                     />
                   ) : (
                     <img
@@ -568,11 +553,8 @@ export default function HeroBanner({
           CarouselBanners
         ) : (
           <>
-            {/* Main banner content with fixed 2:1 aspect ratio or full height */}
-            <div 
-              className={`relative w-full ${useContainerHeight ? 'h-full' : ''}`}
-              style={useContainerHeight ? { height: '100%', minHeight: '100%' } : { aspectRatio: '2 / 1' }}
-            >
+            {/* Main banner content with fixed 2:1 aspect ratio */}
+            <div className="relative w-full" style={{ aspectRatio: '2 / 1' }}>
               <BannerSlides 
                 slides={slidesToShow}
                 activeIndex={activeIndex}
@@ -586,7 +568,6 @@ export default function HeroBanner({
                 setActiveIndex={setActiveIndex}
                 setPreviousIndex={setPreviousIndex}
                 progress={progress}
-                dotsPosition={dotsPosition}
               />
             </div>
 
