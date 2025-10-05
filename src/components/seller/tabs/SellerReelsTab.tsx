@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Play, Plus, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
+import ProductFilterBar from '@/components/home/ProductFilterBar';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,6 +33,8 @@ const SellerReelsTab: React.FC<SellerReelsTabProps> = ({
   onDeleteVideo
 }) => {
   const [deleteVideoId, setDeleteVideoId] = useState<string | null>(null);
+  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
+
   const formatNumber = (num: number): string => {
     if (num >= 1000000) {
       return `${(num / 1000000).toFixed(1)}M`;
@@ -48,6 +51,42 @@ const SellerReelsTab: React.FC<SellerReelsTabProps> = ({
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
+  const filterCategories = [
+    {
+      id: 'sort',
+      label: 'Sort By',
+      options: ['All', 'Most Recent', 'Most Viewed', 'Most Liked']
+    },
+    {
+      id: 'duration',
+      label: 'Duration',
+      options: ['All', 'Under 30s', '30s-1m', 'Over 1m']
+    }
+  ];
+
+  const handleFilterSelect = (filterId: string, option: string) => {
+    setSelectedFilters(prev => ({
+      ...prev,
+      [filterId]: option
+    }));
+  };
+
+  const handleFilterClear = (filterId: string) => {
+    setSelectedFilters(prev => {
+      const newFilters = { ...prev };
+      delete newFilters[filterId];
+      return newFilters;
+    });
+  };
+
+  const handleClearAll = () => {
+    setSelectedFilters({});
+  };
+
+  const handleFilterButtonClick = (filterId: string) => {
+    console.log('Filter button clicked:', filterId);
+  };
+
   const stats = [
     { value: videos.length, label: 'Total Reels', color: 'text-blue-600' },
     { value: videos.reduce((sum, v) => sum + (v.views || 0), 0), label: 'Total Views', color: 'text-green-600' },
@@ -55,7 +94,7 @@ const SellerReelsTab: React.FC<SellerReelsTabProps> = ({
   ];
 
   return (
-    <div className="p-4">
+    <div className="w-full bg-white">
       <SellerSummaryHeader
         title="Reels"
         subtitle="Share engaging video content with your audience"
@@ -68,9 +107,21 @@ const SellerReelsTab: React.FC<SellerReelsTabProps> = ({
         showStats={videos.length > 0}
       />
 
-      {/* Videos Grid */}
-      {isLoading ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="-mx-2">
+        <ProductFilterBar
+          filterCategories={filterCategories}
+          selectedFilters={selectedFilters}
+          onFilterSelect={handleFilterSelect}
+          onFilterClear={handleFilterClear}
+          onClearAll={handleClearAll}
+          onFilterButtonClick={handleFilterButtonClick}
+        />
+      </div>
+
+      <div className="py-4">
+        {/* Videos Grid */}
+        {isLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="bg-white rounded-lg overflow-hidden border border-gray-100">
               <div className="aspect-[3/4] bg-gray-200 animate-pulse"></div>
@@ -187,7 +238,8 @@ const SellerReelsTab: React.FC<SellerReelsTabProps> = ({
             Upload Your First Reel
           </Button>
         </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

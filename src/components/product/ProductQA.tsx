@@ -10,6 +10,7 @@ import {
   Send
 } from 'lucide-react';
 import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
+import ProductFilterBar from '@/components/home/ProductFilterBar';
 import SearchInfoComponent from './SearchInfoComponent';
 
 // Mock Button component
@@ -275,8 +276,70 @@ const ProductQA = ({
     { value: `${Math.round(qaStats.count > 0 ? (qaStats.answeredCount / qaStats.count) * 100 : 0)}%`, label: 'Response Rate', color: 'text-blue-600' }
   ];
 
+  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
+
+  const filterCategories = [
+    {
+      id: 'sort',
+      label: 'Sort By',
+      options: ['All', 'Most Recent', 'Most Helpful', 'Answered First', 'Unanswered First']
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      options: ['All', 'Answered', 'Unanswered', 'Official Answers']
+    }
+  ];
+
+  const handleFilterSelect = (filterId: string, option: string) => {
+    setSelectedFilters(prev => ({
+      ...prev,
+      [filterId]: option
+    }));
+    
+    if (filterId === 'sort') {
+      const sortMap: Record<string, string> = {
+        'Most Recent': 'recent',
+        'Most Helpful': 'helpful',
+        'Answered First': 'answered',
+        'Unanswered First': 'unanswered'
+      };
+      if (sortMap[option]) {
+        setSortBy(sortMap[option]);
+      }
+    } else if (filterId === 'status') {
+      const statusMap: Record<string, string> = {
+        'Answered': 'answered',
+        'Unanswered': 'unanswered',
+        'Official Answers': 'official',
+        'All': 'all'
+      };
+      if (statusMap[option]) {
+        setFilterStatus(statusMap[option]);
+      }
+    }
+  };
+
+  const handleFilterClear = (filterId: string) => {
+    setSelectedFilters(prev => {
+      const newFilters = { ...prev };
+      delete newFilters[filterId];
+      return newFilters;
+    });
+  };
+
+  const handleClearAll = () => {
+    setSelectedFilters({});
+    setSortBy('recent');
+    setFilterStatus('all');
+  };
+
+  const handleFilterButtonClick = (filterId: string) => {
+    console.log('Filter button clicked:', filterId);
+  };
+
   return (
-    <div className="space-y-4 pb-20">
+    <div className="w-full bg-white pb-20">
       <SellerSummaryHeader
         title="Questions & Answers"
         subtitle={`${qaStats.helpfulCount} helpful votes from the community`}
@@ -284,8 +347,20 @@ const ProductQA = ({
         showStats={qaStats.count > 0}
       />
 
-      {/* Enhanced Filters */}
-      <div className="flex items-center justify-center gap-4">
+      <div className="-mx-2">
+        <ProductFilterBar
+          filterCategories={filterCategories}
+          selectedFilters={selectedFilters}
+          onFilterSelect={handleFilterSelect}
+          onFilterClear={handleFilterClear}
+          onClearAll={handleClearAll}
+          onFilterButtonClick={handleFilterButtonClick}
+        />
+      </div>
+
+      <div className="py-4">
+        {/* Enhanced Filters */}
+        <div className="flex items-center justify-center gap-4 mb-4">
         {/* Sort Filter */}
         <div className="flex items-center gap-2 px-4 py-2 bg-muted/30 rounded-lg min-w-0" style={{backgroundColor: 'rgba(0,0,0,0.03)'}}>
           <Filter className="w-4 h-4 text-muted-foreground flex-shrink-0" style={{color: '#666'}} />
@@ -492,6 +567,7 @@ const ProductQA = ({
             </div>
           ))
         )}
+        </div>
       </div>
 
       {limit && questions.length > limit && (

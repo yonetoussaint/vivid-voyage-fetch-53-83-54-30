@@ -10,6 +10,7 @@ import {
   Send
 } from 'lucide-react';
 import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
+import ProductFilterBar from '@/components/home/ProductFilterBar';
 
 // Mock Button component
 const Button = ({ children, variant, className, onClick }) => (
@@ -287,8 +288,71 @@ const CustomerReviews = ({
     { value: ratingCounts[4], label: '1 Star', color: 'text-red-600' }
   ];
 
+  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
+
+  const filterCategories = [
+    {
+      id: 'sort',
+      label: 'Sort By',
+      options: ['All', 'Most Recent', 'Most Helpful', 'Highest Rating']
+    },
+    {
+      id: 'rating',
+      label: 'Rating',
+      options: ['All', '5 Stars', '4 Stars', '3 Stars', '2 Stars', '1 Star']
+    }
+  ];
+
+  const handleFilterSelect = (filterId: string, option: string) => {
+    setSelectedFilters(prev => ({
+      ...prev,
+      [filterId]: option
+    }));
+    
+    if (filterId === 'sort') {
+      const sortMap: Record<string, string> = {
+        'Most Recent': 'recent',
+        'Most Helpful': 'helpful',
+        'Highest Rating': 'rating'
+      };
+      if (sortMap[option]) {
+        setSortBy(sortMap[option]);
+      }
+    } else if (filterId === 'rating') {
+      const ratingMap: Record<string, number> = {
+        '5 Stars': 5,
+        '4 Stars': 4,
+        '3 Stars': 3,
+        '2 Stars': 2,
+        '1 Star': 1,
+        'All': 0
+      };
+      if (option in ratingMap) {
+        setFilterRating(ratingMap[option]);
+      }
+    }
+  };
+
+  const handleFilterClear = (filterId: string) => {
+    setSelectedFilters(prev => {
+      const newFilters = { ...prev };
+      delete newFilters[filterId];
+      return newFilters;
+    });
+  };
+
+  const handleClearAll = () => {
+    setSelectedFilters({});
+    setSortBy('recent');
+    setFilterRating(0);
+  };
+
+  const handleFilterButtonClick = (filterId: string) => {
+    console.log('Filter button clicked:', filterId);
+  };
+
   return (
-    <div className="space-y-4 pb-20">
+    <div className="w-full bg-white pb-20">
       <SellerSummaryHeader
         title="Customer Reviews"
         subtitle={`${reviewStats.count} review${reviewStats.count !== 1 ? 's' : ''} from verified customers`}
@@ -296,8 +360,20 @@ const CustomerReviews = ({
         showStats={reviewStats.count > 0}
       />
 
-      {/* Filters */}
-      <div className="flex items-center justify-center">
+      <div className="-mx-2">
+        <ProductFilterBar
+          filterCategories={filterCategories}
+          selectedFilters={selectedFilters}
+          onFilterSelect={handleFilterSelect}
+          onFilterClear={handleFilterClear}
+          onClearAll={handleClearAll}
+          onFilterButtonClick={handleFilterButtonClick}
+        />
+      </div>
+
+      <div className="py-4">
+        {/* Filters */}
+        <div className="flex items-center justify-center mb-4">
         <div className="flex items-center gap-2 px-4 py-2 bg-muted/30 rounded-lg" style={{backgroundColor: 'rgba(0,0,0,0.03)'}}>
           <Filter className="w-4 h-4 text-muted-foreground" style={{color: '#666'}} />
           <select 
@@ -481,6 +557,7 @@ const CustomerReviews = ({
             </div>
           ))
         )}
+        </div>
       </div>
 
       {limit && reviews.length > limit && (

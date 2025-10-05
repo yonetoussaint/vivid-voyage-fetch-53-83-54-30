@@ -1,8 +1,9 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Image, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
+import ProductFilterBar from '@/components/home/ProductFilterBar';
 import VendorProductCarousel from '@/components/home/VendorProductCarousel';
 
 interface SellerPostsTabProps {
@@ -10,6 +11,44 @@ interface SellerPostsTabProps {
 }
 
 const SellerPostsTab: React.FC<SellerPostsTabProps> = ({ onCreatePost }) => {
+  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
+
+  const filterCategories = [
+    {
+      id: 'sort',
+      label: 'Sort By',
+      options: ['All', 'Most Recent', 'Most Liked', 'Most Commented']
+    },
+    {
+      id: 'type',
+      label: 'Post Type',
+      options: ['All', 'Announcements', 'Updates', 'Promotions']
+    }
+  ];
+
+  const handleFilterSelect = (filterId: string, option: string) => {
+    setSelectedFilters(prev => ({
+      ...prev,
+      [filterId]: option
+    }));
+  };
+
+  const handleFilterClear = (filterId: string) => {
+    setSelectedFilters(prev => {
+      const newFilters = { ...prev };
+      delete newFilters[filterId];
+      return newFilters;
+    });
+  };
+
+  const handleClearAll = () => {
+    setSelectedFilters({});
+  };
+
+  const handleFilterButtonClick = (filterId: string) => {
+    console.log('Filter button clicked:', filterId);
+  };
+
   const stats = [
     { value: 3, label: 'Total Posts', color: 'text-blue-600' },
     { value: 590, label: 'Total Likes', color: 'text-red-600' },
@@ -17,7 +56,7 @@ const SellerPostsTab: React.FC<SellerPostsTabProps> = ({ onCreatePost }) => {
   ];
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="w-full bg-white">
       <SellerSummaryHeader
         title="Posts"
         subtitle="Share updates, announcements, and photos with followers"
@@ -29,8 +68,20 @@ const SellerPostsTab: React.FC<SellerPostsTabProps> = ({ onCreatePost }) => {
         }}
       />
 
-      {/* Vertical Posts Feed */}
-      <div className="space-y-6">
+      <div className="-mx-2">
+        <ProductFilterBar
+          filterCategories={filterCategories}
+          selectedFilters={selectedFilters}
+          onFilterSelect={handleFilterSelect}
+          onFilterClear={handleFilterClear}
+          onClearAll={handleClearAll}
+          onFilterButtonClick={handleFilterButtonClick}
+        />
+      </div>
+
+      <div className="py-4">
+        {/* Vertical Posts Feed */}
+        <div className="space-y-6 max-w-2xl mx-auto">
         <VendorPostCard
           vendorData={{
             profilePic: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
@@ -134,6 +185,7 @@ const SellerPostsTab: React.FC<SellerPostsTabProps> = ({ onCreatePost }) => {
           commentCount={19}
           shareCount={7}
         />
+        </div>
       </div>
     </div>
   );
