@@ -34,7 +34,6 @@ const CategoryTabs = ({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [underlineWidth, setUnderlineWidth] = useState(0);
   const [underlineLeft, setUnderlineLeft] = useState(0);
-  const [isInitialized, setIsInitialized] = useState(false);
 
   // Memoize refs update
   useEffect(() => {
@@ -68,7 +67,6 @@ const CategoryTabs = ({
 
         setUnderlineWidth(newWidth);
         setUnderlineLeft(underlineStart);
-        setIsInitialized(true);
       }
     }
   }, [activeTab, categories]);
@@ -177,7 +175,6 @@ const CategoryTabs = ({
 
         setUnderlineWidth(newWidth);
         setUnderlineLeft(underlineStart);
-        setIsInitialized(true);
       }
     } else {
       // If refs aren't available yet, retry after a short delay
@@ -215,7 +212,7 @@ const CategoryTabs = ({
     tabRefs.current[index] = el;
 
     // If this is the active tab and we have the element, update underline
-    if (el && id === activeTab && !isInitialized) {
+    if (el && id === activeTab) {
       // Use multiple animation frames to ensure layout is complete
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -229,7 +226,7 @@ const CategoryTabs = ({
         });
       });
     }
-  }, [activeTab, updateUnderline, isInitialized]);
+  }, [activeTab, updateUnderline]);
 
   return (
     <div className="relative w-full overflow-hidden bg-white" style={{ maxHeight: '40px' }}>
