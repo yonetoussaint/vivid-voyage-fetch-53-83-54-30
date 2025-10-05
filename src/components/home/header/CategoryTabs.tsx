@@ -75,10 +75,15 @@ const CategoryTabs = ({
 
   // Force update on mount to handle initial positioning
   useEffect(() => {
-    // Wait for initial render to complete
+    // Wait for DOM to be fully painted before calculating
     const timer = setTimeout(() => {
-      updateUnderline();
-    }, 150);
+      // Use requestAnimationFrame to ensure layout is complete
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          updateUnderline();
+        });
+      });
+    }, 200);
     
     return () => clearTimeout(timer);
   }, [updateUnderline]);
@@ -88,15 +93,28 @@ const CategoryTabs = ({
     if (activeTab && categories.length > 0) {
       // Use requestAnimationFrame to ensure DOM is painted
       requestAnimationFrame(() => {
-        updateUnderline();
+        requestAnimationFrame(() => {
+          updateUnderline();
+        });
       });
 
-      // Multiple retries with increasing delays
+      // Multiple retries with better timing for initial load
       const timers = [
-        setTimeout(() => updateUnderline(), 0),
-        setTimeout(() => updateUnderline(), 10),
-        setTimeout(() => updateUnderline(), 50),
-        setTimeout(() => updateUnderline(), 100),
+        setTimeout(() => {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => updateUnderline());
+          });
+        }, 50),
+        setTimeout(() => {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => updateUnderline());
+          });
+        }, 150),
+        setTimeout(() => {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => updateUnderline());
+          });
+        }, 300),
       ];
       
       return () => {
@@ -197,18 +215,21 @@ const CategoryTabs = ({
     tabRefs.current[index] = el;
 
     // If this is the active tab and we have the element, update underline
-    if (el && id === activeTab) {
+    if (el && id === activeTab && !isInitialized) {
       // Use multiple animation frames to ensure layout is complete
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          updateUnderline();
-          // Additional backup timing
-          setTimeout(() => updateUnderline(), 10);
-          setTimeout(() => updateUnderline(), 50);
+          setTimeout(() => {
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                updateUnderline();
+              });
+            });
+          }, 100);
         });
       });
     }
-  }, [activeTab, updateUnderline]);
+  }, [activeTab, updateUnderline, isInitialized]);
 
   return (
     <div className="relative w-full overflow-hidden bg-white" style={{ maxHeight: '40px' }}>
