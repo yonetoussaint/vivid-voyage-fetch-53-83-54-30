@@ -80,30 +80,44 @@ export function UserSelectionDialog({ open, onOpenChange, currentUserId }: UserS
 
   const handleUserSelect = async (selectedUserId: string) => {
     try {
-      // Check if conversation already exists
-      const { data: existingConversations } = await supabase
+      // First, check if a conversation already exists between these two users
+      const { data: myConversations, error: fetchError } = await supabase
         .from('conversation_participants')
-        .select('conversation_id')
+        .select('conversation_id, conversations!inner(*)')
         .eq('user_id', currentUserId);
 
-      if (existingConversations) {
-        for (const participant of existingConversations) {
-          const { data: otherParticipants } = await supabase
+      if (fetchError) {
+        console.error('Error fetching conversations:', fetchError);
+        throw fetchError;
+      }
+
+      // Check if any of my conversations includes the selected user
+      if (myConversations && myConversations.length > 0) {
+        for (const conv of myConversations) {
+          const { data: otherParticipants, error: participantsError } = await supabase
             .from('conversation_participants')
             .select('user_id')
-            .eq('conversation_id', participant.conversation_id)
+            .eq('conversation_id', conv.conversation_id)
             .neq('user_id', currentUserId);
+
+          if (participantsError) {
+            console.error('Error fetching participants:', participantsError);
+            continue;
+          }
 
           if (otherParticipants?.some((p) => p.user_id === selectedUserId)) {
             // Conversation exists, navigate to it
-            navigate(`/messages/${participant.conversation_id}`);
+            console.log('Existing conversation found:', conv.conversation_id);
+            navigate(`/messages/${conv.conversation_id}`);
             onOpenChange(false);
             return;
           }
         }
       }
 
-      // Create new conversation
+      // No existing conversation found, create a new one
+      console.log('Creating new conversation...');
+      
       const { data: newConversation, error: conversationError } = await supabase
         .from('conversations')
         .insert({
@@ -113,9 +127,14 @@ export function UserSelectionDialog({ open, onOpenChange, currentUserId }: UserS
         .select()
         .single();
 
-      if (conversationError) throw conversationError;
+      if (conversationError) {
+        console.error('Error creating conversation:', conversationError);
+        throw conversationError;
+      }
 
-      // Add participants
+      console.log('New conversation created:', newConversation.id);
+
+      // Add both participants to the conversation
       const { error: participantsError } = await supabase
         .from('conversation_participants')
         .insert([
@@ -131,13 +150,19 @@ export function UserSelectionDialog({ open, onOpenChange, currentUserId }: UserS
           },
         ]);
 
-      if (participantsError) throw participantsError;
+      if (participantsError) {
+        console.error('Error adding participants:', participantsError);
+        throw participantsError;
+      }
 
-      // Navigate to new conversation
+      console.log('Participants added successfully');
+
+      // Navigate to the new conversation
       navigate(`/messages/${newConversation.id}`);
       onOpenChange(false);
     } catch (error) {
-      console.error('Error creating conversation:', error);
+      console.error('Error in handleUserSelect:', error);
+      // You could add a toast notification here to inform the user
     }
   };
 
