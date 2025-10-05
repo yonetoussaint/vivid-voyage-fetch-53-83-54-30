@@ -21,6 +21,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
+import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
 
 const SellerCustomers = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -116,46 +117,29 @@ const SellerCustomers = () => {
     return matchesSearch && matchesFilter;
   });
 
+  const stats = [
+    { value: '892', label: 'Total', color: 'text-blue-600' },
+    { value: '743', label: 'Active', color: 'text-green-600' },
+    { value: '67', label: 'VIP', color: 'text-purple-600' },
+    { value: '34', label: 'New', color: 'text-orange-600' }
+  ];
+
   return (
-    <div className="space-y-4 bg-gray-50 min-h-screen">
-      {/* Compact Header & Stats */}
-      <div className="bg-white border-b">
-        <div className="px-4 py-3">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h1 className="text-lg font-bold text-foreground">Customers</h1>
-              <p className="text-xs text-muted-foreground">Manage your customer relationships</p>
-            </div>
-            <Button size="sm">
-              <Plus className="w-4 h-4 mr-1" />
-              Add Customer
-            </Button>
-          </div>
+    <div className="w-full bg-white">
+      {/* Header & Stats Section */}
+      <SellerSummaryHeader
+        title="Customers"
+        subtitle="Manage your customer relationships"
+        stats={stats}
+        actionButton={{
+          label: 'Add Customer',
+          icon: Plus,
+          onClick: () => console.log('Add customer clicked')
+        }}
+      />
 
-          {/* Ultra compact stats */}
-          <div className="grid grid-cols-4 gap-3">
-            <div className="text-center">
-              <div className="text-lg font-bold text-blue-600">892</div>
-              <div className="text-xs text-muted-foreground">Total</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-bold text-green-600">743</div>
-              <div className="text-xs text-muted-foreground">Active</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-bold text-purple-600">67</div>
-              <div className="text-xs text-muted-foreground">VIP</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-bold text-orange-600">34</div>
-              <div className="text-xs text-muted-foreground">New</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Compact Filters */}
-      <div className="bg-white border-b px-4 py-3">
+      {/* Filters */}
+      <div className="bg-white border-b py-3">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -186,7 +170,7 @@ const SellerCustomers = () => {
       </div>
 
       {/* Customers Grid */}
-      <div className="p-3">
+      <div className="py-4">
         <div className="grid grid-cols-1 gap-3">
           {filteredCustomers.map((customer) => (
             <Card key={customer.id} className="overflow-hidden">

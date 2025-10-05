@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
-  Package, ShoppingCart, Users, BarChart3, ArrowLeft, DollarSign, Megaphone, Settings, Home, Share, MessageCircle, MessageSquare, Star 
+  Package, ShoppingCart, Users, BarChart3, ArrowLeft, DollarSign, Megaphone, Settings, Home, Share, MessageCircle, MessageSquare, Star, Warehouse 
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import ReusableSearchBar from '@/components/shared/ReusableSearchBar';
@@ -97,6 +97,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const navigationItems = isDashboard ? [
     { id: 'overview', name: 'Overview', href: '/seller-dashboard/overview', icon: Home },
     { id: 'products', name: 'Products', href: '/seller-dashboard/products', icon: Package },
+    { id: 'inventory', name: 'Inventory', href: '/seller-dashboard/inventory', icon: Warehouse },
     { id: 'orders', name: 'Orders', href: '/seller-dashboard/orders', icon: ShoppingCart },
     { id: 'customers', name: 'Customers', href: '/seller-dashboard/customers', icon: Users },
     { id: 'analytics', name: 'Analytics', href: '/seller-dashboard/analytics', icon: BarChart3 },

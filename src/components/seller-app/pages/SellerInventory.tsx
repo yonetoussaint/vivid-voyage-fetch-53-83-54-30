@@ -22,6 +22,7 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
+import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
 
 const SellerInventory = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -138,92 +139,29 @@ const SellerInventory = () => {
   const lowStockCount = inventoryItems.filter(item => item.status === 'Low Stock').length;
   const outOfStockCount = inventoryItems.filter(item => item.status === 'Out of Stock').length;
 
+  const stats = [
+    { value: '89', label: 'Total Items', color: 'text-blue-600' },
+    { value: `$${totalValue.toLocaleString()}`, label: 'Total Value', color: 'text-green-600' },
+    { value: lowStockCount, label: 'Low Stock', color: 'text-yellow-600' },
+    { value: outOfStockCount, label: 'Out of Stock', color: 'text-red-600' }
+  ];
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Inventory Management</h1>
-          <p className="text-muted-foreground">Track and manage your product inventory</p>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
-          <Button variant="outline">
-            <Upload className="w-4 h-4 mr-2" />
-            Import
-          </Button>
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Item
-          </Button>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Items</p>
-                <h3 className="text-2xl font-bold text-foreground mt-2">89</h3>
-              </div>
-              <div className="p-3 bg-blue-50 rounded-lg">
-                <Package className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Value</p>
-                <h3 className="text-2xl font-bold text-foreground mt-2">${totalValue.toLocaleString()}</h3>
-              </div>
-              <div className="p-3 bg-green-50 rounded-lg">
-                <Warehouse className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Low Stock</p>
-                <h3 className="text-2xl font-bold text-foreground mt-2">{lowStockCount}</h3>
-              </div>
-              <div className="p-3 bg-yellow-50 rounded-lg">
-                <AlertTriangle className="w-6 h-6 text-yellow-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Out of Stock</p>
-                <h3 className="text-2xl font-bold text-foreground mt-2">{outOfStockCount}</h3>
-              </div>
-              <div className="p-3 bg-red-50 rounded-lg">
-                <TrendingDown className="w-6 h-6 text-red-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+    <div className="w-full bg-white">
+      {/* Header & Stats Section */}
+      <SellerSummaryHeader
+        title="Inventory Management"
+        subtitle="Track and manage your product inventory"
+        stats={stats}
+        actionButton={{
+          label: 'Add Item',
+          icon: Plus,
+          onClick: () => console.log('Add item clicked')
+        }}
+      />
 
       {/* Filters */}
-      <Card className="border-0 shadow-sm">
-        <CardContent className="p-6">
+      <div className="bg-white border-b py-3">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -250,11 +188,11 @@ const SellerInventory = () => {
               More Filters
             </Button>
           </div>
-        </CardContent>
-      </Card>
+      </div>
 
       {/* Inventory Table */}
-      <Card className="border-0 shadow-sm">
+      <div className="py-4">
+        <Card className="border-0 shadow-sm">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -353,7 +291,8 @@ const SellerInventory = () => {
             </table>
           </div>
         </CardContent>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 };
