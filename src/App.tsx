@@ -23,6 +23,7 @@ import Reels from "./pages/Reels";
 import Trending from "./pages/Trending";
 import Wallet from "./pages/Wallet";
 import Messages from "./pages/Messages";
+import ConversationDetail from "./pages/ConversationDetail";
 import ProfilePage from "./pages/ProfilePage";
 import MoreMenu from "./pages/MoreMenu";
 import SimpleAuthPage from "./pages/SimpleAuthPage";
@@ -121,6 +122,7 @@ function App() {
                                 <Route path="trending" element={<Trending />} />
                                 <Route path="wallet" element={<Wallet />} />
                                 <Route path="messages" element={<Messages />} />
+                                <Route path="messages/:conversationId" element={<ConversationDetail />} />
                                 <Route path="profile/*" element={<ProfilePage />} />
                                 <Route path="more" element={<MoreMenu />} />
                                 <Route path="more-menu" element={<MoreMenu />} />
