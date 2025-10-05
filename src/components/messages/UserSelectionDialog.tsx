@@ -69,6 +69,7 @@ export function UserSelectionDialog({ open, onOpenChange, currentUserId }: UserS
   };
 
   const getInitials = (name: string) => {
+    if (!name) return 'NA';
     return name
       .split(' ')
       .map((n) => n[0])
@@ -187,7 +188,7 @@ export function UserSelectionDialog({ open, onOpenChange, currentUserId }: UserS
                   </Avatar>
 
                   <div className="flex-1 min-w-0 text-left">
-                    <h3 className="text-sm font-medium truncate">{user.full_name}</h3>
+                    <h3 className="text-sm font-medium truncate">{user.full_name || 'No name'}</h3>
                     <p className="text-xs text-gray-500 truncate">{user.email}</p>
                   </div>
                 </button>
