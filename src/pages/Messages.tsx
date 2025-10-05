@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Search, MoreVertical } from 'lucide-react';
+import { MoreVertical } from 'lucide-react';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import ReusableSearchBar from '@/components/shared/ReusableSearchBar';
 
 interface Message {
   id: string;
@@ -74,16 +75,11 @@ export default function Messages() {
 
         {/* Search */}
         <div className="px-4 py-3 border-b border-gray-100">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search messages"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border-0 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-200"
-            />
-          </div>
+          <ReusableSearchBar
+            placeholder="Search messages"
+            value={searchQuery}
+            onChange={setSearchQuery}
+          />
         </div>
 
         {/* Conversations */}
