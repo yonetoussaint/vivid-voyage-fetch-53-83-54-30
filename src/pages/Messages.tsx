@@ -108,11 +108,12 @@ export default function Messages() {
 
       {/* Floating Action Button */}
       <button
-        className="fixed bottom-24 right-5 z-50 bg-black text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:bg-gray-800 transition-all active:scale-90"
+        className="fixed bottom-20 right-4 z-[9999] bg-black text-white rounded-full w-14 h-14 flex items-center justify-center shadow-2xl hover:bg-gray-800 transition-all active:scale-90 border-2 border-white"
         onClick={() => setShowUserSelection(true)}
         aria-label="New message"
+        type="button"
       >
-        <Plus size={28} />
+        <Plus size={24} strokeWidth={2.5} />
       </button>
 
       {/* User Selection Dialog */}
