@@ -239,7 +239,7 @@ export default function BookGenreFlashDeals({
     if (selectedFilters.discount && !isAllOption(selectedFilters.discount)) {
       products = products.filter(p => {
         const discountPercentage = p.discount_price
-          ? Math.round(((p.price - p.discount_price) / p.price) * 100)
+          ? Math.round(((product.price - product.discount_price) / product.price) * 100)
           : 0;
         switch (selectedFilters.discount) {
           case 'On Sale': return discountPercentage > 0;
@@ -287,16 +287,6 @@ export default function BookGenreFlashDeals({
       { value: summaryStats.outOfStock, label: 'Out of Stock', color: 'text-red-600' }
     ];
   }, [summaryStats, isLoading, processedProducts.length]);
-
-  // Auto-select first option for each filter on mount
-  React.useEffect(() => {
-    filterCategories.forEach((filter) => {
-      if (!selectedFilters[filter.id] && filter.options.length > 0) {
-        handleFilterSelect(filter.id, filter.options[0]);
-      }
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   return (
     <div className={`w-full bg-white ${className}`}>

@@ -310,11 +310,19 @@ const CustomerReviews = ({
 
   // Auto-select first option for each filter on mount
   React.useEffect(() => {
+    const initialFilters: Record<string, string> = {};
+    let hasChanges = false;
+    
     filterCategories.forEach((filter) => {
       if (!selectedFilters[filter.id] && filter.options.length > 0) {
-        handleFilterSelect(filter.id, filter.options[0]);
+        initialFilters[filter.id] = filter.options[0];
+        hasChanges = true;
       }
     });
+    
+    if (hasChanges) {
+      setSelectedFilters(prev => ({ ...prev, ...initialFilters }));
+    }
   }, []);
 
   const handleFilterSelect = (filterId: string, option: string) => {

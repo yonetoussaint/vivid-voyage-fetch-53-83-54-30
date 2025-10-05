@@ -29,14 +29,7 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
 
-  // Auto-select first option for each filter on mount
-  React.useEffect(() => {
-    filterCategories.forEach((filter) => {
-      if (!selectedFilters[filter.id] && filter.options.length > 0) {
-        onFilterSelect(filter.id, filter.options[0]);
-      }
-    });
-  }, []);
+  
 
   // Helper function to check if an option is an "All" option
   const isAllOption = (option: string) => {

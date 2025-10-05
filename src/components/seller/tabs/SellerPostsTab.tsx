@@ -13,6 +13,11 @@ interface SellerPostsTabProps {
 const SellerPostsTab: React.FC<SellerPostsTabProps> = ({ onCreatePost }) => {
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
 
+  // Helper function to check if an option is an "All" option
+  const isAllOption = (option: string) => {
+    return option.toLowerCase().startsWith('all');
+  };
+
   const filterCategories = [
     {
       id: 'sort',
@@ -48,6 +53,23 @@ const SellerPostsTab: React.FC<SellerPostsTabProps> = ({ onCreatePost }) => {
   const handleFilterButtonClick = (filterId: string) => {
     console.log('Filter button clicked:', filterId);
   };
+
+  // Auto-select first option for each filter on mount
+  React.useEffect(() => {
+    const initialFilters: Record<string, string> = {};
+    let hasChanges = false;
+    
+    filterCategories.forEach((filter) => {
+      if (!selectedFilters[filter.id] && filter.options.length > 0) {
+        initialFilters[filter.id] = filter.options[0];
+        hasChanges = true;
+      }
+    });
+    
+    if (hasChanges) {
+      setSelectedFilters(prev => ({ ...prev, ...initialFilters }));
+    }
+  }, []);
 
   const stats = [
     { value: 3, label: 'Total Posts', color: 'text-blue-600' },

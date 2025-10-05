@@ -35,6 +35,28 @@ const SellerReelsTab: React.FC<SellerReelsTabProps> = ({
   const [deleteVideoId, setDeleteVideoId] = useState<string | null>(null);
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
 
+  // Helper function to check if an option is an "All" option
+  const isAllOption = (option: string) => {
+    return option.toLowerCase().startsWith('all');
+  };
+
+  // Auto-select first option for each filter on mount
+  React.useEffect(() => {
+    const initialFilters: Record<string, string> = {};
+    let hasChanges = false;
+    
+    filterCategories.forEach((filter) => {
+      if (!selectedFilters[filter.id] && filter.options.length > 0) {
+        initialFilters[filter.id] = filter.options[0];
+        hasChanges = true;
+      }
+    });
+    
+    if (hasChanges) {
+      setSelectedFilters(prev => ({ ...prev, ...initialFilters }));
+    }
+  }, []);
+
   const formatNumber = (num: number): string => {
     if (num >= 1000000) {
       return `${(num / 1000000).toFixed(1)}M`;
