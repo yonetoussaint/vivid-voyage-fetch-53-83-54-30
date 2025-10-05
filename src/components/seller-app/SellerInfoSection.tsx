@@ -166,24 +166,66 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
         </div>
 
         {/* Main Content - Fixed structure */}
-        <div className="px-3 -mt-12 relative z-10">
+        <div className="px-3 pt-3 relative z-10">
           {/* Profile Info with Action Buttons */}
-          <div className="flex items-end justify-between mb-3">
-            <div className="flex items-end">
-              <div className="relative p-1 rounded-full bg-gradient-to-tr from-purple-500 via-pink-500 to-orange-400">
-                <div className="bg-white rounded-full p-1">
-                  <Avatar className="w-20 h-20 flex-shrink-0 rounded-full">
-                    <AvatarImage src={getSellerLogoUrl(safeSellerData.image_url)} />
-                    <AvatarFallback>{safeSellerData.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                  </Avatar>
+          <div className="flex items-start justify-between mb-3">
+            {/* Profile Picture and Name Section */}
+            <div className="flex items-start gap-3">
+              <div className="relative">
+                <div className="p-1 rounded-xl bg-gradient-to-tr from-purple-500 via-pink-500 to-orange-400">
+                  <div className="bg-white rounded-xl p-1">
+                    <Avatar className="w-16 h-16 flex-shrink-0 rounded-lg">
+                      <AvatarImage src={getSellerLogoUrl(safeSellerData.image_url)} className="rounded-lg" />
+                      <AvatarFallback className="rounded-lg">{safeSellerData.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                  </div>
+                  {/* Online Status Indicator */}
+                  <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
                 </div>
-                {/* Online Status Indicator */}
-                <div className="absolute bottom-1 right-1 w-5 h-5 bg-green-500 border-3 border-white rounded-full"></div>
+              </div>
+              
+              {/* Name and ID stacked */}
+              <div className="flex flex-col justify-center">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <h1 className="text-xl font-bold">{safeSellerData.name}</h1>
+                  {safeSellerData.verified && (
+                    <svg className="w-5 h-5 flex-shrink-0 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                  <span className="font-mono">
+                    ID: {(() => {
+                      const numericOnly = sellerData?.id?.replace(/\D/g, '') || '';
+                      const eightDigits = numericOnly.substring(0, 8).padEnd(8, '0');
+                      const twoLetters = safeSellerData.name.substring(0, 2).toUpperCase();
+                      return `${twoLetters}${eightDigits}`;
+                    })()}
+                  </span>
+                  <button
+                    onClick={() => {
+                      const numericOnly = sellerData?.id?.replace(/\D/g, '') || '';
+                      const eightDigits = numericOnly.substring(0, 8).padEnd(8, '0');
+                      const twoLetters = safeSellerData.name.substring(0, 2).toUpperCase();
+                      const sellerId = `${twoLetters}${eightDigits}`;
+                      navigator.clipboard.writeText(sellerId);
+                      // Optional: Add a toast notification here
+                    }}
+                    className="p-1 hover:bg-gray-100 rounded transition-colors"
+                    title="Copy seller ID"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-2 pb-2">
+            <div className="flex gap-2">
               <button className="px-4 h-9 rounded-full bg-white/95 backdrop-blur-sm flex items-center justify-center gap-2 hover:bg-white transition-colors shadow-md font-medium text-sm border border-gray-200">
                 <Edit2 className="w-4 h-4 text-gray-700" />
                 <span className="text-gray-700">Edit</span>
@@ -194,46 +236,6 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
               <button className="w-9 h-9 rounded-full bg-white/95 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors shadow-md border border-gray-200">
                 <MoreVertical className="w-4 h-4 text-gray-700" />
               </button>
-            </div>
-          </div>
-
-          <div className="w-full">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-1.5">
-                <h1 className="text-xl font-bold">{safeSellerData.name}</h1>
-                {safeSellerData.verified && (
-                  <svg className="w-5 h-5 flex-shrink-0 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
-                )}
-              </div>
-              <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                <span className="font-mono">
-                  ID: {(() => {
-                    const numericOnly = sellerData?.id?.replace(/\D/g, '') || '';
-                    const eightDigits = numericOnly.substring(0, 8).padEnd(8, '0');
-                    const twoLetters = safeSellerData.name.substring(0, 2).toUpperCase();
-                    return `${twoLetters}${eightDigits}`;
-                  })()}
-                </span>
-                <button
-                  onClick={() => {
-                    const numericOnly = sellerData?.id?.replace(/\D/g, '') || '';
-                    const eightDigits = numericOnly.substring(0, 8).padEnd(8, '0');
-                    const twoLetters = safeSellerData.name.substring(0, 2).toUpperCase();
-                    const sellerId = `${twoLetters}${eightDigits}`;
-                    navigator.clipboard.writeText(sellerId);
-                    // Optional: Add a toast notification here
-                  }}
-                  className="p-1 hover:bg-gray-100 rounded transition-colors"
-                  title="Copy seller ID"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                  </svg>
-                </button>
-              </div>
             </div>
           </div>
 
