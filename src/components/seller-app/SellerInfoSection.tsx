@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import HeroBanner from '@/components/home/HeroBanner';
+import { getSellerLevel, getProgressToNextLevel, getNextLevel } from '@/utils/sellerLevels';
 
 interface SellerInfoSectionProps {
   sellerData: any;
@@ -185,42 +186,79 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
               </div>
               
               {/* Name and ID in single container */}
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <h1 className="text-lg font-bold truncate">{safeSellerData.name}</h1>
-                  {safeSellerData.verified && (
-                    <svg className="w-4 h-4 flex-shrink-0 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                  )}
+              <div className="flex flex-col gap-1 flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <h1 className="text-lg font-bold truncate">{safeSellerData.name}</h1>
+                    {safeSellerData.verified && (
+                      <svg className="w-4 h-4 flex-shrink-0 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                    )}
+                  </div>
+                  <div className="h-4 w-px bg-gray-300"></div>
+                  <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                    <span className="font-mono whitespace-nowrap">
+                      ID: {(() => {
+                        const numericOnly = sellerData?.id?.replace(/\D/g, '') || '';
+                        const eightDigits = numericOnly.substring(0, 8).padEnd(8, '0');
+                        const twoLetters = safeSellerData.name.substring(0, 2).toUpperCase();
+                        return `${twoLetters}${eightDigits}`;
+                      })()}
+                    </span>
+                    <button
+                      onClick={() => {
+                        const numericOnly = sellerData?.id?.replace(/\D/g, '') || '';
+                        const eightDigits = numericOnly.substring(0, 8).padEnd(8, '0');
+                        const twoLetters = safeSellerData.name.substring(0, 2).toUpperCase();
+                        const sellerId = `${twoLetters}${eightDigits}`;
+                        navigator.clipboard.writeText(sellerId);
+                      }}
+                      className="p-0.5 hover:bg-gray-100 rounded transition-colors flex-shrink-0"
+                      title="Copy seller ID"
+                    >
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
-                <div className="h-4 w-px bg-gray-300"></div>
-                <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                  <span className="font-mono whitespace-nowrap">
-                    ID: {(() => {
-                      const numericOnly = sellerData?.id?.replace(/\D/g, '') || '';
-                      const eightDigits = numericOnly.substring(0, 8).padEnd(8, '0');
-                      const twoLetters = safeSellerData.name.substring(0, 2).toUpperCase();
-                      return `${twoLetters}${eightDigits}`;
-                    })()}
-                  </span>
-                  <button
-                    onClick={() => {
-                      const numericOnly = sellerData?.id?.replace(/\D/g, '') || '';
-                      const eightDigits = numericOnly.substring(0, 8).padEnd(8, '0');
-                      const twoLetters = safeSellerData.name.substring(0, 2).toUpperCase();
-                      const sellerId = `${twoLetters}${eightDigits}`;
-                      navigator.clipboard.writeText(sellerId);
-                    }}
-                    className="p-0.5 hover:bg-gray-100 rounded transition-colors flex-shrink-0"
-                    title="Copy seller ID"
-                  >
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                    </svg>
-                  </button>
-                </div>
+                
+                {/* Seller Level Badge */}
+                {(() => {
+                  const level = getSellerLevel(safeSellerData.total_sales);
+                  const nextLevel = getNextLevel(safeSellerData.total_sales);
+                  const progress = getProgressToNextLevel(safeSellerData.total_sales);
+                  
+                  return (
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r ${level.gradient} text-white text-xs font-semibold cursor-help`}
+                        title={`${level.name} Level - ${safeSellerData.total_sales.toLocaleString()} sales`}
+                      >
+                        <span>{level.icon}</span>
+                        <span>{level.name}</span>
+                      </div>
+                      {nextLevel && (
+                        <div className="flex-1 max-w-[120px]">
+                          <div 
+                            className="flex items-center gap-1 text-xs text-gray-500 cursor-help"
+                            title={`${Math.round(progress)}% to ${nextLevel.name} (${nextLevel.minSales.toLocaleString()} sales needed)`}
+                          >
+                            <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                              <div 
+                                className={`h-full bg-gradient-to-r ${level.gradient} transition-all duration-300`}
+                                style={{ width: `${progress}%` }}
+                              />
+                            </div>
+                            <span className="text-xs text-gray-400 whitespace-nowrap">{nextLevel.icon}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 
