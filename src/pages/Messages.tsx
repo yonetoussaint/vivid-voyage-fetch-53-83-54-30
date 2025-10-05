@@ -6,7 +6,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useConversations } from '@/hooks/useConversations';
 import { formatDistanceToNow } from 'date-fns';
 import { UserSelectionDialog } from '@/components/messages/UserSelectionDialog';
-import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
 
 export default function Messages() {
   const navigate = useNavigate();
@@ -108,16 +108,12 @@ export default function Messages() {
       </PageContainer>
 
       {/* Floating Action Button */}
-      <motion.button
-        className="fixed bottom-24 right-5 z-50 bg-black text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:bg-gray-800 transition-colors"
+      <Button
+        className="fixed bottom-24 right-5 z-50 bg-black text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:bg-gray-800 transition-all active:scale-90"
         onClick={() => setShowUserSelection(true)}
-        whileTap={{ scale: 0.9 }}
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 300, damping: 15 }}
       >
         <Plus size={28} />
-      </motion.button>
+      </Button>
 
       {/* User Selection Dialog */}
       <UserSelectionDialog
