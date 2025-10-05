@@ -228,34 +228,13 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
             </div>
           </div>
         ) : (
-          // Scrolled state - show X button, search bar, and notifications
+          // Scrolled state - show only search bar
           <div className="px-4 py-2">
-            <div className="flex items-center gap-3">
-              {/* Left side - X button */}
-              <button 
-                onClick={handleBackClick}
-                className="h-8 w-8 rounded-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-
-              {/* Middle - Reusable Search bar */}
-              <ReusableSearchBar
-                placeholder="Search orders, products..."
-                onSubmit={(query) => navigate(`/search?q=${encodeURIComponent(query)}`)}
-                className="flex-1"
-              />
-
-              {/* Right side - Notifications */}
-              <button className="h-8 w-8 rounded-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors relative">
-                <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                  2
-                </span>
-              </button>
-            </div>
+            <ReusableSearchBar
+              placeholder="Search orders, products..."
+              onSubmit={(query) => navigate(`/search?q=${encodeURIComponent(query)}`)}
+              className="w-full"
+            />
           </div>
         )}
       </div>
