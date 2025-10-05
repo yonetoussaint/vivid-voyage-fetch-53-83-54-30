@@ -34,11 +34,30 @@ export function useConversations(userId: string, filter: 'all' | 'unread' | 'blo
     fetchConversations(true);
 
     const channel = supabase
-      .channel('conversations-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
+      .channel(`conversations-${userId}`)
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'messages' 
+      }, (payload) => {
+        console.log('New message received in useConversations:', payload);
         fetchConversations(false);
       })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, () => {
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'conversations' 
+      }, (payload) => {
+        console.log('Conversation updated in useConversations:', payload);
+        fetchConversations(false);
+      })
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'conversation_participants',
+        filter: `user_id=eq.${userId}`
+      }, (payload) => {
+        console.log('Participant updated in useConversations:', payload);
         fetchConversations(false);
       })
       .subscribe();

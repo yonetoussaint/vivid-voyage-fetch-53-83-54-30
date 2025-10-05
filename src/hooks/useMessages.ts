@@ -41,10 +41,26 @@ export function useMessages(conversationId: string | null, currentUserId: string
           filter: `conversation_id=eq.${conversationId}`,
         },
         (payload) => {
+          console.log('New message received:', payload);
           fetchMessages(false);
         }
       )
-      .subscribe();
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => {
+          console.log('Message updated:', payload);
+          fetchMessages(false);
+        }
+      )
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+      });
 
     return () => {
       supabase.removeChannel(channel);
@@ -142,13 +158,21 @@ export function useMessages(conversationId: string | null, currentUserId: string
 
       if (insertError) throw insertError;
 
-      await supabase
+      const { error: updateError } = await supabase
         .from('conversations')
-        .update({ last_message_at: new Date().toISOString() })
+        .update({ 
+          last_message_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
         .eq('id', conversationId);
+
+      if (updateError) {
+        console.error('Error updating conversation:', updateError);
+      }
 
       return true;
     } catch (err) {
+      console.error('Error sending message:', err);
       setError(err as Error);
       return false;
     }
