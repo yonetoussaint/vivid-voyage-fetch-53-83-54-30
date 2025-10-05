@@ -191,52 +191,13 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
     <div className="min-h-screen bg-white">
       {/* Fixed Header */}
       <div ref={headerRef} className="fixed top-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-200">
-        {!isScrolledState ? (
-          // Initial state - show user info with search icon
-          <div className="px-4 py-2">
-            <div className="flex items-center justify-between">
-              {/* Left side - Back button and user info */}
-              <div className="flex items-center gap-3">
-                <button 
-                  onClick={handleBackClick}
-                  className="h-8 w-8 rounded-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                <div className="flex items-center gap-2">
-                  <Avatar className="w-8 h-8">
-                    <AvatarImage src={mockUser.avatar_url} />
-                    <AvatarFallback>
-                      {mockUser.full_name.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h1 className="text-sm font-semibold">{mockUser.full_name}</h1>
-                    <p className="text-xs text-gray-500">My Profile</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right side - Search icon */}
-              <button className="h-8 w-8 rounded-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        ) : (
-          // Scrolled state - show only search bar
-          <div className="px-4 py-2">
-            <ReusableSearchBar
-              placeholder="Search orders, products..."
-              onSubmit={(query) => navigate(`/search?q=${encodeURIComponent(query)}`)}
-              className="w-full"
-            />
-          </div>
-        )}
+        <div className="px-4 py-2">
+          <ReusableSearchBar
+            placeholder="Search orders, products..."
+            onSubmit={(query) => navigate(`/search?q=${encodeURIComponent(query)}`)}
+            className="w-full"
+          />
+        </div>
       </div>
 
       {/* Main Content Area - Dynamic padding based on actual header height */}
