@@ -41,16 +41,6 @@ const CategoryTabs = ({
     tabRefs.current = tabRefs.current.slice(0, categories.length);
   }, [categories]);
 
-  // Force update on mount to handle initial positioning
-  useEffect(() => {
-    // Wait for initial render to complete
-    const timer = setTimeout(() => {
-      updateUnderline();
-    }, 150);
-    
-    return () => clearTimeout(timer);
-  }, [updateUnderline]);
-
   // Instant underline calculation
   const updateUnderline = useCallback(() => {
     const activeTabIndex = categories.findIndex(cat => cat.id === activeTab);
@@ -80,6 +70,16 @@ const CategoryTabs = ({
       }
     }
   }, [activeTab, categories]);
+
+  // Force update on mount to handle initial positioning
+  useEffect(() => {
+    // Wait for initial render to complete
+    const timer = setTimeout(() => {
+      updateUnderline();
+    }, 150);
+    
+    return () => clearTimeout(timer);
+  }, [updateUnderline]);
 
   // Update underline when activeTab changes AND when refs are available
   useEffect(() => {
