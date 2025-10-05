@@ -68,13 +68,8 @@ export default function Messages() {
     <div className="min-h-screen bg-white">
       <PageContainer maxWidth="lg" padding="none">
         
-        {/* Header */}
-        <div className="border-b border-gray-100 px-4 py-4 sticky top-0 bg-white z-10">
-          <h1 className="text-2xl font-light">Messages</h1>
-        </div>
-
-        {/* Search */}
-        <div className="px-4 py-3 border-b border-gray-100">
+        {/* Search - Sticky */}
+        <div className="sticky top-0 bg-white z-10 px-4 py-3 border-b border-gray-100">
           <ReusableSearchBar
             placeholder="Search messages"
             value={searchQuery}
