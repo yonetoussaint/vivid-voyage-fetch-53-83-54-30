@@ -93,17 +93,21 @@ const SellerPage = () => {
         <Route 
           path="/qas" 
           element={
-            <ProductSectionWrapper>
-              <ProductQA productId={sellerId} limit={null} />
-            </ProductSectionWrapper>
+            <div className="w-full bg-white">
+              <ProductSectionWrapper>
+                <ProductQA productId={sellerId} limit={null} />
+              </ProductSectionWrapper>
+            </div>
           } 
         />
         <Route 
           path="/reviews" 
           element={
-            <ProductSectionWrapper>
-              <CustomerReviewsEnhanced productId={sellerId} limit={null} />
-            </ProductSectionWrapper>
+            <div className="w-full bg-white">
+              <ProductSectionWrapper>
+                <CustomerReviewsEnhanced productId={sellerId} limit={null} />
+              </ProductSectionWrapper>
+            </div>
           } 
         />
       </Routes>
