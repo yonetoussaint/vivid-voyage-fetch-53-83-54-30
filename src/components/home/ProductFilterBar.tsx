@@ -143,9 +143,7 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
                     }`}
                   >
                     <span className="truncate">
-                      {selectedFilters[filter.id] && !isAllOption(selectedFilters[filter.id]) 
-                        ? selectedFilters[filter.id] 
-                        : filter.label}
+                      {selectedFilters[filter.id] || filter.label}
                     </span>
                     <ChevronDown
                       size={14}
