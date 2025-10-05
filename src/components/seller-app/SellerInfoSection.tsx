@@ -152,52 +152,53 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
     );
   }
 
-  if (safeSellerData) {
-    return (
-      <div className="bg-white text-gray-900">
-        {/* Banner with fixed height */}
-        <div className="relative w-full h-32 overflow-hidden z-0">
-          <div className="absolute inset-0">
-            <HeroBanner 
-              asCarousel={false}
-              showNewsTicker={false}
-              dotsPosition="right"
-              useContainerHeight={true}
-              customBanners={[
-                {
-                  id: 'seller-banner-1',
-                  image: 'from-red-500 via-yellow-400 to-blue-500',
-                  alt: 'Seller Banner 1',
-                  type: 'color',
-                  duration: 5000
-                },
-                {
-                  id: 'seller-banner-2',
-                  image: 'from-purple-500 via-pink-500 to-red-500',
-                  alt: 'Seller Banner 2',
-                  type: 'color',
-                  duration: 5000
-                },
-                {
-                  id: 'seller-banner-3',
-                  image: 'from-blue-500 via-teal-400 to-green-500',
-                  alt: 'Seller Banner 3',
-                  type: 'color',
-                  duration: 5000
-                },
-                {
-                  id: 'seller-banner-4',
-                  image: 'from-indigo-500 via-purple-500 to-pink-500',
-                  alt: 'Seller Banner 4',
-                  type: 'color',
-                  duration: 5000
-                }
-              ]}
-            />
-          </div>
+  // Always render the banner section
+  return (
+    <div className="bg-white text-gray-900">
+      {/* Banner with fixed height - Always visible */}
+      <div className="relative w-full h-32 overflow-hidden z-0 border-4 border-red-500">
+        <div className="absolute inset-0">
+          <HeroBanner 
+            asCarousel={false}
+            showNewsTicker={false}
+            dotsPosition="right"
+            useContainerHeight={true}
+            customBanners={[
+              {
+                id: 'seller-banner-1',
+                image: 'from-red-500 via-yellow-400 to-blue-500',
+                alt: 'Seller Banner 1',
+                type: 'color',
+                duration: 5000
+              },
+              {
+                id: 'seller-banner-2',
+                image: 'from-purple-500 via-pink-500 to-red-500',
+                alt: 'Seller Banner 2',
+                type: 'color',
+                duration: 5000
+              },
+              {
+                id: 'seller-banner-3',
+                image: 'from-blue-500 via-teal-400 to-green-500',
+                alt: 'Seller Banner 3',
+                type: 'color',
+                duration: 5000
+              },
+              {
+                id: 'seller-banner-4',
+                image: 'from-indigo-500 via-purple-500 to-pink-500',
+                alt: 'Seller Banner 4',
+                type: 'color',
+                duration: 5000
+              }
+            ]}
+          />
         </div>
+      </div>
 
-        {/* Main Content - Fixed structure */}
+      {/* Main Content - Fixed structure */}
+      {safeSellerData ? (
         <div className="px-3 -mt-12 relative z-10">
           {/* Profile Info with Action Buttons */}
           <div className="flex items-end justify-between mb-3">
@@ -420,20 +421,18 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
             </div>
           )}
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-white text-gray-900 min-h-screen flex flex-col items-center justify-center py-8 px-4 text-center space-y-4">
-      <p className="text-lg font-medium">No seller profile found</p>
-      <p className="text-sm text-gray-400">You need to create a seller account to access the dashboard.</p>
-      <button
-        onClick={onBecomeSeller}
-        className="px-6 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors font-bold"
-      >
-        Become a Seller
-      </button>
+      ) : (
+        <div className="px-3 py-8 text-center space-y-4">
+          <p className="text-lg font-medium">No seller profile found</p>
+          <p className="text-sm text-gray-400">You need to create a seller account to access the dashboard.</p>
+          <button
+            onClick={onBecomeSeller}
+            className="px-6 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors font-bold"
+          >
+            Become a Seller
+          </button>
+        </div>
+      )}
     </div>
   );
 };

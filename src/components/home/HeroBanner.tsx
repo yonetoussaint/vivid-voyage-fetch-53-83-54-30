@@ -66,6 +66,10 @@ export default function HeroBanner({
   onFilterButtonClick = () => {},
   isFilterDisabled = () => false
 }: HeroBannerProps) {
+  console.log('[HeroBanner] customBanners prop:', customBanners);
+  console.log('[HeroBanner] customBanners type:', typeof customBanners);
+  console.log('[HeroBanner] customBanners length:', customBanners?.length);
+  
   const [activeIndex, setActiveIndex] = useState(0);
   const [previousIndex, setPreviousIndex] = useState<number | null>(null);
   const [showNews, setShowNews] = useState(showNewsTicker);

@@ -26,6 +26,13 @@ export default function BannerSlides({
           ? getGradientStyle(banner.image) 
           : {};
         
+        console.log(`[BannerSlides] Banner ${index}:`, {
+          type: banner.type,
+          image: banner.image,
+          gradientStyle,
+          isActive
+        });
+        
         return (
           <div
             key={banner.id}
