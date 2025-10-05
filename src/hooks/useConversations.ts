@@ -52,6 +52,16 @@ export function useConversations(userId: string, filter: 'all' | 'unread' | 'blo
         console.log('Conversation change detected:', payload);
         fetchConversations(false);
       })
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'conversation_participants',
+        filter: `user_id=eq.${userId}`
+      }, (payload) => {
+        console.log('Participant change detected for user:', payload);
+        // Refetch conversations when user is added/removed from a conversation
+        fetchConversations(false);
+      })
       .subscribe((status) => {
         console.log('Conversations subscription status:', status);
         if (status === 'SUBSCRIBED') {

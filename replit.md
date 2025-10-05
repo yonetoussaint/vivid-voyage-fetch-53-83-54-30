@@ -2,6 +2,20 @@
 
 Mima is a modern e-commerce platform designed specifically for the Haitian market. Built as a progressive web app using React and TypeScript, it provides a comprehensive marketplace experience with features like product discovery, shopping, media content (videos/reels), digital services, and financial transactions. The platform supports multiple languages including Haitian Creole and integrates with PayPal for payments, making it accessible to both local and international users.
 
+# Recent Changes
+
+## October 5, 2025 - Messaging System Real-time Fix
+**Issue Fixed**: When users started new conversations and sent messages, the recipient wouldn't see the conversation appear in real-time until they refreshed the page.
+
+**Root Cause**: The `useConversations` hook was only subscribed to `messages` and `conversations` table changes. When a new conversation was created, Supabase's Row Level Security (RLS) blocked the recipient from seeing the initial conversation INSERT event because their participant record wasn't written yet.
+
+**Solution**: Added a real-time subscription to the `conversation_participants` table filtered by the current user's ID. Now when a user is added to a new conversation, their subscription detects the participant INSERT event and automatically refetches their conversations list, showing the new conversation immediately.
+
+**Files Modified**:
+- `src/hooks/useConversations.ts`: Added `conversation_participants` subscription with user filter
+
+**Technical Details**: The subscription listens for any INSERT/UPDATE/DELETE events on the `conversation_participants` table where `user_id` matches the current user. When triggered, it calls `fetchConversations(false)` to update the UI without showing a loading state.
+
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
