@@ -6,7 +6,6 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useConversations } from '@/hooks/useConversations';
 import { formatDistanceToNow } from 'date-fns';
 import { UserSelectionDialog } from '@/components/messages/UserSelectionDialog';
-import { Button } from '@/components/ui/button';
 
 export default function Messages() {
   const navigate = useNavigate();
@@ -108,12 +107,13 @@ export default function Messages() {
       </PageContainer>
 
       {/* Floating Action Button */}
-      <Button
+      <button
         className="fixed bottom-24 right-5 z-50 bg-black text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:bg-gray-800 transition-all active:scale-90"
         onClick={() => setShowUserSelection(true)}
+        aria-label="New message"
       >
         <Plus size={28} />
-      </Button>
+      </button>
 
       {/* User Selection Dialog */}
       <UserSelectionDialog
