@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useQuery } from "@tanstack/react-query";
 import { fetchHeroBanners } from "@/integrations/supabase/hero";
-import { setupStorageBuckets } from "@/integrations/supabase/setup";
+import { setupStorageBuckets } from "@/integrations/supabase/setupStorage";
 import { toast } from "sonner";
 import BannerSlides from './hero/BannerSlides';
 import BannerControls from './hero/BannerControls';
