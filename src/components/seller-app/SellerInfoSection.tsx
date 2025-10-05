@@ -162,6 +162,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
               asCarousel={false}
               showNewsTicker={false}
               dotsPosition="right"
+              useContainerHeight={true}
               customBanners={[
                 {
                   id: 'seller-banner-1',

@@ -29,6 +29,8 @@ interface HeroBannerProps {
   }>;
   // Dots position prop
   dotsPosition?: 'center' | 'right';
+  // Use container height instead of aspect ratio
+  useContainerHeight?: boolean;
   // Filter props
   filterCategories?: Array<{
     id: string;
@@ -52,6 +54,8 @@ export default function HeroBanner({
   customBanners,
   // Dots position
   dotsPosition = 'center',
+  // Use container height
+  useContainerHeight = false,
   // Filter props with defaults
   filterCategories = [],
   selectedFilters = {},
@@ -557,8 +561,11 @@ export default function HeroBanner({
           CarouselBanners
         ) : (
           <>
-            {/* Main banner content with fixed 2:1 aspect ratio */}
-            <div className="relative w-full" style={{ aspectRatio: '2 / 1' }}>
+            {/* Main banner content with fixed 2:1 aspect ratio or full height */}
+            <div 
+              className={`relative w-full ${useContainerHeight ? 'h-full' : ''}`}
+              style={useContainerHeight ? undefined : { aspectRatio: '2 / 1' }}
+            >
               <BannerSlides 
                 slides={slidesToShow}
                 activeIndex={activeIndex}
