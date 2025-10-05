@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import Footer from "@/components/layout/Footer";
 import IndexBottomNav from "@/components/layout/IndexBottomNav";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import AliExpressHeader from "@/components/home/AliExpressHeader";
 import { useAuthOverlay } from "@/context/AuthOverlayContext";
@@ -20,6 +20,7 @@ import { HeaderFilterProvider, useHeaderFilter } from "@/contexts/HeaderFilterCo
 function MainLayoutContent() {
   const isMobile = useIsMobile();
   const location = useLocation();
+  const navigate = useNavigate();
   const pathname = location.pathname;
   const isProductPage = pathname.includes('/product/');
   const isRootHomePage = pathname === "/" || pathname === "/for-you";
@@ -167,7 +168,11 @@ function MainLayoutContent() {
   // Define custom tabs for wallet page
   const walletTabs = isWalletPage ? [
     { id: 'buyer', name: 'Buyer', path: '/wallet?tab=buyer' },
-    { id: 'seller', name: 'Seller', path: '/wallet?tab=seller' }
+    { id: 'seller', name: 'Seller', path: '/wallet?tab=seller' },
+    { id: 'transactions', name: 'Transactions', path: '/wallet?tab=transactions' },
+    { id: 'payouts', name: 'Payouts', path: '/wallet?tab=payouts' },
+    { id: 'payment-methods', name: 'Payment Methods', path: '/wallet?tab=payment-methods' },
+    { id: 'rewards', name: 'Rewards', path: '/wallet?tab=rewards' },
   ] : undefined;
 
   return (
@@ -187,6 +192,12 @@ function MainLayoutContent() {
             onFilterButtonClick={onFilterButtonClick}
             isFilterDisabled={isFilterDisabled}
             customTabs={messagesTabs || walletTabs}
+            onCustomTabChange={isWalletPage ? (tabId) => {
+              const tab = walletTabs.find(t => t.id === tabId);
+              if (tab?.path) {
+                navigate(tab.path);
+              }
+            } : undefined}
           />
         )}
 
