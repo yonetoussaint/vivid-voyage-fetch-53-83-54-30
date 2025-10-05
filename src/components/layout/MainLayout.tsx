@@ -157,6 +157,16 @@ function MainLayoutContent() {
   const messagesFilter = searchParams.get('filter') || 'all';
   const walletFilter = searchParams.get('tab') || 'buyer';
 
+  // Redirect to include default filter if missing
+  useEffect(() => {
+    if (isMessagesPage && !searchParams.get('filter')) {
+      navigate('/messages?filter=all', { replace: true });
+    }
+    if (isWalletPage && !searchParams.get('tab')) {
+      navigate('/wallet?tab=buyer', { replace: true });
+    }
+  }, [isMessagesPage, isWalletPage, searchParams, navigate]);
+
   // Define custom tabs for messages page
   const messagesTabs = isMessagesPage ? [
     { id: 'all', name: 'All', path: '/messages?filter=all' },
