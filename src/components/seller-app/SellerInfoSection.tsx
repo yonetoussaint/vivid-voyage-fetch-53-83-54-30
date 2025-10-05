@@ -159,9 +159,8 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
         <div className="relative w-full h-32 overflow-hidden">
           <div className="absolute inset-0">
             <HeroBanner 
-              asCarousel={true}
+              asCarousel={false}
               showNewsTicker={false}
-              showCarouselBottomRow={false}
             />
           </div>
         </div>
