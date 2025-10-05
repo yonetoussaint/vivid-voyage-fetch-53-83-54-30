@@ -22,6 +22,9 @@ export default function BannerSlides({
       {slides.map((banner, index) => {
         const isActive = index === activeIndex;
         const isPrevious = index === previousIndex;
+        const gradientStyle = (banner.type === 'color' || banner.image.startsWith('from-') || banner.image.includes('gradient')) 
+          ? getGradientStyle(banner.image) 
+          : {};
         
         return (
           <div
@@ -34,7 +37,7 @@ export default function BannerSlides({
             {banner.type === 'color' || banner.image.startsWith('from-') || banner.image.includes('gradient') ? (
               <div 
                 className="w-full h-full" 
-                style={getGradientStyle(banner.image)}
+                style={gradientStyle}
               />
             ) : (
               <BannerImage

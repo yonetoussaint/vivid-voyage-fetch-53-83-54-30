@@ -152,7 +152,7 @@ export default function HeroBanner({
   const transformedBanners: BannerType[] = useMemo(() => {
     // If customBanners provided, use those instead
     if (customBanners) {
-      return customBanners.map((banner, index) => {
+      const transformed = customBanners.map((banner, index) => {
         const rowTypes: ('product' | 'seller' | 'catalog')[] = ['product', 'seller', 'catalog'];
         const rowType = rowTypes[index % 3] || 'product';
 
@@ -167,6 +167,7 @@ export default function HeroBanner({
           catalog: undefined,
         };
       });
+      return transformed;
     }
 
     // Otherwise use fetched banners
