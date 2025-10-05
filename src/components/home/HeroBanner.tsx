@@ -16,6 +16,8 @@ interface HeroBannerProps {
   showNewsTicker?: boolean;
   // New prop to control bottom row in carousel mode
   showCarouselBottomRow?: boolean;
+  // Custom height prop - allows setting custom height (e.g., "400px", "50vh", "h-96")
+  customHeight?: string;
   // Custom banners prop - allows passing custom banner data including colors
   customBanners?: Array<{
     id: string;
@@ -46,6 +48,8 @@ export default function HeroBanner({
   showNewsTicker = true,
   // New prop - default to true for backward compatibility
   showCarouselBottomRow = true,
+  // Custom height
+  customHeight,
   // Custom banners
   customBanners,
   // Filter props with defaults
@@ -475,8 +479,11 @@ export default function HeroBanner({
                   width: 'calc(100vw - 60px)'
                 }}
               >
-                {/* Fixed 2:1 aspect ratio container */}
-                <div className="relative w-full" style={{ aspectRatio: '2 / 1' }}>
+                {/* Fixed 2:1 aspect ratio container or custom height */}
+                <div 
+                  className="relative w-full" 
+                  style={customHeight ? { height: customHeight } : { aspectRatio: '2 / 1' }}
+                >
                   {slide.type === "video" ? (
                     <video
                       src={slide.image}
@@ -553,8 +560,11 @@ export default function HeroBanner({
           CarouselBanners
         ) : (
           <>
-            {/* Main banner content with fixed 2:1 aspect ratio */}
-            <div className="relative w-full" style={{ aspectRatio: '2 / 1' }}>
+            {/* Main banner content with fixed 2:1 aspect ratio or custom height */}
+            <div 
+              className="relative w-full" 
+              style={customHeight ? { height: customHeight } : { aspectRatio: '2 / 1' }}
+            >
               <BannerSlides 
                 slides={slidesToShow}
                 activeIndex={activeIndex}
