@@ -190,7 +190,7 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen bg-white">
       {/* Fixed Header */}
-      <div ref={headerRef} className="fixed top-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-200 px-4 py-2">
+      <div ref={headerRef} className="fixed top-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-200 p-1 ">
         <ReusableSearchBar
           placeholder="Search orders, products..."
           onSubmit={(query) => navigate(`/search?q=${encodeURIComponent(query)}`)}
