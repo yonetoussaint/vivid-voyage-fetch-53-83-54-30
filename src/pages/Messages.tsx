@@ -1,119 +1,112 @@
-import { useState, useEffect } from 'react';
-import { MoreVertical } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { MessageCircle, Loader2 } from 'lucide-react';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { useSearchParams } from 'react-router-dom';
-
-interface Message {
-  id: string;
-  name: string;
-  avatar: string;
-  lastMessage: string;
-  timestamp: string;
-  unread: boolean;
-}
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useConversations } from '@/hooks/useConversations';
+import { formatDistanceToNow } from 'date-fns';
 
 export default function Messages() {
-  const [searchParams] = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState('all');
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'blocked' | 'archived'>('all');
+  
+  const currentUserId = '00000000-0000-0000-0000-000000000004';
+  
+  const { conversations, loading } = useConversations(currentUserId, activeTab);
 
-  // Listen for tab changes from URL params
-  useEffect(() => {
-    const filter = searchParams.get('filter') || 'all';
-    setActiveFilter(filter);
-  }, [searchParams]);
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
-  const conversations: Message[] = [
-    {
-      id: '1',
-      name: 'Sarah Johnson',
-      avatar: 'SJ',
-      lastMessage: 'Thanks for the quick delivery!',
-      timestamp: '2m',
-      unread: true,
-    },
-    {
-      id: '2',
-      name: 'Michael Chen',
-      avatar: 'MC',
-      lastMessage: 'Is the item still available?',
-      timestamp: '1h',
-      unread: true,
-    },
-    {
-      id: '3',
-      name: 'Emma Wilson',
-      avatar: 'EW',
-      lastMessage: 'Perfect, just what I needed',
-      timestamp: '3h',
-      unread: false,
-    },
-    {
-      id: '4',
-      name: 'David Brown',
-      avatar: 'DB',
-      lastMessage: 'Can you send more photos?',
-      timestamp: '5h',
-      unread: false,
-    },
-    {
-      id: '5',
-      name: 'Lisa Anderson',
-      avatar: 'LA',
-      lastMessage: 'Great product quality',
-      timestamp: '1d',
-      unread: false,
-    },
-  ];
+  const formatTimestamp = (timestamp: string) => {
+    try {
+      return formatDistanceToNow(new Date(timestamp), { addSuffix: false });
+    } catch {
+      return 'just now';
+    }
+  };
 
-  const filteredConversations = conversations.filter(conv => {
-    const matchesSearch = conv.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      conv.lastMessage.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = activeFilter === 'all' || (activeFilter === 'unread' && conv.unread);
-    return matchesSearch && matchesFilter;
-  });
+  const handleConversationClick = (conversationId: string) => {
+    navigate(`/messages/${conversationId}`);
+  };
 
   return (
     <div className="min-h-screen bg-white pt-[var(--header-height)]">
       <PageContainer maxWidth="lg" padding="none">
         
-        {/* Conversations */}
+        {/* Header with Tabs */}
+        <div className="sticky top-[var(--header-height)] z-10 bg-white border-b border-gray-200">
+          <div className="px-4 py-3">
+            <h1 className="text-xl font-semibold mb-3">Messages</h1>
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
+              <TabsList className="w-full grid grid-cols-4 bg-gray-100">
+                <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value="unread">Unread</TabsTrigger>
+                <TabsTrigger value="blocked">Blocked</TabsTrigger>
+                <TabsTrigger value="archived">Archived</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        </div>
+
+        {/* Conversations List */}
         <div className="pb-20">
-          {filteredConversations.map((conversation) => (
-            <button
-              key={conversation.id}
-              className="w-full px-4 py-4 flex items-center gap-3 hover:bg-gray-50 transition-colors border-b border-gray-50"
-            >
-              <Avatar className="h-12 w-12 flex-shrink-0">
-                <AvatarImage src="" />
-                <AvatarFallback className="bg-black text-white text-sm">
-                  {conversation.avatar}
-                </AvatarFallback>
-              </Avatar>
-
-              <div className="flex-1 min-w-0 text-left">
-                <div className="flex items-center justify-between mb-1">
-                  <h3 className={`text-sm ${conversation.unread ? 'font-medium' : 'font-normal'}`}>
-                    {conversation.name}
-                  </h3>
-                  <span className="text-xs text-gray-500">{conversation.timestamp}</span>
-                </div>
-                <p className={`text-sm truncate ${conversation.unread ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
-                  {conversation.lastMessage}
-                </p>
-              </div>
-
-              <button className="p-1 hover:bg-gray-100 rounded-full flex-shrink-0">
-                <MoreVertical className="h-4 w-4 text-gray-400" />
-              </button>
-            </button>
-          ))}
-
-          {filteredConversations.length === 0 && (
-            <div className="px-4 py-16 text-center">
-              <p className="text-sm text-gray-500">No messages found</p>
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
             </div>
+          ) : conversations.length === 0 ? (
+            <div className="px-4 py-16 text-center">
+              <MessageCircle className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+              <p className="text-sm text-gray-500">
+                {activeTab === 'all' && 'No messages yet'}
+                {activeTab === 'unread' && 'No unread messages'}
+                {activeTab === 'blocked' && 'No blocked users'}
+                {activeTab === 'archived' && 'No archived conversations'}
+              </p>
+            </div>
+          ) : (
+            conversations.map((conversation) => (
+              <button
+                key={conversation.id}
+                onClick={() => handleConversationClick(conversation.id)}
+                className="w-full px-4 py-4 flex items-center gap-3 hover:bg-gray-50 transition-colors border-b border-gray-50 active:bg-gray-100"
+              >
+                <Avatar className="h-12 w-12 flex-shrink-0">
+                  <AvatarImage src={conversation.other_user.avatar_url || ''} />
+                  <AvatarFallback className="bg-black text-white text-sm">
+                    {getInitials(conversation.other_user.full_name)}
+                  </AvatarFallback>
+                </Avatar>
+
+                <div className="flex-1 min-w-0 text-left">
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className={`text-sm ${conversation.unread_count > 0 ? 'font-semibold' : 'font-normal'}`}>
+                      {conversation.other_user.full_name}
+                    </h3>
+                    <span className="text-xs text-gray-500">
+                      {conversation.last_message ? formatTimestamp(conversation.last_message.created_at) : ''}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <p className={`text-sm truncate flex-1 ${conversation.unread_count > 0 ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
+                      {conversation.last_message?.content || 'Start a conversation'}
+                    </p>
+                    {conversation.unread_count > 0 && (
+                      <span className="bg-black text-white text-xs px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                        {conversation.unread_count}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </button>
+            ))
           )}
         </div>
 
