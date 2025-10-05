@@ -29,6 +29,15 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
 
+  // Auto-select first option for each filter on mount
+  React.useEffect(() => {
+    filterCategories.forEach((filter) => {
+      if (!selectedFilters[filter.id] && filter.options.length > 0) {
+        onFilterSelect(filter.id, filter.options[0]);
+      }
+    });
+  }, []);
+
   const handleDropdownToggle = (filterId: string, event: React.MouseEvent<HTMLButtonElement>) => {
     if (isFilterDisabled && isFilterDisabled(filterId)) return;
     
@@ -148,36 +157,7 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
         </div>
       </div>
 
-      {/* Selected filters */}
-      {Object.keys(selectedFilters).length > 0 && (
-        <div className="px-4 py-2 bg-gray-50 border-b border-gray-100">
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-gray-600 font-medium">Active:</span>
-            {Object.entries(selectedFilters).map(([filterId, value]) => (
-              <span
-                key={filterId}
-                className="inline-flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-800 rounded-full"
-              >
-                {value}
-                <button
-                  type="button"
-                  onClick={() => clearFilter(filterId)}
-                  className="hover:text-orange-900 font-bold"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-            <button
-              type="button"
-              onClick={onClearAll}
-              className="text-gray-500 hover:text-gray-700 underline"
-            >
-              Clear all
-            </button>
-          </div>
-        </div>
-      )}
+      
     </div>
   );
 };
