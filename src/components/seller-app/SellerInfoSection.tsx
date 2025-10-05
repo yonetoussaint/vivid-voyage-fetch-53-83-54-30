@@ -339,14 +339,21 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
             </button>
           </div>
 
-          {showBusinessHours && safeSellerData.business_hours && (
+          {showBusinessHours && (
             <div className="mb-4 p-3 bg-gray-50 rounded-lg space-y-1.5 text-xs">
-              {Object.entries(safeSellerData.business_hours).map(([day, hours]) => (
-                <div key={day} className="flex justify-between text-gray-700">
-                  <span className="font-semibold capitalize">{day}</span>
-                  <span className="text-gray-600">{hours as string}</span>
+              {safeSellerData.business_hours && Object.keys(safeSellerData.business_hours).length > 0 ? (
+                Object.entries(safeSellerData.business_hours).map(([day, hours]) => (
+                  <div key={day} className="flex justify-between text-gray-700">
+                    <span className="font-semibold capitalize">{day}</span>
+                    <span className="text-gray-600">{hours as string}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-gray-500 text-sm">No business hours set</p>
+                  <p className="text-gray-400 text-xs mt-1">This seller hasn't configured their business hours yet</p>
                 </div>
-              ))}
+              )}
             </div>
           )}
 
