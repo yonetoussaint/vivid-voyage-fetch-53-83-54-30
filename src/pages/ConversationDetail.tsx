@@ -25,7 +25,7 @@ export default function ConversationDetail() {
   
   const currentUserId = user?.id || '';
   
-  const { messages, loading, sendMessage, blockUser, archiveConversation } = useMessages(
+  const { messages, loading, isConnected, sendMessage, blockUser, archiveConversation } = useMessages(
     conversationId || null,
     currentUserId
   );
@@ -151,6 +151,12 @@ export default function ConversationDetail() {
             <h2 className="text-base font-semibold truncate">
               {otherUser?.full_name || 'User'}
             </h2>
+            {isConnected && (
+              <p className="text-xs text-green-600 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-green-600 rounded-full animate-pulse"></span>
+                Live
+              </p>
+            )}
           </div>
 
           <DropdownMenu>

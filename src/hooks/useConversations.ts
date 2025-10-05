@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
 export interface ConversationWithDetails {
   id: string;
@@ -23,60 +24,11 @@ export function useConversations(userId: string, filter: 'all' | 'unread' | 'blo
   const [conversations, setConversations] = useState<ConversationWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isConnected, setIsConnected] = useState(false);
+  const channelRef = useRef<RealtimeChannel | null>(null);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    if (!userId) {
-      setLoading(false);
-      return;
-    }
-
-    fetchConversations(true);
-
-    const channel = supabase
-      .channel(`conversations-${userId}`)
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'messages' 
-      }, (payload) => {
-        console.log('Message change detected in useConversations:', payload);
-        // Refetch conversations when any message is inserted or updated
-        fetchConversations(false);
-      })
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'conversations' 
-      }, (payload) => {
-        console.log('Conversation change detected:', payload);
-        fetchConversations(false);
-      })
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'conversation_participants',
-        filter: `user_id=eq.${userId}`
-      }, (payload) => {
-        console.log('Participant change detected for user:', payload);
-        // Refetch conversations when user is added/removed from a conversation
-        fetchConversations(false);
-      })
-      .subscribe((status) => {
-        console.log('Conversations subscription status:', status);
-        if (status === 'SUBSCRIBED') {
-          console.log('Successfully subscribed to conversations updates');
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('Error subscribing to conversations channel');
-        }
-      });
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [userId, filter]);
-
-  async function fetchConversations(isInitial: boolean = false) {
+  const fetchConversations = useCallback(async (isInitial: boolean = false) => {
     try {
       if (isInitial) {
         setLoading(true);
@@ -109,7 +61,6 @@ export function useConversations(userId: string, filter: 'all' | 'unread' | 'blo
         setConversations(blockedConversations);
         if (isInitial) {
           setLoading(false);
-          setIsInitialLoad(false);
         }
         return;
       }
@@ -126,6 +77,14 @@ export function useConversations(userId: string, filter: 'all' | 'unread' | 'blo
       }
 
       const conversationIds = participantData.map((p: any) => p.conversation_id);
+
+      if (conversationIds.length === 0) {
+        setConversations([]);
+        if (isInitial) {
+          setLoading(false);
+        }
+        return;
+      }
 
       const { data: otherParticipants } = await supabase
         .from('conversation_participants')
@@ -188,14 +147,107 @@ export function useConversations(userId: string, filter: 'all' | 'unread' | 'blo
       setConversations(conversationsList);
       setError(null);
     } catch (err) {
+      console.error('Error fetching conversations:', err);
       setError(err as Error);
     } finally {
       if (isInitial) {
         setLoading(false);
-        setIsInitialLoad(false);
       }
     }
-  }
+  }, [userId, filter]);
 
-  return { conversations, loading, error, refetch: () => fetchConversations(true) };
+  const setupRealtimeSubscription = useCallback(() => {
+    if (!userId) return;
+
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
+    console.log('Setting up conversations real-time subscription for user:', userId);
+
+    const channel = supabase
+      .channel(`conversations-${userId}-${Date.now()}`)
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'messages' 
+      }, (payload) => {
+        console.log('Message change detected in conversations:', payload);
+        fetchConversations(false);
+      })
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'conversations' 
+      }, (payload) => {
+        console.log('Conversation change detected:', payload);
+        fetchConversations(false);
+      })
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'conversation_participants',
+        filter: `user_id=eq.${userId}`
+      }, (payload) => {
+        console.log('Participant change detected for user:', payload);
+        fetchConversations(false);
+      })
+      .subscribe((status) => {
+        console.log('Conversations subscription status:', status);
+        
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Successfully subscribed to conversation updates');
+          setIsConnected(true);
+          setError(null);
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Error subscribing to conversations channel');
+          setIsConnected(false);
+          
+          if (retryTimeoutRef.current) {
+            clearTimeout(retryTimeoutRef.current);
+          }
+          retryTimeoutRef.current = setTimeout(() => {
+            console.log('Retrying conversations subscription...');
+            setupRealtimeSubscription();
+          }, 3000);
+        } else if (status === 'TIMED_OUT') {
+          console.error('⏱️ Conversations subscription timed out');
+          setIsConnected(false);
+        } else if (status === 'CLOSED') {
+          console.log('🔌 Conversations subscription closed');
+          setIsConnected(false);
+        }
+      });
+
+    channelRef.current = channel;
+  }, [userId, fetchConversations]);
+
+  useEffect(() => {
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+
+    fetchConversations(true);
+    setupRealtimeSubscription();
+
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
+    };
+  }, [userId, filter, fetchConversations, setupRealtimeSubscription]);
+
+  return { 
+    conversations, 
+    loading, 
+    error, 
+    isConnected,
+    refetch: () => fetchConversations(true) 
+  };
 }
