@@ -16,7 +16,7 @@ export default function BannerSlides({
   onVideoDurationChange
 }: BannerSlidesProps) {
   return (
-    <div className="relative w-full">
+    <div className="relative w-full h-full">
       {slides.map((banner, index) => {
         const isActive = index === activeIndex;
         const isPrevious = index === previousIndex;
@@ -24,8 +24,8 @@ export default function BannerSlides({
         return (
           <div
             key={banner.id}
-            className={`absolute inset-0 w-full transition-transform duration-500 ease-out ${
-              isActive ? "translate-y-0 z-10 relative" : 
+            className={`absolute inset-0 w-full h-full transition-transform duration-500 ease-out ${
+              isActive ? "translate-y-0 z-10" : 
               isPrevious ? "-translate-y-full z-0 hidden" : "translate-y-full z-0 hidden"
             }`}
           >
@@ -37,7 +37,7 @@ export default function BannerSlides({
                 alt={banner.alt || "Banner image"}
                 type={banner.type} // "image" or "video"
                 isActive={isActive}
-                className="w-full h-[60vh]"
+                className="w-full h-full object-cover"
                 onVideoDurationChange={(duration) => onVideoDurationChange?.(index, duration)}
               />
             )}
