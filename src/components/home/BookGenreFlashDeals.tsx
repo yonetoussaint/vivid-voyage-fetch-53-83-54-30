@@ -18,6 +18,8 @@ interface Product {
   product_images?: Array<{ src: string }>;
   inventory?: number;
   flash_start_time?: string;
+  seller_id?: string; // Added seller_id
+  category?: string; // Added category
 }
 
 interface GenreFlashDealsProps {
@@ -38,7 +40,7 @@ interface SummaryStats {
   lowStock: number;
 }
 
-export default function BookGenreFlashDeals({ 
+export default function BookGenreFlashDeals({
   productType = undefined,
   excludeTypes = [],
   className = '',
@@ -193,8 +195,8 @@ export default function BookGenreFlashDeals({
   // Process products with memoization to prevent infinite re-renders
   const processedProducts = React.useMemo(() => {
     let products = allProducts.map(product => {
-      const discountPercentage = product.discount_price 
-        ? Math.round(((product.price - product.discount_price) / product.price) * 100) 
+      const discountPercentage = product.discount_price
+        ? Math.round(((product.price - product.discount_price) / product.price) * 100)
         : 0;
 
       return {
@@ -236,8 +238,8 @@ export default function BookGenreFlashDeals({
 
     if (selectedFilters.discount && !isAllOption(selectedFilters.discount)) {
       products = products.filter(p => {
-        const discountPercentage = p.discount_price 
-          ? Math.round(((p.price - p.discount_price) / p.price) * 100) 
+        const discountPercentage = p.discount_price
+          ? Math.round(((p.price - p.discount_price) / p.price) * 100)
           : 0;
         switch (selectedFilters.discount) {
           case 'On Sale': return discountPercentage > 0;
@@ -286,6 +288,16 @@ export default function BookGenreFlashDeals({
     ];
   }, [summaryStats, isLoading, processedProducts.length]);
 
+  // Auto-select first option for each filter on mount
+  React.useEffect(() => {
+    filterCategories.forEach((filter) => {
+      if (!selectedFilters[filter.id] && filter.options.length > 0) {
+        handleFilterSelect(filter.id, filter.options[0]);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className={`w-full bg-white ${className}`}>
       {/* Header & Stats Section */}
@@ -329,7 +341,7 @@ export default function BookGenreFlashDeals({
             <div className="grid grid-cols-2 gap-2">
               {processedProducts.slice(0, displayCount).map((product) => (
                 <div key={product.id} className="bg-white border border-gray-200 overflow-hidden">
-                  <Link 
+                  <Link
                     to={`/product/${product.id}`}
                     onClick={() => trackProductView(product.id)}
                     className="block"
@@ -340,7 +352,7 @@ export default function BookGenreFlashDeals({
                         alt={product.name}
                         className="w-full h-full object-cover"
                         loading="lazy"
-                        style={{ 
+                        style={{
                           objectFit: 'cover',
                           aspectRatio: '1/1'
                         }}

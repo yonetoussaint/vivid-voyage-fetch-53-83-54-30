@@ -19,6 +19,38 @@ const SellerPage = () => {
   const location = useLocation();
   const { sellerId } = useParams();
 
+  // Add filter state for all tabs
+  const [selectedFilters, setSelectedFilters] = React.useState<Record<string, string>>({});
+
+  // Helper function to check if an option is an "All" option
+  const isAllOption = (option: string) => {
+    return option.toLowerCase().startsWith('all');
+  };
+
+  // Filter handler functions
+  const handleFilterSelect = (filterId: string, option: string) => {
+    setSelectedFilters(prev => ({
+      ...prev,
+      [filterId]: option
+    }));
+  };
+
+  const handleFilterClear = (filterId: string) => {
+    setSelectedFilters(prev => {
+      const newFilters = { ...prev };
+      delete newFilters[filterId];
+      return newFilters;
+    });
+  };
+
+  const handleClearAll = () => {
+    setSelectedFilters({});
+  };
+
+  const handleFilterButtonClick = (filterId: string) => {
+    console.log('Filter button clicked:', filterId);
+  };
+
   // Fetch public seller data based on URL parameter
   const { data: sellerData, isLoading: sellerLoading } = useQuery({
     queryKey: ['public-seller', sellerId],
@@ -81,15 +113,24 @@ const SellerPage = () => {
         <Route 
           path="/reels" 
           element={
-            <SellerReelsTab
-              videos={mockVideos}
-              isLoading={false}
-              onVideoClick={handleVideoClick}
-              onUploadClick={handleUploadClick}
-            />
+            <div className="w-full">
+              <SellerReelsTab
+                videos={mockVideos}
+                isLoading={false}
+                onVideoClick={handleVideoClick}
+                onUploadClick={handleUploadClick}
+              />
+            </div>
           } 
         />
-        <Route path="/posts" element={<SellerPostsTab />} />
+        <Route 
+          path="/posts" 
+          element={
+            <div className="w-full">
+              <SellerPostsTab />
+            </div>
+          } 
+        />
         <Route 
           path="/qas" 
           element={
