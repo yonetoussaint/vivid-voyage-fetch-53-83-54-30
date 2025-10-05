@@ -1,15 +1,14 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MessageCircle, Loader2 } from 'lucide-react';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useConversations } from '@/hooks/useConversations';
 import { formatDistanceToNow } from 'date-fns';
 
 export default function Messages() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'blocked' | 'archived'>('all');
+  const [searchParams] = useSearchParams();
+  const activeTab = (searchParams.get('filter') || 'all') as 'all' | 'unread' | 'blocked' | 'archived';
   
   const currentUserId = '00000000-0000-0000-0000-000000000004';
   
@@ -42,21 +41,6 @@ export default function Messages() {
   return (
     <div className="min-h-screen bg-white pt-[var(--header-height)]">
       <PageContainer maxWidth="lg" padding="none">
-        
-        {/* Header with Tabs */}
-        <div className="sticky top-[var(--header-height)] z-10 bg-white border-b border-gray-200">
-          <div className="px-4 py-3">
-            <h1 className="text-xl font-semibold mb-3">Messages</h1>
-            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
-              <TabsList className="w-full grid grid-cols-4 bg-gray-100">
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="unread">Unread</TabsTrigger>
-                <TabsTrigger value="blocked">Blocked</TabsTrigger>
-                <TabsTrigger value="archived">Archived</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-        </div>
 
         {/* Conversations List */}
         <div className="pb-20">
