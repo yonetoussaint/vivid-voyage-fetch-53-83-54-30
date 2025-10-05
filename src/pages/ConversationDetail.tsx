@@ -21,7 +21,7 @@ export default function ConversationDetail() {
   const [otherUser, setOtherUser] = useState<any>(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   
   const currentUserId = user?.id || '';
   
@@ -29,6 +29,14 @@ export default function ConversationDetail() {
     conversationId || null,
     currentUserId
   );
+
+  if (isLoading || !user) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      </div>
+    );
+  }
 
   useEffect(() => {
     if (conversationId) {

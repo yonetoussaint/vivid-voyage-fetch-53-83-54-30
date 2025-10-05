@@ -13,11 +13,36 @@ export default function Messages() {
   const [searchParams] = useSearchParams();
   const activeTab = (searchParams.get('filter') || 'all') as 'all' | 'unread' | 'blocked' | 'archived';
   const [showUserSelection, setShowUserSelection] = useState(false);
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   
   const currentUserId = user?.id || '';
   
   const { conversations, loading } = useConversations(currentUserId, activeTab);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center pt-[var(--header-height)]">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center pt-[var(--header-height)]">
+        <div className="text-center px-4">
+          <MessageCircle className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+          <p className="text-sm text-gray-500 mb-4">Please log in to view your messages</p>
+          <button
+            onClick={() => navigate('/auth')}
+            className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800"
+          >
+            Log In
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const getInitials = (name: string) => {
     return name
@@ -109,21 +134,25 @@ export default function Messages() {
       </PageContainer>
 
       {/* Floating Action Button */}
-      <button
-        className="fixed bottom-20 right-4 z-[9999] bg-black text-white rounded-full w-14 h-14 flex items-center justify-center shadow-2xl hover:bg-gray-800 transition-all active:scale-90 border-2 border-white"
-        onClick={() => setShowUserSelection(true)}
-        aria-label="New message"
-        type="button"
-      >
-        <Plus size={24} strokeWidth={2.5} />
-      </button>
+      {user && (
+        <>
+          <button
+            className="fixed bottom-20 right-4 z-[9999] bg-black text-white rounded-full w-14 h-14 flex items-center justify-center shadow-2xl hover:bg-gray-800 transition-all active:scale-90 border-2 border-white"
+            onClick={() => setShowUserSelection(true)}
+            aria-label="New message"
+            type="button"
+          >
+            <Plus size={24} strokeWidth={2.5} />
+          </button>
 
-      {/* User Selection Dialog */}
-      <UserSelectionDialog
-        open={showUserSelection}
-        onOpenChange={setShowUserSelection}
-        currentUserId={currentUserId}
-      />
+          {/* User Selection Dialog */}
+          <UserSelectionDialog
+            open={showUserSelection}
+            onOpenChange={setShowUserSelection}
+            currentUserId={currentUserId}
+          />
+        </>
+      )}
     </div>
   );
 }

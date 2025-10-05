@@ -49,6 +49,12 @@ export function UserSelectionDialog({ open, onOpenChange, currentUserId }: UserS
   }, [searchQuery, users]);
 
   const fetchUsers = async () => {
+    if (!currentUserId) {
+      console.error('No current user ID available');
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const { data, error } = await supabase
