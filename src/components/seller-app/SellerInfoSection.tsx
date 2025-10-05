@@ -24,6 +24,9 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
   showActionButtons = true
 }) => {
   const [showBusinessHours, setShowBusinessHours] = useState(false);
+  
+  console.log('[SellerInfoSection] Rendering with sellerData:', sellerData);
+  console.log('[SellerInfoSection] showActionButtons:', showActionButtons);
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '2008';
@@ -156,7 +159,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
   return (
     <div className="bg-white text-gray-900">
       {/* Banner with fixed height - Always visible */}
-      <div className="relative w-full h-32">
+      <div className="relative w-full" style={{ height: '128px' }}>
         <HeroBanner 
           asCarousel={false}
           showNewsTicker={false}
