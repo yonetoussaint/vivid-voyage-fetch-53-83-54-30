@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { 
-  User, Bell, Shield, CreditCard, Truck, Globe, 
-  Palette, Save, Eye, EyeOff, Camera, Edit, 
+import {
+  User, Bell, Shield, CreditCard, Truck, Globe,
+  Palette, Save, Eye, EyeOff, Camera, Edit,
   Smartphone, Mail, MapPin, Calendar
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,16 +10,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
 
 const ProfileSettings = () => {
   const { user } = useAuth();
@@ -33,14 +34,14 @@ const ProfileSettings = () => {
     phone: '+1 (555) 123-4567',
     bio: 'Love technology and great products!',
     birthDate: '1990-01-01',
-    
+
     // Address settings
     address: '123 Main St, Apt 4B',
     city: 'New York',
     state: 'NY',
     zipCode: '10001',
     country: 'United States',
-    
+
     // Notification settings
     orderUpdates: true,
     priceAlerts: true,
@@ -48,19 +49,19 @@ const ProfileSettings = () => {
     promotions: true,
     newsletter: false,
     smsNotifications: true,
-    
+
     // Privacy settings
     profileVisibility: 'friends',
     showEmail: false,
     showPhone: false,
     allowRecommendations: true,
-    
+
     // Preferences
     currency: 'USD',
     timezone: 'America/New_York',
     language: 'en',
     theme: 'system',
-    
+
     // Security settings
     twoFactorEnabled: false,
     sessionTimeout: '30',
@@ -89,38 +90,36 @@ const ProfileSettings = () => {
   return (
     <div className="space-y-4 bg-gray-50 min-h-screen">
       {/* Header */}
-      <div className="bg-white border-b">
-        <div className="px-4 py-3">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h1 className="text-lg font-bold text-foreground">Account Settings</h1>
-              <p className="text-xs text-muted-foreground">Manage your account preferences</p>
-            </div>
-            <Button size="sm" onClick={handleSave}>
-              <Save className="w-3 h-3 mr-1" />
-              Save Changes
-            </Button>
-          </div>
+      <SellerSummaryHeader
+        title="Account Settings"
+        subtitle="Manage your account preferences"
+        stats={[]}
+        showStats={false}
+      >
+        <Button size="sm" onClick={handleSave}>
+          <Save className="w-3 h-3 mr-1" />
+          Save Changes
+        </Button>
+      </SellerSummaryHeader>
 
-          {/* Tab Navigation */}
-          <div className="flex gap-1 overflow-x-auto">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <Button
-                  key={tab.id}
-                  size="sm"
-                  variant={activeTab === tab.id ? "default" : "ghost"}
-                  onClick={() => setActiveTab(tab.id)}
-                  className="whitespace-nowrap h-7 text-xs"
-                >
-                  <Icon className="w-3 h-3 mr-1" />
-                  {tab.name}
-                </Button>
-              );
-            })}
-          </div>
-        </div>
+
+      {/* Tab Navigation */}
+      <div className="flex gap-1 overflow-x-auto px-4">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <Button
+              key={tab.id}
+              size="sm"
+              variant={activeTab === tab.id ? "default" : "ghost"}
+              onClick={() => setActiveTab(tab.id)}
+              className="whitespace-nowrap h-7 text-xs"
+            >
+              <Icon className="w-3 h-3 mr-1" />
+              {tab.name}
+            </Button>
+          );
+        })}
       </div>
 
       <div className="px-4">
@@ -130,7 +129,7 @@ const ProfileSettings = () => {
             <Card>
               <CardContent className="p-4">
                 <h3 className="font-semibold text-sm mb-3">Profile Information</h3>
-                
+
                 {/* Profile Picture */}
                 <div className="flex items-center gap-4 mb-4">
                   <div className="relative">

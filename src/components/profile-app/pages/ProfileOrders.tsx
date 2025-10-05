@@ -21,6 +21,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
+import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
 
 const ProfileOrders = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -129,54 +130,26 @@ const ProfileOrders = () => {
     return matchesSearch && matchesStatus;
   });
 
+  const stats = [
+    { value: orders.length.toString(), label: 'Total', color: 'text-blue-600' },
+    { value: orders.filter(o => o.status === 'Processing').length.toString(), label: 'Pending', color: 'text-yellow-600' },
+    { value: orders.filter(o => o.status === 'Delivered').length.toString(), label: 'Delivered', color: 'text-green-600' },
+    { value: orders.filter(o => o.status === 'Cancelled').length.toString(), label: 'Cancelled', color: 'text-red-600' }
+  ];
+
   return (
     <div className="space-y-4 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="px-4 py-3">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h1 className="text-lg font-bold text-foreground">My Orders</h1>
-              <p className="text-xs text-muted-foreground">Track and manage your orders</p>
-            </div>
-            <Button size="sm">
-              <Download className="w-3 h-3 mr-1" />
-              Export
-            </Button>
-          </div>
-
-          {/* Search and Filters */}
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Search orders, sellers, products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-8 text-sm"
-              />
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-32 h-8 text-sm">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="processing">Processing</SelectItem>
-                <SelectItem value="shipped">Shipped</SelectItem>
-                <SelectItem value="delivered">Delivered</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
+      <SellerSummaryHeader
+        title="My Orders"
+        subtitle="Track and manage your orders"
+        stats={stats}
+      />
 
       {/* Orders List */}
       <div className="px-4 space-y-3">
         {filteredOrders.map((order) => {
           const StatusIcon = getStatusIcon(order.status);
-          
+
           return (
             <Card key={order.id}>
               <CardContent className="p-4">
@@ -262,7 +235,7 @@ const ProfileOrders = () => {
                       </span>
                     )}
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold">Total: ${order.total.toFixed(2)}</span>
                     <div className="flex gap-1">

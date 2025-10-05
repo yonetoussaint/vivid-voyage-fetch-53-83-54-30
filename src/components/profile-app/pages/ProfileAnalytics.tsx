@@ -14,6 +14,7 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
+import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
 
 const ProfileAnalytics = () => {
   const [timeRange, setTimeRange] = useState('30days');
@@ -139,7 +140,7 @@ const ProfileAnalytics = () => {
             {stats.map((stat, index) => {
               const Icon = stat.icon;
               const isPositive = stat.trend === 'up';
-              
+
               return (
                 <div key={index} className="bg-muted/20 rounded-lg p-3">
                   <div className="flex items-center justify-between mb-1">

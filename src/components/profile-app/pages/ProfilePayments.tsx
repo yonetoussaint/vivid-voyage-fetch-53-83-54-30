@@ -28,6 +28,7 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from '@/components/ui/dialog';
+import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
 
 const ProfilePayments = () => {
   const [isAddingNew, setIsAddingNew] = useState(false);
@@ -128,117 +129,25 @@ const ProfilePayments = () => {
     console.log('Setting default card:', cardId);
   };
 
+  const mockPaymentMethods = paymentMethods; // Assuming paymentMethods is your data source
+
+  const stats = [
+    { value: mockPaymentMethods.length.toString(), label: 'Cards', color: 'text-blue-600' },
+    { value: mockPaymentMethods.filter(p => p.isDefault).length.toString(), label: 'Default', color: 'text-green-600' }
+  ];
+
   return (
     <div className="space-y-4 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="px-4 py-3">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h1 className="text-lg font-bold text-foreground">Payment Methods</h1>
-              <p className="text-xs text-muted-foreground">Manage your payment cards</p>
-            </div>
-            <Dialog open={isAddingNew} onOpenChange={setIsAddingNew}>
-              <DialogTrigger asChild>
-                <Button size="sm">
-                  <Plus className="w-3 h-3 mr-1" />
-                  Add Card
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Add New Payment Method</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-3">
-                  <div>
-                    <Label className="text-xs">Card Number</Label>
-                    <Input
-                      value={newCard.cardNumber}
-                      onChange={(e) => setNewCard(prev => ({ 
-                        ...prev, 
-                        cardNumber: formatCardNumber(e.target.value)
-                      }))}
-                      placeholder="1234 5678 9012 3456"
-                      className="h-8 text-sm"
-                      maxLength={19}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-xs">Expiry Date</Label>
-                      <Input
-                        value={newCard.expiryDate}
-                        onChange={(e) => {
-                          let value = e.target.value.replace(/\D/g, '');
-                          if (value.length >= 2) {
-                            value = value.substring(0, 2) + '/' + value.substring(2, 4);
-                          }
-                          setNewCard(prev => ({ ...prev, expiryDate: value }));
-                        }}
-                        placeholder="MM/YY"
-                        className="h-8 text-sm"
-                        maxLength={5}
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">CVV</Label>
-                      <Input
-                        value={newCard.cvv}
-                        onChange={(e) => setNewCard(prev => ({ 
-                          ...prev, 
-                          cvv: e.target.value.replace(/\D/g, '').substring(0, 4)
-                        }))}
-                        placeholder="123"
-                        className="h-8 text-sm"
-                        maxLength={4}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <Label className="text-xs">Cardholder Name</Label>
-                    <Input
-                      value={newCard.holderName}
-                      onChange={(e) => setNewCard(prev => ({ ...prev, holderName: e.target.value }))}
-                      placeholder="John Doe"
-                      className="h-8 text-sm"
-                    />
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="setDefaultCard"
-                      checked={newCard.isDefault}
-                      onChange={(e) => setNewCard(prev => ({ ...prev, isDefault: e.target.checked }))}
-                      className="w-4 h-4"
-                    />
-                    <Label htmlFor="setDefaultCard" className="text-xs">Set as default payment method</Label>
-                  </div>
-                  
-                  <div className="flex gap-2 pt-3">
-                    <Button onClick={handleSaveCard} size="sm" className="flex-1">
-                      Add Card
-                    </Button>
-                    <Button onClick={() => setIsAddingNew(false)} variant="outline" size="sm" className="flex-1">
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          {/* Security Notice */}
-          <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
-            <Shield className="w-4 h-4 text-blue-600" />
-            <p className="text-xs text-blue-800">
-              Your payment information is encrypted and secure
-            </p>
-          </div>
-        </div>
-      </div>
+      <SellerSummaryHeader
+        title="Payment Methods"
+        subtitle="Manage your payment methods"
+        stats={stats}
+        actionButton={{
+          label: 'Add Card',
+          icon: Plus,
+          onClick: () => setIsAddingNew(true) // Corrected to open dialog
+        }}
+      />
 
       {/* Payment Methods List */}
       <div className="px-4 space-y-3">
@@ -261,7 +170,7 @@ const ProfilePayments = () => {
                     <p className="text-xs text-muted-foreground">Expires {card.expiryDate}</p>
                   </div>
                 </div>
-                
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="sm">
@@ -270,7 +179,7 @@ const ProfilePayments = () => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem>
-                      <Edit className="w-3 h-3 mr-2" />
+                      <Edit className="w-3 h-3 mr-1" />
                       Edit
                     </DropdownMenuItem>
                     {!card.isDefault && (
@@ -304,7 +213,7 @@ const ProfilePayments = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-              
+
               <div className="bg-muted/20 rounded-lg p-3">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -325,7 +234,7 @@ const ProfilePayments = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex items-center justify-end gap-2 mt-3">
                 <Button size="sm" variant="outline" className="h-7 text-xs">
                   <Edit className="w-3 h-3 mr-1" />
@@ -378,6 +287,101 @@ const ProfilePayments = () => {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      <Dialog open={isAddingNew} onOpenChange={setIsAddingNew}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add New Payment Method</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">Card Number</Label>
+              <Input
+                value={newCard.cardNumber}
+                onChange={(e) => setNewCard(prev => ({ 
+                  ...prev, 
+                  cardNumber: formatCardNumber(e.target.value)
+                }))}
+                placeholder="1234 5678 9012 3456"
+                className="h-8 text-sm"
+                maxLength={19}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Expiry Date</Label>
+                <Input
+                  value={newCard.expiryDate}
+                  onChange={(e) => {
+                    let value = e.target.value.replace(/\D/g, '');
+                    if (value.length >= 2) {
+                      value = value.substring(0, 2) + '/' + value.substring(2, 4);
+                    }
+                    setNewCard(prev => ({ ...prev, expiryDate: value }));
+                  }}
+                  placeholder="MM/YY"
+                  className="h-8 text-sm"
+                  maxLength={5}
+                />
+              </div>
+              <div>
+                <Label className="text-xs">CVV</Label>
+                <Input
+                  value={newCard.cvv}
+                  onChange={(e) => setNewCard(prev => ({ 
+                    ...prev, 
+                    cvv: e.target.value.replace(/\D/g, '').substring(0, 4)
+                  }))}
+                  placeholder="123"
+                  className="h-8 text-sm"
+                  maxLength={4}
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs">Cardholder Name</Label>
+              <Input
+                value={newCard.holderName}
+                onChange={(e) => setNewCard(prev => ({ ...prev, holderName: e.target.value }))}
+                placeholder="John Doe"
+                className="h-8 text-sm"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="setDefaultCard"
+                checked={newCard.isDefault}
+                onChange={(e) => setNewCard(prev => ({ ...prev, isDefault: e.target.checked }))}
+                className="w-4 h-4"
+              />
+              <Label htmlFor="setDefaultCard" className="text-xs">Set as default payment method</Label>
+            </div>
+
+            <div className="flex gap-2 pt-3">
+              <Button onClick={handleSaveCard} size="sm" className="flex-1">
+                Add Card
+              </Button>
+              <Button onClick={() => setIsAddingNew(false)} variant="outline" size="sm" className="flex-1">
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Security Notice (moved from original header to be with other security info) */}
+      <div className="px-4 pb-4">
+        <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+          <Shield className="w-4 h-4 text-blue-600" />
+          <p className="text-xs text-blue-800">
+            Your payment information is encrypted and secure
+          </p>
+        </div>
       </div>
     </div>
   );

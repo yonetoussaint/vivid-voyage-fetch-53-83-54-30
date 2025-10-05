@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { 
-  MapPin, Plus, Edit, Trash2, MoreHorizontal, 
+import {
+  MapPin, Plus, Edit, Trash2, MoreHorizontal,
   Home, Building, Star, Check
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,26 +8,27 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
 } from '@/components/ui/dialog';
+import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
 
 const ProfileAddresses = () => {
   const [isAddingNew, setIsAddingNew] = useState(false);
@@ -134,174 +135,30 @@ const ProfileAddresses = () => {
     console.log('Setting default address:', addressId);
   };
 
+  const mockAddresses = addresses; // Use the existing addresses for stats calculation
+  const stats = [
+    { value: mockAddresses.length.toString(), label: 'Saved', color: 'text-blue-600' },
+    { value: mockAddresses.filter(a => a.isDefault).length.toString(), label: 'Default', color: 'text-green-600' }
+  ];
+
   return (
     <div className="space-y-4 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="px-4 py-3">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h1 className="text-lg font-bold text-foreground">My Addresses</h1>
-              <p className="text-xs text-muted-foreground">Manage your delivery addresses</p>
-            </div>
-            <Dialog open={isAddingNew} onOpenChange={setIsAddingNew}>
-              <DialogTrigger asChild>
-                <Button size="sm">
-                  <Plus className="w-3 h-3 mr-1" />
-                  Add Address
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Add New Address</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-xs">Address Type</Label>
-                      <Select value={newAddress.type} onValueChange={(value) => setNewAddress(prev => ({ ...prev, type: value }))}>
-                        <SelectTrigger className="h-8 text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="home">Home</SelectItem>
-                          <SelectItem value="work">Work</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label className="text-xs">Label</Label>
-                      <Input
-                        value={newAddress.label}
-                        onChange={(e) => setNewAddress(prev => ({ ...prev, label: e.target.value }))}
-                        placeholder="Home, Work, etc."
-                        className="h-8 text-sm"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <Label className="text-xs">Full Name</Label>
-                    <Input
-                      value={newAddress.name}
-                      onChange={(e) => setNewAddress(prev => ({ ...prev, name: e.target.value }))}
-                      className="h-8 text-sm"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label className="text-xs">Street Address</Label>
-                    <Input
-                      value={newAddress.address}
-                      onChange={(e) => setNewAddress(prev => ({ ...prev, address: e.target.value }))}
-                      className="h-8 text-sm"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label className="text-xs">Apartment, Suite, etc. (optional)</Label>
-                    <Input
-                      value={newAddress.apartment}
-                      onChange={(e) => setNewAddress(prev => ({ ...prev, apartment: e.target.value }))}
-                      className="h-8 text-sm"
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-xs">City</Label>
-                      <Input
-                        value={newAddress.city}
-                        onChange={(e) => setNewAddress(prev => ({ ...prev, city: e.target.value }))}
-                        className="h-8 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">State</Label>
-                      <Input
-                        value={newAddress.state}
-                        onChange={(e) => setNewAddress(prev => ({ ...prev, state: e.target.value }))}
-                        className="h-8 text-sm"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-xs">ZIP Code</Label>
-                      <Input
-                        value={newAddress.zipCode}
-                        onChange={(e) => setNewAddress(prev => ({ ...prev, zipCode: e.target.value }))}
-                        className="h-8 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Country</Label>
-                      <Select value={newAddress.country} onValueChange={(value) => setNewAddress(prev => ({ ...prev, country: value }))}>
-                        <SelectTrigger className="h-8 text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="United States">United States</SelectItem>
-                          <SelectItem value="Canada">Canada</SelectItem>
-                          <SelectItem value="United Kingdom">United Kingdom</SelectItem>
-                          <SelectItem value="Australia">Australia</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <Label className="text-xs">Phone Number</Label>
-                    <Input
-                      value={newAddress.phone}
-                      onChange={(e) => setNewAddress(prev => ({ ...prev, phone: e.target.value }))}
-                      className="h-8 text-sm"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label className="text-xs">Delivery Instructions (optional)</Label>
-                    <Input
-                      value={newAddress.instructions}
-                      onChange={(e) => setNewAddress(prev => ({ ...prev, instructions: e.target.value }))}
-                      placeholder="Ring doorbell, leave at door, etc."
-                      className="h-8 text-sm"
-                    />
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="setDefault"
-                      checked={newAddress.isDefault}
-                      onChange={(e) => setNewAddress(prev => ({ ...prev, isDefault: e.target.checked }))}
-                      className="w-4 h-4"
-                    />
-                    <Label htmlFor="setDefault" className="text-xs">Set as default address</Label>
-                  </div>
-                  
-                  <div className="flex gap-2 pt-3">
-                    <Button onClick={handleSaveAddress} size="sm" className="flex-1">
-                      Save Address
-                    </Button>
-                    <Button onClick={() => setIsAddingNew(false)} variant="outline" size="sm" className="flex-1">
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
-      </div>
+      <SellerSummaryHeader
+        title="My Addresses"
+        subtitle="Manage your delivery addresses"
+        stats={stats}
+        actionButton={{
+          label: 'Add Address',
+          icon: Plus,
+          onClick: () => setIsAddingNew(true)
+        }}
+      />
 
       {/* Addresses List */}
       <div className="px-4 space-y-3">
         {addresses.map((address) => {
           const Icon = getAddressIcon(address.type);
-          
+
           return (
             <Card key={address.id} className={address.isDefault ? 'ring-2 ring-primary/20' : ''}>
               <CardContent className="p-4">
@@ -323,7 +180,7 @@ const ProfileAddresses = () => {
                       <p className="text-xs text-muted-foreground">{address.name}</p>
                     </div>
                   </div>
-                  
+
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="sm">
@@ -341,7 +198,7 @@ const ProfileAddresses = () => {
                           Set as Default
                         </DropdownMenuItem>
                       )}
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         className="text-red-600"
                         onClick={() => handleDeleteAddress(address.id)}
                       >
@@ -351,7 +208,7 @@ const ProfileAddresses = () => {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-                
+
                 <div className="bg-muted/20 rounded-lg p-3">
                   <div className="space-y-1 text-sm">
                     <p className="font-medium">{address.address}</p>
@@ -359,7 +216,7 @@ const ProfileAddresses = () => {
                     <p>{address.city}, {address.state} {address.zipCode}</p>
                     <p>{address.country}</p>
                   </div>
-                  
+
                   <div className="mt-2 pt-2 border-t border-muted-foreground/10">
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <span>📞 {address.phone}</span>
@@ -369,16 +226,16 @@ const ProfileAddresses = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center justify-end gap-2 mt-3">
                   <Button size="sm" variant="outline" className="h-7 text-xs">
                     <Edit className="w-3 h-3 mr-1" />
                     Edit
                   </Button>
                   {!address.isDefault && (
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
+                    <Button
+                      size="sm"
+                      variant="outline"
                       className="h-7 text-xs"
                       onClick={() => handleSetDefault(address.id)}
                     >

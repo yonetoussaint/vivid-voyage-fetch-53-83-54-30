@@ -22,6 +22,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
+import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
 
 const ProfileReviews = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -153,59 +154,59 @@ const ProfileReviews = () => {
     console.log('Deleting review:', reviewId);
   };
 
+  const avgRating = (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1);
+
+  const stats = [
+    { value: reviews.length.toString(), label: 'Reviews', color: 'text-blue-600' },
+    { value: avgRating, label: 'Avg Rating', color: 'text-yellow-600' },
+    { value: reviews.filter(r => r.helpful > 0).length.toString(), label: 'Helpful', color: 'text-green-600' }
+  ];
+
   return (
     <div className="space-y-4 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="px-4 py-3">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h1 className="text-lg font-bold text-foreground">My Reviews</h1>
-              <p className="text-xs text-muted-foreground">
-                {reviewStats.total} reviews • {reviewStats.average} average rating
-              </p>
-            </div>
-          </div>
+      <SellerSummaryHeader
+        title="My Reviews"
+        subtitle="Reviews you've written"
+        stats={stats}
+      />
 
-          {/* Stats Overview */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3">
-            {[5, 4, 3, 2, 1].map((rating) => (
-              <div key={rating} className="bg-muted/20 rounded-lg p-2 text-center">
-                <div className="flex items-center justify-center gap-1 mb-1">
-                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                  <span className="text-xs">{rating}</span>
-                </div>
-                <div className="text-sm font-bold">{reviewStats.breakdown[rating]}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Search and Filters */}
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Search reviews..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-8 text-sm"
-              />
+      {/* Stats Overview */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-3 px-4">
+        {[5, 4, 3, 2, 1].map((rating) => (
+          <div key={rating} className="bg-muted/20 rounded-lg p-2 text-center">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+              <span className="text-xs">{rating}</span>
             </div>
-            <Select value={ratingFilter} onValueChange={setRatingFilter}>
-              <SelectTrigger className="w-32 h-8 text-sm">
-                <SelectValue placeholder="Rating" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Ratings</SelectItem>
-                <SelectItem value="5">5 Stars</SelectItem>
-                <SelectItem value="4">4 Stars</SelectItem>
-                <SelectItem value="3">3 Stars</SelectItem>
-                <SelectItem value="2">2 Stars</SelectItem>
-                <SelectItem value="1">1 Star</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="text-sm font-bold">{reviewStats.breakdown[rating]}</div>
           </div>
+        ))}
+      </div>
+
+      {/* Search and Filters */}
+      <div className="flex gap-2 px-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
+            placeholder="Search reviews..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 h-8 text-sm"
+          />
         </div>
+        <Select value={ratingFilter} onValueChange={setRatingFilter}>
+          <SelectTrigger className="w-32 h-8 text-sm">
+            <SelectValue placeholder="Rating" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Ratings</SelectItem>
+            <SelectItem value="5">5 Stars</SelectItem>
+            <SelectItem value="4">4 Stars</SelectItem>
+            <SelectItem value="3">3 Stars</SelectItem>
+            <SelectItem value="2">2 Stars</SelectItem>
+            <SelectItem value="1">1 Star</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Reviews List */}
@@ -227,7 +228,7 @@ const ProfileReviews = () => {
                       <p className="text-xs text-muted-foreground">from {review.seller}</p>
                     </div>
                   </div>
-                  
+
                   <div>
                     <label className="text-xs font-medium">Rating</label>
                     <div className="flex gap-1 mt-1">
@@ -244,7 +245,7 @@ const ProfileReviews = () => {
                       ))}
                     </div>
                   </div>
-                  
+
                   <div>
                     <label className="text-xs font-medium">Title</label>
                     <Input
@@ -253,7 +254,7 @@ const ProfileReviews = () => {
                       className="h-8 text-sm mt-1"
                     />
                   </div>
-                  
+
                   <div>
                     <label className="text-xs font-medium">Review</label>
                     <Textarea
@@ -263,7 +264,7 @@ const ProfileReviews = () => {
                       rows={3}
                     />
                   </div>
-                  
+
                   <div className="flex gap-2">
                     <Button size="sm" onClick={handleSaveEdit}>
                       Save Changes
@@ -309,7 +310,7 @@ const ProfileReviews = () => {
                         </div>
                       </div>
                     </div>
-                    
+
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm">
@@ -335,13 +336,13 @@ const ProfileReviews = () => {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                  
+
                   {/* Review Content */}
                   <div className="mb-3">
                     <h4 className="font-medium text-sm mb-1">{review.title}</h4>
                     <p className="text-sm text-muted-foreground">{review.review}</p>
                   </div>
-                  
+
                   {/* Seller Response */}
                   {review.sellerResponse && (
                     <div className="bg-blue-50 rounded-lg p-3 mb-3">
@@ -359,7 +360,7 @@ const ProfileReviews = () => {
                       <p className="text-xs text-blue-800">{review.sellerResponse.message}</p>
                     </div>
                   )}
-                  
+
                   {/* Review Footer */}
                   <div className="flex items-center justify-between pt-3 border-t">
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
@@ -372,7 +373,7 @@ const ProfileReviews = () => {
                         {review.notHelpful} not helpful
                       </span>
                     </div>
-                    
+
                     <div className="flex items-center gap-2">
                       <Button size="sm" variant="outline" className="h-7 text-xs">
                         <Edit className="w-3 h-3 mr-1" />
