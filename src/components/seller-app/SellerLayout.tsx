@@ -41,6 +41,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const [headerHeight, setHeaderHeight] = useState<number>(0);
   const [sellerInfoHeight, setSellerInfoHeight] = useState<number>(0);
   const [isTransparentHeader, setIsTransparentHeader] = useState(true);
+  const [showSearchOverlay, setShowSearchOverlay] = useState(false);
 
   const handleBackClick = () => {
     navigate('/profile');
@@ -322,8 +323,12 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
                 onSettingsClick={() => console.log('Seller settings clicked')}
                 onSubmit={(query) => {
                   console.log('Searching for:', query);
+                  setShowSearchOverlay(false);
                 }}
+                onSearchFocus={() => setShowSearchOverlay(true)}
                 onSearchClose={handleBackClick}
+                isOverlayOpen={showSearchOverlay}
+                onCloseOverlay={() => setShowSearchOverlay(false)}
                 isTransparent={isTransparentHeader}
                 onBackClick={handleBackClick}
                 onShareClick={handleShareClick}
