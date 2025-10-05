@@ -29,7 +29,7 @@ export default function BannerSlides({
               isPrevious ? "-translate-y-full z-0 hidden" : "translate-y-full z-0 hidden"
             }`}
           >
-            {banner.type === 'color' || banner.image.startsWith('from-') ? (
+            {banner.type === 'color' || banner.image.startsWith('from-') || banner.image.includes('gradient') ? (
               <div className={`w-full h-full bg-gradient-to-r ${banner.image}`} />
             ) : (
               <BannerImage

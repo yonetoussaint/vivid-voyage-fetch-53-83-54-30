@@ -164,7 +164,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
               customBanners={[
                 {
                   id: 'seller-banner-1',
-                  color: 'from-red-500 via-yellow-400 to-blue-500',
+                  image: 'from-red-500 via-yellow-400 to-blue-500',
                   alt: 'Seller Banner',
                   type: 'color',
                   duration: 5000

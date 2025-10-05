@@ -148,7 +148,7 @@ export default function HeroBanner({
 
         return {
           ...banner,
-          image: banner.color || '', // Use color as image placeholder
+          image: banner.image || banner.color || '', // Use image field or fallback to color
           type: (banner.type || 'color') as 'image' | 'video',
           duration: banner.duration || 5000,
           rowType,
