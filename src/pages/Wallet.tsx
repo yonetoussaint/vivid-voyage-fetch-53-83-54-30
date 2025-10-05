@@ -78,6 +78,13 @@ export default function Wallet() {
     }
   }, [urlTab]);
 
+  // Sync activeTab with URL tab changes
+  useEffect(() => {
+    if (urlTab && (urlTab === 'buyer' || urlTab === 'seller') && urlTab !== activeTab) {
+      setActiveTab(urlTab);
+    }
+  }, [urlTab, activeTab]);
+
   // Buyer Quick Actions
   const buyerActions: QuickAction[] = [
     { id: '1', icon: Plus, label: 'Add Money', action: 'add', color: 'bg-blue-600', description: 'Top up your wallet' },
@@ -205,46 +212,9 @@ export default function Wallet() {
     : currentTransactions.filter(t => t.type === filterType);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pt-[var(--header-height)]">
       <PageContainer maxWidth="lg" padding="none">
         <div className="space-y-4 pb-20">
-          
-          {/* Header */}
-          <div className="bg-white px-4 py-6">
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-2">
-                <WalletIcon className="h-6 w-6 text-gray-900" />
-                <h1 className="text-2xl font-semibold">Wallet</h1>
-              </div>
-              <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <Settings className="h-5 w-5 text-gray-600" />
-              </button>
-            </div>
-            <p className="text-sm text-gray-600">
-              {activeTab === 'buyer' ? 'Shop and pay seamlessly' : 'Accept payments and manage earnings'}
-            </p>
-          </div>
-
-          {/* Tabs for Buyer/Seller */}
-          {isSeller && (
-            <div className="px-4">
-              <Tabs value={activeTab} onValueChange={(v) => {
-                setActiveTab(v as 'buyer' | 'seller');
-                navigate(`/wallet?tab=${v}`);
-              }}>
-                <TabsList className="w-full grid grid-cols-2">
-                  <TabsTrigger value="buyer" className="flex items-center gap-2">
-                    <ShoppingCart className="h-4 w-4" />
-                    Buyer
-                  </TabsTrigger>
-                  <TabsTrigger value="seller" className="flex items-center gap-2">
-                    <Store className="h-4 w-4" />
-                    Seller
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-          )}
 
           {/* Balance Card */}
           <div className="px-4">
