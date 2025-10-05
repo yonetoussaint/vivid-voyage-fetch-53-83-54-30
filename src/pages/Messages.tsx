@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MoreVertical } from 'lucide-react';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { useSearchParams } from 'react-router-dom';
 
 interface Message {
   id: string;
@@ -13,7 +14,15 @@ interface Message {
 }
 
 export default function Messages() {
+  const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState('all');
+
+  // Listen for tab changes from URL params
+  useEffect(() => {
+    const filter = searchParams.get('filter') || 'all';
+    setActiveFilter(filter);
+  }, [searchParams]);
 
   const conversations: Message[] = [
     {
@@ -58,17 +67,19 @@ export default function Messages() {
     },
   ];
 
-  const filteredConversations = conversations.filter(conv =>
-    conv.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    conv.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredConversations = conversations.filter(conv => {
+    const matchesSearch = conv.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      conv.lastMessage.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter = activeFilter === 'all' || (activeFilter === 'unread' && conv.unread);
+    return matchesSearch && matchesFilter;
+  });
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white pt-[var(--header-height)]">
       <PageContainer maxWidth="lg" padding="none">
         
         {/* Conversations */}
-        <div className="pb-20 pt-4">
+        <div className="pb-20">
           {filteredConversations.map((conversation) => (
             <button
               key={conversation.id}

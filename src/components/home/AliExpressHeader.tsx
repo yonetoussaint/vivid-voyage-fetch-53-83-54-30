@@ -35,6 +35,8 @@ interface AliExpressHeaderProps {
   onClearAll?: () => void;
   onFilterButtonClick?: (filterId: string) => void;
   isFilterDisabled?: (filterId: string) => boolean;
+  customTabs?: Array<{ id: string; name: string; path?: string }>;
+  onCustomTabChange?: (tabId: string) => void;
 }
 
 export default function AliExpressHeader({ 
@@ -46,7 +48,9 @@ export default function AliExpressHeader({
   onFilterClear = () => {},
   onClearAll = () => {},
   onFilterButtonClick = () => {},
-  isFilterDisabled = () => false
+  isFilterDisabled = () => false,
+  customTabs,
+  onCustomTabChange
 }: AliExpressHeaderProps) {
   const { progress } = useScrollProgress();
   const { currentLanguage, setLanguage, supportedLanguages, currentLocation } = useLanguageSwitcher();
@@ -116,8 +120,8 @@ export default function AliExpressHeader({
     { id: 'books', name: t('books', { ns: 'categories' }), path: '/categories/books' },
   ], [t]);
 
-  // Determine which tabs to show based on search overlay state
-  const tabsToShow = showSearchOverlay ? searchTabs : categories;
+  // Determine which tabs to show based on search overlay state or custom tabs
+  const tabsToShow = customTabs || (showSearchOverlay ? searchTabs : categories);
 
   // Add this function to handle search query changes
   const handleSearchQueryChange = (query: string) => {
@@ -376,8 +380,12 @@ export default function AliExpressHeader({
   const handleTabChange = useCallback((tabId: string) => {
     setActiveTab(tabId);
 
+    // Handle custom tabs
+    if (customTabs && onCustomTabChange) {
+      onCustomTabChange(tabId);
+    }
     // Handle navigation for regular categories
-    if (!showSearchOverlay) {
+    else if (!showSearchOverlay) {
       const category = categories.find(cat => cat.id === tabId);
       if (category && category.path) {
         navigate(category.path);
@@ -386,7 +394,7 @@ export default function AliExpressHeader({
       // Handle search tabs (no navigation, just filtering)
       handleSearchTabClick(tabId);
     }
-  }, [showSearchOverlay, categories, navigate]);
+  }, [showSearchOverlay, categories, navigate, customTabs, onCustomTabChange]);
 
   const togglePanel = () => setIsOpen(!isOpen);
   const handleVoiceSearch = () => setVoiceSearchActive(!voiceSearchActive);

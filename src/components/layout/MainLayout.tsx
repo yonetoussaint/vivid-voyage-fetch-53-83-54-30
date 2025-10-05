@@ -146,6 +146,19 @@ function MainLayoutContent() {
 
   // Check if current page is electronics (has filter functionality)
   const isElectronicsPage = pathname === '/categories/electronics';
+  
+  // Check if current page is messages
+  const isMessagesPage = pathname === '/messages';
+  
+  // Get filter from URL params for messages
+  const searchParams = new URLSearchParams(location.search);
+  const messagesFilter = searchParams.get('filter') || 'all';
+  
+  // Define custom tabs for messages page
+  const messagesTabs = isMessagesPage ? [
+    { id: 'all', name: 'All', path: '/messages?filter=all' },
+    { id: 'unread', name: 'Unread', path: '/messages?filter=unread' }
+  ] : undefined;
 
   return (
     <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
@@ -154,7 +167,7 @@ function MainLayoutContent() {
         {/* Show AliExpressHeader for category pages */}
         {shouldShowHeader && (
           <AliExpressHeader 
-            activeTabId={activeTab}
+            activeTabId={isMessagesPage ? messagesFilter : activeTab}
             showFilterBar={showFilterBar}
             filterCategories={filterCategories}
             selectedFilters={selectedFilters}
@@ -163,6 +176,7 @@ function MainLayoutContent() {
             onClearAll={onClearAll}
             onFilterButtonClick={onFilterButtonClick}
             isFilterDisabled={isFilterDisabled}
+            customTabs={messagesTabs}
           />
         )}
 
