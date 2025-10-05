@@ -295,7 +295,7 @@ export default function BookGenreFlashDeals({
       />
 
       {/* Filter Bar Section - Added right before the products grid */}
-      <div className="relative z-10" style={{ overflow: 'visible' }}>
+      <div>
         <ProductFilterBar
           filterCategories={filterCategories}
           selectedFilters={selectedFilters}
