@@ -28,57 +28,39 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
   console.log('[SellerInfoSection] Rendering with sellerData:', sellerData);
   console.log('[SellerInfoSection] showActionButtons:', showActionButtons);
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return '2008';
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', { 
-        year: 'numeric'
-      });
-    } catch {
-      return '2008';
+  // Create custom color gradient banners
+  const customColorBanners = [
+    {
+      id: 'color-1',
+      image: 'from-red-500 via-yellow-400 to-blue-500',
+      alt: 'Colorful gradient banner 1',
+      type: 'color' as const,
+      duration: 5000
+    },
+    {
+      id: 'color-2',
+      image: 'from-purple-500 via-pink-500 to-red-500',
+      alt: 'Colorful gradient banner 2',
+      type: 'color' as const,
+      duration: 5000
+    },
+    {
+      id: 'color-3',
+      image: 'from-green-400 via-blue-500 to-purple-600',
+      alt: 'Colorful gradient banner 3',
+      type: 'color' as const,
+      duration: 5000
+    },
+    {
+      id: 'color-4',
+      image: 'from-orange-400 via-red-500 to-pink-500',
+      alt: 'Colorful gradient banner 4',
+      type: 'color' as const,
+      duration: 5000
     }
-  };
+  ];
 
-  const formatNumber = (num: number) => {
-    if (num >= 1000000000) {
-      return (num / 1000000000).toFixed(1).replace(/\.0$/, '') + 'b';
-    }
-    if (num >= 1000000) {
-      return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'm';
-    }
-    if (num >= 1000) {
-      return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
-    }
-    return num.toString();
-  };
-
-  const safeSellerData = sellerData ? {
-    name: sellerData.name || 'Seller Name',
-    username: sellerData.username || sellerData.name?.toLowerCase().replace(/\s+/g, '') || 'seller',
-    image_url: sellerData.image_url,
-    verified: sellerData.verified || false,
-    bio: sellerData.bio || sellerData.description || 'Award-winning seller with a passion for quality products and excellent customer service.',
-    business_type: sellerData.business_type || sellerData.category || 'Business',
-    location: sellerData.location || sellerData.address || 'Location not specified',
-    website: sellerData.website,
-    rating: sellerData.rating ? Number(sellerData.rating) : 0,
-    reviews_count: sellerData.reviews_count || 0,
-    total_sales: sellerData.total_sales || 0,
-    response_rate: sellerData.response_rate,
-    response_time: sellerData.response_time,
-    join_date: formatDate(sellerData.join_date || sellerData.created_at),
-    followers_count: sellerData.followers_count || 0,
-    mentions: sellerData.mentions || [],
-    social_media: sellerData.social_media || {},
-    last_active: sellerData.last_active || 'Active 2 hours ago',
-    business_hours: sellerData.business_hours || null,
-    followed_by: Array.isArray(sellerData.followed_by) 
-      ? sellerData.followed_by 
-      : typeof sellerData.followed_by === 'string' 
-        ? JSON.parse(sellerData.followed_by || "[]")
-        : []
-  } : null;
+  console.log('[SellerInfoSection] customColorBanners:', customColorBanners);
 
   // Always render the banner section first
   const bannerSection = (
@@ -86,38 +68,8 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
       <HeroBanner 
         asCarousel={false}
         showNewsTicker={false}
-        dotsPosition="right"
         useContainerHeight={true}
-        customBanners={[
-          {
-            id: 'seller-banner-1',
-            image: 'from-red-500 via-yellow-400 to-blue-500',
-            alt: 'Seller Banner 1',
-            type: 'color',
-            duration: 5000
-          },
-          {
-            id: 'seller-banner-2',
-            image: 'from-purple-500 via-pink-500 to-red-500',
-            alt: 'Seller Banner 2',
-            type: 'color',
-            duration: 5000
-          },
-          {
-            id: 'seller-banner-3',
-            image: 'from-blue-500 via-teal-400 to-green-500',
-            alt: 'Seller Banner 3',
-            type: 'color',
-            duration: 5000
-          },
-          {
-            id: 'seller-banner-4',
-            image: 'from-indigo-500 via-purple-500 to-pink-500',
-            alt: 'Seller Banner 4',
-            type: 'color',
-            duration: 5000
-          }
-        ]}
+        customBanners={customColorBanners}
       />
     </div>
   );
