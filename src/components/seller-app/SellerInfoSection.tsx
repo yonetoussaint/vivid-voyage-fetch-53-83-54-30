@@ -80,10 +80,52 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
         : []
   } : null;
 
+  // Always render the banner section first
+  const bannerSection = (
+    <div className="relative w-full" style={{ height: '128px' }}>
+      <HeroBanner 
+        asCarousel={false}
+        showNewsTicker={false}
+        dotsPosition="right"
+        useContainerHeight={true}
+        customBanners={[
+          {
+            id: 'seller-banner-1',
+            image: 'from-red-500 via-yellow-400 to-blue-500',
+            alt: 'Seller Banner 1',
+            type: 'color',
+            duration: 5000
+          },
+          {
+            id: 'seller-banner-2',
+            image: 'from-purple-500 via-pink-500 to-red-500',
+            alt: 'Seller Banner 2',
+            type: 'color',
+            duration: 5000
+          },
+          {
+            id: 'seller-banner-3',
+            image: 'from-blue-500 via-teal-400 to-green-500',
+            alt: 'Seller Banner 3',
+            type: 'color',
+            duration: 5000
+          },
+          {
+            id: 'seller-banner-4',
+            image: 'from-indigo-500 via-purple-500 to-pink-500',
+            alt: 'Seller Banner 4',
+            type: 'color',
+            duration: 5000
+          }
+        ]}
+      />
+    </div>
+  );
+
   if (sellerLoading) {
     return (
       <div className="bg-white text-gray-900">
-        <div className="relative w-full h-32 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-pulse" />
+        {bannerSection}
 
         <div className="px-3 -mt-12">
           <div className="flex items-end justify-between mb-3">
@@ -155,48 +197,10 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
     );
   }
 
-  // Always render the banner section
+  // Main render
   return (
     <div className="bg-white text-gray-900">
-      {/* Banner with fixed height - Always visible */}
-      <div className="relative w-full" style={{ height: '128px' }}>
-        <HeroBanner 
-          asCarousel={false}
-          showNewsTicker={false}
-          dotsPosition="right"
-          useContainerHeight={true}
-          customBanners={[
-            {
-              id: 'seller-banner-1',
-              image: 'from-red-500 via-yellow-400 to-blue-500',
-              alt: 'Seller Banner 1',
-              type: 'color',
-              duration: 5000
-            },
-            {
-              id: 'seller-banner-2',
-              image: 'from-purple-500 via-pink-500 to-red-500',
-              alt: 'Seller Banner 2',
-              type: 'color',
-              duration: 5000
-            },
-            {
-              id: 'seller-banner-3',
-              image: 'from-blue-500 via-teal-400 to-green-500',
-              alt: 'Seller Banner 3',
-              type: 'color',
-              duration: 5000
-            },
-            {
-              id: 'seller-banner-4',
-              image: 'from-indigo-500 via-purple-500 to-pink-500',
-              alt: 'Seller Banner 4',
-              type: 'color',
-              duration: 5000
-            }
-          ]}
-        />
-      </div>
+      {bannerSection}
 
       {/* Main Content - Fixed structure */}
       {safeSellerData ? (
