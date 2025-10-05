@@ -41,6 +41,16 @@ const CategoryTabs = ({
     tabRefs.current = tabRefs.current.slice(0, categories.length);
   }, [categories]);
 
+  // Force update on mount to handle initial positioning
+  useEffect(() => {
+    // Wait for initial render to complete
+    const timer = setTimeout(() => {
+      updateUnderline();
+    }, 150);
+    
+    return () => clearTimeout(timer);
+  }, [updateUnderline]);
+
   // Instant underline calculation
   const updateUnderline = useCallback(() => {
     const activeTabIndex = categories.findIndex(cat => cat.id === activeTab);
@@ -74,22 +84,21 @@ const CategoryTabs = ({
   // Update underline when activeTab changes AND when refs are available
   useEffect(() => {
     if (activeTab && categories.length > 0) {
-      // Try to update immediately
-      updateUnderline();
+      // Use requestAnimationFrame to ensure DOM is painted
+      requestAnimationFrame(() => {
+        updateUnderline();
+      });
 
-      // Always retry to ensure proper positioning, especially for first tab
-      const timer = setTimeout(() => {
-        updateUnderline();
-      }, 0);
-      
-      // Additional retry for first tab initialization
-      const secondTimer = setTimeout(() => {
-        updateUnderline();
-      }, 50);
+      // Multiple retries with increasing delays
+      const timers = [
+        setTimeout(() => updateUnderline(), 0),
+        setTimeout(() => updateUnderline(), 10),
+        setTimeout(() => updateUnderline(), 50),
+        setTimeout(() => updateUnderline(), 100),
+      ];
       
       return () => {
-        clearTimeout(timer);
-        clearTimeout(secondTimer);
+        timers.forEach(timer => clearTimeout(timer));
       };
     }
   }, [activeTab, categories, updateUnderline]);
@@ -183,13 +192,16 @@ const CategoryTabs = ({
   const setTabRef = useCallback((el: HTMLButtonElement | null, index: number, id: string) => {
     tabRefs.current[index] = el;
 
-    // If this is the active tab and we have the element, update underline immediately
+    // If this is the active tab and we have the element, update underline
     if (el && id === activeTab) {
-      // Force multiple updates to ensure proper positioning
+      // Use multiple animation frames to ensure layout is complete
       requestAnimationFrame(() => {
-        updateUnderline();
-        setTimeout(() => updateUnderline(), 0);
-        setTimeout(() => updateUnderline(), 50);
+        requestAnimationFrame(() => {
+          updateUnderline();
+          // Additional backup timing
+          setTimeout(() => updateUnderline(), 10);
+          setTimeout(() => updateUnderline(), 50);
+        });
       });
     }
   }, [activeTab, updateUnderline]);
