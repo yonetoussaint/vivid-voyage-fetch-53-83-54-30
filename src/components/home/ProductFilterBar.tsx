@@ -60,7 +60,7 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
                 <div className="relative flex-1">
                   <button
                     type="button"
-                    onClick={() => onFilterButtonClick(filter.id)}
+                    onClick={() => handleDropdownToggle(filter.id)}
                     disabled={isFilterDisabled && isFilterDisabled(filter.id)}
                     className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap border-0 bg-transparent w-full ${
                       isFilterDisabled && isFilterDisabled(filter.id)
