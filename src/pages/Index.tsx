@@ -305,6 +305,12 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
 
         <TopVendorsCompact />
 
+        <TopVendorsCompact 
+          title="TOP PICK UP STATIONS"
+          showProducts={false}
+          viewAllLink="/pickup-stations"
+        />
+
         {/* First Vendor Post */}
         <VendorProductCarousel
           title="Tech Deals"

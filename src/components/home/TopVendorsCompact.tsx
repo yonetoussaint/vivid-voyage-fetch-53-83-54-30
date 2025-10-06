@@ -105,7 +105,7 @@ const DefaultProfileAvatar = ({ className = "w-6 h-6" }) => (
 
 
 // Vendor Card Component
-const VendorCard = ({ vendor, onProductClick, onSellerClick }) => {
+const VendorCard = ({ vendor, onProductClick, onSellerClick, showProducts = true }) => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [imageError, setImageError] = useState(false);
   const displayProducts = vendor.products.slice(0, 4);
@@ -124,41 +124,43 @@ const VendorCard = ({ vendor, onProductClick, onSellerClick }) => {
       <div className="bg-white rounded-2xl border border-gray-300 overflow-hidden hover:border-gray-400 transition-all duration-300">
 
         {/* Products Grid */}  
-        <div className="px-2 pt-2 pb-1 relative">  
-          {vendor.discount && (  
-            <div className="absolute top-3 right-3 bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full z-10">  
-              {vendor.discount}  
-            </div>  
-          )}
+        {showProducts && (
+          <div className="px-2 pt-2 pb-1 relative">  
+            {vendor.discount && (  
+              <div className="absolute top-3 right-3 bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full z-10">  
+                {vendor.discount}  
+              </div>  
+            )}
 
-          <div className="grid grid-cols-4 gap-1">  
-            {displayProducts.map(product => (  
-              <button 
-                key={product.id} 
-                className="group cursor-pointer"
-                onClick={() => handleProductClick(product.id)}
-              >  
-                <div className="aspect-square rounded-md border border-gray-100 bg-gray-50 overflow-hidden hover:border-gray-200 transition-colors">  
-                  {product.image ? (
-                    <img   
-                      src={product.image}   
-                      alt=""   
-                      className="h-full w-full object-contain hover:scale-105 transition-transform duration-300"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">
-                      <Store size={16} />
-                    </div>
-                  )}
-                </div>
-              </button>  
-            ))}  
-          </div>  
-        </div>
+            <div className="grid grid-cols-4 gap-1">  
+              {displayProducts.map(product => (  
+                <button 
+                  key={product.id} 
+                  className="group cursor-pointer"
+                  onClick={() => handleProductClick(product.id)}
+                >  
+                  <div className="aspect-square rounded-md border border-gray-100 bg-gray-50 overflow-hidden hover:border-gray-200 transition-colors">  
+                    {product.image ? (
+                      <img   
+                        src={product.image}   
+                        alt=""   
+                        className="h-full w-full object-contain hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        <Store size={16} />
+                      </div>
+                    )}
+                  </div>
+                </button>  
+              ))}  
+            </div>  
+          </div>
+        )}
 
         {/* Vendor Info */}
-        <div className="px-2 py-1">
+        <div className={`px-2 ${showProducts ? 'py-1' : 'py-2'}`}>
           <div className="flex items-center gap-2">
 
             {/* Vendor Avatar */}
@@ -241,8 +243,18 @@ const useIsMobile = () => {
   return isMobile;
 };
 
+interface VendorCarouselProps {
+  title?: string;
+  showProducts?: boolean;
+  viewAllLink?: string;
+}
+
 // Main Carousel Component
-const VendorCarousel = () => {
+const VendorCarousel: React.FC<VendorCarouselProps> = ({ 
+  title = "TOP VENDORS",
+  showProducts = true,
+  viewAllLink = "/vendors"
+}) => {
   const isMobile = useIsMobile();
   const scrollContainerRef = useRef(null);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
@@ -326,7 +338,7 @@ const VendorCarousel = () => {
         rank: index + 1
       };
     })
-    .filter(vendor => vendor.products.length >= 4);
+    .filter(vendor => showProducts ? vendor.products.length >= 4 : true);
 
   const cardWidth = isMobile ? "66%" : "33.333%";
 
@@ -341,9 +353,9 @@ const VendorCarousel = () => {
     return (
       <div className="w-full relative">
         <SectionHeader
-          title="TOP VENDORS"
+          title={title}
           icon={Store}
-          viewAllLink="/vendors"
+          viewAllLink={viewAllLink}
           viewAllText="View All"
         />
         <div className="flex overflow-x-auto pl-2 space-x-4">
@@ -358,9 +370,9 @@ const VendorCarousel = () => {
   return (
     <div className="w-full relative">
       <SectionHeader
-        title="TOP VENDORS"
+        title={title}
         icon={Store}
-        viewAllLink="/vendors"
+        viewAllLink={viewAllLink}
         viewAllText="View All"
       />
 
@@ -383,7 +395,7 @@ const VendorCarousel = () => {
               scrollSnapAlign: 'start'
             }}
           >
-            <VendorCard vendor={vendor} onProductClick={handleProductClick} onSellerClick={handleSellerClick} />
+            <VendorCard vendor={vendor} onProductClick={handleProductClick} onSellerClick={handleSellerClick} showProducts={showProducts} />
           </div>
         ))}
 
