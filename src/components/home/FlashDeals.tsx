@@ -168,16 +168,6 @@ export default function FlashDeals({
                           className="h-full w-full object-cover hover:scale-105 transition-transform duration-300"
                           loading="lazy"
                         />
-                        {productType !== 'books' && (
-                          <div className="absolute bottom-0 left-0 w-full bg-black/60 text-white text-[10px] flex justify-center py-0.5">
-                            {[timeLeft.hours, timeLeft.minutes, timeLeft.seconds].map((unit, i) => (
-                              <span key={i} className="mx-0.5">
-                                <span>{unit.toString().padStart(2, "0")}</span>
-                                {i < 2 && <span className="mx-0.5">:</span>}
-                              </span>
-                            ))}
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -220,16 +210,6 @@ export default function FlashDeals({
                           {productType !== 'books' && (
                             <div className="absolute top-0 left-0 bg-[#FF4747] text-white text-[10px] px-1.5 py-0.5 rounded-br-md font-medium">
                               {product.stock} left
-                            </div>
-                          )}
-                          {productType !== 'books' && (
-                            <div className="absolute bottom-0 left-0 w-full bg-black/60 text-white text-[10px] flex justify-center py-0.5">
-                              {[timeLeft.hours, timeLeft.minutes, timeLeft.seconds].map((unit, i) => (
-                                <span key={i} className="mx-0.5">
-                                  <span>{unit.toString().padStart(2, "0")}</span>
-                                  {i < 2 && <span className="mx-0.5">:</span>}
-                                </span>
-                              ))}
                             </div>
                           )}
                         </div>
