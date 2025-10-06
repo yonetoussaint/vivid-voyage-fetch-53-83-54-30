@@ -28,12 +28,12 @@ interface BottomNavTab {
   badge?: number;
 }
 
-const getNavItems = (isSellerDashboard: boolean, isPickupStation: boolean): BottomNavTab[] => [
+const getNavItems = (isSellerDashboard: boolean, isPickupStation: boolean, isExplorePage: boolean): BottomNavTab[] => [
   { 
     id: 'home', 
-    nameKey: isSellerDashboard || isPickupStation ? 'navigation.store' : 'navigation.home', 
-    icon: isSellerDashboard || isPickupStation ? Store : Logo, 
-    path: isSellerDashboard ? '/seller-dashboard' : isPickupStation ? '/pickup-station' : '/for-you' 
+    nameKey: isSellerDashboard || isPickupStation ? 'navigation.store' : isExplorePage ? 'navigation.explore' : 'navigation.home', 
+    icon: isSellerDashboard || isPickupStation ? Store : isExplorePage ? LayoutGrid : Logo, 
+    path: isSellerDashboard ? '/seller-dashboard' : isPickupStation ? '/pickup-station' : isExplorePage ? '/explore' : '/for-you' 
   }, 
   { id: 'shorts', nameKey: 'navigation.shorts', icon: Zap, path: '/reels' },
   { id: 'messages', nameKey: 'navigation.messages', icon: MessageCircle, path: '/messages' },
@@ -72,10 +72,11 @@ export default function BottomNav() {
   const [previousTab, setPreviousTab] = useState(null);
   const [animating, setAnimating] = useState(false);
 
-  // Check if we're in seller dashboard or pickup station
+  // Check if we're in seller dashboard, pickup station, or explore page
   const isSellerDashboard = location.pathname.startsWith('/seller-dashboard');
   const isPickupStation = location.pathname.startsWith('/pickup-station');
-  const navItems = getNavItems(isSellerDashboard, isPickupStation);
+  const isExplorePage = location.pathname.startsWith('/explore');
+  const navItems = getNavItems(isSellerDashboard, isPickupStation, isExplorePage);
 
   // Sync activeTab with current route
   useEffect(() => {
@@ -124,7 +125,7 @@ export default function BottomNav() {
   // Update reorderedNavItems when navItems change
   useEffect(() => {
     setReorderedNavItems(navItems);
-  }, [isSellerDashboard, isPickupStation]);
+  }, [isSellerDashboard, isPickupStation, isExplorePage]);
 
   // Load selected more item from localStorage on mount
   useEffect(() => {
@@ -269,8 +270,8 @@ export default function BottomNav() {
                       {t(item.nameKey)}
                     </span>
                   )}
-                  {/* X button for My Store/Station tab when active */}
-                  {isActive && item.id === 'home' && (isSellerDashboard || isPickupStation) && (
+                  {/* X button for My Store/Station/Explore tab when active */}
+                  {isActive && item.id === 'home' && (isSellerDashboard || isPickupStation || isExplorePage) && (
                     <span
                       onClick={(e) => {
                         e.stopPropagation();
