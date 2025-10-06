@@ -244,7 +244,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       </div>
 
       {/* Main content container */}
-      <div className="flex-1 flex flex-col w-full max-w-md mx-auto relative">
+      <div className="flex flex-col w-full max-w-md mx-auto relative">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-semibold text-gray-900 mb-2">
             What's your email?
