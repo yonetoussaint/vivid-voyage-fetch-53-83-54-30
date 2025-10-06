@@ -116,17 +116,16 @@ const ProfileAnalytics = () => {
     <div className="space-y-4 bg-gray-50 min-h-screen">
       {/* Header & Stats */}
       <div className="bg-white">
-        <div className="px-4 py-3">
-          <SellerSummaryHeader
-            title="Shopping Analytics"
-            subtitle="Insights into your shopping habits"
-            stats={summaryStats}
-          />
-        </div>
+        <SellerSummaryHeader
+          title="Shopping Analytics"
+          subtitle="Insights into your shopping habits"
+          stats={summaryStats}
+        />
       </div>
 
-      {/* Charts and Analytics */}
-      <div className="px-4 space-y-4">
+      {/* Main Charts Section */}
+      <div className="py-4">
+        <div className="space-y-4 px-2">
         {/* Spending Trend */}
         <Card>
           <CardContent className="p-4">
@@ -307,6 +306,8 @@ const ProfileAnalytics = () => {
             </div>
           </CardContent>
         </Card>
+      </div>
+        </div>
       </div>
     </div>
   );
