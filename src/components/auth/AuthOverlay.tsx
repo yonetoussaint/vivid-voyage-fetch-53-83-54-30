@@ -188,6 +188,9 @@ const AuthOverlay: React.FC<AuthOverlayProps> = ({ isOpen, onClose }) => {
             selectedLanguage={selectedLanguage}
             setSelectedLanguage={setSelectedLanguage}
             onContinueWithEmail={handleContinueWithEmail}
+            showHeader={!compactProps.isCompact}
+            showAnimation={false}
+            animationSize={240}
             {...compactProps}
           />
         );
