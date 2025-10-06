@@ -400,7 +400,7 @@ const SellerOrders = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => navigate(`/profile/${order.pickupStationId}`)}
+                          onClick={() => navigate(`/pickup-station/overview`)}
                           className="flex items-center gap-2"
                         >
                           <MapPin className="w-4 h-4" />

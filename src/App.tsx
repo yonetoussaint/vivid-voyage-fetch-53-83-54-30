@@ -71,8 +71,10 @@ import ProductEditNewVariantPage from "./pages/ProductEditNewVariantPage";
 import ProductEditDetailsPage from "./pages/ProductEditDetailsPage";
 import ProductEditDescriptionPage from "./pages/ProductEditDescriptionPage";
 import ComponentTestPage from "./pages/ComponentTestPage";
-import SellerDashboard from "./pages/SellerDashboard";
-
+import SellerDashboard from './pages/SellerDashboard';
+import SellerPage from './pages/SellerPage';
+import AdminDashboard from './pages/AdminDashboard';
+import PickupStationDashboard from './pages/PickupStationDashboard';
 import NotFound from "./pages/NotFound";
 import MainLayout from "./components/layout/MainLayout";
 import { AuthOverlayProvider } from "./context/AuthOverlayContext";
@@ -175,6 +177,9 @@ function App() {
                                 <Route path="signup" element={<SimpleAuthPage />} />
                                 <Route path="auth/callback" element={<ForYou />} />
                                 <Route path="seller-dashboard/*" element={<SellerDashboard />} />
+                                <Route path="/seller/:sellerId/*" element={<SellerPage />} />
+                                <Route path="/admin-dashboard/*" element={<AdminDashboard />} />
+                                <Route path="/pickup-station/*" element={<PickupStationDashboard />} />
                                 <Route path="*" element={<NotFound />} />
                                 <Route path="/cart" element={<CartPage />} />
                                 <Route path="/menu" element={<MenuPage />} />
