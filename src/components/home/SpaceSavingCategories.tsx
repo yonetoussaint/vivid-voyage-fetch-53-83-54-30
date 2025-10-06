@@ -419,12 +419,19 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
     } else {
       setCategories(updatedCategories);
     }
-
-    // Reset scroll position to start when categories order changes
-    if (rowRef.current) {
-      rowRef.current.scrollLeft = 0;
-    }
   }, [user, userCounts, userPreferences]);
+
+  // Reset scroll position when categories change
+  useEffect(() => {
+    if (rowRef.current) {
+      // Use setTimeout to ensure DOM has updated
+      setTimeout(() => {
+        if (rowRef.current) {
+          rowRef.current.scrollLeft = 0;
+        }
+      }, 0);
+    }
+  }, [categories]);
 
   const handleCategorySelect = (categoryName: string) => {
     if (categoryName === 'Shorts') {
