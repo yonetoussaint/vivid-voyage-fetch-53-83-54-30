@@ -7,7 +7,7 @@ import BookGenreFlashDeals from '@/components/home/BookGenreFlashDeals';
 import ProfileAddresses from '@/components/profile-app/pages/ProfileAddresses';
 import ProfilePayments from '@/components/profile-app/pages/ProfilePayments';
 import ProfileAnalytics from '@/components/profile-app/pages/ProfileAnalytics';
-import ProfileReviews from '@/components/profile-app/pages/ProfileReviews';
+import CustomerReviewsEnhanced from '@/components/product/CustomerReviewsEnhanced';
 import ProfileSettings from '@/components/profile-app/pages/ProfileSettings';
 
 const ProfilePage = () => {
@@ -37,7 +37,7 @@ const ProfilePage = () => {
         <Route path="addresses" element={<ProfileAddresses />} />
         <Route path="payments" element={<ProfilePayments />} />
         <Route path="analytics" element={<ProfileAnalytics />} />
-        <Route path="reviews" element={<ProfileReviews />} />
+        <Route path="reviews" element={<CustomerReviewsEnhanced />} />
         <Route path="settings" element={<ProfileSettings />} />
       </Routes>
     </ProfileLayout>
