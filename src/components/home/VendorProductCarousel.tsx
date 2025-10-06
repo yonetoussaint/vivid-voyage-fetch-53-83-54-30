@@ -35,54 +35,152 @@ const PostCard = ({
         <p className="whitespace-pre-line line-clamp-3">{postDescription}</p>
       </div>
 
-      {/* Products Carousel */}
-      <div className="relative w-full px-1 py-2">
-        <div
-          className="flex overflow-x-auto gap-2 pb-2 pt-1 snap-x snap-mandatory"
-          ref={carouselRef}
-          style={{
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-            paddingLeft: '8px',
-            paddingRight: '8px',
-            scrollSnapType: 'x mandatory'
-          }}
-        >
-          {displayProducts.map((product) => (
-            <div
-              key={product.id}
-              className="flex-shrink-0 rounded-lg overflow-hidden shadow-sm border border-gray-200 bg-white hover:shadow-md transition-shadow"
-              style={{
-                width: 'calc(40% - 8px)',
-                minWidth: '100px',
-                scrollSnapAlign: 'center'
-              }}
-            >
-              {/* Product Image with Overlay */}
+      {/* Products Display */}
+      <div className="relative w-full px-3 py-2">
+        {/* Single Product - Full Width */}
+        {displayProducts.length === 1 && (
+          <div className="w-full rounded-lg overflow-hidden shadow-sm border border-gray-200 bg-white hover:shadow-md transition-shadow">
+            <div className="relative aspect-square">
+              <img
+                src={displayProducts[0].image}
+                alt="Product"
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+              {displayProducts[0].discount && (
+                <div className="absolute top-0 left-0 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-br-lg z-10">
+                  {displayProducts[0].discount} OFF
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Two Products - Justified */}
+        {displayProducts.length === 2 && (
+          <div className="flex justify-between gap-2">
+            {displayProducts.map((product) => (
+              <div
+                key={product.id}
+                className="flex-1 rounded-lg overflow-hidden shadow-sm border border-gray-200 bg-white hover:shadow-md transition-shadow"
+              >
+                <div className="relative aspect-square">
+                  <img
+                    src={product.image}
+                    alt="Product"
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  {product.discount && (
+                    <div className="absolute top-0 left-0 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-br-lg z-10">
+                      {product.discount} OFF
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Three Products - Horizontal Line */}
+        {displayProducts.length === 3 && (
+          <div className="flex gap-2">
+            {displayProducts.map((product) => (
+              <div
+                key={product.id}
+                className="flex-1 rounded-lg overflow-hidden shadow-sm border border-gray-200 bg-white hover:shadow-md transition-shadow"
+              >
+                <div className="relative aspect-square">
+                  <img
+                    src={product.image}
+                    alt="Product"
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  {product.discount && (
+                    <div className="absolute top-0 left-0 bg-red-500 text-white text-xs font-bold px-1 py-0.5 rounded-br-lg z-10">
+                      {product.discount} OFF
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Four Products - 2x2 Grid */}
+        {displayProducts.length === 4 && (
+          <div className="grid grid-cols-2 gap-2">
+            {displayProducts.map((product) => (
+              <div
+                key={product.id}
+                className="rounded-lg overflow-hidden shadow-sm border border-gray-200 bg-white hover:shadow-md transition-shadow"
+              >
+                <div className="relative aspect-square">
+                  <img
+                    src={product.image}
+                    alt="Product"
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  {product.discount && (
+                    <div className="absolute top-0 left-0 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-br-lg z-10">
+                      {product.discount} OFF
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Five or More Products - 2x2 Grid with Counter */}
+        {displayProducts.length >= 5 && (
+          <div className="grid grid-cols-2 gap-2">
+            {displayProducts.slice(0, 3).map((product) => (
+              <div
+                key={product.id}
+                className="rounded-lg overflow-hidden shadow-sm border border-gray-200 bg-white hover:shadow-md transition-shadow"
+              >
+                <div className="relative aspect-square">
+                  <img
+                    src={product.image}
+                    alt="Product"
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  {product.discount && (
+                    <div className="absolute top-0 left-0 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-br-lg z-10">
+                      {product.discount} OFF
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+            {/* Last product with counter overlay */}
+            <div className="rounded-lg overflow-hidden shadow-sm border border-gray-200 bg-white hover:shadow-md transition-shadow relative">
               <div className="relative aspect-square">
                 <img
-                  src={product.image}
+                  src={displayProducts[3].image}
                   alt="Product"
                   className="w-full h-full object-cover"
                   loading="lazy"
                 />
-                {/* Discount Tag */}
-                {product.discount && (
-                  <div className="absolute top-0 left-0 bg-red-500 text-white text-xs font-bold px-1 py-0.5 rounded-br-lg z-10">
-                    {product.discount} OFF
+                {displayProducts[3].discount && (
+                  <div className="absolute top-0 left-0 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-br-lg z-10">
+                    {displayProducts[3].discount} OFF
                   </div>
                 )}
-                {/* Price Info Overlay */}
-                <div className="absolute bottom-0 w-full px-1 py-1 bg-gradient-to-t from-black/70 to-transparent text-white flex items-center justify-between text-xs z-10">
-                  <span className="font-bold text-xs text-red-400">{product.currentPrice}</span>
-                  {product.originalPrice && (
-                    <span className="line-through text-gray-300 text-xs">{product.originalPrice}</span>
-                  )}
+                {/* Counter Overlay */}
+                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                  <span className="text-white text-2xl font-bold">
+                    +{displayProducts.length - 4}
+                  </span>
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Facebook style engagement stats */}
