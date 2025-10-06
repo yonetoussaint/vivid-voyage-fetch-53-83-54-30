@@ -68,9 +68,9 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
 
   if (isCompact) {
     return (
-      <div className="px-4 pb-6">
+      <div className="px-4 pb-4">
         {/* Compact view - only buttons and footer */}
-        <div className="space-y-3 mb-6">
+        <div className="space-y-3 mb-4">
           <button 
             onClick={handleGoogleSignIn}
             className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
@@ -108,16 +108,16 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
           </button>
         </div>
 
-        <div className="flex items-center justify-center gap-2 mb-4">
+        <div className="flex items-center justify-center gap-2 mb-3">
           <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
             <path d="M18,8A6,6 0 0,0 12,2A6,6 0 0,0 6,8H4C2.89,8 2,8.89 2,10V20A2,2 0 0,0 4,22H20A2,2 0 0,0 22,20V10C22,8.89 21.1,8 20,8H18M12,4A4,4 0 0,1 16,8H8A4,4 0 0,1 12,4Z"/>
           </svg>
-          <TranslatedText className="text-gray-500 text-sm">
+          <TranslatedText className="text-gray-500 text-xs">
             Secure Authentication
           </TranslatedText>
         </div>
 
-        <p className="text-xs text-gray-500 text-center leading-relaxed">
+        <p className="text-[10px] text-gray-500 text-center leading-tight px-2">
           <TranslatedText>
             By proceeding, you confirm that you've read and agree to our
           </TranslatedText>{' '}

@@ -295,14 +295,14 @@ const AuthOverlay: React.FC<AuthOverlayProps> = ({ isOpen, onClose }) => {
           if (!open) onClose();
         }}>
           <DrawerContent 
-            className="h-auto max-h-[85vh] transition-all duration-300 ease-out"
+            className="h-auto max-h-[90vh] transition-all duration-300 ease-out"
             style={{
               transform: isDragging ? `translateY(${-dragY}px)` : undefined
             }}
           >
             {/* Drag handle */}
             <div 
-              className="flex flex-col items-center pt-2 pb-4 cursor-grab active:cursor-grabbing select-none"
+              className="flex flex-col items-center pt-2 pb-3 cursor-grab active:cursor-grabbing select-none"
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
@@ -315,20 +315,20 @@ const AuthOverlay: React.FC<AuthOverlayProps> = ({ isOpen, onClose }) => {
 
             {/* Lottie Animation Section - only show on main screen in compact mode */}
             {currentScreen === 'main' && !isExpanded && (
-              <div className="flex justify-center mb-4 mt-2">
+              <div className="flex justify-center mb-0 px-4">
                 {animationData ? (
                   <Lottie 
                     animationData={animationData} 
                     loop={true} 
-                    style={{ width: 280, height: 280 }}
+                    style={{ width: 240, height: 240 }}
                   />
                 ) : (
-                  <div className="w-[280px] h-[280px] bg-gray-100 rounded-lg animate-pulse" />
+                  <div className="w-[240px] h-[240px] bg-gray-100 rounded-lg animate-pulse" />
                 )}
               </div>
             )}
             
-            <div className="overflow-hidden px-0">
+            <div className="overflow-y-auto px-0 pb-4">
               {renderCurrentScreen()}
             </div>
           </DrawerContent>
