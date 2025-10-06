@@ -22,5 +22,8 @@
     "terms": "By subscribing, you agree to our Terms and Privacy Policy"
   },
   "noResults": "No results found",
-  "tryAdjustingSearch": "Try adjusting your search terms"
+  "tryAdjustingSearch": "Try adjusting your search terms",
+  "location": "Location",
+  "settings": "Settings",
+  "language": "Language"
 }

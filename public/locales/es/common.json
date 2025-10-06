@@ -1,4 +1,8 @@
 {
+  "welcome": "Bienvenido",
+  "location": "Ubicación",
+  "settings": "Configuración",
+  "language": "Idioma",
   "header": {
     "search": "Buscar productos",
     "selectLanguage": "Selecciona tu idioma",

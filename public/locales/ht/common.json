@@ -14,5 +14,8 @@
     "finish": "Fini"
   },
   "noResults": "Pa gen rezilta yo jwenn",
-  "tryAdjustingSearch": "Eseye ajiste mo rechèch ou yo"
+  "tryAdjustingSearch": "Eseye ajiste mo rechèch ou yo",
+  "location": "Lokasyon",
+  "settings": "Paramèt",
+  "language": "Lang"
 }

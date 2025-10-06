@@ -14,5 +14,8 @@
     "finish": "Terminer"
   },
   "noResults": "Aucun résultat trouvé",
-  "tryAdjustingSearch": "Essayez d'ajuster vos termes de recherche"
+  "tryAdjustingSearch": "Essayez d'ajuster vos termes de recherche",
+  "location": "Emplacement",
+  "settings": "Paramètres",
+  "language": "Langue"
 }
