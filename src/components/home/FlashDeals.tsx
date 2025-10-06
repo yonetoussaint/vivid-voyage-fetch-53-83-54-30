@@ -11,11 +11,11 @@ interface FlashDealsProps {
   productType?: string;
   title?: string;
   icon?: React.ComponentType<any>;
-  customCountdown?: string; // Custom countdown value
-  showCountdown?: boolean; // Force show/hide
-  maxProducts?: number; // Add max products prop
-  layoutMode?: 'carousel' | 'grid'; // Add layout mode prop
-  showSectionHeader?: boolean; // Option to hide section header
+  customCountdown?: string;
+  showCountdown?: boolean;
+  maxProducts?: number;
+  layoutMode?: 'carousel' | 'grid';
+  showSectionHeader?: boolean;
 }
 
 export default function FlashDeals({ 
@@ -24,22 +24,23 @@ export default function FlashDeals({
   icon = Zap,
   customCountdown,
   showCountdown,
-  maxProducts = 20, // Default to 20 products
-  layoutMode = 'carousel', // Default to carousel mode
-  showSectionHeader = true // Default to show section header
+  maxProducts = 20,
+  layoutMode = 'carousel',
+  showSectionHeader = true
 }: FlashDealsProps) {
   const isMobile = useIsMobile();
   const scrollRef = useRef(null);
   const { setHasActiveOverlay } = useScreenOverlay();
 
-  // State for managing the semi panel
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
+  const queryMaxProducts = layoutMode === 'grid' ? undefined : maxProducts;
+
   const { data: flashProducts = [], isLoading } = useQuery({
-    queryKey: ['flash-deals', productType, maxProducts],
-    queryFn: () => fetchFlashDeals(undefined, productType, maxProducts), // Pass maxProducts to API
-    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+    queryKey: ['flash-deals', productType, queryMaxProducts],
+    queryFn: () => fetchFlashDeals(undefined, productType, queryMaxProducts),
+    refetchInterval: 5 * 60 * 1000,
   });
 
   const [timeLeft, setTimeLeft] = useState({
@@ -48,12 +49,10 @@ export default function FlashDeals({
     seconds: 0
   });
 
-  // Calculate time remaining for flash deals
   useEffect(() => {
     const calculateTimeLeft = () => {
       if (!flashProducts || flashProducts.length === 0) return { hours: 0, minutes: 0, seconds: 0 };
 
-      // Get the most recent flash deal start time
       const latestFlashStart = flashProducts.reduce((latest, product) => {
         const startTime = new Date(product.flash_start_time || '').getTime();
         return startTime > latest ? startTime : latest;
@@ -61,7 +60,7 @@ export default function FlashDeals({
 
       if (latestFlashStart === 0) return { hours: 0, minutes: 0, seconds: 0 };
 
-      const endTime = latestFlashStart + (24 * 60 * 60 * 1000); // 24 hours later
+      const endTime = latestFlashStart + (24 * 60 * 60 * 1000);
       const now = Date.now();
       const difference = endTime - now;
 
@@ -78,21 +77,16 @@ export default function FlashDeals({
       setTimeLeft(calculateTimeLeft());
     }, 1000);
 
-    // Initial calculation
     setTimeLeft(calculateTimeLeft());
-
     return () => clearInterval(timer);
   }, [flashProducts]);
 
-  // Handle panel open/close to control bottom nav visibility
   useEffect(() => {
     setHasActiveOverlay(isPanelOpen);
   }, [isPanelOpen, setHasActiveOverlay]);
 
-  // Calculate discount percentage and real inventory for display
-  // Limit to maxProducts in case API returns more
   const processedProducts = flashProducts
-    .slice(0, maxProducts)
+    .slice(0, layoutMode === 'grid' ? flashProducts.length : maxProducts)
     .map(product => {
       const discountPercentage = product.discount_price 
         ? Math.round(((product.price - product.discount_price) / product.price) * 100) 
@@ -101,30 +95,26 @@ export default function FlashDeals({
       return {
         ...product,
         discountPercentage,
-        stock: product.inventory ?? 0,  // Real stock from database
+        stock: product.inventory ?? 0,
         image: product.product_images?.[0]?.src || "https://placehold.co/300x300?text=No+Image"
       };
     });
 
-  // Handle product click to open semi panel
   const handleProductClick = (productId: string) => {
     trackProductView(productId);
     setSelectedProductId(productId);
     setIsPanelOpen(true);
   };
 
-  // Handle closing the semi panel
   const handleCloseSemiPanel = () => {
     setIsPanelOpen(false);
     setSelectedProductId(null);
   };
 
-  // Don't render the component if no products are available
   if (!isLoading && processedProducts.length === 0) {
     return null;
   }
 
-  // Determine countdown display
   const displayCountdown = customCountdown || 
     `${timeLeft.hours.toString().padStart(2, "0")}:${timeLeft.minutes.toString().padStart(2, "0")}:${timeLeft.seconds.toString().padStart(2, "0")}`;
 
@@ -135,7 +125,8 @@ export default function FlashDeals({
   return (
     <>
       <div className="w-full bg-white">
-        {showSectionHeader && (
+        {/* Only show section header if explicitly enabled AND not in grid mode */}
+        {showSectionHeader && layoutMode !== 'grid' && (
           <SectionHeader
             title={title}
             icon={icon}
@@ -148,13 +139,13 @@ export default function FlashDeals({
 
         <div className="relative">
           {isLoading ? (
-            <div className={`${layoutMode === 'grid' ? 'grid grid-cols-3 gap-4' : 'pl-2 flex overflow-x-hidden'}`}>
-              {Array.from({ length: Math.min(8, maxProducts) }).map((_, index) => (
+            <div className={`${layoutMode === 'grid' ? 'grid grid-cols-3 gap-1' : 'pl-2 flex overflow-x-hidden'}`}>
+              {Array.from({ length: Math.min(8, layoutMode === 'grid' ? 12 : maxProducts) }).map((_, index) => (
                 <div 
                   key={index} 
                   className={`${layoutMode === 'grid' ? 'w-full' : 'w-[calc(100%/3.5)] flex-shrink-0 mr-2'}`}
                 >
-                  <div className={`${productType === 'books' ? 'aspect-[1.6:1]' : 'aspect-square'} bg-gray-200 animate-pulse rounded-md mb-1.5`}></div>
+                  <div className={`${productType === 'books' ? 'aspect-[1.6:1]' : 'aspect-square'} bg-gray-200 animate-pulse mb-1.5`}></div>
                   <div className="h-3 w-3/4 bg-gray-200 animate-pulse mb-1"></div>
                   <div className="h-2 w-1/2 bg-gray-200 animate-pulse"></div>
                 </div>
@@ -162,7 +153,8 @@ export default function FlashDeals({
             </div>
           ) : processedProducts.length > 0 ? (
             layoutMode === 'grid' ? (
-              <div className="grid grid-cols-3 gap-0">
+              // Grid layout - no extra padding, starts immediately
+              <div className="grid grid-cols-3 gap-1">
                 {processedProducts.map((product) => (
                   <div key={product.id} className="flex flex-col">
                     <div 
@@ -176,11 +168,6 @@ export default function FlashDeals({
                           className="h-full w-full object-cover hover:scale-105 transition-transform duration-300"
                           loading="lazy"
                         />
-                        {productType !== 'books' && (
-                          <div className="absolute top-0 left-0 bg-[#FF4747] text-white text-[10px] px-1.5 py-0.5 rounded-br-md font-medium">
-                            {product.stock} left
-                          </div>
-                        )}
                         {productType !== 'books' && (
                           <div className="absolute bottom-0 left-0 w-full bg-black/60 text-white text-[10px] flex justify-center py-0.5">
                             {[timeLeft.hours, timeLeft.minutes, timeLeft.seconds].map((unit, i) => (
@@ -197,6 +184,7 @@ export default function FlashDeals({
                 ))}
               </div>
             ) : (
+              // Carousel layout - maintains existing padding
               <div
                 ref={scrollRef}
                 className="overflow-x-auto scroll-smooth scrollbar-hide snap-x snap-mandatory"
@@ -260,8 +248,6 @@ export default function FlashDeals({
                       </div>
                     </div>
                   ))}
-
-                  {/* Add right spacing for proper scrolling to the end */}
                   <div className="flex-shrink-0 w-2"></div>
                 </div>
               </div>
@@ -274,7 +260,6 @@ export default function FlashDeals({
         </div>
       </div>
 
-      {/* Product Semi Panel */}
       <ProductSemiPanel
         productId={selectedProductId}
         isOpen={isPanelOpen}

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { PageContainer } from '@/components/layout/PageContainer';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAllProducts } from '@/integrations/supabase/products';
 import FlashDeals from '@/components/home/FlashDeals';
@@ -8,6 +7,7 @@ import MobileOptimizedReels from '@/components/home/MobileOptimizedReels';
 import VendorProductCarousel from '@/components/home/VendorProductCarousel';
 import TopVendorsCompact from '@/components/home/TopVendorsCompact';
 import { Clock, Package, Video, FileText, Store, MapPin } from 'lucide-react';
+
 export default function Explore() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -31,7 +31,7 @@ export default function Explore() {
     switch (activeTab) {
       case 'products':
         return (
-          <div className="space-y-2">
+          <div className="-mt-2">
             <FlashDeals
               layoutMode="grid"
               showSectionHeader={false}
@@ -41,7 +41,7 @@ export default function Explore() {
 
       case 'reels':
         return (
-          <div className="space-y-2">
+          <div className="w-full space-y-2">
             <MobileOptimizedReels 
               title="TRENDING REELS"
               isLive={false}
@@ -59,7 +59,7 @@ export default function Explore() {
 
       case 'posts':
         return (
-          <div className="space-y-2">
+          <div className="w-full space-y-2">
             {products && products.length > 0 && (
               <>
                 <VendorProductCarousel
@@ -109,7 +109,7 @@ export default function Explore() {
 
       case 'sellers':
         return (
-          <div className="space-y-2">
+          <div className="w-full space-y-2">
             <TopVendorsCompact 
               title="TOP SELLERS"
               showProducts={true}
@@ -127,7 +127,7 @@ export default function Explore() {
 
       case 'stations':
         return (
-          <div className="space-y-2">
+          <div className="w-full space-y-2">
             <TopVendorsCompact 
               title="NEARBY PICKUP STATIONS"
               showProducts={false}
@@ -155,14 +155,10 @@ export default function Explore() {
   };
 
   return (
-    <PageContainer 
-      className="overflow-hidden"
-      style={{
-        paddingTop: 'var(--header-height, 0px)',
-        paddingBottom: 'var(--bottom-nav-height, 0px)'
-      }}
+    <div 
+      className="w-full bg-white"
     >
       {renderContent()}
-    </PageContainer>
+    </div>
   );
 }
