@@ -41,18 +41,12 @@ export default function Explore() {
 
       case 'reels':
         return (
-          <div className="w-full space-y-2">
+          <div className="-mt-2">
             <MobileOptimizedReels 
-              title="TRENDING REELS"
+              title="REELS"
               isLive={false}
-            />
-            <MobileOptimizedReels 
-              title="LIVE NOW"
-              isLive={true}
-            />
-            <MobileOptimizedReels 
-              title="RECOMMENDED FOR YOU"
-              isLive={false}
+              layoutMode="grid"
+              showSectionHeader={false}
             />
           </div>
         );
