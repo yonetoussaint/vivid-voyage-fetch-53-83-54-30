@@ -28,6 +28,7 @@ export const useBottomNavHeight = () => {
       pathname === '/shopping' || 
       pathname === '/settings' ||
       pathname === '/wallet' ||
+      pathname === '/explore' ||
       pathname === '/categories/electronics' ||
       pathname === '/categories/home-living' ||
       pathname === '/categories/fashion' ||
@@ -74,5 +75,5 @@ export const useBottomNavHeight = () => {
     };
   }, [isMobile, pathname, location.search]);
 
-  return bottomNavHeight;
+  return { bottomNavHeight };
 };
