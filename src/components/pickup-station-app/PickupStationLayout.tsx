@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -11,9 +10,13 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 
 interface PickupStationLayoutProps {
   children: React.ReactNode;
+  showActionButtons?: boolean;
 }
 
-const PickupStationLayout: React.FC<PickupStationLayoutProps> = ({ children }) => {
+const PickupStationLayout: React.FC<PickupStationLayoutProps> = ({ 
+  children, 
+  showActionButtons = true 
+}) => {
   const location = useLocation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -35,6 +38,10 @@ const PickupStationLayout: React.FC<PickupStationLayoutProps> = ({ children }) =
   const getCurrentTab = () => {
     const path = location.pathname.split('/pickup-station/')[1];
     if (!path || path === '') {
+      if (location.pathname === '/pickup-station' || 
+          location.pathname.endsWith('/pickup-station/')) {
+        navigate('/pickup-station/overview', { replace: true });
+      }
       return 'overview';
     }
     return path;
@@ -42,13 +49,18 @@ const PickupStationLayout: React.FC<PickupStationLayoutProps> = ({ children }) =
 
   const [activeTab, setActiveTab] = useState(getCurrentTab());
 
+  // Check if we're on the overview tab
+  const isOverviewTab = activeTab === 'overview';
+
+  const baseRoute = '/pickup-station';
+
   const navigationItems = [
-    { id: 'overview', name: 'Overview', href: '/pickup-station/overview', icon: Home },
-    { id: 'packages', name: 'Packages', href: '/pickup-station/packages', icon: Package },
-    { id: 'customers', name: 'Customers', href: '/pickup-station/customers', icon: Users },
-    { id: 'analytics', name: 'Analytics', href: '/pickup-station/analytics', icon: BarChart3 },
-    { id: 'notifications', name: 'Notifications', href: '/pickup-station/notifications', icon: Bell },
-    { id: 'settings', name: 'Settings', href: '/pickup-station/settings', icon: Settings },
+    { id: 'overview', name: 'Overview', href: `${baseRoute}/overview`, icon: Home },
+    { id: 'packages', name: 'Packages', href: `${baseRoute}/packages`, icon: Package },
+    { id: 'customers', name: 'Customers', href: `${baseRoute}/customers`, icon: Users },
+    { id: 'analytics', name: 'Analytics', href: `${baseRoute}/analytics`, icon: BarChart3 },
+    { id: 'notifications', name: 'Notifications', href: `${baseRoute}/notifications`, icon: Bell },
+    { id: 'settings', name: 'Settings', href: `${baseRoute}/settings`, icon: Settings },
   ];
 
   const handleTabChange = (tabId: string) => {
@@ -68,6 +80,7 @@ const PickupStationLayout: React.FC<PickupStationLayoutProps> = ({ children }) =
     id: item.id,
     label: item.name
   }));
+
 
   // Measure heights with ResizeObserver
   useLayoutEffect(() => {

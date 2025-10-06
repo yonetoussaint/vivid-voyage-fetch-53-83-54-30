@@ -12,13 +12,13 @@ import PickupStationSettings from '@/components/pickup-station-app/pages/PickupS
 const PickupStationDashboard = () => {
   const location = useLocation();
 
-  // Scroll to top when route changes
+  // Scroll to top when route changes (similar to SellerDashboard behavior)
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [location.pathname]);
 
   return (
-    <PickupStationLayout>
+    <PickupStationLayout showActionButtons={false}>
       <Routes>
         <Route path="/" element={<Navigate to="/pickup-station/overview" replace />} />
         <Route path="/overview" element={<PickupStationOverview />} />
