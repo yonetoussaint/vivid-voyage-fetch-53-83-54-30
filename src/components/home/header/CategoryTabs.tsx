@@ -34,11 +34,18 @@ const CategoryTabs = ({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [underlineWidth, setUnderlineWidth] = useState(0);
   const [underlineLeft, setUnderlineLeft] = useState(0);
+  const isInitialMount = useRef(true);
 
-  // Memoize refs update
+  // Memoize refs update and reset initial mount flag
   useEffect(() => {
     tabRefs.current = tabRefs.current.slice(0, categories.length);
+    isInitialMount.current = true; // Reset flag when categories change
   }, [categories]);
+
+  // Reset initial mount flag when active tab changes
+  useEffect(() => {
+    isInitialMount.current = true;
+  }, [activeTab]);
 
   // Instant underline calculation
   const updateUnderline = useCallback(() => {
@@ -188,10 +195,12 @@ const CategoryTabs = ({
     tabRefs.current[index] = el;
 
     // If this is the active tab and we have the element, update underline immediately
-    if (el && id === activeTab) {
-      // The useLayoutEffect will handle the actual update
-      // Just trigger a micro-task to ensure it runs after current execution
-      Promise.resolve().then(() => updateUnderline());
+    if (el && id === activeTab && isInitialMount.current) {
+      // Use requestAnimationFrame to ensure DOM is ready but still appear instant
+      requestAnimationFrame(() => {
+        updateUnderline();
+        isInitialMount.current = false;
+      });
     }
   }, [activeTab, updateUnderline]);
 
