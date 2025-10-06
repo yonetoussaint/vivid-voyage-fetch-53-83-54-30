@@ -565,7 +565,6 @@ export default function AliExpressHeader({
           </div>
         ) : (
           <CategoryTabs 
-            key={customTabs ? 'custom-tabs' : showSearchOverlay ? 'search-tabs' : 'category-tabs'}
             progress={1}
             activeTab={activeTab}
             setActiveTab={handleTabChange}

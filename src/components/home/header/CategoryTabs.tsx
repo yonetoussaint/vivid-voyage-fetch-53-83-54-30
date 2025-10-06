@@ -88,7 +88,15 @@ const CategoryTabs = ({
 
   // Force recalculation when categories change (e.g., switching to custom tabs)
   useEffect(() => {
+    // Immediate calculation
+    updateUnderline();
+    
     const timers = [
+      setTimeout(() => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => updateUnderline());
+        });
+      }, 10),
       setTimeout(() => {
         requestAnimationFrame(() => {
           requestAnimationFrame(() => updateUnderline());
