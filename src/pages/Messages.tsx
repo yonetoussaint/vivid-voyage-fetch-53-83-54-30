@@ -23,7 +23,7 @@ export default function Messages() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center pt-[var(--header-height)]">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
       </div>
     );
@@ -31,7 +31,7 @@ export default function Messages() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center pt-[var(--header-height)]">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center px-4">
           <MessageCircle className="h-12 w-12 mx-auto text-gray-300 mb-3" />
           <p className="text-sm text-gray-500 mb-4">Please log in to view your messages</p>
@@ -71,7 +71,7 @@ export default function Messages() {
   };
 
   return (
-    <div className="min-h-screen bg-white pt-[var(--header-height)]">
+    <div className="min-h-screen bg-white">
       <PageContainer maxWidth="lg" padding="none">
 
         {/* Conversations List */}

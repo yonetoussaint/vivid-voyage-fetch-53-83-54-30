@@ -113,7 +113,7 @@ function MainLayoutContent() {
   };
 
   // Check if current page is messages, wallet, or explore
-  const isMessagesPage = pathname === '/messages';
+  const isMessagesPage = pathname === '/messages' || pathname.startsWith('/messages/');
   const isWalletPage = pathname === '/wallet';
   const isExplorePage = pathname === '/explore';
 
