@@ -105,7 +105,7 @@ const DefaultProfileAvatar = ({ className = "w-6 h-6" }) => (
 
 
 // Vendor Card Component
-const VendorCard = ({ vendor, onProductClick, onSellerClick, showProducts = true }) => {
+const VendorCard = ({ vendor, onProductClick, onSellerClick, showProducts = true, isPickupStation = false }) => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [imageError, setImageError] = useState(false);
   const displayProducts = vendor.products.slice(0, 4);
@@ -211,7 +211,7 @@ const VendorCard = ({ vendor, onProductClick, onSellerClick, showProducts = true
             className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white text-xs font-medium py-1.5 px-2 rounded-full transition-colors"
             onClick={handleSellerClick}
           >  
-            Visit Store  
+            {isPickupStation ? 'Visit Station' : 'Visit Store'}
           </button>  
           <button   
             className={`flex items-center justify-center text-xs font-medium py-1.5 px-2 rounded-full transition-colors ${  
@@ -247,15 +247,18 @@ interface VendorCarouselProps {
   title?: string;
   showProducts?: boolean;
   viewAllLink?: string;
+  isPickupStation?: boolean;
 }
 
 // Main Carousel Component
 const VendorCarousel: React.FC<VendorCarouselProps> = ({ 
   title = "TOP VENDORS",
   showProducts = true,
-  viewAllLink = "/vendors"
+  viewAllLink = "/vendors",
+  isPickupStation = false
 }) => {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const scrollContainerRef = useRef(null);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -273,8 +276,12 @@ const VendorCarousel: React.FC<VendorCarouselProps> = ({
   };
 
   const handleSellerClick = (sellerId: string) => {
-    setSelectedSellerId(sellerId);
-    setIsSellerPanelOpen(true);
+    if (isPickupStation) {
+      navigate('/pickup-station');
+    } else {
+      setSelectedSellerId(sellerId);
+      setIsSellerPanelOpen(true);
+    }
   };
 
   const handleCloseSellerPanel = () => {
@@ -395,7 +402,7 @@ const VendorCarousel: React.FC<VendorCarouselProps> = ({
               scrollSnapAlign: 'start'
             }}
           >
-            <VendorCard vendor={vendor} onProductClick={handleProductClick} onSellerClick={handleSellerClick} showProducts={showProducts} />
+            <VendorCard vendor={vendor} onProductClick={handleProductClick} onSellerClick={handleSellerClick} showProducts={showProducts} isPickupStation={isPickupStation} />
           </div>
         ))}
 

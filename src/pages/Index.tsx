@@ -309,6 +309,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
           title="TOP PICK UP STATIONS"
           showProducts={false}
           viewAllLink="/pickup-stations"
+          isPickupStation={true}
         />
 
         {/* First Vendor Post */}
