@@ -123,15 +123,18 @@ function MainLayoutContent() {
   const walletFilter = searchParams.get('tab') || 'buyer';
   const exploreFilter = searchParams.get('tab') || 'products';
 
-  // Check if we should apply spacing (messages, explore, wallet)
+  // Check if we should apply spacing (messages, wallet, explore)
   const shouldApplySpacing = isMessagesPage || isExplorePage || isWalletPage;
+
+  // Check if current page is reels
+  const isReelsPage = pathname === '/reels' && !location.search.includes('video=');
 
   // Define custom tabs for explore page
 
 
   // Calculate header and bottom nav heights for CSS variables
   const headerHeight = shouldApplySpacing ? (isMobile ? '80px' : '120px') : '0px';
-  const bottomNavHeight = shouldApplySpacing && isMobile && !isMultiStepTransferPage && !isMultiStepTransferSheetPage && !isTransferOldPage ? '48px' : '0px';
+  const bottomNavHeight = (shouldApplySpacing || isReelsPage) && isMobile && !isMultiStepTransferPage && !isMultiStepTransferSheetPage && !isTransferOldPage ? '48px' : '0px';
 
   // In MainLayout.tsx, update the headerHeightStyle to ensure bottom nav height is set correctly
   const headerHeightStyle = `
