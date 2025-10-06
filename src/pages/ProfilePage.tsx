@@ -9,6 +9,7 @@ import ProfilePayments from '@/components/profile-app/pages/ProfilePayments';
 import ProfileAnalytics from '@/components/profile-app/pages/ProfileAnalytics';
 import CustomerReviewsEnhanced from '@/components/product/CustomerReviewsEnhanced';
 import ProfileSettings from '@/components/profile-app/pages/ProfileSettings';
+import PickupStationProfile from '@/components/profile-app/pages/PickupStationProfile';
 
 const ProfilePage = () => {
   const location = useLocation();
@@ -39,6 +40,7 @@ const ProfilePage = () => {
         <Route path="analytics" element={<ProfileAnalytics />} />
         <Route path="reviews" element={<CustomerReviewsEnhanced />} />
         <Route path="settings" element={<ProfileSettings />} />
+        <Route path=":stationId" element={<PickupStationProfile />} />
       </Routes>
     </ProfileLayout>
   );
