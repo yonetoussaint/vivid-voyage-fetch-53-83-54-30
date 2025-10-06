@@ -221,7 +221,7 @@ const AuthOverlay: React.FC<AuthOverlayProps> = ({ isOpen, onClose }) => {
           <DrawerContent 
             className="h-auto transition-all duration-300 ease-out"
             style={{
-              maxHeight: currentScreen === 'main' ? '70vh' : '90vh'
+              maxHeight: currentScreen === 'main' ? '70vh' : currentScreen === 'email' ? '75vh' : '90vh'
             }}
           >
             {/* Drag handle */}

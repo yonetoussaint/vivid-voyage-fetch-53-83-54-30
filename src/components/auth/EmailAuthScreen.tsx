@@ -201,7 +201,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   };
 
   return (
-   <div className="min-h-screen bg-white flex flex-col px-4">
+   <div className={isCompact ? "bg-white flex flex-col px-4" : "min-h-screen bg-white flex flex-col px-4"}>
       {/* Header section - hide in compact mode or if showHeader is false */}
       {(showHeader && !isCompact) && (
         <div className="pt-2 pb-3 flex items-center justify-between">
