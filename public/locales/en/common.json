@@ -1,7 +1,4 @@
 {
-  "settings": "Settings",
-  "language": "Language",
-  "location": "Location",
   "header": {
     "search": "Search for products",
     "selectLanguage": "Select your language",

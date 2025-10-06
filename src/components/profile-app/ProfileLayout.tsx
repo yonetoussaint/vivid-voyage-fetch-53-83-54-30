@@ -1,15 +1,9 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
-  LayoutDashboard, 
-  ShoppingCart, 
-  Heart, 
-  MapPin, 
-  CreditCard, 
-  BarChart3, 
-  Users, 
-  MessageCircle,
-  Settings 
+  LayoutDashboard, Package, ShoppingCart, Users, BarChart3, 
+  Heart, Settings, User, MapPin, CreditCard,
+  Bell, Store
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -61,7 +55,6 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
     { id: 'payments', name: 'Payments', href: '/profile/payments', icon: CreditCard },
     { id: 'analytics', name: 'Analytics', href: '/profile/analytics', icon: BarChart3 },
     { id: 'reviews', name: 'Reviews', href: '/profile/reviews', icon: Users },
-    { id: 'questions', name: 'Questions', href: '/profile/questions', icon: MessageCircle }, // Added Questions tab
     { id: 'settings', name: 'Settings', href: '/profile/settings', icon: Settings },
   ];
 
