@@ -161,7 +161,7 @@ const handleShare = () => {
       data-reel-container
       className="w-full relative snap-start snap-always overflow-hidden bg-black"
       style={{ 
-        height: isModalMode ? '100vh' : `calc(100vh - ${bottomNavHeight}px)`
+        height: isModalMode ? '100dvh' : `calc(100dvh - ${bottomNavHeight}px)`
       }}
     >
       {/* Full Screen Video Background */}
