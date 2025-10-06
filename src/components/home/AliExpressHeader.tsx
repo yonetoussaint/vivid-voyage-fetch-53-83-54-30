@@ -122,6 +122,9 @@ export default function AliExpressHeader({
 
   // Determine which tabs to show based on search overlay state or custom tabs
   const tabsToShow = customTabs || (showSearchOverlay ? searchTabs : categories);
+  
+  // Generate a unique key for CategoryTabs based on the actual tabs being displayed
+  const categoryTabsKey = tabsToShow.map(tab => tab.id).join('-');
 
   // Add this function to handle search query changes
   const handleSearchQueryChange = (query: string) => {
@@ -565,6 +568,7 @@ export default function AliExpressHeader({
           </div>
         ) : (
           <CategoryTabs 
+            key={categoryTabsKey}
             progress={1}
             activeTab={activeTab}
             setActiveTab={handleTabChange}
