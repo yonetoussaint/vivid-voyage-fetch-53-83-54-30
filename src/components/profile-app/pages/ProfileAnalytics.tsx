@@ -117,32 +117,11 @@ const ProfileAnalytics = () => {
       {/* Header & Stats */}
       <div className="bg-white">
         <div className="px-4 py-3">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex-1">
-              <SellerSummaryHeader
-                title="Shopping Analytics"
-                subtitle="Insights into your shopping habits"
-                stats={summaryStats}
-              />
-            </div>
-            <div className="flex gap-2">
-              <Select value={timeRange} onValueChange={setTimeRange}>
-                <SelectTrigger className="w-32 h-8 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="7days">Last 7 days</SelectItem>
-                  <SelectItem value="30days">Last 30 days</SelectItem>
-                  <SelectItem value="90days">Last 3 months</SelectItem>
-                  <SelectItem value="1year">Last year</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button size="sm" variant="outline">
-                <Download className="w-3 h-3 mr-1" />
-                Export
-              </Button>
-            </div>
-          </div>
+          <SellerSummaryHeader
+            title="Shopping Analytics"
+            subtitle="Insights into your shopping habits"
+            stats={summaryStats}
+          />
         </div>
       </div>
 
