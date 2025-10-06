@@ -19,10 +19,11 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   initialEmail = '',
   isCompact = false,
   onExpand,
+  showHeader = true, // Add showHeader prop
 }) => {
   // Get auth context
   const { login, signup, isLoading: authLoading } = useAuth();
-  
+
   // Extract the new isUntrustedProvider value from the hook
   // This tells us when an email has valid format but uses an untrusted domain
   const { 
@@ -32,7 +33,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     emailCheckState, 
     isUntrustedProvider  // This is the new value we're extracting
   } = useEmailValidation(initialEmail);
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [showDomainSuggestions, setShowDomainSuggestions] = useState(false);
 
@@ -67,13 +68,13 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
           <path fill="#0c4999" d="M33.919,8.84h9.046V7.732C42.965,6.775,42.19,6,41.234,6H17.667c-0.956,0-1.732,0.775-1.732,1.732 V8.84h9.005H33.919z"></path>
           <path fill="#0f73d9" d="M33.919,33.522h7.314c0.956,0,1.732-0.775,1.732-1.732v-6.827h-9.046V33.522z"></path>
           <path fill="#0f439d" d="M15.936,24.964v6.827c0,0.956,0.775,1.732,1.732,1.732h7.273v-8.558H15.936z"></path>
-          <path fill="#2ecdfd" d="M33.919 8.84H42.964999999999996V16.866999999999997H33.919z"></path>
-          <path fill="#1c5fb0" d="M15.936 8.84H24.941000000000003V16.866999999999997H15.936z"></path>
-          <path fill="#1467c7" d="M24.94 24.964H33.919V33.522H24.94z"></path>
-          <path fill="#1690d5" d="M24.94 8.84H33.919V16.866999999999997H24.94z"></path>
-          <path fill="#1bb4ff" d="M33.919 16.867H42.964999999999996V24.963H33.919z"></path>
-          <path fill="#074daf" d="M15.936 16.867H24.941000000000003V24.963H15.936z"></path>
-          <path fill="#2076d4" d="M24.94 16.867H33.919V24.963H24.94z"></path>
+          <path fill="#2ecdfd" d="M33.919,8.84H42.964999999999996V16.866999999999997H33.919z"></path>
+          <path fill="#1c5fb0" d="M15.936,8.84H24.941000000000003V16.866999999999997H15.936z"></path>
+          <path fill="#1467c7" d="M24.94,24.964H33.919V33.522H24.94z"></path>
+          <path fill="#1690d5" d="M24.94,8.84H33.919V16.866999999999997H24.94z"></path>
+          <path fill="#1bb4ff" d="M33.919,16.867H42.964999999999996V24.963H33.919z"></path>
+          <path fill="#074daf" d="M15.936,16.867H24.941000000000003V24.963H15.936z"></path>
+          <path fill="#2076d4" d="M24.94,16.867H33.919V24.963H24.94z"></path>
           <path fill="#2ed0ff" d="M15.441,42c0.463,0,26.87,0,26.87,0C43.244,42,44,41.244,44,40.311V24.438 c0,0-0.03,0.658-1.751,1.617c-1.3,0.724-27.505,15.511-27.505,15.511S14.978,42,15.441,42z"></path>
           <path fill="#139fe2" d="M42.279,41.997c-0.161,0-26.59,0.003-26.59,0.003C14.756,42,14,41.244,14,40.311V25.067 l29.363,16.562C43.118,41.825,42.807,41.997,42.279,41.997z"></path>
           <path fill="#00488d" d="M22.319,34H5.681C4.753,34,4,33.247,4,32.319V15.681C4,14.753,4.753,14,5.681,14h16.638 C23.247,14,24,14.753,24,15.681v16.638C24,33.247,23.247,34,22.319,34z"></path>
@@ -109,7 +110,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       ),
       protonmail: (
         <svg width="16" height="16" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-          <path fill="#d1c4e9" d="M42.449,9.264L26.355,22.088c-1.401,1.117-3.404,1.112-4.8-0.01L5.535,9.198	C4.909,8.721,4,9.161,4,9.941v5.603v19.732c0,2.076,1.706,3.758,3.81,3.758H40.19c2.104,0,3.81-1.683,3.81-3.758V9.995	C44,9.205,43.072,8.767,42.449,9.264z"></path>
+          <path fill="#d1c4e9" d="M42.449,9.264L26.355,22.088c-1.401,1.117-3.404,1.112-4.8,0.01L5.535,9.198	C4.909,8.721,4,9.161,4,9.941v5.603v19.732c0,2.076,1.706,3.758,3.81,3.758H40.19c2.104,0,3.81-1.683,3.81-3.758V9.995	C44,9.205,43.072,8.767,42.449,9.264z"></path>
           <path fill="#7c4dff" d="M35.429,14.858l-13.79,10.988c-1.4,1.115-3.399,1.112-4.796-0.007L4,15.545v19.732	c0,2.076,1.706,3.758,3.81,3.758h27.619V14.858z"></path>
         </svg>
       ),
@@ -152,13 +153,13 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
   const handleContinueWithCode = async () => {
     if (!isEmailValid || isLoading || emailCheckState === 'checking') return;
-    
+
     console.log('EmailAuthScreen: handleContinueWithCode called for email:', email);
     setIsLoading(true);
     try {
       // Use Supabase's built-in OTP authentication
       const { supabase } = await import('../../integrations/supabase/client');
-      
+
       const { error } = await supabase.auth.signInWithOtp({
         email: email,
         options: {
@@ -184,7 +185,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
   const handleCreateAccountClick = async () => {
     if (!isEmailValid || isLoading || emailCheckState === 'checking') return;
-    
+
     console.log('EmailAuthScreen: handleCreateAccountClick called for email:', email);
     setIsLoading(true);
     try {
@@ -201,8 +202,8 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
   return (
    <div className="min-h-screen bg-white flex flex-col px-4">
-      {/* Header section - hide in compact mode */}
-      {!isCompact && (
+      {/* Header section - hide in compact mode or if showHeader is false */}
+      {(showHeader && !isCompact) && (
         <div className="pt-2 pb-3 flex items-center justify-between">
           <button
             onClick={() => {
@@ -254,7 +255,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
         </div>
 
         {/* THIS IS THE KEY CHANGE: Pass the isUntrustedProvider prop */}
-        
+
   <div className="flex flex-col gap-2">
   <EmailStatusMessage
     emailCheckState={emailCheckState}

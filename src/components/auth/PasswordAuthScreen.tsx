@@ -11,6 +11,7 @@ interface PasswordAuthScreenProps {
   onForgotPasswordClick: () => void;
   isCompact?: boolean;
   onExpand?: () => void;
+  showHeader?: boolean;
 }
 
 const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
@@ -19,7 +20,8 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
   onSignInSuccess,
   onForgotPasswordClick,
   isCompact = false,
-  onExpand
+  onExpand,
+  showHeader = true
 }) => {
   const { login, isLoading: authLoading } = useAuth();
   const [password, setPassword] = useState('');
@@ -76,8 +78,8 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
 
   return (
     <div className="min-h-screen bg-white flex flex-col px-4">
-      {/* Header - hide in compact mode */}
-      {!isCompact && (
+      {/* Header - optional */}
+      {showHeader && !isCompact && (
         <div className="pt-2 pb-3 flex items-center justify-between">
           <button
             onClick={onBack}

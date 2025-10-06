@@ -131,6 +131,7 @@ const AuthOverlay: React.FC<AuthOverlayProps> = ({ isOpen, onClose }) => {
             onCreateAccount={handleCreateAccount}
             onSignUpClick={handleSignUpClick}
             initialEmail={userEmail}
+            showHeader={!compactProps.isCompact}
             {...compactProps}
           />
         );
@@ -140,6 +141,7 @@ const AuthOverlay: React.FC<AuthOverlayProps> = ({ isOpen, onClose }) => {
             email={userEmail}
             onBack={handleBackFromVerification}
             onVerificationSuccess={handleVerificationSuccess}
+            showHeader={!compactProps.isCompact}
             {...compactProps}
           />
         );
@@ -150,6 +152,7 @@ const AuthOverlay: React.FC<AuthOverlayProps> = ({ isOpen, onClose }) => {
             onBack={handleBackFromPassword}
             onSignInSuccess={handleSignInSuccess}
             onForgotPasswordClick={handleForgotPasswordClick}
+            showHeader={!compactProps.isCompact}
             {...compactProps}
           />
         );

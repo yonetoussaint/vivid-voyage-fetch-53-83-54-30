@@ -10,4 +10,5 @@ export interface EmailAuthScreenProps {
   initialEmail?: string;
   isCompact?: boolean;
   onExpand?: () => void;
+  showHeader?: boolean;
 }
