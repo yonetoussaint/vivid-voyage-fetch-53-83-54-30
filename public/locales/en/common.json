@@ -1,4 +1,7 @@
 {
+  "settings": "Settings",
+  "language": "Language",
+  "location": "Location",
   "header": {
     "search": "Search for products",
     "selectLanguage": "Select your language",
@@ -22,8 +25,5 @@
     "terms": "By subscribing, you agree to our Terms and Privacy Policy"
   },
   "noResults": "No results found",
-  "tryAdjustingSearch": "Try adjusting your search terms",
-  "location": "Location",
-  "settings": "Settings",
-  "language": "Language"
+  "tryAdjustingSearch": "Try adjusting your search terms"
 }

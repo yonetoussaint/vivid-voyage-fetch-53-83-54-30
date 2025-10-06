@@ -1,4 +1,7 @@
 {
+  "settings": "Paramèt",
+  "language": "Lang",
+  "location": "Lokasyon",
   "header": {
     "search": "Chèche pwodwi",
     "selectLanguage": "Chwazi lang ou",
@@ -14,8 +17,5 @@
     "finish": "Fini"
   },
   "noResults": "Pa gen rezilta yo jwenn",
-  "tryAdjustingSearch": "Eseye ajiste mo rechèch ou yo",
-  "location": "Lokasyon",
-  "settings": "Paramèt",
-  "language": "Lang"
+  "tryAdjustingSearch": "Eseye ajiste mo rechèch ou yo"
 }
