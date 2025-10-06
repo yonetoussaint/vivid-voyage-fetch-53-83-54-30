@@ -1,15 +1,24 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
-  LayoutDashboard, Package, ShoppingCart, Users, BarChart3, 
-  Heart, Settings, User, MapPin, CreditCard,
-  Bell, Store
+  LayoutDashboard, 
+  ShoppingCart, 
+  Heart, 
+  MapPin, 
+  CreditCard, 
+  BarChart3, 
+  Users, 
+  MessageCircle,
+  Settings 
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import TabsNavigation from '@/components/home/TabsNavigation';
 import ReusableSearchBar from '@/components/shared/ReusableSearchBar';
+
+// Dynamically import ProductQA to prevent it from loading unless needed
+const ProductQA = React.lazy(() => import('@/components/product/ProductQA'));
 
 interface ProfileLayoutProps {
   children: React.ReactNode;
@@ -55,6 +64,7 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
     { id: 'payments', name: 'Payments', href: '/profile/payments', icon: CreditCard },
     { id: 'analytics', name: 'Analytics', href: '/profile/analytics', icon: BarChart3 },
     { id: 'reviews', name: 'Reviews', href: '/profile/reviews', icon: Users },
+    { id: 'questions', name: 'Questions', href: '/profile/questions', icon: MessageCircle }, // Added Questions tab
     { id: 'settings', name: 'Settings', href: '/profile/settings', icon: Settings },
   ];
 
@@ -283,7 +293,14 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
 
           {/* Main Content */}
           <div className="px-2">
-            {children}
+            {/* Render the ProductQA component if the current tab is 'questions' */}
+            {activeTab === 'questions' ? (
+              <React.Suspense fallback={<div>Loading Questions...</div>}>
+                <ProductQA />
+              </React.Suspense>
+            ) : (
+              children
+            )}
           </div>
         </main>
       </div>

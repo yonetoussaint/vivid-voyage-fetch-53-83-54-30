@@ -8,6 +8,7 @@ import ProfileAddresses from '@/components/profile-app/pages/ProfileAddresses';
 import ProfilePayments from '@/components/profile-app/pages/ProfilePayments';
 import ProfileAnalytics from '@/components/profile-app/pages/ProfileAnalytics';
 import CustomerReviewsEnhanced from '@/components/product/CustomerReviewsEnhanced';
+import ProductQA from '@/components/product/ProductQA';
 import ProfileSettings from '@/components/profile-app/pages/ProfileSettings';
 
 const ProfilePage = () => {
@@ -38,6 +39,7 @@ const ProfilePage = () => {
         <Route path="payments" element={<ProfilePayments />} />
         <Route path="analytics" element={<ProfileAnalytics />} />
         <Route path="reviews" element={<CustomerReviewsEnhanced />} />
+        <Route path="questions" element={<ProductQA />} />
         <Route path="settings" element={<ProfileSettings />} />
       </Routes>
     </ProfileLayout>
