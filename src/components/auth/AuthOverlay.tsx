@@ -34,11 +34,11 @@ const AuthOverlay: React.FC<AuthOverlayProps> = ({ isOpen, onClose }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [startY, setStartY] = useState(0);
 
-  // Reset to main screen when overlay opens and start in expanded mode
+  // Reset to main screen when overlay opens
   useEffect(() => {
     if (isOpen) {
       setCurrentScreen('main');
-      setIsExpanded(true); // Start expanded for full feature access
+      setIsExpanded(false);
       setUserEmail('');
       setResetOTP('');
     }
@@ -282,7 +282,7 @@ const AuthOverlay: React.FC<AuthOverlayProps> = ({ isOpen, onClose }) => {
           if (!open) onClose();
         }}>
           <DrawerContent 
-            className="h-[95vh] transition-all duration-300 ease-out"
+            className="h-auto max-h-[70vh] transition-all duration-300 ease-out"
             style={{
               transform: isDragging ? `translateY(${-dragY}px)` : undefined
             }}
