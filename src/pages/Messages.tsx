@@ -67,6 +67,7 @@ export default function Messages() {
     if (conversationId.startsWith('blocked-')) {
       return;
     }
+    console.log('Navigating to conversation:', conversationId);
     navigate(`/messages/${conversationId}`);
   };
 
@@ -94,6 +95,7 @@ export default function Messages() {
             conversations.map((conversation) => (
               <button
                 key={conversation.id}
+                type="button"
                 onClick={() => handleConversationClick(conversation.id)}
                 className={`w-full px-4 py-4 flex items-center gap-3 transition-colors border-b border-gray-50 ${
                   conversation.id.startsWith('blocked-') 
