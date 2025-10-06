@@ -160,6 +160,17 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       orderIndex: 0
     },
     { 
+      id: 'explore', 
+      name: 'Explore', 
+      icon: Sparkles,
+      bgColor: 'bg-pink-100', 
+      iconBg: 'text-pink-500',
+      labelBg: 'bg-pink-600/90',
+      isSpecial: true,
+      count: 0,
+      orderIndex: 1
+    },
+    { 
       id: 'trending', 
       name: 'My Store', 
       icon: Store,
@@ -168,7 +179,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       labelBg: 'bg-purple-600/90',
       isSpecial: true,
       count: 0,
-      orderIndex: 1
+      orderIndex: 2
     },
     { 
       id: 'my-station', 
@@ -179,7 +190,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       labelBg: 'bg-orange-600/90',
       isSpecial: true,
       count: 0,
-      orderIndex: 2
+      orderIndex: 3
     },
     { 
       id: 'wishlist', 
@@ -190,7 +201,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       labelBg: 'bg-teal-600/90',
       isSpecial: true,
       count: 0,
-      orderIndex: 3
+      orderIndex: 4
     },
     { 
       id: 'cart', 
@@ -201,7 +212,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       labelBg: 'bg-yellow-600/90',
       isSpecial: true,
       count: 0,
-      orderIndex: 4
+      orderIndex: 5
     },
     { 
       id: 'notifications', 
@@ -212,7 +223,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       labelBg: 'bg-blue-600/90',
       isSpecial: true,
       count: 0,
-      orderIndex: 5
+      orderIndex: 6
     },
     { 
       id: 'addresses', 
@@ -223,7 +234,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       labelBg: 'bg-indigo-600/90',
       isSpecial: true,
       count: 0,
-      orderIndex: 6
+      orderIndex: 7
     },
     { 
       id: 'help', 
@@ -234,7 +245,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       labelBg: 'bg-gray-600/90',
       isSpecial: true,
       count: 0,
-      orderIndex: 7
+      orderIndex: 8
     }
   ];
 
@@ -413,6 +424,8 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
   const handleCategorySelect = (categoryName: string) => {
     if (categoryName === 'Shorts') {
       navigate('/reels?video=modal');
+    } else if (categoryName === 'Explore') {
+      navigate('/explore');
     } else if (categoryName === 'My Store') {
       navigate('/seller-dashboard');
     } else if (categoryName === 'My Station') {

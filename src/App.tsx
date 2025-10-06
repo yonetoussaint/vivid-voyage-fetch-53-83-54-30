@@ -73,6 +73,7 @@ import ComponentTestPage from "./pages/ComponentTestPage";
 import SellerDashboard from './pages/SellerDashboard';
 import SellerPage from './pages/SellerPage';
 import PickupStationDashboard from './pages/PickupStationDashboard';
+import Explore from './pages/Explore';
 import NotFound from "./pages/NotFound";
 import MainLayout from "./components/layout/MainLayout";
 import { AuthOverlayProvider } from "./context/AuthOverlayContext";
@@ -142,6 +143,7 @@ function App() {
                                 <Route path="categories/automotive" element={<AutomotivePage />} />
                                 <Route path="categories/kids-hobbies" element={<KidsHobbiesPage />} />
                                 <Route path="categories/entertainment" element={<EntertainmentPage />} />
+                                <Route path="explore" element={<Explore />} />
                                 <Route path="admin" element={<AdminPanel />} />
                 <Route path="admin-dashboard/*" element={<AdminDashboard />} />
                                 <Route path="/seller/:sellerId/*" element={<SellerPage />} />

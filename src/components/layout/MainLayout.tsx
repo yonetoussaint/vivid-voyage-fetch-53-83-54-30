@@ -133,6 +133,7 @@ function MainLayoutContent() {
     '/for-you',
     '/messages',
     '/wallet',
+    '/explore',
     '/categories/electronics',
     '/categories/home-living',
     '/categories/fashion',
@@ -148,14 +149,16 @@ function MainLayoutContent() {
   // Check if current page is electronics (has filter functionality)
   const isElectronicsPage = pathname === '/categories/electronics';
 
-  // Check if current page is messages or wallet
+  // Check if current page is messages, wallet, or explore
   const isMessagesPage = pathname === '/messages';
   const isWalletPage = pathname === '/wallet';
+  const isExplorePage = pathname === '/explore';
 
-  // Get filter from URL params for messages and wallet
+  // Get filter from URL params for messages, wallet, and explore
   const searchParams = new URLSearchParams(location.search);
   const messagesFilter = searchParams.get('filter') || 'all';
   const walletFilter = searchParams.get('tab') || 'buyer';
+  const exploreFilter = searchParams.get('tab') || 'products';
 
   // Redirect to include default filter if missing
   useEffect(() => {
@@ -165,7 +168,10 @@ function MainLayoutContent() {
     if (isWalletPage && !searchParams.get('tab')) {
       navigate('/wallet?tab=buyer', { replace: true });
     }
-  }, [isMessagesPage, isWalletPage, searchParams, navigate]);
+    if (isExplorePage && !searchParams.get('tab')) {
+      navigate('/explore?tab=products', { replace: true });
+    }
+  }, [isMessagesPage, isWalletPage, isExplorePage, searchParams, navigate]);
 
   // Define custom tabs for messages page
   const messagesTabs = isMessagesPage ? [
@@ -185,6 +191,15 @@ function MainLayoutContent() {
     { id: 'rewards', name: 'Rewards', path: '/wallet?tab=rewards' },
   ] : undefined;
 
+  // Define custom tabs for explore page
+  const exploreTabs = isExplorePage ? [
+    { id: 'products', name: 'Products', path: '/explore?tab=products' },
+    { id: 'reels', name: 'Reels', path: '/explore?tab=reels' },
+    { id: 'posts', name: 'Posts', path: '/explore?tab=posts' },
+    { id: 'sellers', name: 'Sellers', path: '/explore?tab=sellers' },
+    { id: 'stations', name: 'Stations', path: '/explore?tab=stations' },
+  ] : undefined;
+
   return (
     <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
         <style dangerouslySetInnerHTML={{ __html: headerHeightStyle }} />
@@ -192,7 +207,7 @@ function MainLayoutContent() {
         {/* Show AliExpressHeader for category pages */}
         {shouldShowHeader && (
           <AliExpressHeader 
-            activeTabId={isMessagesPage ? messagesFilter : isWalletPage ? walletFilter : activeTab}
+            activeTabId={isMessagesPage ? messagesFilter : isWalletPage ? walletFilter : isExplorePage ? exploreFilter : activeTab}
             showFilterBar={showFilterBar}
             filterCategories={filterCategories}
             selectedFilters={selectedFilters}
@@ -201,7 +216,7 @@ function MainLayoutContent() {
             onClearAll={onClearAll}
             onFilterButtonClick={onFilterButtonClick}
             isFilterDisabled={isFilterDisabled}
-            customTabs={messagesTabs || walletTabs}
+            customTabs={messagesTabs || walletTabs || exploreTabs}
             onCustomTabChange={isMessagesPage ? (tabId) => {
               const tab = messagesTabs?.find(t => t.id === tabId);
               if (tab?.path) {
@@ -209,6 +224,11 @@ function MainLayoutContent() {
               }
             } : isWalletPage ? (tabId) => {
               const tab = walletTabs?.find(t => t.id === tabId);
+              if (tab?.path) {
+                navigate(tab.path);
+              }
+            } : isExplorePage ? (tabId) => {
+              const tab = exploreTabs?.find(t => t.id === tabId);
               if (tab?.path) {
                 navigate(tab.path);
               }
@@ -241,6 +261,7 @@ function MainLayoutContent() {
           pathname === '/shopping' || 
           pathname === '/settings' ||
           pathname === '/wallet' ||
+          pathname === '/explore' ||
           pathname === '/categories/electronics' ||
           pathname === '/categories/home-living' ||
           pathname === '/categories/fashion' ||
