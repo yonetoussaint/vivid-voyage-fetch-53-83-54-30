@@ -106,15 +106,24 @@ const ProfileAnalytics = () => {
     },
   ];
 
+  const summaryStats = stats.map(stat => ({
+    value: stat.value,
+    label: stat.title,
+    color: stat.color
+  }));
+
   return (
     <div className="space-y-4 bg-gray-50 min-h-screen">
       {/* Header & Stats */}
-      <div className="bg-white border-b">
+      <div className="bg-white">
         <div className="px-4 py-3">
           <div className="flex items-center justify-between mb-3">
-            <div>
-              <h1 className="text-lg font-bold text-foreground">Shopping Analytics</h1>
-              <p className="text-xs text-muted-foreground">Insights into your shopping habits</p>
+            <div className="flex-1">
+              <SellerSummaryHeader
+                title="Shopping Analytics"
+                subtitle="Insights into your shopping habits"
+                stats={summaryStats}
+              />
             </div>
             <div className="flex gap-2">
               <Select value={timeRange} onValueChange={setTimeRange}>
@@ -133,32 +142,6 @@ const ProfileAnalytics = () => {
                 Export
               </Button>
             </div>
-          </div>
-
-          {/* Compact Stats Row */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {stats.map((stat, index) => {
-              const Icon = stat.icon;
-              const isPositive = stat.trend === 'up';
-
-              return (
-                <div key={index} className="bg-muted/20 rounded-lg p-3">
-                  <div className="flex items-center justify-between mb-1">
-                    <Icon className="w-4 h-4 text-muted-foreground" />
-                    {isPositive ? (
-                      <ArrowUpRight className="w-3 h-3 text-green-600" />
-                    ) : (
-                      <ArrowDownRight className="w-3 h-3 text-red-600" />
-                    )}
-                  </div>
-                  <div className="text-lg font-bold text-foreground">{stat.value}</div>
-                  <div className="text-xs text-muted-foreground">{stat.title}</div>
-                  <div className={`text-xs ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                    {stat.change}
-                  </div>
-                </div>
-              );
-            })}
           </div>
         </div>
       </div>
