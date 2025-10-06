@@ -175,7 +175,13 @@ export default function Explore() {
   };
 
   return (
-    <PageContainer className="overflow-hidden">
+    <PageContainer 
+      className="overflow-hidden"
+      style={{
+        paddingTop: 'var(--header-height, 0px)',
+        paddingBottom: 'var(--bottom-nav-height, 0px)'
+      }}
+    >
       {renderContent()}
     </PageContainer>
   );

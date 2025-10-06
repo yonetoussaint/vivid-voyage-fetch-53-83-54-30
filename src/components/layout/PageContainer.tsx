@@ -41,10 +41,6 @@ export const PageContainer = React.forwardRef<HTMLDivElement, PageContainerProps
         paddingClasses[padding],
         className
       )}
-      style={{
-        paddingTop: 'var(--header-height, 0px)',
-        paddingBottom: 'var(--bottom-nav-height, 0px)'
-      }}
     >
       {children}
     </div>
