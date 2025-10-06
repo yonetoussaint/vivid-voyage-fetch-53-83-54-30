@@ -29,16 +29,10 @@ const AuthOverlay: React.FC<AuthOverlayProps> = ({ isOpen, onClose }) => {
   const [selectedLanguage, setSelectedLanguage] = useState('en');
   const [userEmail, setUserEmail] = useState('');
   const [resetOTP, setResetOTP] = useState('');
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [dragY, setDragY] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startY, setStartY] = useState(0);
-
   // Reset to main screen when overlay opens
   useEffect(() => {
     if (isOpen) {
       setCurrentScreen('main');
-      setIsExpanded(false);
       setUserEmail('');
       setResetOTP('');
     }
@@ -105,63 +99,11 @@ const AuthOverlay: React.FC<AuthOverlayProps> = ({ isOpen, onClose }) => {
     setCurrentScreen('success');
   };
 
-  // Drag handlers for expansion (only when not expanded)
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (isExpanded) return;
-    setIsDragging(true);
-    setStartY(e.touches[0].clientY);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging || isExpanded) return;
-    const currentY = e.touches[0].clientY;
-    const diff = startY - currentY;
-    setDragY(diff);
-  };
-
-  const handleTouchEnd = () => {
-    if (!isDragging || isExpanded) return;
-    setIsDragging(false);
-    
-    if (dragY > 100) {
-      setIsExpanded(true);
-    } else if (dragY < -100) {
-      onClose();
-    }
-    
-    setDragY(0);
-  };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (isExpanded) return;
-    setIsDragging(true);
-    setStartY(e.clientY);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || isExpanded) return;
-    const diff = startY - e.clientY;
-    setDragY(diff);
-  };
-
-  const handleMouseUp = () => {
-    if (!isDragging || isExpanded) return;
-    setIsDragging(false);
-    
-    if (dragY > 100) {
-      setIsExpanded(true);
-    } else if (dragY < -100) {
-      onClose();
-    }
-    
-    setDragY(0);
-  };
-
   // Get compact props for each screen
   const getCompactProps = () => {
     return {
-      isCompact: !isExpanded,
-      onExpand: () => setIsExpanded(true)
+      isCompact: true,
+      onExpand: undefined
     };
   };
 
@@ -270,36 +212,18 @@ const AuthOverlay: React.FC<AuthOverlayProps> = ({ isOpen, onClose }) => {
   return (
     <AuthProvider>
       <LanguageProvider>
-      {isExpanded ? (
-        // Full page mode
-        <div className="fixed inset-0 z-50 bg-background">
-          <div className="h-full overflow-auto">
-            {renderCurrentScreen()}
-          </div>
-        </div>
-      ) : (
-        // Drawer overlay mode
         <Drawer open={isOpen} onOpenChange={(open) => {
           if (!open) onClose();
         }}>
           <DrawerContent 
             className="h-auto transition-all duration-300 ease-out"
             style={{
-              transform: isDragging ? `translateY(${-dragY}px)` : undefined,
               maxHeight: currentScreen === 'main' ? '70vh' : '90vh'
             }}
           >
             {/* Drag handle */}
-            <div 
-              className="flex flex-col items-center pt-2 pb-3 cursor-grab active:cursor-grabbing select-none"
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-            >
-              <div className="w-16 h-1.5 bg-gray-300 rounded-full shadow-sm hover:bg-gray-400 transition-colors" />
+            <div className="flex flex-col items-center pt-2 pb-3">
+              <div className="w-16 h-1.5 bg-gray-300 rounded-full shadow-sm" />
             </div>
             
             <div className="overflow-y-auto px-0 pb-4">
@@ -307,7 +231,6 @@ const AuthOverlay: React.FC<AuthOverlayProps> = ({ isOpen, onClose }) => {
             </div>
           </DrawerContent>
         </Drawer>
-      )}
       </LanguageProvider>
     </AuthProvider>
   );
