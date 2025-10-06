@@ -239,53 +239,10 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
     }
   ];
 
-  // Enhanced debugging function to check database state
-  const debugDatabaseState = async (userId: string) => {
-    try {
-      console.log('🔍 DEBUG: Starting database state check for user:', userId);
-
-      // Check if wishlist table has ANY data
-      const { data: allWishlistData, error: allWishlistError } = await supabase
-        .from('wishlist')
-        .select('*')
-        .limit(5);
-
-      console.log('🔍 DEBUG: All wishlist data (first 5 rows):', allWishlistData);
-      console.log('🔍 DEBUG: All wishlist error:', allWishlistError);
-
-      // Check wishlist data for specific user
-      const { data: userWishlistData, error: userWishlistError } = await supabase
-        .from('wishlist')
-        .select('*')
-        .eq('user_id', userId);
-
-      console.log('🔍 DEBUG: Wishlist data for current user:', userWishlistData);
-      console.log('🔍 DEBUG: Wishlist count for current user:', userWishlistData?.length);
-      console.log('🔍 DEBUG: Wishlist error for current user:', userWishlistError);
-
-      // Test without user_id filter to see all data
-      const { data: allWishlistNoFilter, error: allWishlistNoFilterError } = await supabase
-        .from('wishlist')
-        .select('*');
-
-      console.log('🔍 DEBUG: All wishlist data (no filter):', allWishlistNoFilter);
-      console.log('🔍 DEBUG: Total wishlist items count:', allWishlistNoFilter?.length);
-
-    } catch (error) {
-      console.error('🔍 DEBUG: Error in debug function:', error);
-    }
-  };
-
-  // Fetch real user data for counters
   // Fetch real user data for counters
   const fetchUserDataCounts = async (userId: string) => {
     try {
-      console.log('🔍 Fetching user data counts for user:', userId);
-
-      // First, run debug to see what's in the database
-      await debugDatabaseState(userId);
-
-      // Fetch all counts in parallel with better error handling
+      // Fetch all counts in parallel
       const [
         wishlistResult,
         cartResult,
@@ -321,29 +278,14 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
           .eq('status', 'open')
       ]);
 
-      console.log('📊 Wishlist result:', wishlistResult);
-      console.log('📊 Cart result:', cartResult);
-      console.log('📊 Notifications result:', notificationsResult);
-
-      // Check for errors in each result
-      if (wishlistResult.error) console.error('Wishlist error:', wishlistResult.error);
-      if (cartResult.error) console.error('Cart error:', cartResult.error);
-      if (notificationsResult.error) console.error('Notifications error:', notificationsResult.error);
-      if (addressesResult.error) console.error('Addresses error:', addressesResult.error);
-      if (helpTicketsResult.error) console.error('Help tickets error:', helpTicketsResult.error);
-
-      const counts = {
+      return {
         wishlist: wishlistResult.count || 0,
         cart: cartResult.count || 0,
         notifications: notificationsResult.count || 0,
         addresses: addressesResult.count || 0,
         help: helpTicketsResult.count || 0
       };
-
-      console.log('✅ Final counts:', counts);
-      return counts;
     } catch (error) {
-      console.error('❌ Error fetching user data counts:', error);
       return {
         wishlist: 0,
         cart: 0,
@@ -353,26 +295,22 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       };
     }
   };
+
   // Helper function to get count for specific category
   const getCountForCategory = (categoryId: string, userCounts: any): number => {
-    try {
-      switch (categoryId) {
-        case 'wishlist':
-          return userCounts?.wishlist ?? 0;
-        case 'cart':
-          return userCounts?.cart ?? 0;
-        case 'notifications':
-          return userCounts?.notifications ?? 0;
-        case 'addresses':
-          return userCounts?.addresses ?? 0;
-        case 'help':
-          return userCounts?.help ?? 0;
-        default:
-          return 0;
-      }
-    } catch (error) {
-      console.error(`❌ Error getting count for ${categoryId}:`, error);
-      return 0;
+    switch (categoryId) {
+      case 'wishlist':
+        return userCounts?.wishlist ?? 0;
+      case 'cart':
+        return userCounts?.cart ?? 0;
+      case 'notifications':
+        return userCounts?.notifications ?? 0;
+      case 'addresses':
+        return userCounts?.addresses ?? 0;
+      case 'help':
+        return userCounts?.help ?? 0;
+      default:
+        return 0;
     }
   };
 
@@ -382,17 +320,12 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       setIsLoading(true);
 
       if (!user) {
-        console.log('👤 No user found, skipping category fetch');
         setCategories([]);
         return;
       }
 
-      console.log('🔄 Starting to fetch user category order for user:', user.id);
-
       // Fetch real user data counts
       const userCounts = await fetchUserDataCounts(user.id);
-
-      console.log('📋 User counts for categories:', userCounts);
 
       // Try to get user's custom order from user_preferences table
       const { data, error } = await supabase
@@ -402,12 +335,10 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
         .maybeSingle();
 
       if (error) {
-        console.error('❌ Error fetching category order:', error);
         const categoriesWithCounts = defaultCategories.map(cat => ({
           ...cat,
           count: getCountForCategory(cat.id, userCounts)
         }));
-        console.log('📝 Setting categories with counts:', categoriesWithCounts);
         setCategories(categoriesWithCounts);
         return;
       }
@@ -443,7 +374,6 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
         setCategories(categoriesWithCounts);
       }
     } catch (error) {
-      console.error('❌ Error in fetchUserCategoryOrder:', error);
       const categoriesWithCounts = defaultCategories.map(cat => ({
         ...cat,
         count: 0
@@ -477,7 +407,6 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
         });
 
       if (error) {
-        console.error('Error saving category order:', error);
         toast.error('Failed to save changes');
         return false;
       }
@@ -485,7 +414,6 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       toast.success('Shortcuts order saved successfully');
       return true;
     } catch (error) {
-      console.error('Error saving category order:', error);
       toast.error('Failed to save changes');
       return false;
     } finally {
@@ -500,7 +428,6 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       try {
         await fetchUserCategoryOrder();
       } catch (error) {
-        console.error('Failed to load category data:', error);
         if (mounted) {
           setCategories(defaultCategories.map(cat => ({ ...cat, count: 0 })));
           setIsLoading(false);
