@@ -157,19 +157,18 @@ const handleShare = () => {
     <div 
       id={`reel-${index}`}
       data-reel-container
-      className="w-full h-full relative snap-start snap-always overflow-hidden bg-black"
-      style={{ height: '100%' }}
+      className="w-full h-screen relative snap-start snap-always overflow-hidden bg-black"
     >
       {/* Full Screen Video Background */}
       <div className="absolute inset-0 w-full h-full">
         <video
           ref={videoRef}
           src={video.video_url}
-          className="w-full h-full object-contain"
+          className="w-full h-full object-cover"
           loop
           muted={isMuted}
           playsInline
-          preload="metadata"
+          preload="auto"
           onClick={(e) => onVideoClick(index, e)}
         />
       </div>

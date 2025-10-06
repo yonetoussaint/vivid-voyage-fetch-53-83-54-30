@@ -47,18 +47,12 @@ export default function Reels() {
   }
 
   return (
-    <div className={`flex flex-col bg-black ${isModalMode ? 'fixed inset-0 z-50' : 'min-h-screen'}`}>
+    <div className={`flex flex-col bg-black ${isModalMode ? 'fixed inset-0 z-50' : 'h-screen'}`}>
       <ReelsHeader isModalMode={isModalMode} onClose={handleClose} />
 
       <div 
-        className="w-full overflow-y-auto snap-y snap-mandatory"
+        className="flex-1 w-full overflow-y-auto snap-y snap-mandatory"
         ref={containerRef}
-        style={{
-          height: isModalMode 
-            ? '100vh' 
-            : `calc(100vh - ${bottomNavHeight}px)`,
-          // Remove paddingBottom - it's not effective here
-        }}
       >
         {videos?.map((video, index) => (
           <ReelsVideoPlayer
