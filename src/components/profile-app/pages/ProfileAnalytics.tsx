@@ -306,7 +306,6 @@ const ProfileAnalytics = () => {
             </div>
           </CardContent>
         </Card>
-      </div>
         </div>
       </div>
     </div>
