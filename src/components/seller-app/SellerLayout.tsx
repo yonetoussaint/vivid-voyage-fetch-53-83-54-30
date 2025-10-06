@@ -109,6 +109,8 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     { id: 'overview', name: 'Overview', href: '/pickup-station/overview', icon: Home },
     { id: 'packages', name: 'Packages', href: '/pickup-station/packages', icon: Package },
     { id: 'customers', name: 'Customers', href: '/pickup-station/customers', icon: Users },
+    { id: 'reviews', name: 'Reviews', href: '/pickup-station/reviews', icon: Star },
+    { id: 'qa', name: 'Q&A', href: '/pickup-station/qa', icon: MessageSquare },
     { id: 'analytics', name: 'Analytics', href: '/pickup-station/analytics', icon: BarChart3 },
     { id: 'notifications', name: 'Notifications', href: '/pickup-station/notifications', icon: MessageCircle },
     { id: 'settings', name: 'Settings', href: '/pickup-station/settings', icon: Settings },

@@ -8,6 +8,8 @@ import PickupStationCustomers from '@/components/pickup-station-app/pages/Pickup
 import PickupStationAnalytics from '@/components/pickup-station-app/pages/PickupStationAnalytics';
 import PickupStationNotifications from '@/components/pickup-station-app/pages/PickupStationNotifications';
 import PickupStationSettings from '@/components/pickup-station-app/pages/PickupStationSettings';
+import PickupStationReviews from '@/components/pickup-station-app/pages/PickupStationReviews';
+import PickupStationQA from '@/components/pickup-station-app/pages/PickupStationQA';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -74,6 +76,8 @@ const PickupStationDashboard = () => {
         <Route path="/overview" element={<PickupStationOverview />} />
         <Route path="/packages" element={<PickupStationPackages />} />
         <Route path="/customers" element={<PickupStationCustomers />} />
+        <Route path="/reviews" element={<PickupStationReviews />} />
+        <Route path="/qa" element={<PickupStationQA />} />
         <Route path="/analytics" element={<PickupStationAnalytics />} />
         <Route path="/notifications" element={<PickupStationNotifications />} />
         <Route path="/settings" element={<PickupStationSettings />} />
