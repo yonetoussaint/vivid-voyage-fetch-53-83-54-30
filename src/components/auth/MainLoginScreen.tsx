@@ -1,5 +1,4 @@
 import React from 'react';
-import Lottie from 'lottie-react';
 import LanguageSelector from './LanguageSelector';
 import TranslatedText from './TranslatedText';
 
@@ -17,8 +16,6 @@ interface MainLoginScreenProps {
   isCompact?: boolean;
   onExpand?: () => void;
   showHeader?: boolean;
-  showAnimation?: boolean;
-  animationSize?: number;
 }
 
 const MainLoginScreen: React.FC<MainLoginScreenProps> = ({ 
@@ -27,9 +24,7 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
   onContinueWithEmail,
   isCompact = false,
   onExpand,
-  showHeader = true,
-  showAnimation = true,
-  animationSize = 300
+  showHeader = true
 }) => {
   const languages: Language[] = [
     { code: 'ht', name: 'Kreyòl Ayisyen', country: 'HT', countryName: 'Haiti' },
@@ -40,20 +35,6 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
   ];
 
   const currentLang = languages.find(lang => lang.code === selectedLanguage);
-
-  // Lottie animation URL
-  const lottieUrl = 'https://lottie.host/67390598-e140-4d3c-ad5b-fa8e572fddb7/bFJV5M8lWj.json';
-
-  const [animationData, setAnimationData] = React.useState<any>(null);
-
-  React.useEffect(() => {
-    if (showAnimation) {
-      fetch(lottieUrl)
-        .then(res => res.json())
-        .then(data => setAnimationData(data))
-        .catch(err => console.error('Failed to load Lottie animation', err));
-    }
-  }, [lottieUrl, showAnimation]);
 
   const handleGoogleSignIn = async () => {
     try {
@@ -87,21 +68,6 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
       )}
 
       <div className={isCompact ? "" : "flex-1 flex flex-col justify-center w-full p-0"}>
-        {/* Lottie animation - optional, rendered outside in compact mode */}
-        {showAnimation && !isCompact && (
-          <div className="flex justify-center mb-0">
-            {animationData ? (
-              <Lottie 
-                animationData={animationData} 
-                loop={true} 
-                style={{ width: animationSize, height: animationSize }}
-              />
-            ) : (
-              <div className="shimmer-wrapper" />
-            )}
-          </div>
-        )}
-
         <div className={isCompact ? "space-y-3 mb-4" : "space-y-3 mb-6"}>
           <button 
             onClick={handleGoogleSignIn}
