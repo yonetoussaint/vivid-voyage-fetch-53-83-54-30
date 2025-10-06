@@ -8,12 +8,9 @@ import MobileOptimizedReels from '@/components/home/MobileOptimizedReels';
 import VendorProductCarousel from '@/components/home/VendorProductCarousel';
 import TopVendorsCompact from '@/components/home/TopVendorsCompact';
 import { Clock, Package, Video, FileText, Store, MapPin } from 'lucide-react';
-import { useBottomNavHeight } from '@/hooks/useBottomNavHeight';
-
 export default function Explore() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { bottomNavHeight } = useBottomNavHeight();
   
   const searchParams = new URLSearchParams(location.search);
   const activeTab = searchParams.get('tab') || 'products';
@@ -178,13 +175,7 @@ export default function Explore() {
   };
 
   return (
-    <PageContainer 
-      className="overflow-hidden"
-      style={{
-        paddingTop: 'var(--header-height, 80px)',
-        paddingBottom: `calc(${bottomNavHeight}px + 1rem)`
-      }}
-    >
+    <PageContainer className="overflow-hidden">
       {renderContent()}
     </PageContainer>
   );

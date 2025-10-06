@@ -10,7 +10,7 @@ interface PageContainerProps {
 
 const maxWidthClasses = {
   sm: 'max-w-sm',
-  md: 'max-w-md', 
+  md: 'max-w-md',
   lg: 'max-w-lg',
   xl: 'max-w-xl',
   '2xl': 'max-w-2xl',
@@ -22,7 +22,7 @@ const maxWidthClasses = {
 const paddingClasses = {
   none: '',
   sm: 'px-3',
-  md: 'px-4', 
+  md: 'px-4',
   lg: 'px-6'
 };
 
@@ -33,7 +33,7 @@ export const PageContainer = React.forwardRef<HTMLDivElement, PageContainerProps
   padding = 'none'
 }, ref) => {
   return (
-    <div 
+    <div
       ref={ref}
       className={cn(
         'mx-auto w-full',
