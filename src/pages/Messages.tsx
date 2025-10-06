@@ -68,7 +68,7 @@ export default function Messages() {
       return;
     }
     console.log('Navigating to conversation:', conversationId);
-    navigate(`/messages/${conversationId}`);
+    navigate(`/messages/${conversationId}`, { replace: false });
   };
 
   return (
@@ -96,7 +96,11 @@ export default function Messages() {
               <button
                 key={conversation.id}
                 type="button"
-                onClick={() => handleConversationClick(conversation.id)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleConversationClick(conversation.id);
+                }}
                 className={`w-full px-4 py-4 flex items-center gap-3 transition-colors border-b border-gray-50 ${
                   conversation.id.startsWith('blocked-') 
                     ? 'cursor-default opacity-60' 
