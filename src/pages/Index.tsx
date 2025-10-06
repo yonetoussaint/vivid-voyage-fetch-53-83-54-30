@@ -267,9 +267,9 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   };
 
   return (
-      <PageContainer padding="none">
-      {/* Traditional component layout - each shows only once */}
-      <div className="space-y-2">
+    <div>
+      <PageContainer maxWidth="7xl" padding="none">
+        <div className="space-y-2 pb-20">
 
         {/* Hero Banner with news ticker */}
         <div ref={heroBannerRef}>
@@ -375,8 +375,9 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
           title="STAFF PICKS"
           icon={Clock}
         />
-      </div>
-    </PageContainer>
+        </div>
+      </PageContainer>
+    </div>
   );
 };
 
