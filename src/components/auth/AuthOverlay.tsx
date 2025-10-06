@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { } from 'lucide-react';
+import Lottie from 'lottie-react';
 import MainLoginScreen from './MainLoginScreen';
 import EmailAuthScreen from './EmailAuthScreen';
 import VerificationCodeScreen from './VerificationCodeScreen';
@@ -33,6 +34,18 @@ const AuthOverlay: React.FC<AuthOverlayProps> = ({ isOpen, onClose }) => {
   const [dragY, setDragY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [startY, setStartY] = useState(0);
+  const [animationData, setAnimationData] = useState<any>(null);
+
+  // Lottie animation URL
+  const lottieUrl = 'https://lottie.host/67390598-e140-4d3c-ad5b-fa8e572fddb7/bFJV5M8lWj.json';
+
+  // Load Lottie animation
+  useEffect(() => {
+    fetch(lottieUrl)
+      .then(res => res.json())
+      .then(data => setAnimationData(data))
+      .catch(err => console.error('Failed to load Lottie animation', err));
+  }, [lottieUrl]);
 
   // Reset to main screen when overlay opens
   useEffect(() => {
@@ -282,7 +295,7 @@ const AuthOverlay: React.FC<AuthOverlayProps> = ({ isOpen, onClose }) => {
           if (!open) onClose();
         }}>
           <DrawerContent 
-            className="h-auto max-h-[70vh] transition-all duration-300 ease-out"
+            className="h-auto max-h-[85vh] transition-all duration-300 ease-out"
             style={{
               transform: isDragging ? `translateY(${-dragY}px)` : undefined
             }}
@@ -299,6 +312,21 @@ const AuthOverlay: React.FC<AuthOverlayProps> = ({ isOpen, onClose }) => {
             >
               <div className="w-16 h-1.5 bg-gray-300 rounded-full shadow-sm hover:bg-gray-400 transition-colors" />
             </div>
+
+            {/* Lottie Animation Section - only show on main screen in compact mode */}
+            {currentScreen === 'main' && !isExpanded && (
+              <div className="flex justify-center mb-4 mt-2">
+                {animationData ? (
+                  <Lottie 
+                    animationData={animationData} 
+                    loop={true} 
+                    style={{ width: 280, height: 280 }}
+                  />
+                ) : (
+                  <div className="w-[280px] h-[280px] bg-gray-100 rounded-lg animate-pulse" />
+                )}
+              </div>
+            )}
             
             <div className="overflow-hidden px-0">
               {renderCurrentScreen()}
