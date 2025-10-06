@@ -267,9 +267,8 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   };
 
   return (
-    <div>
-      <PageContainer maxWidth="7xl" padding="none">
-        <div className="space-y-2 pb-20">
+    <PageContainer padding="none" className="overflow-hidden pb-16 relative">
+      <div className="space-y-2">
 
         {/* Hero Banner with news ticker */}
         <div ref={heroBannerRef}>
@@ -375,9 +374,8 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
           title="STAFF PICKS"
           icon={Clock}
         />
-        </div>
-      </PageContainer>
-    </div>
+      </div>
+    </PageContainer>
   );
 };
 
