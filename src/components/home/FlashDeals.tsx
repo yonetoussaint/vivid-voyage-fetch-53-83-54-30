@@ -14,6 +14,8 @@ interface FlashDealsProps {
   customCountdown?: string; // Custom countdown value
   showCountdown?: boolean; // Force show/hide
   maxProducts?: number; // Add max products prop
+  layoutMode?: 'carousel' | 'grid'; // Add layout mode prop
+  showSectionHeader?: boolean; // Option to hide section header
 }
 
 export default function FlashDeals({ 
@@ -22,7 +24,9 @@ export default function FlashDeals({
   icon = Zap,
   customCountdown,
   showCountdown,
-  maxProducts = 20 // Default to 20 products
+  maxProducts = 20, // Default to 20 products
+  layoutMode = 'carousel', // Default to carousel mode
+  showSectionHeader = true // Default to show section header
 }: FlashDealsProps) {
   const isMobile = useIsMobile();
   const scrollRef = useRef(null);
@@ -131,22 +135,24 @@ export default function FlashDeals({
   return (
     <>
       <div className="w-full bg-white">
-        <SectionHeader
-          title={title}
-          icon={icon}
-          showCountdown={shouldShowCountdown}
-          countdown={displayCountdown}
-          viewAllLink="/search?category=flash-deals"
-          viewAllText="View All"
-        />
+        {showSectionHeader && (
+          <SectionHeader
+            title={title}
+            icon={icon}
+            showCountdown={shouldShowCountdown}
+            countdown={displayCountdown}
+            viewAllLink="/search?category=flash-deals"
+            viewAllText="View All"
+          />
+        )}
 
         <div className="relative">
           {isLoading ? (
-            <div className="pl-2 flex overflow-x-hidden">
+            <div className={`${layoutMode === 'grid' ? 'grid grid-cols-3 gap-4' : 'pl-2 flex overflow-x-hidden'}`}>
               {Array.from({ length: Math.min(8, maxProducts) }).map((_, index) => (
                 <div 
                   key={index} 
-                  className="w-[calc(100%/3.5)] flex-shrink-0 mr-2"
+                  className={`${layoutMode === 'grid' ? 'w-full' : 'w-[calc(100%/3.5)] flex-shrink-0 mr-2'}`}
                 >
                   <div className={`${productType === 'books' ? 'aspect-[1.6:1]' : 'aspect-square'} bg-gray-200 animate-pulse rounded-md mb-1.5`}></div>
                   <div className="h-3 w-3/4 bg-gray-200 animate-pulse mb-1"></div>
@@ -155,30 +161,13 @@ export default function FlashDeals({
               ))}
             </div>
           ) : processedProducts.length > 0 ? (
-            <div
-              ref={scrollRef}
-              className="overflow-x-auto scroll-smooth scrollbar-hide snap-x snap-mandatory"
-              style={{
-                scrollPaddingLeft: "8px",
-                WebkitOverflowScrolling: "touch",
-                scrollbarWidth: 'none', 
-                msOverflowStyle: 'none',
-                scrollSnapType: 'x mandatory'
-              }}
-            >
-              <div className="flex pl-2">
+            layoutMode === 'grid' ? (
+              <div className="grid grid-cols-3 gap-4 px-4">
                 {processedProducts.map((product) => (
-                  <div
-                    key={product.id}
-                    className="w-[calc(100%/3.5)] flex-shrink-0 snap-start mr-[3vw]"
-                    style={{ 
-                      maxWidth: '160px',
-                      scrollSnapAlign: 'start'
-                    }}
-                  >
+                  <div key={product.id} className="flex flex-col items-center">
                     <div 
                       onClick={() => handleProductClick(product.id)}
-                      className="cursor-pointer"
+                      className="cursor-pointer w-full"
                     >
                       <div className={`relative ${productType === 'books' ? 'aspect-[1.6:1]' : 'aspect-square'} overflow-hidden bg-gray-50 rounded-md mb-1.5`}>
                         <img
@@ -214,15 +203,82 @@ export default function FlashDeals({
                             </div>
                           )}
                         </div>
+                        <div className="text-sm font-medium text-gray-800 mt-1">{product.name}</div>
                       </div>
                     </div>
                   </div>
                 ))}
-
-                {/* Add right spacing for proper scrolling to the end */}
-                <div className="flex-shrink-0 w-2"></div>
               </div>
-            </div>
+            ) : (
+              <div
+                ref={scrollRef}
+                className="overflow-x-auto scroll-smooth scrollbar-hide snap-x snap-mandatory"
+                style={{
+                  scrollPaddingLeft: "8px",
+                  WebkitOverflowScrolling: "touch",
+                  scrollbarWidth: 'none', 
+                  msOverflowStyle: 'none',
+                  scrollSnapType: 'x mandatory'
+                }}
+              >
+                <div className="flex pl-2">
+                  {processedProducts.map((product) => (
+                    <div
+                      key={product.id}
+                      className="w-[calc(100%/3.5)] flex-shrink-0 snap-start mr-[3vw]"
+                      style={{ 
+                        maxWidth: '160px',
+                        scrollSnapAlign: 'start'
+                      }}
+                    >
+                      <div 
+                        onClick={() => handleProductClick(product.id)}
+                        className="cursor-pointer"
+                      >
+                        <div className={`relative ${productType === 'books' ? 'aspect-[1.6:1]' : 'aspect-square'} overflow-hidden bg-gray-50 rounded-md mb-1.5`}>
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className="h-full w-full object-cover hover:scale-105 transition-transform duration-300"
+                            loading="lazy"
+                          />
+                          {productType !== 'books' && (
+                            <div className="absolute top-0 left-0 bg-[#FF4747] text-white text-[10px] px-1.5 py-0.5 rounded-br-md font-medium">
+                              {product.stock} left
+                            </div>
+                          )}
+                          {productType !== 'books' && (
+                            <div className="absolute bottom-0 left-0 w-full bg-black/60 text-white text-[10px] flex justify-center py-0.5">
+                              {[timeLeft.hours, timeLeft.minutes, timeLeft.seconds].map((unit, i) => (
+                                <span key={i} className="mx-0.5">
+                                  <span>{unit.toString().padStart(2, "0")}</span>
+                                  {i < 2 && <span className="mx-0.5">:</span>}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <div className="flex items-baseline gap-1">
+                            <div className="text-[#FF4747] font-semibold text-sm">
+                              ${Number(product.discount_price || product.price).toFixed(2)}
+                            </div>
+                            {product.discount_price && (
+                              <div className="text-[10px] text-gray-500 line-through">
+                                ${Number(product.price).toFixed(2)}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Add right spacing for proper scrolling to the end */}
+                  <div className="flex-shrink-0 w-2"></div>
+                </div>
+              </div>
+            )
           ) : (
             <div className="text-center py-8 text-gray-500">
               No flash deals available

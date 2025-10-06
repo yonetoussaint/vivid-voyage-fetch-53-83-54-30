@@ -33,28 +33,8 @@ export default function Explore() {
         return (
           <div className="space-y-2">
             <FlashDeals
-              title="TRENDING PRODUCTS"
-              icon={Clock}
-            />
-            {products && products.length > 0 && (
-              <VendorProductCarousel
-                title="Featured Products"
-                products={products.slice(0, 10) || []}
-              />
-            )}
-            <FlashDeals
-              title="NEW ARRIVALS"
-              icon={Package}
-            />
-            {products && products.length > 0 && (
-              <VendorProductCarousel
-                title="Popular Products"
-                products={products.slice(10, 20) || []}
-              />
-            )}
-            <FlashDeals
-              title="BESTSELLERS"
-              icon={Clock}
+              layoutMode="grid"
+              showSectionHeader={false}
             />
           </div>
         );
