@@ -356,13 +356,26 @@ export default function AliExpressHeader({
 
   // Update active tab when prop changes or route changes
   useEffect(() => {
-    const currentCategory = categories.find(cat => location.pathname === cat.path);
-    if (currentCategory) {
-      setActiveTab(currentCategory.id);
-    } else if (location.pathname === '/' || location.pathname === '/for-you') {
-      setActiveTab('recommendations');
+    // If custom tabs are provided, ensure activeTab matches one of them
+    if (customTabs && customTabs.length > 0) {
+      // Check if activeTabId prop matches a custom tab
+      const matchingCustomTab = customTabs.find(tab => tab.id === activeTabId);
+      if (matchingCustomTab) {
+        setActiveTab(activeTabId);
+      } else {
+        // Default to first custom tab if activeTabId doesn't match
+        setActiveTab(customTabs[0].id);
+      }
+    } else {
+      // Handle regular categories
+      const currentCategory = categories.find(cat => location.pathname === cat.path);
+      if (currentCategory) {
+        setActiveTab(currentCategory.id);
+      } else if (location.pathname === '/' || location.pathname === '/for-you') {
+        setActiveTab('recommendations');
+      }
     }
-  }, [activeTabId, location.pathname, categories]);
+  }, [activeTabId, location.pathname, categories, customTabs]);
 
   // Cycle through popular searches
   useEffect(() => {
