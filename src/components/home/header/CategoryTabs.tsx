@@ -122,6 +122,9 @@ const CategoryTabs = ({
   // Update underline when activeTab changes AND when refs are available
   useEffect(() => {
     if (activeTab && categories.length > 0) {
+      // Immediate update
+      updateUnderline();
+      
       // Use requestAnimationFrame to ensure DOM is painted
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -246,18 +249,31 @@ const CategoryTabs = ({
 
     // If this is the active tab and we have the element, update underline
     if (el && id === activeTab) {
+      // Immediate update
+      updateUnderline();
+      
       // Use multiple animation frames to ensure layout is complete
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          setTimeout(() => {
-            requestAnimationFrame(() => {
-              requestAnimationFrame(() => {
-                updateUnderline();
-              });
-            });
-          }, 100);
+          updateUnderline();
         });
       });
+      
+      setTimeout(() => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            updateUnderline();
+          });
+        });
+      }, 50);
+      
+      setTimeout(() => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            updateUnderline();
+          });
+        });
+      }, 100);
     }
   }, [activeTab, updateUnderline]);
 
