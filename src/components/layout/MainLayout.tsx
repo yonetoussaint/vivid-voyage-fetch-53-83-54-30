@@ -112,9 +112,16 @@ function MainLayoutContent() {
     });
   };
 
-  // Define custom tabs for messages page
+  // Check if current page is messages, wallet, or explore
   const isMessagesPage = pathname === '/messages';
+  const isWalletPage = pathname === '/wallet';
+  const isExplorePage = pathname === '/explore';
+
+  // Get filter from URL params for messages, wallet, and explore
+  const searchParams = new URLSearchParams(location.search);
   const messagesFilter = searchParams.get('filter') || 'all';
+  const walletFilter = searchParams.get('tab') || 'buyer';
+  const exploreFilter = searchParams.get('tab') || 'products';
 
   // Check if we should apply spacing (messages, explore, or index pages)
   const shouldApplySpacing = isMessagesPage || isExplorePage || pathname === '/' || pathname === '/index';
@@ -164,17 +171,6 @@ function MainLayoutContent() {
 
   // Check if current page is electronics (has filter functionality)
   const isElectronicsPage = pathname === '/categories/electronics';
-
-  // Check if current page is messages, wallet, or explore
-  const isMessagesPage = pathname === '/messages';
-  const isWalletPage = pathname === '/wallet';
-  const isExplorePage = pathname === '/explore';
-
-  // Get filter from URL params for messages, wallet, and explore
-  const searchParams = new URLSearchParams(location.search);
-  const messagesFilter = searchParams.get('filter') || 'all';
-  const walletFilter = searchParams.get('tab') || 'buyer';
-  const exploreFilter = searchParams.get('tab') || 'products';
 
   // Redirect to include default filter if missing
   useEffect(() => {
