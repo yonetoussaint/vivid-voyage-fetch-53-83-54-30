@@ -18,6 +18,7 @@ import PriceInfo from '@/components/product/PriceInfo';
 import SellerInfoOverlay from '@/components/product/SellerInfoOverlay';
 import ProductDetails from '@/components/product/ProductDetails';
 import { useSellerByUserId } from '@/hooks/useSellerByUserId';
+import { useBottomNavHeight } from '@/hooks/useBottomNavHeight';
 
 interface ReelsVideoPlayerProps {
   video: Video;
@@ -102,6 +103,7 @@ export const ReelsVideoPlayer: React.FC<ReelsVideoPlayerProps> = ({
 }) => {
   // Fetch real seller data from database
   const { data: seller } = useSellerByUserId(video.user_id || '');
+  const { bottomNavHeight } = useBottomNavHeight();
 
   // Local state for button interactions
   const [isLiked, setIsLiked] = useState(false);
@@ -185,7 +187,12 @@ const handleShare = () => {
           <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
           {/* Bottom left content */}
-          <div className="absolute bottom-6 left-4 right-20 pointer-events-none">
+          <div 
+            className="absolute left-4 right-20 pointer-events-none"
+            style={{ 
+              bottom: isModalMode ? '24px' : `${24 + bottomNavHeight}px` 
+            }}
+          >
             {/* Simple Name (without @) */}
             <div className="mb-3 pointer-events-auto">
               <p className="text-white font-semibold text-lg leading-tight">
@@ -238,7 +245,12 @@ const handleShare = () => {
       </div>
 
       {/* Right side - Sticky action buttons at same level as music */}
-      <div className="absolute right-2 bottom-6 flex flex-col items-center space-y-4">
+      <div 
+        className="absolute right-2 flex flex-col items-center space-y-4"
+        style={{ 
+          bottom: isModalMode ? '24px' : `${24 + bottomNavHeight}px` 
+        }}
+      >
         {/* Like button - Enhanced with fill */}
         <ActionButton
           icon={<Heart size={32} fill={isLiked ? "currentColor" : "none"} />}
