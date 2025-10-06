@@ -282,7 +282,7 @@ const AuthOverlay: React.FC<AuthOverlayProps> = ({ isOpen, onClose }) => {
           if (!open) onClose();
         }}>
           <DrawerContent 
-            className="h-auto max-h-[70vh] transition-all duration-300 ease-out"
+            className="h-auto max-h-[85vh] transition-all duration-300 ease-out"
             style={{
               transform: isDragging ? `translateY(${-dragY}px)` : undefined
             }}
