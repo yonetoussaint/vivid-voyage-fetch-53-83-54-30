@@ -123,8 +123,8 @@ function MainLayoutContent() {
   const walletFilter = searchParams.get('tab') || 'buyer';
   const exploreFilter = searchParams.get('tab') || 'products';
 
-  // Check if we should apply spacing (messages, explore, wallet, index pages)
-  const shouldApplySpacing = isMessagesPage || isExplorePage || isWalletPage || pathname === '/' || pathname === '/for-you';
+  // Check if we should apply spacing (messages, explore, wallet)
+  const shouldApplySpacing = isMessagesPage || isExplorePage || isWalletPage;
 
   // Define custom tabs for explore page
 

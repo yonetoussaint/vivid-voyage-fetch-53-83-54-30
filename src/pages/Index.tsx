@@ -274,7 +274,6 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
         <div ref={heroBannerRef}>
           <HeroBanner 
             showNewsTicker={true}
-            customHeight="300px"
           />
         </div>
 
