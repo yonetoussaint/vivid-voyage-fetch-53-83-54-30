@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MessageCircle, Loader2, Plus } from 'lucide-react';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -93,12 +93,16 @@ export default function Messages() {
             </div>
           ) : (
             conversations.map((conversation) => (
-              <Link
+              <div
                 key={conversation.id}
-                to={conversation.id.startsWith('blocked-') ? '#' : `/messages/${conversation.id}`}
+                onClick={() => {
+                  if (!conversation.id.startsWith('blocked-')) {
+                    navigate(`/messages/${conversation.id}`);
+                  }
+                }}
                 className={`w-full px-4 py-4 flex items-center gap-3 transition-colors border-b border-gray-50 ${
                   conversation.id.startsWith('blocked-') 
-                    ? 'cursor-default opacity-60 pointer-events-none' 
+                    ? 'cursor-default opacity-60' 
                     : 'hover:bg-gray-50 active:bg-gray-100 cursor-pointer'
                 }`}
               >
@@ -129,7 +133,7 @@ export default function Messages() {
                     )}
                   </div>
                 </div>
-              </Link>
+              </div>
             ))
           )}
         </div>
