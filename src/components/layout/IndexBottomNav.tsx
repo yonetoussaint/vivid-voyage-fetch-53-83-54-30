@@ -28,11 +28,11 @@ interface BottomNavTab {
   badge?: number;
 }
 
-const getNavItems = (isSellerDashboard: boolean): BottomNavTab[] => [
+const getNavItems = (isSellerDashboard: boolean, isPickupStation: boolean): BottomNavTab[] => [
   { 
     id: 'home', 
-    nameKey: isSellerDashboard ? 'navigation.store' : 'navigation.home', 
-    icon: isSellerDashboard ? Store : Logo, 
+    nameKey: isSellerDashboard || isPickupStation ? 'navigation.store' : 'navigation.home', 
+    icon: isSellerDashboard || isPickupStation ? Store : Logo, 
     path: isSellerDashboard ? '/seller-dashboard' : isPickupStation ? '/pickup-station' : '/for-you' 
   }, 
   { id: 'shorts', nameKey: 'navigation.shorts', icon: Zap, path: '/reels' },
@@ -75,7 +75,7 @@ export default function BottomNav() {
   // Check if we're in seller dashboard or pickup station
   const isSellerDashboard = location.pathname.startsWith('/seller-dashboard');
   const isPickupStation = location.pathname.startsWith('/pickup-station');
-  const navItems = getNavItems(isSellerDashboard || isPickupStation);
+  const navItems = getNavItems(isSellerDashboard, isPickupStation);
 
   // Sync activeTab with current route
   useEffect(() => {
