@@ -249,7 +249,35 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
     }
   ];
 
-  const [categories, setCategories] = useState<Category[]>(defaultCategories);
+  // Initialize categories from cache if available
+  const getCachedCategories = (): Category[] => {
+    if (!user) return defaultCategories;
+    
+    try {
+      const cached = localStorage.getItem(`shortcut-order-${user.id}`);
+      if (cached) {
+        const cachedOrder = JSON.parse(cached) as string[];
+        const ordered: Category[] = [];
+        
+        cachedOrder.forEach(categoryId => {
+          const cat = defaultCategories.find(c => c.id === categoryId);
+          if (cat) ordered.push(cat);
+        });
+        
+        const remaining = defaultCategories.filter(
+          cat => !cachedOrder.includes(cat.id)
+        );
+        
+        return [...ordered, ...remaining];
+      }
+    } catch (error) {
+      console.error('Error loading cached categories:', error);
+    }
+    
+    return defaultCategories;
+  };
+
+  const [categories, setCategories] = useState<Category[]>(getCachedCategories());
 
   // Fetch real user data for counters
   const fetchUserDataCounts = async (userId: string) => {
@@ -398,24 +426,42 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
     }
 
     // Apply counts to categories
-    let updatedCategories = defaultCategories.map(cat => ({
+    let updatedCategories = categories.map(cat => ({
       ...cat,
       count: getCountForCategory(cat.id)
     }));
 
-    // Apply saved order if available
+    // Only apply order from server if preferences are loaded and different from cache
     if (userPreferences && Array.isArray(userPreferences)) {
-      const ordered: Category[] = [];
-      userPreferences.forEach(categoryId => {
-        const cat = updatedCategories.find(c => c.id === categoryId);
-        if (cat) ordered.push(cat);
-      });
+      try {
+        const cached = localStorage.getItem(`shortcut-order-${user.id}`);
+        const cachedOrder = cached ? JSON.parse(cached) : null;
+        
+        // Only reorder if server preferences differ from cached
+        if (JSON.stringify(cachedOrder) !== JSON.stringify(userPreferences)) {
+          const ordered: Category[] = [];
+          userPreferences.forEach(categoryId => {
+            const cat = updatedCategories.find(c => c.id === categoryId);
+            if (cat) ordered.push(cat);
+          });
 
-      const remaining = updatedCategories.filter(
-        cat => !userPreferences.includes(cat.id)
-      );
+          const remaining = updatedCategories.filter(
+            cat => !userPreferences.includes(cat.id)
+          );
 
-      setCategories([...ordered, ...remaining]);
+          const newCategories = [...ordered, ...remaining];
+          setCategories(newCategories);
+          
+          // Update cache
+          localStorage.setItem(`shortcut-order-${user.id}`, JSON.stringify(userPreferences));
+        } else {
+          // Just update counts without reordering
+          setCategories(updatedCategories);
+        }
+      } catch (error) {
+        console.error('Error processing categories:', error);
+        setCategories(updatedCategories);
+      }
     } else {
       setCategories(updatedCategories);
     }
@@ -486,6 +532,10 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
     }
     const success = await saveCategoryOrder(categories);
     if (success) {
+      // Update cache immediately
+      const categoryOrder = categories.map(cat => cat.id);
+      localStorage.setItem(`shortcut-order-${user.id}`, JSON.stringify(categoryOrder));
+      
       setIsCustomizePanelOpen(false);
       // Reset scroll position to start after reordering
       if (rowRef.current) {
