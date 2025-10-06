@@ -29,6 +29,7 @@ import SlideUpPanel from '@/components/shared/SlideUpPanel';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import { useQuery } from '@tanstack/react-query';
 
 interface SpaceSavingCategoriesProps {
   onCategorySelect?: (category: string) => void;
@@ -142,9 +143,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isCustomizePanelOpen, setIsCustomizePanelOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   // Default categories structure
@@ -239,6 +238,8 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
     }
   ];
 
+  const [categories, setCategories] = useState<Category[]>(defaultCategories);
+
   // Fetch real user data for counters
   const fetchUserDataCounts = async (userId: string) => {
     try {
@@ -296,91 +297,48 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
     }
   };
 
-  // Helper function to get count for specific category
-  const getCountForCategory = (categoryId: string, userCounts: any): number => {
-    switch (categoryId) {
-      case 'wishlist':
-        return userCounts?.wishlist ?? 0;
-      case 'cart':
-        return userCounts?.cart ?? 0;
-      case 'notifications':
-        return userCounts?.notifications ?? 0;
-      case 'addresses':
-        return userCounts?.addresses ?? 0;
-      case 'help':
-        return userCounts?.help ?? 0;
-      default:
-        return 0;
-    }
-  };
+  // Use React Query to cache user counts
+  const { data: userCounts } = useQuery({
+    queryKey: ['shortcut-counts', user?.id],
+    queryFn: () => fetchUserDataCounts(user!.id),
+    enabled: !!user,
+    staleTime: 30000, // Cache for 30 seconds
+  });
 
-  // Fetch user's category order from Supabase
-  const fetchUserCategoryOrder = async () => {
-    try {
-      setIsLoading(true);
-
-      if (!user) {
-        setCategories([]);
-        return;
-      }
-
-      // Fetch real user data counts
-      const userCounts = await fetchUserDataCounts(user.id);
-
-      // Try to get user's custom order from user_preferences table
+  // Use React Query to cache user preferences
+  const { data: userPreferences } = useQuery({
+    queryKey: ['shortcut-preferences', user?.id],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('user_preferences')
         .select('shortcuts_order')
-        .eq('user_id', user.id)
+        .eq('user_id', user!.id)
         .maybeSingle();
+      
+      if (error) throw error;
+      return (data?.shortcuts_order as string[]) || null;
+    },
+    enabled: !!user,
+    staleTime: 60000, // Cache for 1 minute
+  });
 
-      if (error) {
-        const categoriesWithCounts = defaultCategories.map(cat => ({
-          ...cat,
-          count: getCountForCategory(cat.id, userCounts)
-        }));
-        setCategories(categoriesWithCounts);
-        return;
-      }
-
-      if (data && data.shortcuts_order && Array.isArray(data.shortcuts_order)) {
-        const savedOrder = data.shortcuts_order as string[];
-        const orderedCategories = savedOrder
-          .map(categoryId => {
-            const defaultCat = defaultCategories.find(cat => cat.id === categoryId);
-            if (!defaultCat) return null;
-            return {
-              ...defaultCat,
-              count: getCountForCategory(defaultCat.id, userCounts)
-            };
-          })
-          .filter(Boolean) as Category[];
-
-        const newCategories = defaultCategories.filter(
-          cat => !savedOrder.includes(cat.id)
-        ).map((cat, index) => ({
-          ...cat,
-          count: getCountForCategory(cat.id, userCounts),
-          orderIndex: orderedCategories.length + index
-        }));
-
-        const mergedCategories = [...orderedCategories, ...newCategories];
-        setCategories(mergedCategories);
-      } else {
-        const categoriesWithCounts = defaultCategories.map(cat => ({
-          ...cat,
-          count: getCountForCategory(cat.id, userCounts)
-        }));
-        setCategories(categoriesWithCounts);
-      }
-    } catch (error) {
-      const categoriesWithCounts = defaultCategories.map(cat => ({
-        ...cat,
-        count: 0
-      }));
-      setCategories(categoriesWithCounts);
-    } finally {
-      setIsLoading(false);
+  // Helper function to get count for specific category
+  const getCountForCategory = (categoryId: string): number => {
+    if (!userCounts) return 0;
+    
+    switch (categoryId) {
+      case 'wishlist':
+        return userCounts.wishlist ?? 0;
+      case 'cart':
+        return userCounts.cart ?? 0;
+      case 'notifications':
+        return userCounts.notifications ?? 0;
+      case 'addresses':
+        return userCounts.addresses ?? 0;
+      case 'help':
+        return userCounts.help ?? 0;
+      default:
+        return 0;
     }
   };
 
@@ -421,31 +379,36 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
     }
   };
 
+  // Update categories when user data changes
   useEffect(() => {
-    let mounted = true;
-
-    const loadData = async () => {
-      try {
-        await fetchUserCategoryOrder();
-      } catch (error) {
-        if (mounted) {
-          setCategories(defaultCategories.map(cat => ({ ...cat, count: 0 })));
-          setIsLoading(false);
-        }
-      }
-    };
-
-    if (user) {
-      loadData();
-    } else {
-      setIsLoading(false);
-      setCategories([]);
+    if (!user) {
+      setCategories(defaultCategories);
+      return;
     }
 
-    return () => {
-      mounted = false;
-    };
-  }, [user]);
+    // Apply counts to categories
+    let updatedCategories = defaultCategories.map(cat => ({
+      ...cat,
+      count: getCountForCategory(cat.id)
+    }));
+
+    // Apply saved order if available
+    if (userPreferences && Array.isArray(userPreferences)) {
+      const ordered: Category[] = [];
+      userPreferences.forEach(categoryId => {
+        const cat = updatedCategories.find(c => c.id === categoryId);
+        if (cat) ordered.push(cat);
+      });
+
+      const remaining = updatedCategories.filter(
+        cat => !userPreferences.includes(cat.id)
+      );
+
+      setCategories([...ordered, ...remaining]);
+    } else {
+      setCategories(updatedCategories);
+    }
+  }, [user, userCounts, userPreferences]);
 
   const handleCategorySelect = (categoryName: string) => {
     if (categoryName === 'Shorts') {
@@ -507,31 +470,6 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
   }
 
   const displayedCategories = [...categories];
-
-  if (isLoading) {
-    return (
-      <div className="w-full bg-white overflow-visible">
-        {showHeader && headerTitle && (
-          <SectionHeader
-            title={headerTitle}
-            subtitle={headerSubtitle}
-            icon={headerIcon}
-            titleTransform={headerTitleTransform}
-          />
-        )}
-        <div className="flex overflow-x-auto pl-1 scrollbar-hide">
-          {[...Array(7)].map((_, i) => (
-            <div key={i} className="flex-shrink-0 mr-[3vw] py-2">
-              <div className="flex flex-col items-center w-16">
-                <div className="w-14 h-14 rounded-xl bg-gray-200 animate-pulse mb-2"></div>
-                <div className="h-3 w-12 bg-gray-200 rounded animate-pulse"></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="w-full bg-white overflow-visible">
