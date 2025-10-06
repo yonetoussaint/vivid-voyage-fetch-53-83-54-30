@@ -56,9 +56,10 @@ export default function Explore() {
           <div className="w-full space-y-2">
             {products && products.length > 0 && (
               <>
+                {/* Example 1: Single Product - Full Width */}
                 <VendorProductCarousel
-                  title="Popular Posts"
-                  products={products.slice(0, 5) || []}
+                  title="Single Product Example"
+                  products={products.slice(0, 1) || []}
                   posts={[{
                     id: 1,
                     vendorData: {
@@ -68,44 +69,120 @@ export default function Explore() {
                       followers: products[0]?.sellers?.followers_count ? `${(products[0].sellers.followers_count / 1000).toFixed(1)}K` : "12.5K",
                       publishedAt: products[0]?.created_at || new Date().toISOString()
                     },
-                    title: "Latest Deals",
-                    postDescription: "Check out our amazing deals on the latest products! Perfect for tech enthusiasts and professionals.",
-                    displayProducts: products.slice(0, 2).map(product => ({
+                    title: "Featured Product",
+                    postDescription: "Check out our premium flagship product! Limited edition with exclusive features and exceptional quality.",
+                    displayProducts: products.slice(0, 1).map(product => ({
                       id: product.id,
                       image: product.product_images?.[0]?.src || "https://placehold.co/300x300?text=No+Image",
-                      discount: product.discount_price ? `${Math.round(((product.price - product.discount_price) / product.price) * 100)}%` : null,
-                      currentPrice: `$${Number(product.discount_price || product.price).toFixed(2)}`,
-                      originalPrice: product.discount_price ? `$${Number(product.price).toFixed(2)}` : null
+                      discount: product.discount_price ? `${Math.round(((product.price - product.discount_price) / product.price) * 100)}%` : null
                     })),
-                    likeCount: 245,
-                    commentCount: 32,
-                    shareCount: 18
+                    likeCount: 342,
+                    commentCount: 56,
+                    shareCount: 28
                   }]}
                 />
+
+                {/* Example 2: Two Products - Justified */}
                 <VendorProductCarousel
-                  title="Trending Posts"
-                  products={products.slice(5, 10) || []}
+                  title="Two Products Example"
+                  products={products.slice(1, 3) || []}
                   posts={[{
                     id: 2,
                     vendorData: {
-                      profilePic: products[5]?.sellers?.image_url || "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
-                      vendorName: products[5]?.sellers?.name || "Fashion Forward",
-                      verified: products[5]?.sellers?.verified || true,
-                      followers: products[5]?.sellers?.followers_count ? `${(products[5].sellers.followers_count / 1000).toFixed(1)}K` : "8.3K",
-                      publishedAt: products[5]?.created_at || new Date().toISOString()
+                      profilePic: products[1]?.sellers?.image_url || "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
+                      vendorName: products[1]?.sellers?.name || "Fashion Forward",
+                      verified: products[1]?.sellers?.verified || true,
+                      followers: products[1]?.sellers?.followers_count ? `${(products[1].sellers.followers_count / 1000).toFixed(1)}K` : "8.3K",
+                      publishedAt: products[1]?.created_at || new Date().toISOString()
                     },
-                    title: "Summer Collection",
-                    postDescription: "Discover our stunning summer collection! Fresh styles, vibrant colors, and comfortable fits for every occasion.",
-                    displayProducts: products.slice(5, 7).map(product => ({
+                    title: "Perfect Pair",
+                    postDescription: "Two must-have items that complement each other perfectly. Style meets functionality!",
+                    displayProducts: products.slice(1, 3).map(product => ({
                       id: product.id,
                       image: product.product_images?.[0]?.src || "https://placehold.co/300x300?text=No+Image",
-                      discount: product.discount_price ? `${Math.round(((product.price - product.discount_price) / product.price) * 100)}%` : null,
-                      currentPrice: `$${Number(product.discount_price || product.price).toFixed(2)}`,
-                      originalPrice: product.discount_price ? `$${Number(product.price).toFixed(2)}` : null
+                      discount: product.discount_price ? `${Math.round(((product.price - product.discount_price) / product.price) * 100)}%` : null
                     })),
                     likeCount: 189,
                     commentCount: 24,
                     shareCount: 11
+                  }]}
+                />
+
+                {/* Example 3: Three Products - Horizontal Line */}
+                <VendorProductCarousel
+                  title="Three Products Example"
+                  products={products.slice(3, 6) || []}
+                  posts={[{
+                    id: 3,
+                    vendorData: {
+                      profilePic: products[3]?.sellers?.image_url || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
+                      vendorName: products[3]?.sellers?.name || "Home Essentials",
+                      verified: products[3]?.sellers?.verified || true,
+                      followers: products[3]?.sellers?.followers_count ? `${(products[3].sellers.followers_count / 1000).toFixed(1)}K` : "15.2K",
+                      publishedAt: products[3]?.created_at || new Date().toISOString()
+                    },
+                    title: "Triple Threat",
+                    postDescription: "Three amazing products in one collection. Perfect for completing your setup!",
+                    displayProducts: products.slice(3, 6).map(product => ({
+                      id: product.id,
+                      image: product.product_images?.[0]?.src || "https://placehold.co/300x300?text=No+Image",
+                      discount: product.discount_price ? `${Math.round(((product.price - product.discount_price) / product.price) * 100)}%` : null
+                    })),
+                    likeCount: 267,
+                    commentCount: 38,
+                    shareCount: 19
+                  }]}
+                />
+
+                {/* Example 4: Four Products - 2x2 Grid */}
+                <VendorProductCarousel
+                  title="Four Products Example"
+                  products={products.slice(6, 10) || []}
+                  posts={[{
+                    id: 4,
+                    vendorData: {
+                      profilePic: products[6]?.sellers?.image_url || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
+                      vendorName: products[6]?.sellers?.name || "Sports & Fitness",
+                      verified: products[6]?.sellers?.verified || false,
+                      followers: products[6]?.sellers?.followers_count ? `${(products[6].sellers.followers_count / 1000).toFixed(1)}K` : "9.7K",
+                      publishedAt: products[6]?.created_at || new Date().toISOString()
+                    },
+                    title: "Complete Bundle",
+                    postDescription: "Everything you need in one complete package. Four essential items for maximum value!",
+                    displayProducts: products.slice(6, 10).map(product => ({
+                      id: product.id,
+                      image: product.product_images?.[0]?.src || "https://placehold.co/300x300?text=No+Image",
+                      discount: product.discount_price ? `${Math.round(((product.price - product.discount_price) / product.price) * 100)}%` : null
+                    })),
+                    likeCount: 421,
+                    commentCount: 67,
+                    shareCount: 34
+                  }]}
+                />
+
+                {/* Example 5: Five or More Products - Grid with Counter */}
+                <VendorProductCarousel
+                  title="Collection Example"
+                  products={products.slice(10, 18) || []}
+                  posts={[{
+                    id: 5,
+                    vendorData: {
+                      profilePic: products[10]?.sellers?.image_url || "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
+                      vendorName: products[10]?.sellers?.name || "Beauty & Care",
+                      verified: products[10]?.sellers?.verified || true,
+                      followers: products[10]?.sellers?.followers_count ? `${(products[10].sellers.followers_count / 1000).toFixed(1)}K` : "22.4K",
+                      publishedAt: products[10]?.created_at || new Date().toISOString()
+                    },
+                    title: "Mega Collection",
+                    postDescription: "Our biggest collection yet! Browse through 8 amazing products carefully curated just for you. Limited stock available!",
+                    displayProducts: products.slice(10, 18).map(product => ({
+                      id: product.id,
+                      image: product.product_images?.[0]?.src || "https://placehold.co/300x300?text=No+Image",
+                      discount: product.discount_price ? `${Math.round(((product.price - product.discount_price) / product.price) * 100)}%` : null
+                    })),
+                    likeCount: 589,
+                    commentCount: 94,
+                    shareCount: 52
                   }]}
                 />
               </>
