@@ -159,8 +159,10 @@ const handleShare = () => {
     <div 
       id={`reel-${index}`}
       data-reel-container
-      className="w-full h-full relative snap-start snap-always overflow-hidden bg-black"
-      style={{ height: '100%' }}
+      className="w-full relative snap-start snap-always overflow-hidden bg-black"
+      style={{ 
+        height: isModalMode ? '100vh' : `calc(100vh - ${bottomNavHeight}px)`
+      }}
     >
       {/* Full Screen Video Background */}
       <div className="absolute inset-0 w-full h-full">
