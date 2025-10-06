@@ -56,8 +56,9 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     console.log('Share seller profile');
   };
 
-  // Determine if we're in dashboard or public seller page
+  // Determine if we're in dashboard, pickup station, or public seller page
   const isDashboard = location.pathname.includes('/seller-dashboard');
+  const isPickupStation = location.pathname.includes('/pickup-station');
 
   // Extract current tab from pathname
   const getCurrentTab = () => {
@@ -67,6 +68,16 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         if (location.pathname === '/seller-dashboard' || 
             location.pathname.endsWith('/seller-dashboard/')) {
           navigate('/seller-dashboard/overview', { replace: true });
+        }
+        return 'overview';
+      }
+      return path;
+    } else if (isPickupStation) {
+      const path = location.pathname.split('/pickup-station/')[1];
+      if (!path || path === '') {
+        if (location.pathname === '/pickup-station' || 
+            location.pathname.endsWith('/pickup-station/')) {
+          navigate('/pickup-station/overview', { replace: true });
         }
         return 'overview';
       }
@@ -92,9 +103,16 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   // Check if we're on the overview tab
   const isOverviewTab = activeTab === 'overview';
 
-  const baseRoute = isDashboard ? '/seller-dashboard' : `/seller/${location.pathname.split('/seller/')[1]?.split('/')[0] || ''}`;
+  const baseRoute = isDashboard ? '/seller-dashboard' : isPickupStation ? '/pickup-station' : `/seller/${location.pathname.split('/seller/')[1]?.split('/')[0] || ''}`;
 
-  const navigationItems = isDashboard ? [
+  const navigationItems = isPickupStation ? [
+    { id: 'overview', name: 'Overview', href: '/pickup-station/overview', icon: Home },
+    { id: 'packages', name: 'Packages', href: '/pickup-station/packages', icon: Package },
+    { id: 'customers', name: 'Customers', href: '/pickup-station/customers', icon: Users },
+    { id: 'analytics', name: 'Analytics', href: '/pickup-station/analytics', icon: BarChart3 },
+    { id: 'notifications', name: 'Notifications', href: '/pickup-station/notifications', icon: MessageCircle },
+    { id: 'settings', name: 'Settings', href: '/pickup-station/settings', icon: Settings },
+  ] : isDashboard ? [
     { id: 'overview', name: 'Overview', href: '/seller-dashboard/overview', icon: Home },
     { id: 'products', name: 'Products', href: '/seller-dashboard/products', icon: Package },
     { id: 'inventory', name: 'Inventory', href: '/seller-dashboard/inventory', icon: Warehouse },
@@ -218,6 +236,9 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     if (location.pathname === '/seller-dashboard' || 
         location.pathname.endsWith('/seller-dashboard/')) {
       navigate('/seller-dashboard/overview', { replace: true });
+    } else if (location.pathname === '/pickup-station' || 
+               location.pathname.endsWith('/pickup-station/')) {
+      navigate('/pickup-station/overview', { replace: true });
     }
   }, [location.pathname, navigate]);
 
@@ -318,10 +339,16 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
           <div className="flex items-center justify-center">
             <div className="w-full max-w-2xl">
               <ReusableSearchBar
-                placeholder="Search in store..."
+                placeholder={isPickupStation ? "Search packages..." : "Search in store..."}
                 showScanMic={!isTransparentHeader}
                 showSettingsButton={!isTransparentHeader}
-                onSettingsClick={() => console.log('Seller settings clicked')}
+                onSettingsClick={() => {
+                  if (isPickupStation) {
+                    navigate('/pickup-station/settings');
+                  } else {
+                    console.log('Seller settings clicked');
+                  }
+                }}
                 onSubmit={(query) => {
                   console.log('Searching for:', query);
                   setShowSearchOverlay(false);
@@ -332,7 +359,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
                 onCloseOverlay={() => setShowSearchOverlay(false)}
                 isTransparent={isTransparentHeader}
                 onBackClick={handleBackClick}
-                onShareClick={handleShareClick}
+                onShareClick={isPickupStation ? undefined : handleShareClick}
               />
             </div>
           </div>
