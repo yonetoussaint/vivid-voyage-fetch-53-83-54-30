@@ -62,15 +62,21 @@ export default function Explore() {
                   posts={[{
                     id: 1,
                     vendorData: {
-                      profilePic: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-                      vendorName: "Tech Store Pro",
-                      verified: true,
-                      followers: "12.5K",
-                      publishedAt: new Date().toISOString()
+                      profilePic: products[0]?.sellers?.image_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+                      vendorName: products[0]?.sellers?.name || "Tech Store Pro",
+                      verified: products[0]?.sellers?.verified || true,
+                      followers: products[0]?.sellers?.followers_count ? `${(products[0].sellers.followers_count / 1000).toFixed(1)}K` : "12.5K",
+                      publishedAt: products[0]?.created_at || new Date().toISOString()
                     },
                     title: "Latest Deals",
-                    postDescription: "Check out our amazing deals!",
-                    displayProducts: [],
+                    postDescription: "Check out our amazing deals on the latest products! Perfect for tech enthusiasts and professionals.",
+                    displayProducts: products.slice(0, 2).map(product => ({
+                      id: product.id,
+                      image: product.product_images?.[0]?.src || "https://placehold.co/300x300?text=No+Image",
+                      discount: product.discount_price ? `${Math.round(((product.price - product.discount_price) / product.price) * 100)}%` : null,
+                      currentPrice: `$${Number(product.discount_price || product.price).toFixed(2)}`,
+                      originalPrice: product.discount_price ? `$${Number(product.price).toFixed(2)}` : null
+                    })),
                     likeCount: 245,
                     commentCount: 32,
                     shareCount: 18
@@ -82,15 +88,21 @@ export default function Explore() {
                   posts={[{
                     id: 2,
                     vendorData: {
-                      profilePic: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
-                      vendorName: "Fashion Forward",
-                      verified: true,
-                      followers: "8.3K",
-                      publishedAt: new Date().toISOString()
+                      profilePic: products[5]?.sellers?.image_url || "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
+                      vendorName: products[5]?.sellers?.name || "Fashion Forward",
+                      verified: products[5]?.sellers?.verified || true,
+                      followers: products[5]?.sellers?.followers_count ? `${(products[5].sellers.followers_count / 1000).toFixed(1)}K` : "8.3K",
+                      publishedAt: products[5]?.created_at || new Date().toISOString()
                     },
                     title: "Summer Collection",
-                    postDescription: "Discover our stunning summer collection!",
-                    displayProducts: [],
+                    postDescription: "Discover our stunning summer collection! Fresh styles, vibrant colors, and comfortable fits for every occasion.",
+                    displayProducts: products.slice(5, 7).map(product => ({
+                      id: product.id,
+                      image: product.product_images?.[0]?.src || "https://placehold.co/300x300?text=No+Image",
+                      discount: product.discount_price ? `${Math.round(((product.price - product.discount_price) / product.price) * 100)}%` : null,
+                      currentPrice: `$${Number(product.discount_price || product.price).toFixed(2)}`,
+                      originalPrice: product.discount_price ? `$${Number(product.price).toFixed(2)}` : null
+                    })),
                     likeCount: 189,
                     commentCount: 24,
                     shareCount: 11
