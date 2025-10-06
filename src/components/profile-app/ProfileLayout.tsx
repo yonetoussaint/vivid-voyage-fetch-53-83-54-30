@@ -17,9 +17,6 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import TabsNavigation from '@/components/home/TabsNavigation';
 import ReusableSearchBar from '@/components/shared/ReusableSearchBar';
 
-// Dynamically import ProductQA to prevent it from loading unless needed
-const ProductQA = React.lazy(() => import('@/components/product/ProductQA'));
-
 interface ProfileLayoutProps {
   children: React.ReactNode;
 }
@@ -293,14 +290,7 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
 
           {/* Main Content */}
           <div className="px-2">
-            {/* Render the ProductQA component if the current tab is 'questions' */}
-            {activeTab === 'questions' ? (
-              <React.Suspense fallback={<div>Loading Questions...</div>}>
-                <ProductQA />
-              </React.Suspense>
-            ) : (
-              children
-            )}
+            {children}
           </div>
         </main>
       </div>
