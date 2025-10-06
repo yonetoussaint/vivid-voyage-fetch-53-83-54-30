@@ -202,8 +202,13 @@ function MainLayoutContent() {
             onFilterButtonClick={onFilterButtonClick}
             isFilterDisabled={isFilterDisabled}
             customTabs={messagesTabs || walletTabs}
-            onCustomTabChange={isWalletPage ? (tabId) => {
-              const tab = walletTabs.find(t => t.id === tabId);
+            onCustomTabChange={isMessagesPage ? (tabId) => {
+              const tab = messagesTabs?.find(t => t.id === tabId);
+              if (tab?.path) {
+                navigate(tab.path);
+              }
+            } : isWalletPage ? (tabId) => {
+              const tab = walletTabs?.find(t => t.id === tabId);
               if (tab?.path) {
                 navigate(tab.path);
               }

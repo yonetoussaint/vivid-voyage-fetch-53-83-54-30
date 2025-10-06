@@ -86,6 +86,31 @@ const CategoryTabs = ({
     return () => clearTimeout(timer);
   }, [updateUnderline]);
 
+  // Force recalculation when categories change (e.g., switching to custom tabs)
+  useEffect(() => {
+    const timers = [
+      setTimeout(() => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => updateUnderline());
+        });
+      }, 50),
+      setTimeout(() => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => updateUnderline());
+        });
+      }, 150),
+      setTimeout(() => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => updateUnderline());
+        });
+      }, 300),
+    ];
+    
+    return () => {
+      timers.forEach(timer => clearTimeout(timer));
+    };
+  }, [categories, updateUnderline]);
+
   // Update underline when activeTab changes AND when refs are available
   useEffect(() => {
     if (activeTab && categories.length > 0) {
