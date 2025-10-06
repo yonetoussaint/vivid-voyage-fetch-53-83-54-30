@@ -162,14 +162,14 @@ export default function FlashDeals({
             </div>
           ) : processedProducts.length > 0 ? (
             layoutMode === 'grid' ? (
-              <div className="grid grid-cols-3 gap-4 px-4">
+              <div className="grid grid-cols-3 gap-0">
                 {processedProducts.map((product) => (
-                  <div key={product.id} className="flex flex-col items-center">
+                  <div key={product.id} className="flex flex-col">
                     <div 
                       onClick={() => handleProductClick(product.id)}
                       className="cursor-pointer w-full"
                     >
-                      <div className={`relative ${productType === 'books' ? 'aspect-[1.6:1]' : 'aspect-square'} overflow-hidden bg-gray-50 rounded-md mb-1.5`}>
+                      <div className="relative aspect-square overflow-hidden bg-gray-50">
                         <img
                           src={product.image}
                           alt={product.name}
@@ -191,19 +191,6 @@ export default function FlashDeals({
                             ))}
                           </div>
                         )}
-                      </div>
-                      <div>
-                        <div className="flex items-baseline gap-1">
-                          <div className="text-[#FF4747] font-semibold text-sm">
-                            ${Number(product.discount_price || product.price).toFixed(2)}
-                          </div>
-                          {product.discount_price && (
-                            <div className="text-[10px] text-gray-500 line-through">
-                              ${Number(product.price).toFixed(2)}
-                            </div>
-                          )}
-                        </div>
-                        <div className="text-sm font-medium text-gray-800 mt-1">{product.name}</div>
                       </div>
                     </div>
                   </div>
