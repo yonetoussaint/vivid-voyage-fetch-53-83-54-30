@@ -1,6 +1,6 @@
 import { LayoutGrid } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ReactNode, useRef, useEffect, useState, useCallback } from 'react';
+import { ReactNode, useRef, useEffect, useState, useCallback, useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface CategoryTab {
@@ -77,92 +77,23 @@ const CategoryTabs = ({
     }
   }, [activeTab, categories]);
 
-  // Force update on mount to handle initial positioning
-  useEffect(() => {
-    // Multiple attempts with increasing delays to catch the DOM at different stages
-    const timers = [
-      setTimeout(() => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => updateUnderline());
-        });
-      }, 100),
-      setTimeout(() => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => updateUnderline());
-        });
-      }, 200),
-      setTimeout(() => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => updateUnderline());
-        });
-      }, 400),
-    ];
-    
-    return () => timers.forEach(timer => clearTimeout(timer));
-  }, [updateUnderline]);
+  // Use useLayoutEffect for initial positioning - runs synchronously after DOM mutations
+  useLayoutEffect(() => {
+    if (activeTab && categories.length > 0) {
+      // Immediate synchronous update
+      updateUnderline();
+    }
+  }, [activeTab, categories, updateUnderline]);
 
-  // Force recalculation when categories change (e.g., switching to custom tabs)
-  useEffect(() => {
-    const timers = [
-      setTimeout(() => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => updateUnderline());
-        });
-      }, 50),
-      setTimeout(() => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => updateUnderline());
-        });
-      }, 150),
-      setTimeout(() => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => updateUnderline());
-        });
-      }, 300),
-      setTimeout(() => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => updateUnderline());
-        });
-      }, 500),
-    ];
-    
-    return () => {
-      timers.forEach(timer => clearTimeout(timer));
-    };
-  }, [categories, updateUnderline]);
-
-  // Update underline when activeTab changes AND when refs are available
+  // Backup async updates for edge cases
   useEffect(() => {
     if (activeTab && categories.length > 0) {
-      // Use requestAnimationFrame to ensure DOM is painted
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          updateUnderline();
-        });
-      });
-
-      // Multiple retries with better timing for initial load
       const timers = [
-        setTimeout(() => {
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => updateUnderline());
-          });
-        }, 100),
-        setTimeout(() => {
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => updateUnderline());
-          });
-        }, 250),
-        setTimeout(() => {
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => updateUnderline());
-          });
-        }, 450),
+        setTimeout(() => updateUnderline(), 50),
+        setTimeout(() => updateUnderline(), 200),
       ];
       
-      return () => {
-        timers.forEach(timer => clearTimeout(timer));
-      };
+      return () => timers.forEach(timer => clearTimeout(timer));
     }
   }, [activeTab, categories, updateUnderline]);
 
@@ -256,30 +187,11 @@ const CategoryTabs = ({
   const setTabRef = useCallback((el: HTMLButtonElement | null, index: number, id: string) => {
     tabRefs.current[index] = el;
 
-    // If this is the active tab and we have the element, update underline
+    // If this is the active tab and we have the element, update underline immediately
     if (el && id === activeTab) {
-      // Use multiple animation frames to ensure layout is complete
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          updateUnderline();
-        });
-      });
-      
-      setTimeout(() => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            updateUnderline();
-          });
-        });
-      }, 100);
-      
-      setTimeout(() => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            updateUnderline();
-          });
-        });
-      }, 250);
+      // The useLayoutEffect will handle the actual update
+      // Just trigger a micro-task to ensure it runs after current execution
+      Promise.resolve().then(() => updateUnderline());
     }
   }, [activeTab, updateUnderline]);
 
