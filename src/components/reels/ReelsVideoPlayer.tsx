@@ -192,7 +192,7 @@ const handleShare = () => {
           <div 
             className="absolute left-4 right-20 pointer-events-none"
             style={{ 
-              bottom: isModalMode ? '24px' : `${24 + bottomNavHeight}px` 
+              bottom: isModalMode ? '16px' : '16px'
             }}
           >
             {/* Simple Name (without @) */}
@@ -250,7 +250,7 @@ const handleShare = () => {
       <div 
         className="absolute right-2 flex flex-col items-center space-y-4"
         style={{ 
-          bottom: isModalMode ? '24px' : `${24 + bottomNavHeight}px` 
+          bottom: isModalMode ? '16px' : '16px'
         }}
       >
         {/* Like button - Enhanced with fill */}
