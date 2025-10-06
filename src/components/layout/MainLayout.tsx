@@ -112,13 +112,29 @@ function MainLayoutContent() {
     });
   };
 
+  // Define custom tabs for messages page
+  const isMessagesPage = pathname === '/messages';
+  const messagesFilter = searchParams.get('filter') || 'all';
+
+  // Check if we should apply spacing (messages, explore, or index pages)
+  const shouldApplySpacing = isMessagesPage || isExplorePage || pathname === '/' || pathname === '/index';
+
+  // Define custom tabs for explore page
+  const exploreTabs = isExplorePage ? [
+    { id: 'products', name: 'Products', path: '/explore?tab=products' },
+    { id: 'reels', name: 'Reels', path: '/explore?tab=reels' },
+    { id: 'posts', name: 'Posts', path: '/explore?tab=posts' },
+    { id: 'sellers', name: 'Sellers', path: '/explore?tab=sellers' },
+    { id: 'stations', name: 'Stations', path: '/explore?tab=stations' },
+  ] : undefined;
+
   // In MainLayout.tsx, update the headerHeightStyle to ensure bottom nav height is set correctly
   const headerHeightStyle = `
-    :root {
-      --header-height: ${isMobile ? '80px' : '120px'};
-      --bottom-nav-height: ${isMobile && !isMultiStepTransferPage && !isMultiStepTransferSheetPage && !isTransferOldPage ? '48px' : '0px'};
-    }
-  `;
+  :root {
+    --header-height: ${shouldApplySpacing ? (isMobile ? '80px' : '120px') : '0px'};
+    --bottom-nav-height: ${shouldApplySpacing && isMobile && !isMultiStepTransferPage && !isMultiStepTransferSheetPage && !isTransferOldPage ? '48px' : '0px'};
+  }
+`;
 
   useEffect(() => {
     if (pathname === "/auth") {
