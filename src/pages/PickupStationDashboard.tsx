@@ -8,8 +8,8 @@ import PickupStationCustomers from '@/components/pickup-station-app/pages/Pickup
 import PickupStationAnalytics from '@/components/pickup-station-app/pages/PickupStationAnalytics';
 import PickupStationNotifications from '@/components/pickup-station-app/pages/PickupStationNotifications';
 import PickupStationSettings from '@/components/pickup-station-app/pages/PickupStationSettings';
-import PickupStationReviews from '@/components/pickup-station-app/pages/PickupStationReviews';
-import PickupStationQA from '@/components/pickup-station-app/pages/PickupStationQA';
+import CustomerReviews from '@/components/product/CustomerReviewsEnhanced';
+import ProductQA from '@/components/product/ProductQA';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -63,6 +63,89 @@ const PickupStationDashboard = () => {
     return data.publicUrl;
   };
 
+  const mockStationReviews = [
+    {
+      id: 1,
+      user_name: "Claudette Joseph",
+      rating: 5,
+      title: "Excellent service!",
+      comment: "Very fast and professional. The staff is always friendly and helpful. I never wait more than 5 minutes to pick up my packages.",
+      created_at: "2024-08-15T10:30:00Z",
+      verified_purchase: true,
+      helpful_count: 15,
+      reply_count: 1,
+      media: [],
+      replies: [
+        {
+          id: 101,
+          user_name: "Station Manager",
+          comment: "Thank you for your wonderful feedback! We're committed to providing fast, friendly service.",
+          created_at: "2024-08-16T09:15:00Z",
+          is_seller: true
+        }
+      ]
+    },
+    {
+      id: 2,
+      user_name: "Jacques Desir",
+      rating: 5,
+      title: "Very convenient location",
+      comment: "Right in the heart of the city. Easy to access and plenty of parking nearby.",
+      created_at: "2024-08-10T14:20:00Z",
+      verified_purchase: true,
+      helpful_count: 12,
+      reply_count: 0,
+      media: [],
+      replies: []
+    }
+  ];
+
+  const mockStationQAs = [
+    {
+      id: 1,
+      user_name: "Jean Baptiste",
+      question: "What are your operating hours?",
+      answer: "We're open Monday to Saturday from 8 AM to 8 PM, and Sunday from 10 AM to 6 PM.",
+      answer_author: "Station Manager",
+      is_official: true,
+      created_at: "2024-08-15T10:30:00Z",
+      answered_at: "2024-08-15T14:30:00Z",
+      helpful_count: 24,
+      reply_count: 2,
+      media: [],
+      replies: [
+        {
+          id: 101,
+          user_name: "Marie Claire",
+          comment: "Perfect hours for my schedule!",
+          created_at: "2024-08-16T09:15:00Z",
+          is_seller: false
+        },
+        {
+          id: 102,
+          user_name: "Station Manager",
+          comment: "We're here to serve you at convenient times!",
+          created_at: "2024-08-17T14:30:00Z",
+          is_seller: true
+        }
+      ]
+    },
+    {
+      id: 2,
+      user_name: "Pierre Louis",
+      question: "How long can I leave my package at the station?",
+      answer: "Packages can be stored for up to 7 days free of charge. After that, a small storage fee applies.",
+      answer_author: "Customer Service",
+      is_official: true,
+      created_at: "2024-08-10T14:20:00Z",
+      answered_at: "2024-08-10T16:45:00Z",
+      helpful_count: 18,
+      reply_count: 0,
+      media: [],
+      replies: []
+    }
+  ];
+
   return (
     <SellerLayout 
       showActionButtons={false}
@@ -76,8 +159,22 @@ const PickupStationDashboard = () => {
         <Route path="/overview" element={<PickupStationOverview />} />
         <Route path="/packages" element={<PickupStationPackages />} />
         <Route path="/customers" element={<PickupStationCustomers />} />
-        <Route path="/reviews" element={<PickupStationReviews />} />
-        <Route path="/qa" element={<PickupStationQA />} />
+        <Route path="/reviews" element={
+          <div className="w-full bg-white pb-20">
+            <CustomerReviews 
+              productId="pickup-station-1"
+              reviews={mockStationReviews}
+            />
+          </div>
+        } />
+        <Route path="/qa" element={
+          <div className="w-full bg-white pb-20">
+            <ProductQA 
+              productId="pickup-station-1"
+              questions={mockStationQAs}
+            />
+          </div>
+        } />
         <Route path="/analytics" element={<PickupStationAnalytics />} />
         <Route path="/notifications" element={<PickupStationNotifications />} />
         <Route path="/settings" element={<PickupStationSettings />} />
