@@ -419,6 +419,11 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
     } else {
       setCategories(updatedCategories);
     }
+
+    // Reset scroll position to start when categories order changes
+    if (rowRef.current) {
+      rowRef.current.scrollLeft = 0;
+    }
   }, [user, userCounts, userPreferences]);
 
   const handleCategorySelect = (categoryName: string) => {
@@ -475,6 +480,10 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
     const success = await saveCategoryOrder(categories);
     if (success) {
       setIsCustomizePanelOpen(false);
+      // Reset scroll position to start after reordering
+      if (rowRef.current) {
+        rowRef.current.scrollLeft = 0;
+      }
     }
   };
 
