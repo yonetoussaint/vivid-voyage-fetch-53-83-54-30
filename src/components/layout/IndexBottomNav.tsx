@@ -33,7 +33,7 @@ const getNavItems = (isSellerDashboard: boolean): BottomNavTab[] => [
     id: 'home', 
     nameKey: isSellerDashboard ? 'navigation.store' : 'navigation.home', 
     icon: isSellerDashboard ? Store : Logo, 
-    path: isSellerDashboard ? '/seller-dashboard' : '/for-you' 
+    path: isSellerDashboard ? '/seller-dashboard' : isPickupStation ? '/pickup-station' : '/for-you' 
   }, 
   { id: 'shorts', nameKey: 'navigation.shorts', icon: Zap, path: '/reels' },
   { id: 'messages', nameKey: 'navigation.messages', icon: MessageCircle, path: '/messages' },
@@ -72,9 +72,10 @@ export default function BottomNav() {
   const [previousTab, setPreviousTab] = useState(null);
   const [animating, setAnimating] = useState(false);
 
-  // Check if we're in seller dashboard
+  // Check if we're in seller dashboard or pickup station
   const isSellerDashboard = location.pathname.startsWith('/seller-dashboard');
-  const navItems = getNavItems(isSellerDashboard);
+  const isPickupStation = location.pathname.startsWith('/pickup-station');
+  const navItems = getNavItems(isSellerDashboard || isPickupStation);
 
   // Sync activeTab with current route
   useEffect(() => {
@@ -123,7 +124,7 @@ export default function BottomNav() {
   // Update reorderedNavItems when navItems change
   useEffect(() => {
     setReorderedNavItems(navItems);
-  }, [isSellerDashboard]);
+  }, [isSellerDashboard, isPickupStation]);
 
   // Load selected more item from localStorage on mount
   useEffect(() => {
@@ -268,12 +269,12 @@ export default function BottomNav() {
                       {t(item.nameKey)}
                     </span>
                   )}
-                  {/* X button for My Store tab when active */}
-                  {isActive && item.id === 'home' && isSellerDashboard && (
+                  {/* X button for My Store/Station tab when active */}
+                  {isActive && item.id === 'home' && (isSellerDashboard || isPickupStation) && (
                     <span
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate('/');
+                        navigate('/for-you');
                         setActiveTab('home');
                       }}
                       className="ml-2 p-1 hover:bg-red-700 rounded-full transition-colors cursor-pointer inline-flex"
@@ -282,7 +283,7 @@ export default function BottomNav() {
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.stopPropagation();
-                          navigate('/');
+                          navigate('/for-you');
                           setActiveTab('home');
                         }
                       }}
