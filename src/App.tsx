@@ -40,7 +40,6 @@ import KidsHobbiesPage from "./pages/KidsHobbiesPage";
 import EntertainmentPage from "./pages/EntertainmentPage";
 import AdminPanel from "./pages/AdminPanel";
 import AdminDashboard from "./pages/AdminDashboard";
-import SellerPage from "./pages/SellerPage";
 import Checkout from "./pages/Checkout";
 import PayPalCheckout from "./pages/PayPalCheckout";
 import PayPalHostedCheckout from "./pages/PayPalHostedCheckout";

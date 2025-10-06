@@ -172,6 +172,17 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       orderIndex: 1
     },
     { 
+      id: 'my-station', 
+      name: 'My Station', 
+      icon: MapPin,
+      bgColor: 'bg-orange-100', 
+      iconBg: 'text-orange-500',
+      labelBg: 'bg-orange-600/90',
+      isSpecial: true,
+      count: 0,
+      orderIndex: 2
+    },
+    { 
       id: 'wishlist', 
       name: 'Wishlist', 
       icon: Heart,
@@ -180,7 +191,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       labelBg: 'bg-teal-600/90',
       isSpecial: true,
       count: 0,
-      orderIndex: 2
+      orderIndex: 3
     },
     { 
       id: 'cart', 
@@ -191,7 +202,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       labelBg: 'bg-yellow-600/90',
       isSpecial: true,
       count: 0,
-      orderIndex: 3
+      orderIndex: 4
     },
     { 
       id: 'notifications', 
@@ -202,7 +213,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       labelBg: 'bg-blue-600/90',
       isSpecial: true,
       count: 0,
-      orderIndex: 4
+      orderIndex: 5
     },
     { 
       id: 'addresses', 
@@ -213,7 +224,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       labelBg: 'bg-indigo-600/90',
       isSpecial: true,
       count: 0,
-      orderIndex: 5
+      orderIndex: 6
     },
     { 
       id: 'help', 
@@ -224,7 +235,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       labelBg: 'bg-gray-600/90',
       isSpecial: true,
       count: 0,
-      orderIndex: 6
+      orderIndex: 7
     }
   ];
 
@@ -514,6 +525,8 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       navigate('/reels?video=modal');
     } else if (categoryName === 'My Store') {
       navigate('/seller-dashboard');
+    } else if (categoryName === 'My Station') {
+      navigate('/pickup-station');
     } else if (onCategorySelect) {
       onCategorySelect(categoryName);
     }
