@@ -123,23 +123,28 @@ function MainLayoutContent() {
   const walletFilter = searchParams.get('tab') || 'buyer';
   const exploreFilter = searchParams.get('tab') || 'products';
 
-  // Check if we should apply spacing (messages, explore, or index pages)
-  const shouldApplySpacing = isMessagesPage || isExplorePage || pathname === '/' || pathname === '/index';
+  // Check if we should apply spacing (messages, explore, wallet, or index pages)
+  const shouldApplySpacing = isMessagesPage || isExplorePage || isWalletPage || pathname === '/' || pathname === '/index' || pathname === '/for-you';
 
   // Define custom tabs for explore page
-  const exploreTabs = isExplorePage ? [
-    { id: 'products', name: 'Products', path: '/explore?tab=products' },
-    { id: 'reels', name: 'Reels', path: '/explore?tab=reels' },
-    { id: 'posts', name: 'Posts', path: '/explore?tab=posts' },
-    { id: 'sellers', name: 'Sellers', path: '/explore?tab=sellers' },
-    { id: 'stations', name: 'Stations', path: '/explore?tab=stations' },
-  ] : undefined;
+
+
+  // Calculate header and bottom nav heights for CSS variables
+  const headerHeight = shouldApplySpacing ? (isMobile ? '80px' : '120px') : '0px';
+  const bottomNavHeight = shouldApplySpacing && isMobile && !isMultiStepTransferPage && !isMultiStepTransferSheetPage && !isTransferOldPage ? '48px' : '0px';
 
   // In MainLayout.tsx, update the headerHeightStyle to ensure bottom nav height is set correctly
   const headerHeightStyle = `
   :root {
-    --header-height: ${shouldApplySpacing ? (isMobile ? '80px' : '120px') : '0px'};
-    --bottom-nav-height: ${shouldApplySpacing && isMobile && !isMultiStepTransferPage && !isMultiStepTransferSheetPage && !isTransferOldPage ? '48px' : '0px'};
+    --header-height: ${headerHeight};
+    --bottom-nav-height: ${bottomNavHeight};
+  }
+
+  /* Ensure main content respects the header and bottom nav */
+  main {
+    padding-top: var(--header-height);
+    padding-bottom: var(--bottom-nav-height);
+    min-height: calc(100vh - var(--header-height) - var(--bottom-nav-height));
   }
 `;
 

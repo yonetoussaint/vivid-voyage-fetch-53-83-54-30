@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -60,7 +59,7 @@ export default function Wallet() {
   const isSeller = !!sellerData;
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   // Get tab from URL params
   const searchParams = new URLSearchParams(location.search);
   const urlTab = searchParams.get('tab') as 'buyer' | 'seller' | null;
@@ -212,7 +211,7 @@ export default function Wallet() {
     : currentTransactions.filter(t => t.type === filterType);
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-[var(--header-height)]">
+    <div className=" bg-gray-50">
       <PageContainer maxWidth="lg" padding="none">
         <div className="space-y-4 pb-20">
 
@@ -240,7 +239,7 @@ export default function Wallet() {
                     {activeTab === 'buyer' ? 'Available to spend' : 'Ready to withdraw'}
                   </p>
                   <div className="text-4xl font-light">
-                    {showBalance ? `$${currentBalance.toLocaleString('en-US', { minimumFractionDigals: 2 })}` : '••••••'}
+                    {showBalance ? `$${currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '••••••'}
                   </div>
                 </div>
 

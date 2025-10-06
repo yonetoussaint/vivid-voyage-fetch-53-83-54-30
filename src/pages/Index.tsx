@@ -267,7 +267,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   };
 
   return (
-    <PageContainer className="overflow-hidden pb-16 relative">
+      <PageContainer padding="none">
       {/* Traditional component layout - each shows only once */}
       <div className="space-y-2">
 
