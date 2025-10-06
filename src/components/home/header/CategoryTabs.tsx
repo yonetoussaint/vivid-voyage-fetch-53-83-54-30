@@ -54,8 +54,14 @@ const CategoryTabs = ({
     if (activeTabElement && containerElement) {
       const textSpan = activeTabElement.querySelector('span');
       if (textSpan) {
-        // Use scrollWidth for actual text content width (more accurate)
-        const textWidth = textSpan.scrollWidth;
+        // Force layout recalculation before measuring
+        void activeTabElement.offsetHeight;
+        void textSpan.offsetHeight;
+        
+        // Use getBoundingClientRect for more accurate measurements
+        const textRect = textSpan.getBoundingClientRect();
+        const textWidth = textRect.width;
+        
         // Make underline 60-70% of text width for a sleek look
         const newWidth = Math.max(textWidth * 0.6, 20);
 
@@ -73,30 +79,31 @@ const CategoryTabs = ({
 
   // Force update on mount to handle initial positioning
   useEffect(() => {
-    // Wait for DOM to be fully painted before calculating
-    const timer = setTimeout(() => {
-      // Use requestAnimationFrame to ensure layout is complete
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          updateUnderline();
-        });
-      });
-    }, 200);
-    
-    return () => clearTimeout(timer);
-  }, [updateUnderline]);
-
-  // Force recalculation when categories change (e.g., switching to custom tabs)
-  useEffect(() => {
-    // Immediate calculation
-    updateUnderline();
-    
+    // Multiple attempts with increasing delays to catch the DOM at different stages
     const timers = [
       setTimeout(() => {
         requestAnimationFrame(() => {
           requestAnimationFrame(() => updateUnderline());
         });
-      }, 10),
+      }, 100),
+      setTimeout(() => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => updateUnderline());
+        });
+      }, 200),
+      setTimeout(() => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => updateUnderline());
+        });
+      }, 400),
+    ];
+    
+    return () => timers.forEach(timer => clearTimeout(timer));
+  }, [updateUnderline]);
+
+  // Force recalculation when categories change (e.g., switching to custom tabs)
+  useEffect(() => {
+    const timers = [
       setTimeout(() => {
         requestAnimationFrame(() => {
           requestAnimationFrame(() => updateUnderline());
@@ -112,6 +119,11 @@ const CategoryTabs = ({
           requestAnimationFrame(() => updateUnderline());
         });
       }, 300),
+      setTimeout(() => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => updateUnderline());
+        });
+      }, 500),
     ];
     
     return () => {
@@ -122,9 +134,6 @@ const CategoryTabs = ({
   // Update underline when activeTab changes AND when refs are available
   useEffect(() => {
     if (activeTab && categories.length > 0) {
-      // Immediate update
-      updateUnderline();
-      
       // Use requestAnimationFrame to ensure DOM is painted
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -138,17 +147,17 @@ const CategoryTabs = ({
           requestAnimationFrame(() => {
             requestAnimationFrame(() => updateUnderline());
           });
-        }, 50),
+        }, 100),
         setTimeout(() => {
           requestAnimationFrame(() => {
             requestAnimationFrame(() => updateUnderline());
           });
-        }, 150),
+        }, 250),
         setTimeout(() => {
           requestAnimationFrame(() => {
             requestAnimationFrame(() => updateUnderline());
           });
-        }, 300),
+        }, 450),
       ];
       
       return () => {
@@ -249,9 +258,6 @@ const CategoryTabs = ({
 
     // If this is the active tab and we have the element, update underline
     if (el && id === activeTab) {
-      // Immediate update
-      updateUnderline();
-      
       // Use multiple animation frames to ensure layout is complete
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -265,7 +271,7 @@ const CategoryTabs = ({
             updateUnderline();
           });
         });
-      }, 50);
+      }, 100);
       
       setTimeout(() => {
         requestAnimationFrame(() => {
@@ -273,7 +279,7 @@ const CategoryTabs = ({
             updateUnderline();
           });
         });
-      }, 100);
+      }, 250);
     }
   }, [activeTab, updateUnderline]);
 
