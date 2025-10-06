@@ -7,6 +7,7 @@ import { useConversations } from '@/hooks/useConversations';
 import { formatDistanceToNow } from 'date-fns';
 import { UserSelectionDialog } from '@/components/messages/UserSelectionDialog';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import { useAuthOverlay } from '@/context/AuthOverlayContext';
 
 export default function Messages() {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ export default function Messages() {
   const activeTab = (searchParams.get('filter') || 'all') as 'all' | 'unread' | 'blocked' | 'archived';
   const [showUserSelection, setShowUserSelection] = useState(false);
   const { user, isLoading } = useAuth();
+  const { openAuthOverlay } = useAuthOverlay();
   
   const currentUserId = user?.id || '';
   
@@ -34,7 +36,7 @@ export default function Messages() {
           <MessageCircle className="h-12 w-12 mx-auto text-gray-300 mb-3" />
           <p className="text-sm text-gray-500 mb-4">Please log in to view your messages</p>
           <button
-            onClick={() => navigate('/auth')}
+            onClick={() => openAuthOverlay()}
             className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800"
           >
             Log In
