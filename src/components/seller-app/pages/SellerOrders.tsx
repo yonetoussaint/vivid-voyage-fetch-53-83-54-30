@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { 
   Search, Filter, MoreHorizontal, Eye, MessageCircle,
-  Download, Plus, Package, RefreshCw
+  Download, Plus, Package, RefreshCw, Copy, MapPin
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,9 +27,15 @@ import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
 import ProductFilterBar from '@/components/home/ProductFilterBar';
 
 const SellerOrders = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [displayCount, setDisplayCount] = useState(8);
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success('Tracking number copied to clipboard');
+  };
 
   // Add filter state
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
@@ -89,12 +97,19 @@ const SellerOrders = () => {
         avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612e1b4?w=150&h=150&fit=crop&crop=face'
       },
       products: [
-        { name: 'Wireless Earbuds Pro', quantity: 2, price: 49.99 }
+        { 
+          name: 'Wireless Earbuds Pro', 
+          quantity: 2, 
+          price: 49.99,
+          image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=100&h=100&fit=crop'
+        }
       ],
       total: 149.99,
       status: 'Completed',
       date: '2024-01-20',
-      shippingAddress: '123 Main St, New York, NY 10001',
+      trackingNumber: 'TRK1234567890',
+      pickupStation: 'Downtown Station #45',
+      pickupStationId: 'station-1',
       paymentMethod: 'Credit Card ****1234'
     },
     {
@@ -105,13 +120,25 @@ const SellerOrders = () => {
         avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
       },
       products: [
-        { name: 'Smart Watch Series 5', quantity: 1, price: 299.99 },
-        { name: 'USB-C Fast Charger', quantity: 1, price: 19.99 }
+        { 
+          name: 'Smart Watch Series 5', 
+          quantity: 1, 
+          price: 299.99,
+          image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100&h=100&fit=crop'
+        },
+        { 
+          name: 'USB-C Fast Charger', 
+          quantity: 1, 
+          price: 19.99,
+          image: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=100&h=100&fit=crop'
+        }
       ],
       total: 319.98,
       status: 'Processing',
       date: '2024-01-20',
-      shippingAddress: '456 Oak Ave, Los Angeles, CA 90210',
+      trackingNumber: 'TRK0987654321',
+      pickupStation: 'West Side Station #12',
+      pickupStationId: 'station-2',
       paymentMethod: 'PayPal'
     },
     {
@@ -122,12 +149,19 @@ const SellerOrders = () => {
         avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face'
       },
       products: [
-        { name: 'Bluetooth Speaker', quantity: 1, price: 79.99 }
+        { 
+          name: 'Bluetooth Speaker', 
+          quantity: 1, 
+          price: 79.99,
+          image: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=100&h=100&fit=crop'
+        }
       ],
       total: 79.99,
       status: 'Shipped',
       date: '2024-01-19',
-      shippingAddress: '789 Pine St, Chicago, IL 60601',
+      trackingNumber: 'TRK5647382910',
+      pickupStation: 'East End Station #28',
+      pickupStationId: 'station-3',
       paymentMethod: 'Credit Card ****5678'
     },
     {
@@ -138,12 +172,19 @@ const SellerOrders = () => {
         avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'
       },
       products: [
-        { name: 'Phone Case Premium', quantity: 3, price: 24.99 }
+        { 
+          name: 'Phone Case Premium', 
+          quantity: 3, 
+          price: 24.99,
+          image: 'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=100&h=100&fit=crop'
+        }
       ],
       total: 74.97,
       status: 'Pending',
       date: '2024-01-19',
-      shippingAddress: '321 Elm St, Houston, TX 77001',
+      trackingNumber: 'TRK2938475610',
+      pickupStation: 'South Plaza Station #67',
+      pickupStationId: 'station-4',
       paymentMethod: 'Credit Card ****9012'
     },
     {
@@ -154,12 +195,19 @@ const SellerOrders = () => {
         avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&h=150&fit=crop&crop=face'
       },
       products: [
-        { name: 'Wireless Earbuds Pro', quantity: 1, price: 49.99 }
+        { 
+          name: 'Wireless Earbuds Pro', 
+          quantity: 1, 
+          price: 49.99,
+          image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=100&h=100&fit=crop'
+        }
       ],
       total: 49.99,
       status: 'Cancelled',
       date: '2024-01-18',
-      shippingAddress: '654 Maple Dr, Miami, FL 33101',
+      trackingNumber: 'TRK8765432109',
+      pickupStation: 'North Market Station #91',
+      pickupStationId: 'station-5',
       paymentMethod: 'Credit Card ****3456'
     }
   ];
@@ -297,11 +345,20 @@ const SellerOrders = () => {
                       {/* Products */}
                       <div>
                         <p className="text-xs text-muted-foreground mb-1">Products</p>
-                        <div className="space-y-1">
+                        <div className="space-y-2">
                           {order.products.map((product, index) => (
-                            <div key={index} className="flex justify-between text-sm">
-                              <span>{product.quantity}x {product.name}</span>
-                              <span className="font-medium">${(product.price * product.quantity).toFixed(2)}</span>
+                            <div key={index} className="flex items-center gap-2">
+                              <img 
+                                src={product.image} 
+                                alt={product.name}
+                                className="w-10 h-10 object-cover rounded"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-start gap-2">
+                                  <span className="text-sm truncate">{product.quantity}x {product.name}</span>
+                                  <span className="text-sm font-medium whitespace-nowrap">${(product.price * product.quantity).toFixed(2)}</span>
+                                </div>
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -315,10 +372,41 @@ const SellerOrders = () => {
                       </div>
                     </div>
 
-                    {/* Shipping Address */}
+                    {/* Tracking Number */}
                     <div className="mt-3 pt-3 border-t border-border">
-                      <p className="text-xs text-muted-foreground mb-1">Shipping Address</p>
-                      <p className="text-sm text-foreground">{order.shippingAddress}</p>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Tracking Number</p>
+                          <p className="text-sm font-mono text-foreground">{order.trackingNumber}</p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(order.trackingNumber)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Pickup Station */}
+                    <div className="mt-3 pt-3 border-t border-border">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <p className="text-xs text-muted-foreground mb-1">Pickup Station</p>
+                          <p className="text-sm text-foreground">{order.pickupStation}</p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/profile/${order.pickupStationId}`)}
+                          className="flex items-center gap-2"
+                        >
+                          <MapPin className="w-4 h-4" />
+                          Visit Pickup Station
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
