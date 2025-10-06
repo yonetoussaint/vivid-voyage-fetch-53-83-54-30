@@ -128,7 +128,7 @@ const MobileOptimizedReels: React.FC<MobileOptimizedReelsProps> = ({
           {videos?.map((video) => (
             <div 
               key={video.id} 
-              className="relative cursor-pointer aspect-[3/4] rounded-lg overflow-hidden bg-black"
+              className="relative cursor-pointer aspect-[3/4] overflow-hidden bg-black"
               onClick={() => handleVideoClick(video.id)}
             >
               <video 
