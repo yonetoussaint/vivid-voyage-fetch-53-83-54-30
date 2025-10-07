@@ -192,21 +192,11 @@ export default function Explore() {
 
       case 'sellers':
         return (
-          <div className="w-full space-y-2">
+          <div className="w-full">
             <TopVendorsCompact 
-              title="TOP SELLERS"
               showProducts={true}
               mode="grid"
-            />
-            <TopVendorsCompact 
-              title="VERIFIED SELLERS"
-              showProducts={true}
-              mode="grid"
-            />
-            <TopVendorsCompact 
-              title="NEW SELLERS"
-              showProducts={false}
-              mode="grid"
+              showSectionHeader={false}
             />
           </div>
         );

@@ -249,6 +249,7 @@ interface VendorCarouselProps {
   viewAllLink?: string;
   isPickupStation?: boolean;
   mode?: 'carousel' | 'grid';
+  showSectionHeader?: boolean;
 }
 
 // Main Carousel Component
@@ -257,7 +258,8 @@ const VendorCarousel: React.FC<VendorCarouselProps> = ({
   showProducts = true,
   viewAllLink = "/vendors",
   isPickupStation = false,
-  mode = 'carousel'
+  mode = 'carousel',
+  showSectionHeader = true
 }) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
@@ -378,12 +380,14 @@ const VendorCarousel: React.FC<VendorCarouselProps> = ({
 
   return (
     <div className="w-full relative">
-      <SectionHeader
-        title={title}
-        icon={Store}
-        viewAllLink={viewAllLink}
-        viewAllText="View All"
-      />
+      {showSectionHeader && (
+        <SectionHeader
+          title={title}
+          icon={Store}
+          viewAllLink={viewAllLink}
+          viewAllText="View All"
+        />
+      )}
 
       {mode === 'grid' ? (
         <div className="grid grid-cols-2 gap-4 px-2">
