@@ -211,7 +211,7 @@ const VendorCard = ({ vendor, onProductClick, onSellerClick, showProducts = true
             className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white text-xs font-medium py-1.5 px-2 rounded-full transition-colors"
             onClick={handleSellerClick}
           >  
-            {isPickupStation ? 'Visit Station' : 'Visit Store'}
+            {isPickupStation ? 'Visit Station' : mode === 'grid' ? 'Visit' : 'Visit Store'}
           </button>  
           <button   
             className={`flex items-center justify-center text-xs font-medium py-1.5 px-2 rounded-full transition-colors ${  
@@ -349,7 +349,13 @@ const VendorCarousel: React.FC<VendorCarouselProps> = ({
         rank: index + 1
       };
     })
-    .filter(vendor => showProducts ? vendor.products.length >= 4 : true);
+    .filter(vendor => {
+      // In grid mode, show sellers with at least 1 product; in carousel mode, require 4 products
+      if (showProducts) {
+        return mode === 'grid' ? vendor.products.length >= 1 : vendor.products.length >= 4;
+      }
+      return true;
+    });
 
   const cardWidth = isMobile ? "66%" : "33.333%";
 
