@@ -428,7 +428,7 @@ const VendorCarousel: React.FC<VendorCarouselProps> = ({
       )}
 
       {mode === 'grid' ? (
-        <div className="grid grid-cols-2 gap-4 px-2">
+        <div className="grid grid-cols-2 gap-1 px-2">
           {vendors.map((vendor) => (
             <VendorCard 
               key={vendor.id} 
