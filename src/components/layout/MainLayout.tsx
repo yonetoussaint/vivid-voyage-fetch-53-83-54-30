@@ -182,7 +182,7 @@ function MainLayoutContent() {
 
   // Redirect to include default filter if missing
   useEffect(() => {
-    if (isMessagesPage && !searchParams.get('filter')) {
+    if (isMessagesPage && pathname === '/messages' && !searchParams.get('filter')) {
       navigate('/messages?filter=all', { replace: true });
     }
     if (isWalletPage && !searchParams.get('tab')) {
@@ -191,7 +191,7 @@ function MainLayoutContent() {
     if (isExplorePage && !searchParams.get('tab')) {
       navigate('/explore?tab=products', { replace: true });
     }
-  }, [isMessagesPage, isWalletPage, isExplorePage, searchParams, navigate]);
+  }, [isMessagesPage, isWalletPage, isExplorePage, searchParams, navigate, pathname]);
 
   // Define custom tabs for messages page
   const messagesTabs = isMessagesPage ? [
