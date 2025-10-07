@@ -203,24 +203,13 @@ export default function Explore() {
 
       case 'stations':
         return (
-          <div className="w-full space-y-2">
+          <div className="w-full">
             <TopVendorsCompact 
-              title="NEARBY PICKUP STATIONS"
               showProducts={false}
-              viewAllLink="/pickup-stations"
+              mode="grid"
+              showSectionHeader={false}
               isPickupStation={true}
-            />
-            <TopVendorsCompact 
-              title="TOP RATED STATIONS"
-              showProducts={false}
-              viewAllLink="/pickup-stations"
-              isPickupStation={true}
-            />
-            <TopVendorsCompact 
-              title="FEATURED STATIONS"
-              showProducts={false}
-              viewAllLink="/pickup-stations"
-              isPickupStation={true}
+              showBanner={true}
             />
           </div>
         );

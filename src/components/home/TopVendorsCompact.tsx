@@ -105,7 +105,7 @@ const DefaultProfileAvatar = ({ className = "w-6 h-6" }) => (
 
 
 // Vendor Card Component
-const VendorCard = ({ vendor, onProductClick, onSellerClick, showProducts = true, isPickupStation = false, mode = 'carousel' }) => {
+const VendorCard = ({ vendor, onProductClick, onSellerClick, showProducts = true, isPickupStation = false, mode = 'carousel', showBanner = false }) => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [imageError, setImageError] = useState(false);
   const displayProducts = vendor.products.slice(0, 4);
@@ -123,8 +123,22 @@ const VendorCard = ({ vendor, onProductClick, onSellerClick, showProducts = true
     <div className="w-full">
       <div className={`bg-white border border-gray-300 overflow-hidden hover:border-gray-400 transition-all duration-300 ${mode === 'grid' ? 'rounded-none' : 'rounded-2xl'}`}>
 
+        {/* Banner for stations */}
+        {showBanner && (
+          <div className="px-2 pt-2 pb-1">
+            <div className="w-full h-24 rounded-xl overflow-hidden bg-gradient-to-r from-blue-500 to-purple-600">
+              <img 
+                src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&h=200&fit=crop"
+                alt="Station banner"
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            </div>
+          </div>
+        )}
+
         {/* Products Grid */}  
-        {showProducts && (
+        {showProducts && !showBanner && (
           <div className="px-2 pt-2 pb-1 relative">  
             {vendor.discount && (  
               <div className="absolute top-3 right-3 bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full z-10">  
@@ -257,6 +271,7 @@ interface VendorCarouselProps {
   isPickupStation?: boolean;
   mode?: 'carousel' | 'grid';
   showSectionHeader?: boolean;
+  showBanner?: boolean;
 }
 
 // Main Carousel Component
@@ -266,7 +281,8 @@ const VendorCarousel: React.FC<VendorCarouselProps> = ({
   viewAllLink = "/vendors",
   isPickupStation = false,
   mode = 'carousel',
-  showSectionHeader = true
+  showSectionHeader = true,
+  showBanner = false
 }) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
@@ -443,6 +459,7 @@ const VendorCarousel: React.FC<VendorCarouselProps> = ({
               showProducts={showProducts} 
               isPickupStation={isPickupStation}
               mode={mode}
+              showBanner={showBanner}
             />
           ))}
         </div>
@@ -473,6 +490,7 @@ const VendorCarousel: React.FC<VendorCarouselProps> = ({
                 showProducts={showProducts} 
                 isPickupStation={isPickupStation}
                 mode={mode}
+                showBanner={showBanner}
               />
             </div>
           ))}
