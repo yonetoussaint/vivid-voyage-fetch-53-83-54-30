@@ -199,7 +199,9 @@ const VendorCard = ({ vendor, onProductClick, onSellerClick, showProducts = true
                     {vendor.followers}  
                   </div>
                 </div>
-                <span className="text-xs font-bold text-white bg-gray-400 px-1.5 py-0.5 rounded-full">#{vendor.rank}</span>
+                {mode !== 'grid' && (
+                  <span className="text-xs font-bold text-white bg-gray-400 px-1.5 py-0.5 rounded-full">#{vendor.rank}</span>
+                )}
               </div>
             </div>
           </div>
@@ -305,23 +307,53 @@ const VendorCarousel: React.FC<VendorCarouselProps> = ({
 
   const isLoading = sellersLoading || productsLoading;
 
-  // Transform data
-  const vendors = sellers
-    .map((seller, index) => {
-      const sellerProducts = products
-        .filter(product => product.seller_id === seller.id)
-        .slice(0, 4)
-        .map(product => {
-          const productImages = Array.isArray(product.product_images) ? product.product_images : [];
-          const firstImage = productImages.length > 0 ? productImages[0] : null;
+  // Sample sellers data to show more cards
+  const sampleSellers = [
+    { id: 'sample-1', name: 'Tech Haven', image_url: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=150&h=150&fit=crop', verified: true, rating: 4.8, followers_count: 25000, category: 'electronics', total_sales: 0 },
+    { id: 'sample-2', name: 'Fashion Forward', image_url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=150&h=150&fit=crop', verified: true, rating: 4.6, followers_count: 18500, category: 'fashion', total_sales: 0 },
+    { id: 'sample-3', name: 'Home Essentials', image_url: 'https://images.unsplash.com/photo-1555421689-d68471e189f2?w=150&h=150&fit=crop', verified: false, rating: 4.5, followers_count: 12300, category: 'home', total_sales: 0 },
+    { id: 'sample-4', name: 'Sports Zone', image_url: 'https://images.unsplash.com/photo-1556740749-887f6717d7e4?w=150&h=150&fit=crop', verified: true, rating: 4.7, followers_count: 31200, category: 'sports', total_sales: 0 },
+    { id: 'sample-5', name: 'Beauty Box', image_url: 'https://images.unsplash.com/photo-1522337660859-02fbefca4702?w=150&h=150&fit=crop', verified: true, rating: 4.9, followers_count: 42000, category: 'beauty', total_sales: 0 },
+    { id: 'sample-6', name: 'Book Nook', image_url: 'https://images.unsplash.com/photo-1481277542470-605612bd2d61?w=150&h=150&fit=crop', verified: false, rating: 4.4, followers_count: 8900, category: 'books', total_sales: 0 },
+    { id: 'sample-7', name: 'Pet Paradise', image_url: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=150&h=150&fit=crop', verified: true, rating: 4.8, followers_count: 19500, category: 'pets', total_sales: 0 },
+    { id: 'sample-8', name: 'Kitchen King', image_url: 'https://images.unsplash.com/photo-1556911220-bff31c812dba?w=150&h=150&fit=crop', verified: false, rating: 4.3, followers_count: 14200, category: 'kitchen', total_sales: 0 },
+    { id: 'sample-9', name: 'Garden Glory', image_url: 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=150&h=150&fit=crop', verified: true, rating: 4.6, followers_count: 22100, category: 'garden', total_sales: 0 },
+    { id: 'sample-10', name: 'Auto Parts Pro', image_url: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=150&h=150&fit=crop', verified: true, rating: 4.7, followers_count: 28300, category: 'automotive', total_sales: 0 },
+  ];
 
-          return {
-            id: product.id,
-            image: firstImage?.src || "",
-            price: `$${product.price}`,
-            discount: product.discount_price ? `${Math.round((1 - product.discount_price / product.price) * 100)}%` : null
-          };
-        });
+  // Sample products for the sample sellers
+  const sampleProducts = [
+    { id: 'prod-1', image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop' },
+    { id: 'prod-2', image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&h=300&fit=crop' },
+    { id: 'prod-3', image: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=300&h=300&fit=crop' },
+    { id: 'prod-4', image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300&h=300&fit=crop' },
+  ];
+
+  // Combine real sellers with sample sellers
+  const allSellers = [...sellers, ...sampleSellers];
+
+  // Transform data
+  const vendors = allSellers
+    .map((seller, index) => {
+      // Check if this is a sample seller
+      const isSampleSeller = seller.id.startsWith('sample-');
+      
+      const sellerProducts = isSampleSeller 
+        ? sampleProducts 
+        : products
+            .filter(product => product.seller_id === seller.id)
+            .slice(0, 4)
+            .map(product => {
+              const productImages = Array.isArray(product.product_images) ? product.product_images : [];
+              const firstImage = productImages.length > 0 ? productImages[0] : null;
+
+              return {
+                id: product.id,
+                image: firstImage?.src || "",
+                price: `$${product.price}`,
+                discount: product.discount_price ? `${Math.round((1 - product.discount_price / product.price) * 100)}%` : null
+              };
+            });
 
       // Handle different types of image URLs
       let imageUrl = "";
