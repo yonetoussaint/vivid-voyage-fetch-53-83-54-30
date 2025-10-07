@@ -105,7 +105,7 @@ const DefaultProfileAvatar = ({ className = "w-6 h-6" }) => (
 
 
 // Vendor Card Component
-const VendorCard = ({ vendor, onProductClick, onSellerClick, showProducts = true, isPickupStation = false }) => {
+const VendorCard = ({ vendor, onProductClick, onSellerClick, showProducts = true, isPickupStation = false, mode = 'carousel' }) => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [imageError, setImageError] = useState(false);
   const displayProducts = vendor.products.slice(0, 4);
@@ -132,7 +132,7 @@ const VendorCard = ({ vendor, onProductClick, onSellerClick, showProducts = true
               </div>  
             )}
 
-            <div className="grid grid-cols-4 gap-1">  
+            <div className={`grid ${mode === 'grid' ? 'grid-cols-2' : 'grid-cols-4'} gap-1`}>  
               {displayProducts.map(product => (  
                 <button 
                   key={product.id} 
@@ -398,7 +398,8 @@ const VendorCarousel: React.FC<VendorCarouselProps> = ({
               onProductClick={handleProductClick} 
               onSellerClick={handleSellerClick} 
               showProducts={showProducts} 
-              isPickupStation={isPickupStation} 
+              isPickupStation={isPickupStation}
+              mode={mode}
             />
           ))}
         </div>
@@ -422,7 +423,14 @@ const VendorCarousel: React.FC<VendorCarouselProps> = ({
                 scrollSnapAlign: 'start'
               }}
             >
-              <VendorCard vendor={vendor} onProductClick={handleProductClick} onSellerClick={handleSellerClick} showProducts={showProducts} isPickupStation={isPickupStation} />
+              <VendorCard 
+                vendor={vendor} 
+                onProductClick={handleProductClick} 
+                onSellerClick={handleSellerClick} 
+                showProducts={showProducts} 
+                isPickupStation={isPickupStation}
+                mode={mode}
+              />
             </div>
           ))}
 
