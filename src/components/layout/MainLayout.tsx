@@ -137,6 +137,9 @@ function MainLayoutContent() {
   const headerHeight = shouldApplySpacing ? (isMobile ? '80px' : '120px') : '0px';
   const bottomNavHeight = (shouldApplySpacing || isReelsPage) && isMobile && !isMultiStepTransferPage && !isMultiStepTransferSheetPage && !isTransferOldPage ? '48px' : '0px';
 
+  // Check if current page is conversation detail
+  const isConversationDetailPage = pathname.startsWith('/messages/') && pathname !== '/messages';
+
   // In MainLayout.tsx, update the headerHeightStyle to ensure bottom nav height is set correctly
   const headerHeightStyle = `
   :root {
@@ -150,6 +153,14 @@ function MainLayoutContent() {
     padding-bottom: var(--bottom-nav-height);
     min-height: calc(100vh - var(--header-height) - var(--bottom-nav-height));
   }
+
+  /* Remove padding for conversation detail page */
+  ${isConversationDetailPage ? `
+  main {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+  ` : ''}
 `;
 
   useEffect(() => {
