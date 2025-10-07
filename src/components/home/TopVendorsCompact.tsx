@@ -121,7 +121,7 @@ const VendorCard = ({ vendor, onProductClick, onSellerClick, showProducts = true
 
   return (
     <div className="w-full">
-      <div className="bg-white rounded-2xl border border-gray-300 overflow-hidden hover:border-gray-400 transition-all duration-300">
+      <div className={`bg-white border border-gray-300 overflow-hidden hover:border-gray-400 transition-all duration-300 ${mode === 'grid' ? 'rounded-none' : 'rounded-2xl'}`}>
 
         {/* Products Grid */}  
         {showProducts && (
@@ -133,10 +133,10 @@ const VendorCard = ({ vendor, onProductClick, onSellerClick, showProducts = true
             )}
 
             <div className={`grid ${mode === 'grid' ? 'grid-cols-2' : 'grid-cols-4'} gap-1`}>  
-              {displayProducts.map(product => (  
+              {displayProducts.map((product, index) => (  
                 <button 
                   key={product.id} 
-                  className="group cursor-pointer"
+                  className="group cursor-pointer relative"
                   onClick={() => handleProductClick(product.id)}
                 >  
                   <div className="aspect-square rounded-md border border-gray-100 bg-gray-50 overflow-hidden hover:border-gray-200 transition-colors">  
@@ -153,6 +153,11 @@ const VendorCard = ({ vendor, onProductClick, onSellerClick, showProducts = true
                       </div>
                     )}
                   </div>
+                  {mode === 'grid' && index === 3 && (
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-md">
+                      <span className="text-white font-bold text-sm">+15K</span>
+                    </div>
+                  )}
                 </button>  
               ))}  
             </div>  
