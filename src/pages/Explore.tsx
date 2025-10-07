@@ -196,14 +196,17 @@ export default function Explore() {
             <TopVendorsCompact 
               title="TOP SELLERS"
               showProducts={true}
+              mode="grid"
             />
             <TopVendorsCompact 
               title="VERIFIED SELLERS"
               showProducts={true}
+              mode="grid"
             />
             <TopVendorsCompact 
               title="NEW SELLERS"
               showProducts={false}
+              mode="grid"
             />
           </div>
         );

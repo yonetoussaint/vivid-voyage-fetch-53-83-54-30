@@ -248,6 +248,7 @@ interface VendorCarouselProps {
   showProducts?: boolean;
   viewAllLink?: string;
   isPickupStation?: boolean;
+  mode?: 'carousel' | 'grid';
 }
 
 // Main Carousel Component
@@ -255,7 +256,8 @@ const VendorCarousel: React.FC<VendorCarouselProps> = ({
   title = "TOP VENDORS",
   showProducts = true,
   viewAllLink = "/vendors",
-  isPickupStation = false
+  isPickupStation = false,
+  mode = 'carousel'
 }) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
@@ -383,31 +385,46 @@ const VendorCarousel: React.FC<VendorCarouselProps> = ({
         viewAllText="View All"
       />
 
-      <div 
-        ref={scrollContainerRef}
-        className="flex overflow-x-auto pl-2 scrollbar-none w-full"
-        style={{ 
-          scrollbarWidth: 'none', 
-          msOverflowStyle: 'none',
-          scrollSnapType: 'x mandatory',
-          scrollPaddingLeft: '8px'
-        }}
-      >
-        {vendors.map((vendor) => (
-          <div 
-            key={vendor.id}
-            className="flex-shrink-0 mr-[3vw]"
-            style={{ 
-              width: cardWidth,
-              scrollSnapAlign: 'start'
-            }}
-          >
-            <VendorCard vendor={vendor} onProductClick={handleProductClick} onSellerClick={handleSellerClick} showProducts={showProducts} isPickupStation={isPickupStation} />
-          </div>
-        ))}
+      {mode === 'grid' ? (
+        <div className="grid grid-cols-2 gap-4 px-2">
+          {vendors.map((vendor) => (
+            <VendorCard 
+              key={vendor.id} 
+              vendor={vendor} 
+              onProductClick={handleProductClick} 
+              onSellerClick={handleSellerClick} 
+              showProducts={showProducts} 
+              isPickupStation={isPickupStation} 
+            />
+          ))}
+        </div>
+      ) : (
+        <div 
+          ref={scrollContainerRef}
+          className="flex overflow-x-auto pl-2 scrollbar-none w-full"
+          style={{ 
+            scrollbarWidth: 'none', 
+            msOverflowStyle: 'none',
+            scrollSnapType: 'x mandatory',
+            scrollPaddingLeft: '8px'
+          }}
+        >
+          {vendors.map((vendor) => (
+            <div 
+              key={vendor.id}
+              className="flex-shrink-0 mr-[3vw]"
+              style={{ 
+                width: cardWidth,
+                scrollSnapAlign: 'start'
+              }}
+            >
+              <VendorCard vendor={vendor} onProductClick={handleProductClick} onSellerClick={handleSellerClick} showProducts={showProducts} isPickupStation={isPickupStation} />
+            </div>
+          ))}
 
-        <div className="flex-shrink-0 w-2"></div>
-      </div>
+          <div className="flex-shrink-0 w-2"></div>
+        </div>
+      )}
 
       {/* Product Semi Panel */}
       <ProductSemiPanel
