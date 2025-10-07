@@ -114,6 +114,7 @@ function MainLayoutContent() {
 
   // Check if current page is messages, wallet, or explore
   const isMessagesPage = pathname === '/messages' || pathname.startsWith('/messages/');
+  const isMessagesListPage = pathname === '/messages';
   const isWalletPage = pathname === '/wallet';
   const isExplorePage = pathname === '/explore';
 
@@ -123,8 +124,8 @@ function MainLayoutContent() {
   const walletFilter = searchParams.get('tab') || 'buyer';
   const exploreFilter = searchParams.get('tab') || 'products';
 
-  // Check if we should apply spacing (messages, wallet, explore)
-  const shouldApplySpacing = isMessagesPage || isExplorePage || isWalletPage;
+  // Check if we should apply spacing (messages list only, not conversation detail, wallet, explore)
+  const shouldApplySpacing = isMessagesListPage || isExplorePage || isWalletPage;
 
   // Check if current page is reels
   const isReelsPage = pathname === '/reels' && !location.search.includes('video=');
@@ -194,7 +195,7 @@ function MainLayoutContent() {
   }, [isMessagesPage, isWalletPage, isExplorePage, searchParams, navigate, pathname]);
 
   // Define custom tabs for messages page
-  const messagesTabs = isMessagesPage ? [
+  const messagesTabs = isMessagesListPage ? [
     { id: 'all', name: 'All', path: '/messages?filter=all' },
     { id: 'unread', name: 'Unread', path: '/messages?filter=unread' },
     { id: 'blocked', name: 'Blocked', path: '/messages?filter=blocked' },
@@ -227,7 +228,7 @@ function MainLayoutContent() {
         {/* Show AliExpressHeader for category pages */}
         {shouldShowHeader && (
           <AliExpressHeader 
-            activeTabId={isMessagesPage ? messagesFilter : isWalletPage ? walletFilter : isExplorePage ? exploreFilter : activeTab}
+            activeTabId={isMessagesListPage ? messagesFilter : isWalletPage ? walletFilter : isExplorePage ? exploreFilter : activeTab}
             showFilterBar={showFilterBar}
             filterCategories={filterCategories}
             selectedFilters={selectedFilters}
@@ -237,7 +238,7 @@ function MainLayoutContent() {
             onFilterButtonClick={onFilterButtonClick}
             isFilterDisabled={isFilterDisabled}
             customTabs={messagesTabs || walletTabs || exploreTabs}
-            onCustomTabChange={isMessagesPage ? (tabId) => {
+            onCustomTabChange={isMessagesListPage ? (tabId) => {
               const tab = messagesTabs?.find(t => t.id === tabId);
               if (tab?.path) {
                 navigate(tab.path);
