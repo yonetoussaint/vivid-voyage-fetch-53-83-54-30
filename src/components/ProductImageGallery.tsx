@@ -384,12 +384,7 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
       </div>
 
 
-      {/* Replace ProductNameDisplay with StockProgressBar */}
-      {stockData && (
-        <div>
-          <StockProgressBar product={stockData} />
-        </div>
-      )}
+    <InfoBand/>
 
             
       
