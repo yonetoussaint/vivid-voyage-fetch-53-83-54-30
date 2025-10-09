@@ -14,7 +14,7 @@ export default function StockProgressBar({ product }) {
   const isPositive = product.change >= 0;
 
   return (
-    <div className="bg-black/60 backdrop-blur-sm rounded-full px-2 py-1">
+    <div className="bg-black/60 backdrop-blur-sm rounded-lg border border-gray-200/50 shadow-sm p-2">
       <div className="space-y-1.5">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1">
