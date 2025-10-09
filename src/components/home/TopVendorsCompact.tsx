@@ -232,7 +232,7 @@ const VendorCard = ({ vendor, onProductClick, onSellerClick, showProducts = true
             className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white text-xs font-medium py-1.5 px-2 rounded-full transition-colors"
             onClick={handleSellerClick}
           >  
-            {isPickupStation ? 'Visit Station' : mode === 'grid' ? 'Visit' : 'Visit Store'}
+            {isPickupStation ? 'Visit' : mode === 'grid' ? 'Visit' : 'Visit Store'}
           </button>  
           <button   
             className={`flex items-center justify-center text-xs font-medium py-1.5 px-2 rounded-full transition-colors ${  

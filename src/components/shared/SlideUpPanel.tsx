@@ -49,23 +49,23 @@ export default function SlideUpPanel({
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
       if (!isOpen || !preventBodyScroll) return;
-      
+
       const contentElement = contentRef.current;
       if (contentElement && contentElement.contains(e.target as Node)) {
         return;
       }
-      
+
       e.preventDefault();
     };
 
     const handleTouchMove = (e: TouchEvent) => {
       if (!isOpen || !preventBodyScroll) return;
-      
+
       const contentElement = contentRef.current;
       if (contentElement && contentElement.contains(e.target as Node)) {
         return;
       }
-      
+
       e.preventDefault();
     };
 
@@ -84,22 +84,24 @@ export default function SlideUpPanel({
 
   return (
     <>
+      {/* Blurred Backdrop */}
       <div 
-        className="fixed inset-0 bg-black bg-opacity-50 z-40 animate-in fade-in duration-300"
+        className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md z-[70] animate-in fade-in duration-300"
         onClick={onClose}
       />
 
+      {/* Panel - Remove fixed height, use max-height with auto height */}
       <div
-        className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 rounded-t-2xl shadow-lg z-40 animate-in slide-in-from-bottom duration-300 flex flex-col"
+        className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 rounded-t-2xl shadow-lg z-[70] animate-in slide-in-from-bottom duration-300 flex flex-col"
         style={{
-          maxHeight: '90vh',
-          height: '90vh',
+          maxHeight: '90vh', // Still limit to 90vh max
+          height: 'auto', // Let content determine height
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Sticky Header */}
         {(title || showCloseButton) && (
-          <div className="flex-shrink-0 bg-white z-10 flex items-center justify-between p-4 border-b border-gray-100 rounded-t-2xl"> {/* Added rounded-t-2xl */}
+          <div className="flex-shrink-0 bg-white z-10 flex items-center justify-between p-4 border-b border-gray-100 rounded-t-2xl">
             {title && <h3 className="font-medium text-gray-900">{title}</h3>}
             {showCloseButton && (
               <button
@@ -112,10 +114,10 @@ export default function SlideUpPanel({
           </div>
         )}
 
-        {/* Scrollable Content Area - REMOVED bg-white from here */}
+        {/* Scrollable Content Area - Add min-height: 0 for proper flex behavior */}
         <div 
           ref={contentRef}
-          className={`flex-1 overflow-y-auto ${className}`}
+          className={`flex-1 overflow-y-auto min-h-0 ${className}`}
           style={{
             WebkitOverflowScrolling: 'touch',
             scrollBehavior: 'smooth',
@@ -126,7 +128,7 @@ export default function SlideUpPanel({
 
         {/* Sticky Footer Area */}
         {stickyFooter && (
-          <div className="flex-shrink-0 border-t border-gray-200 bg-white rounded-b-2xl"> {/* Added rounded-b-2xl */}
+          <div className="flex-shrink-0 border-t border-gray-200 bg-white rounded-b-2xl">
             {stickyFooter}
           </div>
         )}

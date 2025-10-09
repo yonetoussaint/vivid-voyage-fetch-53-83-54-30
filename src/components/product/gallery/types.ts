@@ -6,6 +6,7 @@ export interface ProductImageGalleryRef {
 
 export interface ProductImageGalleryProps {
   images: string[];
+  onReadMore?: () => void;
   videos?: {
     id: string;
     video_url: string;

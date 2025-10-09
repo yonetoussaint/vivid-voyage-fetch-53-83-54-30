@@ -10,7 +10,6 @@ const ShimmerSkeleton = ({ className }: { className?: string }) => (
   </div>
 );
 
-
 interface GalleryThumbnailsProps {
   images: string[];
   currentIndex: number;
@@ -44,19 +43,28 @@ export const GalleryThumbnails = ({
   const handleImageError = useCallback((index: number) => {
     setLoadedImages(prev => new Set(prev).add(index));
   }, []);
+
+  // Show only first 5 thumbnails, and calculate remaining count
+  const maxThumbnails = 5;
+  const displayImages = images.slice(0, maxThumbnails);
+  const remainingCount = images.length - maxThumbnails;
+
   return (
-    <div className="flex items-center gap-2 px-2 py-2 overflow-x-auto w-full scrollbar-hide">
-      {images.map((src, index) => {
+    <div className="flex items-center justify-between gap-2 px-2  w-full">
+      {displayImages.map((src, index) => {
         const isVideo = videoIndices.includes(index);
         const galleryItem = galleryItems[index];
         const isImageLoaded = loadedImages.has(index);
+
+        // Check if this is the last thumbnail and there are remaining items
+        const isLastThumbnailWithCounter = index === maxThumbnails - 1 && remainingCount > 0;
 
         return (
           <div
             key={index}
             className={cn(
-              "relative overflow-hidden rounded-md border flex-shrink-0 transition-all",
-              "w-14 h-14 cursor-pointer",
+              "relative overflow-hidden rounded-md border flex-shrink-0 transition-all flex-1 aspect-square",
+              "cursor-pointer max-w-[20%]",
               currentIndex === index 
                 ? "border-2 border-primary shadow-md ring-1 ring-primary/20" 
                 : "border border-gray-300 hover:border-gray-400"
@@ -82,7 +90,7 @@ export const GalleryThumbnails = ({
                 {!isImageLoaded && (
                   <ShimmerSkeleton className="absolute inset-0 w-full h-full" />
                 )}
-                
+
                 <video 
                   src={src}
                   className={cn("w-full h-full object-cover transition-opacity duration-300", 
@@ -94,7 +102,7 @@ export const GalleryThumbnails = ({
                   onLoadedData={() => handleImageLoad(index)}
                   onError={() => handleImageError(index)}
                 />
-                
+
                 <div className={cn(
                   "absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity duration-300",
                   currentIndex === index && isPlaying && "opacity-0",
@@ -102,7 +110,7 @@ export const GalleryThumbnails = ({
                 )}>
                   <Play className="h-4 w-4 text-white" />
                 </div>
-                
+
                 {/* Video duration badge */}
                 <div className={cn(
                   "absolute top-0.5 left-0.5 text-[8px] bg-black/60 text-white px-1 rounded text-center transition-opacity duration-300",
@@ -117,7 +125,7 @@ export const GalleryThumbnails = ({
                 {!isImageLoaded && (
                   <ShimmerSkeleton className="absolute inset-0 w-full h-full" />
                 )}
-                
+
                 <img 
                   src={src} 
                   alt={`Thumbnail ${index}`} 
@@ -127,6 +135,13 @@ export const GalleryThumbnails = ({
                   onLoad={() => handleImageLoad(index)}
                   onError={() => handleImageError(index)}
                 />
+              </div>
+            )}
+
+            {/* Counter overlay for the last thumbnail when there are remaining items */}
+            {isLastThumbnailWithCounter && (
+              <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-md">
+                <span className="text-white text-xs font-semibold">+{remainingCount}</span>
               </div>
             )}
 

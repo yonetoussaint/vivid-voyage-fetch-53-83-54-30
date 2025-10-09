@@ -1,3 +1,4 @@
+// ProductDetailLayout.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -18,13 +19,12 @@ import ProductStickyComponents from './ProductStickyComponents';
 import ProductNameDisplay from './ProductNameDisplay';
 import PriceInfo from './PriceInfo';
 
-
 interface ProductDetailLayoutProps {
   product: any;
   productId: string;
-  hideHeader?: boolean; // New prop to conditionally hide header
-  // Panel context props
+  hideHeader?: boolean;
   inPanel?: boolean;
+  onReadMore?: () => void; // Add this
   scrollContainerRef?: React.RefObject<HTMLDivElement>;
   stickyTopOffset?: number;
 }
@@ -35,7 +35,8 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
   hideHeader = false,
   inPanel = false,
   scrollContainerRef,
-  stickyTopOffset
+  stickyTopOffset,
+  onReadMore // Destructure it here
 }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -137,7 +138,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
         />
       )}
 
-      {/* Image Gallery Section */}
+      {/* Image Gallery Section - PASS onReadMore HERE */}
       <ProductGallerySection
         ref={refs.overviewRef}
         galleryRef={refs.galleryRef}
@@ -160,6 +161,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
             console.error('❌ No seller ID found');
           }
         }}
+        onReadMore={onReadMore} // ADD THIS LINE
       />
 
       {/* Sticky Tabs Navigation - Moved back to main layout */}

@@ -10,7 +10,7 @@ import PriceInfo from "@/components/product/PriceInfo";
 import TabsNavigation from "@/components/home/TabsNavigation";
 import SellerInfoOverlay from "@/components/product/SellerInfoOverlay";
 import ConfigurationSummary from "@/components/product/ConfigurationSummary";
-import ProductNameDisplay from "@/components/product/ProductNameDisplay"; // Import the separate component
+import StockProgressBar from "@/components/product/StockProgressBar"; // Import the new component
 
 // Import new modular components
 import { ProductImageGalleryRef, ProductImageGalleryProps } from './product/gallery/types';
@@ -19,7 +19,7 @@ import { useGalleryState } from './product/gallery/useGalleryState';
 import GalleryItem from './product/gallery/GalleryItem';
 import GalleryTabsContent from './product/gallery/GalleryTabsContent';
 import FullscreenGallery from './product/gallery/FullscreenGallery';
-import StickyCheckoutBar from '@/components/product/StickyCheckoutBar'; // Import StickyCheckoutBar
+import StickyCheckoutBar from '@/components/product/StickyCheckoutBar';
 
 const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalleryProps>(
   ({ 
@@ -37,8 +37,9 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
     onImageIndexChange,
     onVariantImageChange,
     configurationData,
-    activeTab = 'overview', // Add activeTab prop with default value
-    onBuyNow
+    activeTab = 'overview',
+    onBuyNow,
+    onReadMore
   }, ref) => {
 
   // Use the custom hook for state management
@@ -70,7 +71,7 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
     focusMode,
     showConfiguration,
     zoomLevel,
-    activeTab: internalActiveTab, // Renamed to avoid conflict with prop
+    activeTab: internalActiveTab,
     internalConfigData,
     isPlaying,
     isMuted,
@@ -87,7 +88,7 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
     setCurrentTime,
     setDuration,
     setBufferedTime,
-    setActiveTab, // This is the internal setter for the tab
+    setActiveTab,
     setInternalConfigData,
     setShowConfiguration,
     setFocusMode,
@@ -204,8 +205,8 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
   // Expose methods via ref
   useImperativeHandle(ref, () => ({
     getTabsContainer: () => tabsContainerRef.current,
-    setActiveTab: (tab: string) => setActiveTab(tab), // Use internal setter
-    getActiveTab: () => internalActiveTab // Return internal state
+    setActiveTab: (tab: string) => setActiveTab(tab),
+    getActiveTab: () => internalActiveTab
   }));
 
   // Video control handlers
@@ -266,6 +267,14 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
       }
     }
   };
+
+  // Create product data for StockProgressBar
+  const stockData = product ? {
+    id: product.id,
+    change: 12.5, // You can calculate this from product data or pass it as a prop
+    inStock: product.stock || 0,
+    sold: product.sold || 0
+  } : null;
 
   if (totalItems === 0) {
     return (
@@ -379,10 +388,16 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
         </Carousel>
       </div>
 
-      <InfoBand />
 
+      {/* Replace ProductNameDisplay with StockProgressBar */}
+      {stockData && (
+        <div>
+          <StockProgressBar product={stockData} />
+        </div>
+      )}
 
- {/* Use the separate ProductNameDisplay component */}
+            
+      
 
       {totalItems > 1 && (
         <div ref={tabsContainerRef} className="w-full bg-white">
@@ -398,8 +413,8 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
               { id: 'shipping', label: 'Shipping' },
               { id: 'recommendations', label: 'Recommendations' }
             ]}
-            activeTab={internalActiveTab} // Use internal state for TabsNavigation
-            onTabChange={setActiveTab} // Use internal setter
+            activeTab={internalActiveTab}
+            onTabChange={setActiveTab}
             edgeToEdge={true}
             style={{ backgroundColor: 'white' }}
           />
@@ -407,7 +422,7 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
       )}
 
       <GalleryTabsContent
-        activeTab={internalActiveTab} // Pass internal activeTab state
+        activeTab={internalActiveTab}
         totalItems={totalItems}
         galleryItems={galleryItems}
         currentIndex={currentIndex}
@@ -419,6 +434,7 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
         onImageSelect={handleVariantImageChange}
         onConfigurationChange={setInternalConfigData}
         onBuyNow={onBuyNow}
+        onReadMore={onReadMore}
       />
 
       <FullscreenGallery
@@ -468,7 +484,6 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
           className=""
           onImageSelect={onVariantImageChange}
           onConfigurationChange={(configData) => {
-            // Handle configuration change with single parameter
             if (onVariantChange && configData) {
               onVariantChange(0, configData);
             }

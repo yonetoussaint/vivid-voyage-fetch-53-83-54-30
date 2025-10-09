@@ -13,6 +13,7 @@ interface ProductGallerySectionProps {
   onVariantImageChange: (imageUrl: string, variantName: string) => void;
   onSellerClick: () => void;
   onBuyNow?: () => void;
+  onReadMore?: () => void;
 }
 
 const ProductGallerySection = React.forwardRef<HTMLDivElement, ProductGallerySectionProps>(({
@@ -25,7 +26,8 @@ const ProductGallerySection = React.forwardRef<HTMLDivElement, ProductGallerySec
   onImageIndexChange,
   onVariantImageChange,
   onSellerClick,
-  onBuyNow
+  onBuyNow,
+  onReadMore
 }, ref) => {
   return (
     <div className="relative z-0 w-full bg-transparent" ref={ref} onClick={() => { if (focusMode) onFocusModeChange(false); }}>
@@ -44,6 +46,7 @@ const ProductGallerySection = React.forwardRef<HTMLDivElement, ProductGallerySec
         onVariantImageChange={onVariantImageChange}
         activeTab="overview"
         onBuyNow={onBuyNow}
+        onReadMore={onReadMore}
       />
     </div>
   );

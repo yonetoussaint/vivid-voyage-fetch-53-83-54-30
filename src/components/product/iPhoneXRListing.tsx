@@ -1,12 +1,14 @@
+// iPhoneXRListing.tsx
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, Shield, Star, User } from 'lucide-react';
 import { Product } from '@/integrations/supabase/products';
 
 interface IPhoneXRListingProps {
   product?: Product;
+  onReadMore?: () => void; // Add this prop
 }
 
-export function IPhoneXRListing({ product }: IPhoneXRListingProps) {
+export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
   const [liveViews, setLiveViews] = useState(product?.views || 847);
 
   useEffect(() => {
@@ -30,10 +32,20 @@ export function IPhoneXRListing({ product }: IPhoneXRListingProps) {
   // Use short_description if available, otherwise fall back to description
   const displayDescription = product?.short_description || product?.description || 'Product description not available.';
 
+  // Check if description needs truncation (rough estimate - more than ~150 characters)
+  const needsTruncation = displayDescription.length > 150;
+  const truncatedDescription = displayDescription.slice(0, 150) + (displayDescription.length > 150 ? '...' : '');
+
+  const handleReadMore = () => {
+    if (onReadMore) {
+      onReadMore();
+    }
+  };
+
   return (
-    <div className="w-full px-2 bg-white">
-      {/* Header with live views */}
-      <div className="flex items-center mb-2">
+    <div className="w-full px-2 bg-white font-sans">
+      {/* Header with rating */}
+      <div className="flex items-center mb-1">
         <div className="flex-1 overflow-hidden">
           <h1 className="text-lg font-medium text-gray-900 whitespace-nowrap overflow-x-auto scrollbar-hide">
             {product?.name || 'Product Name'}
@@ -41,24 +53,11 @@ export function IPhoneXRListing({ product }: IPhoneXRListingProps) {
         </div>
         <div className="w-px h-5 bg-gray-300 mr-3"></div>
         <div className="flex items-center gap-1 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded flex-shrink-0">
-          <div className="w-1.5 h-1.5 bg-red-400 rounded-full animate-pulse"></div>        <span>{liveViews.toLocaleString()} viewing</span>
-        </div>
-      </div>
-
-      {/* Description - Now using short_description */}
-        <p className="text-base text-gray-600 leading-relaxed mb-3">
-        {displayDescription}
-      </p>
-
-      {/* Rest of your component remains the same */}
-      {/* Rating section */}
-      <div className="flex items-center justify-between mb-4 py-2 border-y border-gray-100">
-        <div className="flex items-center gap-1">
           <div className="flex">
             {[1, 2, 3, 4, 5].map((i) => (
               <Star 
                 key={i} 
-                className={`w-4 h-4 ${
+                className={`w-3 h-3 ${
                   i <= Math.floor(product?.rating || 4.8) 
                     ? 'fill-amber-400 text-amber-400' 
                     : 'text-gray-300'
@@ -66,12 +65,35 @@ export function IPhoneXRListing({ product }: IPhoneXRListingProps) {
               />
             ))}
           </div>
-          <span className="text-sm text-gray-600 ml-1">({product?.rating?.toFixed(1) || '4.8'})</span>
+          <span className="ml-1">({product?.rating?.toFixed(1) || '4.8'})</span>
         </div>
+      </div>
+
+      {/* Description with truncation */}
+      <div className="mb-3">
+        <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">
+          {truncatedDescription}
+        </p>
+        {needsTruncation && (
+          <button 
+            onClick={handleReadMore}
+            className="text-blue-600 hover:text-blue-800 text-sm font-medium mt-1 transition-colors"
+          >
+            Read more
+          </button>
+        )}
+      </div>
+
+      {/* Rest of the component remains the same */}
+      {/* Rating section - now simplified since rating is in header */}
+      <div className="flex items-center justify-between mb-4 py-2 border-y border-gray-100">
         <div className="flex gap-3 text-xs text-gray-400">
           <span>{product?.reviewCount || 0} reviews</span>
           <span className="text-gray-300">|</span>
           <span>{product?.sold_count || 0} sold</span>
+        </div>
+        <div className="text-xs text-gray-400">
+          <span>{liveViews.toLocaleString()} viewing</span>
         </div>
       </div>
 

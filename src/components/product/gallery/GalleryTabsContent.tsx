@@ -1,4 +1,5 @@
-import React from 'react';
+// GalleryTabsContent.tsx
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GalleryThumbnails } from '@/components/product/GalleryThumbnails';
 import ProductVariants from '@/components/product/ProductVariants';
@@ -15,6 +16,7 @@ import StickyCheckoutBar from '@/components/product/StickyCheckoutBar';
 import ProductSectionWrapper from '@/components/product/ProductSectionWrapper';
 import FullDescription from '@/components/product/FullDescription';
 import ProductSpecifications from '@/components/product/ProductSpecifications';
+import SlideUpPanel from '@/components/shared/SlideUpPanel'; // Import SlideUpPanel
 
 interface GalleryTabsContentProps {
   activeTab: string;
@@ -29,6 +31,7 @@ interface GalleryTabsContentProps {
   onImageSelect: (imageUrl: string, variantName: string) => void;
   onConfigurationChange: (configData: any) => void;
   onBuyNow?: () => void;
+  onReadMore?: () => void;
 }
 
 const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
@@ -43,12 +46,18 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
   onThumbnailClick,
   onImageSelect,
   onConfigurationChange,
-  onBuyNow
+  onBuyNow,
+  onReadMore
 }) => {
   const navigate = useNavigate();
+  const [isDescriptionPanelOpen, setIsDescriptionPanelOpen] = useState(false);
 
   const handleViewCart = () => {
     navigate('/cart');
+  };
+
+  const handleReadMore = () => {
+    setIsDescriptionPanelOpen(true);
   };
 
   // Only show tabs when there's more than 1 item OR when there's a 3D model
@@ -59,7 +68,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
   return (
     <div className="mt-1 w-full">
       {(activeTab === 'overview' || !activeTab) && (
-        <div className="space-y-4"> {/* Increased from space-y-0 */}
+        <div className="space-y-3">
           <GalleryThumbnails
             images={galleryItems.map(item => item.src)}
             currentIndex={currentIndex}
@@ -69,27 +78,26 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
             galleryItems={galleryItems}
           />
 
-          <IPhoneXRListing product={product} />
+          <IPhoneXRListing 
+            product={product} 
+            onReadMore={onReadMore} // Pass the handler
+          />
 
           {/* Search Info Component moved to description's original position */}
           {productId && (
-              <SearchInfoComponent productId={productId} />
+            <SearchInfoComponent productId={productId} />
           )}
 
-
-            <ReviewGallery />
-
+          <ReviewGallery />
 
           {/* Description Component moved before BookGenreFlashDeals */}
-          
           <FullDescription/>
 
           <ProductSpecifications productId={productId} />
-          
+
           <BookGenreFlashDeals 
             className="border border-gray-200 rounded-lg overflow-hidden"
           />
-          
 
           {/* Sticky Checkout Bar for Overview Tab */}
           {product && onBuyNow && (
@@ -109,6 +117,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
         </div>
       )}
 
+      {/* Rest of the tabs remain the same */}
       {activeTab === 'variants' && (
         <ProductSectionWrapper>
           <ProductVariants 
@@ -190,6 +199,9 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
           />
         </ProductSectionWrapper>
       )}
+
+      {/* SlideUpPanel for Full Description */}
+      
     </div>
   );
 };
