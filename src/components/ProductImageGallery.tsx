@@ -346,7 +346,7 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
 
           {!(focusMode || (isCurrentVideo && isPlaying)) && stockData && (
             <div className="absolute bottom-3 right-3 z-30 max-w-[200px]">
-              <div className="bg-white/95 backdrop-blur-sm rounded-lg overflow-hidden p-2">
+              <div className="backdrop-blur-md bg-black/10 rounded-lg border border-gray-200/50 shadow-sm p-2">
                 <StockProgressBar product={stockData} />
               </div>
             </div>
