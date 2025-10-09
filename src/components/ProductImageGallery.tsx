@@ -344,16 +344,11 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
             isPlaying={isCurrentVideo && isPlaying}
           />
 
-          {!(focusMode || (isCurrentVideo && isPlaying)) && (
-            <div className="absolute bottom-3 right-3 z-30">
-              <button 
-                onClick={handleConfigurationClick}
-                className="bg-black/60 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 hover:bg-black/70 transition-colors"
-              >
-                <BadgeInfo size={12} className="text-white/80" />
-                <span className="text-xs font-medium text-white/80">Product Details</span>
-                <ChevronRight size={10} className="text-white/80" />
-              </button>
+          {!(focusMode || (isCurrentVideo && isPlaying)) && stockData && (
+            <div className="absolute bottom-3 left-3 right-3 z-30">
+              <div className="bg-white/95 backdrop-blur-sm rounded-lg overflow-hidden">
+                <StockProgressBar product={stockData} />
+              </div>
             </div>
           )}
 
