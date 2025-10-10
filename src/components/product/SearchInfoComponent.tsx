@@ -45,7 +45,7 @@ Note: Product information is not currently available. Please let the user know t
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY}`
+          'Authorization': `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`
         },
         body: JSON.stringify({
           model: "deepseek/deepseek-r1-0528:free",
