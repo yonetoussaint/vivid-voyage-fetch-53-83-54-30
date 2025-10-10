@@ -63,7 +63,7 @@ Based on this product, generate 6 specific, relevant questions that a customer m
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_OPENROUTER_API_KEY || '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'}`
+            'Authorization': `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`
           },
           body: JSON.stringify({
             model: "deepseek/deepseek-chat-v3.1:free",
@@ -171,7 +171,7 @@ ${product.specifications ? `- Specifications: ${JSON.stringify(product.specifica
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_OPENROUTER_API_KEY || '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'}`
+          'Authorization': `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`
         },
         body: JSON.stringify({
           model: "deepseek/deepseek-chat-v3.1:free",
