@@ -19,6 +19,9 @@ export default function SearchInfoComponent({ productId }: SearchInfoComponentPr
     setIsLoading(true);
     setResponse('');
 
+    const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+    console.log('API Key check:', apiKey ? 'API key is present' : 'API key is MISSING');
+
     try {
       // Create context about the product for the AI
       let productContext = '';
@@ -45,7 +48,7 @@ Note: Product information is not currently available. Please let the user know t
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`
+          'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
           model: "deepseek/deepseek-r1-0528:free",
@@ -59,6 +62,8 @@ Note: Product information is not currently available. Please let the user know t
       });
 
       if (!apiResponse.ok) {
+        const errorText = await apiResponse.text();
+        console.error('API Error Response:', apiResponse.status, errorText);
         throw new Error(`API request failed: ${apiResponse.status}`);
       }
 
@@ -67,6 +72,7 @@ Note: Product information is not currently available. Please let the user know t
       setResponse(answer);
     } catch (error) {
       console.error('Error calling API:', error);
+      console.error('Error details:', error instanceof Error ? error.message : String(error));
       setResponse('Sorry, there was an error getting an answer. Please try again.');
     } finally {
       setIsLoading(false);
