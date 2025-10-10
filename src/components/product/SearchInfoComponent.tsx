@@ -59,29 +59,40 @@ ${product.specifications ? `- Specifications: ${JSON.stringify(product.specifica
 
 Based on this product, generate 6 specific, relevant questions that a customer might want to ask. Make them natural and conversational. Return ONLY a JSON array of strings, no other text.`;
 
+        const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+
+        if (!apiKey) {
+          console.error('OpenRouter API key is missing');
+          throw new Error('API key not configured');
+        }
+
         const apiResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`
+            'Authorization': `Bearer ${apiKey}`,
+            'HTTP-Referer': window.location.origin,
+            'X-Title': 'Product Search Assistant'
           },
           body: JSON.stringify({
             model: "deepseek/deepseek-chat-v3.1:free",
-            messages: [{ 
-              role: "user", 
-              content: productContext 
+            messages: [{
+              role: "user",
+              content: productContext
             }],
             stream: false
           })
         });
 
         if (!apiResponse.ok) {
+          const errorData = await apiResponse.json().catch(() => ({}));
+          console.error('API Error:', apiResponse.status, errorData);
           throw new Error(`API request failed: ${apiResponse.status}`);
         }
 
         const data = await apiResponse.json();
         const responseText = data.choices[0]?.message?.content || '';
-        
+
         // Extract JSON array from response
         const jsonMatch = responseText.match(/\[.*\]/s);
         if (jsonMatch) {
@@ -167,11 +178,20 @@ ${product.specifications ? `- Specifications: ${JSON.stringify(product.specifica
     try {
       const context = buildContext(trimmedQuery);
 
+      const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+
+      if (!apiKey) {
+        console.error('OpenRouter API key is missing');
+        throw new Error('API key not configured');
+      }
+
       const apiResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`
+          'Authorization': `Bearer ${apiKey}`,
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'Product Search Assistant'
         },
         body: JSON.stringify({
           model: "deepseek/deepseek-chat-v3.1:free",
@@ -182,6 +202,8 @@ ${product.specifications ? `- Specifications: ${JSON.stringify(product.specifica
       });
 
       if (!apiResponse.ok) {
+        const errorData = await apiResponse.json().catch(() => ({}));
+        console.error('API Error:', apiResponse.status, errorData);
         throw new Error(`API request failed: ${apiResponse.status}`);
       }
 
@@ -258,7 +280,7 @@ ${product.specifications ? `- Specifications: ${JSON.stringify(product.specifica
               className="w-full px-3 py-2.5 pr-12 text-gray-600 bg-white border-2 border-blue-400 rounded-lg focus:outline-none focus:border-blue-500 text-sm"
               disabled={isLoading || isProductLoading}
             />
-            <button 
+            <button
               type="submit"
               disabled={isLoading || !query.trim() || isProductLoading}
               className="absolute right-1.5 top-1/2 transform -translate-y-1/2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 rounded-full p-1.5 transition-colors"
