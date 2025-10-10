@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useProduct } from '@/hooks/useProduct';
 import SectionHeader from '@/components/home/SectionHeader';
 
@@ -10,8 +10,67 @@ export default function SearchInfoComponent({ productId }: SearchInfoComponentPr
   const [query, setQuery] = useState('');
   const [response, setResponse] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
   const { data: product } = useProduct(productId);
+
+  // Generate AI-powered suggestions when product data is available
+  useEffect(() => {
+    const generateSuggestions = async () => {
+      if (!product || loadingSuggestions || suggestions.length > 0) return;
+
+      setLoadingSuggestions(true);
+      const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+
+      try {
+        const productContext = `Product: ${product.name}
+Category: ${product.category || 'General'}
+Description: ${product.description || 'No description'}
+Price: $${product.price}
+${product.specifications ? `Specifications: ${JSON.stringify(product.specifications)}` : ''}
+
+Generate exactly 4 short, relevant questions (max 6-8 words each) that customers would commonly ask about this specific product. Return ONLY the questions, one per line, without numbers or bullets.`;
+
+        const apiResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: "deepseek/deepseek-r1-0528:free",
+            messages: [
+              {
+                role: "user",
+                content: productContext
+              }
+            ]
+          })
+        });
+
+        if (apiResponse.ok) {
+          const data = await apiResponse.json();
+          const generatedText = data.choices[0]?.message?.content || '';
+          const questionsList = generatedText
+            .split('\n')
+            .map((q: string) => q.trim())
+            .filter((q: string) => q.length > 0 && q.includes('?'))
+            .slice(0, 4);
+
+          if (questionsList.length > 0) {
+            setSuggestions(questionsList);
+          }
+        }
+      } catch (error) {
+        console.error('Error generating suggestions:', error);
+      } finally {
+        setLoadingSuggestions(false);
+      }
+    };
+
+    generateSuggestions();
+  }, [product, loadingSuggestions, suggestions.length]);
 
   const handleSubmit = async (questionText: string) => {
     if (!questionText.trim()) return;
@@ -153,37 +212,59 @@ Note: Product information is not currently available. Please let the user know t
       )}
 
       {/* Suggestion Pills - Horizontally Scrollable */}
-      <div className="w-full"> {/* Consistent horizontal padding */}
-        <div className="overflow-x-auto scrollbar-hide px-2 ">
-          <div className="flex gap-2 pb-1"> {/* Consistent gap and reduced bottom padding */}
-            <button 
-              onClick={() => handleSuggestionClick('Does it have facial recognition?')}
-              disabled={isLoading}
-              className="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-400 text-blue-800 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0"
-            >
-              Does it have facial recognition?
-            </button>
-            <button 
-              onClick={() => handleSuggestionClick('Is this phone waterproof?')}
-              disabled={isLoading}
-              className="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-400 text-blue-800 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0"
-            >
-              Is this phone waterproof?
-            </button>
-            <button 
-              onClick={() => handleSuggestionClick('What is the battery life like?')}
-              disabled={isLoading}
-              className="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-400 text-blue-800 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0"
-            >
-              What is the battery life like?
-            </button>
-            <button 
-              onClick={() => handleSuggestionClick('How good is the camera quality?')}
-              disabled={isLoading}
-              className="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-400 text-blue-800 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0"
-            >
-              How good is the camera quality?
-            </button>
+      <div className="w-full">
+        <div className="overflow-x-auto scrollbar-hide px-2">
+          <div className="flex gap-2 pb-1">
+            {loadingSuggestions ? (
+              // Loading skeleton for suggestions
+              <>
+                {[1, 2, 3, 4].map((i) => (
+                  <div
+                    key={i}
+                    className="px-3 py-1.5 bg-blue-50 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 animate-pulse"
+                  >
+                    <div className="h-4 w-32 bg-blue-200 rounded"></div>
+                  </div>
+                ))}
+              </>
+            ) : suggestions.length > 0 ? (
+              // AI-generated suggestions
+              suggestions.map((suggestion, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleSuggestionClick(suggestion)}
+                  disabled={isLoading}
+                  className="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-400 text-blue-800 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0"
+                >
+                  {suggestion}
+                </button>
+              ))
+            ) : (
+              // Fallback suggestions if AI generation fails
+              <>
+                <button
+                  onClick={() => handleSuggestionClick('What are the key features?')}
+                  disabled={isLoading}
+                  className="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-400 text-blue-800 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0"
+                >
+                  What are the key features?
+                </button>
+                <button
+                  onClick={() => handleSuggestionClick('Is this good value?')}
+                  disabled={isLoading}
+                  className="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-400 text-blue-800 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0"
+                >
+                  Is this good value?
+                </button>
+                <button
+                  onClick={() => handleSuggestionClick('What are the specifications?')}
+                  disabled={isLoading}
+                  className="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-400 text-blue-800 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0"
+                >
+                  What are the specifications?
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
