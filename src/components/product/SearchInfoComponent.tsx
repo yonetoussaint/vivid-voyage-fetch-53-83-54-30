@@ -85,9 +85,20 @@ Based on this product, generate 6 specific, relevant questions that a customer m
         });
 
         if (!apiResponse.ok) {
-          const errorData = await apiResponse.json().catch(() => ({}));
-          console.error('API Error:', apiResponse.status, errorData);
-          throw new Error(`API request failed: ${apiResponse.status}`);
+          const errorText = await apiResponse.text();
+          let errorData = {};
+          try {
+            errorData = JSON.parse(errorText);
+          } catch (e) {
+            errorData = { raw: errorText };
+          }
+          console.error('Suggestions API Error Details:', {
+            status: apiResponse.status,
+            statusText: apiResponse.statusText,
+            headers: Object.fromEntries(apiResponse.headers.entries()),
+            error: errorData
+          });
+          throw new Error(`API request failed: ${apiResponse.status} - ${JSON.stringify(errorData)}`);
         }
 
         const data = await apiResponse.json();
@@ -202,9 +213,20 @@ ${product.specifications ? `- Specifications: ${JSON.stringify(product.specifica
       });
 
       if (!apiResponse.ok) {
-        const errorData = await apiResponse.json().catch(() => ({}));
-        console.error('API Error:', apiResponse.status, errorData);
-        throw new Error(`API request failed: ${apiResponse.status}`);
+        const errorText = await apiResponse.text();
+        let errorData = {};
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (e) {
+          errorData = { raw: errorText };
+        }
+        console.error('API Error Details:', {
+          status: apiResponse.status,
+          statusText: apiResponse.statusText,
+          headers: Object.fromEntries(apiResponse.headers.entries()),
+          error: errorData
+        });
+        throw new Error(`API request failed: ${apiResponse.status} - ${JSON.stringify(errorData)}`);
       }
 
       const data = await apiResponse.json();
