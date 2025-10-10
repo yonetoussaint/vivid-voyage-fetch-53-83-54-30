@@ -18,7 +18,7 @@ export default function SearchInfoComponent({ productId }: SearchInfoComponentPr
   // Generate AI-powered suggestions when product data is available
   useEffect(() => {
     const generateSuggestions = async () => {
-      if (!product || loadingSuggestions || suggestions.length > 0) return;
+      if (!product || suggestions.length > 0) return;
 
       setLoadingSuggestions(true);
       const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
@@ -60,17 +60,24 @@ Generate exactly 4 short, relevant questions (max 6-8 words each) that customers
 
           if (questionsList.length > 0) {
             setSuggestions(questionsList);
+            setLoadingSuggestions(false);
+          } else {
+            // Retry after 3 seconds if no valid questions were generated
+            setTimeout(generateSuggestions, 3000);
           }
+        } else {
+          // Retry after 5 seconds on error (e.g., rate limit)
+          setTimeout(generateSuggestions, 5000);
         }
       } catch (error) {
         console.error('Error generating suggestions:', error);
-      } finally {
-        setLoadingSuggestions(false);
+        // Retry after 5 seconds on error
+        setTimeout(generateSuggestions, 5000);
       }
     };
 
     generateSuggestions();
-  }, [product, loadingSuggestions, suggestions.length]);
+  }, [product, suggestions.length]);
 
   const handleSubmit = async (questionText: string) => {
     if (!questionText.trim()) return;
@@ -215,8 +222,8 @@ Note: Product information is not currently available. Please let the user know t
       <div className="w-full">
         <div className="overflow-x-auto scrollbar-hide px-2">
           <div className="flex gap-2 pb-1">
-            {loadingSuggestions ? (
-              // Loading skeleton for suggestions
+            {loadingSuggestions || suggestions.length === 0 ? (
+              // Loading skeleton for suggestions - keep showing until AI suggestions are loaded
               <>
                 {[1, 2, 3, 4].map((i) => (
                   <div
@@ -227,7 +234,7 @@ Note: Product information is not currently available. Please let the user know t
                   </div>
                 ))}
               </>
-            ) : suggestions.length > 0 ? (
+            ) : (
               // AI-generated suggestions
               suggestions.map((suggestion, index) => (
                 <button
@@ -239,31 +246,6 @@ Note: Product information is not currently available. Please let the user know t
                   {suggestion}
                 </button>
               ))
-            ) : (
-              // Fallback suggestions if AI generation fails
-              <>
-                <button
-                  onClick={() => handleSuggestionClick('What are the key features?')}
-                  disabled={isLoading}
-                  className="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-400 text-blue-800 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0"
-                >
-                  What are the key features?
-                </button>
-                <button
-                  onClick={() => handleSuggestionClick('Is this good value?')}
-                  disabled={isLoading}
-                  className="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-400 text-blue-800 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0"
-                >
-                  Is this good value?
-                </button>
-                <button
-                  onClick={() => handleSuggestionClick('What are the specifications?')}
-                  disabled={isLoading}
-                  className="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-400 text-blue-800 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0"
-                >
-                  What are the specifications?
-                </button>
-              </>
             )}
           </div>
         </div>
