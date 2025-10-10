@@ -33,94 +33,73 @@ export default function SearchInfoComponent({ productId }: SearchInfoComponentPr
     }
   }, [messages, streamingResponse]);
 
-  // Generate dynamic suggestions based on product category/type
-  const suggestions = useMemo(() => {
-    if (!product) return [
-      'Tell me about this product',
-      'What are the key features?',
-      'Is it worth the price?',
-      'What do customers say about it?'
-    ];
+  // AI-generated suggestions based on product context
+  const [suggestions, setSuggestions] = useState<string[]>([
+    'Tell me about this product',
+    'What are the key features?',
+    'Is it worth the price?',
+    'What do customers say about it?'
+  ]);
+  const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
 
-    const category = product.category?.toLowerCase() || '';
-    const name = product.name?.toLowerCase() || '';
+  // Generate AI suggestions when product loads
+  useEffect(() => {
+    const generateSuggestions = async () => {
+      if (!product || isGeneratingSuggestions) return;
 
-    // Smart suggestion generation based on product type
-    if (category.includes('phone') || name.includes('phone') || category.includes('mobile')) {
-      return [
-        'Does it have facial recognition?',
-        'Is this phone waterproof?',
-        'What is the battery life like?',
-        'How good is the camera quality?',
-        'Does it support 5G?',
-        'What storage options are available?'
-      ];
-    } else if (category.includes('laptop') || category.includes('computer')) {
-      return [
-        'What is the processor speed?',
-        'How much RAM does it have?',
-        'Is it good for gaming?',
-        'What is the battery life?',
-        'Does it have a dedicated GPU?',
-        'Is it suitable for video editing?'
-      ];
-    } else if (category.includes('headphone') || category.includes('audio')) {
-      return [
-        'Does it have noise cancellation?',
-        'What is the battery life?',
-        'Is it wireless or wired?',
-        'How is the sound quality?',
-        'Is it comfortable for long use?',
-        'Does it work with my device?'
-      ];
-    } else if (category.includes('tv') || category.includes('television')) {
-      return [
-        'What is the screen resolution?',
-        'Does it support 4K/HDR?',
-        'Is it a smart TV?',
-        'What streaming apps does it have?',
-        'How is the picture quality?',
-        'What is the refresh rate?'
-      ];
-    } else if (category.includes('camera')) {
-      return [
-        'What is the megapixel count?',
-        'Does it shoot 4K video?',
-        'Is it good for beginners?',
-        'What lenses are compatible?',
-        'Does it have image stabilization?',
-        'How is the low-light performance?'
-      ];
-    } else if (category.includes('watch') || name.includes('watch')) {
-      return [
-        'Is it waterproof?',
-        'What fitness features does it have?',
-        'What is the battery life?',
-        'Does it track sleep?',
-        'Is it compatible with my phone?',
-        'Can I make calls with it?'
-      ];
-    } else if (category.includes('appliance') || category.includes('kitchen')) {
-      return [
-        'How energy efficient is it?',
-        'Is it easy to clean?',
-        'What is the warranty period?',
-        'What is the capacity?',
-        'Is it noisy during operation?',
-        'Does it have smart features?'
-      ];
-    }
+      setIsGeneratingSuggestions(true);
 
-    // Generic fallback suggestions
-    return [
-      'What are the main features?',
-      'How does it compare to similar products?',
-      'Is it worth the price?',
-      'What do reviews say?',
-      'What is the warranty?',
-      'Is it easy to use?'
-    ];
-  }, [product]);
+      try {
+        const productContext = `Product Information:
+- Name: ${product.name}
+- Category: ${product.category || 'Not specified'}
+- Price: $${product.price}
+- Description: ${product.description || 'No description available'}
+${product.specifications ? `- Specifications: ${JSON.stringify(product.specifications)}` : ''}
+
+Based on this product, generate 6 specific, relevant questions that a customer might want to ask. Make them natural and conversational. Return ONLY a JSON array of strings, no other text.`;
+
+        const apiResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_OPENROUTER_API_KEY || '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'}`
+          },
+          body: JSON.stringify({
+            model: "deepseek/deepseek-chat-v3.1:free",
+            messages: [{ 
+              role: "user", 
+              content: productContext 
+            }],
+            stream: false
+          })
+        });
+
+        if (!apiResponse.ok) {
+          throw new Error(`API request failed: ${apiResponse.status}`);
+        }
+
+        const data = await apiResponse.json();
+        const responseText = data.choices[0]?.message?.content || '';
+        
+        // Extract JSON array from response
+        const jsonMatch = responseText.match(/\[.*\]/s);
+        if (jsonMatch) {
+          const generatedSuggestions = JSON.parse(jsonMatch[0]);
+          if (Array.isArray(generatedSuggestions) && generatedSuggestions.length > 0) {
+            setSuggestions(generatedSuggestions.slice(0, 6));
+          }
+        }
+      } catch (error) {
+        console.error('Error generating suggestions:', error);
+        // Keep default suggestions on error
+      } finally {
+        setIsGeneratingSuggestions(false);
+      }
+    };
+
+    generateSuggestions();
+  }, [product?.id]); // Only regenerate when product changes
 
   // Build conversation context for AI
   const buildContext = (questionText: string): string => {
@@ -360,20 +339,30 @@ ${product.specifications ? `- Specifications: ${JSON.stringify(product.specifica
           </div>
         )}
 
-        {/* Suggestion Pills - Dynamic based on product */}
+        {/* Suggestion Pills - AI Generated based on product */}
         <div className="w-full">
           <div className="px-2 overflow-x-auto scrollbar-hide">
             <div className="flex gap-2 pb-1">
-              {suggestions.slice(0, 6).map((suggestion, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleSuggestionClick(suggestion)}
-                  disabled={isLoading || isProductLoading}
-                  className="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-400 text-blue-800 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0"
-                >
-                  {suggestion}
-                </button>
-              ))}
+              {isGeneratingSuggestions ? (
+                // Loading skeleton for suggestions
+                Array.from({ length: 4 }).map((_, idx) => (
+                  <div
+                    key={idx}
+                    className="px-3 py-1.5 bg-blue-50 rounded-full h-8 w-32 animate-pulse flex-shrink-0"
+                  />
+                ))
+              ) : (
+                suggestions.map((suggestion, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    disabled={isLoading || isProductLoading}
+                    className="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-400 text-blue-800 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0"
+                  >
+                    {suggestion}
+                  </button>
+                ))
+              )}
             </div>
           </div>
         </div>
