@@ -66,7 +66,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
   }
 
   return (
-    <div className="mt-1 w-full">
+    <div className="mt-2 w-full">
       {(activeTab === 'overview' || !activeTab) && (
         <div className="space-y-3">
           <GalleryThumbnails
@@ -91,7 +91,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
           <ReviewGallery />
 
           {/* Description Component moved before BookGenreFlashDeals */}
-          <FullDescription/>
+        
 
           <ProductSpecifications productId={productId} />
 

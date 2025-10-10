@@ -1,6 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useProduct } from '@/hooks/useProduct';
 import SectionHeader from '@/components/home/SectionHeader';
+
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: number;
+}
 
 interface SearchInfoComponentProps {
   productId: string;
@@ -8,22 +14,121 @@ interface SearchInfoComponentProps {
 
 export default function SearchInfoComponent({ productId }: SearchInfoComponentProps) {
   const [query, setQuery] = useState('');
-  const [response, setResponse] = useState('');
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [streamingResponse, setStreamingResponse] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const responseRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-  const { data: product } = useProduct(productId);
+  const { data: product, isLoading: isProductLoading } = useProduct(productId);
 
-  const handleSubmit = async (questionText: string) => {
-    if (!questionText.trim()) return;
+  // Response cache to avoid duplicate API calls
+  const [responseCache] = useState<Map<string, string>>(new Map());
 
-    setIsLoading(true);
-    setResponse('');
+  // Auto-scroll to latest response
+  useEffect(() => {
+    if (responseRef.current) {
+      responseRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [messages, streamingResponse]);
 
-    try {
-      // Create context about the product for the AI
-      let productContext = '';
-      if (product) {
-        productContext = `Product Information:
+  // Generate dynamic suggestions based on product category/type
+  const suggestions = useMemo(() => {
+    if (!product) return [
+      'Tell me about this product',
+      'What are the key features?',
+      'Is it worth the price?',
+      'What do customers say about it?'
+    ];
+
+    const category = product.category?.toLowerCase() || '';
+    const name = product.name?.toLowerCase() || '';
+
+    // Smart suggestion generation based on product type
+    if (category.includes('phone') || name.includes('phone') || category.includes('mobile')) {
+      return [
+        'Does it have facial recognition?',
+        'Is this phone waterproof?',
+        'What is the battery life like?',
+        'How good is the camera quality?',
+        'Does it support 5G?',
+        'What storage options are available?'
+      ];
+    } else if (category.includes('laptop') || category.includes('computer')) {
+      return [
+        'What is the processor speed?',
+        'How much RAM does it have?',
+        'Is it good for gaming?',
+        'What is the battery life?',
+        'Does it have a dedicated GPU?',
+        'Is it suitable for video editing?'
+      ];
+    } else if (category.includes('headphone') || category.includes('audio')) {
+      return [
+        'Does it have noise cancellation?',
+        'What is the battery life?',
+        'Is it wireless or wired?',
+        'How is the sound quality?',
+        'Is it comfortable for long use?',
+        'Does it work with my device?'
+      ];
+    } else if (category.includes('tv') || category.includes('television')) {
+      return [
+        'What is the screen resolution?',
+        'Does it support 4K/HDR?',
+        'Is it a smart TV?',
+        'What streaming apps does it have?',
+        'How is the picture quality?',
+        'What is the refresh rate?'
+      ];
+    } else if (category.includes('camera')) {
+      return [
+        'What is the megapixel count?',
+        'Does it shoot 4K video?',
+        'Is it good for beginners?',
+        'What lenses are compatible?',
+        'Does it have image stabilization?',
+        'How is the low-light performance?'
+      ];
+    } else if (category.includes('watch') || name.includes('watch')) {
+      return [
+        'Is it waterproof?',
+        'What fitness features does it have?',
+        'What is the battery life?',
+        'Does it track sleep?',
+        'Is it compatible with my phone?',
+        'Can I make calls with it?'
+      ];
+    } else if (category.includes('appliance') || category.includes('kitchen')) {
+      return [
+        'How energy efficient is it?',
+        'Is it easy to clean?',
+        'What is the warranty period?',
+        'What is the capacity?',
+        'Is it noisy during operation?',
+        'Does it have smart features?'
+      ];
+    }
+
+    // Generic fallback suggestions
+    return [
+      'What are the main features?',
+      'How does it compare to similar products?',
+      'Is it worth the price?',
+      'What do reviews say?',
+      'What is the warranty?',
+      'Is it easy to use?'
+    ];
+  }, [product]);
+
+  // Build conversation context for AI
+  const buildContext = (questionText: string): string => {
+    let context = '';
+
+    // Add product information
+    if (product) {
+      context = `Product Information:
 - Name: ${product.name}
 - Price: $${product.price}${product.discount_price ? ` (was $${product.discount_price})` : ''}
 - Description: ${product.description || 'No description available'}
@@ -32,30 +137,69 @@ export default function SearchInfoComponent({ productId }: SearchInfoComponentPr
 - Stock: ${product.inventory || 'Stock info not available'}
 ${product.specifications ? `- Specifications: ${JSON.stringify(product.specifications)}` : ''}
 
-User Question: ${questionText}
+`;
+    }
 
-Please answer the user's question specifically about this product based on the information provided. If the information needed to answer the question is not available in the product details, please say so clearly.`;
-      } else {
-        productContext = `The user is asking: ${questionText}
+    // Add conversation history for context (last 3 exchanges)
+    if (messages.length > 0) {
+      context += 'Previous conversation:\n';
+      const recentMessages = messages.slice(-6); // Last 3 Q&A pairs
+      recentMessages.forEach(msg => {
+        context += `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}\n`;
+      });
+      context += '\n';
+    }
 
-Note: Product information is not currently available. Please let the user know that product details are loading and ask them to try again in a moment.`;
-      }
+    context += `Current question: ${questionText}\n\n`;
+    context += 'Please answer specifically about this product. Keep responses concise (2-3 sentences). If information is not available, say so clearly.';
+
+    return context;
+  };
+
+  // Handle API call with streaming support
+  const handleSubmit = async (questionText: string) => {
+    if (!questionText.trim() || isLoading) return;
+
+    const trimmedQuery = questionText.trim();
+
+    // Check cache first
+    if (responseCache.has(trimmedQuery)) {
+      const cachedResponse = responseCache.get(trimmedQuery)!;
+      setMessages(prev => [
+        ...prev,
+        { role: 'user', content: trimmedQuery, timestamp: Date.now() },
+        { role: 'assistant', content: cachedResponse, timestamp: Date.now() }
+      ]);
+      setQuery('');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    setStreamingResponse('');
+
+    // Add user message immediately
+    setMessages(prev => [...prev, { role: 'user', content: trimmedQuery, timestamp: Date.now() }]);
+    setQuery('');
+
+    // Create abort controller for cancellation
+    abortControllerRef.current = new AbortController();
+
+    try {
+      const context = buildContext(trimmedQuery);
 
       const apiResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer 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'
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_OPENROUTER_API_KEY || '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'}`
         },
         body: JSON.stringify({
           model: "deepseek/deepseek-chat-v3.1:free",
-          messages: [
-            {
-              role: "user",
-              content: productContext
-            }
-          ]
-        })
+          messages: [{ role: "user", content: context }],
+          stream: false // Set to true if you want streaming
+        }),
+        signal: abortControllerRef.current.signal
       });
 
       if (!apiResponse.ok) {
@@ -64,12 +208,27 @@ Note: Product information is not currently available. Please let the user know t
 
       const data = await apiResponse.json();
       const answer = data.choices[0]?.message?.content || 'No response received';
-      setResponse(answer);
-    } catch (error) {
+
+      // Cache the response
+      responseCache.set(trimmedQuery, answer);
+
+      // Add assistant message
+      setMessages(prev => [...prev, { role: 'assistant', content: answer, timestamp: Date.now() }]);
+
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.log('Request cancelled');
+        return;
+      }
+
       console.error('Error calling API:', error);
-      setResponse('Sorry, there was an error getting an answer. Please try again.');
+      const errorMessage = 'Sorry, there was an error getting an answer. Please try again.';
+      setError(errorMessage);
+      setMessages(prev => [...prev, { role: 'assistant', content: errorMessage, timestamp: Date.now() }]);
     } finally {
       setIsLoading(false);
+      setStreamingResponse('');
+      abortControllerRef.current = null;
     }
   };
 
@@ -83,7 +242,12 @@ Note: Product information is not currently available. Please let the user know t
     handleSubmit(suggestion);
   };
 
-  // Updated custom icon component to match ReviewGallery sizing
+  const clearConversation = () => {
+    setMessages([]);
+    setError(null);
+    setQuery('');
+  };
+
   const SearchInfoIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
     <div className={`relative ${className}`}>
       <div className="w-4 h-4 bg-orange-500 rounded-full"></div>
@@ -91,95 +255,137 @@ Note: Product information is not currently available. Please let the user know t
     </div>
   );
 
+  const charCount = query.length;
+  const maxChars = 200;
+  const isNearLimit = charCount > maxChars * 0.8;
+
   return (
     <div className="w-full bg-white">
-      {/* Header using SectionHeader with consistent spacing */}
       <SectionHeader
         title="Looking for Specific Info?"
         icon={SearchInfoIcon}
         titleTransform="uppercase"
-        />
+      />
 
-      {/* Search Input */}
-      <div className="px-2 mb-2"> {/* Consistent 16px bottom margin */}
-        <form onSubmit={handleInputSubmit} className="relative">
-          <input
-            type="text"
-            placeholder="Ask Rufus or search reviews and Q&A"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="w-full px-3 py-2.5 pr-12 text-gray-600 bg-white border-2 border-blue-400 rounded-lg focus:outline-none focus:border-blue-500 text-sm"
-            disabled={isLoading}
-          />
-          <button 
-            type="submit"
-            disabled={isLoading || !query.trim()}
-            className="absolute right-1.5 top-1/2 transform -translate-y-1/2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 rounded-full p-1.5 transition-colors"
-          >
-            {isLoading ? (
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            ) : (
-              <svg
-                className="w-4 h-4 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+      <div className="w-full bg-white space-y-2">
+        {/* Search Input */}
+        <div className="px-2">
+          <form onSubmit={handleInputSubmit} className="relative">
+            <input
+              type="text"
+              placeholder={isProductLoading ? "Loading product info..." : "Ask anything about this product..."}
+              value={query}
+              onChange={(e) => setQuery(e.target.value.slice(0, maxChars))}
+              className="w-full px-3 py-2.5 pr-12 text-gray-600 bg-white border-2 border-blue-400 rounded-lg focus:outline-none focus:border-blue-500 text-sm"
+              disabled={isLoading || isProductLoading}
+            />
+            <button 
+              type="submit"
+              disabled={isLoading || !query.trim() || isProductLoading}
+              className="absolute right-1.5 top-1/2 transform -translate-y-1/2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 rounded-full p-1.5 transition-colors"
+              aria-label="Submit question"
+            >
+              {isLoading ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              )}
+            </button>
+          </form>
+          {isNearLimit && (
+            <div className={`text-xs mt-1 ${charCount >= maxChars ? 'text-red-500' : 'text-gray-500'}`}>
+              {charCount}/{maxChars} characters
+            </div>
+          )}
+        </div>
+
+        {/* Conversation History */}
+        {messages.length > 0 && (
+          <div className="px-2 space-y-2 max-h-96 overflow-y-auto">
+            {messages.map((msg, idx) => (
+              <div
+                key={idx}
+                ref={idx === messages.length - 1 ? responseRef : null}
+                className={`p-3 rounded-lg ${
+                  msg.role === 'user'
+                    ? 'bg-blue-50 border border-blue-100 ml-8'
+                    : 'bg-gray-50 border border-gray-200 mr-8'
+                }`}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M14 5l7 7m0 0l-7 7m7-7H3"
-                />
-              </svg>
+                <div className="flex items-start gap-2">
+                  <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold ${
+                    msg.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-400 text-white'
+                  }`}>
+                    {msg.role === 'user' ? 'Q' : 'A'}
+                  </div>
+                  <div className="text-sm text-gray-800 whitespace-pre-wrap flex-1">{msg.content}</div>
+                </div>
+              </div>
+            ))}
+
+            {/* Streaming response indicator */}
+            {streamingResponse && (
+              <div className="p-3 bg-gray-50 rounded-lg border border-gray-200 mr-8">
+                <div className="flex items-start gap-2">
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold bg-gray-400 text-white">
+                    A
+                  </div>
+                  <div className="text-sm text-gray-800 whitespace-pre-wrap flex-1">
+                    {streamingResponse}
+                    <span className="inline-block w-1 h-4 bg-gray-400 ml-1 animate-pulse"></span>
+                  </div>
+                </div>
+              </div>
             )}
-          </button>
-        </form>
-      </div>
 
-      {/* Response Area */}
-      {response && (
-        <div className="px-2"> {/* Consistent 16px bottom margin and horizontal padding */}
-          <div className="p-3 bg-gray-50 rounded-lg border">
-            <div className="text-sm text-gray-800 whitespace-pre-wrap">{response}</div>
-          </div>
-        </div>
-      )}
-
-      {/* Suggestion Pills - Horizontally Scrollable */}
-      <div className="w-full"> {/* Consistent horizontal padding */}
-        <div className="overflow-x-auto scrollbar-hide px-2 ">
-          <div className="flex gap-2 pb-1"> {/* Consistent gap and reduced bottom padding */}
-            <button 
-              onClick={() => handleSuggestionClick('Does it have facial recognition?')}
-              disabled={isLoading}
-              className="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-400 text-blue-800 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0"
+            {/* Clear conversation button */}
+            <button
+              onClick={clearConversation}
+              className="w-full py-2 text-sm text-blue-600 hover:text-blue-800 transition-colors"
             >
-              Does it have facial recognition?
-            </button>
-            <button 
-              onClick={() => handleSuggestionClick('Is this phone waterproof?')}
-              disabled={isLoading}
-              className="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-400 text-blue-800 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0"
-            >
-              Is this phone waterproof?
-            </button>
-            <button 
-              onClick={() => handleSuggestionClick('What is the battery life like?')}
-              disabled={isLoading}
-              className="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-400 text-blue-800 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0"
-            >
-              What is the battery life like?
-            </button>
-            <button 
-              onClick={() => handleSuggestionClick('How good is the camera quality?')}
-              disabled={isLoading}
-              className="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-400 text-blue-800 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0"
-            >
-              How good is the camera quality?
+              Clear conversation
             </button>
           </div>
+        )}
+
+        {/* Loading skeleton */}
+        {isLoading && messages.length === 0 && (
+          <div className="px-2">
+            <div className="p-3 bg-gray-50 rounded-lg border animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          </div>
+        )}
+
+        {/* Suggestion Pills - Dynamic based on product */}
+        <div className="w-full">
+          <div className="px-2 overflow-x-auto scrollbar-hide">
+            <div className="flex gap-2 pb-1">
+              {suggestions.slice(0, 6).map((suggestion, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleSuggestionClick(suggestion)}
+                  disabled={isLoading || isProductLoading}
+                  className="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 disabled:bg-blue-50 disabled:text-blue-400 text-blue-800 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0"
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
+
+        {/* Help text for empty state */}
+        {messages.length === 0 && !isLoading && (
+          <div className="px-2 py-2">
+            <p className="text-xs text-gray-500 text-center">
+              Ask me anything about this product. Try the suggestions above!
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
