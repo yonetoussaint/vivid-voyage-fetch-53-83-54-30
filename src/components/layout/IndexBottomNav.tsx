@@ -36,7 +36,11 @@ const getNavItems = (
   isCartPage: boolean,
   isNotificationsPage: boolean,
   isAddressesPage: boolean,
-  isHelpPage: boolean
+  isHelpPage: boolean,
+  isMessagesPage: boolean,
+  isWalletPage: boolean,
+  isReelsPage: boolean,
+  isProfilePage: boolean
 ): BottomNavTab[] => {
   let homeLabel = 'navigation.home';
   let homeIcon: any = Logo;
@@ -72,6 +76,48 @@ const getNavItems = (
     homePath = '/help';
   }
 
+  // Determine labels and icons for other nav items
+  let shortsLabel = 'navigation.shorts';
+  let shortsIcon: any = Zap;
+  let shortsPath = '/reels';
+
+  let messagesLabel = 'navigation.messages';
+  let messagesIcon: any = MessageCircle;
+  let messagesPath = '/messages';
+
+  let walletLabel = 'navigation.wallet';
+  let walletIcon: any = Wallet;
+  let walletPath = '/wallet';
+
+  let profileLabel = 'navigation.account';
+  let profileIcon: any = User;
+  let profilePath = '/profile/dashboard';
+
+  // Update if on specific pages
+  if (isReelsPage) {
+    shortsLabel = 'navigation.shorts';
+    shortsIcon = Zap as any;
+    shortsPath = '/reels';
+  }
+
+  if (isMessagesPage) {
+    messagesLabel = 'navigation.messages';
+    messagesIcon = MessageCircle as any;
+    messagesPath = '/messages';
+  }
+
+  if (isWalletPage) {
+    walletLabel = 'navigation.wallet';
+    walletIcon = Wallet as any;
+    walletPath = '/wallet';
+  }
+
+  if (isProfilePage) {
+    profileLabel = 'navigation.account';
+    profileIcon = User as any;
+    profilePath = '/profile/dashboard';
+  }
+
   return [
     { 
       id: 'home', 
@@ -79,10 +125,10 @@ const getNavItems = (
       icon: homeIcon, 
       path: homePath
     }, 
-    { id: 'shorts', nameKey: 'navigation.shorts', icon: Zap, path: '/reels' },
-    { id: 'messages', nameKey: 'navigation.messages', icon: MessageCircle, path: '/messages' },
-    { id: 'wallet', nameKey: 'navigation.wallet', icon: Wallet, path: '/wallet' },
-    { id: 'profile', nameKey: 'navigation.account', icon: User, path: '/profile/dashboard', isAvatar: true },
+    { id: 'shorts', nameKey: shortsLabel, icon: shortsIcon, path: shortsPath },
+    { id: 'messages', nameKey: messagesLabel, icon: messagesIcon, path: messagesPath },
+    { id: 'wallet', nameKey: walletLabel, icon: walletIcon, path: walletPath },
+    { id: 'profile', nameKey: profileLabel, icon: profileIcon, path: profilePath, isAvatar: true },
   ];
 };
 
@@ -126,7 +172,11 @@ export default function BottomNav() {
   const isNotificationsPage = location.pathname.startsWith('/notifications');
   const isAddressesPage = location.pathname.startsWith('/addresses');
   const isHelpPage = location.pathname.startsWith('/help');
-  const navItems = getNavItems(isSellerDashboard, isPickupStation, isExplorePage, isWishlistPage, isCartPage, isNotificationsPage, isAddressesPage, isHelpPage);
+  const isMessagesPage = location.pathname.startsWith('/messages');
+  const isWalletPage = location.pathname.startsWith('/wallet');
+  const isReelsPage = location.pathname.startsWith('/reels');
+  const isProfilePage = location.pathname.startsWith('/profile');
+  const navItems = getNavItems(isSellerDashboard, isPickupStation, isExplorePage, isWishlistPage, isCartPage, isNotificationsPage, isAddressesPage, isHelpPage, isMessagesPage, isWalletPage, isReelsPage, isProfilePage);
 
   // Sync activeTab with current route
   useEffect(() => {
@@ -175,7 +225,7 @@ export default function BottomNav() {
   // Update reorderedNavItems when navItems change
   useEffect(() => {
     setReorderedNavItems(navItems);
-  }, [isSellerDashboard, isPickupStation, isExplorePage, isWishlistPage, isCartPage, isNotificationsPage, isAddressesPage, isHelpPage]);
+  }, [isSellerDashboard, isPickupStation, isExplorePage, isWishlistPage, isCartPage, isNotificationsPage, isAddressesPage, isHelpPage, isMessagesPage, isWalletPage, isReelsPage, isProfilePage]);
 
   // Load selected more item from localStorage on mount
   useEffect(() => {
@@ -321,12 +371,23 @@ export default function BottomNav() {
                     </span>
                   )}
                   {/* X button for special pages when active */}
-                  {isActive && item.id === 'home' && (isSellerDashboard || isPickupStation || isExplorePage || isWishlistPage || isCartPage || isNotificationsPage || isAddressesPage || isHelpPage) && (
+                  {isActive && (
+                    (item.id === 'home' && (isSellerDashboard || isPickupStation || isExplorePage || isWishlistPage || isCartPage || isNotificationsPage || isAddressesPage || isHelpPage)) ||
+                    (item.id === 'shorts' && isReelsPage) ||
+                    (item.id === 'messages' && isMessagesPage) ||
+                    (item.id === 'wallet' && isWalletPage) ||
+                    (item.id === 'profile' && isProfilePage)
+                  ) && (
                     <span
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate('/for-you');
-                        setActiveTab('home');
+                        // Navigate to the default page for each button
+                        if (item.id === 'home') navigate('/for-you');
+                        else if (item.id === 'shorts') navigate('/reels');
+                        else if (item.id === 'messages') navigate('/messages');
+                        else if (item.id === 'wallet') navigate('/wallet');
+                        else if (item.id === 'profile') navigate('/profile/dashboard');
+                        setActiveTab(item.id);
                       }}
                       className="ml-2 p-1 hover:bg-red-700 rounded-full transition-colors cursor-pointer inline-flex"
                       role="button"
@@ -334,8 +395,12 @@ export default function BottomNav() {
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.stopPropagation();
-                          navigate('/for-you');
-                          setActiveTab('home');
+                          if (item.id === 'home') navigate('/for-you');
+                          else if (item.id === 'shorts') navigate('/reels');
+                          else if (item.id === 'messages') navigate('/messages');
+                          else if (item.id === 'wallet') navigate('/wallet');
+                          else if (item.id === 'profile') navigate('/profile/dashboard');
+                          setActiveTab(item.id);
                         }
                       }}
                     >
