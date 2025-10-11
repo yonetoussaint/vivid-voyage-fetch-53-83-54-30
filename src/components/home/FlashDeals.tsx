@@ -145,11 +145,10 @@ export default function FlashDeals({
               {Array.from({ length: Math.min(8, layoutMode === 'grid' ? 12 : maxProducts) }).map((_, index) => (
                 <div 
                   key={index} 
-                  className={`${layoutMode === 'grid' ? 'w-full' : 'w-[calc(100%/3.5)] flex-shrink-0 mr-2'}`}
+                  className={`${layoutMode === 'grid' ? 'w-full' : 'w-[calc(100%/3.5)] flex-shrink-0 mr-[3vw]'}`}
+                  style={layoutMode === 'carousel' ? { maxWidth: '160px' } : undefined}
                 >
-                  <div className={`${productType === 'books' ? 'aspect-[1.6:1]' : 'aspect-square'} bg-gray-200 animate-pulse mb-1.5`}></div>
-                  <div className="h-3 w-3/4 bg-gray-200 animate-pulse mb-1"></div>
-                  <div className="h-2 w-1/2 bg-gray-200 animate-pulse"></div>
+                  <div className={`${productType === 'books' ? 'aspect-[1.6:1]' : 'aspect-square'} bg-gray-200 animate-pulse ${layoutMode === 'carousel' ? 'rounded-md mb-1.5' : ''}`}></div>
                 </div>
               ))}
             </div>
