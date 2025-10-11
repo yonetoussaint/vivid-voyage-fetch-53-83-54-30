@@ -303,6 +303,7 @@ function MainLayoutContent() {
           pathname === '/cart' ||
           pathname === '/addresses' ||
           pathname === '/help' ||
+          pathname === '/my-stations' ||
           pathname === '/categories/electronics' ||
           pathname === '/categories/home-living' ||
           pathname === '/categories/fashion' ||

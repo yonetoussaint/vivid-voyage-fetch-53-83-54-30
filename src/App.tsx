@@ -78,6 +78,7 @@ import Wishlist from './pages/Wishlist';
 import Notifications from './pages/Notifications';
 import Addresses from './pages/Addresses';
 import Help from './pages/Help';
+import MyStations from "./pages/MyStations";
 import NotFound from "./pages/NotFound";
 import MainLayout from "./components/layout/MainLayout";
 import { AuthOverlayProvider } from "./context/AuthOverlayContext";
@@ -152,6 +153,7 @@ function App() {
                                 <Route path="notifications" element={<Notifications />} />
                                 <Route path="addresses" element={<Addresses />} />
                                 <Route path="help" element={<Help />} />
+                                <Route path="/my-stations" element={<MyStations />} />
                                 <Route path="admin" element={<AdminPanel />} />
                 <Route path="admin-dashboard/*" element={<AdminDashboard />} />
                                 <Route path="/seller/:sellerId/*" element={<SellerPage />} />
