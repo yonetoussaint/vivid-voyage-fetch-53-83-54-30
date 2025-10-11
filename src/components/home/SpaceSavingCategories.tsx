@@ -22,7 +22,8 @@ import {
   HelpCircle,
   Pen,
   GripVertical,
-  Check
+  Check,
+  Grid3x3
 } from 'lucide-react';
 import SectionHeader from "./SectionHeader";
 import SlideUpPanel from '@/components/shared/SlideUpPanel';
@@ -145,6 +146,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
   const [isCustomizePanelOpen, setIsCustomizePanelOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [showGridView, setShowGridView] = useState(false);
 
   // Default categories structure
   const defaultCategories: Category[] = [
@@ -577,7 +579,8 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
         />
       )}
 
-      <div className="bg-white overflow-x-visible overflow-y-visible">
+      <div className="bg-white overflow-visible">
+        {/* Horizontal row with first 4 categories + grid toggle button */}
         <div 
           ref={rowRef}
           className="flex overflow-x-auto overflow-y-visible pl-1 scrollbar-hide"
@@ -588,7 +591,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
             scrollPaddingLeft: '8px'
           }}
         >
-          {displayedCategories.map(category => (
+          {displayedCategories.slice(0, 4).map(category => (
             <div 
               key={category.id}
               className="flex-shrink-0 mr-[3vw] overflow-visible py-2"
@@ -598,8 +601,59 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
             </div>
           ))}
 
+          {/* Grid toggle button as 5th item */}
+          <div 
+            className="flex-shrink-0 mr-[3vw] overflow-visible py-2"
+            style={{ scrollSnapAlign: 'start' }}
+          >
+            <div 
+              className="flex flex-col items-center w-16 flex-shrink-0 active:opacity-80 transition-opacity touch-manipulation cursor-pointer"
+              onClick={() => setShowGridView(!showGridView)}
+            >
+              <div className="relative mb-2">
+                <div className={`w-14 h-14 rounded-xl ${showGridView ? 'bg-blue-100' : 'bg-gray-100'} flex items-center justify-center`}>
+                  <Grid3x3 className={`w-7 h-7 ${showGridView ? 'text-blue-500' : 'text-gray-500'}`} />
+                </div>
+              </div>
+              <span className="text-xs font-normal text-gray-800 text-center w-full leading-tight px-1 truncate">
+                {showGridView ? 'Hide' : 'More'}
+              </span>
+            </div>
+          </div>
+
           <div className="flex-shrink-0 w-2"></div>
         </div>
+
+        {/* Grid view for all categories */}
+        {showGridView && (
+          <div className="px-4 pb-4 pt-2 bg-white">
+            <div className="grid grid-cols-4 gap-4">
+              {displayedCategories.map(category => (
+                <div 
+                  key={category.id}
+                  className="flex flex-col items-center active:opacity-80 transition-opacity touch-manipulation cursor-pointer"
+                  onClick={() => handleCategorySelect(category.name)}
+                >
+                  <div className="relative mb-2">
+                    <div className={`w-14 h-14 rounded-xl ${category.bgColor} flex items-center justify-center`}>
+                      <category.icon className={`w-7 h-7 ${category.iconBg}`} />
+                    </div>
+
+                    {category.count !== undefined && category.count > 0 && (
+                      <div className="absolute -top-2 -right-2 min-w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-medium px-1 border-2 border-white shadow-sm z-10">
+                        {category.count > 99 ? '99+' : category.count}
+                      </div>
+                    )}
+                  </div>
+
+                  <span className="text-xs font-normal text-gray-800 text-center w-full leading-tight px-1 truncate">
+                    {category.name}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <SlideUpPanel
