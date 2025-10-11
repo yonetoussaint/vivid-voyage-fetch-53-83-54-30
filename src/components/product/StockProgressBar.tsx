@@ -1,6 +1,6 @@
 import React from 'react';
 
-function StockProgressBar({ product }) {
+export default function StockProgressBar({ product }) {
   const total = product.inStock + product.sold;
   const stockPct = (product.inStock / total) * 100;
 
