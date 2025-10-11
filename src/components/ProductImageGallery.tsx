@@ -46,15 +46,15 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
     console.log('📦 Product object:', product);
     if (product) {
       console.log('📊 Stock properties check:', {
-        stock: product.stock,
+        inventory: product.inventory,
+        sold_count: product.sold_count,
+        // Legacy properties for debugging
+        stock: (product as any).stock,
         inStock: (product as any).inStock,
-        inventory: (product as any).inventory,
         quantity: (product as any).quantity,
         sold: (product as any).sold,
         soldCount: (product as any).soldCount,
-        unitsSold: (product as any).unitsSold,
-        changePercent: (product as any).changePercent,
-        priceChange: (product as any).priceChange
+        unitsSold: (product as any).unitsSold
       });
     }
   }, [product]);
@@ -285,38 +285,25 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
     }
   };
 
-  // Create product data for StockProgressBar with comprehensive property checking
+  // Create product data for StockProgressBar using REAL database fields
   const stockData = product ? {
     id: product.id,
-    // Try multiple possible property names for change percentage
+    // Use actual database fields
+    inventory: product.inventory || 0,
+    sold_count: product.sold_count || 0,
+    // For change percentage - you can calculate this based on historical data
     change: (product as any).changePercent || 
             (product as any).priceChange || 
             (product as any).stockChange || 
             (product as any).change || 
-            0,
-    // Try multiple possible property names for stock/inventory
-    inStock: (product as any).inStock || 
-             product.stock || 
-             (product as any).inventory || 
-             (product as any).quantity || 
-             (product as any).available || 
-             (product as any).availableQuantity || 
-             0,
-    // Try multiple possible property names for sold count
-    sold: (product as any).sold || 
-          (product as any).soldCount || 
-          (product as any).unitsSold || 
-          (product as any).totalSold || 
-          0
+            0
   } : null;
 
   // Additional debug log for stockData
   useEffect(() => {
     if (stockData) {
-      console.log('📈 StockData created:', stockData);
-      if (stockData.inStock === 0 && stockData.sold === 0) {
-        console.warn('⚠️ Warning: Both inStock and sold are 0. Check your product object properties.');
-      }
+      console.log('📈 StockData created from database:', stockData);
+      console.log('📊 Real stock counts - Inventory:', stockData.inventory, 'Sold:', stockData.sold_count);
     }
   }, [stockData]);
 
@@ -391,7 +378,7 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
           {/* Stock Progress Bar - Only show if we have valid stock data and not in focus/playing mode */}
           {!(focusMode || (isCurrentVideo && isPlaying)) && 
            stockData && 
-           (stockData.inStock > 0 || stockData.sold > 0) && (
+           (stockData.inventory > 0 || stockData.sold_count > 0) && (
             <div className="absolute bottom-3 right-3 z-30 max-w-[200px]">
               <StockProgressBar product={stockData} />
             </div>

@@ -8,6 +8,9 @@ export interface Product {
   discount_price?: number | null;
   category?: string;
   imageUrl?: string;
+  // Real stock properties from database
+  inventory: number;
+  sold_count: number;
   product_images?: {
     id: string;
     src: string;
@@ -23,7 +26,6 @@ export interface Product {
   model_3d_url?: string;
   rating?: number;
   reviewCount?: number;
-  inventory?: number;
   location?: string;
   status?: string;
   created_at?: string;
@@ -35,7 +37,6 @@ export interface Product {
   seller_trust_score?: number;
   last_activity?: string;
   seller_id?: string;
-  sold_count?: number;
   product_type?: string;
   bundle_deals?: {
     min: number;
@@ -47,7 +48,7 @@ export interface Product {
   sellers?: {
     id: string;
     name: string;
-    bio?: string;  // ← CHANGED FROM description TO bio
+    bio?: string;
     image_url?: string;
     verified: boolean;
     rating?: number;
@@ -93,8 +94,7 @@ export interface Product {
   }[];
   variant_names?: any[];
 }
-// --- Fetch all products from Supabase ---
-// --- Fetch all products from Supabase ---
+
 // --- Fetch all products from Supabase ---
 export async function fetchAllProducts(): Promise<Product[]> {
   const { supabase } = await import('./client');
@@ -135,6 +135,8 @@ export async function fetchAllProducts(): Promise<Product[]> {
 
   return (data || []).map(product => ({
     ...product,
+    inventory: product.inventory || 0,
+    sold_count: product.sold_count || 0,
     bundle_deals: Array.isArray(product.bundle_deals) ? product.bundle_deals as any[] : [],
     specifications: Array.isArray(product.specifications) ? product.specifications as any[] : [],
     variants: Array.isArray((product as any).color_variants) ? (product as any).color_variants as any[] : [],
@@ -143,7 +145,64 @@ export async function fetchAllProducts(): Promise<Product[]> {
 }
 
 // --- Fetch single product by ID ---
+export async function fetchProductById(productId: string): Promise<Product> {
+  const { supabase } = await import('./client');
 
+  console.log(`🔍 fetchProductById: Starting fetch for productId: ${productId}`);
+
+  const { data, error } = await supabase
+    .from('products')
+    .select(`
+      *,
+      product_images (
+        id,
+        src,
+        alt
+      ),
+      product_videos (
+        id,
+        video_url,
+        title,
+        description,
+        created_at
+      ),
+      sellers (
+        id,
+        name,
+        image_url,
+        verified,
+        rating,
+        total_sales,
+        followers_count,
+        bio
+      )
+    `)
+    .eq('id', productId)
+    .maybeSingle();
+
+  console.log(`🔍 fetchProductById: Query result for productId ${productId}:`, { data, error });
+  console.log(`🔍 fetchProductById: Inventory: ${data?.inventory}, Sold Count: ${data?.sold_count}`);
+
+  if (error) {
+    console.error('❌ fetchProductById: Error fetching product:', error);
+    throw error;
+  }
+
+  if (!data) {
+    console.error(`❌ fetchProductById: No product found with ID: ${productId}`);
+    throw new Error('Product not found');
+  }
+
+  return {
+    ...data,
+    inventory: data.inventory || 0,
+    sold_count: data.sold_count || 0,
+    bundle_deals: Array.isArray(data.bundle_deals) ? data.bundle_deals as any[] : [],
+    specifications: Array.isArray(data.specifications) ? data.specifications as any[] : [],
+    variants: Array.isArray((data as any).color_variants) ? (data as any).color_variants as any[] : [],
+    storage_variants: Array.isArray((data as any).storage_variants) ? (data as any).storage_variants as any[] : []
+  } as Product;
+}
 
 // --- Fetch products for a specific user ---
 export async function fetchUserProducts(userId: string): Promise<Product[]> {
@@ -158,7 +217,7 @@ export async function createProduct(productData: Partial<Product>): Promise<Prod
     id: Math.random().toString(36).substring(2, 9),
     name: productData.name || "New Product",
     description: productData.description || "",
-    short_description: productData.short_description || "", // Include short description
+    short_description: productData.short_description || "",
     price: productData.price ?? 0,
     discount_price: productData.discount_price ?? null,
     category: productData.category || "",
@@ -166,7 +225,8 @@ export async function createProduct(productData: Partial<Product>): Promise<Prod
     product_images: [],
     rating: 0,
     reviewCount: 0,
-    inventory: 0,
+    inventory: productData.inventory || 0, // Include inventory
+    sold_count: productData.sold_count || 0, // Include sold_count
     created_at: new Date().toISOString(),
   };
 }
@@ -211,65 +271,8 @@ export async function updateProduct(productId: string, productData: Partial<Prod
 
   return {
     ...data,
-    bundle_deals: Array.isArray(data.bundle_deals) ? data.bundle_deals as any[] : [],
-    specifications: Array.isArray(data.specifications) ? data.specifications as any[] : [],
-    variants: Array.isArray((data as any).color_variants) ? (data as any).color_variants as any[] : [],
-    storage_variants: Array.isArray((data as any).storage_variants) ? (data as any).storage_variants as any[] : []
-  } as Product;
-}
-
-// --- Fetch single product by ID ---
-// --- Fetch single product by ID ---
-export async function fetchProductById(productId: string): Promise<Product> {
-  const { supabase } = await import('./client');
-
-  console.log(`🔍 fetchProductById: Starting fetch for productId: ${productId}`);
-
-  const { data, error } = await supabase
-    .from('products')
-    .select(`
-      *,
-      product_images (
-        id,
-        src,
-        alt
-      ),
-      product_videos (
-        id,
-        video_url,
-        title,
-        description,
-        created_at
-      ),
-      sellers (
-        id,
-        name,
-        image_url,
-        verified,
-        rating,
-        total_sales,
-        followers_count,
-        bio
-      )
-    `)
-    .eq('id', productId)
-    .maybeSingle();
-
-  console.log(`🔍 fetchProductById: Query result for productId ${productId}:`, { data, error });
-  console.log(`🔍 fetchProductById: model_3d_url value:`, data?.model_3d_url);
-
-  if (error) {
-    console.error('❌ fetchProductById: Error fetching product:', error);
-    throw error;
-  }
-
-  if (!data) {
-    console.error(`❌ fetchProductById: No product found with ID: ${productId}`);
-    throw new Error('Product not found');
-  }
-
-  return {
-    ...data,
+    inventory: data.inventory || 0,
+    sold_count: data.sold_count || 0,
     bundle_deals: Array.isArray(data.bundle_deals) ? data.bundle_deals as any[] : [],
     specifications: Array.isArray(data.specifications) ? data.specifications as any[] : [],
     variants: Array.isArray((data as any).color_variants) ? (data as any).color_variants as any[] : [],
@@ -354,6 +357,8 @@ export async function fetchFlashDeals(category?: string, productType?: string): 
 
   return (data || []).map(product => ({
     ...product,
+    inventory: product.inventory || 0,
+    sold_count: product.sold_count || 0,
     bundle_deals: Array.isArray(product.bundle_deals) ? product.bundle_deals as any[] : [],
     specifications: Array.isArray(product.specifications) ? product.specifications as any[] : [],
     variants: Array.isArray((product as any).color_variants) ? (product as any).color_variants as any[] : [],

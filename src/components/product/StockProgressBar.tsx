@@ -1,8 +1,21 @@
 import React from 'react';
 
-export default function StockProgressBar({ product }) {
-  const total = product.inStock + product.sold;
-  const stockPct = (product.inStock / total) * 100;
+interface StockProgressBarProps {
+  product: {
+    id: string;
+    inventory: number;     // Real stock count from database
+    sold_count: number;    // Real sold count from database  
+    change?: number;       // For percentage change
+  };
+}
+
+export default function StockProgressBar({ product }: StockProgressBarProps) {
+  const inStock = product.inventory || 0;
+  const sold = product.sold_count || 0;
+  const total = inStock + sold;
+
+  // Avoid division by zero
+  const stockPct = total > 0 ? (inStock / total) * 100 : 0;
 
   const getColors = () => {
     if (stockPct < 20) return '#ef4444';
@@ -12,7 +25,7 @@ export default function StockProgressBar({ product }) {
 
   const stockColor = getColors();
   const soldColor = '#f97316';
-  const isPositive = product.change >= 0;
+  const isPositive = (product.change || 0) >= 0;
 
   return (
     <div 
@@ -37,16 +50,16 @@ export default function StockProgressBar({ product }) {
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1">
             <span className={`text-xs font-semibold ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
-              {isPositive ? '+' : ''}{product.change.toFixed(1)}%
+              {isPositive ? '+' : ''}{(product.change || 0).toFixed(1)}%
             </span>
             <span className={`text-[10px] ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
               {isPositive ? '▲' : '▼'}
             </span>
           </div>
           <div className="flex gap-1.5 text-[10px] text-white/80">
-            <span>{product.sold} sold</span>
+            <span>{sold} sold</span>
             <span className="text-white/40">|</span>
-            <span>{product.inStock} left</span>
+            <span>{inStock} left</span>
           </div>
         </div>
       </div>

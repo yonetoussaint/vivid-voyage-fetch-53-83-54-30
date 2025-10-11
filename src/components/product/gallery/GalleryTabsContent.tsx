@@ -119,13 +119,13 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
 
       {/* Rest of the tabs remain the same */}
       {activeTab === 'variants' && (
-        <ProductSectionWrapper>
+        
           <ProductVariants 
             productId={productId}
             onImageSelect={onImageSelect}
             onConfigurationChange={onConfigurationChange}
           />
-        </ProductSectionWrapper>
+        
       )}
 
       {activeTab === 'reviews' && (
