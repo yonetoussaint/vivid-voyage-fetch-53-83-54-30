@@ -583,19 +583,12 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
         {/* Horizontal row with first 4 categories + grid toggle button */}
         <div 
           ref={rowRef}
-          className="flex overflow-x-auto overflow-y-visible pl-1 scrollbar-hide"
-          style={{ 
-            scrollbarWidth: 'none', 
-            msOverflowStyle: 'none',
-            scrollSnapType: 'x mandatory',
-            scrollPaddingLeft: '8px'
-          }}
+          className="flex overflow-visible pl-1"
         >
           {displayedCategories.slice(0, 4).map(category => (
             <div 
               key={category.id}
               className="flex-shrink-0 mr-[3vw] overflow-visible py-2"
-              style={{ scrollSnapAlign: 'start' }}
             >
               <CategoryShortcut category={category} onCategorySelect={handleCategorySelect} />
             </div>
@@ -604,7 +597,6 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
           {/* Grid toggle button as 5th item */}
           <div 
             className="flex-shrink-0 mr-[3vw] overflow-visible py-2"
-            style={{ scrollSnapAlign: 'start' }}
           >
             <div 
               className="flex flex-col items-center w-16 flex-shrink-0 active:opacity-80 transition-opacity touch-manipulation cursor-pointer"
@@ -620,8 +612,6 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
               </span>
             </div>
           </div>
-
-          <div className="flex-shrink-0 w-2"></div>
         </div>
 
         {/* Grid view for all categories */}
