@@ -136,7 +136,7 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
   const faviconUrl = FAVICON_OVERRIDES[domain] || `https://www.google.com/s2/favicons?domain=${domain}`;
 
   return (
-    <div className="bg-white flex flex-col px-4 min-h-full">
+    <div className="bg-white flex flex-col px-4">
       {/* Header - hide in compact mode */}
       {!isCompact && (
         <div className="pt-2 pb-3 flex items-center justify-between">
