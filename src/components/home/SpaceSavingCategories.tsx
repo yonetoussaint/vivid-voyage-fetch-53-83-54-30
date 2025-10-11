@@ -583,7 +583,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
         {/* Horizontal row with first 4 categories + grid toggle button */}
         <div 
           ref={rowRef}
-          className="flex overflow-visible pl-1"
+          className="flex overflow-visible pl-1 pr-4"
         >
           {displayedCategories.slice(0, 4).map(category => (
             <div 
@@ -614,11 +614,11 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
           </div>
         </div>
 
-        {/* Grid view for all categories */}
+        {/* Grid view for remaining categories only */}
         {showGridView && (
           <div className="px-4 pb-4 pt-2 bg-white">
             <div className="grid grid-cols-4 gap-4">
-              {displayedCategories.map(category => (
+              {displayedCategories.slice(4).map(category => (
                 <div 
                   key={category.id}
                   className="flex flex-col items-center active:opacity-80 transition-opacity touch-manipulation cursor-pointer"
