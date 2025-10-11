@@ -92,7 +92,7 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col px-4">
+    <div className="bg-white flex flex-col px-4 min-h-full">
       {/* Header - hide in compact mode */}
       {!isCompact && (
         <div className="pt-2 pb-3 flex items-center justify-between">

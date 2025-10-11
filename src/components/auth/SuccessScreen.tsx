@@ -43,7 +43,7 @@ const SuccessScreen: React.FC<SuccessScreenProps> = ({ email, onContinue }) => {
   }, [onContinue, email, user]);
 
   return (
-    <div className="min-h-screen bg-white flex flex-col px-4">
+    <div className="bg-white flex flex-col px-4 min-h-full">
       {/* Main content container - no progress bar */}
       <div className="flex-1 flex flex-col items-center justify-center w-full max-w-md mx-auto relative">
         

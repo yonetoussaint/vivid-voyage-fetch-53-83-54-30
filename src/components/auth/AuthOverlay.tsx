@@ -218,13 +218,13 @@ const AuthOverlay: React.FC<AuthOverlayProps> = ({ isOpen, onClose }) => {
         <Drawer open={isOpen} onOpenChange={(open) => {
           if (!open) onClose();
         }}>
-          <DrawerContent>
+          <DrawerContent className="h-[95vh] overflow-auto">
             {/* Drag handle */}
-            <div className="flex flex-col items-center pt-2 pb-3">
+            <div className="flex flex-col items-center pt-2 pb-3 flex-shrink-0">
               <div className="w-16 h-1.5 bg-gray-300 rounded-full shadow-sm" />
             </div>
             
-            <div className="px-0 pb-4">
+            <div className="px-0 pb-4 flex-1 overflow-y-auto">
               {renderCurrentScreen()}
             </div>
           </DrawerContent>
