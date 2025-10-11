@@ -580,44 +580,44 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       )}
 
       <div className="bg-white overflow-visible">
-        {/* Horizontal row with first 4 categories + grid toggle button */}
+        {/* Horizontal row with first 4 categories + grid toggle button - aligned with 5-column grid */}
         <div 
           ref={rowRef}
-          className="flex overflow-visible pl-1 pr-4"
+          className="px-4 overflow-visible"
         >
-          {displayedCategories.slice(0, 4).map(category => (
-            <div 
-              key={category.id}
-              className="flex-shrink-0 mr-[3vw] overflow-visible py-2"
-            >
-              <CategoryShortcut category={category} onCategorySelect={handleCategorySelect} />
-            </div>
-          ))}
-
-          {/* Grid toggle button as 5th item */}
-          <div 
-            className="flex-shrink-0 mr-[3vw] overflow-visible py-2"
-          >
-            <div 
-              className="flex flex-col items-center w-16 flex-shrink-0 active:opacity-80 transition-opacity touch-manipulation cursor-pointer"
-              onClick={() => setShowGridView(!showGridView)}
-            >
-              <div className="relative mb-2">
-                <div className={`w-14 h-14 rounded-xl ${showGridView ? 'bg-blue-100' : 'bg-gray-100'} flex items-center justify-center`}>
-                  <Grid3x3 className={`w-7 h-7 ${showGridView ? 'text-blue-500' : 'text-gray-500'}`} />
-                </div>
+          <div className="grid grid-cols-5 gap-4">
+            {displayedCategories.slice(0, 4).map(category => (
+              <div 
+                key={category.id}
+                className="flex justify-center overflow-visible py-2"
+              >
+                <CategoryShortcut category={category} onCategorySelect={handleCategorySelect} />
               </div>
-              <span className="text-xs font-normal text-gray-800 text-center w-full leading-tight px-1 truncate">
-                {showGridView ? 'Hide' : 'More'}
-              </span>
+            ))}
+
+            {/* Grid toggle button as 5th item */}
+            <div className="flex justify-center overflow-visible py-2">
+              <div 
+                className="flex flex-col items-center w-16 flex-shrink-0 active:opacity-80 transition-opacity touch-manipulation cursor-pointer"
+                onClick={() => setShowGridView(!showGridView)}
+              >
+                <div className="relative mb-2">
+                  <div className={`w-14 h-14 rounded-xl ${showGridView ? 'bg-blue-100' : 'bg-gray-100'} flex items-center justify-center`}>
+                    <Grid3x3 className={`w-7 h-7 ${showGridView ? 'text-blue-500' : 'text-gray-500'}`} />
+                  </div>
+                </div>
+                <span className="text-xs font-normal text-gray-800 text-center w-full leading-tight px-1 truncate">
+                  {showGridView ? 'Hide' : 'More'}
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Grid view for remaining categories only */}
+        {/* Grid view for remaining categories only - 5 columns to match above */}
         {showGridView && (
           <div className="px-4 pb-4 pt-2 bg-white">
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-5 gap-4">
               {displayedCategories.slice(4).map(category => (
                 <div 
                   key={category.id}
