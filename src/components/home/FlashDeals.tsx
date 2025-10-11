@@ -16,6 +16,7 @@ interface FlashDealsProps {
   maxProducts?: number;
   layoutMode?: 'carousel' | 'grid';
   showSectionHeader?: boolean;
+  showPrice?: boolean;
 }
 
 export default function FlashDeals({ 
@@ -26,7 +27,8 @@ export default function FlashDeals({
   showCountdown,
   maxProducts = 20,
   layoutMode = 'carousel',
-  showSectionHeader = true
+  showSectionHeader = true,
+  showPrice = false
 }: FlashDealsProps) {
   const isMobile = useIsMobile();
   const scrollRef = useRef(null);
@@ -213,18 +215,20 @@ export default function FlashDeals({
                             </div>
                           )}
                         </div>
-                        <div>
-                          <div className="flex items-baseline gap-1">
-                            <div className="text-[#FF4747] font-semibold text-sm">
-                              ${Number(product.discount_price || product.price).toFixed(2)}
-                            </div>
-                            {product.discount_price && (
-                              <div className="text-[10px] text-gray-500 line-through">
-                                ${Number(product.price).toFixed(2)}
+                        {showPrice && (
+                          <div>
+                            <div className="flex items-baseline gap-1">
+                              <div className="text-[#FF4747] font-semibold text-sm">
+                                ${Number(product.discount_price || product.price).toFixed(2)}
                               </div>
-                            )}
+                              {product.discount_price && (
+                                <div className="text-[10px] text-gray-500 line-through">
+                                  ${Number(product.price).toFixed(2)}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </div>
                     </div>
                   ))}
