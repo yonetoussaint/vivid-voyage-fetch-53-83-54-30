@@ -4,17 +4,16 @@ import {
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
-import { BadgeInfo, ChevronRight, X } from "lucide-react";
+import { X } from "lucide-react";
 import InfoBand from "@/components/product/InfoBand";
 import PriceInfo from "@/components/product/PriceInfo";
 import TabsNavigation from "@/components/home/TabsNavigation";
 import SellerInfoOverlay from "@/components/product/SellerInfoOverlay";
 import ConfigurationSummary from "@/components/product/ConfigurationSummary";
-import StockProgressBar from "@/components/product/StockProgressBar"; // Import the new component
+import StockProgressBar from "@/components/product/StockProgressBar";
 
 // Import new modular components
 import { ProductImageGalleryRef, ProductImageGalleryProps } from './product/gallery/types';
-import { createGalleryItems } from './product/gallery/utils';
 import { useGalleryState } from './product/gallery/useGalleryState';
 import GalleryItem from './product/gallery/GalleryItem';
 import GalleryTabsContent from './product/gallery/GalleryTabsContent';
@@ -41,6 +40,24 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
     onBuyNow,
     onReadMore
   }, ref) => {
+
+  // Debug: Log product object to see available properties
+  useEffect(() => {
+    console.log('📦 Product object:', product);
+    if (product) {
+      console.log('📊 Stock properties check:', {
+        stock: product.stock,
+        inStock: (product as any).inStock,
+        inventory: (product as any).inventory,
+        quantity: (product as any).quantity,
+        sold: (product as any).sold,
+        soldCount: (product as any).soldCount,
+        unitsSold: (product as any).unitsSold,
+        changePercent: (product as any).changePercent,
+        priceChange: (product as any).priceChange
+      });
+    }
+  }, [product]);
 
   // Use the custom hook for state management
   const galleryState = useGalleryState(
@@ -268,13 +285,40 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
     }
   };
 
-  // Create product data for StockProgressBar
+  // Create product data for StockProgressBar with comprehensive property checking
   const stockData = product ? {
     id: product.id,
-    change: 12.5, // You can calculate this from product data or pass it as a prop
-    inStock: product.stock || 0,
-    sold: product.sold || 0
+    // Try multiple possible property names for change percentage
+    change: (product as any).changePercent || 
+            (product as any).priceChange || 
+            (product as any).stockChange || 
+            (product as any).change || 
+            0,
+    // Try multiple possible property names for stock/inventory
+    inStock: (product as any).inStock || 
+             product.stock || 
+             (product as any).inventory || 
+             (product as any).quantity || 
+             (product as any).available || 
+             (product as any).availableQuantity || 
+             0,
+    // Try multiple possible property names for sold count
+    sold: (product as any).sold || 
+          (product as any).soldCount || 
+          (product as any).unitsSold || 
+          (product as any).totalSold || 
+          0
   } : null;
+
+  // Additional debug log for stockData
+  useEffect(() => {
+    if (stockData) {
+      console.log('📈 StockData created:', stockData);
+      if (stockData.inStock === 0 && stockData.sold === 0) {
+        console.warn('⚠️ Warning: Both inStock and sold are 0. Check your product object properties.');
+      }
+    }
+  }, [stockData]);
 
   if (totalItems === 0) {
     return (
@@ -344,7 +388,10 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
             isPlaying={isCurrentVideo && isPlaying}
           />
 
-          {!(focusMode || (isCurrentVideo && isPlaying)) && stockData && (
+          {/* Stock Progress Bar - Only show if we have valid stock data and not in focus/playing mode */}
+          {!(focusMode || (isCurrentVideo && isPlaying)) && 
+           stockData && 
+           (stockData.inStock > 0 || stockData.sold > 0) && (
             <div className="absolute bottom-3 right-3 z-30 max-w-[200px]">
               <StockProgressBar product={stockData} />
             </div>
@@ -381,11 +428,7 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
         </Carousel>
       </div>
 
-
-    <InfoBand/>
-
-            
-      
+      <InfoBand/>
 
       {totalItems > 1 && (
         <div ref={tabsContainerRef} className="w-full bg-white">

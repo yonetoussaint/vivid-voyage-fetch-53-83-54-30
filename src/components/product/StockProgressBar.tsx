@@ -1,20 +1,38 @@
 import React from 'react';
 
-export default function StockProgressBar({ product }) {
+function StockProgressBar({ product }) {
   const total = product.inStock + product.sold;
   const stockPct = (product.inStock / total) * 100;
-  
+
   const getColors = () => {
-    if (stockPct < 20) return { bar: 'bg-gradient-to-r from-red-400 to-red-600' };
-    if (stockPct < 40) return { bar: 'bg-gradient-to-r from-yellow-400 to-yellow-600' };
-    return { bar: 'bg-gradient-to-r from-green-400 to-green-600' };
+    if (stockPct < 20) return '#ef4444';
+    if (stockPct < 40) return '#eab308';
+    return '#22c55e';
   };
 
-  const colors = getColors();
+  const stockColor = getColors();
+  const soldColor = '#f97316';
   const isPositive = product.change >= 0;
 
   return (
-    <div className="bg-black/60 backdrop-blur-sm rounded-lg border border-gray-200/50 shadow-sm p-2">
+    <div 
+      className="relative p-2 rounded-lg shadow-sm"
+      style={{
+        border: '3px solid transparent',
+        background: `
+          linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)) padding-box,
+          conic-gradient(
+            from 0deg,
+            ${stockColor} 0%, 
+            ${stockColor} ${stockPct}%, 
+            ${soldColor} ${stockPct}%, 
+            ${soldColor} 100%
+          ) border-box
+        `,
+        borderRadius: '0.5rem',
+        backdropFilter: 'blur(4px)'
+      }}
+    >
       <div className="space-y-1.5">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1">
@@ -30,11 +48,6 @@ export default function StockProgressBar({ product }) {
             <span className="text-white/40">|</span>
             <span>{product.inStock} left</span>
           </div>
-        </div>
-        <div className="w-full h-1 bg-gray-200/30 rounded-full overflow-hidden relative">
-          <div className={`absolute left-0 h-full ${colors.bar} transition-all duration-500`} style={{ width: '100%' }} />
-          <div className="absolute left-0 h-full bg-gradient-to-r from-orange-400 to-orange-600 transition-all duration-500 rounded-r-full" 
-               style={{ width: `${100 - stockPct}%` }} />
         </div>
       </div>
     </div>
