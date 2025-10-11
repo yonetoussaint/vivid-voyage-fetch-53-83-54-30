@@ -299,6 +299,10 @@ function MainLayoutContent() {
           pathname === '/settings' ||
           pathname === '/wallet' ||
           pathname === '/explore' ||
+          pathname === '/wishlist' ||
+          pathname === '/cart' ||
+          pathname === '/addresses' ||
+          pathname === '/help' ||
           pathname === '/categories/electronics' ||
           pathname === '/categories/home-living' ||
           pathname === '/categories/fashion' ||
@@ -306,6 +310,9 @@ function MainLayoutContent() {
           pathname === '/categories/kids-hobbies' ||
           pathname === '/categories/sports-outdoors' ||
           pathname === '/categories/automotive' ||
+          pathname === '/categories/women' ||
+          pathname === '/categories/men' ||
+          pathname === '/categories/books' ||
           pathname.startsWith('/seller-dashboard')
         ) && (
           <div className="z-30">
