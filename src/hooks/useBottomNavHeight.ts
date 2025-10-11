@@ -43,7 +43,8 @@ export const useBottomNavHeight = () => {
       pathname === '/categories/automotive' ||
       pathname === '/categories/women' ||
       pathname === '/categories/men' ||
-      pathname === '/categories/books'
+      pathname === '/categories/books' ||
+      pathname.startsWith('/pickup-station')
     );
 
     if (!shouldShowBottomNav) {

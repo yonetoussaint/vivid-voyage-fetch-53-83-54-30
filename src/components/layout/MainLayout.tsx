@@ -314,7 +314,8 @@ function MainLayoutContent() {
           pathname === '/categories/women' ||
           pathname === '/categories/men' ||
           pathname === '/categories/books' ||
-          pathname.startsWith('/seller-dashboard')
+          pathname.startsWith('/seller-dashboard') ||
+          pathname.startsWith('/pickup-station')
         ) && (
           <div className="z-30">
             <IndexBottomNav />
