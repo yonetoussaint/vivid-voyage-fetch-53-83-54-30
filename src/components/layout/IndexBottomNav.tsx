@@ -4,7 +4,7 @@ import {
   Home, Zap, Rss, Wallet, Tv, LayoutGrid, X, MoreHorizontal,
   Settings, Bell, Bookmark, Star, Users, ShoppingBag, ChevronDown, User,
   MessageCircle, Film, Calendar, Gift, Camera, PlayCircle, 
-  MapPin, Heart, HelpCircle, Store
+  MapPin, Heart, HelpCircle, Store, ShoppingCart
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -28,18 +28,63 @@ interface BottomNavTab {
   badge?: number;
 }
 
-const getNavItems = (isSellerDashboard: boolean, isPickupStation: boolean, isExplorePage: boolean): BottomNavTab[] => [
-  { 
-    id: 'home', 
-    nameKey: isSellerDashboard || isPickupStation ? 'navigation.store' : isExplorePage ? 'navigation.explore' : 'navigation.home', 
-    icon: isSellerDashboard || isPickupStation ? Store : isExplorePage ? LayoutGrid : Logo, 
-    path: isSellerDashboard ? '/seller-dashboard' : isPickupStation ? '/pickup-station' : isExplorePage ? '/explore' : '/for-you' 
-  }, 
-  { id: 'shorts', nameKey: 'navigation.shorts', icon: Zap, path: '/reels' },
-  { id: 'messages', nameKey: 'navigation.messages', icon: MessageCircle, path: '/messages' },
-  { id: 'wallet', nameKey: 'navigation.wallet', icon: Wallet, path: '/wallet' },
-  { id: 'profile', nameKey: 'navigation.account', icon: User, path: '/profile/dashboard', isAvatar: true },
-];
+const getNavItems = (
+  isSellerDashboard: boolean, 
+  isPickupStation: boolean, 
+  isExplorePage: boolean,
+  isWishlistPage: boolean,
+  isCartPage: boolean,
+  isNotificationsPage: boolean,
+  isAddressesPage: boolean,
+  isHelpPage: boolean
+): BottomNavTab[] => {
+  let homeLabel = 'navigation.home';
+  let homeIcon: any = Logo;
+  let homePath = '/for-you';
+
+  if (isSellerDashboard || isPickupStation) {
+    homeLabel = 'navigation.store';
+    homeIcon = Store as any;
+    homePath = isSellerDashboard ? '/seller-dashboard' : '/pickup-station';
+  } else if (isExplorePage) {
+    homeLabel = 'navigation.explore';
+    homeIcon = LayoutGrid as any;
+    homePath = '/explore';
+  } else if (isWishlistPage) {
+    homeLabel = 'Wishlist';
+    homeIcon = Heart as any;
+    homePath = '/wishlist';
+  } else if (isCartPage) {
+    homeLabel = 'Cart';
+    homeIcon = ShoppingCart as any;
+    homePath = '/cart';
+  } else if (isNotificationsPage) {
+    homeLabel = 'Notifications';
+    homeIcon = Bell as any;
+    homePath = '/notifications';
+  } else if (isAddressesPage) {
+    homeLabel = 'Addresses';
+    homeIcon = MapPin as any;
+    homePath = '/addresses';
+  } else if (isHelpPage) {
+    homeLabel = 'Help';
+    homeIcon = HelpCircle as any;
+    homePath = '/help';
+  }
+
+  return [
+    { 
+      id: 'home', 
+      nameKey: homeLabel, 
+      icon: homeIcon, 
+      path: homePath
+    }, 
+    { id: 'shorts', nameKey: 'navigation.shorts', icon: Zap, path: '/reels' },
+    { id: 'messages', nameKey: 'navigation.messages', icon: MessageCircle, path: '/messages' },
+    { id: 'wallet', nameKey: 'navigation.wallet', icon: Wallet, path: '/wallet' },
+    { id: 'profile', nameKey: 'navigation.account', icon: User, path: '/profile/dashboard', isAvatar: true },
+  ];
+};
 
 // More menu items that will appear in the side panel
 const moreMenuItems = [
@@ -72,11 +117,16 @@ export default function BottomNav() {
   const [previousTab, setPreviousTab] = useState(null);
   const [animating, setAnimating] = useState(false);
 
-  // Check if we're in seller dashboard, pickup station, or explore page
+  // Check if we're in special pages that should show X button
   const isSellerDashboard = location.pathname.startsWith('/seller-dashboard');
   const isPickupStation = location.pathname.startsWith('/pickup-station');
   const isExplorePage = location.pathname.startsWith('/explore');
-  const navItems = getNavItems(isSellerDashboard, isPickupStation, isExplorePage);
+  const isWishlistPage = location.pathname.startsWith('/wishlist');
+  const isCartPage = location.pathname.startsWith('/cart');
+  const isNotificationsPage = location.pathname.startsWith('/notifications');
+  const isAddressesPage = location.pathname.startsWith('/addresses');
+  const isHelpPage = location.pathname.startsWith('/help');
+  const navItems = getNavItems(isSellerDashboard, isPickupStation, isExplorePage, isWishlistPage, isCartPage, isNotificationsPage, isAddressesPage, isHelpPage);
 
   // Sync activeTab with current route
   useEffect(() => {
@@ -125,7 +175,7 @@ export default function BottomNav() {
   // Update reorderedNavItems when navItems change
   useEffect(() => {
     setReorderedNavItems(navItems);
-  }, [isSellerDashboard, isPickupStation, isExplorePage]);
+  }, [isSellerDashboard, isPickupStation, isExplorePage, isWishlistPage, isCartPage, isNotificationsPage, isAddressesPage, isHelpPage]);
 
   // Load selected more item from localStorage on mount
   useEffect(() => {
@@ -270,8 +320,8 @@ export default function BottomNav() {
                       {t(item.nameKey)}
                     </span>
                   )}
-                  {/* X button for My Store/Station/Explore tab when active */}
-                  {isActive && item.id === 'home' && (isSellerDashboard || isPickupStation || isExplorePage) && (
+                  {/* X button for special pages when active */}
+                  {isActive && item.id === 'home' && (isSellerDashboard || isPickupStation || isExplorePage || isWishlistPage || isCartPage || isNotificationsPage || isAddressesPage || isHelpPage) && (
                     <span
                       onClick={(e) => {
                         e.stopPropagation();

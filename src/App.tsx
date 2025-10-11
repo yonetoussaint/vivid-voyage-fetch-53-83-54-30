@@ -74,6 +74,10 @@ import SellerDashboard from './pages/SellerDashboard';
 import SellerPage from './pages/SellerPage';
 import PickupStationDashboard from './pages/PickupStationDashboard';
 import Explore from './pages/Explore';
+import Wishlist from './pages/Wishlist';
+import Notifications from './pages/Notifications';
+import Addresses from './pages/Addresses';
+import Help from './pages/Help';
 import NotFound from "./pages/NotFound";
 import MainLayout from "./components/layout/MainLayout";
 import { AuthOverlayProvider } from "./context/AuthOverlayContext";
@@ -144,6 +148,10 @@ function App() {
                                 <Route path="categories/kids-hobbies" element={<KidsHobbiesPage />} />
                                 <Route path="categories/entertainment" element={<EntertainmentPage />} />
                                 <Route path="explore" element={<Explore />} />
+                                <Route path="wishlist" element={<Wishlist />} />
+                                <Route path="notifications" element={<Notifications />} />
+                                <Route path="addresses" element={<Addresses />} />
+                                <Route path="help" element={<Help />} />
                                 <Route path="admin" element={<AdminPanel />} />
                 <Route path="admin-dashboard/*" element={<AdminDashboard />} />
                                 <Route path="/seller/:sellerId/*" element={<SellerPage />} />

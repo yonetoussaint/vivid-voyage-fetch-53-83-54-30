@@ -488,6 +488,16 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       navigate('/seller-dashboard');
     } else if (categoryName === 'My Station') {
       navigate('/pickup-station');
+    } else if (categoryName === 'Wishlist') {
+      navigate('/wishlist');
+    } else if (categoryName === 'Cart') {
+      navigate('/cart');
+    } else if (categoryName === 'Notifications') {
+      navigate('/notifications');
+    } else if (categoryName === 'Addresses') {
+      navigate('/addresses');
+    } else if (categoryName === 'Help') {
+      navigate('/help');
     } else if (onCategorySelect) {
       onCategorySelect(categoryName);
     }
