@@ -9,7 +9,7 @@ import { useSellerByUserId } from "@/hooks/useSellerByUserId";
 import { supabase } from "@/integrations/supabase/client";
 import SellerSummaryHeader from "@/components/seller-app/SellerSummaryHeader";
 import ProductFilterBar from "@/components/home/ProductFilterBar";
-import SectionHeader from "@/components/shared/SectionHeader";
+import SectionHeader from "@/components/home/SectionHeader";
 
 interface Product {
   id: string;
@@ -308,7 +308,8 @@ export default function BookGenreFlashDeals({
       {showSectionHeader && (
         <SectionHeader 
           title={title}
-          showViewAll={false}
+          titleTransform="none"
+          titleSize="base"
         />
       )}
 
