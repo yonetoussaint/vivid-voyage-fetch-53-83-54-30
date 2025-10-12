@@ -17,6 +17,7 @@ import ProductSectionWrapper from '@/components/product/ProductSectionWrapper';
 import FullDescription from '@/components/product/FullDescription';
 import ProductSpecifications from '@/components/product/ProductSpecifications';
 import SlideUpPanel from '@/components/shared/SlideUpPanel'; // Import SlideUpPanel
+import { Zap } from 'lucide-react'; // Import Zap icon
 
 interface GalleryTabsContentProps {
   activeTab: string;
@@ -78,8 +79,8 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
             galleryItems={galleryItems}
           />
 
-          <IPhoneXRListing 
-            product={product} 
+          <IPhoneXRListing
+            product={product}
             onReadMore={onReadMore} // Pass the handler
           />
 
@@ -91,17 +92,17 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
           <ReviewGallery />
 
           {/* Description Component moved before BookGenreFlashDeals */}
-        
+
 
           <ProductSpecifications productId={productId} />
 
           <div className="space-y-3">
-            <SectionHeader 
-              title="Related Products" 
+            <SectionHeader
+              title="Related Products"
               showViewAll={true}
               onViewAllClick={() => console.log('View all clicked')}
             />
-            <BookGenreFlashDeals 
+            <BookGenreFlashDeals
               className="border border-gray-200 rounded-lg overflow-hidden"
               title="Related Products"
               showSectionHeader={false}
@@ -129,13 +130,13 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
 
       {/* Rest of the tabs remain the same */}
       {activeTab === 'variants' && (
-        
-          <ProductVariants 
+
+          <ProductVariants
             productId={productId}
             onImageSelect={onImageSelect}
             onConfigurationChange={onConfigurationChange}
           />
-        
+
       )}
 
       {activeTab === 'reviews' && (
@@ -144,7 +145,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
         </ProductSectionWrapper>
       )}
 
-      {activeTab === 'qna' && ( 
+      {activeTab === 'qna' && (
         <ProductSectionWrapper>
           <ProductQA/>
         </ProductSectionWrapper>
@@ -204,14 +205,15 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
 
       {activeTab === 'recommendations' && (
         <ProductSectionWrapper>
-          <BookGenreFlashDeals 
+          <BookGenreFlashDeals
             className="border border-gray-200 rounded-lg overflow-hidden"
+            icon={<Zap size={20} />} // Add Zap icon
           />
         </ProductSectionWrapper>
       )}
 
       {/* SlideUpPanel for Full Description */}
-      
+
     </div>
   );
 };

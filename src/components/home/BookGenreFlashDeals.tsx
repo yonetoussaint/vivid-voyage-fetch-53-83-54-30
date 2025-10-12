@@ -34,6 +34,9 @@ interface GenreFlashDealsProps {
   subtitle?: string;
   showSectionHeader?: boolean;
   showSummary?: boolean;
+  icon?: React.ComponentType<any>;
+  customCountdown?: string;
+  showCountdown?: boolean;
 }
 
 interface SummaryStats {
@@ -55,7 +58,10 @@ export default function BookGenreFlashDeals({
   title = "Products",
   subtitle = "Manage all your products",
   showSectionHeader = true,
-  showSummary = true
+  showSummary = true,
+  icon,
+  customCountdown,
+  showCountdown
 }: GenreFlashDealsProps) {
   const [displayCount, setDisplayCount] = useState(8);
 
@@ -308,8 +314,11 @@ export default function BookGenreFlashDeals({
       {showSectionHeader && (
         <SectionHeader 
           title={title}
+          icon={icon}
           titleTransform="none"
           titleSize="base"
+          showCountdown={showCountdown !== undefined ? showCountdown : (timeLeft.hours > 0 || timeLeft.minutes > 0 || timeLeft.seconds > 0)}
+          countdown={customCountdown || `${timeLeft.hours.toString().padStart(2, "0")}:${timeLeft.minutes.toString().padStart(2, "0")}:${timeLeft.seconds.toString().padStart(2, "0")}`}
         />
       )}
 
