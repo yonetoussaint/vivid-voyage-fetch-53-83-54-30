@@ -95,9 +95,18 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
 
           <ProductSpecifications productId={productId} />
 
-          <BookGenreFlashDeals 
-            className="border border-gray-200 rounded-lg overflow-hidden"
-          />
+          <div className="space-y-3">
+            <SectionHeader 
+              title="Related Products" 
+              showViewAll={true}
+              onViewAllClick={() => console.log('View all clicked')}
+            />
+            <BookGenreFlashDeals 
+              className="border border-gray-200 rounded-lg overflow-hidden"
+              title=""
+              subtitle=""
+            />
+          </div>
 
           {/* Sticky Checkout Bar for Overview Tab */}
           {product && onBuyNow && (
