@@ -312,13 +312,13 @@ export default function BookGenreFlashDeals({
     <div className={`w-full bg-white ${className}`}>
       {/* Section Header - Optional */}
       {showSectionHeader && (
-        <SectionHeader 
+        <SectionHeader
           title={title}
           icon={icon}
-          titleTransform="none"
-          titleSize="base"
           showCountdown={showCountdown !== undefined ? showCountdown : (timeLeft.hours > 0 || timeLeft.minutes > 0 || timeLeft.seconds > 0)}
           countdown={customCountdown || `${timeLeft.hours.toString().padStart(2, "0")}:${timeLeft.minutes.toString().padStart(2, "0")}:${timeLeft.seconds.toString().padStart(2, "0")}`}
+          viewAllLink="/search?category=flash-deals"
+          viewAllText="View All"
         />
       )}
 
