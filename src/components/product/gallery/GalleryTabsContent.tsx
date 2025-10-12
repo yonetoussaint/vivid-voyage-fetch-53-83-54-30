@@ -207,7 +207,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
         <ProductSectionWrapper>
           <BookGenreFlashDeals
             className="border border-gray-200 rounded-lg overflow-hidden"
-            icon={<Zap size={20} />} // Add Zap icon
+            icon={Zap}
           />
         </ProductSectionWrapper>
       )}
