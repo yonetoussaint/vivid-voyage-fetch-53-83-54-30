@@ -103,8 +103,9 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
             />
             <BookGenreFlashDeals 
               className="border border-gray-200 rounded-lg overflow-hidden"
-              title=""
-              subtitle=""
+              title="Related Products"
+              showSectionHeader={false}
+              showSummary={false}
             />
           </div>
 

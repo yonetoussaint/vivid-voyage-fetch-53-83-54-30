@@ -8,7 +8,8 @@ import { useAuth } from "@/contexts/auth/AuthContext";
 import { useSellerByUserId } from "@/hooks/useSellerByUserId";
 import { supabase } from "@/integrations/supabase/client";
 import SellerSummaryHeader from "@/components/seller-app/SellerSummaryHeader";
-import ProductFilterBar from "@/components/home/ProductFilterBar"; // Add this import
+import ProductFilterBar from "@/components/home/ProductFilterBar";
+import SectionHeader from "@/components/shared/SectionHeader";
 
 interface Product {
   id: string;
@@ -31,6 +32,8 @@ interface GenreFlashDealsProps {
   onAddProduct?: () => void; // Added prop for add product action
   title?: string;
   subtitle?: string;
+  showSectionHeader?: boolean;
+  showSummary?: boolean;
 }
 
 interface SummaryStats {
@@ -50,7 +53,9 @@ export default function BookGenreFlashDeals({
   sellerId,
   onAddProduct, // Added prop
   title = "Products",
-  subtitle = "Manage all your products"
+  subtitle = "Manage all your products",
+  showSectionHeader = true,
+  showSummary = true
 }: GenreFlashDealsProps) {
   const [displayCount, setDisplayCount] = useState(8);
 
@@ -299,14 +304,24 @@ export default function BookGenreFlashDeals({
 
   return (
     <div className={`w-full bg-white ${className}`}>
-      {/* Header & Stats Section */}
-      <SellerSummaryHeader
-        title={title}
-        subtitle={subtitle}
-        stats={summaryHeaderStats}
-        actionButton={addProductButton} // Pass the button here
-        showStats={!isLoading && processedProducts.length > 0}
-      />
+      {/* Section Header - Optional */}
+      {showSectionHeader && (
+        <SectionHeader 
+          title={title}
+          showViewAll={false}
+        />
+      )}
+
+      {/* Summary Section - Optional */}
+      {showSummary && (
+        <SellerSummaryHeader
+          title={title}
+          subtitle={subtitle}
+          stats={summaryHeaderStats}
+          actionButton={addProductButton}
+          showStats={!isLoading && processedProducts.length > 0}
+        />
+      )}
 
       {/* Filter Bar Section - Added right before the products grid */}
       <div className="-mx-2">
