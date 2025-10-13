@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Timer, Plus, ChevronRight } from "lucide-react"; // Added Plus icon
+import { Timer, Plus, ChevronRight, Package } from "lucide-react"; // Added Package icon
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllProducts, trackProductView } from "@/integrations/supabase/products";
@@ -9,6 +9,7 @@ import { useSellerByUserId } from "@/hooks/useSellerByUserId";
 import { supabase } from "@/integrations/supabase/client";
 import SellerSummaryHeader from "@/components/seller-app/SellerSummaryHeader";
 import ProductFilterBar from "@/components/home/ProductFilterBar";
+import SectionHeader from "@/components/home/SectionHeader"; // Import SectionHeader
 
 interface Product {
   id: string;
@@ -33,6 +34,7 @@ interface GenreFlashDealsProps {
   subtitle?: string;
   showSectionHeader?: boolean;
   showSummary?: boolean;
+  showFilters?: boolean; // Added prop to control filter visibility
   icon?: React.ComponentType<any>;
   customCountdown?: string;
   showCountdown?: boolean;
@@ -58,6 +60,7 @@ export default function BookGenreFlashDeals({
   subtitle = "Manage all your products",
   showSectionHeader = true,
   showSummary = true,
+  showFilters = true, // Default to true for backward compatibility
   icon,
   customCountdown,
   showCountdown
@@ -177,41 +180,6 @@ export default function BookGenreFlashDeals({
     };
   }, [onAddProduct]);
 
-  // Internal Section Header Component
-  const InternalSectionHeader = () => {
-    const Icon = icon;
-    
-    return (
-      <div className="flex items-center px-2 mb-2 py-0">
-        <div className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-1 font-bold tracking-wide text-xs uppercase">
-            {Icon && <Icon className="w-4 h-4 flex-shrink-0" />}
-            <span className="h-4 flex items-center justify-center">
-              <span className="leading-none">{title}</span>
-            </span>
-            {showCountdown && timeLeft && (
-              <>
-                <span className="text-gray-400 mx-1 flex-shrink-0">|</span>
-                <span className={`font-bold transition-colors duration-300 flex-shrink-0 text-sm ${
-                  (timeLeft.hours * 3600 + timeLeft.minutes * 60 + timeLeft.seconds) < 10 ? 'text-red-600 animate-bounce' : 'text-red-500'
-                }`}>
-                  {customCountdown || `${timeLeft.hours.toString().padStart(2, "0")}:${timeLeft.minutes.toString().padStart(2, "0")}:${timeLeft.seconds.toString().padStart(2, "0")}`}
-                </span>
-              </>
-            )}
-          </div>
-          <a
-            href="/search?category=flash-deals"
-            className="text-xs hover:underline flex items-center font-medium transition-colors"
-          >
-            View All
-            <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
-          </a>
-        </div>
-      </div>
-    );
-  };
-
   // Calculate time remaining for flash deals
   useEffect(() => {
     const calculateTimeLeft = () => {
@@ -246,6 +214,16 @@ export default function BookGenreFlashDeals({
     return () => clearInterval(timer);
   }, [allProducts]);
 
+  // Format countdown for SectionHeader
+  const formattedCountdown = React.useMemo(() => {
+    if (customCountdown) return customCountdown;
+
+    const totalSeconds = timeLeft.hours * 3600 + timeLeft.minutes * 60 + timeLeft.seconds;
+    if (totalSeconds <= 0) return "00:00:00";
+
+    return `${timeLeft.hours.toString().padStart(2, "0")}:${timeLeft.minutes.toString().padStart(2, "0")}:${timeLeft.seconds.toString().padStart(2, "0")}`;
+  }, [timeLeft, customCountdown]);
+
   // Process products with memoization to prevent infinite re-renders
   const processedProducts = React.useMemo(() => {
     let products = allProducts.map(product => {
@@ -261,50 +239,52 @@ export default function BookGenreFlashDeals({
       };
     });
 
-    // Apply filters (skip if it's an "All" option)
-    if (selectedFilters.category && !isAllOption(selectedFilters.category)) {
-      products = products.filter(p => p.category === selectedFilters.category);
-    }
+    // Apply filters only if showFilters is true
+    if (showFilters) {
+      if (selectedFilters.category && !isAllOption(selectedFilters.category)) {
+        products = products.filter(p => p.category === selectedFilters.category);
+      }
 
-    if (selectedFilters.price && !isAllOption(selectedFilters.price)) {
-      products = products.filter(p => {
-        const price = p.discount_price || p.price;
-        switch (selectedFilters.price) {
-          case 'Under $10': return price < 10;
-          case '$10-$25': return price >= 10 && price <= 25;
-          case '$25-$50': return price > 25 && price <= 50;
-          case 'Over $50': return price > 50;
-          default: return true;
-        }
-      });
-    }
+      if (selectedFilters.price && !isAllOption(selectedFilters.price)) {
+        products = products.filter(p => {
+          const price = p.discount_price || p.price;
+          switch (selectedFilters.price) {
+            case 'Under $10': return price < 10;
+            case '$10-$25': return price >= 10 && price <= 25;
+            case '$25-$50': return price > 25 && price <= 50;
+            case 'Over $50': return price > 50;
+            default: return true;
+          }
+        });
+      }
 
-    if (selectedFilters.availability && !isAllOption(selectedFilters.availability)) {
-      products = products.filter(p => {
-        switch (selectedFilters.availability) {
-          case 'In Stock': return (p.inventory ?? 0) > 0;
-          case 'Out of Stock': return (p.inventory ?? 0) === 0;
-          case 'Low Stock': return (p.inventory ?? 0) > 0 && (p.inventory ?? 0) <= 10;
-          default: return true;
-        }
-      });
-    }
+      if (selectedFilters.availability && !isAllOption(selectedFilters.availability)) {
+        products = products.filter(p => {
+          switch (selectedFilters.availability) {
+            case 'In Stock': return (p.inventory ?? 0) > 0;
+            case 'Out of Stock': return (p.inventory ?? 0) === 0;
+            case 'Low Stock': return (p.inventory ?? 0) > 0 && (p.inventory ?? 0) <= 10;
+            default: return true;
+          }
+        });
+      }
 
-    if (selectedFilters.discount && !isAllOption(selectedFilters.discount)) {
-      products = products.filter(p => {
-        const discountPercentage = p.discount_price
-          ? Math.round(((product.price - product.discount_price) / product.price) * 100)
-          : 0;
-        switch (selectedFilters.discount) {
-          case 'On Sale': return discountPercentage > 0;
-          case 'No Discount': return discountPercentage === 0;
-          default: return true;
-        }
-      });
+      if (selectedFilters.discount && !isAllOption(selectedFilters.discount)) {
+        products = products.filter(p => {
+          const discountPercentage = p.discount_price
+            ? Math.round(((product.price - product.discount_price) / product.price) * 100)
+            : 0;
+          switch (selectedFilters.discount) {
+            case 'On Sale': return discountPercentage > 0;
+            case 'No Discount': return discountPercentage === 0;
+            default: return true;
+          }
+        });
+      }
     }
 
     return products;
-  }, [allProducts, selectedFilters]);
+  }, [allProducts, selectedFilters, showFilters]);
 
   // Infinite scroll logic
   useEffect(() => {
@@ -344,8 +324,19 @@ export default function BookGenreFlashDeals({
 
   return (
     <div className={`w-full bg-white ${className}`}>
-      {/* Section Header - Optional */}
-      {showSectionHeader && <InternalSectionHeader />}
+      {/* Section Header - Using imported SectionHeader component */}
+      {showSectionHeader && (
+        <SectionHeader
+          title={title}
+          icon={Package} // Using Package icon as requested
+          viewAllLink="/search?category=flash-deals"
+          viewAllText="View All"
+          titleTransform="uppercase"
+          titleSize="xs"
+          showCountdown={showCountdown}
+          countdown={formattedCountdown}
+        />
+      )}
 
       {/* Summary Section - Optional */}
       {showSummary && (
@@ -358,20 +349,22 @@ export default function BookGenreFlashDeals({
         />
       )}
 
-      {/* Filter Bar Section - Added right before the products grid */}
-      <div className="-mx-2">
-        <ProductFilterBar
-          filterCategories={filterCategories}
-          selectedFilters={selectedFilters}
-          onFilterSelect={handleFilterSelect}
-          onFilterClear={handleFilterClear}
-          onClearAll={handleClearAll}
-          onFilterButtonClick={handleFilterButtonClick}
-        />
-      </div>
+      {/* Filter Bar Section - Conditionally rendered */}
+      {showFilters && (
+        <div className="-mx-2">
+          <ProductFilterBar
+            filterCategories={filterCategories}
+            selectedFilters={selectedFilters}
+            onFilterSelect={handleFilterSelect}
+            onFilterClear={handleFilterClear}
+            onClearAll={handleClearAll}
+            onFilterButtonClick={handleFilterButtonClick}
+          />
+        </div>
+      )}
 
       {/* Products Grid - Reverted to old version design */}
-      <div className="py-4">
+      <div className="">
         {isLoading && !externalProducts ? (
           <div className="grid grid-cols-2 gap-2">
             {[1, 2, 3, 4, 5, 6].map((_, index) => (

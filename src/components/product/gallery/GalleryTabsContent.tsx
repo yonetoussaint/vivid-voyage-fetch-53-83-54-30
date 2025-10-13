@@ -82,7 +82,11 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
             product={product}
             onReadMore={onReadMore} // Pass the handler
           />
-
+<ProductVariants
+            productId={productId}
+            onImageSelect={onImageSelect}
+            onConfigurationChange={onConfigurationChange}
+          />
           {/* Search Info Component moved to description's original position */}
           {productId && (
             <SearchInfoComponent productId={productId} />
@@ -96,9 +100,10 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
           <ProductSpecifications productId={productId} />
 
           <BookGenreFlashDeals
-            className="border border-gray-200 rounded-lg overflow-hidden"
+            className="overflow-hidden"
             title="Related Products"
             showSectionHeader={true}
+            showFilters={false}
             showSummary={false}
           />
 

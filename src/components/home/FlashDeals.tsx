@@ -10,25 +10,41 @@ import { useScreenOverlay } from "@/context/ScreenOverlayContext";
 interface FlashDealsProps {
   productType?: string;
   title?: string;
-  icon?: React.ComponentType<any>;
+  icon?: React.ComponentType<any> | string; // Allow string for Font Awesome classes
   customCountdown?: string;
   showCountdown?: boolean;
   maxProducts?: number;
   layoutMode?: 'carousel' | 'grid';
   showSectionHeader?: boolean;
   showPrice?: boolean;
+  // New props for stacked profiles
+  showStackedProfiles?: boolean;
+  stackedProfiles?: Array<{ id: string; image: string; alt?: string }>;
+  onProfileClick?: (profileId: string) => void;
+  stackedProfilesText?: string;
+  // New props for title chevron
+  showTitleChevron?: boolean;
+  onTitleClick?: () => void;
 }
 
 export default function FlashDeals({ 
   productType, 
   title = "FLASH DEALS", 
-  icon = Zap,
+  icon: Icon = Zap,
   customCountdown,
   showCountdown,
   maxProducts = 20,
   layoutMode = 'carousel',
   showSectionHeader = true,
-  showPrice = false
+  showPrice = false,
+  // New props
+  showStackedProfiles = false,
+  stackedProfiles = [],
+  onProfileClick,
+  stackedProfilesText = "Handpicked by",
+  // Title chevron props
+  showTitleChevron = false,
+  onTitleClick
 }: FlashDealsProps) {
   const isMobile = useIsMobile();
   const scrollRef = useRef(null);
@@ -131,14 +147,23 @@ export default function FlashDeals({
         {showSectionHeader && layoutMode !== 'grid' && (
           <SectionHeader
             title={title}
-            icon={icon}
+            icon={Icon}
             showCountdown={shouldShowCountdown}
             countdown={displayCountdown}
             viewAllLink="/search?category=flash-deals"
             viewAllText="View All"
+            // New stacked profiles props
+            showStackedProfiles={showStackedProfiles}
+            stackedProfiles={stackedProfiles}
+            onProfileClick={onProfileClick}
+            stackedProfilesText={stackedProfilesText}
+            // New title chevron props
+            showTitleChevron={showTitleChevron}
+            onTitleClick={onTitleClick}
           />
         )}
 
+        {/* Rest of the component remains the same */}
         <div className="relative">
           {isLoading ? (
             <div className={`${layoutMode === 'grid' ? 'grid grid-cols-3 gap-1' : 'pl-2 flex overflow-x-hidden'}`}>

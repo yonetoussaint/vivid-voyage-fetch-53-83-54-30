@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 interface SectionHeaderProps {
   title: string;
   subtitle?: string;
-  icon?: React.ComponentType<{ className?: string }>;
+  icon?: React.ComponentType<{ className?: string }> | string; // Allow string for Font Awesome classes
   viewAllLink?: string;
   viewAllText?: string;
   titleTransform?: "uppercase" | "capitalize" | "none";
@@ -39,14 +39,23 @@ interface SectionHeaderProps {
   // New props for custom button
   showCustomButton?: boolean;
   customButtonText?: string;
-  customButtonIcon?: React.ComponentType<{ className?: string }>;
+  customButtonIcon?: React.ComponentType<{ className?: string }> | string;
   onCustomButtonClick?: () => void;
+  // New props for stacked profiles
+  showStackedProfiles?: boolean;
+  stackedProfiles?: Array<{ id: string; image: string; alt?: string }>;
+  onProfileClick?: (profileId: string) => void;
+  maxProfiles?: number;
+  stackedProfilesText?: string;
+  // New props for title chevron
+  showTitleChevron?: boolean;
+  onTitleClick?: () => void;
 }
 
 export default function SectionHeader({
   title,
   subtitle,
-  icon: Icon,
+  icon,
   viewAllLink,
   viewAllText,
   titleTransform = "uppercase",
@@ -72,8 +81,17 @@ export default function SectionHeader({
   // Custom button props
   showCustomButton = false,
   customButtonText = "Tout regarder",
-  customButtonIcon: CustomIcon = Play,
-  onCustomButtonClick
+  customButtonIcon,
+  onCustomButtonClick,
+  // Stacked profiles props
+  showStackedProfiles = false,
+  stackedProfiles = [],
+  onProfileClick,
+  maxProfiles = 3,
+  stackedProfilesText = "Handpicked by",
+  // Title chevron props
+  showTitleChevron = false,
+  onTitleClick
 }: SectionHeaderProps) {
 
   const defaultViewAllText = viewAllText || 'View All';
@@ -113,6 +131,94 @@ export default function SectionHeader({
     titleSize === 'base' ? 'text-lg' :
     titleSize === 'lg' ? 'text-xl' :
     'text-2xl';
+
+  // Render icon component
+  const renderIcon = () => {
+    if (!icon) return null;
+
+    // If icon is a string (Font Awesome class), render as <i> element
+    if (typeof icon === 'string') {
+      return <i className={`${icon} w-4 h-4 flex-shrink-0`} />;
+    }
+
+    // If icon is a React component (Lucide icon), render as component
+    const IconComponent = icon;
+    return <IconComponent className="w-4 h-4 flex-shrink-0" />;
+  };
+
+  // Render custom button icon
+  const renderCustomButtonIcon = () => {
+    if (!customButtonIcon) return null;
+
+    // If customButtonIcon is a string (Font Awesome class), render as <i> element
+    if (typeof customButtonIcon === 'string') {
+      return <i className={`${customButtonIcon} h-3.5 w-3.5 mr-1`} />;
+    }
+
+    // If customButtonIcon is a React component (Lucide icon), render as component
+    const CustomIconComponent = customButtonIcon;
+    return <CustomIconComponent className="h-3.5 w-3.5 mr-1" fill="currentColor" />;
+  };
+
+  // Stacked profiles component
+  const StackedProfiles = () => {
+    const displayProfiles = stackedProfiles.slice(0, maxProfiles);
+
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-gray-600 whitespace-nowrap">{stackedProfilesText}</span>
+        <div className="flex -space-x-2">
+          {displayProfiles.map((profile, index) => (
+            <div
+              key={profile.id}
+              onClick={() => onProfileClick?.(profile.id)}
+              className={`relative w-6 h-6 rounded-full border-2 border-white bg-gray-200 overflow-hidden ${
+                onProfileClick ? 'cursor-pointer hover:scale-110 transition-transform' : ''
+              }`}
+              style={{ zIndex: displayProfiles.length - index }}
+            >
+              <img
+                src={profile.image}
+                alt={profile.alt || `Profile ${index + 1}`}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Title with chevron component
+  const TitleWithChevron = () => (
+    <div 
+      onClick={onTitleClick}
+      className={`flex items-center gap-1 font-bold tracking-wide ${titleSizeClass} ${
+        titleTransform === 'uppercase' ? 'uppercase' : titleTransform === 'capitalize' ? 'capitalize' : ''
+      } ${onTitleClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+    >
+      {renderIcon()}
+      <span className="h-4 flex items-center justify-center">
+        <span className="leading-none">
+          {title}
+        </span>
+      </span>
+      {showTitleChevron && (
+        <ChevronRight className="w-3 h-3 flex-shrink-0 text-gray-400" />
+      )}
+      {showCountdown && countdown && (
+        <>
+          <span className="text-gray-400 mx-1 flex-shrink-0">|</span>
+          <span className={`font-bold transition-colors duration-300 flex-shrink-0 ${
+            countdown < 10 ? 'text-red-600 animate-bounce' : 'text-red-500'
+          } ${countdownSizeClass}`}>
+            {countdown}
+          </span>
+        </>
+      )}
+    </div>
+  );
 
   return (
     <div className="flex flex-col">
@@ -158,59 +264,46 @@ export default function SectionHeader({
       {!showVendorHeader && (
           <div className={` flex items-center px-2 mb-2 ${compact ? 'py-0' : 'py-0'}`}>
           <div className="flex items-center justify-between w-full">
-            {/* First element (Title with Icon and optional Countdown) */}
-            <div className={`flex items-center gap-1 font-bold tracking-wide ${titleSizeClass} ${titleTransform === 'uppercase' ? 'uppercase' : titleTransform === 'capitalize' ? 'capitalize' : ''}`}>
-              {Icon && <Icon className="w-4 h-4 flex-shrink-0" />}
-              <span className="h-4 flex items-center justify-center">
-                <span className="leading-none">
-                  {title}
-                </span>
-              </span>
-              {showCountdown && countdown && (
-                <>
-                  <span className="text-gray-400 mx-1 flex-shrink-0">|</span>
-                  <span className={`font-bold transition-colors duration-300 flex-shrink-0 ${
-                    countdown < 10 ? 'text-red-600 animate-bounce' : 'text-red-500'
-                  } ${countdownSizeClass}`}>
-                    {countdown}
-                  </span>
-                </>
-              )}
-            </div>
+            {/* First element (Title with Icon, optional Chevron, and optional Countdown) */}
+            <TitleWithChevron />
 
-            {/* Last element (Clear button and View All or Custom Button) */}
+            {/* Last element (Clear button and View All or Custom Button or Stacked Profiles) */}
             <div className="flex items-center gap-2">
-              {showClearButton && onClearClick && (
-                <button 
-                  onClick={onClearClick}
-                  className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
-                >
-                  {clearButtonText}
-                </button>
-              )}
-
-              {/* Show custom button if enabled, otherwise show regular view all link */}
-              {showCustomButton ? (
-                <button 
-                  onClick={onCustomButtonClick}
-                  className="text-xs flex items-center font-medium transition-colors text-black"
-                >
-                  <CustomIcon className="h-3.5 w-3.5 mr-1" 
-                    fill="currentColor"/>
-
-
-                  {customButtonText}
-                </button>
+              {/* Show stacked profiles if enabled */}
+              {showStackedProfiles && stackedProfiles.length > 0 ? (
+                <StackedProfiles />
               ) : (
-                viewAllLink && (
-                  <a
-                    href={viewAllLink}
-                    className="text-xs hover:underline flex items-center font-medium transition-colors"
-                  >
-                    {defaultViewAllText}
-                    <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
-                  </a>
-                )
+                <>
+                  {showClearButton && onClearClick && (
+                    <button 
+                      onClick={onClearClick}
+                      className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
+                    >
+                      {clearButtonText}
+                    </button>
+                  )}
+
+                  {/* Show custom button if enabled, otherwise show regular view all link */}
+                  {showCustomButton ? (
+                    <button 
+                      onClick={onCustomButtonClick}
+                      className="text-xs flex items-center font-medium transition-colors text-black"
+                    >
+                      {renderCustomButtonIcon()}
+                      {customButtonText}
+                    </button>
+                  ) : (
+                    viewAllLink && (
+                      <a
+                        href={viewAllLink}
+                        className="text-xs hover:underline flex items-center font-medium transition-colors"
+                      >
+                        {defaultViewAllText}
+                        <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
+                      </a>
+                    )
+                  )}
+                </>
               )}
             </div>
           </div>

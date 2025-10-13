@@ -29,6 +29,7 @@ import {
   Sparkles,
   Car,
   Play,
+  Pin,
   BookOpen,
   Gamepad2,
   Watch,
@@ -293,13 +294,42 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
           icon={Clock}
         />
 
+        <FlashDeals
+  title="Editor's PICKS"
+  showStackedProfiles={true}
+          icon={Pin}
+          showTitleChevron={true}
+  stackedProfiles={[
+    { 
+      id: '1', 
+      image: 'https://example.com/profile1.jpg', 
+      alt: 'Sarah Johnson' 
+    },
+    { 
+      id: '2', 
+      image: 'https://example.com/profile2.jpg', 
+      alt: 'Mike Chen' 
+    },
+    { 
+      id: '3', 
+      image: 'https://example.com/profile3.jpg', 
+      alt: 'Emma Davis' 
+    }
+  ]}
+  onProfileClick={(profileId) => {
+    console.log('Profile clicked:', profileId);
+    // Navigate to profile page or show profile modal
+  }}
+  stackedProfilesText="Handpicked by"
+/>
+
         {products && products.length > 0 && (
           <SuperDealsSection products={products} />
         )}
 
         <FlashDeals 
           title="RECENTLY VIEWED"
-          icon={Clock}
+          icon="clock-rotate-left"
         />
 
         <TopVendorsCompact />
