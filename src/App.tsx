@@ -79,6 +79,7 @@ import Notifications from './pages/Notifications';
 import Addresses from './pages/Addresses';
 import Help from './pages/Help';
 import MyStations from "./pages/MyStations";
+import ProductsPage from "./pages/ProductsPage";
 import NotFound from "./pages/NotFound";
 import MainLayout from "./components/layout/MainLayout";
 import { AuthOverlayProvider } from "./context/AuthOverlayContext";
@@ -154,6 +155,7 @@ function App() {
                                 <Route path="addresses" element={<Addresses />} />
                                 <Route path="help" element={<Help />} />
                                 <Route path="/my-stations" element={<MyStations />} />
+                                <Route path="/products" element={<ProductsPage />} />
                                 <Route path="admin" element={<AdminPanel />} />
                 <Route path="admin-dashboard/*" element={<AdminDashboard />} />
                                 <Route path="/seller/:sellerId/*" element={<SellerPage />} />

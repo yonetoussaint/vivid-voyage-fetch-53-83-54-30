@@ -300,6 +300,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   showStackedProfiles={true}
           icon={Pin}
           showTitleChevron={true}
+          onTitleClick={() => navigate('/products?title=Editor\'s PICKS')}
   stackedProfiles={[
     { 
       id: '1', 

@@ -112,11 +112,12 @@ function MainLayoutContent() {
     });
   };
 
-  // Check if current page is messages, wallet, or explore
+  // Check if current page is messages, wallet, explore, or products
   const isMessagesPage = pathname === '/messages' || pathname.startsWith('/messages/');
   const isMessagesListPage = pathname === '/messages';
   const isWalletPage = pathname === '/wallet';
   const isExplorePage = pathname === '/explore';
+  const isProductsPage = pathname === '/products';
 
   // Get filter from URL params for messages, wallet, and explore
   const searchParams = new URLSearchParams(location.search);
@@ -124,8 +125,8 @@ function MainLayoutContent() {
   const walletFilter = searchParams.get('tab') || 'buyer';
   const exploreFilter = searchParams.get('tab') || 'products';
 
-  // Check if we should apply spacing (messages list only, not conversation detail, wallet, explore)
-  const shouldApplySpacing = isMessagesListPage || isExplorePage || isWalletPage;
+  // Check if we should apply spacing (messages list only, not conversation detail, wallet, explore, products)
+  const shouldApplySpacing = isMessagesListPage || isExplorePage || isWalletPage || isProductsPage;
 
   // Check if current page is reels
   const isReelsPage = pathname === '/reels' && !location.search.includes('video=');
@@ -182,6 +183,7 @@ function MainLayoutContent() {
     '/notifications',
     '/addresses',
     '/help',
+    '/products',
     '/categories/electronics',
     '/categories/home-living',
     '/categories/fashion',
@@ -304,6 +306,7 @@ function MainLayoutContent() {
           pathname === '/addresses' ||
           pathname === '/help' ||
           pathname === '/my-stations' ||
+          pathname === '/products' ||
           pathname === '/categories/electronics' ||
           pathname === '/categories/home-living' ||
           pathname === '/categories/fashion' ||
