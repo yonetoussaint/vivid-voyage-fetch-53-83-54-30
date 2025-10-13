@@ -37,7 +37,8 @@ import {
   Camera,
   Laptop,
   Coffee,
-  Clock
+  Clock,
+  History
 } from "lucide-react";
 import { useLocation } from 'react-router-dom';
 
@@ -329,7 +330,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
 
         <FlashDeals 
           title="RECENTLY VIEWED"
-          icon="clock-rotate-left"
+          icon={History}
         />
 
         <TopVendorsCompact />
