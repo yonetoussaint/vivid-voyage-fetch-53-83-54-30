@@ -248,6 +248,7 @@ function MainLayoutContent() {
           <AliExpressHeader 
             activeTabId={isMessagesListPage ? messagesFilter : isWalletPage ? walletFilter : isExplorePage ? exploreFilter : activeTab}
             showFilterBar={showFilterBar}
+            showCategoryTabs={!isProductsPage}
             filterCategories={filterCategories}
             selectedFilters={selectedFilters}
             onFilterSelect={onFilterSelect}

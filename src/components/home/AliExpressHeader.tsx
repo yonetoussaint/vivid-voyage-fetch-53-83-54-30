@@ -24,6 +24,7 @@ import { useHeaderFilter } from "@/contexts/HeaderFilterContext";
 interface AliExpressHeaderProps {
   activeTabId?: string;
   showFilterBar?: boolean;
+  showCategoryTabs?: boolean;
   filterCategories?: Array<{
     id: string;
     label: string;
@@ -42,6 +43,7 @@ interface AliExpressHeaderProps {
 export default function AliExpressHeader({ 
   activeTabId = 'recommendations', 
   showFilterBar = false,
+  showCategoryTabs = true,
   filterCategories = [],
   selectedFilters = {},
   onFilterSelect = () => {},
@@ -565,31 +567,32 @@ export default function AliExpressHeader({
       />
 
       {/* Conditional rendering: ProductFilterBar or CategoryTabs */}
-
-      <div className="relative overflow-hidden">
-        {showFilterBar ? (
-          <div data-header="true" className="product-filter-bar">
-            <ProductFilterBar 
-              filterCategories={filterCategories}
-              selectedFilters={selectedFilters}
-              onFilterSelect={onFilterSelect}
-              onFilterClear={onFilterClear}
-              onClearAll={onClearAll}
-              onFilterButtonClick={onFilterButtonClick}
-              isFilterDisabled={isFilterDisabled}
+      {showCategoryTabs && (
+        <div className="relative overflow-hidden">
+          {showFilterBar ? (
+            <div data-header="true" className="product-filter-bar">
+              <ProductFilterBar 
+                filterCategories={filterCategories}
+                selectedFilters={selectedFilters}
+                onFilterSelect={onFilterSelect}
+                onFilterClear={onFilterClear}
+                onClearAll={onClearAll}
+                onFilterButtonClick={onFilterButtonClick}
+                isFilterDisabled={isFilterDisabled}
+              />
+            </div>
+          ) : (
+            <CategoryTabs 
+              key={categoryTabsKey}
+              progress={1}
+              activeTab={activeTab}
+              setActiveTab={handleTabChange}
+              categories={tabsToShow}
+              isSearchOverlayActive={showSearchOverlay}
             />
-          </div>
-        ) : (
-          <CategoryTabs 
-            key={categoryTabsKey}
-            progress={1}
-            activeTab={activeTab}
-            setActiveTab={handleTabChange}
-            categories={tabsToShow}
-            isSearchOverlayActive={showSearchOverlay}
-          />
-        )}
-      </div>
+          )}
+        </div>
+      )}
       {/* Category Panel */}
       <CategoryPanel 
         progress={1}
