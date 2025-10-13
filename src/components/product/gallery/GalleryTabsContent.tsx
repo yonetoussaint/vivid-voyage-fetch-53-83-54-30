@@ -9,7 +9,6 @@ import ProductQA from '@/components/product/ProductQA';
 import { GalleryItem } from './types';
 import ShippingOptionsComponent from '@/components/product/ShippingOptionsComponent';
 import SearchInfoComponent from '@/components/product/SearchInfoComponent';
-import SectionHeader from '@/components/shared/SectionHeader';
 import ReviewGallery from '@/components/product/ReviewGallery';
 import BookGenreFlashDeals from '@/components/home/BookGenreFlashDeals';
 import StickyCheckoutBar from '@/components/product/StickyCheckoutBar';
@@ -96,19 +95,12 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
 
           <ProductSpecifications productId={productId} />
 
-          <div className="space-y-3">
-            <SectionHeader
-              title="Related Products"
-              showViewAll={true}
-              onViewAllClick={() => console.log('View all clicked')}
-            />
-            <BookGenreFlashDeals
-              className="border border-gray-200 rounded-lg overflow-hidden"
-              title="Related Products"
-              showSectionHeader={false}
-              showSummary={false}
-            />
-          </div>
+          <BookGenreFlashDeals
+            className="border border-gray-200 rounded-lg overflow-hidden"
+            title="Related Products"
+            showSectionHeader={true}
+            showSummary={false}
+          />
 
           {/* Sticky Checkout Bar for Overview Tab */}
           {product && onBuyNow && (
