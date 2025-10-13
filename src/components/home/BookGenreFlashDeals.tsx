@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Timer, Plus } from "lucide-react"; // Added Plus icon
+import { Timer, Plus, ChevronRight } from "lucide-react"; // Added Plus icon
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllProducts, trackProductView } from "@/integrations/supabase/products";
@@ -9,7 +9,6 @@ import { useSellerByUserId } from "@/hooks/useSellerByUserId";
 import { supabase } from "@/integrations/supabase/client";
 import SellerSummaryHeader from "@/components/seller-app/SellerSummaryHeader";
 import ProductFilterBar from "@/components/home/ProductFilterBar";
-import SectionHeader from "@/components/home/SectionHeader";
 
 interface Product {
   id: string;
@@ -178,6 +177,41 @@ export default function BookGenreFlashDeals({
     };
   }, [onAddProduct]);
 
+  // Internal Section Header Component
+  const InternalSectionHeader = () => {
+    const Icon = icon;
+    
+    return (
+      <div className="flex items-center px-2 mb-2 py-0">
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-1 font-bold tracking-wide text-xs uppercase">
+            {Icon && <Icon className="w-4 h-4 flex-shrink-0" />}
+            <span className="h-4 flex items-center justify-center">
+              <span className="leading-none">{title}</span>
+            </span>
+            {showCountdown && timeLeft && (
+              <>
+                <span className="text-gray-400 mx-1 flex-shrink-0">|</span>
+                <span className={`font-bold transition-colors duration-300 flex-shrink-0 text-sm ${
+                  (timeLeft.hours * 3600 + timeLeft.minutes * 60 + timeLeft.seconds) < 10 ? 'text-red-600 animate-bounce' : 'text-red-500'
+                }`}>
+                  {customCountdown || `${timeLeft.hours.toString().padStart(2, "0")}:${timeLeft.minutes.toString().padStart(2, "0")}:${timeLeft.seconds.toString().padStart(2, "0")}`}
+                </span>
+              </>
+            )}
+          </div>
+          <a
+            href="/search?category=flash-deals"
+            className="text-xs hover:underline flex items-center font-medium transition-colors"
+          >
+            View All
+            <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
+          </a>
+        </div>
+      </div>
+    );
+  };
+
   // Calculate time remaining for flash deals
   useEffect(() => {
     const calculateTimeLeft = () => {
@@ -311,16 +345,7 @@ export default function BookGenreFlashDeals({
   return (
     <div className={`w-full bg-white ${className}`}>
       {/* Section Header - Optional */}
-      {showSectionHeader && (
-        <SectionHeader
-          title={title}
-          icon={icon}
-          showCountdown={showCountdown !== undefined ? showCountdown : (timeLeft.hours > 0 || timeLeft.minutes > 0 || timeLeft.seconds > 0)}
-          countdown={customCountdown || `${timeLeft.hours.toString().padStart(2, "0")}:${timeLeft.minutes.toString().padStart(2, "0")}:${timeLeft.seconds.toString().padStart(2, "0")}`}
-          viewAllLink="/search?category=flash-deals"
-          viewAllText="View All"
-        />
-      )}
+      {showSectionHeader && <InternalSectionHeader />}
 
       {/* Summary Section - Optional */}
       {showSummary && (
