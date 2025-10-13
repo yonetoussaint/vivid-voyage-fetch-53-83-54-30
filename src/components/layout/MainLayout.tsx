@@ -118,6 +118,9 @@ function MainLayoutContent() {
   const isWalletPage = pathname === '/wallet';
   const isExplorePage = pathname === '/explore';
   const isProductsPage = pathname === '/products';
+  
+  // Get title from URL params for products page
+  const productsTitle = isProductsPage ? new URLSearchParams(location.search).get('title') || 'Products' : '';
 
   // Get filter from URL params for messages, wallet, and explore
   const searchParams = new URLSearchParams(location.search);
@@ -273,6 +276,27 @@ function MainLayoutContent() {
                 navigate(tab.path);
               }
             } : undefined}
+            showSectionHeader={isProductsPage}
+            sectionHeaderTitle={productsTitle}
+            sectionHeaderShowStackedProfiles={true}
+            sectionHeaderStackedProfiles={[
+              { 
+                id: '1', 
+                image: 'https://example.com/profile1.jpg', 
+                alt: 'Sarah Johnson' 
+              },
+              { 
+                id: '2', 
+                image: 'https://example.com/profile2.jpg', 
+                alt: 'Mike Chen' 
+              },
+              { 
+                id: '3', 
+                image: 'https://example.com/profile3.jpg', 
+                alt: 'Emma Davis' 
+              }
+            ]}
+            sectionHeaderStackedProfilesText="Handpicked by"
           />
         )}
 

@@ -8,6 +8,7 @@ import VoiceSearchOverlay from './header/VoiceSearchOverlay';
 import NotificationBadge from './header/NotificationBadge';
 import HeaderLogoToggle from './header/HeaderLogoToggle';
 import HomepageDropdown from './header/HomepageDropdown';
+import SectionHeader from './SectionHeader';
 import { useAuthOverlay } from '@/context/AuthOverlayContext';
 import { useLanguageSwitcher } from '@/hooks/useLanguageSwitcher';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -38,6 +39,11 @@ interface AliExpressHeaderProps {
   isFilterDisabled?: (filterId: string) => boolean;
   customTabs?: Array<{ id: string; name: string; path?: string }>;
   onCustomTabChange?: (tabId: string) => void;
+  showSectionHeader?: boolean;
+  sectionHeaderTitle?: string;
+  sectionHeaderShowStackedProfiles?: boolean;
+  sectionHeaderStackedProfiles?: Array<{ id: string; image: string; alt?: string }>;
+  sectionHeaderStackedProfilesText?: string;
 }
 
 export default function AliExpressHeader({ 
@@ -52,7 +58,12 @@ export default function AliExpressHeader({
   onFilterButtonClick = () => {},
   isFilterDisabled = () => false,
   customTabs,
-  onCustomTabChange
+  onCustomTabChange,
+  showSectionHeader = false,
+  sectionHeaderTitle = '',
+  sectionHeaderShowStackedProfiles = false,
+  sectionHeaderStackedProfiles = [],
+  sectionHeaderStackedProfilesText = "Handpicked by"
 }: AliExpressHeaderProps) {
   const { progress } = useScrollProgress();
   const { currentLanguage, setLanguage, supportedLanguages, currentLocation } = useLanguageSwitcher();
@@ -566,8 +577,21 @@ export default function AliExpressHeader({
         onToggleLanguagePin={toggleLanguagePin}
       />
 
-      {/* Conditional rendering: ProductFilterBar or CategoryTabs */}
-      {showCategoryTabs && (
+      {/* Conditional rendering: SectionHeader, ProductFilterBar or CategoryTabs */}
+      {showSectionHeader ? (
+        <div className="bg-white py-2">
+          <SectionHeader
+            title={sectionHeaderTitle}
+            titleSize="base"
+            showStackedProfiles={sectionHeaderShowStackedProfiles}
+            stackedProfiles={sectionHeaderStackedProfiles}
+            stackedProfilesText={sectionHeaderStackedProfilesText}
+            onProfileClick={(profileId) => {
+              console.log('Profile clicked:', profileId);
+            }}
+          />
+        </div>
+      ) : showCategoryTabs && (
         <div className="relative overflow-hidden">
           {showFilterBar ? (
             <div data-header="true" className="product-filter-bar">
