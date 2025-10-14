@@ -1,5 +1,5 @@
 // SectionHeader.tsx
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ChevronRight, LucideIcon, MoreHorizontal, Play } from "lucide-react"; // Added Play icon
 import { useTranslation } from 'react-i18next';
@@ -31,6 +31,7 @@ interface SectionHeaderProps {
     verified: boolean;
     followers: string;
     publishedAt: string;
+    isFollowing?: boolean; // Add this to track follow state
   };
   onFollowClick?: () => void;
   // New countdown props
@@ -73,7 +74,7 @@ export const serializeSectionHeaderProps = (props: {
   verifiedIcon?: React.ComponentType<{ className?: string }>;
 }) => {
   const params = new URLSearchParams();
-  
+
   if (props.showCountdown) params.set('showCountdown', 'true');
   if (props.countdown) params.set('countdown', props.countdown);
   if (props.showStackedProfiles) params.set('showProfiles', 'true');
@@ -81,7 +82,7 @@ export const serializeSectionHeaderProps = (props: {
   if (props.showSponsorCount) params.set('showSponsorCount', 'true');
   if (props.showVerifiedSellers) params.set('showVerifiedSellers', 'true');
   if (props.verifiedSellersText) params.set('verifiedSellersText', props.verifiedSellersText);
-  
+
   // Serialize icon names
   if (props.icon) {
     const iconName = typeof props.icon === 'string' ? props.icon : (props.icon as any).name || 'Tag';
@@ -91,7 +92,7 @@ export const serializeSectionHeaderProps = (props: {
     const verifiedIconName = (props.verifiedIcon as any).name || 'ShieldCheck';
     params.set('verifiedIcon', verifiedIconName);
   }
-  
+
   return params.toString();
 };
 
@@ -148,6 +149,57 @@ export default function SectionHeader({
   const defaultViewAllText = viewAllText || 'View All';
   const navigate = useNavigate();
 
+  // State for follow functionality
+  const [isFollowing, setIsFollowing] = useState(vendorData?.isFollowing || false);
+  const [followersCount, setFollowersCount] = useState(
+    vendorData?.followers ? parseInt(vendorData.followers.replace('K', '000').replace('M', '000000')) : 0
+  );
+
+  // Handle follow button click
+  const handleFollowClick = () => {
+    if (onFollowClick) {
+      onFollowClick();
+    } else {
+      // Default follow behavior if no custom handler provided
+      const newFollowState = !isFollowing;
+      setIsFollowing(newFollowState);
+
+      // Update followers count
+      if (newFollowState) {
+        setFollowersCount(prev => prev + 1);
+      } else {
+        setFollowersCount(prev => Math.max(0, prev - 1));
+      }
+
+      // Here you would typically make an API call to update the follow status
+      console.log(`${newFollowState ? 'Following' : 'Unfollowing'} vendor: ${vendorData?.vendorName}`);
+
+      // Example API call (uncomment and implement as needed):
+      /*
+      updateVendorFollowStatus(vendorData?.vendorName, newFollowState)
+        .then(response => {
+          console.log('Follow status updated successfully');
+        })
+        .catch(error => {
+          console.error('Failed to update follow status:', error);
+          // Revert state on error
+          setIsFollowing(!newFollowState);
+          setFollowersCount(prev => newFollowState ? prev - 1 : prev + 1);
+        });
+      */
+    }
+  };
+
+  // Format followers count for display
+  const formatFollowers = (count: number) => {
+    if (count >= 1000000) {
+      return (count / 1000000).toFixed(1) + 'M';
+    } else if (count >= 1000) {
+      return (count / 1000).toFixed(1) + 'K';
+    }
+    return count.toString();
+  };
+
   // Automatic navigation handler for title chevron clicks
   const handleTitleClick = onTitleClick || (showTitleChevron ? () => {
     const sectionProps = serializeSectionHeaderProps({
@@ -168,12 +220,34 @@ export default function SectionHeader({
   const timeAgo = (date: string) => {
     const now = new Date();
     const postDate = new Date(date);
-    const diffInHours = Math.floor((now.getTime() - postDate.getTime()) / (1000 * 60 * 60));
+    const diffInMs = now.getTime() - postDate.getTime();
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    const diffInDays = Math.floor(diffInHours / 24);
+    const diffInWeeks = Math.floor(diffInDays / 7);
 
     if (diffInHours < 1) return 'Just now';
     if (diffInHours < 24) return `${diffInHours}h ago`;
-    const diffInDays = Math.floor(diffInHours / 24);
-    return `${diffInDays}d ago`;
+    if (diffInDays < 7) return `${diffInDays}d ago`;
+    if (diffInWeeks < 4) return `${diffInWeeks}w ago`;
+
+    // For dates more than a month ago
+    const currentYear = now.getFullYear();
+    const postYear = postDate.getFullYear();
+
+    if (postYear === currentYear) {
+      // Same year - show month and day (e.g., "May 14")
+      return postDate.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric' 
+      });
+    } else {
+      // Different year - show month, day, and year (e.g., "May 14, 2015")
+      return postDate.toLocaleDateString('en-US', { 
+        year: 'numeric',
+        month: 'short', 
+        day: 'numeric' 
+      });
+    }
   };
 
   const Button = ({ variant, size, className, children, ...props }) => (
@@ -354,14 +428,18 @@ export default function SectionHeader({
               )}
             </div>
             <p className="text-gray-500 text-xs truncate">
-              {vendorData.followers} followers • {timeAgo(vendorData.publishedAt)}
+              {formatFollowers(followersCount)} followers • {timeAgo(vendorData.publishedAt)}
             </p>
           </div>
           <button 
-            onClick={onFollowClick}
-            className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded-full text-xs font-medium transition-colors"
+            onClick={handleFollowClick}
+            className={`${
+              isFollowing 
+                ? 'bg-gray-200 hover:bg-gray-300 text-gray-800' 
+                : 'bg-red-500 hover:bg-red-600 text-white'
+            } px-3 py-1.5 rounded-full text-xs font-medium transition-colors duration-200`}
           >
-            Follow
+            {isFollowing ? 'Following' : 'Follow'}
           </button>
           <Button variant="ghost" size="icon" className="ml-1 rounded-full h-6 w-6">
             <MoreHorizontal className="text-gray-600 h-3 w-3" />
@@ -377,7 +455,7 @@ export default function SectionHeader({
             <TitleWithChevron />
 
             {/* Last element (Countdown or Verified Sellers or Stacked Profiles or Clear button or Custom Button or View All) */}
-            
+
             <div className="flex items-center gap-2">
               {showCountdown && countdown ? (
                 <CountdownDisplay />

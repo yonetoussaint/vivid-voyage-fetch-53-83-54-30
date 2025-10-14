@@ -22,12 +22,38 @@ const PostCard = ({
   const reactionsRef = useRef(null);
 
   const reactions = [
-    { id: 'like', icon: <ThumbsUp className="h-3 w-3" />, bg: 'bg-blue-500', label: 'Like' },
-    { id: 'love', icon: <i className="fa-solid fa-heart text-xs"></i>, bg: 'bg-red-500', label: 'Love' },
-    { id: 'haha', emoji: '😆', label: 'Haha' },
-    { id: 'wow', emoji: '😮', label: 'Wow' },
-    { id: 'sad', emoji: '😢', label: 'Sad' },
-    { id: 'angry', emoji: '😠', label: 'Angry' }
+    { 
+      id: 'like', 
+      icon: <ThumbsUp className="h-5 w-5 text-white fill-white" />, 
+      bg: 'bg-blue-500', 
+      label: 'Like' 
+    },
+    { 
+      id: 'love', 
+      icon: <i className="fa-solid fa-heart text-white text-base"></i>, 
+      bg: 'bg-red-500', 
+      label: 'Love' 
+    },
+    { 
+      id: 'haha', 
+      emoji: '😆', 
+      label: 'Haha' 
+    },
+    { 
+      id: 'wow', 
+      emoji: '😮', 
+      label: 'Wow' 
+    },
+    { 
+      id: 'sad', 
+      emoji: '😢', 
+      label: 'Sad' 
+    },
+    { 
+      id: 'angry', 
+      emoji: '😠', 
+      label: 'Angry' 
+    }
   ];
 
   const handleLikePress = () => {
@@ -39,7 +65,7 @@ const PostCard = ({
 
   const handleLikeRelease = () => {
     clearTimeout(longPressTimer.current);
-    
+
     if (!isLongPress.current) {
       // Quick click - toggle like
       if (liked || selectedReaction) {
@@ -52,7 +78,7 @@ const PostCard = ({
         setCurrentLikeCount(prev => prev + 1);
       }
     }
-    
+
     isLongPress.current = false;
   };
 
@@ -61,7 +87,7 @@ const PostCard = ({
     setSelectedReaction(reaction.id);
     setLiked(reaction.id === 'like');
     setShowReactions(false);
-    
+
     if (!wasLiked) {
       setCurrentLikeCount(prev => prev + 1);
     }
@@ -254,7 +280,7 @@ const PostCard = ({
       </div>
 
       {/* Facebook style engagement stats */}
-      <div className="px-3 py-1.5 flex items-center justify-between border-b border-gray-100">
+      <div className="px-3 py-1.5 flex items-center justify-between">
         <div className="flex items-center gap-1">
           <div className="flex items-center -space-x-1">
             <div className="bg-blue-500 rounded-full p-0.5 w-5 h-5 flex items-center justify-center border border-white z-30">
@@ -274,7 +300,7 @@ const PostCard = ({
       </div>
 
       {/* Enhanced Social Buttons - Moved to Bottom */}
-      <div className="flex items-center justify-between px-1 py-1 relative">
+      <div className="flex items-center justify-between px-2 py-1 relative gap-3">
         {/* Reactions Overlay */}
         {showReactions && (
           <div 
@@ -288,11 +314,13 @@ const PostCard = ({
                 className="hover:scale-125 transition-transform duration-200 flex flex-col items-center"
               >
                 {reaction.icon ? (
-                  <div className={`${reaction.bg} rounded-full p-2 text-white flex items-center justify-center w-7 h-7`}>
+                  <div className={`${reaction.bg} rounded-full w-8 h-8 flex items-center justify-center`}>
                     {reaction.icon}
                   </div>
                 ) : (
-                  <span className="text-2xl">{reaction.emoji}</span>
+                  <div className="w-8 h-8 flex items-center justify-center">
+                    <span className="text-3xl leading-none">{reaction.emoji}</span>
+                  </div>
                 )}
               </button>
             ))}
@@ -309,15 +337,15 @@ const PostCard = ({
             }}
             onTouchStart={handleLikePress}
             onTouchEnd={handleLikeRelease}
-            className="flex items-center justify-center gap-1 group transition-colors w-full py-1.5 hover:bg-gray-100 rounded-md"
+            className="flex items-center justify-center gap-2 group transition-colors w-full py-2 bg-gray-100 hover:bg-gray-200 rounded-full h-8"
           >
             {selectedReaction && selectedReaction !== 'like' ? (
               <>
                 {reactions.find(r => r.id === selectedReaction)?.emoji ? (
-                  <span className="text-base">{reactions.find(r => r.id === selectedReaction)?.emoji}</span>
+                  <span className="text-lg">{reactions.find(r => r.id === selectedReaction)?.emoji}</span>
                 ) : (
                   selectedReaction === 'love' ? (
-                    <i className="fa-solid fa-heart text-red-500 text-sm"></i>
+                    <i className="fa-solid fa-heart text-red-500 text-lg"></i>
                   ) : null
                 )}
                 <span className={`text-xs font-medium ${selectedReaction === 'love' ? 'text-red-500' : selectedReaction === 'wow' ? 'text-yellow-500' : selectedReaction === 'sad' ? 'text-yellow-600' : 'text-orange-500'}`}>
@@ -338,7 +366,7 @@ const PostCard = ({
         <div className="flex-1">
           <button
             onClick={handleComment}
-            className="flex items-center justify-center gap-1 group transition-colors w-full py-1.5 hover:bg-gray-100 rounded-md"
+            className="flex items-center justify-center gap-2 group transition-colors w-full py-2 bg-gray-100 hover:bg-gray-200 rounded-full h-8"
           >
             <MessageCircle className="w-4 h-4 text-gray-600 group-hover:text-gray-800" />
             <span className="text-xs text-gray-600 group-hover:text-gray-800">
@@ -350,7 +378,7 @@ const PostCard = ({
         <div className="flex-1">
           <button
             onClick={handleShare}
-            className="flex items-center justify-center gap-1 group transition-colors w-full py-1.5 hover:bg-gray-100 rounded-md"
+            className="flex items-center justify-center gap-2 group transition-colors w-full py-2 bg-gray-100 hover:bg-gray-200 rounded-full h-8"
           >
             <i className="fa-solid fa-share w-4 h-4 text-gray-600 group-hover:text-gray-800 flex items-center justify-center"></i>
             <span className="text-xs text-gray-600 group-hover:text-gray-800">
@@ -399,10 +427,7 @@ const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
   };
 
   const handleFollowClick = () => {
-    console.log('Follow button clicked');
-    // Add your follow logic here
-  };
-
+    console.log('Follow button clicked for vendor');};
   // Use custom posts if provided, otherwise use default posts
   const posts = customPosts || [
     {
@@ -410,6 +435,7 @@ const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
       vendorData: {
         profilePic: getSellerLogoUrl("20250322_230219.jpg"),
         vendorName: "Tech Store Pro",
+        isFollowing: false, // Add this to track initial follow state
         verified: true,
         followers: "12.5K",
         publishedAt: "2024-01-15T10:30:00Z"
