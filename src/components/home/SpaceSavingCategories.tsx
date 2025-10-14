@@ -577,6 +577,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
   const displayedCategories = [...categories];
   const firstFourCategories = displayedCategories.slice(0, 4);
   const remainingCategories = displayedCategories.slice(4);
+  const remainingCount = remainingCategories.length;
 
   return (
     <div className="w-full bg-white overflow-visible">
@@ -596,7 +597,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       )}
 
       <div className="bg-white overflow-visible">
-        {/* Horizontal row with first 4 categories + grid toggle button - aligned with 5-column grid */}
+        {/* Horizontal row with first 4 categories + expand/collapse counter button - aligned with 5-column grid */}
         <div 
           ref={rowRef}
           className="px-2 overflow-visible"
@@ -611,7 +612,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
               </div>
             ))}
 
-            {/* Grid toggle button as 5th item */}
+            {/* Counter button as 5th item - shows +X when collapsed */}
             <div className="flex justify-center overflow-visible py-2">
               <div 
                 className="flex flex-col items-center w-16 flex-shrink-0 active:opacity-80 transition-opacity touch-manipulation cursor-pointer"
@@ -619,71 +620,61 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
               >
                 <div className="relative mb-2">
                   <div className={`w-14 h-14 rounded-xl ${showGridView ? 'bg-blue-100' : 'bg-gray-100'} flex items-center justify-center`}>
-                    <Grid3x3 className={`w-7 h-7 ${showGridView ? 'text-blue-500' : 'text-gray-500'}`} />
+                    <span className={`text-xl font-bold ${showGridView ? 'text-blue-500' : 'text-gray-500'}`}>
+                      +{remainingCount}
+                    </span>
                   </div>
                 </div>
                 <span className="text-xs font-normal text-gray-800 text-center w-full leading-tight px-1 truncate">
-                  {showGridView ? 'Hide' : 'More'}
+                  More
                 </span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Grid view for remaining categories */}
+        {/* Grid view for remaining categories with hide button as last item */}
         {showGridView && (
           <div className="px-2 pb-4 pt-2 bg-white">
             <div className="grid grid-cols-5 gap-4">
-              {remainingCategories.map((category, index) => {
-                const isExpanded = expandedCategories.has(category.id);
-                const isLastCategory = index === remainingCategories.length - 1;
-
-                return (
-                  <div 
-                    key={category.id}
-                    className={`flex flex-col items-center active:opacity-80 transition-opacity touch-manipulation cursor-pointer ${isLastCategory && isExpanded ? 'relative' : ''}`}
-                    onClick={() => {
-                      if (isLastCategory && isExpanded) {
-                        toggleExpandCategory(category.id);
-                      } else {
-                        handleCategorySelect(category.name);
-                      }
-                    }}
-                  >
-                    <div className="relative mb-2">
-                      <div className={`w-14 h-14 rounded-xl ${category.bgColor} flex items-center justify-center`}>
-                        <category.icon className={`w-7 h-7 ${category.iconBg}`} />
-                      </div>
-
-                      {category.count !== undefined && category.count > 0 && (
-                        <div className="absolute -top-2 -right-2 min-w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-medium px-1 border-2 border-white shadow-sm z-10">
-                          {category.count > 99 ? '99+' : category.count}
-                        </div>
-                      )}
+              {remainingCategories.map((category) => (
+                <div 
+                  key={category.id}
+                  className="flex flex-col items-center active:opacity-80 transition-opacity touch-manipulation cursor-pointer"
+                  onClick={() => handleCategorySelect(category.name)}
+                >
+                  <div className="relative mb-2">
+                    <div className={`w-14 h-14 rounded-xl ${category.bgColor} flex items-center justify-center`}>
+                      <category.icon className={`w-7 h-7 ${category.iconBg}`} />
                     </div>
 
-                    <span className="text-xs font-normal text-gray-800 text-center w-full leading-tight px-1 truncate">
-                      {category.name}
-                    </span>
-
-                    {isLastCategory && (
-                      <div 
-                        className="mt-2 flex items-center justify-center w-full cursor-pointer"
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent triggering parent onClick
-                          toggleExpandCategory(category.id);
-                        }}
-                      >
-                        {isExpanded ? (
-                          <ChevronUp className="w-5 h-5 text-gray-500" />
-                        ) : (
-                          <Grid3x3 className="w-5 h-5 text-gray-500" />
-                        )}
+                    {category.count !== undefined && category.count > 0 && (
+                      <div className="absolute -top-2 -right-2 min-w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-medium px-1 border-2 border-white shadow-sm z-10">
+                        {category.count > 99 ? '99+' : category.count}
                       </div>
                     )}
                   </div>
-                );
-              })}
+
+                  <span className="text-xs font-normal text-gray-800 text-center w-full leading-tight px-1 truncate">
+                    {category.name}
+                  </span>
+                </div>
+              ))}
+
+              {/* Hide button as the last item in the grid */}
+              <div 
+                className="flex flex-col items-center active:opacity-80 transition-opacity touch-manipulation cursor-pointer"
+                onClick={() => setShowGridView(false)}
+              >
+                <div className="relative mb-2">
+                  <div className="w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center">
+                    <ChevronUp className="w-7 h-7 text-gray-500" />
+                  </div>
+                </div>
+                <span className="text-xs font-normal text-gray-800 text-center w-full leading-tight px-1 truncate">
+                  Hide
+                </span>
+              </div>
             </div>
           </div>
         )}
