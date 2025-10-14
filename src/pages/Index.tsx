@@ -33,6 +33,7 @@ import {
   BookOpen,
   Gamepad2,
   Watch,
+  Tag,
   Headphones,
   Camera,
   Laptop,
@@ -283,6 +284,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
 
         <FlashDeals
           showCountdown={true}
+          icon={Tag}
         />
         <MobileOptimizedReels 
           showCustomButton={true}
