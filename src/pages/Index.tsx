@@ -376,18 +376,28 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   stackedProfiles={[
     { 
       id: '1', 
-      image: 'https://example.com/profile1.jpg', 
+      image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face', 
       alt: 'Sarah Johnson' 
     },
     { 
       id: '2', 
-      image: 'https://example.com/profile2.jpg', 
+      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face', 
       alt: 'Mike Chen' 
     },
     { 
       id: '3', 
-      image: 'https://example.com/profile3.jpg', 
+      image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face', 
       alt: 'Emma Davis' 
+    },
+    { 
+      id: '4', 
+      image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face', 
+      alt: 'Alex Turner' 
+    },
+    { 
+      id: '5', 
+      image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face', 
+      alt: 'Lisa Wong' 
     }
   ]}
   onProfileClick={(profileId) => {
@@ -395,6 +405,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
     // Navigate to profile page or show profile modal
   }}
   stackedProfilesText="Handpicked by"
+  maxProfiles={3}
 />
 
         {products && products.length > 0 && (

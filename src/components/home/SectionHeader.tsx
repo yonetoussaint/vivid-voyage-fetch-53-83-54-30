@@ -183,12 +183,12 @@ export default function SectionHeader({
         ) : (
           <span className="text-xs text-gray-600 whitespace-nowrap">{stackedProfilesText}</span>
         )}
-        <div className="flex items-center -space-x-2">
+        <div className="flex items-center -space-x-1.5">
           {displayProfiles.map((profile, index) => (
             <div
               key={profile.id}
               onClick={() => onProfileClick?.(profile.id)}
-              className={`relative w-6 h-6 rounded-full border-2 border-white bg-gray-200 overflow-hidden ${
+              className={`relative w-5 h-5 rounded-full border-2 border-white bg-gray-200 overflow-hidden ${
                 onProfileClick ? 'cursor-pointer hover:scale-110 transition-transform' : ''
               }`}
               style={{ zIndex: displayProfiles.length - index + 1 }}
@@ -203,10 +203,10 @@ export default function SectionHeader({
           ))}
           {remainingCount > 0 && (
             <div
-              className="relative w-6 h-6 rounded-full border-2 border-white bg-gray-700 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              className="relative w-5 h-5 rounded-full border-2 border-white bg-gray-700 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
               style={{ zIndex: 1 }}
             >
-              <span className="text-[9px] font-bold text-white">+{remainingCount}</span>
+              <span className="text-[8px] font-bold text-white">+{remainingCount}</span>
             </div>
           )}
         </div>

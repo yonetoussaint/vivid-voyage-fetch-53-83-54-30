@@ -27,6 +27,8 @@ interface FlashDealsProps {
   onTitleClick?: () => void;
   // New prop for sponsor count
   showSponsorCount?: boolean;
+  // Max profiles to show
+  maxProfiles?: number;
 }
 
 export default function FlashDeals({ 
@@ -48,7 +50,9 @@ export default function FlashDeals({
   showTitleChevron = false,
   onTitleClick,
   // Sponsor count prop
-  showSponsorCount = false
+  showSponsorCount = false,
+  // Max profiles prop
+  maxProfiles = 3
 }: FlashDealsProps) {
   const isMobile = useIsMobile();
   const scrollRef = useRef(null);
@@ -161,6 +165,7 @@ export default function FlashDeals({
             stackedProfiles={stackedProfiles}
             onProfileClick={onProfileClick}
             stackedProfilesText={stackedProfilesText}
+            maxProfiles={maxProfiles}
             // New title chevron props
             showTitleChevron={showTitleChevron}
             onTitleClick={onTitleClick}
