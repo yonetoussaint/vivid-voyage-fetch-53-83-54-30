@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ThumbsUp, MessageCircle, MoreHorizontal, Store, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import SectionHeader from './SectionHeader';
@@ -19,6 +19,7 @@ const PostCard = ({
   const carouselRef = useRef(null);
   const longPressTimer = useRef(null);
   const isLongPress = useRef(false);
+  const reactionsRef = useRef(null);
 
   const reactions = [
     { id: 'like', icon: <ThumbsUp className="h-4 w-4" />, bg: 'bg-blue-500', label: 'Like' },
@@ -33,7 +34,7 @@ const PostCard = ({
     longPressTimer.current = setTimeout(() => {
       isLongPress.current = true;
       setShowReactions(true);
-    }, 500);
+    }, 300);
   };
 
   const handleLikeRelease = () => {
@@ -68,6 +69,25 @@ const PostCard = ({
 
   const handleComment = () => console.log('Comment clicked');
   const handleShare = () => console.log('Share clicked');
+
+  // Handle clicks outside reactions overlay to dismiss it
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (reactionsRef.current && !reactionsRef.current.contains(event.target)) {
+        setShowReactions(false);
+      }
+    };
+
+    if (showReactions) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [showReactions]);
 
   const Button = ({ variant, size, className, children, ...props }) => (
     <button
@@ -257,7 +277,10 @@ const PostCard = ({
       <div className="flex items-center justify-between px-1 py-1 relative">
         {/* Reactions Overlay */}
         {showReactions && (
-          <div className="absolute bottom-full left-0 mb-2 bg-white rounded-full shadow-lg border border-gray-200 px-3 py-2 flex gap-3 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <div 
+            ref={reactionsRef}
+            className="absolute bottom-full left-0 mb-2 bg-white rounded-full shadow-lg border border-gray-200 px-3 py-2 flex gap-3 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200"
+          >
             {reactions.map((reaction) => (
               <button
                 key={reaction.id}
