@@ -51,6 +51,7 @@ interface AliExpressHeaderProps {
   sectionHeaderShowSponsorCount?: boolean;
   sectionHeaderShowVerifiedSellers?: boolean;
   sectionHeaderVerifiedSellersText?: string;
+  sectionHeaderIcon?: React.ComponentType<{ className?: string }>;
 }
 
 export default function AliExpressHeader({ 
@@ -78,6 +79,7 @@ export default function AliExpressHeader({
   sectionHeaderShowSponsorCount = false,
   sectionHeaderShowVerifiedSellers = false,
   sectionHeaderVerifiedSellersText = 'Verified Sellers',
+  sectionHeaderIcon,
 }: AliExpressHeaderProps) {
   const { progress } = useScrollProgress();
   const { currentLanguage, setLanguage, supportedLanguages, currentLocation } = useLanguageSwitcher();
@@ -597,6 +599,7 @@ export default function AliExpressHeader({
           <SectionHeader
             title={sectionHeaderTitle}
             titleSize="sm"
+            icon={sectionHeaderIcon}
             viewAllLink={sectionHeaderViewAllLink}
             viewAllText={sectionHeaderViewAllText}
             showStackedProfiles={sectionHeaderShowStackedProfiles}

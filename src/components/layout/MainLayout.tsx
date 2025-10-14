@@ -6,7 +6,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import AliExpressHeader from "@/components/home/AliExpressHeader";
 import { useAuthOverlay } from "@/context/AuthOverlayContext";
-import { Home, Smartphone, Shirt, Baby, Dumbbell, Sparkles, Car, Book } from "lucide-react";
+import { Home, Smartphone, Shirt, Baby, Dumbbell, Sparkles, Car, Book, Trophy, Tag, ShieldCheck, Zap, Star, Crown, Award } from "lucide-react";
 import { useScreenOverlay } from "@/context/ScreenOverlayContext";
 import ProductUploadOverlay from "@/components/product/ProductUploadOverlay";
 import LocationScreen from "@/components/home/header/LocationScreen";
@@ -122,6 +122,25 @@ function MainLayoutContent() {
   // Get title from URL params for products page
   const productsTitle = isProductsPage ? new URLSearchParams(location.search).get('title') || 'Products' : '';
 
+  // Icon mapper to convert string names to components
+  const iconMapper: Record<string, React.ComponentType<{ className?: string }>> = {
+    Trophy,
+    Tag,
+    ShieldCheck,
+    Zap,
+    Star,
+    Crown,
+    Award,
+    Home,
+    Smartphone,
+    Shirt,
+    Baby,
+    Dumbbell,
+    Sparkles,
+    Car,
+    Book
+  };
+
   // Get filter from URL params for messages, wallet, and explore
   const searchParams = new URLSearchParams(location.search);
   const messagesFilter = searchParams.get('filter') || 'all';
@@ -143,6 +162,10 @@ function MainLayoutContent() {
 
   // Check if current page is conversation detail
   const isConversationDetailPage = pathname.startsWith('/messages/') && pathname !== '/messages';
+
+  // Get icon from URL and map to component
+  const iconName = searchParams.get('icon');
+  const sectionHeaderIcon = iconName ? iconMapper[iconName] : undefined;
 
   // In MainLayout.tsx, update the headerHeightStyle to ensure bottom nav height is set correctly
   const headerHeightStyle = `
@@ -304,8 +327,8 @@ function MainLayoutContent() {
   sectionHeaderShowCountdown={searchParams.get('showCountdown') === 'true'}
   sectionHeaderCountdown={searchParams.get('countdown') || undefined}
   sectionHeaderShowSponsorCount={searchParams.get('showSponsorCount') === 'true'}
-  // Pass icon from URL params - will need to be mapped to actual icon component in AliExpressHeader
-  {...(searchParams.get('icon') && { sectionHeaderIcon: searchParams.get('icon') })}
+  // Pass mapped icon component
+  {...(sectionHeaderIcon && { sectionHeaderIcon })}
   // FIXED: Only show View All when no other right-side elements are present
   sectionHeaderViewAllLink={
     (searchParams.get('showProfiles') !== 'true' &&
