@@ -58,9 +58,7 @@ interface Category {
 }
 
 // Category shortcut component
-const CategoryShortcut = ({ category, onCategorySelect }) => {
-  const IconComponent = category.icon;
-
+const CategoryShortcut = ({ category, onCategorySelect }: { category: Category; onCategorySelect?: (category: string) => void }) => {
   return (
     <div 
       className="flex flex-col items-center w-16 flex-shrink-0 active:opacity-80 transition-opacity touch-manipulation cursor-pointer"
@@ -68,7 +66,9 @@ const CategoryShortcut = ({ category, onCategorySelect }) => {
     >
       <div className="relative mb-2">
         <div className={`w-14 h-14 rounded-xl ${category.bgColor} flex items-center justify-center`}>
-          <IconComponent className={`w-7 h-7 ${category.iconBg}`} />
+          {React.createElement(category.icon, { 
+            className: `w-7 h-7 ${category.iconBg}` 
+          })}
         </div>
 
         {category.count !== undefined && category.count > 0 && (
@@ -86,9 +86,21 @@ const CategoryShortcut = ({ category, onCategorySelect }) => {
 };
 
 // Draggable category item for reordering
-const DraggableCategoryItem = ({ category, index, isDragging, onDragStart, onDragOver, onDragEnd }) => {
-  const IconComponent = category.icon;
-
+const DraggableCategoryItem = ({ 
+  category, 
+  index, 
+  isDragging, 
+  onDragStart, 
+  onDragOver, 
+  onDragEnd 
+}: { 
+  category: Category; 
+  index: number; 
+  isDragging: boolean; 
+  onDragStart: (e: React.DragEvent, index: number) => void; 
+  onDragOver: (e: React.DragEvent, index: number) => void; 
+  onDragEnd: () => void; 
+}) => {
   return (
     <div
       draggable
@@ -103,7 +115,9 @@ const DraggableCategoryItem = ({ category, index, isDragging, onDragStart, onDra
 
       <div className="relative flex-shrink-0">
         <div className={`w-10 h-10 rounded-lg ${category.bgColor} flex items-center justify-center`}>
-          <IconComponent className={`w-5 h-5 ${category.iconBg}`} />
+          {React.createElement(category.icon, { 
+            className: `w-5 h-5 ${category.iconBg}` 
+          })}
         </div>
 
         {category.count !== undefined && category.count > 0 && (
@@ -141,7 +155,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
   headerTitleTransform = "uppercase",
   onCustomizeClick
 }) => {
-  const rowRef = useRef(null);
+  const rowRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isCustomizePanelOpen, setIsCustomizePanelOpen] = useState(false);
@@ -575,9 +589,9 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
   }
 
   const displayedCategories = [...categories];
-  const firstFourCategories = displayedCategories.slice(0, 4);
-  const remainingCategories = displayedCategories.slice(4);
-  const remainingCount = remainingCategories.length;
+  const firstRowCategories = showGridView ? displayedCategories.slice(0, 5) : displayedCategories.slice(0, 4);
+  const remainingCategories = showGridView ? displayedCategories.slice(5) : displayedCategories.slice(4);
+  const remainingCount = displayedCategories.slice(4).length;
 
   return (
     <div className="w-full bg-white overflow-visible">
@@ -597,13 +611,13 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       )}
 
       <div className="bg-white overflow-visible">
-        {/* Horizontal row with first 4 categories + expand/collapse counter button - aligned with 5-column grid */}
+        {/* Horizontal row with first 4 or 5 categories + expand/collapse button - aligned with 5-column grid */}
         <div 
           ref={rowRef}
           className="px-2 overflow-visible"
         >
           <div className="grid grid-cols-5 gap-4">
-            {firstFourCategories.map(category => (
+            {firstRowCategories.map(category => (
               <div 
                 key={category.id}
                 className="flex justify-center overflow-visible py-2"
@@ -612,24 +626,72 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
               </div>
             ))}
 
-            {/* Counter button as 5th item - shows +X when collapsed */}
-            <div className="flex justify-center overflow-visible py-2">
-              <div 
-                className="flex flex-col items-center w-16 flex-shrink-0 active:opacity-80 transition-opacity touch-manipulation cursor-pointer"
-                onClick={() => setShowGridView(!showGridView)}
-              >
-                <div className="relative mb-2">
-                  <div className={`w-14 h-14 rounded-xl ${showGridView ? 'bg-blue-100' : 'bg-gray-100'} flex items-center justify-center`}>
-                    <span className={`text-xl font-bold ${showGridView ? 'text-blue-500' : 'text-gray-500'}`}>
-                      +{remainingCount}
-                    </span>
+            {/* Sophisticated 2x2 grid preview button */}
+            {!showGridView && remainingCategories.length > 0 && (
+              <div className="flex justify-center overflow-visible py-2">
+                <div 
+                  className="flex flex-col items-center w-16 flex-shrink-0 active:opacity-80 transition-opacity touch-manipulation cursor-pointer relative"
+                  onClick={() => setShowGridView(true)}
+                >
+                  {/* 2x2 grid container */}
+                  <div className="relative mb-2 w-14 h-14 bg-gray-100 rounded-xl overflow-hidden">
+                    {/* Grid layout */}
+                    <div className="grid grid-cols-2 grid-rows-2 w-full h-full gap-px">
+                      {/* Top-left */}
+                      {remainingCategories[0] && (
+                        <div className={`${remainingCategories[0].bgColor} flex items-center justify-center opacity-70`}>
+                          {React.createElement(remainingCategories[0].icon, { 
+                            className: `w-4 h-4 ${remainingCategories[0].iconBg}` 
+                          })}
+                        </div>
+                      )}
+                      {/* Top-right */}
+                      {remainingCategories[1] && (
+                        <div className={`${remainingCategories[1].bgColor} flex items-center justify-center opacity-70`}>
+                          {React.createElement(remainingCategories[1].icon, { 
+                            className: `w-4 h-4 ${remainingCategories[1].iconBg}` 
+                          })}
+                        </div>
+                      )}
+                      {/* Bottom-left */}
+                      {remainingCategories[2] && (
+                        <div className={`${remainingCategories[2].bgColor} flex items-center justify-center opacity-70`}>
+                          {React.createElement(remainingCategories[2].icon, { 
+                            className: `w-4 h-4 ${remainingCategories[2].iconBg}` 
+                          })}
+                        </div>
+                      )}
+                      {/* Bottom-right */}
+                      {remainingCategories[3] && (
+                        <div className={`${remainingCategories[3].bgColor} flex items-center justify-center opacity-70`}>
+                          {React.createElement(remainingCategories[3].icon, { 
+                            className: `w-4 h-4 ${remainingCategories[3].iconBg}` 
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Overlay counter */}
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                      <span className="text-lg font-bold text-white drop-shadow-md">
+                        +{remainingCount}
+                      </span>
+                    </div>
+
+                    {/* Show count badge from first category if it has notifications */}
+                    {remainingCategories[0]?.count !== undefined && remainingCategories[0].count > 0 && (
+                      <div className="absolute -top-2 -right-2 min-w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-medium px-1 border-2 border-white shadow-sm z-10">
+                        {remainingCategories[0].count > 99 ? '99+' : remainingCategories[0].count}
+                      </div>
+                    )}
                   </div>
+
+                  <span className="text-xs font-normal text-gray-800 text-center w-full leading-tight px-1 truncate">
+                    More
+                  </span>
                 </div>
-                <span className="text-xs font-normal text-gray-800 text-center w-full leading-tight px-1 truncate">
-                  More
-                </span>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -645,7 +707,9 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
                 >
                   <div className="relative mb-2">
                     <div className={`w-14 h-14 rounded-xl ${category.bgColor} flex items-center justify-center`}>
-                      <category.icon className={`w-7 h-7 ${category.iconBg}`} />
+                      {React.createElement(category.icon, { 
+                        className: `w-7 h-7 ${category.iconBg}` 
+                      })}
                     </div>
 
                     {category.count !== undefined && category.count > 0 && (
