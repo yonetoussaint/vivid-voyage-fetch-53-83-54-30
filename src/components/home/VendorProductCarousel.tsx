@@ -188,10 +188,10 @@ const PostCard = ({
         <div className="flex items-center gap-1">
           <div className="flex items-center -space-x-1">
             <div className="bg-blue-500 rounded-full p-0.5 w-5 h-5 flex items-center justify-center border border-white z-30">
-              <span className="text-sm">👍</span>
+              <ThumbsUp className="h-3 w-3 text-white fill-white" />
             </div>
             <div className="bg-red-500 rounded-full p-0.5 w-5 h-5 flex items-center justify-center border border-white z-20">
-              <span className="text-sm">❤️</span>
+              <i className="fa-solid fa-heart text-white text-[10px]"></i>
             </div>
             <div className="bg-yellow-400 rounded-full p-0.5 w-5 h-5 flex items-center justify-center border border-white z-10">
               <span className="text-sm">😆</span>
