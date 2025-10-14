@@ -277,10 +277,12 @@ export default function SectionHeader({
             {/* First element (Title with Icon, optional Chevron) */}
             <TitleWithChevron />
 
-            {/* Last element (Countdown or Clear button or Custom Button) */}
+            {/* Last element (Countdown or Stacked Profiles or Clear button or Custom Button or View All) */}
             <div className="flex items-center gap-2">
               {showCountdown && countdown ? (
                 <CountdownDisplay />
+              ) : showStackedProfiles && stackedProfiles.length > 0 ? (
+                <StackedProfiles />
               ) : (
                 <>
                   {showClearButton && onClearClick && (
