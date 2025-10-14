@@ -593,7 +593,7 @@ export default function AliExpressHeader({
 
       {/* Conditional rendering: SectionHeader, ProductFilterBar or CategoryTabs */}
       {showSectionHeader ? (
-
+<div className="py-1">
           <SectionHeader
             title={sectionHeaderTitle}
             titleSize="sm"
@@ -612,6 +612,8 @@ export default function AliExpressHeader({
               console.log('Profile clicked:', profileId);
             }}
           />
+
+      </div>
 
       ) : showCategoryTabs && (
         <div className="relative overflow-hidden">
