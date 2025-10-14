@@ -211,18 +211,24 @@ export default function SectionHeader({
       {showTitleChevron && (
         <ChevronRight className="w-3 h-3 flex-shrink-0 text-gray-400" />
       )}
-      {showCountdown && countdown && (
-        <>
-          <span className="text-gray-400 mx-1 flex-shrink-0">|</span>
-          <span className={`font-bold transition-colors duration-300 flex-shrink-0 ${
-            countdown < 10 ? 'text-red-600 animate-bounce' : 'text-red-500'
-          } ${countdownSizeClass}`}>
-            {countdown}
-          </span>
-        </>
-      )}
     </div>
   );
+
+  // Countdown component for right side - replaces view all button
+  const CountdownDisplay = () => {
+    if (!showCountdown || !countdown) return null;
+
+    return (
+      <div className="flex items-center gap-1.5">
+        <span className="text-xs text-gray-600 font-medium">Ends in</span>
+        <span className={`font-mono font-bold transition-colors duration-300 ${
+          countdown < 10 ? 'text-red-600 animate-bounce' : 'text-red-500'
+        } text-sm`}>
+          {countdown}
+        </span>
+      </div>
+    );
+  };
 
   return (
     <div className="flex flex-col">
@@ -268,14 +274,13 @@ export default function SectionHeader({
       {!showVendorHeader && (
           <div className={` flex items-center px-2 ${paddingBottom ? 'mb-2' : ''} ${compact ? 'py-0' : 'py-0'}`}>
           <div className="flex items-center justify-between w-full">
-            {/* First element (Title with Icon, optional Chevron, and optional Countdown) */}
+            {/* First element (Title with Icon, optional Chevron) */}
             <TitleWithChevron />
 
-            {/* Last element (Clear button and View All or Custom Button or Stacked Profiles) */}
+            {/* Last element (Countdown or Clear button or Custom Button) */}
             <div className="flex items-center gap-2">
-              {/* Show stacked profiles if enabled */}
-              {showStackedProfiles && stackedProfiles.length > 0 ? (
-                <StackedProfiles />
+              {showCountdown && countdown ? (
+                <CountdownDisplay />
               ) : (
                 <>
                   {showClearButton && onClearClick && (
