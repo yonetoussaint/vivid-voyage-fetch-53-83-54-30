@@ -118,7 +118,7 @@ function MainLayoutContent() {
   const isWalletPage = pathname === '/wallet';
   const isExplorePage = pathname === '/explore';
   const isProductsPage = pathname === '/products';
-  
+
   // Get title from URL params for products page
   const productsTitle = isProductsPage ? new URLSearchParams(location.search).get('title') || 'Products' : '';
 
@@ -246,11 +246,11 @@ function MainLayoutContent() {
     <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
         <style dangerouslySetInnerHTML={{ __html: headerHeightStyle }} />
 
-      
+
 
         {/* Show AliExpressHeader for category pages */}
         {shouldShowHeader && (
-          <AliExpressHeader 
+          <AliExpressHeader
   activeTabId={isMessagesListPage ? messagesFilter : isWalletPage ? walletFilter : isExplorePage ? exploreFilter : activeTab}
   showFilterBar={showFilterBar}
   showCategoryTabs={!isProductsPage}
@@ -284,38 +284,40 @@ function MainLayoutContent() {
   sectionHeaderShowVerifiedSellers={searchParams.get('showVerifiedSellers') === 'true'}
   sectionHeaderVerifiedSellersText={searchParams.get('verifiedSellersText') || 'Verified Sellers'}
   sectionHeaderStackedProfiles={searchParams.get('showProfiles') === 'true' ? [
-    { 
-      id: '1', 
-      image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face', 
-      alt: 'Sarah Johnson' 
+    {
+      id: '1',
+      image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
+      alt: 'Sarah Johnson'
     },
-    { 
-      id: '2', 
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face', 
-      alt: 'Mike Chen' 
+    {
+      id: '2',
+      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+      alt: 'Mike Chen'
     },
-    { 
-      id: '3', 
-      image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face', 
-      alt: 'Emma Davis' 
+    {
+      id: '3',
+      image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+      alt: 'Emma Davis'
     }
   ] : []}
   sectionHeaderStackedProfilesText={searchParams.get('profilesText') || 'Handpicked by'}
   sectionHeaderShowCountdown={searchParams.get('showCountdown') === 'true'}
   sectionHeaderCountdown={searchParams.get('countdown') || undefined}
   sectionHeaderShowSponsorCount={searchParams.get('showSponsorCount') === 'true'}
+  // Pass icon from URL params - will need to be mapped to actual icon component in AliExpressHeader
+  {...(searchParams.get('icon') && { sectionHeaderIcon: searchParams.get('icon') })}
   // FIXED: Only show View All when no other right-side elements are present
   sectionHeaderViewAllLink={
-    (searchParams.get('showProfiles') !== 'true' && 
-     searchParams.get('showVerifiedSellers') !== 'true' && 
-     searchParams.get('showCountdown') !== 'true') 
-      ? "/vendors" 
+    (searchParams.get('showProfiles') !== 'true' &&
+     searchParams.get('showVerifiedSellers') !== 'true' &&
+     searchParams.get('showCountdown') !== 'true')
+      ? "/vendors"
       : undefined
   }
   sectionHeaderViewAllText="View All"
 />  )}
 
-      
+
 
         <main className="flex-grow relative">
           <Outlet />
@@ -327,19 +329,19 @@ function MainLayoutContent() {
         {/* Show IndexBottomNav only on specific paths defined in the component */}
         {/* Don't show IndexBottomNav when reels is opened in modal mode (with video parameter) */}
         {isMobile && (
-          pathname === '/for-you' || 
+          pathname === '/for-you' ||
           pathname === '/' ||
-          (pathname === '/reels' && !location.search.includes('video=')) || 
-          pathname === '/posts' || 
-          pathname === '/messages' || 
-          pathname === '/more-menu' || 
-          pathname === '/profile' || 
+          (pathname === '/reels' && !location.search.includes('video=')) ||
+          pathname === '/posts' ||
+          pathname === '/messages' ||
+          pathname === '/more-menu' ||
+          pathname === '/profile' ||
           pathname.startsWith('/profile/') ||
-          pathname === '/videos' || 
-          pathname === '/notifications' || 
-          pathname === '/bookmarks' || 
-          pathname === '/friends' || 
-          pathname === '/shopping' || 
+          pathname === '/videos' ||
+          pathname === '/notifications' ||
+          pathname === '/bookmarks' ||
+          pathname === '/friends' ||
+          pathname === '/shopping' ||
           pathname === '/settings' ||
           pathname === '/wallet' ||
           pathname === '/explore' ||

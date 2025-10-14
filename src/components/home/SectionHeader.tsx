@@ -69,6 +69,8 @@ export const serializeSectionHeaderProps = (props: {
   showSponsorCount?: boolean;
   showVerifiedSellers?: boolean;
   verifiedSellersText?: string;
+  icon?: React.ComponentType<{ className?: string }> | string;
+  verifiedIcon?: React.ComponentType<{ className?: string }>;
 }) => {
   const params = new URLSearchParams();
   
@@ -79,6 +81,16 @@ export const serializeSectionHeaderProps = (props: {
   if (props.showSponsorCount) params.set('showSponsorCount', 'true');
   if (props.showVerifiedSellers) params.set('showVerifiedSellers', 'true');
   if (props.verifiedSellersText) params.set('verifiedSellersText', props.verifiedSellersText);
+  
+  // Serialize icon names
+  if (props.icon) {
+    const iconName = typeof props.icon === 'string' ? props.icon : (props.icon as any).name || 'Tag';
+    params.set('icon', iconName);
+  }
+  if (props.verifiedIcon) {
+    const verifiedIconName = (props.verifiedIcon as any).name || 'ShieldCheck';
+    params.set('verifiedIcon', verifiedIconName);
+  }
   
   return params.toString();
 };
@@ -145,7 +157,9 @@ export default function SectionHeader({
       stackedProfilesText,
       showSponsorCount,
       showVerifiedSellers,
-      verifiedSellersText
+      verifiedSellersText,
+      icon,
+      verifiedIcon
     });
     const params = sectionProps ? `&${sectionProps}` : '';
     navigate(`/products?title=${encodeURIComponent(title)}${params}`);

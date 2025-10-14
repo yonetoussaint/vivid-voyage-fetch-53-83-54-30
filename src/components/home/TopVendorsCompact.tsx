@@ -460,15 +460,24 @@ const VendorCarousel: React.FC<VendorCarouselProps> = ({
     }
   }, [showSearchOverlay, categories, navigate, customTabs, onCustomTabChange, onCustomTabChange, handleSearchTabClick]); // Added dependencies
 
-  // Build navigation URL with verified sellers params
+  // Build navigation URL with verified sellers params and icon
   const buildNavigationUrl = (title: string) => {
     const params = new URLSearchParams();
     params.set('title', title);
+
+    // Pass icon name if available
+    if (icon) {
+      // Get icon name from the component
+      const iconName = icon.name || 'Trophy';
+      params.set('icon', iconName);
+    }
 
     if (showVerifiedSellers) {
       params.set('showVerifiedSellers', 'true');
       if (verifiedIcon) {
         params.set('verifiedSellersText', 'Verified Sellers');
+        const verifiedIconName = verifiedIcon.name || 'ShieldCheck';
+        params.set('verifiedIcon', verifiedIconName);
       }
     }
 
