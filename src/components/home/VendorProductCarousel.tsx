@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ThumbsUp, MessageCircle, MoreHorizontal, Store, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import SectionHeader from './SectionHeader';
+import SlideUpPanel from '@/components/shared/SlideUpPanel';
+import VendorPostComments from './VendorPostComments';
 
 const PostCard = ({
   title,
@@ -10,12 +12,14 @@ const PostCard = ({
   likeCount,
   commentCount,
   shareCount,
-  onProductClick
+  onProductClick,
+  postId
 }) => {
   const [liked, setLiked] = useState(false);
   const [selectedReaction, setSelectedReaction] = useState(null);
   const [showReactions, setShowReactions] = useState(false);
   const [currentLikeCount, setCurrentLikeCount] = useState(likeCount);
+  const [showCommentsPanel, setShowCommentsPanel] = useState(false);
   const carouselRef = useRef(null);
   const longPressTimer = useRef(null);
   const isLongPress = useRef(false);
@@ -93,7 +97,7 @@ const PostCard = ({
     }
   };
 
-  const handleComment = () => console.log('Comment clicked');
+  const handleComment = () => setShowCommentsPanel(true);
   const handleShare = () => console.log('Share clicked');
 
   // Handle clicks outside reactions overlay to dismiss it
@@ -387,6 +391,17 @@ const PostCard = ({
           </button>
         </div>
       </div>
+
+      {/* Comments Panel */}
+      <SlideUpPanel
+        isOpen={showCommentsPanel}
+        onClose={() => setShowCommentsPanel(false)}
+        title="Comments"
+        className="p-0"
+        preventBodyScroll={true}
+      >
+        <VendorPostComments postId={postId} />
+      </SlideUpPanel>
     </div>
   );
 };
@@ -605,6 +620,7 @@ const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
             commentCount={post.commentCount}
             shareCount={post.shareCount}
             onProductClick={onProductClick}
+            postId={post.id}
           />
         </div>
       ))}
