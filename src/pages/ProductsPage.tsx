@@ -8,10 +8,16 @@ export default function ProductsPage() {
   const searchParams = new URLSearchParams(location.search);
   const title = searchParams.get('title') || 'Products';
   const productType = searchParams.get('type');
-  const showCountdown = productType === 'flash'; // Show countdown for flash deals
+  const showCountdown = searchParams.get('showCountdown') === 'true' || productType === 'flash';
+  const countdown = searchParams.get('countdown') || undefined;
+  const showProfiles = searchParams.get('showProfiles') === 'true';
+  const profilesText = searchParams.get('profilesText') || 'Handpicked by';
+  const showSponsorCount = searchParams.get('showSponsorCount') === 'true';
+  const showVerifiedSellers = searchParams.get('showVerifiedSellers') === 'true';
+  const verifiedSellersText = searchParams.get('verifiedSellersText') || 'Verified Sellers';
 
   // Determine if we should show stacked profiles (not for Flash Deals)
-  const shouldShowStackedProfiles = title !== 'Flash Deals' && title !== 'FLASH DEALS';
+  const shouldShowStackedProfiles = showProfiles && title !== 'Flash Deals' && title !== 'FLASH DEALS';
   
   // Sample stacked profiles data
   const stackedProfiles = shouldShowStackedProfiles ? [
@@ -41,6 +47,13 @@ export default function ProductsPage() {
         showSummary={false}
         showFilters={false}
         showCountdown={showCountdown}
+        countdown={countdown}
+        showStackedProfiles={shouldShowStackedProfiles}
+        stackedProfiles={stackedProfiles}
+        stackedProfilesText={profilesText}
+        showSponsorCount={showSponsorCount}
+        showVerifiedSellers={showVerifiedSellers}
+        verifiedSellersText={verifiedSellersText}
       />
     </PageContainer>
   );
