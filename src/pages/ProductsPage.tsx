@@ -16,7 +16,7 @@ export default function ProductsPage() {
         productType={productType || undefined}
         showSectionHeader={false}
         showSummary={false}
-        showFilters={true}
+        showFilters={false}
       />
     </PageContainer>
   );
