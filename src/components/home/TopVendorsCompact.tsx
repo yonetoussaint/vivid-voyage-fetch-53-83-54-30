@@ -274,6 +274,9 @@ interface VendorCarouselProps {
   showBanner?: boolean;
   icon?: React.ComponentType<{ className?: string }>;
   showVerifiedSellers?: boolean;
+  verifiedIcon?: React.ComponentType<{ className?: string }>;
+  showTitleChevron?: boolean;
+  onTitleClick?: () => void;
 }
 
 // Main Carousel Component
@@ -286,7 +289,10 @@ const VendorCarousel: React.FC<VendorCarouselProps> = ({
   showSectionHeader = true,
   showBanner = false,
   icon,
-  showVerifiedSellers = false
+  showVerifiedSellers = false,
+  verifiedIcon,
+  showTitleChevron = false,
+  onTitleClick
 }) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
@@ -451,6 +457,9 @@ const VendorCarousel: React.FC<VendorCarouselProps> = ({
           viewAllText="View All"
           showVerifiedSellers={showVerifiedSellers}
           verifiedSellersText="Verified Sellers"
+          verifiedIcon={verifiedIcon}
+          showTitleChevron={showTitleChevron}
+          onTitleClick={onTitleClick}
         />
       )}
 

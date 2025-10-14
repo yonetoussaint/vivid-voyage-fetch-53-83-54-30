@@ -41,7 +41,8 @@ import {
   Laptop,
   Coffee,
   Clock,
-  History
+  History,
+  ShieldCheck
 } from "lucide-react";
 import { useLocation } from 'react-router-dom';
 
@@ -420,9 +421,12 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
         />
 
         <TopVendorsCompact 
-          title="Verified Sellers"
+          title="Top Vendors Today"
           icon={Trophy}
+          showTitleChevron={true}
+          onTitleClick={() => navigate('/vendors')}
           showVerifiedSellers={true}
+          verifiedIcon={ShieldCheck}
         />
 
         <TopVendorsCompact 
