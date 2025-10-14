@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllProducts } from "@/integrations/supabase/products";
-import PageSkeleton from "@/components/skeletons/PageSkeleton";
 import { PageContainer } from "@/components/layout/PageContainer";
 import SuperDealsSection from "@/components/home/SuperDealsSection";
 import FlashDeals from "@/components/home/FlashDeals";
@@ -217,9 +216,6 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
     };
   }, [setHeaderMode]);
 
-  if (isLoading) {
-    return <PageSkeleton />;
-  }
 
   // Define different posts for different sections
   const techPost = {
