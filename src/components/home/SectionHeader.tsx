@@ -54,6 +54,9 @@ interface SectionHeaderProps {
   paddingBottom?: boolean;
   // New prop for sponsor count display
   showSponsorCount?: boolean;
+  // New props for verified sellers display
+  showVerifiedSellers?: boolean;
+  verifiedSellersText?: string;
 }
 
 export default function SectionHeader({
@@ -99,7 +102,10 @@ export default function SectionHeader({
   // Padding bottom prop
   paddingBottom = true,
   // Sponsor count prop
-  showSponsorCount = false
+  showSponsorCount = false,
+  // Verified sellers props
+  showVerifiedSellers = false,
+  verifiedSellersText = "Verified Sellers"
 }: SectionHeaderProps) {
 
   const defaultViewAllText = viewAllText || 'View All';
@@ -250,6 +256,20 @@ export default function SectionHeader({
     );
   };
 
+  // Verified Sellers component
+  const VerifiedSellersDisplay = () => {
+    if (!showVerifiedSellers) return null;
+
+    return (
+      <div className="flex items-center gap-1">
+        <svg className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+        </svg>
+        <span className="text-xs text-gray-600 font-medium">{verifiedSellersText}</span>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col">
       {/* Vendor Header Section - Only shown when showVendorHeader is true */}
@@ -297,10 +317,12 @@ export default function SectionHeader({
             {/* First element (Title with Icon, optional Chevron) */}
             <TitleWithChevron />
 
-            {/* Last element (Countdown or Stacked Profiles or Clear button or Custom Button or View All) */}
+            {/* Last element (Countdown or Verified Sellers or Stacked Profiles or Clear button or Custom Button or View All) */}
             <div className="flex items-center gap-2">
               {showCountdown && countdown ? (
                 <CountdownDisplay />
+              ) : showVerifiedSellers ? (
+                <VerifiedSellersDisplay />
               ) : showStackedProfiles && stackedProfiles.length > 0 ? (
                 <StackedProfiles />
               ) : (
