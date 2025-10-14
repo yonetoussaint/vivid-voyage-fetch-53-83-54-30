@@ -13,9 +13,59 @@ const PostCard = ({
   onProductClick
 }) => {
   const [liked, setLiked] = useState(false);
+  const [selectedReaction, setSelectedReaction] = useState(null);
+  const [showReactions, setShowReactions] = useState(false);
+  const [currentLikeCount, setCurrentLikeCount] = useState(likeCount);
   const carouselRef = useRef(null);
+  const longPressTimer = useRef(null);
+  const isLongPress = useRef(false);
 
-  const handleLike = () => setLiked(!liked);
+  const reactions = [
+    { id: 'like', icon: <ThumbsUp className="h-5 w-5" />, bg: 'bg-blue-500', label: 'Like' },
+    { id: 'love', icon: <i className="fa-solid fa-heart text-lg"></i>, bg: 'bg-red-500', label: 'Love' },
+    { id: 'haha', emoji: '😆', label: 'Haha' },
+    { id: 'wow', emoji: '😮', label: 'Wow' },
+    { id: 'sad', emoji: '😢', label: 'Sad' },
+    { id: 'angry', emoji: '😠', label: 'Angry' }
+  ];
+
+  const handleLikePress = () => {
+    longPressTimer.current = setTimeout(() => {
+      isLongPress.current = true;
+      setShowReactions(true);
+    }, 500);
+  };
+
+  const handleLikeRelease = () => {
+    clearTimeout(longPressTimer.current);
+    
+    if (!isLongPress.current) {
+      // Quick click - toggle like
+      if (liked || selectedReaction) {
+        setLiked(false);
+        setSelectedReaction(null);
+        setCurrentLikeCount(prev => prev - 1);
+      } else {
+        setLiked(true);
+        setSelectedReaction('like');
+        setCurrentLikeCount(prev => prev + 1);
+      }
+    }
+    
+    isLongPress.current = false;
+  };
+
+  const handleReactionSelect = (reaction) => {
+    const wasLiked = liked || selectedReaction;
+    setSelectedReaction(reaction.id);
+    setLiked(reaction.id === 'like');
+    setShowReactions(false);
+    
+    if (!wasLiked) {
+      setCurrentLikeCount(prev => prev + 1);
+    }
+  };
+
   const handleComment = () => console.log('Comment clicked');
   const handleShare = () => console.log('Share clicked');
 
@@ -195,7 +245,7 @@ const PostCard = ({
             </div>
             <span className="text-lg leading-none z-10">😆</span>
           </div>
-          <span className="text-xs text-gray-500">{likeCount}</span>
+          <span className="text-xs text-gray-500">{currentLikeCount}</span>
         </div>
         <div className="flex items-center gap-3 text-xs text-gray-500">
           <span>{commentCount} comments</span>
@@ -204,16 +254,62 @@ const PostCard = ({
       </div>
 
       {/* Enhanced Social Buttons - Moved to Bottom */}
-      <div className="flex items-center justify-between px-1 py-1">
+      <div className="flex items-center justify-between px-1 py-1 relative">
+        {/* Reactions Overlay */}
+        {showReactions && (
+          <div className="absolute bottom-full left-0 mb-2 bg-white rounded-full shadow-lg border border-gray-200 px-2 py-2 flex gap-2 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+            {reactions.map((reaction) => (
+              <button
+                key={reaction.id}
+                onClick={() => handleReactionSelect(reaction)}
+                className="hover:scale-125 transition-transform duration-200 flex flex-col items-center"
+              >
+                {reaction.icon ? (
+                  <div className={`${reaction.bg} rounded-full p-2 text-white`}>
+                    {reaction.icon}
+                  </div>
+                ) : (
+                  <span className="text-2xl">{reaction.emoji}</span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="flex-1">
           <button
-            onClick={handleLike}
+            onMouseDown={handleLikePress}
+            onMouseUp={handleLikeRelease}
+            onMouseLeave={() => {
+              clearTimeout(longPressTimer.current);
+              isLongPress.current = false;
+            }}
+            onTouchStart={handleLikePress}
+            onTouchEnd={handleLikeRelease}
             className="flex items-center justify-center gap-1 group transition-colors w-full py-1.5 hover:bg-gray-100 rounded-md"
           >
-            <ThumbsUp className={`w-4 h-4 ${liked ? 'text-blue-500' : 'text-gray-600 group-hover:text-gray-800'}`} />
-            <span className={`text-xs ${liked ? 'font-medium text-blue-500' : 'text-gray-600 group-hover:text-gray-800'}`}>
-              Like
-            </span>
+            {selectedReaction && selectedReaction !== 'like' ? (
+              <>
+                {reactions.find(r => r.id === selectedReaction)?.emoji && (
+                  <span className="text-base">{reactions.find(r => r.id === selectedReaction)?.emoji}</span>
+                )}
+                {reactions.find(r => r.id === selectedReaction)?.icon && !reactions.find(r => r.id === selectedReaction)?.emoji && (
+                  <div className={`${reactions.find(r => r.id === selectedReaction)?.bg} rounded-full p-1`}>
+                    {reactions.find(r => r.id === selectedReaction)?.icon}
+                  </div>
+                )}
+                <span className={`text-xs font-medium ${selectedReaction === 'love' ? 'text-red-500' : selectedReaction === 'wow' ? 'text-yellow-500' : selectedReaction === 'sad' ? 'text-yellow-600' : 'text-orange-500'}`}>
+                  {reactions.find(r => r.id === selectedReaction)?.label}
+                </span>
+              </>
+            ) : (
+              <>
+                <ThumbsUp className={`w-4 h-4 ${liked ? 'text-blue-500' : 'text-gray-600 group-hover:text-gray-800'}`} />
+                <span className={`text-xs ${liked ? 'font-medium text-blue-500' : 'text-gray-600 group-hover:text-gray-800'}`}>
+                  Like
+                </span>
+              </>
+            )}
           </button>
         </div>
 
