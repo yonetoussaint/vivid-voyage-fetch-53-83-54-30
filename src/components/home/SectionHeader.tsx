@@ -50,6 +50,8 @@ interface SectionHeaderProps {
   // New props for title chevron
   showTitleChevron?: boolean;
   onTitleClick?: () => void;
+  // New prop for padding bottom
+  paddingBottom?: boolean;
 }
 
 export default function SectionHeader({
@@ -91,7 +93,9 @@ export default function SectionHeader({
   stackedProfilesText = "Handpicked by",
   // Title chevron props
   showTitleChevron = false,
-  onTitleClick
+  onTitleClick,
+  // Padding bottom prop
+  paddingBottom = true
 }: SectionHeaderProps) {
 
   const defaultViewAllText = viewAllText || 'View All';
@@ -262,7 +266,7 @@ export default function SectionHeader({
 
       {/* Original Header section with padding - Only shown when NOT showing vendor header */}
       {!showVendorHeader && (
-          <div className={` flex items-center px-2 mb-2 ${compact ? 'py-0' : 'py-0'}`}>
+          <div className={` flex items-center px-2 ${paddingBottom ? 'mb-2' : ''} ${compact ? 'py-0' : 'py-0'}`}>
           <div className="flex items-center justify-between w-full">
             {/* First element (Title with Icon, optional Chevron, and optional Countdown) */}
             <TitleWithChevron />

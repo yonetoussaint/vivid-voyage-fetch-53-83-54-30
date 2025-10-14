@@ -586,6 +586,7 @@ export default function AliExpressHeader({
             showStackedProfiles={sectionHeaderShowStackedProfiles}
             stackedProfiles={sectionHeaderStackedProfiles}
             stackedProfilesText={sectionHeaderStackedProfilesText}
+            paddingBottom={false}
             onProfileClick={(profileId) => {
               console.log('Profile clicked:', profileId);
             }}
