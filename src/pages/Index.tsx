@@ -437,7 +437,8 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
         {components.map((component, index) => (
           <React.Fragment key={`section-${index}`}>
             {component}
-            {renderVendorCarousel(index)}
+            {/* Show VendorProductCarousel after first FlashDeals (index 2) and then after every component */}
+            {index >= 2 && renderVendorCarousel(index)}
           </React.Fragment>
         ))}
       </div>
