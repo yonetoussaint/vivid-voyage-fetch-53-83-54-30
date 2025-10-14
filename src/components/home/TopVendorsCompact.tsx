@@ -447,7 +447,7 @@ const VendorCarousel: React.FC<VendorCarouselProps> = ({
         <SectionHeader
           title={title}
           icon={icon || Store}
-          viewAllLink={viewAllLink}
+          viewAllLink={showVerifiedSellers ? undefined : viewAllLink}
           viewAllText="View All"
           showVerifiedSellers={showVerifiedSellers}
           verifiedSellersText="Verified Sellers"
