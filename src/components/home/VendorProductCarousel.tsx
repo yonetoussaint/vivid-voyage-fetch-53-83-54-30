@@ -396,14 +396,19 @@ interface VendorProductCarouselProps {
   products: any[];
   onProductClick?: (productId: string) => void;
   posts?: any[]; // Allow passing custom posts
+  sellerId?: string; // Optional seller ID to filter posts
 }
 
 const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
   title,
   products,
   onProductClick,
-  posts: customPosts // Optional custom posts prop
+  posts: customPosts, // Optional custom posts prop
+  sellerId
 }) => {
+  const [posts, setPosts] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
   // Helper function to get seller logo URL from Supabase storage
   const getSellerLogoUrl = (imagePath?: string): string => {
     if (!imagePath) return "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face";
@@ -426,91 +431,148 @@ const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
     return data.publicUrl;
   };
 
-  const handleFollowClick = () => {
-    console.log('Follow button clicked for vendor');};
-  // Use custom posts if provided, otherwise use default posts
-  const posts = customPosts || [
-    {
-      id: 1,
-      vendorData: {
-        profilePic: getSellerLogoUrl("20250322_230219.jpg"),
-        vendorName: "Tech Store Pro",
-        isFollowing: false, // Add this to track initial follow state
-        verified: true,
-        followers: "12.5K",
-        publishedAt: "2024-01-15T10:30:00Z"
-      },
-      title: "Latest Tech Deals",
-      postDescription: "Check out our amazing deals on the latest gadgets! Perfect for tech enthusiasts and professionals. Limited time offers available now.",
-      displayProducts: [
-        {
-          id: 1,
-          image: getProductImageUrl("b6e05212-a0ba-4958-8b95-858f72d907a8/1753454025995-4-1000235215.webp"),
-          discount: "20%",
-          currentPrice: "$299",
-          originalPrice: "$399"
-        },
-        {
-          id: 2,
-          image: getProductImageUrl("b6e05212-a0ba-4958-8b95-858f72d907a8/1753454025995-3-1000235214.webp"),
-          discount: "15%",
-          currentPrice: "$599",
-          originalPrice: "$699"
+  // Fetch seller and products data from database
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch sellers with their products
+        let sellerQuery = supabase
+          .from('sellers')
+          .select(`
+            id,
+            name,
+            image_url,
+            verified,
+            followers_count,
+            created_at
+          `)
+          .eq('status', 'active')
+          .order('followers_count', { ascending: false })
+          .limit(3);
+
+        if (sellerId) {
+          sellerQuery = sellerQuery.eq('id', sellerId);
         }
-      ],
-      likeCount: 245,
-      commentCount: 32,
-      shareCount: 18
-    },
-    {
-      id: 2,
-      vendorData: {
-        profilePic: getSellerLogoUrl("20250322_230219.jpg"),
-        vendorName: "Fashion Forward",
-        verified: true,
-        followers: "8.3K",
-        publishedAt: "2024-01-14T15:45:00Z"
-      },
-      title: "Summer Collection 2024",
-      postDescription: "Discover our stunning summer collection! Fresh styles, vibrant colors, and comfortable fits for every occasion.",
-      displayProducts: [
-        {
-          id: 4,
-          image: getProductImageUrl("61aeccd8-b9e6-4ec3-be16-4d055de6ee37/1753453908730-0-1000235206.webp"),
-          discount: "30%",
-          currentPrice: "$79",
-          originalPrice: "$115"
+
+        const { data: sellers, error: sellerError } = await sellerQuery;
+
+        if (sellerError) throw sellerError;
+
+        if (!sellers || sellers.length === 0) {
+          setPosts([]);
+          setLoading(false);
+          return;
         }
-      ],
-      likeCount: 189,
-      commentCount: 24,
-      shareCount: 11
-    },
-    {
-      id: 3,
-      vendorData: {
-        profilePic: getSellerLogoUrl("20250322_230219.jpg"),
-        vendorName: "Home & Garden",
-        verified: false,
-        followers: "5.1K",
-        publishedAt: "2024-01-13T09:20:00Z"
-      },
-      title: "Transform Your Space",
-      postDescription: "Beautiful home decor items to transform your living space. Quality furniture and accessories at unbeatable prices.",
-      displayProducts: [
-        {
-          id: 6,
-          image: getProductImageUrl("c4e5f01a-b006-40e1-a5d6-6606876ee92a/1747588517198-0-happy valentine day.png"),
-          discount: "25%",
-          currentPrice: "$149",
-          originalPrice: "$199"
-        }
-      ],
-      likeCount: 156,
-      commentCount: 19,
-      shareCount: 7
+
+        // Fetch products for each seller
+        const postsData = await Promise.all(
+          sellers.map(async (seller) => {
+            const { data: sellerProducts, error: productsError } = await supabase
+              .from('products')
+              .select(`
+                id,
+                name,
+                description,
+                price,
+                discount_price,
+                product_images (
+                  id,
+                  src,
+                  alt
+                )
+              `)
+              .eq('seller_id', seller.id)
+              .eq('status', 'active')
+              .limit(5);
+
+            if (productsError) {
+              console.error('Error fetching products:', productsError);
+              return null;
+            }
+
+            if (!sellerProducts || sellerProducts.length === 0) {
+              return null;
+            }
+
+            // Calculate discount percentage
+            const displayProducts = sellerProducts.slice(0, 4).map(product => ({
+              id: product.id,
+              image: product.product_images?.[0]?.src ? 
+                getProductImageUrl(product.product_images[0].src) : 
+                getProductImageUrl(),
+              discount: product.discount_price ? 
+                `${Math.round(((product.price - product.discount_price) / product.price) * 100)}%` : 
+                null,
+              currentPrice: `$${product.discount_price || product.price}`,
+              originalPrice: product.discount_price ? `$${product.price}` : null
+            }));
+
+            return {
+              id: seller.id,
+              vendorData: {
+                profilePic: getSellerLogoUrl(seller.image_url),
+                vendorName: seller.name,
+                verified: seller.verified,
+                followers: seller.followers_count >= 1000 ? 
+                  `${(seller.followers_count / 1000).toFixed(1)}K` : 
+                  seller.followers_count.toString(),
+                publishedAt: seller.created_at
+              },
+              title: `${seller.name}'s Featured Products`,
+              postDescription: sellerProducts[0]?.description || 
+                `Check out our amazing products! High quality items at great prices.`,
+              displayProducts,
+              likeCount: Math.floor(Math.random() * 500) + 50,
+              commentCount: Math.floor(Math.random() * 100) + 10,
+              shareCount: Math.floor(Math.random() * 50) + 5
+            };
+          })
+        );
+
+        // Filter out null values
+        const validPosts = postsData.filter(post => post !== null);
+        setPosts(validPosts);
+      } catch (error) {
+        console.error('Error fetching vendor posts:', error);
+        setPosts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Use custom posts if provided, otherwise fetch from database
+    if (customPosts && customPosts.length > 0) {
+      setPosts(customPosts);
+      setLoading(false);
+    } else {
+      fetchData();
     }
-  ];
+  }, [sellerId, customPosts]);
+
+  const handleFollowClick = () => {
+    console.log('Follow button clicked for vendor');
+  };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="w-full bg-white mb-4">
+        <div className="p-4">
+          <div className="animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-1/3 mb-4"></div>
+            <div className="h-40 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show nothing if no posts
+  if (!posts || posts.length === 0) {
+    return null;
+  }
 
   // Show only the first post instead of carousel
   const currentPost = posts[0];
