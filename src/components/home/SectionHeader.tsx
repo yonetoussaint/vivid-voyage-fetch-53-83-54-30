@@ -363,11 +363,14 @@ export default function SectionHeader({
             <TitleWithChevron />
 
             {/* Last element (Countdown or Verified Sellers or Stacked Profiles or Clear button or Custom Button or View All) */}
+            
             <div className="flex items-center gap-2">
               {showCountdown && countdown ? (
                 <CountdownDisplay />
               ) : showStackedProfiles && stackedProfiles.length > 0 ? (
                 <StackedProfiles />
+              ) : showVerifiedSellers ? (
+                <VerifiedSellersDisplay />
               ) : (
                 <>
                   {showClearButton && onClearClick && (
@@ -378,9 +381,6 @@ export default function SectionHeader({
                       {clearButtonText}
                     </button>
                   )}
-
-                  {/* Show verified sellers indicator if enabled */}
-                  {showVerifiedSellers && <VerifiedSellersDisplay />}
 
                   {/* Show custom button if enabled, otherwise show regular view all link */}
                   {showCustomButton ? (
