@@ -296,6 +296,8 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
         <FlashDeals 
           title="SPONSORED DEALS"
           icon={Megaphone}
+          showTitleChevron={true}
+          onTitleClick={() => navigate('/products?title=SPONSORED DEALS')}
           showStackedProfiles={true}
           stackedProfiles={[
             { 
@@ -414,6 +416,8 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
         <FlashDeals 
           title="RECENTLY VIEWED"
           icon={History}
+          showTitleChevron={true}
+          onTitleClick={() => navigate('/products?title=RECENTLY VIEWED')}
         />
 
         <TopVendorsCompact 
@@ -442,6 +446,8 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
         <FlashDeals 
           title="NEW ARRIVALS"
           icon={Clock}
+          showTitleChevron={true}
+          onTitleClick={() => navigate('/products?title=NEW ARRIVALS')}
         />
 
         {products && products.length > 0 && (
@@ -451,6 +457,8 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
         <FlashDeals 
           title="BESTSELLERS"
           icon={Clock}
+          showTitleChevron={true}
+          onTitleClick={() => navigate('/products?title=BESTSELLERS')}
         />
 
         {/* Second Vendor Post */}
@@ -463,6 +471,8 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
         <FlashDeals 
           title="TODAY'S DEALS"
           icon={Clock}
+          showTitleChevron={true}
+          onTitleClick={() => navigate('/products?title=TODAY\'S DEALS')}
         />
 
         <MobileOptimizedReels />
@@ -470,6 +480,8 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
         <FlashDeals 
           title="TRENDING NOW"
           icon={Clock}
+          showTitleChevron={true}
+          onTitleClick={() => navigate('/products?title=TRENDING NOW')}
         />
 
         <HeroBanner asCarousel={true} />
@@ -477,6 +489,8 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
         <FlashDeals 
           title="STAFF PICKS"
           icon={Clock}
+          showTitleChevron={true}
+          onTitleClick={() => navigate('/products?title=STAFF PICKS')}
         />
 
         {/* Third Vendor Post (uses default post) */}
@@ -494,6 +508,8 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
         <FlashDeals 
           title="STAFF PICKS"
           icon={Clock}
+          showTitleChevron={true}
+          onTitleClick={() => navigate('/products?title=STAFF PICKS')}
         />
       </div>
     </PageContainer>
