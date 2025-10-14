@@ -278,8 +278,8 @@ function MainLayoutContent() {
             } : undefined}
             showSectionHeader={isProductsPage}
             sectionHeaderTitle={productsTitle}
-            sectionHeaderShowStackedProfiles={isProductsPage && productsTitle !== 'Flash Deals' && productsTitle !== 'FLASH DEALS' && productsTitle === 'SPONSORED DEALS'}
-            sectionHeaderStackedProfiles={isProductsPage && productsTitle === 'SPONSORED DEALS' ? [
+            sectionHeaderShowStackedProfiles={searchParams.get('showProfiles') === 'true'}
+            sectionHeaderStackedProfiles={searchParams.get('showProfiles') === 'true' ? [
               { 
                 id: '1', 
                 image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face', 
@@ -296,10 +296,10 @@ function MainLayoutContent() {
                 alt: 'Emma Davis' 
               }
             ] : []}
-            sectionHeaderStackedProfilesText={productsTitle === 'SPONSORED DEALS' ? 'Partners' : 'Handpicked by'}
-            sectionHeaderShowCountdown={searchParams.get('type') === 'flash'}
+            sectionHeaderStackedProfilesText={searchParams.get('profilesText') || 'Handpicked by'}
+            sectionHeaderShowCountdown={searchParams.get('showCountdown') === 'true'}
             sectionHeaderCountdown={searchParams.get('countdown') || undefined}
-            sectionHeaderShowSponsorCount={productsTitle === 'SPONSORED DEALS'}
+            sectionHeaderShowSponsorCount={searchParams.get('showSponsorCount') === 'true'}
           />
         )}
 

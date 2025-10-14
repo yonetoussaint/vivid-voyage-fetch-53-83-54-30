@@ -285,7 +285,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
           showCountdown={true}
           icon={Tag}
           showTitleChevron={true}
-          onTitleClick={() => navigate('/products?title=Flash Deals&type=flash')}
+          onTitleClick={() => navigate('/products?title=Flash Deals&type=flash&showCountdown=true')}
         />
         <MobileOptimizedReels 
           showCustomButton={true}
@@ -297,7 +297,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
           title="SPONSORED DEALS"
           icon={Megaphone}
           showTitleChevron={true}
-          onTitleClick={() => navigate('/products?title=SPONSORED DEALS')}
+          onTitleClick={() => navigate('/products?title=SPONSORED DEALS&showProfiles=true&showSponsorCount=true&profilesText=Partners')}
           showStackedProfiles={true}
           stackedProfiles={[
             { 
@@ -373,7 +373,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   showStackedProfiles={true}
           icon={Pin}
           showTitleChevron={true}
-          onTitleClick={() => navigate('/products?title=Editor\'s PICKS')}
+          onTitleClick={() => navigate('/products?title=Editor\'s PICKS&showProfiles=true&profilesText=Handpicked by')}
   stackedProfiles={[
     { 
       id: '1', 
