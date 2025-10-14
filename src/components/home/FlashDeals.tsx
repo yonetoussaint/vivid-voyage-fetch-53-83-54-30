@@ -3,9 +3,10 @@ import { useState, useEffect, useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
 import { fetchFlashDeals, trackProductView } from "@/integrations/supabase/products";
-import SectionHeader from "./SectionHeader";
+import SectionHeader, { serializeSectionHeaderProps } from "./SectionHeader";
 import ProductSemiPanel from "./ProductSemiPanel";
 import { useScreenOverlay } from "@/context/ScreenOverlayContext";
+import { useNavigate } from "react-router-dom";
 
 interface FlashDealsProps {
   productType?: string;
@@ -57,6 +58,20 @@ export default function FlashDeals({
   const isMobile = useIsMobile();
   const scrollRef = useRef(null);
   const { setHasActiveOverlay } = useScreenOverlay();
+  const navigate = useNavigate();
+
+  // Create dynamic title click handler if showTitleChevron is true but no onTitleClick provided
+  const handleTitleClick = onTitleClick || (showTitleChevron ? () => {
+    const sectionProps = serializeSectionHeaderProps({
+      showCountdown,
+      countdown: displayCountdown,
+      showStackedProfiles,
+      stackedProfilesText,
+      showSponsorCount
+    });
+    const params = sectionProps ? `&${sectionProps}` : '';
+    navigate(`/products?title=${encodeURIComponent(title)}${params}`);
+  } : undefined);
 
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -168,7 +183,7 @@ export default function FlashDeals({
             maxProfiles={maxProfiles}
             // New title chevron props
             showTitleChevron={showTitleChevron}
-            onTitleClick={onTitleClick}
+            onTitleClick={handleTitleClick}
             // Sponsor count prop
             showSponsorCount={showSponsorCount}
           />

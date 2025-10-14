@@ -60,6 +60,29 @@ interface SectionHeaderProps {
   verifiedIcon?: React.ComponentType<{ className?: string }>;
 }
 
+// Helper function to serialize section header props to URL params
+export const serializeSectionHeaderProps = (props: {
+  showCountdown?: boolean;
+  countdown?: string;
+  showStackedProfiles?: boolean;
+  stackedProfilesText?: string;
+  showSponsorCount?: boolean;
+  showVerifiedSellers?: boolean;
+  verifiedSellersText?: string;
+}) => {
+  const params = new URLSearchParams();
+  
+  if (props.showCountdown) params.set('showCountdown', 'true');
+  if (props.countdown) params.set('countdown', props.countdown);
+  if (props.showStackedProfiles) params.set('showProfiles', 'true');
+  if (props.stackedProfilesText) params.set('profilesText', props.stackedProfilesText);
+  if (props.showSponsorCount) params.set('showSponsorCount', 'true');
+  if (props.showVerifiedSellers) params.set('showVerifiedSellers', 'true');
+  if (props.verifiedSellersText) params.set('verifiedSellersText', props.verifiedSellersText);
+  
+  return params.toString();
+};
+
 export default function SectionHeader({
   title,
   subtitle,
