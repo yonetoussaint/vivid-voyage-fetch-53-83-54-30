@@ -187,9 +187,15 @@ const PostCard = ({
       <div className="px-3 py-1.5 flex items-center justify-between border-b border-gray-100">
         <div className="flex items-center gap-1">
           <div className="flex items-center -space-x-1">
-            <span className="text-lg leading-none border-2 border-white rounded-full z-30">👍</span>
-            <span className="text-lg leading-none border-2 border-white rounded-full z-20">❤️</span>
-            <span className="text-lg leading-none border-2 border-white rounded-full z-10">😆</span>
+            <div className="bg-blue-500 rounded-full p-0.5 w-5 h-5 flex items-center justify-center border border-white z-30">
+              <span className="text-sm">👍</span>
+            </div>
+            <div className="bg-red-500 rounded-full p-0.5 w-5 h-5 flex items-center justify-center border border-white z-20">
+              <span className="text-sm">❤️</span>
+            </div>
+            <div className="bg-yellow-400 rounded-full p-0.5 w-5 h-5 flex items-center justify-center border border-white z-10">
+              <span className="text-sm">😆</span>
+            </div>
           </div>
           <span className="text-xs text-gray-500">{likeCount}</span>
         </div>
