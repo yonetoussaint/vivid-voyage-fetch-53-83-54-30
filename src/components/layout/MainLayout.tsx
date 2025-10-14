@@ -278,8 +278,8 @@ function MainLayoutContent() {
             } : undefined}
             showSectionHeader={isProductsPage}
             sectionHeaderTitle={productsTitle}
-            sectionHeaderShowStackedProfiles={productsTitle !== 'Flash Deals' && productsTitle !== 'FLASH DEALS'}
-            sectionHeaderStackedProfiles={[
+            sectionHeaderShowStackedProfiles={isProductsPage && productsTitle !== 'Flash Deals' && productsTitle !== 'FLASH DEALS'}
+            sectionHeaderStackedProfiles={isProductsPage && productsTitle !== 'Flash Deals' && productsTitle !== 'FLASH DEALS' ? [
               { 
                 id: '1', 
                 image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face', 
@@ -295,7 +295,7 @@ function MainLayoutContent() {
                 image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face', 
                 alt: 'Emma Davis' 
               }
-            ]}
+            ] : []}
             sectionHeaderStackedProfilesText="Handpicked by"
             sectionHeaderShowCountdown={searchParams.get('type') === 'flash'}
             sectionHeaderCountdown={searchParams.get('countdown') || undefined}
