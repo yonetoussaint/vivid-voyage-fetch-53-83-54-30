@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { ThumbsUp, MessageSquare, Share, MoreHorizontal, Store, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ThumbsUp, MessageCircle, MoreHorizontal, Store, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import SectionHeader from './SectionHeader';
 
@@ -186,8 +186,16 @@ const PostCard = ({
       {/* Facebook style engagement stats */}
       <div className="px-3 py-1.5 flex items-center justify-between border-b border-gray-100">
         <div className="flex items-center gap-1">
-          <div className="bg-blue-500 rounded-full p-0.5">
-            <ThumbsUp className="h-2.5 w-2.5 text-white" />
+          <div className="flex items-center -space-x-1">
+            <div className="bg-blue-500 rounded-full p-0.5 w-5 h-5 flex items-center justify-center border border-white z-30">
+              <span className="text-[10px]">👍</span>
+            </div>
+            <div className="bg-red-500 rounded-full p-0.5 w-5 h-5 flex items-center justify-center border border-white z-20">
+              <span className="text-[10px]">❤️</span>
+            </div>
+            <div className="bg-yellow-400 rounded-full p-0.5 w-5 h-5 flex items-center justify-center border border-white z-10">
+              <span className="text-[10px]">😆</span>
+            </div>
           </div>
           <span className="text-xs text-gray-500">{likeCount}</span>
         </div>
@@ -216,7 +224,7 @@ const PostCard = ({
             onClick={handleComment}
             className="flex items-center justify-center gap-1 group transition-colors w-full py-1.5 hover:bg-gray-100 rounded-md"
           >
-            <MessageSquare className="w-4 h-4 text-gray-600 group-hover:text-gray-800" />
+            <MessageCircle className="w-4 h-4 text-gray-600 group-hover:text-gray-800" />
             <span className="text-xs text-gray-600 group-hover:text-gray-800">
               Comment
             </span>
@@ -228,7 +236,7 @@ const PostCard = ({
             onClick={handleShare}
             className="flex items-center justify-center gap-1 group transition-colors w-full py-1.5 hover:bg-gray-100 rounded-md"
           >
-            <Share className="w-4 h-4 text-gray-600 group-hover:text-gray-800" />
+            <i className="fa-solid fa-share w-4 h-4 text-gray-600 group-hover:text-gray-800 flex items-center justify-center"></i>
             <span className="text-xs text-gray-600 group-hover:text-gray-800">
               Share
             </span>
