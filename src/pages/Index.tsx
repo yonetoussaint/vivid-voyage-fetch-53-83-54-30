@@ -269,7 +269,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   };
 
   return (
-    <PageContainer padding="none" className="overflow-hidden pb-16 relative">
+    <PageContainer padding="none" className="overflow-hidden relative">
       <div className="space-y-2">
 
         {/* Hero Banner with news ticker */}
