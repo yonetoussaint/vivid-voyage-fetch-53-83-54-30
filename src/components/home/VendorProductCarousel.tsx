@@ -584,29 +584,31 @@ const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
     return null;
   }
 
-  // Show only the first post instead of carousel
-  const currentPost = posts[0];
-
+  // Display all posts from the database
   return (
-    <div className="w-full bg-white mb-4">
-      {/* SectionHeader for the post with vendor data */}
-      <SectionHeader
-        title={currentPost.title}
-        showVendorHeader={true}
-        vendorData={currentPost.vendorData}
-        onFollowClick={handleFollowClick}
-      />
+    <>
+      {posts.map((post) => (
+        <div key={post.id} className="w-full bg-white mb-4">
+          {/* SectionHeader for the post with vendor data */}
+          <SectionHeader
+            title={post.title}
+            showVendorHeader={true}
+            vendorData={post.vendorData}
+            onFollowClick={handleFollowClick}
+          />
 
-      <PostCard
-        title={currentPost.title}
-        postDescription={currentPost.postDescription}
-        displayProducts={currentPost.displayProducts}
-        likeCount={currentPost.likeCount}
-        commentCount={currentPost.commentCount}
-        shareCount={currentPost.shareCount}
-        onProductClick={onProductClick}
-      />
-    </div>
+          <PostCard
+            title={post.title}
+            postDescription={post.postDescription}
+            displayProducts={post.displayProducts}
+            likeCount={post.likeCount}
+            commentCount={post.commentCount}
+            shareCount={post.shareCount}
+            onProductClick={onProductClick}
+          />
+        </div>
+      ))}
+    </>
   );
 };
 
