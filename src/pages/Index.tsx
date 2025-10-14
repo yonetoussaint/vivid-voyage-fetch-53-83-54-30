@@ -25,6 +25,7 @@ import {
   Shirt,
   Baby,
   Home,
+  Megaphone,
   Dumbbell,
   Sparkles,
   Car,
@@ -296,7 +297,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
         />
         <FlashDeals 
           title="SPONSORED DEALS"
-          icon={Clock}
+          icon={Megaphone}
           showStackedProfiles={true}
           stackedProfiles={[
             { 
