@@ -217,69 +217,15 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   }, [setHeaderMode]);
 
 
-  // Define different posts for different sections
-  const techPost = {
-    id: 1,
-    vendorData: {
-      profilePic: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-      vendorName: "Tech Store Pro",
-      verified: true,
-      followers: "12.5K",
-      publishedAt: "2024-01-15T10:30:00Z"
-    },
-    title: "Latest Tech Deals",
-    postDescription: "Check out our amazing deals on the latest gadgets! Perfect for tech enthusiasts and professionals.",
-    displayProducts: [
-      {
-        id: 1,
-        image: "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=300&h=300&fit=crop",
-        discount: "20%",
-        currentPrice: "$299",
-        originalPrice: "$399"
-      }
-    ],
-    likeCount: 245,
-    commentCount: 32,
-    shareCount: 18
-  };
-
-  const fashionPost = {
-    id: 2,
-    vendorData: {
-      profilePic: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
-      vendorName: "Fashion Forward",
-      verified: true,
-      followers: "8.3K",
-      publishedAt: "2024-01-14T15:45:00Z"
-    },
-    title: "Summer Collection 2024",
-    postDescription: "Discover our stunning summer collection! Fresh styles, vibrant colors, and comfortable fits.",
-    displayProducts: [
-      {
-        id: 4,
-        image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&h=300&fit=crop",
-        discount: "30%",
-        currentPrice: "$79",
-        originalPrice: "$115"
-      }
-    ],
-    likeCount: 189,
-    commentCount: 24,
-    shareCount: 11
-  };
-
-  // Helper function to render VendorProductCarousel with cycling posts
+  // Helper function to render VendorProductCarousel with real data from database
   const renderVendorCarousel = (index: number) => {
-    const posts = [techPost, fashionPost];
-    const post = posts[index % posts.length];
     const productSlice = products?.slice((index * 5) % (products?.length || 20), ((index * 5) + 5) % (products?.length || 20)) || [];
     
     return (
       <VendorProductCarousel
         key={`vendor-${index}`}
-        title={post.title}
+        title="Featured Products"
         products={productSlice}
-        posts={[post]}
       />
     );
   };
