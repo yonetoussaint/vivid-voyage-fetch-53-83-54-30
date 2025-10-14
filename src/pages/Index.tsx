@@ -421,7 +421,6 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
           title="Top Vendors Today"
           icon={Trophy}
           showTitleChevron={true}
-          onTitleClick={() => navigate('/products?title=Top Vendors Today')}
           showVerifiedSellers={true}
           verifiedIcon={ShieldCheck}
         />
