@@ -38,6 +38,7 @@ interface GenreFlashDealsProps {
   icon?: React.ComponentType<any>;
   customCountdown?: string;
   showCountdown?: boolean;
+  passCountdownToHeader?: boolean;
 }
 
 interface SummaryStats {

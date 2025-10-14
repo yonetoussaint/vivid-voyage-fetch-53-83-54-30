@@ -285,6 +285,8 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
         <FlashDeals
           showCountdown={true}
           icon={Tag}
+          showTitleChevron={true}
+          onTitleClick={() => navigate('/products?title=Flash Deals&type=flash')}
         />
         <MobileOptimizedReels 
           showCustomButton={true}

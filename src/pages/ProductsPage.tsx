@@ -8,6 +8,7 @@ export default function ProductsPage() {
   const searchParams = new URLSearchParams(location.search);
   const title = searchParams.get('title') || 'Products';
   const productType = searchParams.get('type');
+  const showCountdown = productType === 'flash'; // Show countdown for flash deals
 
   return (
     <PageContainer padding="none" className="min-h-screen bg-gray-50">
@@ -17,6 +18,7 @@ export default function ProductsPage() {
         showSectionHeader={false}
         showSummary={false}
         showFilters={false}
+        showCountdown={showCountdown}
       />
     </PageContainer>
   );

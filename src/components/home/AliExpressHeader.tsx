@@ -44,6 +44,8 @@ interface AliExpressHeaderProps {
   sectionHeaderShowStackedProfiles?: boolean;
   sectionHeaderStackedProfiles?: Array<{ id: string; image: string; alt?: string }>;
   sectionHeaderStackedProfilesText?: string;
+  sectionHeaderShowCountdown?: boolean;
+  sectionHeaderCountdown?: string; // Added for countdown
 }
 
 export default function AliExpressHeader({ 
@@ -63,7 +65,9 @@ export default function AliExpressHeader({
   sectionHeaderTitle = '',
   sectionHeaderShowStackedProfiles = false,
   sectionHeaderStackedProfiles = [],
-  sectionHeaderStackedProfilesText = "Handpicked by"
+  sectionHeaderStackedProfilesText = "Handpicked by",
+  sectionHeaderShowCountdown = false, // Added for countdown
+  sectionHeaderCountdown, // Added for countdown
 }: AliExpressHeaderProps) {
   const { progress } = useScrollProgress();
   const { currentLanguage, setLanguage, supportedLanguages, currentLocation } = useLanguageSwitcher();
@@ -135,7 +139,7 @@ export default function AliExpressHeader({
 
   // Determine which tabs to show based on search overlay state or custom tabs
   const tabsToShow = customTabs || (showSearchOverlay ? searchTabs : categories);
-  
+
   // Generate a unique key for CategoryTabs based on the actual tabs being displayed
   const categoryTabsKey = tabsToShow.map(tab => tab.id).join('-');
 
@@ -579,19 +583,21 @@ export default function AliExpressHeader({
 
       {/* Conditional rendering: SectionHeader, ProductFilterBar or CategoryTabs */}
       {showSectionHeader ? (
-        
+
           <SectionHeader
             title={sectionHeaderTitle}
             titleSize="base"
             showStackedProfiles={sectionHeaderShowStackedProfiles}
             stackedProfiles={sectionHeaderStackedProfiles}
             stackedProfilesText={sectionHeaderStackedProfilesText}
+            showCountdown={sectionHeaderShowCountdown} // Pass countdown visibility
+            countdown={sectionHeaderCountdown} // Pass countdown value
             paddingBottom={false}
             onProfileClick={(profileId) => {
               console.log('Profile clicked:', profileId);
             }}
           />
-      
+
       ) : showCategoryTabs && (
         <div className="relative overflow-hidden">
           {showFilterBar ? (

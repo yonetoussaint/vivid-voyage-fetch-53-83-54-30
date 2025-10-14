@@ -278,7 +278,7 @@ function MainLayoutContent() {
             } : undefined}
             showSectionHeader={isProductsPage}
             sectionHeaderTitle={productsTitle}
-            sectionHeaderShowStackedProfiles={true}
+            sectionHeaderShowStackedProfiles={productsTitle !== 'Flash Deals'}
             sectionHeaderStackedProfiles={[
               { 
                 id: '1', 
@@ -297,6 +297,8 @@ function MainLayoutContent() {
               }
             ]}
             sectionHeaderStackedProfilesText="Handpicked by"
+            sectionHeaderShowCountdown={searchParams.get('type') === 'flash'}
+            sectionHeaderCountdown={searchParams.get('countdown') || undefined}
           />
         )}
 
