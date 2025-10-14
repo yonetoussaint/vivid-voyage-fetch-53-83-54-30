@@ -586,7 +586,7 @@ export default function AliExpressHeader({
 
           <SectionHeader
             title={sectionHeaderTitle}
-            titleSize="base"
+            titleSize="sm"
             showStackedProfiles={sectionHeaderShowStackedProfiles}
             stackedProfiles={sectionHeaderStackedProfiles}
             stackedProfilesText={sectionHeaderStackedProfilesText}
