@@ -212,7 +212,7 @@ export default function SectionHeader({
 
     // If customButtonIcon is a React component (Lucide icon), render as component
     const CustomIconComponent = customButtonIcon;
-    return <CustomIconComponent className="h-3.5 w-3.5 mr-1" fill="currentColor" />;
+    return <CustomIconComponent className="h-3.5 w-3.5 mr-1" />;
   };
 
   // Stacked profiles component
@@ -288,9 +288,7 @@ export default function SectionHeader({
     return (
       <div className="flex items-center gap-1.5">
         <span className="text-xs text-gray-600 font-medium">Ends in</span>
-        <span className={`font-mono font-bold transition-colors duration-300 ${
-          countdown < 10 ? 'text-red-600 animate-bounce' : 'text-red-500'
-        } text-sm`}>
+        <span className="font-mono font-bold transition-colors duration-300 text-red-500 text-sm">
           {countdown}
         </span>
       </div>
@@ -368,8 +366,6 @@ export default function SectionHeader({
             <div className="flex items-center gap-2">
               {showCountdown && countdown ? (
                 <CountdownDisplay />
-              ) : showVerifiedSellers ? (
-                <VerifiedSellersDisplay />
               ) : showStackedProfiles && stackedProfiles.length > 0 ? (
                 <StackedProfiles />
               ) : (
@@ -382,6 +378,9 @@ export default function SectionHeader({
                       {clearButtonText}
                     </button>
                   )}
+
+                  {/* Show verified sellers indicator if enabled */}
+                  {showVerifiedSellers && <VerifiedSellersDisplay />}
 
                   {/* Show custom button if enabled, otherwise show regular view all link */}
                   {showCustomButton ? (
