@@ -431,50 +431,59 @@ const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
     return data.publicUrl;
   };
 
-  // Fetch seller and products data from database
+  // Fetch seller posts and products data from database
   React.useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         
-        // Fetch sellers with their products
-        let sellerQuery = supabase
-          .from('sellers')
+        // Fetch seller posts with seller information
+        let postsQuery = supabase
+          .from('seller_posts')
           .select(`
             id,
-            name,
-            image_url,
-            verified,
-            followers_count,
-            created_at
+            seller_id,
+            title,
+            description,
+            product_ids,
+            like_count,
+            comment_count,
+            share_count,
+            created_at,
+            sellers (
+              id,
+              name,
+              image_url,
+              verified,
+              followers_count
+            )
           `)
-          .eq('status', 'active')
-          .order('followers_count', { ascending: false })
-          .limit(3);
+          .order('created_at', { ascending: false })
+          .limit(10);
 
         if (sellerId) {
-          sellerQuery = sellerQuery.eq('id', sellerId);
+          postsQuery = postsQuery.eq('seller_id', sellerId);
         }
 
-        const { data: sellers, error: sellerError } = await sellerQuery;
+        const { data: sellerPosts, error: postsError } = await postsQuery;
 
-        if (sellerError) throw sellerError;
+        if (postsError) throw postsError;
 
-        if (!sellers || sellers.length === 0) {
+        if (!sellerPosts || sellerPosts.length === 0) {
           setPosts([]);
           setLoading(false);
           return;
         }
 
-        // Fetch products for each seller
+        // Fetch products for each post
         const postsData = await Promise.all(
-          sellers.map(async (seller) => {
-            const { data: sellerProducts, error: productsError } = await supabase
+          sellerPosts.map(async (post) => {
+            // Fetch products referenced in the post
+            const { data: postProducts, error: productsError } = await supabase
               .from('products')
               .select(`
                 id,
                 name,
-                description,
                 price,
                 discount_price,
                 product_images (
@@ -483,7 +492,7 @@ const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
                   alt
                 )
               `)
-              .eq('seller_id', seller.id)
+              .in('id', post.product_ids || [])
               .eq('status', 'active')
               .limit(5);
 
@@ -492,12 +501,12 @@ const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
               return null;
             }
 
-            if (!sellerProducts || sellerProducts.length === 0) {
+            if (!postProducts || postProducts.length === 0) {
               return null;
             }
 
-            // Calculate discount percentage
-            const displayProducts = sellerProducts.slice(0, 4).map(product => ({
+            // Calculate discount percentage and format products
+            const displayProducts = postProducts.slice(0, 5).map(product => ({
               id: product.id,
               image: product.product_images?.[0]?.src ? 
                 getProductImageUrl(product.product_images[0].src) : 
@@ -509,24 +518,25 @@ const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
               originalPrice: product.discount_price ? `$${product.price}` : null
             }));
 
+            const seller = post.sellers;
+            
             return {
-              id: seller.id,
+              id: post.id,
               vendorData: {
-                profilePic: getSellerLogoUrl(seller.image_url),
-                vendorName: seller.name,
-                verified: seller.verified,
-                followers: seller.followers_count >= 1000 ? 
+                profilePic: getSellerLogoUrl(seller?.image_url),
+                vendorName: seller?.name || 'Unknown Seller',
+                verified: seller?.verified || false,
+                followers: seller?.followers_count >= 1000 ? 
                   `${(seller.followers_count / 1000).toFixed(1)}K` : 
-                  seller.followers_count.toString(),
-                publishedAt: seller.created_at
+                  seller?.followers_count?.toString() || '0',
+                publishedAt: post.created_at
               },
-              title: `${seller.name}'s Featured Products`,
-              postDescription: sellerProducts[0]?.description || 
-                `Check out our amazing products! High quality items at great prices.`,
+              title: post.title,
+              postDescription: post.description || 'Check out our amazing products!',
               displayProducts,
-              likeCount: Math.floor(Math.random() * 500) + 50,
-              commentCount: Math.floor(Math.random() * 100) + 10,
-              shareCount: Math.floor(Math.random() * 50) + 5
+              likeCount: post.like_count || 0,
+              commentCount: post.comment_count || 0,
+              shareCount: post.share_count || 0
             };
           })
         );
@@ -535,7 +545,7 @@ const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
         const validPosts = postsData.filter(post => post !== null);
         setPosts(validPosts);
       } catch (error) {
-        console.error('Error fetching vendor posts:', error);
+        console.error('Error fetching seller posts:', error);
         setPosts([]);
       } finally {
         setLoading(false);
