@@ -302,6 +302,8 @@ function MainLayoutContent() {
             sectionHeaderShowCountdown={searchParams.get('showCountdown') === 'true'}
             sectionHeaderCountdown={searchParams.get('countdown') || undefined}
             sectionHeaderShowSponsorCount={searchParams.get('showSponsorCount') === 'true'}
+            sectionHeaderViewAllLink="/vendors"
+            sectionHeaderViewAllText="View All"
           />
         )}
 

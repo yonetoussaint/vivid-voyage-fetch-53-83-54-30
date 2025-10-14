@@ -41,6 +41,8 @@ interface AliExpressHeaderProps {
   onCustomTabChange?: (tabId: string) => void;
   showSectionHeader?: boolean;
   sectionHeaderTitle?: string;
+  sectionHeaderViewAllLink?: string;
+  sectionHeaderViewAllText?: string;
   sectionHeaderShowStackedProfiles?: boolean;
   sectionHeaderStackedProfiles?: Array<{ id: string; image: string; alt?: string }>;
   sectionHeaderStackedProfilesText?: string;
@@ -66,6 +68,8 @@ export default function AliExpressHeader({
   onCustomTabChange,
   showSectionHeader = false,
   sectionHeaderTitle = '',
+  sectionHeaderViewAllLink,
+  sectionHeaderViewAllText = 'View All',
   sectionHeaderShowStackedProfiles = false,
   sectionHeaderStackedProfiles = [],
   sectionHeaderStackedProfilesText = "Handpicked by",
@@ -593,6 +597,8 @@ export default function AliExpressHeader({
           <SectionHeader
             title={sectionHeaderTitle}
             titleSize="sm"
+            viewAllLink={sectionHeaderViewAllLink}
+            viewAllText={sectionHeaderViewAllText}
             showStackedProfiles={sectionHeaderShowStackedProfiles}
             stackedProfiles={sectionHeaderStackedProfiles}
             stackedProfilesText={sectionHeaderStackedProfilesText}
