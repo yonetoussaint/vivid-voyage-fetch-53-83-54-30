@@ -23,7 +23,8 @@ import {
   Pen,
   GripVertical,
   Check,
-  Grid3x3
+  Grid3x3,
+  ChevronUp
 } from 'lucide-react';
 import SectionHeader from "./SectionHeader";
 import SlideUpPanel from '@/components/shared/SlideUpPanel';
@@ -147,6 +148,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [showGridView, setShowGridView] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
   // Default categories structure
   const defaultCategories: Category[] = [
@@ -254,28 +256,28 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
   // Initialize categories from cache if available
   const getCachedCategories = (): Category[] => {
     if (!user) return defaultCategories;
-    
+
     try {
       const cached = localStorage.getItem(`shortcut-order-${user.id}`);
       if (cached) {
         const cachedOrder = JSON.parse(cached) as string[];
         const ordered: Category[] = [];
-        
+
         cachedOrder.forEach(categoryId => {
           const cat = defaultCategories.find(c => c.id === categoryId);
           if (cat) ordered.push(cat);
         });
-        
+
         const remaining = defaultCategories.filter(
           cat => !cachedOrder.includes(cat.id)
         );
-        
+
         return [...ordered, ...remaining];
       }
     } catch (error) {
       console.error('Error loading cached categories:', error);
     }
-    
+
     return defaultCategories;
   };
 
@@ -355,7 +357,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
         .select('shortcuts_order')
         .eq('user_id', user!.id)
         .maybeSingle();
-      
+
       if (error) throw error;
       return (data?.shortcuts_order as string[]) || null;
     },
@@ -366,7 +368,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
   // Helper function to get count for specific category
   const getCountForCategory = (categoryId: string): number => {
     if (!userCounts) return 0;
-    
+
     switch (categoryId) {
       case 'wishlist':
         return userCounts.wishlist ?? 0;
@@ -438,7 +440,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       try {
         const cached = localStorage.getItem(`shortcut-order-${user.id}`);
         const cachedOrder = cached ? JSON.parse(cached) : null;
-        
+
         // Only reorder if server preferences differ from cached
         if (JSON.stringify(cachedOrder) !== JSON.stringify(userPreferences)) {
           const ordered: Category[] = [];
@@ -453,7 +455,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
 
           const newCategories = [...ordered, ...remaining];
           setCategories(newCategories);
-          
+
           // Update cache
           localStorage.setItem(`shortcut-order-${user.id}`, JSON.stringify(userPreferences));
         } else {
@@ -547,7 +549,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       // Update cache immediately
       const categoryOrder = categories.map(cat => cat.id);
       localStorage.setItem(`shortcut-order-${user.id}`, JSON.stringify(categoryOrder));
-      
+
       setIsCustomizePanelOpen(false);
       // Reset scroll position to start after reordering
       if (rowRef.current) {
@@ -556,11 +558,25 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
     }
   };
 
+  const toggleExpandCategory = (categoryId: string) => {
+    setExpandedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(categoryId)) {
+        next.delete(categoryId);
+      } else {
+        next.add(categoryId);
+      }
+      return next;
+    });
+  };
+
   if (!user) {
     return null;
   }
 
   const displayedCategories = [...categories];
+  const firstFourCategories = displayedCategories.slice(0, 4);
+  const remainingCategories = displayedCategories.slice(4);
 
   return (
     <div className="w-full bg-white overflow-visible">
@@ -586,7 +602,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
           className="px-2 overflow-visible"
         >
           <div className="grid grid-cols-5 gap-4">
-            {displayedCategories.slice(0, 4).map(category => (
+            {firstFourCategories.map(category => (
               <div 
                 key={category.id}
                 className="flex justify-center overflow-visible py-2"
@@ -614,33 +630,60 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
           </div>
         </div>
 
-        {/* Grid view for remaining categories only - 5 columns to match above */}
+        {/* Grid view for remaining categories */}
         {showGridView && (
           <div className="px-2 pb-4 pt-2 bg-white">
             <div className="grid grid-cols-5 gap-4">
-              {displayedCategories.slice(4).map(category => (
-                <div 
-                  key={category.id}
-                  className="flex flex-col items-center active:opacity-80 transition-opacity touch-manipulation cursor-pointer"
-                  onClick={() => handleCategorySelect(category.name)}
-                >
-                  <div className="relative mb-2">
-                    <div className={`w-14 h-14 rounded-xl ${category.bgColor} flex items-center justify-center`}>
-                      <category.icon className={`w-7 h-7 ${category.iconBg}`} />
+              {remainingCategories.map((category, index) => {
+                const isExpanded = expandedCategories.has(category.id);
+                const isLastCategory = index === remainingCategories.length - 1;
+
+                return (
+                  <div 
+                    key={category.id}
+                    className={`flex flex-col items-center active:opacity-80 transition-opacity touch-manipulation cursor-pointer ${isLastCategory && isExpanded ? 'relative' : ''}`}
+                    onClick={() => {
+                      if (isLastCategory && isExpanded) {
+                        toggleExpandCategory(category.id);
+                      } else {
+                        handleCategorySelect(category.name);
+                      }
+                    }}
+                  >
+                    <div className="relative mb-2">
+                      <div className={`w-14 h-14 rounded-xl ${category.bgColor} flex items-center justify-center`}>
+                        <category.icon className={`w-7 h-7 ${category.iconBg}`} />
+                      </div>
+
+                      {category.count !== undefined && category.count > 0 && (
+                        <div className="absolute -top-2 -right-2 min-w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-medium px-1 border-2 border-white shadow-sm z-10">
+                          {category.count > 99 ? '99+' : category.count}
+                        </div>
+                      )}
                     </div>
 
-                    {category.count !== undefined && category.count > 0 && (
-                      <div className="absolute -top-2 -right-2 min-w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-medium px-1 border-2 border-white shadow-sm z-10">
-                        {category.count > 99 ? '99+' : category.count}
+                    <span className="text-xs font-normal text-gray-800 text-center w-full leading-tight px-1 truncate">
+                      {category.name}
+                    </span>
+
+                    {isLastCategory && (
+                      <div 
+                        className="mt-2 flex items-center justify-center w-full cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent triggering parent onClick
+                          toggleExpandCategory(category.id);
+                        }}
+                      >
+                        {isExpanded ? (
+                          <ChevronUp className="w-5 h-5 text-gray-500" />
+                        ) : (
+                          <Grid3x3 className="w-5 h-5 text-gray-500" />
+                        )}
                       </div>
                     )}
                   </div>
-
-                  <span className="text-xs font-normal text-gray-800 text-center w-full leading-tight px-1 truncate">
-                    {category.name}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
