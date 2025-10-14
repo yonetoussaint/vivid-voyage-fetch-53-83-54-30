@@ -29,6 +29,7 @@ import {
   Dumbbell,
   Sparkles,
   Car,
+  Trophy,
   Play,
   Pin,
   BookOpen,
