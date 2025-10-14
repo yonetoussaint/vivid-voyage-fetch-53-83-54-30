@@ -22,8 +22,8 @@ const PostCard = ({
   const reactionsRef = useRef(null);
 
   const reactions = [
-    { id: 'like', icon: <ThumbsUp className="h-4 w-4" />, bg: 'bg-blue-500', label: 'Like' },
-    { id: 'love', icon: <i className="fa-solid fa-heart text-sm"></i>, bg: 'bg-red-500', label: 'Love' },
+    { id: 'like', icon: <ThumbsUp className="h-3 w-3" />, bg: 'bg-blue-500', label: 'Like' },
+    { id: 'love', icon: <i className="fa-solid fa-heart text-xs"></i>, bg: 'bg-red-500', label: 'Love' },
     { id: 'haha', emoji: '😆', label: 'Haha' },
     { id: 'wow', emoji: '😮', label: 'Wow' },
     { id: 'sad', emoji: '😢', label: 'Sad' },
@@ -288,7 +288,7 @@ const PostCard = ({
                 className="hover:scale-125 transition-transform duration-200 flex flex-col items-center"
               >
                 {reaction.icon ? (
-                  <div className={`${reaction.bg} rounded-full p-1.5 text-white flex items-center justify-center w-8 h-8`}>
+                  <div className={`${reaction.bg} rounded-full p-2 text-white flex items-center justify-center w-7 h-7`}>
                     {reaction.icon}
                   </div>
                 ) : (
@@ -313,13 +313,12 @@ const PostCard = ({
           >
             {selectedReaction && selectedReaction !== 'like' ? (
               <>
-                {reactions.find(r => r.id === selectedReaction)?.emoji && (
+                {reactions.find(r => r.id === selectedReaction)?.emoji ? (
                   <span className="text-base">{reactions.find(r => r.id === selectedReaction)?.emoji}</span>
-                )}
-                {reactions.find(r => r.id === selectedReaction)?.icon && !reactions.find(r => r.id === selectedReaction)?.emoji && (
-                  <div className={`${reactions.find(r => r.id === selectedReaction)?.bg} rounded-full p-1`}>
-                    {reactions.find(r => r.id === selectedReaction)?.icon}
-                  </div>
+                ) : (
+                  selectedReaction === 'love' ? (
+                    <i className="fa-solid fa-heart text-red-500 text-sm"></i>
+                  ) : null
                 )}
                 <span className={`text-xs font-medium ${selectedReaction === 'love' ? 'text-red-500' : selectedReaction === 'wow' ? 'text-yellow-500' : selectedReaction === 'sad' ? 'text-yellow-600' : 'text-orange-500'}`}>
                   {reactions.find(r => r.id === selectedReaction)?.label}
