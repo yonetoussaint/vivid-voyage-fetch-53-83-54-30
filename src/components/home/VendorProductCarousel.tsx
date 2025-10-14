@@ -21,8 +21,8 @@ const PostCard = ({
   const isLongPress = useRef(false);
 
   const reactions = [
-    { id: 'like', icon: <ThumbsUp className="h-5 w-5" />, bg: 'bg-blue-500', label: 'Like' },
-    { id: 'love', icon: <i className="fa-solid fa-heart text-lg"></i>, bg: 'bg-red-500', label: 'Love' },
+    { id: 'like', icon: <ThumbsUp className="h-4 w-4" />, bg: 'bg-blue-500', label: 'Like' },
+    { id: 'love', icon: <i className="fa-solid fa-heart text-sm"></i>, bg: 'bg-red-500', label: 'Love' },
     { id: 'haha', emoji: '😆', label: 'Haha' },
     { id: 'wow', emoji: '😮', label: 'Wow' },
     { id: 'sad', emoji: '😢', label: 'Sad' },
@@ -257,7 +257,7 @@ const PostCard = ({
       <div className="flex items-center justify-between px-1 py-1 relative">
         {/* Reactions Overlay */}
         {showReactions && (
-          <div className="absolute bottom-full left-0 mb-2 bg-white rounded-full shadow-lg border border-gray-200 px-2 py-2 flex gap-2 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <div className="absolute bottom-full left-0 mb-2 bg-white rounded-full shadow-lg border border-gray-200 px-3 py-2 flex gap-3 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
             {reactions.map((reaction) => (
               <button
                 key={reaction.id}
@@ -265,7 +265,7 @@ const PostCard = ({
                 className="hover:scale-125 transition-transform duration-200 flex flex-col items-center"
               >
                 {reaction.icon ? (
-                  <div className={`${reaction.bg} rounded-full p-2 text-white`}>
+                  <div className={`${reaction.bg} rounded-full p-1.5 text-white flex items-center justify-center w-8 h-8`}>
                     {reaction.icon}
                   </div>
                 ) : (
