@@ -25,6 +25,8 @@ interface FlashDealsProps {
   // New props for title chevron
   showTitleChevron?: boolean;
   onTitleClick?: () => void;
+  // New prop for sponsor count
+  showSponsorCount?: boolean;
 }
 
 export default function FlashDeals({ 
@@ -44,7 +46,9 @@ export default function FlashDeals({
   stackedProfilesText = "Handpicked by",
   // Title chevron props
   showTitleChevron = false,
-  onTitleClick
+  onTitleClick,
+  // Sponsor count prop
+  showSponsorCount = false
 }: FlashDealsProps) {
   const isMobile = useIsMobile();
   const scrollRef = useRef(null);
@@ -160,6 +164,8 @@ export default function FlashDeals({
             // New title chevron props
             showTitleChevron={showTitleChevron}
             onTitleClick={onTitleClick}
+            // Sponsor count prop
+            showSponsorCount={showSponsorCount}
           />
         )}
 

@@ -52,6 +52,8 @@ interface SectionHeaderProps {
   onTitleClick?: () => void;
   // New prop for padding bottom
   paddingBottom?: boolean;
+  // New prop for sponsor count display
+  showSponsorCount?: boolean;
 }
 
 export default function SectionHeader({
@@ -95,7 +97,9 @@ export default function SectionHeader({
   showTitleChevron = false,
   onTitleClick,
   // Padding bottom prop
-  paddingBottom = true
+  paddingBottom = true,
+  // Sponsor count prop
+  showSponsorCount = false
 }: SectionHeaderProps) {
 
   const defaultViewAllText = viewAllText || 'View All';
@@ -166,12 +170,20 @@ export default function SectionHeader({
 
   // Stacked profiles component
   const StackedProfiles = () => {
+    const totalCount = stackedProfiles.length;
     const displayProfiles = stackedProfiles.slice(0, maxProfiles);
+    const remainingCount = totalCount - maxProfiles;
 
     return (
       <div className="flex items-center gap-2">
-        <span className="text-xs text-gray-600 whitespace-nowrap">{stackedProfilesText}</span>
-        <div className="flex -space-x-2">
+        {showSponsorCount ? (
+          <span className="text-xs text-gray-600 font-medium whitespace-nowrap">
+            {totalCount}+ {stackedProfilesText}
+          </span>
+        ) : (
+          <span className="text-xs text-gray-600 whitespace-nowrap">{stackedProfilesText}</span>
+        )}
+        <div className="flex items-center -space-x-2">
           {displayProfiles.map((profile, index) => (
             <div
               key={profile.id}
@@ -179,7 +191,7 @@ export default function SectionHeader({
               className={`relative w-6 h-6 rounded-full border-2 border-white bg-gray-200 overflow-hidden ${
                 onProfileClick ? 'cursor-pointer hover:scale-110 transition-transform' : ''
               }`}
-              style={{ zIndex: displayProfiles.length - index }}
+              style={{ zIndex: displayProfiles.length - index + 1 }}
             >
               <img
                 src={profile.image}
@@ -189,6 +201,14 @@ export default function SectionHeader({
               />
             </div>
           ))}
+          {remainingCount > 0 && (
+            <div
+              className="relative w-6 h-6 rounded-full border-2 border-white bg-gray-700 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform"
+              style={{ zIndex: 1 }}
+            >
+              <span className="text-[9px] font-bold text-white">+{remainingCount}</span>
+            </div>
+          )}
         </div>
       </div>
     );

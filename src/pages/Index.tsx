@@ -297,6 +297,74 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
         <FlashDeals 
           title="SPONSORED DEALS"
           icon={Clock}
+          showStackedProfiles={true}
+          stackedProfiles={[
+            { 
+              id: 'sponsor1', 
+              image: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=150&h=150&fit=crop', 
+              alt: 'Brand A' 
+            },
+            { 
+              id: 'sponsor2', 
+              image: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=150&h=150&fit=crop', 
+              alt: 'Brand B' 
+            },
+            { 
+              id: 'sponsor3', 
+              image: 'https://images.unsplash.com/photo-1572044162444-ad60f128bdea?w=150&h=150&fit=crop', 
+              alt: 'Brand C' 
+            },
+            { 
+              id: 'sponsor4', 
+              image: 'https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?w=150&h=150&fit=crop', 
+              alt: 'Brand D' 
+            },
+            { 
+              id: 'sponsor5', 
+              image: 'https://images.unsplash.com/photo-1611930022073-b7a4ba5fcccd?w=150&h=150&fit=crop', 
+              alt: 'Brand E' 
+            },
+            { 
+              id: 'sponsor6', 
+              image: 'https://images.unsplash.com/photo-1618044733300-9472054094ee?w=150&h=150&fit=crop', 
+              alt: 'Brand F' 
+            },
+            { 
+              id: 'sponsor7', 
+              image: 'https://images.unsplash.com/photo-1635514569146-9a9607ecf303?w=150&h=150&fit=crop', 
+              alt: 'Brand G' 
+            },
+            { 
+              id: 'sponsor8', 
+              image: 'https://images.unsplash.com/photo-1599305446868-59e861c82501?w=150&h=150&fit=crop', 
+              alt: 'Brand H' 
+            },
+            { 
+              id: 'sponsor9', 
+              image: 'https://images.unsplash.com/photo-1611926653670-1f0bb1a72e1e?w=150&h=150&fit=crop', 
+              alt: 'Brand I' 
+            },
+            { 
+              id: 'sponsor10', 
+              image: 'https://images.unsplash.com/photo-1614680376739-414d95ff43df?w=150&h=150&fit=crop', 
+              alt: 'Brand J' 
+            },
+            { 
+              id: 'sponsor11', 
+              image: 'https://images.unsplash.com/photo-1635514569110-4b9e1f3e0b75?w=150&h=150&fit=crop', 
+              alt: 'Brand K' 
+            },
+            { 
+              id: 'sponsor12', 
+              image: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=150&h=150&fit=crop', 
+              alt: 'Brand L' 
+            }
+          ]}
+          onProfileClick={(profileId) => {
+            console.log('Sponsor clicked:', profileId);
+          }}
+          stackedProfilesText="Partners"
+          showSponsorCount={true}
         />
 
         <FlashDeals
