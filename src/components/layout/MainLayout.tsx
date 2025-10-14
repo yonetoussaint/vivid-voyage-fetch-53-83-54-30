@@ -279,6 +279,8 @@ function MainLayoutContent() {
             showSectionHeader={isProductsPage}
             sectionHeaderTitle={productsTitle}
             sectionHeaderShowStackedProfiles={searchParams.get('showProfiles') === 'true'}
+            sectionHeaderShowVerifiedSellers={searchParams.get('showVerifiedSellers') === 'true'}
+            sectionHeaderVerifiedSellersText={searchParams.get('verifiedSellersText') || 'Verified Sellers'}
             sectionHeaderStackedProfiles={searchParams.get('showProfiles') === 'true' ? [
               { 
                 id: '1', 

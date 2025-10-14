@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Star, 
-  Plus, 
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  Star,
+  Plus,
   Store,
-  Users, 
+  Users,
 } from 'lucide-react';
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllProducts } from "@/integrations/supabase/products";
@@ -38,43 +38,43 @@ const getProductImageUrl = (imagePath) => {
 
 // Custom Seller Avatar SVG Component
 const DefaultSellerAvatar = ({ className = "w-6 h-6" }) => (
-  <svg 
-    viewBox="0 0 24 24" 
+  <svg
+    viewBox="0 0 24 24"
     className={className}
-    fill="none" 
+    fill="none"
     xmlns="http://www.w3.org/2000/svg"
   >
     {/* Shop/Store building outline */}
-    <path 
-      d="M3 21H21V9L18 6.5L15 4L12 6.5L9 4L6 6.5L3 9V21Z" 
-      fill="#E5E7EB" 
-      stroke="#9CA3AF" 
-      strokeWidth="1.5" 
-      strokeLinecap="round" 
+    <path
+      d="M3 21H21V9L18 6.5L15 4L12 6.5L9 4L6 6.5L3 9V21Z"
+      fill="#E5E7EB"
+      stroke="#9CA3AF"
+      strokeWidth="1.5"
+      strokeLinecap="round"
       strokeLinejoin="round"
     />
     {/* Store front */}
-    <path 
-      d="M6 21V12H10V21" 
-      fill="#F3F4F6" 
-      stroke="#9CA3AF" 
-      strokeWidth="1.5" 
-      strokeLinecap="round" 
+    <path
+      d="M6 21V12H10V21"
+      fill="#F3F4F6"
+      stroke="#9CA3AF"
+      strokeWidth="1.5"
+      strokeLinecap="round"
       strokeLinejoin="round"
     />
-    <path 
-      d="M14 21V12H18V21" 
-      fill="#F3F4F6" 
-      stroke="#9CA3AF" 
-      strokeWidth="1.5" 
-      strokeLinecap="round" 
+    <path
+      d="M14 21V12H18V21"
+      fill="#F3F4F6"
+      stroke="#9CA3AF"
+      strokeWidth="1.5"
+      strokeLinecap="round"
       strokeLinejoin="round"
     />
     {/* Awning/roof detail */}
-    <path 
-      d="M2 9H22" 
-      stroke="#9CA3AF" 
-      strokeWidth="1.5" 
+    <path
+      d="M2 9H22"
+      stroke="#9CA3AF"
+      strokeWidth="1.5"
       strokeLinecap="round"
     />
     {/* Windows */}
@@ -85,18 +85,18 @@ const DefaultSellerAvatar = ({ className = "w-6 h-6" }) => (
 
 // Alternative User/Profile SVG Component
 const DefaultProfileAvatar = ({ className = "w-6 h-6" }) => (
-  <svg 
-    viewBox="0 0 24 24" 
+  <svg
+    viewBox="0 0 24 24"
     className={className}
-    fill="none" 
+    fill="none"
     xmlns="http://www.w3.org/2000/svg"
   >
     {/* Circle background */}
     <circle cx="12" cy="12" r="12" fill="#E5E7EB"/>
     {/* Person silhouette */}
     <circle cx="12" cy="8" r="3" fill="#9CA3AF"/>
-    <path 
-      d="M6.168 18.849C6.718 16.761 9.143 15.25 12 15.25s5.282 1.511 5.832 3.599" 
+    <path
+      d="M6.168 18.849C6.718 16.761 9.143 15.25 12 15.25s5.282 1.511 5.832 3.599"
       fill="#9CA3AF"
     />
   </svg>
@@ -127,7 +127,7 @@ const VendorCard = ({ vendor, onProductClick, onSellerClick, showProducts = true
         {showBanner && (
           <div className="px-2 pt-2 pb-1">
             <div className="w-full h-24 rounded-xl overflow-hidden bg-gradient-to-r from-blue-500 to-purple-600">
-              <img 
+              <img
                 src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&h=200&fit=crop"
                 alt="Station banner"
                 className="w-full h-full object-cover"
@@ -137,27 +137,27 @@ const VendorCard = ({ vendor, onProductClick, onSellerClick, showProducts = true
           </div>
         )}
 
-        {/* Products Grid */}  
+        {/* Products Grid */}
         {showProducts && !showBanner && (
-          <div className="px-2 pt-2 pb-1 relative">  
-            {vendor.discount && (  
-              <div className="absolute top-3 right-3 bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full z-10">  
-                {vendor.discount}  
-              </div>  
+          <div className="px-2 pt-2 pb-1 relative">
+            {vendor.discount && (
+              <div className="absolute top-3 right-3 bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded-full z-10">
+                {vendor.discount}
+              </div>
             )}
 
-            <div className={`grid ${mode === 'grid' ? 'grid-cols-2' : 'grid-cols-4'} gap-1`}>  
-              {displayProducts.map((product, index) => (  
-                <button 
-                  key={product.id} 
+            <div className={`grid ${mode === 'grid' ? 'grid-cols-2' : 'grid-cols-4'} gap-1`}>
+              {displayProducts.map((product, index) => (
+                <button
+                  key={product.id}
                   className="group cursor-pointer relative"
                   onClick={() => handleProductClick(product.id)}
-                >  
-                  <div className="aspect-square rounded-md border border-gray-100 bg-gray-50 overflow-hidden hover:border-gray-200 transition-colors">  
+                >
+                  <div className="aspect-square rounded-md border border-gray-100 bg-gray-50 overflow-hidden hover:border-gray-200 transition-colors">
                     {product.image ? (
-                      <img   
-                        src={product.image}   
-                        alt=""   
+                      <img
+                        src={product.image}
+                        alt=""
                         className="h-full w-full object-contain hover:scale-105 transition-transform duration-300"
                         loading="lazy"
                       />
@@ -172,9 +172,9 @@ const VendorCard = ({ vendor, onProductClick, onSellerClick, showProducts = true
                       <span className="text-white font-bold text-sm">+15K</span>
                     </div>
                   )}
-                </button>  
-              ))}  
-            </div>  
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
@@ -185,10 +185,10 @@ const VendorCard = ({ vendor, onProductClick, onSellerClick, showProducts = true
             {/* Vendor Avatar */}
             <div className="w-10 h-10 flex-shrink-0 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden">
               {vendor.image && !imageError ? (
-                <img   
-                  src={vendor.image}   
-                  alt={vendor.name}   
-                  className="w-full h-full object-cover rounded-full"  
+                <img
+                  src={vendor.image}
+                  alt={vendor.name}
+                  className="w-full h-full object-cover rounded-full"
                   onError={() => setImageError(true)}
                   loading="lazy"
                 />
@@ -200,22 +200,22 @@ const VendorCard = ({ vendor, onProductClick, onSellerClick, showProducts = true
             {/* Vendor Details */}
             <div className="flex-1 min-w-0">
               {/* Name and Verification */}
-              <div className="flex items-center mb-0.5">  
-                <h3 className="font-medium text-xs truncate mr-1">{vendor.name}</h3>  
+              <div className="flex items-center mb-0.5">
+                <h3 className="font-medium text-xs truncate mr-1">{vendor.name}</h3>
                 {vendor.verified && <VerificationBadge />}
               </div>
 
               {/* Stats */}
-              <div className="flex items-center justify-between text-xs text-gray-500">  
+              <div className="flex items-center justify-between text-xs text-gray-500">
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center text-yellow-500">  
-                    <Star size={10} className="fill-yellow-500" />  
-                    <span className="font-medium ml-0.5 text-gray-600">{vendor.rating}</span>  
+                  <div className="flex items-center text-yellow-500">
+                    <Star size={10} className="fill-yellow-500" />
+                    <span className="font-medium ml-0.5 text-gray-600">{vendor.rating}</span>
                   </div>
                   <div className="w-px h-3 bg-gray-300"></div>
-                  <div className="flex items-center">  
-                    <Users size={10} className="mr-0.5" />  
-                    {vendor.followers}  
+                  <div className="flex items-center">
+                    <Users size={10} className="mr-0.5" />
+                    {vendor.followers}
                   </div>
                 </div>
                 {mode !== 'grid' && (
@@ -226,24 +226,24 @@ const VendorCard = ({ vendor, onProductClick, onSellerClick, showProducts = true
           </div>
         </div>
 
-        {/* Action Buttons */}  
-        <div className="px-2 pb-2 grid grid-cols-2 gap-2">  
-          <button 
+        {/* Action Buttons */}
+        <div className="px-2 pb-2 grid grid-cols-2 gap-2">
+          <button
             className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white text-xs font-medium py-1.5 px-2 rounded-full transition-colors"
             onClick={handleSellerClick}
-          >  
+          >
             {isPickupStation ? 'Visit' : mode === 'grid' ? 'Visit' : 'Visit Store'}
-          </button>  
-          <button   
-            className={`flex items-center justify-center text-xs font-medium py-1.5 px-2 rounded-full transition-colors ${  
-              isFollowing   
-                ? "bg-gray-100 text-gray-800 hover:bg-gray-200"   
-                : "bg-blue-100 text-blue-800 hover:bg-blue-200"  
-            }`}  
-            onClick={() => setIsFollowing(!isFollowing)}  
-          >  
-            {isFollowing ? "Following" : "Follow"}  
-          </button>  
+          </button>
+          <button
+            className={`flex items-center justify-center text-xs font-medium py-1.5 px-2 rounded-full transition-colors ${
+              isFollowing
+                ? "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                : "bg-blue-100 text-blue-800 hover:bg-blue-200"
+            }`}
+            onClick={() => setIsFollowing(!isFollowing)}
+          >
+            {isFollowing ? "Following" : "Follow"}
+          </button>
         </div>
       </div>
     </div>
@@ -277,10 +277,15 @@ interface VendorCarouselProps {
   verifiedIcon?: React.ComponentType<{ className?: string }>;
   showTitleChevron?: boolean;
   onTitleClick?: () => void;
+  categories?: any[]; // Assuming categories can be passed
+  customTabs?: any[]; // Assuming customTabs can be passed
+  onCustomTabChange?: (tabId: string) => void; // Assuming custom tab change handler
+  showSearchOverlay?: boolean; // Assuming this prop exists
+  handleSearchTabClick?: (tabId: string) => void; // Assuming this prop exists
 }
 
 // Main Carousel Component
-const VendorCarousel: React.FC<VendorCarouselProps> = ({ 
+const VendorCarousel: React.FC<VendorCarouselProps> = ({
   title = "TOP VENDORS",
   showProducts = true,
   viewAllLink = "/vendors",
@@ -292,7 +297,12 @@ const VendorCarousel: React.FC<VendorCarouselProps> = ({
   showVerifiedSellers = false,
   verifiedIcon,
   showTitleChevron = false,
-  onTitleClick
+  onTitleClick,
+  categories = [], // Default to empty array
+  customTabs = [], // Default to empty array
+  onCustomTabChange,
+  showSearchOverlay = false, // Default to false
+  handleSearchTabClick = () => {}, // Default to no-op
 }) => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
@@ -301,6 +311,8 @@ const VendorCarousel: React.FC<VendorCarouselProps> = ({
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [selectedSellerId, setSelectedSellerId] = useState<string | null>(null);
   const [isSellerPanelOpen, setIsSellerPanelOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>(categories.length > 0 ? categories[0].id : '');
+
 
   const handleProductClick = (productId: string) => {
     setSelectedProductId(productId);
@@ -368,9 +380,9 @@ const VendorCarousel: React.FC<VendorCarouselProps> = ({
     .map((seller, index) => {
       // Check if this is a sample seller
       const isSampleSeller = seller.id.startsWith('sample-');
-      
-      const sellerProducts = isSampleSeller 
-        ? sampleProducts 
+
+      const sellerProducts = isSampleSeller
+        ? sampleProducts
         : products
             .filter(product => product.seller_id === seller.id)
             .slice(0, 4)
@@ -429,6 +441,41 @@ const VendorCarousel: React.FC<VendorCarouselProps> = ({
     </div>
   );
 
+  const handleTabChange = useCallback((tabId: string) => {
+    setActiveTab(tabId);
+
+    // Handle custom tabs
+    if (customTabs && onCustomTabChange) {
+      onCustomTabChange(tabId);
+    }
+    // Handle navigation for regular categories
+    else if (!showSearchOverlay) {
+      const category = categories.find(cat => cat.id === tabId);
+      if (category && category.path) {
+        navigate(category.path);
+      }
+    } else {
+      // Handle search tabs (no navigation, just filtering)
+      handleSearchTabClick(tabId);
+    }
+  }, [showSearchOverlay, categories, navigate, customTabs, onCustomTabChange, onCustomTabChange, handleSearchTabClick]); // Added dependencies
+
+  // Build navigation URL with verified sellers params
+  const buildNavigationUrl = (title: string) => {
+    const params = new URLSearchParams();
+    params.set('title', title);
+
+    if (showVerifiedSellers) {
+      params.set('showVerifiedSellers', 'true');
+      if (verifiedIcon) {
+        params.set('verifiedSellersText', 'Verified Sellers');
+      }
+    }
+
+    return `/products?${params.toString()}`;
+  };
+
+
   if (isLoading) {
     return (
       <div className="w-full relative">
@@ -459,19 +506,19 @@ const VendorCarousel: React.FC<VendorCarouselProps> = ({
           verifiedSellersText="Verified Sellers"
           verifiedIcon={verifiedIcon}
           showTitleChevron={showTitleChevron}
-          onTitleClick={onTitleClick}
+          onTitleClick={() => onTitleClick ? onTitleClick() : navigate(buildNavigationUrl(title))} // Use buildNavigationUrl here
         />
       )}
 
       {mode === 'grid' ? (
         <div className="grid grid-cols-2 gap-1 px-2">
           {vendors.map((vendor) => (
-            <VendorCard 
-              key={vendor.id} 
-              vendor={vendor} 
-              onProductClick={handleProductClick} 
-              onSellerClick={handleSellerClick} 
-              showProducts={showProducts} 
+            <VendorCard
+              key={vendor.id}
+              vendor={vendor}
+              onProductClick={handleProductClick}
+              onSellerClick={handleSellerClick}
+              showProducts={showProducts}
               isPickupStation={isPickupStation}
               mode={mode}
               showBanner={showBanner}
@@ -479,30 +526,30 @@ const VendorCarousel: React.FC<VendorCarouselProps> = ({
           ))}
         </div>
       ) : (
-        <div 
+        <div
           ref={scrollContainerRef}
           className="flex overflow-x-auto pl-2 scrollbar-none w-full"
-          style={{ 
-            scrollbarWidth: 'none', 
+          style={{
+            scrollbarWidth: 'none',
             msOverflowStyle: 'none',
             scrollSnapType: 'x mandatory',
             scrollPaddingLeft: '8px'
           }}
         >
           {vendors.map((vendor) => (
-            <div 
+            <div
               key={vendor.id}
               className="flex-shrink-0 mr-[3vw]"
-              style={{ 
+              style={{
                 width: cardWidth,
                 scrollSnapAlign: 'start'
               }}
             >
-              <VendorCard 
-                vendor={vendor} 
-                onProductClick={handleProductClick} 
-                onSellerClick={handleSellerClick} 
-                showProducts={showProducts} 
+              <VendorCard
+                vendor={vendor}
+                onProductClick={handleProductClick}
+                onSellerClick={handleSellerClick}
+                showProducts={showProducts}
                 isPickupStation={isPickupStation}
                 mode={mode}
                 showBanner={showBanner}

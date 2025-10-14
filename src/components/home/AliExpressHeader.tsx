@@ -47,6 +47,8 @@ interface AliExpressHeaderProps {
   sectionHeaderShowCountdown?: boolean;
   sectionHeaderCountdown?: string; // Added for countdown
   sectionHeaderShowSponsorCount?: boolean;
+  sectionHeaderShowVerifiedSellers?: boolean;
+  sectionHeaderVerifiedSellersText?: string;
 }
 
 export default function AliExpressHeader({ 
@@ -70,6 +72,8 @@ export default function AliExpressHeader({
   sectionHeaderShowCountdown = false, // Added for countdown
   sectionHeaderCountdown, // Added for countdown
   sectionHeaderShowSponsorCount = false,
+  sectionHeaderShowVerifiedSellers = false,
+  sectionHeaderVerifiedSellersText = 'Verified Sellers',
 }: AliExpressHeaderProps) {
   const { progress } = useScrollProgress();
   const { currentLanguage, setLanguage, supportedLanguages, currentLocation } = useLanguageSwitcher();
@@ -595,6 +599,8 @@ export default function AliExpressHeader({
             showCountdown={sectionHeaderShowCountdown} // Pass countdown visibility
             countdown={sectionHeaderCountdown} // Pass countdown value
             showSponsorCount={sectionHeaderShowSponsorCount}
+            showVerifiedSellers={sectionHeaderShowVerifiedSellers}
+            verifiedSellersText={sectionHeaderVerifiedSellersText}
             paddingBottom={false}
             onProfileClick={(profileId) => {
               console.log('Profile clicked:', profileId);
