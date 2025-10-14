@@ -1,6 +1,6 @@
 // SectionHeader.tsx
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ChevronRight, LucideIcon, MoreHorizontal, Play } from "lucide-react"; // Added Play icon
 import { useTranslation } from 'react-i18next';
 
@@ -134,6 +134,22 @@ export default function SectionHeader({
 }: SectionHeaderProps) {
 
   const defaultViewAllText = viewAllText || 'View All';
+  const navigate = useNavigate();
+
+  // Automatic navigation handler for title chevron clicks
+  const handleTitleClick = onTitleClick || (showTitleChevron ? () => {
+    const sectionProps = serializeSectionHeaderProps({
+      showCountdown,
+      countdown,
+      showStackedProfiles,
+      stackedProfilesText,
+      showSponsorCount,
+      showVerifiedSellers,
+      verifiedSellersText
+    });
+    const params = sectionProps ? `&${sectionProps}` : '';
+    navigate(`/products?title=${encodeURIComponent(title)}${params}`);
+  } : undefined);
 
   const timeAgo = (date: string) => {
     const now = new Date();
@@ -248,10 +264,10 @@ export default function SectionHeader({
   // Title with chevron component
   const TitleWithChevron = () => (
     <div 
-      onClick={onTitleClick}
+      onClick={handleTitleClick}
       className={`flex items-center gap-1 font-bold tracking-wide ${titleSizeClass} ${
         titleTransform === 'uppercase' ? 'uppercase' : titleTransform === 'capitalize' ? 'capitalize' : ''
-      } ${onTitleClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+      } ${handleTitleClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
     >
       {renderIcon()}
       <span className="h-4 flex items-center justify-center">
