@@ -39,6 +39,8 @@ interface GenreFlashDealsProps {
   customCountdown?: string;
   showCountdown?: boolean;
   passCountdownToHeader?: boolean;
+  showVerifiedSellers?: boolean;
+  verifiedSellersText?: string;
 }
 
 interface SummaryStats {
@@ -64,7 +66,9 @@ export default function BookGenreFlashDeals({
   showFilters = true, // Default to true for backward compatibility
   icon,
   customCountdown,
-  showCountdown
+  showCountdown,
+  showVerifiedSellers = false,
+  verifiedSellersText = "Verified Sellers",
 }: GenreFlashDealsProps) {
   const [displayCount, setDisplayCount] = useState(8);
 
@@ -336,6 +340,8 @@ export default function BookGenreFlashDeals({
           titleSize="xs"
           showCountdown={showCountdown}
           countdown={formattedCountdown}
+          showVerifiedSellers={showVerifiedSellers}
+          verifiedSellersText={verifiedSellersText}
         />
       )}
 
