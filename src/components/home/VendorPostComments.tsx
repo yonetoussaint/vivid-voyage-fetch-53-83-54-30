@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Heart, Smile, Send } from 'lucide-react';
+import { Heart, Smile, Send, MessageCircle } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -205,36 +205,36 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
           {/* Avatar */}
           <Avatar className="h-8 w-8 md:h-9 md:w-9 flex-shrink-0">
             <AvatarImage src={comment.userAvatar} alt={comment.userName} />
-            <AvatarFallback className="bg-gray-600 text-white text-xs">
+            <AvatarFallback className="bg-gray-200 text-gray-800 text-xs">
               {comment.userName[0]}
             </AvatarFallback>
           </Avatar>
 
           <div className="flex-1 min-w-0">
             {/* Full-width comment bubble */}
-            <div className="bg-[#3A3B3C] rounded-2xl px-3 py-2 w-full">
+            <div className="bg-gray-100 rounded-2xl px-3 py-2 w-full">
               {/* User name & top fan badge */}
               <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <p className="font-semibold text-[13px] text-white break-words">
+                <p className="font-semibold text-[13px] text-gray-900 break-words">
                   {comment.userName}
                 </p>
                 {comment.isTopFan && (
-                  <div className="flex items-center gap-1 bg-[#4E4F50] rounded px-1.5 py-0.5">
+                  <div className="flex items-center gap-1 bg-gray-200 rounded px-1.5 py-0.5">
                     <svg className="w-2.5 h-2.5" viewBox="0 0 16 16" fill="none">
                       <path
                         d="M8 0L9.5 5.5H15L10.5 9L12 14.5L8 11L4 14.5L5.5 9L1 5.5H6.5L8 0Z"
                         fill="#8E8E8E"
                       />
                     </svg>
-                    <span className="text-[10px] text-[#B0B3B8]">Top fan</span>
+                    <span className="text-[10px] text-gray-600">Top fan</span>
                   </div>
                 )}
               </div>
 
               {/* Comment text */}
-              <p className="text-[15px] text-[#E4E6EB] break-words">{comment.content}</p>
+              <p className="text-[15px] text-gray-800 break-words">{comment.content}</p>
               {comment.isTranslated && (
-                <p className="text-[12px] text-[#B0B3B8] mt-1">See translation</p>
+                <p className="text-[12px] text-gray-500 mt-1">See translation</p>
               )}
 
               {/* Optional image */}
@@ -252,23 +252,25 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
             {/* Action row */}
             <div className="flex items-center justify-between mt-1 text-[12px]">
               <div className="flex items-center gap-3">
-                <ReactionButton
-                  onReactionChange={(reactionId) => handleReaction(comment.id, reactionId)}
-                  initialReaction={comment.userReaction}
-                  buttonClassName="font-semibold hover:underline"
-                  size="sm"
-                />
+                <div className="flex-shrink-0">
+                  <ReactionButton
+                    onReactionChange={(reactionId) => handleReaction(comment.id, reactionId)}
+                    initialReaction={comment.userReaction}
+                    buttonClassName="font-semibold hover:underline"
+                    size="sm"
+                  />
+                </div>
 
                 {!isReply && (
                   <button
                     onClick={() => setReplyingTo(comment.id)}
-                    className="font-semibold text-[#B0B3B8] hover:underline"
+                    className="font-semibold text-gray-600 hover:underline"
                   >
                     Reply
                   </button>
                 )}
 
-                <span className="text-[#B0B3B8]">{comment.timestamp}</span>
+                <span className="text-gray-500">{comment.timestamp}</span>
               </div>
 
               {totalReactions > 0 && (
@@ -284,14 +286,14 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
                     src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face"
                     alt="You"
                   />
-                  <AvatarFallback className="bg-gray-600 text-white text-xs">Y</AvatarFallback>
+                  <AvatarFallback className="bg-gray-200 text-gray-800 text-xs">Y</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
                   <Textarea
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
                     placeholder="Write a reply..."
-                    className="min-h-[60px] text-sm resize-none bg-[#3A3B3C] border-none text-white placeholder:text-[#B0B3B8] focus:ring-1 focus:ring-[#0866FF]"
+                    className="min-h-[60px] text-sm resize-none bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:ring-1 focus:ring-blue-500"
                     autoFocus
                   />
                   <div className="flex gap-2 mt-2">
@@ -299,7 +301,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
                       size="sm"
                       onClick={() => handleAddReply(comment.id)}
                       disabled={!replyText.trim()}
-                      className="bg-[#0866FF] hover:bg-[#0757D4] text-white h-7 text-xs"
+                      className="bg-blue-500 hover:bg-blue-600 text-white h-7 text-xs"
                     >
                       Reply
                     </Button>
@@ -310,7 +312,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
                         setReplyingTo(null);
                         setReplyText('');
                       }}
-                      className="text-[#B0B3B8] hover:bg-[#3A3B3C] h-7 text-xs"
+                      className="text-gray-600 hover:bg-gray-100 h-7 text-xs"
                     >
                       Cancel
                     </Button>
@@ -324,7 +326,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
               <div className="mt-3">
                 <button 
                   onClick={() => setShowReplies(!showReplies)}
-                  className="text-[#B0B3B8] text-[13px] font-semibold hover:underline"
+                  className="text-gray-600 text-[13px] font-semibold hover:underline"
                 >
                   {showReplies ? 'Hide' : 'Show'} {comment.replies.length} {comment.replies.length === 1 ? 'reply' : 'replies'}
                 </button>
@@ -345,12 +347,12 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#242526] relative">
+    <div className="flex flex-col h-full bg-white relative">
       {/* Sort dropdown */}
-      <div className="flex-shrink-0 px-3 md:px-4 py-3 border-b border-[#3A3B3C] sticky top-0 bg-[#242526] z-10">
+      <div className="flex-shrink-0 px-3 md:px-4 py-3 border-b border-gray-200 sticky top-0 bg-white z-10">
         <button 
           onClick={() => setSortBy(sortBy === 'relevant' ? 'newest' : 'relevant')}
-          className="flex items-center gap-2 text-[15px] font-semibold text-[#E4E6EB]"
+          className="flex items-center gap-2 text-[15px] font-semibold text-gray-900"
         >
           {sortBy === 'relevant' ? 'Most relevant' : 'Newest first'}
           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -363,11 +365,11 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
       <div className="flex-1 overflow-y-auto px-3 md:px-4 pb-24">
         {comments.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center py-8">
-            <p className="text-[#B0B3B8] mb-2">No comments yet</p>
-            <p className="text-sm text-[#65676B]">Be the first to comment!</p>
+            <p className="text-gray-600 mb-2">No comments yet</p>
+            <p className="text-sm text-gray-400">Be the first to comment!</p>
           </div>
         ) : (
-          <div className="divide-y divide-[#3A3B3C]">
+          <div className="divide-y divide-gray-100">
             {comments.map(comment => (
               <CommentItem key={comment.id} comment={comment} />
             ))}
@@ -377,14 +379,14 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
       </div>
 
       {/* Sticky Comment Input */}
-      <div className={`fixed bottom-0 left-0 right-0 bg-[#242526] border-t border-[#3A3B3C] transition-all duration-200 ${
+      <div className={`fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 transition-all duration-200 ${
         isInputFocused ? 'pb-4' : ''
       }`}>
         <div className="p-3 max-w-screen-md mx-auto">
           <div className="flex gap-2 items-end">
             <Avatar className="h-8 w-8 flex-shrink-0">
               <AvatarImage src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face" alt="You" />
-              <AvatarFallback className="bg-gray-600 text-white text-xs">Y</AvatarFallback>
+              <AvatarFallback className="bg-gray-200 text-gray-800 text-xs">Y</AvatarFallback>
             </Avatar>
             <div className="flex-1 relative">
               <Textarea
@@ -392,7 +394,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder="Write a comment..."
-                className="min-h-[44px] max-h-32 text-sm resize-none bg-[#3A3B3C] border-none text-white placeholder:text-[#B0B3B8] rounded-2xl px-4 py-3 pr-12 focus:ring-1 focus:ring-[#0866FF] transition-all"
+                className="min-h-[44px] max-h-32 text-sm resize-none bg-gray-100 border-none text-gray-900 placeholder:text-gray-400 rounded-2xl px-4 py-3 pr-12 focus:ring-1 focus:ring-blue-500 transition-all"
                 onFocus={() => setIsInputFocused(true)}
                 onBlur={() => setIsInputFocused(false)}
                 onKeyDown={(e) => {
@@ -408,8 +410,8 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
                 disabled={!newComment.trim()}
                 className={`absolute right-3 bottom-3 p-1 rounded-full transition-colors ${
                   newComment.trim() 
-                    ? 'text-[#0866FF] hover:bg-[#3A3B3C]' 
-                    : 'text-[#65676B] cursor-not-allowed'
+                    ? 'text-blue-500 hover:bg-gray-200' 
+                    : 'text-gray-400 cursor-not-allowed'
                 }`}
               >
                 <Send className="h-4 w-4" />
@@ -422,21 +424,21 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
             <div className="flex gap-3 mt-3 px-1 overflow-x-auto">
               <button
                 onClick={() => setNewComment(prev => prev + ' 👍')}
-                className="flex items-center gap-2 px-3 py-2 bg-[#3A3B3C] rounded-full text-[#E4E6EB] text-sm whitespace-nowrap"
+                className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-full text-gray-700 text-sm whitespace-nowrap"
               >
-                <ThumbsUp className="h-4 w-4" />
+                <i className="fa-solid fa-thumbs-up h-4 w-4" />
                 Like
               </button>
               <button
                 onClick={() => setNewComment(prev => prev + ' ❤️')}
-                className="flex items-center gap-2 px-3 py-2 bg-[#3A3B3C] rounded-full text-[#E4E6EB] text-sm whitespace-nowrap"
+                className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-full text-gray-700 text-sm whitespace-nowrap"
               >
                 <Heart className="h-4 w-4" />
                 Love
               </button>
               <button
                 onClick={() => setNewComment(prev => prev + ' 😂')}
-                className="flex items-center gap-2 px-3 py-2 bg-[#3A3B3C] rounded-full text-[#E4E6EB] text-sm whitespace-nowrap"
+                className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-full text-gray-700 text-sm whitespace-nowrap"
               >
                 <Smile className="h-4 w-4" />
                 Haha
@@ -446,7 +448,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
         </div>
 
         {/* Safe area for mobile devices with notches */}
-        <div className="h-safe-bottom bg-[#242526]" />
+        <div className="h-safe-bottom bg-white" />
       </div>
     </div>
   );

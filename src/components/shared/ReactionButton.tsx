@@ -68,26 +68,11 @@ const ReactionButton: React.FC<ReactionButtonProps> = ({
     }
   ];
 
-  const handlePress = () => {
-    longPressTimer.current = setTimeout(() => {
-      isLongPress.current = true;
-      setShowReactions(true);
-    }, 300);
-  };
-
-  const handleRelease = () => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-    }
-
-    if (!isLongPress.current) {
-      // Quick click - toggle like
-      const newReaction = selectedReaction ? null : 'like';
-      setSelectedReaction(newReaction);
-      onReactionChange?.(newReaction);
-    }
-
-    isLongPress.current = false;
+  const handleClick = () => {
+    // Simple click - toggle like
+    const newReaction = selectedReaction ? null : 'like';
+    setSelectedReaction(newReaction);
+    onReactionChange?.(newReaction);
   };
 
   const handleReactionSelect = (reaction: Reaction) => {
@@ -191,16 +176,7 @@ const ReactionButton: React.FC<ReactionButtonProps> = ({
       )}
 
       <button
-        onMouseDown={handlePress}
-        onMouseUp={handleRelease}
-        onMouseLeave={() => {
-          if (longPressTimer.current) {
-            clearTimeout(longPressTimer.current);
-          }
-          isLongPress.current = false;
-        }}
-        onTouchStart={handlePress}
-        onTouchEnd={handleRelease}
+        onClick={handleClick}
         className={`flex items-center justify-center gap-2 group transition-colors ${buttonClassName}`}
       >
         {display?.icon}
