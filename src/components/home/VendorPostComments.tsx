@@ -252,12 +252,14 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
             {/* Action row */}
             <div className="flex items-center justify-between mt-1 text-[12px]">
               <div className="flex items-center gap-3">
-                <ReactionButton
-                  onReactionChange={(reactionId) => handleReaction(comment.id, reactionId)}
-                  initialReaction={comment.userReaction}
-                  buttonClassName="py-2 bg-gray-100 hover:bg-gray-200 rounded-full h-8"
-                  size="md"
-                />
+                <div className="flex-shrink-0">
+                  <ReactionButton
+                    onReactionChange={(reactionId) => handleReaction(comment.id, reactionId)}
+                    initialReaction={comment.userReaction}
+                    buttonClassName="py-1 px-3 bg-gray-100 hover:bg-gray-200 rounded-full h-8 flex items-center justify-center"
+                    size="md"
+                  />
+                </div>
 
                 {!isReply && (
                   <button
