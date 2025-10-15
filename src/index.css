@@ -94,6 +94,11 @@
 
   * {
     @apply border-border;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
   }
 
   body {
@@ -104,6 +109,21 @@
     @apply bg-white;
     overflow-x: hidden;
     max-width: 100vw;
+  }
+  
+  /* Allow text selection for input fields and editable content */
+  input,
+  textarea,
+  [contenteditable="true"] {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+  }
+  
+  /* Prevent context menu on long press */
+  * {
+    -webkit-touch-callout: none;
   }
 }
 
