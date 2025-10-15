@@ -448,6 +448,13 @@ const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
 
   // Fetch seller posts and products data from database
   React.useEffect(() => {
+    // Skip fetching if custom posts are provided
+    if (customPosts && customPosts.length > 0) {
+      setPosts(customPosts);
+      setLoading(false);
+      return;
+    }
+
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -567,13 +574,7 @@ const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
       }
     };
 
-    // Use custom posts if provided, otherwise fetch from database
-    if (customPosts && customPosts.length > 0) {
-      setPosts(customPosts);
-      setLoading(false);
-    } else {
-      fetchData();
-    }
+    fetchData();
   }, [sellerId, customPosts]);
 
   const handleFollowClick = () => {

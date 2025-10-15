@@ -55,6 +55,9 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
 
   // State for filter functionality
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
+  
+  // State for lazy loading carousel data
+  const [visibleCarousels, setVisibleCarousels] = useState<Set<number>>(new Set([0, 1, 2])); // Load first 3
 
   // Header filter context for news ticker functionality
   const {
@@ -216,10 +219,45 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
     };
   }, [setHeaderMode]);
 
+  // Intersection Observer for lazy loading carousels
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const carouselIndex = parseInt(entry.target.getAttribute('data-carousel-index') || '0');
+            setVisibleCarousels(prev => new Set([...prev, carouselIndex, carouselIndex + 1])); // Preload next one
+          }
+        });
+      },
+      {
+        rootMargin: '400px', // Start loading 400px before component enters viewport
+        threshold: 0.01
+      }
+    );
+
+    // Observe all carousel placeholders
+    const placeholders = document.querySelectorAll('[data-carousel-placeholder]');
+    placeholders.forEach(placeholder => observer.observe(placeholder));
+
+    return () => observer.disconnect();
+  }, [components.length]);
 
   // Helper function to render VendorProductCarousel with real data from database
   const renderVendorCarousel = (index: number) => {
     const productSlice = products?.slice((index * 5) % (products?.length || 20), ((index * 5) + 5) % (products?.length || 20)) || [];
+    
+    // Only render if this carousel index is visible or close to viewport
+    if (!visibleCarousels.has(index)) {
+      return (
+        <div 
+          key={`vendor-placeholder-${index}`}
+          data-carousel-placeholder
+          data-carousel-index={index}
+          className="w-full h-96 bg-gray-50 animate-pulse"
+        />
+      );
+    }
     
     return (
       <VendorProductCarousel
