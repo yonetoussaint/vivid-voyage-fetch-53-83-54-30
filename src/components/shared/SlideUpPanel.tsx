@@ -6,6 +6,7 @@ interface SlideUpPanelProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
+  headerContent?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
   showCloseButton?: boolean;
@@ -17,6 +18,7 @@ export default function SlideUpPanel({
   isOpen,
   onClose,
   title,
+  headerContent,
   children,
   className = '',
   showCloseButton = true,
@@ -100,13 +102,15 @@ export default function SlideUpPanel({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Sticky Header */}
-        {(title || showCloseButton) && (
+        {(title || headerContent || showCloseButton) && (
           <div className="flex-shrink-0 bg-white z-10 flex items-center justify-between p-4 border-b border-gray-100 rounded-t-2xl">
-            {title && <h3 className="font-medium text-gray-900">{title}</h3>}
+            <div className="flex-1 min-w-0">
+              {headerContent ? headerContent : (title && <h3 className="font-medium text-gray-900">{title}</h3>)}
+            </div>
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-1 hover:bg-gray-100 rounded-full transition-colors ml-2 flex-shrink-0"
               >
                 <X className="h-4 w-4 text-gray-600" />
               </button>

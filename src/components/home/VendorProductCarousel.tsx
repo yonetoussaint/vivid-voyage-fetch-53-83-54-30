@@ -20,6 +20,7 @@ const PostCard = ({
   const [currentLikeCount, setCurrentLikeCount] = useState(likeCount);
   const [showCommentsPanel, setShowCommentsPanel] = useState(false);
   const [hasReacted, setHasReacted] = useState(false);
+  const [sortBy, setSortBy] = useState<'relevant' | 'newest'>('relevant');
   const carouselRef = useRef(null);
 
   const handleReactionChange = (reactionId: string | null) => {
@@ -248,11 +249,25 @@ const PostCard = ({
       <SlideUpPanel
         isOpen={showCommentsPanel}
         onClose={() => setShowCommentsPanel(false)}
-        title="Comments"
+        headerContent={
+          <button 
+            onClick={() => setSortBy(sortBy === 'relevant' ? 'newest' : 'relevant')}
+            className="flex items-center gap-2 text-[15px] font-semibold text-gray-900"
+          >
+            {sortBy === 'relevant' ? 'Most relevant' : 'Newest first'}
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
+        }
         className="p-0"
         preventBodyScroll={true}
       >
-        <VendorPostComments postId={postId} />
+        <VendorPostComments 
+          postId={postId} 
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+        />
       </SlideUpPanel>
     </div>
   );

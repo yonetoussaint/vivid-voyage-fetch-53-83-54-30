@@ -27,11 +27,15 @@ interface Comment {
 interface VendorPostCommentsProps {
   postId: string;
   initialComments?: Comment[];
+  sortBy?: 'relevant' | 'newest';
+  onSortChange?: (sortBy: 'relevant' | 'newest') => void;
 }
 
 const VendorPostComments: React.FC<VendorPostCommentsProps> = ({ 
   postId, 
-  initialComments = [] 
+  initialComments = [],
+  sortBy = 'relevant',
+  onSortChange
 }) => {
   const [comments, setComments] = useState<Comment[]>(initialComments.length > 0 ? initialComments : [
     {
@@ -89,7 +93,6 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
-  const [sortBy, setSortBy] = useState<'relevant' | 'newest'>('relevant');
   const [isInputFocused, setIsInputFocused] = useState(false);
   const commentsEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -380,19 +383,6 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-white relative">
-      {/* Sort dropdown */}
-      <div className="flex-shrink-0 px-3 md:px-4 py-3 border-b border-gray-200 sticky top-0 bg-white z-10">
-        <button 
-          onClick={() => setSortBy(sortBy === 'relevant' ? 'newest' : 'relevant')}
-          className="flex items-center gap-2 text-[15px] font-semibold text-gray-900"
-        >
-          {sortBy === 'relevant' ? 'Most relevant' : 'Newest first'}
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-          </svg>
-        </button>
-      </div>
-
       {/* Comments List */}
       <div className="flex-1 overflow-y-auto px-3 md:px-4 pb-24">
         {comments.length === 0 ? (
