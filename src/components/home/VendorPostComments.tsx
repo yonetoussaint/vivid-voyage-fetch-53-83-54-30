@@ -236,17 +236,6 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
                   />
                 </div>
               )}
-              
-              {totalReactions > 0 && (
-                <div className="absolute -bottom-2 right-2 bg-[#242526] rounded-full px-1.5 py-0.5 border border-[#3A3B3C]">
-                  <StackedReactionIcons 
-                    count={totalReactions} 
-                    size="sm" 
-                    className="gap-1 text-[12px] text-[#B0B3B8]"
-                    reactions={comment.reactions}
-                  />
-                </div>
-              )}
             </div>
             
             <div className="relative">
@@ -267,7 +256,17 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
                     Reply
                   </button>
                 )}
-                <span className="text-[12px] text-[#B0B3B8]">{comment.timestamp}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[12px] text-[#B0B3B8]">{comment.timestamp}</span>
+                  {totalReactions > 0 && (
+                    <StackedReactionIcons 
+                      count={totalReactions} 
+                      size="sm" 
+                      className="gap-1 text-[12px] text-[#B0B3B8]"
+                      reactions={comment.reactions}
+                    />
+                  )}
+                </div>
               </div>
             </div>
             
