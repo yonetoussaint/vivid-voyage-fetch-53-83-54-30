@@ -234,13 +234,13 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
     },
     onMutate: async ({ commentId, reactionType }) => {
       // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['post-comments', postId] });
+      await queryClient.cancelQueries({ queryKey: ['post-comments', postId, sortBy] });
 
       // Snapshot the previous value
-      const previousComments = queryClient.getQueryData(['post-comments', postId]);
+      const previousComments = queryClient.getQueryData(['post-comments', postId, sortBy]);
 
       // Optimistically update the cache
-      queryClient.setQueryData(['post-comments', postId], (old: any) => {
+      queryClient.setQueryData(['post-comments', postId, sortBy], (old: any) => {
         if (!old) return old;
 
         return old.map((comment: Comment) => {
@@ -266,12 +266,12 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
     onError: (err, variables, context) => {
       // Rollback on error
       if (context?.previousComments) {
-        queryClient.setQueryData(['post-comments', postId], context.previousComments);
+        queryClient.setQueryData(['post-comments', postId, sortBy], context.previousComments);
       }
     },
     onSettled: () => {
       // Refetch to ensure we have the latest data
-      queryClient.invalidateQueries({ queryKey: ['post-comments', postId] });
+      queryClient.invalidateQueries({ queryKey: ['post-comments', postId, sortBy] });
     },
   });
 
