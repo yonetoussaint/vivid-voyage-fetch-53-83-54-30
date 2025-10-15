@@ -62,7 +62,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
 
   // Fetch comments from database
   const { data: dbComments = [], isLoading } = useQuery({
-    queryKey: ['post-comments', postId, sortBy],
+    queryKey: ['post-comments', postId, sortBy, currentUserId],
     queryFn: async () => {
       const { data: commentsData, error } = await supabase
         .from('post_comments')
@@ -190,7 +190,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['post-comments', postId] });
+      queryClient.invalidateQueries({ queryKey: ['post-comments', postId, sortBy, currentUserId] });
       setNewComment('');
       setReplyingTo(null);
     },
@@ -234,29 +234,38 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
     },
     onMutate: async ({ commentId, reactionType }) => {
       // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['post-comments', postId, sortBy] });
+      await queryClient.cancelQueries({ queryKey: ['post-comments', postId, sortBy, currentUserId] });
 
       // Snapshot the previous value
-      const previousComments = queryClient.getQueryData(['post-comments', postId, sortBy]);
+      const previousComments = queryClient.getQueryData(['post-comments', postId, sortBy, currentUserId]);
 
       // Optimistically update the cache
-      queryClient.setQueryData(['post-comments', postId, sortBy], (old: any) => {
+      queryClient.setQueryData(['post-comments', postId, sortBy, currentUserId], (old: any) => {
         if (!old) return old;
 
         return old.map((comment: Comment) => {
+          // Check if this is the comment being reacted to
           if (comment.id === commentId) {
             return { ...comment, userReaction: reactionType };
           }
-          if (comment.replies) {
-            return {
-              ...comment,
-              replies: comment.replies.map((reply: Comment) => 
-                reply.id === commentId 
-                  ? { ...reply, userReaction: reactionType }
-                  : reply
-              )
-            };
+          
+          // Check if any reply matches
+          if (comment.replies && comment.replies.length > 0) {
+            const hasMatchingReply = comment.replies.some((reply: Comment) => reply.id === commentId);
+            
+            if (hasMatchingReply) {
+              return {
+                ...comment,
+                replies: comment.replies.map((reply: Comment) => 
+                  reply.id === commentId 
+                    ? { ...reply, userReaction: reactionType }
+                    : reply
+                )
+              };
+            }
           }
+          
+          // Return unchanged
           return comment;
         });
       });
@@ -266,12 +275,12 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
     onError: (err, variables, context) => {
       // Rollback on error
       if (context?.previousComments) {
-        queryClient.setQueryData(['post-comments', postId, sortBy], context.previousComments);
+        queryClient.setQueryData(['post-comments', postId, sortBy, currentUserId], context.previousComments);
       }
     },
-    onSettled: () => {
-      // Refetch to ensure we have the latest data
-      queryClient.invalidateQueries({ queryKey: ['post-comments', postId, sortBy] });
+    onSuccess: () => {
+      // Only invalidate after successful save to refetch with correct data
+      queryClient.invalidateQueries({ queryKey: ['post-comments', postId, sortBy, currentUserId] });
     },
   });
 
