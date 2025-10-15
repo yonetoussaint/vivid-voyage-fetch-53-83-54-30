@@ -256,7 +256,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
                   <ReactionButton
                     onReactionChange={(reactionId) => handleReaction(comment.id, reactionId)}
                     initialReaction={comment.userReaction}
-                    buttonClassName="font-semibold hover:underline"
+                    buttonClassName="py-1 px-3 bg-gray-100 hover:bg-gray-200 rounded-full"
                     size="sm"
                   />
                 </div>
