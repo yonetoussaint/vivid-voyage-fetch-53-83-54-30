@@ -47,61 +47,8 @@ args = "npm run dev"
 waitForPort = 5000
 
 [[ports]]
-localPort = 80
-
-[[ports]]
 localPort = 5000
-externalPort = 8000
-
-[[ports]]
-localPort = 5001
-externalPort = 80
-
-[[ports]]
-localPort = 5002
-externalPort = 6000
-
-[[ports]]
-localPort = 32827
-
-[[ports]]
-localPort = 32845
-
-[[ports]]
-localPort = 33737
-externalPort = 4200
-
-[[ports]]
-localPort = 35467
-externalPort = 6800
-
-[[ports]]
-localPort = 38287
-externalPort = 3003
-
-[[ports]]
-localPort = 41559
-externalPort = 8008
-
-[[ports]]
-localPort = 43057
 externalPort = 3000
-
-[[ports]]
-localPort = 44121
-externalPort = 3001
-
-[[ports]]
-localPort = 44919
-externalPort = 3002
-
-[[ports]]
-localPort = 45411
-externalPort = 5173
-
-[[ports]]
-localPort = 45453
-externalPort = 5000
 
 [agent]
 expertMode = true

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import StackedReactionIcons from '@/components/shared/StackedReactionIcons';
 import ReactionButton from '@/components/shared/ReactionButton';
+import VerificationBadge from '@/components/shared/VerificationBadge';
 
 interface Comment {
   id: string;
@@ -21,6 +22,7 @@ interface Comment {
   image?: string;
   isTopFan?: boolean;
   isTranslated?: boolean;
+  isVerified?: boolean;
   replies?: Comment[];
 }
 
@@ -269,11 +271,14 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
           <div className="flex-1 min-w-0">
             {/* Full-width comment bubble */}
             <div className="bg-gray-100 rounded-2xl px-3 py-2 w-full">
-              {/* User name & top fan badge */}
+              {/* User name & badges */}
               <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <p className="font-semibold text-[13px] text-gray-900 break-words">
-                  {comment.userName}
-                </p>
+                <div className="flex items-center gap-1">
+                  <p className="font-semibold text-[13px] text-gray-900 break-words">
+                    {comment.userName}
+                  </p>
+                  {comment.isVerified && <VerificationBadge size="xs" />}
+                </div>
                 {comment.isTopFan && (
                   <div className="flex items-center gap-1 bg-gray-200 rounded px-1.5 py-0.5">
                     <svg className="w-2.5 h-2.5" viewBox="0 0 16 16" fill="none">

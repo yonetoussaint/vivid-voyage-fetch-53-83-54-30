@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ChevronRight, LucideIcon, MoreHorizontal, Play } from "lucide-react"; // Added Play icon
 import { useTranslation } from 'react-i18next';
+import VerificationBadge from '@/components/shared/VerificationBadge';
 
 interface SectionHeaderProps {
   title: string;
@@ -421,11 +422,7 @@ export default function SectionHeader({
               <h3 className="font-bold text-gray-800 text-sm truncate">
                 {vendorData.vendorName}
               </h3>
-              {vendorData.verified && (
-                <svg className="w-3 h-3 text-blue-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-              )}
+              {vendorData.verified && <VerificationBadge size="sm" />}
             </div>
             <p className="text-gray-500 text-xs truncate">
               {formatFollowers(followersCount)} followers • {timeAgo(vendorData.publishedAt)}
