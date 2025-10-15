@@ -250,12 +250,15 @@ const ReactionButton: React.FC<ReactionButtonProps> = ({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       if (reactionsRef.current && !reactionsRef.current.contains(event.target as Node)) {
-        if (!isDragging.current) {
-          setShowReactions(false);
-          isLongPress.current = false;
-          setHoveredReaction(null);
-          setAnimatedReaction(null);
-        }
+        // Defer the close check to allow backdrop drag handlers to set isDragging first
+        requestAnimationFrame(() => {
+          if (!isDragging.current) {
+            setShowReactions(false);
+            isLongPress.current = false;
+            setHoveredReaction(null);
+            setAnimatedReaction(null);
+          }
+        });
       }
     };
 
