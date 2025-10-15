@@ -241,7 +241,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
     placeholders.forEach(placeholder => observer.observe(placeholder));
 
     return () => observer.disconnect();
-  }, [components.length]);
+  }, []);
 
   // Helper function to render VendorProductCarousel with real data from database
   const renderVendorCarousel = (index: number) => {
