@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ThumbsUp, Heart, Smile, Send } from 'lucide-react';
+import { Heart, Smile, Send } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import StackedReactionIcons from '@/components/shared/StackedReactionIcons';
+import ReactionButton from '@/components/shared/ReactionButton';
 
 interface Comment {
   id: string;
@@ -97,7 +98,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
     commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [comments]);
 
-  const handleReaction = (commentId: string, reactionType: 'like' | 'love' | 'haha') => {
+  const handleReaction = (commentId: string, reactionId: string | null) => {
     setComments(prevComments => 
       prevComments.map(comment => {
         if (comment.id === commentId) {
@@ -108,12 +109,13 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
             newReactions[comment.userReaction] = Math.max(0, newReactions[comment.userReaction] - 1);
           }
 
-          // Add new reaction or toggle off
-          if (comment.userReaction === reactionType) {
-            return { ...comment, userReaction: undefined, reactions: newReactions };
-          } else {
+          // Add new reaction or clear
+          if (reactionId) {
+            const reactionType = reactionId as 'like' | 'love' | 'haha';
             newReactions[reactionType] = newReactions[reactionType] + 1;
             return { ...comment, userReaction: reactionType, reactions: newReactions };
+          } else {
+            return { ...comment, userReaction: undefined, reactions: newReactions };
           }
         }
 
@@ -129,11 +131,12 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
                   newReactions[reply.userReaction] = Math.max(0, newReactions[reply.userReaction] - 1);
                 }
 
-                if (reply.userReaction === reactionType) {
-                  return { ...reply, userReaction: undefined, reactions: newReactions };
-                } else {
+                if (reactionId) {
+                  const reactionType = reactionId as 'like' | 'love' | 'haha';
                   newReactions[reactionType] = newReactions[reactionType] + 1;
                   return { ...reply, userReaction: reactionType, reactions: newReactions };
+                } else {
+                  return { ...reply, userReaction: undefined, reactions: newReactions };
                 }
               }
               return reply;
@@ -249,20 +252,12 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
             {/* Action row */}
             <div className="flex items-center justify-between mt-1 text-[12px]">
               <div className="flex items-center gap-3">
-                <button
-                  onClick={() => handleReaction(comment.id, 'like')}
-                  className={`font-semibold ${
-                    comment.userReaction ? 'text-[#0866FF]' : 'text-[#B0B3B8]'
-                  } hover:underline`}
-                >
-                  {comment.userReaction === 'like'
-                    ? 'Like'
-                    : comment.userReaction === 'love'
-                    ? 'Love'
-                    : comment.userReaction === 'haha'
-                    ? 'Haha'
-                    : 'Like'}
-                </button>
+                <ReactionButton
+                  onReactionChange={(reactionId) => handleReaction(comment.id, reactionId)}
+                  initialReaction={comment.userReaction}
+                  buttonClassName="font-semibold hover:underline"
+                  size="sm"
+                />
 
                 {!isReply && (
                   <button

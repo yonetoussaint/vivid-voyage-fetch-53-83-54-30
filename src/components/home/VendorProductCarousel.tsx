@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ThumbsUp, MessageCircle, MoreHorizontal, Store, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MessageCircle, MoreHorizontal, Store, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import SectionHeader from './SectionHeader';
 import SlideUpPanel from '@/components/shared/SlideUpPanel';
 import VendorPostComments from './VendorPostComments';
 import StackedReactionIcons from '@/components/shared/StackedReactionIcons';
+import ReactionButton from '@/components/shared/ReactionButton';
 
 const PostCard = ({
   title,
@@ -16,109 +17,24 @@ const PostCard = ({
   onProductClick,
   postId
 }) => {
-  const [liked, setLiked] = useState(false);
-  const [selectedReaction, setSelectedReaction] = useState(null);
-  const [showReactions, setShowReactions] = useState(false);
   const [currentLikeCount, setCurrentLikeCount] = useState(likeCount);
   const [showCommentsPanel, setShowCommentsPanel] = useState(false);
+  const [hasReacted, setHasReacted] = useState(false);
   const carouselRef = useRef(null);
-  const longPressTimer = useRef(null);
-  const isLongPress = useRef(false);
-  const reactionsRef = useRef(null);
 
-  const reactions = [
-    { 
-      id: 'like', 
-      icon: <ThumbsUp className="h-5 w-5 text-white fill-white" />, 
-      bg: 'bg-blue-500', 
-      label: 'Like' 
-    },
-    { 
-      id: 'love', 
-      icon: <i className="fa-solid fa-heart text-white text-base"></i>, 
-      bg: 'bg-red-500', 
-      label: 'Love' 
-    },
-    { 
-      id: 'haha', 
-      emoji: '😆', 
-      label: 'Haha' 
-    },
-    { 
-      id: 'wow', 
-      emoji: '😮', 
-      label: 'Wow' 
-    },
-    { 
-      id: 'sad', 
-      emoji: '😢', 
-      label: 'Sad' 
-    },
-    { 
-      id: 'angry', 
-      emoji: '😠', 
-      label: 'Angry' 
-    }
-  ];
-
-  const handleLikePress = () => {
-    longPressTimer.current = setTimeout(() => {
-      isLongPress.current = true;
-      setShowReactions(true);
-    }, 300);
-  };
-
-  const handleLikeRelease = () => {
-    clearTimeout(longPressTimer.current);
-
-    if (!isLongPress.current) {
-      // Quick click - toggle like
-      if (liked || selectedReaction) {
-        setLiked(false);
-        setSelectedReaction(null);
-        setCurrentLikeCount(prev => prev - 1);
-      } else {
-        setLiked(true);
-        setSelectedReaction('like');
-        setCurrentLikeCount(prev => prev + 1);
-      }
-    }
-
-    isLongPress.current = false;
-  };
-
-  const handleReactionSelect = (reaction) => {
-    const wasLiked = liked || selectedReaction;
-    setSelectedReaction(reaction.id);
-    setLiked(reaction.id === 'like');
-    setShowReactions(false);
-
-    if (!wasLiked) {
+  const handleReactionChange = (reactionId: string | null) => {
+    const hadReaction = hasReacted;
+    setHasReacted(reactionId !== null);
+    
+    if (!hadReaction && reactionId) {
       setCurrentLikeCount(prev => prev + 1);
+    } else if (hadReaction && !reactionId) {
+      setCurrentLikeCount(prev => prev - 1);
     }
   };
 
   const handleComment = () => setShowCommentsPanel(true);
   const handleShare = () => console.log('Share clicked');
-
-  // Handle clicks outside reactions overlay to dismiss it
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (reactionsRef.current && !reactionsRef.current.contains(event.target)) {
-        setShowReactions(false);
-      }
-    };
-
-    if (showReactions) {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('touchstart', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
-    };
-  }, [showReactions]);
 
   const Button = ({ variant, size, className, children, ...props }) => (
     <button
@@ -295,66 +211,12 @@ const PostCard = ({
 
       {/* Enhanced Social Buttons - Moved to Bottom */}
       <div className="flex items-center justify-between px-2 py-1 relative gap-3">
-        {/* Reactions Overlay */}
-        {showReactions && (
-          <div 
-            ref={reactionsRef}
-            className="absolute bottom-full left-0 mb-2 bg-white rounded-full shadow-lg border border-gray-200 px-3 py-2 flex gap-3 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200"
-          >
-            {reactions.map((reaction) => (
-              <button
-                key={reaction.id}
-                onClick={() => handleReactionSelect(reaction)}
-                className="hover:scale-125 transition-transform duration-200 flex flex-col items-center"
-              >
-                {reaction.icon ? (
-                  <div className={`${reaction.bg} rounded-full w-8 h-8 flex items-center justify-center`}>
-                    {reaction.icon}
-                  </div>
-                ) : (
-                  <div className="w-8 h-8 flex items-center justify-center">
-                    <span className="text-3xl leading-none">{reaction.emoji}</span>
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
-        )}
-
         <div className="flex-1">
-          <button
-            onMouseDown={handleLikePress}
-            onMouseUp={handleLikeRelease}
-            onMouseLeave={() => {
-              clearTimeout(longPressTimer.current);
-              isLongPress.current = false;
-            }}
-            onTouchStart={handleLikePress}
-            onTouchEnd={handleLikeRelease}
-            className="flex items-center justify-center gap-2 group transition-colors w-full py-2 bg-gray-100 hover:bg-gray-200 rounded-full h-8"
-          >
-            {selectedReaction && selectedReaction !== 'like' ? (
-              <>
-                {reactions.find(r => r.id === selectedReaction)?.emoji ? (
-                  <span className="text-lg">{reactions.find(r => r.id === selectedReaction)?.emoji}</span>
-                ) : (
-                  selectedReaction === 'love' ? (
-                    <i className="fa-solid fa-heart text-red-500 text-lg"></i>
-                  ) : null
-                )}
-                <span className={`text-xs font-medium ${selectedReaction === 'love' ? 'text-red-500' : selectedReaction === 'wow' ? 'text-yellow-500' : selectedReaction === 'sad' ? 'text-yellow-600' : 'text-orange-500'}`}>
-                  {reactions.find(r => r.id === selectedReaction)?.label}
-                </span>
-              </>
-            ) : (
-              <>
-                <ThumbsUp className={`w-4 h-4 ${liked ? 'text-blue-500' : 'text-gray-600 group-hover:text-gray-800'}`} />
-                <span className={`text-xs ${liked ? 'font-medium text-blue-500' : 'text-gray-600 group-hover:text-gray-800'}`}>
-                  Like
-                </span>
-              </>
-            )}
-          </button>
+          <ReactionButton
+            onReactionChange={handleReactionChange}
+            buttonClassName="w-full py-2 bg-gray-100 hover:bg-gray-200 rounded-full h-8"
+            size="md"
+          />
         </div>
 
         <div className="flex-1">
