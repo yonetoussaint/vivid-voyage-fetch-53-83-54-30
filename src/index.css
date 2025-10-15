@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -104,13 +103,13 @@
   body {
     @apply bg-white text-foreground;
   }
-  
+
   html, body, #root {
     @apply bg-white;
     overflow-x: hidden;
     max-width: 100vw;
   }
-  
+
   /* Allow text selection for input fields and editable content */
   input,
   textarea,
@@ -120,10 +119,36 @@
     -ms-user-select: text;
     user-select: text;
   }
-  
+
   /* Prevent context menu on long press */
   * {
     -webkit-touch-callout: none;
+  }
+
+  /* Remove scrollbars for all elements */
+  * {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+  }
+
+  *::-webkit-scrollbar {
+    display: none; /* WebKit browsers (Chrome, Safari, Edge) */
+    width: 0;
+    height: 0;
+    background: transparent;
+  }
+
+  /* Ensure html and body elements also hide scrollbars */
+  html, body {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
   }
 }
 
@@ -215,8 +240,6 @@
   scrollbar-width: none;
 }
 
-
-
 @keyframes heartBeat {
   0% {
     transform: scale(1);
@@ -239,9 +262,6 @@
   animation: heartBeat 0.7s ease-in-out;
   color: #f97316 !important; /* Use your activeColor or keep this as is */
 }
-
-
-
 
 /* Slide animations for news banner & glow pulse for icons */
 @layer utilities {
@@ -289,7 +309,7 @@
   .animate-pulse-glow {
     animation: pulse-glow 2s infinite ease-in-out;
   }
-  
+
   /* Button ripple effect */
   @keyframes ripple-effect {
     0% {
@@ -301,32 +321,32 @@
       opacity: 0;
     }
   }
-  
+
   /* Loading state pulse animation */
   @keyframes loading-pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.6; }
   }
-  
+
   .animate-loading-pulse {
     animation: loading-pulse 1.5s infinite ease-in-out;
   }
-  
+
   /* New button animations */
   @keyframes button-glow {
     0%, 100% { box-shadow: 0 0 4px 2px rgba(255, 71, 71, 0.3); }
     50% { box-shadow: 0 0 8px 4px rgba(255, 71, 71, 0.5); }
   }
-  
+
   @keyframes button-pulse {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.02); }
   }
-  
+
   .animate-button-glow {
     animation: button-glow 1.5s infinite ease-in-out;
   }
-  
+
   .animate-button-pulse {
     animation: button-pulse 1.5s infinite ease-in-out;
   }
@@ -396,7 +416,6 @@
   border-radius: 20px;
   opacity: 0;
 }
-
 
 /* Utility classes for mobile toolbar */
 .scrollbar-hide {
