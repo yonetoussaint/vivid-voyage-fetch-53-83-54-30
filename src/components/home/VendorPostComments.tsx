@@ -401,40 +401,34 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
             </div>
           )}
 
-          <div className="flex gap-2 items-end">
-            <Avatar className="h-7 w-7 flex-shrink-0">
-              <AvatarImage src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face" alt="You" />
-              <AvatarFallback className="bg-gray-200 text-gray-800 text-xs">Y</AvatarFallback>
-            </Avatar>
-            <div className="flex-1 relative">
-              <Textarea
-                ref={inputRef}
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Write a comment..."
-                className="min-h-[36px] max-h-32 text-sm resize-none bg-gray-100 border-none text-gray-900 placeholder:text-gray-400 rounded-full px-4 py-2 pr-10 focus:ring-1 focus:ring-blue-500 transition-all"
-                onFocus={() => setIsInputFocused(true)}
-                onBlur={() => setIsInputFocused(false)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleAddComment();
-                  }
-                }}
-                rows={1}
-              />
-              <button
-                onClick={handleAddComment}
-                disabled={!newComment.trim()}
-                className={`absolute right-2 bottom-2 p-1 rounded-full transition-colors ${
-                  newComment.trim() 
-                    ? 'text-blue-500 hover:bg-blue-50' 
-                    : 'text-gray-400 cursor-not-allowed'
-                }`}
-              >
-                <Send className="h-4 w-4" />
-              </button>
-            </div>
+          <div className="relative w-full">
+            <Textarea
+              ref={inputRef}
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Write a comment..."
+              className="min-h-[36px] max-h-32 w-full text-sm resize-none bg-gray-100 border-none text-gray-900 placeholder:text-gray-400 rounded-full px-4 py-2 pr-10 focus:ring-1 focus:ring-blue-500 transition-all"
+              onFocus={() => setIsInputFocused(true)}
+              onBlur={() => setIsInputFocused(false)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleAddComment();
+                }
+              }}
+              rows={1}
+            />
+            <button
+              onClick={handleAddComment}
+              disabled={!newComment.trim()}
+              className={`absolute right-2 bottom-2 p-1 rounded-full transition-colors ${
+                newComment.trim() 
+                  ? 'text-blue-500 hover:bg-blue-50' 
+                  : 'text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              <Send className="h-4 w-4" />
+            </button>
           </div>
         </div>
 
