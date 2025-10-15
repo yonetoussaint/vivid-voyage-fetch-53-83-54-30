@@ -223,9 +223,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
       const oldReactionType = existingReaction?.reaction_type;
 
       if (reactionType === null) {
-        // Remove reaction - only proceed if there's an existing reaction
-        if (!oldReactionType) return;
-
+        // Remove reaction - the trigger will handle count updates automatically
         const { error: deleteError } = await supabase
           .from('comment_reactions')
           .delete()
@@ -233,33 +231,6 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
           .eq('user_id', user.id);
 
         if (deleteError) throw deleteError;
-
-        // The trigger should handle count decrement automatically,
-        // but we'll also do it manually to ensure consistency
-        const columnName = `${oldReactionType}_count`;
-        const { error: updateError } = await supabase.rpc('decrement_comment_count', {
-          comment_id: commentId,
-          column_name: columnName
-        }).single();
-
-        // If RPC doesn't exist, fall back to manual update
-        if (updateError) {
-          const { data: commentData } = await supabase
-            .from('post_comments')
-            .select(columnName)
-            .eq('id', commentId)
-            .single();
-          
-          if (commentData) {
-            const currentCount = commentData[columnName] || 0;
-            const newCount = Math.max(0, currentCount - 1);
-            
-            await supabase
-              .from('post_comments')
-              .update({ [columnName]: newCount })
-              .eq('id', commentId);
-          }
-        }
       } else {
         // Upsert reaction
         const { error: upsertError } = await supabase
