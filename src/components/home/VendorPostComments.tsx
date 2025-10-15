@@ -92,7 +92,6 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
 
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
-  const [replyText, setReplyText] = useState('');
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set());
   const commentsEndRef = useRef<HTMLDivElement>(null);
@@ -108,6 +107,19 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
       }
       return next;
     });
+  };
+
+  const handleReplyClick = (commentId: string) => {
+    setReplyingTo(commentId);
+    inputRef.current?.focus();
+  };
+
+  const getReplyingToName = () => {
+    if (!replyingTo) return null;
+    const comment = comments.find(c => c.id === replyingTo || c.replies?.some(r => r.id === replyingTo));
+    if (comment?.id === replyingTo) return comment.userName;
+    const reply = comment?.replies?.find(r => r.id === replyingTo);
+    return reply?.userName;
   };
 
   const handleReaction = (commentId: string, reactionId: string | null) => {
@@ -197,50 +209,46 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
   const handleAddComment = () => {
     if (!newComment.trim()) return;
 
-    const comment: Comment = {
-      id: Date.now().toString(),
-      userName: 'You',
-      userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face',
-      content: newComment,
-      timestamp: 'Just now',
-      reactions: { like: 0, love: 0, haha: 0 },
-      // No initial userReaction - starts empty
-    };
+    if (replyingTo) {
+      // Adding a reply
+      const reply: Comment = {
+        id: `${replyingTo}-${Date.now()}`,
+        userName: 'You',
+        userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face',
+        content: newComment,
+        timestamp: 'Just now',
+        reactions: { like: 0, love: 0, haha: 0 },
+      };
 
-    setComments([comment, ...comments]);
+      setComments(prevComments =>
+        prevComments.map(comment => {
+          if (comment.id === replyingTo) {
+            return {
+              ...comment,
+              replies: [...(comment.replies || []), reply]
+            };
+          }
+          return comment;
+        })
+      );
+      setReplyingTo(null);
+    } else {
+      // Adding a new comment
+      const comment: Comment = {
+        id: Date.now().toString(),
+        userName: 'You',
+        userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face',
+        content: newComment,
+        timestamp: 'Just now',
+        reactions: { like: 0, love: 0, haha: 0 },
+      };
+
+      setComments([comment, ...comments]);
+    }
+
     setNewComment('');
-    // Blur and refocus to close mobile keyboard and reopen for new comment
     inputRef.current?.blur();
     setTimeout(() => inputRef.current?.focus(), 100);
-  };
-
-  const handleAddReply = (parentId: string) => {
-    if (!replyText.trim()) return;
-
-    const reply: Comment = {
-      id: `${parentId}-${Date.now()}`,
-      userName: 'You',
-      userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face',
-      content: replyText,
-      timestamp: 'Just now',
-      reactions: { like: 0, love: 0, haha: 0 },
-      // No initial userReaction - starts empty
-    };
-
-    setComments(prevComments =>
-      prevComments.map(comment => {
-        if (comment.id === parentId) {
-          return {
-            ...comment,
-            replies: [...(comment.replies || []), reply]
-          };
-        }
-        return comment;
-      })
-    );
-
-    setReplyText('');
-    setReplyingTo(null);
   };
 
   const CommentItem = ({ comment, isReply = false }: { comment: Comment; isReply?: boolean }) => {
@@ -311,7 +319,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
 
                 {!isReply && (
                   <button
-                    onClick={() => setReplyingTo(comment.id)}
+                    onClick={() => handleReplyClick(comment.id)}
                     className="font-semibold text-gray-600 hover:underline"
                   >
                     Reply
@@ -325,49 +333,6 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
                 <StackedReactionIcons count={totalReactions} />
               )}
             </div>
-
-            {/* Reply input */}
-            {replyingTo === comment.id && (
-              <div className="mt-2 flex gap-2">
-                <Avatar className="h-7 w-7 flex-shrink-0">
-                  <AvatarImage
-                    src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face"
-                    alt="You"
-                  />
-                  <AvatarFallback className="bg-gray-200 text-gray-800 text-xs">Y</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <Textarea
-                    value={replyText}
-                    onChange={(e) => setReplyText(e.target.value)}
-                    placeholder="Write a reply..."
-                    className="min-h-[60px] text-sm resize-none bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:ring-1 focus:ring-blue-500"
-                    autoFocus
-                  />
-                  <div className="flex gap-2 mt-2">
-                    <Button
-                      size="sm"
-                      onClick={() => handleAddReply(comment.id)}
-                      disabled={!replyText.trim()}
-                      className="bg-blue-500 hover:bg-blue-600 text-white h-7 text-xs"
-                    >
-                      Reply
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        setReplyingTo(null);
-                        setReplyText('');
-                      }}
-                      className="text-gray-600 hover:bg-gray-100 h-7 text-xs"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* Nested replies toggle */}
             {comment.replies && comment.replies.length > 0 && (
@@ -414,12 +379,30 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
       </div>
 
       {/* Sticky Comment Input */}
-      <div className={`fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 transition-all duration-200 ${
-        isInputFocused ? 'pb-4' : ''
-      }`}>
-        <div className="p-3 max-w-screen-md mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
+        <div className="p-2 max-w-screen-md mx-auto">
+          {/* Replying to indicator */}
+          {replyingTo && (
+            <div className="flex items-center justify-between px-3 py-1.5 mb-1 bg-gray-50 rounded-lg">
+              <span className="text-xs text-gray-600">
+                Replying to <span className="font-semibold text-gray-900">{getReplyingToName()}</span>
+              </span>
+              <button
+                onClick={() => {
+                  setReplyingTo(null);
+                  setNewComment('');
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
+
           <div className="flex gap-2 items-end">
-            <Avatar className="h-8 w-8 flex-shrink-0">
+            <Avatar className="h-7 w-7 flex-shrink-0">
               <AvatarImage src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&crop=face" alt="You" />
               <AvatarFallback className="bg-gray-200 text-gray-800 text-xs">Y</AvatarFallback>
             </Avatar>
@@ -429,7 +412,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder="Write a comment..."
-                className="min-h-[44px] max-h-32 text-sm resize-none bg-gray-100 border-none text-gray-900 placeholder:text-gray-400 rounded-2xl px-4 py-3 pr-12 focus:ring-1 focus:ring-blue-500 transition-all"
+                className="min-h-[36px] max-h-32 text-sm resize-none bg-gray-100 border-none text-gray-900 placeholder:text-gray-400 rounded-full px-4 py-2 pr-10 focus:ring-1 focus:ring-blue-500 transition-all"
                 onFocus={() => setIsInputFocused(true)}
                 onBlur={() => setIsInputFocused(false)}
                 onKeyDown={(e) => {
@@ -443,9 +426,9 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
               <button
                 onClick={handleAddComment}
                 disabled={!newComment.trim()}
-                className={`absolute right-3 bottom-3 p-1 rounded-full transition-colors ${
+                className={`absolute right-2 bottom-2 p-1 rounded-full transition-colors ${
                   newComment.trim() 
-                    ? 'text-blue-500 hover:bg-gray-200' 
+                    ? 'text-blue-500 hover:bg-blue-50' 
                     : 'text-gray-400 cursor-not-allowed'
                 }`}
               >
@@ -453,33 +436,6 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
               </button>
             </div>
           </div>
-
-          {/* Quick Reactions - Only show when input is focused on mobile */}
-          {isInputFocused && (
-            <div className="flex gap-3 mt-3 px-1 overflow-x-auto">
-              <button
-                onClick={() => setNewComment(prev => prev + ' 👍')}
-                className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-full text-gray-700 text-sm whitespace-nowrap"
-              >
-                <i className="fa-solid fa-thumbs-up h-4 w-4" />
-                Like
-              </button>
-              <button
-                onClick={() => setNewComment(prev => prev + ' ❤️')}
-                className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-full text-gray-700 text-sm whitespace-nowrap"
-              >
-                <Heart className="h-4 w-4" />
-                Love
-              </button>
-              <button
-                onClick={() => setNewComment(prev => prev + ' 😂')}
-                className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-full text-gray-700 text-sm whitespace-nowrap"
-              >
-                <Smile className="h-4 w-4" />
-                Haha
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Safe area for mobile devices with notches */}
