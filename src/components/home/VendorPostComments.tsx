@@ -62,8 +62,12 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
 
   // Fetch comments from database
   const { data: dbComments = [], isLoading } = useQuery({
-    queryKey: ['post-comments', postId, sortBy, currentUserId],
+    queryKey: ['post-comments', postId, sortBy],
     queryFn: async () => {
+      // Get current user for fetching reactions
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id;
+      
       const { data: commentsData, error } = await supabase
         .from('post_comments')
         .select(`
@@ -91,11 +95,11 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
 
       // Fetch user reactions
       let userReactions = [];
-      if (currentUserId) {
+      if (userId) {
         const { data: reactionsData } = await supabase
           .from('comment_reactions')
           .select('comment_id, reaction_type')
-          .eq('user_id', currentUserId);
+          .eq('user_id', userId);
 
         userReactions = reactionsData || [];
       }
@@ -190,7 +194,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['post-comments', postId, sortBy, currentUserId] });
+      queryClient.invalidateQueries({ queryKey: ['post-comments', postId, sortBy] });
       setNewComment('');
       setReplyingTo(null);
     },
@@ -234,13 +238,13 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
     },
     onMutate: async ({ commentId, reactionType }) => {
       // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['post-comments', postId, sortBy, currentUserId] });
+      await queryClient.cancelQueries({ queryKey: ['post-comments', postId, sortBy] });
 
       // Snapshot the previous value
-      const previousComments = queryClient.getQueryData(['post-comments', postId, sortBy, currentUserId]);
+      const previousComments = queryClient.getQueryData(['post-comments', postId, sortBy]);
 
       // Optimistically update the cache
-      queryClient.setQueryData(['post-comments', postId, sortBy, currentUserId], (old: any) => {
+      queryClient.setQueryData(['post-comments', postId, sortBy], (old: any) => {
         if (!old) return old;
 
         return old.map((comment: Comment) => {
@@ -275,12 +279,12 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
     onError: (err, variables, context) => {
       // Rollback on error
       if (context?.previousComments) {
-        queryClient.setQueryData(['post-comments', postId, sortBy, currentUserId], context.previousComments);
+        queryClient.setQueryData(['post-comments', postId, sortBy], context.previousComments);
       }
     },
     onSuccess: () => {
       // Only invalidate after successful save to refetch with correct data
-      queryClient.invalidateQueries({ queryKey: ['post-comments', postId, sortBy, currentUserId] });
+      queryClient.invalidateQueries({ queryKey: ['post-comments', postId, sortBy] });
     },
   });
 
