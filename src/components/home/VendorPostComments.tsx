@@ -94,11 +94,6 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
   const commentsEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-scroll to bottom when new comments are added
-  useEffect(() => {
-    commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [comments]);
-
   const handleReaction = (commentId: string, reactionId: string | null) => {
     setComments(prevComments => 
       prevComments.map(comment => {
