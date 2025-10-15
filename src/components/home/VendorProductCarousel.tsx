@@ -586,9 +586,10 @@ const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
     // Determine product count from sellerId or use default
     const skeletonProductCount = sellerId ? 5 : 1;
     
+    // Show only 1 skeleton post by default
     return (
       <>
-        {[1, 2, 3].map((index) => (
+        {[1].map((index) => (
           <div key={`skeleton-${index}`} className="w-full bg-white mb-4">
             {/* Section Header Skeleton */}
             <div className="p-3 border-b border-gray-100">
