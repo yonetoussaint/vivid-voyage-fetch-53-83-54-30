@@ -41,7 +41,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
   onImageClick
 }) => {
   const [showFullContent, setShowFullContent] = useState(false);
-  const { userReaction, toggleReaction } = useCommentReactions(comment.id);
+  const { userReaction, toggleReaction, isLoading } = useCommentReactions(comment.id);
   const totalReactions = (comment.like_count || 0) + (comment.love_count || 0) + (comment.haha_count || 0);
 
 
@@ -173,13 +173,49 @@ const CommentItem: React.FC<CommentItemProps> = ({
               </motion.button>
             </div>
 
-            <ReactionButton
-              size="sm"
-              showLabel={true}
-              className="flex-shrink-0"
-              initialReaction={userReaction}
-              onReactionChange={toggleReaction}
-            />
+            <div className="flex items-center gap-2">
+              <motion.button
+                type="button"
+                disabled={isLoading}
+                className={`flex items-center gap-1 text-xs transition-colors ${
+                  userReaction === 'like' ? 'text-primary' : 'text-muted-foreground hover:text-primary'
+                } ${isLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => toggleReaction(userReaction === 'like' ? null : 'like')}
+                aria-pressed={userReaction === 'like'}
+                aria-label="Like"
+              >
+                <ThumbsUp className={`h-4 w-4 ${userReaction === 'like' ? 'fill-current' : ''}`} />
+              </motion.button>
+
+              <motion.button
+                type="button"
+                disabled={isLoading}
+                className={`flex items-center gap-1 text-xs transition-colors ${
+                  userReaction === 'love' ? 'text-primary' : 'text-muted-foreground hover:text-primary'
+                } ${isLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => toggleReaction(userReaction === 'love' ? null : 'love')}
+                aria-pressed={userReaction === 'love'}
+                aria-label="Love"
+              >
+                <Heart className={`h-4 w-4 ${userReaction === 'love' ? 'fill-current' : ''}`} />
+              </motion.button>
+
+              <motion.button
+                type="button"
+                disabled={isLoading}
+                className={`flex items-center gap-1 text-xs transition-colors ${
+                  userReaction === 'haha' ? 'text-primary' : 'text-muted-foreground hover:text-primary'
+                } ${isLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => toggleReaction(userReaction === 'haha' ? null : 'haha')}
+                aria-pressed={userReaction === 'haha'}
+                aria-label="Haha"
+              >
+                <span className="text-sm">😄</span>
+              </motion.button>
+            </div>
             <Button
               variant="ghost"
               size="sm"
