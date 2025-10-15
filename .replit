@@ -3,7 +3,7 @@ modules = ["web", "nodejs-20", "postgresql-16"]
 
 [nix]
 channel = "stable-24_11"
-packages = ["static-web-server"]
+packages = ["static-web-server", "supabase-cli"]
 
 [deployment]
 publicDir = "/"
