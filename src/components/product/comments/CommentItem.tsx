@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from 'framer-motion';
+import { useCommentReactions } from '@/hooks/useCommentReactions';
 
 interface Comment {
   id: string;
@@ -19,6 +20,9 @@ interface Comment {
   rating?: number;
   helpful: number;
   isHelpful?: boolean;
+  like_count?: number;
+  love_count?: number;
+  haha_count?: number;
 }
 
 interface CommentItemProps {
@@ -37,7 +41,10 @@ const CommentItem: React.FC<CommentItemProps> = ({
   onImageClick
 }) => {
   const [showFullContent, setShowFullContent] = useState(false);
-  
+  const { userReaction, toggleReaction } = useCommentReactions(comment.id);
+  const totalReactions = (comment.like_count || 0) + (comment.love_count || 0) + (comment.haha_count || 0);
+
+
   const renderStars = (rating: number) => {
     return (
       <div className="flex">
@@ -54,8 +61,8 @@ const CommentItem: React.FC<CommentItemProps> = ({
   };
 
   const shouldTruncateContent = comment.content.length > 200;
-  const displayContent = shouldTruncateContent && !showFullContent 
-    ? comment.content.substring(0, 200) + '...' 
+  const displayContent = shouldTruncateContent && !showFullContent
+    ? comment.content.substring(0, 200) + '...'
     : comment.content;
 
   return (
@@ -144,7 +151,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
                 <Heart className={`h-4 w-4 ${comment.isLiked ? 'fill-red-500' : ''}`} />
                 <span>{comment.likes}</span>
               </motion.button>
-              
+
               <motion.button
                 className="flex items-center space-x-1 text-xs text-muted-foreground hover:text-primary transition-colors"
                 onClick={() => onReply(comment.id)}
@@ -153,7 +160,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
                 <Reply className="h-4 w-4" />
                 <span>{comment.replies}</span>
               </motion.button>
-              
+
               <motion.button
                 className={`flex items-center space-x-1 text-xs transition-colors ${
                   comment.isHelpful ? 'text-blue-500' : 'text-muted-foreground hover:text-blue-500'
@@ -165,7 +172,14 @@ const CommentItem: React.FC<CommentItemProps> = ({
                 <span>{comment.helpful}</span>
               </motion.button>
             </div>
-            
+
+            <ReactionButton
+              size="sm"
+              showLabel={true}
+              className="flex-shrink-0"
+              initialReaction={userReaction}
+              onReactionChange={toggleReaction}
+            />
             <Button
               variant="ghost"
               size="sm"

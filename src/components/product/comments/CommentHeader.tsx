@@ -3,6 +3,7 @@ import { ChevronLeft, Search, Filter, SlidersHorizontal } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion } from 'framer-motion';
+import { usePostComments } from '@/hooks/usePostComments';
 
 interface CommentHeaderProps {
   onClose: () => void;
@@ -53,7 +54,7 @@ const CommentHeader: React.FC<CommentHeaderProps> = ({
       </div>
 
       {/* Search Bar */}
-      <motion.div 
+      <motion.div
         className="px-4 pb-3"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}

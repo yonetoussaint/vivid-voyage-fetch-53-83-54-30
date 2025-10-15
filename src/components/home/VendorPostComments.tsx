@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Heart, Smile, Send, MessageCircle } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -97,7 +96,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
           .from('post_comment_reactions')
           .select('comment_id, reaction_type')
           .eq('user_id', currentUserId);
-        
+
         userReactions = reactionsData || [];
       }
 
@@ -266,7 +265,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
   const handleReaction = (commentId: string, reactionId: string | null) => {
     const comment = comments.find(c => c.id === commentId || c.replies?.some(r => r.id === commentId));
     const targetComment = comment?.id === commentId ? comment : comment?.replies?.find(r => r.id === commentId);
-    
+
     if (!targetComment) return;
 
     // If clicking the same reaction, remove it
