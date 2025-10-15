@@ -212,18 +212,50 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Must be logged in to react');
 
+      // First, get the current reaction (if any)
+      const { data: existingReaction } = await supabase
+        .from('comment_reactions')
+        .select('reaction_type')
+        .eq('comment_id', commentId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      const oldReactionType = existingReaction?.reaction_type;
+
       if (reactionType === null) {
         // Remove reaction
-        const { error } = await supabase
+        const { error: deleteError } = await supabase
           .from('comment_reactions')
           .delete()
           .eq('comment_id', commentId)
           .eq('user_id', user.id);
 
-        if (error) throw error;
+        if (deleteError) throw deleteError;
+
+        // Decrement the count in post_comments
+        if (oldReactionType) {
+          // Get current count
+          const { data: commentData } = await supabase
+            .from('post_comments')
+            .select(`${oldReactionType}_count`)
+            .eq('id', commentId)
+            .single();
+          
+          if (commentData) {
+            const currentCount = commentData[`${oldReactionType}_count`] || 0;
+            const newCount = Math.max(0, currentCount - 1);
+            
+            const { error: updateError } = await supabase
+              .from('post_comments')
+              .update({ [`${oldReactionType}_count`]: newCount })
+              .eq('id', commentId);
+            
+            if (updateError) throw updateError;
+          }
+        }
       } else {
         // Upsert reaction
-        const { error } = await supabase
+        const { error: upsertError } = await supabase
           .from('comment_reactions')
           .upsert({
             comment_id: commentId,
@@ -233,7 +265,40 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
             onConflict: 'comment_id,user_id',
           });
 
-        if (error) throw error;
+        if (upsertError) throw upsertError;
+
+        // Update counts in post_comments
+        const { data: commentData } = await supabase
+          .from('post_comments')
+          .select('like_count, love_count, haha_count')
+          .eq('id', commentId)
+          .single();
+        
+        if (commentData) {
+          const updates: any = {};
+          
+          if (oldReactionType && oldReactionType !== reactionType) {
+            // Decrement old reaction count and increment new reaction count
+            const oldCount = commentData[`${oldReactionType}_count`] || 0;
+            const newCount = commentData[`${reactionType}_count`] || 0;
+            
+            updates[`${oldReactionType}_count`] = Math.max(0, oldCount - 1);
+            updates[`${reactionType}_count`] = newCount + 1;
+          } else if (!oldReactionType) {
+            // Increment new reaction count only
+            const count = commentData[`${reactionType}_count`] || 0;
+            updates[`${reactionType}_count`] = count + 1;
+          }
+          
+          if (Object.keys(updates).length > 0) {
+            const { error: updateError } = await supabase
+              .from('post_comments')
+              .update(updates)
+              .eq('id', commentId);
+            
+            if (updateError) throw updateError;
+          }
+        }
       }
     },
     onMutate: async ({ commentId, reactionType }) => {
