@@ -336,6 +336,16 @@ const ReactionButton: React.FC<ReactionButtonProps> = ({
         <div 
           className="fixed inset-0 bg-black/10 backdrop-blur-sm z-40"
           style={{ margin: 0 }}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            isDragging.current = true;
+            startGlobalDrag();
+          }}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            isDragging.current = true;
+            startGlobalDrag();
+          }}
           onMouseMove={(e) => {
             if (isDragging.current) {
               handleGlobalDragMove(e.nativeEvent);
