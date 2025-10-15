@@ -29,9 +29,9 @@ interface VendorPostCommentsProps {
   initialComments?: Comment[];
 }
 
-const VendorPostComments: React.FC<VendorPostCommentsProps> = ({ 
-  postId, 
-  initialComments = [] 
+const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
+  postId,
+  initialComments = []
 }) => {
   const [comments, setComments] = useState<Comment[]>(initialComments.length > 0 ? initialComments : [
     {
@@ -99,7 +99,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
   }, [comments]);
 
   const handleReaction = (commentId: string, reactionId: string | null) => {
-    setComments(prevComments => 
+    setComments(prevComments =>
       prevComments.map(comment => {
         if (comment.id === commentId) {
           const newReactions = { ...comment.reactions };
@@ -256,8 +256,9 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
                   <ReactionButton
                     onReactionChange={(reactionId) => handleReaction(comment.id, reactionId)}
                     initialReaction={comment.userReaction}
-                    buttonClassName="py-1 px-3 bg-gray-100 hover:bg-gray-200 rounded-full h-8 flex items-center justify-center"
+                    buttonClassName="py-2 bg-gray-100 hover:bg-gray-200 rounded-full h-8 flex items-center justify-center"
                     size="md"
+                    showLabel={true}
                   />
                 </div>
 
@@ -324,7 +325,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
             {/* Nested replies toggle */}
             {comment.replies && comment.replies.length > 0 && (
               <div className="mt-3">
-                <button 
+                <button
                   onClick={() => setShowReplies(!showReplies)}
                   className="text-gray-600 text-[13px] font-semibold hover:underline"
                 >
@@ -350,7 +351,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
     <div className="flex flex-col h-full bg-white relative">
       {/* Sort dropdown */}
       <div className="flex-shrink-0 px-3 md:px-4 py-3 border-b border-gray-200 sticky top-0 bg-white z-10">
-        <button 
+        <button
           onClick={() => setSortBy(sortBy === 'relevant' ? 'newest' : 'relevant')}
           className="flex items-center gap-2 text-[15px] font-semibold text-gray-900"
         >
@@ -409,8 +410,8 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
                 onClick={handleAddComment}
                 disabled={!newComment.trim()}
                 className={`absolute right-3 bottom-3 p-1 rounded-full transition-colors ${
-                  newComment.trim() 
-                    ? 'text-blue-500 hover:bg-gray-200' 
+                  newComment.trim()
+                    ? 'text-blue-500 hover:bg-gray-200'
                     : 'text-gray-400 cursor-not-allowed'
                 }`}
               >
