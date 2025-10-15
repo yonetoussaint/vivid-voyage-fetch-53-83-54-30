@@ -581,17 +581,107 @@ const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
     console.log('Follow button clicked for vendor');
   };
 
-  // Show loading state
+  // Show loading state with proper skeleton structure
   if (loading) {
+    // Determine product count from sellerId or use default
+    const skeletonProductCount = sellerId ? 5 : 1;
+    
     return (
-      <div className="w-full bg-white mb-4">
-        <div className="p-4">
-          <div className="animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-1/3 mb-4"></div>
-            <div className="h-40 bg-gray-200 rounded"></div>
+      <>
+        {[1, 2, 3].map((index) => (
+          <div key={`skeleton-${index}`} className="w-full bg-white mb-4">
+            {/* Section Header Skeleton */}
+            <div className="p-3 border-b border-gray-100">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse" />
+                  <div className="flex-1">
+                    <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mb-1" />
+                    <div className="h-3 w-24 bg-gray-200 rounded animate-pulse" />
+                  </div>
+                </div>
+                <div className="h-8 w-20 bg-gray-200 rounded-full animate-pulse" />
+              </div>
+            </div>
+
+            {/* Post Description Skeleton */}
+            <div className="px-3 py-2">
+              <div className="h-3 w-full bg-gray-200 rounded animate-pulse mb-1" />
+              <div className="h-3 w-3/4 bg-gray-200 rounded animate-pulse" />
+            </div>
+
+            {/* Products Display Skeleton - Varies by count */}
+            <div className="relative w-full px-3 py-2">
+              {skeletonProductCount === 1 && (
+                <div className="w-full rounded-lg overflow-hidden">
+                  <div className="w-full aspect-square bg-gray-200 animate-pulse" />
+                </div>
+              )}
+
+              {skeletonProductCount === 2 && (
+                <div className="flex justify-between gap-2">
+                  <div className="flex-1 aspect-square bg-gray-200 rounded-lg animate-pulse" />
+                  <div className="flex-1 aspect-square bg-gray-200 rounded-lg animate-pulse" />
+                </div>
+              )}
+
+              {skeletonProductCount === 3 && (
+                <div className="flex gap-2">
+                  <div className="flex-1 aspect-square bg-gray-200 rounded-lg animate-pulse" />
+                  <div className="flex-1 aspect-square bg-gray-200 rounded-lg animate-pulse" />
+                  <div className="flex-1 aspect-square bg-gray-200 rounded-lg animate-pulse" />
+                </div>
+              )}
+
+              {skeletonProductCount === 4 && (
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="aspect-square bg-gray-200 rounded-lg animate-pulse" />
+                  <div className="aspect-square bg-gray-200 rounded-lg animate-pulse" />
+                  <div className="aspect-square bg-gray-200 rounded-lg animate-pulse" />
+                  <div className="aspect-square bg-gray-200 rounded-lg animate-pulse" />
+                </div>
+              )}
+
+              {skeletonProductCount >= 5 && (
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="aspect-square bg-gray-200 rounded-lg animate-pulse" />
+                  <div className="aspect-square bg-gray-200 rounded-lg animate-pulse" />
+                  <div className="aspect-square bg-gray-200 rounded-lg animate-pulse" />
+                  <div className="relative">
+                    <div className="aspect-square bg-gray-200 rounded-lg animate-pulse" />
+                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center rounded-lg">
+                      <div className="w-12 h-8 bg-white/30 rounded animate-pulse" />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Engagement Stats Skeleton */}
+            <div className="px-3 py-1.5 flex items-center justify-between">
+              <div className="flex items-center gap-1">
+                <div className="flex items-center -space-x-1">
+                  <div className="w-5 h-5 rounded-full bg-gray-200 animate-pulse" />
+                  <div className="w-5 h-5 rounded-full bg-gray-200 animate-pulse" />
+                  <div className="w-5 h-5 rounded-full bg-gray-200 animate-pulse" />
+                </div>
+                <div className="h-3 w-8 ml-1 bg-gray-200 rounded animate-pulse" />
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="h-3 w-20 bg-gray-200 rounded animate-pulse" />
+                <div className="h-3 w-16 bg-gray-200 rounded animate-pulse" />
+              </div>
+            </div>
+
+            {/* Social Buttons Skeleton */}
+            <div className="flex items-center justify-between px-2 py-1 gap-3">
+              <div className="flex-1 h-8 bg-gray-200 rounded-full animate-pulse" />
+              <div className="flex-1 h-8 bg-gray-200 rounded-full animate-pulse" />
+              <div className="flex-1 h-8 bg-gray-200 rounded-full animate-pulse" />
+            </div>
           </div>
-        </div>
-      </div>
+        ))}
+      </>
     );
   }
 
