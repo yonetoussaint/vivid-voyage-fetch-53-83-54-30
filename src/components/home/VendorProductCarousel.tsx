@@ -250,15 +250,20 @@ const PostCard = ({
         isOpen={showCommentsPanel}
         onClose={() => setShowCommentsPanel(false)}
         headerContent={
-          <button 
-            onClick={() => setSortBy(sortBy === 'relevant' ? 'newest' : 'relevant')}
-            className="flex items-center gap-2 text-[15px] font-semibold text-gray-900"
-          >
-            {sortBy === 'relevant' ? 'Most relevant' : 'Newest first'}
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-          </button>
+          <div className="flex items-center justify-between w-full">
+            <h3 className="font-semibold text-gray-900 text-[15px]">
+              Comments ({commentCount})
+            </h3>
+            <button 
+              onClick={() => setSortBy(sortBy === 'relevant' ? 'newest' : 'relevant')}
+              className="flex items-center gap-1 text-[13px] font-medium text-gray-600 hover:text-gray-900"
+            >
+              {sortBy === 'relevant' ? 'Most relevant' : 'Newest first'}
+              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
         }
         className="p-0"
         preventBodyScroll={true}
