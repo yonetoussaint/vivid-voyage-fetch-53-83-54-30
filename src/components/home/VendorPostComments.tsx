@@ -94,8 +94,21 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set());
   const commentsEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const toggleReplies = (commentId: string) => {
+    setExpandedReplies(prev => {
+      const next = new Set(prev);
+      if (next.has(commentId)) {
+        next.delete(commentId);
+      } else {
+        next.add(commentId);
+      }
+      return next;
+    });
+  };
 
   const handleReaction = (commentId: string, reactionId: string | null) => {
     setComments(prevComments => 
@@ -232,7 +245,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
 
   const CommentItem = ({ comment, isReply = false }: { comment: Comment; isReply?: boolean }) => {
     const totalReactions = comment.reactions.like + comment.reactions.love + comment.reactions.haha;
-    const [showReplies, setShowReplies] = useState(false);
+    const showReplies = expandedReplies.has(comment.id);
 
     return (
       <div className={`${isReply ? 'ml-8 md:ml-10 mt-3' : 'py-3'}`}>
@@ -360,7 +373,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
             {comment.replies && comment.replies.length > 0 && (
               <div className="mt-3">
                 <button 
-                  onClick={() => setShowReplies(!showReplies)}
+                  onClick={() => toggleReplies(comment.id)}
                   className="text-gray-600 text-[13px] font-semibold hover:underline"
                 >
                   {showReplies ? 'Hide' : 'Show'} {comment.replies.length} {comment.replies.length === 1 ? 'reply' : 'replies'}
