@@ -223,7 +223,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
       const oldReactionType = existingReaction?.reaction_type;
 
       if (reactionType === null) {
-        // Remove reaction - the trigger will handle count updates automatically
+        // Remove reaction - trigger will handle count updates
         const { error: deleteError } = await supabase
           .from('comment_reactions')
           .delete()
@@ -232,7 +232,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
 
         if (deleteError) throw deleteError;
       } else {
-        // Upsert reaction
+        // Upsert reaction - trigger will handle count updates
         const { error: upsertError } = await supabase
           .from('comment_reactions')
           .upsert({
@@ -244,39 +244,6 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
           });
 
         if (upsertError) throw upsertError;
-
-        // Update counts in post_comments
-        const { data: commentData } = await supabase
-          .from('post_comments')
-          .select('like_count, love_count, haha_count')
-          .eq('id', commentId)
-          .single();
-        
-        if (commentData) {
-          const updates: any = {};
-          
-          if (oldReactionType && oldReactionType !== reactionType) {
-            // Decrement old reaction count and increment new reaction count
-            const oldCount = commentData[`${oldReactionType}_count`] || 0;
-            const newCount = commentData[`${reactionType}_count`] || 0;
-            
-            updates[`${oldReactionType}_count`] = Math.max(0, oldCount - 1);
-            updates[`${reactionType}_count`] = newCount + 1;
-          } else if (!oldReactionType) {
-            // Increment new reaction count only
-            const count = commentData[`${reactionType}_count`] || 0;
-            updates[`${reactionType}_count`] = count + 1;
-          }
-          
-          if (Object.keys(updates).length > 0) {
-            const { error: updateError } = await supabase
-              .from('post_comments')
-              .update(updates)
-              .eq('id', commentId);
-            
-            if (updateError) throw updateError;
-          }
-        }
       }
     },
     onMutate: async ({ commentId, reactionType }) => {
@@ -293,7 +260,22 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
         return old.map((comment: Comment) => {
           // Check if this is the comment being reacted to
           if (comment.id === commentId) {
-            return { ...comment, userReaction: reactionType || undefined };
+            const oldReaction = comment.userReaction;
+            const newReactions = { ...comment.reactions };
+            
+            // Update counts optimistically
+            if (oldReaction) {
+              newReactions[oldReaction] = Math.max(0, (newReactions[oldReaction] || 0) - 1);
+            }
+            if (reactionType) {
+              newReactions[reactionType] = (newReactions[reactionType] || 0) + 1;
+            }
+            
+            return { 
+              ...comment, 
+              userReaction: reactionType || undefined,
+              reactions: newReactions
+            };
           }
           
           // Check if any reply matches
@@ -303,11 +285,27 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
             if (hasMatchingReply) {
               return {
                 ...comment,
-                replies: comment.replies.map((reply: Comment) => 
-                  reply.id === commentId 
-                    ? { ...reply, userReaction: reactionType || undefined }
-                    : reply
-                )
+                replies: comment.replies.map((reply: Comment) => {
+                  if (reply.id === commentId) {
+                    const oldReaction = reply.userReaction;
+                    const newReactions = { ...reply.reactions };
+                    
+                    // Update counts optimistically
+                    if (oldReaction) {
+                      newReactions[oldReaction] = Math.max(0, (newReactions[oldReaction] || 0) - 1);
+                    }
+                    if (reactionType) {
+                      newReactions[reactionType] = (newReactions[reactionType] || 0) + 1;
+                    }
+                    
+                    return { 
+                      ...reply, 
+                      userReaction: reactionType || undefined,
+                      reactions: newReactions
+                    };
+                  }
+                  return reply;
+                })
               };
             }
           }
