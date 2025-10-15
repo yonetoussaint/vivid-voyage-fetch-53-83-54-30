@@ -246,7 +246,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
         return old.map((comment: Comment) => {
           // Check if this is the comment being reacted to
           if (comment.id === commentId) {
-            return { ...comment, userReaction: reactionType };
+            return { ...comment, userReaction: reactionType || undefined };
           }
           
           // Check if any reply matches
@@ -258,7 +258,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
                 ...comment,
                 replies: comment.replies.map((reply: Comment) => 
                   reply.id === commentId 
-                    ? { ...reply, userReaction: reactionType }
+                    ? { ...reply, userReaction: reactionType || undefined }
                     : reply
                 )
               };
