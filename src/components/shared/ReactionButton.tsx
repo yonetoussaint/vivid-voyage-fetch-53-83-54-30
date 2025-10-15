@@ -1,6 +1,5 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { ThumbsUp } from 'lucide-react';
+import { ThumbsUp, Heart } from 'lucide-react';
 
 interface Reaction {
   id: string;
@@ -42,7 +41,7 @@ const ReactionButton: React.FC<ReactionButtonProps> = ({
     },
     { 
       id: 'love', 
-      icon: <i className="fa-solid fa-heart text-white text-base"></i>, 
+      icon: <Heart className="h-5 w-5 text-white fill-white" />, 
       bg: 'bg-red-500', 
       label: 'Love' 
     },
@@ -79,20 +78,44 @@ const ReactionButton: React.FC<ReactionButtonProps> = ({
   const handlePressEnd = () => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
     }
-    
-    // Only toggle like if it wasn't a long press
-    if (!isLongPress.current && !showReactions) {
-      const newReaction = selectedReaction ? null : 'like';
+  };
+
+  const handleClick = () => {
+    // If it was a long press, don't handle the click
+    if (isLongPress.current) {
+      isLongPress.current = false;
+      return;
+    }
+
+    // Direct click behavior
+    if (selectedReaction) {
+      // If already has a reaction, remove it
+      const newReaction = null;
+      setSelectedReaction(newReaction);
+      onReactionChange?.(newReaction);
+    } else {
+      // If no reaction, add like by default
+      const newReaction = 'like';
       setSelectedReaction(newReaction);
       onReactionChange?.(newReaction);
     }
   };
 
   const handleReactionSelect = (reaction: Reaction) => {
-    setSelectedReaction(reaction.id);
+    if (selectedReaction === reaction.id) {
+      // If clicking the same reaction in overlay, remove it
+      const newReaction = null;
+      setSelectedReaction(newReaction);
+      onReactionChange?.(newReaction);
+    } else {
+      // Select new reaction
+      setSelectedReaction(reaction.id);
+      onReactionChange?.(reaction.id);
+    }
     setShowReactions(false);
-    onReactionChange?.(reaction.id);
+    isLongPress.current = false;
   };
 
   // Handle clicks outside reactions overlay to dismiss it
@@ -100,6 +123,7 @@ const ReactionButton: React.FC<ReactionButtonProps> = ({
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       if (reactionsRef.current && !reactionsRef.current.contains(event.target as Node)) {
         setShowReactions(false);
+        isLongPress.current = false;
       }
     };
 
@@ -113,6 +137,11 @@ const ReactionButton: React.FC<ReactionButtonProps> = ({
       document.removeEventListener('touchstart', handleClickOutside);
     };
   }, [showReactions]);
+
+  // Update internal state when initialReaction changes
+  useEffect(() => {
+    setSelectedReaction(initialReaction);
+  }, [initialReaction]);
 
   const sizeClasses = {
     sm: { icon: 'h-3 w-3', text: 'text-xs', emoji: 'text-base', overlay: 'w-6 h-6' },
@@ -146,14 +175,14 @@ const ReactionButton: React.FC<ReactionButtonProps> = ({
 
     if (selectedReaction === 'love') {
       return {
-        icon: <i className={`fa-solid fa-heart ${currentSize.icon} text-red-500`}></i>,
+        icon: <Heart className={`${currentSize.icon} text-red-500 fill-red-500`} />,
         label: reaction.label,
         color: 'text-red-500'
       };
     }
 
     return {
-      icon: <ThumbsUp className={`${currentSize.icon} text-blue-500`} />,
+      icon: <ThumbsUp className={`${currentSize.icon} text-blue-500 fill-blue-500`} />,
       label: reaction.label,
       color: 'text-blue-500'
     };
@@ -195,6 +224,7 @@ const ReactionButton: React.FC<ReactionButtonProps> = ({
         onMouseLeave={handlePressEnd}
         onTouchStart={handlePressStart}
         onTouchEnd={handlePressEnd}
+        onClick={handleClick}
         className={`flex items-center justify-center gap-2 group transition-colors ${buttonClassName}`}
       >
         {display?.icon}

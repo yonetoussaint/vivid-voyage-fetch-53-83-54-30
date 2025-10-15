@@ -41,7 +41,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
       content: 'Sheinbaun de tres puntos!!!!!',
       timestamp: '2h',
       reactions: { like: 2, love: 0, haha: 1 },
-      userReaction: 'like',
+      // REMOVED initial userReaction to start empty
       isTranslated: true,
       replies: [
         {
@@ -61,6 +61,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
       content: 'Did you see the Olympics of 2008 😏',
       timestamp: '2h',
       reactions: { like: 1, love: 1, haha: 1 },
+      // REMOVED initial userReaction to start empty
       isTopFan: true,
       isTranslated: true,
       image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=600&h=400&fit=crop',
@@ -101,48 +102,82 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
   const handleReaction = (commentId: string, reactionId: string | null) => {
     setComments(prevComments => 
       prevComments.map(comment => {
+        // Handle main comment
         if (comment.id === commentId) {
           const newReactions = { ...comment.reactions };
+          const currentReaction = comment.userReaction;
 
-          // Remove old reaction if exists
-          if (comment.userReaction) {
-            newReactions[comment.userReaction] = Math.max(0, newReactions[comment.userReaction] - 1);
-          }
-
-          // Add new reaction or clear
-          if (reactionId) {
-            const reactionType = reactionId as 'like' | 'love' | 'haha';
-            newReactions[reactionType] = newReactions[reactionType] + 1;
-            return { ...comment, userReaction: reactionType, reactions: newReactions };
-          } else {
+          // If reactionId is null, it means we're toggling off the current reaction
+          // This happens when clicking the main button directly
+          if (reactionId === null && currentReaction) {
+            newReactions[currentReaction] = Math.max(0, newReactions[currentReaction] - 1);
             return { ...comment, userReaction: undefined, reactions: newReactions };
           }
+
+          // If clicking the same reaction that's already active, remove it (unfill)
+          if (currentReaction && reactionId === currentReaction) {
+            newReactions[currentReaction] = Math.max(0, newReactions[currentReaction] - 1);
+            return { ...comment, userReaction: undefined, reactions: newReactions };
+          }
+
+          // If clicking a different reaction or no reaction is currently active
+          if (reactionId) {
+            const newReactionType = reactionId as 'like' | 'love' | 'haha';
+
+            // Remove old reaction if exists
+            if (currentReaction) {
+              newReactions[currentReaction] = Math.max(0, newReactions[currentReaction] - 1);
+            }
+
+            // Add new reaction
+            newReactions[newReactionType] = (newReactions[newReactionType] || 0) + 1;
+            return { ...comment, userReaction: newReactionType, reactions: newReactions };
+          }
+
+          return comment;
         }
 
-        // Handle nested replies
+        // Handle replies
         if (comment.replies) {
-          return {
-            ...comment,
-            replies: comment.replies.map(reply => {
-              if (reply.id === commentId) {
-                const newReactions = { ...reply.reactions };
+          const updatedReplies = comment.replies.map(reply => {
+            if (reply.id === commentId) {
+              const newReactions = { ...reply.reactions };
+              const currentReaction = reply.userReaction;
 
-                if (reply.userReaction) {
-                  newReactions[reply.userReaction] = Math.max(0, newReactions[reply.userReaction] - 1);
-                }
-
-                if (reactionId) {
-                  const reactionType = reactionId as 'like' | 'love' | 'haha';
-                  newReactions[reactionType] = newReactions[reactionType] + 1;
-                  return { ...reply, userReaction: reactionType, reactions: newReactions };
-                } else {
-                  return { ...reply, userReaction: undefined, reactions: newReactions };
-                }
+              // If reactionId is null, it means we're toggling off the current reaction
+              if (reactionId === null && currentReaction) {
+                newReactions[currentReaction] = Math.max(0, newReactions[currentReaction] - 1);
+                return { ...reply, userReaction: undefined, reactions: newReactions };
               }
+
+              // If clicking the same reaction that's already active, remove it (unfill)
+              if (currentReaction && reactionId === currentReaction) {
+                newReactions[currentReaction] = Math.max(0, newReactions[currentReaction] - 1);
+                return { ...reply, userReaction: undefined, reactions: newReactions };
+              }
+
+              // If clicking a different reaction or no reaction is currently active
+              if (reactionId) {
+                const newReactionType = reactionId as 'like' | 'love' | 'haha';
+
+                // Remove old reaction if exists
+                if (currentReaction) {
+                  newReactions[currentReaction] = Math.max(0, newReactions[currentReaction] - 1);
+                }
+
+                // Add new reaction
+                newReactions[newReactionType] = (newReactions[newReactionType] || 0) + 1;
+                return { ...reply, userReaction: newReactionType, reactions: newReactions };
+              }
+
               return reply;
-            })
-          };
+            }
+            return reply;
+          });
+
+          return { ...comment, replies: updatedReplies };
         }
+
         return comment;
       })
     );
@@ -158,6 +193,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
       content: newComment,
       timestamp: 'Just now',
       reactions: { like: 0, love: 0, haha: 0 },
+      // No initial userReaction - starts empty
     };
 
     setComments([comment, ...comments]);
@@ -177,6 +213,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
       content: replyText,
       timestamp: 'Just now',
       reactions: { like: 0, love: 0, haha: 0 },
+      // No initial userReaction - starts empty
     };
 
     setComments(prevComments =>
@@ -255,7 +292,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
                 <div className="flex-shrink-0">
                   <ReactionButton
                     onReactionChange={(reactionId) => handleReaction(comment.id, reactionId)}
-                    initialReaction={comment.userReaction}
+                    initialReaction={comment.userReaction} // This will be undefined initially
                     buttonClassName="py-1 px-3 bg-gray-100 hover:bg-gray-200 rounded-full h-8 flex items-center justify-center"
                     size="md"
                   />
