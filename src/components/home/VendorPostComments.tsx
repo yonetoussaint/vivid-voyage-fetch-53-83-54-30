@@ -93,7 +93,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
       let userReactions = [];
       if (currentUserId) {
         const { data: reactionsData } = await supabase
-          .from('post_comment_reactions')
+          .from('comment_reactions')
           .select('comment_id, reaction_type')
           .eq('user_id', currentUserId);
 
@@ -211,7 +211,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
       if (reactionType === null) {
         // Remove reaction
         const { error } = await supabase
-          .from('post_comment_reactions')
+          .from('comment_reactions')
           .delete()
           .eq('comment_id', commentId)
           .eq('user_id', user.id);
@@ -220,7 +220,7 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
       } else {
         // Upsert reaction
         const { error } = await supabase
-          .from('post_comment_reactions')
+          .from('comment_reactions')
           .upsert({
             comment_id: commentId,
             user_id: user.id,
