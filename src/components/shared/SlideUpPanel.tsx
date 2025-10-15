@@ -103,7 +103,7 @@ export default function SlideUpPanel({
       >
         {/* Sticky Header */}
         {(title || headerContent || showCloseButton) && (
-          <div className="flex-shrink-0 bg-white z-10 flex items-center justify-between p-4 border-b border-gray-100 rounded-t-2xl">
+          <div className="flex-shrink-0 bg-white z-10 flex items-center justify-between px-4 py-2 border-b border-gray-100 rounded-t-2xl">
             <div className="flex-1 min-w-0">
               {headerContent ? headerContent : (title && <h3 className="font-medium text-gray-900">{title}</h3>)}
             </div>
