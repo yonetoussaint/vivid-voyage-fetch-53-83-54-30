@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import SectionHeader from './SectionHeader';
 import SlideUpPanel from '@/components/shared/SlideUpPanel';
 import VendorPostComments from './VendorPostComments';
+import StackedReactionIcons from '@/components/shared/StackedReactionIcons';
 
 const PostCard = ({
   title,
@@ -285,18 +286,7 @@ const PostCard = ({
 
       {/* Facebook style engagement stats */}
       <div className="px-3 py-1.5 flex items-center justify-between">
-        <div className="flex items-center gap-1">
-          <div className="flex items-center -space-x-1">
-            <div className="bg-blue-500 rounded-full p-0.5 w-5 h-5 flex items-center justify-center border border-white z-30">
-              <ThumbsUp className="h-3 w-3 text-white fill-white" />
-            </div>
-            <div className="bg-red-500 rounded-full p-0.5 w-5 h-5 flex items-center justify-center border border-white z-20">
-              <i className="fa-solid fa-heart text-white text-[10px]"></i>
-            </div>
-            <span className="text-lg leading-none z-10">😆</span>
-          </div>
-          <span className="text-xs text-gray-500">{currentLikeCount}</span>
-        </div>
+        <StackedReactionIcons count={currentLikeCount} size="md" className="gap-1 text-xs text-gray-500" />
         <div className="flex items-center gap-3 text-xs text-gray-500">
           <span>{commentCount} comments</span>
           <span>{shareCount} shares</span>

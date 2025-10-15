@@ -4,6 +4,7 @@ import { ThumbsUp, Heart, Smile } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import StackedReactionIcons from '@/components/shared/StackedReactionIcons';
 
 interface Comment {
   id: string;
@@ -237,11 +238,13 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
               )}
               
               {totalReactions > 0 && (
-                <div className="absolute -bottom-2 right-2 flex items-center gap-1 bg-[#242526] rounded-full px-1.5 py-0.5 border border-[#3A3B3C]">
-                  <div className="flex items-center -space-x-1">
-                    {reactionIcons}
-                  </div>
-                  <span className="text-[12px] text-[#B0B3B8] ml-0.5">{totalReactions}</span>
+                <div className="absolute -bottom-2 right-2 bg-[#242526] rounded-full px-1.5 py-0.5 border border-[#3A3B3C]">
+                  <StackedReactionIcons 
+                    count={totalReactions} 
+                    size="sm" 
+                    className="gap-1 text-[12px] text-[#B0B3B8]"
+                    reactions={comment.reactions}
+                  />
                 </div>
               )}
             </div>
@@ -324,20 +327,11 @@ const VendorPostComments: React.FC<VendorPostCommentsProps> = ({
     <div className="flex flex-col h-full bg-[#242526]">
       {/* Header with reaction count and shares */}
       <div className="flex-shrink-0 px-4 py-3 border-b border-[#3A3B3C] flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center -space-x-1">
-            <div className="bg-[#0866FF] rounded-full w-[18px] h-[18px] flex items-center justify-center border border-[#242526] z-30">
-              <ThumbsUp className="h-2.5 w-2.5 text-white fill-white" />
-            </div>
-            <div className="bg-[#F43373] rounded-full w-[18px] h-[18px] flex items-center justify-center border border-[#242526] z-20">
-              <Heart className="h-2.5 w-2.5 text-white fill-white" />
-            </div>
-            <div className="bg-[#F7B125] rounded-full w-[18px] h-[18px] flex items-center justify-center border border-[#242526] z-10">
-              <Smile className="h-2.5 w-2.5 text-white fill-white" />
-            </div>
-          </div>
-          <span className="text-sm text-[#E4E6EB]">{totalReactions > 0 ? `${totalReactions}K` : '1.6K'}</span>
-        </div>
+        <StackedReactionIcons 
+          count={totalReactions > 0 ? `${totalReactions}K` : '1.6K'} 
+          size="sm" 
+          className="gap-2 text-sm text-[#E4E6EB]"
+        />
         <span className="text-sm text-[#B0B3B8]">{totalShares} shares</span>
       </div>
 
