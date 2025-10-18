@@ -456,7 +456,7 @@ const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
   // Show loading state with proper skeleton structure
   if (loading) {
     // Determine product count from sellerId or use default
-    const skeletonProductCount = sellerId ? 5 : 1;
+    const skeletonProductCount: number = sellerId ? 5 : 1;
     
     // Show only 1 skeleton post by default
     return (
