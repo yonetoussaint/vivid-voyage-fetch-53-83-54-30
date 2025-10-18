@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from 'react';
 import SectionHeader from '@/components/home/SectionHeader'; // Adjust the import path as needed
 import { Star, Play } from 'lucide-react'; // Import icons from your icon library

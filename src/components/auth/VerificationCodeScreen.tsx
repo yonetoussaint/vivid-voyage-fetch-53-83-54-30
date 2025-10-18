@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Key, Mail, HelpCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';

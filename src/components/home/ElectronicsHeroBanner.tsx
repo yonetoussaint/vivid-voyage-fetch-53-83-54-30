@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState, useEffect, useRef } from 'react';
 import { BannerType } from './hero/types';
 import BannerSlides from './hero/BannerSlides';

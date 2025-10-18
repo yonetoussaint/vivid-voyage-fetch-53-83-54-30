@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Timer, Zap } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";

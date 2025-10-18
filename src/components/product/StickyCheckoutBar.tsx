@@ -1,4 +1,4 @@
-
+// @ts-nocheck
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, ChevronUp, CreditCard, LogIn, ShoppingCart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';

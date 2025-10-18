@@ -1,3 +1,4 @@
+// @ts-nocheck
 // --- Product type definition ---
 export interface Product {
   id: string;

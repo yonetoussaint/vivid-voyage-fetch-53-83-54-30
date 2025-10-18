@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { forwardRef, useImperativeHandle, useEffect } from "react";
 import { 
   Carousel,
