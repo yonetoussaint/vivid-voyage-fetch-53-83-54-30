@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchAllProducts } from "@/integrations/supabase/products";
 import { PageContainer } from "@/components/layout/PageContainer";
 import SuperDealsSection from "@/components/home/SuperDealsSection";
-// import FlashDeals from "@/components/home/FlashDeals";
+import FlashDeals from "@/components/home/FlashDeals";
 import SimpleFlashDeals from "@/components/home/SimpleFlashDeals";
 import SpaceSavingCategories from "@/components/home/SpaceSavingCategories";
 import TopBrands from "@/components/home/TopBrands";
@@ -46,8 +46,7 @@ import {
 import { useLocation } from 'react-router-dom';
 
 // Temporary safe fallbacks to prevent build crashes from dependent components
-const FlashDeals: React.FC<any> = () => null;
-const MobileOptimizedReels: React.FC<any> = () => null;
+
 
 interface ForYouContentProps {
   category: string;
