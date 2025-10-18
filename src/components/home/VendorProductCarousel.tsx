@@ -380,7 +380,7 @@ const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
                 name,
                 price,
                 discount_price,
-                product_images (
+                product_images!product_images_product_id_fkey (
                   id,
                   src,
                   alt

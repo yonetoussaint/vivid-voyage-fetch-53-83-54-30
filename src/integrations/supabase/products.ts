@@ -103,7 +103,7 @@ export async function fetchAllProducts(): Promise<Product[]> {
     .from('products')
     .select(`
       *,
-      product_images (
+      product_images!product_images_product_id_fkey (
         id,
         src,
         alt
@@ -154,7 +154,7 @@ export async function fetchProductById(productId: string): Promise<Product> {
     .from('products')
     .select(`
       *,
-      product_images (
+      product_images!product_images_product_id_fkey (
         id,
         src,
         alt
@@ -324,7 +324,7 @@ export async function fetchFlashDeals(category?: string, productType?: string): 
     .from('products')
     .select(`
       *,
-      product_images (
+      product_images!product_images_product_id_fkey (
         id,
         src,
         alt
