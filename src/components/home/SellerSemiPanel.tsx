@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useRef, useState, useEffect } from 'react';
 import SellerPage from '@/pages/SellerPage';
 import SellerHeader from '@/components/product/SellerHeader';

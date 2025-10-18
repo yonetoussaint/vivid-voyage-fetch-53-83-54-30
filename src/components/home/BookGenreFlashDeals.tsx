@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from "react";
 import { Link } from "react-router-dom";
 import { Timer, Plus, ChevronRight, Package } from "lucide-react"; // Added Package icon

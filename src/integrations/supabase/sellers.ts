@@ -1,4 +1,3 @@
-// @ts-nocheck
 // --- Seller type definition ---
 export interface Seller {
   id: string;

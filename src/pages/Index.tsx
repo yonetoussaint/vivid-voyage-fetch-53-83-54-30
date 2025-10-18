@@ -11,7 +11,7 @@ import TopBrands from "@/components/home/TopBrands";
 import VendorProductCarousel from "@/components/home/VendorProductCarousel";
 import BenefitsBanner from "@/components/home/BenefitsBanner";
 import TopVendorsCompact from "@/components/home/TopVendorsCompact";
-// import MobileOptimizedReels from "@/components/home/MobileOptimizedReels";
+import MobileOptimizedReels from "@/components/home/MobileOptimizedReels";
 import PopularSearches from "@/components/home/PopularSearches";
 import NewArrivalsSection from "@/components/home/NewArrivalsSection";
 import HeroBanner from "@/components/home/HeroBanner";
@@ -44,9 +44,6 @@ import {
   ShieldCheck
 } from "lucide-react";
 import { useLocation } from 'react-router-dom';
-
-// Temporary safe fallbacks to prevent build crashes from dependent components
-
 
 interface ForYouContentProps {
   category: string;

@@ -1,4 +1,3 @@
-// @ts-nocheck
 // GalleryTabsContent.tsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';

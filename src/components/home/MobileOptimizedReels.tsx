@@ -1,4 +1,3 @@
-// @ts-nocheck
 // MobileOptimizedReels.tsx
 import React, { useRef } from 'react';
 import { Store, Users, Zap, ArrowRight, Play } from 'lucide-react';
