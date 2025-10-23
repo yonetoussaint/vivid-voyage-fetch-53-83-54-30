@@ -1,5 +1,6 @@
 // components/Providers.tsx
 import React from "react";
+import { BrowserRouter as Router } from "react-router-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "next-themes";
@@ -24,19 +25,21 @@ export function Providers({ children }: ProvidersProps) {
         <TooltipProvider>
           <CurrencyProvider>
             <RouteCacheProvider>
-              <RedirectAuthProvider>
-                <HomepageProvider>
-                  <AuthProvider>
-                    <AuthOverlayProvider>
-                      <ScreenOverlayProvider>
-                        <HeaderFilterProvider>
-                          {children}
-                        </HeaderFilterProvider>
-                      </ScreenOverlayProvider>
-                    </AuthOverlayProvider>
-                  </AuthProvider>
-                </HomepageProvider>
-              </RedirectAuthProvider>
+              <Router>
+                <RedirectAuthProvider>
+                  <HomepageProvider>
+                    <AuthProvider>
+                      <AuthOverlayProvider>
+                        <ScreenOverlayProvider>
+                          <HeaderFilterProvider>
+                            {children}
+                          </HeaderFilterProvider>
+                        </ScreenOverlayProvider>
+                      </AuthOverlayProvider>
+                    </AuthProvider>
+                  </HomepageProvider>
+                </RedirectAuthProvider>
+              </Router>
             </RouteCacheProvider>
           </CurrencyProvider>
         </TooltipProvider>
