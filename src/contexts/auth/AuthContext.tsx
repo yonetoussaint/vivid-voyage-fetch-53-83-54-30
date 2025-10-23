@@ -17,6 +17,9 @@ interface AuthContextType {
   signup: (email: string, password: string, fullName?: string) => Promise<{ error?: string }>;
   logout: () => Promise<void>;
   checkAuthStatus: () => Promise<void>;
+  checkIfFollowing: (sellerId: string) => Promise<boolean>;
+  toggleFollowSeller: (sellerId: string, sellerName: string, currentFollowStatus: boolean) => Promise<{ success: boolean; error?: string }>;
+  followedSellers: string[];
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,6 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [followedSellers, setFollowedSellers] = useState<string[]>([]);
 
   // Convert Supabase user to our User type
   const mapSupabaseUser = (supabaseUser: SupabaseUser): User => {
@@ -42,6 +46,118 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       full_name: supabaseUser.user_metadata?.full_name,
       profile_picture: supabaseUser.user_metadata?.profile_picture,
     };
+  };
+
+  // Load followed sellers when user logs in
+  const loadFollowedSellers = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('seller_follows')
+        .select('seller_id')
+        .eq('user_id', userId);
+
+      if (error) {
+        console.error('Error loading followed sellers:', error);
+        return;
+      }
+
+      setFollowedSellers(data?.map(item => item.seller_id) || []);
+    } catch (error) {
+      console.error('Error loading followed sellers:', error);
+      setFollowedSellers([]);
+    }
+  };
+
+  // Check if user is following a seller - SIMPLIFIED VERSION
+  const checkIfFollowing = async (sellerId: string): Promise<boolean> => {
+    if (!user) return false;
+
+    // Check cache first - this is the main optimization
+    return followedSellers.includes(sellerId);
+  };
+
+  // Toggle follow status for a seller
+  const toggleFollowSeller = async (sellerId: string, sellerName: string, currentFollowStatus: boolean) => {
+    if (!user) {
+      return { success: false, error: 'User not logged in' };
+    }
+
+    try {
+      if (currentFollowStatus) {
+        // Unfollow
+        const { error } = await supabase
+          .from('seller_follows')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('seller_id', sellerId);
+
+        if (error) throw error;
+
+        // Update cache
+        setFollowedSellers(prev => prev.filter(id => id !== sellerId));
+
+        return { success: true, newFollowStatus: false };
+      } else {
+        // Follow
+        const { error } = await supabase
+          .from('seller_follows')
+          .insert([{ user_id: user.id, seller_id: sellerId }]);
+
+        if (error) {
+          if (error.code === '23505') {
+            // Already following, update cache
+            setFollowedSellers(prev => [...prev, sellerId]);
+            return { success: true, newFollowStatus: true };
+          }
+          throw error;
+        }
+
+        // Update cache
+        setFollowedSellers(prev => [...prev, sellerId]);
+
+        return { success: true, newFollowStatus: true };
+      }
+    } catch (error: any) {
+      console.error('Error toggling follow status:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  const checkAuthStatus = async () => {
+    try {
+      console.log('Checking authentication status...');
+      const { data: { session }, error } = await supabase.auth.getSession();
+
+      if (error) {
+        console.error('Error getting session:', error);
+        setUser(null);
+        setIsAuthenticated(false);
+        setFollowedSellers([]);
+        setIsLoading(false);
+        return;
+      }
+
+      if (session?.user) {
+        console.log('Session found for user:', session.user.email);
+        const userData = mapSupabaseUser(session.user);
+        setUser(userData);
+        setIsAuthenticated(true);
+        // Load followed sellers in background, don't wait for it
+        loadFollowedSellers(session.user.id);
+      } else {
+        console.log('No active session');
+        setUser(null);
+        setIsAuthenticated(false);
+        setFollowedSellers([]);
+      }
+    } catch (error) {
+      console.error('Error checking auth status:', error);
+      setUser(null);
+      setIsAuthenticated(false);
+      setFollowedSellers([]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -57,9 +173,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const userData = mapSupabaseUser(session.user);
           setUser(userData);
           setIsAuthenticated(true);
+          // Load followed sellers in background
+          loadFollowedSellers(session.user.id);
         } else {
           setUser(null);
           setIsAuthenticated(false);
+          setFollowedSellers([]);
         }
 
         setIsLoading(false);
@@ -71,41 +190,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const checkAuthStatus = async () => {
-    try {
-      console.log('Checking authentication status...');
-      const { data: { session }, error } = await supabase.auth.getSession();
-
-      if (error) {
-        console.error('Error getting session:', error);
-        setUser(null);
-        setIsAuthenticated(false);
-        return;
-      }
-
-      if (session?.user) {
-        console.log('Session found for user:', session.user.email);
-        const userData = mapSupabaseUser(session.user);
-        setUser(userData);
-        setIsAuthenticated(true);
-      } else {
-        console.log('No active session');
-        setUser(null);
-        setIsAuthenticated(false);
-      }
-    } catch (error) {
-      console.error('Error checking auth status:', error);
-      setUser(null);
-      setIsAuthenticated(false);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const signup = async (email: string, password: string, fullName?: string) => {
     try {
       console.log('Attempting to signup with email:', email);
-      
+
       const { data, error } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password,
@@ -119,21 +207,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         console.error('Signup error:', error);
-        
+
         let errorMessage = error.message;
         if (error.message.includes('already registered') || error.message.includes('already exists')) {
           errorMessage = 'An account with this email already exists. Please sign in instead.';
         } else if (error.message.includes('Password should be')) {
           errorMessage = 'Password must be at least 6 characters long.';
         }
-        
+
         return { error: errorMessage };
       }
 
       if (data.user) {
         console.log('User signed up successfully:', data.user.email);
         console.log('Confirmation required:', !data.session);
-        
+
         if (!data.session) {
           console.log('Email confirmation required - check your inbox');
         }
@@ -149,7 +237,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     try {
       console.log('Attempting to login with email:', email);
-      
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
         password,
@@ -161,10 +249,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           status: error.status,
           name: error.name
         });
-        
+
         // Provide more specific error messages
         let errorMessage = error.message;
-        
+
         if (error.message.includes('Invalid login credentials') || error.message.includes('Invalid')) {
           errorMessage = 'Invalid email or password. Please check your credentials and try again.';
         } else if (error.message.includes('Email not confirmed') || error.message.includes('not confirmed')) {
@@ -174,16 +262,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else if (error.message.includes('User not found')) {
           errorMessage = 'No account found with this email. Please sign up first.';
         }
-        
+
         return { error: errorMessage };
       }
 
       if (data.user) {
         console.log('User logged in successfully:', data.user.email);
-        console.log('User data:', data.user);
         const userData = mapSupabaseUser(data.user);
         setUser(userData);
         setIsAuthenticated(true);
+        // Load followed sellers in background
+        loadFollowedSellers(data.user.id);
       } else {
         console.warn('Login succeeded but no user data returned');
         return { error: 'Login failed. Please try again.' };
@@ -207,21 +296,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setUser(null);
       setIsAuthenticated(false);
+      setFollowedSellers([]);
     } catch (error) {
       console.error('Logout exception:', error);
     }
   };
 
+  const value: AuthContextType = {
+    user,
+    isAuthenticated,
+    isLoading,
+    login,
+    signup,
+    logout,
+    checkAuthStatus,
+    checkIfFollowing,
+    toggleFollowSeller,
+    followedSellers
+  };
+
   return (
-    <AuthContext.Provider value={{
-      user,
-      isAuthenticated,
-      isLoading,
-      login,
-      signup,
-      logout,
-      checkAuthStatus
-    }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

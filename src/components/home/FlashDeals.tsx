@@ -10,26 +10,61 @@ import { useScreenOverlay } from "@/context/ScreenOverlayContext";
 interface FlashDealsProps {
   productType?: string;
   title?: string;
-  icon?: React.ComponentType<any> | string; // Allow string for Font Awesome classes
+  icon?: React.ComponentType<any> | string;
   customCountdown?: string;
   showCountdown?: boolean;
   maxProducts?: number;
   layoutMode?: 'carousel' | 'grid';
   showSectionHeader?: boolean;
   showPrice?: boolean;
-  // New props for stacked profiles
   showStackedProfiles?: boolean;
   stackedProfiles?: Array<{ id: string; image: string; alt?: string }>;
   onProfileClick?: (profileId: string) => void;
   stackedProfilesText?: string;
-  // New props for title chevron
   showTitleChevron?: boolean;
   onTitleClick?: () => void;
-  // New prop for sponsor count
   showSponsorCount?: boolean;
-  // Max profiles to show
   maxProfiles?: number;
 }
+
+// Unified Skeleton Component
+const FlashDealsSkeleton: React.FC<{ 
+  layoutMode: 'carousel' | 'grid'; 
+  showSectionHeader: boolean;
+  productType?: string;
+  maxProducts?: number;
+}> = ({ layoutMode, showSectionHeader, productType, maxProducts = 20 }) => {
+  const skeletonCount = Math.min(8, layoutMode === 'grid' ? 12 : maxProducts);
+
+  return (
+    <div className="w-full bg-white">
+      {/* Section Header Skeleton */}
+      {showSectionHeader && layoutMode !== 'grid' && (
+        <div className="flex items-center justify-between px-2 py-0 mb-2">
+          <div className="flex items-center gap-1">
+            <div className="w-4 h-4 bg-gray-300 rounded animate-pulse"></div>
+            <div className="h-4 w-24 bg-gray-300 rounded animate-pulse"></div>
+            <div className="w-3 h-3 bg-gray-300 rounded animate-pulse"></div>
+          </div>
+          <div className="h-3 w-16 bg-gray-300 rounded animate-pulse"></div>
+        </div>
+      )}
+
+      {/* Products Skeleton */}
+      <div className={`${layoutMode === 'grid' ? 'grid grid-cols-3 gap-1' : 'pl-2 flex overflow-x-hidden'}`}>
+        {Array.from({ length: skeletonCount }).map((_, index) => (
+          <div 
+            key={index} 
+            className={`${layoutMode === 'grid' ? 'w-full' : 'w-[calc(100%/3.5)] flex-shrink-0 mr-[3vw]'}`}
+            style={layoutMode === 'carousel' ? { maxWidth: '160px' } : undefined}
+          >
+            <div className={`${productType === 'books' ? 'aspect-[1.6:1]' : 'aspect-square'} bg-gray-200 animate-pulse ${layoutMode === 'carousel' ? 'rounded-md mb-1.5' : ''}`}></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 export default function FlashDeals({ 
   productType, 
@@ -41,17 +76,13 @@ export default function FlashDeals({
   layoutMode = 'carousel',
   showSectionHeader = true,
   showPrice = false,
-  // New props
   showStackedProfiles = false,
   stackedProfiles = [],
   onProfileClick,
   stackedProfilesText = "Handpicked by",
-  // Title chevron props
   showTitleChevron = false,
   onTitleClick,
-  // Sponsor count prop
   showSponsorCount = false,
-  // Max profiles prop
   maxProfiles = 3
 }: FlashDealsProps) {
   const isMobile = useIsMobile();
@@ -137,6 +168,18 @@ export default function FlashDeals({
     setSelectedProductId(null);
   };
 
+  // Show unified skeleton while loading
+  if (isLoading) {
+    return (
+      <FlashDealsSkeleton 
+        layoutMode={layoutMode}
+        showSectionHeader={showSectionHeader}
+        productType={productType}
+        maxProducts={maxProducts}
+      />
+    );
+  }
+
   if (!isLoading && processedProducts.length === 0) {
     return null;
   }
@@ -160,37 +203,21 @@ export default function FlashDeals({
             countdown={displayCountdown}
             viewAllLink="/search?category=flash-deals"
             viewAllText="View All"
-            // New stacked profiles props
             showStackedProfiles={showStackedProfiles}
             stackedProfiles={stackedProfiles}
             onProfileClick={onProfileClick}
             stackedProfilesText={stackedProfilesText}
             maxProfiles={maxProfiles}
-            // New title chevron props
             showTitleChevron={showTitleChevron}
             onTitleClick={onTitleClick}
-            // Sponsor count prop
             showSponsorCount={showSponsorCount}
-            // Pass countdown for automatic navigation
             countdown={displayCountdown}
           />
         )}
 
         {/* Rest of the component remains the same */}
         <div className="relative">
-          {isLoading ? (
-            <div className={`${layoutMode === 'grid' ? 'grid grid-cols-3 gap-1' : 'pl-2 flex overflow-x-hidden'}`}>
-              {Array.from({ length: Math.min(8, layoutMode === 'grid' ? 12 : maxProducts) }).map((_, index) => (
-                <div 
-                  key={index} 
-                  className={`${layoutMode === 'grid' ? 'w-full' : 'w-[calc(100%/3.5)] flex-shrink-0 mr-[3vw]'}`}
-                  style={layoutMode === 'carousel' ? { maxWidth: '160px' } : undefined}
-                >
-                  <div className={`${productType === 'books' ? 'aspect-[1.6:1]' : 'aspect-square'} bg-gray-200 animate-pulse ${layoutMode === 'carousel' ? 'rounded-md mb-1.5' : ''}`}></div>
-                </div>
-              ))}
-            </div>
-          ) : processedProducts.length > 0 ? (
+          {processedProducts.length > 0 ? (
             layoutMode === 'grid' ? (
               // Grid layout - no extra padding, starts immediately
               <div className="grid grid-cols-3 gap-1">

@@ -36,19 +36,18 @@ const ReactionButton: React.FC<ReactionButtonProps> = ({
   const reactionsRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
   const dragStartPosition = useRef<{ x: number; y: number } | null>(null);
+  const [lottieLoaded, setLottieLoaded] = useState(false);
 
   const reactions: Reaction[] = [
     { 
       id: 'like', 
       icon: <ThumbsUp className="h-5 w-5 text-white fill-white" />, 
-      emojiUnicode: '1f44d',
       bg: 'bg-blue-500', 
       label: 'Like' 
     },
     { 
       id: 'love', 
       icon: <Heart className="h-5 w-5 text-white fill-white" />, 
-      emojiUnicode: '1f60d',
       bg: 'bg-red-500', 
       label: 'Love' 
     },
@@ -86,9 +85,16 @@ const ReactionButton: React.FC<ReactionButtonProps> = ({
 
   // Load Lottie player script dynamically
   useEffect(() => {
+    // Check if Lottie is already loaded
+    if (typeof window !== 'undefined' && (window as any).lottie) {
+      setLottieLoaded(true);
+      return;
+    }
+
     const script = document.createElement('script');
     script.src = 'https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js';
     script.async = true;
+    script.onload = () => setLottieLoaded(true);
     document.head.appendChild(script);
 
     return () => {
@@ -97,6 +103,33 @@ const ReactionButton: React.FC<ReactionButtonProps> = ({
       }
     };
   }, []);
+
+  // Prevent body scroll when overlay is open
+  useEffect(() => {
+    if (showReactions) {
+      // Store the current scroll position
+      const scrollY = window.scrollY;
+      const body = document.body;
+
+      // Prevent scrolling
+      body.style.position = 'fixed';
+      body.style.top = `-${scrollY}px`;
+      body.style.left = '0';
+      body.style.right = '0';
+      body.style.overflow = 'hidden';
+
+      return () => {
+        // Restore scrolling
+        const scrollY = parseInt(body.style.top || '0') * -1;
+        body.style.position = '';
+        body.style.top = '';
+        body.style.left = '';
+        body.style.right = '';
+        body.style.overflow = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [showReactions]);
 
   const handlePressStart = (event: React.MouseEvent | React.TouchEvent) => {
     event.preventDefault();
@@ -139,32 +172,39 @@ const ReactionButton: React.FC<ReactionButtonProps> = ({
     const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX;
     const clientY = 'touches' in event ? event.touches[0].clientY : event.clientY;
 
-    // Find all reaction container elements (the parent divs with data-reaction-id)
-    const reactionContainers = document.querySelectorAll('[data-reaction-container]');
-    let foundReaction: string | null = null;
+    // Use requestAnimationFrame for smoother performance
+    requestAnimationFrame(() => {
+      // Find all reaction container elements
+      const reactionContainers = document.querySelectorAll('[data-reaction-container]');
+      let foundReaction: string | null = null;
 
-    reactionContainers.forEach((container) => {
-      const rect = container.getBoundingClientRect();
+      reactionContainers.forEach((container) => {
+        const rect = container.getBoundingClientRect();
 
-      // Add some padding to make it easier to select
-      const padding = 10;
-      if (
-        clientX >= rect.left - padding &&
-        clientX <= rect.right + padding &&
-        clientY >= rect.top - padding &&
-        clientY <= rect.bottom + padding
-      ) {
-        foundReaction = container.getAttribute('data-reaction-container');
+        // Create a larger invisible hit area below the emoji container
+        // This allows dragging below the emojis without finger blocking the view
+        const paddingX = 20;
+        const paddingTop = 10;
+        const paddingBottom = 80; // Large padding below for finger clearance
+
+        if (
+          clientX >= rect.left - paddingX &&
+          clientX <= rect.right + paddingX &&
+          clientY >= rect.top - paddingTop &&
+          clientY <= rect.bottom + paddingBottom
+        ) {
+          foundReaction = container.getAttribute('data-reaction-container');
+        }
+      });
+
+      if (foundReaction && foundReaction !== hoveredReaction) {
+        setHoveredReaction(foundReaction);
+        setAnimatedReaction(foundReaction);
+      } else if (!foundReaction && hoveredReaction) {
+        setHoveredReaction(null);
+        setAnimatedReaction(null);
       }
     });
-
-    if (foundReaction && foundReaction !== hoveredReaction) {
-      setHoveredReaction(foundReaction);
-      setAnimatedReaction(foundReaction);
-    } else if (!foundReaction && hoveredReaction) {
-      setHoveredReaction(null);
-      setAnimatedReaction(null);
-    }
   };
 
   const handleDragEnd = () => {
@@ -268,14 +308,12 @@ const ReactionButton: React.FC<ReactionButtonProps> = ({
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
-
-      // Clean up any remaining global drag listeners
       document.removeEventListener('mousemove', handleGlobalDragMove);
       document.removeEventListener('mouseup', handleDragEnd);
       document.removeEventListener('touchmove', handleGlobalDragMove);
       document.removeEventListener('touchend', handleDragEnd);
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
     };
   }, [showReactions]);
 
@@ -332,6 +370,33 @@ const ReactionButton: React.FC<ReactionButtonProps> = ({
 
   const display = getReactionDisplay();
 
+  // Render Lottie player for emoji reactions
+  const renderLottieAnimation = (reaction: Reaction) => {
+    if (!lottieLoaded || !reaction.emojiUnicode) {
+      // Fallback to static emoji while Lottie loads
+      return (
+        <span 
+          className="text-3xl leading-none" 
+          data-reaction-id={reaction.id}
+          style={{ pointerEvents: 'none' }}
+        >
+          {reaction.emoji}
+        </span>
+      );
+    }
+
+    return (
+      <lottie-player
+        autoplay
+        loop
+        mode="normal"
+        src={`https://fonts.gstatic.com/s/e/notoemoji/latest/${reaction.emojiUnicode}/lottie.json`}
+        style={{ width: '48px', height: '48px', pointerEvents: 'none' }}
+        data-reaction-id={reaction.id}
+      />
+    );
+  };
+
   return (
     <div className={`relative ${className}`}>
       {/* Glassmorphic Backdrop */}
@@ -342,103 +407,132 @@ const ReactionButton: React.FC<ReactionButtonProps> = ({
           onMouseDown={(e) => {
             e.preventDefault();
             isDragging.current = true;
+            dragStartPosition.current = { x: e.clientX, y: e.clientY };
             startGlobalDrag();
+            // Immediately start tracking for reactions
+            handleGlobalDragMove(e.nativeEvent);
           }}
           onTouchStart={(e) => {
             e.preventDefault();
             isDragging.current = true;
+            const touch = e.touches[0];
+            dragStartPosition.current = { x: touch.clientX, y: touch.clientY };
             startGlobalDrag();
-          }}
-          onMouseMove={(e) => {
-            if (isDragging.current) {
-              handleGlobalDragMove(e.nativeEvent);
-            }
-          }}
-          onTouchMove={(e) => {
-            if (isDragging.current) {
-              handleGlobalDragMove(e.nativeEvent);
-            }
+            // Immediately start tracking for reactions
+            handleGlobalDragMove(e.nativeEvent);
           }}
         />
       )}
 
-      {/* Reactions Overlay */}
+      {/* Reactions Overlay with invisible extended hit area */}
       {showReactions && (
-        <div
-          ref={reactionsRef}
-          className="absolute bottom-full left-0 mb-2 bg-white rounded-full shadow-lg border border-gray-200 px-3 py-2 flex gap-3 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200"
-          onMouseLeave={() => {
-            setHoveredReaction(null);
-            setAnimatedReaction(null);
-          }}
-        >
-          {reactions.map((reaction) => {
-            const isHovered = hoveredReaction === reaction.id;
-            const scale = isHovered ? 'scale-150' : 'scale-100';
-            const transition = 'transition-all duration-150 ease-out';
+        <div className="absolute bottom-full left-0 mb-2 z-50">
+          {/* Invisible extended hit area below the emojis */}
+          <div 
+            className="absolute -bottom-20 left-0 right-0 h-20 bg-transparent"
+            style={{ pointerEvents: 'none' }}
+          />
 
-            return (
-              <div 
-                key={reaction.id} 
-                className="relative flex flex-col items-center"
-                data-reaction-container={reaction.id}
-              >
-                {/* Floating label */}
-                {isHovered && (
-                  <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-lg px-3 py-1 z-50 whitespace-nowrap">
-                    <div className="text-xs text-gray-700 font-medium text-center">
-                      {reaction.label}
-                    </div>
-                  </div>
-                )}
+          {/* Visible emoji container with ultra-smooth animation */}
+          <div
+            ref={reactionsRef}
+            className="bg-white rounded-full shadow-lg border border-gray-200 px-3 py-2 flex gap-3"
+            style={{
+              animation: 'slideUpFadeIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both',
+              transformOrigin: 'bottom center'
+            }}
+            onMouseLeave={() => {
+              setHoveredReaction(null);
+              setAnimatedReaction(null);
+            }}
+          >
+            {reactions.map((reaction, index) => {
+              const isHovered = hoveredReaction === reaction.id;
+              const isIconReaction = !!reaction.icon;
 
-                {/* Main emoji/icon */}
-                <div
-                  data-reaction-id={reaction.id}
-                  className={`flex flex-col items-center cursor-pointer ${transition} ${scale}`}
-                  onMouseEnter={() => handleReactionMouseEnter(reaction.id)}
-                  onMouseLeave={handleReactionMouseLeave}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleReactionSelect(reaction);
+              return (
+                <div 
+                  key={reaction.id} 
+                  className="relative flex flex-col items-center"
+                  data-reaction-container={reaction.id}
+                  style={{
+                    animation: `emojiSlideIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) ${index * 0.05}s both`,
+                    transformOrigin: 'bottom center'
                   }}
                 >
-                  <div 
-                    className={`${currentSize.overlay} flex items-center justify-center`}
+                  {/* Tooltip outside scaled element */}
+                  {isHovered && (
+                    <div className="absolute left-1/2 bg-gray-900 text-white text-xs font-medium 
+py-1 px-2 rounded-md shadow-md whitespace-nowrap z-[60] pointer-events-none"
+                      style={{
+                        animation: 'fadeInUp 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94) both',
+                        bottom: 'calc(100% + 90px)',
+                        transform: 'translateX(-50%)'
+                      }}
+                    >
+                      {reaction.label}
+                    </div>
+                  )}
+
+                  {/* Scaled wrapper holds emoji only */}
+                  <div
                     data-reaction-id={reaction.id}
+                    className="relative flex flex-col items-center cursor-pointer"
+                    onMouseEnter={() => handleReactionMouseEnter(reaction.id)}
+                    onMouseLeave={handleReactionMouseLeave}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleReactionSelect(reaction);
+                    }}
+                    style={{
+                      transform: isHovered ? 'scale(2.2) translateY(-25px)' : 'scale(1) translateY(0)',
+                      transition: 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease-out',
+                      zIndex: isHovered ? 50 : 1,
+                      filter: isHovered ? 'drop-shadow(0 8px 12px rgba(0, 0, 0, 0.15))' : 'none'
+                    }}
                   >
-                    {isHovered && reaction.emojiUnicode ? (
-                      <lottie-player
-                        autoplay
-                        loop
-                        mode="normal"
-                        src={`https://fonts.gstatic.com/s/e/notoemoji/latest/${reaction.emojiUnicode}/lottie.json`}
-                        style={{ width: '48px', height: '48px', pointerEvents: 'none' }}
-                        data-reaction-id={reaction.id}
-                      />
-                    ) : reaction.icon ? (
-                      <div 
-                        className={`${reaction.bg} rounded-full ${currentSize.overlay} flex items-center justify-center`}
-                        data-reaction-id={reaction.id}
-                      >
-                        {React.cloneElement(reaction.icon as React.ReactElement, { 
-                          'data-reaction-id': reaction.id 
-                        })}
-                      </div>
-                    ) : (
-                      <span 
-                        className="text-3xl leading-none" 
-                        data-reaction-id={reaction.id}
-                        style={{ pointerEvents: 'none' }}
-                      >
-                        {reaction.emoji}
-                      </span>
-                    )}
+                    {/* Emoji/icon content */}
+                    <div 
+                      className={`${currentSize.overlay} flex items-center justify-center relative`}
+                      data-reaction-id={reaction.id}
+                    >
+                      {isHovered && reaction.emojiUnicode ? (
+                        renderLottieAnimation(reaction)
+                      ) : reaction.icon ? (
+                        <div 
+                          className={`
+                            ${reaction.bg} 
+                            rounded-full 
+                            ${currentSize.overlay} 
+                            flex 
+                            items-center 
+                            justify-center 
+                            ${isHovered ? 'animate-bounce' : ''}
+                          `}
+                          style={{ 
+                            animationDuration: '0.6s',
+                            animationTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)'
+                          }}
+                        >
+                          {React.cloneElement(reaction.icon as React.ReactElement, { 
+                            className: `h-5 w-5 text-white fill-white transition-transform duration-300 ease-out`
+                          })}
+                        </div>
+                      ) : (
+                        <span 
+                          className="text-3xl leading-none" 
+                          data-reaction-id={reaction.id}
+                          style={{ pointerEvents: 'none' }}
+                        >
+                          {reaction.emoji}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -458,6 +552,46 @@ const ReactionButton: React.FC<ReactionButtonProps> = ({
           </span>
         )}
       </button>
+
+      {/* Ultra-smooth CSS animations */}
+      <style jsx>{`
+        @keyframes slideUpFadeIn {
+          0% {
+            opacity: 0;
+            transform: translateY(20px) scale(0.9);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        @keyframes emojiSlideIn {
+          0% {
+            opacity: 0;
+            transform: translateY(30px) scale(0.8);
+          }
+          60% {
+            opacity: 1;
+            transform: translateY(-8px) scale(1.05);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        @keyframes fadeInUp {
+          0% {
+            opacity: 0;
+            transform: translate(-50%, 10px);
+          }
+          100% {
+            opacity: 1;
+            transform: translate(-50%, 0);
+          }
+        }
+      `}</style>
     </div>
   );
 };

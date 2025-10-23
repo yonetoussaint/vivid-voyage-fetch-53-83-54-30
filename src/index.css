@@ -2,6 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent context menu on images and other elements */
+img, picture, .image-container, [data-prevent-context-menu] {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Alternative approach - more specific to images */
+img {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* If you need some images to be interactive, you can override with a class */
+img.interactive {
+  pointer-events: auto;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

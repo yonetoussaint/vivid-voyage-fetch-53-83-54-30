@@ -1,6 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,6 +8,15 @@ import { ThemeProvider } from "next-themes";
 import { RedirectAuthProvider } from "./context/RedirectAuthContext";
 import { HomepageProvider } from "./context/HomepageContext";
 import { CurrencyProvider } from "./contexts/CurrencyContext";
+import { RouteCacheProvider } from "./contexts/RouteCacheContext";
+import { AuthOverlayProvider } from "./context/AuthOverlayContext";
+import { ScreenOverlayProvider } from "./context/ScreenOverlayContext";
+import { AuthProvider } from "./contexts/auth/AuthContext";
+import { HeaderFilterProvider } from './contexts/HeaderFilterContext';
+import CachedRoute from "./components/CachedRoute";
+import { queryClient } from "./utils/queryClient";
+
+// Import all your pages
 import Index from "./pages/Index";
 import ForYou from "./pages/ForYou";
 import BooksHomepage from "./pages/BooksHomepage";
@@ -17,7 +26,6 @@ import ProductDetail from "./pages/ProductDetail";
 import SingleProductDetail from "./pages/SingleProductDetail";
 import ProductDescriptionPage from "./pages/ProductDescriptionPage";
 import ProductCheckout from "./pages/ProductCheckout";
-
 import Videos from "./pages/Videos";
 import Reels from "./pages/Reels";
 import Trending from "./pages/Trending";
@@ -66,7 +74,6 @@ import ProductEditDealsPage from "./pages/ProductEditDealsPage";
 import ProductEditSpecsPage from "./pages/ProductEditSpecsPage";
 import ProductEditVariantsPage from "./pages/ProductEditVariantsPage";
 import ProductEditNewVariantPage from "./pages/ProductEditNewVariantPage";
-
 import ProductEditDetailsPage from "./pages/ProductEditDetailsPage";
 import ProductEditDescriptionPage from "./pages/ProductEditDescriptionPage";
 import ComponentTestPage from "./pages/ComponentTestPage";
@@ -82,16 +89,10 @@ import MyStations from "./pages/MyStations";
 import ProductsPage from "./pages/ProductsPage";
 import NotFound from "./pages/NotFound";
 import MainLayout from "./components/layout/MainLayout";
-import { AuthOverlayProvider } from "./context/AuthOverlayContext";
-import { ScreenOverlayProvider } from "./context/ScreenOverlayContext"; // SINGLE IMPORT
-import { AuthProvider } from "./contexts/auth/AuthContext";
-import { HeaderFilterProvider } from './contexts/HeaderFilterContext';
 import CartPage from '@/pages/CartPage';
 import MenuPage from '@/pages/MenuPage';
 
 import "./App.css";
-
-const queryClient = new QueryClient();
 
 function App() {
   return (
@@ -99,114 +100,458 @@ function App() {
       <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
         <TooltipProvider>
           <CurrencyProvider>
-            <Router>
-              <RedirectAuthProvider>
-                <HomepageProvider>
-                  <AuthProvider>
-                    <AuthOverlayProvider>
-                      <ScreenOverlayProvider>
-                        <HeaderFilterProvider>
-                          <div className="App min-h-screen bg-background text-foreground">
-                            <Routes>
-                              <Route path="/" element={<MainLayout />}>
-                                <Route index element={<ConditionalHomepage />} />
-                                <Route path="for-you" element={<ConditionalHomepage />} />
-                                <Route path="index" element={<Index />} />
-                                <Route path="search" element={<SearchPage />} />
-                                <Route path="product/:id" element={<ProductDetail />} />
-                                <Route path="product/:id/description" element={<ProductDescriptionPage />} />
-                                <Route path="product/:id/comments" element={<ProductCommentsPage />} />
-                                <Route path="product/:id/reviews" element={<ProductReviewsPage />} />
-                                <Route path="product/:id/qa" element={<ProductQAPage />} />
-                                <Route path="product/:id/ask-question" element={<AskQuestionPage />} />
-                                <Route path="single-product/:id" element={<SingleProductDetail />} />
-                                <Route path="single-product/:id/comments" element={<ProductCommentsPage />} />
-                                <Route path="single-product/:id/ask-question" element={<AskQuestionPage />} />
-                                <Route path="posts" element={<CategoriesPage />} />
-                                <Route path="videos" element={<Videos />} />
-                                <Route path="reels" element={<Reels />} />
-                                <Route path="reels/:mode" element={<Reels />} />
-                                <Route path="trending" element={<Trending />} />
-                                <Route path="wallet" element={<Wallet />} />
-                                <Route path="messages" element={<Messages />} />
-                                <Route path="messages/:conversationId" element={<ConversationDetail />} />
-                                <Route path="profile/*" element={<ProfilePage />} />
-                                <Route path="more" element={<MoreMenu />} />
-                                <Route path="more-menu" element={<MoreMenu />} />
-                                <Route path="auth" element={<SimpleAuthPage />} />
-                                <Route path="signin" element={<AuthPage />} />
-                                <Route path="categories" element={<CategoriesPage />} />
-                                <Route path="categories/fashion" element={<FashionPage />} />
-                                <Route path="categories/electronics" element={<ElectronicsPage />} />
-                                <Route path="categories/home-living" element={<HomeLivingPage />} />
+            <RouteCacheProvider>
+              <Router>
+                <RedirectAuthProvider>
+                  <HomepageProvider>
+                    <AuthProvider>
+                      <AuthOverlayProvider>
+                        <ScreenOverlayProvider>
+                          <HeaderFilterProvider>
+                            <div className="App min-h-screen bg-background text-foreground">
+                              <Routes>
+                                <Route path="/" element={<MainLayout />}>
+                                  {/* Homepage routes with caching */}
+                                  <Route index element={
+                                    <CachedRoute>
+                                      <ConditionalHomepage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="for-you" element={
+                                    <CachedRoute>
+                                      <ConditionalHomepage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="index" element={
+                                    <CachedRoute>
+                                      <Index />
+                                    </CachedRoute>
+                                  } />
 
-                                <Route path="categories/women" element={<WomenPage />} />
+                                  {/* Search with specific cache key */}
+                                  <Route path="search" element={
+                                    <CachedRoute cacheKey="search-page">
+                                      <SearchPage />
+                                    </CachedRoute>
+                                  } />
 
-                                <Route path="categories/men" element={<MenPage />} />
+                                  {/* Product routes */}
+                                  <Route path="product/:id" element={
+                                    <CachedRoute>
+                                      <ProductDetail />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="product/:id/description" element={
+                                    <CachedRoute>
+                                      <ProductDescriptionPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="product/:id/comments" element={
+                                    <CachedRoute>
+                                      <ProductCommentsPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="product/:id/reviews" element={
+                                    <CachedRoute>
+                                      <ProductReviewsPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="product/:id/qa" element={
+                                    <CachedRoute>
+                                      <ProductQAPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="product/:id/ask-question" element={
+                                    <CachedRoute>
+                                      <AskQuestionPage />
+                                    </CachedRoute>
+                                  } />
 
-                                <Route path="categories/books" element={<BooksHomepage />} />
-                                <Route path="categories/sports-outdoors" element={<SportsOutdoorsPage />} />
-                                <Route path="categories/automotive" element={<AutomotivePage />} />
-                                <Route path="categories/kids-hobbies" element={<KidsHobbiesPage />} />
-                                <Route path="categories/entertainment" element={<EntertainmentPage />} />
-                                <Route path="explore" element={<Explore />} />
-                                <Route path="wishlist" element={<Wishlist />} />
-                                <Route path="notifications" element={<Notifications />} />
-                                <Route path="addresses" element={<Addresses />} />
-                                <Route path="help" element={<Help />} />
-                                <Route path="/my-stations" element={<MyStations />} />
-                                <Route path="/products" element={<ProductsPage />} />
-                                <Route path="admin" element={<AdminPanel />} />
-                <Route path="admin-dashboard/*" element={<AdminDashboard />} />
-                                <Route path="/seller/:sellerId/*" element={<SellerPage />} />
-                                <Route path="product/:productId/edit" element={<ProductEditNavigationPage />} />
-                                <Route path="product/:productId/edit/basic" element={<ProductEditBasicPage />} />
-                                <Route path="product/:productId/edit/category" element={<ProductEditCategoryPage />} />
-                                <Route path="product/:productId/edit/media" element={<ProductEditMediaPage />} />
-                                <Route path="product/:productId/edit/shipping" element={<ProductEditShippingPage />} />
-                                <Route path="product/:productId/edit/deals" element={<ProductEditDealsPage />} />
-                                <Route path="product/:productId/edit/specifications" element={<ProductEditSpecsPage />} />
-                                <Route path="product/:productId/edit/variants" element={<ProductEditVariantsPage />} />
-                                <Route path="product/:productId/edit/variants/new" element={<ProductEditNewVariantPage />} />
+                                  {/* Single product routes */}
+                                  <Route path="single-product/:id" element={
+                                    <CachedRoute>
+                                      <SingleProductDetail />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="single-product/:id/comments" element={
+                                    <CachedRoute>
+                                      <ProductCommentsPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="single-product/:id/ask-question" element={
+                                    <CachedRoute>
+                                      <AskQuestionPage />
+                                    </CachedRoute>
+                                  } />
 
-                                <Route path="product/:productId/edit/details" element={<ProductEditDetailsPage />} />
-                                <Route path="product/:productId/edit/description" element={<ProductEditDescriptionPage />} />
-                                <Route path="checkout" element={<Checkout />} />
-                                <Route path="product-checkout" element={<ProductCheckout />} />
-                                <Route path="paypal-checkout" element={<PayPalCheckout />} />
-                                <Route path="paypal-hosted-checkout" element={<PayPalHostedCheckout />} />
-                                <Route path="paypal-payment" element={<PayPalPayment />} />
-                                <Route path="dynamic-paypal-checkout" element={<DynamicPayPalCheckout />} />
-                                <Route path="paypal-deposit" element={<PayPalDepositPage />} />
-                                <Route path="deposit" element={<DepositPage />} />
-                                <Route path="nft-payment" element={<NFTPaymentPage />} />
-                                <Route path="topup" element={<TopUpPage />} />
-                                <Route path="netflix" element={<NetflixPage />} />
-                                <Route path="transfer-old" element={<TransferPage />} />
-                                <Route path="transfer" element={<TransferHomePage />} />
+                                  {/* Content routes */}
+                                  <Route path="posts" element={
+                                    <CachedRoute>
+                                      <CategoriesPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="videos" element={
+                                    <CachedRoute>
+                                      <Videos />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="reels" element={
+                                    <CachedRoute>
+                                      <Reels />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="reels/:mode" element={
+                                    <CachedRoute>
+                                      <Reels />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="trending" element={
+                                    <CachedRoute>
+                                      <Trending />
+                                    </CachedRoute>
+                                  } />
 
-                                <Route path="component-test" element={<ComponentTestPage />} />
-                                <Route path="signup" element={<SimpleAuthPage />} />
-                                <Route path="auth/callback" element={<ForYou />} />
-                                <Route path="seller-dashboard/*" element={<SellerDashboard />} />
-                                <Route path="/seller/:sellerId/*" element={<SellerPage />} />
-                                <Route path="/admin-dashboard/*" element={<AdminDashboard />} />
-                                <Route path="/pickup-station/*" element={<PickupStationDashboard />} />
-                                <Route path="*" element={<NotFound />} />
-                                <Route path="/cart" element={<CartPage />} />
-                                <Route path="/menu" element={<MenuPage />} />
-                              </Route>
-                            </Routes>
-                            <Toaster />
-                            <Sonner />
-                          </div>
-                        </HeaderFilterProvider>
-                      </ScreenOverlayProvider>
-                    </AuthOverlayProvider>
-                  </AuthProvider>
-                </HomepageProvider>
-              </RedirectAuthProvider>
-            </Router>
+                                  {/* Wallet & Messages */}
+                                  <Route path="wallet" element={
+                                    <CachedRoute>
+                                      <Wallet />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="messages" element={
+                                    <CachedRoute>
+                                      <Messages />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="messages/:conversationId" element={
+                                    <CachedRoute>
+                                      <ConversationDetail />
+                                    </CachedRoute>
+                                  } />
+
+                                  {/* Profile & Auth */}
+                                  <Route path="profile/*" element={
+                                    <CachedRoute>
+                                      <ProfilePage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="more" element={
+                                    <CachedRoute>
+                                      <MoreMenu />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="more-menu" element={
+                                    <CachedRoute>
+                                      <MoreMenu />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="auth" element={
+                                    <CachedRoute shouldCache={false}>
+                                      <SimpleAuthPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="signin" element={
+                                    <CachedRoute shouldCache={false}>
+                                      <AuthPage />
+                                    </CachedRoute>
+                                  } />
+
+                                  {/* Categories */}
+                                  <Route path="categories" element={
+                                    <CachedRoute>
+                                      <CategoriesPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="categories/fashion" element={
+                                    <CachedRoute>
+                                      <FashionPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="categories/electronics" element={
+                                    <CachedRoute>
+                                      <ElectronicsPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="categories/home-living" element={
+                                    <CachedRoute>
+                                      <HomeLivingPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="categories/women" element={
+                                    <CachedRoute>
+                                      <WomenPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="categories/men" element={
+                                    <CachedRoute>
+                                      <MenPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="categories/books" element={
+                                    <CachedRoute>
+                                      <BooksHomepage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="categories/sports-outdoors" element={
+                                    <CachedRoute>
+                                      <SportsOutdoorsPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="categories/automotive" element={
+                                    <CachedRoute>
+                                      <AutomotivePage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="categories/kids-hobbies" element={
+                                    <CachedRoute>
+                                      <KidsHobbiesPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="categories/entertainment" element={
+                                    <CachedRoute>
+                                      <EntertainmentPage />
+                                    </CachedRoute>
+                                  } />
+
+                                  {/* User features */}
+                                  <Route path="explore" element={
+                                    <CachedRoute>
+                                      <Explore />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="wishlist" element={
+                                    <CachedRoute>
+                                      <Wishlist />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="notifications" element={
+                                    <CachedRoute>
+                                      <Notifications />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="addresses" element={
+                                    <CachedRoute>
+                                      <Addresses />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="help" element={
+                                    <CachedRoute>
+                                      <Help />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="/my-stations" element={
+                                    <CachedRoute>
+                                      <MyStations />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="/products" element={
+                                    <CachedRoute>
+                                      <ProductsPage />
+                                    </CachedRoute>
+                                  } />
+
+                                  {/* Admin & Seller */}
+                                  <Route path="admin" element={
+                                    <CachedRoute>
+                                      <AdminPanel />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="admin-dashboard/*" element={
+                                    <CachedRoute>
+                                      <AdminDashboard />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="/seller/:sellerId/*" element={
+                                    <CachedRoute>
+                                      <SellerPage />
+                                    </CachedRoute>
+                                  } />
+
+                                  {/* Product Edit Routes */}
+                                  <Route path="product/:productId/edit" element={
+                                    <CachedRoute shouldCache={false}>
+                                      <ProductEditNavigationPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="product/:productId/edit/basic" element={
+                                    <CachedRoute shouldCache={false}>
+                                      <ProductEditBasicPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="product/:productId/edit/category" element={
+                                    <CachedRoute shouldCache={false}>
+                                      <ProductEditCategoryPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="product/:productId/edit/media" element={
+                                    <CachedRoute shouldCache={false}>
+                                      <ProductEditMediaPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="product/:productId/edit/shipping" element={
+                                    <CachedRoute shouldCache={false}>
+                                      <ProductEditShippingPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="product/:productId/edit/deals" element={
+                                    <CachedRoute shouldCache={false}>
+                                      <ProductEditDealsPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="product/:productId/edit/specifications" element={
+                                    <CachedRoute shouldCache={false}>
+                                      <ProductEditSpecsPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="product/:productId/edit/variants" element={
+                                    <CachedRoute shouldCache={false}>
+                                      <ProductEditVariantsPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="product/:productId/edit/variants/new" element={
+                                    <CachedRoute shouldCache={false}>
+                                      <ProductEditNewVariantPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="product/:productId/edit/details" element={
+                                    <CachedRoute shouldCache={false}>
+                                      <ProductEditDetailsPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="product/:productId/edit/description" element={
+                                    <CachedRoute shouldCache={false}>
+                                      <ProductEditDescriptionPage />
+                                    </CachedRoute>
+                                  } />
+
+                                  {/* Payment & Checkout - disable caching for sensitive pages */}
+                                  <Route path="checkout" element={
+                                    <CachedRoute shouldCache={false}>
+                                      <Checkout />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="product-checkout" element={
+                                    <CachedRoute shouldCache={false}>
+                                      <ProductCheckout />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="paypal-checkout" element={
+                                    <CachedRoute shouldCache={false}>
+                                      <PayPalCheckout />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="paypal-hosted-checkout" element={
+                                    <CachedRoute shouldCache={false}>
+                                      <PayPalHostedCheckout />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="paypal-payment" element={
+                                    <CachedRoute shouldCache={false}>
+                                      <PayPalPayment />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="dynamic-paypal-checkout" element={
+                                    <CachedRoute shouldCache={false}>
+                                      <DynamicPayPalCheckout />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="paypal-deposit" element={
+                                    <CachedRoute shouldCache={false}>
+                                      <PayPalDepositPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="deposit" element={
+                                    <CachedRoute shouldCache={false}>
+                                      <DepositPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="nft-payment" element={
+                                    <CachedRoute shouldCache={false}>
+                                      <NFTPaymentPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="topup" element={
+                                    <CachedRoute shouldCache={false}>
+                                      <TopUpPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="netflix" element={
+                                    <CachedRoute>
+                                      <NetflixPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="transfer-old" element={
+                                    <CachedRoute shouldCache={false}>
+                                      <TransferPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="transfer" element={
+                                    <CachedRoute shouldCache={false}>
+                                      <TransferHomePage />
+                                    </CachedRoute>
+                                  } />
+
+                                  {/* Other routes */}
+                                  <Route path="component-test" element={
+                                    <CachedRoute>
+                                      <ComponentTestPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="signup" element={
+                                    <CachedRoute shouldCache={false}>
+                                      <SimpleAuthPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="auth/callback" element={
+                                    <CachedRoute>
+                                      <ForYou />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="seller-dashboard/*" element={
+                                    <CachedRoute>
+                                      <SellerDashboard />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="/seller/:sellerId/*" element={
+                                    <CachedRoute>
+                                      <SellerPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="/admin-dashboard/*" element={
+                                    <CachedRoute>
+                                      <AdminDashboard />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="/pickup-station/*" element={
+                                    <CachedRoute>
+                                      <PickupStationDashboard />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="/cart" element={
+                                    <CachedRoute>
+                                      <CartPage />
+                                    </CachedRoute>
+                                  } />
+                                  <Route path="/menu" element={
+                                    <CachedRoute>
+                                      <MenuPage />
+                                    </CachedRoute>
+                                  } />
+
+                                  {/* 404 */}
+                                  <Route path="*" element={<NotFound />} />
+                                </Route>
+                              </Routes>
+                              <Toaster />
+                              <Sonner />
+                            </div>
+                          </HeaderFilterProvider>
+                        </ScreenOverlayProvider>
+                      </AuthOverlayProvider>
+                    </AuthProvider>
+                  </HomepageProvider>
+                </RedirectAuthProvider>
+              </Router>
+            </RouteCacheProvider>
           </CurrencyProvider>
         </TooltipProvider>
       </ThemeProvider>

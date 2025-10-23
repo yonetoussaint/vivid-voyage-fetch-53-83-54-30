@@ -1,65 +1,98 @@
-// SectionHeader.tsx
-import React, { useState } from "react";
+import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ChevronRight, LucideIcon, MoreHorizontal, Play } from "lucide-react"; // Added Play icon
+import { ChevronRight, LucideIcon, MoreHorizontal, Play } from "lucide-react";
 import { useTranslation } from 'react-i18next';
 import VerificationBadge from '@/components/shared/VerificationBadge';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
+// Type definitions
 interface SectionHeaderProps {
   title: string;
   subtitle?: string;
-  icon?: React.ComponentType<{ className?: string }> | string; // Allow string for Font Awesome classes
+  icon?: React.ComponentType<{ className?: string }> | string;
   viewAllLink?: string;
   viewAllText?: string;
   titleTransform?: "uppercase" | "capitalize" | "none";
-  titleSize?: "xs" | "sm" | "base" | "lg" | "xl"; // New title size prop
-  // Clear button props
+  titleSize?: "xs" | "sm" | "base" | "lg" | "xl";
   showClearButton?: boolean;
   clearButtonText?: string;
   onClearClick?: () => void;
-  // New props for tabs functionality
   showTabs?: boolean;
   compact?: boolean;
   tabs?: Array<{ id: string; label: string }>;
   activeTab?: string;
   onTabChange?: (tabId: string) => void;
   tabsStyle?: "default" | "glassmorphic";
-  // New props for vendor header functionality
   showVendorHeader?: boolean;
   vendorData?: {
+    sellerId: string;
     profilePic: string;
     vendorName: string;
     verified: boolean;
     followers: string;
     publishedAt: string;
-    isFollowing?: boolean; // Add this to track follow state
+    isFollowing?: boolean;
   };
   onFollowClick?: () => void;
-  // New countdown props
   showCountdown?: boolean;
   countdown?: string;
-  // New props for custom button
   showCustomButton?: boolean;
   customButtonText?: string;
   customButtonIcon?: React.ComponentType<{ className?: string }> | string;
   onCustomButtonClick?: () => void;
-  // New props for stacked profiles
   showStackedProfiles?: boolean;
   stackedProfiles?: Array<{ id: string; image: string; alt?: string }>;
   onProfileClick?: (profileId: string) => void;
   maxProfiles?: number;
   stackedProfilesText?: string;
-  // New props for title chevron
   showTitleChevron?: boolean;
   onTitleClick?: () => void;
-  // New prop for padding bottom
   paddingBottom?: boolean;
-  // New prop for sponsor count display
   showSponsorCount?: boolean;
-  // New props for verified sellers display
+  showThreeDots?: boolean;
+  onThreeDotsClick?: () => void;
   showVerifiedSellers?: boolean;
   verifiedSellersText?: string;
   verifiedIcon?: React.ComponentType<{ className?: string }>;
+}
+
+interface ButtonProps {
+  variant?: string;
+  size?: string;
+  className?: string;
+  children: React.ReactNode;
+  onClick?: () => void;
+  type?: "button" | "submit" | "reset";
+}
+
+// Error Boundary for SectionHeader
+class SectionHeaderErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('SectionHeader Error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-2 bg-yellow-50 border border-yellow-200 rounded">
+          <p className="text-yellow-800 text-sm">Header unavailable</p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
 }
 
 // Helper function to serialize section header props to URL params
@@ -84,7 +117,6 @@ export const serializeSectionHeaderProps = (props: {
   if (props.showVerifiedSellers) params.set('showVerifiedSellers', 'true');
   if (props.verifiedSellersText) params.set('verifiedSellersText', props.verifiedSellersText);
 
-  // Serialize icon names
   if (props.icon) {
     const iconName = typeof props.icon === 'string' ? props.icon : (props.icon as any).name || 'Tag';
     params.set('icon', iconName);
@@ -97,6 +129,12 @@ export const serializeSectionHeaderProps = (props: {
   return params.toString();
 };
 
+const Button: React.FC<ButtonProps> = ({ variant, size, className, children, ...props }) => (
+  <button className={`inline-flex items-center justify-center ${className}`} {...props}>
+    {children}
+  </button>
+);
+
 export default function SectionHeader({
   title,
   subtitle,
@@ -104,44 +142,36 @@ export default function SectionHeader({
   viewAllLink,
   viewAllText,
   titleTransform = "uppercase",
-  titleSize = "xs", // Default size
-  // Clear button props
+  titleSize = "xs",
   showClearButton = false,
   clearButtonText = "× Clear",
   onClearClick,
-  // Tabs props
   showTabs = false,
   compact = false,
   tabs = [],
   activeTab,
   onTabChange,
   tabsStyle = "default",
-  // Vendor header props
   showVendorHeader = false,
   vendorData,
   onFollowClick,
-  // Countdown props
   showCountdown = false,
   countdown,
-  // Custom button props
   showCustomButton = false,
   customButtonText = "Tout regarder",
   customButtonIcon,
   onCustomButtonClick,
-  // Stacked profiles props
   showStackedProfiles = false,
   stackedProfiles = [],
   onProfileClick,
   maxProfiles = 3,
   stackedProfilesText = "Handpicked by",
-  // Title chevron props
   showTitleChevron = false,
   onTitleClick,
-  // Padding bottom prop
   paddingBottom = true,
-  // Sponsor count prop
   showSponsorCount = false,
-  // Verified sellers props
+  showThreeDots = false,
+  onThreeDotsClick,
   showVerifiedSellers = false,
   verifiedSellersText = "Verified Sellers",
   verifiedIcon
@@ -149,59 +179,23 @@ export default function SectionHeader({
 
   const defaultViewAllText = viewAllText || 'View All';
   const navigate = useNavigate();
+  const { user, followedSellers } = useAuth();
 
-  // State for follow functionality
-  const [isFollowing, setIsFollowing] = useState(vendorData?.isFollowing || false);
-  const [followersCount, setFollowersCount] = useState(
-    vendorData?.followers ? parseInt(vendorData.followers.replace('K', '000').replace('M', '000000')) : 0
-  );
+  // Get follow status from centralized auth state
+  const isFollowingSeller = vendorData ? followedSellers.includes(vendorData.sellerId) : false;
 
-  // Handle follow button click
   const handleFollowClick = () => {
     if (onFollowClick) {
       onFollowClick();
     } else {
-      // Default follow behavior if no custom handler provided
-      const newFollowState = !isFollowing;
-      setIsFollowing(newFollowState);
-
-      // Update followers count
-      if (newFollowState) {
-        setFollowersCount(prev => prev + 1);
-      } else {
-        setFollowersCount(prev => Math.max(0, prev - 1));
-      }
-
-      // Here you would typically make an API call to update the follow status
-      console.log(`${newFollowState ? 'Following' : 'Unfollowing'} vendor: ${vendorData?.vendorName}`);
-
-      // Example API call (uncomment and implement as needed):
-      /*
-      updateVendorFollowStatus(vendorData?.vendorName, newFollowState)
-        .then(response => {
-          console.log('Follow status updated successfully');
-        })
-        .catch(error => {
-          console.error('Failed to update follow status:', error);
-          // Revert state on error
-          setIsFollowing(!newFollowState);
-          setFollowersCount(prev => newFollowState ? prev - 1 : prev + 1);
-        });
-      */
+      console.log('No follow handler provided');
     }
   };
 
-  // Format followers count for display
-  const formatFollowers = (count: number) => {
-    if (count >= 1000000) {
-      return (count / 1000000).toFixed(1) + 'M';
-    } else if (count >= 1000) {
-      return (count / 1000).toFixed(1) + 'K';
-    }
-    return count.toString();
+  const formatFollowers = (followers: string) => {
+    return followers;
   };
 
-  // Automatic navigation handler for title chevron clicks
   const handleTitleClick = onTitleClick || (showTitleChevron ? () => {
     const sectionProps = serializeSectionHeaderProps({
       showCountdown,
@@ -219,48 +213,39 @@ export default function SectionHeader({
   } : undefined);
 
   const timeAgo = (date: string) => {
-    const now = new Date();
-    const postDate = new Date(date);
-    const diffInMs = now.getTime() - postDate.getTime();
-    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-    const diffInDays = Math.floor(diffInHours / 24);
-    const diffInWeeks = Math.floor(diffInDays / 7);
+    try {
+      const now = new Date();
+      const postDate = new Date(date);
+      const diffInMs = now.getTime() - postDate.getTime();
+      const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+      const diffInDays = Math.floor(diffInHours / 24);
+      const diffInWeeks = Math.floor(diffInDays / 7);
 
-    if (diffInHours < 1) return 'Just now';
-    if (diffInHours < 24) return `${diffInHours}h ago`;
-    if (diffInDays < 7) return `${diffInDays}d ago`;
-    if (diffInWeeks < 4) return `${diffInWeeks}w ago`;
+      if (diffInHours < 1) return 'Just now';
+      if (diffInHours < 24) return `${diffInHours}h ago`;
+      if (diffInDays < 7) return `${diffInDays}d ago`;
+      if (diffInWeeks < 4) return `${diffInWeeks}w ago`;
 
-    // For dates more than a month ago
-    const currentYear = now.getFullYear();
-    const postYear = postDate.getFullYear();
+      const currentYear = now.getFullYear();
+      const postYear = postDate.getFullYear();
 
-    if (postYear === currentYear) {
-      // Same year - show month and day (e.g., "May 14")
-      return postDate.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric' 
-      });
-    } else {
-      // Different year - show month, day, and year (e.g., "May 14, 2015")
-      return postDate.toLocaleDateString('en-US', { 
-        year: 'numeric',
-        month: 'short', 
-        day: 'numeric' 
-      });
+      if (postYear === currentYear) {
+        return postDate.toLocaleDateString('en-US', { 
+          month: 'short', 
+          day: 'numeric' 
+        });
+      } else {
+        return postDate.toLocaleDateString('en-US', { 
+          year: 'numeric',
+          month: 'short', 
+          day: 'numeric' 
+        });
+      }
+    } catch (error) {
+      return 'Recently';
     }
   };
 
-  const Button = ({ variant, size, className, children, ...props }) => (
-    <button
-      className={`inline-flex items-center justify-center ${className}`}
-      {...props}
-    >
-      {children}
-    </button>
-  );
-
-  // Size mapping for title
   const titleSizeClass = 
     titleSize === 'xs' ? 'text-xs' :
     titleSize === 'sm' ? 'text-sm' :
@@ -268,7 +253,6 @@ export default function SectionHeader({
     titleSize === 'lg' ? 'text-lg' :
     'text-xl';
 
-  // Size mapping for countdown (slightly larger than title)
   const countdownSizeClass = 
     titleSize === 'xs' ? 'text-sm' :
     titleSize === 'sm' ? 'text-base' :
@@ -276,36 +260,29 @@ export default function SectionHeader({
     titleSize === 'lg' ? 'text-xl' :
     'text-2xl';
 
-  // Render icon component
   const renderIcon = () => {
     if (!icon) return null;
 
-    // If icon is a string (Font Awesome class), render as <i> element
     if (typeof icon === 'string') {
       return <i className={`${icon} w-4 h-4 flex-shrink-0`} />;
     }
 
-    // If icon is a React component (Lucide icon), render as component
     const IconComponent = icon;
     return <IconComponent className="w-4 h-4 flex-shrink-0" />;
   };
 
-  // Render custom button icon
   const renderCustomButtonIcon = () => {
     if (!customButtonIcon) return null;
 
-    // If customButtonIcon is a string (Font Awesome class), render as <i> element
     if (typeof customButtonIcon === 'string') {
       return <i className={`${customButtonIcon} h-3.5 w-3.5 mr-1`} />;
     }
 
-    // If customButtonIcon is a React component (Lucide icon), render as component
     const CustomIconComponent = customButtonIcon;
     return <CustomIconComponent className="h-3.5 w-3.5 mr-1" />;
   };
 
-  // Stacked profiles component
-  const StackedProfiles = () => {
+  const StackedProfiles: React.FC = () => {
     const totalCount = stackedProfiles.length;
     const displayProfiles = stackedProfiles.slice(0, maxProfiles);
     const remainingCount = totalCount - maxProfiles;
@@ -334,6 +311,9 @@ export default function SectionHeader({
                 alt={profile.alt || `Profile ${index + 1}`}
                 className="w-full h-full object-cover"
                 loading="lazy"
+                onError={(e) => {
+                  e.currentTarget.src = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face";
+                }}
               />
             </div>
           ))}
@@ -350,8 +330,7 @@ export default function SectionHeader({
     );
   };
 
-  // Title with chevron component
-  const TitleWithChevron = () => (
+  const TitleWithChevron: React.FC = () => (
     <div 
       onClick={handleTitleClick}
       className={`flex items-center gap-1 font-bold tracking-wide ${titleSizeClass} ${
@@ -370,8 +349,7 @@ export default function SectionHeader({
     </div>
   );
 
-  // Countdown component for right side - replaces view all button
-  const CountdownDisplay = () => {
+  const CountdownDisplay: React.FC = () => {
     if (!showCountdown || !countdown) return null;
 
     return (
@@ -384,8 +362,7 @@ export default function SectionHeader({
     );
   };
 
-  // Verified Sellers component
-  const VerifiedSellersDisplay = () => {
+  const VerifiedSellersDisplay: React.FC = () => {
     if (!showVerifiedSellers) return null;
 
     const VerifiedIconComponent = verifiedIcon;
@@ -405,98 +382,104 @@ export default function SectionHeader({
   };
 
   return (
-    <div className="flex flex-col">
-      {/* Vendor Header Section - Only shown when showVendorHeader is true */}
-      {showVendorHeader && vendorData && (
-        <div className="flex items-center p-3 border-b border-gray-100 bg-white">
-          <div className="flex-shrink-0 mr-2 rounded-full overflow-hidden w-8 h-8">
-            <img
-              src={vendorData.profilePic}
-              alt={vendorData.vendorName}
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1">
-              <h3 className="font-bold text-gray-800 text-sm truncate">
-                {vendorData.vendorName}
-              </h3>
-              {vendorData.verified && <VerificationBadge size="sm" />}
+    <SectionHeaderErrorBoundary>
+      <div className="flex flex-col">
+        {/* Vendor Header Section */}
+        {showVendorHeader && vendorData && (
+          <div className="flex items-center p-3 border-b border-gray-100 bg-white">
+            <div className="flex-shrink-0 mr-2 rounded-full overflow-hidden w-8 h-8">
+              <img
+                src={vendorData.profilePic}
+                alt={vendorData.vendorName}
+                className="w-full h-full object-cover"
+                loading="lazy"
+                onError={(e) => {
+                  e.currentTarget.src = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face";
+                }}
+              />
             </div>
-            <p className="text-gray-500 text-xs truncate">
-              {formatFollowers(followersCount)} followers • {timeAgo(vendorData.publishedAt)}
-            </p>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1">
+                <h3 className="font-bold text-gray-800 text-sm truncate">
+                  {vendorData.vendorName}
+                </h3>
+                {vendorData.verified && <VerificationBadge size="sm" />}
+              </div>
+              <p className="text-gray-500 text-xs truncate">
+                {formatFollowers(vendorData.followers)} followers • {timeAgo(vendorData.publishedAt)}
+              </p>
+            </div>
+            <button 
+              onClick={handleFollowClick}
+              className={`${
+                isFollowingSeller 
+                  ? 'bg-gray-200 hover:bg-gray-300 text-gray-800' 
+                  : 'bg-red-500 hover:bg-red-600 text-white'
+              } px-3 py-1.5 rounded-full text-xs font-medium transition-colors duration-200`}
+            >
+              {isFollowingSeller ? 'Following' : 'Follow'}
+            </button>
+            {showThreeDots && (
+              <button 
+                onClick={onThreeDotsClick}
+                className="ml-1 rounded-full h-8 w-8 flex items-center justify-center hover:bg-gray-100 transition-colors"
+              >
+                <MoreHorizontal className="text-gray-600 h-4 w-4" />
+              </button>
+            )}
           </div>
-          <button 
-            onClick={handleFollowClick}
-            className={`${
-              isFollowing 
-                ? 'bg-gray-200 hover:bg-gray-300 text-gray-800' 
-                : 'bg-red-500 hover:bg-red-600 text-white'
-            } px-3 py-1.5 rounded-full text-xs font-medium transition-colors duration-200`}
-          >
-            {isFollowing ? 'Following' : 'Follow'}
-          </button>
-          <Button variant="ghost" size="icon" className="ml-1 rounded-full h-6 w-6">
-            <MoreHorizontal className="text-gray-600 h-3 w-3" />
-          </Button>
-        </div>
-      )}
+        )}
 
-      {/* Original Header section with padding - Only shown when NOT showing vendor header */}
-      {!showVendorHeader && (
-          <div className={` flex items-center px-2 ${paddingBottom ? 'mb-2' : ''} ${compact ? 'py-0' : 'py-0'}`}>
-          <div className="flex items-center justify-between w-full">
-            {/* First element (Title with Icon, optional Chevron) */}
-            <TitleWithChevron />
+        {/* Original Header section with padding */}
+        {!showVendorHeader && (
+          <div className={`flex items-center px-2 ${paddingBottom ? 'mb-2' : ''} ${compact ? 'py-0' : 'py-0'}`}>
+            <div className="flex items-center justify-between w-full">
+              <TitleWithChevron />
 
-            {/* Last element (Countdown or Verified Sellers or Stacked Profiles or Clear button or Custom Button or View All) */}
-
-            <div className="flex items-center gap-2">
-              {showCountdown && countdown ? (
-                <CountdownDisplay />
-              ) : showStackedProfiles && stackedProfiles.length > 0 ? (
-                <StackedProfiles />
-              ) : showVerifiedSellers ? (
-                <VerifiedSellersDisplay />
-              ) : (
-                <>
-                  {showClearButton && onClearClick && (
-                    <button 
-                      onClick={onClearClick}
-                      className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
-                    >
-                      {clearButtonText}
-                    </button>
-                  )}
-
-                  {/* Show custom button if enabled, otherwise show regular view all link */}
-                  {showCustomButton ? (
-                    <button 
-                      onClick={onCustomButtonClick}
-                      className="text-xs flex items-center font-medium transition-colors text-black"
-                    >
-                      {renderCustomButtonIcon()}
-                      {customButtonText}
-                    </button>
-                  ) : (
-                    viewAllLink && (
-                      <a
-                        href={viewAllLink}
-                        className="text-xs hover:underline flex items-center font-medium transition-colors"
+              <div className="flex items-center gap-2">
+                {showCountdown && countdown ? (
+                  <CountdownDisplay />
+                ) : showStackedProfiles && stackedProfiles.length > 0 ? (
+                  <StackedProfiles />
+                ) : showVerifiedSellers ? (
+                  <VerifiedSellersDisplay />
+                ) : (
+                  <>
+                    {showClearButton && onClearClick && (
+                      <button 
+                        onClick={onClearClick}
+                        className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
                       >
-                        {defaultViewAllText}
-                        <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
-                      </a>
-                    )
-                  )}
-                </>
-              )}
+                        {clearButtonText}
+                      </button>
+                    )}
+
+                    {showCustomButton ? (
+                      <button 
+                        onClick={onCustomButtonClick}
+                        className="text-xs flex items-center font-medium transition-colors text-black"
+                      >
+                        {renderCustomButtonIcon()}
+                        {customButtonText}
+                      </button>
+                    ) : (
+                      viewAllLink && (
+                        <a
+                          href={viewAllLink}
+                          className="text-xs hover:underline flex items-center font-medium transition-colors"
+                        >
+                          {defaultViewAllText}
+                          <ChevronRight className="h-3.5 w-3.5 ml-0.5" />
+                        </a>
+                      )
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </SectionHeaderErrorBoundary>
   );
 }
