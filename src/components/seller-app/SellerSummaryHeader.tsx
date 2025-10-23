@@ -20,6 +20,7 @@ interface SellerSummaryHeaderProps {
   stats: StatItem[];
   actionButton?: ActionButton;
   showStats?: boolean;
+  children?: React.ReactNode;
 }
 
 const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
@@ -27,7 +28,8 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
   subtitle,
   stats,
   actionButton,
-  showStats = true
+  showStats = true,
+  children
 }) => {
   return (
     <div className="bg-white">
@@ -37,11 +39,15 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
             <h1 className="text-lg font-bold text-foreground">{title}</h1>
             <p className="text-xs text-muted-foreground">{subtitle}</p>
           </div>
-          {actionButton && (
-            <Button size="sm" onClick={actionButton.onClick}>
-              {actionButton.icon && <actionButton.icon className="w-4 h-4 mr-1" />}
-              {actionButton.label}
-            </Button>
+          {children ? (
+            children
+          ) : (
+            actionButton && (
+              <Button size="sm" onClick={actionButton.onClick}>
+                {actionButton.icon && <actionButton.icon className="w-4 h-4 mr-1" />}
+                {actionButton.label}
+              </Button>
+            )
           )}
         </div>
 

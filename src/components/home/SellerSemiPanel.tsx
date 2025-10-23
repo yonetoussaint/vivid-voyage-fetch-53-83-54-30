@@ -7,6 +7,9 @@ import { Heart, Share } from 'lucide-react';
 import { useQuery } from "@tanstack/react-query";
 import { fetchSellerById } from "@/integrations/supabase/sellers";
 
+// Allow SellerPage to be used with custom props without TS errors
+const SellerPageAny = SellerPage as any;
+
 // Custom hook for panel scroll progress (reused from ProductSemiPanel)
 const usePanelScrollProgress = (scrollContainerRef: React.RefObject<HTMLDivElement>, isOpen: boolean) => {
   const [scrollY, setScrollY] = useState(0);
@@ -167,7 +170,7 @@ const SellerSemiPanel: React.FC<SellerSemiPanelProps> = ({
             customScrollProgress={scrollProgress}
             showCloseIcon={true} // Show X icon in panel
             onCloseClick={onClose} // Handle close click
-            onlineStatus={{ isOnline: seller?.status === 'active', lastSeen: seller?.last_seen }}
+            onlineStatus={{ isOnline: seller?.status === 'active', lastSeen: seller?.updated_at }}
             actionButtons={[
               {
                 Icon: Heart,
@@ -201,7 +204,7 @@ const SellerSemiPanel: React.FC<SellerSemiPanelProps> = ({
               ref={scrollContainerRef}
               className="absolute inset-0 overflow-y-auto"
             >
-              <SellerPage 
+              <SellerPageAny 
                 sellerId={sellerId} 
                 hideHeader={true}
                 inPanel={true}

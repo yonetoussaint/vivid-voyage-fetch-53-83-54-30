@@ -97,7 +97,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
           {/* Description Component moved before BookGenreFlashDeals */}
 
 
-          <ProductSpecifications productId={productId} />
+          <ProductSpecifications product={product} />
 
           <BookGenreFlashDeals
             className="overflow-hidden"

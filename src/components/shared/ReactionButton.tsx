@@ -554,7 +554,7 @@ py-1 px-2 rounded-md shadow-md whitespace-nowrap z-[60] pointer-events-none"
       </button>
 
       {/* Ultra-smooth CSS animations */}
-      <style jsx>{`
+      <style>{`
         @keyframes slideUpFadeIn {
           0% {
             opacity: 0;

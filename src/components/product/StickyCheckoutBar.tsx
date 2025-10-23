@@ -412,8 +412,6 @@ const StickyCheckoutBar = ({
                 productId={product?.id}
                 onImageSelect={onImageSelect}
                 onConfigurationChange={handleVariantConfigChange}
-                className="w-full"
-                style={{ width: '100%', maxWidth: '100%' }}
               />
             </div>
           </div>
