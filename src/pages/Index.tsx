@@ -286,8 +286,6 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
     <MobileOptimizedReels 
       key="reels-1"
       showCustomButton={true}
-      customButtonText="Watch All"
-      customButtonIcon={Play}
       onCustomButtonClick={yourCustomHandler}
     />,
     

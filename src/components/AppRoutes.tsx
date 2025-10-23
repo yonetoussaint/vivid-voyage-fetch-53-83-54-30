@@ -17,17 +17,17 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<MainLayout />}>
-        {/* Render the route components as JSX elements */}
-        <HomepageRoutes />
-        <ProductRoutes />
-        <CategoryRoutes />
-        <ContentRoutes />
-        <UserRoutes />
-        <AuthRoutes />
-        <AdminSellerRoutes />
-        <ProductEditRoutes />
-        <PaymentRoutes />
-        <MiscRoutes />
+        {/* Call the route functions to get Route elements */}
+        {HomepageRoutes()}
+        {ProductRoutes()}
+        {CategoryRoutes()}
+        {ContentRoutes()}
+        {UserRoutes()}
+        {AuthRoutes()}
+        {AdminSellerRoutes()}
+        {ProductEditRoutes()}
+        {PaymentRoutes()}
+        {MiscRoutes()}
       </Route>
     </Routes>
   );
