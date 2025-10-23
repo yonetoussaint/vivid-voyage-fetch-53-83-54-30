@@ -1,13 +1,13 @@
 // MobileOptimizedReels.tsx
 import React, { useRef } from 'react';
-import { Store, Users, Zap, ArrowRight, Play } from 'lucide-react';
+import { Store, Users, Zap, ArrowRight, Play, LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import SectionHeader from './SectionHeader';
 import { useVideos } from '@/hooks/useVideos';
 
 interface MobileOptimizedReelsProps {
   title?: string;
-  icon?: Icon;
+  icon?: LucideIcon;
   viewAllLink?: string;
   viewAllText?: string;
   videoCount?: number;
