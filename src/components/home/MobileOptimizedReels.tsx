@@ -40,7 +40,7 @@ const MobileOptimizedReels: React.FC<MobileOptimizedReelsProps> = ({
 }) => {
   const scrollContainerRef = useRef(null);
   const navigate = useNavigate();
-  const { data: videos, isLoading } = useVideos(videoCount, category);
+  const { data: videos, isLoading } = useVideos(videoCount);
 
   const formatViews = (views: number) => {
     if (views >= 1000000) {
