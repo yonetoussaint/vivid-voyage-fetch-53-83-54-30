@@ -17,6 +17,7 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<MainLayout />}>
+        {/* Render the route components as JSX elements */}
         <HomepageRoutes />
         <ProductRoutes />
         <CategoryRoutes />
