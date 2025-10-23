@@ -30,8 +30,6 @@ export interface ProductImageGalleryProps {
     name: string;
     price: number;
     discount_price?: number | null;
-    inventory?: number;
-    sold_count?: number;
   };
   bundlePrice?: number;
   onVariantChange?: (variantIndex: number, variant: any) => void;

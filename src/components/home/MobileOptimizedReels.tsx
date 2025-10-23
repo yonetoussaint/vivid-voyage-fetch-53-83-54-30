@@ -1,13 +1,13 @@
 // MobileOptimizedReels.tsx
 import React, { useRef } from 'react';
-import { Store, Users, Zap, ArrowRight, Play, LucideIcon } from 'lucide-react';
+import { Store, Users, Zap, ArrowRight, Play } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import SectionHeader from './SectionHeader';
 import { useVideos } from '@/hooks/useVideos';
 
 interface MobileOptimizedReelsProps {
   title?: string;
-  icon?: LucideIcon;
+  icon?: Icon;
   viewAllLink?: string;
   viewAllText?: string;
   videoCount?: number;
@@ -40,7 +40,7 @@ const MobileOptimizedReels: React.FC<MobileOptimizedReelsProps> = ({
 }) => {
   const scrollContainerRef = useRef(null);
   const navigate = useNavigate();
-  const { data: videos, isLoading } = useVideos(videoCount);
+  const { data: videos, isLoading } = useVideos(videoCount, category);
 
   const formatViews = (views: number) => {
     if (views >= 1000000) {

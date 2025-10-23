@@ -110,7 +110,7 @@ export default function ScrollableCards() {
         </div>
       </div>
 
-      <style>{`
+      <style jsx>{`
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
         }

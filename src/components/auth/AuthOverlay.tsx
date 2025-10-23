@@ -141,6 +141,7 @@ const AuthOverlay: React.FC<AuthOverlayProps> = ({ isOpen, onClose }) => {
             email={userEmail}
             onBack={handleBackFromVerification}
             onVerificationSuccess={handleVerificationSuccess}
+            showHeader={!compactProps.isCompact}
             {...compactProps}
           />
         );
