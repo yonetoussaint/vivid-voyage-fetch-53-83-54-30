@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, MoreHorizontal, Store, Send, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
 import SectionHeader from './SectionHeader';
 import SlideUpPanel from '@/components/shared/SlideUpPanel';
@@ -127,7 +128,8 @@ const PostCard: React.FC<PostCardProps> = ({
     return (
       <div
         key={product.id || index}
-        className="rounded-lg overflow-hidden shadow-sm border border-gray-200 bg-white hover:shadow-md transition-shadow"
+        className="rounded-lg overflow-hidden shadow-sm border border-gray-200 bg-white hover:shadow-md transition-shadow cursor-pointer"
+        onClick={() => handleProductClick(product.id)}
       >
         <div className="relative aspect-square">
           <img
@@ -305,12 +307,23 @@ const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
   posts: customPosts,
   sellerId
 }) => {
+  const navigate = useNavigate();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [optimisticUpdates, setOptimisticUpdates] = useState<{[key: string]: boolean}>({});
   const { user, checkIfFollowing, toggleFollowSeller, followedSellers } = useAuth();
   const [showPostMenu, setShowPostMenu] = useState(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+
+  // Handle product click
+  const handleProductClick = (productId: string) => {
+    console.log('🛍️ Product clicked:', productId);
+    if (onProductClick) {
+      onProductClick(productId);
+    } else {
+      navigate(`/product/${productId}`);
+    }
+  };
 
   // Handle three dots click
   const handleThreeDotsClick = (post: Post) => {
