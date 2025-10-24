@@ -2,11 +2,9 @@ import React, { useState, useEffect } from "react";
 import { LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth/AuthContext";
-import { useAuthOverlay } from "@/context/AuthOverlayContext";
 
 export default function SignInBanner() {
-  const { user } = useAuth();
-  const { openAuthOverlay } = useAuthOverlay();
+  const { user, setIsAuthOverlayOpen } = useAuth();
   const [hasStickyCheckout, setHasStickyCheckout] = useState(false);
 
   // Check if StickyCheckoutBar is present on the page
@@ -46,7 +44,7 @@ export default function SignInBanner() {
   }
 
   const handleSignInClick = () => {
-    openAuthOverlay();
+    setIsAuthOverlayOpen(true);
   };
 
   // Dynamic positioning based on whether StickyCheckoutBar is present
