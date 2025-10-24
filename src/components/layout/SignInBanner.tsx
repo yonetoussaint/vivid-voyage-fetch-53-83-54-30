@@ -1,18 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { LogIn, X } from "lucide-react";
+import { LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth/AuthContext";
 import { useAuthOverlay } from "@/context/AuthOverlayContext";
-import { useNavigate } from "react-router-dom";
 
-interface SignInBannerProps {
-  openAuthDialog?: () => void;
-}
-
-export default function SignInBanner({ openAuthDialog }: SignInBannerProps) {
+export default function SignInBanner() {
   const { user } = useAuth();
   const { openAuthOverlay } = useAuthOverlay();
-  const navigate = useNavigate();
   const [hasStickyCheckout, setHasStickyCheckout] = useState(false);
 
   // Check if StickyCheckoutBar is present on the page

@@ -15,6 +15,8 @@ import PopularSearches from "@/components/home/PopularSearches";
 import NewArrivalsSection from "@/components/home/NewArrivalsSection";
 import HeroBanner from "@/components/home/HeroBanner";
 import { useHeaderFilter } from "@/contexts/HeaderFilterContext";
+import AuthOverlay from "@/components/auth/AuthOverlay";
+import { useAuthOverlay } from "@/context/AuthOverlayContext";
 
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -429,6 +431,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
 
 export default function Index() {
   const [activeCategory, setActiveCategory] = useState('recommendations');
+  const { isAuthOverlayOpen, setIsAuthOverlayOpen } = useAuthOverlay();
 
   // Listen for category changes from header
   useEffect(() => {
@@ -442,16 +445,23 @@ export default function Index() {
   }, []);
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={activeCategory}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        transition={{ duration: 0.3, ease: "easeInOut" }}
-      >
-        <ForYouContent category={activeCategory} />
-      </motion.div>
-    </AnimatePresence>
+    <>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeCategory}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+        >
+          <ForYouContent category={activeCategory} />
+        </motion.div>
+      </AnimatePresence>
+      
+      <AuthOverlay 
+        isOpen={isAuthOverlayOpen} 
+        onClose={() => setIsAuthOverlayOpen(false)} 
+      />
+    </>
   );
 }
