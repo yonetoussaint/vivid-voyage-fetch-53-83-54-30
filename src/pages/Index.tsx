@@ -15,7 +15,16 @@ import PopularSearches from "@/components/home/PopularSearches";
 import NewArrivalsSection from "@/components/home/NewArrivalsSection";
 import HeroBanner from "@/components/home/HeroBanner";
 import { useHeaderFilter } from "@/contexts/HeaderFilterContext";
-import AuthOverlay from "@/components/auth/AuthOverlay";
+import MainLoginScreen from "@/components/auth/MainLoginScreen";
+import EmailAuthScreen from "@/components/auth/EmailAuthScreen";
+import VerificationCodeScreen from "@/components/auth/VerificationCodeScreen";
+import PasswordAuthScreen from "@/components/auth/PasswordAuthScreen";
+import SuccessScreen from "@/components/auth/SuccessScreen";
+import ResetPasswordScreen from "@/components/auth/ResetPasswordScreen";
+import OTPResetScreen from "@/components/auth/OTPResetScreen";
+import NewPasswordScreen from "@/components/auth/NewPasswordScreen";
+import AccountCreationScreen from "@/components/auth/AccountCreationScreen";
+import SlideUpPanel from "@/components/shared/SlideUpPanel";
 import { useAuthOverlay } from "@/context/AuthOverlayContext";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -429,9 +438,24 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   );
 };
 
+type ScreenType = 'main' | 'email' | 'verification' | 'password' | 'success' | 'account-creation' | 'reset-password' | 'otp-reset' | 'new-password';
+
 export default function Index() {
   const [activeCategory, setActiveCategory] = useState('recommendations');
   const { isAuthOverlayOpen, setIsAuthOverlayOpen } = useAuthOverlay();
+  const [currentScreen, setCurrentScreen] = useState<ScreenType>('main');
+  const [selectedLanguage, setSelectedLanguage] = useState('en');
+  const [userEmail, setUserEmail] = useState('');
+  const [resetOTP, setResetOTP] = useState('');
+
+  // Reset to main screen when overlay opens
+  useEffect(() => {
+    if (isAuthOverlayOpen) {
+      setCurrentScreen('main');
+      setUserEmail('');
+      setResetOTP('');
+    }
+  }, [isAuthOverlayOpen]);
 
   // Listen for category changes from header
   useEffect(() => {
@@ -443,6 +467,139 @@ export default function Index() {
     window.addEventListener('categoryChange', handleCategoryChange as EventListener);
     return () => window.removeEventListener('categoryChange', handleCategoryChange as EventListener);
   }, []);
+
+  // Auth flow handlers
+  const handleContinueWithEmail = () => setCurrentScreen('email');
+  const handleBackToMain = () => setCurrentScreen('main');
+  const handleContinueWithPassword = (email: string) => {
+    setUserEmail(email);
+    setCurrentScreen('password');
+  };
+  const handleContinueWithCode = (email: string) => {
+    setUserEmail(email);
+    setCurrentScreen('verification');
+  };
+  const handleCreateAccount = (email: string) => {
+    setUserEmail(email);
+    setCurrentScreen('account-creation');
+  };
+  const handleSignUpClick = () => setCurrentScreen('account-creation');
+  const handleBackFromVerification = () => setCurrentScreen('email');
+  const handleBackFromPassword = () => setCurrentScreen('email');
+  const handleVerificationSuccess = () => setCurrentScreen('success');
+  const handleSignInSuccess = () => setCurrentScreen('success');
+  const handleForgotPasswordClick = () => setCurrentScreen('reset-password');
+  const handleContinueToApp = () => {
+    setIsAuthOverlayOpen(false);
+  };
+  const handleBackFromAccountCreation = () => setCurrentScreen('email');
+  const handleAccountCreated = () => setCurrentScreen('success');
+
+  // Render current auth screen
+  const renderCurrentScreen = () => {
+    const compactProps = { isCompact: true, onExpand: undefined };
+
+    switch (currentScreen) {
+      case 'main':
+        return (
+          <MainLoginScreen
+            selectedLanguage={selectedLanguage}
+            setSelectedLanguage={setSelectedLanguage}
+            onContinueWithEmail={handleContinueWithEmail}
+            showHeader={false}
+            {...compactProps}
+          />
+        );
+      case 'email':
+        return (
+          <EmailAuthScreen
+            onBack={handleBackToMain}
+            selectedLanguage={selectedLanguage}
+            onContinueWithPassword={handleContinueWithPassword}
+            onContinueWithCode={handleContinueWithCode}
+            onCreateAccount={handleCreateAccount}
+            onSignUpClick={handleSignUpClick}
+            initialEmail={userEmail}
+            showHeader={false}
+            {...compactProps}
+          />
+        );
+      case 'verification':
+        return (
+          <VerificationCodeScreen
+            email={userEmail}
+            onBack={handleBackFromVerification}
+            onVerificationSuccess={handleVerificationSuccess}
+            showHeader={false}
+            {...compactProps}
+          />
+        );
+      case 'password':
+        return (
+          <PasswordAuthScreen
+            email={userEmail}
+            onBack={handleBackFromPassword}
+            onSignInSuccess={handleSignInSuccess}
+            onForgotPasswordClick={handleForgotPasswordClick}
+            showHeader={false}
+            {...compactProps}
+          />
+        );
+      case 'reset-password':
+        return (
+          <ResetPasswordScreen
+            onBack={() => setCurrentScreen('password')}
+            onResetSuccess={(email) => {
+              setUserEmail(email);
+              setCurrentScreen('otp-reset');
+            }}
+            initialEmail={userEmail}
+            {...compactProps}
+          />
+        );
+      case 'otp-reset':
+        return (
+          <OTPResetScreen
+            email={userEmail}
+            onBack={() => setCurrentScreen('reset-password')}
+            onOTPVerified={(email, otp) => {
+              setResetOTP(otp);
+              setCurrentScreen('new-password');
+            }}
+            {...compactProps}
+          />
+        );
+      case 'new-password':
+        return (
+          <NewPasswordScreen
+            email={userEmail}
+            otp={resetOTP}
+            onBack={() => setCurrentScreen('otp-reset')}
+            onPasswordResetSuccess={() => setCurrentScreen('success')}
+            {...compactProps}
+          />
+        );
+      case 'account-creation':
+        return (
+          <AccountCreationScreen
+            email={userEmail}
+            onBack={handleBackFromAccountCreation}
+            onAccountCreated={handleAccountCreated}
+            {...compactProps}
+          />
+        );
+      case 'success':
+        return (
+          <SuccessScreen
+            email={userEmail}
+            onContinue={handleContinueToApp}
+            {...compactProps}
+          />
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <>
@@ -458,11 +615,22 @@ export default function Index() {
         </motion.div>
       </AnimatePresence>
       
-      {/* Render AuthOverlay at root level - Drawer handles its own portal and positioning */}
-      <AuthOverlay 
-        isOpen={isAuthOverlayOpen} 
-        onClose={() => setIsAuthOverlayOpen(false)} 
-      />
+      {/* Auth overlay using SlideUpPanel */}
+      <SlideUpPanel
+        isOpen={isAuthOverlayOpen}
+        onClose={() => setIsAuthOverlayOpen(false)}
+        showCloseButton={false}
+        preventBodyScroll={true}
+      >
+        <div className="px-0 pb-4">
+          {/* Drag handle */}
+          <div className="flex flex-col items-center pt-2 pb-3 flex-shrink-0">
+            <div className="w-16 h-1.5 bg-gray-300 rounded-full shadow-sm" />
+          </div>
+          
+          {renderCurrentScreen()}
+        </div>
+      </SlideUpPanel>
     </>
   );
 }
