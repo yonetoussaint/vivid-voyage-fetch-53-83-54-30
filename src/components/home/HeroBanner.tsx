@@ -65,6 +65,7 @@ export default function HeroBanner({
   const [previousIndex, setPreviousIndex] = useState<number | null>(null);
   const [showNews, setShowNews] = useState(showNewsTicker);
   const [progress, setProgress] = useState(0);
+  const [offset, setOffset] = useState<number>(0);
   const [videoDurations, setVideoDurations] = useState<{[key: number]: number}>({});
   const [showFloatingVideo, setShowFloatingVideo] = useState(false);
   const [videoCurrentTime, setVideoCurrentTime] = useState(0);
@@ -75,6 +76,33 @@ export default function HeroBanner({
   useEffect(() => {
     setShowNews(showNewsTicker);
   }, [showNewsTicker]);
+
+  // Dynamically measure header height
+  useEffect(() => {
+    function updateOffset() {
+      const header = document.getElementById("ali-header");
+      if (header) {
+        // Get the actual rendered height including borders and padding
+        const computedStyle = window.getComputedStyle(header);
+        const height = header.getBoundingClientRect().height;
+        setOffset(Math.ceil(height));
+      } else {
+        setOffset(0);
+      }
+    }
+
+    // Initial calculation
+    updateOffset();
+
+    // Recalculate on resize and after a short delay to ensure DOM is ready
+    const timeoutId = setTimeout(updateOffset, 100);
+    window.addEventListener('resize', updateOffset);
+
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', updateOffset);
+    };
+  }, []);
 
   // Initialize storage buckets if needed
   useEffect(() => {
@@ -525,7 +553,8 @@ export default function HeroBanner({
       <div
         ref={heroBannerRef}
         data-testid="hero-banner"
-        className="relative overflow-hidden w-full"
+        className={`relative overflow-hidden w-full ${asCarousel ? '' : ''}`}
+        style={{ marginTop: asCarousel ? 0 : offset }}
       >
         {asCarousel ? (
           CarouselBanners
@@ -581,7 +610,7 @@ export default function HeroBanner({
           onClose={handleCloseFloatingVideo}
           onExpand={handleExpandFloatingVideo}
           currentTime={videoCurrentTime}
-          headerOffset={0}
+          headerOffset={offset}
         />
       )}
     </>

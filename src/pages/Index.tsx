@@ -55,7 +55,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
 
   // State for filter functionality
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
-
+  
   // State for lazy loading carousel data
   const [visibleCarousels, setVisibleCarousels] = useState<Set<number>>(new Set([0, 1, 2])); // Load first 3
 
@@ -246,7 +246,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   // Helper function to render VendorProductCarousel with real data from database
   const renderVendorCarousel = (index: number) => {
     const productSlice = products?.slice((index * 5) % (products?.length || 20), ((index * 5) + 5) % (products?.length || 20)) || [];
-
+    
     // Only render if this carousel index is visible or close to viewport
     if (!visibleCarousels.has(index)) {
       return (
@@ -258,7 +258,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
         />
       );
     }
-
+    
     return (
       <VendorProductCarousel
         key={`vendor-${index}`}
@@ -273,22 +273,22 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
     <div key="hero" ref={heroBannerRef}>
       <HeroBanner showNewsTicker={true} />
     </div>,
-
+    
     <SpaceSavingCategories key="categories" />,
-
+    
     <FlashDeals
       key="flash-1"
       showCountdown={true}
       icon={Tag}
       showTitleChevron={true}
     />,
-
+    
     <MobileOptimizedReels 
       key="reels-1"
       showCustomButton={true}
       onCustomButtonClick={yourCustomHandler}
     />,
-
+    
     <FlashDeals 
       key="sponsored"
       title="SPONSORED DEALS"
@@ -303,7 +303,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
         { id: 'sponsor5', image: 'https://images.unsplash.com/photo-1611930022073-b7a4ba5fcccd?w=150&h=150&fit=crop', alt: 'Brand E' },
         { id: 'sponsor6', image: 'https://images.unsplash.com/photo-1618044733300-9472054094ee?w=150&h=150&fit=crop', alt: 'Brand F' },
         { id: 'sponsor7', image: 'https://images.unsplash.com/photo-1635514569146-9a9607ecf303?w=150&h=150&fit=crop', alt: 'Brand G' },
-        { id: 'sponsor8', image: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=150&h=150&fit=crop', alt: 'Brand H' },
+        { id: 'sponsor8', image: 'https://images.unsplash.com/photo-1599305446868-59e861c82501?w=150&h=150&fit=crop', alt: 'Brand H' },
         { id: 'sponsor9', image: 'https://images.unsplash.com/photo-1611926653670-1f0bb1a72e1e?w=150&h=150&fit=crop', alt: 'Brand I' },
         { id: 'sponsor10', image: 'https://images.unsplash.com/photo-1614680376739-414d95ff43df?w=150&h=150&fit=crop', alt: 'Brand J' },
         { id: 'sponsor11', image: 'https://images.unsplash.com/photo-1635514569110-4b9e1f3e0b75?w=150&h=150&fit=crop', alt: 'Brand K' },
@@ -313,7 +313,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       stackedProfilesText="Partners"
       showSponsorCount={true}
     />,
-
+    
     <FlashDeals
       key="editors"
       title="Editor's PICKS"
@@ -331,9 +331,9 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       stackedProfilesText="Handpicked by"
       maxProfiles={3}
     />,
-
+    
     products && products.length > 0 ? <SuperDealsSection key="super-1" products={products} /> : null,
-
+    
     <FlashDeals 
       key="recent"
       title="RECENTLY VIEWED"
@@ -341,7 +341,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       showTitleChevron={true}
       onTitleClick={() => navigate('/products?title=RECENTLY VIEWED')}
     />,
-
+    
     <TopVendorsCompact 
       key="vendors"
       title="Top Vendors Today"
@@ -350,7 +350,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       showVerifiedSellers={true}
       verifiedIcon={ShieldCheck}
     />,
-
+    
     <TopVendorsCompact 
       key="pickup"
       title="TOP PICK UP STATIONS"
@@ -358,7 +358,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       viewAllLink="/pickup-stations"
       isPickupStation={true}
     />,
-
+    
     <FlashDeals 
       key="new-arrivals"
       title="NEW ARRIVALS"
@@ -366,9 +366,9 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       showTitleChevron={true}
       onTitleClick={() => navigate('/products?title=NEW ARRIVALS')}
     />,
-
+    
     products && products.length > 0 ? <SuperDealsSection key="super-2" products={products} /> : null,
-
+    
     <FlashDeals 
       key="bestsellers"
       title="BESTSELLERS"
@@ -376,7 +376,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       showTitleChevron={true}
       onTitleClick={() => navigate('/products?title=BESTSELLERS')}
     />,
-
+    
     <FlashDeals 
       key="today"
       title="TODAY'S DEALS"
@@ -384,9 +384,9 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       showTitleChevron={true}
       onTitleClick={() => navigate('/products?title=TODAY\'S DEALS')}
     />,
-
+    
     <MobileOptimizedReels key="reels-2" />,
-
+    
     <FlashDeals 
       key="trending"
       title="TRENDING NOW"
@@ -394,9 +394,9 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       showTitleChevron={true}
       onTitleClick={() => navigate('/products?title=TRENDING NOW')}
     />,
-
+    
     <HeroBanner key="carousel" asCarousel={true} />,
-
+    
     <FlashDeals 
       key="staff"
       title="STAFF PICKS"
@@ -404,7 +404,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       showTitleChevron={true}
       onTitleClick={() => navigate('/products?title=STAFF PICKS')}
     />,
-
+    
     <MobileOptimizedReels 
       key="live"
       title="LIVE NOW"
