@@ -445,7 +445,7 @@ export default function Index() {
   }, []);
 
   return (
-    <div className="relative">
+    <>
       <AnimatePresence mode="wait">
         <motion.div
           key={activeCategory}
@@ -458,15 +458,11 @@ export default function Index() {
         </motion.div>
       </AnimatePresence>
       
-      {/* Render AuthOverlay at root level with proper z-index */}
-      <div className="fixed inset-0 z-[9999] pointer-events-none">
-        <div className="pointer-events-auto">
-          <AuthOverlay 
-            isOpen={isAuthOverlayOpen} 
-            onClose={() => setIsAuthOverlayOpen(false)} 
-          />
-        </div>
-      </div>
-    </div>
+      {/* Render AuthOverlay at root level - Drawer handles its own portal and positioning */}
+      <AuthOverlay 
+        isOpen={isAuthOverlayOpen} 
+        onClose={() => setIsAuthOverlayOpen(false)} 
+      />
+    </>
   );
 }
