@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllProducts } from "@/integrations/supabase/products";
-import { PageContainer } from "@/components/layout/PageContainer";
 import SuperDealsSection from "@/components/home/SuperDealsSection";
 import FlashDeals from "@/components/home/FlashDeals";
 import SimpleFlashDeals from "@/components/home/SimpleFlashDeals";
@@ -414,7 +413,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   ];
 
   return (
-    <PageContainer padding="none" className="overflow-hidden relative min-h-screen">
+    <div className="overflow-hidden relative min-h-screen">
       <div className="space-y-2">
         {components.map((component, index) => (
           <React.Fragment key={`section-${index}`}>
@@ -424,7 +423,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
           </React.Fragment>
         ))}
       </div>
-    </PageContainer>
+    </div>
   );
 };
 
