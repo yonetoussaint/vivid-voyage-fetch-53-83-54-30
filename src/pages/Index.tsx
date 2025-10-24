@@ -414,7 +414,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   ];
 
   return (
-    <PageContainer padding="none" className="overflow-hidden relative">
+    <PageContainer padding="none" className="overflow-hidden relative min-h-screen">
       <div className="space-y-2">
         {components.map((component, index) => (
           <React.Fragment key={`section-${index}`}>

@@ -8,7 +8,7 @@ import "./App.css";
 function App() {
   return (
     <Providers>
-      <div className="App min-h-screen bg-background text-foreground">
+      <div className="App min-h-screen h-full bg-background text-foreground flex flex-col">
         <AppRoutes />
         <Toasters />
       </div>
