@@ -9,6 +9,8 @@ interface User {
   profile_picture?: string;
 }
 
+type ScreenType = 'main' | 'email' | 'verification' | 'password' | 'success' | 'account-creation' | 'reset-password' | 'otp-reset' | 'new-password';
+
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
@@ -20,6 +22,17 @@ interface AuthContextType {
   checkIfFollowing: (sellerId: string) => Promise<boolean>;
   toggleFollowSeller: (sellerId: string, sellerName: string, currentFollowStatus: boolean) => Promise<{ success: boolean; error?: string }>;
   followedSellers: string[];
+  // Auth overlay state
+  isAuthOverlayOpen: boolean;
+  setIsAuthOverlayOpen: (open: boolean) => void;
+  currentScreen: ScreenType;
+  setCurrentScreen: (screen: ScreenType) => void;
+  selectedLanguage: string;
+  setSelectedLanguage: (lang: string) => void;
+  userEmail: string;
+  setUserEmail: (email: string) => void;
+  resetOTP: string;
+  setResetOTP: (otp: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,6 +50,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [followedSellers, setFollowedSellers] = useState<string[]>([]);
+  
+  // Auth overlay state
+  const [isAuthOverlayOpen, setIsAuthOverlayOpen] = useState(false);
+  const [currentScreen, setCurrentScreen] = useState<ScreenType>('main');
+  const [selectedLanguage, setSelectedLanguage] = useState('en');
+  const [userEmail, setUserEmail] = useState('');
+  const [resetOTP, setResetOTP] = useState('');
+
+  // Reset overlay state when opening
+  useEffect(() => {
+    if (isAuthOverlayOpen) {
+      setCurrentScreen('main');
+      setUserEmail('');
+      setResetOTP('');
+    }
+  }, [isAuthOverlayOpen]);
 
   // Convert Supabase user to our User type
   const mapSupabaseUser = (supabaseUser: SupabaseUser): User => {
@@ -312,7 +341,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkAuthStatus,
     checkIfFollowing,
     toggleFollowSeller,
-    followedSellers
+    followedSellers,
+    // Auth overlay state
+    isAuthOverlayOpen,
+    setIsAuthOverlayOpen,
+    currentScreen,
+    setCurrentScreen,
+    selectedLanguage,
+    setSelectedLanguage,
+    userEmail,
+    setUserEmail,
+    resetOTP,
+    setResetOTP
   };
 
   return (
