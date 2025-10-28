@@ -413,6 +413,8 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
                 ('variant_names' in product && Array.isArray((product as any).variant_names) && (product as any).variant_names.length > 0)
               ) ? [{ id: 'variants', label: 'Variants' }] : []),
               { id: 'reviews', label: 'Reviews' },
+              { id: 'store-reviews', label: 'Store Reviews' },
+              { id: 'reviews-gallery', label: 'Reviews Gallery' },
               { id: 'qna', label: 'Q&A' }
             ]}
             activeTab={internalActiveTab}

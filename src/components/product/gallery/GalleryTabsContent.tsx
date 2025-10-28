@@ -84,10 +84,8 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
           
           {/* Search Info Component moved to description's original position */}
           {productId && (
-            <SearchInfoComponent productId={productId} />
+          <SearchInfoComponent productId={productId} />
           )}
-
-          <ReviewGallery />
 
           {/* Description Component moved before BookGenreFlashDeals */}
 
@@ -136,6 +134,24 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
       {activeTab === 'qna' && (
         <ProductSectionWrapper>
           <ProductQA/>
+        </ProductSectionWrapper>
+      )}
+
+      {activeTab === 'store-reviews' && (
+        <ProductSectionWrapper>
+          <div className="text-center py-8 text-muted-foreground">
+            Store Reviews content coming soon
+          </div>
+        </ProductSectionWrapper>
+      )}
+
+      {activeTab === 'reviews-gallery' && (
+        <ProductSectionWrapper>
+          <ReviewGallery 
+            title="Reviews Gallery"
+            showViewMore={false}
+            customClass="reviews-gallery-grid"
+          />
         </ProductSectionWrapper>
       )}
 
