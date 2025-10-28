@@ -4,13 +4,14 @@ import { Star } from 'lucide-react';
 
 interface IPhoneXRListingProps {
   product?: {
+    name?: string;
     short_description?: string;
     description?: string;
     rating?: number;
     reviewCount?: number;
-    inventory?: number;     // Add stock properties
-    sold_count?: number;    // Add sold count property
-    change?: number;        // Add change percentage
+    inventory?: number;
+    sold_count?: number;
+    change?: number;
   };
   onReadMore?: () => void;
 }
@@ -38,6 +39,13 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
 
   return (
     <div className="w-full px-2 bg-white font-sans">
+      {/* Product Title */}
+      {product?.name && (
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">
+          {product.name}
+        </h2>
+      )}
+      
       {/* Description with truncation and read more button positioned at the end of third line */}
       <div className="mb-3">
         <div className="relative">
@@ -60,7 +68,7 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
         </div>
 
         {/* Full width Stats Section with Reviews and Stock Info */}
-        <div className="flex items-center justify-between gap-1 text-xs text-gray-600 px-3 py-2 rounded w-full mt-2">
+        <div className="flex items-center justify-between gap-1 text-xs text-gray-600 rounded w-full mt-2">
           {/* Reviews Section */}
           <div className="flex items-center gap-1">
             <div className="flex">
