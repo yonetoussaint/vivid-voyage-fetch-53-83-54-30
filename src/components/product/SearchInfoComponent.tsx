@@ -155,25 +155,10 @@ Note: Product information is not currently available. Please let the user know t
     handleSubmit(suggestion);
   };
 
-  // Updated custom icon component to match ReviewGallery sizing
-  const SearchInfoIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
-    <div className={`relative ${className}`}>
-      <div className="w-4 h-4 bg-orange-500 rounded-full"></div>
-      <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-500 rounded-full"></div>
-    </div>
-  );
-
   return (
     <div className="w-full bg-white">
-      {/* Header using SectionHeader with consistent spacing */}
-      <SectionHeader
-        title="Looking for Specific Info?"
-        icon={SearchInfoIcon}
-        titleTransform="uppercase"
-        />
-
       {/* Search Input */}
-      <div className="px-2 mb-2"> {/* Consistent 16px bottom margin */}
+      <div className="px-2 mb-2">
         <form onSubmit={handleInputSubmit} className="relative">
           <input
             type="text"
