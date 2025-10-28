@@ -68,30 +68,52 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
     return null;
   }
 
+  // Determine thumbnails data based on active tab
+  const isVariantsTab = activeTab === 'variants';
+  const thumbnailImages = isVariantsTab && productData?.variant_names
+    ? productData.variant_names.map((vn: any) => vn.mainImage || vn.image || '')
+    : galleryItems.map(item => item.src);
+  
+  const thumbnailGalleryItems = isVariantsTab && productData?.variant_names
+    ? productData.variant_names.map((vn: any) => ({
+        type: 'image' as const,
+        src: vn.mainImage || vn.image || ''
+      }))
+    : galleryItems;
+
+  const handleThumbnailClick = (index: number) => {
+    if (isVariantsTab && productData?.variant_names) {
+      setSelectedColorIndex(index);
+      const variant = productData.variant_names[index];
+      if (variant?.mainImage || variant?.image) {
+        onImageSelect(variant.mainImage || variant.image, variant.name);
+      }
+    } else {
+      onThumbnailClick(index);
+    }
+  };
+
   return (
     <div className="mt-2 w-full">
-      {(activeTab === 'overview' || !activeTab) && (
+      {(activeTab === 'overview' || activeTab === 'variants') && (
         <div className="space-y-3">
           <GalleryThumbnails
-            images={galleryItems.map(item => item.src)}
-            currentIndex={currentIndex}
-            onThumbnailClick={onThumbnailClick}
-            isPlaying={isPlaying}
-            videoIndices={videoIndices}
-            galleryItems={galleryItems}
+            images={thumbnailImages}
+            currentIndex={isVariantsTab ? selectedColorIndex : currentIndex}
+            onThumbnailClick={handleThumbnailClick}
+            isPlaying={!isVariantsTab && isPlaying}
+            videoIndices={isVariantsTab ? [] : videoIndices}
+            galleryItems={thumbnailGalleryItems}
           />
 
           <IPhoneXRListing
             product={product}
-            onReadMore={onReadMore} // Pass the handler
+            onReadMore={onReadMore}
           />
           
-          {/* Search Info Component moved to description's original position */}
           {productId && (
-          <SearchInfoComponent productId={productId} />
+            <SearchInfoComponent productId={productId} />
           )}
-
-          {/* Description Component moved before BookGenreFlashDeals */}
 
           <ProductSpecifications productId={productId} />
 
@@ -103,7 +125,6 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
             showSummary={false}
           />
 
-          {/* Sticky Checkout Bar for Overview Tab */}
           {product && onBuyNow && (
             <StickyCheckoutBar
               product={product}
@@ -119,31 +140,6 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
             />
           )}
         </div>
-      )}
-
-{activeTab === 'variants' && productData?.variant_names && (
-        <ProductSectionWrapper>
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold px-2">Color Variants</h3>
-            <GalleryThumbnails
-              images={productData.variant_names.map((vn: any) => vn.mainImage || vn.image || '')}
-              currentIndex={selectedColorIndex}
-              onThumbnailClick={(index) => {
-                setSelectedColorIndex(index);
-                const variant = productData.variant_names[index];
-                if (variant?.mainImage || variant?.image) {
-                  onImageSelect(variant.mainImage || variant.image, variant.name);
-                }
-              }}
-              isPlaying={false}
-              videoIndices={[]}
-              galleryItems={productData.variant_names.map((vn: any) => ({
-                type: 'image' as const,
-                src: vn.mainImage || vn.image || ''
-              }))}
-            />
-          </div>
-        </ProductSectionWrapper>
       )}
 
       {activeTab === 'reviews' && (
