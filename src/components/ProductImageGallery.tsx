@@ -10,7 +10,6 @@ import PriceInfo from "@/components/product/PriceInfo";
 import TabsNavigation from "@/components/home/TabsNavigation";
 import SellerInfoOverlay from "@/components/product/SellerInfoOverlay";
 import ConfigurationSummary from "@/components/product/ConfigurationSummary";
-import StockProgressBar from "@/components/product/StockProgressBar";
 
 // Import new modular components
 import { ProductImageGalleryRef, ProductImageGalleryProps } from './product/gallery/types';
@@ -19,6 +18,7 @@ import GalleryItem from './product/gallery/GalleryItem';
 import GalleryTabsContent from './product/gallery/GalleryTabsContent';
 import FullscreenGallery from './product/gallery/FullscreenGallery';
 import StickyCheckoutBar from '@/components/product/StickyCheckoutBar';
+import { AutoScrollIndicator } from './product/gallery/AutoScrollIndicator';
 
 const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalleryProps>(
   ({ 
@@ -84,6 +84,7 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
     isRotated,
     isFlipped,
     autoScrollEnabled,
+    autoScrollProgress,
     isFullscreenMode,
     focusMode,
     showConfiguration,
@@ -125,7 +126,9 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
     handleConfigurationClick,
     handleImageClick,
     toggleFullscreen,
-    toggleAutoScroll
+    toggleAutoScroll,
+    startAutoScroll,
+    stopAutoScroll
   } = galleryState;
 
   // Preload items
@@ -223,7 +226,9 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
   useImperativeHandle(ref, () => ({
     getTabsContainer: () => tabsContainerRef.current,
     setActiveTab: (tab: string) => setActiveTab(tab),
-    getActiveTab: () => internalActiveTab
+    getActiveTab: () => internalActiveTab,
+    startAutoScroll: () => startAutoScroll(),
+    stopAutoScroll: () => stopAutoScroll()
   }));
 
   // Video control handlers
@@ -285,28 +290,6 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
     }
   };
 
-  // Create product data for StockProgressBar using REAL database fields
-  const stockData = product ? {
-    id: product.id,
-    // Use actual database fields
-    inventory: product.inventory || 0,
-    sold_count: product.sold_count || 0,
-    // For change percentage - you can calculate this based on historical data
-    change: (product as any).changePercent || 
-            (product as any).priceChange || 
-            (product as any).stockChange || 
-            (product as any).change || 
-            0
-  } : null;
-
-  // Additional debug log for stockData
-  useEffect(() => {
-    if (stockData) {
-      console.log('📈 StockData created from database:', stockData);
-      console.log('📊 Real stock counts - Inventory:', stockData.inventory, 'Sold:', stockData.sold_count);
-    }
-  }, [stockData]);
-
   if (totalItems === 0) {
     return (
       <div className="flex flex-col bg-transparent">
@@ -361,6 +344,17 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
             ))}
           </CarouselContent>
 
+          {/* Auto Scroll Indicator */}
+          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-20 w-4/5 max-w-64">
+            <AutoScrollIndicator
+              totalItems={totalItems}
+              currentIndex={currentIndex}
+              autoScrollEnabled={autoScrollEnabled}
+              autoScrollProgress={autoScrollProgress}
+              onDotClick={handleThumbnailClick}
+            />
+          </div>
+
           <PriceInfo
             product={product}
             focusMode={focusMode}
@@ -374,15 +368,6 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
             focusMode={focusMode}
             isPlaying={isCurrentVideo && isPlaying}
           />
-
-          {/* Stock Progress Bar - Only show if we have valid stock data and not in focus/playing mode */}
-          {!(focusMode || (isCurrentVideo && isPlaying)) && 
-           stockData && 
-           (stockData.inventory > 0 || stockData.sold_count > 0) && (
-            <div className="absolute bottom-3 right-3 z-30 max-w-[200px]">
-              <StockProgressBar product={stockData} />
-            </div>
-          )}
 
           {focusMode && showConfiguration && (configurationData || internalConfigData) && (
             <div className="absolute right-0 top-1/2 transform -translate-y-1/2 z-30">
@@ -415,7 +400,8 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
         </Carousel>
       </div>
 
-      <InfoBand/>
+      {/* Updated InfoBand with product data */}
+      <InfoBand product={product} />
 
       {totalItems > 1 && (
         <div ref={tabsContainerRef} className="w-full bg-white">
@@ -427,9 +413,7 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
                 ('variant_names' in product && Array.isArray((product as any).variant_names) && (product as any).variant_names.length > 0)
               ) ? [{ id: 'variants', label: 'Variants' }] : []),
               { id: 'reviews', label: 'Reviews' },
-              { id: 'qna', label: 'Q&A' },
-              { id: 'shipping', label: 'Shipping' },
-              { id: 'recommendations', label: 'Recommendations' }
+              { id: 'qna', label: 'Q&A' }
             ]}
             activeTab={internalActiveTab}
             onTabChange={setActiveTab}
@@ -466,6 +450,7 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
         imageFilter="none"
         focusMode={focusMode}
         autoScrollEnabled={autoScrollEnabled}
+        autoScrollProgress={autoScrollProgress}
         seller={seller}
         isPlaying={isPlaying}
         isMuted={isMuted}

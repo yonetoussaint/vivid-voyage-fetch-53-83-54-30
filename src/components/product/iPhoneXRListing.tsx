@@ -1,4 +1,4 @@
-// iPhoneXRListing.tsx - Description with Reviews on same line
+// iPhoneXRListing.tsx - Description with Reviews on same line + Stock Info
 import React from 'react';
 import { Star } from 'lucide-react';
 
@@ -8,6 +8,9 @@ interface IPhoneXRListingProps {
     description?: string;
     rating?: number;
     reviewCount?: number;
+    inventory?: number;     // Add stock properties
+    sold_count?: number;    // Add sold count property
+    change?: number;        // Add change percentage
   };
   onReadMore?: () => void;
 }
@@ -20,6 +23,13 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
   const needsTruncation = displayDescription.length > 150;
   const truncatedDescription = displayDescription.slice(0, 150) + (displayDescription.length > 150 ? '...' : '');
 
+  // Stock data calculations
+  const inStock = product?.inventory || 0;
+  const sold = product?.sold_count || 0;
+  const total = inStock + sold;
+  const stockPct = total > 0 ? (inStock / total) * 100 : 0;
+  const isPositive = (product?.change || 0) >= 0;
+
   const handleReadMore = () => {
     if (onReadMore) {
       onReadMore();
@@ -28,25 +38,31 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
 
   return (
     <div className="w-full px-2 bg-white font-sans">
-      {/* Description with truncation and reviews on same line */}
+      {/* Description with truncation and read more button positioned at the end of third line */}
       <div className="mb-3">
-        <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">
-          {truncatedDescription}
-        </p>
-
-        <div className="flex items-center justify-between mt-2">
-          {/* Read More Button */}
+        <div className="relative">
+          <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">
+            {truncatedDescription}
+          </p>
+          
+          {/* Read More Button fixed overlay at bottom right of third line */}
           {needsTruncation && (
-            <button 
-              onClick={handleReadMore}
-              className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
-            >
-              Read more
-            </button>
+            <div className="absolute bottom-0 right-0 flex items-center">
+              <span className="bg-gradient-to-r from-transparent to-white pl-8 pr-1">&nbsp;</span>
+              <button 
+                onClick={handleReadMore}
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors bg-white"
+              >
+                Read more
+              </button>
+            </div>
           )}
+        </div>
 
+        {/* Full width Stats Section with Reviews and Stock Info */}
+        <div className="flex items-center justify-between gap-1 text-xs text-gray-600 px-3 py-2 rounded w-full mt-2">
           {/* Reviews Section */}
-          <div className="flex items-center gap-1 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded flex-shrink-0">
+          <div className="flex items-center gap-1">
             <div className="flex">
               {[1, 2, 3, 4, 5].map((i) => (
                 <Star 
@@ -63,6 +79,26 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
             <span className="text-gray-400 ml-1">•</span>
             <span>{product?.reviewCount || 0} reviews</span>
           </div>
+
+          {/* Stock Info Section */}
+          {inStock > 0 && (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <span className={`text-xs font-semibold ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                  {isPositive ? '+' : ''}{(product?.change || 0).toFixed(1)}%
+                </span>
+                <span className={`text-[10px] ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                  {isPositive ? '▲' : '▼'}
+                </span>
+              </div>
+              <span className="text-gray-400">|</span>
+              <div className="flex gap-1 text-[10px] text-gray-600">
+                <span>{sold} sold</span>
+                <span>•</span>
+                <span>{inStock} left</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

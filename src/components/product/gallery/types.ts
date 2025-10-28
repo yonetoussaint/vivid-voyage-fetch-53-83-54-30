@@ -2,6 +2,8 @@ export interface ProductImageGalleryRef {
   getTabsContainer: () => HTMLDivElement | null;
   setActiveTab: (tab: string) => void;
   getActiveTab: () => string;
+  startAutoScroll: () => void;
+  stopAutoScroll: () => void;
 }
 
 export interface ProductImageGalleryProps {

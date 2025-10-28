@@ -1,3 +1,5 @@
+// In HeaderActionButton.txt - Update the component
+
 import React, { useState } from "react";
 import { LucideIcon } from "lucide-react";
 import { HEADER_ICON_SIZE, HEADER_ICON_STROKE_WIDTH } from "./constants";
@@ -33,11 +35,11 @@ const HeaderActionButton = ({
     if (onClick) {
       onClick();
     }
-    
-    // Only trigger animation for heart icon (you might need to adjust this condition)
+
+    // Only trigger animation for heart icon
     if (Icon.name === "Heart" || Icon.displayName === "Heart") {
       setIsAnimating(true);
-      setTimeout(() => setIsAnimating(false), 700); // Match animation duration
+      setTimeout(() => setIsAnimating(false), 700);
     }
   };
 
@@ -52,28 +54,24 @@ const HeaderActionButton = ({
   if (count !== undefined && progress < expandedThreshold) {
     return (
       <div 
-        className="flex items-center gap-1.5 px-2.5 h-7 rounded-full transition-all duration-500 ease-out hover-scale border border-white/20"
-        style={{ 
-          backgroundColor: `rgba(255, 255, 255, ${0.15 * (1 - progress)})`,
-          backdropFilter: `blur(${8 * (1 - progress)}px)`,
-          transform: `scale(${1 - progress * 0.1})`,
-        }}
+        className="rounded-full transition-all duration-700 hover-scale"
+        style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - progress)})` }}
       >
         <button
           onClick={handleClick}
-          className="flex items-center gap-1.5 transition-all duration-500 ease-out relative"
+          className="flex items-center gap-1.5 px-2.5 h-8 rounded-full transition-all duration-700 relative"
         >
           <Icon
             size={HEADER_ICON_SIZE}
             strokeWidth={HEADER_ICON_STROKE_WIDTH}
-            className={`transition-all duration-500 ease-out ${isAnimating ? 'heart-animation' : ''}`}
+            className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
             style={{
               fill: active && fillWhenActive ? activeColor : 'transparent',
-              color: active ? activeColor : `rgba(255, 255, 255, ${0.95 - (progress * 0.2)})`
+              color: `rgba(255, 255, 255, ${0.9 - (progress * 0.2)})`
             }}
           />
           <span 
-            className="text-xs font-medium transition-all duration-500 ease-out animate-fade-in"
+            className="text-xs font-medium transition-all duration-700 ease-out animate-fade-in"
             style={{
               color: active ? activeColor : `rgba(255, 255, 255, ${0.95 - (progress * 0.2)})`,
               opacity: 1 - (progress / expandedThreshold),
@@ -92,20 +90,12 @@ const HeaderActionButton = ({
 
     return (
       <div 
-        className="flex items-center rounded-full transition-all duration-500 ease-out border border-white/10"
-        style={{ 
-          backgroundColor: `rgba(255, 255, 255, ${0.1 * (1 - progress)})`,
-          backdropFilter: `blur(${6 * (1 - progress)}px)`,
-          paddingLeft: `${12 - (transitionProgress * 8)}px`,
-          paddingRight: `${12 - (transitionProgress * 8)}px`,
-          paddingTop: `${6 - (transitionProgress * 2)}px`,
-          paddingBottom: `${6 - (transitionProgress * 2)}px`,
-          transform: `scale(${1 - progress * 0.05})`,
-        }}
+        className="rounded-full transition-all duration-700"
+        style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - progress)})` }}
       >
         <button
           onClick={handleClick}
-          className="flex items-center transition-all duration-500 ease-out relative"
+          className="flex items-center h-8 px-3 rounded-full transition-all duration-700 relative"
           style={{
             gap: `${6 - (transitionProgress * 6)}px`,
           }}
@@ -113,16 +103,16 @@ const HeaderActionButton = ({
           <Icon
             size={HEADER_ICON_SIZE}
             strokeWidth={HEADER_ICON_STROKE_WIDTH}
-            className={`transition-all duration-500 ease-out ${isAnimating ? 'heart-animation' : ''}`}
+            className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
             style={{
               fill: active && fillWhenActive ? activeColor : 'transparent',
-              color: active ? activeColor : progress > 0.5 
+              color: progress > 0.5 
                 ? `rgba(75, 85, 99, ${0.7 + (progress * 0.3)})` 
                 : `rgba(255, 255, 255, ${0.9 - (progress * 0.3)})`
             }}
           />
           <span 
-            className="text-xs font-medium transition-all duration-500 ease-out"
+            className="text-xs font-medium transition-all duration-700"
             style={{
               color: active ? activeColor : `rgba(255, 255, 255, ${0.9 - (progress * 0.3)})`,
               opacity: 1 - transitionProgress,
@@ -140,31 +130,25 @@ const HeaderActionButton = ({
     );
   }
 
-  // Compact circular button state
+  // Compact circular button state (matches back button exactly)
   return (
     <div 
-      className="rounded-full transition-all duration-500 ease-out hover-scale border border-white/10"
-      style={{ 
-        backgroundColor: transform ? 'transparent' : `rgba(255, 255, 255, ${0.1 * (1 - progress)})`,
-        backdropFilter: transform ? 'none' : `blur(${4 * (1 - progress)}px)`,
-      }}
+      className="rounded-full transition-all duration-700"
+      style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - progress)})` }}
     >
       <button
         onClick={handleClick}
-        className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-500 ease-out relative"
-        style={{
-          transform: `scale(${0.9 + (progress * 0.1)})`,
-        }}
+        className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700 relative"
       >
         <Icon
           size={HEADER_ICON_SIZE}
           strokeWidth={HEADER_ICON_STROKE_WIDTH}
-          className={`transition-all duration-500 ease-out ${isAnimating ? 'heart-animation' : ''}`}
+          className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
           style={{
             fill: active && fillWhenActive ? activeColor : 'transparent',
-            color: active ? activeColor : progress > 0.5 
+            color: progress > 0.5 
               ? `rgba(75, 85, 99, ${0.7 + (progress * 0.3)})` 
-              : `rgba(255, 255, 255, ${0.9 - (progress * 0.3)})`
+              : `rgba(255, 255, 255, ${0.9 - (progress * 0.2)})`
           }}
         />
         {badge && (

@@ -3,6 +3,7 @@ import { ArrowUpToLine } from 'lucide-react';
 import ImageGalleryControls from '@/components/product/ImageGalleryControls';
 import VideoControls from '@/components/product/VideoControls';
 import { GalleryItem } from './types';
+import { AutoScrollIndicator } from './AutoScrollIndicator';
 
 interface FullscreenGalleryProps {
   isVisible: boolean;
@@ -15,6 +16,7 @@ interface FullscreenGalleryProps {
   imageFilter: string;
   focusMode: boolean;
   autoScrollEnabled: boolean;
+  autoScrollProgress: number;
   seller?: any;
   // Video props
   isPlaying?: boolean;
@@ -53,6 +55,7 @@ const FullscreenGallery: React.FC<FullscreenGalleryProps> = ({
   imageFilter,
   focusMode,
   autoScrollEnabled,
+  autoScrollProgress,
   seller,
   isPlaying,
   isMuted,
@@ -87,7 +90,7 @@ const FullscreenGallery: React.FC<FullscreenGalleryProps> = ({
       onClick={onToggleFullscreen}
     >
       <button 
-        className="absolute top-4 right-4 text-white bg-black/50 p-2 rounded-full hover:bg-black/70 transition-colors"
+        className="absolute top-4 right-4 text-white bg-black/50 p-2 rounded-full hover:bg-black/70 transition-colors z-40"
         onClick={onToggleFullscreen}
       >
         <ArrowUpToLine className="h-5 w-5" />
@@ -159,6 +162,22 @@ const FullscreenGallery: React.FC<FullscreenGalleryProps> = ({
               console.error('Fullscreen image loading error:', e);
             }}
           />
+
+          {/* Auto Scroll Indicator for Fullscreen */}
+          <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-30 w-4/5 max-w-80">
+            <AutoScrollIndicator
+              totalItems={totalItems}
+              currentIndex={currentIndex}
+              autoScrollEnabled={autoScrollEnabled}
+              autoScrollProgress={autoScrollProgress}
+              onDotClick={(index) => {
+                // You might need to pass the API or handle this differently
+                // This is a placeholder - you'll need to implement the navigation
+              }}
+              className="bg-black/30 backdrop-blur-sm rounded-full px-4 py-3"
+            />
+          </div>
+
           <ImageGalleryControls
             currentIndex={currentIndex}
             totalImages={totalItems}
@@ -176,8 +195,14 @@ const FullscreenGallery: React.FC<FullscreenGalleryProps> = ({
               if (e) e.stopPropagation();
               onFlip();
             }}
-            onToggleAutoScroll={onToggleAutoScroll}
-            onToggleFocusMode={onToggleFocusMode}
+            onToggleAutoScroll={(e) => {
+              if (e) e.stopPropagation();
+              onToggleAutoScroll();
+            }}
+            onToggleFocusMode={(e) => {
+              if (e) e.stopPropagation();
+              onToggleFocusMode();
+            }}
             onPrevious={(e) => {
               if (e) e.stopPropagation();
               onPrevious();

@@ -82,7 +82,7 @@ const ImageGalleryControls: React.FC<ImageGalleryControlsProps> = ({
     return (
       <>
         <div className={cn(
-          "absolute bottom-3 right-3 flex items-center gap-2 z-30 transition-opacity duration-300",
+          "absolute bottom-12 right-3 flex items-center gap-2 z-30 transition-opacity duration-300",
           (focusMode || (isPlaying)) && "opacity-0",
           className
         )}>
@@ -94,7 +94,7 @@ const ImageGalleryControls: React.FC<ImageGalleryControlsProps> = ({
           >
             <RotateCw className="h-4 w-4" />
           </Button>
-          
+
           <Button
             variant="ghost" 
             size="icon"
@@ -103,13 +103,13 @@ const ImageGalleryControls: React.FC<ImageGalleryControlsProps> = ({
           >
             <FlipHorizontal className="h-4 w-4" />
           </Button>
-          
+
           <Button
             variant="ghost" 
             size="icon"
             className={cn(
-              "h-8 w-8 rounded-full bg-black/10 backdrop-blur-sm text-white hover:bg-black/20",
-              autoScrollEnabled && "bg-primary text-white"
+              "h-8 w-8 rounded-full bg-black/10 backdrop-blur-sm text-white hover:bg-black/20 transition-all",
+              autoScrollEnabled && "bg-primary text-white ring-2 ring-primary/50"
             )}
             onClick={onToggleAutoScroll}
           >
@@ -118,7 +118,7 @@ const ImageGalleryControls: React.FC<ImageGalleryControlsProps> = ({
               <Play className="h-4 w-4" />
             }
           </Button>
-          
+
           <button
             onClick={onToggleFocusMode}
             className={cn(
@@ -130,10 +130,10 @@ const ImageGalleryControls: React.FC<ImageGalleryControlsProps> = ({
             <Focus size={16} />
           </button>
         </div>
-        
-        
+
+
         <div className={cn(
-          "absolute bottom-3 left-3 z-30 transition-opacity duration-300 flex items-center h-8",
+          "absolute bottom-12 left-3 z-30 transition-opacity duration-300 flex items-center h-8",
           (focusMode || isPlaying) && "opacity-0"
         )}>
           {seller ? (
@@ -178,11 +178,11 @@ const ImageGalleryControls: React.FC<ImageGalleryControlsProps> = ({
           >
             <ChevronLeft className="h-5 w-5 text-white" />
           </Button>
-          
+
           <div className="bg-black/40 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg">
             {currentIndex + 1} / {totalImages}
           </div>
-          
+
           <Button 
             variant="outline" 
             size="icon" 
@@ -196,7 +196,7 @@ const ImageGalleryControls: React.FC<ImageGalleryControlsProps> = ({
           </Button>
         </div>
       )}
-      
+
       <div className="flex items-center gap-2 bg-black/40 backdrop-blur-sm rounded-full p-1.5">
         <Button
           variant="ghost" 
@@ -209,7 +209,7 @@ const ImageGalleryControls: React.FC<ImageGalleryControlsProps> = ({
         >
           <RotateCw className="h-4 w-4 text-white" />
         </Button>
-        
+
         <Button
           variant="ghost" 
           size="icon"
@@ -221,7 +221,25 @@ const ImageGalleryControls: React.FC<ImageGalleryControlsProps> = ({
         >
           <FlipHorizontal className="h-4 w-4 text-white" />
         </Button>
-        
+
+        <Button
+          variant="ghost" 
+          size="icon"
+          className={cn(
+            "h-8 w-8 rounded-full bg-black/10 backdrop-blur-sm hover:bg-black/20 transition-all",
+            autoScrollEnabled && "bg-primary text-white ring-2 ring-primary/50"
+          )}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleAutoScroll(e);
+          }}
+        >
+          {autoScrollEnabled ? 
+            <Pause className="h-4 w-4" /> : 
+            <Play className="h-4 w-4" />
+          }
+        </Button>
+
         {onDownload && (
           <Button
             variant="ghost" 

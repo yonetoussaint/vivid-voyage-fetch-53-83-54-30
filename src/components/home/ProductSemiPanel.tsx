@@ -3,6 +3,7 @@ import ProductDetail from '@/pages/ProductDetail';
 import ProductHeader from '@/components/product/ProductHeader';
 import { Heart, Share } from 'lucide-react';
 import { useScreenOverlay } from "@/context/ScreenOverlayContext";
+import { useNavigate } from 'react-router-dom';
 
 // Custom hook for panel scroll progress
 const usePanelScrollProgress = (scrollContainerRef: React.RefObject<HTMLDivElement>, isOpen: boolean) => {
@@ -39,7 +40,7 @@ const usePanelScrollProgress = (scrollContainerRef: React.RefObject<HTMLDivEleme
       console.log('🧹 Cleaning up panel scroll listener');
       container.removeEventListener("scroll", onScroll);
     };
-  }, [scrollContainerRef, isOpen]); // Added isOpen dependency
+  }, [scrollContainerRef, isOpen]);
 
   const maxScroll = 120; // Match the standard header scroll threshold
   const progress = Math.min(scrollY / maxScroll, 1);
@@ -65,8 +66,9 @@ const ProductSemiPanel: React.FC<ProductSemiPanelProps> = ({
   const [showHeaderInFocus, setShowHeaderInFocus] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [totalImages, setTotalImages] = useState(0);
-  const [panelHeaderHeight, setPanelHeaderHeight] = useState(60); // Default header height
+  const [panelHeaderHeight, setPanelHeaderHeight] = useState(60);
   const { setHasActiveOverlay } = useScreenOverlay();
+  const navigate = useNavigate();
 
   // Get scroll progress for the panel
   const { progress: scrollProgress, scrollY } = usePanelScrollProgress(scrollContainerRef, isOpen);
@@ -82,7 +84,6 @@ const ProductSemiPanel: React.FC<ProductSemiPanelProps> = ({
   // Force immediate scroll progress update when panel opens
   React.useEffect(() => {
     if (isOpen) {
-      // Small delay to ensure DOM is ready
       const timer = setTimeout(() => {
         const container = scrollContainerRef.current;
         if (container) {
@@ -95,13 +96,12 @@ const ProductSemiPanel: React.FC<ProductSemiPanelProps> = ({
             overflow: getComputedStyle(container).overflow
           });
 
-          // Force a scroll event to initialize progress
           const scrollEvent = new Event('scroll', { bubbles: true });
           container.dispatchEvent(scrollEvent);
         } else {
           console.log('❌ Panel opened but no scroll container found');
         }
-      }, 100); // Increased delay for better reliability
+      }, 100);
 
       return () => clearTimeout(timer);
     }
@@ -122,7 +122,6 @@ const ProductSemiPanel: React.FC<ProductSemiPanelProps> = ({
     });
   }, [scrollY, scrollProgress, panelHeaderHeight, isOpen]);
 
-
   // Handle panel state changes to control bottom nav visibility
   useEffect(() => {
     setHasActiveOverlay(isOpen);
@@ -131,12 +130,24 @@ const ProductSemiPanel: React.FC<ProductSemiPanelProps> = ({
     };
   }, [isOpen, setHasActiveOverlay]);
 
+  // Handle details button click - navigate to product page FIRST, then close panel
+  const handleDetailsClick = () => {
+    console.log('🔗 Details button clicked, productId:', productId);
+    if (productId) {
+      // Navigate FIRST, then close the panel
+      navigate(`/product/${productId}`);
+      // Close the panel after navigation
+      setTimeout(() => {
+        onClose();
+      }, 300); // Give time for navigation to start
+    }
+  };
+
   if (!isOpen) return null;
 
   const handleTabChange = (section: string) => {
     setActiveSection(section);
     console.log('Tab changed to:', section);
-    // You might want to implement scroll-to-section logic here
   };
 
   const handleShareClick = () => {
@@ -145,7 +156,7 @@ const ProductSemiPanel: React.FC<ProductSemiPanelProps> = ({
 
   const handleProductDetailsClick = () => {
     console.log('Product details clicked');
-    onClose(); // Or any other action
+    onClose();
   };
 
   return (
@@ -166,7 +177,7 @@ const ProductSemiPanel: React.FC<ProductSemiPanelProps> = ({
           className="absolute top-0 left-0 right-0 z-50"
         >
           <ProductHeader 
-            inPanel={true} // Enable panel behavior
+            inPanel={true}
             activeSection={activeSection}
             onTabChange={handleTabChange}
             focusMode={focusMode}
@@ -177,8 +188,10 @@ const ProductSemiPanel: React.FC<ProductSemiPanelProps> = ({
             onShareClick={handleShareClick}
             forceScrolledState={false}
             customScrollProgress={scrollProgress}
-            showCloseIcon={true} // Show X icon in panel
-            onCloseClick={onClose} // Handle close click
+            showCloseIcon={true}
+            onCloseClick={onClose}
+            showDetailsButton={true}
+            onDetailsClick={handleDetailsClick}
             actionButtons={[
               {
                 Icon: Heart,

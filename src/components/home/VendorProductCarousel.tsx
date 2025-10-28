@@ -9,6 +9,8 @@ import StackedReactionIcons from '@/components/shared/StackedReactionIcons';
 import ReactionButton from '@/components/shared/ReactionButton';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import PostMenuPanel from './PostMenuPanel';
+import ProductSemiPanel from './ProductSemiPanel';
+import { useScreenOverlay } from "@/context/ScreenOverlayContext";
 
 // Type definitions
 interface DisplayProduct {
@@ -102,11 +104,20 @@ const PostCard: React.FC<PostCardProps> = ({
   onProductClick,
   postId
 }) => {
+  // REMOVED useNavigate hook from here
   const [currentLikeCount, setCurrentLikeCount] = useState(likeCount);
   const [showCommentsPanel, setShowCommentsPanel] = useState(false);
   const [hasReacted, setHasReacted] = useState(false);
   const [sortBy, setSortBy] = useState<'relevant' | 'newest'>('relevant');
   const carouselRef = useRef<HTMLDivElement>(null);
+
+  const handleProductClick = (productId: string) => {
+    console.log('🛍️ Product clicked in PostCard:', productId);
+    if (onProductClick) {
+      onProductClick(productId); // Only call the parent handler, no fallback navigation
+    }
+    // REMOVED the else block that was navigating directly
+  };
 
   const handleReactionChange = (reactionId: string | null) => {
     const hadReaction = hasReacted;
@@ -174,10 +185,10 @@ const PostCard: React.FC<PostCardProps> = ({
           )}
 
           {displayProducts.length === 3 && (
-  <div className="grid grid-cols-3 gap-2">
-    {displayProducts.map((product, index) => renderProductImage(product, index))}
-  </div>
-)}
+            <div className="grid grid-cols-3 gap-2">
+              {displayProducts.map((product, index) => renderProductImage(product, index))}
+            </div>
+          )}
 
           {displayProducts.length === 4 && (
             <div className="grid grid-cols-2 gap-2">
@@ -190,7 +201,10 @@ const PostCard: React.FC<PostCardProps> = ({
               {displayProducts.slice(0, 3).map((product, index) => renderProductImage(product, index))}
 
               {displayProducts[3] && (
-                <div className="rounded-lg overflow-hidden shadow-sm border border-gray-200 bg-white hover:shadow-md transition-shadow relative">
+                <div 
+                  className="rounded-lg overflow-hidden shadow-sm border border-gray-200 bg-white hover:shadow-md transition-shadow relative cursor-pointer"
+                  onClick={() => handleProductClick(displayProducts[3].id)}
+                >
                   <div className="relative aspect-square">
                     <img
                       src={displayProducts[3].image}
@@ -315,15 +329,32 @@ const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
   const [showPostMenu, setShowPostMenu] = useState(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
-  // Handle product click
+  // Add state for product semi-panel (like FlashDeals)
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const { setHasActiveOverlay } = useScreenOverlay();
+
+  // Handle product click - open semi-panel instead of navigating
   const handleProductClick = (productId: string) => {
-    console.log('🛍️ Product clicked:', productId);
-    if (onProductClick) {
-      onProductClick(productId);
-    } else {
-      navigate(`/product/${productId}`);
-    }
+    console.log('🛍️ VendorProductCarousel: Product clicked, opening semi-panel:', productId);
+    setSelectedProductId(productId);
+    setIsPanelOpen(true);
   };
+
+  // Handle semi-panel close
+  const handleCloseSemiPanel = () => {
+    console.log('🔴 Closing product semi-panel');
+    setIsPanelOpen(false);
+    setSelectedProductId(null);
+  };
+
+  // Handle overlay state
+  useEffect(() => {
+    setHasActiveOverlay(isPanelOpen);
+    return () => {
+      setHasActiveOverlay(false);
+    };
+  }, [isPanelOpen, setHasActiveOverlay]);
 
   // Handle three dots click
   const handleThreeDotsClick = (post: Post) => {
@@ -595,7 +626,7 @@ const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
                   `${(seller.followers_count / 1000).toFixed(1)}K` : 
                   seller?.followers_count?.toString() || '0',
                 publishedAt: post.created_at,
-            
+                isFollowing: isFollowing
               },
               title: post.title,
               postDescription: post.description || 'Check out our amazing products!',
@@ -746,11 +777,18 @@ const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
             likeCount={post.likeCount}
             commentCount={post.commentCount}
             shareCount={post.shareCount}
-            onProductClick={onProductClick}
+            onProductClick={handleProductClick} // Pass the semi-panel handler
             postId={post.id}
           />
         </div>
       ))}
+
+      {/* Product Semi Panel - Same as FlashDeals */}
+      <ProductSemiPanel
+        productId={selectedProductId}
+        isOpen={isPanelOpen}
+        onClose={handleCloseSemiPanel}
+      />
 
       {/* Post Menu Panel */}
       <PostMenuPanel

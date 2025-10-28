@@ -1,5 +1,18 @@
 import React, { useState } from "react";
-import { Heart, Share, Package, BadgeInfo, Star, HelpCircle, Truck, Lightbulb, Search, ChevronRight, ScanLine } from "lucide-react";
+import { 
+  Heart, 
+  Share2, 
+  Package, 
+  BadgeInfo, 
+  Star, 
+  HelpCircle, 
+  Truck, 
+  Lightbulb, 
+  Search, 
+  ChevronRight, 
+  ScanLine, 
+  ExternalLink 
+} from "lucide-react";
 import { useScrollProgress } from "./header/useScrollProgress";
 import LiveBadge from "./header/LiveBadge";
 import BackButton from "./header/BackButton";
@@ -13,7 +26,6 @@ import CategoryTabs from "../home/header/CategoryTabs";
 import { Separator } from "@/components/ui/separator";
 import PriceInfo, { CurrencySwitcher } from "./PriceInfo";
 import SearchSuggestions from "../search/SearchSuggestions";
-
 
 interface ActionButton {
   Icon: any;
@@ -39,16 +51,18 @@ interface ProductHeaderProps {
   showCloseIcon?: boolean;
   onCloseClick?: () => void;
   sellerMode?: boolean;
-  seller?: any; // Add seller prop
-  isFollowing?: boolean; // Add isFollowing prop
-  onFollow?: () => void; // Add onFollow prop
-  onMessage?: () => void; // Add onMessage prop
-  stickyMode?: boolean; // New prop to enable sticky positioning
+  seller?: any;
+  isFollowing?: boolean;
+  onFollow?: () => void;
+  onMessage?: () => void;
+  stickyMode?: boolean;
   searchQuery?: string;
   setSearchQuery?: (query: string) => void;
   onSearchFocus?: () => void;
   onSearchBlur?: () => void;
   onSearch?: (query: string) => void;
+  showDetailsButton?: boolean;
+  onDetailsClick?: () => void;
 }
 
 const ProductHeader: React.FC<ProductHeaderProps> = ({
@@ -71,12 +85,14 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
   isFollowing = false,
   onFollow,
   onMessage,
-  stickyMode = false, // New prop for sticky positioning
+  stickyMode = false,
   searchQuery: externalSearchQuery,
   setSearchQuery: externalSetSearchQuery,
   onSearchFocus,
   onSearchBlur,
-  onSearch
+  onSearch,
+  showDetailsButton = false,
+  onDetailsClick
 }) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const { progress: internalProgress } = useScrollProgress();
@@ -98,17 +114,22 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
   // Use forced state, seller mode, or actual scroll progress
   const displayProgress = forceScrolledState || sellerMode ? 1 : progress;
 
+  const { id: paramId } = useParams<{ id: string }>();
+  const { data: product } = useProduct(paramId || '');
+  const navigate = useNavigate();
+  const { isLoading, startLoading } = useNavigationLoading();
+
   // Live search effect
   React.useEffect(() => {
     if (searchQuery.trim() && isSearchFocused) {
       setIsLiveSearching(true);
       setShowSuggestions(true);
-      
+
       // Clear previous timeout
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
       }
-      
+
       // Debounce search
       searchTimeoutRef.current = setTimeout(() => {
         // Mock live search results
@@ -122,7 +143,7 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
           reviews: Math.floor(Math.random() * 1000) + 10,
           freeShipping: Math.random() > 0.3,
         }));
-        
+
         setLiveSearchResults(mockResults);
         setIsLiveSearching(false);
       }, 300);
@@ -152,18 +173,26 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
         usingCustomProgress: customScrollProgress !== undefined,
         shouldShowSearchBar: displayProgress >= 0.5,
         headerBackgroundOpacity: displayProgress * 0.95,
-        blurAmount: displayProgress * 8
+        blurAmount: displayProgress * 8,
+        showDetailsButton,
+        hasOnDetailsClick: !!onDetailsClick
       });
     }
-  }, [customScrollProgress, internalProgress, progress, displayProgress, forceScrolledState, inPanel]);
-
-  const { id: paramId } = useParams<{ id: string }>();
-  const { data: product } = useProduct(paramId || '');
-  const navigate = useNavigate();
-  const { isLoading, startLoading } = useNavigationLoading();
+  }, [customScrollProgress, internalProgress, progress, displayProgress, forceScrolledState, inPanel, showDetailsButton, onDetailsClick]);
 
   const toggleFavorite = () => {
     setIsFavorite(!isFavorite);
+  };
+
+  // Handle details button click
+  const handleDetailsClick = () => {
+    console.log('🔗 Details button clicked, navigating to product page');
+    if (onDetailsClick) {
+      onDetailsClick();
+    } else if (paramId) {
+      // Default behavior: navigate to product page
+      navigate(`/product/${paramId}`);
+    }
   };
 
   const productSections = [
@@ -185,8 +214,6 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
     if (inPanel) return 'relative';
     return 'fixed top-0 left-0 right-0';
   };
-
-  
 
   return (
     <div
@@ -210,6 +237,31 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
               showCloseIcon={showCloseIcon}
               onClick={onCloseClick}
             />
+
+            {/* Details button - only show in panel mode when scrolled */}
+            {inPanel && showDetailsButton && displayProgress >= 0.5 && (
+              <div 
+                className="rounded-full transition-all duration-700 hover-scale"
+                style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})` }}
+              >
+                <button 
+                  className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700"
+                  onClick={handleDetailsClick}
+                  title="View full product details"
+                >
+                  <ExternalLink
+                    size={20}
+                    strokeWidth={1.5}
+                    className="transition-all duration-700"
+                    style={{
+                      color: displayProgress > 0.5 
+                        ? `rgba(75, 85, 99, ${0.7 + (displayProgress * 0.3)})` 
+                        : `rgba(255, 255, 255, ${0.9 - (displayProgress * 0.2)})`
+                    }}
+                  />
+                </button>
+              </div>
+            )}
 
             {/* Seller Mode: Show seller info when scrolled */}
             {sellerMode && seller && displayProgress >= 0.5 && (
@@ -285,7 +337,7 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
                   className="w-full px-3 py-1 text-sm font-medium border-2 border-gray-800 rounded-full focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-300 bg-white shadow-sm"
                 />
                 <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-600 font-bold" />
-                
+
                 {/* Search Suggestions Dropdown */}
                 {showSuggestions && isSearchFocused && !onSearchFocus && (
                   <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 z-50 max-h-96 overflow-hidden">
@@ -307,7 +359,7 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
                         setShowSuggestions(false);
                       }}
                     />
-                    
+
                     {/* Live Search Results */}
                     {(liveSearchResults.length > 0 || isLiveSearching) && (
                       <div className="border-t bg-gray-50 p-4">
@@ -401,7 +453,7 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
                 />
 
                 <HeaderActionButton
-                  Icon={Share}
+                  Icon={Share2}
                   progress={displayProgress}
                   shareCount={23}
                   onClick={onShareClick}

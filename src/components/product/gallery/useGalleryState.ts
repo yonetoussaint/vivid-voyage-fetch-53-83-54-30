@@ -25,6 +25,7 @@ export const useGalleryState = (
   const [isFlipped, setIsFlipped] = useState(false);
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(false);
   const [autoScrollInterval, setAutoScrollInterval] = useState<NodeJS.Timeout | null>(null);
+  const [autoScrollProgress, setAutoScrollProgress] = useState(0);
   const [isFullscreenMode, setIsFullscreenMode] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   const [showConfiguration, setShowConfiguration] = useState(false);
@@ -78,8 +79,51 @@ export const useGalleryState = (
       setCurrentTime(0);
       setDuration(0);
       setBufferedTime(0);
+      setAutoScrollProgress(0); // Reset progress on manual navigation
     });
   }, [onImageIndexChange, totalItems]);
+
+  // FIXED: Enhanced auto-scroll effect with proper carousel integration
+  useEffect(() => {
+    if (autoScrollEnabled && api && totalItems > 1) {
+      const intervalDuration = 3000; // 3 seconds per slide
+      let startTime = Date.now();
+      let currentSlideStartTime = Date.now();
+
+      const interval = setInterval(() => {
+        const now = Date.now();
+        const elapsed = now - currentSlideStartTime;
+        const progress = (elapsed / intervalDuration) * 100;
+
+        setAutoScrollProgress(progress);
+
+        // Move to next slide when progress reaches 100%
+        if (progress >= 100) {
+          api.scrollNext();
+          currentSlideStartTime = now;
+          setAutoScrollProgress(0);
+        }
+      }, 50); // Update progress every 50ms for smooth animation
+
+      setAutoScrollInterval(interval);
+
+      return () => {
+        clearInterval(interval);
+        setAutoScrollInterval(null);
+        setAutoScrollProgress(0);
+      };
+    } else {
+      // Reset progress when auto-scroll is disabled
+      setAutoScrollProgress(0);
+    }
+  }, [autoScrollEnabled, api, totalItems]);
+
+  // Reset progress when current index changes (manual navigation)
+  useEffect(() => {
+    if (!autoScrollEnabled) {
+      setAutoScrollProgress(0);
+    }
+  }, [currentIndex, autoScrollEnabled]);
 
   // Handle variant image selection
   const handleVariantImageChange = useCallback((imageUrl: string, variantName: string) => {
@@ -104,15 +148,22 @@ export const useGalleryState = (
   const handleThumbnailClick = useCallback((index: number) => {
     if (api) {
       api.scrollTo(index);
+      setAutoScrollProgress(0); // Reset progress when manually navigating
     }
   }, [api]);
 
   const handlePrevious = useCallback(() => {
-    if (api) api.scrollPrev();
+    if (api) {
+      api.scrollPrev();
+      setAutoScrollProgress(0); // Reset progress when manually navigating
+    }
   }, [api]);
 
   const handleNext = useCallback(() => {
-    if (api) api.scrollNext();
+    if (api) {
+      api.scrollNext();
+      setAutoScrollProgress(0); // Reset progress when manually navigating
+    }
   }, [api]);
 
   // Transform handlers
@@ -187,28 +238,14 @@ export const useGalleryState = (
     setAutoScrollEnabled(prev => !prev);
   }, []);
 
-  useEffect(() => {
-    if (autoScrollEnabled && api) {
-      const interval = setInterval(() => {
-        api.scrollNext();
-      }, 3000);
+  // Auto-scroll control methods
+  const startAutoScroll = useCallback(() => {
+    setAutoScrollEnabled(true);
+  }, []);
 
-      setAutoScrollInterval(interval);
-
-      return () => {
-        clearInterval(interval);
-      };
-    } else if (!autoScrollEnabled && autoScrollInterval) {
-      clearInterval(autoScrollInterval);
-      setAutoScrollInterval(null);
-    }
-
-    return () => {
-      if (autoScrollInterval) {
-        clearInterval(autoScrollInterval);
-      }
-    };
-  }, [autoScrollEnabled, api]);
+  const stopAutoScroll = useCallback(() => {
+    setAutoScrollEnabled(false);
+  }, []);
 
   return {
     // State
@@ -218,6 +255,7 @@ export const useGalleryState = (
     isRotated,
     isFlipped,
     autoScrollEnabled,
+    autoScrollProgress,
     isFullscreenMode,
     focusMode,
     showConfiguration,
@@ -235,7 +273,7 @@ export const useGalleryState = (
     isCurrentModel3D,
     totalItems,
     videoIndices,
-    galleryItems, // Add galleryItems to return
+    galleryItems,
 
     // Setters
     setDisplayImages,
@@ -271,6 +309,8 @@ export const useGalleryState = (
     handleConfigurationClick,
     handleImageClick,
     toggleFullscreen,
-    toggleAutoScroll
+    toggleAutoScroll,
+    startAutoScroll,
+    stopAutoScroll
   };
 };
