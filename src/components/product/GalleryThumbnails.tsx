@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { cn } from "@/lib/utils";
 import { Play } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Custom shimmer skeleton component for thumbnails
 const ShimmerSkeleton = ({ className }: { className?: string }) => (
@@ -60,19 +59,20 @@ export const GalleryThumbnails = ({
     const galleryItem = galleryItems[index];
     const isImageLoaded = loadedImages.has(index);
     const isLastThumbnailWithCounter = index === maxThumbnails - 1 && remainingCount > 0;
+    const variantName = variantNames[index];
 
     return (
-      <div
-        key={index}
-        className={cn(
-          "relative overflow-hidden rounded-md border flex-shrink-0 transition-all aspect-square",
-          "cursor-pointer w-[calc(20%-0.4rem)]",
-          currentIndex === index 
-            ? "border-2 border-primary shadow-md ring-1 ring-primary/20" 
-            : "border border-gray-300 hover:border-gray-400"
-        )}
-        onClick={() => onThumbnailClick(index)}
-      >
+      <div key={index} className="flex flex-col gap-1 w-[calc(20%-0.4rem)] flex-shrink-0">
+        <div
+          className={cn(
+            "relative overflow-hidden rounded-md border transition-all aspect-square",
+            "cursor-pointer",
+            currentIndex === index 
+              ? "border-2 border-primary shadow-md ring-1 ring-primary/20" 
+              : "border border-gray-300 hover:border-gray-400"
+          )}
+          onClick={() => onThumbnailClick(index)}
+        >
         {galleryItem?.type === 'model3d' ? (
           <div className="relative w-full h-full bg-white flex items-center justify-center p-0.5">
             <svg
@@ -143,50 +143,40 @@ export const GalleryThumbnails = ({
           </div>
         )}
 
-        <span className="absolute bottom-0.5 right-0.5 text-[9px] bg-black/40 text-white px-0.5 rounded">
-          {index + 1}
-        </span>
+          <span className="absolute bottom-0.5 right-0.5 text-[9px] bg-black/40 text-white px-0.5 rounded">
+            {index + 1}
+          </span>
+        </div>
+        
+        {variantName && (
+          <p className="text-[10px] text-center text-muted-foreground truncate px-0.5 leading-tight">
+            {variantName}
+          </p>
+        )}
       </div>
     );
   };
 
   return (
-    <TooltipProvider delayDuration={200}>
-      <div className="flex items-center gap-2 px-2 w-full">
-        {slots.map((slotIndex) => {
-          const src = displayImages[slotIndex];
-          const index = slotIndex;
-          
-          // Empty slot if no image for this position
-          if (!src) {
-            return (
-              <div
-                key={`empty-${slotIndex}`}
-                className="relative overflow-hidden rounded-md border flex-shrink-0 aspect-square w-[calc(20%-0.4rem)] opacity-0 pointer-events-none"
-              />
-            );
-          }
+    <div className="flex items-start gap-2 px-2 w-full">
+      {slots.map((slotIndex) => {
+        const src = displayImages[slotIndex];
+        const index = slotIndex;
+        
+        // Empty slot if no image for this position
+        if (!src) {
+          return (
+            <div
+              key={`empty-${slotIndex}`}
+              className="flex flex-col gap-1 w-[calc(20%-0.4rem)] flex-shrink-0 opacity-0 pointer-events-none"
+            >
+              <div className="relative overflow-hidden rounded-md border aspect-square" />
+            </div>
+          );
+        }
 
-          const variantName = variantNames[index];
-          const content = thumbnailContent(slotIndex, src, index);
-
-          // Wrap with tooltip if variant name exists
-          if (variantName) {
-            return (
-              <Tooltip key={index}>
-                <TooltipTrigger asChild>
-                  {content}
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="font-medium">{variantName}</p>
-                </TooltipContent>
-              </Tooltip>
-            );
-          }
-
-          return content;
-        })}
-      </div>
-    </TooltipProvider>
+        return thumbnailContent(slotIndex, src, index);
+      })}
+    </div>
   );
 };
