@@ -62,17 +62,17 @@ export const GalleryThumbnails = ({
     const variantName = variantNames[index];
 
     return (
-      <div key={index} className="flex flex-col gap-1 w-[calc(20%-0.4rem)] flex-shrink-0">
-        <div
-          className={cn(
-            "relative overflow-hidden rounded-md border transition-all aspect-square",
-            "cursor-pointer",
-            currentIndex === index 
-              ? "border-2 border-primary shadow-md ring-1 ring-primary/20" 
-              : "border border-gray-300 hover:border-gray-400"
-          )}
-          onClick={() => onThumbnailClick(index)}
-        >
+      <div
+        key={index}
+        className={cn(
+          "relative overflow-hidden rounded-md border flex-shrink-0 transition-all aspect-square",
+          "cursor-pointer w-[calc(20%-0.4rem)]",
+          currentIndex === index 
+            ? "border-2 border-primary shadow-md ring-1 ring-primary/20" 
+            : "border border-gray-300 hover:border-gray-400"
+        )}
+        onClick={() => onThumbnailClick(index)}
+      >
         {galleryItem?.type === 'model3d' ? (
           <div className="relative w-full h-full bg-white flex items-center justify-center p-0.5">
             <svg
@@ -143,22 +143,23 @@ export const GalleryThumbnails = ({
           </div>
         )}
 
+          {variantName && (
+            <div className="absolute bottom-0 left-0 right-0 backdrop-blur-md bg-white/80 dark:bg-black/80 px-1 py-0.5">
+              <p className="text-[9px] text-center text-foreground truncate leading-tight font-medium">
+                {variantName}
+              </p>
+            </div>
+          )}
+
           <span className="absolute bottom-0.5 right-0.5 text-[9px] bg-black/40 text-white px-0.5 rounded">
             {index + 1}
           </span>
         </div>
-        
-        {variantName && (
-          <p className="text-[10px] text-center text-muted-foreground truncate px-0.5 leading-tight">
-            {variantName}
-          </p>
-        )}
-      </div>
     );
   };
 
   return (
-    <div className="flex items-start gap-2 px-2 w-full">
+    <div className="flex items-center gap-2 px-2 w-full">
       {slots.map((slotIndex) => {
         const src = displayImages[slotIndex];
         const index = slotIndex;
@@ -168,10 +169,8 @@ export const GalleryThumbnails = ({
           return (
             <div
               key={`empty-${slotIndex}`}
-              className="flex flex-col gap-1 w-[calc(20%-0.4rem)] flex-shrink-0 opacity-0 pointer-events-none"
-            >
-              <div className="relative overflow-hidden rounded-md border aspect-square" />
-            </div>
+              className="relative overflow-hidden rounded-md border flex-shrink-0 aspect-square w-[calc(20%-0.4rem)] opacity-0 pointer-events-none"
+            />
           );
         }
 
