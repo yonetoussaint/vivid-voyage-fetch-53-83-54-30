@@ -151,7 +151,7 @@ export const GalleryThumbnails = ({
   };
 
   return (
-    <TooltipProvider>
+    <TooltipProvider delayDuration={200}>
       <div className="flex items-center gap-2 px-2 w-full">
         {slots.map((slotIndex) => {
           const src = displayImages[slotIndex];
