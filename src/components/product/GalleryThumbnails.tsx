@@ -49,9 +49,24 @@ export const GalleryThumbnails = ({
   const displayImages = images.slice(0, maxThumbnails);
   const remainingCount = images.length - maxThumbnails;
 
+  // Always render 5 slots
+  const slots = Array.from({ length: maxThumbnails }, (_, i) => i);
+
   return (
-    <div className="flex items-center justify-between gap-2 px-2  w-full">
-      {displayImages.map((src, index) => {
+    <div className="flex items-center gap-2 px-2 w-full">
+      {slots.map((slotIndex) => {
+        const src = displayImages[slotIndex];
+        const index = slotIndex;
+        
+        // Empty slot if no image for this position
+        if (!src) {
+          return (
+            <div
+              key={`empty-${slotIndex}`}
+              className="relative overflow-hidden rounded-md border flex-shrink-0 aspect-square w-[calc(20%-0.4rem)] opacity-0 pointer-events-none"
+            />
+          );
+        }
         const isVideo = videoIndices.includes(index);
         const galleryItem = galleryItems[index];
         const isImageLoaded = loadedImages.has(index);
@@ -63,8 +78,8 @@ export const GalleryThumbnails = ({
           <div
             key={index}
             className={cn(
-              "relative overflow-hidden rounded-md border flex-shrink-0 transition-all flex-1 aspect-square",
-              "cursor-pointer max-w-[20%]",
+              "relative overflow-hidden rounded-md border flex-shrink-0 transition-all aspect-square",
+              "cursor-pointer w-[calc(20%-0.4rem)]",
               currentIndex === index 
                 ? "border-2 border-primary shadow-md ring-1 ring-primary/20" 
                 : "border border-gray-300 hover:border-gray-400"
