@@ -81,6 +81,10 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
       }))
     : galleryItems;
 
+  const variantNames = isVariantsTab && productData?.variant_names
+    ? productData.variant_names.map((vn: any) => vn.name)
+    : [];
+
   const handleThumbnailClick = (index: number) => {
     if (isVariantsTab && productData?.variant_names) {
       setSelectedColorIndex(index);
@@ -104,6 +108,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
             isPlaying={!isVariantsTab && isPlaying}
             videoIndices={isVariantsTab ? [] : videoIndices}
             galleryItems={thumbnailGalleryItems}
+            variantNames={variantNames}
           />
 
           <IPhoneXRListing
