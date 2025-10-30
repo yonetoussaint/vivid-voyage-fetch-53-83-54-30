@@ -116,7 +116,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
   }, [isVariantsTab, hasVariants, selectedVariant, galleryItems]);
 
   const variantNames = isVariantsTab && selectedVariant 
-    ? [Object.values(selectedVariant.options).join(' / ')]
+    ? [Object.values(selectedVariant.options || {}).join(' / ')]
     : [];
 
   const handleThumbnailClick = (index: number) => {
@@ -127,7 +127,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
       ].filter(Boolean);
       
       if (images[index]) {
-        onImageSelect(images[index], Object.values(selectedVariant.options).join(' / '));
+        onImageSelect(images[index], Object.values(selectedVariant.options || {}).join(' / '));
       }
     } else {
       onThumbnailClick(index);
@@ -186,7 +186,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
             <SearchInfoComponent productId={productId} />
           )}
 
-          <ProductSpecifications productId={productId} />
+          <ProductSpecifications product={product} />
 
           <BookGenreFlashDeals
             className="overflow-hidden"

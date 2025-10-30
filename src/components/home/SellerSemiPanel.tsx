@@ -167,7 +167,7 @@ const SellerSemiPanel: React.FC<SellerSemiPanelProps> = ({
             customScrollProgress={scrollProgress}
             showCloseIcon={true} // Show X icon in panel
             onCloseClick={onClose} // Handle close click
-            onlineStatus={{ isOnline: seller?.status === 'active', lastSeen: seller?.last_seen }}
+            onlineStatus={{ isOnline: seller?.status === 'active', lastSeen: (seller as any)?.last_seen }}
             actionButtons={[
               {
                 Icon: Heart,
@@ -201,13 +201,7 @@ const SellerSemiPanel: React.FC<SellerSemiPanelProps> = ({
               ref={scrollContainerRef}
               className="absolute inset-0 overflow-y-auto"
             >
-              <SellerPage 
-                sellerId={sellerId} 
-                hideHeader={true}
-                inPanel={true}
-                scrollContainerRef={scrollContainerRef}
-                stickyTopOffset={panelHeaderHeight}
-              />
+              <SellerPage />
             </div>
           </div>
         ) : (

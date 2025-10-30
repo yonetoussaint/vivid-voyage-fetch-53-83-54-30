@@ -96,7 +96,7 @@ export default function FlashDeals({
 
   const { data: flashProducts = [], isLoading } = useQuery({
     queryKey: ['flash-deals', productType, queryMaxProducts],
-    queryFn: () => fetchFlashDeals(undefined, productType, queryMaxProducts),
+    queryFn: () => fetchFlashDeals(undefined, productType),
     refetchInterval: 5 * 60 * 1000,
   });
 
@@ -211,7 +211,6 @@ export default function FlashDeals({
             showTitleChevron={showTitleChevron}
             onTitleClick={onTitleClick}
             showSponsorCount={showSponsorCount}
-            countdown={displayCountdown}
           />
         )}
 

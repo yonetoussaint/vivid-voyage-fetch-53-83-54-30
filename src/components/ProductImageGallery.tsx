@@ -46,8 +46,8 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
     console.log('📦 Product object:', product);
     if (product) {
       console.log('📊 Stock properties check:', {
-        inventory: product.inventory,
-        sold_count: product.sold_count,
+        inventory: (product as any)?.inventory,
+        sold_count: (product as any)?.sold_count,
         // Legacy properties for debugging
         stock: (product as any).stock,
         inStock: (product as any).inStock,
@@ -401,7 +401,7 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
       </div>
 
       {/* Updated InfoBand with product data */}
-      <InfoBand product={product} />
+      <InfoBand />
 
       {totalItems > 1 && (
         <div ref={tabsContainerRef} className="w-full bg-white">

@@ -31,7 +31,7 @@ export const ProductVariantDisplay: React.FC<ProductVariantDisplayProps> = ({
     ...(safeVariant.additionalImages || [])
   ].filter(Boolean) : [];
 
-  const variantName = safeVariant ? Object.values(safeVariant.options).join(' / ') : '';
+  const variantName = safeVariant ? Object.values(safeVariant.options || {}).join(' / ') : '';
 
   const handleVariantChange = (variantId: string) => {
     onVariantChange(variantId);
@@ -39,7 +39,7 @@ export const ProductVariantDisplay: React.FC<ProductVariantDisplayProps> = ({
     // Update the main image when variant changes
     const newVariant = product?.variants?.find(v => v.id === variantId);
     if (newVariant) {
-      onImageSelect(newVariant.mainImage, Object.values(newVariant.options).join(' / '));
+      onImageSelect(newVariant.mainImage, Object.values(newVariant.options || {}).join(' / '));
     }
   };
 

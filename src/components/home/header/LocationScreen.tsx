@@ -97,7 +97,7 @@ const LocationScreen: React.FC<LocationScreenProps> = ({ onClose, showHeader = t
     }
   ];
 
-  const [selectedFilters, setSelectedFilters] = useState({});
+  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
 
   // Helper function to get all quartiers for a commune
   const getQuartiersByCommune = (communeCode: string): Quartier[] => {

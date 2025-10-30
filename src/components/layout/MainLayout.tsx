@@ -421,10 +421,7 @@ function MainLayoutContent() {
         )}
 
         {/* Auth Overlay */}
-        <AuthOverlay
-          isOpen={isAuthOverlayOpen}
-          onClose={() => setIsAuthOverlayOpen(false)}
-        />
+        <AuthOverlay />
       </div>
   );
 }

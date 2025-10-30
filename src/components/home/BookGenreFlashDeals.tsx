@@ -277,7 +277,7 @@ export default function BookGenreFlashDeals({
       if (selectedFilters.discount && !isAllOption(selectedFilters.discount)) {
         products = products.filter(p => {
           const discountPercentage = p.discount_price
-            ? Math.round(((product.price - product.discount_price) / product.price) * 100)
+            ? Math.round(((p.price - p.discount_price) / p.price) * 100)
             : 0;
           switch (selectedFilters.discount) {
             case 'On Sale': return discountPercentage > 0;
