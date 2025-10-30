@@ -53,8 +53,9 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
   const navigate = useNavigate();
   const [isDescriptionPanelOpen, setIsDescriptionPanelOpen] = useState(false);
   
-  // Use product variants hook with safe product
-  const { selectedVariant, handleOptionSelect, hasVariants } = useProductVariants(product);
+  // Use product variants hook with safe product - only if product has correct structure
+  const safeProduct = product?.variants && Array.isArray(product.variants) ? product : null;
+  const { selectedVariant, handleOptionSelect, hasVariants } = useProductVariants(safeProduct);
 
   // Fetch product data for variants
   const { data: productData, isLoading: productLoading } = useProduct(productId || '');
@@ -69,7 +70,9 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
 
   const handleVariantChange = (variantId: string) => {
     // Handle variant change logic here
-    const newVariant = product?.variants?.find((v: any) => v.id === variantId);
+    if (!safeProduct?.variants) return;
+    
+    const newVariant = safeProduct.variants.find((v: any) => v.id === variantId);
     if (newVariant) {
       onConfigurationChange({
         variant: newVariant,
@@ -146,9 +149,9 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
     <div className="mt-2 w-full">
       {(activeTab === 'overview' || activeTab === 'variants') && (
         <div className="space-y-6">
-          {activeTab === 'variants' && (
+          {activeTab === 'variants' && hasVariants && safeProduct && (
             <ProductVariantDisplay
-              product={product}
+              product={safeProduct}
               currentVariant={selectedVariant}
               onVariantChange={handleVariantChange}
               onImageSelect={onImageSelect}
@@ -156,6 +159,12 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
               onThumbnailClick={onThumbnailClick}
               isPlaying={isPlaying}
             />
+          )}
+          
+          {activeTab === 'variants' && !hasVariants && (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>No variants available for this product.</p>
+            </div>
           )}
 
           <GalleryThumbnails
