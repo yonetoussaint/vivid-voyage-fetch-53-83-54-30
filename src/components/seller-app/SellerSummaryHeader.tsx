@@ -46,19 +46,13 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
         </div>
 
         {showStats && stats.length > 0 && (
-          <div className={`grid gap-3 ${
-            stats.length === 3 ? 'grid-cols-3' :
-            stats.length === 4 ? 'grid-cols-2 sm:grid-cols-4' :
-            stats.length === 5 ? 'grid-cols-5' :
-            stats.length === 6 ? 'grid-cols-3 sm:grid-cols-3 md:grid-cols-6' :
-            'grid-cols-3 sm:grid-cols-4 md:grid-cols-6'
-          }`}>
+          <div className="flex gap-6 overflow-x-auto scrollbar-hide">
             {stats.map((stat, index) => (
-              <div key={index} className="text-center">
+              <div key={index} className="text-center flex-shrink-0">
                 <div className={`text-lg font-bold ${stat.color || 'text-blue-600'}`}>
                   {stat.value}
                 </div>
-                <div className="text-xs text-muted-foreground">{stat.label}</div>
+                <div className="text-xs text-muted-foreground whitespace-nowrap">{stat.label}</div>
               </div>
             ))}
           </div>
