@@ -1,5 +1,5 @@
-// GalleryTabsContent.tsx (Fixed - Critical fixes)
-import React, { useState, useMemo } from 'react';
+// GalleryTabsContent.tsx
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GalleryThumbnails } from '@/components/product/GalleryThumbnails';
 import { IPhoneXRListing } from '@/components/product/iPhoneXRListing';
@@ -16,8 +16,6 @@ import ProductSpecifications from '@/components/product/ProductSpecifications';
 import SlideUpPanel from '@/components/shared/SlideUpPanel';
 import { Zap } from 'lucide-react';
 import { useProduct } from '@/hooks/useProduct';
-import { ProductVariantDisplay } from '@/components/product/ProductVariantDisplay';
-import { useProductVariants } from '@/hooks/useProductVariants';
 
 interface GalleryTabsContentProps {
   activeTab: string;
@@ -52,12 +50,10 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
 }) => {
   const navigate = useNavigate();
   const [isDescriptionPanelOpen, setIsDescriptionPanelOpen] = useState(false);
+  const [selectedColorIndex, setSelectedColorIndex] = useState(0);
   
-  // Use product variants hook with safe product
-  const { selectedVariant, handleOptionSelect, hasVariants } = useProductVariants(product);
-
   // Fetch product data for variants
-  const { data: productData, isLoading: productLoading } = useProduct(productId || '');
+  const { data: productData } = useProduct(productId || '');
 
   const handleViewCart = () => {
     navigate('/cart');
@@ -67,17 +63,6 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
     setIsDescriptionPanelOpen(true);
   };
 
-  const handleVariantChange = (variantId: string) => {
-    // Handle variant change logic here
-    const newVariant = product?.variants?.find((v: any) => v.id === variantId);
-    if (newVariant) {
-      onConfigurationChange({
-        variant: newVariant,
-        options: newVariant.options
-      });
-    }
-  };
-
   // Only show tabs when there's more than 1 item OR when there's a 3D model
   if (!(totalItems > 1 || galleryItems.some(item => item.type === 'model3d'))) {
     return null;
@@ -85,82 +70,40 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
 
   // Determine thumbnails data based on active tab
   const isVariantsTab = activeTab === 'variants';
+  const thumbnailImages = isVariantsTab && productData?.variant_names
+    ? productData.variant_names.map((vn: any) => vn.mainImage || vn.image || '')
+    : galleryItems.map(item => item.src);
   
-  const thumbnailImages = useMemo(() => {
-    if (isVariantsTab && hasVariants && selectedVariant) {
-      // Show images for the currently selected variant
-      return [
-        selectedVariant?.mainImage,
-        ...(selectedVariant?.additionalImages || [])
-      ].filter(Boolean) as string[];
-    }
-    return galleryItems.map(item => item.src).filter(Boolean);
-  }, [isVariantsTab, hasVariants, selectedVariant, galleryItems]);
+  const thumbnailGalleryItems = isVariantsTab && productData?.variant_names
+    ? productData.variant_names.map((vn: any) => ({
+        type: 'image' as const,
+        src: vn.mainImage || vn.image || ''
+      }))
+    : galleryItems;
 
-  const thumbnailGalleryItems = useMemo(() => {
-    if (isVariantsTab && hasVariants && selectedVariant) {
-      const images = [
-        selectedVariant?.mainImage,
-        ...(selectedVariant?.additionalImages || [])
-      ].filter(Boolean);
-      
-      return images.map(src => ({ 
-        type: 'image' as const, 
-        src 
-      }));
-    }
-    return galleryItems;
-  }, [isVariantsTab, hasVariants, selectedVariant, galleryItems]);
-
-  const variantNames = isVariantsTab && selectedVariant 
-    ? [Object.values(selectedVariant.options).join(' / ')]
+  const variantNames = isVariantsTab && productData?.variant_names
+    ? productData.variant_names.map((vn: any) => vn.name)
     : [];
 
   const handleThumbnailClick = (index: number) => {
-    if (isVariantsTab && selectedVariant) {
-      const images = [
-        selectedVariant.mainImage,
-        ...(selectedVariant.additionalImages || [])
-      ].filter(Boolean);
-      
-      if (images[index]) {
-        onImageSelect(images[index], Object.values(selectedVariant.options).join(' / '));
+    if (isVariantsTab && productData?.variant_names) {
+      setSelectedColorIndex(index);
+      const variant = productData.variant_names[index];
+      if (variant?.mainImage || variant?.image) {
+        onImageSelect(variant.mainImage || variant.image, variant.name);
       }
     } else {
       onThumbnailClick(index);
     }
   };
 
-  // Show loading state
-  if (productLoading) {
-    return (
-      <div className="mt-2 w-full">
-        <div className="flex justify-center items-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="mt-2 w-full">
       {(activeTab === 'overview' || activeTab === 'variants') && (
-        <div className="space-y-6">
-          {activeTab === 'variants' && (
-            <ProductVariantDisplay
-              product={product}
-              currentVariant={selectedVariant}
-              onVariantChange={handleVariantChange}
-              onImageSelect={onImageSelect}
-              currentIndex={currentIndex}
-              onThumbnailClick={onThumbnailClick}
-              isPlaying={isPlaying}
-            />
-          )}
-
+        <div className="space-y-3">
           <GalleryThumbnails
             images={thumbnailImages}
-            currentIndex={currentIndex}
+            currentIndex={isVariantsTab ? selectedColorIndex : currentIndex}
             onThumbnailClick={handleThumbnailClick}
             isPlaying={!isVariantsTab && isPlaying}
             videoIndices={isVariantsTab ? [] : videoIndices}
@@ -179,23 +122,25 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
 
           <ProductSpecifications productId={productId} />
 
-          <BookGenreFlashDeals
-            className="overflow-hidden"
-            title="Related Products"
-            showSectionHeader={true}
-            showFilters={false}
-            showSummary={false}
-          />
+          
+<BookGenreFlashDeals
+  className="overflow-hidden"
+  title="Related Products"
+  showSectionHeader={false}
+  showFilters={false}
+  showSummary={false}
+  // Don't pass any icon prop - it will be optional now
+/>
 
-          {product && selectedVariant && onBuyNow && (
+          {product && onBuyNow && (
             <StickyCheckoutBar
               product={product}
               onBuyNow={onBuyNow}
               onViewCart={handleViewCart}
-              selectedColor={selectedVariant.options?.color || ''}
-              selectedStorage={selectedVariant.options?.size || ''}
-              selectedNetwork={selectedVariant.options?.material || ''}
-              selectedCondition="new"
+              selectedColor=""
+              selectedStorage=""
+              selectedNetwork=""
+              selectedCondition=""
               className=""
               onImageSelect={onImageSelect}
               onConfigurationChange={onConfigurationChange}
