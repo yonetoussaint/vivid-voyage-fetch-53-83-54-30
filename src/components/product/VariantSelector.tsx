@@ -1,11 +1,11 @@
-// components/product/VariantSelector.tsx
+// components/product/VariantSelector.tsx (Fixed)
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Product, ProductOption } from '@/types/variant';
+import { Product } from '@/types/variant';
 import { useProductVariants } from '@/hooks/useProductVariants';
 
 interface VariantSelectorProps {
-  product: Product;
+  product?: Product | null;
   onVariantChange?: (variantId: string) => void;
   className?: string;
 }
@@ -20,8 +20,18 @@ export const VariantSelector: React.FC<VariantSelectorProps> = ({
     selectedVariant,
     getAvailableOptionValues,
     isOptionValueAvailable,
-    handleOptionSelect
+    handleOptionSelect,
+    hasVariants
   } = useProductVariants(product);
+
+  // If no variants, show message
+  if (!hasVariants) {
+    return (
+      <div className={cn("text-center py-8 text-muted-foreground", className)}>
+        <p>No variants available for this product.</p>
+      </div>
+    );
+  }
 
   const handleOptionClick = (optionName: string, optionValue: string) => {
     if (!isOptionValueAvailable(optionName, optionValue)) return;
@@ -30,7 +40,7 @@ export const VariantSelector: React.FC<VariantSelectorProps> = ({
     
     // Find the variant that matches the new selection
     const newSelections = { ...selectedOptions, [optionName]: optionValue };
-    const newVariant = product.variants.find(variant =>
+    const newVariant = product?.variants?.find(variant =>
       Object.entries(newSelections).every(([key, value]) => variant.options[key] === value)
     );
 
@@ -39,7 +49,7 @@ export const VariantSelector: React.FC<VariantSelectorProps> = ({
     }
   };
 
-  const renderOption = (option: ProductOption) => {
+  const renderOption = (option: any) => {
     const availableValues = getAvailableOptionValues(option.name);
 
     return (
@@ -54,7 +64,7 @@ export const VariantSelector: React.FC<VariantSelectorProps> = ({
         </div>
         
         <div className="flex flex-wrap gap-2">
-          {option.values.map(value => {
+          {option.values.map((value: string) => {
             const isAvailable = isOptionValueAvailable(option.name, value);
             const isSelected = selectedOptions[option.name] === value;
             
@@ -95,7 +105,7 @@ export const VariantSelector: React.FC<VariantSelectorProps> = ({
 
   return (
     <div className={cn("space-y-4", className)}>
-      {product.options.map(renderOption)}
+      {product?.options?.map(renderOption)}
       
       {/* Selected variant info */}
       {selectedVariant && (
