@@ -122,13 +122,15 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
 
           <ProductSpecifications productId={productId} />
 
-          <BookGenreFlashDeals
-            className="overflow-hidden"
-            title="Related Products"
-            showSectionHeader={true}
-            showFilters={false}
-            showSummary={false}
-          />
+          // In GalleryTabsContent.tsx - Update the BookGenreFlashDeals usage
+<BookGenreFlashDeals
+  className="overflow-hidden"
+  title="Related Products"
+  showSectionHeader={true}
+  showFilters={false}
+  showSummary={false}
+  // Don't pass any icon prop - it will be optional now
+/>
 
           {product && onBuyNow && (
             <StickyCheckoutBar
