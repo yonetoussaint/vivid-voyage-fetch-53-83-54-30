@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { cn } from "@/lib/utils";
 import { Play } from "lucide-react";
-import { safeObjectValues } from '@/utils/productHelpers';
 
 // Custom shimmer skeleton component for thumbnails
 const ShimmerSkeleton = ({ className }: { className?: string }) => (

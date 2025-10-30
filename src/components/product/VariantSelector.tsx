@@ -1,9 +1,8 @@
-// components/product/VariantSelector.tsx (Fixed with safe utilities)
+// components/product/VariantSelector.tsx (Fixed)
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Product } from '@/types/variant';
 import { useProductVariants } from '@/hooks/useProductVariants';
-import { safeObjectEntries } from '@/utils/productHelpers';
 
 interface VariantSelectorProps {
   product?: Product | null;
@@ -41,11 +40,9 @@ export const VariantSelector: React.FC<VariantSelectorProps> = ({
     
     // Find the variant that matches the new selection
     const newSelections = { ...selectedOptions, [optionName]: optionValue };
-    const newVariant = product?.variants?.find(variant => {
-      return safeObjectEntries(newSelections).every(([key, value]) => {
-        return variant.options?.[key] === value;
-      });
-    });
+    const newVariant = product?.variants?.find(variant =>
+      Object.entries(newSelections).every(([key, value]) => variant.options[key] === value)
+    );
 
     if (newVariant && onVariantChange) {
       onVariantChange(newVariant.id);

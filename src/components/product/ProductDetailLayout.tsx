@@ -1,4 +1,4 @@
-// ProductDetailLayout.tsx (Updated - Removed old variants system)
+// ProductDetailLayout.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -24,7 +24,7 @@ interface ProductDetailLayoutProps {
   productId: string;
   hideHeader?: boolean;
   inPanel?: boolean;
-  onReadMore?: () => void;
+  onReadMore?: () => void; // Add this
   scrollContainerRef?: React.RefObject<HTMLDivElement>;
   stickyTopOffset?: number;
 }
@@ -36,7 +36,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
   inPanel = false,
   scrollContainerRef,
   stickyTopOffset,
-  onReadMore
+  onReadMore // Destructure it here
 }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -52,15 +52,49 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
   // Create a ref for description section
   const descriptionRef = React.useRef<HTMLDivElement>(null);
 
-  // Use new variants system
-  const hasVariants = product?.variants && product.variants.length > 0;
+  // Get first variant values if variants exist and use them as defaults
+  const hasVariants = product.variants && product.variants.length > 0;
   const firstVariant = hasVariants ? product.variants[0] : null;
 
-  // Get display name and price from first variant or product
-  const displayName = firstVariant 
-    ? `${product.name} - ${Object.values(firstVariant.options).join(' / ')}`
-    : product.name;
+  // Build complete variant display name
+  const getVariantDisplayName = () => {
+    if (!firstVariant) return product.name;
 
+    const parts = [product.name];
+
+    // Add variant name (color)
+    if (firstVariant.name) {
+      parts.push(firstVariant.name);
+    }
+
+    // Add storage if available
+    if (firstVariant.storageOptions && firstVariant.storageOptions.length > 0) {
+      const firstStorage = firstVariant.storageOptions[0];
+      if (firstStorage.capacity) {
+        parts.push(firstStorage.capacity);
+      }
+
+      // Add network if available in storage
+      if (firstStorage.networkOptions && firstStorage.networkOptions.length > 0) {
+        const firstNetwork = firstStorage.networkOptions[0];
+        if (firstNetwork.name) {
+          parts.push(firstNetwork.name);
+        }
+
+        // Add condition if available in network
+        if (firstNetwork.conditionOptions && firstNetwork.conditionOptions.length > 0) {
+          const firstCondition = firstNetwork.conditionOptions[0];
+          if (firstCondition.name) {
+            parts.push(firstCondition.name);
+          }
+        }
+      }
+    }
+
+    return parts.join(' ');
+  };
+
+  const displayName = getVariantDisplayName();
   const displayPrice = firstVariant?.price !== undefined ? firstVariant.price : product.price;
 
   // Create a modified product object with first variant values as defaults
@@ -104,12 +138,12 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
         />
       )}
 
-      {/* Image Gallery Section */}
+      {/* Image Gallery Section - PASS onReadMore HERE */}
       <ProductGallerySection
         ref={refs.overviewRef}
         galleryRef={refs.galleryRef}
         displayImages={state.displayImages}
-        product={productWithDefaults}
+        product={product}
         focusMode={state.focusMode}
         onFocusModeChange={state.setFocusMode}
         onProductDetailsClick={() => state.setProductDetailsSheetOpen(true)}
@@ -127,10 +161,10 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
             console.error('❌ No seller ID found');
           }
         }}
-        onReadMore={onReadMore}
+        onReadMore={onReadMore} // ADD THIS LINE
       />
 
-      {/* Sticky Tabs Navigation */}
+      {/* Sticky Tabs Navigation - Moved back to main layout */}
       <StickyTabsNavigation
         headerHeight={state.headerHeight}
         galleryRef={refs.galleryRef}
@@ -139,7 +173,9 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
         stickyTopOffset={stickyTopOffset}
       />
 
-      {/* Main Content Sections */}
+      {/* Main Content Sections - Removed ProductContentSections component */}
+
+      {/* Related Products Section - Moved to recommendations tab */}
 
       {/* Scroll Management */}
       <ProductScrollManager
@@ -156,7 +192,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
         verticalRecommendationsRef={refs.verticalRecommendationsRef}
       />
 
-      {/* Variant Management - Updated to use new system */}
+      {/* Variant Management */}
       <ProductVariantManager
         product={product}
         displayImages={state.displayImages}
@@ -166,11 +202,11 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
 
       {/* Sticky Components */}
       <ProductStickyComponents
-        product={productWithDefaults}
+        product={product}
         onBuyNow={buyNow}
         sharePanelOpen={state.sharePanelOpen}
         setSharePanelOpen={state.setSharePanelOpen}
-        hideCheckoutBar={false}
+        hideCheckoutBar={false} // Enable checkout bar for cart functionality
       />
     </div>
   );

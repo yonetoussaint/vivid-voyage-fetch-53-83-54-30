@@ -1,4 +1,3 @@
-// ProductImageGallery.tsx (Updated - Removed old variants system)
 import React, { forwardRef, useImperativeHandle, useEffect } from "react";
 import { 
   Carousel,
@@ -46,10 +45,16 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
   useEffect(() => {
     console.log('📦 Product object:', product);
     if (product) {
-      console.log('📊 Variants check:', {
-        hasVariants: product.variants && product.variants.length > 0,
-        variantsCount: product.variants?.length || 0,
-        hasOptions: product.options && product.options.length > 0
+      console.log('📊 Stock properties check:', {
+        inventory: product.inventory,
+        sold_count: product.sold_count,
+        // Legacy properties for debugging
+        stock: (product as any).stock,
+        inStock: (product as any).inStock,
+        quantity: (product as any).quantity,
+        sold: (product as any).sold,
+        soldCount: (product as any).soldCount,
+        unitsSold: (product as any).unitsSold
       });
     }
   }, [product]);
@@ -295,9 +300,6 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
     );
   }
 
-  // Check if product has variants for tabs
-  const hasVariants = product?.variants && product.variants.length > 0;
-
   return (
     <div ref={containerRef} className="flex flex-col bg-transparent w-full max-w-full overflow-x-hidden">
       <div className="relative w-full aspect-square overflow-hidden max-w-full">
@@ -406,7 +408,10 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
           <TabsNavigation
             tabs={[
               { id: 'overview', label: 'Overview' },
-              ...(hasVariants ? [{ id: 'variants', label: 'Variants' }] : []),
+              ...(product && (
+                ('variants' in product && Array.isArray((product as any).variants) && (product as any).variants.length > 0) ||
+                ('variant_names' in product && Array.isArray((product as any).variant_names) && (product as any).variant_names.length > 0)
+              ) ? [{ id: 'variants', label: 'Variants' }] : []),
               { id: 'reviews', label: 'Reviews' },
               { id: 'store-reviews', label: 'Store Reviews' },
               { id: 'reviews-gallery', label: 'Reviews Gallery' },

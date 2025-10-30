@@ -1,7 +1,6 @@
-// hooks/useProductVariants.ts (Fixed with safe utilities)
+// hooks/useProductVariants.ts (Fixed)
 import { useState, useMemo } from 'react';
 import { Product, ProductVariant, ProductOption } from '@/types/variant';
-import { safeObjectEntries } from '@/utils/productHelpers';
 
 // Default empty product to prevent crashes
 const defaultProduct: Product = {
@@ -28,10 +27,8 @@ export const useProductVariants = (product?: Product | null) => {
     }
     
     return safeProduct.variants.filter(variant => {
-      return safeObjectEntries(selectedOptions).every(([optionName, optionValue]) => {
-        // Safe access to variant options
-        const variantOptionValue = variant.options?.[optionName];
-        return variantOptionValue === optionValue;
+      return Object.entries(selectedOptions).every(([optionName, optionValue]) => {
+        return variant.options[optionName] === optionValue;
       });
     });
   }, [safeProduct.variants, selectedOptions]);
@@ -43,10 +40,8 @@ export const useProductVariants = (product?: Product | null) => {
     }
 
     const foundVariant = safeProduct.variants.find(variant => {
-      return safeObjectEntries(selectedOptions).every(([optionName, optionValue]) => {
-        // Safe access to variant options
-        const variantOptionValue = variant.options?.[optionName];
-        return variantOptionValue === optionValue;
+      return Object.entries(selectedOptions).every(([optionName, optionValue]) => {
+        return variant.options[optionName] === optionValue;
       });
     });
 
@@ -69,15 +64,12 @@ export const useProductVariants = (product?: Product | null) => {
 
     safeProduct.variants.forEach(variant => {
       // Check if variant matches all current selections
-      const matchesCurrentSelections = safeObjectEntries(currentSelections).every(
-        ([key, value]) => variant.options?.[key] === value
+      const matchesCurrentSelections = Object.entries(currentSelections).every(
+        ([key, value]) => variant.options[key] === value
       );
 
       if (matchesCurrentSelections && variant.isAvailable) {
-        const optionValue = variant.options?.[optionName];
-        if (optionValue) {
-          availableValues.add(optionValue);
-        }
+        availableValues.add(variant.options[optionName]);
       }
     });
 

@@ -1,4 +1,4 @@
-// GalleryTabsContent.tsx (Fixed with utilities)
+// GalleryTabsContent.tsx (Fixed - Critical fixes)
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GalleryThumbnails } from '@/components/product/GalleryThumbnails';
@@ -13,10 +13,11 @@ import BookGenreFlashDeals from '@/components/home/BookGenreFlashDeals';
 import StickyCheckoutBar from '@/components/product/StickyCheckoutBar';
 import ProductSectionWrapper from '@/components/product/ProductSectionWrapper';
 import ProductSpecifications from '@/components/product/ProductSpecifications';
+import SlideUpPanel from '@/components/shared/SlideUpPanel';
+import { Zap } from 'lucide-react';
 import { useProduct } from '@/hooks/useProduct';
 import { ProductVariantDisplay } from '@/components/product/ProductVariantDisplay';
 import { useProductVariants } from '@/hooks/useProductVariants';
-import { getVariantDisplayName, getVariantImages, hasValidVariants } from '@/utils/productHelpers';
 
 interface GalleryTabsContentProps {
   activeTab: string;
@@ -50,16 +51,37 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
   onReadMore
 }) => {
   const navigate = useNavigate();
+  const [isDescriptionPanelOpen, setIsDescriptionPanelOpen] = useState(false);
   
   // Use product variants hook with safe product
   const { selectedVariant, handleOptionSelect, hasVariants } = useProductVariants(product);
 
-  // Fetch product data
+  // Fetch product data for variants
   const { data: productData, isLoading: productLoading } = useProduct(productId || '');
 
   const handleViewCart = () => {
     navigate('/cart');
   };
+
+  const handleReadMore = () => {
+    setIsDescriptionPanelOpen(true);
+  };
+
+  const handleVariantChange = (variantId: string) => {
+    // Handle variant change logic here
+    const newVariant = product?.variants?.find((v: any) => v.id === variantId);
+    if (newVariant) {
+      onConfigurationChange({
+        variant: newVariant,
+        options: newVariant.options
+      });
+    }
+  };
+
+  // Only show tabs when there's more than 1 item OR when there's a 3D model
+  if (!(totalItems > 1 || galleryItems.some(item => item.type === 'model3d'))) {
+    return null;
+  }
 
   // Determine thumbnails data based on active tab
   const isVariantsTab = activeTab === 'variants';
@@ -67,33 +89,42 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
   const thumbnailImages = useMemo(() => {
     if (isVariantsTab && hasVariants && selectedVariant) {
       // Show images for the currently selected variant
-      const variantImages = getVariantImages(selectedVariant);
-      return variantImages.length > 0 ? variantImages : galleryItems.map(item => item.src).filter(Boolean);
+      return [
+        selectedVariant?.mainImage,
+        ...(selectedVariant?.additionalImages || [])
+      ].filter(Boolean) as string[];
     }
     return galleryItems.map(item => item.src).filter(Boolean);
   }, [isVariantsTab, hasVariants, selectedVariant, galleryItems]);
 
   const thumbnailGalleryItems = useMemo(() => {
     if (isVariantsTab && hasVariants && selectedVariant) {
-      const images = getVariantImages(selectedVariant);
-      return images.length > 0 
-        ? images.map(src => ({ type: 'image' as const, src }))
-        : galleryItems;
+      const images = [
+        selectedVariant?.mainImage,
+        ...(selectedVariant?.additionalImages || [])
+      ].filter(Boolean);
+      
+      return images.map(src => ({ 
+        type: 'image' as const, 
+        src 
+      }));
     }
     return galleryItems;
   }, [isVariantsTab, hasVariants, selectedVariant, galleryItems]);
 
-  // Safe variant name generation
-  const variantNames = isVariantsTab && selectedVariant
-    ? [getVariantDisplayName(selectedVariant)]
+  const variantNames = isVariantsTab && selectedVariant 
+    ? [Object.values(selectedVariant.options).join(' / ')]
     : [];
 
   const handleThumbnailClick = (index: number) => {
     if (isVariantsTab && selectedVariant) {
-      const images = getVariantImages(selectedVariant);
+      const images = [
+        selectedVariant.mainImage,
+        ...(selectedVariant.additionalImages || [])
+      ].filter(Boolean);
+      
       if (images[index]) {
-        const variantName = getVariantDisplayName(selectedVariant);
-        onImageSelect(images[index], variantName);
+        onImageSelect(images[index], Object.values(selectedVariant.options).join(' / '));
       }
     } else {
       onThumbnailClick(index);
@@ -119,16 +150,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
             <ProductVariantDisplay
               product={product}
               currentVariant={selectedVariant}
-              onVariantChange={(variantId) => {
-                // Handle variant change
-                const newVariant = product?.variants?.find((v: any) => v.id === variantId);
-                if (newVariant) {
-                  onConfigurationChange({
-                    variant: newVariant,
-                    options: newVariant.options || {}
-                  });
-                }
-              }}
+              onVariantChange={handleVariantChange}
               onImageSelect={onImageSelect}
               currentIndex={currentIndex}
               onThumbnailClick={onThumbnailClick}
@@ -211,6 +233,8 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
           />
         </ProductSectionWrapper>
       )}
+
+      {/* SlideUpPanel for Full Description */}
     </div>
   );
 };

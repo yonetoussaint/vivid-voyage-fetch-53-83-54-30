@@ -1,9 +1,8 @@
-// components/product/ProductVariantDisplay.tsx (Fixed with utilities)
+// components/product/ProductVariantDisplay.tsx (Fixed)
 import React from 'react';
 import { Product, ProductVariant } from '@/types/variant';
 import { VariantSelector } from './VariantSelector';
 import { GalleryThumbnails } from './GalleryThumbnails';
-import { getVariantDisplayName, getVariantImages, hasValidVariants } from '@/utils/productHelpers';
 
 interface ProductVariantDisplayProps {
   product?: Product | null;
@@ -27,21 +26,24 @@ export const ProductVariantDisplay: React.FC<ProductVariantDisplayProps> = ({
   // Safe fallbacks for currentVariant
   const safeVariant = currentVariant || product?.variants?.[0];
   
-  const variantImages = getVariantImages(safeVariant);
-  const variantName = getVariantDisplayName(safeVariant);
+  const variantImages = safeVariant ? [
+    safeVariant.mainImage,
+    ...(safeVariant.additionalImages || [])
+  ].filter(Boolean) : [];
+
+  const variantName = safeVariant ? Object.values(safeVariant.options).join(' / ') : '';
 
   const handleVariantChange = (variantId: string) => {
     onVariantChange(variantId);
     
     // Update the main image when variant changes
     const newVariant = product?.variants?.find(v => v.id === variantId);
-    if (newVariant && newVariant.mainImage) {
-      const newVariantName = getVariantDisplayName(newVariant);
-      onImageSelect(newVariant.mainImage, newVariantName);
+    if (newVariant) {
+      onImageSelect(newVariant.mainImage, Object.values(newVariant.options).join(' / '));
     }
   };
 
-  if (!hasValidVariants(product)) {
+  if (!product || !product.variants || product.variants.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
         <p>No product variants available.</p>
@@ -61,7 +63,7 @@ export const ProductVariantDisplay: React.FC<ProductVariantDisplayProps> = ({
       {safeVariant && (
         <div className="flex items-center gap-3">
           <span className="text-2xl font-bold text-foreground">
-            ${safeVariant.price?.toFixed(2) || '0.00'}
+            ${safeVariant.price.toFixed(2)}
           </span>
           {safeVariant.compareAtPrice && safeVariant.compareAtPrice > safeVariant.price && (
             <>
@@ -80,7 +82,7 @@ export const ProductVariantDisplay: React.FC<ProductVariantDisplayProps> = ({
       {variantImages.length > 0 && (
         <div>
           <h4 className="text-sm font-medium text-muted-foreground mb-3">
-            {variantName || 'Product Images'}
+            {variantName} - Images
           </h4>
           <GalleryThumbnails
             images={variantImages}

@@ -1,4 +1,3 @@
-// ProductDetail.tsx (Updated with debugging)
 // ProductDetail.tsx
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -38,20 +37,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [productId]);
-
-  // Debug product data
-  useEffect(() => {
-    if (product) {
-      console.log('🔍 Product data structure:', {
-        hasProduct: !!product,
-        hasVariants: !!(product.variants && product.variants.length > 0),
-        variantsCount: product.variants?.length || 0,
-        firstVariant: product.variants?.[0],
-        firstVariantOptions: product.variants?.[0]?.options,
-        productStructure: product
-      });
-    }
-  }, [product]);
 
   const handleReadMore = () => {
     setIsDescriptionPanelOpen(true);

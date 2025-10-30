@@ -1,4 +1,4 @@
-// types/variant.ts (Updated)
+// types/variant.ts
 export interface ProductVariant {
   id: string;
   productId: string;
@@ -31,14 +31,4 @@ export interface Product {
   options: ProductOption[];
   variants: ProductVariant[];
   defaultVariantId: string;
-  // Legacy properties for compatibility
-  variant_names?: any[];
-  product_videos?: any[];
-  model_3d_url?: string;
-  sellers?: any;
-  inventory?: number;
-  sold_count?: number;
-  price?: number;
-  discount_price?: number;
-  name?: string;
 }
