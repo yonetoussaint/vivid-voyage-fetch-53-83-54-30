@@ -330,7 +330,7 @@ export default function BookGenreFlashDeals({
   return (
     <div className={`w-full bg-white ${className}`}>
       {/* Section Header - Using imported SectionHeader component */}
-      // In BookGenreFlashDeals.tsx - Update the SectionHeader usage
+      
 {showSectionHeader && (
   <SectionHeader
     title={title}
