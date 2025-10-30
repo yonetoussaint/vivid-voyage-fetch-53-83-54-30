@@ -1,4 +1,4 @@
-// GalleryTabsContent.tsx (Fixed - Critical fixes)
+// GalleryTabsContent.tsx (Updated for new variants system)
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GalleryThumbnails } from '@/components/product/GalleryThumbnails';
@@ -13,8 +13,6 @@ import BookGenreFlashDeals from '@/components/home/BookGenreFlashDeals';
 import StickyCheckoutBar from '@/components/product/StickyCheckoutBar';
 import ProductSectionWrapper from '@/components/product/ProductSectionWrapper';
 import ProductSpecifications from '@/components/product/ProductSpecifications';
-import SlideUpPanel from '@/components/shared/SlideUpPanel';
-import { Zap } from 'lucide-react';
 import { useProduct } from '@/hooks/useProduct';
 import { ProductVariantDisplay } from '@/components/product/ProductVariantDisplay';
 import { useProductVariants } from '@/hooks/useProductVariants';
@@ -51,37 +49,16 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
   onReadMore
 }) => {
   const navigate = useNavigate();
-  const [isDescriptionPanelOpen, setIsDescriptionPanelOpen] = useState(false);
   
   // Use product variants hook with safe product
   const { selectedVariant, handleOptionSelect, hasVariants } = useProductVariants(product);
 
-  // Fetch product data for variants
+  // Fetch product data
   const { data: productData, isLoading: productLoading } = useProduct(productId || '');
 
   const handleViewCart = () => {
     navigate('/cart');
   };
-
-  const handleReadMore = () => {
-    setIsDescriptionPanelOpen(true);
-  };
-
-  const handleVariantChange = (variantId: string) => {
-    // Handle variant change logic here
-    const newVariant = product?.variants?.find((v: any) => v.id === variantId);
-    if (newVariant) {
-      onConfigurationChange({
-        variant: newVariant,
-        options: newVariant.options
-      });
-    }
-  };
-
-  // Only show tabs when there's more than 1 item OR when there's a 3D model
-  if (!(totalItems > 1 || galleryItems.some(item => item.type === 'model3d'))) {
-    return null;
-  }
 
   // Determine thumbnails data based on active tab
   const isVariantsTab = activeTab === 'variants';
@@ -150,7 +127,16 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
             <ProductVariantDisplay
               product={product}
               currentVariant={selectedVariant}
-              onVariantChange={handleVariantChange}
+              onVariantChange={(variantId) => {
+                // Handle variant change
+                const newVariant = product?.variants?.find((v: any) => v.id === variantId);
+                if (newVariant) {
+                  onConfigurationChange({
+                    variant: newVariant,
+                    options: newVariant.options
+                  });
+                }
+              }}
               onImageSelect={onImageSelect}
               currentIndex={currentIndex}
               onThumbnailClick={onThumbnailClick}
@@ -233,8 +219,6 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
           />
         </ProductSectionWrapper>
       )}
-
-      {/* SlideUpPanel for Full Description */}
     </div>
   );
 };
