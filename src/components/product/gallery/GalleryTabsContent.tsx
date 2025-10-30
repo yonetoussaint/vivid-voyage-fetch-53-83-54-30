@@ -122,7 +122,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
 
           <ProductSpecifications productId={productId} />
 
-          // In GalleryTabsContent.tsx - Update the BookGenreFlashDeals usage
+          
 <BookGenreFlashDeals
   className="overflow-hidden"
   title="Related Products"
