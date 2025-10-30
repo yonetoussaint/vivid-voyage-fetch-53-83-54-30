@@ -1,4 +1,4 @@
-// GalleryTabsContent.tsx (Updated for new variants system)
+// GalleryTabsContent.tsx (Fixed with utilities)
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GalleryThumbnails } from '@/components/product/GalleryThumbnails';
@@ -16,6 +16,7 @@ import ProductSpecifications from '@/components/product/ProductSpecifications';
 import { useProduct } from '@/hooks/useProduct';
 import { ProductVariantDisplay } from '@/components/product/ProductVariantDisplay';
 import { useProductVariants } from '@/hooks/useProductVariants';
+import { getVariantDisplayName, getVariantImages, hasValidVariants } from '@/utils/productHelpers';
 
 interface GalleryTabsContentProps {
   activeTab: string;
@@ -66,42 +67,33 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
   const thumbnailImages = useMemo(() => {
     if (isVariantsTab && hasVariants && selectedVariant) {
       // Show images for the currently selected variant
-      return [
-        selectedVariant?.mainImage,
-        ...(selectedVariant?.additionalImages || [])
-      ].filter(Boolean) as string[];
+      const variantImages = getVariantImages(selectedVariant);
+      return variantImages.length > 0 ? variantImages : galleryItems.map(item => item.src).filter(Boolean);
     }
     return galleryItems.map(item => item.src).filter(Boolean);
   }, [isVariantsTab, hasVariants, selectedVariant, galleryItems]);
 
   const thumbnailGalleryItems = useMemo(() => {
     if (isVariantsTab && hasVariants && selectedVariant) {
-      const images = [
-        selectedVariant?.mainImage,
-        ...(selectedVariant?.additionalImages || [])
-      ].filter(Boolean);
-      
-      return images.map(src => ({ 
-        type: 'image' as const, 
-        src 
-      }));
+      const images = getVariantImages(selectedVariant);
+      return images.length > 0 
+        ? images.map(src => ({ type: 'image' as const, src }))
+        : galleryItems;
     }
     return galleryItems;
   }, [isVariantsTab, hasVariants, selectedVariant, galleryItems]);
 
-  const variantNames = isVariantsTab && selectedVariant 
-    ? [Object.values(selectedVariant.options).join(' / ')]
+  // Safe variant name generation
+  const variantNames = isVariantsTab && selectedVariant
+    ? [getVariantDisplayName(selectedVariant)]
     : [];
 
   const handleThumbnailClick = (index: number) => {
     if (isVariantsTab && selectedVariant) {
-      const images = [
-        selectedVariant.mainImage,
-        ...(selectedVariant.additionalImages || [])
-      ].filter(Boolean);
-      
+      const images = getVariantImages(selectedVariant);
       if (images[index]) {
-        onImageSelect(images[index], Object.values(selectedVariant.options).join(' / '));
+        const variantName = getVariantDisplayName(selectedVariant);
+        onImageSelect(images[index], variantName);
       }
     } else {
       onThumbnailClick(index);
@@ -133,7 +125,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
                 if (newVariant) {
                   onConfigurationChange({
                     variant: newVariant,
-                    options: newVariant.options
+                    options: newVariant.options || {}
                   });
                 }
               }}
