@@ -282,11 +282,11 @@ const CustomerReviews = ({
   }, [reviews, sortBy, filterRating, limit]);
 
   const summaryStats = [
-    { value: reviewStats.averageRating.toFixed(1), label: 'Average Rating', color: 'text-yellow-600' },
-    { value: reviewStats.count, label: 'Total Reviews', color: 'text-blue-600' },
-    { value: ratingCounts[0], label: '5 Stars', color: 'text-green-600' },
-    { value: ratingCounts[4], label: '1 Star', color: 'text-red-600' }
-  ];
+  { value: reviewStats.averageRating.toFixed(1), label: 'Average Rating', color: 'text-yellow-600' },
+  { value: reviewStats.count, label: 'Total Reviews', color: 'text-blue-600' },
+  { value: `${Math.round((ratingCounts[0] / reviewStats.count) * 100)}%`, label: 'Positive Reviews', color: 'text-green-600' },
+  { value: ratingCounts[0], label: '5 Star Reviews', color: 'text-purple-600' }
+];
 
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
 
