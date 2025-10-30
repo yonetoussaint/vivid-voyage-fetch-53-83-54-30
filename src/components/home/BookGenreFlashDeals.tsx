@@ -334,8 +334,7 @@ export default function BookGenreFlashDeals({
 {showSectionHeader && (
   <SectionHeader
     title={title}
-    // Remove the hardcoded icon line below
-    // icon={Package} // ← Remove this line
+    icon={icon} // Pass the optional icon prop instead of hardcoded Package
     viewAllLink="/search?category=flash-deals"
     viewAllText="View All"
     titleTransform="uppercase"
