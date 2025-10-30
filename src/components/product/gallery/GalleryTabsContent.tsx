@@ -53,9 +53,8 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
   const navigate = useNavigate();
   const [isDescriptionPanelOpen, setIsDescriptionPanelOpen] = useState(false);
   
-  // Use product variants hook with safe product - only if product has correct structure
-  const safeProduct = product?.variants && Array.isArray(product.variants) ? product : null;
-  const { selectedVariant, handleOptionSelect, hasVariants } = useProductVariants(safeProduct);
+  // Use product variants hook with safe product
+  const { selectedVariant, handleOptionSelect, hasVariants } = useProductVariants(product);
 
   // Fetch product data for variants
   const { data: productData, isLoading: productLoading } = useProduct(productId || '');
@@ -70,9 +69,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
 
   const handleVariantChange = (variantId: string) => {
     // Handle variant change logic here
-    if (!safeProduct?.variants) return;
-    
-    const newVariant = safeProduct.variants.find((v: any) => v.id === variantId);
+    const newVariant = product?.variants?.find((v: any) => v.id === variantId);
     if (newVariant) {
       onConfigurationChange({
         variant: newVariant,
@@ -116,7 +113,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
   }, [isVariantsTab, hasVariants, selectedVariant, galleryItems]);
 
   const variantNames = isVariantsTab && selectedVariant 
-    ? [Object.values(selectedVariant.options || {}).join(' / ')]
+    ? [Object.values(selectedVariant.options).join(' / ')]
     : [];
 
   const handleThumbnailClick = (index: number) => {
@@ -127,7 +124,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
       ].filter(Boolean);
       
       if (images[index]) {
-        onImageSelect(images[index], Object.values(selectedVariant.options || {}).join(' / '));
+        onImageSelect(images[index], Object.values(selectedVariant.options).join(' / '));
       }
     } else {
       onThumbnailClick(index);
@@ -149,9 +146,9 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
     <div className="mt-2 w-full">
       {(activeTab === 'overview' || activeTab === 'variants') && (
         <div className="space-y-6">
-          {activeTab === 'variants' && hasVariants && safeProduct && (
+          {activeTab === 'variants' && (
             <ProductVariantDisplay
-              product={safeProduct}
+              product={product}
               currentVariant={selectedVariant}
               onVariantChange={handleVariantChange}
               onImageSelect={onImageSelect}
@@ -159,12 +156,6 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
               onThumbnailClick={onThumbnailClick}
               isPlaying={isPlaying}
             />
-          )}
-          
-          {activeTab === 'variants' && !hasVariants && (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>No variants available for this product.</p>
-            </div>
           )}
 
           <GalleryThumbnails
@@ -186,7 +177,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
             <SearchInfoComponent productId={productId} />
           )}
 
-          <ProductSpecifications product={product} />
+          <ProductSpecifications productId={productId} />
 
           <BookGenreFlashDeals
             className="overflow-hidden"

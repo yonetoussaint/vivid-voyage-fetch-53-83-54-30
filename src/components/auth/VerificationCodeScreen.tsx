@@ -69,7 +69,7 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
 
       const { error: resendError } = await supabase.auth.resend({
         email,
-        type: 'signup',
+        type: 'email',
       });
 
       if (resendError) {

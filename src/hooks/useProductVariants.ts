@@ -26,11 +26,11 @@ export const useProductVariants = (product?: Product | null) => {
       return [];
     }
     
-  return safeProduct.variants.filter(variant => {
-    return Object.entries(selectedOptions).every(([optionName, optionValue]) => {
-      return (variant.options?.[optionName]) === optionValue;
+    return safeProduct.variants.filter(variant => {
+      return Object.entries(selectedOptions).every(([optionName, optionValue]) => {
+        return variant.options[optionName] === optionValue;
+      });
     });
-  });
   }, [safeProduct.variants, selectedOptions]);
 
   // Get current selected variant
@@ -41,7 +41,7 @@ export const useProductVariants = (product?: Product | null) => {
 
     const foundVariant = safeProduct.variants.find(variant => {
       return Object.entries(selectedOptions).every(([optionName, optionValue]) => {
-        return (variant.options?.[optionName]) === optionValue;
+        return variant.options[optionName] === optionValue;
       });
     });
 
@@ -65,12 +65,11 @@ export const useProductVariants = (product?: Product | null) => {
     safeProduct.variants.forEach(variant => {
       // Check if variant matches all current selections
       const matchesCurrentSelections = Object.entries(currentSelections).every(
-        ([key, value]) => (variant.options?.[key]) === value
+        ([key, value]) => variant.options[key] === value
       );
 
-      const valueForOption = variant.options?.[optionName];
-      if (matchesCurrentSelections && variant.isAvailable && valueForOption) {
-        availableValues.add(valueForOption);
+      if (matchesCurrentSelections && variant.isAvailable) {
+        availableValues.add(variant.options[optionName]);
       }
     });
 

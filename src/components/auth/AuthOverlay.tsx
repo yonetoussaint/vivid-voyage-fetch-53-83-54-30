@@ -96,6 +96,7 @@ const AuthOverlay: React.FC = () => {
               email={userEmail}
               onBack={handleBackFromVerification}
               onVerificationSuccess={handleVerificationSuccess}
+              showHeader={false}
               {...compactProps}
             />
           </React.Suspense>

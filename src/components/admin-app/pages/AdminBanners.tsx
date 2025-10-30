@@ -39,7 +39,7 @@ interface Banner {
   image: string;
   alt: string;
   position: number;
-  duration?: number;
+  duration: number;
   created_at: string;
   updated_at: string;
   banner_type?: 'system' | 'seller_premium' | 'seller_standard' | 'promotional';

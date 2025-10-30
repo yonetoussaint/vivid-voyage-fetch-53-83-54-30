@@ -638,7 +638,7 @@ const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
           })
         );
 
-        const validPosts = postsData.filter((post) => post !== null) as Post[];
+        const validPosts = postsData.filter((post): post is Post => post !== null);
         setPosts(validPosts);
       } catch (error) {
         console.error('Error fetching seller posts:', error);
@@ -653,7 +653,7 @@ const VendorProductCarousel: React.FC<VendorProductCarouselProps> = ({
 
   // Show loading state
   if (loading) {
-    const skeletonProductCount: number = sellerId ? 5 : 1;
+    const skeletonProductCount = sellerId ? 5 : 1;
 
     return (
       <ErrorBoundary>

@@ -7,7 +7,7 @@ const ProductRelatedSection: React.FC = () => {
       <BookGenreFlashDeals 
         excludeTypes={['books']}
         title="RELATED PRODUCTS"
-        
+        headerGradient="from-orange-500 via-red-500 to-pink-600"
         categories={[
           { id: 'electronics', label: 'Electronics' },
           { id: 'fashion', label: 'Fashion' },

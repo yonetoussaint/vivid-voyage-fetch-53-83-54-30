@@ -6,7 +6,6 @@ export interface BannerType {
   subtitle?: string;
   type: 'image' | 'video' | 'color';
   duration?: number;
-  position?: number;
   rowType?: 'product' | 'seller' | 'catalog'; // Add this
   product?: {
     id: string;
