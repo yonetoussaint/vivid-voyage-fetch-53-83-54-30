@@ -29,13 +29,13 @@ interface GenreFlashDealsProps {
   className?: string;
   products?: Product[];
   sellerId?: string;
-  onAddProduct?: () => void; // Added prop for add product action
+  onAddProduct?: () => void;
   title?: string;
   subtitle?: string;
   showSectionHeader?: boolean;
   showSummary?: boolean;
-  showFilters?: boolean; // Added prop to control filter visibility
-  icon?: React.ComponentType<any>;
+  showFilters?: boolean;
+  icon?: React.ComponentType<any>; // This already exists, keep it
   customCountdown?: string;
   showCountdown?: boolean;
   passCountdownToHeader?: boolean;
