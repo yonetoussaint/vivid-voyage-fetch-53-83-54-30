@@ -1,11 +1,11 @@
-// GalleryTabsContent.tsx (Updated)
+// GalleryTabsContent.tsx (Fixed - Critical fixes)
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GalleryThumbnails } from '@/components/product/GalleryThumbnails';
 import { IPhoneXRListing } from '@/components/product/iPhoneXRListing';
 import CustomerReviewsEnhanced from '@/components/product/CustomerReviewsEnhanced';
 import ProductQA from '@/components/product/ProductQA';
-import { GalleryItem, Product } from './types';
+import { GalleryItem } from './types';
 import ShippingOptionsComponent from '@/components/product/ShippingOptionsComponent';
 import SearchInfoComponent from '@/components/product/SearchInfoComponent';
 import ReviewGallery from '@/components/product/ReviewGallery';
@@ -27,7 +27,7 @@ interface GalleryTabsContentProps {
   isPlaying: boolean;
   videoIndices: number[];
   productId?: string;
-  product?: Product;
+  product?: any;
   onThumbnailClick: (index: number) => void;
   onImageSelect: (imageUrl: string, variantName: string) => void;
   onConfigurationChange: (configData: any) => void;
@@ -53,11 +53,11 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
   const navigate = useNavigate();
   const [isDescriptionPanelOpen, setIsDescriptionPanelOpen] = useState(false);
   
-  // Use product variants hook
-  const { selectedVariant, handleOptionSelect } = useProductVariants(product || {} as Product);
+  // Use product variants hook with safe product
+  const { selectedVariant, handleOptionSelect, hasVariants } = useProductVariants(product);
 
   // Fetch product data for variants
-  const { data: productData } = useProduct(productId || '');
+  const { data: productData, isLoading: productLoading } = useProduct(productId || '');
 
   const handleViewCart = () => {
     navigate('/cart');
@@ -69,7 +69,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
 
   const handleVariantChange = (variantId: string) => {
     // Handle variant change logic here
-    const newVariant = product?.variants.find(v => v.id === variantId);
+    const newVariant = product?.variants?.find((v: any) => v.id === variantId);
     if (newVariant) {
       onConfigurationChange({
         variant: newVariant,
@@ -87,27 +87,30 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
   const isVariantsTab = activeTab === 'variants';
   
   const thumbnailImages = useMemo(() => {
-    if (isVariantsTab && product) {
+    if (isVariantsTab && hasVariants && selectedVariant) {
       // Show images for the currently selected variant
       return [
         selectedVariant?.mainImage,
         ...(selectedVariant?.additionalImages || [])
       ].filter(Boolean) as string[];
     }
-    return galleryItems.map(item => item.src);
-  }, [isVariantsTab, product, selectedVariant, galleryItems]);
+    return galleryItems.map(item => item.src).filter(Boolean);
+  }, [isVariantsTab, hasVariants, selectedVariant, galleryItems]);
 
   const thumbnailGalleryItems = useMemo(() => {
-    if (isVariantsTab && product) {
-      return [
-        { type: 'image' as const, src: selectedVariant?.mainImage || '' },
-        ...(selectedVariant?.additionalImages?.map(src => ({ 
-          type: 'image' as const, src 
-        })) || [])
-      ];
+    if (isVariantsTab && hasVariants && selectedVariant) {
+      const images = [
+        selectedVariant?.mainImage,
+        ...(selectedVariant?.additionalImages || [])
+      ].filter(Boolean);
+      
+      return images.map(src => ({ 
+        type: 'image' as const, 
+        src 
+      }));
     }
     return galleryItems;
-  }, [isVariantsTab, product, selectedVariant, galleryItems]);
+  }, [isVariantsTab, hasVariants, selectedVariant, galleryItems]);
 
   const variantNames = isVariantsTab && selectedVariant 
     ? [Object.values(selectedVariant.options).join(' / ')]
@@ -118,7 +121,8 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
       const images = [
         selectedVariant.mainImage,
         ...(selectedVariant.additionalImages || [])
-      ];
+      ].filter(Boolean);
+      
       if (images[index]) {
         onImageSelect(images[index], Object.values(selectedVariant.options).join(' / '));
       }
@@ -127,11 +131,22 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
     }
   };
 
+  // Show loading state
+  if (productLoading) {
+    return (
+      <div className="mt-2 w-full">
+        <div className="flex justify-center items-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mt-2 w-full">
       {(activeTab === 'overview' || activeTab === 'variants') && (
         <div className="space-y-6">
-          {activeTab === 'variants' && product && selectedVariant && (
+          {activeTab === 'variants' && (
             <ProductVariantDisplay
               product={product}
               currentVariant={selectedVariant}
@@ -177,9 +192,9 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
               product={product}
               onBuyNow={onBuyNow}
               onViewCart={handleViewCart}
-              selectedColor={selectedVariant.options.color || ''}
-              selectedStorage={selectedVariant.options.size || ''}
-              selectedNetwork={selectedVariant.options.material || ''}
+              selectedColor={selectedVariant.options?.color || ''}
+              selectedStorage={selectedVariant.options?.size || ''}
+              selectedNetwork={selectedVariant.options?.material || ''}
               selectedCondition="new"
               className=""
               onImageSelect={onImageSelect}
