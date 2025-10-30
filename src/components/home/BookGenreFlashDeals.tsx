@@ -330,20 +330,22 @@ export default function BookGenreFlashDeals({
   return (
     <div className={`w-full bg-white ${className}`}>
       {/* Section Header - Using imported SectionHeader component */}
-      {showSectionHeader && (
-        <SectionHeader
-          title={title}
-          icon={Package} // Using Package icon as requested
-          viewAllLink="/search?category=flash-deals"
-          viewAllText="View All"
-          titleTransform="uppercase"
-          titleSize="xs"
-          showCountdown={showCountdown}
-          countdown={formattedCountdown}
-          showVerifiedSellers={showVerifiedSellers}
-          verifiedSellersText={verifiedSellersText}
-        />
-      )}
+      // In BookGenreFlashDeals.tsx - Update the SectionHeader usage
+{showSectionHeader && (
+  <SectionHeader
+    title={title}
+    // Remove the hardcoded icon line below
+    // icon={Package} // ← Remove this line
+    viewAllLink="/search?category=flash-deals"
+    viewAllText="View All"
+    titleTransform="uppercase"
+    titleSize="xs"
+    showCountdown={showCountdown}
+    countdown={formattedCountdown}
+    showVerifiedSellers={showVerifiedSellers}
+    verifiedSellersText={verifiedSellersText}
+  />
+)}
 
       {/* Summary Section - Optional */}
       {showSummary && (
