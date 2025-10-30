@@ -126,7 +126,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
 <BookGenreFlashDeals
   className="overflow-hidden"
   title="Related Products"
-  showSectionHeader={true}
+  showSectionHeader={false}
   showFilters={false}
   showSummary={false}
   // Don't pass any icon prop - it will be optional now
