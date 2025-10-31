@@ -17,13 +17,13 @@ export const SocialButtons: React.FC<SocialButtonsProps> = ({
 }) => {
   return (
     <div className="flex items-center justify-between px-2 py-1 relative gap-3">
-      <div className="flex-1">
-        <ReactionButton
-          onReactionChange={onReactionChange}
-          buttonClassName={buttonClassName}
-          size="md"
-        />
-      </div>
+     <div className="flex-1">
+  <ReactionButton
+    onReactionChange={onReactionChange}
+    buttonClassName={`w-full py-2 rounded-full h-8 ${buttonClassName.includes('bg-gray-100') ? '' : 'bg-gray-100 hover:bg-gray-200'}`}
+    size="md"
+  />
+</div>
 
       <div className="flex-1">
         <button
