@@ -193,9 +193,9 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
       )}
 
       {activeTab === 'reviews' && (
-        <ProductSectionWrapper>
+        
           <CustomerReviewsEnhanced productId={productId || ''} limit={10} />
-        </ProductSectionWrapper>
+        
       )}
 
       {activeTab === 'qna' && (
