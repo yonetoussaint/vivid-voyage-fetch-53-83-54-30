@@ -133,7 +133,7 @@ const mockReviews = [
     shareCount: 3,
     media: [
       { type: 'image', url: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop', alt: 'Product close-up' },
-      { type: 'image', url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop', alt: 'Product comparison' },
+      { type: 'image', url: 'https://images.unsplash.com-1441986300917-64674bd600d8?w=400&h=300&fit=crop', alt: 'Product comparison' },
       { type: 'image', url: 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=400&h=300&fit=crop', alt: 'Product features' }
     ],
     replies: [
@@ -199,6 +199,10 @@ const CustomerReviews = ({
   const [showRatingPopup, setShowRatingPopup] = useState(false);
   const [selectedRating, setSelectedRating] = useState(0);
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
+  
+  // Add state for reply functionality
+  const [replyingToReviewId, setReplyingToReviewId] = useState<number | null>(null);
+  const [replyText, setReplyText] = useState('');
 
   const openAuthOverlay = () => {
     alert('Please sign in to write a review');
@@ -245,7 +249,12 @@ const CustomerReviews = ({
 
   const handleCommentClick = (reviewId: number) => {
     console.log('Comment button clicked for review:', reviewId);
-    // You could implement logic to focus on the comment input or expand replies
+    
+    // Set the review we're replying to and clear any previous reply text
+    setReplyingToReviewId(reviewId);
+    setReplyText('');
+    
+    // Also expand replies for this review
     const newExpanded = new Set(expandedReplies);
     if (!newExpanded.has(reviewId)) {
       newExpanded.add(reviewId);
@@ -267,6 +276,25 @@ const CustomerReviews = ({
       navigator.clipboard.writeText(window.location.href);
       alert('Review link copied to clipboard!');
     }
+  };
+
+  const handleSubmitReply = () => {
+    if (replyText.trim() && replyingToReviewId) {
+      // Here you would normally submit the reply to your backend
+      console.log(`Submitting reply to review ${replyingToReviewId}: "${replyText}"`);
+      
+      // Clear the reply state
+      setReplyText('');
+      setReplyingToReviewId(null);
+      
+      // You might want to refresh the replies data here
+      alert(`Reply submitted: "${replyText}"`);
+    }
+  };
+
+  const handleCancelReply = () => {
+    setReplyingToReviewId(null);
+    setReplyText('');
   };
 
   // Calculate review statistics
@@ -609,6 +637,39 @@ const CustomerReviews = ({
         >
           View All {reviews.length} Reviews
         </Button>
+      )}
+
+      {/* Conditional Reply Bar - Only shown when replying to a review */}
+      {replyingToReviewId && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 shadow-lg">
+          <div className="max-w-4xl mx-auto flex items-center gap-3">
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                placeholder="Write a reply..."
+                className="w-full px-4 py-2 pr-20 border border-gray-300 rounded-full bg-gray-50 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onKeyPress={(e) => e.key === 'Enter' && handleSubmitReply()}
+              />
+              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex gap-1">
+                <button 
+                  onClick={handleCancelReply}
+                  className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors text-sm font-medium"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleSubmitReply}
+                  disabled={!replyText.trim()}
+                  className="p-1.5 text-blue-600 hover:text-blue-800 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+                >
+                  Reply
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Sticky Review Input Bar */}
