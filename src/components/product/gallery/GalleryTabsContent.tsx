@@ -1,4 +1,3 @@
-// GalleryTabsContent.tsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GalleryThumbnails } from '@/components/product/GalleryThumbnails';
@@ -130,21 +129,19 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
             showSummary={false}
           />
 
-          {/* StickyCheckoutBar - ONLY in overview tab */}
-          {product && onBuyNow && (
-            <StickyCheckoutBar
-              product={product}
-              onBuyNow={onBuyNow}
-              onViewCart={handleViewCart}
-              selectedColor=""
-              selectedStorage=""
-              selectedNetwork=""
-              selectedCondition=""
-              className=""
-              onImageSelect={onImageSelect}
-              onConfigurationChange={onConfigurationChange}
-            />
-          )}
+          {/* StickyCheckoutBar - conditions removed */}
+          <StickyCheckoutBar
+            product={product}
+            onBuyNow={onBuyNow}
+            onViewCart={handleViewCart}
+            selectedColor=""
+            selectedStorage=""
+            selectedNetwork=""
+            selectedCondition=""
+            className=""
+            onImageSelect={onImageSelect}
+            onConfigurationChange={onConfigurationChange}
+          />
         </div>
       )}
 
