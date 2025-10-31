@@ -94,6 +94,26 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     return parts.join(' ');
   };
 
+useEffect(() => {
+  const syncActiveTab = () => {
+    if (refs.galleryRef.current) {
+      const galleryActiveTab = refs.galleryRef.current.getActiveTab?.();
+      if (galleryActiveTab && galleryActiveTab !== state.activeTab) {
+        console.log('🔄 Syncing active tab from gallery:', galleryActiveTab);
+        state.setActiveTab(galleryActiveTab);
+      }
+    }
+  };
+
+  // Check initially
+  syncActiveTab();
+  
+  // Set up interval to monitor tab changes
+  const interval = setInterval(syncActiveTab, 500);
+  
+  return () => clearInterval(interval);
+}, [refs.galleryRef, state.activeTab, state.setActiveTab]);
+
   const displayName = getVariantDisplayName();
   const displayPrice = firstVariant?.price !== undefined ? firstVariant.price : product.price;
 
