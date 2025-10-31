@@ -97,7 +97,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
   };
 
   return (
-    <div className="mt-2 w-full">
+    <div className={`mt-2 w-full ${shouldLockToTabs ? 'h-full' : ''}`}>
       {activeTab === 'overview' && (
         <div className="space-y-3">
           <GalleryThumbnails
