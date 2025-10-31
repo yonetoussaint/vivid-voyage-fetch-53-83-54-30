@@ -8,7 +8,8 @@ interface ProductStickyComponentsProps {
   onBuyNow: () => void;
   sharePanelOpen: boolean;
   setSharePanelOpen: (open: boolean) => void;
-  hideCheckoutBar?: boolean; // Added this prop based on the changes
+  hideCheckoutBar?: boolean;
+  activeTab?: string; // Add activeTab prop
 }
 
 const ProductStickyComponents: React.FC<ProductStickyComponentsProps> = ({
@@ -16,7 +17,8 @@ const ProductStickyComponents: React.FC<ProductStickyComponentsProps> = ({
   onBuyNow,
   sharePanelOpen,
   setSharePanelOpen,
-  hideCheckoutBar = false // Default value for the new prop
+  hideCheckoutBar = false,
+  activeTab = 'overview' // Default to overview
 }) => {
   const navigate = useNavigate();
 
@@ -24,9 +26,13 @@ const ProductStickyComponents: React.FC<ProductStickyComponentsProps> = ({
     console.log('🛒 Navigating to cart page from ProductStickyComponents');
     navigate('/cart');
   };
+
+  // Only show checkout bar on overview tab AND if not explicitly hidden
+  const shouldShowCheckoutBar = !hideCheckoutBar && activeTab === 'overview';
+
   return (
     <>
-      {!hideCheckoutBar && (
+      {shouldShowCheckoutBar && (
         <StickyCheckoutBar 
           product={product}
           onBuyNow={onBuyNow}
