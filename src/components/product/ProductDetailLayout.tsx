@@ -222,12 +222,13 @@ useEffect(() => {
 
       {/* Sticky Components */}
      
+
 <ProductStickyComponents
   product={product}
   onBuyNow={buyNow}
   sharePanelOpen={state.sharePanelOpen}
   setSharePanelOpen={state.setSharePanelOpen}
-  hideCheckoutBar={state.activeTab !== 'overview'} // Force hide when not on overview
+  hideCheckoutBar={state.activeTab !== 'overview'} // This is the key change!
   activeTab={state.activeTab}
 />
     </div>
