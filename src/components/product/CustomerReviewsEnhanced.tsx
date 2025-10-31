@@ -543,8 +543,9 @@ const CustomerReviews = ({
             </div>
             
             {/* Reply input */}
-           <div className="relative">
+       <div className="relative">
   <input
+    ref={(el) => el && !replyText.trim() && el.focus()}
     type="text"
     value={replyText}
     onChange={(e) => setReplyText(e.target.value)}
