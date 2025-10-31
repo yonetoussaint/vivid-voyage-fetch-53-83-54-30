@@ -480,22 +480,7 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
 
       {/* Conditional Sticky Checkout Bar - Only show on overview tab */}
      {/* Remove this entire section - it's creating a duplicate checkout bar */}
-{internalActiveTab === 'overview' && product && (
-  <StickyCheckoutBar
-    product={product}
-    selectedColor=""
-    selectedStorage=""
-    selectedNetwork=""
-    selectedCondition=""
-    className=""
-    onImageSelect={onVariantImageChange}
-    onConfigurationChange={(configData) => {
-      if (onVariantChange && configData) {
-        onVariantChange(0, configData);
-      }
-    }}
-  />
-)}
+
     </div>
   );
 });
