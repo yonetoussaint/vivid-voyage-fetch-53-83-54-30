@@ -331,42 +331,64 @@ const ReactionButton: React.FC<ReactionButtonProps> = ({
   const currentSize = sizeClasses[size];
 
   const getReactionDisplay = () => {
-    if (!selectedReaction) {
-      return {
-        icon: <ThumbsUp className={`${currentSize.icon} text-gray-600 group-hover:text-gray-800`} />,
-        label: 'Like',
-        color: 'text-gray-600 group-hover:text-gray-800'
-      };
-    }
-
-    const reaction = reactions.find(r => r.id === selectedReaction);
-    if (!reaction) return null;
-
-    if (reaction.emoji) {
-      return {
-        icon: <span className={currentSize.emoji}>{reaction.emoji}</span>,
-        label: reaction.label,
-        color: selectedReaction === 'love' ? 'text-red-500' : 
-               selectedReaction === 'care' ? 'text-pink-500' :
-               selectedReaction === 'wow' ? 'text-yellow-500' : 
-               selectedReaction === 'sad' ? 'text-yellow-600' : 'text-orange-500'
-      };
-    }
-
-    if (selectedReaction === 'love') {
-      return {
-        icon: <Heart className={`${currentSize.icon} text-red-500 fill-red-500`} />,
-        label: reaction.label,
-        color: 'text-red-500'
-      };
-    }
-
+  if (!selectedReaction) {
     return {
-      icon: <ThumbsUp className={`${currentSize.icon} text-blue-500 fill-blue-500`} />,
-      label: reaction.label,
-      color: 'text-blue-500'
+      icon: <ThumbsUp className={`${currentSize.icon} text-gray-600 group-hover:text-gray-800`} />,
+      label: 'Like',
+      bgColor: 'bg-gray-100 hover:bg-gray-200', // Default background
+      textColor: 'text-gray-600 group-hover:text-gray-800' // Keep text black-ish
     };
+  }
+
+  const reaction = reactions.find(r => r.id === selectedReaction);
+  if (!reaction) return null;
+
+  // Determine background color based on reaction
+  let bgColor = 'bg-gray-100';
+  let hoverBgColor = 'hover:bg-gray-200';
+  
+  if (selectedReaction === 'like') {
+    bgColor = 'bg-blue-100';
+    hoverBgColor = 'hover:bg-blue-200';
+  } else if (selectedReaction === 'love') {
+    bgColor = 'bg-red-100';
+    hoverBgColor = 'hover:bg-red-200';
+  } else if (selectedReaction === 'care') {
+    bgColor = 'bg-pink-100';
+    hoverBgColor = 'hover:bg-pink-200';
+  } else if (selectedReaction === 'haha') {
+    bgColor = 'bg-yellow-100';
+    hoverBgColor = 'hover:bg-yellow-200';
+  } else if (selectedReaction === 'wow') {
+    bgColor = 'bg-amber-100';
+    hoverBgColor = 'hover:bg-amber-200';
+  } else if (selectedReaction === 'sad') {
+    bgColor = 'bg-indigo-100';
+    hoverBgColor = 'hover:bg-indigo-200';
+  } else if (selectedReaction === 'angry') {
+    bgColor = 'bg-orange-100';
+    hoverBgColor = 'hover:bg-orange-200';
+  }
+
+  if (reaction.emoji) {
+    return {
+      icon: <span className={currentSize.emoji}>{reaction.emoji}</span>,
+      label: reaction.label,
+      bgColor: `${bgColor} ${hoverBgColor}`,
+      textColor: 'text-gray-800' // Always black text
+    };
+  }
+
+  // For icon reactions (like, love)
+  return {
+    icon: reaction.id === 'love' 
+      ? <Heart className={`${currentSize.icon} text-red-500 fill-red-500`} />
+      : <ThumbsUp className={`${currentSize.icon} text-blue-500 fill-blue-500`} />,
+    label: reaction.label,
+    bgColor: `${bgColor} ${hoverBgColor}`,
+    textColor: 'text-gray-800' // Always black text
   };
+};
 
   const display = getReactionDisplay();
 
