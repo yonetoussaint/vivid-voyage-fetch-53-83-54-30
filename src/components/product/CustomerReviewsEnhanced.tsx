@@ -12,6 +12,7 @@ import {
   formatDate, 
   formatDateForReply 
 } from './DateUtils';
+import VerificationBadge from '@/components/shared/VerificationBadge';
 
 // Mock Button component
 const Button = ({ children, variant, className, onClick }) => (
@@ -48,6 +49,7 @@ const mockReviews = [
         comment: "Thank you for your wonderful review! We're thrilled to hear you had such a positive experience with our product and customer service team.",
         created_at: new Date(Date.now() - 30 * 1000).toISOString(), // 30 seconds ago
         is_seller: true,
+        verified_seller: true,
         likeCount: 3,
         liked: false,
         parent_reply_id: null
@@ -58,6 +60,7 @@ const mockReviews = [
         comment: "I had the same experience! Really happy with this purchase.",
         created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
         is_seller: false,
+        verified_seller: false,
         likeCount: 1,
         liked: false,
         parent_reply_id: null
@@ -68,6 +71,7 @@ const mockReviews = [
         comment: "Thanks for the quick response!",
         created_at: new Date(Date.now() - 25 * 60 * 1000).toISOString(), // 25 minutes ago
         is_seller: false,
+        verified_seller: false,
         likeCount: 0,
         liked: false,
         parent_reply_id: 101,
@@ -79,6 +83,7 @@ const mockReviews = [
         comment: "How long did shipping take for you?",
         created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
         is_seller: false,
+        verified_seller: false,
         likeCount: 2,
         liked: false,
         parent_reply_id: 101,
@@ -90,6 +95,7 @@ const mockReviews = [
         comment: "Great review! I'm convinced to buy this now.",
         created_at: "2024-01-15T10:30:00Z", // January 15, 2024 (current year)
         is_seller: false,
+        verified_seller: false,
         likeCount: 1,
         liked: false,
         parent_reply_id: null
@@ -100,6 +106,7 @@ const mockReviews = [
         comment: "I've had this for over a year and it's still working great!",
         created_at: "2023-08-20T14:20:00Z", // August 20, 2023 (previous year)
         is_seller: false,
+        verified_seller: false,
         likeCount: 4,
         liked: false,
         parent_reply_id: null
@@ -128,6 +135,7 @@ const mockReviews = [
         comment: "Thanks for your feedback! If you need any help with setup, please don't hesitate to reach out to our support team.",
         created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
         is_seller: true,
+        verified_seller: true,
         likeCount: 0,
         liked: false,
         parent_reply_id: null
@@ -293,6 +301,7 @@ const CustomerReviews = ({
         comment: replyText.trim(),
         created_at: new Date().toISOString(),
         is_seller: false, // This would depend on the user
+        verified_seller: false,
         likeCount: 0,
         liked: false,
         parent_reply_id: replyingTo.type === 'reply' ? replyingTo.replyId : null,
@@ -517,9 +526,10 @@ const CustomerReviews = ({
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{review.user_name}</span>
                         {review.verified_purchase && (
-                          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                            Verified Purchase
-                          </span>
+                          <div className="flex items-center gap-1 text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                            <VerificationBadge size="xs" />
+                            <span>Verified Purchase</span>
+                          </div>
                         )}
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground" style={{color: '#666'}}>
@@ -609,9 +619,10 @@ const CustomerReviews = ({
                             <div className="flex items-center gap-2">
                               <span className="font-medium text-sm">{reply.user_name}</span>
                               {reply.is_seller && (
-                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                  Seller
-                                </span>
+                                <div className="flex items-center gap-1 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                  {reply.verified_seller && <VerificationBadge size="xs" />}
+                                  <span>Seller</span>
+                                </div>
                               )}
                             </div>
 
