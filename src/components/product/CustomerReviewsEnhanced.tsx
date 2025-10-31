@@ -626,12 +626,12 @@ const CustomerReviews = ({
                               {reply.comment}
                             </div>
 
-                            {/* TikTok-style Like and Reply Buttons with Date - PERFECT VERTICAL ALIGNMENT */}
-                            <div className="flex items-baseline gap-4 mt-2">
-                              {/* Heart Button with Counter */}
+                            {/* TikTok-style Like and Reply Buttons with Date - PERFECT ALIGNMENT FOR ALL THREE */}
+                            <div className="flex items-center gap-4 mt-2">
+                              {/* Heart Button with Counter - Aligned with other elements */}
                               <button
                                 onClick={() => handleLikeReply(review.id, reply.id)}
-                                className="flex items-center gap-1 text-gray-600 hover:text-red-600 text-sm font-medium transition-colors"
+                                className="flex items-center gap-1 text-gray-600 hover:text-red-600 text-sm font-medium transition-colors h-5"
                                 style={{ 
                                   background: 'none',
                                   border: 'none',
@@ -643,13 +643,13 @@ const CustomerReviews = ({
                                 <Heart 
                                   className={`w-4 h-4 ${reply.liked ? 'fill-red-600 text-red-600' : ''}`}
                                 />
-                                <span>{reply.likeCount || 0}</span>
+                                <span className="leading-none">{reply.likeCount || 0}</span>
                               </button>
 
-                              {/* Reply Button */}
+                              {/* Reply Button - Aligned with other elements */}
                               <button
                                 onClick={() => handleReplyToReply(review.id, reply.id, reply.user_name)}
-                                className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                                className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors h-5 flex items-center"
                                 style={{ 
                                   background: 'none',
                                   border: 'none',
@@ -661,8 +661,8 @@ const CustomerReviews = ({
                                 Reply
                               </button>
 
-                              {/* Date - PERFECT VERTICAL ALIGNMENT */}
-                              <span className="text-sm text-muted-foreground font-medium leading-none relative top-[1px]" style={{color: '#666'}}>
+                              {/* Date - PERFECTLY ALIGNED with both buttons */}
+                              <span className="text-sm text-muted-foreground font-medium leading-none h-5 flex items-center" style={{color: '#666'}}>
                                 {formatDateForReply(reply.created_at)}
                               </span>
                             </div>
