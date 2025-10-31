@@ -178,7 +178,7 @@ const CustomerReviews = ({
   const [localReviews, setLocalReviews] = useState(reviews);
 
   // Enhanced state for reply functionality
-  const [replyingTo, setReplyingTo] = useState<{ type: 'review' | 'reply'; reviewId: number; replyId?: number; userName: string } | null>(null);
+  const [replyingTo, setReplyingTo] = useState<{ type: 'review' | 'reply'; reviewId: number; replyId?: number; userName: string; isSeller?: boolean; verifiedSeller?: boolean } | null>(null);
   const [replyText, setReplyText] = useState('');
 
   // Function to handle liking a reply
@@ -252,7 +252,9 @@ const CustomerReviews = ({
     setReplyingTo({
       type: 'review',
       reviewId: reviewId,
-      userName: review.user_name
+      userName: review.user_name,
+      isSeller: false,
+      verifiedSeller: false
     });
     setReplyText('');
 
@@ -267,11 +269,19 @@ const CustomerReviews = ({
   const handleReplyToReply = (reviewId: number, replyId: number, userName: string) => {
     console.log('Reply button clicked for reply:', replyId, 'in review:', reviewId);
 
+    const review = localReviews.find(r => r.id === reviewId);
+    if (!review) return;
+
+    const reply = review.replies.find(r => r.id === replyId);
+    if (!reply) return;
+
     setReplyingTo({
       type: 'reply',
       reviewId: reviewId,
       replyId: replyId,
-      userName: userName
+      userName: userName,
+      isSeller: reply.is_seller,
+      verifiedSeller: reply.verified_seller
     });
     setReplyText('');
   };
@@ -616,7 +626,7 @@ const CustomerReviews = ({
                                 <div className="flex items-center gap-1">
                                   {reply.verified_seller && <VerificationBadge size="sm" />}
                                   <span className="text-xs text-gray-500">•</span>
-                                  <span className="font-bold text-sm">Seller</span>
+                                  <span className="font-bold text-sm text-orange-500">Seller</span>
                                 </div>
                               )}
                             </div>
@@ -727,6 +737,13 @@ const CustomerReviews = ({
                     {replyingTo.userName.charAt(0)}
                   </div>
                   <span className="text-sm font-medium">{replyingTo.userName}</span>
+                  {replyingTo.isSeller && (
+                    <div className="flex items-center gap-1">
+                      {replyingTo.verifiedSeller && <VerificationBadge size="sm" />}
+                      <span className="text-xs text-gray-500">•</span>
+                      <span className="font-bold text-sm text-orange-500">Seller</span>
+                    </div>
+                  )}
                 </div>
               </div>
               <button 
