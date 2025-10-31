@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { ChevronDown, Star, CheckCircle, Image, Calendar, Filter } from 'lucide-react';
 
 interface ProductFilterBarProps {
@@ -25,6 +25,7 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
   isFilterDisabled
 }) => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Helper function to check if an option is an "All" option
   const isAllOption = (option: string) => {
@@ -52,6 +53,25 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
   const handleDropdownToggle = (filterId: string) => {
     if (isFilterDisabled && isFilterDisabled(filterId)) return;
 
+    // Scroll to the clicked filter to ensure it's visible
+    if (scrollContainerRef.current) {
+      const container = scrollContainerRef.current;
+      const filterElement = container.querySelector(`[data-filter-id="${filterId}"]`) as HTMLElement;
+      
+      if (filterElement) {
+        const containerRect = container.getBoundingClientRect();
+        const filterRect = filterElement.getBoundingClientRect();
+        const scrollLeft = container.scrollLeft;
+        const filterLeft = filterRect.left - containerRect.left + scrollLeft;
+        
+        // Smooth scroll to the filter element, aligning to the left
+        container.scrollTo({
+          left: filterLeft,
+          behavior: 'smooth'
+        });
+      }
+    }
+
     if (openDropdown === filterId) {
       setOpenDropdown(null);
     } else {
@@ -64,26 +84,78 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
     setOpenDropdown(null);
   };
 
+  // Handle scroll events for snapping
+  const handleScroll = () => {
+    if (!scrollContainerRef.current) return;
+
+    const container = scrollContainerRef.current;
+    const scrollLeft = container.scrollLeft;
+    const containerWidth = container.clientWidth;
+    
+    // Find the closest filter element to snap to
+    const filterElements = container.querySelectorAll('[data-filter-id]');
+    let closestElement: HTMLElement | null = null;
+    let closestDistance = Infinity;
+
+    filterElements.forEach((element) => {
+      const el = element as HTMLElement;
+      const elementLeft = el.offsetLeft;
+      const elementWidth = el.offsetWidth;
+      const elementCenter = elementLeft + elementWidth / 2;
+      const distance = Math.abs(scrollLeft - elementLeft);
+
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestElement = el;
+      }
+    });
+
+    // Snap to the closest element when scrolling stops
+    if (closestElement && closestDistance < containerWidth / 4) {
+      setTimeout(() => {
+        if (container.scrollLeft === scrollLeft) { // Only snap if scrolling has stopped
+          container.scrollTo({
+            left: closestElement!.offsetLeft,
+            behavior: 'smooth'
+          });
+        }
+      }, 100);
+    }
+  };
+
   return (
     <div className="product-filter-bar w-full bg-white relative">
       {/* Main filter bar */}
       <div className="border-b border-gray-200">
-        <div className="overflow-x-auto scrollbar-hide">
-          <div className="flex justify-start">
+        <div 
+          ref={scrollContainerRef}
+          className="overflow-x-auto scrollbar-hide snap-x snap-mandatory scroll-smooth"
+          onScroll={handleScroll}
+          style={{ 
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none'
+          }}
+        >
+          <div className="flex justify-start min-w-max">
             {filterCategories.map((filter, index) => (
-              <div key={filter.id} className="relative flex flex-1">
+              <div 
+                key={filter.id} 
+                className="relative flex flex-1 snap-start"
+                data-filter-id={filter.id}
+              >
                 {/* Vertical separator */}
                 {index > 0 && (
                   <div className="w-px bg-gray-200 h-full" />
                 )}
 
                 {/* Filter button */}
-                <div className="relative flex-1">
+                <div className="relative flex-1 min-w-[120px]">
                   <button
                     type="button"
                     onClick={() => handleDropdownToggle(filter.id)}
                     disabled={isFilterDisabled && isFilterDisabled(filter.id)}
-                    className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap border-0 bg-transparent w-full ${
+                    className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap border-0 bg-transparent w-full snap-start ${
                       isFilterDisabled && isFilterDisabled(filter.id)
                         ? 'text-gray-400 cursor-not-allowed'
                         : selectedFilters[filter.id] && !isAllOption(selectedFilters[filter.id])
