@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import PostMenuPanel from './PostMenuPanel';
 import ProductSemiPanel from './ProductSemiPanel';
 import { useScreenOverlay } from "@/context/ScreenOverlayContext";
+import { EngagementSection } from '@/components/shared/EngagementSection';
 
 // Type definitions
 interface DisplayProduct {
@@ -233,52 +234,14 @@ const PostCard: React.FC<PostCardProps> = ({
         </div>
 
         {/* Facebook style engagement stats */}
-        <div className="px-3 py-1.5 flex items-center justify-between">
-          <StackedReactionIcons 
-            count={currentLikeCount} 
-            size="md" 
-            className="gap-1 text-xs text-gray-500" 
-          />
-          <div className="flex items-center gap-3 text-xs text-gray-500">
-            <span>{commentCount} comments</span>
-            <span>{shareCount} shares</span>
-          </div>
-        </div>
-
-        {/* Enhanced Social Buttons */}
-        <div className="flex items-center justify-between px-2 py-1 relative gap-3">
-          <div className="flex-1">
-            <ReactionButton
-              onReactionChange={handleReactionChange}
-              buttonClassName="w-full py-2 bg-gray-100 hover:bg-gray-200 rounded-full h-8"
-              size="md"
-            />
-          </div>
-
-          <div className="flex-1">
-            <button
-              onClick={handleComment}
-              className="flex items-center justify-center gap-2 group transition-colors w-full py-2 bg-gray-100 hover:bg-gray-200 rounded-full h-8"
-            >
-              <MessageCircle className="w-4 h-4 text-gray-600 group-hover:text-gray-800" />
-              <span className="text-xs text-gray-600 group-hover:text-gray-800">
-                Comment
-              </span>
-            </button>
-          </div>
-
-          <div className="flex-1">
-            <button
-              onClick={handleShare}
-              className="flex items-center justify-center gap-2 group transition-colors w-full py-2 bg-gray-100 hover:bg-gray-200 rounded-full h-8"
-            >
-              <Send className="w-4 h-4 text-gray-600 group-hover:text-gray-800" />
-              <span className="text-xs text-gray-600 group-hover:text-gray-800">
-                Share
-              </span>
-            </button>
-          </div>
-        </div>
+        
+<EngagementSection
+  likeCount={currentLikeCount}
+  commentCount={commentCount}
+  shareCount={shareCount}
+  onComment={handleComment}
+  onShare={handleShare}
+/>
 
         {/* Comments Panel */}
         <SlideUpPanel
