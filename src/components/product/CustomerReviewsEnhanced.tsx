@@ -492,21 +492,15 @@ const CustomerReviews = ({
     <div className="w-full bg-white">
       <SellerSummaryHeader
         title="Customer Reviews"
-        subtitle={`${reviewStats.count} review${reviewStats.count !== 1 ? 's' : ''} from verified customers`}
+        subtitle={
+          <div className="flex items-center gap-2">
+            <VerificationBadge size="sm" />
+            <span>All {reviewStats.count} review{reviewStats.count !== 1 ? 's' : ''} from verified purchases</span>
+          </div>
+        }
         stats={summaryStats}
         showStats={reviewStats.count > 0}
       />
-
-      {/* Verified Purchase Notice */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg mx-4 mb-4 p-3">
-        <div className="flex items-center gap-2 text-sm text-blue-800">
-          <VerificationBadge size="sm" />
-          <div>
-            <span className="font-medium">All reviews are from verified purchases</span>
-            <p className="text-blue-700 mt-1">Only customers who purchased this product can leave reviews, ensuring authentic feedback from real users.</p>
-          </div>
-        </div>
-      </div>
 
       <ProductFilterBar
         filterCategories={filterCategories}
