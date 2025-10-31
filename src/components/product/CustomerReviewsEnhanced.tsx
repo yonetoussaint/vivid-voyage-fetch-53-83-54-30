@@ -516,7 +516,7 @@ const CustomerReviews = ({
 
       {/* Conditional Reply Bar - Only shown when replying to a review */}
       {replyingToReviewId && reviewBeingReplied && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 shadow-lg z-40">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-3 shadow-lg z-40">
           <div className="max-w-4xl mx-auto">
             {/* User info header */}
             <div className="flex items-center justify-between mb-3">
