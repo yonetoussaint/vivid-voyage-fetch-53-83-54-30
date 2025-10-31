@@ -59,27 +59,16 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
       const filterElement = container.querySelector(`[data-filter-id="${filterId}"]`) as HTMLElement;
       
       if (filterElement) {
-        const containerWidth = container.clientWidth;
-        const filterWidth = filterElement.offsetWidth;
-        const filterLeft = filterElement.offsetLeft;
-        const filterRight = filterLeft + filterWidth;
+        const containerRect = container.getBoundingClientRect();
+        const filterRect = filterElement.getBoundingClientRect();
         const scrollLeft = container.scrollLeft;
-        const maxScroll = container.scrollWidth - containerWidth;
-
-        let targetScroll: number;
-
-        // If the filter is near the right edge, scroll to show the end of the container
-        if (filterRight > scrollLeft + containerWidth - filterWidth / 2) {
-          // Scroll to show the filter at the right side
-          targetScroll = Math.min(filterRight - containerWidth, maxScroll);
-        } else if (filterLeft < scrollLeft + filterWidth / 2) {
-          // Scroll to show the filter at the left side
-          targetScroll = Math.max(filterLeft, 0);
-        } else {
-          // Keep current position if the filter is already well visible
-          targetScroll = scrollLeft;
-        }
-
+        const filterLeft = filterRect.left - containerRect.left + scrollLeft;
+        
+        // Calculate maximum scroll position
+        const maxScroll = container.scrollWidth - container.clientWidth;
+        const targetScroll = Math.min(filterLeft, maxScroll);
+        
+        // Smooth scroll to the filter element, aligning to the left
         container.scrollTo({
           left: targetScroll,
           behavior: 'smooth'
@@ -109,20 +98,12 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
     const scrollWidth = container.scrollWidth;
     const maxScroll = scrollWidth - containerWidth;
     
-    // Check if we're at the very end
-    if (scrollLeft >= maxScroll - 5) { // 5px tolerance
-      // At the end, ensure we're exactly at maxScroll to show the last item completely
-      setTimeout(() => {
-        if (Math.abs(container.scrollLeft - scrollLeft) < 10) { // Only if scrolling stopped
-          container.scrollTo({
-            left: maxScroll,
-            behavior: 'smooth'
-          });
-        }
-      }, 150);
+    // Check if we're at the end of scroll
+    if (scrollLeft >= maxScroll - 1) {
+      // At the end, no need to snap
       return;
     }
-
+    
     // Find the closest filter element to snap to
     const filterElements = container.querySelectorAll('[data-filter-id]');
     let closestElement: HTMLElement | null = null;
@@ -131,10 +112,6 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
     filterElements.forEach((element) => {
       const el = element as HTMLElement;
       const elementLeft = el.offsetLeft;
-      const elementWidth = el.offsetWidth;
-      const elementCenter = elementLeft + elementWidth / 2;
-      
-      // Calculate distance from the element's left edge to current scroll position
       const distance = Math.abs(scrollLeft - elementLeft);
 
       if (distance < closestDistance) {
@@ -146,19 +123,14 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
     // Snap to the closest element when scrolling stops
     if (closestElement && closestDistance < containerWidth / 3) {
       setTimeout(() => {
-        const currentScroll = container.scrollLeft;
-        // Only snap if scrolling has essentially stopped
-        if (Math.abs(currentScroll - scrollLeft) < 5) {
-          const targetLeft = closestElement!.offsetLeft;
-          // Don't snap if we're already at the target or very close
-          if (Math.abs(currentScroll - targetLeft) > 10) {
-            container.scrollTo({
-              left: targetLeft,
-              behavior: 'smooth'
-            });
-          }
+        if (container.scrollLeft === scrollLeft) { // Only snap if scrolling has stopped
+          const targetScroll = Math.min(closestElement!.offsetLeft, maxScroll);
+          container.scrollTo({
+            left: targetScroll,
+            behavior: 'smooth'
+          });
         }
-      }, 100);
+      }, 150);
     }
   };
 
@@ -168,7 +140,7 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
       <div className="border-b border-gray-200">
         <div 
           ref={scrollContainerRef}
-          className="overflow-x-auto scrollbar-hide scroll-smooth"
+          className="overflow-x-auto scrollbar-hide snap-x snap-mandatory scroll-smooth"
           onScroll={handleScroll}
           style={{ 
             WebkitOverflowScrolling: 'touch',
@@ -180,7 +152,7 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
             {filterCategories.map((filter, index) => (
               <div 
                 key={filter.id} 
-                className="relative flex flex-1"
+                className="relative flex flex-1 snap-start"
                 data-filter-id={filter.id}
               >
                 {/* Vertical separator */}
@@ -194,7 +166,7 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
                     type="button"
                     onClick={() => handleDropdownToggle(filter.id)}
                     disabled={isFilterDisabled && isFilterDisabled(filter.id)}
-                    className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap border-0 bg-transparent w-full ${
+                    className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap border-0 bg-transparent w-full snap-start ${
                       isFilterDisabled && isFilterDisabled(filter.id)
                         ? 'text-gray-400 cursor-not-allowed'
                         : selectedFilters[filter.id] && !isAllOption(selectedFilters[filter.id])
