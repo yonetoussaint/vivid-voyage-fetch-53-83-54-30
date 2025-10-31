@@ -1,8 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Star, 
-  Filter, 
-  ChevronDown, 
   Heart, 
   MessageCircle,
   Pen,
@@ -186,6 +184,7 @@ const CustomerReviews = ({
   const [reviewText, setReviewText] = useState('');
   const [showRatingPopup, setShowRatingPopup] = useState(false);
   const [selectedRating, setSelectedRating] = useState(0);
+  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
 
   const openAuthOverlay = () => {
     alert('Please sign in to write a review');
@@ -250,46 +249,6 @@ const CustomerReviews = ({
     return counts;
   }, [reviews]);
 
-  // Filter and sort reviews
-  const finalReviews = useMemo(() => {
-    let filtered = reviews;
-
-    // Filter by rating
-    if (filterRating > 0) {
-      filtered = filtered.filter(review => review.rating === filterRating);
-    }
-
-    // Sort reviews
-    filtered = [...filtered].sort((a, b) => {
-      switch (sortBy) {
-        case 'recent':
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        case 'helpful':
-          return b.helpful_count - a.helpful_count;
-        case 'rating':
-          return b.rating - a.rating;
-        default:
-          return 0;
-      }
-    });
-
-    // Apply limit if specified
-    if (limit && limit > 0) {
-      filtered = filtered.slice(0, limit);
-    }
-
-    return filtered;
-  }, [reviews, sortBy, filterRating, limit]);
-
-  const summaryStats = [
-  { value: reviewStats.averageRating.toFixed(1), label: 'Average', color: 'text-yellow-600' },
-  { value: reviewStats.count, label: 'Total', color: 'text-blue-600' },
-  { value: `${Math.round((ratingCounts[0] / reviewStats.count) * 100)}%`, label: 'Positivity', color: 'text-green-600' },
-  { value: ratingCounts[0], label: '5 Star', color: 'text-purple-600' }
-];
-
-  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
-
   // Helper function to check if an option is an "All" option
   const isAllOption = (option: string) => {
     return option.toLowerCase().startsWith('all');
@@ -315,6 +274,11 @@ const CustomerReviews = ({
       id: 'time',
       label: 'Time Period',
       options: ['All Time', 'Last 30 Days', 'Last 6 Months', 'Last Year']
+    },
+    {
+      id: 'sort',
+      label: 'Sort By',
+      options: ['All Sorts', 'Most Recent', 'Most Helpful', 'Highest Rating']
     }
   ], []);
 
@@ -389,6 +353,44 @@ const CustomerReviews = ({
     console.log('Filter button clicked:', filterId);
   };
 
+  // Filter and sort reviews
+  const finalReviews = useMemo(() => {
+    let filtered = reviews;
+
+    // Filter by rating
+    if (filterRating > 0) {
+      filtered = filtered.filter(review => review.rating === filterRating);
+    }
+
+    // Sort reviews
+    filtered = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'recent':
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case 'helpful':
+          return b.helpful_count - a.helpful_count;
+        case 'rating':
+          return b.rating - a.rating;
+        default:
+          return 0;
+      }
+    });
+
+    // Apply limit if specified
+    if (limit && limit > 0) {
+      filtered = filtered.slice(0, limit);
+    }
+
+    return filtered;
+  }, [reviews, sortBy, filterRating, limit]);
+
+  const summaryStats = [
+    { value: reviewStats.averageRating.toFixed(1), label: 'Average Rating', color: 'text-yellow-600' },
+    { value: reviewStats.count, label: 'Total Reviews', color: 'text-blue-600' },
+    { value: `${Math.round((ratingCounts[0] / reviewStats.count) * 100)}%`, label: 'Positive Reviews', color: 'text-green-600' },
+    { value: ratingCounts[0], label: '5 Star Reviews', color: 'text-purple-600' }
+  ];
+
   return (
     <div className="w-full bg-white pb-20">
       <SellerSummaryHeader
@@ -410,191 +412,155 @@ const CustomerReviews = ({
       </div>
 
       <div className="py-4">
-        {/* Filters */}
-        <div className="flex items-center justify-center mb-4">
-        <div className="flex items-center gap-2 px-4 py-2 bg-muted/30 rounded-lg" style={{backgroundColor: 'rgba(0,0,0,0.03)'}}>
-          <Filter className="w-4 h-4 text-muted-foreground" style={{color: '#666'}} />
-          <select 
-            value={sortBy} 
-            onChange={(e) => setSortBy(e.target.value)}
-            className="bg-transparent border-none outline-none text-sm font-medium cursor-pointer appearance-none"
-          >
-            <option value="recent">Most Recent</option>
-            <option value="helpful">Most Helpful</option>
-            <option value="rating">Highest Rating</option>
-          </select>
-          <ChevronDown className="w-4 h-4 text-muted-foreground" style={{color: '#666'}} />
-        </div>
-
-        <div className="w-px h-6 bg-border mx-3" style={{backgroundColor: '#e5e5e5'}}></div>
-
-        <div className="flex items-center gap-2 px-4 py-2 bg-muted/30 rounded-lg" style={{backgroundColor: 'rgba(0,0,0,0.03)'}}>
-          <Star className="w-4 h-4 text-muted-foreground" style={{color: '#666'}} />
-          <select 
-            value={filterRating} 
-            onChange={(e) => setFilterRating(Number(e.target.value))}
-            className="bg-transparent border-none outline-none text-sm font-medium cursor-pointer appearance-none"
-          >
-            <option value={0}>All Ratings</option>
-            <option value={5}>5 Stars</option>
-            <option value={4}>4 Stars</option>
-            <option value={3}>3 Stars</option>
-            <option value={2}>2 Stars</option>
-            <option value={1}>1 Star</option>
-          </select>
-          <ChevronDown className="w-4 h-4 text-muted-foreground" style={{color: '#666'}} />
-        </div>
-      </div>
-
-      {/* Reviews List */}
-      <div className="space-y-4">
-        {finalReviews.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground" style={{color: '#666'}}>No reviews yet.</p>
-            <p className="text-sm text-muted-foreground mt-1" style={{color: '#666'}}>Be the first to review this product!</p>
-          </div>
-        ) : (
-          finalReviews.map((review) => (
-            <div key={review.id} className="border-b pb-4" style={{borderBottom: '1px solid #e5e5e5'}}>
-              <div className="flex items-start justify-between mb-2 px-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center text-sm font-semibold" style={{backgroundColor: 'rgba(0,0,0,0.1)'}}>
-                    {review.user_name.charAt(0)}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{review.user_name}</span>
-                      {review.verified_purchase && (
-                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                          Verified Purchase
-                        </span>
-                      )}
+        {/* Reviews List */}
+        <div className="space-y-4">
+          {finalReviews.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground" style={{color: '#666'}}>No reviews found.</p>
+              <p className="text-sm text-muted-foreground mt-1" style={{color: '#666'}}>Try adjusting your filters.</p>
+            </div>
+          ) : (
+            finalReviews.map((review) => (
+              <div key={review.id} className="border-b pb-4" style={{borderBottom: '1px solid #e5e5e5'}}>
+                <div className="flex items-start justify-between mb-2 px-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center text-sm font-semibold" style={{backgroundColor: 'rgba(0,0,0,0.1)'}}>
+                      {review.user_name.charAt(0)}
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground" style={{color: '#666'}}>
-                      <div className="flex">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star 
-                            key={star}
-                            className={`w-3 h-3 ${star <= review.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`}
-                          />
-                        ))}
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{review.user_name}</span>
+                        {review.verified_purchase && (
+                          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                            Verified Purchase
+                          </span>
+                        )}
                       </div>
-                      <span>•</span>
-                      <span>{formatDate(review.created_at)}</span>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground" style={{color: '#666'}}>
+                        <div className="flex">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star 
+                              key={star}
+                              className={`w-3 h-3 ${star <= review.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`}
+                            />
+                          ))}
+                        </div>
+                        <span>•</span>
+                        <span>{formatDate(review.created_at)}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {review.title && (
-                <div className="font-medium text-sm mb-1 px-2">{review.title}</div>
-              )}
+                {review.title && (
+                  <div className="font-medium text-sm mb-1 px-2">{review.title}</div>
+                )}
 
-              <div className="text-foreground text-sm mb-2 px-2">
-                <span>
-                  {expandedReviews.has(review.id) ? review.comment : truncateText(review.comment || '')}
-                  {(review.comment || '').length > 120 && (
-                    <button
-                      onClick={() => toggleReadMore(review.id)}
-                      className="text-blue-600 hover:text-blue-800 text-sm font-medium ml-1"
-                    >
-                      {expandedReviews.has(review.id) ? 'Read less' : 'Read more'}
-                    </button>
-                  )}
-                </span>
-              </div>
+                <div className="text-foreground text-sm mb-2 px-2">
+                  <span>
+                    {expandedReviews.has(review.id) ? review.comment : truncateText(review.comment || '')}
+                    {(review.comment || '').length > 120 && (
+                      <button
+                        onClick={() => toggleReadMore(review.id)}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium ml-1"
+                      >
+                        {expandedReviews.has(review.id) ? 'Read less' : 'Read more'}
+                      </button>
+                    )}
+                  </span>
+                </div>
 
-              {/* Media Section */}
-              {review.media && review.media.length > 0 && (
-                <div className="mb-3 px-2">
-                  <div className="flex gap-2 overflow-x-auto pb-2">
-                    {review.media.map((item, index) => (
-                      <div key={index} className="flex-shrink-0 relative">
-                        {item.type === 'image' ? (
-                          <img
-                            src={item.url}
-                            alt={item.alt}
-                            className="w-24 h-24 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                            onClick={() => window.open(item.url, '_blank')}
-                          />
-                        ) : item.type === 'video' ? (
-                          <div 
-                            className="w-24 h-24 relative cursor-pointer hover:opacity-90 transition-opacity rounded-lg overflow-hidden"
-                            onClick={() => window.open(item.url, '_blank')}
-                          >
+                {/* Media Section */}
+                {review.media && review.media.length > 0 && (
+                  <div className="mb-3 px-2">
+                    <div className="flex gap-2 overflow-x-auto pb-2">
+                      {review.media.map((item, index) => (
+                        <div key={index} className="flex-shrink-0 relative">
+                          {item.type === 'image' ? (
                             <img
-                              src={item.thumbnail}
+                              src={item.url}
                               alt={item.alt}
-                              className="w-full h-full object-cover"
+                              className="w-24 h-24 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                              onClick={() => window.open(item.url, '_blank')}
                             />
-                            <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-                              <Play className="w-6 h-6 text-white fill-white" />
+                          ) : item.type === 'video' ? (
+                            <div 
+                              className="w-24 h-24 relative cursor-pointer hover:opacity-90 transition-opacity rounded-lg overflow-hidden"
+                              onClick={() => window.open(item.url, '_blank')}
+                            >
+                              <img
+                                src={item.thumbnail}
+                                alt={item.alt}
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+                                <Play className="w-6 h-6 text-white fill-white" />
+                              </div>
+                            </div>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Facebook-style Actions */}
+                <div className="flex gap-2 mt-3 px-2">
+                  <button className="flex items-center gap-2 text-muted-foreground hover:bg-muted transition-colors py-2 px-4 rounded-full bg-muted/50" style={{backgroundColor: 'rgba(0,0,0,0.05)', color: '#666'}}>
+                    <Heart className="w-4 h-4" />
+                    <span className="text-sm">{review.helpful_count}</span>
+                  </button>
+                  <button className="flex items-center gap-2 text-muted-foreground hover:bg-muted transition-colors py-2 px-4 rounded-full bg-muted/50" style={{backgroundColor: 'rgba(0,0,0,0.05)', color: '#666'}}>
+                    <MessageCircle className="w-4 h-4" />
+                    <span className="text-sm">{review.reply_count}</span>
+                  </button>
+                </div>
+
+                {/* Replies Section */}
+                {review.replies && review.replies.length > 0 && (
+                  <div className="mt-4 ml-6 space-y-3">
+                    {(expandedReplies.has(review.id) ? review.replies : review.replies.slice(0, 2)).map((reply) => (
+                      <div key={reply.id} className="border-l-2 border-gray-200 pl-4">
+                        <div className="flex items-start gap-2">
+                          <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center text-xs font-semibold" style={{backgroundColor: reply.is_seller ? '#3b82f6' : 'rgba(0,0,0,0.1)', color: reply.is_seller ? 'white' : 'black'}}>
+                            {reply.user_name.charAt(0)}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-sm">{reply.user_name}</span>
+                              {reply.is_seller && (
+                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                  Seller
+                                </span>
+                              )}
+                              <span className="text-xs text-muted-foreground" style={{color: '#666'}}>
+                                {formatDate(reply.created_at)}
+                              </span>
+                            </div>
+                            <div className="text-sm text-foreground mt-1">
+                              {reply.comment}
                             </div>
                           </div>
-                        ) : null}
+                        </div>
                       </div>
                     ))}
+
+                    {review.replies.length > 2 && (
+                      <button
+                        onClick={() => toggleShowMoreReplies(review.id)}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium ml-4 transition-colors"
+                      >
+                        {expandedReplies.has(review.id) 
+                          ? 'Show fewer replies' 
+                          : `Show ${review.replies.length - 2} more replies`
+                        }
+                      </button>
+                    )}
                   </div>
-                </div>
-              )}
-
-              {/* Facebook-style Actions */}
-              <div className="flex gap-2 mt-3 px-2">
-                <button className="flex items-center gap-2 text-muted-foreground hover:bg-muted transition-colors py-2 px-4 rounded-full bg-muted/50" style={{backgroundColor: 'rgba(0,0,0,0.05)', color: '#666'}}>
-                  <Heart className="w-4 h-4" />
-                  <span className="text-sm">{review.helpful_count}</span>
-                </button>
-                <button className="flex items-center gap-2 text-muted-foreground hover:bg-muted transition-colors py-2 px-4 rounded-full bg-muted/50" style={{backgroundColor: 'rgba(0,0,0,0.05)', color: '#666'}}>
-                  <MessageCircle className="w-4 h-4" />
-                  <span className="text-sm">{review.reply_count}</span>
-                </button>
+                )}
               </div>
-
-              {/* Replies Section */}
-              {review.replies && review.replies.length > 0 && (
-                <div className="mt-4 ml-6 space-y-3">
-                  {(expandedReplies.has(review.id) ? review.replies : review.replies.slice(0, 2)).map((reply) => (
-                    <div key={reply.id} className="border-l-2 border-gray-200 pl-4">
-                      <div className="flex items-start gap-2">
-                        <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center text-xs font-semibold" style={{backgroundColor: reply.is_seller ? '#3b82f6' : 'rgba(0,0,0,0.1)', color: reply.is_seller ? 'white' : 'black'}}>
-                          {reply.user_name.charAt(0)}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-sm">{reply.user_name}</span>
-                            {reply.is_seller && (
-                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                Seller
-                              </span>
-                            )}
-                            <span className="text-xs text-muted-foreground" style={{color: '#666'}}>
-                              {formatDate(reply.created_at)}
-                            </span>
-                          </div>
-                          <div className="text-sm text-foreground mt-1">
-                            {reply.comment}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-
-                  {review.replies.length > 2 && (
-                    <button
-                      onClick={() => toggleShowMoreReplies(review.id)}
-                      className="text-blue-600 hover:text-blue-800 text-sm font-medium ml-4 transition-colors"
-                    >
-                      {expandedReplies.has(review.id) 
-                        ? 'Show fewer replies' 
-                        : `Show ${review.replies.length - 2} more replies`
-                      }
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          ))
-        )}
+            ))
+          )}
         </div>
       </div>
 
