@@ -559,21 +559,21 @@ py-1 px-2 rounded-md shadow-md whitespace-nowrap z-[60] pointer-events-none"
       )}
 
       <button
-        onMouseDown={handlePressStart}
-        onMouseUp={handlePressEnd}
-        onMouseLeave={handlePressEnd}
-        onTouchStart={handlePressStart}
-        onTouchEnd={handlePressEnd}
-        onClick={handleClick}
-        className={`flex items-center justify-center gap-2 group transition-colors ${buttonClassName}`}
-      >
-        {display?.icon}
-        {showLabel && display && (
-          <span className={`${currentSize.text} font-medium ${display.color}`}>
-            {display.label}
-          </span>
-        )}
-      </button>
+  onMouseDown={handlePressStart}
+  onMouseUp={handlePressEnd}
+  onMouseLeave={handlePressEnd}
+  onTouchStart={handlePressStart}
+  onTouchEnd={handlePressEnd}
+  onClick={handleClick}
+  className={`flex items-center justify-center gap-2 group transition-colors ${display?.bgColor || 'bg-gray-100 hover:bg-gray-200'} ${buttonClassName}`}
+>
+  {display?.icon}
+  {showLabel && display && (
+    <span className={`${currentSize.text} font-medium ${display.textColor}`}>
+      {display.label}
+    </span>
+  )}
+</button>
 
       {/* Ultra-smooth CSS animations */}
       <style jsx>{`
