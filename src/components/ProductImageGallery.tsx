@@ -1,4 +1,4 @@
-import React, { forwardRef, useImperativeHandle, useEffect } from "react";
+import React, { forwardRef, useImperativeHandle, useEffect, useState } from "react";
 import { 
   Carousel,
   CarouselContent,
@@ -131,8 +131,34 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
     stopAutoScroll
   } = galleryState;
 
+  // State to track header height
+  const [headerHeight, setHeaderHeight] = useState(0);
+
   // Determine if we should lock the view to tabs only
   const shouldLockToTabs = !(internalActiveTab === 'overview' || internalActiveTab === 'variants');
+
+  // Calculate available height for tabs content (viewport height minus header)
+  const tabsContentHeight = `calc(100vh - ${headerHeight}px)`;
+
+  // Measure header height on mount and when tabs container ref changes
+  useEffect(() => {
+    const measureHeaderHeight = () => {
+      if (tabsContainerRef.current) {
+        const height = tabsContainerRef.current.offsetHeight;
+        setHeaderHeight(height);
+        console.log('📏 Header height measured:', height);
+      }
+    };
+
+    measureHeaderHeight();
+    
+    // Re-measure when window resizes
+    window.addEventListener('resize', measureHeaderHeight);
+    
+    return () => {
+      window.removeEventListener('resize', measureHeaderHeight);
+    };
+  }, [tabsContainerRef.current, internalActiveTab]);
 
   // Preload items
   useEffect(() => {
@@ -442,8 +468,11 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
         </div>
       )}
 
-      {/* GalleryTabsContent - Takes full height when locked */}
-      <div className={shouldLockToTabs ? 'flex-1 overflow-auto' : ''}>
+      {/* GalleryTabsContent - Takes calculated height when locked */}
+      <div 
+        className={shouldLockToTabs ? 'overflow-auto' : ''}
+        style={shouldLockToTabs ? { height: tabsContentHeight } : {}}
+      >
         <GalleryTabsContent
           activeTab={internalActiveTab}
           totalItems={totalItems}
