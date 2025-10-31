@@ -130,6 +130,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
             showSummary={false}
           />
 
+          {/* StickyCheckoutBar - ONLY in overview tab */}
           {product && onBuyNow && (
             <StickyCheckoutBar
               product={product}
