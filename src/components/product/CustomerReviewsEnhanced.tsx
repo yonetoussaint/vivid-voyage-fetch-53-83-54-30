@@ -10,13 +10,13 @@ import ProductFilterBar from '@/components/home/ProductFilterBar';
 import { EngagementSection } from '@/components/shared/EngagementSection';
 
 // DateUtils.js - Separate component for date logic
-const isCurrentYear = (dateString: string): boolean => {
+export const isCurrentYear = (dateString: string): boolean => {
   const date = new Date(dateString);
   const currentYear = new Date().getFullYear();
   return date.getFullYear() === currentYear;
 };
 
-const isLessThanAWeek = (dateString: string): boolean => {
+export const isLessThanAWeek = (dateString: string): boolean => {
   const date = new Date(dateString);
   const now = new Date();
   const diffTime = Math.abs(now.getTime() - date.getTime());
@@ -24,7 +24,7 @@ const isLessThanAWeek = (dateString: string): boolean => {
   return diffDays < 7;
 };
 
-const isLessThanADay = (dateString: string): boolean => {
+export const isLessThanADay = (dateString: string): boolean => {
   const date = new Date(dateString);
   const now = new Date();
   const diffTime = Math.abs(now.getTime() - date.getTime());
@@ -32,7 +32,7 @@ const isLessThanADay = (dateString: string): boolean => {
   return diffHours < 24;
 };
 
-const isLessThanAnHour = (dateString: string): boolean => {
+export const isLessThanAnHour = (dateString: string): boolean => {
   const date = new Date(dateString);
   const now = new Date();
   const diffTime = Math.abs(now.getTime() - date.getTime());
@@ -40,7 +40,7 @@ const isLessThanAnHour = (dateString: string): boolean => {
   return diffMinutes < 60;
 };
 
-const isLessThanAMinute = (dateString: string): boolean => {
+export const isLessThanAMinute = (dateString: string): boolean => {
   const date = new Date(dateString);
   const now = new Date();
   const diffTime = Math.abs(now.getTime() - date.getTime());
@@ -48,7 +48,7 @@ const isLessThanAMinute = (dateString: string): boolean => {
   return diffSeconds < 60;
 };
 
-const formatTime = (dateString: string): string => {
+export const formatTime = (dateString: string): string => {
   const date = new Date(dateString);
   return date.toLocaleTimeString('en-US', {
     hour: 'numeric',
@@ -781,47 +781,45 @@ const CustomerReviews = ({
                               {reply.comment}
                             </div>
 
-                            {/* TikTok-style Like and Reply Buttons with Date stacked on the left */}
-                            <div className="flex items-center justify-between mt-2">
-                              <div className="flex items-center gap-4">
-                                {/* Date on the left - using compact format for replies */}
-                                <span className="text-xs text-muted-foreground" style={{color: '#666'}}>
-                                  {formatDateForReply(reply.created_at)}
-                                </span>
-                                
-                                {/* Like Button with Counter */}
-                                <button
-                                  onClick={() => handleLikeReply(review.id, reply.id)}
-                                  className="flex items-center gap-1 text-gray-600 hover:text-red-600 text-sm font-medium transition-colors"
-                                  style={{ 
-                                    background: 'none',
-                                    border: 'none',
-                                    padding: 0,
-                                    cursor: 'pointer',
-                                    font: 'inherit'
-                                  }}
-                                >
-                                  <Heart 
-                                    className={`w-4 h-4 ${reply.liked ? 'fill-red-600 text-red-600' : ''}`}
-                                  />
-                                  <span>{reply.likeCount || 0}</span>
-                                </button>
+                            {/* TikTok-style Like and Reply Buttons with Date on the LEFT */}
+                            <div className="flex items-center gap-4 mt-2">
+                              {/* Heart Button with Counter */}
+                              <button
+                                onClick={() => handleLikeReply(review.id, reply.id)}
+                                className="flex items-center gap-1 text-gray-600 hover:text-red-600 text-sm font-medium transition-colors"
+                                style={{ 
+                                  background: 'none',
+                                  border: 'none',
+                                  padding: 0,
+                                  cursor: 'pointer',
+                                  font: 'inherit'
+                                }}
+                              >
+                                <Heart 
+                                  className={`w-4 h-4 ${reply.liked ? 'fill-red-600 text-red-600' : ''}`}
+                                />
+                                <span>{reply.likeCount || 0}</span>
+                              </button>
 
-                                {/* Reply Button */}
-                                <button
-                                  onClick={() => handleReplyToReply(review.id, reply.id, reply.user_name)}
-                                  className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
-                                  style={{ 
-                                    background: 'none',
-                                    border: 'none',
-                                    padding: 0,
-                                    cursor: 'pointer',
-                                    font: 'inherit'
-                                  }}
-                                >
-                                  Reply
-                                </button>
-                              </div>
+                              {/* Reply Button */}
+                              <button
+                                onClick={() => handleReplyToReply(review.id, reply.id, reply.user_name)}
+                                className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                                style={{ 
+                                  background: 'none',
+                                  border: 'none',
+                                  padding: 0,
+                                  cursor: 'pointer',
+                                  font: 'inherit'
+                                }}
+                              >
+                                Reply
+                              </button>
+
+                              {/* Date on the same line - using compact format for replies */}
+                              <span className="text-xs text-muted-foreground" style={{color: '#666'}}>
+                                {formatDateForReply(reply.created_at)}
+                              </span>
                             </div>
                           </div>
                         </div>
