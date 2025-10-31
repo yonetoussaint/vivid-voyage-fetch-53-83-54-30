@@ -2,7 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { 
   Star, 
   Play,
-  Send
+  Send,
+  Heart
 } from 'lucide-react';
 import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
 import ProductFilterBar from '@/components/home/ProductFilterBar';
@@ -44,15 +45,9 @@ const mockReviews = [
         comment: "Thank you for your wonderful review! We're thrilled to hear you had such a positive experience with our product and customer service team.",
         created_at: "2024-08-16T09:15:00Z",
         is_seller: true,
-        replies: [
-          {
-            id: 201,
-            user_name: "John Smith",
-            comment: "Thanks for the quick response!",
-            created_at: "2024-08-16T11:20:00Z",
-            is_seller: false
-          }
-        ]
+        likeCount: 3,
+        liked: false,
+        parent_reply_id: null
       },
       {
         id: 102,
@@ -60,7 +55,31 @@ const mockReviews = [
         comment: "I had the same experience! Really happy with this purchase.",
         created_at: "2024-08-17T14:30:00Z",
         is_seller: false,
-        replies: []
+        likeCount: 1,
+        liked: false,
+        parent_reply_id: null
+      },
+      {
+        id: 103,
+        user_name: "John Smith",
+        comment: "Thanks for the quick response!",
+        created_at: "2024-08-16T11:20:00Z",
+        is_seller: false,
+        likeCount: 0,
+        liked: false,
+        parent_reply_id: 101, // This is a reply to Customer Support's reply
+        replying_to: "Customer Support"
+      },
+      {
+        id: 104,
+        user_name: "Mike Chen",
+        comment: "How long did shipping take for you?",
+        created_at: "2024-08-18T10:15:00Z",
+        is_seller: false,
+        likeCount: 2,
+        liked: false,
+        parent_reply_id: 101, // This is also a reply to Customer Support's reply
+        replying_to: "Customer Support"
       }
     ]
   },
@@ -87,7 +106,9 @@ const mockReviews = [
         comment: "Thanks for your feedback! If you need any help with setup, please don't hesitate to reach out to our support team.",
         created_at: "2024-08-11T10:45:00Z",
         is_seller: true,
-        replies: []
+        likeCount: 0,
+        liked: false,
+        parent_reply_id: null
       }
     ]
   }
@@ -117,37 +138,52 @@ const CustomerReviews = ({
   const [expandedReviews, setExpandedReviews] = useState(new Set());
   const [expandedReplies, setExpandedReplies] = useState(new Set());
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
+  const [localReviews, setLocalReviews] = useState(reviews);
 
   // Enhanced state for reply functionality
   const [replyingTo, setReplyingTo] = useState<{ type: 'review' | 'reply'; reviewId: number; replyId?: number; userName: string } | null>(null);
   const [replyText, setReplyText] = useState('');
 
+  // Function to handle liking a reply
+  const handleLikeReply = (reviewId: number, replyId: number) => {
+    setLocalReviews(prevReviews => 
+      prevReviews.map(review => {
+        if (review.id === reviewId) {
+          const updatedReplies = review.replies.map(reply => {
+            if (reply.id === replyId) {
+              const newLikeCount = reply.liked ? reply.likeCount - 1 : reply.likeCount + 1;
+              return {
+                ...reply,
+                liked: !reply.liked,
+                likeCount: newLikeCount
+              };
+            }
+            return reply;
+          });
+          return {
+            ...review,
+            replies: updatedReplies
+          };
+        }
+        return review;
+      })
+    );
+  };
+
   // Get the item being replied to
   const itemBeingReplied = useMemo(() => {
     if (!replyingTo) return null;
     
-    const review = reviews.find(r => r.id === replyingTo.reviewId);
+    const review = localReviews.find(r => r.id === replyingTo.reviewId);
     if (!review) return null;
 
     if (replyingTo.type === 'review') {
       return { type: 'review' as const, item: review };
     } else {
-      // Find the reply in the review's replies (including nested replies)
-      const findReply = (replies: any[]): any => {
-        for (const reply of replies) {
-          if (reply.id === replyingTo.replyId) return reply;
-          if (reply.replies && reply.replies.length > 0) {
-            const found = findReply(reply.replies);
-            if (found) return found;
-          }
-        }
-        return null;
-      };
-
-      const reply = findReply(review.replies || []);
+      const reply = review.replies.find(r => r.id === replyingTo.replyId);
       return reply ? { type: 'reply' as const, item: reply } : null;
     }
-  }, [replyingTo, reviews]);
+  }, [replyingTo, localReviews]);
 
   const toggleReadMore = (reviewId) => {
     const newExpanded = new Set(expandedReviews);
@@ -172,7 +208,7 @@ const CustomerReviews = ({
   const handleCommentClick = (reviewId: number) => {
     console.log('Comment button clicked for review:', reviewId);
 
-    const review = reviews.find(r => r.id === reviewId);
+    const review = localReviews.find(r => r.id === reviewId);
     if (!review) return;
 
     // Set the review we're replying to
@@ -221,9 +257,36 @@ const CustomerReviews = ({
     if (replyText.trim() && replyingTo) {
       console.log(`Submitting reply to ${replyingTo.type} ${replyingTo.type === 'review' ? replyingTo.reviewId : replyingTo.replyId}: "${replyText}"`);
 
-      // Here you would submit the reply to your backend
-      // For now, just show an alert and clear the state
-      alert(`Reply submitted to ${replyingTo.userName}: "${replyText}"`);
+      // Create new reply object
+      const newReply = {
+        id: Date.now(), // Temporary ID
+        user_name: "Current User", // This would come from user context
+        comment: replyText.trim(),
+        created_at: new Date().toISOString(),
+        is_seller: false, // This would depend on the user
+        likeCount: 0,
+        liked: false,
+        parent_reply_id: replyingTo.type === 'reply' ? replyingTo.replyId : null,
+        replying_to: replyingTo.type === 'reply' ? replyingTo.userName : null
+      };
+
+      // Add the reply to the local state
+      setLocalReviews(prevReviews => 
+        prevReviews.map(review => {
+          if (review.id === replyingTo.reviewId) {
+            return {
+              ...review,
+              replies: [...review.replies, newReply],
+              reply_count: review.reply_count + 1
+            };
+          }
+          return review;
+        })
+      );
+
+      // Here you would also submit the reply to your backend
+      console.log('Reply submitted:', newReply);
+
       setReplyText('');
       setReplyingTo(null);
     }
@@ -234,106 +297,24 @@ const CustomerReviews = ({
     setReplyText('');
   };
 
-  // Recursive component to render replies and their nested replies
-  const ReplyItem = ({ reply, reviewId, depth = 0 }) => {
-    const hasReplies = reply.replies && reply.replies.length > 0;
-    const [showNestedReplies, setShowNestedReplies] = useState(depth === 0); // Always show first level replies
-
-    return (
-      <div className={`${depth > 0 ? 'ml-6' : ''}`}>
-        <div className="border-l-2 border-gray-200 pl-4">
-          <div className="flex items-start gap-2">
-            <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center text-xs font-semibold" style={{backgroundColor: reply.is_seller ? '#3b82f6' : 'rgba(0,0,0,0.1)', color: reply.is_seller ? 'white' : 'black'}}>
-              {reply.user_name.charAt(0)}
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <span className="font-medium text-sm">{reply.user_name}</span>
-                {reply.is_seller && (
-                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                    Seller
-                  </span>
-                )}
-                <span className="text-xs text-muted-foreground" style={{color: '#666'}}>
-                  {formatDate(reply.created_at)}
-                </span>
-              </div>
-              <div className="text-sm text-foreground mt-1">
-                {reply.comment}
-              </div>
-              
-              {/* TikTok-style Reply Button */}
-              <button
-                onClick={() => handleReplyToReply(reviewId, reply.id, reply.user_name)}
-                className="text-blue-600 hover:text-blue-800 text-sm font-medium mt-1 transition-colors"
-                style={{ 
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                  cursor: 'pointer',
-                  font: 'inherit'
-                }}
-              >
-                Reply
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Nested Replies */}
-        {hasReplies && (
-          <div className="mt-2">
-            {showNestedReplies ? (
-              <>
-                {reply.replies.map((nestedReply) => (
-                  <ReplyItem 
-                    key={nestedReply.id} 
-                    reply={nestedReply} 
-                    reviewId={reviewId}
-                    depth={depth + 1}
-                  />
-                ))}
-                {depth === 0 && reply.replies.length > 0 && (
-                  <button
-                    onClick={() => setShowNestedReplies(false)}
-                    className="text-blue-600 hover:text-blue-800 text-sm font-medium ml-4 mt-1 transition-colors"
-                  >
-                    Hide replies
-                  </button>
-                )}
-              </>
-            ) : (
-              <button
-                onClick={() => setShowNestedReplies(true)}
-                className="text-blue-600 hover:text-blue-800 text-sm font-medium ml-4 mt-1 transition-colors"
-              >
-                Show {reply.replies.length} repl{reply.replies.length === 1 ? 'y' : 'ies'}
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  };
-
   // Calculate review statistics
   const reviewStats = useMemo(() => {
-    const count = reviews.length;
-    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+    const count = localReviews.length;
+    const totalRating = localReviews.reduce((sum, review) => sum + review.rating, 0);
     const averageRating = count > 0 ? totalRating / count : 0;
     return { count, averageRating };
-  }, [reviews]);
+  }, [localReviews]);
 
   // Calculate rating distribution
   const ratingCounts = useMemo(() => {
     const counts = [0, 0, 0, 0, 0];
-    reviews.forEach(review => {
+    localReviews.forEach(review => {
       if (review.rating >= 1 && review.rating <= 5) {
         counts[5 - review.rating]++;
       }
     });
     return counts;
-  }, [reviews]);
+  }, [localReviews]);
 
   const filterCategories = React.useMemo(() => [
     {
@@ -433,7 +414,7 @@ const CustomerReviews = ({
 
   // Filter and sort reviews
   const finalReviews = useMemo(() => {
-    let filtered = reviews;
+    let filtered = localReviews;
 
     // Filter by rating
     if (filterRating > 0) {
@@ -460,7 +441,7 @@ const CustomerReviews = ({
     }
 
     return filtered;
-  }, [reviews, sortBy, filterRating, limit]);
+  }, [localReviews, sortBy, filterRating, limit]);
 
   const summaryStats = [
     { value: reviewStats.averageRating.toFixed(1), label: 'Average', color: 'text-yellow-600' },
@@ -589,15 +570,77 @@ const CustomerReviews = ({
                   onShare={() => handleShareClick(review.id)}
                 />
 
-                {/* Replies Section */}
+                {/* Replies Section - Flat structure like TikTok */}
                 {review.replies && review.replies.length > 0 && (
                   <div className="mt-4 ml-6 space-y-3">
                     {(expandedReplies.has(review.id) ? review.replies : review.replies.slice(0, 2)).map((reply) => (
-                      <ReplyItem 
-                        key={reply.id} 
-                        reply={reply} 
-                        reviewId={review.id}
-                      />
+                      <div key={reply.id} className="border-l-2 border-gray-200 pl-4">
+                        <div className="flex items-start gap-2">
+                          <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center text-xs font-semibold" style={{backgroundColor: reply.is_seller ? '#3b82f6' : 'rgba(0,0,0,0.1)', color: reply.is_seller ? 'white' : 'black'}}>
+                            {reply.user_name.charAt(0)}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-sm">{reply.user_name}</span>
+                              {reply.is_seller && (
+                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                  Seller
+                                </span>
+                              )}
+                              <span className="text-xs text-muted-foreground" style={{color: '#666'}}>
+                                {formatDate(reply.created_at)}
+                              </span>
+                            </div>
+                            
+                            {/* Show who this reply is replying to */}
+                            {reply.replying_to && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                Replying to <span className="font-medium">{reply.replying_to}</span>
+                              </div>
+                            )}
+                            
+                            <div className="text-sm text-foreground mt-1">
+                              {reply.comment}
+                            </div>
+                            
+                            {/* TikTok-style Reply and Like Buttons */}
+                            <div className="flex items-center gap-4 mt-2">
+                              {/* Reply Button */}
+                              <button
+                                onClick={() => handleReplyToReply(review.id, reply.id, reply.user_name)}
+                                className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                                style={{ 
+                                  background: 'none',
+                                  border: 'none',
+                                  padding: 0,
+                                  cursor: 'pointer',
+                                  font: 'inherit'
+                                }}
+                              >
+                                Reply
+                              </button>
+                              
+                              {/* Like Button with Counter */}
+                              <button
+                                onClick={() => handleLikeReply(review.id, reply.id)}
+                                className="flex items-center gap-1 text-gray-600 hover:text-red-600 text-sm font-medium transition-colors"
+                                style={{ 
+                                  background: 'none',
+                                  border: 'none',
+                                  padding: 0,
+                                  cursor: 'pointer',
+                                  font: 'inherit'
+                                }}
+                              >
+                                <Heart 
+                                  className={`w-4 h-4 ${reply.liked ? 'fill-red-600 text-red-600' : ''}`}
+                                />
+                                <span>{reply.likeCount || 0}</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     ))}
 
                     {review.replies.length > 2 && (
@@ -619,13 +662,13 @@ const CustomerReviews = ({
         </div>
       </div>
 
-      {limit && reviews.length > limit && (
+      {limit && localReviews.length > limit && (
         <Button 
           variant="outline" 
           className="w-full mt-4"
           onClick={() => window.location.href = `/product/${productId}/reviews`}
         >
-          View All {reviews.length} Reviews
+          View All {localReviews.length} Reviews
         </Button>
       )}
 
