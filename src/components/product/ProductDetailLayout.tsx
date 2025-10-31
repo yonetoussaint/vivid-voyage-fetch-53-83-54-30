@@ -207,8 +207,8 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
   onBuyNow={buyNow}
   sharePanelOpen={state.sharePanelOpen}
   setSharePanelOpen={state.setSharePanelOpen}
-  hideCheckoutBar={false}
-  activeTab={state.activeTab} // Add this line to pass the active tab
+  hideCheckoutBar={state.activeTab !== 'overview'} // Force hide when not on overview
+  activeTab={state.activeTab}
 />
     </div>
   );
