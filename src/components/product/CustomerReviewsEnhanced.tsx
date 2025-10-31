@@ -626,8 +626,8 @@ const CustomerReviews = ({
                               {reply.comment}
                             </div>
 
-                            {/* TikTok-style Like and Reply Buttons with Date - PERFECTLY ALIGNED */}
-                            <div className="flex items-center gap-4 mt-2">
+                            {/* TikTok-style Like and Reply Buttons with Date - PERFECT VERTICAL ALIGNMENT */}
+                            <div className="flex items-baseline gap-4 mt-2">
                               {/* Heart Button with Counter */}
                               <button
                                 onClick={() => handleLikeReply(review.id, reply.id)}
@@ -661,8 +661,8 @@ const CustomerReviews = ({
                                 Reply
                               </button>
 
-                              {/* Date - NOW PERFECTLY ALIGNED with buttons */}
-                              <span className="text-sm text-muted-foreground font-medium leading-none" style={{color: '#666'}}>
+                              {/* Date - PERFECT VERTICAL ALIGNMENT */}
+                              <span className="text-sm text-muted-foreground font-medium leading-none relative top-[1px]" style={{color: '#666'}}>
                                 {formatDateForReply(reply.created_at)}
                               </span>
                             </div>
