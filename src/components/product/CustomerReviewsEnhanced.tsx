@@ -19,13 +19,6 @@ const Button = ({ children, variant, className, onClick }) => (
   </button>
 );
 
-// Mock WriteReviewDialog component
-const WriteReviewDialog = ({ children, productId }) => (
-  <div onClick={() => alert(`Opening review dialog for product ${productId}`)}>
-    {children}
-  </div>
-);
-
 // Mock data and utility functions
 const mockReviews = [
   {
@@ -101,74 +94,6 @@ const mockReviews = [
         is_seller: true
       }
     ]
-  },
-  {
-    id: 3,
-    user_name: "Mike Chen",
-    rating: 3,
-    title: "Average product",
-    comment: "It's okay, nothing special but does the job.",
-    created_at: "2024-08-05T09:15:00Z",
-    verified_purchase: false,
-    helpful_count: 3,
-    reply_count: 0,
-    likeCount: 2,
-    commentCount: 0,
-    shareCount: 0,
-    media: [],
-    replies: []
-  },
-  {
-    id: 4,
-    user_name: "Emma Davis",
-    rating: 5,
-    title: "Love it!",
-    comment: "Perfect for my needs. Highly recommend!",
-    created_at: "2024-08-01T16:45:00Z",
-    verified_purchase: true,
-    helpful_count: 15,
-    reply_count: 1,
-    likeCount: 12,
-    commentCount: 1,
-    shareCount: 3,
-    media: [
-      { type: 'image', url: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop', alt: 'Product close-up' },
-      { type: 'image', url: 'https://images.unsplash.com-1441986300917-64674bd600d8?w=400&h=300&fit=crop', alt: 'Product comparison' },
-      { type: 'image', url: 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=400&h=300&fit=crop', alt: 'Product features' }
-    ],
-    replies: [
-      {
-        id: 401,
-        user_name: "Customer Support",
-        comment: "We're so happy to hear you love the product! Thank you for recommending us!",
-        created_at: "2024-08-02T08:20:00Z",
-        is_seller: true
-      }
-    ]
-  },
-  {
-    id: 5,
-    user_name: "Tom Wilson",
-    rating: 2,
-    title: "Disappointed",
-    comment: "Not what I expected based on the description. Quality could be better and the shipping took longer than promised.",
-    created_at: "2024-07-28T11:30:00Z",
-    verified_purchase: true,
-    helpful_count: 5,
-    reply_count: 1,
-    likeCount: 3,
-    commentCount: 1,
-    shareCount: 0,
-    media: [],
-    replies: [
-      {
-        id: 501,
-        user_name: "Customer Support",
-        comment: "We're sorry to hear about your experience. We've sent you a direct message to resolve this issue and improve our service. Thank you for your feedback.",
-        created_at: "2024-07-29T13:15:00Z",
-        is_seller: true
-      }
-    ]
   }
 ];
 
@@ -235,7 +160,6 @@ const CustomerReviews = ({
   };
 
   const handleRatingSubmit = () => {
-    // Here you would normally submit the review with rating
     alert(`Review submitted: "${reviewText}" with ${selectedRating} stars`);
     setReviewText('');
     setSelectedRating(0);
@@ -264,7 +188,6 @@ const CustomerReviews = ({
 
   const handleShareClick = (reviewId: number) => {
     console.log('Share button clicked for review:', reviewId);
-    // Implement share functionality
     if (navigator.share) {
       navigator.share({
         title: 'Product Review',
@@ -272,7 +195,6 @@ const CustomerReviews = ({
         url: window.location.href,
       });
     } else {
-      // Fallback for browsers that don't support Web Share API
       navigator.clipboard.writeText(window.location.href);
       alert('Review link copied to clipboard!');
     }
@@ -280,14 +202,9 @@ const CustomerReviews = ({
 
   const handleSubmitReply = () => {
     if (replyText.trim() && replyingToReviewId) {
-      // Here you would normally submit the reply to your backend
       console.log(`Submitting reply to review ${replyingToReviewId}: "${replyText}"`);
-      
-      // Clear the reply state
       setReplyText('');
       setReplyingToReviewId(null);
-      
-      // You might want to refresh the replies data here
       alert(`Reply submitted: "${replyText}"`);
     }
   };
@@ -302,13 +219,12 @@ const CustomerReviews = ({
     const count = reviews.length;
     const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
     const averageRating = count > 0 ? totalRating / count : 0;
-
     return { count, averageRating };
   }, [reviews]);
 
   // Calculate rating distribution
   const ratingCounts = useMemo(() => {
-    const counts = [0, 0, 0, 0, 0]; // 5-star, 4-star, 3-star, 2-star, 1-star
+    const counts = [0, 0, 0, 0, 0];
     reviews.forEach(review => {
       if (review.rating >= 1 && review.rating <= 5) {
         counts[5 - review.rating]++;
@@ -357,7 +273,7 @@ const CustomerReviews = ({
       initialFilters[filter.id] = filter.options[0];
     });
     setSelectedFilters(initialFilters);
-  }, []); // Empty dependency array - only run once on mount
+  }, []);
 
   const handleFilterSelect = (filterId: string, option: string) => {
     setSelectedFilters(prev => ({
@@ -366,7 +282,6 @@ const CustomerReviews = ({
     }));
 
     if (filterId === 'sort') {
-      // Reset to default if "All" option selected
       if (isAllOption(option)) {
         setSortBy('recent');
       } else {
@@ -380,7 +295,6 @@ const CustomerReviews = ({
         }
       }
     } else if (filterId === 'rating') {
-      // Reset to 0 if "All" option selected
       if (isAllOption(option)) {
         setFilterRating(0);
       } else {
@@ -407,7 +321,6 @@ const CustomerReviews = ({
   };
 
   const handleClearAll = () => {
-    // Reset to first "All" option for each filter
     const resetFilters: Record<string, string> = {};
     filterCategories.forEach(category => {
       resetFilters[category.id] = category.options[0];
@@ -460,7 +373,7 @@ const CustomerReviews = ({
   ];
 
   return (
-    <div className="w-full bg-white pb-20">
+    <div className="w-full bg-white">
       <SellerSummaryHeader
         title="Customer Reviews"
         subtitle={`${reviewStats.count} review${reviewStats.count !== 1 ? 's' : ''} from verified customers`}
@@ -468,18 +381,16 @@ const CustomerReviews = ({
         showStats={reviewStats.count > 0}
       />
 
-      
-        <ProductFilterBar
-          filterCategories={filterCategories}
-          selectedFilters={selectedFilters}
-          onFilterSelect={handleFilterSelect}
-          onFilterClear={handleFilterClear}
-          onClearAll={handleClearAll}
-          onFilterButtonClick={handleFilterButtonClick}
-        />
-      
+      <ProductFilterBar
+        filterCategories={filterCategories}
+        selectedFilters={selectedFilters}
+        onFilterSelect={handleFilterSelect}
+        onFilterClear={handleFilterClear}
+        onClearAll={handleClearAll}
+        onFilterButtonClick={handleFilterButtonClick}
+      />
 
-      <div className="py-4">
+      <div className="py-4 pb-32">
         {/* Reviews List */}
         <div className="space-y-4">
           {finalReviews.length === 0 ? (
@@ -540,7 +451,7 @@ const CustomerReviews = ({
 
                 {/* Media Section */}
                 {review.media && review.media.length > 0 && (
-                  <div className=" px-2">
+                  <div className="px-2">
                     <div className="flex gap-2 overflow-x-auto pb-2">
                       {review.media.map((item, index) => (
                         <div key={index} className="flex-shrink-0 relative">
@@ -572,7 +483,7 @@ const CustomerReviews = ({
                   </div>
                 )}
 
-                {/* Facebook-style Engagement Section (Reused from VendorProductCarousel) */}
+                {/* Facebook-style Engagement Section */}
                 <EngagementSection
                   likeCount={review.likeCount || 0}
                   commentCount={review.commentCount || 0}
@@ -641,39 +552,40 @@ const CustomerReviews = ({
 
       {/* Conditional Reply Bar - Only shown when replying to a review */}
       {replyingToReviewId && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 shadow-lg">
-          <div className="max-w-4xl mx-auto flex items-center gap-3">
-            <div className="flex-1 relative">
+        <div className="fixed bottom-16 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 shadow-lg z-40">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700">Replying to review</span>
+              <button 
+                onClick={handleCancelReply}
+                className="text-gray-400 hover:text-gray-600 text-sm"
+              >
+                ×
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
               <input
                 type="text"
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
-                placeholder="Write a reply..."
-                className="w-full px-4 py-2 pr-20 border border-gray-300 rounded-full bg-gray-50 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Write your reply..."
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-full bg-gray-50 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 onKeyPress={(e) => e.key === 'Enter' && handleSubmitReply()}
               />
-              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex gap-1">
-                <button 
-                  onClick={handleCancelReply}
-                  className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors text-sm font-medium"
-                >
-                  Cancel
-                </button>
-                <button 
-                  onClick={handleSubmitReply}
-                  disabled={!replyText.trim()}
-                  className="p-1.5 text-blue-600 hover:text-blue-800 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors text-sm font-medium"
-                >
-                  Reply
-                </button>
-              </div>
+              <button 
+                onClick={handleSubmitReply}
+                disabled={!replyText.trim()}
+                className="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+              >
+                Reply
+              </button>
             </div>
           </div>
         </div>
       )}
 
       {/* Sticky Review Input Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 z-30">
         <div className="max-w-4xl mx-auto flex items-center gap-3">
           <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-sm font-semibold">
             ?
