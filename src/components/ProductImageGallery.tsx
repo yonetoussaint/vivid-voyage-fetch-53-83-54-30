@@ -131,6 +131,9 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
     stopAutoScroll
   } = galleryState;
 
+  // Determine if we should show the image gallery
+  const shouldShowImageGallery = activeTab === 'overview' || activeTab === 'variants';
+
   // Preload items
   useEffect(() => {
     const preloadItems = async () => {
@@ -302,107 +305,113 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
 
   return (
     <div ref={containerRef} className="flex flex-col bg-transparent w-full max-w-full overflow-x-hidden">
-      <div className="relative w-full aspect-square overflow-hidden max-w-full">
-        <Carousel
-          className="w-full h-full"
-          opts={{
-            loop: totalItems > 1,
-          }}
-          setApi={onApiChange}
-        >
-          <CarouselContent className="h-full">
-            {galleryItems.map((item, index) => (
-              <CarouselItem key={`${item.type}-${index}`} className="h-full">
-                <div className="flex h-full w-full items-center justify-center overflow-hidden relative">
-                  <GalleryItem
-                    item={item}
-                    index={index}
-                    currentIndex={currentIndex}
-                    isRotated={isRotated}
-                    isFlipped={isFlipped}
-                    zoomLevel={zoomLevel}
-                    imageFilter="none"
-                    onImageClick={handleImageClick}
-                    isPlaying={isPlaying}
-                    isMuted={isMuted}
-                    volume={volume}
-                    currentTime={currentTime}
-                    duration={duration}
-                    bufferedTime={bufferedTime}
-                    videoRef={videoRef}
-                    imageRef={imageRef}
-                    onToggleVideo={toggleVideo}
-                    onMuteToggle={handleMuteToggle}
-                    onVolumeChange={handleVolumeChange}
-                    onSeek={handleSeek}
-                    onSkipForward={handleSkipForward}
-                    onSkipBackward={handleSkipBackward}
-                    onFullscreenToggle={handleFullscreenVideo}
-                  />
-                </div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
+      {/* Conditionally render image gallery based on active tab */}
+      {shouldShowImageGallery && (
+        <>
+          <div className="relative w-full aspect-square overflow-hidden max-w-full">
+            <Carousel
+              className="w-full h-full"
+              opts={{
+                loop: totalItems > 1,
+              }}
+              setApi={onApiChange}
+            >
+              <CarouselContent className="h-full">
+                {galleryItems.map((item, index) => (
+                  <CarouselItem key={`${item.type}-${index}`} className="h-full">
+                    <div className="flex h-full w-full items-center justify-center overflow-hidden relative">
+                      <GalleryItem
+                        item={item}
+                        index={index}
+                        currentIndex={currentIndex}
+                        isRotated={isRotated}
+                        isFlipped={isFlipped}
+                        zoomLevel={zoomLevel}
+                        imageFilter="none"
+                        onImageClick={handleImageClick}
+                        isPlaying={isPlaying}
+                        isMuted={isMuted}
+                        volume={volume}
+                        currentTime={currentTime}
+                        duration={duration}
+                        bufferedTime={bufferedTime}
+                        videoRef={videoRef}
+                        imageRef={imageRef}
+                        onToggleVideo={toggleVideo}
+                        onMuteToggle={handleMuteToggle}
+                        onVolumeChange={handleVolumeChange}
+                        onSeek={handleSeek}
+                        onSkipForward={handleSkipForward}
+                        onSkipBackward={handleSkipBackward}
+                        onFullscreenToggle={handleFullscreenVideo}
+                      />
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
 
-          {/* Auto Scroll Indicator */}
-          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-20 w-4/5 max-w-64">
-            <AutoScrollIndicator
-              totalItems={totalItems}
-              currentIndex={currentIndex}
-              autoScrollEnabled={autoScrollEnabled}
-              autoScrollProgress={autoScrollProgress}
-              onDotClick={handleThumbnailClick}
-            />
-          </div>
-
-          <PriceInfo
-            product={product}
-            focusMode={focusMode}
-            isPlaying={isCurrentVideo ? isPlaying : false}
-            configurationData={configurationData || internalConfigData}
-          />
-
-          <SellerInfoOverlay 
-            seller={seller}
-            onSellerClick={onSellerClick}
-            focusMode={focusMode}
-            isPlaying={isCurrentVideo && isPlaying}
-          />
-
-          {focusMode && showConfiguration && (configurationData || internalConfigData) && (
-            <div className="absolute right-0 top-1/2 transform -translate-y-1/2 z-30">
-              <div className="relative">
-                <button 
-                  onClick={() => {
-                    setShowConfiguration(false);
-                    if (focusMode) {
-                      setFocusMode(false);
-                      onFocusModeChange?.(false);
-                    }
-                  }}
-                  className="absolute -top-2 -right-2 z-40 bg-white rounded-full p-1 shadow-md hover:bg-gray-50"
-                >
-                  <X size={16} className="text-gray-600" />
-                </button>
-                <ConfigurationSummary 
-                  {...(configurationData || internalConfigData)} 
-                  onClose={() => {
-                    setShowConfiguration(false);
-                    if (focusMode) {
-                      setFocusMode(false);
-                      onFocusModeChange?.(false);
-                    }
-                  }}
+              {/* Auto Scroll Indicator */}
+              <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-20 w-4/5 max-w-64">
+                <AutoScrollIndicator
+                  totalItems={totalItems}
+                  currentIndex={currentIndex}
+                  autoScrollEnabled={autoScrollEnabled}
+                  autoScrollProgress={autoScrollProgress}
+                  onDotClick={handleThumbnailClick}
                 />
               </div>
-            </div>
-          )}
-        </Carousel>
-      </div>
 
-      {/* Updated InfoBand with product data */}
-      <InfoBand product={product} />
+              <PriceInfo
+                product={product}
+                focusMode={focusMode}
+                isPlaying={isCurrentVideo ? isPlaying : false}
+                configurationData={configurationData || internalConfigData}
+              />
 
+              <SellerInfoOverlay 
+                seller={seller}
+                onSellerClick={onSellerClick}
+                focusMode={focusMode}
+                isPlaying={isCurrentVideo && isPlaying}
+              />
+
+              {focusMode && showConfiguration && (configurationData || internalConfigData) && (
+                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 z-30">
+                  <div className="relative">
+                    <button 
+                      onClick={() => {
+                        setShowConfiguration(false);
+                        if (focusMode) {
+                          setFocusMode(false);
+                          onFocusModeChange?.(false);
+                        }
+                      }}
+                      className="absolute -top-2 -right-2 z-40 bg-white rounded-full p-1 shadow-md hover:bg-gray-50"
+                    >
+                      <X size={16} className="text-gray-600" />
+                    </button>
+                    <ConfigurationSummary 
+                      {...(configurationData || internalConfigData)} 
+                      onClose={() => {
+                        setShowConfiguration(false);
+                        if (focusMode) {
+                          setFocusMode(false);
+                          onFocusModeChange?.(false);
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </Carousel>
+          </div>
+
+          {/* Updated InfoBand with product data */}
+          <InfoBand product={product} />
+        </>
+      )}
+
+      {/* Tabs Navigation - Always show regardless of active tab */}
       {totalItems > 1 && (
         <div ref={tabsContainerRef} className="w-full bg-white">
           <TabsNavigation
@@ -425,6 +434,7 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
         </div>
       )}
 
+      {/* GalleryTabsContent - Always show regardless of active tab */}
       <GalleryTabsContent
         activeTab={internalActiveTab}
         totalItems={totalItems}
@@ -441,6 +451,7 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
         onReadMore={onReadMore}
       />
 
+      {/* FullscreenGallery - Always available regardless of active tab */}
       <FullscreenGallery
         isVisible={isFullscreenMode}
         currentItem={currentItem}
@@ -477,8 +488,6 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
         onSkipBackward={handleSkipBackward}
         onFullscreenVideo={handleFullscreenVideo}
       />
-
-      {/* REMOVED: Conditional Sticky Checkout Bar - Now handled in GalleryTabsContent */}
     </div>
   );
 });
