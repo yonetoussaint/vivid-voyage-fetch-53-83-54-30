@@ -166,12 +166,12 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
                     type="button"
                     onClick={() => handleDropdownToggle(filter.id)}
                     disabled={isFilterDisabled && isFilterDisabled(filter.id)}
-                    className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap border-0 bg-transparent w-full snap-start ${
+                    className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap border-0 w-full snap-start ${
                       isFilterDisabled && isFilterDisabled(filter.id)
-                        ? 'text-gray-400 cursor-not-allowed'
+                        ? 'text-gray-400 cursor-not-allowed bg-transparent'
                         : selectedFilters[filter.id] && !isAllOption(selectedFilters[filter.id])
-                        ? 'text-orange-600 hover:text-orange-700'
-                        : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                        ? 'text-gray-700 bg-orange-50 hover:bg-orange-100 border border-orange-200'
+                        : 'text-gray-700 hover:bg-gray-50 bg-transparent'
                     }`}
                   >
                     {getFilterIcon(filter.id)}
