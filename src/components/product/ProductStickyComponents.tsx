@@ -1,6 +1,4 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
-import StickyCheckoutBar from '@/components/product/StickyCheckoutBar';
 import SocialSharePanel from "@/components/product/SocialSharePanel";
 
 interface ProductStickyComponentsProps {
@@ -20,51 +18,13 @@ const ProductStickyComponents: React.FC<ProductStickyComponentsProps> = ({
   hideCheckoutBar = false,
   activeTab = 'overview'
 }) => {
-  const navigate = useNavigate();
-
-  const handleViewCart = () => {
-    console.log('🛒 Navigating to cart page from ProductStickyComponents');
-    navigate('/cart');
-  };
-
-  // Debug: Log current state
-  console.log('🔍 ProductStickyComponents - activeTab:', activeTab, 'hideCheckoutBar:', hideCheckoutBar);
-
-  // Only show checkout bar on overview tab AND if not explicitly hidden
-  const shouldShowCheckoutBar = !hideCheckoutBar && activeTab === 'overview';
-
-  console.log('🔍 ProductStickyComponents - shouldShowCheckoutBar:', shouldShowCheckoutBar);
-
-  if (!shouldShowCheckoutBar) {
-    console.log('🚫 StickyCheckoutBar is HIDDEN - either not overview tab or explicitly hidden');
-    return (
-      <SocialSharePanel 
-        open={sharePanelOpen}
-        onOpenChange={setSharePanelOpen}
-        product={product}
-      />
-    );
-  }
-
+  // Only render SocialSharePanel - StickyCheckoutBar is now handled in GalleryTabsContent
   return (
-    <>
-      <StickyCheckoutBar 
-        product={product}
-        onBuyNow={onBuyNow}
-        onViewCart={handleViewCart}
-        selectedColor=""
-        selectedStorage=""
-        selectedNetwork=""
-        selectedCondition=""
-        className=""
-      />
-
-      <SocialSharePanel 
-        open={sharePanelOpen}
-        onOpenChange={setSharePanelOpen}
-        product={product}
-      />
-    </>
+    <SocialSharePanel 
+      open={sharePanelOpen}
+      onOpenChange={setSharePanelOpen}
+      product={product}
+    />
   );
 };
 
