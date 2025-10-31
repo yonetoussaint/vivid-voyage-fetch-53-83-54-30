@@ -478,9 +478,7 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
         onFullscreenVideo={handleFullscreenVideo}
       />
 
-      {/* Conditional Sticky Checkout Bar - Only show on overview tab */}
-     {/* Remove this entire section - it's creating a duplicate checkout bar */}
-
+      {/* REMOVED: Conditional Sticky Checkout Bar - Now handled in GalleryTabsContent */}
     </div>
   );
 });
