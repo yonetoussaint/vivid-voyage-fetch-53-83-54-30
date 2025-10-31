@@ -9,7 +9,7 @@ interface ProductStickyComponentsProps {
   sharePanelOpen: boolean;
   setSharePanelOpen: (open: boolean) => void;
   hideCheckoutBar?: boolean;
-  activeTab?: string; // Add activeTab prop
+  activeTab?: string;
 }
 
 const ProductStickyComponents: React.FC<ProductStickyComponentsProps> = ({
@@ -18,7 +18,7 @@ const ProductStickyComponents: React.FC<ProductStickyComponentsProps> = ({
   sharePanelOpen,
   setSharePanelOpen,
   hideCheckoutBar = false,
-  activeTab = 'overview' // Default to overview
+  activeTab = 'overview'
 }) => {
   const navigate = useNavigate();
 
@@ -27,23 +27,37 @@ const ProductStickyComponents: React.FC<ProductStickyComponentsProps> = ({
     navigate('/cart');
   };
 
+  // Debug: Log current state
+  console.log('🔍 ProductStickyComponents - activeTab:', activeTab, 'hideCheckoutBar:', hideCheckoutBar);
+
   // Only show checkout bar on overview tab AND if not explicitly hidden
   const shouldShowCheckoutBar = !hideCheckoutBar && activeTab === 'overview';
 
+  console.log('🔍 ProductStickyComponents - shouldShowCheckoutBar:', shouldShowCheckoutBar);
+
+  if (!shouldShowCheckoutBar) {
+    console.log('🚫 StickyCheckoutBar is HIDDEN - either not overview tab or explicitly hidden');
+    return (
+      <SocialSharePanel 
+        open={sharePanelOpen}
+        onOpenChange={setSharePanelOpen}
+        product={product}
+      />
+    );
+  }
+
   return (
     <>
-      {shouldShowCheckoutBar && (
-        <StickyCheckoutBar 
-          product={product}
-          onBuyNow={onBuyNow}
-          onViewCart={handleViewCart}
-          selectedColor=""
-          selectedStorage=""
-          selectedNetwork=""
-          selectedCondition=""
-          className=""
-        />
-      )}
+      <StickyCheckoutBar 
+        product={product}
+        onBuyNow={onBuyNow}
+        onViewCart={handleViewCart}
+        selectedColor=""
+        selectedStorage=""
+        selectedNetwork=""
+        selectedCondition=""
+        className=""
+      />
 
       <SocialSharePanel 
         open={sharePanelOpen}
