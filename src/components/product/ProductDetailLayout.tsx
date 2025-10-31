@@ -201,13 +201,15 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
       />
 
       {/* Sticky Components */}
-      <ProductStickyComponents
-        product={product}
-        onBuyNow={buyNow}
-        sharePanelOpen={state.sharePanelOpen}
-        setSharePanelOpen={state.setSharePanelOpen}
-        hideCheckoutBar={false} // Enable checkout bar for cart functionality
-      />
+     
+<ProductStickyComponents
+  product={product}
+  onBuyNow={buyNow}
+  sharePanelOpen={state.sharePanelOpen}
+  setSharePanelOpen={state.setSharePanelOpen}
+  hideCheckoutBar={false}
+  activeTab={state.activeTab} // Add this line to pass the active tab
+/>
     </div>
   );
 };
