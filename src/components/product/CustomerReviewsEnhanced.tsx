@@ -43,14 +43,24 @@ const mockReviews = [
         user_name: "Customer Support",
         comment: "Thank you for your wonderful review! We're thrilled to hear you had such a positive experience with our product and customer service team.",
         created_at: "2024-08-16T09:15:00Z",
-        is_seller: true
+        is_seller: true,
+        replies: [
+          {
+            id: 201,
+            user_name: "John Smith",
+            comment: "Thanks for the quick response!",
+            created_at: "2024-08-16T11:20:00Z",
+            is_seller: false
+          }
+        ]
       },
       {
         id: 102,
         user_name: "Lisa Wong",
         comment: "I had the same experience! Really happy with this purchase.",
         created_at: "2024-08-17T14:30:00Z",
-        is_seller: false
+        is_seller: false,
+        replies: []
       }
     ]
   },
@@ -76,7 +86,8 @@ const mockReviews = [
         user_name: "Customer Support",
         comment: "Thanks for your feedback! If you need any help with setup, please don't hesitate to reach out to our support team.",
         created_at: "2024-08-11T10:45:00Z",
-        is_seller: true
+        is_seller: true,
+        replies: []
       }
     ]
   }
@@ -106,16 +117,37 @@ const CustomerReviews = ({
   const [expandedReviews, setExpandedReviews] = useState(new Set());
   const [expandedReplies, setExpandedReplies] = useState(new Set());
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
-  
-  // Add state for reply functionality ONLY
-  const [replyingToReviewId, setReplyingToReviewId] = useState<number | null>(null);
+
+  // Enhanced state for reply functionality
+  const [replyingTo, setReplyingTo] = useState<{ type: 'review' | 'reply'; reviewId: number; replyId?: number; userName: string } | null>(null);
   const [replyText, setReplyText] = useState('');
 
-  // Get the review being replied to
-  const reviewBeingReplied = useMemo(() => {
-    if (!replyingToReviewId) return null;
-    return reviews.find(review => review.id === replyingToReviewId);
-  }, [replyingToReviewId, reviews]);
+  // Get the item being replied to
+  const itemBeingReplied = useMemo(() => {
+    if (!replyingTo) return null;
+    
+    const review = reviews.find(r => r.id === replyingTo.reviewId);
+    if (!review) return null;
+
+    if (replyingTo.type === 'review') {
+      return { type: 'review' as const, item: review };
+    } else {
+      // Find the reply in the review's replies (including nested replies)
+      const findReply = (replies: any[]): any => {
+        for (const reply of replies) {
+          if (reply.id === replyingTo.replyId) return reply;
+          if (reply.replies && reply.replies.length > 0) {
+            const found = findReply(reply.replies);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+
+      const reply = findReply(review.replies || []);
+      return reply ? { type: 'reply' as const, item: reply } : null;
+    }
+  }, [replyingTo, reviews]);
 
   const toggleReadMore = (reviewId) => {
     const newExpanded = new Set(expandedReviews);
@@ -139,17 +171,36 @@ const CustomerReviews = ({
 
   const handleCommentClick = (reviewId: number) => {
     console.log('Comment button clicked for review:', reviewId);
-    
-    // Set the review we're replying to and clear any previous reply text
-    setReplyingToReviewId(reviewId);
+
+    const review = reviews.find(r => r.id === reviewId);
+    if (!review) return;
+
+    // Set the review we're replying to
+    setReplyingTo({
+      type: 'review',
+      reviewId: reviewId,
+      userName: review.user_name
+    });
     setReplyText('');
-    
+
     // Also expand replies for this review
     const newExpanded = new Set(expandedReplies);
     if (!newExpanded.has(reviewId)) {
       newExpanded.add(reviewId);
       setExpandedReplies(newExpanded);
     }
+  };
+
+  const handleReplyToReply = (reviewId: number, replyId: number, userName: string) => {
+    console.log('Reply button clicked for reply:', replyId, 'in review:', reviewId);
+    
+    setReplyingTo({
+      type: 'reply',
+      reviewId: reviewId,
+      replyId: replyId,
+      userName: userName
+    });
+    setReplyText('');
   };
 
   const handleShareClick = (reviewId: number) => {
@@ -167,20 +218,102 @@ const CustomerReviews = ({
   };
 
   const handleSubmitReply = () => {
-    if (replyText.trim() && replyingToReviewId) {
-      console.log(`Submitting reply to review ${replyingToReviewId}: "${replyText}"`);
-      
+    if (replyText.trim() && replyingTo) {
+      console.log(`Submitting reply to ${replyingTo.type} ${replyingTo.type === 'review' ? replyingTo.reviewId : replyingTo.replyId}: "${replyText}"`);
+
       // Here you would submit the reply to your backend
       // For now, just show an alert and clear the state
-      alert(`Reply submitted: "${replyText}"`);
+      alert(`Reply submitted to ${replyingTo.userName}: "${replyText}"`);
       setReplyText('');
-      setReplyingToReviewId(null);
+      setReplyingTo(null);
     }
   };
 
   const handleCancelReply = () => {
-    setReplyingToReviewId(null);
+    setReplyingTo(null);
     setReplyText('');
+  };
+
+  // Recursive component to render replies and their nested replies
+  const ReplyItem = ({ reply, reviewId, depth = 0 }) => {
+    const hasReplies = reply.replies && reply.replies.length > 0;
+    const [showNestedReplies, setShowNestedReplies] = useState(depth === 0); // Always show first level replies
+
+    return (
+      <div className={`${depth > 0 ? 'ml-6' : ''}`}>
+        <div className="border-l-2 border-gray-200 pl-4">
+          <div className="flex items-start gap-2">
+            <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center text-xs font-semibold" style={{backgroundColor: reply.is_seller ? '#3b82f6' : 'rgba(0,0,0,0.1)', color: reply.is_seller ? 'white' : 'black'}}>
+              {reply.user_name.charAt(0)}
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-sm">{reply.user_name}</span>
+                {reply.is_seller && (
+                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                    Seller
+                  </span>
+                )}
+                <span className="text-xs text-muted-foreground" style={{color: '#666'}}>
+                  {formatDate(reply.created_at)}
+                </span>
+              </div>
+              <div className="text-sm text-foreground mt-1">
+                {reply.comment}
+              </div>
+              
+              {/* TikTok-style Reply Button */}
+              <button
+                onClick={() => handleReplyToReply(reviewId, reply.id, reply.user_name)}
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium mt-1 transition-colors"
+                style={{ 
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                  font: 'inherit'
+                }}
+              >
+                Reply
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Nested Replies */}
+        {hasReplies && (
+          <div className="mt-2">
+            {showNestedReplies ? (
+              <>
+                {reply.replies.map((nestedReply) => (
+                  <ReplyItem 
+                    key={nestedReply.id} 
+                    reply={nestedReply} 
+                    reviewId={reviewId}
+                    depth={depth + 1}
+                  />
+                ))}
+                {depth === 0 && reply.replies.length > 0 && (
+                  <button
+                    onClick={() => setShowNestedReplies(false)}
+                    className="text-blue-600 hover:text-blue-800 text-sm font-medium ml-4 mt-1 transition-colors"
+                  >
+                    Hide replies
+                  </button>
+                )}
+              </>
+            ) : (
+              <button
+                onClick={() => setShowNestedReplies(true)}
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium ml-4 mt-1 transition-colors"
+              >
+                Show {reply.replies.length} repl{reply.replies.length === 1 ? 'y' : 'ies'}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    );
   };
 
   // Calculate review statistics
@@ -460,29 +593,11 @@ const CustomerReviews = ({
                 {review.replies && review.replies.length > 0 && (
                   <div className="mt-4 ml-6 space-y-3">
                     {(expandedReplies.has(review.id) ? review.replies : review.replies.slice(0, 2)).map((reply) => (
-                      <div key={reply.id} className="border-l-2 border-gray-200 pl-4">
-                        <div className="flex items-start gap-2">
-                          <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center text-xs font-semibold" style={{backgroundColor: reply.is_seller ? '#3b82f6' : 'rgba(0,0,0,0.1)', color: reply.is_seller ? 'white' : 'black'}}>
-                            {reply.user_name.charAt(0)}
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-sm">{reply.user_name}</span>
-                              {reply.is_seller && (
-                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                  Seller
-                                </span>
-                              )}
-                              <span className="text-xs text-muted-foreground" style={{color: '#666'}}>
-                                {formatDate(reply.created_at)}
-                              </span>
-                            </div>
-                            <div className="text-sm text-foreground mt-1">
-                              {reply.comment}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                      <ReplyItem 
+                        key={reply.id} 
+                        reply={reply} 
+                        reviewId={review.id}
+                      />
                     ))}
 
                     {review.replies.length > 2 && (
@@ -514,8 +629,8 @@ const CustomerReviews = ({
         </Button>
       )}
 
-      {/* Conditional Reply Bar - Only shown when replying to a review */}
-      {replyingToReviewId && reviewBeingReplied && (
+      {/* Enhanced Conditional Reply Bar - Shows who you're replying to */}
+      {replyingTo && itemBeingReplied && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-3 shadow-lg z-40">
           <div className="max-w-4xl mx-auto">
             {/* User info header */}
@@ -524,14 +639,9 @@ const CustomerReviews = ({
                 <span className="text-sm text-gray-600">Replying to</span>
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center text-xs font-semibold" style={{backgroundColor: 'rgba(0,0,0,0.1)'}}>
-                    {reviewBeingReplied.user_name.charAt(0)}
+                    {replyingTo.userName.charAt(0)}
                   </div>
-                  <span className="text-sm font-medium">{reviewBeingReplied.user_name}</span>
-                  {reviewBeingReplied.verified_purchase && (
-                    <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded">
-                      Verified
-                    </span>
-                  )}
+                  <span className="text-sm font-medium">{replyingTo.userName}</span>
                 </div>
               </div>
               <button 
@@ -541,26 +651,26 @@ const CustomerReviews = ({
                 ×
               </button>
             </div>
-            
+
             {/* Reply input */}
-       <div className="relative">
-  <input
-    ref={(el) => el && !replyText.trim() && el.focus()}
-    type="text"
-    value={replyText}
-    onChange={(e) => setReplyText(e.target.value)}
-    placeholder="Type your reply here..."
-    className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-full bg-gray-50 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-    onKeyPress={(e) => e.key === 'Enter' && handleSubmitReply()}
-  />
-  <button 
-    onClick={handleSubmitReply}
-    disabled={!replyText.trim()}
-    className="absolute right-1 top-1/2 -translate-y-1/2 p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-  >
-    <Send className="w-4 h-4" />
-  </button>
-</div>
+            <div className="relative">
+              <input
+                ref={(el) => el && !replyText.trim() && el.focus()}
+                type="text"
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                placeholder="Type your reply here..."
+                className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-full bg-gray-50 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onKeyPress={(e) => e.key === 'Enter' && handleSubmitReply()}
+              />
+              <button 
+                onClick={handleSubmitReply}
+                disabled={!replyText.trim()}
+                className="absolute right-1 top-1/2 -translate-y-1/2 p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       )}
