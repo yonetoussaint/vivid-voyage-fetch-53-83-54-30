@@ -606,81 +606,83 @@ const CustomerReviews = ({
                     {(expandedReplies.has(review.id) ? review.replies : review.replies.slice(0, 2)).map((reply) => (
                       <div key={reply.id} className="border-l-2 border-gray-200 pl-4">
                         <div className="flex items-start gap-2">
-                          <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center text-xs font-semibold" style={{backgroundColor: reply.is_seller ? '#3b82f6' : 'rgba(0,0,0,0.1)', color: reply.is_seller ? 'white' : 'black'}}>
-                            {reply.user_name.charAt(0)}
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-sm">{reply.user_name}</span>
-                              {reply.is_seller && (
-                                <div className="flex items-center gap-1 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                  {reply.verified_seller && <VerificationBadge size="xs" />}
-                                  <span>Seller</span>
-                                </div>
-                              )}
-                            </div>
+  <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center text-xs font-semibold" style={{backgroundColor: reply.is_seller ? '#3b82f6' : 'rgba(0,0,0,0.1)', color: reply.is_seller ? 'white' : 'black'}}>
+    {reply.user_name.charAt(0)}
+  </div>
+  <div className="flex-1">
+    <div className="flex items-center gap-2">
+      {reply.is_seller && (
+        <>
+          <VerificationBadge size="sm" />
+          <span className="font-bold text-sm">Seller</span>
+        </>
+      )}
+      {!reply.is_seller && (
+        <span className="font-medium text-sm">{reply.user_name}</span>
+      )}
+    </div>
 
-                            {/* Show who this reply is replying to */}
-                            {reply.replying_to && (
-                              <div className="text-xs text-gray-500 mt-1">
-                                Replying to <span className="font-medium">{reply.replying_to}</span>
-                              </div>
-                            )}
+    {/* Show who this reply is replying to */}
+    {reply.replying_to && (
+      <div className="text-xs text-gray-500 mt-1">
+        Replying to <span className="font-medium">{reply.replying_to}</span>
+      </div>
+    )}
 
-                            <div className="text-sm text-foreground mt-1">
-                              {reply.comment}
-                            </div>
+    <div className="text-sm text-foreground mt-1">
+      {reply.comment}
+    </div>
 
-                            {/* TikTok-style Like and Reply Buttons with Date - PERFECT ALIGNMENT */}
-                            <div className="flex items-center gap-4 mt-2">
-                              {/* Heart Button with Counter */}
-                              <button
-                                onClick={() => handleLikeReply(review.id, reply.id)}
-                                className="flex items-center gap-1.5 text-gray-600 hover:text-red-600 text-sm font-medium transition-colors"
-                                style={{ 
-                                  background: 'none',
-                                  border: 'none',
-                                  padding: 0,
-                                  cursor: 'pointer',
-                                  font: 'inherit',
-                                  lineHeight: '1'
-                                }}
-                              >
-                                <Heart 
-                                  className={`w-4 h-4 flex-shrink-0 ${reply.liked ? 'fill-red-600 text-red-600' : ''}`}
-                                />
-                                <span style={{ lineHeight: '1' }}>{reply.likeCount || 0}</span>
-                              </button>
+    {/* TikTok-style Like and Reply Buttons with Date - PERFECT ALIGNMENT */}
+    <div className="flex items-center gap-4 mt-2">
+      {/* Heart Button with Counter */}
+      <button
+        onClick={() => handleLikeReply(review.id, reply.id)}
+        className="flex items-center gap-1.5 text-gray-600 hover:text-red-600 text-sm font-medium transition-colors"
+        style={{ 
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          cursor: 'pointer',
+          font: 'inherit',
+          lineHeight: '1'
+        }}
+      >
+        <Heart 
+          className={`w-4 h-4 flex-shrink-0 ${reply.liked ? 'fill-red-600 text-red-600' : ''}`}
+        />
+        <span style={{ lineHeight: '1' }}>{reply.likeCount || 0}</span>
+      </button>
 
-                              {/* Reply Button */}
-                              <button
-                                onClick={() => handleReplyToReply(review.id, reply.id, reply.user_name)}
-                                className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
-                                style={{ 
-                                  background: 'none',
-                                  border: 'none',
-                                  padding: 0,
-                                  cursor: 'pointer',
-                                  font: 'inherit',
-                                  lineHeight: '1'
-                                }}
-                              >
-                                Reply
-                              </button>
+      {/* Reply Button */}
+      <button
+        onClick={() => handleReplyToReply(review.id, reply.id, reply.user_name)}
+        className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+        style={{ 
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          cursor: 'pointer',
+          font: 'inherit',
+          lineHeight: '1'
+        }}
+      >
+        Reply
+      </button>
 
-                              {/* Date */}
-                              <span 
-                                className="text-sm text-muted-foreground font-medium"
-                                style={{ 
-                                  color: '#666',
-                                  lineHeight: '1'
-                                }}
-                              >
-                                {formatDateForReply(reply.created_at)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
+      {/* Date */}
+      <span 
+        className="text-sm text-muted-foreground font-medium"
+        style={{ 
+          color: '#666',
+          lineHeight: '1'
+        }}
+      >
+        {formatDateForReply(reply.created_at)}
+      </span>
+    </div>
+  </div>
+</div>
                       </div>
                     ))}
 
