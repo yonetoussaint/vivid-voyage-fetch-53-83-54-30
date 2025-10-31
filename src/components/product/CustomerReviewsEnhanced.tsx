@@ -1,14 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Star, 
-  Heart, 
-  MessageCircle,
   Pen,
   Play,
   Send
 } from 'lucide-react';
 import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
 import ProductFilterBar from '@/components/home/ProductFilterBar';
+import { EngagementSection } from '@/components/shared/EngagementSection';
 
 // Mock Button component
 const Button = ({ children, variant, className, onClick }) => (
@@ -39,6 +38,9 @@ const mockReviews = [
     verified_purchase: true,
     helpful_count: 12,
     reply_count: 4,
+    likeCount: 8,
+    commentCount: 4,
+    shareCount: 2,
     media: [
       { type: 'image', url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop', alt: 'Product in use' },
       { type: 'image', url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=300&fit=crop', alt: 'Product packaging' }
@@ -84,6 +86,9 @@ const mockReviews = [
     verified_purchase: true,
     helpful_count: 8,
     reply_count: 1,
+    likeCount: 5,
+    commentCount: 1,
+    shareCount: 0,
     media: [
       { type: 'video', url: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4', thumbnail: 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=400&h=300&fit=crop', alt: 'Product demo video' }
     ],
@@ -107,6 +112,9 @@ const mockReviews = [
     verified_purchase: false,
     helpful_count: 3,
     reply_count: 0,
+    likeCount: 2,
+    commentCount: 0,
+    shareCount: 0,
     media: [],
     replies: []
   },
@@ -120,6 +128,9 @@ const mockReviews = [
     verified_purchase: true,
     helpful_count: 15,
     reply_count: 1,
+    likeCount: 12,
+    commentCount: 1,
+    shareCount: 3,
     media: [
       { type: 'image', url: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop', alt: 'Product close-up' },
       { type: 'image', url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop', alt: 'Product comparison' },
@@ -145,6 +156,9 @@ const mockReviews = [
     verified_purchase: true,
     helpful_count: 5,
     reply_count: 1,
+    likeCount: 3,
+    commentCount: 1,
+    shareCount: 0,
     media: [],
     replies: [
       {
@@ -227,6 +241,32 @@ const CustomerReviews = ({
   const handleRatingCancel = () => {
     setShowRatingPopup(false);
     setSelectedRating(0);
+  };
+
+  const handleCommentClick = (reviewId: number) => {
+    console.log('Comment button clicked for review:', reviewId);
+    // You could implement logic to focus on the comment input or expand replies
+    const newExpanded = new Set(expandedReplies);
+    if (!newExpanded.has(reviewId)) {
+      newExpanded.add(reviewId);
+      setExpandedReplies(newExpanded);
+    }
+  };
+
+  const handleShareClick = (reviewId: number) => {
+    console.log('Share button clicked for review:', reviewId);
+    // Implement share functionality
+    if (navigator.share) {
+      navigator.share({
+        title: 'Product Review',
+        text: 'Check out this product review!',
+        url: window.location.href,
+      });
+    } else {
+      // Fallback for browsers that don't support Web Share API
+      navigator.clipboard.writeText(window.location.href);
+      alert('Review link copied to clipboard!');
+    }
   };
 
   // Calculate review statistics
@@ -504,17 +544,14 @@ const CustomerReviews = ({
                   </div>
                 )}
 
-                {/* Facebook-style Actions */}
-                <div className="flex gap-2 mt-3 px-2">
-                  <button className="flex items-center gap-2 text-muted-foreground hover:bg-muted transition-colors py-2 px-4 rounded-full bg-muted/50" style={{backgroundColor: 'rgba(0,0,0,0.05)', color: '#666'}}>
-                    <Heart className="w-4 h-4" />
-                    <span className="text-sm">{review.helpful_count}</span>
-                  </button>
-                  <button className="flex items-center gap-2 text-muted-foreground hover:bg-muted transition-colors py-2 px-4 rounded-full bg-muted/50" style={{backgroundColor: 'rgba(0,0,0,0.05)', color: '#666'}}>
-                    <MessageCircle className="w-4 h-4" />
-                    <span className="text-sm">{review.reply_count}</span>
-                  </button>
-                </div>
+                {/* Facebook-style Engagement Section (Reused from VendorProductCarousel) */}
+                <EngagementSection
+                  likeCount={review.likeCount || 0}
+                  commentCount={review.commentCount || 0}
+                  shareCount={review.shareCount || 0}
+                  onComment={() => handleCommentClick(review.id)}
+                  onShare={() => handleShareClick(review.id)}
+                />
 
                 {/* Replies Section */}
                 {review.replies && review.replies.length > 0 && (
