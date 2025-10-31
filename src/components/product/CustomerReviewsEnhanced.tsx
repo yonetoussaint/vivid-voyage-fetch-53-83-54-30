@@ -8,6 +8,10 @@ import {
 import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
 import ProductFilterBar from '@/components/home/ProductFilterBar';
 import { EngagementSection } from '@/components/shared/EngagementSection';
+import { 
+  formatDate, 
+  formatDateForReply 
+} from './DateUtils';
 
 // Mock Button component
 const Button = ({ children, variant, className, onClick }) => (
@@ -26,7 +30,7 @@ const mockReviews = [
     user_name: "John Smith",
     rating: 5,
     comment: "This product exceeded my expectations. The quality is outstanding and it arrived quickly. I would definitely recommend this to anyone looking for a reliable solution. The customer service was also very helpful when I had questions about the setup process.",
-    created_at: "2024-08-15T10:30:00Z",
+    created_at: new Date(Date.now() - 2 * 60 * 1000).toISOString(), // 2 minutes ago
     verified_purchase: true,
     helpful_count: 12,
     reply_count: 4,
@@ -42,7 +46,7 @@ const mockReviews = [
         id: 101,
         user_name: "Customer Support",
         comment: "Thank you for your wonderful review! We're thrilled to hear you had such a positive experience with our product and customer service team.",
-        created_at: "2024-08-16T09:15:00Z",
+        created_at: new Date(Date.now() - 30 * 1000).toISOString(), // 30 seconds ago
         is_seller: true,
         likeCount: 3,
         liked: false,
@@ -52,7 +56,7 @@ const mockReviews = [
         id: 102,
         user_name: "Lisa Wong",
         comment: "I had the same experience! Really happy with this purchase.",
-        created_at: "2024-08-17T14:30:00Z",
+        created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
         is_seller: false,
         likeCount: 1,
         liked: false,
@@ -62,7 +66,7 @@ const mockReviews = [
         id: 103,
         user_name: "John Smith",
         comment: "Thanks for the quick response!",
-        created_at: "2024-08-16T11:20:00Z",
+        created_at: new Date(Date.now() - 25 * 60 * 1000).toISOString(), // 25 minutes ago
         is_seller: false,
         likeCount: 0,
         liked: false,
@@ -73,12 +77,32 @@ const mockReviews = [
         id: 104,
         user_name: "Mike Chen",
         comment: "How long did shipping take for you?",
-        created_at: "2024-08-18T10:15:00Z",
+        created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
         is_seller: false,
         likeCount: 2,
         liked: false,
         parent_reply_id: 101,
         replying_to: "Customer Support"
+      },
+      {
+        id: 105,
+        user_name: "Alex Taylor",
+        comment: "Great review! I'm convinced to buy this now.",
+        created_at: "2024-01-15T10:30:00Z", // January 15, 2024 (current year)
+        is_seller: false,
+        likeCount: 1,
+        liked: false,
+        parent_reply_id: null
+      },
+      {
+        id: 106,
+        user_name: "Sarah Kim",
+        comment: "I've had this for over a year and it's still working great!",
+        created_at: "2023-08-20T14:20:00Z", // August 20, 2023 (previous year)
+        is_seller: false,
+        likeCount: 4,
+        liked: false,
+        parent_reply_id: null
       }
     ]
   },
@@ -87,7 +111,7 @@ const mockReviews = [
     user_name: "Sarah Johnson",
     rating: 4,
     comment: "Works as expected. Minor issues with setup but overall satisfied with the purchase.",
-    created_at: "2024-08-10T14:20:00Z",
+    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
     verified_purchase: true,
     helpful_count: 8,
     reply_count: 1,
@@ -102,23 +126,30 @@ const mockReviews = [
         id: 201,
         user_name: "Customer Support",
         comment: "Thanks for your feedback! If you need any help with setup, please don't hesitate to reach out to our support team.",
-        created_at: "2024-08-11T10:45:00Z",
+        created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
         is_seller: true,
         likeCount: 0,
         liked: false,
         parent_reply_id: null
       }
     ]
+  },
+  {
+    id: 3,
+    user_name: "Michael Brown",
+    rating: 5,
+    comment: "Absolutely love this product! Worth every penny.",
+    created_at: "2024-03-10T09:15:00Z", // March 10, 2024 (current year, older date)
+    verified_purchase: true,
+    helpful_count: 15,
+    reply_count: 0,
+    likeCount: 10,
+    commentCount: 0,
+    shareCount: 1,
+    media: [],
+    replies: []
   }
 ];
-
-const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-};
 
 const truncateText = (text, maxLength = 120) => {
   if (text.length <= maxLength) return text;
@@ -632,9 +663,9 @@ const CustomerReviews = ({
                                 </button>
                               </div>
                               
-                              {/* Date on the same line */}
+                              {/* Date on the same line - using compact format for replies */}
                               <span className="text-xs text-muted-foreground ml-auto" style={{color: '#666'}}>
-                                {formatDate(reply.created_at)}
+                                {formatDateForReply(reply.created_at)}
                               </span>
                             </div>
                           </div>
