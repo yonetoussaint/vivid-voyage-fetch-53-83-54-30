@@ -543,23 +543,23 @@ const CustomerReviews = ({
             </div>
             
             {/* Reply input */}
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                placeholder="Type your reply here..."
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-full bg-gray-50 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                onKeyPress={(e) => e.key === 'Enter' && handleSubmitReply()}
-              />
-              <button 
-                onClick={handleSubmitReply}
-                disabled={!replyText.trim()}
-                className="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-sm font-medium"
-              >
-                <Send className="w-4 h-4" />
-              </button>
-            </div>
+           <div className="relative">
+  <input
+    type="text"
+    value={replyText}
+    onChange={(e) => setReplyText(e.target.value)}
+    placeholder="Type your reply here..."
+    className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-full bg-gray-50 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+    onKeyPress={(e) => e.key === 'Enter' && handleSubmitReply()}
+  />
+  <button 
+    onClick={handleSubmitReply}
+    disabled={!replyText.trim()}
+    className="absolute right-1 top-1/2 -translate-y-1/2 p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+  >
+    <Send className="w-4 h-4" />
+  </button>
+</div>
           </div>
         </div>
       )}
