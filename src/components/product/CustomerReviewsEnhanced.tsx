@@ -587,47 +587,48 @@ const CustomerReviews = ({
             </div>
 
             {/* TikTok-style Like and Reply Buttons with Date on the same line */}
-            <div className="flex items-center justify-between mt-2">
-              <div className="flex items-center gap-4">
-                {/* Like Button with Counter */}
-                <button
-                  onClick={() => handleLikeReply(review.id, reply.id)}
-                  className="flex items-center gap-1 text-gray-600 hover:text-red-600 text-sm font-medium transition-colors"
-                  style={{ 
-                    background: 'none',
-                    border: 'none',
-                    padding: 0,
-                    cursor: 'pointer',
-                    font: 'inherit'
-                  }}
-                >
-                  <Heart 
-                    className={`w-4 h-4 ${reply.liked ? 'fill-red-600 text-red-600' : ''}`}
-                  />
-                  <span>{reply.likeCount || 0}</span>
-                </button>
+            {/* TikTok-style Like and Reply Buttons with Date on the same line */}
+<div className="flex items-center w-full mt-2">
+  <div className="flex items-center gap-4">
+    {/* Like Button with Counter */}
+    <button
+      onClick={() => handleLikeReply(review.id, reply.id)}
+      className="flex items-center gap-1 text-gray-600 hover:text-red-600 text-sm font-medium transition-colors"
+      style={{ 
+        background: 'none',
+        border: 'none',
+        padding: 0,
+        cursor: 'pointer',
+        font: 'inherit'
+      }}
+    >
+      <Heart 
+        className={`w-4 h-4 ${reply.liked ? 'fill-red-600 text-red-600' : ''}`}
+      />
+      <span>{reply.likeCount || 0}</span>
+    </button>
 
-                {/* Reply Button */}
-                <button
-                  onClick={() => handleReplyToReply(review.id, reply.id, reply.user_name)}
-                  className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
-                  style={{ 
-                    background: 'none',
-                    border: 'none',
-                    padding: 0,
-                    cursor: 'pointer',
-                    font: 'inherit'
-                  }}
-                >
-                  Reply
-                </button>
-              </div>
-              
-              {/* Date moved to the right, same line as buttons */}
-              <span className="text-xs text-muted-foreground" style={{color: '#666'}}>
-                {formatDate(reply.created_at)}
-              </span>
-            </div>
+    {/* Reply Button */}
+    <button
+      onClick={() => handleReplyToReply(review.id, reply.id, reply.user_name)}
+      className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+      style={{ 
+        background: 'none',
+        border: 'none',
+        padding: 0,
+        cursor: 'pointer',
+        font: 'inherit'
+      }}
+    >
+      Reply
+    </button>
+  </div>
+  
+  {/* Date on the same line but not forced to the far right */}
+  <span className="text-xs text-muted-foreground ml-auto" style={{color: '#666'}}>
+    {formatDate(reply.created_at)}
+  </span>
+</div>
           </div>
         </div>
       </div>
