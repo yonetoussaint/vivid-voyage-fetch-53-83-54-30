@@ -1,27 +1,3 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { LucideIcon } from 'lucide-react';
-
-interface StatItem {
-  value: string | number;
-  label: string;
-  color?: string;
-}
-
-interface ActionButton {
-  label: string;
-  icon?: LucideIcon;
-  onClick: () => void;
-}
-
-interface SellerSummaryHeaderProps {
-  title: string;
-  subtitle: string;
-  stats: StatItem[];
-  actionButton?: ActionButton;
-  showStats?: boolean;
-}
-
 const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
   title,
   subtitle,
@@ -29,10 +5,23 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
   actionButton,
   showStats = true
 }) => {
+  // Map stat counts to grid classes
+  const getGridClass = () => {
+    switch(stats.length) {
+      case 1: return 'grid-cols-1';
+      case 2: return 'grid-cols-2';
+      case 3: return 'grid-cols-3';
+      case 4: return 'grid-cols-4';
+      case 5: return 'grid-cols-5';
+      case 6: return 'grid-cols-6';
+      default: return 'grid-cols-1';
+    }
+  };
+
   return (
     <div className="bg-white">
-      <div className="px-2 py-2"> {/* Changed py-3 to pt-3 to remove bottom padding */}
-        <div className="flex items-center justify-between"> {/* Removed mb-3 */}
+      <div className="px-2 py-2">
+        <div className="flex items-center justify-between">
           <div>
             <h1 className="text-lg font-bold text-foreground">{title}</h1>
             <p className="text-xs text-muted-foreground">{subtitle}</p>
@@ -46,7 +35,7 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
         </div>
 
         {showStats && stats.length > 0 && (
-          <div className={`grid grid-cols-${stats.length} gap-4 mt-3`}> {/* Added mt-3 instead of bottom margin */}
+          <div className={`grid ${getGridClass()} gap-4 mt-3`}>
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
                 <div className={`text-lg font-bold ${stat.color || 'text-blue-600'}`}>
@@ -59,10 +48,7 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
         )}
       </div>
 
-      {/* Remove -mx-2 and let the border align naturally */}
       <div className="border-b"></div>
     </div>
   );
 };
-
-export default SellerSummaryHeader;
