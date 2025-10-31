@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Star, CheckCircle, Image, Calendar, Filter } from 'lucide-react';
 
 interface ProductFilterBarProps {
   filterCategories?: Array<{
@@ -29,6 +29,24 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
   // Helper function to check if an option is an "All" option
   const isAllOption = (option: string) => {
     return option.toLowerCase().startsWith('all');
+  };
+
+  // Get icon for each filter category
+  const getFilterIcon = (filterId: string) => {
+    switch (filterId) {
+      case 'rating':
+        return <Star className="w-4 h-4" />;
+      case 'verified':
+        return <CheckCircle className="w-4 h-4" />;
+      case 'media':
+        return <Image className="w-4 h-4" />;
+      case 'time':
+        return <Calendar className="w-4 h-4" />;
+      case 'sort':
+        return <Filter className="w-4 h-4" />;
+      default:
+        return null;
+    }
   };
 
   const handleDropdownToggle = (filterId: string) => {
@@ -73,6 +91,7 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
                         : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                     }`}
                   >
+                    {getFilterIcon(filter.id)}
                     <span className="truncate">
                       {selectedFilters[filter.id] || filter.label}
                     </span>
