@@ -556,7 +556,7 @@ const CustomerReviews = ({
                   </div>
                 )}
 
-                {/* Replies Section - Flat structure like TikTok */}
+               {/* Replies Section - Flat structure like TikTok */}
 {review.replies && review.replies.length > 0 && (
   <div className="mt-4 ml-6 space-y-3">
     {(expandedReplies.has(review.id) ? review.replies : review.replies.slice(0, 2)).map((reply) => (
@@ -566,21 +566,13 @@ const CustomerReviews = ({
             {reply.user_name.charAt(0)}
           </div>
           <div className="flex-1">
-            {/* Updated header with date moved to right */}
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-2">
-                <span className="font-medium text-sm">{reply.user_name}</span>
-                {reply.is_seller && (
-                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                    Seller
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground" style={{color: '#666'}}>
-                  {formatDate(reply.created_at)}
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-sm">{reply.user_name}</span>
+              {reply.is_seller && (
+                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                  Seller
                 </span>
-              </div>
+              )}
             </div>
 
             {/* Show who this reply is replying to */}
@@ -594,10 +586,10 @@ const CustomerReviews = ({
               {reply.comment}
             </div>
 
-            {/* TikTok-style Like and Reply Buttons (swapped order) */}
+            {/* TikTok-style Like and Reply Buttons with Date on the same line */}
             <div className="flex items-center justify-between mt-2">
               <div className="flex items-center gap-4">
-                {/* Like Button with Counter - Now first */}
+                {/* Like Button with Counter */}
                 <button
                   onClick={() => handleLikeReply(review.id, reply.id)}
                   className="flex items-center gap-1 text-gray-600 hover:text-red-600 text-sm font-medium transition-colors"
@@ -615,7 +607,7 @@ const CustomerReviews = ({
                   <span>{reply.likeCount || 0}</span>
                 </button>
 
-                {/* Reply Button - Now second */}
+                {/* Reply Button */}
                 <button
                   onClick={() => handleReplyToReply(review.id, reply.id, reply.user_name)}
                   className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
@@ -630,6 +622,11 @@ const CustomerReviews = ({
                   Reply
                 </button>
               </div>
+              
+              {/* Date moved to the right, same line as buttons */}
+              <span className="text-xs text-muted-foreground" style={{color: '#666'}}>
+                {formatDate(reply.created_at)}
+              </span>
             </div>
           </div>
         </div>
