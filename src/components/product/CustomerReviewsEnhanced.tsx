@@ -556,101 +556,99 @@ const CustomerReviews = ({
                   </div>
                 )}
 
-                {/* Facebook-style Engagement Section */}
-                <EngagementSection
-                  likeCount={review.likeCount || 0}
-                  commentCount={review.commentCount || 0}
-                  shareCount={review.shareCount || 0}
-                  onComment={() => handleCommentClick(review.id)}
-                  onShare={() => handleShareClick(review.id)}
-                />
-
                 {/* Replies Section - Flat structure like TikTok */}
-                {review.replies && review.replies.length > 0 && (
-                  <div className="mt-4 ml-6 space-y-3">
-                    {(expandedReplies.has(review.id) ? review.replies : review.replies.slice(0, 2)).map((reply) => (
-                      <div key={reply.id} className="border-l-2 border-gray-200 pl-4">
-                        <div className="flex items-start gap-2">
-                          <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center text-xs font-semibold" style={{backgroundColor: reply.is_seller ? '#3b82f6' : 'rgba(0,0,0,0.1)', color: reply.is_seller ? 'white' : 'black'}}>
-                            {reply.user_name.charAt(0)}
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-sm">{reply.user_name}</span>
-                              {reply.is_seller && (
-                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                  Seller
-                                </span>
-                              )}
-                              <span className="text-xs text-muted-foreground" style={{color: '#666'}}>
-                                {formatDate(reply.created_at)}
-                              </span>
-                            </div>
-                            
-                            {/* Show who this reply is replying to */}
-                            {reply.replying_to && (
-                              <div className="text-xs text-gray-500 mt-1">
-                                Replying to <span className="font-medium">{reply.replying_to}</span>
-                              </div>
-                            )}
-                            
-                            <div className="text-sm text-foreground mt-1">
-                              {reply.comment}
-                            </div>
-                            
-                            {/* TikTok-style Like and Reply Buttons (swapped order) */}
-                            <div className="flex items-center gap-4 mt-2">
-                              {/* Like Button with Counter - Now first */}
-                              <button
-                                onClick={() => handleLikeReply(review.id, reply.id)}
-                                className="flex items-center gap-1 text-gray-600 hover:text-red-600 text-sm font-medium transition-colors"
-                                style={{ 
-                                  background: 'none',
-                                  border: 'none',
-                                  padding: 0,
-                                  cursor: 'pointer',
-                                  font: 'inherit'
-                                }}
-                              >
-                                <Heart 
-                                  className={`w-4 h-4 ${reply.liked ? 'fill-red-600 text-red-600' : ''}`}
-                                />
-                                <span>{reply.likeCount || 0}</span>
-                              </button>
-                              
-                              {/* Reply Button - Now second */}
-                              <button
-                                onClick={() => handleReplyToReply(review.id, reply.id, reply.user_name)}
-                                className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
-                                style={{ 
-                                  background: 'none',
-                                  border: 'none',
-                                  padding: 0,
-                                  cursor: 'pointer',
-                                  font: 'inherit'
-                                }}
-                              >
-                                Reply
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-
-                    {review.replies.length > 2 && (
-                      <button
-                        onClick={() => toggleShowMoreReplies(review.id)}
-                        className="text-blue-600 hover:text-blue-800 text-sm font-medium ml-4 transition-colors"
-                      >
-                        {expandedReplies.has(review.id) 
-                          ? 'Show fewer replies' 
-                          : `Show ${review.replies.length - 2} more replies`
-                        }
-                      </button>
-                    )}
-                  </div>
+{review.replies && review.replies.length > 0 && (
+  <div className="mt-4 ml-6 space-y-3">
+    {(expandedReplies.has(review.id) ? review.replies : review.replies.slice(0, 2)).map((reply) => (
+      <div key={reply.id} className="border-l-2 border-gray-200 pl-4">
+        <div className="flex items-start gap-2">
+          <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center text-xs font-semibold" style={{backgroundColor: reply.is_seller ? '#3b82f6' : 'rgba(0,0,0,0.1)', color: reply.is_seller ? 'white' : 'black'}}>
+            {reply.user_name.charAt(0)}
+          </div>
+          <div className="flex-1">
+            {/* Updated header with date moved to right */}
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-sm">{reply.user_name}</span>
+                {reply.is_seller && (
+                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                    Seller
+                  </span>
                 )}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground" style={{color: '#666'}}>
+                  {formatDate(reply.created_at)}
+                </span>
+              </div>
+            </div>
+
+            {/* Show who this reply is replying to */}
+            {reply.replying_to && (
+              <div className="text-xs text-gray-500 mt-1">
+                Replying to <span className="font-medium">{reply.replying_to}</span>
+              </div>
+            )}
+
+            <div className="text-sm text-foreground mt-1">
+              {reply.comment}
+            </div>
+
+            {/* TikTok-style Like and Reply Buttons (swapped order) */}
+            <div className="flex items-center justify-between mt-2">
+              <div className="flex items-center gap-4">
+                {/* Like Button with Counter - Now first */}
+                <button
+                  onClick={() => handleLikeReply(review.id, reply.id)}
+                  className="flex items-center gap-1 text-gray-600 hover:text-red-600 text-sm font-medium transition-colors"
+                  style={{ 
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    font: 'inherit'
+                  }}
+                >
+                  <Heart 
+                    className={`w-4 h-4 ${reply.liked ? 'fill-red-600 text-red-600' : ''}`}
+                  />
+                  <span>{reply.likeCount || 0}</span>
+                </button>
+
+                {/* Reply Button - Now second */}
+                <button
+                  onClick={() => handleReplyToReply(review.id, reply.id, reply.user_name)}
+                  className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                  style={{ 
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    font: 'inherit'
+                  }}
+                >
+                  Reply
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    ))}
+
+    {review.replies.length > 2 && (
+      <button
+        onClick={() => toggleShowMoreReplies(review.id)}
+        className="text-blue-600 hover:text-blue-800 text-sm font-medium ml-4 transition-colors"
+      >
+        {expandedReplies.has(review.id) 
+          ? 'Show fewer replies' 
+          : `Show ${review.replies.length - 2} more replies`
+        }
+      </button>
+    )}
+  </div>
+)}
               </div>
             ))
           )}
