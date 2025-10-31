@@ -626,43 +626,51 @@ const CustomerReviews = ({
                               {reply.comment}
                             </div>
 
-                            {/* TikTok-style Like and Reply Buttons with Date - PERFECT ALIGNMENT FOR ALL THREE */}
+                            {/* TikTok-style Like and Reply Buttons with Date - PERFECT ALIGNMENT */}
                             <div className="flex items-center gap-4 mt-2">
-                              {/* Heart Button with Counter - Aligned with other elements */}
+                              {/* Heart Button with Counter */}
                               <button
                                 onClick={() => handleLikeReply(review.id, reply.id)}
-                                className="flex items-center gap-1 text-gray-600 hover:text-red-600 text-sm font-medium transition-colors h-5"
+                                className="flex items-center gap-1.5 text-gray-600 hover:text-red-600 text-sm font-medium transition-colors"
                                 style={{ 
                                   background: 'none',
                                   border: 'none',
                                   padding: 0,
                                   cursor: 'pointer',
-                                  font: 'inherit'
+                                  font: 'inherit',
+                                  lineHeight: '1'
                                 }}
                               >
                                 <Heart 
-                                  className={`w-4 h-4 ${reply.liked ? 'fill-red-600 text-red-600' : ''}`}
+                                  className={`w-4 h-4 flex-shrink-0 ${reply.liked ? 'fill-red-600 text-red-600' : ''}`}
                                 />
-                                <span className="leading-none">{reply.likeCount || 0}</span>
+                                <span style={{ lineHeight: '1' }}>{reply.likeCount || 0}</span>
                               </button>
 
-                              {/* Reply Button - Aligned with other elements */}
+                              {/* Reply Button */}
                               <button
                                 onClick={() => handleReplyToReply(review.id, reply.id, reply.user_name)}
-                                className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors h-5 flex items-center"
+                                className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
                                 style={{ 
                                   background: 'none',
                                   border: 'none',
                                   padding: 0,
                                   cursor: 'pointer',
-                                  font: 'inherit'
+                                  font: 'inherit',
+                                  lineHeight: '1'
                                 }}
                               >
                                 Reply
                               </button>
 
-                              {/* Date - PERFECTLY ALIGNED with both buttons */}
-                              <span className="text-sm text-muted-foreground font-medium leading-none h-5 flex items-center" style={{color: '#666'}}>
+                              {/* Date */}
+                              <span 
+                                className="text-sm text-muted-foreground font-medium"
+                                style={{ 
+                                  color: '#666',
+                                  lineHeight: '1'
+                                }}
+                              >
                                 {formatDateForReply(reply.created_at)}
                               </span>
                             </div>
