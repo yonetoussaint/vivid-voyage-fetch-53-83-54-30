@@ -25,7 +25,6 @@ const mockReviews = [
     id: 1,
     user_name: "John Smith",
     rating: 5,
-    title: "Excellent product!",
     comment: "This product exceeded my expectations. The quality is outstanding and it arrived quickly. I would definitely recommend this to anyone looking for a reliable solution. The customer service was also very helpful when I had questions about the setup process.",
     created_at: "2024-08-15T10:30:00Z",
     verified_purchase: true,
@@ -67,7 +66,7 @@ const mockReviews = [
         is_seller: false,
         likeCount: 0,
         liked: false,
-        parent_reply_id: 101, // This is a reply to Customer Support's reply
+        parent_reply_id: 101,
         replying_to: "Customer Support"
       },
       {
@@ -78,7 +77,7 @@ const mockReviews = [
         is_seller: false,
         likeCount: 2,
         liked: false,
-        parent_reply_id: 101, // This is also a reply to Customer Support's reply
+        parent_reply_id: 101,
         replying_to: "Customer Support"
       }
     ]
@@ -87,7 +86,6 @@ const mockReviews = [
     id: 2,
     user_name: "Sarah Johnson",
     rating: 4,
-    title: "Good value for money",
     comment: "Works as expected. Minor issues with setup but overall satisfied with the purchase.",
     created_at: "2024-08-10T14:20:00Z",
     verified_purchase: true,
@@ -509,10 +507,7 @@ const CustomerReviews = ({
                   </div>
                 </div>
 
-                {review.title && (
-                  <div className="font-medium text-sm mb-1 px-2">{review.title}</div>
-                )}
-
+                {/* Review Comment Only - No Title */}
                 <div className="text-foreground text-sm mb-2 px-2">
                   <span>
                     {expandedReviews.has(review.id) ? review.comment : truncateText(review.comment || '')}
@@ -603,24 +598,9 @@ const CustomerReviews = ({
                               {reply.comment}
                             </div>
                             
-                            {/* TikTok-style Reply and Like Buttons */}
+                            {/* TikTok-style Like and Reply Buttons (swapped order) */}
                             <div className="flex items-center gap-4 mt-2">
-                              {/* Reply Button */}
-                              <button
-                                onClick={() => handleReplyToReply(review.id, reply.id, reply.user_name)}
-                                className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
-                                style={{ 
-                                  background: 'none',
-                                  border: 'none',
-                                  padding: 0,
-                                  cursor: 'pointer',
-                                  font: 'inherit'
-                                }}
-                              >
-                                Reply
-                              </button>
-                              
-                              {/* Like Button with Counter */}
+                              {/* Like Button with Counter - Now first */}
                               <button
                                 onClick={() => handleLikeReply(review.id, reply.id)}
                                 className="flex items-center gap-1 text-gray-600 hover:text-red-600 text-sm font-medium transition-colors"
@@ -636,6 +616,21 @@ const CustomerReviews = ({
                                   className={`w-4 h-4 ${reply.liked ? 'fill-red-600 text-red-600' : ''}`}
                                 />
                                 <span>{reply.likeCount || 0}</span>
+                              </button>
+                              
+                              {/* Reply Button - Now second */}
+                              <button
+                                onClick={() => handleReplyToReply(review.id, reply.id, reply.user_name)}
+                                className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                                style={{ 
+                                  background: 'none',
+                                  border: 'none',
+                                  padding: 0,
+                                  cursor: 'pointer',
+                                  font: 'inherit'
+                                }}
+                              >
+                                Reply
                               </button>
                             </div>
                           </div>
