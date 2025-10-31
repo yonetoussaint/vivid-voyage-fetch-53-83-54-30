@@ -175,6 +175,20 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
             showFilters={false}
             showSummary={false}
           />
+
+          {/* StickyCheckoutBar - added to variants tab */}
+          <StickyCheckoutBar
+            product={product}
+            onBuyNow={onBuyNow}
+            onViewCart={handleViewCart}
+            selectedColor=""
+            selectedStorage=""
+            selectedNetwork=""
+            selectedCondition=""
+            className=""
+            onImageSelect={onImageSelect}
+            onConfigurationChange={onConfigurationChange}
+          />
         </div>
       )}
 
