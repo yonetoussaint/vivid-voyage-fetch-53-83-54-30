@@ -440,7 +440,7 @@ const CustomerReviews = ({
         showStats={reviewStats.count > 0}
       />
 
-      <div className="-mx-2">
+      
         <ProductFilterBar
           filterCategories={filterCategories}
           selectedFilters={selectedFilters}
@@ -449,7 +449,7 @@ const CustomerReviews = ({
           onClearAll={handleClearAll}
           onFilterButtonClick={handleFilterButtonClick}
         />
-      </div>
+      
 
       <div className="py-4">
         {/* Reviews List */}
