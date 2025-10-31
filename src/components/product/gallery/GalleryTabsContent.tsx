@@ -51,7 +51,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
   const navigate = useNavigate();
   const [isDescriptionPanelOpen, setIsDescriptionPanelOpen] = useState(false);
   const [selectedColorIndex, setSelectedColorIndex] = useState(0);
-  
+
   // Fetch product data for variants
   const { data: productData } = useProduct(productId || '');
 
@@ -73,7 +73,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
   const thumbnailImages = isVariantsTab && productData?.variant_names
     ? productData.variant_names.map((vn: any) => vn.mainImage || vn.image || '')
     : galleryItems.map(item => item.src);
-  
+
   const thumbnailGalleryItems = isVariantsTab && productData?.variant_names
     ? productData.variant_names.map((vn: any) => ({
         type: 'image' as const,
@@ -99,38 +99,36 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
 
   return (
     <div className="mt-2 w-full">
-      {(activeTab === 'overview' || activeTab === 'variants') && (
+      {activeTab === 'overview' && (
         <div className="space-y-3">
           <GalleryThumbnails
             images={thumbnailImages}
-            currentIndex={isVariantsTab ? selectedColorIndex : currentIndex}
-            onThumbnailClick={handleThumbnailClick}
-            isPlaying={!isVariantsTab && isPlaying}
-            videoIndices={isVariantsTab ? [] : videoIndices}
-            galleryItems={thumbnailGalleryItems}
-            variantNames={variantNames}
+            currentIndex={currentIndex}
+            onThumbnailClick={onThumbnailClick}
+            isPlaying={isPlaying}
+            videoIndices={videoIndices}
+            galleryItems={galleryItems}
+            variantNames={[]}
           />
 
           <IPhoneXRListing
             product={product}
             onReadMore={onReadMore}
           />
-          
+
           {productId && (
             <SearchInfoComponent productId={productId} />
           )}
 
           <ProductSpecifications productId={productId} />
 
-          
-<BookGenreFlashDeals
-  className="overflow-hidden"
-  title="Related Products"
-  showSectionHeader={false}
-  showFilters={false}
-  showSummary={false}
-  // Don't pass any icon prop - it will be optional now
-/>
+          <BookGenreFlashDeals
+            className="overflow-hidden"
+            title="Related Products"
+            showSectionHeader={false}
+            showFilters={false}
+            showSummary={false}
+          />
 
           {product && onBuyNow && (
             <StickyCheckoutBar
@@ -146,6 +144,39 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
               onConfigurationChange={onConfigurationChange}
             />
           )}
+        </div>
+      )}
+
+      {activeTab === 'variants' && (
+        <div className="space-y-3">
+          <GalleryThumbnails
+            images={thumbnailImages}
+            currentIndex={selectedColorIndex}
+            onThumbnailClick={handleThumbnailClick}
+            isPlaying={false}
+            videoIndices={[]}
+            galleryItems={thumbnailGalleryItems}
+            variantNames={variantNames}
+          />
+
+          <IPhoneXRListing
+            product={product}
+            onReadMore={onReadMore}
+          />
+
+          {productId && (
+            <SearchInfoComponent productId={productId} />
+          )}
+
+          <ProductSpecifications productId={productId} />
+
+          <BookGenreFlashDeals
+            className="overflow-hidden"
+            title="Related Products"
+            showSectionHeader={false}
+            showFilters={false}
+            showSummary={false}
+          />
         </div>
       )}
 
