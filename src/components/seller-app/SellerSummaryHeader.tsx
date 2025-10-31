@@ -31,11 +31,12 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
 }) => {
   return (
     <div className="bg-white">
-      <div className="px-2 py-3"> {/* Add horizontal padding here */}
-        <div className="flex items-center justify-between mb-3">
+      {/* Reduced vertical padding and removed horizontal padding constraint */}
+      <div className="px-4 py-2"> {/* Changed from py-3 to py-2 */}
+        <div className="flex items-center justify-between mb-2"> {/* Reduced mb-3 to mb-2 */}
           <div>
-            <h1 className="text-lg font-bold text-foreground">{title}</h1>
-            <p className="text-xs text-muted-foreground">{subtitle}</p>
+            <h1 className="text-lg font-bold text-foreground leading-tight">{title}</h1> {/* Added leading-tight */}
+            <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p> {/* Added small top margin */}
           </div>
           {actionButton && (
             <Button size="sm" onClick={actionButton.onClick}>
@@ -46,7 +47,7 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
         </div>
 
         {showStats && stats.length > 0 && (
-          <div className={`grid grid-cols-${stats.length} gap-4`}>
+          <div className={`grid grid-cols-${stats.length} gap-3 mt-2`}> {/* Added mt-2 and reduced gap */}
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
                 <div className={`text-lg font-bold ${stat.color || 'text-blue-600'}`}>
@@ -59,7 +60,6 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
         )}
       </div>
 
-      {/* Remove -mx-2 and let the border align naturally */}
       <div className="border-b"></div>
     </div>
   );
