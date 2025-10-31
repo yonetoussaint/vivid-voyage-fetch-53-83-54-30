@@ -12,7 +12,7 @@ import {
   formatDate, 
   formatDateForReply 
 } from './DateUtils';
-import VerificationBadge from '@/components/shared/VerificationBadge';
+import VerificationBadge from './VerificationBadge';
 
 // Mock Button component
 const Button = ({ children, variant, className, onClick }) => (
@@ -497,6 +497,17 @@ const CustomerReviews = ({
         showStats={reviewStats.count > 0}
       />
 
+      {/* Verified Purchase Notice */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg mx-4 mb-4 p-3">
+        <div className="flex items-center gap-2 text-sm text-blue-800">
+          <VerificationBadge size="sm" />
+          <div>
+            <span className="font-medium">All reviews are from verified purchases</span>
+            <p className="text-blue-700 mt-1">Only customers who purchased this product can leave reviews, ensuring authentic feedback from real users.</p>
+          </div>
+        </div>
+      </div>
+
       <ProductFilterBar
         filterCategories={filterCategories}
         selectedFilters={selectedFilters}
@@ -525,12 +536,6 @@ const CustomerReviews = ({
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{review.user_name}</span>
-                        {review.verified_purchase && (
-                          <div className="flex items-center gap-1 text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                            <VerificationBadge size="xs" />
-                            <span>Verified Purchase</span>
-                          </div>
-                        )}
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground" style={{color: '#666'}}>
                         <div className="flex">
