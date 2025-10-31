@@ -31,7 +31,7 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
 }) => {
   return (
     <div className="bg-white">
-      <div className="py-3">
+      <div className="px-2 py-3"> {/* Add horizontal padding here */}
         <div className="flex items-center justify-between mb-3">
           <div>
             <h1 className="text-lg font-bold text-foreground">{title}</h1>
@@ -59,8 +59,8 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
         )}
       </div>
 
-      {/* Apply -mx-2 only to the bottom border */}
-      <div className="border-b -mx-2"></div>
+      {/* Remove -mx-2 and let the border align naturally */}
+      <div className="border-b"></div>
     </div>
   );
 };
