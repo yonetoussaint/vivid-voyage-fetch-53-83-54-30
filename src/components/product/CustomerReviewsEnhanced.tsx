@@ -635,6 +635,20 @@ const CustomerReviews = ({
                             {reply.replying_to && (
                               <div className="text-xs text-gray-500 mt-1">
                                 Replying to <span className="font-medium">{reply.replying_to}</span>
+                                {/* Check if the person being replied to is a seller */}
+                                {(() => {
+                                  const repliedToUser = review.replies.find(r => r.user_name === reply.replying_to);
+                                  if (repliedToUser && repliedToUser.is_seller) {
+                                    return (
+                                      <div className="flex items-center gap-1 mt-1">
+                                        {repliedToUser.verified_seller && <VerificationBadge size="xs" />}
+                                        <span className="text-xs text-gray-500">•</span>
+                                        <span className="font-bold text-xs text-orange-500">Seller</span>
+                                      </div>
+                                    );
+                                  }
+                                  return null;
+                                })()}
                               </div>
                             )}
 
