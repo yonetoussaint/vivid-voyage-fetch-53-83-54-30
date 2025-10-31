@@ -12,7 +12,7 @@ import {
   formatDate, 
   formatDateForReply 
 } from './DateUtils';
-import VerificationBadge from './VerificationBadge';
+import VerificationBadge from '@/components/shared/VerificationBadge';
 
 // Mock Button component
 const Button = ({ children, variant, className, onClick }) => (
