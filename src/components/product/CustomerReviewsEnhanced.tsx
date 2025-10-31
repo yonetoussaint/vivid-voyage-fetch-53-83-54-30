@@ -111,6 +111,12 @@ const CustomerReviews = ({
   const [replyingToReviewId, setReplyingToReviewId] = useState<number | null>(null);
   const [replyText, setReplyText] = useState('');
 
+  // Get the review being replied to
+  const reviewBeingReplied = useMemo(() => {
+    if (!replyingToReviewId) return null;
+    return reviews.find(review => review.id === replyingToReviewId);
+  }, [replyingToReviewId, reviews]);
+
   const toggleReadMore = (reviewId) => {
     const newExpanded = new Set(expandedReviews);
     if (newExpanded.has(reviewId)) {
@@ -509,18 +515,34 @@ const CustomerReviews = ({
       )}
 
       {/* Conditional Reply Bar - Only shown when replying to a review */}
-      {replyingToReviewId && (
+      {replyingToReviewId && reviewBeingReplied && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 shadow-lg z-40">
           <div className="max-w-4xl mx-auto">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">Write a reply</span>
+            {/* User info header */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Replying to</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center text-xs font-semibold" style={{backgroundColor: 'rgba(0,0,0,0.1)'}}>
+                    {reviewBeingReplied.user_name.charAt(0)}
+                  </div>
+                  <span className="text-sm font-medium">{reviewBeingReplied.user_name}</span>
+                  {reviewBeingReplied.verified_purchase && (
+                    <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded">
+                      Verified
+                    </span>
+                  )}
+                </div>
+              </div>
               <button 
                 onClick={handleCancelReply}
-                className="text-gray-400 hover:text-gray-600 text-sm"
+                className="text-gray-400 hover:text-gray-600 text-lg font-bold"
               >
                 ×
               </button>
             </div>
+            
+            {/* Reply input */}
             <div className="flex items-center gap-2">
               <input
                 type="text"
@@ -535,7 +557,7 @@ const CustomerReviews = ({
                 disabled={!replyText.trim()}
                 className="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-sm font-medium"
               >
-                Reply
+                <Send className="w-4 h-4" />
               </button>
             </div>
           </div>
