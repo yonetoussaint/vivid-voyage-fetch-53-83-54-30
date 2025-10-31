@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Star, 
-  Pen,
   Play,
   Send
 } from 'lucide-react';
@@ -51,20 +50,6 @@ const mockReviews = [
         user_name: "Lisa Wong",
         comment: "I had the same experience! Really happy with this purchase.",
         created_at: "2024-08-17T14:30:00Z",
-        is_seller: false
-      },
-      {
-        id: 103,
-        user_name: "David Kim",
-        comment: "Thanks for the detailed review! This helped me make my decision.",
-        created_at: "2024-08-18T11:20:00Z",
-        is_seller: false
-      },
-      {
-        id: 104,
-        user_name: "Rachel Green",
-        comment: "Same here! Great quality and fast shipping.",
-        created_at: "2024-08-19T16:45:00Z",
         is_seller: false
       }
     ]
@@ -120,18 +105,11 @@ const CustomerReviews = ({
   const [filterRating, setFilterRating] = useState(0);
   const [expandedReviews, setExpandedReviews] = useState(new Set());
   const [expandedReplies, setExpandedReplies] = useState(new Set());
-  const [reviewText, setReviewText] = useState('');
-  const [showRatingPopup, setShowRatingPopup] = useState(false);
-  const [selectedRating, setSelectedRating] = useState(0);
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
   
-  // Add state for reply functionality
+  // Add state for reply functionality ONLY
   const [replyingToReviewId, setReplyingToReviewId] = useState<number | null>(null);
   const [replyText, setReplyText] = useState('');
-
-  const openAuthOverlay = () => {
-    alert('Please sign in to write a review');
-  };
 
   const toggleReadMore = (reviewId) => {
     const newExpanded = new Set(expandedReviews);
@@ -151,24 +129,6 @@ const CustomerReviews = ({
       newExpanded.add(reviewId);
     }
     setExpandedReplies(newExpanded);
-  };
-
-  const handleSubmitReview = () => {
-    if (reviewText.trim()) {
-      setShowRatingPopup(true);
-    }
-  };
-
-  const handleRatingSubmit = () => {
-    alert(`Review submitted: "${reviewText}" with ${selectedRating} stars`);
-    setReviewText('');
-    setSelectedRating(0);
-    setShowRatingPopup(false);
-  };
-
-  const handleRatingCancel = () => {
-    setShowRatingPopup(false);
-    setSelectedRating(0);
   };
 
   const handleCommentClick = (reviewId: number) => {
@@ -203,9 +163,12 @@ const CustomerReviews = ({
   const handleSubmitReply = () => {
     if (replyText.trim() && replyingToReviewId) {
       console.log(`Submitting reply to review ${replyingToReviewId}: "${replyText}"`);
+      
+      // Here you would submit the reply to your backend
+      // For now, just show an alert and clear the state
+      alert(`Reply submitted: "${replyText}"`);
       setReplyText('');
       setReplyingToReviewId(null);
-      alert(`Reply submitted: "${replyText}"`);
     }
   };
 
@@ -232,11 +195,6 @@ const CustomerReviews = ({
     });
     return counts;
   }, [reviews]);
-
-  // Helper function to check if an option is an "All" option
-  const isAllOption = (option: string) => {
-    return option.toLowerCase().startsWith('all');
-  };
 
   const filterCategories = React.useMemo(() => [
     {
@@ -282,7 +240,7 @@ const CustomerReviews = ({
     }));
 
     if (filterId === 'sort') {
-      if (isAllOption(option)) {
+      if (option.toLowerCase().startsWith('all')) {
         setSortBy('recent');
       } else {
         const sortMap: Record<string, string> = {
@@ -295,7 +253,7 @@ const CustomerReviews = ({
         }
       }
     } else if (filterId === 'rating') {
-      if (isAllOption(option)) {
+      if (option.toLowerCase().startsWith('all')) {
         setFilterRating(0);
       } else {
         const ratingMap: Record<string, number> = {
@@ -390,7 +348,7 @@ const CustomerReviews = ({
         onFilterButtonClick={handleFilterButtonClick}
       />
 
-      <div className="py-4 pb-32">
+      <div className="py-4">
         {/* Reviews List */}
         <div className="space-y-4">
           {finalReviews.length === 0 ? (
@@ -552,10 +510,10 @@ const CustomerReviews = ({
 
       {/* Conditional Reply Bar - Only shown when replying to a review */}
       {replyingToReviewId && (
-        <div className="fixed bottom-16 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 shadow-lg z-40">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 shadow-lg z-40">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">Replying to review</span>
+              <span className="text-sm font-medium text-gray-700">Write a reply</span>
               <button 
                 onClick={handleCancelReply}
                 className="text-gray-400 hover:text-gray-600 text-sm"
@@ -568,7 +526,7 @@ const CustomerReviews = ({
                 type="text"
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
-                placeholder="Write your reply..."
+                placeholder="Type your reply here..."
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-full bg-gray-50 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 onKeyPress={(e) => e.key === 'Enter' && handleSubmitReply()}
               />
@@ -578,71 +536,6 @@ const CustomerReviews = ({
                 className="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-sm font-medium"
               >
                 Reply
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Sticky Review Input Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 z-30">
-        <div className="max-w-4xl mx-auto flex items-center gap-3">
-          <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-sm font-semibold">
-            ?
-          </div>
-          <div className="flex-1 relative">
-            <input
-              type="text"
-              value={reviewText}
-              onChange={(e) => setReviewText(e.target.value)}
-              placeholder="Write your review..."
-              className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-full bg-gray-50 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              onKeyPress={(e) => e.key === 'Enter' && handleSubmitReview()}
-            />
-            <button 
-              onClick={handleSubmitReview}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 text-gray-400 hover:text-blue-600 transition-colors"
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Rating Popup */}
-      {showRatingPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4 text-center">Rate this product</h3>
-            <div className="flex justify-center gap-2 mb-6">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star 
-                  key={star}
-                  onClick={() => setSelectedRating(star)}
-                  className={`w-8 h-8 cursor-pointer transition-colors ${
-                    star <= selectedRating 
-                      ? 'text-yellow-500 fill-yellow-500' 
-                      : 'text-gray-300 hover:text-yellow-400'
-                  }`}
-                />
-              ))}
-            </div>
-            <div className="text-sm text-gray-600 mb-4 text-center">
-              "{reviewText}"
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={handleRatingCancel}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleRatingSubmit}
-                disabled={selectedRating === 0}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-              >
-                Submit
               </button>
             </div>
           </div>
