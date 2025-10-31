@@ -31,7 +31,7 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
 }) => {
   return (
     <div className="bg-white">
-      <div className="px-2 pt-3"> {/* Changed py-3 to pt-3 to remove bottom padding */}
+      <div className="px-2 py-2"> {/* Changed py-3 to pt-3 to remove bottom padding */}
         <div className="flex items-center justify-between"> {/* Removed mb-3 */}
           <div>
             <h1 className="text-lg font-bold text-foreground">{title}</h1>
