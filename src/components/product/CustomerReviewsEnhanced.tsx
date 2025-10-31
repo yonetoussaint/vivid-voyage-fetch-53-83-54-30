@@ -492,12 +492,7 @@ const CustomerReviews = ({
     <div className="w-full bg-white">
       <SellerSummaryHeader
         title="Customer Reviews"
-        subtitle={
-          <div className="flex items-center gap-2">
-            <VerificationBadge size="sm" />
-            <span>All {reviewStats.count} review{reviewStats.count !== 1 ? 's' : ''} from verified purchases</span>
-          </div>
-        }
+        subtitle={`All ${reviewStats.count} review${reviewStats.count !== 1 ? 's' : ''} from verified purchases`}
         stats={summaryStats}
         showStats={reviewStats.count > 0}
       />
