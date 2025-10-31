@@ -512,7 +512,7 @@ const CustomerReviews = ({
 
                 {/* Media Section */}
                 {review.media && review.media.length > 0 && (
-                  <div className="mb-1 px-2">
+                  <div className=" px-2">
                     <div className="flex gap-2 overflow-x-auto pb-2">
                       {review.media.map((item, index) => (
                         <div key={index} className="flex-shrink-0 relative">
