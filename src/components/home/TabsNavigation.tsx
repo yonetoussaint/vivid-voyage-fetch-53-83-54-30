@@ -1,6 +1,15 @@
 import { useState, useRef, useEffect } from "react";
 
-export default function TabsNavigation({ tabs, activeTab, onTabChange, className = "", style = {}, edgeToEdge = false, isLoading = false }) {
+export default function TabsNavigation({ 
+  tabs, 
+  activeTab, 
+  onTabChange, 
+  className = "", 
+  style = {}, 
+  edgeToEdge = false, 
+  isLoading = false,
+  variant = "underline" // New prop: "underline" | "pills"
+}) {
   const tabRefs = useRef([]);
   const scrollContainerRef = useRef(null);
   const [underlineWidth, setUnderlineWidth] = useState(0);
@@ -10,7 +19,6 @@ export default function TabsNavigation({ tabs, activeTab, onTabChange, className
   // Initialize underline width on mount
   useEffect(() => {
     if (tabs.length > 0 && !activeTab) {
-      // If no activeTab is set, use the first tab
       const firstTab = tabs[0];
       if (firstTab) {
         onTabChange(firstTab.id);
@@ -29,15 +37,11 @@ export default function TabsNavigation({ tabs, activeTab, onTabChange, className
     const containerElement = scrollContainerRef.current;
 
     if (activeTabElement && containerElement) {
-      // Get the text span element
-      const textSpan = activeTabElement.querySelector('span:last-child'); // Target the label span specifically
+      const textSpan = activeTabElement.querySelector('span:last-child');
 
       if (textSpan) {
-        // Calculate underline width based on text content
         const textWidth = textSpan.offsetWidth;
-        const newWidth = Math.max(textWidth * 0.8, 20); // Minimum 20px width, 80% of text width
-
-        // Calculate position relative to the button center 
+        const newWidth = Math.max(textWidth * 0.8, 20);
         const buttonRect = activeTabElement.getBoundingClientRect();
         const containerRect = containerElement.getBoundingClientRect();
         const relativeLeft = buttonRect.left - containerRect.left + containerElement.scrollLeft;
@@ -52,11 +56,10 @@ export default function TabsNavigation({ tabs, activeTab, onTabChange, className
 
   // Update underline when active tab changes
   useEffect(() => {
-    if (activeTab) {
-      // Use setTimeout to ensure DOM is updated
+    if (activeTab && variant === "underline") {
       setTimeout(updateUnderline, 0);
     }
-  }, [activeTab, tabs]);
+  }, [activeTab, tabs, variant]);
 
   // Handle tab scrolling - only auto-scroll when shouldAutoScroll is true
   useEffect(() => {
@@ -67,8 +70,7 @@ export default function TabsNavigation({ tabs, activeTab, onTabChange, className
     const containerElement = scrollContainerRef.current;
 
     if (activeTabElement && containerElement) {
-      // Scroll to position the active tab at the left edge (with some padding)
-      const paddingLeft = edgeToEdge ? 16 : 8; // Account for container padding
+      const paddingLeft = edgeToEdge ? 16 : 8;
       const newScrollLeft = activeTabElement.offsetLeft - paddingLeft;
 
       containerElement.scrollTo({
@@ -77,26 +79,25 @@ export default function TabsNavigation({ tabs, activeTab, onTabChange, className
       });
     }
 
-    // Reset auto-scroll after a delay to allow manual scrolling
     const timer = setTimeout(() => setShouldAutoScroll(false), 500);
     return () => clearTimeout(timer);
   }, [activeTab, tabs, edgeToEdge, shouldAutoScroll]);
 
   // Set initial underline when component mounts
   useEffect(() => {
-    if (activeTab && tabs.length > 0) {
-      setTimeout(updateUnderline, 100); // Small delay to ensure fonts are loaded
+    if (activeTab && tabs.length > 0 && variant === "underline") {
+      setTimeout(updateUnderline, 100);
     }
   }, []);
 
   const handleTabClick = (id) => {
-    setShouldAutoScroll(true); // Enable auto-scroll when tab is clicked
+    setShouldAutoScroll(true);
     onTabChange(id);
   };
 
-  // Default style (original)
+  // Default style
   const defaultStyle = {
-    maxHeight: '40px',
+    maxHeight: variant === "pills" ? '48px' : '40px',
     opacity: 1,
     backgroundColor: 'white',
   };
@@ -120,7 +121,7 @@ export default function TabsNavigation({ tabs, activeTab, onTabChange, className
               WebkitOverflowScrolling: 'touch'
             }}
           >
-            <div className="flex items-center space-x-7">
+            <div className={`flex items-center ${variant === "pills" ? "space-x-2" : "space-x-7"}`}>
               {tabs.map((tab, index) => {
                 const widths = ['w-16', 'w-20', 'w-16', 'w-20', 'w-20', 'w-16', 'w-20', 'w-16', 'w-20'];
                 const width = widths[index] || 'w-16';
@@ -138,54 +139,70 @@ export default function TabsNavigation({ tabs, activeTab, onTabChange, className
   }
 
   return (
-  <div
-    className={`relative w-full transition-all duration-700 overflow-hidden ${className}`}
-    style={finalStyle}
-  >
-    {/* Tabs List */}
-    <div className="h-full w-full">
-      <div
-        ref={scrollContainerRef}
-        className={`flex items-center overflow-x-auto no-scrollbar h-full w-full relative ${edgeToEdge ? 'px-2' : 'px-2'}`}
-        onScroll={() => setShouldAutoScroll(false)} // Disable auto-scroll when user manually scrolls
-        style={{ 
-          scrollbarWidth: 'none', 
-          msOverflowStyle: 'none',
-          WebkitOverflowScrolling: 'touch'
-        }}
-      >
-        <div className="flex items-center space-x-7"> {/* Added gap container */}
-          {tabs.map((tab, index) => (
-            <button
-              key={tab.id}
-              ref={el => (tabRefs.current[index] = el)}
-              onClick={() => handleTabClick(tab.id)}
-              aria-pressed={activeTab === tab.id}
-              className={`relative flex items-center py-2 text-sm font-medium whitespace-nowrap transition-all duration-200 ease-in-out outline-none flex-shrink-0 ${
-                activeTab === tab.id
-                  ? 'text-red-600'
-                  : 'text-gray-700 hover:text-red-600'
-              }`}
-            >
-              {tab.icon && <span className="mr-1">{tab.icon}</span>}
-              <span className="font-medium">{tab.label}</span>
-            </button>
-          ))}
-        </div>
+    <div
+      className={`relative w-full transition-all duration-700 overflow-hidden ${className}`}
+      style={finalStyle}
+    >
+      {/* Tabs List */}
+      <div className="h-full w-full">
+        <div
+          ref={scrollContainerRef}
+          className={`flex items-center overflow-x-auto no-scrollbar h-full w-full relative ${
+            edgeToEdge ? 'px-2' : 'px-2'
+          } ${variant === "pills" ? 'py-1' : ''}`}
+          onScroll={() => setShouldAutoScroll(false)}
+          style={{ 
+            scrollbarWidth: 'none', 
+            msOverflowStyle: 'none',
+            WebkitOverflowScrolling: 'touch'
+          }}
+        >
+          <div className={`flex items-center ${variant === "pills" ? "space-x-2" : "space-x-7"}`}>
+            {tabs.map((tab, index) => (
+              <button
+                key={tab.id}
+                ref={el => (tabRefs.current[index] = el)}
+                onClick={() => handleTabClick(tab.id)}
+                aria-pressed={activeTab === tab.id}
+                className={`
+                  relative flex items-center py-2 text-sm font-medium whitespace-nowrap transition-all duration-200 ease-in-out outline-none flex-shrink-0
+                  ${
+                    variant === "pills" 
+                      ? `
+                          px-3 rounded-full border
+                          ${activeTab === tab.id
+                            ? 'bg-pink-100 border-pink-200 text-pink-700 shadow-sm'
+                            : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                          }
+                        `
+                      : `
+                          ${activeTab === tab.id
+                            ? 'text-red-600'
+                            : 'text-gray-700 hover:text-red-600'
+                          }
+                        `
+                  }
+                `}
+              >
+                {tab.icon && <span className="mr-1">{tab.icon}</span>}
+                <span className="font-medium">{tab.label}</span>
+              </button>
+            ))}
+          </div>
 
-        {/* Animated underline - positioned absolutely within the scroll container */}
-        {activeTab && (
-          <div
-            className="absolute bottom-0 h-1 bg-gradient-to-r from-red-500 to-red-600 rounded-full transition-all duration-300 ease-out"
-            style={{ 
-              width: underlineWidth,
-              left: underlineLeft,
-              transform: 'translateZ(0)', // Hardware acceleration
-            }}
-          />
-        )}
+          {/* Animated underline - only for underline variant */}
+          {activeTab && variant === "underline" && (
+            <div
+              className="absolute bottom-0 h-1 bg-gradient-to-r from-red-500 to-red-600 rounded-full transition-all duration-300 ease-out"
+              style={{ 
+                width: underlineWidth,
+                left: underlineLeft,
+                transform: 'translateZ(0)',
+              }}
+            />
+          )}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
 }
