@@ -342,13 +342,13 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
               className="w-full bg-black text-white relative z-30"
             >
               <SellerInfoSection
-                sellerData={sellerData}
-                sellerLoading={sellerLoading}
-                getSellerLogoUrl={getSellerLogoUrl}
-                onBecomeSeller={handleBecomeSeller}
-                onBack={handleBackClick}
-                showActionButtons={showActionButtons}
-              />
+  sellerData={sellerData}
+  sellerLoading={loading}
+  getSellerLogoUrl={getLogoUrl}
+  onBecomeSeller={handleBecomeSeller}
+  onBack={handleBack}
+  isOwnProfile={true} // or false based on your logic
+/>
             </div>
           )}
 
