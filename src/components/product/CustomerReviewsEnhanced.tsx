@@ -14,7 +14,7 @@ import {
 } from './DateUtils';
 import VerificationBadge from '@/components/shared/VerificationBadge';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Mock Button component
 const Button = ({ children, variant, className, onClick }) => (
@@ -33,7 +33,7 @@ const truncateText = (text, maxLength = 120) => {
 };
 
 const CustomerReviews = ({ 
-  productId = "123", 
+  productId, 
   limit = null 
 }) => {
   const [sortBy, setSortBy] = useState('recent');
@@ -55,85 +55,142 @@ const CustomerReviews = ({
     try {
       setIsLoading(true);
       setError(null);
+      
+      console.log('Fetching reviews for product:', productId);
 
-      // Fetch reviews with user information
+      if (!productId) {
+        setError('Product ID is required');
+        setIsLoading(false);
+        return;
+      }
+
+      // First, check if product exists
+      const { data: productData, error: productError } = await supabase
+        .from('products')
+        .select('id, name')
+        .eq('id', productId)
+        .single();
+
+      if (productError) {
+        console.error('Product not found:', productError);
+        setError('Product not found');
+        setIsLoading(false);
+        return;
+      }
+
+      console.log('Product found:', productData);
+
+      // Fetch reviews
       const { data: reviewsData, error: reviewsError } = await supabase
         .from('reviews')
-        .select(`
-          *,
-          profiles:user_id (
-            username,
-            full_name,
-            profile_picture,
-            avatar_url
-          )
-        `)
+        .select('*')
         .eq('product_id', productId)
         .order('created_at', { ascending: false });
 
-      if (reviewsError) throw reviewsError;
+      if (reviewsError) {
+        console.error('Error fetching reviews:', reviewsError);
+        throw reviewsError;
+      }
+
+      console.log('Reviews found:', reviewsData?.length || 0);
+
+      // If no reviews found, set empty array and return
+      if (!reviewsData || reviewsData.length === 0) {
+        console.log('No reviews found for this product');
+        setLocalReviews([]);
+        setIsLoading(false);
+        return;
+      }
 
       // Fetch all data in parallel for better performance
       const reviewsWithDetails = await Promise.all(
-        (reviewsData || []).map(async (review) => {
-          // Fetch media for this review
-          const { data: mediaData } = await supabase
-            .from('review_media')
-            .select('*')
-            .eq('review_id', review.id);
+        reviewsData.map(async (review) => {
+          try {
+            // Fetch media for this review
+            const { data: mediaData, error: mediaError } = await supabase
+              .from('review_media')
+              .select('*')
+              .eq('review_id', review.id);
 
-          // Fetch replies for this review
-          const { data: repliesData } = await supabase
-            .from('reviews_replies')
-            .select('*')
-            .eq('review_id', review.id)
-            .order('created_at', { ascending: true });
+            if (mediaError) {
+              console.error('Error fetching media for review', review.id, mediaError);
+            }
 
-          // Format media
-          const media = (mediaData || []).map(mediaItem => ({
-            type: mediaItem.media_type,
-            url: mediaItem.url,
-            thumbnail: mediaItem.thumbnail_url,
-            alt: mediaItem.alt_text || 'Review media'
-          }));
+            // Fetch replies for this review
+            const { data: repliesData, error: repliesError } = await supabase
+              .from('reviews_replies')
+              .select('*')
+              .eq('review_id', review.id)
+              .order('created_at', { ascending: true });
 
-          // Format replies
-          const replies = (repliesData || []).map(reply => ({
-            id: reply.id,
-            user_name: reply.user_name,
-            comment: reply.comment,
-            created_at: reply.created_at,
-            is_seller: reply.is_seller,
-            verified_seller: reply.verified_seller,
-            likeCount: reply.like_count || 0,
-            liked: reply.liked || false,
-            parent_reply_id: reply.parent_reply_id,
-            replying_to: reply.replying_to
-          }));
+            if (repliesError) {
+              console.error('Error fetching replies for review', review.id, repliesError);
+            }
 
-          return {
-            id: review.id,
-            user_name: review.profiles?.full_name || review.profiles?.username || review.user_name || 'Anonymous',
-            rating: review.rating,
-            comment: review.comment,
-            created_at: review.created_at,
-            verified_purchase: review.verified_purchase || false,
-            helpful_count: review.helpful_count || 0,
-            reply_count: replies.length,
-            likeCount: 0, // You might want to add like_count to reviews table
-            commentCount: replies.length,
-            shareCount: 0,
-            media: media,
-            replies: replies,
-            user_avatar: review.profiles?.profile_picture || review.profiles?.avatar_url
-          };
+            // Format media
+            const media = (mediaData || []).map(mediaItem => ({
+              type: mediaItem.media_type,
+              url: mediaItem.url,
+              thumbnail: mediaItem.thumbnail_url,
+              alt: mediaItem.alt_text || 'Review media'
+            }));
+
+            // Format replies
+            const replies = (repliesData || []).map(reply => ({
+              id: reply.id,
+              user_name: reply.user_name,
+              comment: reply.comment,
+              created_at: reply.created_at,
+              is_seller: reply.is_seller,
+              verified_seller: reply.verified_seller,
+              likeCount: reply.like_count || 0,
+              liked: reply.liked || false,
+              parent_reply_id: reply.parent_reply_id,
+              replying_to: reply.replying_to
+            }));
+
+            return {
+              id: review.id,
+              user_name: review.user_name || 'Anonymous',
+              rating: review.rating,
+              comment: review.comment,
+              created_at: review.created_at,
+              verified_purchase: review.verified_purchase || false,
+              helpful_count: review.helpful_count || 0,
+              reply_count: replies.length,
+              likeCount: review.like_count || 0,
+              commentCount: replies.length,
+              shareCount: review.share_count || 0,
+              media: media,
+              replies: replies
+            };
+          } catch (err) {
+            console.error('Error processing review', review.id, err);
+            // Return basic review data even if media/replies fail
+            return {
+              id: review.id,
+              user_name: review.user_name || 'Anonymous',
+              rating: review.rating,
+              comment: review.comment,
+              created_at: review.created_at,
+              verified_purchase: review.verified_purchase || false,
+              helpful_count: review.helpful_count || 0,
+              reply_count: 0,
+              likeCount: review.like_count || 0,
+              commentCount: 0,
+              shareCount: review.share_count || 0,
+              media: [],
+              replies: []
+            };
+          }
         })
       );
 
+      console.log('Processed reviews:', reviewsWithDetails.length);
       setLocalReviews(reviewsWithDetails);
     } catch (err) {
-      console.error('Error fetching reviews:', err);
-      setError('Failed to load reviews');
+      console.error('Error in fetchReviews:', err);
+      setError(err.message || 'Failed to load reviews');
     } finally {
       setIsLoading(false);
     }
@@ -142,8 +199,14 @@ const CustomerReviews = ({
   useEffect(() => {
     if (productId) {
       fetchReviews();
+    } else {
+      setIsLoading(false);
+      setError('Product ID is required');
     }
   }, [productId]);
+
+  // Rest of the component remains the same...
+  // [Keep all the other functions: handleLikeReply, toggleReadMore, handleCommentClick, etc.]
 
   // Function to handle liking a reply
   const handleLikeReply = async (reviewId: string, replyId: string) => {
@@ -196,21 +259,6 @@ const CustomerReviews = ({
       fetchReviews();
     }
   };
-
-  // Get the item being replied to
-  const itemBeingReplied = useMemo(() => {
-    if (!replyingTo) return null;
-
-    const review = localReviews.find(r => r.id === replyingTo.reviewId);
-    if (!review) return null;
-
-    if (replyingTo.type === 'review') {
-      return { type: 'review' as const, item: review };
-    } else {
-      const reply = review.replies.find(r => r.id === replyingTo.replyId);
-      return reply ? { type: 'reply' as const, item: reply } : null;
-    }
-  }, [replyingTo, localReviews]);
 
   const toggleReadMore = (reviewId) => {
     const newExpanded = new Set(expandedReviews);
@@ -586,8 +634,8 @@ const CustomerReviews = ({
         <div className="space-y-4">
           {finalReviews.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-muted-foreground" style={{color: '#666'}}>No reviews found.</p>
-              <p className="text-sm text-muted-foreground mt-1" style={{color: '#666'}}>Try adjusting your filters.</p>
+              <p className="text-muted-foreground" style={{color: '#666'}}>No reviews found for this product.</p>
+              <p className="text-sm text-muted-foreground mt-1" style={{color: '#666'}}>Be the first to leave a review!</p>
             </div>
           ) : (
             finalReviews.map((review) => (
@@ -595,15 +643,7 @@ const CustomerReviews = ({
                 <div className="flex items-start justify-between mb-2 px-2">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center text-sm font-semibold" style={{backgroundColor: 'rgba(0,0,0,0.1)'}}>
-                      {review.user_avatar ? (
-                        <img 
-                          src={review.user_avatar} 
-                          alt={review.user_name}
-                          className="w-8 h-8 rounded-full object-cover"
-                        />
-                      ) : (
-                        review.user_name.charAt(0)
-                      )}
+                      {review.user_name.charAt(0)}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
