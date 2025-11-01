@@ -378,7 +378,7 @@ const CustomerReviews = ({
   {
     id: 'sort',
     label: 'Sort By',
-    options: ['Most Recent', 'Oldest First', 'Most Liked']
+    options: ['All Sorts','Most Recent', 'Oldest First', 'Most Liked']
   }
 ], []);
 
