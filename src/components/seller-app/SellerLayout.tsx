@@ -1,5 +1,3 @@
-// In SellerLayout.tsx - Add the necessary state and imports
-
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -12,7 +10,7 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import TabsNavigation from '@/components/home/TabsNavigation';
 import SellerInfoSection from './SellerInfoSection';
-import ProductHeader from '@/components/product/ProductHeader';
+import ProductHeader from './ProductHeader';
 
 interface SellerLayoutProps {
   children: React.ReactNode;
@@ -37,19 +35,14 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const headerRef = useRef<HTMLDivElement>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
   const sellerInfoRef = useRef<HTMLDivElement>(null);
-
-  // State for ProductHeaderSection - similar to ProductDetailLayout
-  const [activeSection, setActiveSection] = useState('overview');
-  const [focusMode, setFocusMode] = useState(false);
-  const [showHeaderInFocus, setShowHeaderInFocus] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [totalImages, setTotalImages] = useState(0);
-  const [headerHeight, setHeaderHeight] = useState<number>(0);
+  const scrollObserverRef = useRef<HTMLDivElement>(null);
 
   const [isTabsSticky, setIsTabsSticky] = useState(false);
   const [tabsHeight, setTabsHeight] = useState(0);
+  const [headerHeight, setHeaderHeight] = useState<number>(0);
   const [sellerInfoHeight, setSellerInfoHeight] = useState<number>(0);
   const [isTransparentHeader, setIsTransparentHeader] = useState(true);
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   const handleBackClick = () => {
     navigate('/profile');
@@ -60,31 +53,24 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     navigate('/seller-onboarding');
   };
 
-  const handleShareClick = async () => {
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: sellerData?.business_name || 'Seller Profile',
-          url: window.location.href,
-        });
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        // Show toast notification
-        console.log('Link copied to clipboard');
-      }
-    } catch (error) {
-      console.error('Error sharing:', error);
+  const handleShareClick = () => {
+    console.log('Share seller profile');
+    // Implement share functionality
+    if (navigator.share) {
+      navigator.share({
+        title: sellerData?.business_name || 'Seller Profile',
+        url: window.location.href,
+      });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      // Show toast notification
     }
   };
 
-  const handleLinkClick = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      // Show toast notification
-      console.log('Link copied to clipboard');
-    } catch (error) {
-      console.error('Error copying link:', error);
-    }
+  const handleLinkClick = () => {
+    console.log('Link button clicked');
+    navigator.clipboard.writeText(window.location.href);
+    // Show toast notification
   };
 
   // Determine if we're in dashboard, pickup station, or public seller page
@@ -199,17 +185,42 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     return data.publicUrl;
   });
 
-  // Handler for tab change in header
-  const handleHeaderTabChange = (section: string) => {
-    setActiveSection(section);
-    // You can add scroll logic here if needed
-  };
+  // Define action buttons for ProductHeader
+  const actionButtons = [
+    {
+      Icon: ExternalLink,
+      onClick: handleLinkClick,
+      active: false,
+      count: undefined
+    },
+    {
+      Icon: Share,
+      onClick: handleShareClick,
+      active: false,
+      count: undefined
+    }
+  ];
 
-  // Handler for product details click
-  const handleProductDetailsClick = () => {
-    // Not used in seller layout, but required by ProductHeaderSection
-    console.log('Product details clicked');
-  };
+  // Intersection Observer for scroll progress
+  useEffect(() => {
+    if (!scrollObserverRef.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const progress = 1 - entry.intersectionRatio;
+        setScrollProgress(progress);
+        setIsTransparentHeader(progress < 0.3); // Becomes opaque after 30% scroll
+      },
+      {
+        threshold: Array.from({ length: 101 }, (_, i) => i * 0.01),
+        rootMargin: '-50px 0px 0px 0px' // Start tracking 50px from top
+      }
+    );
+
+    observer.observe(scrollObserverRef.current);
+
+    return () => observer.disconnect();
+  }, []);
 
   // Measure heights with ResizeObserver
   useLayoutEffect(() => {
@@ -282,29 +293,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     };
   }, [isTabsSticky, isProductsTab, sellerInfoHeight, headerHeight]);
 
-  // Handle header transparency for products tab
-  useEffect(() => {
-    if (!isProductsTab) {
-      setIsTransparentHeader(false);
-      return;
-    }
-
-    if (!headerHeight || !sellerInfoHeight) return;
-
-    const handleScroll = () => {
-      const scrollY = window.scrollY;
-      const transparencyThreshold = sellerInfoHeight * 0.3;
-      setIsTransparentHeader(scrollY < transparencyThreshold);
-    };
-
-    handleScroll();
-    window.addEventListener('scroll', handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [isProductsTab, headerHeight, sellerInfoHeight]);
-
   // Handle redirects for empty paths
   useEffect(() => {
     if (location.pathname === '/seller-dashboard' || 
@@ -318,18 +306,29 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header - Using ProductHeaderSection exactly like in ProductDetailLayout */}
-      <div ref={headerRef} className="relative z-50">
-        <ProductHeaderSection
-          ref={headerRef}
-          activeSection={activeSection}
-          onTabChange={handleHeaderTabChange}
-          focusMode={focusMode}
-          showHeaderInFocus={showHeaderInFocus}
-          onProductDetailsClick={handleProductDetailsClick}
-          currentImageIndex={currentImageIndex}
-          totalImages={totalImages}
-          onShareClick={handleShareClick}
+      {/* Scroll Observer Element - placed at the top to track scroll progress */}
+      <div 
+        ref={scrollObserverRef}
+        className="absolute top-0 left-0 w-full h-1 pointer-events-none"
+        style={{ top: `${headerHeight}px` }}
+      />
+
+      {/* Header - Full width, fixed positioning */}
+      <div 
+        ref={headerRef} 
+        className="fixed top-0 left-0 right-0 z-40"
+      >
+        {/* Remove the inner container that was limiting width */}
+        <ProductHeader
+          showCloseIcon={false}
+          onCloseClick={handleBackClick}
+          actionButtons={actionButtons}
+          sellerMode={false} // Disable seller mode to avoid avatar and stats
+          stickyMode={true}
+          forceScrolledState={scrollProgress > 0.3} // Force scrolled state after 30% progress
+          customScrollProgress={scrollProgress}
+          inPanel={false}
+          showDetailsButton={false}
         />
       </div>
 
@@ -353,10 +352,8 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
             </div>
           )}
 
-          {/* Spacer for non-products tabs */}
-          {!isProductsTab && (
-            <div style={{ height: `${headerHeight}px` }} />
-          )}
+          {/* Spacer for header height */}
+          <div style={{ height: `${headerHeight}px` }} />
 
           {/* Tabs Navigation */}
           <nav
