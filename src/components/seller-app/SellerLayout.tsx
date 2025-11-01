@@ -343,11 +343,12 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
             >
               <SellerInfoSection
                 sellerData={sellerData}
-                sellerLoading={sellerLoading} // Use the sellerLoading from useQuery
+                sellerLoading={sellerLoading}
                 getSellerLogoUrl={getSellerLogoUrl}
                 onBecomeSeller={handleBecomeSeller}
-                onBack={handleBack}
-                isOwnProfile={user?.id === sellerData?.user_id} // Fixed: use user_id from sellerData
+                onBack={handleBackClick} {/* Fixed: use handleBackClick instead of handleBack */}
+                isOwnProfile={user?.id === sellerData?.user_id}
+                showActionButtons={showActionButtons}
               />
             </div>
           )}
