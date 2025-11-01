@@ -8,7 +8,8 @@ export default function TabsNavigation({
   style = {}, 
   edgeToEdge = false, 
   isLoading = false,
-  variant = "underline" // "underline" | "pills"
+  variant = "underline", // "underline" | "pills"
+  showTopBorder = false // New prop for conditional top border
 }) {
   const tabRefs = useRef([]);
   const scrollContainerRef = useRef(null);
@@ -40,7 +41,7 @@ export default function TabsNavigation({
 
     if (activeTabElement && containerElement) {
       const textSpan = activeTabElement.querySelector('span:last-child');
-      
+
       if (textSpan) {
         // Force layout recalculation before measuring
         void activeTabElement.offsetHeight;
@@ -137,7 +138,7 @@ export default function TabsNavigation({
 
   const handleTabClick = (id) => {
     setShouldAutoScroll(true);
-    
+
     // Immediate underline update like reference component
     const activeTabIndex = tabs.findIndex(tab => tab.id === id);
     const activeTabElement = tabRefs.current[activeTabIndex];
@@ -198,7 +199,7 @@ export default function TabsNavigation({
           : 'bg-transparent text-gray-700 hover:bg-gray-100 hover:text-gray-900'
       }`;
     }
-    
+
     // Underline variant - matches reference exactly
     return `relative flex items-center px-3 py-2 text-sm font-medium whitespace-nowrap outline-none flex-shrink-0 ${
       isActive
@@ -207,11 +208,20 @@ export default function TabsNavigation({
     }`;
   };
 
+  // Build border classes conditionally
+  const getBorderClasses = () => {
+    const baseClasses = "relative w-full overflow-hidden bg-white";
+    const borderClasses = showTopBorder 
+      ? "border-t border-b border-gray-200" 
+      : "border-b border-gray-200";
+    return `${baseClasses} ${borderClasses} ${className}`;
+  };
+
   // Skeleton loading state
   if (isLoading) {
     return (
       <div
-        className={`relative w-full overflow-hidden bg-white border-b border-gray-200 ${className}`}
+        className={getBorderClasses()}
         style={defaultStyle}
       >
         <div className="h-full w-full">
@@ -242,7 +252,7 @@ export default function TabsNavigation({
 
   return (
     <div
-      className={`relative w-full overflow-hidden bg-white border-b border-gray-200 ${className}`}
+      className={getBorderClasses()}
       style={defaultStyle}
     >
       {/* Tabs List */}
