@@ -315,25 +315,19 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
       
 {/* Header - Full width, fixed positioning */}
+
+{/* Header - Full width, fixed positioning */}
 <div 
   ref={headerRef} 
   className="fixed top-0 left-0 right-0 z-40"
-  style={{
-    // Ensure no background is applied at the container level
-    backgroundColor: 'transparent',
-  }}
 >
   <ProductHeader
-    showCloseIcon={false}
     onCloseClick={handleBackClick}
     actionButtons={actionButtons}
-    sellerMode={false}
-    stickyMode={true}
-    forceScrolledState={scrollProgress > 0.3}
     customScrollProgress={scrollProgress}
     inPanel={false}
-    showDetailsButton={false}
     showSearchBar={false}
+    forceScrolledState={scrollProgress > 0.3}
   />
 </div>
 
