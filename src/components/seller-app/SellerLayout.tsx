@@ -382,9 +382,9 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
           {/* Tabs Navigation */}
           <nav
             ref={tabsRef}
-            className={`bg-white border-b transition-all duration-200 ${
+            className={`bg-white transition-all duration-200 ${
               isTabsSticky
-                ? 'fixed left-0 right-0 z-40 shadow-sm'
+                ? 'fixed left-0 right-0 z-40'
                 : 'relative'
             }`}
             style={{
