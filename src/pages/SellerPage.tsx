@@ -101,7 +101,7 @@ const SellerPage = () => {
       isOwnProfile={false} // Explicitly set to false for public seller pages
     >
       <Routes>
-        <Route path="/" element={<Navigate to="/products" replace />} />
+        <Route path="/" element={<Navigate to="products" replace />} />
         <Route 
           path="/products" 
           element={
