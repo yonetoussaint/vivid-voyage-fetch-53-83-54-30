@@ -8,7 +8,7 @@ export default function TabsNavigation({
   style = {}, 
   edgeToEdge = false, 
   isLoading = false,
-  variant = "underline" // New prop: "underline" | "pills"
+  variant = "underline" // "underline" | "pills"
 }) {
   const tabRefs = useRef([]);
   const scrollContainerRef = useRef(null);
@@ -97,7 +97,7 @@ export default function TabsNavigation({
 
   // Default style
   const defaultStyle = {
-    maxHeight: variant === "pills" ? '48px' : '40px',
+    maxHeight: variant === "pills" ? '42px' : '40px',
     opacity: 1,
     backgroundColor: 'white',
   };
@@ -140,7 +140,9 @@ export default function TabsNavigation({
 
   return (
     <div
-      className={`relative w-full transition-all duration-700 overflow-hidden ${className}`}
+      className={`relative w-full transition-all duration-700 overflow-hidden ${
+        variant === "underline" ? "border-b border-gray-200" : ""
+      } ${className}`}
       style={finalStyle}
     >
       {/* Tabs List */}
@@ -165,17 +167,18 @@ export default function TabsNavigation({
                 onClick={() => handleTabClick(tab.id)}
                 aria-pressed={activeTab === tab.id}
                 className={`
-                  relative flex items-center py-2 text-sm font-medium whitespace-nowrap transition-all duration-200 ease-in-out outline-none flex-shrink-0
+                  relative flex items-center text-sm font-medium whitespace-nowrap transition-all duration-200 ease-in-out outline-none flex-shrink-0
                   ${
                     variant === "pills" 
                       ? `
-                          px-3 rounded-full border
+                          px-3 py-1.5 rounded-full
                           ${activeTab === tab.id
-                            ? 'bg-pink-100 border-pink-200 text-pink-700 shadow-sm'
-                            : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                            ? 'bg-pink-100 text-pink-700'
+                            : 'bg-transparent text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                           }
                         `
                       : `
+                          py-2
                           ${activeTab === tab.id
                             ? 'text-red-600'
                             : 'text-gray-700 hover:text-red-600'
