@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import VerificationBadge from '@/components/shared/VerificationBadge';
 
@@ -21,15 +22,24 @@ const SellerInfoOverlay: React.FC<SellerInfoOverlayProps> = ({
   focusMode,
   isPlaying 
 }) => {
+  const navigate = useNavigate();
+
   if (!seller) return null;
+
+  const handleSellerClick = () => {
+    console.log('🔍 SellerInfoOverlay clicked, seller:', seller);
+    
+    // Navigate to seller page
+    navigate(`/seller/${seller.id}/products`);
+    
+    // Call the original onSellerClick if provided
+    onSellerClick?.();
+  };
 
   return (
     <div className={`absolute bottom-3 left-3 z-30 transition-opacity duration-300 ${(focusMode || isPlaying) ? 'opacity-0' : 'opacity-100'}`}>
       <button
-        onClick={() => {
-          console.log('🔍 SellerInfoOverlay clicked, seller:', seller);
-          onSellerClick?.();
-        }}
+        onClick={handleSellerClick}
         className="bg-black/60 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 hover:bg-black/70 transition-colors"
       >
         <div className="w-5 h-5 rounded-full bg-gray-100 overflow-hidden flex-shrink-0">
