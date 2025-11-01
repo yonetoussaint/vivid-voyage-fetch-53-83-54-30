@@ -208,10 +208,10 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
           </p>
         </div>
 
-        {/* Stats - Clean cards layout */}
+        {/* Stats - Clean light colored cards */}
         <div className="grid grid-cols-4 gap-2 mb-2">
           {/* Followers Card */}
-          <div className="bg-white border border-gray-200 rounded-lg p-3 text-center shadow-sm hover:shadow-md transition-shadow">
+          <div className="bg-gray-50 rounded-xl p-3 text-center hover:bg-gray-100 transition-colors">
             <div className="font-bold text-red-600 text-base mb-1">
               {formatNumber(safeSellerData.followers_count)}
             </div>
@@ -219,7 +219,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
           </div>
 
           {/* Orders Card */}
-          <div className="bg-white border border-gray-200 rounded-lg p-3 text-center shadow-sm hover:shadow-md transition-shadow">
+          <div className="bg-gray-50 rounded-xl p-3 text-center hover:bg-gray-100 transition-colors">
             <div className="text-red-600 font-bold text-base mb-1">
               {formatNumber(safeSellerData.total_sales)}
             </div>
@@ -227,7 +227,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
           </div>
 
           {/* Average Rating Card */}
-          <div className="bg-white border border-gray-200 rounded-lg p-3 text-center shadow-sm hover:shadow-md transition-shadow">
+          <div className="bg-gray-50 rounded-xl p-3 text-center hover:bg-gray-100 transition-colors">
             <div className="text-red-600 font-bold text-base mb-1">
               {safeSellerData.rating || '0.0'}
             </div>
@@ -235,7 +235,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
           </div>
 
           {/* Years Card */}
-          <div className="bg-white border border-gray-200 rounded-lg p-3 text-center shadow-sm hover:shadow-md transition-shadow">
+          <div className="bg-gray-50 rounded-xl p-3 text-center hover:bg-gray-100 transition-colors">
             <div className="text-red-600 font-bold text-base mb-1">
               {safeSellerData.store_age_years}
             </div>
