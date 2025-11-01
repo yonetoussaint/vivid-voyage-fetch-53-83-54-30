@@ -338,22 +338,20 @@ isOwnProfile = true
       <div className="relative min-h-screen">
         <main>
           {/* Seller Info Section - Only on products tab */}
-          {isProductsTab && (
-            <div 
-              ref={sellerInfoRef} 
-              className="w-full bg-black text-white relative z-30"
-            >
-             <SellerInfoSection
-  sellerData={sellerData}
-  sellerLoading={sellerLoading}
-  getSellerLogoUrl={getSellerLogoUrl}
-  onBecomeSeller={handleBecomeSeller}
-  onBack={handleBackClick}
-  isOwnProfile={isOwnProfile} // Pass through the prop
-  showActionButtons={showActionButtons}
-/>
-            </div>
-          )}
+          {/* Seller Info Section - Only on products tab */}
+{true && ( // Change from isProductsTab to true for testing
+  <div ref={sellerInfoRef} className="w-full bg-black text-white relative z-30">
+    <SellerInfoSection
+      sellerData={sellerData}
+      sellerLoading={sellerLoading}
+      getSellerLogoUrl={getSellerLogoUrl}
+      onBecomeSeller={handleBecomeSeller}
+      onBack={handleBackClick}
+      isOwnProfile={isOwnProfile}
+      showActionButtons={showActionButtons}
+    />
+  </div>
+)}
 
           {/* Spacer for header height */}
           <div style={{ height: `${headerHeight}px` }} />
