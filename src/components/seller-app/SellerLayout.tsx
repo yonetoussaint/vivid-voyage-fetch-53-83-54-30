@@ -65,20 +65,12 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     if (isDashboard) {
       const path = location.pathname.split('/seller-dashboard/')[1];
       if (!path || path === '') {
-        if (location.pathname === '/seller-dashboard' || 
-            location.pathname.endsWith('/seller-dashboard/')) {
-          navigate('/seller-dashboard/products', { replace: true });
-        }
         return 'products';
       }
       return path;
     } else if (isPickupStation) {
       const path = location.pathname.split('/pickup-station/')[1];
       if (!path || path === '') {
-        if (location.pathname === '/pickup-station' || 
-            location.pathname.endsWith('/pickup-station/')) {
-          navigate('/pickup-station/overview', { replace: true });
-        }
         return 'overview';
       }
       return path;
@@ -92,7 +84,8 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }
   };
 
-  const [activeTab, setActiveTab] = useState(getCurrentTab());
+  // Derive activeTab from current route - SINGLE SOURCE OF TRUTH
+  const activeTab = getCurrentTab();
 
   // Fetch products from database
   const { data: products = [], isLoading: productsLoading } = useQuery({
@@ -134,7 +127,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const handleTabChange = (tabId: string) => {
     const item = navigationItems.find(nav => nav.id === tabId);
     if (item) {
-      setActiveTab(tabId);
       navigate(item.href);
     }
 
@@ -227,11 +219,8 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     };
   }, [isProductsTab]);
 
-  // Update active tab when location changes
+  // Handle redirects for empty paths
   useEffect(() => {
-    const currentTab = getCurrentTab();
-    setActiveTab(currentTab);
-
     if (location.pathname === '/seller-dashboard' || 
         location.pathname.endsWith('/seller-dashboard/')) {
       navigate('/seller-dashboard/products', { replace: true });
@@ -403,11 +392,11 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
             }}
           >
             <TabsNavigation
-  tabs={tabs}
-  activeTab={activeTab}
-  onTabChange={setActiveTab}
-  variant="pills"
-/>
+              tabs={tabs}
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+              variant="pills"
+            />
           </nav>
 
           {/* Spacer when tabs are sticky */}
