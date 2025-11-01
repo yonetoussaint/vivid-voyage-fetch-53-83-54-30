@@ -29,7 +29,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   publicSellerLoading,
   getSellerLogoUrl: externalGetSellerLogoUrl,
   isPublicPage = false,
-isOwnProfile = false
+isOwnProfile = true
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
