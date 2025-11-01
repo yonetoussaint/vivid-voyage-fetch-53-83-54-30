@@ -39,8 +39,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
   const [isTabsSticky, setIsTabsSticky] = useState(false);
   const [tabsHeight, setTabsHeight] = useState(0);
-const [loading, setLoading] = useState(false); // Define loading state
-const [sellerData, setSellerData] = useState(null);
   const [headerHeight, setHeaderHeight] = useState<number>(0);
   const [sellerInfoHeight, setSellerInfoHeight] = useState<number>(0);
   const [isTransparentHeader, setIsTransparentHeader] = useState(true);
@@ -343,17 +341,14 @@ const [sellerData, setSellerData] = useState(null);
               ref={sellerInfoRef} 
               className="w-full bg-black text-white relative z-30"
             >
-              
-
-
-<SellerInfoSection
-  sellerData={sellerData}
-  sellerLoading={loading} // Use the defined loading state
-  getSellerLogoUrl={getSellerLogoUrl}
-  onBecomeSeller={handleBecomeSeller}
-  onBack={handleBack}
-  isOwnProfile={currentUserId === sellerData?.userId}
-/>
+              <SellerInfoSection
+                sellerData={sellerData}
+                sellerLoading={sellerLoading} // Use the sellerLoading from useQuery
+                getSellerLogoUrl={getSellerLogoUrl}
+                onBecomeSeller={handleBecomeSeller}
+                onBack={handleBack}
+                isOwnProfile={user?.id === sellerData?.user_id} // Fixed: use user_id from sellerData
+              />
             </div>
           )}
 
