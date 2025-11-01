@@ -140,9 +140,7 @@ export default function TabsNavigation({
 
   return (
     <div
-      className={`relative w-full transition-all duration-700 overflow-hidden ${
-        variant === "underline" ? "border-b border-gray-200" : ""
-      } ${className}`}
+      className={`relative w-full transition-all duration-700 overflow-hidden ${className}`}
       style={finalStyle}
     >
       {/* Tabs List */}
