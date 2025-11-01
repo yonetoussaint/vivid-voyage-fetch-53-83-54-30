@@ -105,24 +105,24 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
 
       <div className="px-3 pt-3 relative z-10">
         {/* Profile Info */}
-        <div className="flex items-center gap-3 mb-3">
-          {/* Avatar */}
+        <div className="flex items-start gap-3 mb-3">
+          {/* Circular Avatar */}
           <div className="relative flex-shrink-0">
-            <div className="p-0.5 rounded-lg bg-gradient-to-tr from-purple-500 via-pink-500 to-orange-400">
-              <div className="bg-white rounded-lg p-0.5">
-                <Avatar className="w-12 h-12 rounded-md">
-                  <AvatarImage src={getSellerLogoUrl(safeSellerData.image_url)} className="rounded-md" />
-                  <AvatarFallback className="rounded-md">
+            <div className="p-0.5 rounded-full bg-gradient-to-tr from-purple-500 via-pink-500 to-orange-400">
+              <div className="bg-white rounded-full p-0.5">
+                <Avatar className="w-16 h-16 rounded-full">
+                  <AvatarImage src={getSellerLogoUrl(safeSellerData.image_url)} className="rounded-full" />
+                  <AvatarFallback className="rounded-full">
                     {safeSellerData.name.substring(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
               </div>
-              <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></div>
+              <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
             </div>
           </div>
 
           {/* Name + ID + Link icon */}
-          <div className="flex items-start justify-between w-full">
+          <div className="flex items-start justify-between w-full min-h-16">
             <div className="flex flex-col gap-0.5 flex-1 min-w-0">
               <div className="flex items-center gap-1.5">
                 <h1 className="text-lg font-bold truncate">{safeSellerData.name}</h1>
