@@ -449,14 +449,14 @@ const CustomerReviews = ({
 };
 
   const handleClearAll = () => {
-    const resetFilters: Record<string, string> = {};
-    filterCategories.forEach(category => {
-      resetFilters[category.id] = category.options[0];
-    });
-    setSelectedFilters(resetFilters);
-    setSortBy('recent');
-    setFilterRating(0);
-  };
+  const resetFilters: Record<string, string> = {};
+  filterCategories.forEach(category => {
+    resetFilters[category.id] = category.options[0];
+  });
+  setSelectedFilters(resetFilters);
+  setSortBy('recent');
+  setFilterRating(0);
+};
 
   const handleFilterButtonClick = (filterId: string) => {
     console.log('Filter button clicked:', filterId);
