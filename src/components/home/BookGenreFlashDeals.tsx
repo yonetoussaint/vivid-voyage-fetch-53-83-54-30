@@ -9,7 +9,6 @@ import { useSellerByUserId } from "@/hooks/useSellerByUserId";
 import { supabase } from "@/integrations/supabase/client";
 import SellerSummaryHeader from "@/components/seller-app/SellerSummaryHeader";
 import ProductFilterBar from "@/components/home/ProductFilterBar";
-import SectionHeader from "@/components/home/SectionHeader"; // Import SectionHeader
 
 interface Product {
   id: string;
@@ -329,23 +328,6 @@ export default function BookGenreFlashDeals({
 
   return (
     <div className={`w-full bg-white ${className}`}>
-      {/* Section Header - Using imported SectionHeader component */}
-      
-{showSectionHeader && (
-  <SectionHeader
-    title={title}
-    icon={icon} // Pass the optional icon prop instead of hardcoded Package
-    viewAllLink="/search?category=flash-deals"
-    viewAllText="View All"
-    titleTransform="uppercase"
-    titleSize="xs"
-    showCountdown={showCountdown}
-    countdown={formattedCountdown}
-    showVerifiedSellers={showVerifiedSellers}
-    verifiedSellersText={verifiedSellersText}
-  />
-)}
-
       {/* Summary Section - Optional */}
       {showSummary && (
         <SellerSummaryHeader
