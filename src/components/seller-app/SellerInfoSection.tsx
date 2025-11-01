@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import {
   Clock, ChevronUp, ArrowLeft, ChevronDown, Store, MapPin, Calendar, Star,
-  Facebook, Instagram, Mail, Edit2, Share2, MoreVertical, Bell, Link2, X
+  Facebook, Instagram, Mail, Edit2, Share2, MoreVertical, Bell, Link2, X,
+  MessageCircle
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import HeroBanner from '@/components/home/HeroBanner';
@@ -18,6 +19,7 @@ interface SellerInfoSectionProps {
   onBecomeSeller: () => void;
   onBack: () => void;
   showActionButtons?: boolean;
+  isOwnProfile?: boolean; // Add this prop to determine if it's the user's own profile
 }
 
 const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
@@ -26,10 +28,12 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
   getSellerLogoUrl,
   onBecomeSeller,
   onBack,
-  showActionButtons = true
+  showActionButtons = true,
+  isOwnProfile = false // Default to false
 }) => {
   const [showBusinessHours, setShowBusinessHours] = useState(false);
   const [showSocialPanel, setShowSocialPanel] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false); // State for follow status
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '2008';
@@ -156,27 +160,38 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
               </div>
             </div>
 
-            {/* Three Icons: Link, Share, More */}
-            <div className="flex items-center gap-1 self-center">
-              <button
-                onClick={() => setShowSocialPanel(true)}
-                className="p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                title="View social links"
-              >
-                <Link2 className="w-5 h-5" />
-              </button>
-              <button
-                className="p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Share profile"
-              >
-                <Share2 className="w-5 h-5" />
-              </button>
-              <button
-                className="p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                title="More options"
-              >
-                <MoreVertical className="w-5 h-5" />
-              </button>
+            {/* Dynamic Action Section */}
+            <div className="flex items-center gap-2 self-center">
+              {isOwnProfile ? (
+                // Edit Profile Button for own profile
+                <button
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  title="Edit Profile"
+                >
+                  <Edit2 className="w-4 h-4" />
+                  <span>Edit</span>
+                </button>
+              ) : (
+                // Message and Follow buttons for other profiles
+                <>
+                  <button
+                    className="p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
+                    title="Message"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                  </button>
+                  <button
+                    className={`px-4 py-1.5 text-sm font-bold rounded-full transition-colors ${
+                      isFollowing 
+                        ? 'bg-gray-900 text-white hover:bg-gray-800' 
+                        : 'bg-red-600 text-white hover:bg-red-700'
+                    }`}
+                    onClick={() => setIsFollowing(!isFollowing)}
+                  >
+                    {isFollowing ? 'Following' : 'Follow'}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
