@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Star, 
   Play,
@@ -13,6 +13,8 @@ import {
   formatDateForReply 
 } from './DateUtils';
 import VerificationBadge from '@/components/shared/VerificationBadge';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Mock Button component
 const Button = ({ children, variant, className, onClick }) => (
@@ -24,182 +26,14 @@ const Button = ({ children, variant, className, onClick }) => (
   </button>
 );
 
-// Mock data and utility functions
-const mockReviews = [
-  {
-    id: 1,
-    user_name: "John Smith",
-    rating: 5,
-    comment: "This product exceeded my expectations. The quality is outstanding and it arrived quickly. I would definitely recommend this to anyone looking for a reliable solution. The customer service was also very helpful when I had questions about the setup process.",
-    created_at: new Date(Date.now() - 2 * 60 * 1000).toISOString(), // 2 minutes ago
-    verified_purchase: true,
-    helpful_count: 12,
-    reply_count: 4,
-    likeCount: 8,
-    commentCount: 4,
-    shareCount: 2,
-    media: [
-      { type: 'image', url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop', alt: 'Product in use' },
-      { type: 'image', url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=300&fit=crop', alt: 'Product packaging' }
-    ],
-    replies: [
-      {
-        id: 101,
-        user_name: "Customer Support",
-        comment: "Thank you for your wonderful review! We're thrilled to hear you had such a positive experience with our product and customer service team.",
-        created_at: new Date(Date.now() - 30 * 1000).toISOString(), // 30 seconds ago
-        is_seller: true,
-        verified_seller: true,
-        likeCount: 3,
-        liked: false,
-        parent_reply_id: null
-      },
-      {
-        id: 102,
-        user_name: "Lisa Wong",
-        comment: "I had the same experience! Really happy with this purchase.",
-        created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
-        is_seller: false,
-        verified_seller: false,
-        likeCount: 1,
-        liked: false,
-        parent_reply_id: null
-      },
-      {
-        id: 103,
-        user_name: "John Smith",
-        comment: "Thanks for the quick response!",
-        created_at: new Date(Date.now() - 25 * 60 * 1000).toISOString(), // 25 minutes ago
-        is_seller: false,
-        verified_seller: false,
-        likeCount: 0,
-        liked: false,
-        parent_reply_id: 101,
-        replying_to: "Customer Support"
-      },
-      {
-        id: 104,
-        user_name: "Mike Chen",
-        comment: "How long did shipping take for you?",
-        created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
-        is_seller: false,
-        verified_seller: false,
-        likeCount: 2,
-        liked: false,
-        parent_reply_id: 101,
-        replying_to: "Customer Support"
-      },
-      {
-        id: 105,
-        user_name: "Alex Taylor",
-        comment: "Great review! I'm convinced to buy this now.",
-        created_at: "2024-01-15T10:30:00Z", // January 15, 2024 (current year)
-        is_seller: false,
-        verified_seller: false,
-        likeCount: 1,
-        liked: false,
-        parent_reply_id: null
-      },
-      {
-        id: 106,
-        user_name: "Sarah Kim",
-        comment: "I've had this for over a year and it's still working great!",
-        created_at: "2023-08-20T14:20:00Z", // August 20, 2023 (previous year)
-        is_seller: false,
-        verified_seller: false,
-        likeCount: 4,
-        liked: false,
-        parent_reply_id: null
-      }
-    ]
-  },
-  {
-    id: 2,
-    user_name: "Sarah Johnson",
-    rating: 4,
-    comment: "Works as expected. Minor issues with setup but overall satisfied with the purchase.",
-    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
-    verified_purchase: true,
-    helpful_count: 8,
-    reply_count: 1,
-    likeCount: 5,
-    commentCount: 1,
-    shareCount: 0,
-    media: [
-      { type: 'video', url: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4', thumbnail: 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=400&h=300&fit=crop', alt: 'Product demo video' }
-    ],
-    replies: [
-      {
-        id: 201,
-        user_name: "Customer Support",
-        comment: "Thanks for your feedback! If you need any help with setup, please don't hesitate to reach out to our support team.",
-        created_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
-        is_seller: true,
-        verified_seller: true,
-        likeCount: 0,
-        liked: false,
-        parent_reply_id: null
-      }
-    ]
-  },
-  {
-    id: 3,
-    user_name: "Michael Brown",
-    rating: 5,
-    comment: "Absolutely love this product! Worth every penny.",
-    created_at: "2024-03-10T09:15:00Z", // March 10, 2024 (current year, older date)
-    verified_purchase: true,
-    helpful_count: 15,
-    reply_count: 0,
-    likeCount: 10,
-    commentCount: 0,
-    shareCount: 1,
-    media: [],
-    replies: []
-  },
-  {
-    id: 4,
-    user_name: "David Wilson",
-    rating: 3,
-    comment: "Average product. Does the job but nothing special.",
-    created_at: "2024-02-15T14:20:00Z",
-    verified_purchase: true,
-    helpful_count: 3,
-    reply_count: 0,
-    likeCount: 2,
-    commentCount: 0,
-    shareCount: 0,
-    media: [],
-    replies: []
-  },
-  {
-    id: 5,
-    user_name: "Emma Davis",
-    rating: 2,
-    comment: "Not what I expected. Poor quality and arrived damaged.",
-    created_at: "2024-01-20T11:45:00Z",
-    verified_purchase: true,
-    helpful_count: 1,
-    reply_count: 0,
-    likeCount: 0,
-    commentCount: 0,
-    shareCount: 0,
-    media: [
-      { type: 'image', url: 'https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=400&h=300&fit=crop', alt: 'Damaged product' }
-    ],
-    replies: []
-  }
-];
-
 const truncateText = (text, maxLength = 120) => {
+  if (!text) return '';
   if (text.length <= maxLength) return text;
   return text.slice(0, maxLength) + '...';
 };
 
 const CustomerReviews = ({ 
   productId = "123", 
-  user = null, 
-  reviews = mockReviews,
   limit = null 
 }) => {
   const [sortBy, setSortBy] = useState('recent');
@@ -207,36 +41,160 @@ const CustomerReviews = ({
   const [expandedReviews, setExpandedReviews] = useState(new Set());
   const [expandedReplies, setExpandedReplies] = useState(new Set());
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
-  const [localReviews, setLocalReviews] = useState(reviews);
+  const [localReviews, setLocalReviews] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { user } = useAuth();
 
   // Enhanced state for reply functionality
-  const [replyingTo, setReplyingTo] = useState<{ type: 'review' | 'reply'; reviewId: number; replyId?: number; userName: string; isSeller?: boolean; verifiedSeller?: boolean } | null>(null);
+  const [replyingTo, setReplyingTo] = useState<{ type: 'review' | 'reply'; reviewId: string; replyId?: string; userName: string; isSeller?: boolean; verifiedSeller?: boolean } | null>(null);
   const [replyText, setReplyText] = useState('');
 
-  // Function to handle liking a reply
-  const handleLikeReply = (reviewId: number, replyId: number) => {
-    setLocalReviews(prevReviews => 
-      prevReviews.map(review => {
-        if (review.id === reviewId) {
-          const updatedReplies = review.replies.map(reply => {
-            if (reply.id === replyId) {
-              const newLikeCount = reply.liked ? reply.likeCount - 1 : reply.likeCount + 1;
-              return {
-                ...reply,
-                liked: !reply.liked,
-                likeCount: newLikeCount
-              };
-            }
-            return reply;
-          });
+  // Fetch reviews from Supabase
+  const fetchReviews = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Fetch reviews with user information
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from('reviews')
+        .select(`
+          *,
+          profiles:user_id (
+            username,
+            full_name,
+            profile_picture,
+            avatar_url
+          )
+        `)
+        .eq('product_id', productId)
+        .order('created_at', { ascending: false });
+
+      if (reviewsError) throw reviewsError;
+
+      // Fetch all data in parallel for better performance
+      const reviewsWithDetails = await Promise.all(
+        (reviewsData || []).map(async (review) => {
+          // Fetch media for this review
+          const { data: mediaData } = await supabase
+            .from('review_media')
+            .select('*')
+            .eq('review_id', review.id);
+
+          // Fetch replies for this review
+          const { data: repliesData } = await supabase
+            .from('reviews_replies')
+            .select('*')
+            .eq('review_id', review.id)
+            .order('created_at', { ascending: true });
+
+          // Format media
+          const media = (mediaData || []).map(mediaItem => ({
+            type: mediaItem.media_type,
+            url: mediaItem.url,
+            thumbnail: mediaItem.thumbnail_url,
+            alt: mediaItem.alt_text || 'Review media'
+          }));
+
+          // Format replies
+          const replies = (repliesData || []).map(reply => ({
+            id: reply.id,
+            user_name: reply.user_name,
+            comment: reply.comment,
+            created_at: reply.created_at,
+            is_seller: reply.is_seller,
+            verified_seller: reply.verified_seller,
+            likeCount: reply.like_count || 0,
+            liked: reply.liked || false,
+            parent_reply_id: reply.parent_reply_id,
+            replying_to: reply.replying_to
+          }));
+
           return {
-            ...review,
-            replies: updatedReplies
+            id: review.id,
+            user_name: review.profiles?.full_name || review.profiles?.username || review.user_name || 'Anonymous',
+            rating: review.rating,
+            comment: review.comment,
+            created_at: review.created_at,
+            verified_purchase: review.verified_purchase || false,
+            helpful_count: review.helpful_count || 0,
+            reply_count: replies.length,
+            likeCount: 0, // You might want to add like_count to reviews table
+            commentCount: replies.length,
+            shareCount: 0,
+            media: media,
+            replies: replies,
+            user_avatar: review.profiles?.profile_picture || review.profiles?.avatar_url
           };
-        }
-        return review;
-      })
-    );
+        })
+      );
+
+      setLocalReviews(reviewsWithDetails);
+    } catch (err) {
+      console.error('Error fetching reviews:', err);
+      setError('Failed to load reviews');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (productId) {
+      fetchReviews();
+    }
+  }, [productId]);
+
+  // Function to handle liking a reply
+  const handleLikeReply = async (reviewId: string, replyId: string) => {
+    try {
+      // Find the current reply to get like count
+      const review = localReviews.find(r => r.id === reviewId);
+      const reply = review?.replies.find(r => r.id === replyId);
+      
+      if (!reply) return;
+
+      const newLikeCount = reply.liked ? reply.likeCount - 1 : reply.likeCount + 1;
+      const newLikedStatus = !reply.liked;
+
+      // Update local state optimistically
+      setLocalReviews(prevReviews => 
+        prevReviews.map(review => {
+          if (review.id === reviewId) {
+            const updatedReplies = review.replies.map(reply => {
+              if (reply.id === replyId) {
+                return {
+                  ...reply,
+                  liked: newLikedStatus,
+                  likeCount: newLikeCount
+                };
+              }
+              return reply;
+            });
+            return {
+              ...review,
+              replies: updatedReplies
+            };
+          }
+          return review;
+        })
+      );
+
+      // Update in database
+      const { error } = await supabase
+        .from('reviews_replies')
+        .update({ 
+          like_count: newLikeCount,
+          liked: newLikedStatus
+        })
+        .eq('id', replyId);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error liking reply:', error);
+      // Revert optimistic update
+      fetchReviews();
+    }
   };
 
   // Get the item being replied to
@@ -274,7 +232,7 @@ const CustomerReviews = ({
     setExpandedReplies(newExpanded);
   };
 
-  const handleCommentClick = (reviewId: number) => {
+  const handleCommentClick = (reviewId: string) => {
     console.log('Comment button clicked for review:', reviewId);
 
     const review = localReviews.find(r => r.id === reviewId);
@@ -298,7 +256,7 @@ const CustomerReviews = ({
     }
   };
 
-  const handleReplyToReply = (reviewId: number, replyId: number, userName: string) => {
+  const handleReplyToReply = (reviewId: string, replyId: string, userName: string) => {
     console.log('Reply button clicked for reply:', replyId, 'in review:', reviewId);
 
     const review = localReviews.find(r => r.id === reviewId);
@@ -318,42 +276,64 @@ const CustomerReviews = ({
     setReplyText('');
   };
 
-  const handleShareClick = (reviewId: number) => {
+  const handleShareClick = (reviewId: string) => {
     console.log('Share button clicked for review:', reviewId);
     if (navigator.share) {
       navigator.share({
         title: 'Product Review',
         text: 'Check out this product review!',
-        url: window.location.href,
+        url: `${window.location.origin}/product/${productId}?review=${reviewId}`,
       });
     } else {
-      navigator.clipboard.writeText(window.location.href);
+      navigator.clipboard.writeText(`${window.location.origin}/product/${productId}?review=${reviewId}`);
       alert('Review link copied to clipboard!');
     }
   };
 
-  const handleSubmitReply = () => {
-    if (replyText.trim() && replyingTo) {
+  const handleSubmitReply = async () => {
+    if (!replyText.trim() || !replyingTo) return;
+
+    try {
       console.log(`Submitting reply to ${replyingTo.type} ${replyingTo.type === 'review' ? replyingTo.reviewId : replyingTo.replyId}: "${replyText}"`);
 
-      // Create new reply object
-      const newReply = {
-        id: Date.now(), // Temporary ID
-        user_name: "Current User", // This would come from user context
+      // Create new reply object for database
+      const newReplyData = {
+        review_id: replyingTo.reviewId,
+        user_id: user?.id || null,
+        user_name: user?.full_name || 'Current User',
         comment: replyText.trim(),
-        created_at: new Date().toISOString(),
-        is_seller: false, // This would depend on the user
-        verified_seller: false,
-        likeCount: 0,
-        liked: false,
+        is_seller: replyingTo.isSeller || false,
+        verified_seller: replyingTo.verifiedSeller || false,
         parent_reply_id: replyingTo.type === 'reply' ? replyingTo.replyId : null,
         replying_to: replyingTo.type === 'reply' ? replyingTo.userName : null
       };
 
-      // Add the reply to the local state
+      // Insert into database
+      const { data: insertedReply, error } = await supabase
+        .from('reviews_replies')
+        .insert([newReplyData])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Update local state
       setLocalReviews(prevReviews => 
         prevReviews.map(review => {
           if (review.id === replyingTo.reviewId) {
+            const newReply = {
+              id: insertedReply.id,
+              user_name: insertedReply.user_name,
+              comment: insertedReply.comment,
+              created_at: insertedReply.created_at,
+              is_seller: insertedReply.is_seller,
+              verified_seller: insertedReply.verified_seller,
+              likeCount: 0,
+              liked: false,
+              parent_reply_id: insertedReply.parent_reply_id,
+              replying_to: insertedReply.replying_to
+            };
+
             return {
               ...review,
               replies: [...review.replies, newReply],
@@ -364,11 +344,13 @@ const CustomerReviews = ({
         })
       );
 
-      // Here you would also submit the reply to your backend
-      console.log('Reply submitted:', newReply);
+      console.log('Reply submitted successfully:', insertedReply);
 
       setReplyText('');
       setReplyingTo(null);
+    } catch (error) {
+      console.error('Error submitting reply:', error);
+      alert('Failed to submit reply. Please try again.');
     }
   };
 
@@ -397,22 +379,22 @@ const CustomerReviews = ({
   }, [localReviews]);
 
   const filterCategories = React.useMemo(() => [
-  {
-    id: 'rating',
-    label: 'Rating',
-    options: ['All Ratings', '5 Stars', '4 Stars', '3 Stars', '2 Stars', '1 Star']
-  },
-  {
-    id: 'media',
-    label: 'Media',
-    options: ['All Media', 'With Photos', 'With Videos', 'No Media']
-  },
-  {
-    id: 'sort',
-    label: 'Sort By',
-    options: ['All Sorts', 'Most Recent', 'Oldest First', 'Most Liked']
-  }
-], []);
+    {
+      id: 'rating',
+      label: 'Rating',
+      options: ['All Ratings', '5 Stars', '4 Stars', '3 Stars', '2 Stars', '1 Star']
+    },
+    {
+      id: 'media',
+      label: 'Media',
+      options: ['All Media', 'With Photos', 'With Videos', 'No Media']
+    },
+    {
+      id: 'sort',
+      label: 'Sort By',
+      options: ['All Sorts', 'Most Recent', 'Oldest First', 'Most Liked']
+    }
+  ], []);
 
   // Initialize filters with "All" options on mount only
   React.useEffect(() => {
@@ -424,41 +406,41 @@ const CustomerReviews = ({
   }, []);
 
   const handleFilterSelect = (filterId: string, option: string) => {
-  setSelectedFilters(prev => ({
-    ...prev,
-    [filterId]: option
-  }));
+    setSelectedFilters(prev => ({
+      ...prev,
+      [filterId]: option
+    }));
 
-  if (filterId === 'sort') {
-    if (option.toLowerCase().startsWith('all')) {
-      setSortBy('recent');
-    } else {
-      const sortMap: Record<string, string> = {
-        'Most Recent': 'recent',
-        'Oldest First': 'oldest',
-        'Most Liked': 'helpful'
-      };
-      if (sortMap[option]) {
-        setSortBy(sortMap[option]);
+    if (filterId === 'sort') {
+      if (option.toLowerCase().startsWith('all')) {
+        setSortBy('recent');
+      } else {
+        const sortMap: Record<string, string> = {
+          'Most Recent': 'recent',
+          'Oldest First': 'oldest',
+          'Most Liked': 'helpful'
+        };
+        if (sortMap[option]) {
+          setSortBy(sortMap[option]);
+        }
+      }
+    } else if (filterId === 'rating') {
+      if (option.toLowerCase().startsWith('all')) {
+        setFilterRating(0);
+      } else {
+        const ratingMap: Record<string, number> = {
+          '5 Stars': 5,
+          '4 Stars': 4,
+          '3 Stars': 3,
+          '2 Stars': 2,
+          '1 Star': 1
+        };
+        if (option in ratingMap) {
+          setFilterRating(ratingMap[option]);
+        }
       }
     }
-  } else if (filterId === 'rating') {
-    if (option.toLowerCase().startsWith('all')) {
-      setFilterRating(0);
-    } else {
-      const ratingMap: Record<string, number> = {
-        '5 Stars': 5,
-        '4 Stars': 4,
-        '3 Stars': 3,
-        '2 Stars': 2,
-        '1 Star': 1
-      };
-      if (option in ratingMap) {
-        setFilterRating(ratingMap[option]);
-      }
-    }
-  }
-};
+  };
 
   const handleFilterClear = (filterId: string) => {
     setSelectedFilters(prev => {
@@ -554,6 +536,33 @@ const CustomerReviews = ({
     { value: ratingCounts[0], label: '5 Star', color: 'text-purple-600' }
   ];
 
+  if (isLoading) {
+    return (
+      <div className="w-full bg-white">
+        <div className="text-center py-8">
+          <p className="text-muted-foreground" style={{color: '#666'}}>Loading reviews...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-full bg-white">
+        <div className="text-center py-8">
+          <p className="text-red-600">Error: {error}</p>
+          <Button 
+            variant="outline" 
+            className="mt-4"
+            onClick={fetchReviews}
+          >
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full bg-white">
       <SellerSummaryHeader
@@ -586,11 +595,22 @@ const CustomerReviews = ({
                 <div className="flex items-start justify-between mb-2 px-2">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center text-sm font-semibold" style={{backgroundColor: 'rgba(0,0,0,0.1)'}}>
-                      {review.user_name.charAt(0)}
+                      {review.user_avatar ? (
+                        <img 
+                          src={review.user_avatar} 
+                          alt={review.user_name}
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                      ) : (
+                        review.user_name.charAt(0)
+                      )}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{review.user_name}</span>
+                        {review.verified_purchase && (
+                          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Verified Purchase</span>
+                        )}
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground" style={{color: '#666'}}>
                         <div className="flex">
@@ -691,20 +711,6 @@ const CustomerReviews = ({
                             {reply.replying_to && (
                               <div className="text-xs text-gray-500 mt-1">
                                 Replying to <span className="font-medium">{reply.replying_to}</span>
-                                {/* Check if the person being replied to is a seller */}
-                                {(() => {
-                                  const repliedToUser = review.replies.find(r => r.user_name === reply.replying_to);
-                                  if (repliedToUser && repliedToUser.is_seller) {
-                                    return (
-                                      <div className="flex items-center gap-1 mt-1">
-                                        {repliedToUser.verified_seller && <VerificationBadge size="xs" />}
-                                        <span className="text-xs text-gray-500">•</span>
-                                        <span className="font-bold text-xs text-orange-500">Seller</span>
-                                      </div>
-                                    );
-                                  }
-                                  return null;
-                                })()}
                               </div>
                             )}
 
