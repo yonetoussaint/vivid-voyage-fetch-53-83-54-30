@@ -418,11 +418,31 @@ const CustomerReviews = ({
     try {
       console.log(`Submitting reply to ${replyingTo.type} ${replyingTo.type === 'review' ? replyingTo.reviewId : replyingTo.replyId}: "${replyText}"`);
 
+      // Get user profile data to display proper name
+      let userName = 'User'; // fallback
+      
+      if (user) {
+        // Try to get user's full name from profiles table
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('full_name, username')
+          .eq('id', user.id)
+          .single();
+
+        if (!profileError && profileData) {
+          // Use full_name if available, otherwise username, otherwise fallback
+          userName = profileData.full_name || profileData.username || user.email?.split('@')[0] || 'User';
+        } else {
+          // Fallback to email username if profile not found
+          userName = user.email?.split('@')[0] || 'User';
+        }
+      }
+
       // Create new reply object for database
       const newReplyData = {
         review_id: replyingTo.reviewId,
         user_id: user?.id || null,
-        user_name: user?.full_name || 'Current User',
+        user_name: userName, // Use the properly fetched name
         comment: replyText.trim(),
         is_seller: replyingTo.isSeller || false,
         verified_seller: replyingTo.verifiedSeller || false,
@@ -445,7 +465,7 @@ const CustomerReviews = ({
           if (review.id === replyingTo.reviewId) {
             const newReply = {
               id: insertedReply.id,
-              user_name: insertedReply.user_name || 'User',
+              user_name: insertedReply.user_name || userName, // Use the same name here
               comment: insertedReply.comment || '',
               created_at: insertedReply.created_at,
               is_seller: insertedReply.is_seller || false,
