@@ -211,7 +211,7 @@ export default function TabsNavigation({
   if (isLoading) {
     return (
       <div
-        className={`relative w-full overflow-hidden bg-white ${className}`}
+        className={`relative w-full overflow-hidden bg-white border-b border-gray-200 ${className}`}
         style={defaultStyle}
       >
         <div className="h-full w-full">
@@ -242,7 +242,7 @@ export default function TabsNavigation({
 
   return (
     <div
-      className={`relative w-full overflow-hidden bg-white ${className}`}
+      className={`relative w-full overflow-hidden bg-white border-b border-gray-200 ${className}`}
       style={defaultStyle}
     >
       {/* Tabs List */}
