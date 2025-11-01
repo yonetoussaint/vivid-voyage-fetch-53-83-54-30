@@ -1,75 +1,56 @@
-import { LayoutGrid } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { ReactNode, useRef, useEffect, useState, useCallback, useLayoutEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useState, useRef, useEffect, useCallback, useLayoutEffect } from "react";
 
-interface CategoryTab {
-  id: string;
-  name: string;
-  icon?: ReactNode;
-  path?: string;
-}
-
-interface CategoryTabsProps {
-  progress: number;
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
-  categories: CategoryTab[];
-  showCategoriesButton?: boolean;
-  isSearchOverlayActive?: boolean;
-}
-
-const CategoryTabs = ({
-  progress,
-  activeTab,
-  setActiveTab,
-  categories,
-  showCategoriesButton = true,
-  isSearchOverlayActive = false,
-}: CategoryTabsProps) => {
-  const { t } = useTranslation();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+export default function TabsNavigation({ 
+  tabs, 
+  activeTab, 
+  onTabChange, 
+  className = "", 
+  style = {}, 
+  edgeToEdge = false, 
+  isLoading = false,
+  variant = "underline" // "underline" | "pills"
+}) {
+  const tabRefs = useRef([]);
+  const scrollContainerRef = useRef(null);
   const [underlineWidth, setUnderlineWidth] = useState(0);
   const [underlineLeft, setUnderlineLeft] = useState(0);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const isInitialMount = useRef(true);
 
-  // Memoize refs update and reset initial mount flag
+  // Initialize active tab on mount if not provided
   useEffect(() => {
-    tabRefs.current = tabRefs.current.slice(0, categories.length);
-    isInitialMount.current = true; // Reset flag when categories change
-  }, [categories]);
-
-  // Reset initial mount flag when active tab changes
-  useEffect(() => {
-    isInitialMount.current = true;
-  }, [activeTab]);
-
-  // Instant underline calculation
-  const updateUnderline = useCallback(() => {
-    const activeTabIndex = categories.findIndex(cat => cat.id === activeTab);
-
-    if (activeTabIndex === -1) {
-      return;
+    if (tabs.length > 0 && !activeTab) {
+      const firstTab = tabs[0];
+      if (firstTab) {
+        onTabChange(firstTab.id);
+      }
     }
+  }, [tabs, activeTab, onTabChange]);
 
+  useEffect(() => {
+    tabRefs.current = tabRefs.current.slice(0, tabs.length);
+    isInitialMount.current = true;
+  }, [tabs]);
+
+  // Function to update underline position and width - matches reference component
+  const updateUnderline = useCallback(() => {
+    const activeTabIndex = tabs.findIndex(tab => tab.id === activeTab);
     const activeTabElement = tabRefs.current[activeTabIndex];
     const containerElement = scrollContainerRef.current;
 
     if (activeTabElement && containerElement) {
-      const textSpan = activeTabElement.querySelector('span');
+      const textSpan = activeTabElement.querySelector('span:last-child');
+      
       if (textSpan) {
         // Force layout recalculation before measuring
         void activeTabElement.offsetHeight;
         void textSpan.offsetHeight;
-        
+
         // Use getBoundingClientRect for more accurate measurements
         const textRect = textSpan.getBoundingClientRect();
         const textWidth = textRect.width;
-        
-        // Make underline 60-70% of text width for a sleek look
+
+        // Make underline 60% of text width to match reference
         const newWidth = Math.max(textWidth * 0.6, 20);
 
         const buttonRect = activeTabElement.getBoundingClientRect();
@@ -82,40 +63,40 @@ const CategoryTabs = ({
         setUnderlineLeft(underlineStart);
       }
     }
-  }, [activeTab, categories]);
+  }, [activeTab, tabs]);
 
-  // Use useLayoutEffect for initial positioning - runs synchronously after DOM mutations
+  // Use useLayoutEffect for initial positioning - matches reference
   useLayoutEffect(() => {
-    if (activeTab && categories.length > 0) {
-      // Immediate synchronous update
+    if (activeTab && tabs.length > 0 && variant === "underline") {
       updateUnderline();
     }
-  }, [activeTab, categories, updateUnderline]);
+  }, [activeTab, tabs, variant, updateUnderline]);
 
   // Backup async updates for edge cases
   useEffect(() => {
-    if (activeTab && categories.length > 0) {
+    if (activeTab && tabs.length > 0 && variant === "underline") {
       const timers = [
         setTimeout(() => updateUnderline(), 50),
         setTimeout(() => updateUnderline(), 200),
       ];
-      
+
       return () => timers.forEach(timer => clearTimeout(timer));
     }
-  }, [activeTab, categories, updateUnderline]);
+  }, [activeTab, tabs, variant, updateUnderline]);
 
   // Update on resize and scroll
   useEffect(() => {
     const handleResize = () => {
-      if (activeTab && categories.length > 0) {
+      if (activeTab && tabs.length > 0 && variant === "underline") {
         updateUnderline();
       }
     };
 
     const handleScroll = () => {
-      if (activeTab && categories.length > 0) {
+      if (activeTab && tabs.length > 0 && variant === "underline") {
         updateUnderline();
       }
+      setShouldAutoScroll(false);
     };
 
     window.addEventListener('resize', handleResize);
@@ -130,24 +111,42 @@ const CategoryTabs = ({
         container.removeEventListener('scroll', handleScroll);
       }
     };
-  }, [activeTab, categories, updateUnderline]);
+  }, [activeTab, tabs, variant, updateUnderline]);
 
-  // Tab click handler - UPDATED: with retry logic for first tab
-  const handleTabClick = useCallback((id: string, path?: string) => {
-    // First update the active tab
-    setActiveTab(id);
+  // Handle tab scrolling
+  useEffect(() => {
+    if (!shouldAutoScroll) return;
 
-    // Immediately calculate and update underline position
-    const activeTabIndex = categories.findIndex(cat => cat.id === id);
+    const activeTabIndex = tabs.findIndex(tab => tab.id === activeTab);
     const activeTabElement = tabRefs.current[activeTabIndex];
     const containerElement = scrollContainerRef.current;
 
     if (activeTabElement && containerElement) {
-      const textSpan = activeTabElement.querySelector('span');
+      const paddingLeft = 8; // Matches reference component gap-1
+      const newScrollLeft = activeTabElement.offsetLeft - paddingLeft;
+
+      containerElement.scrollTo({
+        left: newScrollLeft,
+        behavior: 'smooth'
+      });
+    }
+
+    const timer = setTimeout(() => setShouldAutoScroll(false), 500);
+    return () => clearTimeout(timer);
+  }, [activeTab, tabs, shouldAutoScroll]);
+
+  const handleTabClick = (id) => {
+    setShouldAutoScroll(true);
+    
+    // Immediate underline update like reference component
+    const activeTabIndex = tabs.findIndex(tab => tab.id === id);
+    const activeTabElement = tabRefs.current[activeTabIndex];
+    const containerElement = scrollContainerRef.current;
+
+    if (activeTabElement && containerElement && variant === "underline") {
+      const textSpan = activeTabElement.querySelector('span:last-child');
       if (textSpan) {
-        // Use scrollWidth for actual text content width (more accurate)
         const textWidth = textSpan.scrollWidth;
-        // Make underline 60-70% of text width for a sleek look
         const newWidth = Math.max(textWidth * 0.6, 20);
 
         const buttonRect = activeTabElement.getBoundingClientRect();
@@ -159,53 +158,94 @@ const CategoryTabs = ({
         setUnderlineWidth(newWidth);
         setUnderlineLeft(underlineStart);
       }
-    } else {
+    } else if (variant === "underline") {
       // If refs aren't available yet, retry after a short delay
       setTimeout(() => {
         updateUnderline();
       }, 10);
     }
 
-    if (path && !isSearchOverlayActive && !path.startsWith('#')) {
-      navigate(path, { 
-        preventScrollReset: true 
-      });
-    }
-
-    if (isSearchOverlayActive && process.env.NODE_ENV === 'development') {
-      console.log(`Search tab selected: ${id}`);
-    }
-  }, [setActiveTab, navigate, isSearchOverlayActive, categories, updateUnderline]);
-
-  const handleCategoriesClick = useCallback(() => {
-    navigate('/search', { preventScrollReset: true });
-  }, [navigate]);
-
-  // Tab styles
-  const getTabClassName = useCallback((isActive: boolean) => {
-    return `relative flex items-center px-3 py-2 text-sm font-medium whitespace-nowrap outline-none flex-shrink-0 ${
-      isActive
-        ? 'text-red-600'
-        : 'text-gray-700 hover:text-red-600'
-    }`;
-  }, []);
+    onTabChange(id);
+  };
 
   // Ref callback that updates underline when refs are set
-  const setTabRef = useCallback((el: HTMLButtonElement | null, index: number, id: string) => {
+  const setTabRef = useCallback((el, index, id) => {
     tabRefs.current[index] = el;
 
     // If this is the active tab and we have the element, update underline immediately
-    if (el && id === activeTab && isInitialMount.current) {
-      // Use requestAnimationFrame to ensure DOM is ready but still appear instant
+    if (el && id === activeTab && isInitialMount.current && variant === "underline") {
       requestAnimationFrame(() => {
         updateUnderline();
         isInitialMount.current = false;
       });
     }
-  }, [activeTab, updateUnderline]);
+  }, [activeTab, variant, updateUnderline]);
+
+  // Default style - matches reference component exactly
+  const defaultStyle = {
+    maxHeight: '40px',
+    opacity: 1,
+    backgroundColor: 'white',
+    ...style
+  };
+
+  // Tab styles - matches reference component exactly
+  const getTabClassName = (isActive) => {
+    if (variant === "pills") {
+      return `relative flex items-center px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap outline-none flex-shrink-0 ${
+        isActive
+          ? 'bg-pink-100 text-pink-700'
+          : 'bg-transparent text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+      }`;
+    }
+    
+    // Underline variant - matches reference exactly
+    return `relative flex items-center px-3 py-2 text-sm font-medium whitespace-nowrap outline-none flex-shrink-0 ${
+      isActive
+        ? 'text-red-600'
+        : 'text-gray-700 hover:text-red-600'
+    }`;
+  };
+
+  // Skeleton loading state
+  if (isLoading) {
+    return (
+      <div
+        className={`relative w-full overflow-hidden bg-white ${className}`}
+        style={defaultStyle}
+      >
+        <div className="h-full w-full">
+          <div
+            className="flex items-center overflow-x-auto no-scrollbar h-full w-full relative"
+            style={{ 
+              scrollbarWidth: 'none', 
+              msOverflowStyle: 'none',
+              WebkitOverflowScrolling: 'touch'
+            }}
+          >
+            <div className="flex items-center gap-1">
+              {tabs.map((tab, index) => {
+                const widths = ['w-16', 'w-20', 'w-16', 'w-20', 'w-20', 'w-16', 'w-20', 'w-16', 'w-20'];
+                const width = widths[index] || 'w-16';
+                return (
+                  <div key={tab.id} className="flex-shrink-0">
+                    <div className={`h-5 bg-gray-200 rounded ${width} animate-pulse`} />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="relative w-full overflow-hidden bg-white" style={{ maxHeight: '40px' }}>
+    <div
+      className={`relative w-full overflow-hidden bg-white ${className}`}
+      style={defaultStyle}
+    >
+      {/* Tabs List */}
       <div className="h-full w-full">
         <div
           ref={scrollContainerRef}
@@ -214,24 +254,26 @@ const CategoryTabs = ({
             scrollbarWidth: 'none', 
             msOverflowStyle: 'none',
             WebkitOverflowScrolling: 'touch',
-            paddingRight: isSearchOverlayActive ? '0px' : '2.5rem',
+            paddingRight: edgeToEdge ? '0px' : '2.5rem',
           }}
         >
-          {categories.map(({ id, name, icon, path }, index) => (
-            <button
-              key={id}
-              ref={el => setTabRef(el, index, id)}
-              onClick={() => handleTabClick(id, path)}
-              aria-pressed={activeTab === id}
-              className={getTabClassName(activeTab === id)}
-            >
-              {icon && <span className="mr-2">{icon}</span>}
-              <span className="font-medium select-none">{name}</span>
-            </button>
-          ))}
+          <div className="flex items-center gap-1">
+            {tabs.map((tab, index) => (
+              <button
+                key={tab.id}
+                ref={el => setTabRef(el, index, tab.id)}
+                onClick={() => handleTabClick(tab.id)}
+                aria-pressed={activeTab === tab.id}
+                className={getTabClassName(activeTab === tab.id)}
+              >
+                {tab.icon && <span className="mr-2">{tab.icon}</span>}
+                <span className="font-medium select-none">{tab.label}</span>
+              </button>
+            ))}
+          </div>
 
-          {/* Static underline - no animation */}
-          {activeTab && underlineWidth > 0 && (
+          {/* Animated underline - matches reference component exactly */}
+          {activeTab && variant === "underline" && underlineWidth > 0 && (
             <div
               className="absolute bottom-0 h-1 bg-gradient-to-r from-red-500 to-red-600 rounded-full"
               style={{ 
@@ -242,22 +284,6 @@ const CategoryTabs = ({
           )}
         </div>
       </div>
-
-      {showCategoriesButton && !isSearchOverlayActive && (
-        <div className="absolute top-0 right-0 h-full flex items-center z-20 bg-white">
-          <div className="h-6 w-px bg-gray-200 opacity-50" />
-          <button
-            type="button"
-            onClick={handleCategoriesClick}
-            className="p-2 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-colors duration-150"
-            aria-label={t('allCategories', { ns: 'categories' })}
-          >
-            <LayoutGrid className="h-5 w-5" />
-          </button>
-        </div>
-      )}
     </div>
   );
-};
-
-export default CategoryTabs;
+}
