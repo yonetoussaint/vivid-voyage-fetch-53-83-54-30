@@ -142,14 +142,28 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
               </div>
             </div>
 
-            {/* Big Link Icon */}
-            <button
-              onClick={() => setShowSocialPanel(true)}
-              className="p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors self-center"
-              title="View social links"
-            >
-              <Link2 className="w-6 h-6" />
-            </button>
+            {/* Three Icons: Link, Share, More */}
+            <div className="flex items-center gap-1 self-center">
+              <button
+                onClick={() => setShowSocialPanel(true)}
+                className="p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                title="View social links"
+              >
+                <Link2 className="w-5 h-5" />
+              </button>
+              <button
+                className="p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Share profile"
+              >
+                <Share2 className="w-5 h-5" />
+              </button>
+              <button
+                className="p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                title="More options"
+              >
+                <MoreVertical className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -165,56 +179,30 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
           </p>
         </div>
 
-        {/* Stats */}
-        <div className="flex items-center justify-between py-3 mb-3 border-y border-gray-200 -mx-4 px-4">
+        {/* Stats - No border separators */}
+        <div className="flex items-center justify-between py-3 mb-3 -mx-4 px-4">
           <div className="flex items-center">
             <span className="font-bold text-gray-900 text-base">{formatNumber(safeSellerData.followers_count)}</span>
             <span className="text-gray-500 text-xs ml-1">Followers</span>
           </div>
 
           {safeSellerData.rating > 0 && (
-            <>
-              <div className="h-4 w-px bg-gray-300"></div>
-              <div className="flex items-center gap-1">
-                <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                <span className="text-gray-900 font-bold text-base">{safeSellerData.rating}</span>
-                {safeSellerData.reviews_count > 0 && (
-                  <span className="text-gray-500 text-xs">({formatNumber(safeSellerData.reviews_count)})</span>
-                )}
-              </div>
-            </>
+            <div className="flex items-center gap-1">
+              <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+              <span className="text-gray-900 font-bold text-base">{safeSellerData.rating}</span>
+              {safeSellerData.reviews_count > 0 && (
+                <span className="text-gray-500 text-xs">({formatNumber(safeSellerData.reviews_count)})</span>
+              )}
+            </div>
           )}
 
           {safeSellerData.total_sales > 0 && (
-            <>
-              <div className="h-4 w-px bg-gray-300"></div>
-              <div className="flex items-center">
-                <span className="text-gray-900 font-bold text-base">{formatNumber(safeSellerData.total_sales)}</span>
-                <span className="text-gray-500 text-xs ml-1">orders</span>
-              </div>
-            </>
+            <div className="flex items-center">
+              <span className="text-gray-900 font-bold text-base">{formatNumber(safeSellerData.total_sales)}</span>
+              <span className="text-gray-500 text-xs ml-1">orders</span>
+            </div>
           )}
         </div>
-
-        {/* Followed By */}
-        {safeSellerData.followed_by?.length > 0 && (
-          <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
-            <div className="flex -space-x-1.5">
-              {safeSellerData.followed_by.slice(0, 3).map((followerName: string, i: number) => (
-                <div
-                  key={i}
-                  className="w-6 h-6 rounded-full border-2 border-white bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold"
-                >
-                  {followerName.charAt(0).toUpperCase()}
-                </div>
-              ))}
-            </div>
-            <span>
-              Followed by <span className="font-semibold text-gray-700">{safeSellerData.followed_by.slice(0, 2).join(', ')}</span>
-              {safeSellerData.followed_by.length > 2 && ` and ${safeSellerData.followed_by.length - 2} others`}
-            </span>
-          </div>
-        )}
 
         {/* Action Buttons */}
         {showActionButtons && (
