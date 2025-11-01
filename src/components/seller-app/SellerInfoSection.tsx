@@ -240,20 +240,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
           </div>
         </div>
 
-        {/* Action Buttons */}
-        {showActionButtons && (
-          <div className="flex gap-2 pb-4">
-            <button className="flex-1 h-10 rounded-lg bg-gray-900 text-white text-sm font-bold hover:bg-gray-800 transition-colors">
-              Following
-            </button>
-            <button className="w-10 h-10 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors">
-              <Mail className="w-4 h-4" />
-            </button>
-            <button className="w-10 h-10 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors">
-              <Bell className="w-4 h-4" />
-            </button>
-          </div>
-        )}
+        {/* Action Buttons - Removed the section with Mail and Notifications buttons */}
       </div>
 
       {/* Social Media Bottom Sheet */}
