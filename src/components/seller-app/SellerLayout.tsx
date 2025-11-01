@@ -1,16 +1,16 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
-  Package, ShoppingCart, Users, BarChart3, ArrowLeft, DollarSign, Megaphone, Settings, Home, Share, MessageCircle, MessageSquare, Star 
+  Package, ShoppingCart, Users, BarChart3, ArrowLeft, DollarSign, Megaphone, Settings, Home, Share, MessageCircle, MessageSquare, Star, ExternalLink 
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import ReusableSearchBar from '@/components/shared/ReusableSearchBar';
 import { useQuery } from '@tanstack/react-query';
 import { fetchAllProducts } from '@/integrations/supabase/products';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import TabsNavigation from '@/components/home/TabsNavigation';
 import SellerInfoSection from './SellerInfoSection';
+import ProductHeader from './ProductHeader'; // Import ProductHeader
 
 interface SellerLayoutProps {
   children: React.ReactNode;
@@ -54,6 +54,16 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
   const handleShareClick = () => {
     console.log('Share seller profile');
+    // You can implement share functionality here
+  };
+
+  const handleLinkClick = () => {
+    console.log('Link button clicked');
+    // Copy seller profile link to clipboard or open share dialog
+    if (navigator.clipboard && window.location.href) {
+      navigator.clipboard.writeText(window.location.href);
+      // You might want to show a toast notification here
+    }
   };
 
   // Determine if we're in dashboard, pickup station, or public seller page
@@ -174,6 +184,22 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     const { data } = supabase.storage.from('seller-logos').getPublicUrl(imagePath);
     return data.publicUrl;
   });
+
+  // Define action buttons for ProductHeader
+  const actionButtons = [
+    {
+      Icon: Share,
+      onClick: handleShareClick,
+      active: false,
+      count: undefined
+    },
+    {
+      Icon: ExternalLink,
+      onClick: handleLinkClick,
+      active: false,
+      count: undefined
+    }
+  ];
 
   // Measure heights with ResizeObserver
   useLayoutEffect(() => {
@@ -326,28 +352,17 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         <div className="px-1.5 py-1">
           <div className="flex items-center justify-center">
             <div className="w-full max-w-2xl">
-              <ReusableSearchBar
-                placeholder={isPickupStation ? "Search packages..." : "Search in store..."}
-                showScanMic={!isTransparentHeader}
-                showSettingsButton={!isTransparentHeader}
-                onSettingsClick={() => {
-                  if (isPickupStation) {
-                    navigate('/pickup-station/settings');
-                  } else {
-                    console.log('Seller settings clicked');
-                  }
-                }}
-                onSubmit={(query) => {
-                  console.log('Searching for:', query);
-                  setShowSearchOverlay(false);
-                }}
-                onSearchFocus={() => setShowSearchOverlay(true)}
-                onSearchClose={handleBackClick}
-                isOverlayOpen={showSearchOverlay}
-                onCloseOverlay={() => setShowSearchOverlay(false)}
-                isTransparent={isTransparentHeader}
-                onBackClick={handleBackClick}
-                onShareClick={isPickupStation ? undefined : handleShareClick}
+              {/* Replace ReusableSearchBar with ProductHeader */}
+              <ProductHeader
+                showCloseIcon={false}
+                onCloseClick={handleBackClick}
+                actionButtons={actionButtons}
+                sellerMode={true}
+                seller={sellerData}
+                stickyMode={true}
+                forceScrolledState={!isTransparentHeader}
+                customScrollProgress={isTransparentHeader ? 0 : 1}
+                inPanel={false}
               />
             </div>
           </div>
@@ -391,14 +406,13 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
               top: isTabsSticky ? `${headerHeight}px` : 'auto',
             }}
           >
-
-<TabsNavigation 
-  tabs={tabs}
-  activeTab={activeTab}
-  onTabChange={handleTabChange}
-  showTopBorder={true}
-variant="underline"
-/>
+            <TabsNavigation 
+              tabs={tabs}
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+              showTopBorder={true}
+              variant="underline"
+            />
           </nav>
 
           {/* Spacer when tabs are sticky */}
