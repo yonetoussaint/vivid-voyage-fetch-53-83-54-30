@@ -111,7 +111,7 @@ export default function TabsNavigation({
       >
         <div className="h-full w-full">
           <div
-            className="flex items-center overflow-x-auto no-scrollbar h-full w-full relative px-2 py-2"
+            className="flex items-center overflow-x-auto no-scrollbar h-full w-full relative px-2 "
             style={{ 
               scrollbarWidth: 'none', 
               msOverflowStyle: 'none',
