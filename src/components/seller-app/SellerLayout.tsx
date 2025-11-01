@@ -319,17 +319,19 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         className="fixed top-0 left-0 right-0 z-40"
       >
         {/* Remove the inner container that was limiting width */}
-        <ProductHeader
-          showCloseIcon={false}
-          onCloseClick={handleBackClick}
-          actionButtons={actionButtons}
-          sellerMode={false} // Disable seller mode to avoid avatar and stats
-          stickyMode={true}
-          forceScrolledState={scrollProgress > 0.3} // Force scrolled state after 30% progress
-          customScrollProgress={scrollProgress}
-          inPanel={false}
-          showDetailsButton={false}
-        />
+       
+<ProductHeader
+  showCloseIcon={false}
+  onCloseClick={handleBackClick}
+  actionButtons={actionButtons}
+  sellerMode={false}
+  stickyMode={true}
+  forceScrolledState={scrollProgress > 0.3}
+  customScrollProgress={scrollProgress}
+  inPanel={false}
+  showDetailsButton={false}
+  showSearchBar={false} // ADD THIS LINE - Disables search bar completely
+/>
       </div>
 
       {/* Main Content Area */}
