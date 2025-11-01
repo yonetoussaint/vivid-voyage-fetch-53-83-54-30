@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
-  Package, ShoppingCart, Users, BarChart3, ArrowLeft, DollarSign, Megaphone, Settings, Home, Share, MessageCircle, MessageSquare, Star, Warehouse 
+  Package, ShoppingCart, Users, BarChart3, ArrowLeft, DollarSign, Megaphone, Settings, Home, Share, MessageCircle, MessageSquare, Star 
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import ReusableSearchBar from '@/components/shared/ReusableSearchBar';
@@ -67,9 +67,9 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       if (!path || path === '') {
         if (location.pathname === '/seller-dashboard' || 
             location.pathname.endsWith('/seller-dashboard/')) {
-          navigate('/seller-dashboard/overview', { replace: true });
+          navigate('/seller-dashboard/products', { replace: true });
         }
-        return 'overview';
+        return 'products';
       }
       return path;
     } else if (isPickupStation) {
@@ -88,7 +88,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       if (pathParts && pathParts.length > 1) {
         return pathParts[1]; // Return the tab part (e.g., 'products', 'reels', etc.)
       }
-      return 'overview';
+      return 'products';
     }
   };
 
@@ -100,8 +100,8 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     queryFn: fetchAllProducts,
   });
 
-  // Check if we're on the overview tab
-  const isOverviewTab = activeTab === 'overview';
+  // Check if we're on the products tab (which now shows seller info)
+  const isProductsTab = activeTab === 'products';
 
   const baseRoute = isDashboard ? '/seller-dashboard' : isPickupStation ? '/pickup-station' : `/seller/${location.pathname.split('/seller/')[1]?.split('/')[0] || ''}`;
 
@@ -115,9 +115,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     { id: 'notifications', name: 'Notifications', href: '/pickup-station/notifications', icon: MessageCircle },
     { id: 'settings', name: 'Settings', href: '/pickup-station/settings', icon: Settings },
   ] : isDashboard ? [
-    { id: 'overview', name: 'Overview', href: '/seller-dashboard/overview', icon: Home },
     { id: 'products', name: 'Products', href: '/seller-dashboard/products', icon: Package },
-    
     { id: 'orders', name: 'Orders', href: '/seller-dashboard/orders', icon: ShoppingCart },
     { id: 'customers', name: 'Customers', href: '/seller-dashboard/customers', icon: Users },
     { id: 'analytics', name: 'Analytics', href: '/seller-dashboard/analytics', icon: BarChart3 },
@@ -126,7 +124,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     { id: 'reels', name: 'Reels', href: '/seller-dashboard/reels', icon: Megaphone },
     { id: 'settings', name: 'Settings', href: '/seller-dashboard/settings', icon: Settings },
   ] : [
-    { id: 'overview', name: 'Overview', href: baseRoute, icon: Home },
     { id: 'products', name: 'Products', href: `${baseRoute}/products`, icon: Package },
     { id: 'reels', name: 'Reels', href: `${baseRoute}/reels`, icon: Megaphone },
     { id: 'posts', name: 'Posts', href: `${baseRoute}/posts`, icon: MessageCircle },
@@ -195,7 +192,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
           setHeaderHeight(height);
         }
       }
-      if (sellerInfoRef.current && isOverviewTab) {
+      if (sellerInfoRef.current && isProductsTab) {
         const height = sellerInfoRef.current.offsetHeight;
         if (height > 0) {
           setSellerInfoHeight(height);
@@ -218,7 +215,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     if (headerRef.current) {
       resizeObserver.observe(headerRef.current);
     }
-    if (sellerInfoRef.current && isOverviewTab) {
+    if (sellerInfoRef.current && isProductsTab) {
       resizeObserver.observe(sellerInfoRef.current);
     }
     if (tabsRef.current) {
@@ -228,7 +225,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     return () => {
       resizeObserver.disconnect();
     };
-  }, [isOverviewTab]);
+  }, [isProductsTab]);
 
   // Update active tab when location changes
   useEffect(() => {
@@ -237,7 +234,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
     if (location.pathname === '/seller-dashboard' || 
         location.pathname.endsWith('/seller-dashboard/')) {
-      navigate('/seller-dashboard/overview', { replace: true });
+      navigate('/seller-dashboard/products', { replace: true });
     } else if (location.pathname === '/pickup-station' || 
                location.pathname.endsWith('/pickup-station/')) {
       navigate('/pickup-station/overview', { replace: true });
@@ -257,7 +254,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         // We need to calculate where the tabs would be if they weren't sticky
         let tabsNaturalTopInViewport;
 
-        if (isOverviewTab) {
+        if (isProductsTab) {
           // Tabs naturally sit after seller info
           // Their natural position from document top = sellerInfoHeight
           // Their position in viewport = naturalPosition - scrollY
@@ -298,11 +295,11 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleScroll);
     };
-  }, [isTabsSticky, isOverviewTab, sellerInfoHeight, headerHeight]);
+  }, [isTabsSticky, isProductsTab, sellerInfoHeight, headerHeight]);
 
-  // Handle header transparency for overview tab
+  // Handle header transparency for products tab
   useEffect(() => {
-    if (!isOverviewTab) {
+    if (!isProductsTab) {
       setIsTransparentHeader(false);
       return;
     }
@@ -324,7 +321,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [isOverviewTab, headerHeight, sellerInfoHeight]);
+  }, [isProductsTab, headerHeight, sellerInfoHeight]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -371,8 +368,8 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       {/* Main Content Area */}
       <div className="relative min-h-screen">
         <main>
-          {/* Seller Info Section - Only on overview tab */}
-          {isOverviewTab && (
+          {/* Seller Info Section - Only on products tab */}
+          {isProductsTab && (
             <div 
               ref={sellerInfoRef} 
               className="w-full bg-black text-white relative z-30"
@@ -388,8 +385,8 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
             </div>
           )}
 
-          {/* Spacer for non-overview tabs */}
-          {!isOverviewTab && (
+          {/* Spacer for non-products tabs */}
+          {!isProductsTab && (
             <div style={{ height: `${headerHeight}px` }} />
           )}
 
@@ -425,7 +422,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
           <div className="px-2">
             {React.Children.map(children, child => {
               if (React.isValidElement(child)) {
-                if (activeTab !== 'overview') {
+                if (activeTab !== 'products') {
                   return React.cloneElement(child, { 
                     products, 
                     isLoading: productsLoading || sellerLoading
