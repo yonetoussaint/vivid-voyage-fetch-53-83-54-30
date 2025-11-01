@@ -208,39 +208,40 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
           </p>
         </div>
 
-        {/* Stats - Evenly distributed with vertical separators */}
-        <div className="flex items-center justify-evenly -mx-4 mb-2">
-          <div className="flex flex-col items-center">
-            <span className="font-bold text-red-600 text-base">{formatNumber(safeSellerData.followers_count)}</span>
-            <span className="text-gray-600 text-xs font-medium">Followers</span>
+        {/* Stats - Clean cards layout */}
+        <div className="grid grid-cols-4 gap-2 mb-2">
+          {/* Followers Card */}
+          <div className="bg-white border border-gray-200 rounded-lg p-3 text-center shadow-sm hover:shadow-md transition-shadow">
+            <div className="font-bold text-red-600 text-base mb-1">
+              {formatNumber(safeSellerData.followers_count)}
+            </div>
+            <div className="text-gray-600 text-xs font-medium">Followers</div>
           </div>
 
-          {/* Vertical Border */}
-          <div className="h-8 w-px bg-gray-300"></div>
-
-          <div className="flex flex-col items-center">
-            <span className="text-red-600 font-bold text-base">{formatNumber(safeSellerData.total_sales)}</span>
-            <span className="text-gray-600 text-xs font-medium">Orders</span>
+          {/* Orders Card */}
+          <div className="bg-white border border-gray-200 rounded-lg p-3 text-center shadow-sm hover:shadow-md transition-shadow">
+            <div className="text-red-600 font-bold text-base mb-1">
+              {formatNumber(safeSellerData.total_sales)}
+            </div>
+            <div className="text-gray-600 text-xs font-medium">Orders</div>
           </div>
 
-          {/* Vertical Border */}
-          <div className="h-8 w-px bg-gray-300"></div>
-
-          <div className="flex flex-col items-center">
-            <span className="text-red-600 font-bold text-base">{safeSellerData.rating || '0.0'}</span>
-            <span className="text-gray-600 text-xs font-medium">Average</span>
+          {/* Average Rating Card */}
+          <div className="bg-white border border-gray-200 rounded-lg p-3 text-center shadow-sm hover:shadow-md transition-shadow">
+            <div className="text-red-600 font-bold text-base mb-1">
+              {safeSellerData.rating || '0.0'}
+            </div>
+            <div className="text-gray-600 text-xs font-medium">Average</div>
           </div>
 
-          {/* Vertical Border */}
-          <div className="h-8 w-px bg-gray-300"></div>
-
-          <div className="flex flex-col items-center">
-            <span className="text-red-600 font-bold text-base">{safeSellerData.store_age_years}</span>
-            <span className="text-gray-600 text-xs font-medium">Years</span>
+          {/* Years Card */}
+          <div className="bg-white border border-gray-200 rounded-lg p-3 text-center shadow-sm hover:shadow-md transition-shadow">
+            <div className="text-red-600 font-bold text-base mb-1">
+              {safeSellerData.store_age_years}
+            </div>
+            <div className="text-gray-600 text-xs font-medium">Years</div>
           </div>
         </div>
-
-        {/* Action Buttons - Removed the section with Mail and Notifications buttons */}
       </div>
 
       {/* Social Media Bottom Sheet */}
