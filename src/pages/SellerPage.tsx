@@ -1,4 +1,3 @@
-
 // components/seller-app/SellerPage.tsx
 import React, { useEffect } from 'react';
 import { useLocation, useParams, Routes, Route, Navigate } from 'react-router-dom';
@@ -99,9 +98,10 @@ const SellerPage = () => {
       publicSellerLoading={sellerLoading}
       getSellerLogoUrl={getSellerLogoUrl}
       isPublicPage={true}
+      isOwnProfile={false} // Explicitly set to false for public seller pages
     >
       <Routes>
-        <Route path="/" element={<SellerOverview />} />
+        <Route path="/" element={<Navigate to="/products" replace />} />
         <Route 
           path="/products" 
           element={
