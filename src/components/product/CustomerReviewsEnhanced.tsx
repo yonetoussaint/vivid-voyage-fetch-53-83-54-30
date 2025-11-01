@@ -397,22 +397,22 @@ const CustomerReviews = ({
   }, [localReviews]);
 
   const filterCategories = React.useMemo(() => [
-    {
-      id: 'rating',
-      label: 'Rating',
-      options: ['All Ratings', '5 Stars', '4 Stars', '3 Stars', '2 Stars', '1 Star']
-    },
-    {
-      id: 'media',
-      label: 'Media',
-      options: ['All Media', 'With Photos', 'With Videos', 'No Media']
-    },
-    {
-      id: 'sort',
-      label: 'Sort By',
-      options: ['Most Recent', 'Oldest First', 'Most Liked']
-    }
-  ], []);
+  {
+    id: 'rating',
+    label: 'Rating',
+    options: ['All Ratings', '5 Stars', '4 Stars', '3 Stars', '2 Stars', '1 Star']
+  },
+  {
+    id: 'media',
+    label: 'Media',
+    options: ['All Media', 'With Photos', 'With Videos', 'No Media']
+  },
+  {
+    id: 'sort',
+    label: 'Sort By',
+    options: ['All Sorts', 'Most Recent', 'Oldest First', 'Most Liked']
+  }
+], []);
 
   // Initialize filters with "All" options on mount only
   React.useEffect(() => {
@@ -424,41 +424,41 @@ const CustomerReviews = ({
   }, []);
 
   const handleFilterSelect = (filterId: string, option: string) => {
-    setSelectedFilters(prev => ({
-      ...prev,
-      [filterId]: option
-    }));
+  setSelectedFilters(prev => ({
+    ...prev,
+    [filterId]: option
+  }));
 
-    if (filterId === 'sort') {
-      if (option.toLowerCase().startsWith('all')) {
-        setSortBy('recent');
-      } else {
-        const sortMap: Record<string, string> = {
-          'Most Recent': 'recent',
-          'Oldest First': 'oldest',
-          'Most Liked': 'helpful'
-        };
-        if (sortMap[option]) {
-          setSortBy(sortMap[option]);
-        }
-      }
-    } else if (filterId === 'rating') {
-      if (option.toLowerCase().startsWith('all')) {
-        setFilterRating(0);
-      } else {
-        const ratingMap: Record<string, number> = {
-          '5 Stars': 5,
-          '4 Stars': 4,
-          '3 Stars': 3,
-          '2 Stars': 2,
-          '1 Star': 1
-        };
-        if (option in ratingMap) {
-          setFilterRating(ratingMap[option]);
-        }
+  if (filterId === 'sort') {
+    if (option.toLowerCase().startsWith('all')) {
+      setSortBy('recent');
+    } else {
+      const sortMap: Record<string, string> = {
+        'Most Recent': 'recent',
+        'Oldest First': 'oldest',
+        'Most Liked': 'helpful'
+      };
+      if (sortMap[option]) {
+        setSortBy(sortMap[option]);
       }
     }
-  };
+  } else if (filterId === 'rating') {
+    if (option.toLowerCase().startsWith('all')) {
+      setFilterRating(0);
+    } else {
+      const ratingMap: Record<string, number> = {
+        '5 Stars': 5,
+        '4 Stars': 4,
+        '3 Stars': 3,
+        '2 Stars': 2,
+        '1 Star': 1
+      };
+      if (option in ratingMap) {
+        setFilterRating(ratingMap[option]);
+      }
+    }
+  }
+};
 
   const handleFilterClear = (filterId: string) => {
     setSelectedFilters(prev => {
