@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Clock, ChevronUp, ArrowLeft, ChevronDown, Store, MapPin, Calendar, Star,
-  Facebook, Instagram, Mail, Edit2, Share2, MoreVertical, Bell, Link2
+  Facebook, Instagram, Mail, Edit2, Share2, MoreVertical, Bell, Link2, X
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import HeroBanner from '@/components/home/HeroBanner';
@@ -141,7 +141,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
                 </span>
               </div>
 
-              {/* Seller Level (without progress bar) */}
+              {/* Seller Level */}
               {(() => {
                 const level = getSellerLevel(safeSellerData.total_sales);
                 return (
@@ -245,36 +245,86 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
         )}
       </div>
 
-      {/* Social Media Slide Panel */}
+      {/* Social Media Bottom Sheet */}
       {showSocialPanel && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex justify-end">
-          <div className="w-64 bg-white h-full shadow-xl p-4 flex flex-col">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold">Social Links</h2>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center">
+          <div className="bg-white w-full max-w-md rounded-t-2xl shadow-lg p-6 animate-slide-up">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold">Social Links</h2>
               <button
                 onClick={() => setShowSocialPanel(false)}
-                className="text-gray-500 hover:text-gray-700 transition"
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
               >
-                ✕
+                <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="flex flex-col gap-3">
-              <a href={safeSellerData.social_media?.whatsapp || '#'} target="_blank" className="flex items-center gap-2 text-green-600 hover:text-green-700">
-                <WhatsAppIcon className="w-5 h-5" /> WhatsApp
+
+            {/* Horizontal Social Links */}
+            <div className="flex justify-center gap-6 pb-4">
+              <a 
+                href={safeSellerData.social_media?.whatsapp || '#'} 
+                target="_blank" 
+                className="flex flex-col items-center gap-2 text-green-600 hover:text-green-700 transition-colors"
+              >
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                  <WhatsAppIcon className="w-6 h-6" />
+                </div>
+                <span className="text-xs font-medium">WhatsApp</span>
               </a>
-              <a href={safeSellerData.social_media?.facebook || '#'} target="_blank" className="flex items-center gap-2 text-blue-600 hover:text-blue-700">
-                <Facebook className="w-5 h-5" /> Facebook
+              
+              <a 
+                href={safeSellerData.social_media?.facebook || '#'} 
+                target="_blank" 
+                className="flex flex-col items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors"
+              >
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Facebook className="w-6 h-6" />
+                </div>
+                <span className="text-xs font-medium">Facebook</span>
               </a>
-              <a href={safeSellerData.social_media?.instagram || '#'} target="_blank" className="flex items-center gap-2 text-pink-600 hover:text-pink-700">
-                <Instagram className="w-5 h-5" /> Instagram
+              
+              <a 
+                href={safeSellerData.social_media?.instagram || '#'} 
+                target="_blank" 
+                className="flex flex-col items-center gap-2 text-pink-600 hover:text-pink-700 transition-colors"
+              >
+                <div className="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center">
+                  <Instagram className="w-6 h-6" />
+                </div>
+                <span className="text-xs font-medium">Instagram</span>
               </a>
-              <a href={safeSellerData.social_media?.x || '#'} target="_blank" className="flex items-center gap-2 text-black hover:text-gray-800">
-                <XIcon className="w-5 h-5" /> X (Twitter)
+              
+              <a 
+                href={safeSellerData.social_media?.x || '#'} 
+                target="_blank" 
+                className="flex flex-col items-center gap-2 text-black hover:text-gray-800 transition-colors"
+              >
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                  <XIcon className="w-6 h-6" />
+                </div>
+                <span className="text-xs font-medium">X</span>
               </a>
-              <a href={safeSellerData.social_media?.tiktok || '#'} target="_blank" className="flex items-center gap-2 text-black hover:text-gray-800">
-                <TikTokIcon className="w-5 h-5" /> TikTok
+              
+              <a 
+                href={safeSellerData.social_media?.tiktok || '#'} 
+                target="_blank" 
+                className="flex flex-col items-center gap-2 text-black hover:text-gray-800 transition-colors"
+              >
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                  <TikTokIcon className="w-6 h-6" />
+                </div>
+                <span className="text-xs font-medium">TikTok</span>
               </a>
             </div>
+
+            {/* Close Button */}
+            <button
+              onClick={() => setShowSocialPanel(false)}
+              className="w-full mt-4 py-3 bg-gray-100 text-gray-900 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
