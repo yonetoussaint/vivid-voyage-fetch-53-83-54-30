@@ -14,7 +14,7 @@ import {
 } from './DateUtils';
 import VerificationBadge from '@/components/shared/VerificationBadge';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 // Mock Button component
 const Button = ({ children, variant, className, onClick }) => (
