@@ -168,7 +168,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
         </div>
 
         {/* Bio */}
-        <div className="mb-3">
+        <div className="mb-2">
           <p className="text-gray-900 text-sm leading-relaxed">
             {safeSellerData.bio}
             {safeSellerData.mentions && safeSellerData.mentions.length > 0 && (
@@ -180,7 +180,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
         </div>
 
         {/* Stats - No border separators */}
-        <div className="flex items-center justify-between -mx-4 px-4">
+        <div className="flex items-center justify-between -mx-4 mb-2 px-4">
           <div className="flex items-center">
             <span className="font-bold text-gray-900 text-base">{formatNumber(safeSellerData.followers_count)}</span>
             <span className="text-gray-500 text-xs ml-1">Followers</span>
