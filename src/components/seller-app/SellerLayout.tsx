@@ -394,7 +394,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
             <TabsNavigation
   tabs={tabs}
   activeTab={activeTab}
-  onTabChange={setActiveTab}
+  onTabChange={handleTabChange}
   variant="underline"
 />
           </nav>
