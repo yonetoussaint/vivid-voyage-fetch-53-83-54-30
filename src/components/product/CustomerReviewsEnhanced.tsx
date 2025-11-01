@@ -365,32 +365,22 @@ const CustomerReviews = ({
   }, [localReviews]);
 
   const filterCategories = React.useMemo(() => [
-    {
-      id: 'rating',
-      label: 'Rating',
-      options: ['All Ratings', '5 Stars', '4 Stars', '3 Stars', '2 Stars', '1 Star']
-    },
-    {
-      id: 'verified',
-      label: 'Purchase',
-      options: ['All Purchases', 'Verified Purchase', 'Unverified']
-    },
-    {
-      id: 'media',
-      label: 'Media',
-      options: ['All Media', 'With Photos', 'With Videos', 'No Media']
-    },
-    {
-      id: 'time',
-      label: 'Time Period',
-      options: ['All Time', 'Last 30 Days', 'Last 6 Months', 'Last Year']
-    },
-    {
-      id: 'sort',
-      label: 'Sort By',
-      options: ['All Sorts', 'Most Recent', 'Most Helpful', 'Highest Rating']
-    }
-  ], []);
+  {
+    id: 'rating',
+    label: 'Rating',
+    options: ['All Ratings', '5 Stars', '4 Stars', '3 Stars', '2 Stars', '1 Star']
+  },
+  {
+    id: 'media',
+    label: 'Media',
+    options: ['All Media', 'With Photos', 'With Videos', 'No Media']
+  },
+  {
+    id: 'sort',
+    label: 'Sort By',
+    options: ['Most Recent', 'Oldest First', 'Most Liked']
+  }
+], []);
 
   // Initialize filters with "All" options on mount only
   React.useEffect(() => {
