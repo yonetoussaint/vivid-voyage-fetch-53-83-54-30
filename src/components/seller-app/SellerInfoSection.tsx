@@ -141,18 +141,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
                 </span>
               </div>
 
-              {/* Seller Level */}
-              {(() => {
-                const level = getSellerLevel(safeSellerData.total_sales);
-                return (
-                  <div
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r ${level.gradient} text-white text-xs font-semibold mt-1`}
-                  >
-                    <span>{level.icon}</span>
-                    <span>{level.name}</span>
-                  </div>
-                );
-              })()}
+              {/* Seller Level removed */}
             </div>
 
             {/* Big Link Icon */}
