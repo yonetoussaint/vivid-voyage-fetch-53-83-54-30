@@ -156,6 +156,38 @@ const mockReviews = [
     shareCount: 1,
     media: [],
     replies: []
+  },
+  {
+    id: 4,
+    user_name: "David Wilson",
+    rating: 3,
+    comment: "Average product. Does the job but nothing special.",
+    created_at: "2024-02-15T14:20:00Z",
+    verified_purchase: true,
+    helpful_count: 3,
+    reply_count: 0,
+    likeCount: 2,
+    commentCount: 0,
+    shareCount: 0,
+    media: [],
+    replies: []
+  },
+  {
+    id: 5,
+    user_name: "Emma Davis",
+    rating: 2,
+    comment: "Not what I expected. Poor quality and arrived damaged.",
+    created_at: "2024-01-20T11:45:00Z",
+    verified_purchase: true,
+    helpful_count: 1,
+    reply_count: 0,
+    likeCount: 0,
+    commentCount: 0,
+    shareCount: 0,
+    media: [
+      { type: 'image', url: 'https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=400&h=300&fit=crop', alt: 'Damaged product' }
+    ],
+    replies: []
   }
 ];
 
@@ -365,22 +397,22 @@ const CustomerReviews = ({
   }, [localReviews]);
 
   const filterCategories = React.useMemo(() => [
-  {
-    id: 'rating',
-    label: 'Rating',
-    options: ['All Ratings', '5 Stars', '4 Stars', '3 Stars', '2 Stars', '1 Star']
-  },
-  {
-    id: 'media',
-    label: 'Media',
-    options: ['All Media', 'With Photos', 'With Videos', 'No Media']
-  },
-  {
-    id: 'sort',
-    label: 'Sort By',
-    options: ['All Sorts','Most Recent', 'Oldest First', 'Most Liked']
-  }
-], []);
+    {
+      id: 'rating',
+      label: 'Rating',
+      options: ['All Ratings', '5 Stars', '4 Stars', '3 Stars', '2 Stars', '1 Star']
+    },
+    {
+      id: 'media',
+      label: 'Media',
+      options: ['All Media', 'With Photos', 'With Videos', 'No Media']
+    },
+    {
+      id: 'sort',
+      label: 'Sort By',
+      options: ['Most Recent', 'Oldest First', 'Most Liked']
+    }
+  ], []);
 
   // Initialize filters with "All" options on mount only
   React.useEffect(() => {
@@ -403,8 +435,8 @@ const CustomerReviews = ({
       } else {
         const sortMap: Record<string, string> = {
           'Most Recent': 'recent',
-          'Most Helpful': 'helpful',
-          'Highest Rating': 'rating'
+          'Oldest First': 'oldest',
+          'Most Liked': 'helpful'
         };
         if (sortMap[option]) {
           setSortBy(sortMap[option]);
@@ -429,34 +461,34 @@ const CustomerReviews = ({
   };
 
   const handleFilterClear = (filterId: string) => {
-  setSelectedFilters(prev => {
-    const defaultOption = filterCategories.find(cat => cat.id === filterId)?.options[0];
-    if (defaultOption) {
-      return {
-        ...prev,
-        [filterId]: defaultOption
-      };
-    }
-    return prev;
-  });
+    setSelectedFilters(prev => {
+      const defaultOption = filterCategories.find(cat => cat.id === filterId)?.options[0];
+      if (defaultOption) {
+        return {
+          ...prev,
+          [filterId]: defaultOption
+        };
+      }
+      return prev;
+    });
 
-  // Also reset the corresponding state
-  if (filterId === 'rating') {
-    setFilterRating(0);
-  } else if (filterId === 'sort') {
-    setSortBy('recent');
-  }
-};
+    // Also reset the corresponding state
+    if (filterId === 'rating') {
+      setFilterRating(0);
+    } else if (filterId === 'sort') {
+      setSortBy('recent');
+    }
+  };
 
   const handleClearAll = () => {
-  const resetFilters: Record<string, string> = {};
-  filterCategories.forEach(category => {
-    resetFilters[category.id] = category.options[0];
-  });
-  setSelectedFilters(resetFilters);
-  setSortBy('recent');
-  setFilterRating(0);
-};
+    const resetFilters: Record<string, string> = {};
+    filterCategories.forEach(category => {
+      resetFilters[category.id] = category.options[0];
+    });
+    setSelectedFilters(resetFilters);
+    setSortBy('recent');
+    setFilterRating(0);
+  };
 
   const handleFilterButtonClick = (filterId: string) => {
     console.log('Filter button clicked:', filterId);
@@ -471,15 +503,37 @@ const CustomerReviews = ({
       filtered = filtered.filter(review => review.rating === filterRating);
     }
 
+    // Filter by media
+    const mediaFilter = selectedFilters.media;
+    if (mediaFilter && !mediaFilter.toLowerCase().startsWith('all')) {
+      switch (mediaFilter) {
+        case 'With Photos':
+          filtered = filtered.filter(review => 
+            review.media && review.media.some(item => item.type === 'image')
+          );
+          break;
+        case 'With Videos':
+          filtered = filtered.filter(review => 
+            review.media && review.media.some(item => item.type === 'video')
+          );
+          break;
+        case 'No Media':
+          filtered = filtered.filter(review => 
+            !review.media || review.media.length === 0
+          );
+          break;
+      }
+    }
+
     // Sort reviews
     filtered = [...filtered].sort((a, b) => {
       switch (sortBy) {
         case 'recent':
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case 'oldest':
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
         case 'helpful':
           return b.helpful_count - a.helpful_count;
-        case 'rating':
-          return b.rating - a.rating;
         default:
           return 0;
       }
@@ -491,7 +545,7 @@ const CustomerReviews = ({
     }
 
     return filtered;
-  }, [localReviews, sortBy, filterRating, limit]);
+  }, [localReviews, sortBy, filterRating, selectedFilters.media, limit]);
 
   const summaryStats = [
     { value: reviewStats.averageRating.toFixed(1), label: 'Average', color: 'text-yellow-600' },
