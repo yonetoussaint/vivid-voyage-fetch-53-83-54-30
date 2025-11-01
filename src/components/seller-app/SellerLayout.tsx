@@ -392,11 +392,11 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
             }}
           >
             <TabsNavigation
-              tabs={tabs}
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
-              variant="pills"
-            />
+  tabs={tabs}
+  activeTab={activeTab}
+  onTabChange={setActiveTab}
+  variant="underline"
+/>
           </nav>
 
           {/* Spacer when tabs are sticky */}
