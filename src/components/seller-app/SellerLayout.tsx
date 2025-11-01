@@ -403,11 +403,11 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
             }}
           >
             <TabsNavigation
-              tabs={tabs}
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
-              isLoading={sellerLoading}
-            />
+  tabs={tabs}
+  activeTab={activeTab}
+  onTabChange={setActiveTab}
+  variant="pills"
+/>
           </nav>
 
           {/* Spacer when tabs are sticky */}
