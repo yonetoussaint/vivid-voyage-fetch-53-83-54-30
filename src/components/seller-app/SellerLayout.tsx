@@ -346,7 +346,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
                 sellerLoading={sellerLoading}
                 getSellerLogoUrl={getSellerLogoUrl}
                 onBecomeSeller={handleBecomeSeller}
-                onBack={handleBackClick} {/* Fixed: use handleBackClick instead of handleBack */}
+                onBack={handleBackClick}
                 isOwnProfile={user?.id === sellerData?.user_id}
                 showActionButtons={showActionButtons}
               />
