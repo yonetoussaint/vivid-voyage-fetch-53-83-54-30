@@ -29,8 +29,8 @@ const SellerInfoOverlay: React.FC<SellerInfoOverlayProps> = ({
   const handleSellerClick = () => {
     console.log('🔍 SellerInfoOverlay clicked, seller:', seller);
     
-    // Navigate to seller page
-    navigate(`/seller/${seller.id}/products`);
+    // FIX: Navigate to just the seller page, not seller/products
+    navigate(`/seller/${seller.id}`);
     
     // Call the original onSellerClick if provided
     onSellerClick?.();
