@@ -117,7 +117,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   ] : isDashboard ? [
     { id: 'overview', name: 'Overview', href: '/seller-dashboard/overview', icon: Home },
     { id: 'products', name: 'Products', href: '/seller-dashboard/products', icon: Package },
-    { id: 'inventory', name: 'Inventory', href: '/seller-dashboard/inventory', icon: Warehouse },
+    
     { id: 'orders', name: 'Orders', href: '/seller-dashboard/orders', icon: ShoppingCart },
     { id: 'customers', name: 'Customers', href: '/seller-dashboard/customers', icon: Users },
     { id: 'analytics', name: 'Analytics', href: '/seller-dashboard/analytics', icon: BarChart3 },
