@@ -27,14 +27,14 @@ const SellerInfoOverlay: React.FC<SellerInfoOverlayProps> = ({
   if (!seller) return null;
 
   const handleSellerClick = () => {
-    console.log('🔍 SellerInfoOverlay clicked, seller:', seller);
-    
-    // FIX: Navigate to just the seller page, not seller/products
-    navigate(`/seller/${seller.id}`);
-    
-    // Call the original onSellerClick if provided
-    onSellerClick?.();
-  };
+  console.log('🔍 SellerInfoOverlay clicked, seller:', seller);
+  
+  // Use absolute path to avoid conflict with /products route
+  navigate(`/seller/${seller.id}`);
+  
+  // Call the original onSellerClick if provided
+  onSellerClick?.();
+};
 
   return (
     <div className={`absolute bottom-3 left-3 z-30 transition-opacity duration-300 ${(focusMode || isPlaying) ? 'opacity-0' : 'opacity-100'}`}>
