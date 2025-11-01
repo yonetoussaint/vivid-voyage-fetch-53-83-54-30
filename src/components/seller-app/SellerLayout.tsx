@@ -313,26 +313,29 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         style={{ top: `${headerHeight}px` }}
       />
 
-      {/* Header - Full width, fixed positioning */}
-      <div 
-        ref={headerRef} 
-        className="fixed top-0 left-0 right-0 z-40"
-      >
-        {/* Remove the inner container that was limiting width */}
-       
-<ProductHeader
-  showCloseIcon={false}
-  onCloseClick={handleBackClick}
-  actionButtons={actionButtons}
-  sellerMode={false}
-  stickyMode={true}
-  forceScrolledState={scrollProgress > 0.3}
-  customScrollProgress={scrollProgress}
-  inPanel={false}
-  showDetailsButton={false}
-  showSearchBar={false} // ADD THIS LINE - Disables search bar completely
-/>
-      </div>
+      
+{/* Header - Full width, fixed positioning */}
+<div 
+  ref={headerRef} 
+  className="fixed top-0 left-0 right-0 z-40"
+  style={{
+    // Ensure no background is applied at the container level
+    backgroundColor: 'transparent',
+  }}
+>
+  <ProductHeader
+    showCloseIcon={false}
+    onCloseClick={handleBackClick}
+    actionButtons={actionButtons}
+    sellerMode={false}
+    stickyMode={true}
+    forceScrolledState={scrollProgress > 0.3}
+    customScrollProgress={scrollProgress}
+    inPanel={false}
+    showDetailsButton={false}
+    showSearchBar={false}
+  />
+</div>
 
       {/* Main Content Area */}
       <div className="relative min-h-screen">
