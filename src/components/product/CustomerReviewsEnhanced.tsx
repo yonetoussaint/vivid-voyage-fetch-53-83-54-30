@@ -429,12 +429,24 @@ const CustomerReviews = ({
   };
 
   const handleFilterClear = (filterId: string) => {
-    setSelectedFilters(prev => {
-      const newFilters = { ...prev };
-      delete newFilters[filterId];
-      return newFilters;
-    });
-  };
+  setSelectedFilters(prev => {
+    const defaultOption = filterCategories.find(cat => cat.id === filterId)?.options[0];
+    if (defaultOption) {
+      return {
+        ...prev,
+        [filterId]: defaultOption
+      };
+    }
+    return prev;
+  });
+
+  // Also reset the corresponding state
+  if (filterId === 'rating') {
+    setFilterRating(0);
+  } else if (filterId === 'sort') {
+    setSortBy('recent');
+  }
+};
 
   const handleClearAll = () => {
     const resetFilters: Record<string, string> = {};
