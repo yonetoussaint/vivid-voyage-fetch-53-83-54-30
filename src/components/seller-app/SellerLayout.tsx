@@ -1,444 +1,211 @@
-import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { 
-  Package, ShoppingCart, Users, BarChart3, ArrowLeft, DollarSign, Megaphone, Settings, Home, Share, MessageCircle, MessageSquare, Star 
-} from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
-import ReusableSearchBar from '@/components/shared/ReusableSearchBar';
-import { useQuery } from '@tanstack/react-query';
-import { fetchAllProducts } from '@/integrations/supabase/products';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import TabsNavigation from '@/components/home/TabsNavigation';
-import SellerInfoSection from './SellerInfoSection';
+import { useState, useRef, useEffect } from "react";
 
-interface SellerLayoutProps {
-  children: React.ReactNode;
-  showActionButtons?: boolean;
-  publicSellerData?: any;
-  publicSellerLoading?: boolean;
-  getSellerLogoUrl?: (imagePath?: string) => string;
-  isPublicPage?: boolean;
-}
+export default function TabsNavigation({ 
+  tabs, 
+  activeTab, 
+  onTabChange, 
+  className = "", 
+  style = {}, 
+  edgeToEdge = false, 
+  isLoading = false,
+  variant = "underline" // "underline" | "pills"
+}) {
+  const tabRefs = useRef([]);
+  const scrollContainerRef = useRef(null);
+  const [underlineWidth, setUnderlineWidth] = useState(0);
+  const [underlineLeft, setUnderlineLeft] = useState(0);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
 
-const SellerLayout: React.FC<SellerLayoutProps> = ({ 
-  children, 
-  showActionButtons = true,
-  publicSellerData,
-  publicSellerLoading,
-  getSellerLogoUrl: externalGetSellerLogoUrl,
-  isPublicPage = false
-}) => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const isMobile = useIsMobile();
-  const headerRef = useRef<HTMLDivElement>(null);
-  const tabsRef = useRef<HTMLDivElement>(null);
-  const sellerInfoRef = useRef<HTMLDivElement>(null);
-
-  const [isTabsSticky, setIsTabsSticky] = useState(false);
-  const [tabsHeight, setTabsHeight] = useState(0);
-  const [headerHeight, setHeaderHeight] = useState<number>(0);
-  const [sellerInfoHeight, setSellerInfoHeight] = useState<number>(0);
-  const [isTransparentHeader, setIsTransparentHeader] = useState(true);
-  const [showSearchOverlay, setShowSearchOverlay] = useState(false);
-
-  const handleBackClick = () => {
-    navigate('/profile');
-  };
-
-  const handleBecomeSeller = () => {
-    console.log('Start seller onboarding');
-    navigate('/seller-onboarding');
-  };
-
-  const handleShareClick = () => {
-    console.log('Share seller profile');
-  };
-
-  // Determine if we're in dashboard, pickup station, or public seller page
-  const isDashboard = location.pathname.includes('/seller-dashboard');
-  const isPickupStation = location.pathname.includes('/pickup-station');
-
-  // Extract current tab from pathname
-  const getCurrentTab = () => {
-    if (isDashboard) {
-      const path = location.pathname.split('/seller-dashboard/')[1];
-      if (!path || path === '') {
-        if (location.pathname === '/seller-dashboard' || 
-            location.pathname.endsWith('/seller-dashboard/')) {
-          navigate('/seller-dashboard/products', { replace: true });
-        }
-        return 'products';
-      }
-      return path;
-    } else if (isPickupStation) {
-      const path = location.pathname.split('/pickup-station/')[1];
-      if (!path || path === '') {
-        if (location.pathname === '/pickup-station' || 
-            location.pathname.endsWith('/pickup-station/')) {
-          navigate('/pickup-station/overview', { replace: true });
-        }
-        return 'overview';
-      }
-      return path;
-    } else {
-      // For public seller pages, extract tab from path
-      const pathParts = location.pathname.split('/seller/')[1]?.split('/');
-      if (pathParts && pathParts.length > 1) {
-        return pathParts[1]; // Return the tab part (e.g., 'products', 'reels', etc.)
-      }
-      return 'products';
-    }
-  };
-
-  const [activeTab, setActiveTab] = useState(getCurrentTab());
-
-  // Fetch products from database
-  const { data: products = [], isLoading: productsLoading } = useQuery({
-    queryKey: ['products', 'all'],
-    queryFn: fetchAllProducts,
-  });
-
-  // Check if we're on the products tab (which now shows seller info)
-  const isProductsTab = activeTab === 'products';
-
-  const baseRoute = isDashboard ? '/seller-dashboard' : isPickupStation ? '/pickup-station' : `/seller/${location.pathname.split('/seller/')[1]?.split('/')[0] || ''}`;
-
-  const navigationItems = isPickupStation ? [
-    { id: 'overview', name: 'Overview', href: '/pickup-station/overview', icon: Home },
-    { id: 'packages', name: 'Packages', href: '/pickup-station/packages', icon: Package },
-    { id: 'customers', name: 'Customers', href: '/pickup-station/customers', icon: Users },
-    { id: 'reviews', name: 'Reviews', href: '/pickup-station/reviews', icon: Star },
-    { id: 'qa', name: 'Q&A', href: '/pickup-station/qa', icon: MessageSquare },
-    { id: 'analytics', name: 'Analytics', href: '/pickup-station/analytics', icon: BarChart3 },
-    { id: 'notifications', name: 'Notifications', href: '/pickup-station/notifications', icon: MessageCircle },
-    { id: 'settings', name: 'Settings', href: '/pickup-station/settings', icon: Settings },
-  ] : isDashboard ? [
-    { id: 'products', name: 'Products', href: '/seller-dashboard/products', icon: Package },
-    { id: 'orders', name: 'Orders', href: '/seller-dashboard/orders', icon: ShoppingCart },
-    { id: 'customers', name: 'Customers', href: '/seller-dashboard/customers', icon: Users },
-    { id: 'analytics', name: 'Analytics', href: '/seller-dashboard/analytics', icon: BarChart3 },
-    { id: 'finances', name: 'Finances', href: '/seller-dashboard/finances', icon: DollarSign },
-    { id: 'marketing', name: 'Marketing', href: '/seller-dashboard/marketing', icon: Megaphone },
-    { id: 'reels', name: 'Reels', href: '/seller-dashboard/reels', icon: Megaphone },
-    { id: 'settings', name: 'Settings', href: '/seller-dashboard/settings', icon: Settings },
-  ] : [
-    { id: 'products', name: 'Products', href: `${baseRoute}/products`, icon: Package },
-    { id: 'reels', name: 'Reels', href: `${baseRoute}/reels`, icon: Megaphone },
-    { id: 'posts', name: 'Posts', href: `${baseRoute}/posts`, icon: MessageCircle },
-    { id: 'qas', name: 'Q&As', href: `${baseRoute}/qas`, icon: MessageSquare },
-    { id: 'reviews', name: 'Reviews', href: `${baseRoute}/reviews`, icon: Star },
-  ];
-
-  const handleTabChange = (tabId: string) => {
-    const item = navigationItems.find(nav => nav.id === tabId);
-    if (item) {
-      setActiveTab(tabId);
-      navigate(item.href);
-    }
-
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  };
-
-  const tabs = navigationItems.map(item => ({
-    id: item.id,
-    label: item.name
-  }));
-
-  const { user } = useAuth();
-
-  // Use public data if on public page, otherwise fetch authenticated seller data
-  const { data: privateSellerData, isLoading: privateSellerLoading } = useQuery({
-    queryKey: ['seller', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-
-      const { data, error } = await supabase
-        .from('sellers')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (error) {
-        console.error('Error fetching seller data:', error);
-        return null;
-      }
-
-      return data;
-    },
-    enabled: !!user?.id && !isPublicPage,
-  });
-
-  // Use public or private seller data based on page type
-  const sellerData = isPublicPage ? publicSellerData : privateSellerData;
-  const sellerLoading = isPublicPage ? publicSellerLoading : privateSellerLoading;
-
-  const getSellerLogoUrl = externalGetSellerLogoUrl || ((imagePath?: string): string => {
-    if (!imagePath) return "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face";
-    const { data } = supabase.storage.from('seller-logos').getPublicUrl(imagePath);
-    return data.publicUrl;
-  });
-
-  // Measure heights with ResizeObserver
-  useLayoutEffect(() => {
-    const updateHeights = () => {
-      if (headerRef.current) {
-        const height = headerRef.current.offsetHeight;
-        if (height > 0) {
-          setHeaderHeight(height);
-        }
-      }
-      if (sellerInfoRef.current && isProductsTab) {
-        const height = sellerInfoRef.current.offsetHeight;
-        if (height > 0) {
-          setSellerInfoHeight(height);
-        }
-      }
-      if (tabsRef.current) {
-        const height = tabsRef.current.offsetHeight;
-        if (height > 0) {
-          setTabsHeight(height);
-        }
-      }
-    };
-
-    updateHeights();
-
-    const resizeObserver = new ResizeObserver(() => {
-      updateHeights();
-    });
-
-    if (headerRef.current) {
-      resizeObserver.observe(headerRef.current);
-    }
-    if (sellerInfoRef.current && isProductsTab) {
-      resizeObserver.observe(sellerInfoRef.current);
-    }
-    if (tabsRef.current) {
-      resizeObserver.observe(tabsRef.current);
-    }
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [isProductsTab]);
-
-  // Update active tab when location changes
+  // Initialize underline width on mount
   useEffect(() => {
-    const currentTab = getCurrentTab();
-    setActiveTab(currentTab);
-
-    if (location.pathname === '/seller-dashboard' || 
-        location.pathname.endsWith('/seller-dashboard/')) {
-      navigate('/seller-dashboard/products', { replace: true });
-    } else if (location.pathname === '/pickup-station' || 
-               location.pathname.endsWith('/pickup-station/')) {
-      navigate('/pickup-station/overview', { replace: true });
-    }
-  }, [location.pathname, navigate]);
-
-  // Handle sticky tabs with scroll listener - PIXEL-PERFECT METHOD
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!tabsRef.current || !headerRef.current) return;
-
-      const currentHeaderHeight = headerRef.current.offsetHeight;
-      const scrollY = window.scrollY;
-
-      if (isTabsSticky) {
-        // When tabs are sticky, check if we should unstick them
-        // We need to calculate where the tabs would be if they weren't sticky
-        let tabsNaturalTopInViewport;
-
-        if (isProductsTab) {
-          // Tabs naturally sit after seller info
-          // Their natural position from document top = sellerInfoHeight
-          // Their position in viewport = naturalPosition - scrollY
-          tabsNaturalTopInViewport = sellerInfoHeight - scrollY;
-        } else {
-          // Tabs naturally sit after the spacer (headerHeight)
-          // Their natural position from document top = headerHeight
-          // Their position in viewport = headerHeight - scrollY
-          tabsNaturalTopInViewport = headerHeight - scrollY;
-        }
-
-        // Unstick when the natural position would be below the header's bottom
-        // This means we've scrolled back up enough that tabs should return to flow
-        if (tabsNaturalTopInViewport > currentHeaderHeight) {
-          setIsTabsSticky(false);
-        }
-      } else {
-        // When tabs are not sticky, check if they should become sticky
-        const tabsRect = tabsRef.current.getBoundingClientRect();
-        const tabsTopRelativeToViewport = tabsRect.top;
-
-        // Tabs should become sticky when their top edge reaches the header's bottom edge
-        if (tabsTopRelativeToViewport <= currentHeaderHeight) {
-          setIsTabsSticky(true);
-        }
+    if (tabs.length > 0 && !activeTab) {
+      const firstTab = tabs[0];
+      if (firstTab) {
+        onTabChange(firstTab.id);
       }
-    };
+    }
+  }, [tabs, activeTab, onTabChange]);
 
-    // Initial check
-    handleScroll();
-
-    // Add scroll listener with passive flag for better performance
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    // Also listen to resize in case header height changes
-    window.addEventListener('resize', handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', handleScroll);
-    };
-  }, [isTabsSticky, isProductsTab, sellerInfoHeight, headerHeight]);
-
-  // Handle header transparency for products tab
   useEffect(() => {
-    if (!isProductsTab) {
-      setIsTransparentHeader(false);
-      return;
+    tabRefs.current = tabRefs.current.slice(0, tabs.length);
+  }, [tabs]);
+
+  // Function to update underline position and width
+  const updateUnderline = () => {
+    const activeTabIndex = tabs.findIndex(tab => tab.id === activeTab);
+    const activeTabElement = tabRefs.current[activeTabIndex];
+    const containerElement = scrollContainerRef.current;
+
+    if (activeTabElement && containerElement) {
+      const textSpan = activeTabElement.querySelector('span:last-child');
+
+      if (textSpan) {
+        const textWidth = textSpan.offsetWidth;
+        const newWidth = Math.max(textWidth * 0.8, 20);
+        const buttonRect = activeTabElement.getBoundingClientRect();
+        const containerRect = containerElement.getBoundingClientRect();
+        const relativeLeft = buttonRect.left - containerRect.left + containerElement.scrollLeft;
+        const buttonCenter = relativeLeft + (activeTabElement.offsetWidth / 2);
+        const underlineStart = buttonCenter - (newWidth / 2);
+
+        setUnderlineWidth(newWidth);
+        setUnderlineLeft(underlineStart);
+      }
+    }
+  };
+
+  // Update underline when active tab changes
+  useEffect(() => {
+    if (activeTab && variant === "underline") {
+      setTimeout(updateUnderline, 0);
+    }
+  }, [activeTab, tabs, variant]);
+
+  // Handle tab scrolling - only auto-scroll when shouldAutoScroll is true
+  useEffect(() => {
+    if (!shouldAutoScroll) return;
+
+    const activeTabIndex = tabs.findIndex(tab => tab.id === activeTab);
+    const activeTabElement = tabRefs.current[activeTabIndex];
+    const containerElement = scrollContainerRef.current;
+
+    if (activeTabElement && containerElement) {
+      const paddingLeft = edgeToEdge ? 16 : 8;
+      const newScrollLeft = activeTabElement.offsetLeft - paddingLeft;
+
+      containerElement.scrollTo({
+        left: newScrollLeft,
+        behavior: 'smooth'
+      });
     }
 
-    if (!headerHeight || !sellerInfoHeight) return;
+    const timer = setTimeout(() => setShouldAutoScroll(false), 500);
+    return () => clearTimeout(timer);
+  }, [activeTab, tabs, edgeToEdge, shouldAutoScroll]);
 
-    const handleScroll = () => {
-      const scrollY = window.scrollY;
-      const transparencyThreshold = sellerInfoHeight * 0.3;
+  // Set initial underline when component mounts
+  useEffect(() => {
+    if (activeTab && tabs.length > 0 && variant === "underline") {
+      setTimeout(updateUnderline, 100);
+    }
+  }, []);
 
-      // Header is transparent when we haven't scrolled past 30% of seller info
-      setIsTransparentHeader(scrollY < transparencyThreshold);
-    };
+  const handleTabClick = (id) => {
+    setShouldAutoScroll(true);
+    onTabChange(id);
+  };
 
-    handleScroll();
+  // Default style
+  const defaultStyle = {
+    maxHeight: variant === "pills" ? '42px' : '40px',
+    opacity: 1,
+    backgroundColor: 'white',
+  };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
+  // Merge styles - passed style overrides default
+  const finalStyle = { ...defaultStyle, ...style };
 
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [isProductsTab, headerHeight, sellerInfoHeight]);
-
-  return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div 
-        ref={headerRef} 
-        className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
-          isTransparentHeader 
-            ? 'bg-transparent' 
-            : 'bg-white/95 backdrop-blur-sm border-b border-gray-200'
-        }`}
+  // Skeleton loading state
+  if (isLoading) {
+    return (
+      <div
+        className={`relative w-full transition-all duration-700 overflow-hidden ${className}`}
+        style={finalStyle}
       >
-        <div className="px-1.5 py-1">
-          <div className="flex items-center justify-center">
-            <div className="w-full max-w-2xl">
-              <ReusableSearchBar
-                placeholder={isPickupStation ? "Search packages..." : "Search in store..."}
-                showScanMic={!isTransparentHeader}
-                showSettingsButton={!isTransparentHeader}
-                onSettingsClick={() => {
-                  if (isPickupStation) {
-                    navigate('/pickup-station/settings');
-                  } else {
-                    console.log('Seller settings clicked');
-                  }
-                }}
-                onSubmit={(query) => {
-                  console.log('Searching for:', query);
-                  setShowSearchOverlay(false);
-                }}
-                onSearchFocus={() => setShowSearchOverlay(true)}
-                onSearchClose={handleBackClick}
-                isOverlayOpen={showSearchOverlay}
-                onCloseOverlay={() => setShowSearchOverlay(false)}
-                isTransparent={isTransparentHeader}
-                onBackClick={handleBackClick}
-                onShareClick={isPickupStation ? undefined : handleShareClick}
-              />
+        <div className="h-full w-full">
+          <div
+            className="flex items-center overflow-x-auto no-scrollbar h-full w-full relative px-2 py-2"
+            style={{ 
+              scrollbarWidth: 'none', 
+              msOverflowStyle: 'none',
+              WebkitOverflowScrolling: 'touch'
+            }}
+          >
+            <div className={`flex items-center ${variant === "pills" ? "space-x-2" : "space-x-7"}`}>
+              {tabs.map((tab, index) => {
+                const widths = ['w-16', 'w-20', 'w-16', 'w-20', 'w-20', 'w-16', 'w-20', 'w-16', 'w-20'];
+                const width = widths[index] || 'w-16';
+                return (
+                  <div key={tab.id} className="flex-shrink-0">
+                    <div className={`h-5 bg-gray-200 rounded ${width} animate-pulse`} />
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
       </div>
+    );
+  }
 
-      {/* Main Content Area */}
-      <div className="relative min-h-screen">
-        <main>
-          {/* Seller Info Section - Only on products tab */}
-          {isProductsTab && (
-            <div 
-              ref={sellerInfoRef} 
-              className="w-full bg-black text-white relative z-30"
-            >
-              <SellerInfoSection
-                sellerData={sellerData}
-                sellerLoading={sellerLoading}
-                getSellerLogoUrl={getSellerLogoUrl}
-                onBecomeSeller={handleBecomeSeller}
-                onBack={handleBackClick}
-                showActionButtons={showActionButtons}
-              />
-            </div>
-          )}
+  return (
+    <div
+      className={`relative w-full transition-all duration-700 overflow-hidden ${
+        variant === "underline" ? "border-b border-gray-200" : ""
+      } ${className}`}
+      style={finalStyle}
+    >
+      {/* Tabs List */}
+      <div className="h-full w-full">
+        <div
+          ref={scrollContainerRef}
+          className={`flex items-center overflow-x-auto no-scrollbar h-full w-full relative ${
+            edgeToEdge ? 'px-2' : 'px-2'
+          } ${variant === "pills" ? 'py-1' : ''}`}
+          onScroll={() => setShouldAutoScroll(false)}
+          style={{ 
+            scrollbarWidth: 'none', 
+            msOverflowStyle: 'none',
+            WebkitOverflowScrolling: 'touch'
+          }}
+        >
+          <div className={`flex items-center ${variant === "pills" ? "space-x-2" : "space-x-7"}`}>
+            {tabs.map((tab, index) => (
+              <button
+                key={tab.id}
+                ref={el => (tabRefs.current[index] = el)}
+                onClick={() => handleTabClick(tab.id)}
+                aria-pressed={activeTab === tab.id}
+                className={`
+                  relative flex items-center text-sm font-medium whitespace-nowrap transition-all duration-200 ease-in-out outline-none flex-shrink-0
+                  ${
+                    variant === "pills" 
+                      ? `
+                          px-3 py-1.5 rounded-full
+                          ${activeTab === tab.id
+                            ? 'bg-pink-100 text-pink-700'
+                            : 'bg-transparent text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                          }
+                        `
+                      : `
+                          py-2
+                          ${activeTab === tab.id
+                            ? 'text-red-600'
+                            : 'text-gray-700 hover:text-red-600'
+                          }
+                        `
+                  }
+                `}
+              >
+                {tab.icon && <span className="mr-1">{tab.icon}</span>}
+                <span className="font-medium">{tab.label}</span>
+              </button>
+            ))}
+          </div>
 
-          {/* Spacer for non-products tabs */}
-          {!isProductsTab && (
-            <div style={{ height: `${headerHeight}px` }} />
-          )}
-
-          {/* Tabs Navigation */}
-          <nav
-            ref={tabsRef}
-            className={`bg-white border-b transition-all duration-200 ${
-              isTabsSticky
-                ? 'fixed left-0 right-0 z-40 shadow-sm'
-                : 'relative'
-            }`}
-            style={{
-              top: isTabsSticky ? `${headerHeight}px` : 'auto',
-            }}
-          >
-            <TabsNavigation
-  tabs={tabs}
-  activeTab={activeTab}
-  onTabChange={setActiveTab}
-  variant="pills"
-/>
-          </nav>
-
-          {/* Spacer when tabs are sticky */}
-          {isTabsSticky && (
+          {/* Animated underline - only for underline variant */}
+          {activeTab && variant === "underline" && (
             <div
-              style={{ height: `${tabsHeight}px` }}
-              aria-hidden="true"
+              className="absolute bottom-0 h-1 bg-gradient-to-r from-red-500 to-red-600 rounded-full transition-all duration-300 ease-out"
+              style={{ 
+                width: underlineWidth,
+                left: underlineLeft,
+                transform: 'translateZ(0)',
+              }}
             />
           )}
-
-          {/* Main Content */}
-          <div className="px-2">
-            {React.Children.map(children, child => {
-              if (React.isValidElement(child)) {
-                if (activeTab !== 'products') {
-                  return React.cloneElement(child, { 
-                    products, 
-                    isLoading: productsLoading || sellerLoading
-                  } as any);
-                }
-                return React.cloneElement(child, { 
-                  isLoading: sellerLoading
-                } as any);
-              }
-              return child;
-            })}
-          </div>
-        </main>
+        </div>
       </div>
     </div>
   );
-};
-
-export default SellerLayout;
+}
