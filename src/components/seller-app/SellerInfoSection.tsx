@@ -49,42 +49,43 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
   };
 
   const safeSellerData = sellerData ? {
-  name: sellerData.name || 'Seller Name',
-  username: sellerData.username || sellerData.name?.toLowerCase().replace(/\s+/g, '') || 'seller',
-  image_url: sellerData.image_url,
-  verified: sellerData.verified || false,
-  bio: sellerData.bio || sellerData.description || 'Award-winning seller with a passion for quality products and excellent customer service.',
-  business_type: sellerData.business_type || sellerData.category || 'Business',
-  location: sellerData.location || sellerData.address || 'Location not specified',
-  website: sellerData.website,
-  rating: sellerData.rating ? Number(sellerData.rating) : 0,
-  reviews_count: sellerData.reviews_count || 0,
-  total_sales: sellerData.total_sales || 0,
-  join_date: formatDate(sellerData.join_date || sellerData.created_at),
-  followers_count: sellerData.followers_count || 0,
-  mentions: sellerData.mentions || [],
-  social_media: sellerData.social_media || {},
-  last_active: sellerData.last_active || 'Active 2 hours ago',
-  business_hours: sellerData.business_hours || null,
-  followed_by: Array.isArray(sellerData.followed_by)
-    ? sellerData.followed_by
-    : typeof sellerData.followed_by === 'string'
-      ? JSON.parse(sellerData.followed_by || "[]")
-      : [],
-  // Calculate store age in years
-  store_age_years: (() => {
-    const joinDate = sellerData.join_date || sellerData.created_at;
-    if (!joinDate) return 0;
-    try {
-      const date = new Date(joinDate);
-      const now = new Date();
-      const years = now.getFullYear() - date.getFullYear();
-      return years > 0 ? years : 0;
-    } catch {
-      return 0;
-    }
-  })()
-} : null;
+    name: sellerData.name || 'Seller Name',
+    username: sellerData.username || sellerData.name?.toLowerCase().replace(/\s+/g, '') || 'seller',
+    image_url: sellerData.image_url,
+    verified: sellerData.verified || false,
+    bio: sellerData.bio || sellerData.description || 'Award-winning seller with a passion for quality products and excellent customer service.',
+    business_type: sellerData.business_type || sellerData.category || 'Business',
+    location: sellerData.location || sellerData.address || 'Location not specified',
+    website: sellerData.website,
+    rating: sellerData.rating ? Number(sellerData.rating) : 0,
+    reviews_count: sellerData.reviews_count || 0,
+    total_sales: sellerData.total_sales || 0,
+    join_date: formatDate(sellerData.join_date || sellerData.created_at),
+    followers_count: sellerData.followers_count || 0,
+    mentions: sellerData.mentions || [],
+    social_media: sellerData.social_media || {},
+    last_active: sellerData.last_active || 'Active 2 hours ago',
+    business_hours: sellerData.business_hours || null,
+    followed_by: Array.isArray(sellerData.followed_by)
+      ? sellerData.followed_by
+      : typeof sellerData.followed_by === 'string'
+        ? JSON.parse(sellerData.followed_by || "[]")
+        : [],
+    // Calculate store age in years with fallback
+    store_age_years: (() => {
+      const joinDate = sellerData.join_date || sellerData.created_at;
+      if (!joinDate) return 3; // Default fallback
+      try {
+        const date = new Date(joinDate);
+        const now = new Date();
+        const years = now.getFullYear() - date.getFullYear();
+        // If less than 1 year old, show as 1 year
+        return years > 0 ? years : 1;
+      } catch {
+        return 3; // Default fallback
+      }
+    })()
+  } : null;
 
   if (sellerLoading) {
     return (
@@ -193,42 +194,36 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
         </div>
 
         {/* Stats - Evenly distributed with vertical separators */}
-<div className="flex items-center justify-evenly -mx-4 mb-2 px-4">
-  <div className="flex flex-col items-center">
-    <span className="font-bold text-red-600 text-base">{formatNumber(safeSellerData.followers_count)}</span>
-    <span className="text-gray-600 text-xs font-medium">Followers</span>
-  </div>
+        <div className="flex items-center justify-evenly -mx-4 mb-2 px-4">
+          <div className="flex flex-col items-center">
+            <span className="font-bold text-red-600 text-base">{formatNumber(safeSellerData.followers_count)}</span>
+            <span className="text-gray-600 text-xs font-medium">Followers</span>
+          </div>
 
-  {/* Vertical Border */}
-  <div className="h-8 w-px bg-gray-300"></div>
+          {/* Vertical Border */}
+          <div className="h-8 w-px bg-gray-300"></div>
 
-  {safeSellerData.total_sales > 0 && (
-    <div className="flex flex-col items-center">
-      <span className="text-red-600 font-bold text-base">{formatNumber(safeSellerData.total_sales)}</span>
-      <span className="text-gray-600 text-xs font-medium">Orders</span>
-    </div>
-  )}
-  
-  {/* Vertical Border */}
-  <div className="h-8 w-px bg-gray-300"></div>
+          <div className="flex flex-col items-center">
+            <span className="text-red-600 font-bold text-base">{formatNumber(safeSellerData.total_sales)}</span>
+            <span className="text-gray-600 text-xs font-medium">Orders</span>
+          </div>
 
-  {safeSellerData.rating > 0 && (
-    <div className="flex flex-col items-center">
-      <span className="text-red-600 font-bold text-base">{safeSellerData.rating}</span>
-      <span className="text-gray-600 text-xs font-medium">Average</span>
-    </div>
-  )}
-  
-  {/* Vertical Border */}
-  <div className="h-8 w-px bg-gray-300"></div>
+          {/* Vertical Border */}
+          <div className="h-8 w-px bg-gray-300"></div>
 
-  {safeSellerData.store_age_years > 0 && (
-    <div className="flex flex-col items-center">
-      <span className="text-red-600 font-bold text-base">{safeSellerData.store_age_years}</span>
-      <span className="text-gray-600 text-xs font-medium">Years</span>
-    </div>
-  )}
-</div>
+          <div className="flex flex-col items-center">
+            <span className="text-red-600 font-bold text-base">{safeSellerData.rating || '0.0'}</span>
+            <span className="text-gray-600 text-xs font-medium">Average</span>
+          </div>
+
+          {/* Vertical Border */}
+          <div className="h-8 w-px bg-gray-300"></div>
+
+          <div className="flex flex-col items-center">
+            <span className="text-red-600 font-bold text-base">{safeSellerData.store_age_years}</span>
+            <span className="text-gray-600 text-xs font-medium">Years</span>
+          </div>
+        </div>
 
         {/* Action Buttons */}
         {showActionButtons && (
@@ -273,7 +268,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
                 </div>
                 <span className="text-xs font-medium">WhatsApp</span>
               </a>
-              
+
               <a 
                 href={safeSellerData.social_media?.facebook || '#'} 
                 target="_blank" 
@@ -284,7 +279,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
                 </div>
                 <span className="text-xs font-medium">Facebook</span>
               </a>
-              
+
               <a 
                 href={safeSellerData.social_media?.instagram || '#'} 
                 target="_blank" 
@@ -295,7 +290,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
                 </div>
                 <span className="text-xs font-medium">Instagram</span>
               </a>
-              
+
               <a 
                 href={safeSellerData.social_media?.x || '#'} 
                 target="_blank" 
@@ -306,7 +301,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
                 </div>
                 <span className="text-xs font-medium">X</span>
               </a>
-              
+
               <a 
                 href={safeSellerData.social_media?.tiktok || '#'} 
                 target="_blank" 
