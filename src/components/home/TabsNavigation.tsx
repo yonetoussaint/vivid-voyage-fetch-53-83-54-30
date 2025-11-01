@@ -16,7 +16,7 @@ export default function TabsNavigation({
   const [underlineLeft, setUnderlineLeft] = useState(0);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
 
-  // Initialize underline width on mount
+  // Initialize active tab on mount if not provided
   useEffect(() => {
     if (tabs.length > 0 && !activeTab) {
       const firstTab = tabs[0];
@@ -95,22 +95,19 @@ export default function TabsNavigation({
     onTabChange(id);
   };
 
-  // Default style
+  // Fixed default style - removed maxHeight to prevent uneven spacing
   const defaultStyle = {
-    maxHeight: variant === "pills" ? '36px' : '40px', // Reduced from 42px to 36px
     opacity: 1,
     backgroundColor: 'white',
+    ...style
   };
-
-  // Merge styles - passed style overrides default
-  const finalStyle = { ...defaultStyle, ...style };
 
   // Skeleton loading state
   if (isLoading) {
     return (
       <div
         className={`relative w-full transition-all duration-700 overflow-hidden ${className}`}
-        style={finalStyle}
+        style={defaultStyle}
       >
         <div className="h-full w-full">
           <div
@@ -141,15 +138,15 @@ export default function TabsNavigation({
   return (
     <div
       className={`relative w-full transition-all duration-700 overflow-hidden ${className}`}
-      style={finalStyle}
+      style={defaultStyle}
     >
       {/* Tabs List */}
       <div className="h-full w-full">
         <div
           ref={scrollContainerRef}
           className={`flex items-center overflow-x-auto no-scrollbar h-full w-full relative ${
-            edgeToEdge ? 'px-2' : 'px-2'
-          } ${variant === "pills" ? 'py-1' : ''}`}
+            edgeToEdge ? 'px-0' : 'px-2'
+          } ${variant === "pills" ? 'py-1' : 'py-2'}`}
           onScroll={() => setShouldAutoScroll(false)}
           style={{ 
             scrollbarWidth: 'none', 
@@ -169,23 +166,27 @@ export default function TabsNavigation({
                   ${
                     variant === "pills" 
                       ? `
-                          px-3 py-1 rounded-full // Changed from py-1.5 to py-1
+                          px-3 py-1.5 rounded-full
                           ${activeTab === tab.id
                             ? 'bg-pink-100 text-pink-700'
                             : 'bg-transparent text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                           }
                         `
                       : `
-                          py-2
+                          py-2.5
                           ${activeTab === tab.id
-                            ? 'text-red-600'
+                            ? 'text-red-600 font-semibold'
                             : 'text-gray-700 hover:text-red-600'
                           }
                         `
                   }
                 `}
               >
-                {tab.icon && <span className="mr-1">{tab.icon}</span>}
+                {tab.icon && (
+                  <span className={`${variant === "pills" ? 'mr-1.5' : 'mr-2'}`}>
+                    {tab.icon}
+                  </span>
+                )}
                 <span className="font-medium">{tab.label}</span>
               </button>
             ))}
