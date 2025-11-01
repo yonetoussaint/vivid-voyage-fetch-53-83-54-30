@@ -10,7 +10,7 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import TabsNavigation from '@/components/home/TabsNavigation';
 import SellerInfoSection from './SellerInfoSection';
-import ProductHeader from './ProductHeader'; // Import ProductHeader
+import ProductHeader from '@/components/product/ProductHeader';
 
 interface SellerLayoutProps {
   children: React.ReactNode;
