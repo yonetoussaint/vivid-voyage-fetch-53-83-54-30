@@ -49,29 +49,42 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
   };
 
   const safeSellerData = sellerData ? {
-    name: sellerData.name || 'Seller Name',
-    username: sellerData.username || sellerData.name?.toLowerCase().replace(/\s+/g, '') || 'seller',
-    image_url: sellerData.image_url,
-    verified: sellerData.verified || false,
-    bio: sellerData.bio || sellerData.description || 'Award-winning seller with a passion for quality products and excellent customer service.',
-    business_type: sellerData.business_type || sellerData.category || 'Business',
-    location: sellerData.location || sellerData.address || 'Location not specified',
-    website: sellerData.website,
-    rating: sellerData.rating ? Number(sellerData.rating) : 0,
-    reviews_count: sellerData.reviews_count || 0,
-    total_sales: sellerData.total_sales || 0,
-    join_date: formatDate(sellerData.join_date || sellerData.created_at),
-    followers_count: sellerData.followers_count || 0,
-    mentions: sellerData.mentions || [],
-    social_media: sellerData.social_media || {},
-    last_active: sellerData.last_active || 'Active 2 hours ago',
-    business_hours: sellerData.business_hours || null,
-    followed_by: Array.isArray(sellerData.followed_by)
-      ? sellerData.followed_by
-      : typeof sellerData.followed_by === 'string'
-        ? JSON.parse(sellerData.followed_by || "[]")
-        : []
-  } : null;
+  name: sellerData.name || 'Seller Name',
+  username: sellerData.username || sellerData.name?.toLowerCase().replace(/\s+/g, '') || 'seller',
+  image_url: sellerData.image_url,
+  verified: sellerData.verified || false,
+  bio: sellerData.bio || sellerData.description || 'Award-winning seller with a passion for quality products and excellent customer service.',
+  business_type: sellerData.business_type || sellerData.category || 'Business',
+  location: sellerData.location || sellerData.address || 'Location not specified',
+  website: sellerData.website,
+  rating: sellerData.rating ? Number(sellerData.rating) : 0,
+  reviews_count: sellerData.reviews_count || 0,
+  total_sales: sellerData.total_sales || 0,
+  join_date: formatDate(sellerData.join_date || sellerData.created_at),
+  followers_count: sellerData.followers_count || 0,
+  mentions: sellerData.mentions || [],
+  social_media: sellerData.social_media || {},
+  last_active: sellerData.last_active || 'Active 2 hours ago',
+  business_hours: sellerData.business_hours || null,
+  followed_by: Array.isArray(sellerData.followed_by)
+    ? sellerData.followed_by
+    : typeof sellerData.followed_by === 'string'
+      ? JSON.parse(sellerData.followed_by || "[]")
+      : [],
+  // Calculate store age in years
+  store_age_years: (() => {
+    const joinDate = sellerData.join_date || sellerData.created_at;
+    if (!joinDate) return 0;
+    try {
+      const date = new Date(joinDate);
+      const now = new Date();
+      const years = now.getFullYear() - date.getFullYear();
+      return years > 0 ? years : 0;
+    } catch {
+      return 0;
+    }
+  })()
+} : null;
 
   if (sellerLoading) {
     return (
