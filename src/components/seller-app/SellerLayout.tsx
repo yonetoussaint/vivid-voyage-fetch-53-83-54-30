@@ -391,11 +391,13 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
               top: isTabsSticky ? `${headerHeight}px` : 'auto',
             }}
           >
-            <TabsNavigation
+
+<TabsNavigation 
   tabs={tabs}
   activeTab={activeTab}
   onTabChange={handleTabChange}
-  variant="underline"
+  showTopBorder={true}
+variant="underline"
 />
           </nav>
 
