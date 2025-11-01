@@ -63,6 +63,7 @@ interface ProductHeaderProps {
   onSearch?: (query: string) => void;
   showDetailsButton?: boolean;
   onDetailsClick?: () => void;
+  showSearchBar?: boolean; // NEW PROP: Control search bar visibility
 }
 
 const ProductHeader: React.FC<ProductHeaderProps> = ({
@@ -92,7 +93,8 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
   onSearchBlur,
   onSearch,
   showDetailsButton = false,
-  onDetailsClick
+  onDetailsClick,
+  showSearchBar = true // DEFAULT to true for backward compatibility
 }) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const { progress: internalProgress } = useScrollProgress();
@@ -119,8 +121,10 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
   const navigate = useNavigate();
   const { isLoading, startLoading } = useNavigationLoading();
 
-  // Live search effect
+  // Live search effect - ONLY if showSearchBar is true
   React.useEffect(() => {
+    if (!showSearchBar) return;
+
     if (searchQuery.trim() && isSearchFocused) {
       setIsLiveSearching(true);
       setShowSuggestions(true);
@@ -158,27 +162,7 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [searchQuery, isSearchFocused]);
-
-  // Debug logging for panel scroll behavior
-  React.useEffect(() => {
-    if (inPanel) {
-      console.log('🎯 ProductHeader Panel Debug:', {
-        customScrollProgress,
-        internalProgress,
-        progress,
-        displayProgress,
-        forceScrolledState,
-        inPanel,
-        usingCustomProgress: customScrollProgress !== undefined,
-        shouldShowSearchBar: displayProgress >= 0.5,
-        headerBackgroundOpacity: displayProgress * 0.95,
-        blurAmount: displayProgress * 8,
-        showDetailsButton,
-        hasOnDetailsClick: !!onDetailsClick
-      });
-    }
-  }, [customScrollProgress, internalProgress, progress, displayProgress, forceScrolledState, inPanel, showDetailsButton, onDetailsClick]);
+  }, [searchQuery, isSearchFocused, showSearchBar]);
 
   const toggleFavorite = () => {
     setIsFavorite(!isFavorite);
@@ -288,9 +272,9 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
             )}
           </div>
 
-          {/* Center - Search bar when scrolled */}
+          {/* Center - Search bar when scrolled - ONLY if showSearchBar is true */}
           <div className="flex-1 mx-4">
-            {displayProgress >= 0.5 && (
+            {showSearchBar && displayProgress >= 0.5 && (
               <div className="flex-1 relative max-w-md mx-auto">
                 <input
                   type="text"
