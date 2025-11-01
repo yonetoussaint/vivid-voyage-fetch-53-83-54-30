@@ -19,6 +19,7 @@ interface SellerLayoutProps {
   publicSellerLoading?: boolean;
   getSellerLogoUrl?: (imagePath?: string) => string;
   isPublicPage?: boolean;
+  isOwnProfile?: boolean; // Add this line
 }
 
 const SellerLayout: React.FC<SellerLayoutProps> = ({ 
