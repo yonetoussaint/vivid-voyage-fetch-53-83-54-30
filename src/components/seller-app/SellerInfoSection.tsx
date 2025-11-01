@@ -194,7 +194,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
         </div>
 
         {/* Stats - Evenly distributed with vertical separators */}
-        <div className="flex items-center justify-evenly -mx-4 mb-2 px-4">
+        <div className="flex items-center justify-evenly -mx-4 mb-2">
           <div className="flex flex-col items-center">
             <span className="font-bold text-red-600 text-base">{formatNumber(safeSellerData.followers_count)}</span>
             <span className="text-gray-600 text-xs font-medium">Followers</span>
