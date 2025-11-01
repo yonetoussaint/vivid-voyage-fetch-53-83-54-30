@@ -95,9 +95,9 @@ export default function TabsNavigation({
     onTabChange(id);
   };
 
-  // Default style
+  // Default style - reduced height for pills variant
   const defaultStyle = {
-    maxHeight: variant === "pills" ? '42px' : '40px',
+    maxHeight: variant === "pills" ? '36px' : '40px', // Reduced from 42px to 36px
     opacity: 1,
     backgroundColor: 'white',
   };
@@ -171,7 +171,7 @@ export default function TabsNavigation({
                   ${
                     variant === "pills" 
                       ? `
-                          px-3 py-1.5 rounded-full
+                          px-2.5 py-1 rounded-full // Reduced padding: px-3 → px-2.5, py-1.5 → py-1
                           ${activeTab === tab.id
                             ? 'bg-pink-100 text-pink-700'
                             : 'bg-transparent text-gray-700 hover:bg-gray-100 hover:text-gray-900'
