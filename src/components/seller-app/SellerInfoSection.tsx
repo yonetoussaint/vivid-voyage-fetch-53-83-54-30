@@ -179,30 +179,43 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
           </p>
         </div>
 
-        {/* Stats - No border separators */}
-        <div className="flex items-center justify-between -mx-4 mb-2 px-4">
-          <div className="flex items-center">
-            <span className="font-bold text-gray-900 text-base">{formatNumber(safeSellerData.followers_count)}</span>
-            <span className="text-gray-500 text-xs ml-1">Followers</span>
-          </div>
+        {/* Stats - Evenly distributed with vertical separators */}
+<div className="flex items-center justify-evenly -mx-4 mb-2 px-4">
+  <div className="flex flex-col items-center">
+    <span className="font-bold text-red-600 text-base">{formatNumber(safeSellerData.followers_count)}</span>
+    <span className="text-gray-600 text-xs font-medium">Followers</span>
+  </div>
 
-          {safeSellerData.rating > 0 && (
-            <div className="flex items-center gap-1">
-              <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-              <span className="text-gray-900 font-bold text-base">{safeSellerData.rating}</span>
-              {safeSellerData.reviews_count > 0 && (
-                <span className="text-gray-500 text-xs">({formatNumber(safeSellerData.reviews_count)})</span>
-              )}
-            </div>
-          )}
+  {/* Vertical Border */}
+  <div className="h-8 w-px bg-gray-300"></div>
 
-          {safeSellerData.total_sales > 0 && (
-            <div className="flex items-center">
-              <span className="text-gray-900 font-bold text-base">{formatNumber(safeSellerData.total_sales)}</span>
-              <span className="text-gray-500 text-xs ml-1">orders</span>
-            </div>
-          )}
-        </div>
+  {safeSellerData.total_sales > 0 && (
+    <div className="flex flex-col items-center">
+      <span className="text-red-600 font-bold text-base">{formatNumber(safeSellerData.total_sales)}</span>
+      <span className="text-gray-600 text-xs font-medium">Orders</span>
+    </div>
+  )}
+  
+  {/* Vertical Border */}
+  <div className="h-8 w-px bg-gray-300"></div>
+
+  {safeSellerData.rating > 0 && (
+    <div className="flex flex-col items-center">
+      <span className="text-red-600 font-bold text-base">{safeSellerData.rating}</span>
+      <span className="text-gray-600 text-xs font-medium">Average</span>
+    </div>
+  )}
+  
+  {/* Vertical Border */}
+  <div className="h-8 w-px bg-gray-300"></div>
+
+  {safeSellerData.store_age_years > 0 && (
+    <div className="flex flex-col items-center">
+      <span className="text-red-600 font-bold text-base">{safeSellerData.store_age_years}</span>
+      <span className="text-gray-600 text-xs font-medium">Years</span>
+    </div>
+  )}
+</div>
 
         {/* Action Buttons */}
         {showActionButtons && (
