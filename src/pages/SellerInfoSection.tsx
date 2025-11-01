@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Star, Calendar, Users } from 'lucide-react';
+import { Star, Calendar, Users, Shield } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatNumber, formatDate } from '@/lib/utils';
 
@@ -12,56 +11,68 @@ interface SellerInfoSectionProps {
 const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({ seller, products }) => {
   return (
     <section className="bg-background border-b">
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex flex-col lg:flex-row gap-6">
-          <div className="flex-1 space-y-3">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-2xl font-bold text-foreground">{seller.name}</h1>
-                  {seller.verified && (
-                    <Badge variant="secondary" className="bg-primary/10 text-primary text-xs">
-                      <Star className="w-3 h-3 mr-1 fill-current" />
-                      Verified
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-muted-foreground text-sm line-clamp-2">{seller.description}</p>
-              </div>
-              <div className="flex items-center gap-2 text-right">
-                <div className="text-right">
-                  <div className="flex items-center gap-1">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-semibold">{seller.rating?.toFixed(1) || '4.8'}</span>
-                  </div>
-                  <span className="text-xs text-muted-foreground">{formatNumber(seller.total_sales)} sales</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
-                <span>Since {formatDate(seller.created_at || new Date().toISOString()).split(' ')[1]}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Users className="w-3 h-3" />
-                <span>{formatNumber(seller.followers_count || 0)} followers</span>
-              </div>
-              {seller.category && (
-                <Badge variant="outline" className="text-xs py-0">{seller.category}</Badge>
+      <div className="container mx-auto px-4 py-4">
+        {/* Header Stack */}
+        <div className="flex items-start gap-3 mb-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <h1 className="text-xl font-bold text-foreground">{seller.name}</h1>
+              {seller.verified && (
+                <Badge variant="secondary" className="bg-primary/10 text-primary text-xs px-1.5 py-0">
+                  <Star className="w-3 h-3 mr-1 fill-current" />
+                  Verified
+                </Badge>
               )}
+            </div>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              {seller.description}
+            </p>
+          </div>
+        </div>
+
+        {/* Key Metrics Grid - Moved Up */}
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          <div className="bg-muted/30 rounded-lg p-3 text-center">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+              <span className="font-bold text-foreground">{seller.rating?.toFixed(1) || '4.8'}</span>
+            </div>
+            <div className="text-xs text-muted-foreground">Rating</div>
+          </div>
+          
+          <div className="bg-muted/30 rounded-lg p-3 text-center">
+            <div className="font-bold text-foreground mb-1">{formatNumber(seller.total_sales)}</div>
+            <div className="text-xs text-muted-foreground">Sales</div>
+          </div>
+          
+          <div className="bg-muted/30 rounded-lg p-3 text-center">
+            <div className="font-bold text-foreground mb-1">{seller.trust_score}/100</div>
+            <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+              <Shield className="w-3 h-3" />
+              Trust
+            </div>
+          </div>
+        </div>
+
+        {/* Metadata & Category */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <Calendar className="w-4 h-4" />
+              <span>Joined {formatDate(seller.created_at || new Date().toISOString()).split(' ')[1]}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Users className="w-4 h-4" />
+              <span>{formatNumber(seller.followers_count || 0)}</span>
             </div>
           </div>
 
-          <div className="flex lg:flex-col gap-3 lg:w-48">
-            <div className="flex-1 bg-muted/30 rounded-lg p-3 text-center">
-              <div className="text-lg font-bold text-foreground">{seller.trust_score}/100</div>
-              <div className="text-xs text-muted-foreground">Trust Score</div>
-            </div>
-            <div className="flex-1 bg-muted/30 rounded-lg p-3 text-center">
-              <div className="text-lg font-bold text-foreground">{products.length}</div>
-              <div className="text-xs text-muted-foreground">Products</div>
+          <div className="flex items-center justify-between">
+            {seller.category && (
+              <Badge variant="outline" className="text-sm py-1">{seller.category}</Badge>
+            )}
+            <div className="text-sm text-muted-foreground">
+              {products.length} products
             </div>
           </div>
         </div>
