@@ -712,19 +712,39 @@ const CustomerReviews = ({
         
 
           <SellerSummaryHeader 
-    mode="reviews"
-    reviewsSummary={{
-      averageRating: 4.6,
-      totalReviews: 1459914,
-      distribution: [
-        { stars: 5, count: 1100000, percentage: 75 },
-        { stars: 4, count: 200000, percentage: 14 },
-        { stars: 3, count: 80000, percentage: 5 },
-        { stars: 2, count: 40000, percentage: 3 },
-        { stars: 1, count: 39914, percentage: 3 }
-      ]
-    }}
-  />
+  mode="reviews"
+  reviewsSummary={{
+    averageRating: reviewStats.averageRating,
+    totalReviews: reviewStats.count,
+    distribution: [
+      { 
+        stars: 5, 
+        count: ratingCounts[0], 
+        percentage: reviewStats.count > 0 ? Math.round((ratingCounts[0] / reviewStats.count) * 100) : 0 
+      },
+      { 
+        stars: 4, 
+        count: ratingCounts[1], 
+        percentage: reviewStats.count > 0 ? Math.round((ratingCounts[1] / reviewStats.count) * 100) : 0 
+      },
+      { 
+        stars: 3, 
+        count: ratingCounts[2], 
+        percentage: reviewStats.count > 0 ? Math.round((ratingCounts[2] / reviewStats.count) * 100) : 0 
+      },
+      { 
+        stars: 2, 
+        count: ratingCounts[3], 
+        percentage: reviewStats.count > 0 ? Math.round((ratingCounts[3] / reviewStats.count) * 100) : 0 
+      },
+      { 
+        stars: 1, 
+        count: ratingCounts[4], 
+        percentage: reviewStats.count > 0 ? Math.round((ratingCounts[4] / reviewStats.count) * 100) : 0 
+      }
+    ]
+  }}
+/>
 
         <ProductFilterBar
           filterCategories={filterCategories}
