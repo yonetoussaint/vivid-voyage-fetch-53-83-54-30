@@ -322,20 +322,20 @@ const summaryStats: SummaryStats = React.useMemo(() => {
     <div className={`w-full bg-white relative ${className}`}>
       {/* Summary Section - Optional */}
       {showSummary && (
-        <SellerSummaryHeader 
-  mode="inventory"
-  title="My Store Inventory"
-  subtitle="Track your products and stock levels in real-time"
-  progressPercentage={78}
-  progressVariant="stock-level"
-  progressStatus="high"
-  stats={[
-    { value: '2,456', label: 'Total Products', color: 'text-blue-600' },
-    { value: '23', label: 'Low Stock', color: 'text-orange-600', status: 'low' },
-    { value: '96%', label: 'In Stock', color: 'text-green-600' },
-    { value: '45', label: 'Categories', color: 'text-purple-600' }
-  ]}
-/>
+          <SellerSummaryHeader 
+    mode="reviews"
+    reviewsSummary={{
+      averageRating: 4.6,
+      totalReviews: 1459914,
+      distribution: [
+        { stars: 5, count: 1100000, percentage: 75 },
+        { stars: 4, count: 200000, percentage: 14 },
+        { stars: 3, count: 80000, percentage: 5 },
+        { stars: 2, count: 40000, percentage: 3 },
+        { stars: 1, count: 39914, percentage: 3 }
+      ]
+    }}
+  />
       )}
 
       {/* Filter Bar Section - Conditionally rendered */}
