@@ -203,7 +203,13 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
   };
 
   const formatNumber = (num: number) => {
-    return num.toLocaleString();
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    }
+    if (num >= 1000) {
+      return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+    }
+    return num.toString();
   };
 
   return (
@@ -266,7 +272,7 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
                     {renderStars(reviewsSummary.averageRating)}
                   </div>
                   <div className="text-xs text-gray-500">
-                    {formatNumber(reviewsSummary.totalReviews)}
+                    {formatNumber(reviewsSummary.totalReviews)} reviews
                   </div>
                 </div>
 
