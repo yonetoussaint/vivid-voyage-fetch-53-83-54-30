@@ -243,13 +243,13 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
                 Ratings and reviews are verified and are from people who use the same type of device that you use
               </p>
               
-              <div className="flex items-start gap-6">
+              <div className="flex items-stretch gap-6">
                 {/* Rating number and stars */}
-                <div className="flex-shrink-0">
-                  <div className="text-6xl font-light text-gray-900 mb-1">
+                <div className="flex-shrink-0 flex flex-col justify-between">
+                  <div className="text-6xl font-light text-gray-900 leading-none">
                     {reviewsSummary.averageRating.toFixed(1)}
                   </div>
-                  <div className="flex gap-0.5 mb-1">
+                  <div className="flex gap-0.5">
                     {renderStars(reviewsSummary.averageRating)}
                   </div>
                   <div className="text-xs text-gray-500">
@@ -258,7 +258,7 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
                 </div>
 
                 {/* Rating bars */}
-                <div className="flex-1 space-y-1">
+                <div className="flex-1 flex flex-col justify-between">
                   {reviewsSummary.distribution.map((dist) => (
                     <div key={dist.stars} className="flex items-center gap-2">
                       <span className="text-xs text-gray-500 w-3">{dist.stars}</span>
