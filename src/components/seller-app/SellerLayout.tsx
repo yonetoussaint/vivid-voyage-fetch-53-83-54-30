@@ -269,13 +269,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         ref={headerRef} 
         className="fixed top-0 left-0 right-0 z-50"
       >
-        <ProductHeader
-          showCloseIcon={false}
-          onCloseClick={handleBackClick}
-          actionButtons={actionButtons}
-          // DO NOT pass tabs, activeTab, or onTabChange here
-          // Header should ONLY contain header elements
-        />
+        <ProductHeader/>
       </div>
 
       {/* Spacer for fixed header */}
