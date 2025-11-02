@@ -190,18 +190,18 @@ export default function TabsNavigation({
     ...style
   };
 
-  // Tab styles - matches reference component exactly
+  // Tab styles - FIXED: Removed px-3 and use gap for spacing instead
   const getTabClassName = (isActive) => {
     if (variant === "pills") {
-      return `relative flex items-center px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap outline-none flex-shrink-0 ${
+      return `relative flex items-center py-1.5 rounded-full text-sm font-medium whitespace-nowrap outline-none flex-shrink-0 ${
         isActive
           ? 'bg-pink-100 text-pink-700'
           : 'bg-transparent text-gray-700 hover:bg-gray-100 hover:text-gray-900'
       }`;
     }
 
-    // Underline variant - matches reference exactly
-    return `relative flex items-center px-3 py-2 text-sm font-medium whitespace-nowrap outline-none flex-shrink-0 ${
+    // Underline variant - REMOVED px-3
+    return `relative flex items-center py-2 text-sm font-medium whitespace-nowrap outline-none flex-shrink-0 ${
       isActive
         ? 'text-red-600'
         : 'text-gray-700 hover:text-red-600'
@@ -233,7 +233,7 @@ export default function TabsNavigation({
               WebkitOverflowScrolling: 'touch'
             }}
           >
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-3"> {/* Increased gap for skeleton */}
               {tabs.map((tab, index) => {
                 const widths = ['w-16', 'w-20', 'w-16', 'w-20', 'w-20', 'w-16', 'w-20', 'w-16', 'w-20'];
                 const width = widths[index] || 'w-16';
@@ -259,7 +259,7 @@ export default function TabsNavigation({
       <div className="h-full w-full">
         <div
           ref={scrollContainerRef}
-          className="flex items-center gap-1 overflow-x-auto no-scrollbar h-full w-full relative"
+          className="flex items-center overflow-x-auto no-scrollbar h-full w-full relative"
           style={{ 
             scrollbarWidth: 'none', 
             msOverflowStyle: 'none',
@@ -267,7 +267,8 @@ export default function TabsNavigation({
             paddingRight: edgeToEdge ? '0px' : '2.5rem',
           }}
         >
-          <div className="flex items-center gap-1">
+          {/* FIXED: Use gap-3 for consistent spacing between tabs */}
+          <div className="flex items-center gap-3 px-2"> {/* Added gap-3 and px-2 for container padding */}
             {tabs.map((tab, index) => (
               <button
                 key={tab.id}
