@@ -322,13 +322,20 @@ const summaryStats: SummaryStats = React.useMemo(() => {
     <div className={`w-full bg-white relative ${className}`}>
       {/* Summary Section - Optional */}
       {showSummary && (
-        <SellerSummaryHeader
-          title={title}
-          subtitle={subtitle}
-          stats={summaryHeaderStats}
-          actionButton={undefined} // Remove the button from here
-          showStats={!isLoading && processedProducts.length > 0}
-        />
+        <SellerSummaryHeader 
+  mode="inventory"
+  title="My Store Inventory"
+  subtitle="Track your products and stock levels in real-time"
+  progressPercentage={78}
+  progressVariant="stock-level"
+  progressStatus="high"
+  stats={[
+    { value: '2,456', label: 'Total Products', color: 'text-blue-600' },
+    { value: '23', label: 'Low Stock', color: 'text-orange-600', status: 'low' },
+    { value: '96%', label: 'In Stock', color: 'text-green-600' },
+    { value: '45', label: 'Categories', color: 'text-purple-600' }
+  ]}
+/>
       )}
 
       {/* Filter Bar Section - Conditionally rendered */}
