@@ -1,3 +1,4 @@
+// SellerSummaryHeader.tsx
 import React from 'react';
 
 interface InventoryItem {
@@ -139,6 +140,35 @@ const mockReviewsSummary: ReviewsSummary = {
   ]
 };
 
+interface ProductMetric {
+  value: string | number;
+  label: string;
+  color: string;
+  icon?: string;
+}
+
+interface ProductsSummary {
+  totalProducts: number;
+  activeProducts: number;
+  categories: number;
+  averagePrice: string;
+  metrics: ProductMetric[];
+}
+
+// Mock products data
+const mockProductsSummary: ProductsSummary = {
+  totalProducts: 847,
+  activeProducts: 812,
+  categories: 28,
+  averagePrice: '$45.99',
+  metrics: [
+    { value: '47', label: 'Out of Stock', color: 'text-red-600' },
+    { value: '28', label: 'Categories', color: 'text-purple-600' },
+    { value: '89', label: 'Low Stock', color: 'text-yellow-600' },
+    { value: '12', label: 'Preorder', color: 'text-blue-600' }
+  ]
+};
+
 interface SellerSummaryHeaderProps {
   title?: string;
   subtitle?: string;
@@ -146,8 +176,9 @@ interface SellerSummaryHeaderProps {
   progressPercentage?: number;
   progressVariant?: 'stock-level' | 'category' | 'turnover' | 'capacity';
   progressStatus?: 'low' | 'medium' | 'high' | 'out-of-stock';
-  mode?: 'inventory' | 'reviews';
+  mode?: 'inventory' | 'reviews' | 'products';
   reviewsSummary?: ReviewsSummary;
+  productsSummary?: ProductsSummary;
   className?: string;
 }
 
@@ -160,6 +191,7 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
   progressStatus = 'medium',
   mode = 'inventory',
   reviewsSummary = mockReviewsSummary,
+  productsSummary = mockProductsSummary,
   className = ''
 }) => {
   const getProgressLabel = () => {
@@ -254,7 +286,7 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
               </div>
             )}
           </>
-        ) : (
+        ) : mode === 'reviews' ? (
           <>
             {/* Reviews mode */}
             <div className="">
@@ -262,39 +294,80 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
                 Ratings and reviews are verified and are from people who use the same type of device that you use
               </p>
 
-             <div className="flex items-stretch gap-6">
-  {/* Rating number and stars - FIXED */}
-  {/* Rating number and stars - FIXED */}
-  <div className="flex-shrink-0 flex flex-col items-center justify-center text-center">
-    <div className="text-6xl font-light text-gray-900 leading-none">
-      {reviewsSummary.averageRating.toFixed(1)}
-    </div>
-    <div className="flex gap-0.5">
-      {renderStars(reviewsSummary.averageRating)}
-    </div>
-    <div className="text-xs text-gray-500">
-      {formatNumber(reviewsSummary.totalReviews)} reviews
-    </div>
-  </div>
+              <div className="flex items-stretch gap-6">
+                {/* Rating number and stars */}
+                <div className="flex-shrink-0 flex flex-col items-center justify-center text-center">
+                  <div className="text-6xl font-light text-gray-900 leading-none">
+                    {reviewsSummary.averageRating.toFixed(1)}
+                  </div>
+                  <div className="flex gap-0.5">
+                    {renderStars(reviewsSummary.averageRating)}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {formatNumber(reviewsSummary.totalReviews)} reviews
+                  </div>
+                </div>
 
-  {/* Rating bars - FIXED */}
-  <div className="flex-1 flex flex-col justify-center gap-1">
-    {reviewsSummary.distribution.map((dist) => (
-      <div key={dist.stars} className="flex items-center gap-2">
-        <span className="text-xs text-gray-500 w-3">{dist.stars}</span>
-        <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-blue-500 transition-all duration-500"
-            style={{ width: `${dist.percentage}%` }}
-          />
-        </div>
-      </div>
-    ))}
-  </div>
-</div>
+                {/* Rating bars */}
+                <div className="flex-1 flex flex-col justify-center gap-1">
+                  {reviewsSummary.distribution.map((dist) => (
+                    <div key={dist.stars} className="flex items-center gap-2">
+                      <span className="text-xs text-gray-500 w-3">{dist.stars}</span>
+                      <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-blue-500 transition-all duration-500"
+                          style={{ width: `${dist.percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </>
-        )}
+        ) : mode === 'products' ? (
+          <>
+            {/* Products mode */}
+            <div className="">
+              <p className="text-xs text-gray-500 mb-3">
+                Manage your product catalog and monitor performance across all categories
+              </p>
+
+              <div className="flex items-center gap-6">
+                {/* Total products - large display */}
+                <div className="flex-shrink-0 flex flex-col items-center justify-center text-center">
+                  <div className="text-6xl font-light text-gray-900 leading-none">
+                    {productsSummary.totalProducts}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-0.5">
+                    Total Products
+                  </div>
+                  <div className="mt-0.5 px-3 py-1 bg-green-50 rounded-full">
+                    <span className="text-xs font-semibold text-green-700">
+                      {productsSummary.activeProducts} Active
+                    </span>
+                  </div>
+                </div>
+
+                {/* Product metrics grid */}
+                <div className="flex-1 grid grid-cols-2 gap-3">
+                  {productsSummary.metrics.map((metric, index) => (
+                    <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                      <div className="flex-1 min-w-0">
+                        <div className={`text-base font-bold ${metric.color} leading-none`}>
+                          {metric.value}
+                        </div>
+                        <div className="text-xs text-gray-500 leading-tight mt-0.5">
+                          {metric.label}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </>
+        ) : null}
       </div>
     </div>
   );
