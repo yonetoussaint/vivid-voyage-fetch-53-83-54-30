@@ -261,14 +261,14 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
               <p className="text-xs text-gray-500 mb-3">
                 Ratings and reviews are verified and are from people who use the same type of device that you use
               </p>
-              
+
               <div className="flex items-stretch gap-6">
-                {/* Rating number and stars */}
-                <div className="flex-shrink-0 flex flex-col justify-between">
-                  <div className="text-6xl font-light text-gray-900 leading-none">
+                {/* Rating number and stars - FIXED ALIGNMENT */}
+                <div className="flex-shrink-0 flex flex-col items-center justify-center text-center">
+                  <div className="text-6xl font-light text-gray-900 leading-none mb-2">
                     {reviewsSummary.averageRating.toFixed(1)}
                   </div>
-                  <div className="flex gap-0.5">
+                  <div className="flex gap-0.5 mb-2">
                     {renderStars(reviewsSummary.averageRating)}
                   </div>
                   <div className="text-xs text-gray-500">
@@ -277,7 +277,7 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
                 </div>
 
                 {/* Rating bars */}
-                <div className="flex-1 flex flex-col justify-between">
+                <div className="flex-1 flex flex-col justify-center gap-1">
                   {reviewsSummary.distribution.map((dist) => (
                     <div key={dist.stars} className="flex items-center gap-2">
                       <span className="text-xs text-gray-500 w-3">{dist.stars}</span>
@@ -287,6 +287,9 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
                           style={{ width: `${dist.percentage}%` }}
                         />
                       </div>
+                      <span className="text-xs text-gray-500 w-8 text-right">
+                        {dist.percentage}%
+                      </span>
                     </div>
                   ))}
                 </div>
