@@ -39,6 +39,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const sellerInfoRef = useRef<HTMLDivElement>(null);
   const scrollObserverRef = useRef<HTMLDivElement>(null);
   const intersectionObserverRef = useRef<IntersectionObserver | null>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const [isTabsSticky, setIsTabsSticky] = useState(false);
   const [tabsHeight, setTabsHeight] = useState(0);
@@ -46,6 +47,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const [sellerInfoHeight, setSellerInfoHeight] = useState<number>(0);
   const [isTransparentHeader, setIsTransparentHeader] = useState(true);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const handleBackClick = () => {
     navigate('/profile');
@@ -196,30 +198,82 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }
   ];
 
-  // PRECISE Intersection Observer for tabs stickiness
+  // Measure heights with ResizeObserver - SINGLE SOURCE OF TRUTH
+  useLayoutEffect(() => {
+    const updateHeights = () => {
+      let newHeaderHeight = 0;
+      let newSellerInfoHeight = 0;
+      let newTabsHeight = 0;
+
+      if (headerRef.current) {
+        newHeaderHeight = headerRef.current.offsetHeight;
+        if (newHeaderHeight > 0) {
+          setHeaderHeight(newHeaderHeight);
+        }
+      }
+
+      if (sellerInfoRef.current && isProductsTab) {
+        newSellerInfoHeight = sellerInfoRef.current.offsetHeight;
+        if (newSellerInfoHeight > 0) {
+          setSellerInfoHeight(newSellerInfoHeight);
+        }
+      }
+
+      if (tabsRef.current) {
+        newTabsHeight = tabsRef.current.offsetHeight;
+        if (newTabsHeight > 0) {
+          setTabsHeight(newTabsHeight);
+        }
+      }
+
+      // Mark as initialized once we have measurements
+      if (newHeaderHeight > 0 && !isInitialized) {
+        setIsInitialized(true);
+      }
+    };
+
+    updateHeights();
+    const resizeObserver = new ResizeObserver(updateHeights);
+
+    if (headerRef.current) resizeObserver.observe(headerRef.current);
+    if (sellerInfoRef.current && isProductsTab) resizeObserver.observe(sellerInfoRef.current);
+    if (tabsRef.current) resizeObserver.observe(tabsRef.current);
+
+    return () => resizeObserver.disconnect();
+  }, [isProductsTab, isInitialized]);
+
+  // PRECISE Intersection Observer for tabs stickiness - ONLY after initialization
   useEffect(() => {
-    if (!tabsRef.current || !headerRef.current) return;
+    if (!isInitialized || !tabsRef.current || headerHeight === 0) {
+      return;
+    }
 
     // Clean up previous observer
     if (intersectionObserverRef.current) {
       intersectionObserverRef.current.disconnect();
     }
 
-    const headerElement = headerRef.current;
-    const tabsElement = tabsRef.current;
+    // Create sentinel element
+    if (!sentinelRef.current) {
+      const sentinel = document.createElement('div');
+      sentinel.style.position = 'absolute';
+      sentinel.style.top = '0px';
+      sentinel.style.left = '0px';
+      sentinel.style.width = '100%';
+      sentinel.style.height = '1px';
+      sentinel.style.pointerEvents = 'none';
+      sentinel.style.zIndex = '-1';
+      sentinel.style.visibility = 'hidden';
+      
+      // Insert sentinel right above the tabs container
+      const tabsContainer = tabsRef.current.parentElement;
+      if (tabsContainer) {
+        tabsContainer.insertBefore(sentinel, tabsRef.current);
+        sentinelRef.current = sentinel;
+      }
+    }
 
-    // Create a small sentinel element to detect when tabs touch the header
-    const sentinel = document.createElement('div');
-    sentinel.style.position = 'absolute';
-    sentinel.style.top = '0px';
-    sentinel.style.left = '0px';
-    sentinel.style.width = '100%';
-    sentinel.style.height = '1px';
-    sentinel.style.pointerEvents = 'none';
-    sentinel.style.zIndex = '-1';
-    
-    // Insert sentinel right above the tabs
-    tabsElement.parentNode?.insertBefore(sentinel, tabsElement);
+    if (!sentinelRef.current) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -240,20 +294,22 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       }
     );
 
-    observer.observe(sentinel);
+    observer.observe(sentinelRef.current);
     intersectionObserverRef.current = observer;
 
     return () => {
-      observer.disconnect();
-      if (sentinel.parentNode) {
-        sentinel.parentNode.removeChild(sentinel);
+      if (intersectionObserverRef.current) {
+        intersectionObserverRef.current.disconnect();
+      }
+      if (sentinelRef.current?.parentNode) {
+        sentinelRef.current.parentNode.removeChild(sentinelRef.current);
       }
     };
-  }, [headerHeight]); // Re-run when header height changes
+  }, [headerHeight, isInitialized]); // Re-run when header height changes or initialization completes
 
   // Scroll progress observer
   useEffect(() => {
-    if (!scrollObserverRef.current) return;
+    if (!scrollObserverRef.current || !isInitialized) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -270,40 +326,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     observer.observe(scrollObserverRef.current);
 
     return () => observer.disconnect();
-  }, []);
-
-  // Measure heights with ResizeObserver
-  useLayoutEffect(() => {
-    const updateHeights = () => {
-      if (headerRef.current) {
-        const height = headerRef.current.offsetHeight;
-        if (height > 0) {
-          setHeaderHeight(height);
-        }
-      }
-      if (sellerInfoRef.current && isProductsTab) {
-        const height = sellerInfoRef.current.offsetHeight;
-        if (height > 0) {
-          setSellerInfoHeight(height);
-        }
-      }
-      if (tabsRef.current) {
-        const height = tabsRef.current.offsetHeight;
-        if (height > 0) {
-          setTabsHeight(height);
-        }
-      }
-    };
-
-    updateHeights();
-    const resizeObserver = new ResizeObserver(updateHeights);
-
-    if (headerRef.current) resizeObserver.observe(headerRef.current);
-    if (sellerInfoRef.current && isProductsTab) resizeObserver.observe(sellerInfoRef.current);
-    if (tabsRef.current) resizeObserver.observe(tabsRef.current);
-
-    return () => resizeObserver.disconnect();
-  }, [isProductsTab]);
+  }, [isInitialized]);
 
   // Handle redirects for empty paths
   useEffect(() => {
@@ -315,6 +338,17 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       navigate('/pickup-station/overview', { replace: true });
     }
   }, [location.pathname, navigate]);
+
+  // Add a small delay to ensure DOM is fully rendered before initializing observers
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!isInitialized && headerRef.current) {
+        setIsInitialized(true);
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [isInitialized]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -364,26 +398,28 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
           {/* Spacer for header height */}
           <div style={{ height: `${headerHeight}px` }} />
 
-          {/* Tabs Navigation */}
-          <nav
-            ref={tabsRef}
-            className={`bg-white transition-all duration-200 ${
-              isTabsSticky
-                ? 'fixed left-0 right-0 z-40 shadow-sm'
-                : 'relative'
-            }`}
-            style={{
-              top: isTabsSticky ? `${headerHeight}px` : 'auto',
-            }}
-          >
-            <TabsNavigation 
-              tabs={tabs}
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
-              showTopBorder={true}
-              variant="underline"
-            />
-          </nav>
+          {/* Tabs Navigation with sentinel */}
+          <div className="relative">
+            <nav
+              ref={tabsRef}
+              className={`bg-white transition-all duration-200 ${
+                isTabsSticky
+                  ? 'fixed left-0 right-0 z-40 shadow-sm'
+                  : 'relative'
+              }`}
+              style={{
+                top: isTabsSticky ? `${headerHeight}px` : 'auto',
+              }}
+            >
+              <TabsNavigation 
+                tabs={tabs}
+                activeTab={activeTab}
+                onTabChange={handleTabChange}
+                showTopBorder={true}
+                variant="underline"
+              />
+            </nav>
+          </div>
 
           {/* Spacer when tabs are sticky */}
           {isTabsSticky && (
