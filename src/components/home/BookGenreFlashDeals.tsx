@@ -155,23 +155,28 @@ export default function BookGenreFlashDeals({
   });
 
   // Calculate summary statistics
-  const summaryStats: SummaryStats = React.useMemo(() => {
-    const totalProducts = allProducts.length;
-    const inStock = allProducts.filter(product => (product.inventory || 0) > 0).length;
-    const outOfStock = allProducts.filter(product => (product.inventory || 0) === 0).length;
-    const onDiscount = allProducts.filter(product => product.discount_price && product.discount_price < product.price).length;
-    const totalValue = allProducts.reduce((sum, product) => sum + (product.discount_price || product.price), 0);
-    const lowStock = allProducts.filter(product => (product.inventory || 0) > 0 && (product.inventory || 0) <= 10).length;
+  // Calculate summary statistics
+const summaryStats: SummaryStats = React.useMemo(() => {
+  const totalProducts = allProducts.length;
+  const inStock = allProducts.filter(product => (product.inventory || 0) > 0).length;
+  const outOfStock = allProducts.filter(product => (product.inventory || 0) === 0).length;
+  const onDiscount = allProducts.filter(product => product.discount_price && product.discount_price < product.price).length;
+  const totalValue = allProducts.reduce((sum, product) => sum + (product.discount_price || product.price), 0);
+  const lowStock = allProducts.filter(product => (product.inventory || 0) > 0 && (product.inventory || 0) <= 10).length;
+  
+  // Calculate unique categories count
+  const categories = new Set(allProducts.map(product => product.category).filter(Boolean)).size;
 
-    return {
-      totalProducts,
-      inStock,
-      outOfStock,
-      onDiscount,
-      totalValue,
-      lowStock
-    };
-  }, [allProducts]);
+  return {
+    totalProducts,
+    inStock,
+    outOfStock,
+    onDiscount,
+    totalValue,
+    lowStock,
+    categories // Add this
+  };
+}, [allProducts]);
 
   // Calculate time remaining for flash deals
   useEffect(() => {
