@@ -43,6 +43,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const [isTabsSticky, setIsTabsSticky] = useState(false);
   const [tabsHeight, setTabsHeight] = useState(0);
   const [headerHeight, setHeaderHeight] = useState(0);
+  const [sellerInfoHeight, setSellerInfoHeight] = useState(0);
 
   const handleBackClick = () => {
     navigate('/profile');
@@ -192,7 +193,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }
   ];
 
-  // Measure header and tabs heights
+  // Measure ALL component heights that affect tab position
   useLayoutEffect(() => {
     const updateHeights = () => {
       if (headerRef.current) {
@@ -200,6 +201,17 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         if (height > 0) {
           setHeaderHeight(height);
         }
+      }
+
+      // Measure SellerInfo height ONLY on products tab
+      if (isProductsTab && sellerInfoRef.current) {
+        const height = sellerInfoRef.current.offsetHeight;
+        if (height > 0) {
+          setSellerInfoHeight(height);
+        }
+      } else {
+        // Reset when not on products tab
+        setSellerInfoHeight(0);
       }
 
       if (tabsRef.current) {
@@ -214,21 +226,25 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     
     const resizeObserver = new ResizeObserver(updateHeights);
     if (headerRef.current) resizeObserver.observe(headerRef.current);
+    if (isProductsTab && sellerInfoRef.current) resizeObserver.observe(sellerInfoRef.current);
     if (tabsRef.current) resizeObserver.observe(tabsRef.current);
 
     return () => resizeObserver.disconnect();
-  }, []);
+  }, [isProductsTab]); // Re-run when tab changes
 
-  // PERFECT STICKY LOGIC
+  // PERFECT STICKY LOGIC - Now accounts for ALL components
   useEffect(() => {
     const handleScroll = () => {
       if (!tabsContainerRef.current) return;
 
       const containerRect = tabsContainerRef.current.getBoundingClientRect();
       
-      // The tabs should become sticky when their container reaches the header bottom
-      // Since header is fixed at top:0, its bottom is at headerHeight
-      const shouldBeSticky = containerRect.top <= headerHeight;
+      // Calculate total offset from top of viewport where tabs should stick
+      // This is the header height (since header is fixed at top)
+      const stickyPoint = headerHeight;
+      
+      // When the tabs container reaches the sticky point, make tabs sticky
+      const shouldBeSticky = containerRect.top <= stickyPoint;
       
       setIsTabsSticky(shouldBeSticky);
     };
@@ -243,7 +259,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleScroll);
     };
-  }, [headerHeight]);
+  }, [headerHeight, sellerInfoHeight, isProductsTab]); // Re-run when heights change
 
   // Handle redirects for empty paths
   useEffect(() => {
@@ -261,7 +277,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       {/* Header - Fixed at top */}
       <div 
         ref={headerRef} 
-        className="fixed top-0 left-0 right-0 z-50"
+        className="fixed top-0 left-0 right-0 z-50 bg-white"
       >
         <ProductHeader
           showCloseIcon={false}
@@ -279,10 +295,10 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         />
       </div>
 
-      {/* Spacer for fixed header */}
+      {/* Spacer for fixed header - ALWAYS present */}
       <div style={{ height: `${headerHeight}px` }} />
 
-      {/* Seller Info Section - Only on products tab */}
+      {/* Seller Info Section - Only on products tab, in normal document flow */}
       {isProductsTab && (
         <div ref={sellerInfoRef} className="w-full bg-black text-white">
           <SellerInfoSection
@@ -297,14 +313,14 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         </div>
       )}
 
-      {/* Tabs Container - CRITICAL: This maintains space in document flow */}
+      {/* Tabs Container - CRITICAL: Marks the position where tabs should stick */}
       <div 
         ref={tabsContainerRef}
         style={{ 
           height: isTabsSticky ? `${tabsHeight}px` : 'auto'
         }}
       >
-        {/* Tabs Navigation - Single instance that transitions */}
+        {/* Tabs Navigation - Single instance that transitions position */}
         <nav
           ref={tabsRef}
           className="bg-white border-b border-gray-200"
