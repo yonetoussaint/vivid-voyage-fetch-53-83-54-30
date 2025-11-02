@@ -106,8 +106,9 @@ const SellerPage = () => {
           path="/products" 
           element={
             <BookGenreFlashDeals 
-              sellerId={sellerId}
-            />
+  sellerId={sellerId}
+  className="px-0"  // Override any padding
+/>
           } 
         />
         <Route 
