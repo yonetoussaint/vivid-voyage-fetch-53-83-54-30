@@ -262,38 +262,35 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
                 Ratings and reviews are verified and are from people who use the same type of device that you use
               </p>
 
-              <div className="flex items-stretch gap-6">
-                {/* Rating number and stars - FIXED ALIGNMENT */}
-                <div className="flex-shrink-0 flex flex-col items-center justify-center text-center">
-                  <div className="text-6xl font-light text-gray-900 leading-none mb-2">
-                    {reviewsSummary.averageRating.toFixed(1)}
-                  </div>
-                  <div className="flex gap-0.5 mb-2">
-                    {renderStars(reviewsSummary.averageRating)}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {formatNumber(reviewsSummary.totalReviews)} reviews
-                  </div>
-                </div>
+             <div className="flex items-stretch gap-6">
+  {/* Rating number and stars - FIXED */}
+  <div className="flex-shrink-0 flex flex-col items-center justify-center text-center">
+    <div className="text-6xl font-light text-gray-900 leading-none mb-2">
+      {reviewsSummary.averageRating.toFixed(1)}
+    </div>
+    <div className="flex gap-0.5 mb-2">
+      {renderStars(reviewsSummary.averageRating)}
+    </div>
+    <div className="text-xs text-gray-500">
+      {formatNumber(reviewsSummary.totalReviews)} reviews
+    </div>
+  </div>
 
-                {/* Rating bars */}
-                <div className="flex-1 flex flex-col justify-center gap-1">
-                  {reviewsSummary.distribution.map((dist) => (
-                    <div key={dist.stars} className="flex items-center gap-2">
-                      <span className="text-xs text-gray-500 w-3">{dist.stars}</span>
-                      <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-blue-500 transition-all duration-500"
-                          style={{ width: `${dist.percentage}%` }}
-                        />
-                      </div>
-                      <span className="text-xs text-gray-500 w-8 text-right">
-                        {dist.percentage}%
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+  {/* Rating bars - FIXED */}
+  <div className="flex-1 flex flex-col justify-center gap-1">
+    {reviewsSummary.distribution.map((dist) => (
+      <div key={dist.stars} className="flex items-center gap-2">
+        <span className="text-xs text-gray-500 w-3">{dist.stars}</span>
+        <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-blue-500 transition-all duration-500"
+            style={{ width: `${dist.percentage}%` }}
+          />
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
             </div>
           </>
         )}
