@@ -305,13 +305,11 @@ export default function BookGenreFlashDeals({
     if (isLoading || processedProducts.length === 0) return [];
 
     return [
-      { value: summaryStats.totalProducts, label: 'Total', color: 'text-blue-600' },
-      { value: summaryStats.inStock, label: 'In Stock', color: 'text-green-600' },
-      { value: summaryStats.onDiscount, label: 'On Discount', color: 'text-orange-600' },
-      { value: `$${summaryStats.totalValue.toFixed(0)}`, label: 'Total Value', color: 'text-purple-600' },
-      { value: summaryStats.lowStock, label: 'Low Stock', color: 'text-yellow-600' },
-      { value: summaryStats.outOfStock, label: 'Out of Stock', color: 'text-red-600' }
-    ];
+  { value: summaryStats.totalProducts, label: 'Total', color: 'text-blue-600' },
+  { value: summaryStats.inStock, label: 'In Stock', color: 'text-green-600' },
+  { value: summaryStats.outOfStock, label: 'Out of Stock', color: 'text-red-600' },
+  { value: summaryStats.categories, label: 'Categories', color: 'text-purple-600' }
+];
   }, [summaryStats, isLoading, processedProducts.length]);
 
   return (
