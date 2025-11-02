@@ -19,7 +19,7 @@ interface SellerLayoutProps {
   publicSellerLoading?: boolean;
   getSellerLogoUrl?: (imagePath?: string) => string;
   isPublicPage?: boolean;
-  isOwnProfile?: boolean; // Add this line
+  isOwnProfile?: boolean;
 }
 
 const SellerLayout: React.FC<SellerLayoutProps> = ({ 
@@ -29,7 +29,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   publicSellerLoading,
   getSellerLogoUrl: externalGetSellerLogoUrl,
   isPublicPage = false,
-isOwnProfile = true
+  isOwnProfile = true
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -38,6 +38,7 @@ isOwnProfile = true
   const tabsRef = useRef<HTMLDivElement>(null);
   const sellerInfoRef = useRef<HTMLDivElement>(null);
   const scrollObserverRef = useRef<HTMLDivElement>(null);
+  const tabsIntersectionRef = useRef<HTMLDivElement>(null);
 
   const [isTabsSticky, setIsTabsSticky] = useState(false);
   const [tabsHeight, setTabsHeight] = useState(0);
@@ -57,7 +58,6 @@ isOwnProfile = true
 
   const handleShareClick = () => {
     console.log('Share seller profile');
-    // Implement share functionality
     if (navigator.share) {
       navigator.share({
         title: sellerData?.business_name || 'Seller Profile',
@@ -65,14 +65,12 @@ isOwnProfile = true
       });
     } else {
       navigator.clipboard.writeText(window.location.href);
-      // Show toast notification
     }
   };
 
   const handleLinkClick = () => {
     console.log('Link button clicked');
     navigator.clipboard.writeText(window.location.href);
-    // Show toast notification
   };
 
   // Determine if we're in dashboard, pickup station, or public seller page
@@ -94,7 +92,6 @@ isOwnProfile = true
       }
       return path;
     } else {
-      // For public seller pages, extract tab from path
       const pathParts = location.pathname.split('/seller/')[1]?.split('/');
       if (pathParts && pathParts.length > 1) {
         return pathParts[1];
@@ -103,7 +100,7 @@ isOwnProfile = true
     }
   };
 
-  // Derive activeTab from current route - SINGLE SOURCE OF TRUTH
+  // Derive activeTab from current route
   const activeTab = getCurrentTab();
 
   // Fetch products from database
@@ -211,18 +208,49 @@ isOwnProfile = true
       ([entry]) => {
         const progress = 1 - entry.intersectionRatio;
         setScrollProgress(progress);
-        setIsTransparentHeader(progress < 0.3); // Becomes opaque after 30% scroll
+        setIsTransparentHeader(progress < 0.3);
       },
       {
         threshold: Array.from({ length: 101 }, (_, i) => i * 0.01),
-        rootMargin: '-50px 0px 0px 0px' // Start tracking 50px from top
+        rootMargin: '-50px 0px 0px 0px'
       }
     );
 
     observer.observe(scrollObserverRef.current);
-
     return () => observer.disconnect();
   }, []);
+
+  // Precise Intersection Observer for tabs sticking
+  useEffect(() => {
+    if (!tabsIntersectionRef.current || !headerRef.current) return;
+
+    const header = headerRef.current;
+    const tabsElement = tabsRef.current;
+    
+    if (!tabsElement) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // When tabs start intersecting with header (touching from below)
+        if (!entry.isIntersecting) {
+          // Tabs are moving up and about to touch the header
+          setIsTabsSticky(true);
+        } else {
+          // Tabs are fully visible below header
+          setIsTabsSticky(false);
+        }
+      },
+      {
+        root: null, // viewport
+        rootMargin: `-${header.offsetHeight}px 0px 0px 0px`, // Negative margin equal to header height
+        threshold: 0, // Trigger as soon as 1px intersects
+      }
+    );
+
+    observer.observe(tabsIntersectionRef.current);
+
+    return () => observer.disconnect();
+  }, [headerHeight]); // Re-run when header height changes
 
   // Measure heights with ResizeObserver
   useLayoutEffect(() => {
@@ -257,44 +285,6 @@ isOwnProfile = true
     return () => resizeObserver.disconnect();
   }, [isProductsTab]);
 
-  // Handle sticky tabs with scroll listener
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!tabsRef.current || !headerRef.current) return;
-
-      const currentHeaderHeight = headerRef.current.offsetHeight;
-      const scrollY = window.scrollY;
-
-      if (isTabsSticky) {
-        let tabsNaturalTopInViewport;
-        if (isProductsTab) {
-          tabsNaturalTopInViewport = sellerInfoHeight - scrollY;
-        } else {
-          tabsNaturalTopInViewport = headerHeight - scrollY;
-        }
-
-        if (tabsNaturalTopInViewport > currentHeaderHeight) {
-          setIsTabsSticky(false);
-        }
-      } else {
-        const tabsRect = tabsRef.current.getBoundingClientRect();
-        const tabsTopRelativeToViewport = tabsRect.top;
-        if (tabsTopRelativeToViewport <= currentHeaderHeight) {
-          setIsTabsSticky(true);
-        }
-      }
-    };
-
-    handleScroll();
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('resize', handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', handleScroll);
-    };
-  }, [isTabsSticky, isProductsTab, sellerInfoHeight, headerHeight]);
-
   // Handle redirects for empty paths
   useEffect(() => {
     if (location.pathname === '/seller-dashboard' || 
@@ -308,11 +298,22 @@ isOwnProfile = true
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Scroll Observer Element - placed at the top to track scroll progress */}
+      {/* Scroll Observer Element for header transparency */}
       <div 
         ref={scrollObserverRef}
         className="absolute top-0 left-0 w-full h-1 pointer-events-none"
         style={{ top: `${headerHeight}px` }}
+      />
+
+      {/* Tabs Intersection Observer Element */}
+      <div 
+        ref={tabsIntersectionRef}
+        className="absolute pointer-events-none"
+        style={{ 
+          top: `${headerHeight}px`, 
+          height: '1px',
+          width: '100%'
+        }}
       />
 
       {/* Header - Full width, fixed positioning */}
@@ -320,14 +321,13 @@ isOwnProfile = true
         ref={headerRef} 
         className="fixed top-0 left-0 right-0 z-40"
       >
-        {/* Remove the inner container that was limiting width */}
         <ProductHeader
           showCloseIcon={false}
           onCloseClick={handleBackClick}
           actionButtons={actionButtons}
-          sellerMode={false} // Disable seller mode to avoid avatar and stats
+          sellerMode={false}
           stickyMode={true}
-          forceScrolledState={scrollProgress > 0.3} // Force scrolled state after 30% progress
+          forceScrolledState={scrollProgress > 0.3}
           customScrollProgress={scrollProgress}
           inPanel={false}
           showDetailsButton={false}
@@ -338,20 +338,19 @@ isOwnProfile = true
       <div className="relative min-h-screen">
         <main>
           {/* Seller Info Section - Only on products tab */}
-          {/* Seller Info Section - Only on products tab */}
-{true && ( // Change from isProductsTab to true for testing
-  <div ref={sellerInfoRef} className="w-full bg-black text-white relative z-30">
-    <SellerInfoSection
-      sellerData={sellerData}
-      sellerLoading={sellerLoading}
-      getSellerLogoUrl={getSellerLogoUrl}
-      onBecomeSeller={handleBecomeSeller}
-      onBack={handleBackClick}
-      isOwnProfile={isOwnProfile}
-      showActionButtons={showActionButtons}
-    />
-  </div>
-)}
+          {true && (
+            <div ref={sellerInfoRef} className="w-full bg-black text-white relative z-30">
+              <SellerInfoSection
+                sellerData={sellerData}
+                sellerLoading={sellerLoading}
+                getSellerLogoUrl={getSellerLogoUrl}
+                onBecomeSeller={handleBecomeSeller}
+                onBack={handleBackClick}
+                isOwnProfile={isOwnProfile}
+                showActionButtons={showActionButtons}
+              />
+            </div>
+          )}
 
           {/* Spacer for header height */}
           <div style={{ height: `${headerHeight}px` }} />
@@ -361,7 +360,7 @@ isOwnProfile = true
             ref={tabsRef}
             className={`bg-white transition-all duration-200 ${
               isTabsSticky
-                ? 'fixed left-0 right-0 z-40'
+                ? 'fixed left-0 right-0 z-40 shadow-sm'
                 : 'relative'
             }`}
             style={{
