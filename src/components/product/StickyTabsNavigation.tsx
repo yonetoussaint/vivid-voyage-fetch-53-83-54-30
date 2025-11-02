@@ -45,35 +45,50 @@ const StickyTabsNavigation: React.FC<StickyTabsNavigationProps> = ({
     const handleScrollForStickyTabs = () => {
       // Get the tabs container directly from the gallery ref
       const tabsContainer = galleryRef.current?.getTabsContainer();
+      
+      if (!tabsContainer) return;
 
-      if (tabsContainer) {
-        const tabsRect = tabsContainer.getBoundingClientRect();
+      const tabsRect = tabsContainer.getBoundingClientRect();
 
-        // Show sticky tabs when the original tabs start to scroll out of view
-        // (when top of tabs container reaches bottom of header)
-        let shouldShow = false;
+      // Determine the threshold based on context
+      let shouldShow = false;
+      
+      if (inPanel && scrollContainerRef?.current && stickyTopOffset !== undefined) {
+        // Panel mode: account for panel position in viewport
+        const containerTop = scrollContainerRef.current.getBoundingClientRect().top;
+        const thresholdOffset = containerTop + stickyTopOffset;
         
-        if (inPanel && scrollContainerRef?.current && stickyTopOffset !== undefined) {
-          // Panel mode: account for panel position in viewport
-          const containerTop = scrollContainerRef.current.getBoundingClientRect().top;
-          const thresholdOffset = containerTop + stickyTopOffset;
-          shouldShow = tabsRect.top <= thresholdOffset;
-        } else {
-          // Window mode: use headerHeight as before
-          shouldShow = tabsRect.top <= headerHeight;
-        }
+        // Precise detection: when tabs top reaches the threshold (within 1px)
+        shouldShow = tabsRect.top <= thresholdOffset + 1;
+      } else {
+        // Window mode: when tabs top reaches header bottom (within 1px)
+        shouldShow = tabsRect.top <= headerHeight + 1;
+      }
 
-        setShowStickyTabs(shouldShow);
+      setShowStickyTabs(shouldShow);
 
-        console.log('📊 Tabs scroll detection:', {
-          tabsTop: tabsRect.top,
-          headerHeight,
-          shouldShow,
-          tabsContainer: !!tabsContainer,
-          inPanel,
-          stickyTopOffset,
-          containerTop: inPanel && scrollContainerRef?.current ? scrollContainerRef.current.getBoundingClientRect().top : 'N/A'
-        });
+      console.log('📊 Tabs scroll detection:', {
+        tabsTop: tabsRect.top,
+        headerHeight,
+        shouldShow,
+        tabsContainer: !!tabsContainer,
+        inPanel,
+        stickyTopOffset,
+        containerTop: inPanel && scrollContainerRef?.current ? scrollContainerRef.current.getBoundingClientRect().top : 'N/A'
+      });
+    };
+
+    // Use requestAnimationFrame for smoother performance
+    let ticking = false;
+    const updateStickyState = () => {
+      handleScrollForStickyTabs();
+      ticking = false;
+    };
+
+    const scrollListener = () => {
+      if (!ticking) {
+        requestAnimationFrame(updateStickyState);
+        ticking = true;
       }
     };
 
@@ -82,12 +97,19 @@ const StickyTabsNavigation: React.FC<StickyTabsNavigationProps> = ({
       ? scrollContainerRef.current 
       : window;
 
-    scrollTarget.addEventListener('scroll', handleScrollForStickyTabs, { passive: true });
+    scrollTarget.addEventListener('scroll', scrollListener, { passive: true });
+    scrollTarget.addEventListener('resize', scrollListener, { passive: true });
     
-    // Run initial check to set sticky state on first render
-    handleScrollForStickyTabs();
+    // Initial check after a small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      handleScrollForStickyTabs();
+    }, 100);
     
-    return () => scrollTarget.removeEventListener('scroll', handleScrollForStickyTabs);
+    return () => {
+      scrollTarget.removeEventListener('scroll', scrollListener);
+      scrollTarget.removeEventListener('resize', scrollListener);
+      clearTimeout(timer);
+    };
   }, [galleryRef, headerHeight, inPanel, scrollContainerRef?.current, stickyTopOffset]);
 
   // Handle tab click with smooth scrolling and sync with gallery
