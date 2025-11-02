@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Timer, Plus, ChevronRight, Package } from "lucide-react"; // Added Package icon
+import { Timer, Plus, ChevronRight, Package } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllProducts, trackProductView } from "@/integrations/supabase/products";
@@ -18,8 +18,8 @@ interface Product {
   product_images?: Array<{ src: string }>;
   inventory?: number;
   flash_start_time?: string;
-  seller_id?: string; // Added seller_id
-  category?: string; // Added category
+  seller_id?: string;
+  category?: string;
 }
 
 interface GenreFlashDealsProps {
@@ -34,7 +34,7 @@ interface GenreFlashDealsProps {
   showSectionHeader?: boolean;
   showSummary?: boolean;
   showFilters?: boolean;
-  icon?: React.ComponentType<any>; // This already exists, keep it
+  icon?: React.ComponentType<any>;
   customCountdown?: string;
   showCountdown?: boolean;
   passCountdownToHeader?: boolean;
@@ -57,12 +57,12 @@ export default function BookGenreFlashDeals({
   className = '',
   products: externalProducts,
   sellerId,
-  onAddProduct, // Added prop
+  onAddProduct,
   title = "Products",
   subtitle = "Manage all your products",
   showSectionHeader = true,
   showSummary = true,
-  showFilters = true, // Default to true for backward compatibility
+  showFilters = true,
   icon,
   customCountdown,
   showCountdown,
@@ -129,7 +129,6 @@ export default function BookGenreFlashDeals({
   };
 
   const handleFilterButtonClick = (filterId: string) => {
-    // You can add custom logic here if needed
     console.log('Filter button clicked:', filterId);
   };
 
@@ -172,17 +171,6 @@ export default function BookGenreFlashDeals({
       lowStock
     };
   }, [allProducts]);
-
-  // Create action button configuration
-  const addProductButton = React.useMemo(() => {
-    if (!onAddProduct) return undefined;
-
-    return {
-      label: "Add Product",
-      icon: Plus,
-      onClick: onAddProduct
-    };
-  }, [onAddProduct]);
 
   // Calculate time remaining for flash deals
   useEffect(() => {
@@ -276,7 +264,7 @@ export default function BookGenreFlashDeals({
       if (selectedFilters.discount && !isAllOption(selectedFilters.discount)) {
         products = products.filter(p => {
           const discountPercentage = p.discount_price
-            ? Math.round(((product.price - product.discount_price) / product.price) * 100)
+            ? Math.round(((p.price - p.discount_price) / p.price) * 100)
             : 0;
           switch (selectedFilters.discount) {
             case 'On Sale': return discountPercentage > 0;
@@ -327,14 +315,14 @@ export default function BookGenreFlashDeals({
   }, [summaryStats, isLoading, processedProducts.length]);
 
   return (
-    <div className={`w-full bg-white ${className}`}>
+    <div className={`w-full bg-white relative ${className}`}>
       {/* Summary Section - Optional */}
       {showSummary && (
         <SellerSummaryHeader
           title={title}
           subtitle={subtitle}
           stats={summaryHeaderStats}
-          actionButton={addProductButton}
+          actionButton={undefined} // Remove the button from here
           showStats={!isLoading && processedProducts.length > 0}
         />
       )}
@@ -353,7 +341,7 @@ export default function BookGenreFlashDeals({
         </div>
       )}
 
-      {/* Products Grid - Reverted to old version design */}
+      {/* Products Grid */}
       <div className="">
         {isLoading && !externalProducts ? (
           <div className="grid grid-cols-2 gap-2">
@@ -453,6 +441,17 @@ export default function BookGenreFlashDeals({
           </div>
         )}
       </div>
+
+      {/* Floating Add Product Button */}
+      {onAddProduct && (
+        <button
+          onClick={onAddProduct}
+          className="fixed bottom-6 right-6 z-50 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-105 active:scale-95"
+          aria-label="Add Product"
+        >
+          <Plus className="w-6 h-6" />
+        </button>
+      )}
     </div>
   );
 }
