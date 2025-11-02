@@ -268,7 +268,7 @@ export default function TabsNavigation({
           }}
         >
           {/* FIXED: Use gap-3 for consistent spacing between tabs */}
-          <div className="flex items-center gap-3 px-2"> {/* Added gap-3 and px-2 for container padding */}
+          <div className="flex items-center gap-5 px-2"> {/* Added gap-3 and px-2 for container padding */}
             {tabs.map((tab, index) => (
               <button
                 key={tab.id}
