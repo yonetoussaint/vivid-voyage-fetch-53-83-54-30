@@ -265,10 +265,10 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
              <div className="flex items-stretch gap-6">
   {/* Rating number and stars - FIXED */}
   <div className="flex-shrink-0 flex flex-col items-center justify-center text-center">
-    <div className="text-6xl font-light text-gray-900 leading-none mb-2">
+    <div className="text-6xl font-light text-gray-900 leading-none">
       {reviewsSummary.averageRating.toFixed(1)}
     </div>
-    <div className="flex gap-0.5 mb-2">
+    <div className="flex gap-0.5">
       {renderStars(reviewsSummary.averageRating)}
     </div>
     <div className="text-xs text-gray-500">
