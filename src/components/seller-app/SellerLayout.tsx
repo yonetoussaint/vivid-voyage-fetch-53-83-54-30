@@ -37,17 +37,13 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const headerRef = useRef<HTMLDivElement>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
   const sellerInfoRef = useRef<HTMLDivElement>(null);
-  const scrollObserverRef = useRef<HTMLDivElement>(null);
-  const intersectionObserverRef = useRef<IntersectionObserver | null>(null);
-  const sentinelRef = useRef<HTMLDivElement>(null);
+  const stickySentinelRef = useRef<HTMLDivElement>(null);
 
   const [isTabsSticky, setIsTabsSticky] = useState(false);
   const [tabsHeight, setTabsHeight] = useState(0);
   const [headerHeight, setHeaderHeight] = useState<number>(0);
   const [sellerInfoHeight, setSellerInfoHeight] = useState<number>(0);
-  const [isTransparentHeader, setIsTransparentHeader] = useState(true);
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [isInitialized, setIsInitialized] = useState(false);
 
   const handleBackClick = () => {
     navigate('/profile');
@@ -198,37 +194,26 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }
   ];
 
-  // Measure heights with ResizeObserver - SINGLE SOURCE OF TRUTH
+  // Measure heights with ResizeObserver
   useLayoutEffect(() => {
     const updateHeights = () => {
-      let newHeaderHeight = 0;
-      let newSellerInfoHeight = 0;
-      let newTabsHeight = 0;
-
       if (headerRef.current) {
-        newHeaderHeight = headerRef.current.offsetHeight;
-        if (newHeaderHeight > 0) {
-          setHeaderHeight(newHeaderHeight);
+        const height = headerRef.current.offsetHeight;
+        if (height > 0) {
+          setHeaderHeight(height);
         }
       }
-
       if (sellerInfoRef.current && isProductsTab) {
-        newSellerInfoHeight = sellerInfoRef.current.offsetHeight;
-        if (newSellerInfoHeight > 0) {
-          setSellerInfoHeight(newSellerInfoHeight);
+        const height = sellerInfoRef.current.offsetHeight;
+        if (height > 0) {
+          setSellerInfoHeight(height);
         }
       }
-
       if (tabsRef.current) {
-        newTabsHeight = tabsRef.current.offsetHeight;
-        if (newTabsHeight > 0) {
-          setTabsHeight(newTabsHeight);
+        const height = tabsRef.current.offsetHeight;
+        if (height > 0) {
+          setTabsHeight(height);
         }
-      }
-
-      // Mark as initialized once we have measurements
-      if (newHeaderHeight > 0 && !isInitialized) {
-        setIsInitialized(true);
       }
     };
 
@@ -240,93 +225,63 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     if (tabsRef.current) resizeObserver.observe(tabsRef.current);
 
     return () => resizeObserver.disconnect();
-  }, [isProductsTab, isInitialized]);
+  }, [isProductsTab]);
 
-  // PRECISE Intersection Observer for tabs stickiness - ONLY after initialization
+  // SIMPLE AND RELIABLE Intersection Observer for tabs stickiness
   useEffect(() => {
-    if (!isInitialized || !tabsRef.current || headerHeight === 0) {
-      return;
-    }
+    if (!tabsRef.current || headerHeight === 0) return;
 
-    // Clean up previous observer
-    if (intersectionObserverRef.current) {
-      intersectionObserverRef.current.disconnect();
-    }
-
-    // Create sentinel element
-    if (!sentinelRef.current) {
-      const sentinel = document.createElement('div');
-      sentinel.style.position = 'absolute';
-      sentinel.style.top = '0px';
-      sentinel.style.left = '0px';
-      sentinel.style.width = '100%';
-      sentinel.style.height = '1px';
-      sentinel.style.pointerEvents = 'none';
-      sentinel.style.zIndex = '-1';
-      sentinel.style.visibility = 'hidden';
-      
-      // Insert sentinel right above the tabs container
-      const tabsContainer = tabsRef.current.parentElement;
-      if (tabsContainer) {
-        tabsContainer.insertBefore(sentinel, tabsRef.current);
-        sentinelRef.current = sentinel;
-      }
-    }
-
-    if (!sentinelRef.current) return;
+    // Create a sentinel element that will be positioned right below the header
+    const sentinel = document.createElement('div');
+    sentinel.style.height = '1px';
+    sentinel.style.width = '100%';
+    sentinel.style.position = 'absolute';
+    sentinel.style.top = `${headerHeight}px`;
+    sentinel.style.left = '0';
+    sentinel.style.zIndex = '-1';
+    sentinel.style.pointerEvents = 'none';
+    
+    // Add the sentinel to the document body
+    document.body.appendChild(sentinel);
+    stickySentinelRef.current = sentinel;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        const isIntersecting = entry.isIntersecting;
-        
-        if (!isIntersecting) {
-          // Sentinel is above viewport - tabs are touching header, make sticky
+        // When the sentinel leaves the viewport (scrolls past header), make tabs sticky
+        if (!entry.isIntersecting) {
           setIsTabsSticky(true);
         } else {
-          // Sentinel is in viewport - tabs are not touching header, remove sticky
           setIsTabsSticky(false);
         }
       },
       {
         root: null,
-        rootMargin: `-${headerHeight}px 0px 0px 0px`, // Negative margin equal to header height
+        rootMargin: '0px',
         threshold: 0
       }
     );
 
-    observer.observe(sentinelRef.current);
-    intersectionObserverRef.current = observer;
+    observer.observe(sentinel);
 
     return () => {
-      if (intersectionObserverRef.current) {
-        intersectionObserverRef.current.disconnect();
-      }
-      if (sentinelRef.current?.parentNode) {
-        sentinelRef.current.parentNode.removeChild(sentinelRef.current);
+      observer.disconnect();
+      if (stickySentinelRef.current && document.body.contains(stickySentinelRef.current)) {
+        document.body.removeChild(stickySentinelRef.current);
       }
     };
-  }, [headerHeight, isInitialized]); // Re-run when header height changes or initialization completes
+  }, [headerHeight]);
 
   // Scroll progress observer
   useEffect(() => {
-    if (!scrollObserverRef.current || !isInitialized) return;
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const progress = Math.min(scrollY / 200, 1); // Calculate progress based on scroll
+      setScrollProgress(progress);
+    };
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        const progress = 1 - entry.intersectionRatio;
-        setScrollProgress(progress);
-        setIsTransparentHeader(progress < 0.3);
-      },
-      {
-        threshold: Array.from({ length: 101 }, (_, i) => i * 0.01),
-        rootMargin: '-50px 0px 0px 0px'
-      }
-    );
-
-    observer.observe(scrollObserverRef.current);
-
-    return () => observer.disconnect();
-  }, [isInitialized]);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Handle redirects for empty paths
   useEffect(() => {
@@ -339,26 +294,8 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }
   }, [location.pathname, navigate]);
 
-  // Add a small delay to ensure DOM is fully rendered before initializing observers
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!isInitialized && headerRef.current) {
-        setIsInitialized(true);
-      }
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [isInitialized]);
-
   return (
     <div className="min-h-screen bg-white">
-      {/* Scroll Observer Element */}
-      <div 
-        ref={scrollObserverRef}
-        className="absolute top-0 left-0 w-full h-1 pointer-events-none"
-        style={{ top: `${headerHeight}px` }}
-      />
-
       {/* Header - Full width, fixed positioning */}
       <div 
         ref={headerRef} 
@@ -398,28 +335,26 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
           {/* Spacer for header height */}
           <div style={{ height: `${headerHeight}px` }} />
 
-          {/* Tabs Navigation with sentinel */}
-          <div className="relative">
-            <nav
-              ref={tabsRef}
-              className={`bg-white transition-all duration-200 ${
-                isTabsSticky
-                  ? 'fixed left-0 right-0 z-40 shadow-sm'
-                  : 'relative'
-              }`}
-              style={{
-                top: isTabsSticky ? `${headerHeight}px` : 'auto',
-              }}
-            >
-              <TabsNavigation 
-                tabs={tabs}
-                activeTab={activeTab}
-                onTabChange={handleTabChange}
-                showTopBorder={true}
-                variant="underline"
-              />
-            </nav>
-          </div>
+          {/* Tabs Navigation */}
+          <nav
+            ref={tabsRef}
+            className={`bg-white transition-all duration-200 ${
+              isTabsSticky
+                ? 'fixed left-0 right-0 z-40 shadow-sm border-b border-gray-200'
+                : 'relative'
+            }`}
+            style={{
+              top: isTabsSticky ? `${headerHeight}px` : 'auto',
+            }}
+          >
+            <TabsNavigation 
+              tabs={tabs}
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+              showTopBorder={true}
+              variant="underline"
+            />
+          </nav>
 
           {/* Spacer when tabs are sticky */}
           {isTabsSticky && (
