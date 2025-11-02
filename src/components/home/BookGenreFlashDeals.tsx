@@ -442,14 +442,17 @@ export default function BookGenreFlashDeals({
         )}
       </div>
 
-      {/* Floating Add Product Button */}
+      {/* Floating Add Product Button - Updated Design */}
       {onAddProduct && (
         <button
           onClick={onAddProduct}
-          className="fixed bottom-6 right-6 z-50 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-105 active:scale-95"
+          className="fixed bottom-20 right-4 z-50 bg-gradient-to-r from-red-400/80 to-pink-500/80 backdrop-blur-md text-white rounded-2xl px-4 py-3 shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-105 active:scale-95 border border-white/20"
           aria-label="Add Product"
         >
-          <Plus className="w-6 h-6" />
+          <div className="flex items-center gap-2">
+            <Plus className="w-5 h-5" />
+            <span className="font-medium text-sm">Add Product</span>
+          </div>
         </button>
       )}
     </div>
