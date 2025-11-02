@@ -1,3 +1,4 @@
+// SellerLayout.tsx - UPDATED
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -37,14 +38,13 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const headerRef = useRef<HTMLDivElement>(null);
   const sellerInfoRef = useRef<HTMLDivElement>(null);
   
-  // NEW: Sticky navigation refs and state
+  // Sticky navigation refs and state
   const tabsContainerRef = useRef<HTMLDivElement>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
   const [isTabsSticky, setIsTabsSticky] = useState(false);
   const [tabsHeight, setTabsHeight] = useState(0);
   const [headerHeight, setHeaderHeight] = useState(0);
   const [sellerInfoHeight, setSellerInfoHeight] = useState<number>(0);
-  const [scrollProgress, setScrollProgress] = useState(0);
 
   const handleBackClick = () => {
     navigate('/profile');
@@ -199,20 +199,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }
   ];
 
-  // NEW: Simplified scroll progress for header
-  useEffect(() => {
-    const handleScrollProgress = () => {
-      const scrollY = window.scrollY;
-      const maxScroll = 200; // Adjust this value to control when header becomes fully opaque
-      const progress = Math.min(scrollY / maxScroll, 1);
-      setScrollProgress(progress);
-    };
-
-    window.addEventListener('scroll', handleScrollProgress, { passive: true });
-    return () => window.removeEventListener('scroll', handleScrollProgress);
-  }, []);
-
-  // NEW: Measure heights with ResizeObserver
+  // Measure heights with ResizeObserver
   useLayoutEffect(() => {
     const updateHeights = () => {
       if (headerRef.current) {
@@ -245,15 +232,16 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     return () => resizeObserver.disconnect();
   }, [isProductsTab]);
 
-  // NEW: Simplified scroll detection for sticky tabs
+  // PERFECT STICKY LOGIC: Detect when tabs touch the header
   useEffect(() => {
     const handleScroll = () => {
-      if (!tabsContainerRef.current) return;
+      if (!tabsContainerRef.current || !headerRef.current) return;
 
-      const containerTop = tabsContainerRef.current.getBoundingClientRect().top;
+      const tabsRect = tabsContainerRef.current.getBoundingClientRect();
+      const headerRect = headerRef.current.getBoundingClientRect();
       
-      // When tabs container reaches the header, make tabs sticky
-      if (containerTop <= headerHeight) {
+      // When tabs top position reaches header bottom, make them sticky
+      if (tabsRect.top <= headerRect.bottom) {
         setIsTabsSticky(true);
       } else {
         setIsTabsSticky(false);
@@ -286,7 +274,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header - Fixed at top */}
+      {/* Header - Fixed at top with integrated tabs */}
       <div 
         ref={headerRef} 
         className="fixed top-0 left-0 right-0 z-40"
@@ -297,10 +285,14 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
           actionButtons={actionButtons}
           sellerMode={false}
           stickyMode={true}
-          forceScrolledState={scrollProgress > 0.3}
-          customScrollProgress={scrollProgress}
           inPanel={false}
           showDetailsButton={false}
+          // NEW: Pass tabs to header for sticky display
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          showTabs={true}
+          isTabsSticky={isTabsSticky}
         />
       </div>
 
@@ -325,7 +317,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
           {/* Spacer for header height */}
           <div style={{ height: `${headerHeight}px` }} />
 
-          {/* Tabs Navigation - PERFECT STICKY IMPLEMENTATION */}
+          {/* Tabs Navigation - In normal document flow */}
           <div 
             ref={tabsContainerRef}
             style={{ 
@@ -335,19 +327,14 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
             <nav
               ref={tabsRef}
               className={`bg-white transition-all duration-200 ${
-                isTabsSticky 
-                  ? 'fixed left-0 right-0 z-40 shadow-sm border-b border-gray-200' 
-                  : 'relative'
+                isTabsSticky ? 'opacity-0 pointer-events-none' : 'opacity-100'
               }`}
-              style={{
-                top: isTabsSticky ? `${headerHeight}px` : 'auto',
-              }}
             >
               <TabsNavigation 
                 tabs={tabs}
                 activeTab={activeTab}
                 onTabChange={handleTabChange}
-                showTopBorder={!isTabsSticky} // Only show top border when not sticky
+                showTopBorder={true}
                 variant="underline"
               />
             </nav>
