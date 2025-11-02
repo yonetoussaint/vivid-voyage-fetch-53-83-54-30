@@ -1,3 +1,4 @@
+// ProductHeader.tsx
 import React, { useState } from "react";
 import { 
   Heart, 
@@ -10,6 +11,7 @@ import HeaderActionButton from "./header/HeaderActionButton";
 import { useNavigate } from 'react-router-dom';
 import { useNavigationLoading } from '@/hooks/useNavigationLoading';
 import SearchPageSkeleton from '@/components/search/SearchPageSkeleton';
+import TabsNavigation from '@/components/home/TabsNavigation'; // NEW
 
 interface ActionButton {
   Icon: any;
@@ -33,6 +35,11 @@ interface ProductHeaderProps {
   onSearch?: (query: string) => void;
   onSearchFocus?: () => void;
   inPanel?: boolean;
+  // NEW PROPS FOR TABS
+  tabs?: Array<{ id: string; label: string }>;
+  activeTab?: string;
+  showTabs?: boolean;
+  isTabsSticky?: boolean;
 }
 
 const ProductHeader: React.FC<ProductHeaderProps> = ({
@@ -49,6 +56,11 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
   onSearch,
   onSearchFocus,
   inPanel = false,
+  // NEW PROPS
+  tabs = [],
+  activeTab = '',
+  showTabs = false,
+  isTabsSticky = false,
 }) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const { progress: displayProgress } = useScrollProgress();
@@ -147,6 +159,20 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
           </div>
         </div>
       </div>
+
+      {/* NEW: Sticky Tabs inside Header */}
+      {showTabs && isTabsSticky && (
+        <div className="bg-white border-b border-gray-200">
+          <TabsNavigation 
+            tabs={tabs}
+            activeTab={activeTab}
+            onTabChange={onTabChange}
+            showTopBorder={false}
+            variant="underline"
+            className="border-t-0"
+          />
+        </div>
+      )}
     </div>
   );
 };
