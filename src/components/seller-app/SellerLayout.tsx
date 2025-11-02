@@ -383,7 +383,7 @@ isOwnProfile = true
           )}
 
           {/* Main Content */}
-          <div className="px-2">
+          <div className="">
             {React.Children.map(children, child => {
               if (React.isValidElement(child)) {
                 if (activeTab !== 'products') {
