@@ -179,11 +179,24 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
 
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
+        // Full star
         stars.push(<span key={i} className="text-blue-500 text-xl">★</span>);
       } else if (i === fullStars && hasHalfStar) {
-        stars.push(<span key={i} className="text-blue-500 text-xl">⯨</span>);
+        // Half star using gradient
+        stars.push(
+          <span key={i} className="relative inline-block text-xl">
+            <span className="text-gray-300">★</span>
+            <span 
+              className="absolute top-0 left-0 text-blue-500 overflow-hidden"
+              style={{ width: '50%' }}
+            >
+              ★
+            </span>
+          </span>
+        );
       } else {
-        stars.push(<span key={i} className="text-gray-600 text-xl">★</span>);
+        // Empty star
+        stars.push(<span key={i} className="text-gray-300 text-xl">★</span>);
       }
     }
     return stars;
