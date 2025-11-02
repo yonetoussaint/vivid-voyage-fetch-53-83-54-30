@@ -49,6 +49,7 @@ interface SummaryStats {
   onDiscount: number;
   totalValue: number;
   lowStock: number;
+  categories: number; // Add this line
 }
 
 export default function BookGenreFlashDeals({
