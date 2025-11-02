@@ -257,7 +257,7 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
         ) : (
           <>
             {/* Reviews mode */}
-            <div className="px-2 py-3">
+            <div className=" py-3">
               <p className="text-xs text-gray-500 mb-3">
                 Ratings and reviews are verified and are from people who use the same type of device that you use
               </p>
