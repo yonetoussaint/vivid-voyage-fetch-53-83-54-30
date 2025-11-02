@@ -40,6 +40,8 @@ interface GenreFlashDealsProps {
   passCountdownToHeader?: boolean;
   showVerifiedSellers?: boolean;
   verifiedSellersText?: string;
+  // Add mode prop to control which header to show
+  summaryMode?: 'inventory' | 'reviews' | 'products';
 }
 
 interface SummaryStats {
@@ -49,7 +51,7 @@ interface SummaryStats {
   onDiscount: number;
   totalValue: number;
   lowStock: number;
-  categories: number; // Add this line
+  categories: number;
 }
 
 export default function BookGenreFlashDeals({
@@ -69,6 +71,7 @@ export default function BookGenreFlashDeals({
   showCountdown,
   showVerifiedSellers = false,
   verifiedSellersText = "Verified Sellers",
+  summaryMode = 'products', // Default to products mode
 }: GenreFlashDealsProps) {
   const [displayCount, setDisplayCount] = useState(8);
 
@@ -155,28 +158,27 @@ export default function BookGenreFlashDeals({
   });
 
   // Calculate summary statistics
-  // Calculate summary statistics
-const summaryStats: SummaryStats = React.useMemo(() => {
-  const totalProducts = allProducts.length;
-  const inStock = allProducts.filter(product => (product.inventory || 0) > 0).length;
-  const outOfStock = allProducts.filter(product => (product.inventory || 0) === 0).length;
-  const onDiscount = allProducts.filter(product => product.discount_price && product.discount_price < product.price).length;
-  const totalValue = allProducts.reduce((sum, product) => sum + (product.discount_price || product.price), 0);
-  const lowStock = allProducts.filter(product => (product.inventory || 0) > 0 && (product.inventory || 0) <= 10).length;
-  
-  // Calculate unique categories count
-  const categories = new Set(allProducts.map(product => product.category).filter(Boolean)).size;
+  const summaryStats: SummaryStats = React.useMemo(() => {
+    const totalProducts = allProducts.length;
+    const inStock = allProducts.filter(product => (product.inventory || 0) > 0).length;
+    const outOfStock = allProducts.filter(product => (product.inventory || 0) === 0).length;
+    const onDiscount = allProducts.filter(product => product.discount_price && product.discount_price < product.price).length;
+    const totalValue = allProducts.reduce((sum, product) => sum + (product.discount_price || product.price), 0);
+    const lowStock = allProducts.filter(product => (product.inventory || 0) > 0 && (product.inventory || 0) <= 10).length;
 
-  return {
-    totalProducts,
-    inStock,
-    outOfStock,
-    onDiscount,
-    totalValue,
-    lowStock,
-    categories // Add this
-  };
-}, [allProducts]);
+    // Calculate unique categories count
+    const categories = new Set(allProducts.map(product => product.category).filter(Boolean)).size;
+
+    return {
+      totalProducts,
+      inStock,
+      outOfStock,
+      onDiscount,
+      totalValue,
+      lowStock,
+      categories
+    };
+  }, [allProducts]);
 
   // Calculate time remaining for flash deals
   useEffect(() => {
@@ -307,35 +309,63 @@ const summaryStats: SummaryStats = React.useMemo(() => {
     setDisplayCount(8);
   }, [processedProducts.length]);
 
-  const summaryHeaderStats = React.useMemo(() => {
-  if (isLoading || processedProducts.length === 0) return [];
-
-  return [
-    { value: summaryStats.totalProducts, label: 'Total', color: 'text-blue-600' },
-    { value: summaryStats.inStock, label: 'In Stock', color: 'text-green-600' },
-    { value: summaryStats.outOfStock, label: 'Out of Stock', color: 'text-red-600' },
-    { value: summaryStats.categories, label: 'Categories', color: 'text-purple-600' }
-  ];
-}, [summaryStats, isLoading, processedProducts.length]);
+  // Prepare data for SellerSummaryHeader based on mode
+  const getHeaderProps = () => {
+    if (summaryMode === 'inventory') {
+      return {
+        mode: 'inventory' as const,
+        title: "Inventory Overview",
+        subtitle: "Manage your stock levels and product availability",
+        stats: [
+          { value: summaryStats.totalProducts.toString(), label: 'Total Items', color: 'text-blue-600' },
+          { value: summaryStats.lowStock.toString(), label: 'Low Stock', color: 'text-red-600', status: 'low' as const },
+          { value: `${Math.round((summaryStats.inStock / summaryStats.totalProducts) * 100)}%`, label: 'Availability', color: 'text-green-600' },
+          { value: summaryStats.categories.toString(), label: 'Categories', color: 'text-purple-600' }
+        ],
+        progressPercentage: Math.round((summaryStats.inStock / summaryStats.totalProducts) * 100),
+        progressVariant: 'stock-level' as const,
+        progressStatus: summaryStats.lowStock > 10 ? 'low' as const : 'high' as const
+      };
+    } else if (summaryMode === 'products') {
+      return {
+        mode: 'products' as const,
+        productsSummary: {
+          totalProducts: summaryStats.totalProducts,
+          activeProducts: summaryStats.inStock,
+          categories: summaryStats.categories,
+          averagePrice: `$${(summaryStats.totalValue / summaryStats.totalProducts).toFixed(2)}`,
+          metrics: [
+            { value: summaryStats.outOfStock.toString(), label: 'Out of Stock', color: 'text-red-600' },
+            { value: summaryStats.categories.toString(), label: 'Categories', color: 'text-purple-600' },
+            { value: summaryStats.lowStock.toString(), label: 'Low Stock', color: 'text-yellow-600' },
+            { value: summaryStats.onDiscount.toString(), label: 'On Sale', color: 'text-blue-600' }
+          ]
+        }
+      };
+    } else {
+      // reviews mode - use mock data or fetch real reviews
+      return {
+        mode: 'reviews' as const,
+        reviewsSummary: {
+          averageRating: 4.6,
+          totalReviews: 1459914,
+          distribution: [
+            { stars: 5, count: 1100000, percentage: 75 },
+            { stars: 4, count: 200000, percentage: 14 },
+            { stars: 3, count: 80000, percentage: 5 },
+            { stars: 2, count: 40000, percentage: 3 },
+            { stars: 1, count: 39914, percentage: 3 }
+          ]
+        }
+      };
+    }
+  };
 
   return (
     <div className={`w-full bg-white relative ${className}`}>
       {/* Summary Section - Optional */}
       {showSummary && (
-          <SellerSummaryHeader 
-    mode="reviews"
-    reviewsSummary={{
-      averageRating: 4.6,
-      totalReviews: 1459914,
-      distribution: [
-        { stars: 5, count: 1100000, percentage: 75 },
-        { stars: 4, count: 200000, percentage: 14 },
-        { stars: 3, count: 80000, percentage: 5 },
-        { stars: 2, count: 40000, percentage: 3 },
-        { stars: 1, count: 39914, percentage: 3 }
-      ]
-    }}
-  />
+        <SellerSummaryHeader {...getHeaderProps()} />
       )}
 
       {/* Filter Bar Section - Conditionally rendered */}
