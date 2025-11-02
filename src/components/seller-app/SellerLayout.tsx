@@ -1,8 +1,8 @@
-// SellerLayout.tsx - REFACTORED
+// SellerLayout.tsx - UPDATED
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
-  Package, ShoppingCart, Users, BarChart3, DollarSign, Megaphone, Settings, Home, Share, MessageCircle, MessageSquare, Star, ExternalLink 
+  Package, ShoppingCart, Users, BarChart3, DollarSign, Megaphone, Settings, Home, Share, MessageCircle, MessageSquare, Star, ExternalLink, Heart 
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useQuery } from '@tanstack/react-query';
@@ -35,7 +35,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  
+
   // Refs for measuring heights
   const headerRef = useRef<HTMLDivElement>(null);
   const sellerInfoRef = useRef<HTMLDivElement>(null);
@@ -47,6 +47,9 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const [tabsHeight, setTabsHeight] = useState(0);
   const [headerHeight, setHeaderHeight] = useState(0);
   const [sellerInfoHeight, setSellerInfoHeight] = useState(0);
+
+  // State for favorite functionality
+  const [isFavorite, setIsFavorite] = useState(false);
 
   const handleBackClick = () => {
     navigate('/profile');
@@ -66,12 +69,22 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       });
     } else {
       navigator.clipboard.writeText(window.location.href);
+      // You might want to show a toast notification here
+      console.log('Link copied to clipboard');
     }
+  };
+
+  const handleFavoriteClick = () => {
+    setIsFavorite(!isFavorite);
+    console.log('Favorite toggled:', !isFavorite);
+    // Add your actual favorite logic here
   };
 
   const handleLinkClick = () => {
     console.log('Link button clicked');
     navigator.clipboard.writeText(window.location.href);
+    // You might want to show a toast notification here
+    console.log('Link copied to clipboard');
   };
 
   // Determine context
@@ -179,12 +192,14 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     return data.publicUrl;
   });
 
+  // Action buttons for ProductHeader - Heart and Share
   const actionButtons = [
     {
-      Icon: ExternalLink,
-      onClick: handleLinkClick,
-      active: false,
-      count: undefined
+      Icon: Heart,
+      onClick: handleFavoriteClick,
+      active: isFavorite,
+      activeColor: "#f43f5e",
+      count: 147 // You can make this dynamic based on actual favorite count
     },
     {
       Icon: Share,
@@ -195,7 +210,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   ];
 
   // ===== PERFECT STICKY IMPLEMENTATION =====
-  
+
   // 1. Measure ALL heights using ResizeObserver
   useLayoutEffect(() => {
     const updateHeights = () => {
@@ -234,10 +249,10 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       if (!tabsContainerRef.current) return;
 
       const containerRect = tabsContainerRef.current.getBoundingClientRect();
-      
+
       // Tabs should stick when they reach the bottom of the header
       const stickyPoint = headerHeight;
-      
+
       setIsTabsSticky(containerRect.top <= stickyPoint);
     };
 
@@ -269,7 +284,16 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         ref={headerRef} 
         className="fixed top-0 left-0 right-0 z-50"
       >
-        <ProductHeader/>
+        <ProductHeader
+          onCloseClick={handleBackClick}
+          onShareClick={handleShareClick}
+          actionButtons={actionButtons}
+          // The ProductHeader will automatically handle:
+          // - Glass background effect on scroll
+          // - Search bar appearance when scrolled
+          // - Back button functionality
+          // - Heart and Share buttons with proper styling
+        />
       </div>
 
       {/* Spacer for fixed header */}
