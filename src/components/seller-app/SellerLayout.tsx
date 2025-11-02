@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   Package, ShoppingCart, Users, BarChart3, DollarSign, Megaphone, Settings, Home, Share, MessageCircle, MessageSquare, Star, ExternalLink 
@@ -35,127 +35,202 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const headerRef = useRef<HTMLDivElement>(null);
-  const tabsRef = useRef<HTMLDivElement>(null);
   const sellerInfoRef = useRef<HTMLDivElement>(null);
-  const scrollObserverRef = useRef<HTMLDivElement>(null);
-  const intersectionObserverRef = useRef<IntersectionObserver | null>(null);
-  const sentinelRef = useRef<HTMLDivElement>(null);
-
+  
+  // NEW: Sticky navigation refs and state
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
+  const tabsRef = useRef<HTMLDivElement>(null);
   const [isTabsSticky, setIsTabsSticky] = useState(false);
   const [tabsHeight, setTabsHeight] = useState(0);
-  const [headerHeight, setHeaderHeight] = useState<number>(0);
+  const [headerHeight, setHeaderHeight] = useState(0);
   const [sellerInfoHeight, setSellerInfoHeight] = useState<number>(0);
-  const [isTransparentHeader, setIsTransparentHeader] = useState(true);
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Rest of your existing code remains the same until the observer section...
+  const handleBackClick = () => {
+    navigate('/profile');
+  };
 
-  // PRECISE Intersection Observer with Performance Optimization
-  const setupIntersectionObserver = useCallback(() => {
-    if (!tabsRef.current || headerHeight === 0) return;
+  const handleBecomeSeller = () => {
+    console.log('Start seller onboarding');
+    navigate('/seller-onboarding');
+  };
 
-    // Clean up previous observer
-    if (intersectionObserverRef.current) {
-      intersectionObserverRef.current.disconnect();
-      intersectionObserverRef.current = null;
+  const handleShareClick = () => {
+    console.log('Share seller profile');
+    if (navigator.share) {
+      navigator.share({
+        title: sellerData?.business_name || 'Seller Profile',
+        url: window.location.href,
+      });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
     }
+  };
 
-    // Remove existing sentinel
-    if (sentinelRef.current?.parentNode) {
-      sentinelRef.current.parentNode.removeChild(sentinelRef.current);
-      sentinelRef.current = null;
-    }
+  const handleLinkClick = () => {
+    console.log('Link button clicked');
+    navigator.clipboard.writeText(window.location.href);
+  };
 
-    // Create and position sentinel element
-    const sentinel = document.createElement('div');
-    sentinel.style.position = 'absolute';
-    sentinel.style.top = '0px';
-    sentinel.style.left = '0px';
-    sentinel.style.width = '100%';
-    sentinel.style.height = '1px';
-    sentinel.style.pointerEvents = 'none';
-    sentinel.style.zIndex = '-1';
-    sentinel.style.visibility = 'hidden';
-    
-    // Insert sentinel exactly at the top of the tabs container
-    const tabsContainer = tabsRef.current;
-    if (tabsContainer.parentElement) {
-      tabsContainer.parentElement.insertBefore(sentinel, tabsContainer);
-      sentinelRef.current = sentinel;
-    }
+  // Determine if we're in dashboard, pickup station, or public seller page
+  const isDashboard = location.pathname.includes('/seller-dashboard');
+  const isPickupStation = location.pathname.includes('/pickup-station');
 
-    if (!sentinelRef.current) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        if (!entry) return;
-
-        const isIntersecting = entry.isIntersecting;
-        
-        // Use your existing logic: when NOT intersecting, tabs are touching header
-        if (!isIntersecting) {
-          setIsTabsSticky(true);
-        } else {
-          setIsTabsSticky(false);
-        }
-      },
-      {
-        root: null,
-        rootMargin: `-${headerHeight}px 0px 0px 0px`, // Negative margin = header height
-        threshold: 0
+  // Extract current tab from pathname
+  const getCurrentTab = () => {
+    if (isDashboard) {
+      const path = location.pathname.split('/seller-dashboard/')[1];
+      if (!path || path === '') {
+        return 'products';
       }
-    );
-
-    observer.observe(sentinelRef.current);
-    intersectionObserverRef.current = observer;
-
-    return () => {
-      observer.disconnect();
-      if (sentinelRef.current?.parentNode) {
-        sentinelRef.current.parentNode.removeChild(sentinelRef.current);
+      return path;
+    } else if (isPickupStation) {
+      const path = location.pathname.split('/pickup-station/')[1];
+      if (!path || path === '') {
+        return 'overview';
       }
-    };
-  }, [headerHeight]);
+      return path;
+    } else {
+      const pathParts = location.pathname.split('/seller/')[1]?.split('/');
+      if (pathParts && pathParts.length > 1) {
+        return pathParts[1];
+      }
+      return 'products';
+    }
+  };
 
-  // Initialize Intersection Observer when ready
+  // Derive activeTab from current route
+  const activeTab = getCurrentTab();
+
+  // Fetch products from database
+  const { data: products = [], isLoading: productsLoading } = useQuery({
+    queryKey: ['products', 'all'],
+    queryFn: fetchAllProducts,
+  });
+
+  // Check if we're on the products tab
+  const isProductsTab = activeTab === 'products';
+
+  const baseRoute = isDashboard ? '/seller-dashboard' : isPickupStation ? '/pickup-station' : `/seller/${location.pathname.split('/seller/')[1]?.split('/')[0] || ''}`;
+
+  const navigationItems = isPickupStation ? [
+    { id: 'overview', name: 'Overview', href: '/pickup-station/overview', icon: Home },
+    { id: 'packages', name: 'Packages', href: '/pickup-station/packages', icon: Package },
+    { id: 'customers', name: 'Customers', href: '/pickup-station/customers', icon: Users },
+    { id: 'reviews', name: 'Reviews', href: '/pickup-station/reviews', icon: Star },
+    { id: 'qa', name: 'Q&A', href: '/pickup-station/qa', icon: MessageSquare },
+    { id: 'analytics', name: 'Analytics', href: '/pickup-station/analytics', icon: BarChart3 },
+    { id: 'notifications', name: 'Notifications', href: '/pickup-station/notifications', icon: MessageCircle },
+    { id: 'settings', name: 'Settings', href: '/pickup-station/settings', icon: Settings },
+  ] : isDashboard ? [
+    { id: 'products', name: 'Products', href: '/seller-dashboard/products', icon: Package },
+    { id: 'orders', name: 'Orders', href: '/seller-dashboard/orders', icon: ShoppingCart },
+    { id: 'customers', name: 'Customers', href: '/seller-dashboard/customers', icon: Users },
+    { id: 'analytics', name: 'Analytics', href: '/seller-dashboard/analytics', icon: BarChart3 },
+    { id: 'finances', name: 'Finances', href: '/seller-dashboard/finances', icon: DollarSign },
+    { id: 'marketing', name: 'Marketing', href: '/seller-dashboard/marketing', icon: Megaphone },
+    { id: 'reels', name: 'Reels', href: '/seller-dashboard/reels', icon: Megaphone },
+    { id: 'settings', name: 'Settings', href: '/seller-dashboard/settings', icon: Settings },
+  ] : [
+    { id: 'products', name: 'Products', href: `${baseRoute}/products`, icon: Package },
+    { id: 'reels', name: 'Reels', href: `${baseRoute}/reels`, icon: Megaphone },
+    { id: 'posts', name: 'Posts', href: `${baseRoute}/posts`, icon: MessageCircle },
+    { id: 'qas', name: 'Q&As', href: `${baseRoute}/qas`, icon: MessageSquare },
+    { id: 'reviews', name: 'Reviews', href: `${baseRoute}/reviews`, icon: Star },
+  ];
+
+  const handleTabChange = (tabId: string) => {
+    const item = navigationItems.find(nav => nav.id === tabId);
+    if (item) {
+      navigate(item.href);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const tabs = navigationItems.map(item => ({
+    id: item.id,
+    label: item.name
+  }));
+
+  const { user } = useAuth();
+
+  // Use public data if on public page, otherwise fetch authenticated seller data
+  const { data: privateSellerData, isLoading: privateSellerLoading } = useQuery({
+    queryKey: ['seller', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from('sellers')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      if (error) {
+        console.error('Error fetching seller data:', error);
+        return null;
+      }
+      return data;
+    },
+    enabled: !!user?.id && !isPublicPage,
+  });
+
+  // Use public or private seller data based on page type
+  const sellerData = isPublicPage ? publicSellerData : privateSellerData;
+  const sellerLoading = isPublicPage ? publicSellerLoading : privateSellerLoading;
+
+  const getSellerLogoUrl = externalGetSellerLogoUrl || ((imagePath?: string): string => {
+    if (!imagePath) return "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face";
+    const { data } = supabase.storage.from('seller-logos').getPublicUrl(imagePath);
+    return data.publicUrl;
+  });
+
+  // Define action buttons for ProductHeader
+  const actionButtons = [
+    {
+      Icon: ExternalLink,
+      onClick: handleLinkClick,
+      active: false,
+      count: undefined
+    },
+    {
+      Icon: Share,
+      onClick: handleShareClick,
+      active: false,
+      count: undefined
+    }
+  ];
+
+  // NEW: Simplified scroll progress for header
   useEffect(() => {
-    if (headerHeight > 0 && tabsRef.current) {
-      const cleanup = setupIntersectionObserver();
-      setIsInitialized(true);
-      return cleanup;
-    }
-  }, [headerHeight, setupIntersectionObserver]);
+    const handleScrollProgress = () => {
+      const scrollY = window.scrollY;
+      const maxScroll = 200; // Adjust this value to control when header becomes fully opaque
+      const progress = Math.min(scrollY / maxScroll, 1);
+      setScrollProgress(progress);
+    };
 
-  // Enhanced height measurement with proper sequencing
+    window.addEventListener('scroll', handleScrollProgress, { passive: true });
+    return () => window.removeEventListener('scroll', handleScrollProgress);
+  }, []);
+
+  // NEW: Measure heights with ResizeObserver
   useLayoutEffect(() => {
     const updateHeights = () => {
-      let newHeaderHeight = 0;
-      let newSellerInfoHeight = 0;
-      let newTabsHeight = 0;
-
-      // Measure header first (most critical)
       if (headerRef.current) {
-        newHeaderHeight = headerRef.current.getBoundingClientRect().height;
-        if (newHeaderHeight > 0 && newHeaderHeight !== headerHeight) {
-          setHeaderHeight(newHeaderHeight);
+        const height = headerRef.current.offsetHeight;
+        if (height > 0) {
+          setHeaderHeight(height);
         }
       }
-
-      // Measure seller info if on products tab
       if (sellerInfoRef.current && isProductsTab) {
-        newSellerInfoHeight = sellerInfoRef.current.offsetHeight;
-        if (newSellerInfoHeight > 0 && newSellerInfoHeight !== sellerInfoHeight) {
-          setSellerInfoHeight(newSellerInfoHeight);
+        const height = sellerInfoRef.current.offsetHeight;
+        if (height > 0) {
+          setSellerInfoHeight(height);
         }
       }
-
-      // Measure tabs last
       if (tabsRef.current) {
-        newTabsHeight = tabsRef.current.offsetHeight;
-        if (newTabsHeight > 0 && newTabsHeight !== tabsHeight) {
-          setTabsHeight(newTabsHeight);
+        const height = tabsRef.current.offsetHeight;
+        if (height > 0) {
+          setTabsHeight(height);
         }
       }
     };
@@ -168,70 +243,50 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     if (tabsRef.current) resizeObserver.observe(tabsRef.current);
 
     return () => resizeObserver.disconnect();
-  }, [isProductsTab, headerHeight, sellerInfoHeight, tabsHeight]);
+  }, [isProductsTab]);
 
-  // Scroll progress observer (separate from sticky logic)
+  // NEW: Simplified scroll detection for sticky tabs
   useEffect(() => {
-    if (!scrollObserverRef.current || !isInitialized) return;
+    const handleScroll = () => {
+      if (!tabsContainerRef.current) return;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        const progress = 1 - entry.intersectionRatio;
-        setScrollProgress(progress);
-        setIsTransparentHeader(progress < 0.3);
-      },
-      {
-        threshold: Array.from({ length: 101 }, (_, i) => i * 0.01),
-        rootMargin: '-50px 0px 0px 0px'
+      const containerTop = tabsContainerRef.current.getBoundingClientRect().top;
+      
+      // When tabs container reaches the header, make tabs sticky
+      if (containerTop <= headerHeight) {
+        setIsTabsSticky(true);
+      } else {
+        setIsTabsSticky(false);
       }
-    );
+    };
 
-    observer.observe(scrollObserverRef.current);
+    // Use passive listener for better performance
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleScroll, { passive: true });
 
-    return () => observer.disconnect();
-  }, [isInitialized]);
+    // Initial check
+    handleScroll();
 
-  // Handle edge cases and initialization
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+    };
+  }, [headerHeight]);
+
+  // Handle redirects for empty paths
   useEffect(() => {
-    // Force re-initialization after a short delay to catch any DOM updates
-    const timer = setTimeout(() => {
-      if (headerHeight > 0 && !isInitialized) {
-        setupIntersectionObserver();
-        setIsInitialized(true);
-      }
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [headerHeight, isInitialized, setupIntersectionObserver]);
-
-  // Handle scroll to top on tab change
-  const handleTabChange = useCallback((tabId: string) => {
-    const item = navigationItems.find(nav => nav.id === tabId);
-    if (item) {
-      navigate(item.href);
+    if (location.pathname === '/seller-dashboard' || 
+        location.pathname.endsWith('/seller-dashboard/')) {
+      navigate('/seller-dashboard/products', { replace: true });
+    } else if (location.pathname === '/pickup-station' || 
+               location.pathname.endsWith('/pickup-station/')) {
+      navigate('/pickup-station/overview', { replace: true });
     }
-    
-    // Smooth scroll to top
-    window.scrollTo({ 
-      top: 0, 
-      behavior: 'smooth' 
-    });
-    
-    // Reset sticky state when changing tabs
-    setIsTabsSticky(false);
-  }, [navigationItems, navigate]);
+  }, [location.pathname, navigate]);
 
-  // Your existing JSX return remains the same, but enhanced with better styling:
   return (
     <div className="min-h-screen bg-white">
-      {/* Scroll Observer Element */}
-      <div 
-        ref={scrollObserverRef}
-        className="absolute top-0 left-0 w-full h-1 pointer-events-none"
-        style={{ top: `${headerHeight}px` }}
-      />
-
-      {/* Header */}
+      {/* Header - Fixed at top */}
       <div 
         ref={headerRef} 
         className="fixed top-0 left-0 right-0 z-40"
@@ -270,19 +325,22 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
           {/* Spacer for header height */}
           <div style={{ height: `${headerHeight}px` }} />
 
-          {/* Tabs Navigation with enhanced styling */}
-          <div className="relative">
+          {/* Tabs Navigation - PERFECT STICKY IMPLEMENTATION */}
+          <div 
+            ref={tabsContainerRef}
+            style={{ 
+              height: isTabsSticky ? `${tabsHeight}px` : 'auto'
+            }}
+          >
             <nav
               ref={tabsRef}
-              className={`bg-white transition-all duration-300 ease-out ${
-                isTabsSticky
-                  ? 'fixed left-0 right-0 z-40 shadow-lg border-b border-gray-200'
+              className={`bg-white transition-all duration-200 ${
+                isTabsSticky 
+                  ? 'fixed left-0 right-0 z-40 shadow-sm border-b border-gray-200' 
                   : 'relative'
               }`}
               style={{
                 top: isTabsSticky ? `${headerHeight}px` : 'auto',
-                // Smooth transition for the sticky effect
-                transform: isTabsSticky ? 'translateY(0)' : 'translateY(0)',
               }}
             >
               <TabsNavigation 
@@ -294,15 +352,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
               />
             </nav>
           </div>
-
-          {/* Spacer when tabs are sticky */}
-          {isTabsSticky && (
-            <div 
-              style={{ height: `${tabsHeight}px` }} 
-              aria-hidden="true"
-              className="transition-all duration-300"
-            />
-          )}
 
           {/* Main Content */}
           <div className="">
