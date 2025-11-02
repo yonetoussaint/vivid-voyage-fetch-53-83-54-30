@@ -1,49 +1,70 @@
 import React from 'react';
-import { LucideIcon } from 'lucide-react';
 
-interface StatItem {
+interface InventoryItem {
   value: string | number;
   label: string;
   color?: string;
+  status?: 'low' | 'medium' | 'high' | 'out-of-stock';
 }
 
-interface CircularProgressProps {
+interface CircularInventoryProgressProps {
   percentage: number;
   color?: string;
   size?: number;
   strokeWidth?: number;
-  variant?: 'default' | 'dashed' | 'gradient' | 'multi-color' | 'minimal';
+  variant?: 'stock-level' | 'category' | 'turnover' | 'capacity';
+  label?: string;
+  status?: 'low' | 'medium' | 'high' | 'out-of-stock';
 }
 
-const CircularProgress: React.FC<CircularProgressProps> = ({
+const CircularInventoryProgress: React.FC<CircularInventoryProgressProps> = ({
   percentage,
-  color = '#3b82f6',
+  color,
   size = 70,
   strokeWidth = 8,
-  variant = 'default'
+  variant = 'stock-level',
+  label = 'Stock Level',
+  status = 'medium'
 }) => {
+  // Determine color based on variant and status
+  const getProgressColor = () => {
+    if (color) return color;
+    
+    switch (variant) {
+      case 'stock-level':
+        switch (status) {
+          case 'low': return '#ef4444';
+          case 'medium': return '#eab308';
+          case 'high': return '#22c55e';
+          case 'out-of-stock': return '#6b7280';
+          default: return '#3b82f6';
+        }
+      case 'capacity':
+        return percentage > 90 ? '#ef4444' : percentage > 70 ? '#eab308' : '#22c55e';
+      case 'turnover':
+        return '#8b5cf6';
+      case 'category':
+        return '#10b981';
+      default:
+        return '#3b82f6';
+    }
+  };
+
+  const progressColor = getProgressColor();
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
-  const getVariantStyles = () => {
-    switch (variant) {
-      case 'dashed':
-        return {
-          strokeDasharray: `${circumference / 20} ${circumference / 40}`,
-          strokeLinecap: 'butt' as const
-        };
-      case 'minimal':
-        return {
-          strokeWidth: strokeWidth - 2,
-          opacity: 0.8
-        };
-      default:
-        return {};
+  const getStatusIcon = () => {
+    if (variant !== 'stock-level') return null;
+    
+    switch (status) {
+      case 'low': return '⚠️';
+      case 'out-of-stock': return '❌';
+      case 'high': return '✅';
+      default: return null;
     }
   };
-
-  const variantStyles = getVariantStyles();
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
@@ -62,95 +83,95 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={color}
+          stroke={progressColor}
           strokeWidth={strokeWidth}
           fill="none"
           strokeDasharray={circumference}
           strokeDashoffset={strokeDashoffset}
           strokeLinecap="round"
           className="transition-all duration-700 ease-out"
-          {...variantStyles}
         />
-        {variant === 'gradient' && (
-          <defs>
-            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#3b82f6" />
-              <stop offset="100%" stopColor="#8b5cf6" />
-            </linearGradient>
-          </defs>
-        )}
-        {variant === 'multi-color' && (
-          <defs>
-            <linearGradient id="multiColor" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#ef4444" />
-              <stop offset="50%" stopColor="#eab308" />
-              <stop offset="100%" stopColor="#22c55e" />
-            </linearGradient>
-          </defs>
-        )}
       </svg>
+      
+      {/* Center content */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        {getStatusIcon() && (
+          <span className="text-xs mb-1">{getStatusIcon()}</span>
+        )}
+        <span className="text-[10px] font-semibold text-gray-700 text-center leading-tight">
+          {percentage}%
+        </span>
+      </div>
     </div>
   );
 };
 
-interface SellerSummaryHeaderProps {
-  title: string;
-  subtitle: string;
-  stats: StatItem[];
+// Mock inventory data
+const mockInventoryStats: InventoryItem[] = [
+  { value: '1,248', label: 'Total Items', color: 'text-blue-600' },
+  { value: '47', label: 'Low Stock', color: 'text-red-600', status: 'low' },
+  { value: '92%', label: 'Availability', color: 'text-green-600' },
+  { value: '28', label: 'Categories', color: 'text-purple-600' }
+];
+
+interface InventorySummaryHeaderProps {
+  title?: string;
+  subtitle?: string;
+  stats?: InventoryItem[];
   progressPercentage?: number;
-  progressColor?: string;
-  progressVariant?: 'default' | 'dashed' | 'gradient' | 'multi-color' | 'minimal';
-  showStats?: boolean;
+  progressVariant?: 'stock-level' | 'category' | 'turnover' | 'capacity';
+  progressStatus?: 'low' | 'medium' | 'high' | 'out-of-stock';
   className?: string;
 }
 
-// Mock data for demonstration
-const mockStats: StatItem[] = [
-  { value: '24', label: 'Active Listings', color: 'text-green-600' },
-  { value: '1.2k', label: 'Monthly Views', color: 'text-blue-600' },
-  { value: '89', label: 'Sold Items', color: 'text-purple-600' },
-  { value: '4.8', label: 'Rating', color: 'text-yellow-600' }
-];
-
-const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
-  title = "Seller Dashboard",
-  subtitle = "Overview of your store performance and statistics",
-  stats = mockStats,
-  progressPercentage = 75,
-  progressColor = '#3b82f6',
-  progressVariant = 'default',
-  showStats = true,
+const InventorySummaryHeader: React.FC<InventorySummaryHeaderProps> = ({
+  title = "Inventory Overview",
+  subtitle = "Manage your stock levels and product availability",
+  stats = mockInventoryStats,
+  progressPercentage = 65,
+  progressVariant = 'stock-level',
+  progressStatus = 'medium',
   className = ''
 }) => {
+  const getProgressLabel = () => {
+    switch (progressVariant) {
+      case 'stock-level': return 'Stock Level';
+      case 'capacity': return 'Capacity Used';
+      case 'turnover': return 'Turnover Rate';
+      case 'category': return 'Category Fill';
+      default: return 'Progress';
+    }
+  };
+
   return (
     <div className={`bg-white border-b ${className}`}>
       <div className="px-2 py-2">
-        {/* Header row with balanced visual weight */}
+        {/* Header row */}
         <div className="flex items-start justify-between">
-          {/* Title section - takes about 70% of width */}
+          {/* Title section */}
           <div className="min-w-0 flex-1 pr-4">
             <h1 className="text-lg font-bold text-gray-900 leading-tight">{title}</h1>
             <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">{subtitle}</p>
           </div>
 
-          {/* Circular diagram section - takes about 30% of width */}
+          {/* Inventory progress diagram */}
           <div className="flex-shrink-0 flex flex-col items-center justify-center">
-            <CircularProgress 
-              percentage={progressPercentage} 
-              color={progressColor}
+            <CircularInventoryProgress 
+              percentage={progressPercentage}
               variant={progressVariant}
+              status={progressStatus}
               size={70}
               strokeWidth={8}
             />
             <span className="text-xs text-gray-500 mt-2 text-center leading-tight">
-              Completion
+              {getProgressLabel()}
             </span>
           </div>
         </div>
 
-        {/* Stats section */}
-        {showStats && stats.length > 0 && (
-          <div className={`grid grid-cols-4 gap-3 mt-4`}>
+        {/* Inventory stats section */}
+        {stats.length > 0 && (
+          <div className="grid grid-cols-4 gap-3 mt-4">
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
                 <div className={`text-lg font-bold ${stat.color || 'text-blue-600'}`}>
@@ -166,4 +187,4 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
   );
 };
 
-export default SellerSummaryHeader;
+export default InventorySummaryHeader;
