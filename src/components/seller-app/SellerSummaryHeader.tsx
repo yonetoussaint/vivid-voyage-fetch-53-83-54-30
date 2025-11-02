@@ -249,32 +249,14 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
       <div className="px-2 py-2">
         {mode === 'inventory' ? (
           <>
-            {/* Header row */}
-            <div className="flex items-start justify-between">
-              {/* Title section */}
-              <div className="min-w-0 flex-1 pr-4">
-                <h1 className="text-lg font-bold text-gray-900 leading-tight">{title}</h1>
-                <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">{subtitle}</p>
-              </div>
-
-              {/* Inventory progress diagram */}
-              <div className="flex-shrink-0 flex flex-col items-center justify-center">
-                <CircularInventoryProgress 
-                  percentage={progressPercentage}
-                  variant={progressVariant}
-                  status={progressStatus}
-                  size={70}
-                  strokeWidth={8}
-                />
-                <span className="text-xs text-gray-500 mt-2 text-center leading-tight">
-                  {getProgressLabel()}
-                </span>
-              </div>
-            </div>
+            {/* Inventory mode - subtitle only like other modes */}
+            <p className="text-xs text-gray-500 mb-3">
+              {subtitle}
+            </p>
 
             {/* Inventory stats section */}
             {stats.length > 0 && (
-              <div className="grid grid-cols-4 gap-3 mt-4">
+              <div className="grid grid-cols-4 gap-3">
                 {stats.map((stat, index) => (
                   <div key={index} className="text-center">
                     <div className={`text-lg font-bold ${stat.color || 'text-blue-600'}`}>
