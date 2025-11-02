@@ -34,14 +34,14 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
   return (
     <div className={`bg-white border-b ${className}`}>
       {/* Main container with tight padding */}
-      <div className="px-2 mb-2"> {/* Consistent padding */}
+      <div className="px-2 py-2"> {/* Changed mb-2 to py-2 for consistent padding */}
         {/* Header row */}
         <div className="flex items-start justify-between">
           <div className="min-w-0 flex-1"> {/* Added flex-1 for better text handling */}
             <h1 className="text-lg font-bold text-foreground leading-tight">{title}</h1>
             <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p> {/* Reduced margin */}
           </div>
-          
+
           {actionButton && (
             <Button 
               size="sm" 
