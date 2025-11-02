@@ -243,36 +243,32 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     return () => resizeObserver.disconnect();
   }, [isProductsTab]);
 
-  // PERFECT STICKY LOGIC: Calculate the exact scroll position where tabs should stick
+  // PERFECT STICKY LOGIC: Use Intersection Observer for precise detection
   useEffect(() => {
-    const handleScroll = () => {
-      if (!tabsContainerRef.current) return;
+    if (!tabsContainerRef.current || !headerRef.current) return;
 
-      const tabsRect = tabsContainerRef.current.getBoundingClientRect();
-      
-      // Calculate the exact point where tabs should become sticky
-      // This is when the tabs top reaches the header bottom (which is at 0 in viewport)
-      const stickyTriggerPoint = 0;
-      
-      if (tabsRect.top <= stickyTriggerPoint) {
-        setIsTabsSticky(true);
-      } else {
-        setIsTabsSticky(false);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // When tabs start intersecting with the top of viewport (touching header bottom)
+        // entry.isIntersecting will be false when tabs go above the threshold
+        setIsTabsSticky(!entry.isIntersecting);
+      },
+      {
+        // Root is viewport
+        root: null,
+        // Trigger when tabs reach exactly headerHeight from top
+        rootMargin: `-${headerHeight}px 0px 0px 0px`,
+        // Trigger as soon as it crosses the threshold
+        threshold: 0
       }
-    };
+    );
 
-    // Use passive listener for better performance
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('resize', handleScroll, { passive: true });
-
-    // Initial check
-    handleScroll();
+    observer.observe(tabsContainerRef.current);
 
     return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', handleScroll);
+      observer.disconnect();
     };
-  }, [headerHeight, sellerInfoHeight]);
+  }, [headerHeight]);
 
   // Handle redirects for empty paths
   useEffect(() => {
