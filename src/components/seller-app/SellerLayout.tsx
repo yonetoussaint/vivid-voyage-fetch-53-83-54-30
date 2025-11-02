@@ -1,4 +1,4 @@
-// SellerLayout.tsx - UPDATED
+// SellerLayout.tsx - UPDATED with pull-up SellerInfoSection
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -69,7 +69,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       });
     } else {
       navigator.clipboard.writeText(window.location.href);
-      // You might want to show a toast notification here
       console.log('Link copied to clipboard');
     }
   };
@@ -77,13 +76,11 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const handleFavoriteClick = () => {
     setIsFavorite(!isFavorite);
     console.log('Favorite toggled:', !isFavorite);
-    // Add your actual favorite logic here
   };
 
   const handleLinkClick = () => {
     console.log('Link button clicked');
     navigator.clipboard.writeText(window.location.href);
-    // You might want to show a toast notification here
     console.log('Link copied to clipboard');
   };
 
@@ -199,7 +196,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       onClick: handleFavoriteClick,
       active: isFavorite,
       activeColor: "#f43f5e",
-      count: 147 // You can make this dynamic based on actual favorite count
+      count: 147
     },
     {
       Icon: Share,
@@ -288,20 +285,19 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
           onCloseClick={handleBackClick}
           onShareClick={handleShareClick}
           actionButtons={actionButtons}
-          // The ProductHeader will automatically handle:
-          // - Glass background effect on scroll
-          // - Search bar appearance when scrolled
-          // - Back button functionality
-          // - Heart and Share buttons with proper styling
         />
       </div>
 
-      {/* Spacer for fixed header */}
-      <div style={{ height: `${headerHeight}px` }} />
-
-      {/* Seller Info Section - Only on products tab, normal flow */}
+      {/* MODIFIED: Seller Info Section - Pulls up to overlap header space */}
       {isProductsTab && (
-        <div ref={sellerInfoRef} className="w-full bg-black text-white">
+        <div 
+          ref={sellerInfoRef} 
+          className="w-full bg-black text-white relative -pt-16" // Negative top padding to pull up
+          style={{ 
+            marginTop: `-${headerHeight}px`, // Pulls up by header height
+            paddingTop: `${headerHeight}px`, // Adds padding to account for pulled-up content
+          }}
+        >
           <SellerInfoSection
             sellerData={sellerData}
             sellerLoading={sellerLoading}
