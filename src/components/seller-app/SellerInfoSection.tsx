@@ -121,7 +121,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
         <HeroBanner asCarousel={false} showNewsTicker={false} customHeight="180px" sellerId={safeSellerData.id} />
       </div>
 
-      <div className="px-3 pt-3 relative z-10">
+      <div className="px-2 pt-3 relative z-10">
         {/* Profile Info */}
         <div className="flex items-start gap-3 mb-3">
           {/* Circular Avatar - Height matches name + code */}
