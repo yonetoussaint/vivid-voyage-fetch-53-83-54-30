@@ -196,6 +196,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   // Measure ALL component heights that affect tab position
   useLayoutEffect(() => {
     const updateHeights = () => {
+      // Get header height from the fixed header
       if (headerRef.current) {
         const height = headerRef.current.offsetHeight;
         if (height > 0) {
@@ -214,6 +215,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         setSellerInfoHeight(0);
       }
 
+      // Measure tabs height
       if (tabsRef.current) {
         const height = tabsRef.current.offsetHeight;
         if (height > 0) {
@@ -232,19 +234,19 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     return () => resizeObserver.disconnect();
   }, [isProductsTab]); // Re-run when tab changes
 
-  // PERFECT STICKY LOGIC - Now accounts for ALL components
+  // IMPROVED STICKY LOGIC - Calculate the exact scroll position where tabs should stick
   useEffect(() => {
     const handleScroll = () => {
       if (!tabsContainerRef.current) return;
 
-      const containerRect = tabsContainerRef.current.getBoundingClientRect();
-
-      // Calculate total offset from top of viewport where tabs should stick
-      // This is the header height (since header is fixed at top)
-      const stickyPoint = headerHeight;
-
-      // When the tabs container reaches the sticky point, make tabs sticky
-      const shouldBeSticky = containerRect.top <= stickyPoint;
+      // Calculate the total height of content above tabs
+      const totalContentAboveTabs = headerHeight + sellerInfoHeight;
+      
+      // Get current scroll position
+      const scrollY = window.scrollY;
+      
+      // Tabs should become sticky when we've scrolled past the content above them
+      const shouldBeSticky = scrollY >= totalContentAboveTabs;
 
       setIsTabsSticky(shouldBeSticky);
     };
@@ -259,7 +261,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleScroll);
     };
-  }, [headerHeight, sellerInfoHeight, isProductsTab]); // Re-run when heights change
+  }, [headerHeight, sellerInfoHeight, isProductsTab]);
 
   // Handle redirects for empty paths
   useEffect(() => {
@@ -313,23 +315,23 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         </div>
       )}
 
-      {/* Tabs Container - CRITICAL: Marks the position where tabs should stick */}
+      {/* Tabs Navigation - This will become sticky when appropriate */}
       <div 
         ref={tabsContainerRef}
-        style={{ 
-          height: isTabsSticky ? `${tabsHeight}px` : 'auto'
-        }}
+        style={isTabsSticky ? {
+          height: `${tabsHeight}px`
+        } : {}}
       >
-        {/* Tabs Navigation - Single instance that transitions position */}
         <nav
           ref={tabsRef}
-          className="bg-white border-b border-gray-200"
+          className="bg-white border-b border-gray-200 transition-all duration-200"
           style={isTabsSticky ? {
             position: 'fixed',
-            top: `${headerHeight}px`,
+            top: `${headerHeight}px`, // Stick right below the fixed header
             left: 0,
             right: 0,
-            zIndex: 40
+            zIndex: 40,
+            animation: 'fadeInDown 0.2s ease-out'
           } : {
             position: 'relative'
           }}
@@ -361,6 +363,20 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
           return child;
         })}
       </div>
+
+      {/* Add CSS animation for smooth appearance */}
+      <style jsx>{`
+        @keyframes fadeInDown {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 };
