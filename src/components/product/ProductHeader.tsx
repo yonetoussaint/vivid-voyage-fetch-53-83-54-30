@@ -1,4 +1,4 @@
-// ProductHeader.tsx
+// ProductHeader.tsx - SIMPLIFIED (No tabs logic)
 import React, { useState } from "react";
 import { 
   Heart, 
@@ -11,7 +11,6 @@ import HeaderActionButton from "./header/HeaderActionButton";
 import { useNavigate } from 'react-router-dom';
 import { useNavigationLoading } from '@/hooks/useNavigationLoading';
 import SearchPageSkeleton from '@/components/search/SearchPageSkeleton';
-import TabsNavigation from '@/components/home/TabsNavigation'; // NEW
 
 interface ActionButton {
   Icon: any;
@@ -35,11 +34,9 @@ interface ProductHeaderProps {
   onSearch?: (query: string) => void;
   onSearchFocus?: () => void;
   inPanel?: boolean;
-  // NEW PROPS FOR TABS
-  tabs?: Array<{ id: string; label: string }>;
-  activeTab?: string;
-  showTabs?: boolean;
-  isTabsSticky?: boolean;
+  showCloseIcon?: boolean;
+  onCloseClick?: () => void;
+  actionButtons?: ActionButton[];
 }
 
 const ProductHeader: React.FC<ProductHeaderProps> = ({
@@ -56,11 +53,9 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
   onSearch,
   onSearchFocus,
   inPanel = false,
-  // NEW PROPS
-  tabs = [],
-  activeTab = '',
-  showTabs = false,
-  isTabsSticky = false,
+  showCloseIcon = false,
+  onCloseClick,
+  actionButtons = [],
 }) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const { progress: displayProgress } = useScrollProgress();
@@ -91,11 +86,11 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
 
   return (
     <div
-      className={`fixed top-0 left-0 right-0 z-30 flex flex-col transition-all duration-300 ${
+      className={`flex flex-col transition-all duration-300 ${
         focusMode && !showHeaderInFocus ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'
       }`}
     >
-      {/* Main Header */}
+      {/* Main Header - ONLY header elements, NO TABS */}
       <div
         className="py-2 px-3 w-full transition-all duration-700"
         style={{
@@ -108,8 +103,8 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
           <div className="flex items-center gap-3 flex-shrink-0">
             <BackButton
               progress={displayProgress}
-              showCloseIcon={false}
-              onClick={() => navigate(-1)}
+              showCloseIcon={showCloseIcon}
+              onClick={onCloseClick || (() => navigate(-1))}
             />
           </div>
 
@@ -141,41 +136,42 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
 
           {/* Right side - Action buttons */}
           <div className="flex gap-2 flex-shrink-0">
-            <HeaderActionButton
-              Icon={Heart}
-              active={isFavorite}
-              onClick={toggleFavorite}
-              progress={displayProgress}
-              activeColor="#f43f5e"
-              likeCount={147}
-            />
+            {actionButtons.length > 0 ? (
+              actionButtons.map((button, index) => (
+                <HeaderActionButton
+                  key={index}
+                  Icon={button.Icon}
+                  active={button.active}
+                  onClick={button.onClick}
+                  progress={displayProgress}
+                  activeColor={button.activeColor}
+                  likeCount={button.count}
+                />
+              ))
+            ) : (
+              <>
+                <HeaderActionButton
+                  Icon={Heart}
+                  active={isFavorite}
+                  onClick={toggleFavorite}
+                  progress={displayProgress}
+                  activeColor="#f43f5e"
+                  likeCount={147}
+                />
 
-            <HeaderActionButton
-              Icon={Share2}
-              progress={displayProgress}
-              shareCount={23}
-              onClick={onShareClick}
-            />
+                <HeaderActionButton
+                  Icon={Share2}
+                  progress={displayProgress}
+                  shareCount={23}
+                  onClick={onShareClick}
+                />
+              </>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Sticky Tabs - Shows when original tabs touch header */}
-      {isTabsSticky && tabs.length > 0 && (
-        <div className="bg-white border-t border-gray-200">
-          <TabsNavigation 
-            tabs={tabs}
-            activeTab={activeTab}
-            onTabChange={onTabChange}
-            edgeToEdge={true}
-            style={{ 
-              backgroundColor: 'white',
-              margin: 0,
-              padding: 0
-            }}
-          />
-        </div>
-      )}
+      {/* NO TABS HERE - Tabs are managed in SellerLayout */}
     </div>
   );
 };
