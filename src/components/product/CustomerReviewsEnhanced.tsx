@@ -709,12 +709,22 @@ const CustomerReviews = ({
   return (
     <ErrorBoundary>
       <div className="w-full bg-white">
-        <SellerSummaryHeader
-          title="Customer Reviews"
-          subtitle={`All ${reviewStats.count} review${reviewStats.count !== 1 ? 's' : ''} from verified purchases`}
-          stats={summaryStats}
-          showStats={reviewStats.count > 0}
-        />
+        
+
+          <SellerSummaryHeader 
+    mode="reviews"
+    reviewsSummary={{
+      averageRating: 4.6,
+      totalReviews: 1459914,
+      distribution: [
+        { stars: 5, count: 1100000, percentage: 75 },
+        { stars: 4, count: 200000, percentage: 14 },
+        { stars: 3, count: 80000, percentage: 5 },
+        { stars: 2, count: 40000, percentage: 3 },
+        { stars: 1, count: 39914, percentage: 3 }
+      ]
+    }}
+  />
 
         <ProductFilterBar
           filterCategories={filterCategories}
