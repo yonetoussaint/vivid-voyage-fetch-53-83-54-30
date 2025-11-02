@@ -38,7 +38,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const tabsRef = useRef<HTMLDivElement>(null);
   const sellerInfoRef = useRef<HTMLDivElement>(null);
   const scrollObserverRef = useRef<HTMLDivElement>(null);
-  const tabsIntersectionRef = useRef<HTMLDivElement>(null);
 
   const [isTabsSticky, setIsTabsSticky] = useState(false);
   const [tabsHeight, setTabsHeight] = useState(0);
@@ -220,37 +219,53 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     return () => observer.disconnect();
   }, []);
 
-  // Precise Intersection Observer for tabs sticking
+  // Scroll handler for sticky tabs - FIXED VERSION
   useEffect(() => {
-    if (!tabsIntersectionRef.current || !headerRef.current) return;
+    const handleScroll = () => {
+      if (!tabsRef.current || !headerRef.current) return;
 
-    const header = headerRef.current;
-    const tabsElement = tabsRef.current;
-    
-    if (!tabsElement) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        // When tabs start intersecting with header (touching from below)
-        if (!entry.isIntersecting) {
-          // Tabs are moving up and about to touch the header
-          setIsTabsSticky(true);
-        } else {
-          // Tabs are fully visible below header
-          setIsTabsSticky(false);
-        }
-      },
-      {
-        root: null, // viewport
-        rootMargin: `-${header.offsetHeight}px 0px 0px 0px`, // Negative margin equal to header height
-        threshold: 0, // Trigger as soon as 1px intersects
+      const headerRect = headerRef.current.getBoundingClientRect();
+      const tabsRect = tabsRef.current.getBoundingClientRect();
+      
+      // Calculate the distance from tabs top to header bottom
+      const distanceToHeaderBottom = tabsRect.top - headerRect.bottom;
+      
+      // When tabs are within 1px of header bottom, make them sticky
+      if (distanceToHeaderBottom <= 1) {
+        setIsTabsSticky(true);
+      } else {
+        setIsTabsSticky(false);
       }
-    );
+    };
 
-    observer.observe(tabsIntersectionRef.current);
+    // Use requestAnimationFrame for smoother performance
+    let ticking = false;
+    const updateStickyState = () => {
+      handleScroll();
+      ticking = false;
+    };
 
-    return () => observer.disconnect();
-  }, [headerHeight]); // Re-run when header height changes
+    const scrollListener = () => {
+      if (!ticking) {
+        requestAnimationFrame(updateStickyState);
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', scrollListener, { passive: true });
+    window.addEventListener('resize', scrollListener, { passive: true });
+    
+    // Initial check after a small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      handleScroll();
+    }, 100);
+
+    return () => {
+      window.removeEventListener('scroll', scrollListener);
+      window.removeEventListener('resize', scrollListener);
+      clearTimeout(timer);
+    };
+  }, []);
 
   // Measure heights with ResizeObserver
   useLayoutEffect(() => {
@@ -296,6 +311,11 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }
   }, [location.pathname, navigate]);
 
+  // Debug: Log sticky state changes
+  useEffect(() => {
+    console.log('Tabs sticky state:', isTabsSticky);
+  }, [isTabsSticky]);
+
   return (
     <div className="min-h-screen bg-white">
       {/* Scroll Observer Element for header transparency */}
@@ -303,17 +323,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         ref={scrollObserverRef}
         className="absolute top-0 left-0 w-full h-1 pointer-events-none"
         style={{ top: `${headerHeight}px` }}
-      />
-
-      {/* Tabs Intersection Observer Element */}
-      <div 
-        ref={tabsIntersectionRef}
-        className="absolute pointer-events-none"
-        style={{ 
-          top: `${headerHeight}px`, 
-          height: '1px',
-          width: '100%'
-        }}
       />
 
       {/* Header - Full width, fixed positioning */}
@@ -360,7 +369,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
             ref={tabsRef}
             className={`bg-white transition-all duration-200 ${
               isTabsSticky
-                ? 'fixed left-0 right-0 z-40 shadow-sm'
+                ? 'fixed left-0 right-0 z-40 shadow-sm border-b border-gray-200'
                 : 'relative'
             }`}
             style={{
