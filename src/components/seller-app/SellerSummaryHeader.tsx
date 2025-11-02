@@ -29,7 +29,7 @@ const CircularInventoryProgress: React.FC<CircularInventoryProgressProps> = ({
   // Determine color based on variant and status
   const getProgressColor = () => {
     if (color) return color;
-    
+
     switch (variant) {
       case 'stock-level':
         switch (status) {
@@ -57,7 +57,7 @@ const CircularInventoryProgress: React.FC<CircularInventoryProgressProps> = ({
 
   const getStatusIcon = () => {
     if (variant !== 'stock-level') return null;
-    
+
     switch (status) {
       case 'low': return '⚠️';
       case 'out-of-stock': return '❌';
@@ -92,7 +92,7 @@ const CircularInventoryProgress: React.FC<CircularInventoryProgressProps> = ({
           className="transition-all duration-700 ease-out"
         />
       </svg>
-      
+
       {/* Center content */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         {getStatusIcon() && (
@@ -114,23 +114,52 @@ const mockInventoryStats: InventoryItem[] = [
   { value: '28', label: 'Categories', color: 'text-purple-600' }
 ];
 
-interface InventorySummaryHeaderProps {
+interface RatingDistribution {
+  stars: number;
+  count: number;
+  percentage: number;
+}
+
+interface ReviewsSummary {
+  averageRating: number;
+  totalReviews: number;
+  distribution: RatingDistribution[];
+}
+
+// Mock reviews data
+const mockReviewsSummary: ReviewsSummary = {
+  averageRating: 4.6,
+  totalReviews: 1459914,
+  distribution: [
+    { stars: 5, count: 1100000, percentage: 75 },
+    { stars: 4, count: 200000, percentage: 14 },
+    { stars: 3, count: 80000, percentage: 5 },
+    { stars: 2, count: 40000, percentage: 3 },
+    { stars: 1, count: 39914, percentage: 3 }
+  ]
+};
+
+interface SellerSummaryHeaderProps {
   title?: string;
   subtitle?: string;
   stats?: InventoryItem[];
   progressPercentage?: number;
   progressVariant?: 'stock-level' | 'category' | 'turnover' | 'capacity';
   progressStatus?: 'low' | 'medium' | 'high' | 'out-of-stock';
+  mode?: 'inventory' | 'reviews';
+  reviewsSummary?: ReviewsSummary;
   className?: string;
 }
 
-const InventorySummaryHeader: React.FC<InventorySummaryHeaderProps> = ({
+const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
   title = "Inventory Overview",
   subtitle = "Manage your stock levels and product availability",
   stats = mockInventoryStats,
   progressPercentage = 65,
   progressVariant = 'stock-level',
   progressStatus = 'medium',
+  mode = 'inventory',
+  reviewsSummary = mockReviewsSummary,
   className = ''
 }) => {
   const getProgressLabel = () => {
@@ -143,48 +172,112 @@ const InventorySummaryHeader: React.FC<InventorySummaryHeaderProps> = ({
     }
   };
 
+  const renderStars = (rating: number) => {
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    const stars = [];
+
+    for (let i = 0; i < 5; i++) {
+      if (i < fullStars) {
+        stars.push(<span key={i} className="text-blue-500 text-xl">★</span>);
+      } else if (i === fullStars && hasHalfStar) {
+        stars.push(<span key={i} className="text-blue-500 text-xl">⯨</span>);
+      } else {
+        stars.push(<span key={i} className="text-gray-600 text-xl">★</span>);
+      }
+    }
+    return stars;
+  };
+
+  const formatNumber = (num: number) => {
+    return num.toLocaleString();
+  };
+
   return (
     <div className={`bg-white border-b ${className}`}>
       <div className="px-2 py-2">
-        {/* Header row */}
-        <div className="flex items-start justify-between">
-          {/* Title section */}
-          <div className="min-w-0 flex-1 pr-4">
-            <h1 className="text-lg font-bold text-gray-900 leading-tight">{title}</h1>
-            <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">{subtitle}</p>
-          </div>
-
-          {/* Inventory progress diagram */}
-          <div className="flex-shrink-0 flex flex-col items-center justify-center">
-            <CircularInventoryProgress 
-              percentage={progressPercentage}
-              variant={progressVariant}
-              status={progressStatus}
-              size={70}
-              strokeWidth={8}
-            />
-            <span className="text-xs text-gray-500 mt-2 text-center leading-tight">
-              {getProgressLabel()}
-            </span>
-          </div>
-        </div>
-
-        {/* Inventory stats section */}
-        {stats.length > 0 && (
-          <div className="grid grid-cols-4 gap-3 mt-4">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className={`text-lg font-bold ${stat.color || 'text-blue-600'}`}>
-                  {stat.value}
-                </div>
-                <div className="text-xs text-gray-500 mt-0.5">{stat.label}</div>
+        {mode === 'inventory' ? (
+          <>
+            {/* Header row */}
+            <div className="flex items-start justify-between">
+              {/* Title section */}
+              <div className="min-w-0 flex-1 pr-4">
+                <h1 className="text-lg font-bold text-gray-900 leading-tight">{title}</h1>
+                <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">{subtitle}</p>
               </div>
-            ))}
-          </div>
+
+              {/* Inventory progress diagram */}
+              <div className="flex-shrink-0 flex flex-col items-center justify-center">
+                <CircularInventoryProgress 
+                  percentage={progressPercentage}
+                  variant={progressVariant}
+                  status={progressStatus}
+                  size={70}
+                  strokeWidth={8}
+                />
+                <span className="text-xs text-gray-500 mt-2 text-center leading-tight">
+                  {getProgressLabel()}
+                </span>
+              </div>
+            </div>
+
+            {/* Inventory stats section */}
+            {stats.length > 0 && (
+              <div className="grid grid-cols-4 gap-3 mt-4">
+                {stats.map((stat, index) => (
+                  <div key={index} className="text-center">
+                    <div className={`text-lg font-bold ${stat.color || 'text-blue-600'}`}>
+                      {stat.value}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-0.5">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            {/* Reviews mode */}
+            <div className="px-2 py-3">
+              <p className="text-xs text-gray-400 mb-3">
+                Ratings and reviews are verified and are from people who use the same type of device that you use
+              </p>
+              
+              <div className="flex items-start gap-6">
+                {/* Rating number and stars */}
+                <div className="flex-shrink-0">
+                  <div className="text-6xl font-light text-white mb-1">
+                    {reviewsSummary.averageRating.toFixed(1)}
+                  </div>
+                  <div className="flex gap-0.5 mb-1">
+                    {renderStars(reviewsSummary.averageRating)}
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    {formatNumber(reviewsSummary.totalReviews)}
+                  </div>
+                </div>
+
+                {/* Rating bars */}
+                <div className="flex-1 space-y-1">
+                  {reviewsSummary.distribution.map((dist) => (
+                    <div key={dist.stars} className="flex items-center gap-2">
+                      <span className="text-xs text-gray-400 w-3">{dist.stars}</span>
+                      <div className="flex-1 h-3 bg-gray-700 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-blue-500 transition-all duration-500"
+                          style={{ width: `${dist.percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>
   );
 };
 
-export default InventorySummaryHeader;
+export default SellerSummaryHeader;
