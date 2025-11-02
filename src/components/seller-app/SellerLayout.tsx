@@ -267,7 +267,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       {/* Fixed Header - NO TABS HERE */}
       <div 
         ref={headerRef} 
-        className="fixed top-0 left-0 right-0 z-50 bg-white"
+        className="fixed top-0 left-0 right-0 z-50"
       >
         <ProductHeader
           showCloseIcon={false}
