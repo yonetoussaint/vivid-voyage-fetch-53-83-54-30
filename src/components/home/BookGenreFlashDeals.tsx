@@ -308,15 +308,15 @@ const summaryStats: SummaryStats = React.useMemo(() => {
   }, [processedProducts.length]);
 
   const summaryHeaderStats = React.useMemo(() => {
-    if (isLoading || processedProducts.length === 0) return [];
+  if (isLoading || processedProducts.length === 0) return [];
 
-    return [
-  { value: summaryStats.totalProducts, label: 'Total', color: 'text-blue-600' },
-  { value: summaryStats.inStock, label: 'In Stock', color: 'text-green-600' },
-  { value: summaryStats.outOfStock, label: 'Out of Stock', color: 'text-red-600' },
-  { value: summaryStats.categories, label: 'Categories', color: 'text-purple-600' }
-];
-  }, [summaryStats, isLoading, processedProducts.length]);
+  return [
+    { value: summaryStats.totalProducts, label: 'Total', color: 'text-blue-600' },
+    { value: summaryStats.inStock, label: 'In Stock', color: 'text-green-600' },
+    { value: summaryStats.outOfStock, label: 'Out of Stock', color: 'text-red-600' },
+    { value: summaryStats.categories, label: 'Categories', color: 'text-purple-600' }
+  ];
+}, [summaryStats, isLoading, processedProducts.length]);
 
   return (
     <div className={`w-full bg-white relative ${className}`}>
