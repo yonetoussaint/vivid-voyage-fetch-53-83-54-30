@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import { 
   Heart, 
-  Share2, 
   Search
 } from "lucide-react";
 import { useScrollProgress } from "./header/useScrollProgress";
@@ -149,23 +148,14 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
                 />
               ))
             ) : (
-              <>
-                <HeaderActionButton
-                  Icon={Heart}
-                  active={isFavorite}
-                  onClick={toggleFavorite}
-                  progress={displayProgress}
-                  activeColor="#f43f5e"
-                  likeCount={147}
-                />
-
-                <HeaderActionButton
-                  Icon={Share2}
-                  progress={displayProgress}
-                  shareCount={23}
-                  onClick={onShareClick}
-                />
-              </>
+              <HeaderActionButton
+                Icon={Heart}
+                active={isFavorite}
+                onClick={toggleFavorite}
+                progress={displayProgress}
+                activeColor="#f43f5e"
+                likeCount={147}
+              />
             )}
           </div>
         </div>
