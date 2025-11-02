@@ -38,6 +38,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const tabsRef = useRef<HTMLDivElement>(null);
   const sellerInfoRef = useRef<HTMLDivElement>(null);
   const scrollObserverRef = useRef<HTMLDivElement>(null);
+  const intersectionObserverRef = useRef<IntersectionObserver | null>(null);
 
   const [isTabsSticky, setIsTabsSticky] = useState(false);
   const [tabsHeight, setTabsHeight] = useState(0);
@@ -99,7 +100,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }
   };
 
-  // Derive activeTab from current route
   const activeTab = getCurrentTab();
 
   // Fetch products from database
@@ -108,7 +108,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     queryFn: fetchAllProducts,
   });
 
-  // Check if we're on the products tab (which now shows seller info)
   const isProductsTab = activeTab === 'products';
 
   const baseRoute = isDashboard ? '/seller-dashboard' : isPickupStation ? '/pickup-station' : `/seller/${location.pathname.split('/seller/')[1]?.split('/')[0] || ''}`;
@@ -173,7 +172,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     enabled: !!user?.id && !isPublicPage,
   });
 
-  // Use public or private seller data based on page type
   const sellerData = isPublicPage ? publicSellerData : privateSellerData;
   const sellerLoading = isPublicPage ? publicSellerLoading : privateSellerLoading;
 
@@ -183,7 +181,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     return data.publicUrl;
   });
 
-  // Define action buttons for ProductHeader
   const actionButtons = [
     {
       Icon: ExternalLink,
@@ -199,7 +196,62 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }
   ];
 
-  // Intersection Observer for scroll progress
+  // PRECISE Intersection Observer for tabs stickiness
+  useEffect(() => {
+    if (!tabsRef.current || !headerRef.current) return;
+
+    // Clean up previous observer
+    if (intersectionObserverRef.current) {
+      intersectionObserverRef.current.disconnect();
+    }
+
+    const headerElement = headerRef.current;
+    const tabsElement = tabsRef.current;
+
+    // Create a small sentinel element to detect when tabs touch the header
+    const sentinel = document.createElement('div');
+    sentinel.style.position = 'absolute';
+    sentinel.style.top = '0px';
+    sentinel.style.left = '0px';
+    sentinel.style.width = '100%';
+    sentinel.style.height = '1px';
+    sentinel.style.pointerEvents = 'none';
+    sentinel.style.zIndex = '-1';
+    
+    // Insert sentinel right above the tabs
+    tabsElement.parentNode?.insertBefore(sentinel, tabsElement);
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const isIntersecting = entry.isIntersecting;
+        
+        if (!isIntersecting) {
+          // Sentinel is above viewport - tabs are touching header, make sticky
+          setIsTabsSticky(true);
+        } else {
+          // Sentinel is in viewport - tabs are not touching header, remove sticky
+          setIsTabsSticky(false);
+        }
+      },
+      {
+        root: null,
+        rootMargin: `-${headerHeight}px 0px 0px 0px`, // Negative margin equal to header height
+        threshold: 0
+      }
+    );
+
+    observer.observe(sentinel);
+    intersectionObserverRef.current = observer;
+
+    return () => {
+      observer.disconnect();
+      if (sentinel.parentNode) {
+        sentinel.parentNode.removeChild(sentinel);
+      }
+    };
+  }, [headerHeight]); // Re-run when header height changes
+
+  // Scroll progress observer
   useEffect(() => {
     if (!scrollObserverRef.current) return;
 
@@ -216,55 +268,8 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     );
 
     observer.observe(scrollObserverRef.current);
+
     return () => observer.disconnect();
-  }, []);
-
-  // Scroll handler for sticky tabs - FIXED VERSION
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!tabsRef.current || !headerRef.current) return;
-
-      const headerRect = headerRef.current.getBoundingClientRect();
-      const tabsRect = tabsRef.current.getBoundingClientRect();
-      
-      // Calculate the distance from tabs top to header bottom
-      const distanceToHeaderBottom = tabsRect.top - headerRect.bottom;
-      
-      // When tabs are within 1px of header bottom, make them sticky
-      if (distanceToHeaderBottom <= 1) {
-        setIsTabsSticky(true);
-      } else {
-        setIsTabsSticky(false);
-      }
-    };
-
-    // Use requestAnimationFrame for smoother performance
-    let ticking = false;
-    const updateStickyState = () => {
-      handleScroll();
-      ticking = false;
-    };
-
-    const scrollListener = () => {
-      if (!ticking) {
-        requestAnimationFrame(updateStickyState);
-        ticking = true;
-      }
-    };
-
-    window.addEventListener('scroll', scrollListener, { passive: true });
-    window.addEventListener('resize', scrollListener, { passive: true });
-    
-    // Initial check after a small delay to ensure DOM is ready
-    const timer = setTimeout(() => {
-      handleScroll();
-    }, 100);
-
-    return () => {
-      window.removeEventListener('scroll', scrollListener);
-      window.removeEventListener('resize', scrollListener);
-      clearTimeout(timer);
-    };
   }, []);
 
   // Measure heights with ResizeObserver
@@ -311,14 +316,9 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }
   }, [location.pathname, navigate]);
 
-  // Debug: Log sticky state changes
-  useEffect(() => {
-    console.log('Tabs sticky state:', isTabsSticky);
-  }, [isTabsSticky]);
-
   return (
     <div className="min-h-screen bg-white">
-      {/* Scroll Observer Element for header transparency */}
+      {/* Scroll Observer Element */}
       <div 
         ref={scrollObserverRef}
         className="absolute top-0 left-0 w-full h-1 pointer-events-none"
@@ -346,7 +346,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       {/* Main Content Area */}
       <div className="relative min-h-screen">
         <main>
-          {/* Seller Info Section - Only on products tab */}
+          {/* Seller Info Section */}
           {true && (
             <div ref={sellerInfoRef} className="w-full bg-black text-white relative z-30">
               <SellerInfoSection
@@ -369,7 +369,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
             ref={tabsRef}
             className={`bg-white transition-all duration-200 ${
               isTabsSticky
-                ? 'fixed left-0 right-0 z-40 shadow-sm border-b border-gray-200'
+                ? 'fixed left-0 right-0 z-40 shadow-sm'
                 : 'relative'
             }`}
             style={{
