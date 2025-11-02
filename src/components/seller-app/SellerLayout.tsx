@@ -43,8 +43,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const [isTabsSticky, setIsTabsSticky] = useState(false);
   const [tabsHeight, setTabsHeight] = useState(0);
   const [headerHeight, setHeaderHeight] = useState(0);
-  const [sellerInfoHeight, setSellerInfoHeight] = useState<number>(0);
-  const [totalAboveTabsHeight, setTotalAboveTabsHeight] = useState(0);
 
   const handleBackClick = () => {
     navigate('/profile');
@@ -99,7 +97,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }
   };
 
-  // Derive activeTab from current route
   const activeTab = getCurrentTab();
 
   // Fetch products from database
@@ -108,7 +105,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     queryFn: fetchAllProducts,
   });
 
-  // Check if we're on the products tab
   const isProductsTab = activeTab === 'products';
 
   const baseRoute = isDashboard ? '/seller-dashboard' : isPickupStation ? '/pickup-station' : `/seller/${location.pathname.split('/seller/')[1]?.split('/')[0] || ''}`;
@@ -154,7 +150,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
   const { user } = useAuth();
 
-  // Use public data if on public page, otherwise fetch authenticated seller data
   const { data: privateSellerData, isLoading: privateSellerLoading } = useQuery({
     queryKey: ['seller', user?.id],
     queryFn: async () => {
@@ -173,7 +168,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     enabled: !!user?.id && !isPublicPage,
   });
 
-  // Use public or private seller data based on page type
   const sellerData = isPublicPage ? publicSellerData : privateSellerData;
   const sellerLoading = isPublicPage ? publicSellerLoading : privateSellerLoading;
 
@@ -183,7 +177,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     return data.publicUrl;
   });
 
-  // Define action buttons for ProductHeader
   const actionButtons = [
     {
       Icon: ExternalLink,
@@ -199,74 +192,56 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }
   ];
 
-  // Measure ALL heights that affect the tabs position
+  // Measure header and tabs heights
   useLayoutEffect(() => {
     const updateHeights = () => {
-      let totalHeight = 0;
-      
-      // 1. Header height
       if (headerRef.current) {
         const height = headerRef.current.offsetHeight;
         if (height > 0) {
           setHeaderHeight(height);
-          totalHeight += height;
         }
       }
 
-      // 2. Seller Info height (only on products tab)
-      if (sellerInfoRef.current && isProductsTab) {
-        const height = sellerInfoRef.current.offsetHeight;
-        if (height > 0) {
-          setSellerInfoHeight(height);
-          totalHeight += height;
-        }
-      }
-
-      // 3. Tabs height
       if (tabsRef.current) {
         const height = tabsRef.current.offsetHeight;
         if (height > 0) {
           setTabsHeight(height);
         }
       }
-
-      setTotalAboveTabsHeight(totalHeight);
     };
 
     updateHeights();
+    
     const resizeObserver = new ResizeObserver(updateHeights);
-
     if (headerRef.current) resizeObserver.observe(headerRef.current);
-    if (sellerInfoRef.current && isProductsTab) resizeObserver.observe(sellerInfoRef.current);
     if (tabsRef.current) resizeObserver.observe(tabsRef.current);
 
     return () => resizeObserver.disconnect();
-  }, [isProductsTab]);
+  }, []);
 
-  // PERFECT STICKY LOGIC: Use Intersection Observer for precise detection
+  // PERFECT STICKY LOGIC
   useEffect(() => {
-    if (!tabsContainerRef.current || !headerRef.current) return;
+    const handleScroll = () => {
+      if (!tabsContainerRef.current) return;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        // When tabs start intersecting with the top of viewport (touching header bottom)
-        // entry.isIntersecting will be false when tabs go above the threshold
-        setIsTabsSticky(!entry.isIntersecting);
-      },
-      {
-        // Root is viewport
-        root: null,
-        // Trigger when tabs reach exactly headerHeight from top
-        rootMargin: `-${headerHeight}px 0px 0px 0px`,
-        // Trigger as soon as it crosses the threshold
-        threshold: 0
-      }
-    );
+      const containerRect = tabsContainerRef.current.getBoundingClientRect();
+      
+      // The tabs should become sticky when their container reaches the header bottom
+      // Since header is fixed at top:0, its bottom is at headerHeight
+      const shouldBeSticky = containerRect.top <= headerHeight;
+      
+      setIsTabsSticky(shouldBeSticky);
+    };
 
-    observer.observe(tabsContainerRef.current);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleScroll, { passive: true });
+
+    // Initial check
+    handleScroll();
 
     return () => {
-      observer.disconnect();
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
     };
   }, [headerHeight]);
 
@@ -286,7 +261,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       {/* Header - Fixed at top */}
       <div 
         ref={headerRef} 
-        className="fixed top-0 left-0 right-0 z-40"
+        className="fixed top-0 left-0 right-0 z-50"
       >
         <ProductHeader
           showCloseIcon={false}
@@ -296,7 +271,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
           stickyMode={true}
           inPanel={false}
           showDetailsButton={false}
-          // NEW: Pass tabs to header for sticky display
           tabs={tabs}
           activeTab={activeTab}
           onTabChange={handleTabChange}
@@ -305,85 +279,71 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         />
       </div>
 
-      {/* Main Content Area */}
-      <div className="relative min-h-screen">
-        <main>
-          {/* Seller Info Section - Only on products tab */}
-          {isProductsTab && (
-            <div ref={sellerInfoRef} className="w-full bg-black text-white relative z-30">
-              <SellerInfoSection
-                sellerData={sellerData}
-                sellerLoading={sellerLoading}
-                getSellerLogoUrl={getSellerLogoUrl}
-                onBecomeSeller={handleBecomeSeller}
-                onBack={handleBackClick}
-                isOwnProfile={isOwnProfile}
-                showActionButtons={showActionButtons}
-              />
-            </div>
-          )}
+      {/* Spacer for fixed header */}
+      <div style={{ height: `${headerHeight}px` }} />
 
-          {/* Spacer for header height - ALWAYS present */}
-          <div style={{ height: `${headerHeight}px` }} />
+      {/* Seller Info Section - Only on products tab */}
+      {isProductsTab && (
+        <div ref={sellerInfoRef} className="w-full bg-black text-white">
+          <SellerInfoSection
+            sellerData={sellerData}
+            sellerLoading={sellerLoading}
+            getSellerLogoUrl={getSellerLogoUrl}
+            onBecomeSeller={handleBecomeSeller}
+            onBack={handleBackClick}
+            isOwnProfile={isOwnProfile}
+            showActionButtons={showActionButtons}
+          />
+        </div>
+      )}
 
-          {/* Tabs Navigation - In normal document flow */}
-          <div 
-            ref={tabsContainerRef}
-            style={{ 
-              height: isTabsSticky ? `${tabsHeight}px` : 'auto'
-            }}
-          >
-            <nav
-              ref={tabsRef}
-              className={`bg-white transition-all duration-200 ${
-                isTabsSticky ? 'opacity-0 pointer-events-none' : 'opacity-100'
-              }`}
-            >
-              <TabsNavigation 
-                tabs={tabs}
-                activeTab={activeTab}
-                onTabChange={handleTabChange}
-                showTopBorder={true}
-                variant="underline"
-              />
-            </nav>
-          </div>
+      {/* Tabs Container - CRITICAL: This maintains space in document flow */}
+      <div 
+        ref={tabsContainerRef}
+        style={{ 
+          height: isTabsSticky ? `${tabsHeight}px` : 'auto'
+        }}
+      >
+        {/* Tabs Navigation - Single instance that transitions */}
+        <nav
+          ref={tabsRef}
+          className="bg-white border-b border-gray-200"
+          style={isTabsSticky ? {
+            position: 'fixed',
+            top: `${headerHeight}px`,
+            left: 0,
+            right: 0,
+            zIndex: 40
+          } : {
+            position: 'relative'
+          }}
+        >
+          <TabsNavigation 
+            tabs={tabs}
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            showTopBorder={false}
+            variant="underline"
+          />
+        </nav>
+      </div>
 
-          {/* Sticky Tabs Placeholder - Shows when tabs are sticky */}
-          {isTabsSticky && (
-            <div 
-              className="fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-200 transition-all duration-200"
-              style={{ top: `${headerHeight}px` }}
-            >
-              <TabsNavigation 
-                tabs={tabs}
-                activeTab={activeTab}
-                onTabChange={handleTabChange}
-                showTopBorder={false}
-                variant="underline"
-                className="border-t-0"
-              />
-            </div>
-          )}
-
-          {/* Main Content */}
-          <div className="">
-            {React.Children.map(children, child => {
-              if (React.isValidElement(child)) {
-                if (activeTab !== 'products') {
-                  return React.cloneElement(child, { 
-                    products, 
-                    isLoading: productsLoading || sellerLoading
-                  } as any);
-                }
-                return React.cloneElement(child, { 
-                  isLoading: sellerLoading
-                } as any);
-              }
-              return child;
-            })}
-          </div>
-        </main>
+      {/* Main Content */}
+      <div>
+        {React.Children.map(children, child => {
+          if (React.isValidElement(child)) {
+            if (activeTab !== 'products') {
+              return React.cloneElement(child, { 
+                products, 
+                isLoading: productsLoading || sellerLoading
+              } as any);
+            }
+            return React.cloneElement(child, { 
+              isLoading: sellerLoading
+            } as any);
+          }
+          return child;
+        })}
       </div>
     </div>
   );
