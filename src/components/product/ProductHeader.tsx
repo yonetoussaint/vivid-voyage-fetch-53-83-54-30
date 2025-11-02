@@ -160,16 +160,19 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
         </div>
       </div>
 
-      {/* NEW: Sticky Tabs inside Header */}
-      {showTabs && isTabsSticky && (
-        <div className="bg-white border-b border-gray-200">
+      {/* Sticky Tabs - Shows when original tabs touch header */}
+      {isTabsSticky && tabs.length > 0 && (
+        <div className="bg-white border-t border-gray-200">
           <TabsNavigation 
             tabs={tabs}
             activeTab={activeTab}
             onTabChange={onTabChange}
-            showTopBorder={false}
-            variant="underline"
-            className="border-t-0"
+            edgeToEdge={true}
+            style={{ 
+              backgroundColor: 'white',
+              margin: 0,
+              padding: 0
+            }}
           />
         </div>
       )}
