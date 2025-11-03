@@ -240,53 +240,39 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     return () => resizeObserver.disconnect();
   }, [isProductsTab]);
 
-  // 2. PERFECT STICKY LOGIC: Use scroll-based detection with proper threshold
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!tabsContainerRef.current || !headerRef.current) return;
-
-      const containerRect = tabsContainerRef.current.getBoundingClientRect();
-      
-      // Calculate the exact point where tabs should stick
-      // This is when the top of tabs container reaches the bottom of header
-      const stickyThreshold = headerHeight;
-      
-      // Add a small buffer to prevent flickering
-      const buffer = 1;
-      
-      setIsTabsSticky(containerRect.top <= stickyThreshold + buffer);
-    };
-
-    handleScroll(); // Initial check
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('resize', handleScroll);
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', handleScroll);
-    };
-  }, [headerHeight]);
-
-  // 3. Reset sticky state when tab changes to products
+  // 2. Reset sticky state when switching to products tab
   useEffect(() => {
     if (isProductsTab) {
       setIsTabsSticky(false);
-      
-      // Force recalculation on next frame
-      requestAnimationFrame(() => {
-        const handleScroll = () => {
-          if (!tabsContainerRef.current || !headerRef.current) return;
-          
-          const containerRect = tabsContainerRef.current.getBoundingClientRect();
-          const stickyThreshold = headerHeight;
-          const buffer = 1;
-          
-          setIsTabsSticky(containerRect.top <= stickyThreshold + buffer);
-        };
-        handleScroll();
-      });
     }
-  }, [isProductsTab, headerHeight]);
+  }, [isProductsTab]);
+
+  // 3. PERFECT STICKY LOGIC: Use Intersection Observer for precise detection
+  useEffect(() => {
+    if (!tabsContainerRef.current || !headerRef.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // When tabs start intersecting with the top of viewport (touching header bottom)
+        // entry.isIntersecting will be false when tabs go above the threshold
+        setIsTabsSticky(!entry.isIntersecting);
+      },
+      {
+        // Root is viewport
+        root: null,
+        // Trigger when tabs reach exactly headerHeight from top
+        rootMargin: `-${headerHeight}px 0px 0px 0px`,
+        // Trigger as soon as it crosses the threshold
+        threshold: 0
+      }
+    );
+
+    observer.observe(tabsContainerRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [headerHeight]);
 
   // Handle redirects
   useEffect(() => {
