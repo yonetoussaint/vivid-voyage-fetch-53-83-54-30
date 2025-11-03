@@ -240,30 +240,26 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     return () => resizeObserver.disconnect();
   }, [isProductsTab]);
 
-  // 2. PERFECT STICKY LOGIC: Use Intersection Observer for precise detection
+  // 2. Perfect scroll detection
   useEffect(() => {
-    if (!tabsContainerRef.current || !headerRef.current) return;
+    const handleScroll = () => {
+      if (!tabsContainerRef.current) return;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        // When tabs start intersecting with the top of viewport (touching header bottom)
-        // entry.isIntersecting will be false when tabs go above the threshold
-        setIsTabsSticky(!entry.isIntersecting);
-      },
-      {
-        // Root is viewport
-        root: null,
-        // Trigger when tabs reach exactly headerHeight from top
-        rootMargin: `-${headerHeight}px 0px 0px 0px`,
-        // Trigger as soon as it crosses the threshold
-        threshold: 0
-      }
-    );
+      const containerRect = tabsContainerRef.current.getBoundingClientRect();
 
-    observer.observe(tabsContainerRef.current);
+      // Tabs should stick when they reach the bottom of the header
+      const stickyPoint = headerHeight;
+
+      setIsTabsSticky(containerRect.top <= stickyPoint);
+    };
+
+    handleScroll(); // Initial check
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleScroll);
 
     return () => {
-      observer.disconnect();
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
     };
   }, [headerHeight]);
 
@@ -348,7 +344,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       {/* Main Content */}
       <div 
         style={!isProductsTab ? {
-          paddingTop: `${headerHeight + tabsHeight}px`
+          paddingTop: `${headerHeight}px`
         } : undefined}
       >
         {React.Children.map(children, child => {
