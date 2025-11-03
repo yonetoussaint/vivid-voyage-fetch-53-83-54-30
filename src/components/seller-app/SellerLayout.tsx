@@ -1,4 +1,4 @@
-// SellerLayout.tsx - WITH INSTANT STICKY BEHAVIOR
+// SellerLayout.tsx - WITH FLAWLESS STICKY ANIMATION
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -206,7 +206,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }
   ];
 
-  // ===== INSTANT STICKY IMPLEMENTATION =====
+  // ===== FLAWLESS STICKY IMPLEMENTATION =====
 
   // 1. Measure ALL heights using ResizeObserver
   useLayoutEffect(() => {
@@ -247,39 +247,38 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }
   }, [isProductsTab]);
 
-  // 3. INSTANT STICKY LOGIC: RequestAnimationFrame for buttery smooth performance
+  // 3. FLAWLESS STICKY LOGIC: Use RAF for 60fps smooth updates
   useEffect(() => {
-    let ticking = false;
-
-    const updateStickyState = () => {
-      if (!tabsContainerRef.current) return;
-      
-      const tabsRect = tabsContainerRef.current.getBoundingClientRect();
-      const shouldBeSticky = tabsRect.top <= headerHeight;
-      
-      if (shouldBeSticky !== isTabsSticky) {
-        setIsTabsSticky(shouldBeSticky);
-      }
-      ticking = false;
-    };
+    let rafId: number | null = null;
+    let isScrolling = false;
 
     const handleScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(updateStickyState);
-        ticking = true;
+      if (!isScrolling) {
+        isScrolling = true;
+        
+        rafId = requestAnimationFrame(() => {
+          if (!tabsContainerRef.current) {
+            isScrolling = false;
+            return;
+          }
+          
+          const tabsRect = tabsContainerRef.current.getBoundingClientRect();
+          const shouldBeSticky = tabsRect.top <= headerHeight;
+          
+          setIsTabsSticky(shouldBeSticky);
+          isScrolling = false;
+        });
       }
     };
 
-    // Add scroll listener with passive for maximum performance
     window.addEventListener('scroll', handleScroll, { passive: true });
-    
-    // Initial check
-    updateStickyState();
+    handleScroll();
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
+      if (rafId) cancelAnimationFrame(rafId);
     };
-  }, [headerHeight, isTabsSticky]);
+  }, [headerHeight]);
 
   // Handle redirects
   useEffect(() => {
@@ -297,7 +296,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       {/* Fixed Header */}
       <div 
         ref={headerRef} 
-        className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm"
+        className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm transition-all duration-300"
       >
         <ProductHeader
           onCloseClick={handleBackClick}
@@ -329,40 +328,58 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         </div>
       )}
 
-      {/* INSTANT STICKY TABS - SINGLE INSTANCE APPROACH */}
+      {/* FLAWLESS STICKY TABS - OPTIMIZED FOR FAST SCROLLING */}
       <div 
         ref={tabsContainerRef}
         style={{ 
           height: isTabsSticky ? `${tabsHeight}px` : 'auto'
         }}
       >
-        {/* Single tabs instance that switches position instantly */}
-        <div
-          ref={tabsRef}
-          className={`transition-colors duration-200 ${
-            isTabsSticky ? 'bg-white shadow-sm' : 'bg-transparent'
-          }`}
-          style={
-            isTabsSticky ? {
+        <div className="relative">
+          {/* Static Tabs */}
+          <div
+            ref={tabsRef}
+            className="transition-opacity duration-200 ease-out"
+            style={{
+              position: 'relative',
+              zIndex: 30,
+              opacity: isTabsSticky ? 0 : 1,
+              pointerEvents: isTabsSticky ? 'none' : 'auto'
+            }}
+          >
+            <TabsNavigation 
+              tabs={tabs}
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+              showTopBorder={false}
+              variant="underline"
+            />
+          </div>
+
+          {/* Fixed Tabs - Hardware Accelerated */}
+          <div
+            className="transition-opacity duration-200 ease-out"
+            style={{
               position: 'fixed',
               top: `${headerHeight}px`,
               left: 0,
               right: 0,
               zIndex: 40,
-              // Instant position change, only animate background/shadow
-            } : {
-              position: 'relative',
-              zIndex: 30
-            }
-          }
-        >
-          <TabsNavigation 
-            tabs={tabs}
-            activeTab={activeTab}
-            onTabChange={handleTabChange}
-            showTopBorder={isTabsSticky}
-            variant="underline"
-          />
+              opacity: isTabsSticky ? 1 : 0,
+              pointerEvents: isTabsSticky ? 'auto' : 'none',
+              willChange: 'opacity',
+              transform: 'translateZ(0)' // Force GPU acceleration
+            }}
+          >
+            <TabsNavigation 
+              tabs={tabs}
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+              showTopBorder={true}
+              variant="underline"
+              className="bg-white shadow-sm"
+            />
+          </div>
         </div>
       </div>
 
