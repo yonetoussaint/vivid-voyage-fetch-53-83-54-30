@@ -240,14 +240,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     return () => resizeObserver.disconnect();
   }, [isProductsTab]);
 
-  // 2. Reset sticky state when switching to products tab
-  useEffect(() => {
-    if (isProductsTab) {
-      setIsTabsSticky(false);
-    }
-  }, [isProductsTab]);
-
-  // 3. PERFECT STICKY LOGIC: Use Intersection Observer for precise detection
+  // 2. PERFECT STICKY LOGIC: Use Intersection Observer for precise detection
   useEffect(() => {
     if (!tabsContainerRef.current || !headerRef.current) return;
 
@@ -355,7 +348,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       {/* Main Content */}
       <div 
         style={!isProductsTab ? {
-          paddingTop: `${headerHeight + (isTabsSticky ? tabsHeight : 0)}px`
+          paddingTop: `${headerHeight + tabsHeight}px`
         } : undefined}
       >
         {React.Children.map(children, child => {
