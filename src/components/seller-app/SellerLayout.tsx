@@ -353,12 +353,10 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       </div>
 
       {/* Main Content */}
-      {/* Main Content - FIXED padding logic */}
+      {/* Main Content - FIXED: Only account for header height */}
 <div 
   style={{
-    paddingTop: !isProductsTab 
-      ? `${headerHeight + tabsHeight}px` // Always include tabs height for non-products tabs
-      : '0px'
+    paddingTop: !isProductsTab ? `${headerHeight}px` : '0px'
   }}
 >
   {React.Children.map(children, child => {
