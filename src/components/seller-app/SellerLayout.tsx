@@ -1,4 +1,4 @@
-// SellerLayout.tsx - WITH FIXED STICKY BEHAVIOR
+// SellerLayout.tsx - WITH FLAWLESS STICKY ANIMATION
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -206,7 +206,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }
   ];
 
-  // ===== FIXED STICKY IMPLEMENTATION =====
+  // ===== FLAWLESS STICKY IMPLEMENTATION =====
 
   // 1. Measure ALL heights using ResizeObserver
   useLayoutEffect(() => {
@@ -247,7 +247,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }
   }, [isProductsTab]);
 
-  // 3. FIXED STICKY LOGIC: Use scroll listener for reliable detection
+  // 3. FLAWLESS STICKY LOGIC: Use scroll listener for reliable detection
   useEffect(() => {
     const handleScroll = () => {
       if (!tabsContainerRef.current) return;
@@ -283,10 +283,10 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Fixed Header - NO TABS HERE */}
+      {/* Fixed Header */}
       <div 
         ref={headerRef} 
-        className="fixed top-0 left-0 right-0 z-50"
+        className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm transition-all duration-300"
       >
         <ProductHeader
           onCloseClick={handleBackClick}
@@ -296,7 +296,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         />
       </div>
 
-      {/* MODIFIED: Seller Info Section - Pulls up to overlap header space */}
+      {/* Seller Info Section */}
       {isProductsTab && (
         <div 
           ref={sellerInfoRef} 
@@ -318,37 +318,66 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         </div>
       )}
 
-      {/* CRITICAL: Tabs Container - Marks position for stickiness */}
+      {/* FLAWLESS STICKY TABS - DUAL RENDER APPROACH */}
       <div 
         ref={tabsContainerRef}
         style={{ 
-          height: isTabsSticky ? `${tabsHeight}px` : 'auto'
+          height: isTabsSticky ? `${tabsHeight}px` : 'auto',
+          transition: 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
         }}
       >
-        {/* Single Tabs Instance - Transitions between relative and fixed */}
-        <nav
-          ref={tabsRef}
-          style={isTabsSticky ? {
-            position: 'fixed',
-            top: `${headerHeight}px`,
-            left: 0,
-            right: 0,
-            zIndex: 40
-          } : {
-            position: 'relative'
-          }}
-        >
-          <TabsNavigation 
-            tabs={tabs}
-            activeTab={activeTab}
-            onTabChange={handleTabChange}
-            showTopBorder={false}
-            variant="underline"
-          />
-        </nav>
+        {/* Always render both versions for seamless transition */}
+        <div className="relative">
+          {/* Static Tabs (visible when not sticky) */}
+          <div
+            ref={tabsRef}
+            className={`transition-all duration-300 ${
+              isTabsSticky 
+                ? 'opacity-0 transform -translate-y-2 pointer-events-none' 
+                : 'opacity-100 transform translate-y-0'
+            }`}
+            style={{
+              position: 'relative',
+              zIndex: 30
+            }}
+          >
+            <TabsNavigation 
+              tabs={tabs}
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+              showTopBorder={false}
+              variant="underline"
+            />
+          </div>
+
+          {/* Fixed Tabs (visible when sticky) */}
+          <div
+            className={`transition-all duration-300 ${
+              isTabsSticky 
+                ? 'opacity-100 transform translate-y-0' 
+                : 'opacity-0 transform translate-y-2 pointer-events-none'
+            }`}
+            style={{
+              position: 'fixed',
+              top: `${headerHeight}px`,
+              left: 0,
+              right: 0,
+              zIndex: 40
+            }}
+          >
+            <TabsNavigation 
+              tabs={tabs}
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+              showTopBorder={true}
+              variant="underline"
+              className="bg-white shadow-sm"
+            />
+          </div>
+        </div>
       </div>
 
-      {/* Main Content - KEEP the negative margin logic */}
+      {/* Main Content */}
       <div 
         style={{
           paddingTop: !isProductsTab ? `${headerHeight}px` : '0px'
