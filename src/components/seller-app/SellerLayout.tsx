@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useRef, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   Package, ShoppingCart, Users, BarChart3, DollarSign, Megaphone, Settings,
@@ -39,14 +39,13 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   // Refs
   const headerRef = useRef<HTMLDivElement>(null);
   const sellerInfoRef = useRef<HTMLDivElement>(null);
-  const tabsContainerRef = useRef<HTMLDivElement>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
 
   // States
-  const [isTabsSticky, setIsTabsSticky] = useState(false);
-  const [tabsHeight, setTabsHeight] = useState(0);
   const [headerHeight, setHeaderHeight] = useState(0);
   const [sellerInfoHeight, setSellerInfoHeight] = useState(0);
+  const [tabsHeight, setTabsHeight] = useState(0);
+  const [isTabsBounced, setIsTabsBounced] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
 
   const handleBackClick = () => navigate('/profile');
@@ -193,63 +192,13 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         setSellerInfoHeight(sellerInfoRef.current.offsetHeight || 0);
       if (tabsRef.current) setTabsHeight(tabsRef.current.offsetHeight || 0);
     };
-
     updateHeights();
-    const resizeObserver = new ResizeObserver(updateHeights);
-    if (headerRef.current) resizeObserver.observe(headerRef.current);
-    if (isProductsTab && sellerInfoRef.current) resizeObserver.observe(sellerInfoRef.current);
-    if (tabsRef.current) resizeObserver.observe(tabsRef.current);
-
-    return () => resizeObserver.disconnect();
+    window.addEventListener('resize', updateHeights);
+    return () => window.removeEventListener('resize', updateHeights);
   }, [isProductsTab]);
-
-  useEffect(() => {
-    if (isProductsTab) setIsTabsSticky(false);
-  }, [isProductsTab]);
-
-  // ===== SLIDE-DOWN STICKY TABS WITH BOUNCE =====
-  useEffect(() => {
-    const tabsEl = tabsContainerRef.current;
-    if (!tabsEl) return;
-
-    let lastSticky = false;
-    let lastScrollY = window.scrollY;
-    let ticking = false;
-
-    const handleScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          const rect = tabsEl.getBoundingClientRect();
-          const currentY = window.scrollY;
-          const scrollingDown = currentY > lastScrollY;
-          lastScrollY = currentY;
-
-          const buffer = 4;
-          const shouldBeSticky = rect.top <= headerHeight + buffer && scrollingDown;
-          const shouldUnstick = rect.top > headerHeight + buffer && !scrollingDown;
-
-          if (shouldBeSticky && !lastSticky) {
-            setIsTabsSticky(true);
-            lastSticky = true;
-          } else if (shouldUnstick && lastSticky) {
-            setIsTabsSticky(false);
-            lastSticky = false;
-          }
-
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [headerHeight]);
 
   // ===== REDIRECT HANDLER =====
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (
       location.pathname === '/seller-dashboard' ||
       location.pathname.endsWith('/seller-dashboard/')
@@ -301,49 +250,22 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       )}
 
       {/* STICKY TABS */}
-      <div
-        ref={tabsContainerRef}
-        style={{ height: isTabsSticky ? `${tabsHeight}px` : 'auto' }}
-      >
-        <div className="relative">
-          {/* Normal Tabs */}
-          <div
-            ref={tabsRef}
-            className={`transition-transform duration-300 ease-out ${
-              isTabsSticky ? '-translate-y-6 opacity-0' : 'translate-y-0 opacity-100'
-            }`}
-            style={{ position: 'relative', zIndex: 30 }}
-          >
-            <TabsNavigation
-              tabs={tabs}
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
-              showTopBorder={false}
-              variant="underline"
-            />
-          </div>
-
-          {/* Sticky Tabs with Slide-Down Bounce */}
-          <div
-            className={`fixed left-0 right-0 z-40 bg-white shadow-sm transition-transform duration-500 ease-out ${
-              isTabsSticky
-                ? 'translate-y-0 opacity-100 animate-slideDownBounce'
-                : '-translate-y-full opacity-0'
-            }`}
-            style={{
-              top: `${headerHeight}px`,
-              willChange: 'transform, opacity',
-            }}
-          >
-            <TabsNavigation
-              tabs={tabs}
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
-              showTopBorder={true}
-              variant="underline"
-              className="bg-white shadow-sm"
-            />
-          </div>
+      <div style={{ minHeight: tabsHeight }}>
+        <div
+          ref={tabsRef}
+          className={`sticky z-40 top-[${headerHeight}px] bg-white shadow-sm transition-all duration-500 ${
+            isTabsBounced ? 'animate-slideDownBounce' : ''
+          }`}
+          onAnimationEnd={() => setIsTabsBounced(false)}
+        >
+          <TabsNavigation
+            tabs={tabs}
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            showTopBorder={true}
+            variant="underline"
+            className="bg-white shadow-sm"
+          />
         </div>
       </div>
 
