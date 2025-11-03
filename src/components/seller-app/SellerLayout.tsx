@@ -189,58 +189,55 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   useLayoutEffect(() => {
     const updateHeights = () => {
       if (headerRef.current) setHeaderHeight(headerRef.current.offsetHeight || 0);
-      if (tabsRef.current) setTabsHeight(tabsRef.current.offsetHeight || 0);
-      
-      // Always measure seller info height, even if not currently visible
-      if (sellerInfoRef.current) {
+      if (isProductsTab && sellerInfoRef.current)
         setSellerInfoHeight(sellerInfoRef.current.offsetHeight || 0);
-      }
+      if (tabsRef.current) setTabsHeight(tabsRef.current.offsetHeight || 0);
     };
 
     updateHeights();
     const resizeObserver = new ResizeObserver(updateHeights);
     if (headerRef.current) resizeObserver.observe(headerRef.current);
-    if (sellerInfoRef.current) resizeObserver.observe(sellerInfoRef.current);
+    if (isProductsTab && sellerInfoRef.current) resizeObserver.observe(sellerInfoRef.current);
     if (tabsRef.current) resizeObserver.observe(tabsRef.current);
 
     return () => resizeObserver.disconnect();
   }, [isProductsTab]);
 
-  // ===== SLIDE-DOWN STICKY TABS =====
+  useEffect(() => {
+    if (isProductsTab) setIsTabsSticky(false);
+  }, [isProductsTab]);
+
+  // ===== SLIDE-DOWN STICKY TABS WITH BOUNCE =====
   useEffect(() => {
     const tabsEl = tabsContainerRef.current;
     if (!tabsEl) return;
 
+    let lastSticky = false;
     let lastScrollY = window.scrollY;
     let ticking = false;
 
-    const updateStickyState = () => {
-      const currentScrollY = window.scrollY;
-      
-      if (isProductsTab) {
-        // For products tab, use the original logic with seller info
-        const totalOffset = headerHeight + sellerInfoHeight;
-        const shouldBeSticky = currentScrollY >= totalOffset;
-        
-        if (shouldBeSticky !== isTabsSticky) {
-          setIsTabsSticky(shouldBeSticky);
-        }
-      } else {
-        // For other tabs, stick immediately when scrolling past header
-        const shouldBeSticky = currentScrollY >= headerHeight;
-        
-        if (shouldBeSticky !== isTabsSticky) {
-          setIsTabsSticky(shouldBeSticky);
-        }
-      }
-      
-      lastScrollY = currentScrollY;
-      ticking = false;
-    };
-
     const handleScroll = () => {
       if (!ticking) {
-        requestAnimationFrame(updateStickyState);
+        requestAnimationFrame(() => {
+          const rect = tabsEl.getBoundingClientRect();
+          const currentY = window.scrollY;
+          const scrollingDown = currentY > lastScrollY;
+          lastScrollY = currentY;
+
+          const buffer = 4;
+          const shouldBeSticky = rect.top <= headerHeight + buffer && scrollingDown;
+          const shouldUnstick = rect.top > headerHeight + buffer && !scrollingDown;
+
+          if (shouldBeSticky && !lastSticky) {
+            setIsTabsSticky(true);
+            lastSticky = true;
+          } else if (shouldUnstick && lastSticky) {
+            setIsTabsSticky(false);
+            lastSticky = false;
+          }
+
+          ticking = false;
+        });
         ticking = true;
       }
     };
@@ -249,7 +246,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [headerHeight, sellerInfoHeight, isProductsTab, isTabsSticky]);
+  }, [headerHeight]);
 
   // ===== REDIRECT HANDLER =====
   useEffect(() => {
@@ -266,15 +263,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }
   }, [location.pathname, navigate]);
 
-  // Calculate content offset based on current tab
-  const getContentOffset = () => {
-    if (isProductsTab) {
-      return headerHeight + sellerInfoHeight + tabsHeight;
-    } else {
-      return headerHeight + tabsHeight;
-    }
-  };
-
   return (
     <div className="min-h-screen bg-white">
       {/* HEADER */}
@@ -290,16 +278,13 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         />
       </div>
 
-      {/* CONTENT WRAPPER WITH PROPER OFFSET */}
-      <div style={{ 
-        paddingTop: `${getContentOffset()}px` 
-      }}>
-        {/* SELLER INFO - Always in DOM for measurements, but conditionally positioned */}
+      {/* SELLER INFO */}
+      {isProductsTab && (
         <div 
           ref={sellerInfoRef} 
-          className={`w-full bg-black text-white relative ${isProductsTab ? 'block' : 'hidden'}`}
+          className="w-full bg-black text-white relative"
           style={{ 
-            marginTop: `-${getContentOffset()}px`,
+            marginTop: `-${headerHeight}px`,
             paddingTop: `${headerHeight}px`,
           }}
         >
@@ -313,26 +298,21 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
             showActionButtons={showActionButtons}
           />
         </div>
+      )}
 
-        {/* TABS NAVIGATION */}
-        <div
-          ref={tabsContainerRef}
-          className="relative bg-white"
-          style={{ 
-            marginTop: isProductsTab ? `-${tabsHeight}px` : '0px'
-          }}
-        >
+      {/* STICKY TABS */}
+      <div
+        ref={tabsContainerRef}
+        style={{ height: isTabsSticky ? `${tabsHeight}px` : 'auto' }}
+      >
+        <div className="relative">
           {/* Normal Tabs */}
           <div
             ref={tabsRef}
-            className={`transition-all duration-300 ${
-              isTabsSticky ? 'opacity-0' : 'opacity-100'
+            className={`transition-transform duration-300 ease-out ${
+              isTabsSticky ? '-translate-y-6 opacity-0' : 'translate-y-0 opacity-100'
             }`}
-            style={{ 
-              position: 'relative', 
-              zIndex: 30,
-              top: isProductsTab ? `${sellerInfoHeight}px` : '0px'
-            }}
+            style={{ position: 'relative', zIndex: 30 }}
           >
             <TabsNavigation
               tabs={tabs}
@@ -343,15 +323,16 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
             />
           </div>
 
-          {/* Sticky Tabs */}
+          {/* Sticky Tabs with Slide-Down Bounce */}
           <div
-            className={`fixed left-0 right-0 z-40 bg-white shadow-sm transition-all duration-300 ${
+            className={`fixed left-0 right-0 z-40 bg-white shadow-sm transition-transform duration-500 ease-out ${
               isTabsSticky
-                ? 'translate-y-0 opacity-100'
-                : '-translate-y-2 opacity-0 pointer-events-none'
+                ? 'translate-y-0 opacity-100 animate-slideDownBounce'
+                : '-translate-y-full opacity-0'
             }`}
             style={{
               top: `${headerHeight}px`,
+              willChange: 'transform, opacity',
             }}
           >
             <TabsNavigation
@@ -360,25 +341,26 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
               onTabChange={handleTabChange}
               showTopBorder={true}
               variant="underline"
+              className="bg-white shadow-sm"
             />
           </div>
         </div>
+      </div>
 
-        {/* MAIN CONTENT */}
-        <div className="relative z-10">
-          {React.Children.map(children, child => {
-            if (React.isValidElement(child)) {
-              if (activeTab !== 'products') {
-                return React.cloneElement(child, {
-                  products,
-                  isLoading: productsLoading || sellerLoading
-                } as any);
-              }
-              return React.cloneElement(child, { isLoading: sellerLoading } as any);
+      {/* CONTENT */}
+      <div style={{ paddingTop: !isProductsTab ? `${headerHeight}px` : '0px' }}>
+        {React.Children.map(children, child => {
+          if (React.isValidElement(child)) {
+            if (activeTab !== 'products') {
+              return React.cloneElement(child, {
+                products,
+                isLoading: productsLoading || sellerLoading
+              } as any);
             }
-            return child;
-          })}
-        </div>
+            return React.cloneElement(child, { isLoading: sellerLoading } as any);
+          }
+          return child;
+        })}
       </div>
     </div>
   );
