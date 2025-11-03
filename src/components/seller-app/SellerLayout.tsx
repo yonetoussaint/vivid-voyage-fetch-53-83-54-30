@@ -355,7 +355,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       {/* Main Content */}
       <div 
         style={!isProductsTab ? {
-          paddingTop: `${headerHeight + tabsHeight}px`
+          paddingTop: `${headerHeight + (isTabsSticky ? tabsHeight : 0)}px`
         } : undefined}
       >
         {React.Children.map(children, child => {
