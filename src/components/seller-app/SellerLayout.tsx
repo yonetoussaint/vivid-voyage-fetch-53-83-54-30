@@ -353,26 +353,29 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       </div>
 
       {/* Main Content */}
-      <div 
-        style={!isProductsTab ? {
-          paddingTop: `${headerHeight + (isTabsSticky ? tabsHeight : 0)}px`
-        } : undefined}
-      >
-        {React.Children.map(children, child => {
-          if (React.isValidElement(child)) {
-            if (activeTab !== 'products') {
-              return React.cloneElement(child, { 
-                products, 
-                isLoading: productsLoading || sellerLoading
-              } as any);
-            }
-            return React.cloneElement(child, { 
-              isLoading: sellerLoading
-            } as any);
-          }
-          return child;
-        })}
-      </div>
+      {/* Main Content - FIXED padding logic */}
+<div 
+  style={{
+    paddingTop: !isProductsTab 
+      ? `${headerHeight + tabsHeight}px` // Always include tabs height for non-products tabs
+      : '0px'
+  }}
+>
+  {React.Children.map(children, child => {
+    if (React.isValidElement(child)) {
+      if (activeTab !== 'products') {
+        return React.cloneElement(child, { 
+          products, 
+          isLoading: productsLoading || sellerLoading
+        } as any);
+      }
+      return React.cloneElement(child, { 
+        isLoading: sellerLoading
+      } as any);
+    }
+    return child;
+  })}
+</div>
     </div>
   );
 };
