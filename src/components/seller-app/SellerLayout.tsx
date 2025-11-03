@@ -247,32 +247,52 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }
   }, [isProductsTab]);
 
-  // 3. FLAWLESS STICKY LOGIC: Use RAF for 60fps smooth updates
+  // 3. ULTRA-SMOOTH STICKY LOGIC: Direct DOM manipulation + RAF
   useEffect(() => {
+    const staticTabs = tabsRef.current?.parentElement;
+    const fixedTabs = staticTabs?.nextElementSibling as HTMLElement;
+    
+    if (!staticTabs || !fixedTabs || !tabsContainerRef.current) return;
+
     let rafId: number | null = null;
-    let isScrolling = false;
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+
+    const updateStickyState = () => {
+      const tabsRect = tabsContainerRef.current!.getBoundingClientRect();
+      const shouldBeSticky = tabsRect.top <= headerHeight;
+      
+      // Direct DOM manipulation for instant visual updates
+      if (shouldBeSticky) {
+        staticTabs.style.opacity = '0';
+        staticTabs.style.pointerEvents = 'none';
+        fixedTabs.style.opacity = '1';
+        fixedTabs.style.pointerEvents = 'auto';
+      } else {
+        staticTabs.style.opacity = '1';
+        staticTabs.style.pointerEvents = 'auto';
+        fixedTabs.style.opacity = '0';
+        fixedTabs.style.pointerEvents = 'none';
+      }
+      
+      // Update React state for container height (less critical)
+      setIsTabsSticky(shouldBeSticky);
+      ticking = false;
+    };
 
     const handleScroll = () => {
-      if (!isScrolling) {
-        isScrolling = true;
-        
-        rafId = requestAnimationFrame(() => {
-          if (!tabsContainerRef.current) {
-            isScrolling = false;
-            return;
-          }
-          
-          const tabsRect = tabsContainerRef.current.getBoundingClientRect();
-          const shouldBeSticky = tabsRect.top <= headerHeight;
-          
-          setIsTabsSticky(shouldBeSticky);
-          isScrolling = false;
-        });
+      lastScrollY = window.scrollY;
+      
+      if (!ticking) {
+        rafId = requestAnimationFrame(updateStickyState);
+        ticking = true;
       }
     };
 
+    // Initial state
+    updateStickyState();
+    
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
@@ -328,7 +348,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         </div>
       )}
 
-      {/* FLAWLESS STICKY TABS - OPTIMIZED FOR FAST SCROLLING */}
+      {/* ULTRA-SMOOTH STICKY TABS - INSTANT VISUAL RESPONSE */}
       <div 
         ref={tabsContainerRef}
         style={{ 
@@ -336,15 +356,15 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         }}
       >
         <div className="relative">
-          {/* Static Tabs */}
+          {/* Static Tabs - No transition, instant updates via DOM */}
           <div
             ref={tabsRef}
-            className="transition-opacity duration-200 ease-out"
             style={{
               position: 'relative',
               zIndex: 30,
-              opacity: isTabsSticky ? 0 : 1,
-              pointerEvents: isTabsSticky ? 'none' : 'auto'
+              opacity: 1,
+              pointerEvents: 'auto',
+              transition: 'none' // Remove ALL transitions for instant response
             }}
           >
             <TabsNavigation 
@@ -356,19 +376,19 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
             />
           </div>
 
-          {/* Fixed Tabs - Hardware Accelerated */}
+          {/* Fixed Tabs - No transition, instant updates via DOM */}
           <div
-            className="transition-opacity duration-200 ease-out"
             style={{
               position: 'fixed',
               top: `${headerHeight}px`,
               left: 0,
               right: 0,
               zIndex: 40,
-              opacity: isTabsSticky ? 1 : 0,
-              pointerEvents: isTabsSticky ? 'auto' : 'none',
+              opacity: 0,
+              pointerEvents: 'none',
               willChange: 'opacity',
-              transform: 'translateZ(0)' // Force GPU acceleration
+              transform: 'translateZ(0)',
+              transition: 'none' // Remove ALL transitions for instant response
             }}
           >
             <TabsNavigation 
