@@ -247,57 +247,26 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }
   }, [isProductsTab]);
 
-  // 3. ULTRA-SMOOTH STICKY LOGIC: Direct DOM manipulation + RAF
+  // 3. INSTANT STICKY: CSS-based with Intersection Observer backup
   useEffect(() => {
-    const staticTabs = tabsRef.current?.parentElement;
-    const fixedTabs = staticTabs?.nextElementSibling as HTMLElement;
-    
-    if (!staticTabs || !fixedTabs || !tabsContainerRef.current) return;
+    if (!tabsContainerRef.current) return;
 
-    let rafId: number | null = null;
-    let lastScrollY = window.scrollY;
-    let ticking = false;
-
-    const updateStickyState = () => {
-      const tabsRect = tabsContainerRef.current!.getBoundingClientRect();
-      const shouldBeSticky = tabsRect.top <= headerHeight;
-      
-      // Direct DOM manipulation for instant visual updates
-      if (shouldBeSticky) {
-        staticTabs.style.opacity = '0';
-        staticTabs.style.pointerEvents = 'none';
-        fixedTabs.style.opacity = '1';
-        fixedTabs.style.pointerEvents = 'auto';
-      } else {
-        staticTabs.style.opacity = '1';
-        staticTabs.style.pointerEvents = 'auto';
-        fixedTabs.style.opacity = '0';
-        fixedTabs.style.pointerEvents = 'none';
+    // Use Intersection Observer for instant, native sticky detection
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // When tabs container top reaches header bottom
+        const isSticky = entry.boundingClientRect.top <= headerHeight;
+        setIsTabsSticky(isSticky);
+      },
+      {
+        threshold: [0, 1],
+        rootMargin: `-${headerHeight}px 0px 0px 0px`
       }
-      
-      // Update React state for container height (less critical)
-      setIsTabsSticky(shouldBeSticky);
-      ticking = false;
-    };
+    );
 
-    const handleScroll = () => {
-      lastScrollY = window.scrollY;
-      
-      if (!ticking) {
-        rafId = requestAnimationFrame(updateStickyState);
-        ticking = true;
-      }
-    };
+    observer.observe(tabsContainerRef.current);
 
-    // Initial state
-    updateStickyState();
-    
-    window.addEventListener('scroll', handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      if (rafId) cancelAnimationFrame(rafId);
-    };
+    return () => observer.disconnect();
   }, [headerHeight]);
 
   // Handle redirects
@@ -348,58 +317,33 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         </div>
       )}
 
-      {/* ULTRA-SMOOTH STICKY TABS - INSTANT VISUAL RESPONSE */}
+      {/* INSTANT STICKY TABS - PURE CSS APPROACH */}
       <div 
         ref={tabsContainerRef}
         style={{ 
           height: isTabsSticky ? `${tabsHeight}px` : 'auto'
         }}
       >
-        <div className="relative">
-          {/* Static Tabs - No transition, instant updates via DOM */}
-          <div
-            ref={tabsRef}
-            style={{
-              position: 'relative',
-              zIndex: 30,
-              opacity: 1,
-              pointerEvents: 'auto',
-              transition: 'none' // Remove ALL transitions for instant response
-            }}
-          >
-            <TabsNavigation 
-              tabs={tabs}
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
-              showTopBorder={false}
-              variant="underline"
-            />
-          </div>
-
-          {/* Fixed Tabs - No transition, instant updates via DOM */}
-          <div
-            style={{
-              position: 'fixed',
-              top: `${headerHeight}px`,
-              left: 0,
-              right: 0,
-              zIndex: 40,
-              opacity: 0,
-              pointerEvents: 'none',
-              willChange: 'opacity',
-              transform: 'translateZ(0)',
-              transition: 'none' // Remove ALL transitions for instant response
-            }}
-          >
-            <TabsNavigation 
-              tabs={tabs}
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
-              showTopBorder={true}
-              variant="underline"
-              className="bg-white shadow-sm"
-            />
-          </div>
+        {/* Single tabs element that becomes sticky */}
+        <div
+          ref={tabsRef}
+          style={{
+            position: 'sticky',
+            top: `${headerHeight}px`,
+            zIndex: 40,
+            backgroundColor: 'white',
+            willChange: 'transform',
+            transform: 'translateZ(0)'
+          }}
+        >
+          <TabsNavigation 
+            tabs={tabs}
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            showTopBorder={isTabsSticky}
+            variant="underline"
+            className={isTabsSticky ? "shadow-sm" : ""}
+          />
         </div>
       </div>
 
