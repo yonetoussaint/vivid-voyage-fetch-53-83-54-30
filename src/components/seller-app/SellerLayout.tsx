@@ -1,4 +1,4 @@
-// SellerLayout.tsx - UPDATED with pull-up SellerInfoSection
+// SellerLayout.tsx - FIXED with perfect sticky tabs timing
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -206,7 +206,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }
   ];
 
-  // ===== PERFECT STICKY IMPLEMENTATION =====
+  // ===== FIXED STICKY IMPLEMENTATION =====
 
   // 1. Measure ALL heights using ResizeObserver
   useLayoutEffect(() => {
@@ -247,32 +247,36 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }
   }, [isProductsTab]);
 
-  // 3. PERFECT STICKY LOGIC: Use Intersection Observer for precise detection
+  // 3. FIXED STICKY LOGIC: Use scroll event listener for precise timing
   useEffect(() => {
-    if (!tabsContainerRef.current || !headerRef.current) return;
+    if (!tabsContainerRef.current || headerHeight === 0) return;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        // When tabs start intersecting with the top of viewport (touching header bottom)
-        // entry.isIntersecting will be false when tabs go above the threshold
-        setIsTabsSticky(!entry.isIntersecting);
-      },
-      {
-        // Root is viewport
-        root: null,
-        // Trigger when tabs reach exactly headerHeight from top
-        rootMargin: `-${headerHeight}px 0px 0px 0px`,
-        // Trigger as soon as it crosses the threshold
-        threshold: 0
-      }
-    );
+    const handleScroll = () => {
+      if (!tabsContainerRef.current) return;
 
-    observer.observe(tabsContainerRef.current);
+      // Get the position of the tabs container relative to viewport
+      const tabsRect = tabsContainerRef.current.getBoundingClientRect();
+      
+      // Calculate the total offset from top (header + sellerInfo if applicable)
+      const totalOffsetTop = isProductsTab ? headerHeight + sellerInfoHeight : headerHeight;
+      
+      // Trigger stickiness when tabs reach the top of viewport
+      // Using a small threshold (1px) to ensure smooth transition
+      const shouldBeSticky = tabsRect.top <= totalOffsetTop;
+
+      setIsTabsSticky(shouldBeSticky);
+    };
+
+    // Add scroll listener with passive for better performance
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    // Initial check
+    handleScroll();
 
     return () => {
-      observer.disconnect();
+      window.removeEventListener('scroll', handleScroll);
     };
-  }, [headerHeight]);
+  }, [headerHeight, sellerInfoHeight, isProductsTab]);
 
   // Handle redirects
   useEffect(() => {
@@ -287,10 +291,10 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Fixed Header - NO TABS HERE */}
+      {/* Fixed Header */}
       <div 
         ref={headerRef} 
-        className="fixed top-0 left-0 right-0 z-50"
+        className="fixed top-0 left-0 right-0 z-50 bg-white"
       >
         <ProductHeader
           onCloseClick={handleBackClick}
@@ -300,14 +304,13 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         />
       </div>
 
-      {/* MODIFIED: Seller Info Section - Pulls up to overlap header space */}
+      {/* Seller Info Section - Only on products tab */}
       {isProductsTab && (
         <div 
           ref={sellerInfoRef} 
-          className="w-full bg-black text-white relative -pt-16" // Negative top padding to pull up
+          className="w-full bg-black text-white relative"
           style={{ 
-            marginTop: `-${headerHeight}px`, // Pulls up by header height
-            paddingTop: `${headerHeight}px`, // Adds padding to account for pulled-up content
+            marginTop: `${headerHeight}px`,
           }}
         >
           <SellerInfoSection
@@ -322,22 +325,31 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         </div>
       )}
 
-      {/* CRITICAL: Tabs Container - Marks position for stickiness */}
+      {/* Tabs Container - Critical for sticky behavior */}
       <div 
         ref={tabsContainerRef}
+        className="bg-white"
         style={{ 
-          height: isTabsSticky ? `${tabsHeight}px` : 'auto'
+          // Reserve space to prevent content jump when tabs become sticky
+          height: isTabsSticky ? `${tabsHeight}px` : 'auto',
+          // Add proper top spacing based on current layout
+          marginTop: isProductsTab ? '0px' : `${headerHeight}px`
         }}
       >
-        {/* Single Tabs Instance - Transitions between relative and fixed */}
+        {/* Tabs Navigation - Becomes sticky at the right moment */}
         <nav
           ref={tabsRef}
+          className={`bg-white transition-all duration-200 ${
+            isTabsSticky ? 'shadow-sm border-b border-gray-200' : ''
+          }`}
           style={isTabsSticky ? {
             position: 'fixed',
-            top: `${headerHeight}px`,
+            top: `${headerHeight}px`, // Stick right below header
             left: 0,
             right: 0,
-            zIndex: 40
+            zIndex: 40,
+            // Smooth appearance
+            animation: 'fadeInDown 0.2s ease-out'
           } : {
             position: 'relative'
           }}
@@ -353,27 +365,42 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       </div>
 
       {/* Main Content */}
-      {/* Main Content - FIXED: Only account for header height */}
-<div 
-  style={{
-    paddingTop: !isProductsTab ? `${headerHeight}px` : '0px'
-  }}
->
-  {React.Children.map(children, child => {
-    if (React.isValidElement(child)) {
-      if (activeTab !== 'products') {
-        return React.cloneElement(child, { 
-          products, 
-          isLoading: productsLoading || sellerLoading
-        } as any);
-      }
-      return React.cloneElement(child, { 
-        isLoading: sellerLoading
-      } as any);
-    }
-    return child;
-  })}
-</div>
+      <div 
+        className="bg-white"
+        style={{
+          // Add padding only when needed to prevent content being hidden behind sticky elements
+          paddingTop: isTabsSticky ? `${tabsHeight}px` : '0px'
+        }}
+      >
+        {React.Children.map(children, child => {
+          if (React.isValidElement(child)) {
+            if (activeTab !== 'products') {
+              return React.cloneElement(child, { 
+                products, 
+                isLoading: productsLoading || sellerLoading
+              } as any);
+            }
+            return React.cloneElement(child, { 
+              isLoading: sellerLoading
+            } as any);
+          }
+          return child;
+        })}
+      </div>
+
+      {/* Add CSS for smooth animation */}
+      <style jsx>{`
+        @keyframes fadeInDown {
+          from {
+            opacity: 0;
+            transform: translateY(-8px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 };
