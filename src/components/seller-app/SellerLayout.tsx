@@ -1,8 +1,8 @@
-// SellerLayout.tsx - FIXED with perfect sticky tabs timing
-import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+// SellerLayout.tsx - SIMPLIFIED and FIXED
+import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
-  Package, ShoppingCart, Users, BarChart3, DollarSign, Megaphone, Settings, Home, Share, MessageCircle, MessageSquare, Star, ExternalLink, Heart 
+  Package, ShoppingCart, Users, BarChart3, DollarSign, Megaphone, Settings, Home, Share, MessageCircle, MessageSquare, Star, Heart 
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useQuery } from '@tanstack/react-query';
@@ -36,19 +36,13 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
-  // Refs for measuring heights
+  // Refs
   const headerRef = useRef<HTMLDivElement>(null);
-  const sellerInfoRef = useRef<HTMLDivElement>(null);
-  const tabsContainerRef = useRef<HTMLDivElement>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
+  const stickySentinelRef = useRef<HTMLDivElement>(null);
 
-  // State for sticky behavior
+  // State
   const [isTabsSticky, setIsTabsSticky] = useState(false);
-  const [tabsHeight, setTabsHeight] = useState(0);
-  const [headerHeight, setHeaderHeight] = useState(0);
-  const [sellerInfoHeight, setSellerInfoHeight] = useState(0);
-
-  // State for favorite functionality
   const [isFavorite, setIsFavorite] = useState(false);
 
   const handleBackClick = () => {
@@ -56,12 +50,10 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   };
 
   const handleBecomeSeller = () => {
-    console.log('Start seller onboarding');
     navigate('/seller-onboarding');
   };
 
   const handleShareClick = () => {
-    console.log('Share seller profile');
     if (navigator.share) {
       navigator.share({
         title: sellerData?.business_name || 'Seller Profile',
@@ -69,19 +61,11 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       });
     } else {
       navigator.clipboard.writeText(window.location.href);
-      console.log('Link copied to clipboard');
     }
   };
 
   const handleFavoriteClick = () => {
     setIsFavorite(!isFavorite);
-    console.log('Favorite toggled:', !isFavorite);
-  };
-
-  const handleLinkClick = () => {
-    console.log('Link button clicked');
-    navigator.clipboard.writeText(window.location.href);
-    console.log('Link copied to clipboard');
   };
 
   // Determine context
@@ -92,22 +76,13 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const getCurrentTab = () => {
     if (isDashboard) {
       const path = location.pathname.split('/seller-dashboard/')[1];
-      if (!path || path === '') {
-        return 'products';
-      }
-      return path;
+      return path || 'products';
     } else if (isPickupStation) {
       const path = location.pathname.split('/pickup-station/')[1];
-      if (!path || path === '') {
-        return 'overview';
-      }
-      return path;
+      return path || 'overview';
     } else {
       const pathParts = location.pathname.split('/seller/')[1]?.split('/');
-      if (pathParts && pathParts.length > 1) {
-        return pathParts[1];
-      }
-      return 'products';
+      return pathParts && pathParts.length > 1 ? pathParts[1] : 'products';
     }
   };
 
@@ -189,7 +164,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     return data.publicUrl;
   });
 
-  // Action buttons for ProductHeader - Heart and Share
+  // Action buttons for ProductHeader
   const actionButtons = [
     {
       Icon: Heart,
@@ -206,77 +181,21 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }
   ];
 
-  // ===== FIXED STICKY IMPLEMENTATION =====
-
-  // 1. Measure ALL heights using ResizeObserver
-  useLayoutEffect(() => {
-    const updateHeights = () => {
-      if (headerRef.current) {
-        const height = headerRef.current.offsetHeight;
-        if (height > 0) setHeaderHeight(height);
-      }
-
-      // Only measure SellerInfo on products tab
-      if (isProductsTab && sellerInfoRef.current) {
-        const height = sellerInfoRef.current.offsetHeight;
-        if (height > 0) setSellerInfoHeight(height);
-      } else {
-        setSellerInfoHeight(0);
-      }
-
-      if (tabsRef.current) {
-        const height = tabsRef.current.offsetHeight;
-        if (height > 0) setTabsHeight(height);
-      }
-    };
-
-    updateHeights();
-
-    const resizeObserver = new ResizeObserver(updateHeights);
-    if (headerRef.current) resizeObserver.observe(headerRef.current);
-    if (isProductsTab && sellerInfoRef.current) resizeObserver.observe(sellerInfoRef.current);
-    if (tabsRef.current) resizeObserver.observe(tabsRef.current);
-
-    return () => resizeObserver.disconnect();
-  }, [isProductsTab]);
-
-  // 2. Reset sticky state when switching to products tab
+  // SIMPLE STICKY LOGIC
   useEffect(() => {
-    if (isProductsTab) {
-      setIsTabsSticky(false);
-    }
-  }, [isProductsTab]);
-
-  // 3. FIXED STICKY LOGIC: Use scroll event listener for precise timing
-  useEffect(() => {
-    if (!tabsContainerRef.current || headerHeight === 0) return;
-
     const handleScroll = () => {
-      if (!tabsContainerRef.current) return;
-
-      // Get the position of the tabs container relative to viewport
-      const tabsRect = tabsContainerRef.current.getBoundingClientRect();
+      if (!stickySentinelRef.current) return;
       
-      // Calculate the total offset from top (header + sellerInfo if applicable)
-      const totalOffsetTop = isProductsTab ? headerHeight + sellerInfoHeight : headerHeight;
-      
-      // Trigger stickiness when tabs reach the top of viewport
-      // Using a small threshold (1px) to ensure smooth transition
-      const shouldBeSticky = tabsRect.top <= totalOffsetTop;
-
-      setIsTabsSticky(shouldBeSticky);
+      const sentinelRect = stickySentinelRef.current.getBoundingClientRect();
+      // When sentinel reaches top of viewport, make tabs sticky
+      setIsTabsSticky(sentinelRect.top <= 0);
     };
 
-    // Add scroll listener with passive for better performance
     window.addEventListener('scroll', handleScroll, { passive: true });
-    
-    // Initial check
-    handleScroll();
+    handleScroll(); // Initial check
 
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [headerHeight, sellerInfoHeight, isProductsTab]);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Handle redirects
   useEffect(() => {
@@ -292,10 +211,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   return (
     <div className="min-h-screen bg-white">
       {/* Fixed Header */}
-      <div 
-        ref={headerRef} 
-        className="fixed top-0 left-0 right-0 z-50 bg-white"
-      >
+      <div ref={headerRef} className="fixed top-0 left-0 right-0 z-50 bg-white">
         <ProductHeader
           onCloseClick={handleBackClick}
           onShareClick={handleShareClick}
@@ -304,55 +220,43 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         />
       </div>
 
-      {/* Seller Info Section - Only on products tab */}
-      {isProductsTab && (
-        <div 
-          ref={sellerInfoRef} 
-          className="w-full bg-black text-white relative"
-          style={{ 
-            marginTop: `${headerHeight}px`,
-          }}
-        >
-          <SellerInfoSection
-            sellerData={sellerData}
-            sellerLoading={sellerLoading}
-            getSellerLogoUrl={getSellerLogoUrl}
-            onBecomeSeller={handleBecomeSeller}
-            onBack={handleBackClick}
-            isOwnProfile={isOwnProfile}
-            showActionButtons={showActionButtons}
-          />
-        </div>
-      )}
+      {/* Content starts below header */}
+      <div className="pt-16"> {/* This matches the header height */}
+        
+        {/* Seller Info Section - Only on products tab */}
+        {isProductsTab && (
+          <div className="w-full bg-black text-white">
+            <SellerInfoSection
+              sellerData={sellerData}
+              sellerLoading={sellerLoading}
+              getSellerLogoUrl={getSellerLogoUrl}
+              onBecomeSeller={handleBecomeSeller}
+              onBack={handleBackClick}
+              isOwnProfile={isOwnProfile}
+              showActionButtons={showActionButtons}
+            />
+          </div>
+        )}
 
-      {/* Tabs Container - Critical for sticky behavior */}
-      <div 
-        ref={tabsContainerRef}
-        className="bg-white"
-        style={{ 
-          // Reserve space to prevent content jump when tabs become sticky
-          height: isTabsSticky ? `${tabsHeight}px` : 'auto',
-          // Add proper top spacing based on current layout
-          marginTop: isProductsTab ? '0px' : `${headerHeight}px`
-        }}
-      >
-        {/* Tabs Navigation - Becomes sticky at the right moment */}
-        <nav
+        {/* Sticky Sentinel - invisible element that triggers stickiness */}
+        {isProductsTab && (
+          <div 
+            ref={stickySentinelRef}
+            className="h-0 absolute"
+            style={{ 
+              top: isProductsTab ? 'calc(16rem + 4rem)' : '4rem' // Adjust based on your content height
+            }}
+          />
+        )}
+
+        {/* Tabs Navigation */}
+        <div
           ref={tabsRef}
           className={`bg-white transition-all duration-200 ${
-            isTabsSticky ? 'shadow-sm border-b border-gray-200' : ''
+            isTabsSticky 
+              ? 'fixed top-16 left-0 right-0 z-40 shadow-sm border-b border-gray-200' 
+              : 'relative'
           }`}
-          style={isTabsSticky ? {
-            position: 'fixed',
-            top: `${headerHeight}px`, // Stick right below header
-            left: 0,
-            right: 0,
-            zIndex: 40,
-            // Smooth appearance
-            animation: 'fadeInDown 0.2s ease-out'
-          } : {
-            position: 'relative'
-          }}
         >
           <TabsNavigation 
             tabs={tabs}
@@ -361,46 +265,26 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
             showTopBorder={false}
             variant="underline"
           />
-        </nav>
-      </div>
+        </div>
 
-      {/* Main Content */}
-      <div 
-        className="bg-white"
-        style={{
-          // Add padding only when needed to prevent content being hidden behind sticky elements
-          paddingTop: isTabsSticky ? `${tabsHeight}px` : '0px'
-        }}
-      >
-        {React.Children.map(children, child => {
-          if (React.isValidElement(child)) {
-            if (activeTab !== 'products') {
+        {/* Main Content */}
+        <div className={isTabsSticky ? 'pt-12' : ''}> {/* Add padding when tabs are sticky */}
+          {React.Children.map(children, child => {
+            if (React.isValidElement(child)) {
+              if (activeTab !== 'products') {
+                return React.cloneElement(child, { 
+                  products, 
+                  isLoading: productsLoading || sellerLoading
+                } as any);
+              }
               return React.cloneElement(child, { 
-                products, 
-                isLoading: productsLoading || sellerLoading
+                isLoading: sellerLoading
               } as any);
             }
-            return React.cloneElement(child, { 
-              isLoading: sellerLoading
-            } as any);
-          }
-          return child;
-        })}
+            return child;
+          })}
+        </div>
       </div>
-
-      {/* Add CSS for smooth animation */}
-      <style jsx>{`
-        @keyframes fadeInDown {
-          from {
-            opacity: 0;
-            transform: translateY(-8px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
     </div>
   );
 };
