@@ -343,8 +343,10 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
       {/* Main Content */}
       <div 
-        style={!isProductsTab ? {
+        style={!isProductsTab && headerHeight > 0 && tabsHeight > 0 ? {
           paddingTop: `${headerHeight + tabsHeight}px`
+        } : !isProductsTab ? {
+          paddingTop: '120px' // Fallback while measuring
         } : undefined}
       >
         {React.Children.map(children, child => {
