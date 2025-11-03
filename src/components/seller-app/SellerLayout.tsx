@@ -268,7 +268,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       {/* HEADER */}
       <div 
         ref={headerRef} 
-        className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm transition-all duration-300"
+        className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
       >
         <ProductHeader
           onCloseClick={handleBackClick}
