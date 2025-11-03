@@ -1,4 +1,4 @@
-// SellerLayout.tsx - WITH FLAWLESS STICKY ANIMATION
+// SellerLayout.tsx - WITH INSTANT STICKY BEHAVIOR
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
@@ -206,7 +206,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }
   ];
 
-  // ===== FLAWLESS STICKY IMPLEMENTATION =====
+  // ===== INSTANT STICKY IMPLEMENTATION =====
 
   // 1. Measure ALL heights using ResizeObserver
   useLayoutEffect(() => {
@@ -247,28 +247,39 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }
   }, [isProductsTab]);
 
-  // 3. FLAWLESS STICKY LOGIC: Use scroll listener for reliable detection
+  // 3. INSTANT STICKY LOGIC: RequestAnimationFrame for buttery smooth performance
   useEffect(() => {
-    const handleScroll = () => {
+    let ticking = false;
+
+    const updateStickyState = () => {
       if (!tabsContainerRef.current) return;
       
       const tabsRect = tabsContainerRef.current.getBoundingClientRect();
-      // Sticky when tabs top reaches header bottom (viewport top + headerHeight)
       const shouldBeSticky = tabsRect.top <= headerHeight;
       
-      setIsTabsSticky(shouldBeSticky);
+      if (shouldBeSticky !== isTabsSticky) {
+        setIsTabsSticky(shouldBeSticky);
+      }
+      ticking = false;
     };
 
-    // Add scroll listener
+    const handleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(updateStickyState);
+        ticking = true;
+      }
+    };
+
+    // Add scroll listener with passive for maximum performance
     window.addEventListener('scroll', handleScroll, { passive: true });
     
     // Initial check
-    handleScroll();
+    updateStickyState();
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [headerHeight]);
+  }, [headerHeight, isTabsSticky]);
 
   // Handle redirects
   useEffect(() => {
@@ -286,7 +297,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       {/* Fixed Header */}
       <div 
         ref={headerRef} 
-        className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm transition-all duration-300"
+        className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm"
       >
         <ProductHeader
           onCloseClick={handleBackClick}
@@ -318,62 +329,40 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         </div>
       )}
 
-      {/* FLAWLESS STICKY TABS - DUAL RENDER APPROACH */}
+      {/* INSTANT STICKY TABS - SINGLE INSTANCE APPROACH */}
       <div 
         ref={tabsContainerRef}
         style={{ 
-          height: isTabsSticky ? `${tabsHeight}px` : 'auto',
-          transition: 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+          height: isTabsSticky ? `${tabsHeight}px` : 'auto'
         }}
       >
-        {/* Always render both versions for seamless transition */}
-        <div className="relative">
-          {/* Static Tabs (visible when not sticky) */}
-          <div
-            ref={tabsRef}
-            className={`transition-all duration-300 ${
-              isTabsSticky 
-                ? 'opacity-0 transform -translate-y-2 pointer-events-none' 
-                : 'opacity-100 transform translate-y-0'
-            }`}
-            style={{
-              position: 'relative',
-              zIndex: 30
-            }}
-          >
-            <TabsNavigation 
-              tabs={tabs}
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
-              showTopBorder={false}
-              variant="underline"
-            />
-          </div>
-
-          {/* Fixed Tabs (visible when sticky) */}
-          <div
-            className={`transition-all duration-300 ${
-              isTabsSticky 
-                ? 'opacity-100 transform translate-y-0' 
-                : 'opacity-0 transform translate-y-2 pointer-events-none'
-            }`}
-            style={{
+        {/* Single tabs instance that switches position instantly */}
+        <div
+          ref={tabsRef}
+          className={`transition-colors duration-200 ${
+            isTabsSticky ? 'bg-white shadow-sm' : 'bg-transparent'
+          }`}
+          style={
+            isTabsSticky ? {
               position: 'fixed',
               top: `${headerHeight}px`,
               left: 0,
               right: 0,
-              zIndex: 40
-            }}
-          >
-            <TabsNavigation 
-              tabs={tabs}
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
-              showTopBorder={true}
-              variant="underline"
-              className="bg-white shadow-sm"
-            />
-          </div>
+              zIndex: 40,
+              // Instant position change, only animate background/shadow
+            } : {
+              position: 'relative',
+              zIndex: 30
+            }
+          }
+        >
+          <TabsNavigation 
+            tabs={tabs}
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            showTopBorder={isTabsSticky}
+            variant="underline"
+          />
         </div>
       </div>
 
