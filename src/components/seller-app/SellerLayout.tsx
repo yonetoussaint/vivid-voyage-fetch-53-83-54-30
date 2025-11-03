@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import {
+import { 
   Package, ShoppingCart, Users, BarChart3, DollarSign, Megaphone, Settings,
   Home, Share, MessageCircle, MessageSquare, Star, Heart
 } from 'lucide-react';
@@ -207,7 +207,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     if (isProductsTab) setIsTabsSticky(false);
   }, [isProductsTab]);
 
-  // ===== FLAWLESS STICKY HANDLER (stable unstick) =====
+  // ===== SLIDE-DOWN STICKY TABS WITH BOUNCE =====
   useEffect(() => {
     const tabsEl = tabsContainerRef.current;
     if (!tabsEl) return;
@@ -215,23 +215,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     let lastSticky = false;
     let lastScrollY = window.scrollY;
     let ticking = false;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        const shouldBeSticky = entry.boundingClientRect.top <= headerHeight;
-        if (shouldBeSticky !== lastSticky) {
-          setIsTabsSticky(shouldBeSticky);
-          lastSticky = shouldBeSticky;
-        }
-      },
-      {
-        root: null,
-        threshold: [0, 1],
-        rootMargin: `-${headerHeight}px 0px 0px 0px`,
-      }
-    );
-
-    observer.observe(tabsEl);
 
     const handleScroll = () => {
       if (!ticking) {
@@ -260,9 +243,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-
     return () => {
-      observer.disconnect();
       window.removeEventListener('scroll', handleScroll);
     };
   }, [headerHeight]);
@@ -285,8 +266,8 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   return (
     <div className="min-h-screen bg-white">
       {/* HEADER */}
-      <div
-        ref={headerRef}
+      <div 
+        ref={headerRef} 
         className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm transition-all duration-300"
       >
         <ProductHeader
@@ -299,10 +280,10 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
       {/* SELLER INFO */}
       {isProductsTab && (
-        <div
-          ref={sellerInfoRef}
+        <div 
+          ref={sellerInfoRef} 
           className="w-full bg-black text-white relative"
-          style={{
+          style={{ 
             marginTop: `-${headerHeight}px`,
             paddingTop: `${headerHeight}px`,
           }}
@@ -328,8 +309,8 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
           {/* Normal Tabs */}
           <div
             ref={tabsRef}
-            className={`transition-all duration-200 ease-out transform ${
-              isTabsSticky ? 'opacity-0 -translate-y-2' : 'opacity-100 translate-y-0'
+            className={`transition-transform duration-300 ease-out ${
+              isTabsSticky ? '-translate-y-6 opacity-0' : 'translate-y-0 opacity-100'
             }`}
             style={{ position: 'relative', zIndex: 30 }}
           >
@@ -342,15 +323,16 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
             />
           </div>
 
-          {/* Sticky Tabs */}
+          {/* Sticky Tabs with Slide-Down Bounce */}
           <div
-            className={`fixed left-0 right-0 transition-all duration-200 ease-out transform ${
-              isTabsSticky ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
+            className={`fixed left-0 right-0 z-40 bg-white shadow-sm transition-transform duration-500 ease-out ${
+              isTabsSticky
+                ? 'translate-y-0 opacity-100 animate-slideDownBounce'
+                : '-translate-y-full opacity-0'
             }`}
             style={{
               top: `${headerHeight}px`,
-              zIndex: 40,
-              willChange: 'opacity, transform',
+              willChange: 'transform, opacity',
             }}
           >
             <TabsNavigation
