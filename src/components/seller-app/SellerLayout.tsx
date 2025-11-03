@@ -342,7 +342,11 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       </div>
 
       {/* Main Content */}
-      <div>
+      <div 
+        style={!isProductsTab ? {
+          paddingTop: `${headerHeight + tabsHeight}px`
+        } : undefined}
+      >
         {React.Children.map(children, child => {
           if (React.isValidElement(child)) {
             if (activeTab !== 'products') {
