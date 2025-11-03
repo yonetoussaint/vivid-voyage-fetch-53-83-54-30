@@ -36,6 +36,7 @@ interface ProductHeaderProps {
   showCloseIcon?: boolean;
   onCloseClick?: () => void;
   actionButtons?: ActionButton[];
+  forceScrolledState?: boolean;
 }
 
 const ProductHeader: React.FC<ProductHeaderProps> = ({
@@ -55,9 +56,11 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
   showCloseIcon = false,
   onCloseClick,
   actionButtons = [],
+  forceScrolledState = false,
 }) => {
   const [isFavorite, setIsFavorite] = useState(false);
-  const { progress: displayProgress } = useScrollProgress();
+  const { progress: scrollProgress } = useScrollProgress();
+  const displayProgress = forceScrolledState ? 1 : scrollProgress;
   const [internalSearchQuery, setInternalSearchQuery] = useState('');
   const navigate = useNavigate();
   const { isLoading, startLoading } = useNavigationLoading();

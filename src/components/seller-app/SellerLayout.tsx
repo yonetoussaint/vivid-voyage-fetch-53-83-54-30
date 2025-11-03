@@ -285,6 +285,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
           onCloseClick={handleBackClick}
           onShareClick={handleShareClick}
           actionButtons={actionButtons}
+          forceScrolledState={!isProductsTab}
         />
       </div>
 
