@@ -1,4 +1,4 @@
-// ProductDetail.tsx - Merged version
+// ProductDetail.tsx - Simplified version
 import React, { useState, useRef, useEffect } from "react";
 import { Routes, Route, Navigate, useParams, useLocation, useNavigate } from "react-router-dom";
 import { useProduct } from "@/hooks/useProduct";
@@ -23,9 +23,6 @@ import ProductReviews from "@/components/product/tabs/ProductReviews";
 import StoreReviews from "@/components/product/tabs/StoreReviews";
 import ReviewsGallery from "@/components/product/tabs/ReviewsGallery";
 import ProductQnA from "@/components/product/tabs/ProductQnA";
-
-// Import hooks
-import { useProductDetailState } from './useProductDetailState';
 
 const DEFAULT_PRODUCT_ID = "aae97882-a3a1-4db5-b4f5-156705cd10ee";
 
@@ -54,7 +51,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   const { openAuthOverlay } = useAuthOverlay();
   const { startLoading } = useNavigationLoading();
 
-  // Use prop productId first, then param, then default - ensure it's never undefined
+  // Use prop productId first, then param, then default
   const productId = propProductId || paramId || DEFAULT_PRODUCT_ID;
   const { data: product, isLoading, error } = useProduct(productId);
 
@@ -63,69 +60,42 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   const topContentRef = useRef<HTMLDivElement>(null);
   const galleryRef = useRef<any>(null);
 
-  // State for description panel
-  const [isDescriptionPanelOpen, setIsDescriptionPanelOpen] = React.useState(false);
-
-  // Product detail state
-  const {
-    state,
-    refs,
-    handlers
-  } = useProductDetailState(product);
-
-  // States for header actions
+  // States
   const [isFavorite, setIsFavorite] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isDescriptionPanelOpen, setIsDescriptionPanelOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
 
   // Scroll to top when component mounts or productId changes
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [productId]);
 
-  // Tabs configuration
+  // Tabs configuration - SIMPLIFIED
   const tabs = [
     { id: 'overview', label: 'Overview' },
-    ...(product && (
-      ('variants' in product && Array.isArray((product as any).variants) && (product as any).variants.length > 0) ||
-      ('variant_names' in product && Array.isArray((product as any).variant_names) && (product as any).variant_names.length > 0)
-    ) ? [{ id: 'variants', label: 'Variants' }] : []),
     { id: 'reviews', label: 'Reviews' },
     { id: 'store-reviews', label: 'Store Reviews' },
     { id: 'reviews-gallery', label: 'Reviews Gallery' },
     { id: 'qna', label: 'Q&A' }
-  ].filter(tab => tab !== null);
+  ];
 
-  // ===== Tab Management =====
+  // ===== Tab Management (Like SellerLayout) =====
   const getCurrentTab = () => {
     const pathParts = location.pathname.split('/');
     const lastPart = pathParts[pathParts.length - 1];
-
-    // Check if the last part is a valid tab ID
     const validTab = tabs.find(tab => tab.id === lastPart);
-    if (validTab) {
-      return validTab.id;
-    }
-
-    // Default to overview if no valid tab found
-    return 'overview';
+    return validTab ? validTab.id : 'overview';
   };
 
   // Sync URL with active tab
   useEffect(() => {
     const currentTabFromURL = getCurrentTab();
-    if (currentTabFromURL !== state.activeTab) {
+    if (currentTabFromURL !== activeTab) {
       console.log('🔄 Syncing active tab from URL:', currentTabFromURL);
-      state.setActiveTab(currentTabFromURL);
+      setActiveTab(currentTabFromURL);
     }
   }, [location.pathname]);
-
-  // Ensure valid active tab
-  useEffect(() => {
-    if (!state.activeTab || !tabs.find(tab => tab.id === state.activeTab)) {
-      console.log('🔄 Setting default active tab: overview');
-      state.setActiveTab('overview');
-    }
-  }, [state.activeTab, tabs]);
 
   // Redirect to default tab if no tab in URL
   useEffect(() => {
@@ -133,50 +103,35 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     const pathParts = currentPath.split('/');
     const lastPart = pathParts[pathParts.length - 1];
 
-    // Check if we're at product root without a tab
     const isProductRoot = currentPath.match(/\/product\/[^/]+$/) || 
-                         currentPath.endsWith('/product/') ||
                          !tabs.find(tab => tab.id === lastPart);
 
     if (isProductRoot && productId) {
-      const basePath = currentPath.split('/').slice(0, -1).join('/');
-      const newPath = `${basePath}/${productId}/overview`;
+      const newPath = `/product/${productId}/overview`;
       console.log('🔄 Redirecting to default tab:', newPath);
       navigate(newPath, { replace: true });
     }
   }, [navigate, productId, tabs]);
 
-  // Sync active tab with gallery
-  useEffect(() => {
-    const syncActiveTab = () => {
-      if (galleryRef.current) {
-        const galleryActiveTab = galleryRef.current.getActiveTab?.();
-        if (galleryActiveTab && galleryActiveTab !== state.activeTab) {
-          console.log('🔄 Syncing active tab from gallery:', galleryActiveTab);
-          state.setActiveTab(galleryActiveTab);
-        }
-      }
-    };
+  // Tab change handler (Like SellerLayout)
+  const handleTabChange = (tabId: string) => {
+    console.log('🔄 Tab changed to:', tabId);
+    setActiveTab(tabId);
 
-    // Check initially
-    syncActiveTab();
+    // Update URL to reflect tab change
+    const basePath = window.location.pathname.split('/').slice(0, -1).join('/');
+    const newPath = `${basePath}/${tabId}`;
+    navigate(newPath);
 
-    // Set up interval to monitor tab changes
-    const interval = setInterval(syncActiveTab, 500);
-
-    return () => clearInterval(interval);
-  }, [galleryRef, state.activeTab, state.setActiveTab]);
-
-  const handleReadMore = () => {
-    setIsDescriptionPanelOpen(true);
+    // Scroll to top when changing tabs
+    window.scrollTo(0, 0);
   };
 
-  const handleCloseDescriptionPanel = () => {
-    setIsDescriptionPanelOpen(false);
-  };
-
-  // Header action handlers
+  // Event handlers
+  const handleReadMore = () => setIsDescriptionPanelOpen(true);
+  const handleCloseDescriptionPanel = () => setIsDescriptionPanelOpen(false);
   const handleBackClick = () => navigate(-1);
+  const handleFavoriteClick = () => setIsFavorite(!isFavorite);
 
   const handleShareClick = async () => {
     try {
@@ -203,8 +158,6 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     }
   };
 
-  const handleFavoriteClick = () => setIsFavorite(!isFavorite);
-
   const handleSearch = (query: string) => {
     if (query.trim()) {
       startLoading();
@@ -217,25 +170,20 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     navigate('/search');
   };
 
-  // Tab change handler
-  const handleTabChange = (tabId: string) => {
-    console.log('🔄 Tab changed to:', tabId);
-
-    // Update local state
-    state.setActiveTab(tabId);
-
-    // Update the gallery's active tab
-    if (galleryRef.current) {
-      galleryRef.current.setActiveTab(tabId);
+  const buyNow = async () => {
+    if (!user) {
+      openAuthOverlay();
+      return;
     }
 
-    // Update URL to reflect tab change
-    const basePath = window.location.pathname.split('/').slice(0, -1).join('/');
-    const newPath = `${basePath}/${tabId}`;
-    navigate(newPath);
+    const currentPrice = product?.discount_price || product?.price || 0;
+    const checkoutParams = new URLSearchParams({
+      productName: product?.name || "Product",
+      quantity: "1",
+      price: currentPrice.toString(),
+    });
 
-    // Scroll to top when changing tabs
-    window.scrollTo(0, 0);
+    navigate(`/product-checkout?${checkoutParams.toString()}`);
   };
 
   // Action buttons
@@ -254,27 +202,9 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     }
   ];
 
-  // Buy now function
-  const buyNow = async () => {
-    if (!user) {
-      openAuthOverlay();
-      return;
-    }
+  const isOverviewTab = activeTab === 'overview';
 
-    const currentPrice = product?.discount_price || product?.price || 0;
-    const checkoutParams = new URLSearchParams({
-      productName: product?.name || "Product",
-      quantity: "1",
-      price: currentPrice.toString(),
-    });
-
-    navigate(`/product-checkout?${checkoutParams.toString()}`);
-  };
-
-  // Get current active tab for proper rendering
-  const currentActiveTab = getCurrentTab();
-  const isOverviewTab = currentActiveTab === 'overview';
-
+  // Loading state
   if (isLoading) {
     return (
       <div className="animate-pulse p-4 space-y-6">
@@ -304,12 +234,6 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
           </div>
         </div>
 
-        {/* Action buttons skeleton */}
-        <div className="flex space-x-4">
-          <Skeleton className="h-12 flex-1" />
-          <Skeleton className="h-12 w-12" />
-        </div>
-
         {/* Tabs skeleton */}
         <div className="space-y-4">
           <div className="flex space-x-4">
@@ -317,26 +241,21 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
               <Skeleton key={i} className="h-8 w-20" />
             ))}
           </div>
-          <div className="space-y-2">
-            {[...Array(6)].map((_, i) => (
-              <Skeleton key={i} className="h-4 w-full" />
-            ))}
-          </div>
         </div>
       </div>
     );
   }
 
+  // Error state
   if (error || !product) {
     return <ProductDetailError />;
   }
 
-  // Header component
+  // ===== COMPONENT STRUCTURE (Like SellerLayout) =====
+
+  // Header component - Same pattern as SellerLayout
   const header = !hideHeader ? (
-    <div 
-      ref={headerRef} 
-      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
-    >
+    <div ref={headerRef} className="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
       <ProductHeader
         onCloseClick={handleBackClick}
         onShareClick={handleShareClick}
@@ -351,42 +270,24 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     </div>
   ) : null;
 
-  // Top content (Gallery Section)
+  // Top content - ONLY ProductImageGallery (Like SellerLayout's SellerInfoSection)
   const topContent = (
-    <div 
-      ref={topContentRef}
-      className="w-full bg-white"
-    >
-      {/* ProductImageGallery directly integrated */}
-      <div 
-        className="relative z-0 w-full bg-transparent" 
-        onClick={() => { if (state.focusMode) state.setFocusMode(false); }}
-      >
-        <ProductImageGallery 
-          ref={galleryRef}
-          images={state.displayImages.length > 0 ? state.displayImages : ["/placeholder.svg"]}
-          videos={product?.product_videos || []}
-          model3dUrl={product?.model_3d_url}
-          focusMode={state.focusMode}
-          onFocusModeChange={state.setFocusMode}
-          seller={product?.sellers}
-          product={product}
-          onSellerClick={() => {
-            if (product?.sellers?.id) {
-              navigate(`/seller/${product?.sellers?.id}`);
-            }
-          }}
-          onProductDetailsClick={() => state.setProductDetailsSheetOpen(true)}
-          onImageIndexChange={(currentIndex, totalItems) => {
-            state.setCurrentImageIndex(currentIndex);
-            state.setTotalImages(totalItems);
-          }}
-          onVariantImageChange={handlers.handleVariantImageSelection}
-          activeTab={state.activeTab}
-          onBuyNow={buyNow}
-          onReadMore={onReadMore}
-        />
-      </div>
+    <div ref={topContentRef} className="w-full bg-white">
+      <ProductImageGallery 
+        ref={galleryRef}
+        images={product?.images?.length > 0 ? product.images : ["/placeholder.svg"]}
+        videos={product?.product_videos || []}
+        model3dUrl={product?.model_3d_url}
+        seller={product?.sellers}
+        product={product}
+        onSellerClick={() => {
+          if (product?.sellers?.id) {
+            navigate(`/seller/${product?.sellers?.id}`);
+          }
+        }}
+        onBuyNow={buyNow}
+        onReadMore={handleReadMore}
+      />
     </div>
   );
 
@@ -401,16 +302,12 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
         <Route path="/qna" element={<ProductQnA product={product} />} />
         <Route path="/overview" element={<ProductOverview product={product} />} />
         <Route path="/" element={<ProductOverview product={product} />} />
-        {/* Catch-all route for any unmatched paths */}
         <Route path="*" element={<Navigate to={`/product/${productId}/overview`} replace />} />
       </Routes>
     </div>
   );
 
-  console.log('🎯 ProductDetail rendering with activeTab:', state.activeTab);
-  console.log('🎯 Current tab from URL:', currentActiveTab);
-  console.log('🎯 Tabs configuration:', tabs);
-  console.log('🎯 Is overview tab:', isOverviewTab);
+  console.log('🎯 ProductDetail rendering with activeTab:', activeTab);
 
   return (
     <>
@@ -420,7 +317,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
         topContent={topContent}
         topContentRef={topContentRef}
         tabs={tabs}
-        activeTab={state.activeTab}
+        activeTab={activeTab}
         onTabChange={handleTabChange}
         isProductsTab={isOverviewTab}
         showTopBorder={false}
@@ -434,7 +331,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
         {enhancedChildren}
       </StickyTabsLayout>
 
-      {/* SlideUpPanel at the root level */}
+      {/* SlideUpPanel for description */}
       <SlideUpPanel
         isOpen={isDescriptionPanelOpen}
         onClose={handleCloseDescriptionPanel}
@@ -461,12 +358,6 @@ const ProductDetail: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [location.pathname]);
 
-  console.log('🔍 ProductDetail routing debug:', {
-    location: location.pathname,
-    params: { id },
-    fullPath: location.pathname
-  });
-
   // If no ID is found in params, use the default
   const productId = id || DEFAULT_PRODUCT_ID;
 
@@ -479,7 +370,6 @@ const ProductDetail: React.FC = () => {
       <Route path="/store-reviews" element={<ProductDetailContent />} />
       <Route path="/reviews-gallery" element={<ProductDetailContent />} />
       <Route path="/qna" element={<ProductDetailContent />} />
-      {/* Catch-all route */}
       <Route path="*" element={<Navigate to={`/product/${productId}/overview`} replace />} />
     </Routes>
   );
