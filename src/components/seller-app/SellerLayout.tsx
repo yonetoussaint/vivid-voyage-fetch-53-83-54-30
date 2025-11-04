@@ -129,20 +129,20 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       ];  
 
   const handleTabChange = (tabId: string) => {  
-  const item = navigationItems.find(nav => nav.id === tabId);  
-  if (item) {
-    // Scroll to top when changing tabs to ensure proper layout
-    window.scrollTo(0, 0);
-    
-    // If switching to products tab, ensure tabs are not sticky
-    if (tabId === 'products') {
-      setIsTabsSticky(false);
-    }
-    
-    navigate(item.href);
-  }  
-};  
+    const item = navigationItems.find(nav => nav.id === tabId);  
+    if (item) {
+      // If switching to products tab, scroll to top and reset sticky state
+      if (tabId === 'products') {
+        setIsTabsSticky(false);
+        // Use smooth scroll with a slight delay to ensure state updates first
+        setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 0);
+      }
 
+      navigate(item.href);
+    }  
+  };
 
   const tabs = navigationItems.map(item => ({  
     id: item.id,  
@@ -232,7 +232,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
           lastScrollY = currentY;
 
           const buffer = 4;
-          
+
           // If we're not on products tab, always make tabs sticky regardless of scroll
           if (!isProductsTab) {
             if (!lastSticky) {
@@ -268,15 +268,16 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   }, [headerHeight, isProductsTab]);
 
   // ===== HANDLE TAB SWITCH =====
-  // ===== HANDLE TAB SWITCH =====
-useEffect(() => {
-  // When switching to non-products tabs, make tabs sticky immediately
-  if (!isProductsTab) {
-    setIsTabsSticky(true);
-  }
-  // Don't automatically set to false when switching to products tab
-  // Let the scroll behavior handle it
-}, [isProductsTab]);
+  useEffect(() => {
+    if (!isProductsTab) {
+      // When switching to non-products tabs, make tabs sticky immediately
+      setIsTabsSticky(true);
+    } else {
+      // When switching back to products tab, reset to non-sticky and scroll to top
+      setIsTabsSticky(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [isProductsTab]);
 
   // ===== REDIRECT HANDLER =====  
   useEffect(() => {  
