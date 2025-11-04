@@ -16,7 +16,7 @@ import StickyTabsLayout from '@/components/layout/StickyTabsLayout';
 import ProductHeader from '@/components/product/ProductHeader';
 import { useNavigationLoading } from '@/hooks/useNavigationLoading';
 import { GalleryThumbnails } from '@/components/product/GalleryThumbnails';
-import GalleryTabsContent from './GalleryTabsContent';
+import GalleryTabsContent from '@/components/product/gallery/GalleryTabsContent';
 
 interface ProductDetailLayoutProps {
   product: any;
