@@ -1,5 +1,4 @@
-// In GalleryTabsContent.tsx - Remove GalleryThumbnails
-
+// GalleryTabsContent.tsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IPhoneXRListing } from '@/components/product/iPhoneXRListing';
@@ -87,8 +86,6 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
     <div className="mt-2 w-full">
       {activeTab === 'overview' && (
         <div className="space-y-3">
-          {/* GalleryThumbnails removed - now in ProductDetailLayout */}
-
           <IPhoneXRListing
             product={product}
             onReadMore={onReadMore}
@@ -126,8 +123,6 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
 
       {activeTab === 'variants' && (
         <div className="space-y-3">
-          {/* GalleryThumbnails removed - now in ProductDetailLayout */}
-
           <IPhoneXRListing
             product={product}
             onReadMore={onReadMore}
