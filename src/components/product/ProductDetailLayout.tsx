@@ -1,3 +1,5 @@
+// In ProductDetailLayout.tsx - Updated version
+
 import React, { useState, useRef, useLayoutEffect, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -16,6 +18,19 @@ import ProductHeader from '@/components/product/ProductHeader';
 import { useNavigationLoading } from '@/hooks/useNavigationLoading';
 import { GalleryThumbnails } from '@/components/product/GalleryThumbnails';
 
+// Import GalleryTabsContent and its dependencies
+import { IPhoneXRListing } from '@/components/product/iPhoneXRListing';
+import CustomerReviewsEnhanced from '@/components/product/CustomerReviewsEnhanced';
+import ProductQA from '@/components/product/ProductQA';
+import ShippingOptionsComponent from '@/components/product/ShippingOptionsComponent';
+import SearchInfoComponent from '@/components/product/SearchInfoComponent';
+import ReviewGallery from '@/components/product/ReviewGallery';
+import BookGenreFlashDeals from '@/components/home/BookGenreFlashDeals';
+import StickyCheckoutBar from '@/components/product/StickyCheckoutBar';
+import ProductSectionWrapper from '@/components/product/ProductSectionWrapper';
+import ProductSpecifications from '@/components/product/ProductSpecifications';
+import { useProduct } from '@/hooks/useProduct';
+
 interface ProductDetailLayoutProps {
   product: any;
   productId: string;
@@ -26,6 +41,182 @@ interface ProductDetailLayoutProps {
   stickyTopOffset?: number;
   children?: React.ReactNode;
 }
+
+// GalleryTabsContent component moved here
+interface GalleryTabsContentProps {
+  activeTab: string;
+  totalItems: number;
+  galleryItems: any[];
+  currentIndex: number;
+  isPlaying: boolean;
+  videoIndices: number[];
+  productId?: string;
+  product?: any;
+  onThumbnailClick: (index: number) => void;
+  onImageSelect: (imageUrl: string, variantName: string) => void;
+  onConfigurationChange: (configData: any) => void;
+  onBuyNow?: () => void;
+  onReadMore?: () => void;
+}
+
+const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
+  activeTab,
+  totalItems,
+  galleryItems,
+  currentIndex,
+  isPlaying,
+  videoIndices,
+  productId,
+  product,
+  onThumbnailClick,
+  onImageSelect,
+  onConfigurationChange,
+  onBuyNow,
+  onReadMore
+}) => {
+  const navigate = useNavigate();
+  const [isDescriptionPanelOpen, setIsDescriptionPanelOpen] = useState(false);
+  const [selectedColorIndex, setSelectedColorIndex] = useState(0);
+
+  // Fetch product data for variants
+  const { data: productData } = useProduct(productId || '');
+
+  const handleViewCart = () => {
+    navigate('/cart');
+  };
+
+  const handleReadMore = () => {
+    setIsDescriptionPanelOpen(true);
+  };
+
+  // Only show tabs when there's more than 1 item OR when there's a 3D model
+  if (!(totalItems > 1 || galleryItems.some(item => item.type === 'model3d'))) {
+    return null;
+  }
+
+  // Determine thumbnails data based on active tab
+  const isVariantsTab = activeTab === 'variants';
+
+  const handleThumbnailClick = (index: number) => {
+    if (isVariantsTab && productData?.variant_names) {
+      setSelectedColorIndex(index);
+      const variant = productData.variant_names[index];
+      if (variant?.mainImage || variant?.image) {
+        onImageSelect(variant.mainImage || variant.image, variant.name);
+      }
+    } else {
+      onThumbnailClick(index);
+    }
+  };
+
+  return (
+    <div className="mt-2 w-full">
+      {activeTab === 'overview' && (
+        <div className="space-y-3">
+          <IPhoneXRListing
+            product={product}
+            onReadMore={onReadMore}
+          />
+
+          {productId && (
+            <SearchInfoComponent productId={productId} />
+          )}
+
+          <ProductSpecifications productId={productId} />
+
+          <BookGenreFlashDeals
+            className="overflow-hidden"
+            title="Related Products"
+            showSectionHeader={false}
+            showFilters={false}
+            showSummary={false}
+          />
+
+          {/* StickyCheckoutBar - conditions removed */}
+          <StickyCheckoutBar
+            product={product}
+            onBuyNow={onBuyNow}
+            onViewCart={handleViewCart}
+            selectedColor=""
+            selectedStorage=""
+            selectedNetwork=""
+            selectedCondition=""
+            className=""
+            onImageSelect={onImageSelect}
+            onConfigurationChange={onConfigurationChange}
+          />
+        </div>
+      )}
+
+      {activeTab === 'variants' && (
+        <div className="space-y-3">
+          <IPhoneXRListing
+            product={product}
+            onReadMore={onReadMore}
+          />
+
+          {productId && (
+            <SearchInfoComponent productId={productId} />
+          )}
+
+          <ProductSpecifications productId={productId} />
+
+          <BookGenreFlashDeals
+            className="overflow-hidden"
+            title="Related Products"
+            showSectionHeader={false}
+            showFilters={false}
+            showSummary={false}
+          />
+
+          {/* StickyCheckoutBar - added to variants tab */}
+          <StickyCheckoutBar
+            product={product}
+            onBuyNow={onBuyNow}
+            onViewCart={handleViewCart}
+            selectedColor=""
+            selectedStorage=""
+            selectedNetwork=""
+            selectedCondition=""
+            className=""
+            onImageSelect={onImageSelect}
+            onConfigurationChange={onConfigurationChange}
+          />
+        </div>
+      )}
+
+      {activeTab === 'reviews' && (
+          <CustomerReviewsEnhanced productId={productId || ''} limit={10} />
+      )}
+
+      {activeTab === 'qna' && (
+        <ProductSectionWrapper>
+          <ProductQA/>
+        </ProductSectionWrapper>
+      )}
+
+      {activeTab === 'store-reviews' && (
+        <ProductSectionWrapper>
+          <div className="text-center py-8 text-muted-foreground">
+            Store Reviews content coming soon
+          </div>
+        </ProductSectionWrapper>
+      )}
+
+      {activeTab === 'reviews-gallery' && (
+        <ProductSectionWrapper>
+          <ReviewGallery 
+            title="Reviews Gallery"
+            showViewMore={false}
+            customClass="reviews-gallery-grid"
+          />
+        </ProductSectionWrapper>
+      )}
+
+      {/* SlideUpPanel for Full Description */}
+    </div>
+  );
+};
 
 const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
   product,
@@ -60,6 +251,11 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
   // State for GalleryThumbnails
   const [selectedColorIndex, setSelectedColorIndex] = useState(0);
 
+  // Gallery state for GalleryTabsContent
+  const [galleryItems, setGalleryItems] = useState<any[]>([]);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [videoIndices, setVideoIndices] = useState<number[]>([]);
+
   // Sync active tab with gallery
   useEffect(() => {
     const syncActiveTab = () => {
@@ -80,6 +276,14 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
 
     return () => clearInterval(interval);
   }, [refs.galleryRef, state.activeTab, state.setActiveTab]);
+
+  // Initialize gallery items
+  useEffect(() => {
+    if (state.displayImages.length > 0) {
+      const items = state.displayImages.map(src => ({ type: 'image' as const, src }));
+      setGalleryItems(items);
+    }
+  }, [state.displayImages]);
 
   // Header action handlers
   const handleBackClick = () => navigate(-1);
@@ -193,7 +397,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
 
   // Prepare data for GalleryThumbnails - FIXED LOGIC
   const isVariantsTab = state.activeTab === 'variants';
-  
+
   // Debug logging
   console.log('🔍 GalleryThumbnails Debug:');
   console.log('activeTab:', state.activeTab);
@@ -201,13 +405,13 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
   console.log('displayImages length:', state.displayImages.length);
   console.log('isVariantsTab:', isVariantsTab);
   console.log('product.variant_names:', product?.variant_names);
-  
+
   const hasVariants = isVariantsTab && product?.variant_names && 
     Array.isArray(product.variant_names) && 
     product.variant_names.length > 0;
-  
+
   console.log('hasVariants:', hasVariants);
-  
+
   const thumbnailImages = hasVariants
     ? product.variant_names.map((vn: any) => vn.mainImage || vn.image || '').filter(Boolean)
     : state.displayImages;
@@ -227,7 +431,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
 
   const shouldRenderThumbnails = thumbnailImages.length > 0 && 
     (thumbnailImages.length > 1 || hasVariants);
-  
+
   console.log('shouldRenderThumbnails:', shouldRenderThumbnails);
   console.log('thumbnailImages length:', thumbnailImages.length);
 
@@ -251,7 +455,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     </div>
   ) : null;
 
-  // Top content (Gallery Section + GalleryThumbnails) - FIXED: Render on all tabs
+  // Top content (Gallery Section + GalleryThumbnails + GalleryTabsContent) - UPDATED
   const topContent = (
     <div 
       ref={topContentRef}
@@ -292,6 +496,23 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
           />
         </div>
       )}
+
+      {/* GalleryTabsContent - MOVED HERE from ProductImageGallery */}
+      <GalleryTabsContent
+        activeTab={state.activeTab}
+        totalItems={state.displayImages.length}
+        galleryItems={galleryItems}
+        currentIndex={state.currentImageIndex}
+        isPlaying={isPlaying}
+        videoIndices={videoIndices}
+        productId={productId}
+        product={product}
+        onThumbnailClick={handleThumbnailClick}
+        onImageSelect={handleVariantImageSelect}
+        onConfigurationChange={handlers.handleConfigurationChange}
+        onBuyNow={buyNow}
+        onReadMore={onReadMore}
+      />
     </div>
   );
 
@@ -364,4 +585,3 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
 };
 
 export default ProductDetailLayout;
-
