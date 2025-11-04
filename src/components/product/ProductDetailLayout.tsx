@@ -18,13 +18,14 @@ import ProductVariantManager from './ProductVariantManager';
 import ProductStickyComponents from './ProductStickyComponents';
 import ProductNameDisplay from './ProductNameDisplay';
 import PriceInfo from './PriceInfo';
+import StickyTabsLayout from '@/components/layout/StickyTabsLayout';
 
 interface ProductDetailLayoutProps {
   product: any;
   productId: string;
   hideHeader?: boolean;
   inPanel?: boolean;
-  onReadMore?: () => void; // Add this
+  onReadMore?: () => void;
   scrollContainerRef?: React.RefObject<HTMLDivElement>;
   stickyTopOffset?: number;
 }
@@ -36,7 +37,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
   inPanel = false,
   scrollContainerRef,
   stickyTopOffset,
-  onReadMore // Destructure it here
+  onReadMore
 }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -141,61 +142,148 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     navigate(`/product-checkout?${checkoutParams.toString()}`);
   };
 
-  return (
-    <div className="flex flex-col min-h-0 bg-white overscroll-none pb-20" ref={refs.contentRef}>
-      {/* Header Section - Conditionally rendered */}
-      {!hideHeader && (
-        <ProductHeaderSection
-          ref={refs.headerRef}
-          activeSection={state.activeSection}
-          onTabChange={handlers.scrollToSection}
-          focusMode={state.focusMode}
-          showHeaderInFocus={state.showHeaderInFocus}
-          onProductDetailsClick={() => state.setProductDetailsSheetOpen(true)}
-          currentImageIndex={state.currentImageIndex}
-          totalImages={state.totalImages}
-          onShareClick={() => state.setSharePanelOpen(true)}
+  // Header component
+  const header = !hideHeader ? (
+    <ProductHeaderSection
+      ref={refs.headerRef}
+      activeSection={state.activeSection}
+      onTabChange={handlers.scrollToSection}
+      focusMode={state.focusMode}
+      showHeaderInFocus={state.showHeaderInFocus}
+      onProductDetailsClick={() => state.setProductDetailsSheetOpen(true)}
+      currentImageIndex={state.currentImageIndex}
+      totalImages={state.totalImages}
+      onShareClick={() => state.setSharePanelOpen(true)}
+    />
+  ) : null;
+
+  // Top content (Gallery Section)
+  const topContent = (
+    <ProductGallerySection
+      ref={refs.overviewRef}
+      galleryRef={refs.galleryRef}
+      displayImages={state.displayImages}
+      product={product}
+      focusMode={state.focusMode}
+      onFocusModeChange={state.setFocusMode}
+      onProductDetailsClick={() => state.setProductDetailsSheetOpen(true)}
+      onImageIndexChange={(currentIndex, totalItems) => {
+        state.setCurrentImageIndex(currentIndex);
+        state.setTotalImages(totalItems);
+      }}
+      onVariantImageChange={handlers.handleVariantImageSelection}
+      onSellerClick={() => {
+        console.log('🔍 Seller click - seller data:', product?.sellers);
+        console.log('🔍 Seller ID:', product?.sellers?.id);
+        if (product?.sellers?.id) {
+          navigate(`/seller/${product?.sellers?.id}`);
+        } else {
+          console.error('❌ No seller ID found');
+        }
+      }}
+      onReadMore={onReadMore}
+    />
+  );
+
+  // Tabs configuration
+  const tabs = [
+    { id: 'overview', label: 'Overview' },
+    ...(product && (
+      ('variants' in product && Array.isArray((product as any).variants) && (product as any).variants.length > 0) ||
+      ('variant_names' in product && Array.isArray((product as any).variant_names) && (product as any).variant_names.length > 0)
+    ) ? [{ id: 'variants', label: 'Variants' }] : []),
+    { id: 'reviews', label: 'Reviews' },
+    { id: 'store-reviews', label: 'Store Reviews' },
+    { id: 'reviews-gallery', label: 'Reviews Gallery' },
+    { id: 'qna', label: 'Q&A' }
+  ];
+
+  // Enhanced children with additional props
+  const enhancedChildren = React.Children.map(children, child => {
+    if (React.isValidElement(child)) {
+      // Add any additional props needed for children
+      return React.cloneElement(child, {
+        // Add product-specific props if needed
+      } as any);
+    }
+    return child;
+  });
+
+  // For panel mode, use the existing StickyTabsNavigation
+  if (inPanel) {
+    return (
+      <div className="flex flex-col min-h-0 bg-white overscroll-none pb-20" ref={refs.contentRef}>
+        {header}
+        {topContent}
+        
+        {/* Use existing StickyTabsNavigation for panel mode */}
+        <StickyTabsNavigation
+          headerHeight={state.headerHeight}
+          galleryRef={refs.galleryRef}
+          inPanel={inPanel}
+          scrollContainerRef={scrollContainerRef}
+          stickyTopOffset={stickyTopOffset}
         />
-      )}
 
-      {/* Image Gallery Section - PASS onReadMore HERE */}
-      <ProductGallerySection
-        ref={refs.overviewRef}
-        galleryRef={refs.galleryRef}
-        displayImages={state.displayImages}
-        product={product}
-        focusMode={state.focusMode}
-        onFocusModeChange={state.setFocusMode}
-        onProductDetailsClick={() => state.setProductDetailsSheetOpen(true)}
-        onImageIndexChange={(currentIndex, totalItems) => {
-          state.setCurrentImageIndex(currentIndex);
-          state.setTotalImages(totalItems);
-        }}
-        onVariantImageChange={handlers.handleVariantImageSelection}
-        onSellerClick={() => {
-          console.log('🔍 Seller click - seller data:', product?.sellers);
-          console.log('🔍 Seller ID:', product?.sellers?.id);
-          if (product?.sellers?.id) {
-            navigate(`/seller/${product?.sellers?.id}`);
-          } else {
-            console.error('❌ No seller ID found');
-          }
-        }}
-        onReadMore={onReadMore} // ADD THIS LINE
-      />
+        {/* Main content */}
+        {enhancedChildren}
 
-      {/* Sticky Tabs Navigation - Moved back to main layout */}
-      <StickyTabsNavigation
-        headerHeight={state.headerHeight}
-        galleryRef={refs.galleryRef}
-        inPanel={inPanel}
-        scrollContainerRef={scrollContainerRef}
-        stickyTopOffset={stickyTopOffset}
-      />
+        {/* Scroll Management */}
+        <ProductScrollManager
+          focusMode={state.focusMode}
+          setFocusMode={state.setFocusMode}
+          setShowHeaderInFocus={state.setShowHeaderInFocus}
+          setShowStickyRecommendations={state.setShowStickyRecommendations}
+          setActiveSection={state.setActiveSection}
+          setActiveTab={state.setActiveTab}
+          headerRef={refs.headerRef}
+          setHeaderHeight={state.setHeaderHeight}
+          overviewRef={refs.overviewRef}
+          descriptionRef={descriptionRef}
+          verticalRecommendationsRef={refs.verticalRecommendationsRef}
+        />
 
-      {/* Main Content Sections - Removed ProductContentSections component */}
+        {/* Variant Management */}
+        <ProductVariantManager
+          product={product}
+          displayImages={state.displayImages}
+          setDisplayImages={state.setDisplayImages}
+          setCurrentImageIndex={state.setCurrentImageIndex}
+        />
 
-      {/* Related Products Section - Moved to recommendations tab */}
+        {/* Sticky Components */}
+        <ProductStickyComponents
+          product={product}
+          onBuyNow={buyNow}
+          sharePanelOpen={state.sharePanelOpen}
+          setSharePanelOpen={state.setSharePanelOpen}
+          activeTab={state.activeTab}
+        />
+      </div>
+    );
+  }
+
+  // Use reusable StickyTabsLayout for regular mode
+  return (
+    <StickyTabsLayout
+      header={header}
+      headerRef={refs.headerRef}
+      topContent={topContent}
+      topContentRef={refs.overviewRef}
+      tabs={tabs}
+      activeTab={state.activeTab}
+      onTabChange={state.setActiveTab}
+      isProductsTab={true}
+      showTopBorder={false}
+      variant="underline"
+      stickyBuffer={4}
+      alwaysStickyForNonProducts={true}
+      inPanel={inPanel}
+      scrollContainerRef={scrollContainerRef}
+      stickyTopOffset={stickyTopOffset}
+    >
+      {/* Enhanced children */}
+      {enhancedChildren}
 
       {/* Scroll Management */}
       <ProductScrollManager
@@ -228,7 +316,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
         setSharePanelOpen={state.setSharePanelOpen}
         activeTab={state.activeTab}
       />
-    </div>
+    </StickyTabsLayout>
   );
 };
 
