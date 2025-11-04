@@ -40,7 +40,6 @@ interface GenreFlashDealsProps {
   passCountdownToHeader?: boolean;
   showVerifiedSellers?: boolean;
   verifiedSellersText?: string;
-  // Add mode prop to control which header to show
   summaryMode?: 'inventory' | 'reviews' | 'products';
 }
 
@@ -71,7 +70,7 @@ export default function BookGenreFlashDeals({
   showCountdown,
   showVerifiedSellers = false,
   verifiedSellersText = "Verified Sellers",
-  summaryMode = 'products', // Default to products mode
+  summaryMode = 'products',
 }: GenreFlashDealsProps) {
   const [displayCount, setDisplayCount] = useState(8);
 
@@ -144,12 +143,18 @@ export default function BookGenreFlashDeals({
     enabled: !externalProducts,
   });
 
-  // Determine which products to use and filter by sellerId if provided
+  // Debug logs to see what's happening
+  console.log('🔍 BookGenreFlashDeals Debug:');
+  console.log('External products provided:', externalProducts?.length || 0);
+  console.log('Fetched products count:', fetchedProducts.length);
+  console.log('All products loading:', allProductsLoading);
+
+  // Determine which products to use
   let allProducts = externalProducts || fetchedProducts || [];
-  if (sellerId && !externalProducts) {
-    allProducts = allProducts.filter(product => product.seller_id === sellerId);
-  }
-  const isLoading = allProductsLoading;
+  
+  console.log('Total products to display:', allProducts.length);
+
+  const isLoading = allProductsLoading && !externalProducts;
 
   const [timeLeft, setTimeLeft] = useState({
     hours: 0,
@@ -283,6 +288,7 @@ export default function BookGenreFlashDeals({
       }
     }
 
+    console.log('✅ Processed products count:', products.length);
     return products;
   }, [allProducts, selectedFilters, showFilters]);
 
@@ -333,7 +339,7 @@ export default function BookGenreFlashDeals({
           totalProducts: summaryStats.totalProducts,
           activeProducts: summaryStats.inStock,
           categories: summaryStats.categories,
-          averagePrice: `$${(summaryStats.totalValue / summaryStats.totalProducts).toFixed(2)}`,
+          averagePrice: summaryStats.totalProducts > 0 ? `$${(summaryStats.totalValue / summaryStats.totalProducts).toFixed(2)}` : '$0.00',
           metrics: [
             { value: summaryStats.outOfStock.toString(), label: 'Out of Stock', color: 'text-red-600' },
             { value: summaryStats.categories.toString(), label: 'Categories', color: 'text-purple-600' },
@@ -474,6 +480,15 @@ export default function BookGenreFlashDeals({
                 </div>
               ))}
             </div>
+
+            {/* Show "Load More" indicator if there are more products */}
+            {displayCount < processedProducts.length && (
+              <div className="text-center py-4">
+                <div className="text-sm text-gray-500">
+                  Scroll down to load more products...
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-center py-12 text-gray-500">
