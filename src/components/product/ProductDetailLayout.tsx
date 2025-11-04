@@ -1,5 +1,3 @@
-// In ProductDetailLayout.tsx - Add GalleryThumbnails import and move the logic
-
 import React, { useState, useRef, useLayoutEffect, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -16,7 +14,7 @@ import ProductStickyComponents from './ProductStickyComponents';
 import StickyTabsLayout from '@/components/layout/StickyTabsLayout';
 import ProductHeader from '@/components/product/ProductHeader';
 import { useNavigationLoading } from '@/hooks/useNavigationLoading';
-import { GalleryThumbnails } from '@/components/product/GalleryThumbnails'; // Add this import
+import { GalleryThumbnails } from '@/components/product/GalleryThumbnails';
 
 interface ProductDetailLayoutProps {
   product: any;
@@ -45,7 +43,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
 
   // Refs
   const headerRef = useRef<HTMLDivElement>(null);
-  const [headerHeight, setHeaderHeight] = useState(0);
+  const topContentRef = useRef<HTMLDivElement>(null);
 
   const {
     state,
@@ -59,19 +57,6 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
 
   // State for GalleryThumbnails
   const [selectedColorIndex, setSelectedColorIndex] = useState(0);
-
-  // Measure header height
-  useLayoutEffect(() => {
-    const updateHeaderHeight = () => {
-      if (headerRef.current) setHeaderHeight(headerRef.current.offsetHeight || 0);
-    };
-
-    updateHeaderHeight();
-    const resizeObserver = new ResizeObserver(updateHeaderHeight);
-    if (headerRef.current) resizeObserver.observe(headerRef.current);
-
-    return () => resizeObserver.disconnect();
-  }, []);
 
   // Sync active tab with gallery
   useEffect(() => {
@@ -147,8 +132,6 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     } else {
       // For overview tab or other tabs
       if (refs.galleryRef.current) {
-        // You might need to add a method to the gallery ref to handle thumbnail clicks
-        // For now, we'll update the current image index in state
         state.setCurrentImageIndex(index);
       }
     }
@@ -201,6 +184,9 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
 
     // Update local state
     state.setActiveTab(tabId);
+    
+    // Scroll to top when changing tabs (same behavior as SellerLayout)
+    window.scrollTo(0, 0);
   };
 
   // Prepare data for GalleryThumbnails
@@ -222,11 +208,11 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
 
   const currentThumbnailIndex = isVariantsTab ? selectedColorIndex : state.currentImageIndex;
 
-  // Header component
+  // Header component - Same pattern as SellerLayout
   const header = !hideHeader ? (
     <div 
       ref={headerRef} 
-      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-white"
+      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
     >
       <ProductHeader
         onCloseClick={handleBackClick}
@@ -242,14 +228,11 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     </div>
   ) : null;
 
-  // Top content (Gallery Section + GalleryThumbnails)
-  const topContent = (
+  // Top content (Gallery Section + GalleryThumbnails) - Same pattern as SellerLayout
+  const topContent = state.activeTab === 'overview' ? (
     <div 
-      className="w-full relative bg-white"
-      style={{ 
-        marginTop: `-${headerHeight}px`,
-        paddingTop: `${headerHeight}px`,
-      }}
+      ref={topContentRef}
+      className="w-full bg-white"
     >
       <ProductGallerySection
         ref={refs.overviewRef}
@@ -271,23 +254,23 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
         }}
         onReadMore={onReadMore}
       />
-      
-      {/* GalleryThumbnails moved here */}
+
+      {/* GalleryThumbnails - Rendered after gallery section, before tabs */}
       {(state.displayImages.length > 1 || (isVariantsTab && product?.variant_names)) && (
         <div className="mt-2 px-4">
           <GalleryThumbnails
             images={thumbnailImages}
             currentIndex={currentThumbnailIndex}
             onThumbnailClick={handleThumbnailClick}
-            isPlaying={false} // You might need to track video playing state
-            videoIndices={[]} // You might need to track video indices
+            isPlaying={false}
+            videoIndices={[]}
             galleryItems={thumbnailGalleryItems}
             variantNames={variantNames}
           />
         </div>
       )}
     </div>
-  );
+  ) : undefined;
 
   // Tabs configuration
   const tabs = [
@@ -302,8 +285,16 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     { id: 'qna', label: 'Q&A' }
   ];
 
-  // Main content
-  const mainContent = (
+  // Enhanced children with additional props - Same pattern as SellerLayout
+  const enhancedChildren = React.Children.map(children, child => {
+    if (React.isValidElement(child)) {
+      return React.cloneElement(child, {
+        product,
+        isLoading: false // Add your loading state here if needed
+      } as any);
+    }
+    return child;
+  }) || (
     <div className="bg-white">
       <ProductVariantManager
         product={product}
@@ -325,12 +316,13 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
   console.log('🎯 ProductDetailLayout rendering with activeTab:', state.activeTab);
   console.log('🎯 Tabs configuration:', tabs);
 
-  // Use StickyTabsLayout with proper tab synchronization
+  // Use StickyTabsLayout with the same implementation pattern as SellerLayout
   return (
     <StickyTabsLayout
       header={header}
       headerRef={headerRef}
       topContent={topContent}
+      topContentRef={topContentRef}
       tabs={tabs}
       activeTab={state.activeTab}
       onTabChange={handleTabChange}
@@ -343,7 +335,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
       scrollContainerRef={scrollContainerRef}
       stickyTopOffset={stickyTopOffset}
     >
-      {mainContent}
+      {enhancedChildren}
     </StickyTabsLayout>
   );
 };
