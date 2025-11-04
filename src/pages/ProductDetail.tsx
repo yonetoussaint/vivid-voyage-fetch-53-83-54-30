@@ -49,7 +49,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   const { openAuthOverlay } = useAuthOverlay();
   const { startLoading } = useNavigationLoading();
 
-  // ✅ FIX: Use prop productId first, then param, but NEVER fallback to default
+  // Use prop productId first, then param
   const productId = propProductId || paramId;
   
   console.log('🔍 Product ID debug:', { propProductId, paramId, finalProductId: productId });
@@ -89,18 +89,20 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     return validTab ? validTab.id : 'overview';
   };
 
-  // Sync URL with active tab
+  // Sync URL with active tab - only if we're not in a panel
   useEffect(() => {
+    if (inPanel) return; // Don't sync URL in panel mode
+    
     const currentTabFromURL = getCurrentTab();
     if (currentTabFromURL !== activeTab) {
       console.log('🔄 Syncing active tab from URL:', currentTabFromURL);
       setActiveTab(currentTabFromURL);
     }
-  }, [location.pathname]);
+  }, [location.pathname, inPanel]);
 
-  // Redirect to default tab if no tab in URL
+  // Redirect to default tab if no tab in URL - only if we're not in a panel
   useEffect(() => {
-    if (!productId) return;
+    if (inPanel || !productId) return;
 
     const currentPath = window.location.pathname;
     const pathParts = currentPath.split('/');
@@ -114,14 +116,14 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
       console.log('🔄 Redirecting to default tab:', newPath);
       navigate(newPath, { replace: true });
     }
-  }, [navigate, productId, tabs]);
+  }, [navigate, productId, tabs, inPanel]);
 
   // Tab change handler
   const handleTabChange = (tabId: string) => {
     console.log('🔄 Tab changed to:', tabId);
     setActiveTab(tabId);
 
-    if (!productId) return;
+    if (!productId || inPanel) return; // Don't navigate in panel mode
 
     // Update URL to reflect tab change
     const newPath = `/product/${productId}/${tabId}`;
@@ -208,7 +210,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
 
   const isOverviewTab = activeTab === 'overview';
 
-  // ✅ FIX: Show error if no productId
+  // Show error if no productId
   if (!productId) {
     return <ProductDetailError message="Product ID is missing" />;
   }
@@ -320,6 +322,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
 
   console.log('🎯 ProductDetail rendering with product:', product?.name);
   console.log('🎯 Active tab:', activeTab);
+  console.log('🎯 In panel mode:', inPanel);
 
   return (
     <>
@@ -330,7 +333,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
         topContentRef={topContentRef}
         tabs={tabs}
         activeTab={activeTab}
-        onTabChange={handleTabChange}
+        onTabChange={inPanel ? setActiveTab : handleTabChange} // Simplified tab change in panel
         isProductsTab={isOverviewTab}
         showTopBorder={false}
         variant="underline"
@@ -361,7 +364,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   );
 };
 
-// Main wrapper component with routing - FIXED
+// Main wrapper component with routing
 const ProductDetail: React.FC = () => {
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
@@ -376,14 +379,13 @@ const ProductDetail: React.FC = () => {
     params: { id }
   });
 
-  // ✅ FIX: If no ID, show error instead of using default product
+  // If no ID, show error
   if (!id) {
     return <ProductDetailError message="Product not found" />;
   }
 
   return (
     <Routes>
-      {/* ✅ FIX: Correct route structure */}
       <Route path="/product/:id">
         <Route path=":tab" element={<ProductDetailContent />} />
         <Route path="" element={<Navigate to={`/product/${id}/overview`} replace />} />
