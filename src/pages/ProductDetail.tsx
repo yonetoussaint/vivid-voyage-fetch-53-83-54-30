@@ -1,4 +1,4 @@
-// ProductDetail.tsx - Simplified version
+// ProductDetail.tsx - Only show gallery on overview tab
 import React, { useState, useRef, useEffect } from "react";
 import { Routes, Route, Navigate, useParams, useLocation, useNavigate } from "react-router-dom";
 import { useProduct } from "@/hooks/useProduct";
@@ -71,7 +71,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     window.scrollTo(0, 0);
   }, [productId]);
 
-  // Tabs configuration - SIMPLIFIED
+  // Tabs configuration
   const tabs = [
     { id: 'overview', label: 'Overview' },
     { id: 'reviews', label: 'Reviews' },
@@ -270,8 +270,8 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     </div>
   ) : null;
 
-  // Top content - ONLY ProductImageGallery (Like SellerLayout's SellerInfoSection)
-  const topContent = (
+  // Top content - ONLY ProductImageGallery on overview tab (Like SellerLayout's SellerInfoSection only on products tab)
+  const topContent = isOverviewTab ? (
     <div ref={topContentRef} className="w-full bg-white">
       <ProductImageGallery 
         ref={galleryRef}
@@ -289,7 +289,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
         onReadMore={handleReadMore}
       />
     </div>
-  );
+  ) : undefined;
 
   // Enhanced children with tab content routing
   const enhancedChildren = (
@@ -308,6 +308,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   );
 
   console.log('🎯 ProductDetail rendering with activeTab:', activeTab);
+  console.log('🎯 Is overview tab (showing gallery):', isOverviewTab);
 
   return (
     <>
