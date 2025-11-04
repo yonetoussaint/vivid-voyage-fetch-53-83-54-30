@@ -111,11 +111,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
         inPanel={inPanel}
         scrollContainerRef={scrollContainerRef}
         stickyTopOffset={stickyTopOffset}
-        onReadMore={handleReadMore} // Pass handler to layout
-      >
-        {/* Empty children - ProductDetailLayout handles all content internally */}
-        {/* If you need to pass additional content, add it here */}
-      </ProductDetailLayout>
+        onReadMore={handleReadMore}
+      />
 
       {/* SlideUpPanel at the root level */}
       <SlideUpPanel
