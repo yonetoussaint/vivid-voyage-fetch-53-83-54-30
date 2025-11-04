@@ -9,7 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchAllProducts } from '@/integrations/supabase/products';  
 import { useAuth } from '@/contexts/auth/AuthContext';  
 import { supabase } from '@/integrations/supabase/client';  
-import TabsNavigation from '@/components/home/TabsNavigation';  
+import TabsNavigation, { TabsNavigationRef } from '@/components/home/TabsNavigation';  
 import SellerInfoSection from './SellerInfoSection';  
 import ProductHeader from '@/components/product/ProductHeader';  
 
@@ -40,8 +40,9 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const headerRef = useRef<HTMLDivElement>(null);  
   const sellerInfoRef = useRef<HTMLDivElement>(null);  
   const tabsContainerRef = useRef<HTMLDivElement>(null);  
-  const tabsRef = useRef<HTMLDivElement>(null);
-  const stickyTabsRef = useRef<HTMLDivElement>(null);  
+  const tabsRef = useRef<HTMLDivElement>(null);  
+  const normalTabsNavigationRef = useRef<TabsNavigationRef>(null); // Ref for normal TabsNavigation
+  const stickyTabsNavigationRef = useRef<TabsNavigationRef>(null); // Ref for sticky TabsNavigation
 
   // States  
   const [isTabsSticky, setIsTabsSticky] = useState(false);  
@@ -132,33 +133,28 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const handleTabChange = (tabId: string) => {  
     const item = navigationItems.find(nav => nav.id === tabId);  
     if (item) {
-      // If switching to products tab, scroll to top and reset sticky state
+      // Scroll to top when changing tabs to ensure proper layout
+      window.scrollTo(0, 0);
+      
+      // If switching to products tab, ensure tabs are not sticky and reset normal tabs scroll
       if (tabId === 'products') {
         setIsTabsSticky(false);
-        
-        // Reset horizontal scroll position of both tab navigation bars
-        if (tabsRef.current) {
-          const scrollContainer = tabsRef.current.querySelector('[data-tabs-scroll]');
-          if (scrollContainer) {
-            scrollContainer.scrollLeft = 0;
-          }
+        // Reset scroll position of normal tabs
+        if (normalTabsNavigationRef.current) {
+          normalTabsNavigationRef.current.resetScroll();
         }
-        if (stickyTabsRef.current) {
-          const scrollContainer = stickyTabsRef.current.querySelector('[data-tabs-scroll]');
-          if (scrollContainer) {
-            scrollContainer.scrollLeft = 0;
-          }
+      } else {
+        // For other tabs, make tabs sticky
+        setIsTabsSticky(true);
+        // Also reset sticky tabs scroll when switching to non-products tabs
+        if (stickyTabsNavigationRef.current) {
+          stickyTabsNavigationRef.current.resetScroll();
         }
-        
-        // Scroll page to top with a slight delay to ensure state updates first
-        setTimeout(() => {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }, 0);
       }
-
+      
       navigate(item.href);
     }  
-  };
+  };  
 
   const tabs = navigationItems.map(item => ({  
     id: item.id,  
@@ -248,7 +244,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
           lastScrollY = currentY;
 
           const buffer = 4;
-
+          
           // If we're not on products tab, always make tabs sticky regardless of scroll
           if (!isProductsTab) {
             if (!lastSticky) {
@@ -285,29 +281,12 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
   // ===== HANDLE TAB SWITCH =====
   useEffect(() => {
+    // When switching to non-products tabs, make tabs sticky immediately
     if (!isProductsTab) {
-      // When switching to non-products tabs, make tabs sticky immediately
       setIsTabsSticky(true);
-    } else {
-      // When switching back to products tab, reset to non-sticky and scroll to top
-      setIsTabsSticky(false);
-      
-      // Reset horizontal scroll position of tabs navigation
-      if (tabsRef.current) {
-        const scrollContainer = tabsRef.current.querySelector('[data-tabs-scroll]');
-        if (scrollContainer) {
-          scrollContainer.scrollLeft = 0;
-        }
-      }
-      if (stickyTabsRef.current) {
-        const scrollContainer = stickyTabsRef.current.querySelector('[data-tabs-scroll]');
-        if (scrollContainer) {
-          scrollContainer.scrollLeft = 0;
-        }
-      }
-      
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+    // Don't automatically set to false when switching to products tab
+    // Let the scroll behavior handle it
   }, [isProductsTab]);
 
   // ===== REDIRECT HANDLER =====  
@@ -377,6 +356,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
             style={{ position: 'relative', zIndex: 30 }}  
           >  
             <TabsNavigation  
+              ref={normalTabsNavigationRef}
               tabs={tabs}  
               activeTab={activeTab}  
               onTabChange={handleTabChange}  
@@ -386,8 +366,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
           </div>  
 
           {/* Sticky Tabs with Slide-Down Bounce */}  
-          <div
-            ref={stickyTabsRef}
+          <div  
             className={`fixed left-0 right-0 z-40 bg-white shadow-sm transition-transform duration-500 ease-out ${  
               isTabsSticky  
                 ? 'translate-y-0 opacity-100 animate-slideDownBounce'  
@@ -399,6 +378,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
             }}  
           >  
             <TabsNavigation  
+              ref={stickyTabsNavigationRef}
               tabs={tabs}  
               activeTab={activeTab}  
               onTabChange={handleTabChange}  
