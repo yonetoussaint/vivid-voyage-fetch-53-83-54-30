@@ -40,7 +40,8 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const headerRef = useRef<HTMLDivElement>(null);  
   const sellerInfoRef = useRef<HTMLDivElement>(null);  
   const tabsContainerRef = useRef<HTMLDivElement>(null);  
-  const tabsRef = useRef<HTMLDivElement>(null);  
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const stickyTabsRef = useRef<HTMLDivElement>(null);  
 
   // States  
   const [isTabsSticky, setIsTabsSticky] = useState(false);  
@@ -134,7 +135,22 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       // If switching to products tab, scroll to top and reset sticky state
       if (tabId === 'products') {
         setIsTabsSticky(false);
-        // Use smooth scroll with a slight delay to ensure state updates first
+        
+        // Reset horizontal scroll position of both tab navigation bars
+        if (tabsRef.current) {
+          const scrollContainer = tabsRef.current.querySelector('[data-tabs-scroll]');
+          if (scrollContainer) {
+            scrollContainer.scrollLeft = 0;
+          }
+        }
+        if (stickyTabsRef.current) {
+          const scrollContainer = stickyTabsRef.current.querySelector('[data-tabs-scroll]');
+          if (scrollContainer) {
+            scrollContainer.scrollLeft = 0;
+          }
+        }
+        
+        // Scroll page to top with a slight delay to ensure state updates first
         setTimeout(() => {
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }, 0);
@@ -275,6 +291,21 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     } else {
       // When switching back to products tab, reset to non-sticky and scroll to top
       setIsTabsSticky(false);
+      
+      // Reset horizontal scroll position of tabs navigation
+      if (tabsRef.current) {
+        const scrollContainer = tabsRef.current.querySelector('[data-tabs-scroll]');
+        if (scrollContainer) {
+          scrollContainer.scrollLeft = 0;
+        }
+      }
+      if (stickyTabsRef.current) {
+        const scrollContainer = stickyTabsRef.current.querySelector('[data-tabs-scroll]');
+        if (scrollContainer) {
+          scrollContainer.scrollLeft = 0;
+        }
+      }
+      
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [isProductsTab]);
@@ -355,7 +386,8 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
           </div>  
 
           {/* Sticky Tabs with Slide-Down Bounce */}  
-          <div  
+          <div
+            ref={stickyTabsRef}
             className={`fixed left-0 right-0 z-40 bg-white shadow-sm transition-transform duration-500 ease-out ${  
               isTabsSticky  
                 ? 'translate-y-0 opacity-100 animate-slideDownBounce'  
