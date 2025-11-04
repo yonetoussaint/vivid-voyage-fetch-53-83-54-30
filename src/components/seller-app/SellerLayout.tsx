@@ -12,7 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import TabsNavigation from '@/components/home/TabsNavigation';  
 import SellerInfoSection from './SellerInfoSection';  
 import ProductHeader from '@/components/product/ProductHeader';  
-  
+
 interface SellerLayoutProps {  
   children: React.ReactNode;  
   showActionButtons?: boolean;  
@@ -22,7 +22,7 @@ interface SellerLayoutProps {
   isPublicPage?: boolean;  
   isOwnProfile?: boolean;  
 }  
-  
+
 const SellerLayout: React.FC<SellerLayoutProps> = ({  
   children,  
   showActionButtons = true,  
@@ -35,23 +35,23 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const location = useLocation();  
   const navigate = useNavigate();  
   const isMobile = useIsMobile();  
-  
+
   // Refs  
   const headerRef = useRef<HTMLDivElement>(null);  
   const sellerInfoRef = useRef<HTMLDivElement>(null);  
   const tabsContainerRef = useRef<HTMLDivElement>(null);  
   const tabsRef = useRef<HTMLDivElement>(null);  
-  
+
   // States  
   const [isTabsSticky, setIsTabsSticky] = useState(false);  
   const [tabsHeight, setTabsHeight] = useState(0);  
   const [headerHeight, setHeaderHeight] = useState(0);  
   const [sellerInfoHeight, setSellerInfoHeight] = useState(0);  
   const [isFavorite, setIsFavorite] = useState(false);  
-  
+
   const handleBackClick = () => navigate('/profile');  
   const handleBecomeSeller = () => navigate('/seller-onboarding');  
-  
+
   const handleShareClick = () => {  
     if (navigator.share) {  
       navigator.share({  
@@ -63,12 +63,12 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       console.log('Link copied to clipboard');  
     }  
   };  
-  
+
   const handleFavoriteClick = () => setIsFavorite(!isFavorite);  
-  
+
   const isDashboard = location.pathname.includes('/seller-dashboard');  
   const isPickupStation = location.pathname.includes('/pickup-station');  
-  
+
   const getCurrentTab = () => {  
     if (isDashboard) {  
       const path = location.pathname.split('/seller-dashboard/')[1];  
@@ -82,22 +82,22 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       return 'products';  
     }  
   };  
-  
+
   const activeTab = getCurrentTab();  
   const isProductsTab = activeTab === 'products';  
-  
+
   // Fetch products  
   const { data: products = [], isLoading: productsLoading } = useQuery({  
     queryKey: ['products', 'all'],  
     queryFn: fetchAllProducts,  
   });  
-  
+
   const baseRoute = isDashboard  
     ? '/seller-dashboard'  
     : isPickupStation  
     ? '/pickup-station'  
     : `/seller/${location.pathname.split('/seller/')[1]?.split('/')[0] || ''}`;  
-  
+
   const navigationItems = isPickupStation  
     ? [  
         { id: 'overview', name: 'Overview', href: '/pickup-station/overview', icon: Home },  
@@ -127,19 +127,19 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         { id: 'qas', name: 'Q&As', href: `${baseRoute}/qas`, icon: MessageSquare },  
         { id: 'reviews', name: 'Reviews', href: `${baseRoute}/reviews`, icon: Star },  
       ];  
-  
+
   const handleTabChange = (tabId: string) => {  
     const item = navigationItems.find(nav => nav.id === tabId);  
     if (item) navigate(item.href);  
   };  
-  
+
   const tabs = navigationItems.map(item => ({  
     id: item.id,  
     label: item.name  
   }));  
-  
+
   const { user } = useAuth();  
-  
+
   const { data: privateSellerData, isLoading: privateSellerLoading } = useQuery({  
     queryKey: ['seller', user?.id],  
     queryFn: async () => {  
@@ -157,10 +157,10 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     },  
     enabled: !!user?.id && !isPublicPage,  
   });  
-  
+
   const sellerData = isPublicPage ? publicSellerData : privateSellerData;  
   const sellerLoading = isPublicPage ? publicSellerLoading : privateSellerLoading;  
-  
+
   const getSellerLogoUrl =  
     externalGetSellerLogoUrl ||  
     ((imagePath?: string): string => {  
@@ -169,7 +169,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       const { data } = supabase.storage.from('seller-logos').getPublicUrl(imagePath);  
       return data.publicUrl;  
     });  
-  
+
   const actionButtons = [  
     {  
       Icon: Heart,  
@@ -184,93 +184,100 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       active: false  
     }  
   ];  
-  
+
   // ===== MEASURE HEIGHTS =====  
   useLayoutEffect(() => {  
     const updateHeights = () => {  
       if (headerRef.current) setHeaderHeight(headerRef.current.offsetHeight || 0);  
-      if (isProductsTab && sellerInfoRef.current)  
-        setSellerInfoHeight(sellerInfoRef.current.offsetHeight || 0);  
+      if (sellerInfoRef.current) setSellerInfoHeight(sellerInfoRef.current.offsetHeight || 0);  
       if (tabsRef.current) setTabsHeight(tabsRef.current.offsetHeight || 0);  
     };  
-  
+
     updateHeights();  
     const resizeObserver = new ResizeObserver(updateHeights);  
     if (headerRef.current) resizeObserver.observe(headerRef.current);  
-    if (isProductsTab && sellerInfoRef.current) resizeObserver.observe(sellerInfoRef.current);  
+    if (sellerInfoRef.current) resizeObserver.observe(sellerInfoRef.current);  
     if (tabsRef.current) resizeObserver.observe(tabsRef.current);  
-  
+
     return () => resizeObserver.disconnect();  
   }, [isProductsTab]);  
-  
+
+  // ===== STICKY TABS BEHAVIOR =====  
   useEffect(() => {  
-    if (isProductsTab) setIsTabsSticky(false);  
-  }, [isProductsTab]);  
-  
-  // ===== SLIDE-DOWN STICKY TABS WITH BOUNCE =====  
-  // ===== STICKY TABS BEHAVIOR =====
-useEffect(() => {
-  const tabsEl = tabsContainerRef.current;
-  if (!tabsEl) return;
+    const tabsEl = tabsContainerRef.current;  
+    if (!tabsEl) return;  
 
-  let lastSticky = false;
-  let lastScrollY = window.scrollY;
-  let ticking = false;
+    let lastScrollY = window.scrollY;  
+    let ticking = false;  
 
-  const handleScroll = () => {
-    if (!ticking) {
-      requestAnimationFrame(() => {
-        const rect = tabsEl.getBoundingClientRect();
-        const currentY = window.scrollY;
-        const scrollingDown = currentY > lastScrollY;
-        lastScrollY = currentY;
+    const handleScroll = () => {  
+      if (!ticking) {  
+        requestAnimationFrame(() => {  
+          const rect = tabsEl.getBoundingClientRect();  
+          const currentY = window.scrollY;  
+          const scrollingDown = currentY > lastScrollY;  
+          lastScrollY = currentY;  
 
-        const buffer = 4;
-        
-        // If we're not on products tab, always make tabs sticky regardless of scroll
-        if (!isProductsTab) {
-          if (!lastSticky) {
-            setIsTabsSticky(true);
-            lastSticky = true;
-          }
-          ticking = false;
-          return;
-        }
+          const buffer = 4;  
+          
+          // If we're not on products tab, always make tabs sticky regardless of scroll  
+          if (!isProductsTab) {  
+            if (!isTabsSticky) {  
+              setIsTabsSticky(true);  
+            }  
+            ticking = false;  
+            return;  
+          }  
 
-        // Original behavior for products tab
-        const shouldBeSticky = rect.top <= headerHeight + buffer && scrollingDown;
-        const shouldUnstick = rect.top > headerHeight + buffer && !scrollingDown;
+          // For products tab, use the original scroll-based behavior  
+          const shouldBeSticky = rect.top <= headerHeight + buffer && scrollingDown;  
+          const shouldUnstick = rect.top > headerHeight + buffer && !scrollingDown;  
 
-        if (shouldBeSticky && !lastSticky) {
-          setIsTabsSticky(true);
-          lastSticky = true;
-        } else if (shouldUnstick && lastSticky) {
-          setIsTabsSticky(false);
-          lastSticky = false;
-        }
+          if (shouldBeSticky && !isTabsSticky) {  
+            setIsTabsSticky(true);  
+          } else if (shouldUnstick && isTabsSticky) {  
+            setIsTabsSticky(false);  
+          }  
 
-        ticking = false;
-      });
-      ticking = true;
-    }
-  };
+          ticking = false;  
+        });  
+        ticking = true;  
+      }  
+    };  
 
-  // Also check immediately when tab changes
-  if (!isProductsTab) {
-    setIsTabsSticky(true);
-    lastSticky = true;
-  } else {
-    // Reset to non-sticky when switching back to products tab
-    setIsTabsSticky(false);
-    lastSticky = false;
-  }
+    // Handle initial tab state  
+    if (!isProductsTab) {  
+      setIsTabsSticky(true);  
+    } else {  
+      // When on products tab, check if we should be sticky based on scroll position  
+      const rect = tabsEl.getBoundingClientRect();  
+      const shouldBeSticky = rect.top <= headerHeight;  
+      if (shouldBeSticky !== isTabsSticky) {  
+        setIsTabsSticky(shouldBeSticky);  
+      }  
+    }  
 
-  window.addEventListener('scroll', handleScroll, { passive: true });
-  return () => {
-    window.removeEventListener('scroll', handleScroll);
-  };
-}, [headerHeight, isProductsTab]); // Added isProductsTab dependency
-  
+    window.addEventListener('scroll', handleScroll, { passive: true });  
+    return () => {  
+      window.removeEventListener('scroll', handleScroll);  
+    };  
+  }, [headerHeight, isProductsTab, isTabsSticky]);  
+
+  // ===== HANDLE TAB SWITCH =====  
+  useEffect(() => {  
+    // When switching to non-products tabs, make tabs sticky immediately  
+    if (!isProductsTab) {  
+      setIsTabsSticky(true);  
+    } else {  
+      // When switching to products tab, ensure proper scroll position  
+      const scrollToTop = headerHeight + (sellerInfoRef.current?.offsetHeight || 0);  
+      if (window.scrollY > scrollToTop) {  
+        window.scrollTo({ top: scrollToTop, behavior: 'smooth' });  
+      }  
+      // Don't immediately set sticky to false - let the scroll handler handle it  
+    }  
+  }, [isProductsTab, headerHeight]);  
+
   // ===== REDIRECT HANDLER =====  
   useEffect(() => {  
     if (  
@@ -285,7 +292,7 @@ useEffect(() => {
       navigate('/pickup-station/overview', { replace: true });  
     }  
   }, [location.pathname, navigate]);  
-  
+
   return (  
     <div className="min-h-screen bg-white">  
       {/* HEADER */}  
@@ -300,7 +307,7 @@ useEffect(() => {
           forceScrolledState={!isProductsTab}  
         />  
       </div>  
-  
+
       {/* SELLER INFO */}  
       {isProductsTab && (  
         <div   
@@ -322,7 +329,7 @@ useEffect(() => {
           />  
         </div>  
       )}  
-  
+
       {/* STICKY TABS */}  
       <div  
         ref={tabsContainerRef}  
@@ -345,7 +352,7 @@ useEffect(() => {
               variant="underline"  
             />  
           </div>  
-  
+
           {/* Sticky Tabs with Slide-Down Bounce */}  
           <div  
             className={`fixed left-0 right-0 z-40 bg-white shadow-sm transition-transform duration-500 ease-out ${  
@@ -369,9 +376,11 @@ useEffect(() => {
           </div>  
         </div>  
       </div>  
-  
+
       {/* CONTENT */}  
-      <div style={{ paddingTop: !isProductsTab ? `${headerHeight}px` : '0px' }}>  
+      <div style={{ 
+        paddingTop: !isProductsTab ? `${headerHeight + tabsHeight}px` : '0px' 
+      }}>  
         {React.Children.map(children, child => {  
           if (React.isValidElement(child)) {  
             if (activeTab !== 'products') {  
@@ -388,5 +397,5 @@ useEffect(() => {
     </div>  
   );  
 };  
-  
+
 export default SellerLayout;  
