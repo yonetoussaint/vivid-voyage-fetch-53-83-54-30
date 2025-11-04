@@ -1,4 +1,4 @@
-// ProductDetail.tsx - Only show gallery on overview tab
+// ProductDetail.tsx - Fixed tab content rendering
 import React, { useState, useRef, useEffect } from "react";
 import { Routes, Route, Navigate, useParams, useLocation, useNavigate } from "react-router-dom";
 import { useProduct } from "@/hooks/useProduct";
@@ -251,6 +251,26 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     return <ProductDetailError />;
   }
 
+  // ===== RENDER TAB CONTENT BASED ON ACTIVE TAB =====
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'overview':
+        return <ProductOverview product={product} />;
+      case 'variants':
+        return <ProductVariants product={product} />;
+      case 'reviews':
+        return <ProductReviews product={product} />;
+      case 'store-reviews':
+        return <StoreReviews product={product} />;
+      case 'reviews-gallery':
+        return <ReviewsGallery product={product} />;
+      case 'qna':
+        return <ProductQnA product={product} />;
+      default:
+        return <ProductOverview product={product} />;
+    }
+  };
+
   // ===== COMPONENT STRUCTURE (Like SellerLayout) =====
 
   // Header component - Same pattern as SellerLayout
@@ -291,22 +311,6 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     </div>
   ) : undefined;
 
-  // Enhanced children with tab content routing
-  const enhancedChildren = (
-    <div className="product-tab-content">
-      <Routes>
-        <Route path="/variants" element={<ProductVariants product={product} />} />
-        <Route path="/reviews" element={<ProductReviews product={product} />} />
-        <Route path="/store-reviews" element={<StoreReviews product={product} />} />
-        <Route path="/reviews-gallery" element={<ReviewsGallery product={product} />} />
-        <Route path="/qna" element={<ProductQnA product={product} />} />
-        <Route path="/overview" element={<ProductOverview product={product} />} />
-        <Route path="/" element={<ProductOverview product={product} />} />
-        <Route path="*" element={<Navigate to={`/product/${productId}/overview`} replace />} />
-      </Routes>
-    </div>
-  );
-
   console.log('🎯 ProductDetail rendering with activeTab:', activeTab);
   console.log('🎯 Is overview tab (showing gallery):', isOverviewTab);
 
@@ -329,7 +333,8 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
         scrollContainerRef={scrollContainerRef}
         stickyTopOffset={stickyTopOffset}
       >
-        {enhancedChildren}
+        {/* Render the appropriate tab content */}
+        {renderTabContent()}
       </StickyTabsLayout>
 
       {/* SlideUpPanel for description */}
@@ -349,7 +354,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   );
 };
 
-// Main wrapper component with routing
+// Main wrapper component with routing - SIMPLIFIED
 const ProductDetail: React.FC = () => {
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
@@ -359,18 +364,18 @@ const ProductDetail: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [location.pathname]);
 
+  console.log('🔍 ProductDetail routing debug:', {
+    location: location.pathname,
+    params: { id }
+  });
+
   // If no ID is found in params, use the default
   const productId = id || DEFAULT_PRODUCT_ID;
 
   return (
     <Routes>
-      <Route path="/" element={<Navigate to={`/product/${productId}/overview`} replace />} />
-      <Route path="/overview" element={<ProductDetailContent />} />
-      <Route path="/variants" element={<ProductDetailContent />} />
-      <Route path="/reviews" element={<ProductDetailContent />} />
-      <Route path="/store-reviews" element={<ProductDetailContent />} />
-      <Route path="/reviews-gallery" element={<ProductDetailContent />} />
-      <Route path="/qna" element={<ProductDetailContent />} />
+      {/* Single route that handles all tabs */}
+      <Route path=":tab?" element={<ProductDetailContent />} />
       <Route path="*" element={<Navigate to={`/product/${productId}/overview`} replace />} />
     </Routes>
   );
