@@ -1,4 +1,4 @@
-// ProductDetail.tsx - Fixed tab content rendering
+// ProductDetail.tsx - Fixed version
 import React, { useState, useRef, useEffect } from "react";
 import { Routes, Route, Navigate, useParams, useLocation, useNavigate } from "react-router-dom";
 import { useProduct } from "@/hooks/useProduct";
@@ -24,7 +24,7 @@ import StoreReviews from "@/components/product/tabs/StoreReviews";
 import ReviewsGallery from "@/components/product/tabs/ReviewsGallery";
 import ProductQnA from "@/components/product/tabs/ProductQnA";
 
-const DEFAULT_PRODUCT_ID = "aae97882-a3a1-4db5-b4f5-156705cd10ee";
+// Remove DEFAULT_PRODUCT_ID - we don't want fallback to a specific product
 
 interface ProductDetailProps {
   productId?: string;
@@ -51,9 +51,12 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   const { openAuthOverlay } = useAuthOverlay();
   const { startLoading } = useNavigationLoading();
 
-  // Use prop productId first, then param, then default
-  const productId = propProductId || paramId || DEFAULT_PRODUCT_ID;
-  const { data: product, isLoading, error } = useProduct(productId);
+  // ✅ FIX: Use prop productId first, then param, but NEVER fallback to default
+  const productId = propProductId || paramId;
+  
+  console.log('🔍 Product ID debug:', { propProductId, paramId, finalProductId: productId });
+
+  const { data: product, isLoading, error } = useProduct(productId!);
 
   // Refs
   const headerRef = useRef<HTMLDivElement>(null);
@@ -80,7 +83,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     { id: 'qna', label: 'Q&A' }
   ];
 
-  // ===== Tab Management (Like SellerLayout) =====
+  // ===== Tab Management =====
   const getCurrentTab = () => {
     const pathParts = location.pathname.split('/');
     const lastPart = pathParts[pathParts.length - 1];
@@ -99,6 +102,8 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
 
   // Redirect to default tab if no tab in URL
   useEffect(() => {
+    if (!productId) return;
+
     const currentPath = window.location.pathname;
     const pathParts = currentPath.split('/');
     const lastPart = pathParts[pathParts.length - 1];
@@ -106,21 +111,22 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     const isProductRoot = currentPath.match(/\/product\/[^/]+$/) || 
                          !tabs.find(tab => tab.id === lastPart);
 
-    if (isProductRoot && productId) {
+    if (isProductRoot) {
       const newPath = `/product/${productId}/overview`;
       console.log('🔄 Redirecting to default tab:', newPath);
       navigate(newPath, { replace: true });
     }
   }, [navigate, productId, tabs]);
 
-  // Tab change handler (Like SellerLayout)
+  // Tab change handler
   const handleTabChange = (tabId: string) => {
     console.log('🔄 Tab changed to:', tabId);
     setActiveTab(tabId);
 
+    if (!productId) return;
+
     // Update URL to reflect tab change
-    const basePath = window.location.pathname.split('/').slice(0, -1).join('/');
-    const newPath = `${basePath}/${tabId}`;
+    const newPath = `/product/${productId}/${tabId}`;
     navigate(newPath);
 
     // Scroll to top when changing tabs
@@ -204,6 +210,11 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
 
   const isOverviewTab = activeTab === 'overview';
 
+  // ✅ FIX: Show error if no productId
+  if (!productId) {
+    return <ProductDetailError message="Product ID is missing" />;
+  }
+
   // Loading state
   if (isLoading) {
     return (
@@ -271,9 +282,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     }
   };
 
-  // ===== COMPONENT STRUCTURE (Like SellerLayout) =====
-
-  // Header component - Same pattern as SellerLayout
+  // Header component
   const header = !hideHeader ? (
     <div ref={headerRef} className="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
       <ProductHeader
@@ -290,7 +299,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     </div>
   ) : null;
 
-  // Top content - ONLY ProductImageGallery on overview tab (Like SellerLayout's SellerInfoSection only on products tab)
+  // Top content - ONLY ProductImageGallery on overview tab
   const topContent = isOverviewTab ? (
     <div ref={topContentRef} className="w-full bg-white">
       <ProductImageGallery 
@@ -311,8 +320,8 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     </div>
   ) : undefined;
 
-  console.log('🎯 ProductDetail rendering with activeTab:', activeTab);
-  console.log('🎯 Is overview tab (showing gallery):', isOverviewTab);
+  console.log('🎯 ProductDetail rendering with product:', product?.name);
+  console.log('🎯 Active tab:', activeTab);
 
   return (
     <>
@@ -354,7 +363,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   );
 };
 
-// Main wrapper component with routing - SIMPLIFIED
+// Main wrapper component with routing - FIXED
 const ProductDetail: React.FC = () => {
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
@@ -369,14 +378,18 @@ const ProductDetail: React.FC = () => {
     params: { id }
   });
 
-  // If no ID is found in params, use the default
-  const productId = id || DEFAULT_PRODUCT_ID;
+  // ✅ FIX: If no ID, show error instead of using default product
+  if (!id) {
+    return <ProductDetailError message="Product not found" />;
+  }
 
   return (
     <Routes>
-      {/* Single route that handles all tabs */}
-      <Route path=":tab?" element={<ProductDetailContent />} />
-      <Route path="*" element={<Navigate to={`/product/${productId}/overview`} replace />} />
+      {/* ✅ FIX: Correct route structure */}
+      <Route path="/product/:id">
+        <Route path=":tab" element={<ProductDetailContent />} />
+        <Route path="" element={<Navigate to={`/product/${id}/overview`} replace />} />
+      </Route>
     </Routes>
   );
 };
