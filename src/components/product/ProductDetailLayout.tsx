@@ -1,20 +1,21 @@
 // ProductDetailLayout.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/RedirectAuthContext';
 import { useAuthOverlay } from '@/context/AuthOverlayContext';
+import { Heart, Share } from 'lucide-react';
 
 import { useProductDetailState } from './useProductDetailState';
 
 // Import sub-components
-import ProductHeaderSection from './ProductHeaderSection';
 import ProductGallerySection from './ProductGallerySection';
-import StickyTabsNavigation from './StickyTabsNavigation';
 import ProductScrollManager from './ProductScrollManager';
 import ProductVariantManager from './ProductVariantManager';
 import ProductStickyComponents from './ProductStickyComponents';
 import StickyTabsLayout from '@/components/layout/StickyTabsLayout';
+import ProductHeader from '@/components/product/ProductHeader';
+import { useNavigationLoading } from '@/hooks/useNavigationLoading';
 
 interface ProductDetailLayoutProps {
   product: any;
@@ -39,12 +40,21 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
   const { toast } = useToast();
   const { user } = useAuth();
   const { openAuthOverlay } = useAuthOverlay();
+  const { startLoading } = useNavigationLoading();
+
+  // Refs - Same as SellerLayout structure
+  const headerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const {
     state,
     refs,
     handlers
   } = useProductDetailState(product);
+
+  // States for header actions - Same as SellerLayout pattern
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Get first variant values if variants exist and use them as defaults
   const hasVariants = product.variants && product.variants.length > 0;
@@ -95,12 +105,64 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
   const displayName = getVariantDisplayName();
   const displayPrice = firstVariant?.price !== undefined ? firstVariant.price : product.price;
 
-  // Create a modified product object with first variant values as defaults
-  const productWithDefaults = hasVariants ? {
-    ...product,
-    name: displayName,
-    price: displayPrice
-  } : product;
+  // Header action handlers - Same as SellerLayout pattern
+  const handleBackClick = () => navigate(-1);
+  
+  const handleShareClick = async () => {
+    try {
+      if (navigator.share && product) {
+        await navigator.share({
+          title: product.name,
+          text: product.description,
+          url: window.location.href,
+        });
+      } else {
+        // Fallback for browsers that don't support Web Share API
+        await navigator.clipboard.writeText(window.location.href);
+        toast({
+          title: "Link copied!",
+          description: "Product link has been copied to clipboard",
+        });
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+      toast({
+        title: "Share failed",
+        description: "Could not share the product",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleFavoriteClick = () => setIsFavorite(!isFavorite);
+
+  const handleSearch = (query: string) => {
+    if (query.trim()) {
+      startLoading();
+      navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+    }
+  };
+
+  const handleSearchFocus = () => {
+    startLoading();
+    navigate('/search');
+  };
+
+  // Action buttons - Same as SellerLayout pattern
+  const actionButtons = [
+    {
+      Icon: Heart,
+      onClick: handleFavoriteClick,
+      active: isFavorite,
+      activeColor: "#f43f5e",
+      count: product?.favorite_count || 0
+    },
+    {
+      Icon: Share,
+      onClick: handleShareClick,
+      active: false
+    }
+  ];
 
   // Buy now function
   const buyNow = async () => {
@@ -119,22 +181,27 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     navigate(`/product-checkout?${checkoutParams.toString()}`);
   };
 
-  // Header component
+  // Header component - Moved from ProductHeaderSection, same as SellerLayout structure
   const header = !hideHeader ? (
-    <ProductHeaderSection
-      ref={refs.headerRef}
-      activeSection={state.activeSection}
-      onTabChange={handlers.scrollToSection}
-      focusMode={state.focusMode}
-      showHeaderInFocus={state.showHeaderInFocus}
-      onProductDetailsClick={() => state.setProductDetailsSheetOpen(true)}
-      currentImageIndex={state.currentImageIndex}
-      totalImages={state.totalImages}
-      onShareClick={() => state.setSharePanelOpen(true)}
-    />
+    <div 
+      ref={headerRef} 
+      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+    >
+      <ProductHeader
+        onCloseClick={handleBackClick}
+        onShareClick={handleShareClick}
+        actionButtons={actionButtons}
+        forceScrolledState={!state.isProductsTab}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        onSearch={handleSearch}
+        onSearchFocus={handleSearchFocus}
+        inPanel={inPanel}
+      />
+    </div>
   ) : null;
 
-  // Top content (Gallery Section)
+  // Top content (Gallery Section) - Same as SellerLayout structure
   const topContent = (
     <ProductGallerySection
       ref={refs.overviewRef}
@@ -186,7 +253,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
         setShowStickyRecommendations={state.setShowStickyRecommendations}
         setActiveSection={state.setActiveSection}
         setActiveTab={state.setActiveTab}
-        headerRef={refs.headerRef}
+        headerRef={headerRef} // Use the local headerRef
         setHeaderHeight={state.setHeaderHeight}
         overviewRef={refs.overviewRef}
         verticalRecommendationsRef={refs.verticalRecommendationsRef}
@@ -211,33 +278,11 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     </>
   );
 
-  // For panel mode, use the existing StickyTabsNavigation (Same pattern as SellerLayout)
-  if (inPanel) {
-    return (
-      <div className="flex flex-col min-h-0 bg-white overscroll-none pb-20" ref={refs.contentRef}>
-        {header}
-        {topContent}
-        
-        {/* Use existing StickyTabsNavigation for panel mode */}
-        <StickyTabsNavigation
-          headerHeight={state.headerHeight}
-          galleryRef={refs.galleryRef}
-          inPanel={inPanel}
-          scrollContainerRef={scrollContainerRef}
-          stickyTopOffset={stickyTopOffset}
-        />
-
-        {/* Main content */}
-        {mainContent}
-      </div>
-    );
-  }
-
-  // Use reusable StickyTabsLayout for regular mode (Same pattern as SellerLayout)
+  // Use reusable StickyTabsLayout for both modes - Same as SellerLayout structure
   return (
     <StickyTabsLayout
       header={header}
-      headerRef={refs.headerRef}
+      headerRef={headerRef}
       topContent={topContent}
       topContentRef={refs.overviewRef}
       tabs={tabs}
