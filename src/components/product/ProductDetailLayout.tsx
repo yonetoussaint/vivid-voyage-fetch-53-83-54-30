@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/RedirectAuthContext';
 import { useAuthOverlay } from '@/context/AuthOverlayContext';
-import { useNavigationLoading } from '@/hooks/useNavigationLoading';
 
 import { useProductDetailState } from './useProductDetailState';
 
@@ -12,12 +11,9 @@ import { useProductDetailState } from './useProductDetailState';
 import ProductHeaderSection from './ProductHeaderSection';
 import ProductGallerySection from './ProductGallerySection';
 import StickyTabsNavigation from './StickyTabsNavigation';
-import ProductRelatedSection from './ProductRelatedSection';
 import ProductScrollManager from './ProductScrollManager';
 import ProductVariantManager from './ProductVariantManager';
 import ProductStickyComponents from './ProductStickyComponents';
-import ProductNameDisplay from './ProductNameDisplay';
-import PriceInfo from './PriceInfo';
 import StickyTabsLayout from '@/components/layout/StickyTabsLayout';
 
 interface ProductDetailLayoutProps {
@@ -50,9 +46,6 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     handlers
   } = useProductDetailState(product);
 
-  // Create a ref for description section
-  const descriptionRef = React.useRef<HTMLDivElement>(null);
-
   // Get first variant values if variants exist and use them as defaults
   const hasVariants = product.variants && product.variants.length > 0;
   const firstVariant = hasVariants ? product.variants[0] : null;
@@ -62,32 +55,19 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     if (!firstVariant) return product.name;
 
     const parts = [product.name];
+    if (firstVariant.name) parts.push(firstVariant.name);
 
-    // Add variant name (color)
-    if (firstVariant.name) {
-      parts.push(firstVariant.name);
-    }
-
-    // Add storage if available
     if (firstVariant.storageOptions && firstVariant.storageOptions.length > 0) {
       const firstStorage = firstVariant.storageOptions[0];
-      if (firstStorage.capacity) {
-        parts.push(firstStorage.capacity);
-      }
+      if (firstStorage.capacity) parts.push(firstStorage.capacity);
 
-      // Add network if available in storage
       if (firstStorage.networkOptions && firstStorage.networkOptions.length > 0) {
         const firstNetwork = firstStorage.networkOptions[0];
-        if (firstNetwork.name) {
-          parts.push(firstNetwork.name);
-        }
+        if (firstNetwork.name) parts.push(firstNetwork.name);
 
-        // Add condition if available in network
         if (firstNetwork.conditionOptions && firstNetwork.conditionOptions.length > 0) {
           const firstCondition = firstNetwork.conditionOptions[0];
-          if (firstCondition.name) {
-            parts.push(firstCondition.name);
-          }
+          if (firstCondition.name) parts.push(firstCondition.name);
         }
       }
     }
@@ -95,6 +75,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     return parts.join(' ');
   };
 
+  // Sync active tab with gallery
   useEffect(() => {
     const syncActiveTab = () => {
       if (refs.galleryRef.current) {
@@ -106,12 +87,8 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
       }
     };
 
-    // Check initially
     syncActiveTab();
-    
-    // Set up interval to monitor tab changes
     const interval = setInterval(syncActiveTab, 500);
-    
     return () => clearInterval(interval);
   }, [refs.galleryRef, state.activeTab, state.setActiveTab]);
 
@@ -185,7 +162,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     />
   );
 
-  // Tabs configuration
+  // Tabs configuration - Same pattern as SellerLayout
   const tabs = [
     { id: 'overview', label: 'Overview' },
     ...(product && (
@@ -212,7 +189,6 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
         headerRef={refs.headerRef}
         setHeaderHeight={state.setHeaderHeight}
         overviewRef={refs.overviewRef}
-        descriptionRef={descriptionRef}
         verticalRecommendationsRef={refs.verticalRecommendationsRef}
       />
 
@@ -235,7 +211,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     </>
   );
 
-  // For panel mode, use the existing StickyTabsNavigation
+  // For panel mode, use the existing StickyTabsNavigation (Same pattern as SellerLayout)
   if (inPanel) {
     return (
       <div className="flex flex-col min-h-0 bg-white overscroll-none pb-20" ref={refs.contentRef}>
@@ -257,7 +233,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     );
   }
 
-  // Use reusable StickyTabsLayout for regular mode
+  // Use reusable StickyTabsLayout for regular mode (Same pattern as SellerLayout)
   return (
     <StickyTabsLayout
       header={header}
