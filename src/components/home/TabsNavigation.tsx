@@ -1,412 +1,346 @@
-import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';  
-import { useLocation, useNavigate } from 'react-router-dom';  
-import {   
-  Package, ShoppingCart, Users, BarChart3, DollarSign, Megaphone, Settings,  
-  Home, Share, MessageCircle, MessageSquare, Star, Heart  
-} from 'lucide-react';  
-import { useIsMobile } from '@/hooks/use-mobile';  
-import { useQuery } from '@tanstack/react-query';  
-import { fetchAllProducts } from '@/integrations/supabase/products';  
-import { useAuth } from '@/contexts/auth/AuthContext';  
-import { supabase } from '@/integrations/supabase/client';  
-import TabsNavigation, { TabsNavigationRef } from '@/components/home/TabsNavigation';  
-import SellerInfoSection from './SellerInfoSection';  
-import ProductHeader from '@/components/product/ProductHeader';  
+import { useState, useRef, useEffect, useCallback, useLayoutEffect, forwardRef, useImperativeHandle } from "react";
 
-interface SellerLayoutProps {  
-  children: React.ReactNode;  
-  showActionButtons?: boolean;  
-  publicSellerData?: any;  
-  publicSellerLoading?: boolean;  
-  getSellerLogoUrl?: (imagePath?: string) => string;  
-  isPublicPage?: boolean;  
-  isOwnProfile?: boolean;  
-}  
+export interface TabsNavigationRef {
+  resetScroll: () => void;
+}
 
-const SellerLayout: React.FC<SellerLayoutProps> = ({  
-  children,  
-  showActionButtons = true,  
-  publicSellerData,  
-  publicSellerLoading,  
-  getSellerLogoUrl: externalGetSellerLogoUrl,  
-  isPublicPage = false,  
-  isOwnProfile = true  
-}) => {  
-  const location = useLocation();  
-  const navigate = useNavigate();  
-  const isMobile = useIsMobile();  
+interface TabsNavigationProps {
+  tabs: Array<{ id: string; label: string; icon?: any }>;
+  activeTab?: string;
+  onTabChange: (id: string) => void;
+  className?: string;
+  style?: React.CSSProperties;
+  edgeToEdge?: boolean;
+  isLoading?: boolean;
+  variant?: "underline" | "pills";
+  showTopBorder?: boolean;
+}
 
-  // Refs  
-  const headerRef = useRef<HTMLDivElement>(null);  
-  const sellerInfoRef = useRef<HTMLDivElement>(null);  
-  const tabsContainerRef = useRef<HTMLDivElement>(null);  
-  const tabsRef = useRef<HTMLDivElement>(null);  
-  const normalTabsNavigationRef = useRef<TabsNavigationRef>(null); // Ref for normal TabsNavigation
-  const stickyTabsNavigationRef = useRef<TabsNavigationRef>(null); // Ref for sticky TabsNavigation
+const TabsNavigation = forwardRef<TabsNavigationRef, TabsNavigationProps>(({ 
+  tabs, 
+  activeTab, 
+  onTabChange, 
+  className = "", 
+  style = {}, 
+  edgeToEdge = false, 
+  isLoading = false,
+  variant = "underline",
+  showTopBorder = false
+}, ref) => {
+  const tabRefs = useRef([]);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [underlineWidth, setUnderlineWidth] = useState(0);
+  const [underlineLeft, setUnderlineLeft] = useState(0);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const isInitialMount = useRef(true);
 
-  // States  
-  const [isTabsSticky, setIsTabsSticky] = useState(false);  
-  const [tabsHeight, setTabsHeight] = useState(0);  
-  const [headerHeight, setHeaderHeight] = useState(0);  
-  const [sellerInfoHeight, setSellerInfoHeight] = useState(0);  
-  const [isFavorite, setIsFavorite] = useState(false);  
-
-  const handleBackClick = () => navigate('/profile');  
-  const handleBecomeSeller = () => navigate('/seller-onboarding');  
-
-  const handleShareClick = () => {  
-    if (navigator.share) {  
-      navigator.share({  
-        title: sellerData?.business_name || 'Seller Profile',  
-        url: window.location.href,  
-      });  
-    } else {  
-      navigator.clipboard.writeText(window.location.href);  
-      console.log('Link copied to clipboard');  
-    }  
-  };  
-
-  const handleFavoriteClick = () => setIsFavorite(!isFavorite);  
-
-  const isDashboard = location.pathname.includes('/seller-dashboard');  
-  const isPickupStation = location.pathname.includes('/pickup-station');  
-
-  const getCurrentTab = () => {  
-    if (isDashboard) {  
-      const path = location.pathname.split('/seller-dashboard/')[1];  
-      return !path || path === '' ? 'products' : path;  
-    } else if (isPickupStation) {  
-      const path = location.pathname.split('/pickup-station/')[1];  
-      return !path || path === '' ? 'overview' : path;  
-    } else {  
-      const pathParts = location.pathname.split('/seller/')[1]?.split('/');  
-      if (pathParts && pathParts.length > 1) return pathParts[1];  
-      return 'products';  
-    }  
-  };  
-
-  const activeTab = getCurrentTab();  
-  const isProductsTab = activeTab === 'products';  
-
-  // Fetch products  
-  const { data: products = [], isLoading: productsLoading } = useQuery({  
-    queryKey: ['products', 'all'],  
-    queryFn: fetchAllProducts,  
-  });  
-
-  const baseRoute = isDashboard  
-    ? '/seller-dashboard'  
-    : isPickupStation  
-    ? '/pickup-station'  
-    : `/seller/${location.pathname.split('/seller/')[1]?.split('/')[0] || ''}`;  
-
-  const navigationItems = isPickupStation  
-    ? [  
-        { id: 'overview', name: 'Overview', href: '/pickup-station/overview', icon: Home },  
-        { id: 'packages', name: 'Packages', href: '/pickup-station/packages', icon: Package },  
-        { id: 'customers', name: 'Customers', href: '/pickup-station/customers', icon: Users },  
-        { id: 'reviews', name: 'Reviews', href: '/pickup-station/reviews', icon: Star },  
-        { id: 'qa', name: 'Q&A', href: '/pickup-station/qa', icon: MessageSquare },  
-        { id: 'analytics', name: 'Analytics', href: '/pickup-station/analytics', icon: BarChart3 },  
-        { id: 'notifications', name: 'Notifications', href: '/pickup-station/notifications', icon: MessageCircle },  
-        { id: 'settings', name: 'Settings', href: '/pickup-station/settings', icon: Settings },  
-      ]  
-    : isDashboard  
-    ? [  
-        { id: 'products', name: 'Products', href: '/seller-dashboard/products', icon: Package },  
-        { id: 'orders', name: 'Orders', href: '/seller-dashboard/orders', icon: ShoppingCart },  
-        { id: 'customers', name: 'Customers', href: '/seller-dashboard/customers', icon: Users },  
-        { id: 'analytics', name: 'Analytics', href: '/seller-dashboard/analytics', icon: BarChart3 },  
-        { id: 'finances', name: 'Finances', href: '/seller-dashboard/finances', icon: DollarSign },  
-        { id: 'marketing', name: 'Marketing', href: '/seller-dashboard/marketing', icon: Megaphone },  
-        { id: 'reels', name: 'Reels', href: '/seller-dashboard/reels', icon: Megaphone },  
-        { id: 'settings', name: 'Settings', href: '/seller-dashboard/settings', icon: Settings },  
-      ]  
-    : [  
-        { id: 'products', name: 'Products', href: `${baseRoute}/products`, icon: Package },  
-        { id: 'reels', name: 'Reels', href: `${baseRoute}/reels`, icon: Megaphone },  
-        { id: 'posts', name: 'Posts', href: `${baseRoute}/posts`, icon: MessageCircle },  
-        { id: 'qas', name: 'Q&As', href: `${baseRoute}/qas`, icon: MessageSquare },  
-        { id: 'reviews', name: 'Reviews', href: `${baseRoute}/reviews`, icon: Star },  
-      ];  
-
-  const handleTabChange = (tabId: string) => {  
-    const item = navigationItems.find(nav => nav.id === tabId);  
-    if (item) {
-      // Scroll to top when changing tabs to ensure proper layout
-      window.scrollTo(0, 0);
-      
-      // If switching to products tab, ensure tabs are not sticky and reset normal tabs scroll
-      if (tabId === 'products') {
-        setIsTabsSticky(false);
-        // Reset scroll position of normal tabs
-        if (normalTabsNavigationRef.current) {
-          normalTabsNavigationRef.current.resetScroll();
-        }
-      } else {
-        // For other tabs, make tabs sticky
-        setIsTabsSticky(true);
-        // Also reset sticky tabs scroll when switching to non-products tabs
-        if (stickyTabsNavigationRef.current) {
-          stickyTabsNavigationRef.current.resetScroll();
-        }
+  // Expose resetScroll method via ref
+  useImperativeHandle(ref, () => ({
+    resetScroll: () => {
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollLeft = 0;
       }
-      
-      navigate(item.href);
-    }  
-  };  
+    }
+  }));
 
-  const tabs = navigationItems.map(item => ({  
-    id: item.id,  
-    label: item.name  
-  }));  
-
-  const { user } = useAuth();  
-
-  const { data: privateSellerData, isLoading: privateSellerLoading } = useQuery({  
-    queryKey: ['seller', user?.id],  
-    queryFn: async () => {  
-      if (!user?.id) return null;  
-      const { data, error } = await supabase  
-        .from('sellers')  
-        .select('*')  
-        .eq('user_id', user.id)  
-        .single();  
-      if (error) {  
-        console.error('Error fetching seller data:', error);  
-        return null;  
-      }  
-      return data;  
-    },  
-    enabled: !!user?.id && !isPublicPage,  
-  });  
-
-  const sellerData = isPublicPage ? publicSellerData : privateSellerData;  
-  const sellerLoading = isPublicPage ? publicSellerLoading : privateSellerLoading;  
-
-  const getSellerLogoUrl =  
-    externalGetSellerLogoUrl ||  
-    ((imagePath?: string): string => {  
-      if (!imagePath)  
-        return "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face";  
-      const { data } = supabase.storage.from('seller-logos').getPublicUrl(imagePath);  
-      return data.publicUrl;  
-    });  
-
-  const actionButtons = [  
-    {  
-      Icon: Heart,  
-      onClick: handleFavoriteClick,  
-      active: isFavorite,  
-      activeColor: "#f43f5e",  
-      count: 147  
-    },  
-    {  
-      Icon: Share,  
-      onClick: handleShareClick,  
-      active: false  
-    }  
-  ];  
-
-  // ===== MEASURE HEIGHTS =====  
-  useLayoutEffect(() => {  
-    const updateHeights = () => {  
-      if (headerRef.current) setHeaderHeight(headerRef.current.offsetHeight || 0);  
-      if (isProductsTab && sellerInfoRef.current)  
-        setSellerInfoHeight(sellerInfoRef.current.offsetHeight || 0);  
-      if (tabsRef.current) setTabsHeight(tabsRef.current.offsetHeight || 0);  
-    };  
-
-    updateHeights();  
-    const resizeObserver = new ResizeObserver(updateHeights);  
-    if (headerRef.current) resizeObserver.observe(headerRef.current);  
-    if (isProductsTab && sellerInfoRef.current) resizeObserver.observe(sellerInfoRef.current);  
-    if (tabsRef.current) resizeObserver.observe(tabsRef.current);  
-
-    return () => resizeObserver.disconnect();  
-  }, [isProductsTab]);  
-
-  // ===== STICKY TABS BEHAVIOR =====
+  // Initialize active tab on mount if not provided
   useEffect(() => {
-    const tabsEl = tabsContainerRef.current;
-    if (!tabsEl) return;
+    if (tabs.length > 0 && !activeTab) {
+      const firstTab = tabs[0];
+      if (firstTab) {
+        onTabChange(firstTab.id);
+      }
+    }
+  }, [tabs, activeTab, onTabChange]);
 
-    let lastSticky = isTabsSticky;
-    let lastScrollY = window.scrollY;
-    let ticking = false;
+  useEffect(() => {
+    tabRefs.current = tabRefs.current.slice(0, tabs.length);
+    isInitialMount.current = true;
+  }, [tabs]);
+
+  // Function to update underline position and width
+  const updateUnderline = useCallback(() => {
+    const activeTabIndex = tabs.findIndex(tab => tab.id === activeTab);
+    const activeTabElement = tabRefs.current[activeTabIndex];
+    const containerElement = scrollContainerRef.current;
+
+    if (activeTabElement && containerElement) {
+      const textSpan = activeTabElement.querySelector('span:last-child');
+
+      if (textSpan) {
+        // Force layout recalculation before measuring
+        void activeTabElement.offsetHeight;
+        void textSpan.offsetHeight;
+
+        // Use getBoundingClientRect for more accurate measurements
+        const textRect = textSpan.getBoundingClientRect();
+        const textWidth = textRect.width;
+
+        // Make underline 60% of text width to match reference
+        const newWidth = Math.max(textWidth * 0.6, 20);
+
+        const buttonRect = activeTabElement.getBoundingClientRect();
+        const containerRect = containerElement.getBoundingClientRect();
+        const relativeLeft = buttonRect.left - containerRect.left + containerElement.scrollLeft;
+        const buttonCenter = relativeLeft + (buttonRect.width / 2);
+        const underlineStart = buttonCenter - (newWidth / 2);
+
+        setUnderlineWidth(newWidth);
+        setUnderlineLeft(underlineStart);
+      }
+    }
+  }, [activeTab, tabs]);
+
+  // Use useLayoutEffect for initial positioning
+  useLayoutEffect(() => {
+    if (activeTab && tabs.length > 0 && variant === "underline") {
+      updateUnderline();
+    }
+  }, [activeTab, tabs, variant, updateUnderline]);
+
+  // Backup async updates for edge cases
+  useEffect(() => {
+    if (activeTab && tabs.length > 0 && variant === "underline") {
+      const timers = [
+        setTimeout(() => updateUnderline(), 50),
+        setTimeout(() => updateUnderline(), 200),
+      ];
+
+      return () => timers.forEach(timer => clearTimeout(timer));
+    }
+  }, [activeTab, tabs, variant, updateUnderline]);
+
+  // Update on resize and scroll
+  useEffect(() => {
+    const handleResize = () => {
+      if (activeTab && tabs.length > 0 && variant === "underline") {
+        updateUnderline();
+      }
+    };
 
     const handleScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          const rect = tabsEl.getBoundingClientRect();
-          const currentY = window.scrollY;
-          const scrollingDown = currentY > lastScrollY;
-          lastScrollY = currentY;
+      if (activeTab && tabs.length > 0 && variant === "underline") {
+        updateUnderline();
+      }
+      setShouldAutoScroll(false);
+    };
 
-          const buffer = 4;
-          
-          // If we're not on products tab, always make tabs sticky regardless of scroll
-          if (!isProductsTab) {
-            if (!lastSticky) {
-              setIsTabsSticky(true);
-              lastSticky = true;
-            }
-            ticking = false;
-            return;
-          }
+    window.addEventListener('resize', handleResize);
+    const container = scrollContainerRef.current;
+    if (container) {
+      container.addEventListener('scroll', handleScroll);
+    }
 
-          // Original behavior for products tab
-          const shouldBeSticky = rect.top <= headerHeight + buffer && scrollingDown;
-          const shouldUnstick = rect.top > headerHeight + buffer && !scrollingDown;
-
-          if (shouldBeSticky && !lastSticky) {
-            setIsTabsSticky(true);
-            lastSticky = true;
-          } else if (shouldUnstick && lastSticky) {
-            setIsTabsSticky(false);
-            lastSticky = false;
-          }
-
-          ticking = false;
-        });
-        ticking = true;
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (container) {
+        container.removeEventListener('scroll', handleScroll);
       }
     };
+  }, [activeTab, tabs, variant, updateUnderline]);
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [headerHeight, isProductsTab]);
-
-  // ===== HANDLE TAB SWITCH =====
+  // Handle tab scrolling
   useEffect(() => {
-    // When switching to non-products tabs, make tabs sticky immediately
-    if (!isProductsTab) {
-      setIsTabsSticky(true);
+    if (!shouldAutoScroll) return;
+
+    const activeTabIndex = tabs.findIndex(tab => tab.id === activeTab);
+    const activeTabElement = tabRefs.current[activeTabIndex];
+    const containerElement = scrollContainerRef.current;
+
+    if (activeTabElement && containerElement) {
+      const paddingLeft = 8;
+      
+      // If it's the first tab, scroll all the way to the start
+      if (activeTabIndex === 0) {
+        containerElement.scrollTo({
+          left: 0,
+          behavior: 'smooth'
+        });
+      } else {
+        const newScrollLeft = activeTabElement.offsetLeft - paddingLeft;
+        containerElement.scrollTo({
+          left: newScrollLeft,
+          behavior: 'smooth'
+        });
+      }
     }
-    // Don't automatically set to false when switching to products tab
-    // Let the scroll behavior handle it
-  }, [isProductsTab]);
 
-  // ===== REDIRECT HANDLER =====  
-  useEffect(() => {  
-    if (  
-      location.pathname === '/seller-dashboard' ||  
-      location.pathname.endsWith('/seller-dashboard/')  
-    ) {  
-      navigate('/seller-dashboard/products', { replace: true });  
-    } else if (  
-      location.pathname === '/pickup-station' ||  
-      location.pathname.endsWith('/pickup-station/')  
-    ) {  
-      navigate('/pickup-station/overview', { replace: true });  
-    }  
-  }, [location.pathname, navigate]);  
+    const timer = setTimeout(() => setShouldAutoScroll(false), 500);
+    return () => clearTimeout(timer);
+  }, [activeTab, tabs, shouldAutoScroll]);
 
-  return (  
-    <div className="min-h-screen bg-white">  
-      {/* HEADER */}  
-      <div   
-        ref={headerRef}   
-        className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"  
-      >  
-        <ProductHeader  
-          onCloseClick={handleBackClick}  
-          onShareClick={handleShareClick}  
-          actionButtons={actionButtons}  
-          forceScrolledState={!isProductsTab}  
-        />  
-      </div>  
+  const handleTabClick = (id) => {
+    setShouldAutoScroll(true);
 
-      {/* SELLER INFO */}  
-      {isProductsTab && (  
-        <div   
-          ref={sellerInfoRef}   
-          className="w-full bg-black text-white relative"  
-          style={{   
-            marginTop: `-${headerHeight}px`,  
-            paddingTop: `${headerHeight}px`,  
-          }}  
-        >  
-          <SellerInfoSection  
-            sellerData={sellerData}  
-            sellerLoading={sellerLoading}  
-            getSellerLogoUrl={getSellerLogoUrl}  
-            onBecomeSeller={handleBecomeSeller}  
-            onBack={handleBackClick}  
-            isOwnProfile={isOwnProfile}  
-            showActionButtons={showActionButtons}  
-          />  
-        </div>  
-      )}  
+    // If clicking the first tab, ensure we reset scroll immediately
+    const clickedTabIndex = tabs.findIndex(tab => tab.id === id);
+    if (clickedTabIndex === 0) {
+      const containerElement = scrollContainerRef.current;
+      if (containerElement) {
+        containerElement.scrollTo({
+          left: 0,
+          behavior: 'smooth'
+        });
+      }
+    }
 
-      {/* STICKY TABS */}  
-      <div  
-        ref={tabsContainerRef}  
-        style={{ height: isTabsSticky ? `${tabsHeight}px` : 'auto' }}  
-      >  
-        <div className="relative">  
-          {/* Normal Tabs */}  
-          <div  
-            ref={tabsRef}  
-            className={`transition-transform duration-300 ease-out ${  
-              isTabsSticky ? '-translate-y-6 opacity-0' : 'translate-y-0 opacity-100'  
-            }`}  
-            style={{ position: 'relative', zIndex: 30 }}  
-          >  
-            <TabsNavigation  
-              ref={normalTabsNavigationRef}
-              tabs={tabs}  
-              activeTab={activeTab}  
-              onTabChange={handleTabChange}  
-              showTopBorder={false}  
-              variant="underline"  
-            />  
-          </div>  
+    // Immediate underline update
+    const activeTabIndex = tabs.findIndex(tab => tab.id === id);
+    const activeTabElement = tabRefs.current[activeTabIndex];
+    const containerElement = scrollContainerRef.current;
 
-          {/* Sticky Tabs with Slide-Down Bounce */}  
-          <div  
-            className={`fixed left-0 right-0 z-40 bg-white shadow-sm transition-transform duration-500 ease-out ${  
-              isTabsSticky  
-                ? 'translate-y-0 opacity-100 animate-slideDownBounce'  
-                : '-translate-y-full opacity-0'  
-            }`}  
-            style={{  
-              top: `${headerHeight}px`,  
-              willChange: 'transform, opacity',  
-            }}  
-          >  
-            <TabsNavigation  
-              ref={stickyTabsNavigationRef}
-              tabs={tabs}  
-              activeTab={activeTab}  
-              onTabChange={handleTabChange}  
-              showTopBorder={true}  
-              variant="underline"  
-              className="bg-white shadow-sm"  
-            />  
-          </div>  
-        </div>  
-      </div>  
+    if (activeTabElement && containerElement && variant === "underline") {
+      const textSpan = activeTabElement.querySelector('span:last-child');
+      if (textSpan) {
+        const textWidth = textSpan.scrollWidth;
+        const newWidth = Math.max(textWidth * 0.6, 20);
 
-      {/* CONTENT */}  
-      <div style={{ paddingTop: !isProductsTab ? `${headerHeight}px` : '0px' }}>  
-        {React.Children.map(children, child => {  
-          if (React.isValidElement(child)) {  
-            if (activeTab !== 'products') {  
-              return React.cloneElement(child, {  
-                products,  
-                isLoading: productsLoading || sellerLoading  
-              } as any);  
-            }  
-            return React.cloneElement(child, { isLoading: sellerLoading } as any);  
-          }  
-          return child;  
-        })}  
-      </div>  
-    </div>  
-  );  
-};  
+        const buttonRect = activeTabElement.getBoundingClientRect();
+        const containerRect = containerElement.getBoundingClientRect();
+        const relativeLeft = buttonRect.left - containerRect.left + containerElement.scrollLeft;
+        const buttonCenter = relativeLeft + (buttonRect.width / 2);
+        const underlineStart = buttonCenter - (newWidth / 2);
 
-export default SellerLayout;
+        setUnderlineWidth(newWidth);
+        setUnderlineLeft(underlineStart);
+      }
+    } else if (variant === "underline") {
+      // If refs aren't available yet, retry after a short delay
+      setTimeout(() => {
+        updateUnderline();
+      }, 10);
+    }
+
+    onTabChange(id);
+  };
+
+  // Ref callback that updates underline when refs are set
+  const setTabRef = useCallback((el, index, id) => {
+    tabRefs.current[index] = el;
+
+    // If this is the active tab and we have the element, update underline immediately
+    if (el && id === activeTab && isInitialMount.current && variant === "underline") {
+      requestAnimationFrame(() => {
+        updateUnderline();
+        isInitialMount.current = false;
+      });
+    }
+  }, [activeTab, variant, updateUnderline]);
+
+  // Default style
+  const defaultStyle = {
+    maxHeight: '40px',
+    opacity: 1,
+    backgroundColor: 'white',
+    ...style
+  };
+
+  // Tab styles
+  const getTabClassName = (isActive) => {
+    if (variant === "pills") {
+      return `relative flex items-center py-1.5 rounded-full text-sm font-medium whitespace-nowrap outline-none flex-shrink-0 ${
+        isActive
+          ? 'bg-pink-100 text-pink-700'
+          : 'bg-transparent text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+      }`;
+    }
+
+    // Underline variant
+    return `relative flex items-center py-2 text-sm font-medium whitespace-nowrap outline-none flex-shrink-0 ${
+      isActive
+        ? 'text-red-600'
+        : 'text-gray-700 hover:text-red-600'
+    }`;
+  };
+
+  // Build border classes conditionally
+  const getBorderClasses = () => {
+    const baseClasses = "relative w-full overflow-hidden bg-white";
+    const borderClasses = showTopBorder 
+      ? "border-t border-b border-gray-200" 
+      : "border-b border-gray-200";
+    return `${baseClasses} ${borderClasses} ${className}`;
+  };
+
+  // Skeleton loading state
+  if (isLoading) {
+    return (
+      <div
+        className={getBorderClasses()}
+        style={defaultStyle}
+      >
+        <div className="h-full w-full">
+          <div
+            className="flex items-center overflow-x-auto no-scrollbar h-full w-full relative"
+            style={{ 
+              scrollbarWidth: 'none', 
+              msOverflowStyle: 'none',
+              WebkitOverflowScrolling: 'touch'
+            }}
+          >
+            <div className="flex items-center gap-3">
+              {tabs.map((tab, index) => {
+                const widths = ['w-16', 'w-20', 'w-16', 'w-20', 'w-20', 'w-16', 'w-20', 'w-16', 'w-20'];
+                const width = widths[index] || 'w-16';
+                return (
+                  <div key={tab.id} className="flex-shrink-0">
+                    <div className={`h-5 bg-gray-200 rounded ${width} animate-pulse`} />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={getBorderClasses()}
+      style={defaultStyle}
+    >
+      {/* Tabs List */}
+      <div className="h-full w-full">
+        <div
+          ref={scrollContainerRef}
+          className="flex items-center overflow-x-auto no-scrollbar h-full w-full relative"
+          style={{ 
+            scrollbarWidth: 'none', 
+            msOverflowStyle: 'none',
+            WebkitOverflowScrolling: 'touch',
+            paddingRight: edgeToEdge ? '0px' : '2.5rem',
+          }}
+        >
+          <div className="flex items-center gap-6 px-2">
+            {tabs.map((tab, index) => (
+              <button
+                key={tab.id}
+                ref={el => setTabRef(el, index, tab.id)}
+                onClick={() => handleTabClick(tab.id)}
+                aria-pressed={activeTab === tab.id}
+                className={getTabClassName(activeTab === tab.id)}
+              >
+                {tab.icon && <span className="mr-2">{tab.icon}</span>}
+                <span className="font-medium select-none">{tab.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Animated underline */}
+          {activeTab && variant === "underline" && underlineWidth > 0 && (
+            <div
+              className="absolute bottom-0 h-1 bg-gradient-to-r from-red-500 to-red-600 rounded-full"
+              style={{ 
+                width: underlineWidth,
+                left: underlineLeft,
+              }}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+});
+
+export default TabsNavigation;
