@@ -13,11 +13,44 @@ import AskQuestionPage from "../pages/AskQuestionPage";
 export function ProductRoutes() {
   return (
     <>
+      {/* Main product detail routes with tab support */}
       <Route path="product/:id" element={
         <CachedRoute>
           <ProductDetail />
         </CachedRoute>
       } />
+      <Route path="product/:id/overview" element={
+        <CachedRoute>
+          <ProductDetail />
+        </CachedRoute>
+      } />
+      <Route path="product/:id/variants" element={
+        <CachedRoute>
+          <ProductDetail />
+        </CachedRoute>
+      } />
+      <Route path="product/:id/reviews" element={
+        <CachedRoute>
+          <ProductDetail />
+        </CachedRoute>
+      } />
+      <Route path="product/:id/store-reviews" element={
+        <CachedRoute>
+          <ProductDetail />
+        </CachedRoute>
+      } />
+      <Route path="product/:id/reviews-gallery" element={
+        <CachedRoute>
+          <ProductDetail />
+        </CachedRoute>
+      } />
+      <Route path="product/:id/qna" element={
+        <CachedRoute>
+          <ProductDetail />
+        </CachedRoute>
+      } />
+
+      {/* Legacy routes - keep for backward compatibility */}
       <Route path="product/:id/description" element={
         <CachedRoute>
           <ProductDescriptionPage />
@@ -26,11 +59,6 @@ export function ProductRoutes() {
       <Route path="product/:id/comments" element={
         <CachedRoute>
           <ProductCommentsPage />
-        </CachedRoute>
-      } />
-      <Route path="product/:id/reviews" element={
-        <CachedRoute>
-          <ProductReviewsPage />
         </CachedRoute>
       } />
       <Route path="product/:id/qa" element={
@@ -58,6 +86,13 @@ export function ProductRoutes() {
       <Route path="single-product/:id/ask-question" element={
         <CachedRoute>
           <AskQuestionPage />
+        </CachedRoute>
+      } />
+
+      {/* Redirects for old routes to new tab system */}
+      <Route path="product/:id/" element={
+        <CachedRoute>
+          <ProductDetail />
         </CachedRoute>
       } />
     </>
