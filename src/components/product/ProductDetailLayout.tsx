@@ -186,29 +186,50 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
 
     // Update local state
     state.setActiveTab(tabId);
-    
+
     // Scroll to top when changing tabs (same behavior as SellerLayout)
     window.scrollTo(0, 0);
   };
 
-  // Prepare data for GalleryThumbnails
+  // Prepare data for GalleryThumbnails - FIXED LOGIC
   const isVariantsTab = state.activeTab === 'variants';
-  const thumbnailImages = isVariantsTab && product?.variant_names
-    ? product.variant_names.map((vn: any) => vn.mainImage || vn.image || '')
+  
+  // Debug logging
+  console.log('🔍 GalleryThumbnails Debug:');
+  console.log('activeTab:', state.activeTab);
+  console.log('displayImages:', state.displayImages);
+  console.log('displayImages length:', state.displayImages.length);
+  console.log('isVariantsTab:', isVariantsTab);
+  console.log('product.variant_names:', product?.variant_names);
+  
+  const hasVariants = isVariantsTab && product?.variant_names && 
+    Array.isArray(product.variant_names) && 
+    product.variant_names.length > 0;
+  
+  console.log('hasVariants:', hasVariants);
+  
+  const thumbnailImages = hasVariants
+    ? product.variant_names.map((vn: any) => vn.mainImage || vn.image || '').filter(Boolean)
     : state.displayImages;
 
-  const thumbnailGalleryItems = isVariantsTab && product?.variant_names
+  const thumbnailGalleryItems = hasVariants
     ? product.variant_names.map((vn: any) => ({
         type: 'image' as const,
         src: vn.mainImage || vn.image || ''
-      }))
+      })).filter((item: any) => item.src)
     : state.displayImages.map(src => ({ type: 'image' as const, src }));
 
-  const variantNames = isVariantsTab && product?.variant_names
+  const variantNames = hasVariants
     ? product.variant_names.map((vn: any) => vn.name)
     : [];
 
   const currentThumbnailIndex = isVariantsTab ? selectedColorIndex : state.currentImageIndex;
+
+  const shouldRenderThumbnails = thumbnailImages.length > 0 && 
+    (thumbnailImages.length > 1 || hasVariants);
+  
+  console.log('shouldRenderThumbnails:', shouldRenderThumbnails);
+  console.log('thumbnailImages length:', thumbnailImages.length);
 
   // Header component - Same pattern as SellerLayout
   const header = !hideHeader ? (
@@ -230,8 +251,8 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     </div>
   ) : null;
 
-  // Top content (Gallery Section + GalleryThumbnails) - Same pattern as SellerLayout
-  const topContent = state.activeTab === 'overview' ? (
+  // Top content (Gallery Section + GalleryThumbnails) - FIXED: Render on all tabs
+  const topContent = (
     <div 
       ref={topContentRef}
       className="w-full bg-white"
@@ -257,9 +278,9 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
         onReadMore={onReadMore}
       />
 
-      {/* GalleryThumbnails - Rendered after gallery section, before tabs */}
-      {(state.displayImages.length > 1 || (isVariantsTab && product?.variant_names)) && (
-        <div className="mt-2 px-4">
+      {/* GalleryThumbnails - FIXED: Render conditionally based on available images */}
+      {shouldRenderThumbnails && (
+        <div className="mt-2 px-4 border border-transparent">
           <GalleryThumbnails
             images={thumbnailImages}
             currentIndex={currentThumbnailIndex}
@@ -272,7 +293,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
         </div>
       )}
     </div>
-  ) : undefined;
+  );
 
   // Tabs configuration
   const tabs = [
@@ -343,3 +364,4 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
 };
 
 export default ProductDetailLayout;
+
