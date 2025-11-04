@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import ProductDetail from '@/pages/ProductDetail';
+import ProductDetail, { ProductDetailContent } from '@/pages/ProductDetail';
 import ProductHeader from '@/components/product/ProductHeader';
 import { Heart, Share } from 'lucide-react';
 import { useScreenOverlay } from "@/context/ScreenOverlayContext";
@@ -18,12 +18,6 @@ const usePanelScrollProgress = (scrollContainerRef: React.RefObject<HTMLDivEleme
     const onScroll = () => {
       const currentScrollTop = container.scrollTop;
       setScrollY(currentScrollTop);
-
-      // Additional debug for scroll events
-      console.log('🔄 Panel Scroll Event:', {
-        scrollTop: currentScrollTop,
-        timestamp: Date.now()
-      });
     };
 
     // Reset scroll to top when container is available
@@ -42,7 +36,7 @@ const usePanelScrollProgress = (scrollContainerRef: React.RefObject<HTMLDivEleme
     };
   }, [scrollContainerRef, isOpen]);
 
-  const maxScroll = 120; // Match the standard header scroll threshold
+  const maxScroll = 120;
   const progress = Math.min(scrollY / maxScroll, 1);
 
   return { scrollY, progress };
@@ -88,39 +82,11 @@ const ProductSemiPanel: React.FC<ProductSemiPanelProps> = ({
         const container = scrollContainerRef.current;
         if (container) {
           container.scrollTop = 0;
-          console.log('🎯 Panel opened - container setup:', {
-            hasContainer: true,
-            scrollTop: container.scrollTop,
-            clientHeight: container.clientHeight,
-            scrollHeight: container.scrollHeight,
-            overflow: getComputedStyle(container).overflow
-          });
-
-          const scrollEvent = new Event('scroll', { bubbles: true });
-          container.dispatchEvent(scrollEvent);
-        } else {
-          console.log('❌ Panel opened but no scroll container found');
         }
       }, 100);
-
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
-
-  // Debug logging for panel scroll progress
-  React.useEffect(() => {
-    console.log('📋 Panel Scroll Debug:', {
-      scrollY,
-      scrollProgress,
-      hasContainer: !!scrollContainerRef.current,
-      panelHeaderHeight,
-      maxScroll: 120,
-      progressCalculation: `${scrollY}/120 = ${scrollProgress}`,
-      isOpen,
-      containerScrollTop: scrollContainerRef.current?.scrollTop || 0,
-      shouldShowScrolledState: scrollProgress > 0.5
-    });
-  }, [scrollY, scrollProgress, panelHeaderHeight, isOpen]);
 
   // Handle panel state changes to control bottom nav visibility
   useEffect(() => {
@@ -130,24 +96,21 @@ const ProductSemiPanel: React.FC<ProductSemiPanelProps> = ({
     };
   }, [isOpen, setHasActiveOverlay]);
 
-  // Handle details button click - navigate to product page FIRST, then close panel
+  // Handle details button click - navigate to product page
   const handleDetailsClick = () => {
     console.log('🔗 Details button clicked, productId:', productId);
     if (productId) {
-      // Navigate FIRST, then close the panel
       navigate(`/product/${productId}`);
-      // Close the panel after navigation
       setTimeout(() => {
         onClose();
-      }, 300); // Give time for navigation to start
+      }, 300);
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !productId) return null;
 
   const handleTabChange = (section: string) => {
     setActiveSection(section);
-    console.log('Tab changed to:', section);
   };
 
   const handleShareClick = () => {
@@ -168,10 +131,9 @@ const ProductSemiPanel: React.FC<ProductSemiPanelProps> = ({
         style={{ margin: 0, padding: 0 }}
       />
 
-      {/* Semi Panel with increased height (85vh) */}
+      {/* Semi Panel */}
       <div className="fixed bottom-0 left-0 right-0 h-[85vh] bg-white z-[9999] rounded-t-lg shadow-xl overflow-hidden flex flex-col">
-
-        {/* Product Header - with scroll-based behavior */}
+        {/* Product Header */}
         <div 
           ref={headerRef} 
           className="absolute top-0 left-0 right-0 z-50"
@@ -208,30 +170,22 @@ const ProductSemiPanel: React.FC<ProductSemiPanelProps> = ({
           />
         </div>
 
-        {/* Scrollable Content with header space */}
-        {productId ? (
-          <div className="flex-1 overflow-hidden min-h-0 relative">
-            {/* Scrollable container that we track for scroll progress */}
-            <div 
-              ref={scrollContainerRef}
-              className="absolute inset-0 overflow-y-auto"
-            >
-              <ProductDetail 
-                productId={productId} 
-                hideHeader={true}
-                inPanel={true}
-                scrollContainerRef={scrollContainerRef}
-                stickyTopOffset={panelHeaderHeight}
-              />
-            </div>
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-hidden min-h-0 relative">
+          <div 
+            ref={scrollContainerRef}
+            className="absolute inset-0 overflow-y-auto"
+          >
+            {/* ✅ FIX: Use ProductDetailContent directly with props */}
+            <ProductDetailContent 
+              productId={productId} 
+              hideHeader={true}
+              inPanel={true}
+              scrollContainerRef={scrollContainerRef}
+              stickyTopOffset={panelHeaderHeight}
+            />
           </div>
-        ) : (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center text-gray-500">
-              No product selected
-            </div>
-          </div>
-        )}
+        </div>
       </div>
     </>
   );
