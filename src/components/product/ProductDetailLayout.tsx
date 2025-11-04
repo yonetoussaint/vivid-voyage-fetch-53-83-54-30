@@ -1,6 +1,6 @@
 // ProductDetailLayout.tsx
 import React, { useState, useRef, useLayoutEffect, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/RedirectAuthContext';
 import { useAuthOverlay } from '@/context/AuthOverlayContext';
@@ -40,6 +40,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
   children
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
   const { openAuthOverlay } = useAuthOverlay();
@@ -67,6 +68,70 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
   const [galleryItems, setGalleryItems] = useState<any[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [videoIndices, setVideoIndices] = useState<number[]>([]);
+
+  // Tabs configuration - MOVED UP for better access
+  const tabs = [
+    { id: 'overview', label: 'Overview' },
+    ...(product && (
+      ('variants' in product && Array.isArray((product as any).variants) && (product as any).variants.length > 0) ||
+      ('variant_names' in product && Array.isArray((product as any).variant_names) && (product as any).variant_names.length > 0)
+    ) ? [{ id: 'variants', label: 'Variants' }] : []),
+    { id: 'reviews', label: 'Reviews' },
+    { id: 'store-reviews', label: 'Store Reviews' },
+    { id: 'reviews-gallery', label: 'Reviews Gallery' },
+    { id: 'qna', label: 'Q&A' }
+  ].filter(tab => tab !== null);
+
+  // ===== FIX 1: Get current tab from URL (like SellerLayout) =====
+  const getCurrentTab = () => {
+    const pathParts = location.pathname.split('/');
+    const lastPart = pathParts[pathParts.length - 1];
+    
+    // Check if the last part is a valid tab ID
+    const validTab = tabs.find(tab => tab.id === lastPart);
+    if (validTab) {
+      return validTab.id;
+    }
+    
+    // Default to overview if no valid tab found
+    return 'overview';
+  };
+
+  // ===== FIX 2: Sync URL with active tab =====
+  useEffect(() => {
+    const currentTabFromURL = getCurrentTab();
+    if (currentTabFromURL !== state.activeTab) {
+      console.log('🔄 Syncing active tab from URL:', currentTabFromURL);
+      state.setActiveTab(currentTabFromURL);
+    }
+  }, [location.pathname]);
+
+  // ===== FIX 3: Ensure valid active tab =====
+  useEffect(() => {
+    if (!state.activeTab || !tabs.find(tab => tab.id === state.activeTab)) {
+      console.log('🔄 Setting default active tab: overview');
+      state.setActiveTab('overview');
+    }
+  }, [state.activeTab, tabs]);
+
+  // ===== FIX 4: Redirect to default tab if no tab in URL =====
+  useEffect(() => {
+    const currentPath = window.location.pathname;
+    const pathParts = currentPath.split('/');
+    const lastPart = pathParts[pathParts.length - 1];
+    
+    // Check if we're at product root without a tab
+    const isProductRoot = currentPath.match(/\/product\/[^/]+$/) || 
+                         currentPath.endsWith('/product/') ||
+                         !tabs.find(tab => tab.id === lastPart);
+    
+    if (isProductRoot && productId) {
+      const basePath = currentPath.split('/').slice(0, -1).join('/');
+      const newPath = `${basePath}/${productId}/overview`;
+      console.log('🔄 Redirecting to default tab:', newPath);
+      navigate(newPath, { replace: true });
+    }
+  }, [navigate, productId, tabs]);
 
   // Sync active tab with gallery
   useEffect(() => {
@@ -159,6 +224,27 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     handlers.handleVariantImageSelection(imageUrl, variantName);
   };
 
+  // ===== FIX 5: Improved Tab Change Handler (like SellerLayout) =====
+  const handleTabChange = (tabId: string) => {
+    console.log('🔄 Tab changed to:', tabId);
+    
+    // Update local state
+    state.setActiveTab(tabId);
+
+    // Update the gallery's active tab
+    if (galleryRef.current) {
+      galleryRef.current.setActiveTab(tabId);
+    }
+
+    // Update URL to reflect tab change (like SellerLayout)
+    const basePath = window.location.pathname.split('/').slice(0, -1).join('/');
+    const newPath = `${basePath}/${tabId}`;
+    navigate(newPath);
+
+    // Scroll to top when changing tabs (same behavior as SellerLayout)
+    window.scrollTo(0, 0);
+  };
+
   // Action buttons
   const actionButtons = [
     {
@@ -190,21 +276,6 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     });
 
     navigate(`/product-checkout?${checkoutParams.toString()}`);
-  };
-
-  // Handle tab change - sync with gallery
-  const handleTabChange = (tabId: string) => {
-    console.log('🔄 Tab changed to:', tabId);
-    // Update the gallery's active tab
-    if (galleryRef.current) {
-      galleryRef.current.setActiveTab(tabId);
-    }
-
-    // Update local state
-    state.setActiveTab(tabId);
-
-    // Scroll to top when changing tabs (same behavior as SellerLayout)
-    window.scrollTo(0, 0);
   };
 
   // Prepare data for GalleryThumbnails - FIXED LOGIC
@@ -247,6 +318,10 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
   console.log('shouldRenderThumbnails:', shouldRenderThumbnails);
   console.log('thumbnailImages length:', thumbnailImages.length);
 
+  // Get current active tab for proper rendering
+  const currentActiveTab = getCurrentTab();
+  const isOverviewTab = currentActiveTab === 'overview';
+
   // Header component - Same pattern as SellerLayout
   const header = !hideHeader ? (
     <div 
@@ -257,7 +332,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
         onCloseClick={handleBackClick}
         onShareClick={handleShareClick}
         actionButtons={actionButtons}
-        forceScrolledState={state.activeTab !== 'overview'}
+        forceScrolledState={!isOverviewTab}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         onSearch={handleSearch}
@@ -338,19 +413,6 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     </div>
   );
 
-  // Tabs configuration
-  const tabs = [
-    { id: 'overview', label: 'Overview' },
-    ...(product && (
-      ('variants' in product && Array.isArray((product as any).variants) && (product as any).variants.length > 0) ||
-      ('variant_names' in product && Array.isArray((product as any).variant_names) && (product as any).variant_names.length > 0)
-    ) ? [{ id: 'variants', label: 'Variants' }] : []),
-    { id: 'reviews', label: 'Reviews' },
-    { id: 'store-reviews', label: 'Store Reviews' },
-    { id: 'reviews-gallery', label: 'Reviews Gallery' },
-    { id: 'qna', label: 'Q&A' }
-  ];
-
   // Enhanced children with additional props - Same pattern as SellerLayout
   const enhancedChildren = React.Children.map(children, child => {
     if (React.isValidElement(child)) {
@@ -380,7 +442,9 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
   );
 
   console.log('🎯 ProductDetailLayout rendering with activeTab:', state.activeTab);
+  console.log('🎯 Current tab from URL:', currentActiveTab);
   console.log('🎯 Tabs configuration:', tabs);
+  console.log('🎯 Is overview tab:', isOverviewTab);
 
   // Use StickyTabsLayout with the same implementation pattern as SellerLayout
   return (
@@ -392,7 +456,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
       tabs={tabs}
       activeTab={state.activeTab}
       onTabChange={handleTabChange}
-      isProductsTab={state.activeTab === 'overview'}
+      isProductsTab={isOverviewTab}
       showTopBorder={false}
       variant="underline"
       stickyBuffer={4}
