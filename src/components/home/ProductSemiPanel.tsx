@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import ProductDetail, { ProductDetailContent } from '@/pages/ProductDetail';
+import { ProductDetailContent } from '@/pages/ProductDetail';
 import ProductHeader from '@/components/product/ProductHeader';
 import { Heart, Share } from 'lucide-react';
 import { useScreenOverlay } from "@/context/ScreenOverlayContext";
@@ -12,8 +12,6 @@ const usePanelScrollProgress = (scrollContainerRef: React.RefObject<HTMLDivEleme
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container || !isOpen) return;
-
-    console.log('🔧 Setting up scroll listener for panel');
 
     const onScroll = () => {
       const currentScrollTop = container.scrollTop;
@@ -31,7 +29,6 @@ const usePanelScrollProgress = (scrollContainerRef: React.RefObject<HTMLDivEleme
     onScroll();
 
     return () => {
-      console.log('🧹 Cleaning up panel scroll listener');
       container.removeEventListener("scroll", onScroll);
     };
   }, [scrollContainerRef, isOpen]);
@@ -56,35 +53,25 @@ const ProductSemiPanel: React.FC<ProductSemiPanelProps> = ({
   const headerRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [activeSection, setActiveSection] = useState("overview");
-  const [focusMode, setFocusMode] = useState(false);
-  const [showHeaderInFocus, setShowHeaderInFocus] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [totalImages, setTotalImages] = useState(0);
   const [panelHeaderHeight, setPanelHeaderHeight] = useState(60);
   const { setHasActiveOverlay } = useScreenOverlay();
   const navigate = useNavigate();
 
   // Get scroll progress for the panel
-  const { progress: scrollProgress, scrollY } = usePanelScrollProgress(scrollContainerRef, isOpen);
+  const { progress: scrollProgress } = usePanelScrollProgress(scrollContainerRef, isOpen);
 
   // Measure panel header height
   React.useEffect(() => {
-    if (headerRef.current) {
+    if (headerRef.current && isOpen) {
       const height = headerRef.current.getBoundingClientRect().height;
       setPanelHeaderHeight(height);
     }
   }, [isOpen]);
 
-  // Force immediate scroll progress update when panel opens
+  // Reset scroll when panel opens
   React.useEffect(() => {
-    if (isOpen) {
-      const timer = setTimeout(() => {
-        const container = scrollContainerRef.current;
-        if (container) {
-          container.scrollTop = 0;
-        }
-      }, 100);
-      return () => clearTimeout(timer);
+    if (isOpen && scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
     }
   }, [isOpen]);
 
@@ -98,37 +85,28 @@ const ProductSemiPanel: React.FC<ProductSemiPanelProps> = ({
 
   // Handle details button click - navigate to product page
   const handleDetailsClick = () => {
-    console.log('🔗 Details button clicked, productId:', productId);
     if (productId) {
       navigate(`/product/${productId}`);
-      setTimeout(() => {
-        onClose();
-      }, 300);
+      onClose();
     }
-  };
-
-  if (!isOpen || !productId) return null;
-
-  const handleTabChange = (section: string) => {
-    setActiveSection(section);
   };
 
   const handleShareClick = () => {
     console.log('Share clicked in panel');
   };
 
-  const handleProductDetailsClick = () => {
-    console.log('Product details clicked');
-    onClose();
+  const handleTabChange = (section: string) => {
+    setActiveSection(section);
   };
+
+  if (!isOpen || !productId) return null;
 
   return (
     <>
-      {/* Backdrop with full coverage */}
+      {/* Backdrop */}
       <div 
         className="fixed inset-0 bg-black/50 z-[9998]"
         onClick={onClose}
-        style={{ margin: 0, padding: 0 }}
       />
 
       {/* Semi Panel */}
@@ -142,11 +120,6 @@ const ProductSemiPanel: React.FC<ProductSemiPanelProps> = ({
             inPanel={true}
             activeSection={activeSection}
             onTabChange={handleTabChange}
-            focusMode={focusMode}
-            showHeaderInFocus={showHeaderInFocus}
-            onProductDetailsClick={handleProductDetailsClick}
-            currentImageIndex={currentImageIndex}
-            totalImages={totalImages}
             onShareClick={handleShareClick}
             forceScrolledState={false}
             customScrollProgress={scrollProgress}
@@ -175,8 +148,9 @@ const ProductSemiPanel: React.FC<ProductSemiPanelProps> = ({
           <div 
             ref={scrollContainerRef}
             className="absolute inset-0 overflow-y-auto"
+            style={{ top: `${panelHeaderHeight}px`, bottom: 0 }}
           >
-            {/* ✅ FIX: Use ProductDetailContent directly with props */}
+            {/* ✅ Use ProductDetailContent directly - no routing conflicts */}
             <ProductDetailContent 
               productId={productId} 
               hideHeader={true}
