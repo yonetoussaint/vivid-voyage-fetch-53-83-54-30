@@ -129,13 +129,20 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       ];  
 
   const handleTabChange = (tabId: string) => {  
-    const item = navigationItems.find(nav => nav.id === tabId);  
-    if (item) {
-      // Scroll to top when changing tabs to ensure proper layout
-      window.scrollTo(0, 0);
-      navigate(item.href);
-    }  
-  };  
+  const item = navigationItems.find(nav => nav.id === tabId);  
+  if (item) {
+    // Scroll to top when changing tabs to ensure proper layout
+    window.scrollTo(0, 0);
+    
+    // If switching to products tab, ensure tabs are not sticky
+    if (tabId === 'products') {
+      setIsTabsSticky(false);
+    }
+    
+    navigate(item.href);
+  }  
+};  
+
 
   const tabs = navigationItems.map(item => ({  
     id: item.id,  
@@ -261,15 +268,15 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   }, [headerHeight, isProductsTab]);
 
   // ===== HANDLE TAB SWITCH =====
-  useEffect(() => {
-    // When switching to non-products tabs, make tabs sticky immediately
-    if (!isProductsTab) {
-      setIsTabsSticky(true);
-    } else {
-      // When switching to products tab, ensure tabs are not sticky
-      setIsTabsSticky(false);
-    }
-  }, [isProductsTab, activeTab]);
+  // ===== HANDLE TAB SWITCH =====
+useEffect(() => {
+  // When switching to non-products tabs, make tabs sticky immediately
+  if (!isProductsTab) {
+    setIsTabsSticky(true);
+  }
+  // Don't automatically set to false when switching to products tab
+  // Let the scroll behavior handle it
+}, [isProductsTab]);
 
   // ===== REDIRECT HANDLER =====  
   useEffect(() => {  
