@@ -198,93 +198,9 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     { id: 'qna', label: 'Q&A' }
   ];
 
-  // Enhanced children with additional props
-  const enhancedChildren = React.Children.map(children, child => {
-    if (React.isValidElement(child)) {
-      // Add any additional props needed for children
-      return React.cloneElement(child, {
-        // Add product-specific props if needed
-      } as any);
-    }
-    return child;
-  });
-
-  // For panel mode, use the existing StickyTabsNavigation
-  if (inPanel) {
-    return (
-      <div className="flex flex-col min-h-0 bg-white overscroll-none pb-20" ref={refs.contentRef}>
-        {header}
-        {topContent}
-        
-        {/* Use existing StickyTabsNavigation for panel mode */}
-        <StickyTabsNavigation
-          headerHeight={state.headerHeight}
-          galleryRef={refs.galleryRef}
-          inPanel={inPanel}
-          scrollContainerRef={scrollContainerRef}
-          stickyTopOffset={stickyTopOffset}
-        />
-
-        {/* Main content */}
-        {enhancedChildren}
-
-        {/* Scroll Management */}
-        <ProductScrollManager
-          focusMode={state.focusMode}
-          setFocusMode={state.setFocusMode}
-          setShowHeaderInFocus={state.setShowHeaderInFocus}
-          setShowStickyRecommendations={state.setShowStickyRecommendations}
-          setActiveSection={state.setActiveSection}
-          setActiveTab={state.setActiveTab}
-          headerRef={refs.headerRef}
-          setHeaderHeight={state.setHeaderHeight}
-          overviewRef={refs.overviewRef}
-          descriptionRef={descriptionRef}
-          verticalRecommendationsRef={refs.verticalRecommendationsRef}
-        />
-
-        {/* Variant Management */}
-        <ProductVariantManager
-          product={product}
-          displayImages={state.displayImages}
-          setDisplayImages={state.setDisplayImages}
-          setCurrentImageIndex={state.setCurrentImageIndex}
-        />
-
-        {/* Sticky Components */}
-        <ProductStickyComponents
-          product={product}
-          onBuyNow={buyNow}
-          sharePanelOpen={state.sharePanelOpen}
-          setSharePanelOpen={state.setSharePanelOpen}
-          activeTab={state.activeTab}
-        />
-      </div>
-    );
-  }
-
-  // Use reusable StickyTabsLayout for regular mode
-  return (
-    <StickyTabsLayout
-      header={header}
-      headerRef={refs.headerRef}
-      topContent={topContent}
-      topContentRef={refs.overviewRef}
-      tabs={tabs}
-      activeTab={state.activeTab}
-      onTabChange={state.setActiveTab}
-      isProductsTab={true}
-      showTopBorder={false}
-      variant="underline"
-      stickyBuffer={4}
-      alwaysStickyForNonProducts={true}
-      inPanel={inPanel}
-      scrollContainerRef={scrollContainerRef}
-      stickyTopOffset={stickyTopOffset}
-    >
-      {/* Enhanced children */}
-      {enhancedChildren}
-
+  // Main content that goes below the tabs
+  const mainContent = (
+    <>
       {/* Scroll Management */}
       <ProductScrollManager
         focusMode={state.focusMode}
@@ -316,6 +232,51 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
         setSharePanelOpen={state.setSharePanelOpen}
         activeTab={state.activeTab}
       />
+    </>
+  );
+
+  // For panel mode, use the existing StickyTabsNavigation
+  if (inPanel) {
+    return (
+      <div className="flex flex-col min-h-0 bg-white overscroll-none pb-20" ref={refs.contentRef}>
+        {header}
+        {topContent}
+        
+        {/* Use existing StickyTabsNavigation for panel mode */}
+        <StickyTabsNavigation
+          headerHeight={state.headerHeight}
+          galleryRef={refs.galleryRef}
+          inPanel={inPanel}
+          scrollContainerRef={scrollContainerRef}
+          stickyTopOffset={stickyTopOffset}
+        />
+
+        {/* Main content */}
+        {mainContent}
+      </div>
+    );
+  }
+
+  // Use reusable StickyTabsLayout for regular mode
+  return (
+    <StickyTabsLayout
+      header={header}
+      headerRef={refs.headerRef}
+      topContent={topContent}
+      topContentRef={refs.overviewRef}
+      tabs={tabs}
+      activeTab={state.activeTab}
+      onTabChange={state.setActiveTab}
+      isProductsTab={true}
+      showTopBorder={false}
+      variant="underline"
+      stickyBuffer={4}
+      alwaysStickyForNonProducts={true}
+      inPanel={inPanel}
+      scrollContainerRef={scrollContainerRef}
+      stickyTopOffset={stickyTopOffset}
+    >
+      {mainContent}
     </StickyTabsLayout>
   );
 };
