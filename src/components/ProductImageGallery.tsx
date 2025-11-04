@@ -7,7 +7,6 @@ import {
 import { X } from "lucide-react";
 import InfoBand from "@/components/product/InfoBand";
 import PriceInfo from "@/components/product/PriceInfo";
-import TabsNavigation from "@/components/home/TabsNavigation";
 import SellerInfoOverlay from "@/components/product/SellerInfoOverlay";
 import ConfigurationSummary from "@/components/product/ConfigurationSummary";
 
@@ -17,7 +16,6 @@ import { useGalleryState } from './product/gallery/useGalleryState';
 import GalleryItem from './product/gallery/GalleryItem';
 import GalleryTabsContent from './product/gallery/GalleryTabsContent';
 import FullscreenGallery from './product/gallery/FullscreenGallery';
-import StickyCheckoutBar from '@/components/product/StickyCheckoutBar';
 import { AutoScrollIndicator } from './product/gallery/AutoScrollIndicator';
 
 const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalleryProps>(
@@ -113,7 +111,6 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
     containerRef,
     imageRef,
     videoRef,
-    tabsContainerRef,
     onApiChange,
     handleVariantImageChange,
     handleThumbnailClick,
@@ -224,7 +221,6 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
 
   // Expose methods via ref
   useImperativeHandle(ref, () => ({
-    getTabsContainer: () => tabsContainerRef.current,
     setActiveTab: (tab: string) => setActiveTab(tab),
     getActiveTab: () => internalActiveTab,
     startAutoScroll: () => startAutoScroll(),
@@ -403,27 +399,7 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
       {/* Updated InfoBand with product data */}
       <InfoBand product={product} />
 
-      {totalItems > 1 && (
-        <div ref={tabsContainerRef} className="w-full bg-white">
-          <TabsNavigation
-            tabs={[
-              { id: 'overview', label: 'Overview' },
-              ...(product && (
-                ('variants' in product && Array.isArray((product as any).variants) && (product as any).variants.length > 0) ||
-                ('variant_names' in product && Array.isArray((product as any).variant_names) && (product as any).variant_names.length > 0)
-              ) ? [{ id: 'variants', label: 'Variants' }] : []),
-              { id: 'reviews', label: 'Reviews' },
-              { id: 'store-reviews', label: 'Store Reviews' },
-              { id: 'reviews-gallery', label: 'Reviews Gallery' },
-              { id: 'qna', label: 'Q&A' }
-            ]}
-            activeTab={internalActiveTab}
-            onTabChange={setActiveTab}
-            edgeToEdge={true}
-            style={{ backgroundColor: 'white' }}
-          />
-        </div>
-      )}
+      {/* REMOVED: Internal TabsNavigation - Now handled by StickyTabsLayout */}
 
       <GalleryTabsContent
         activeTab={internalActiveTab}
@@ -477,8 +453,6 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
         onSkipBackward={handleSkipBackward}
         onFullscreenVideo={handleFullscreenVideo}
       />
-
-      {/* REMOVED: Conditional Sticky Checkout Bar - Now handled in GalleryTabsContent */}
     </div>
   );
 });
