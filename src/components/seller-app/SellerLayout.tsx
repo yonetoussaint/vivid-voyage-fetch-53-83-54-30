@@ -130,7 +130,11 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
   const handleTabChange = (tabId: string) => {  
     const item = navigationItems.find(nav => nav.id === tabId);  
-    if (item) navigate(item.href);  
+    if (item) {
+      // Scroll to top when changing tabs to ensure proper layout
+      window.scrollTo(0, 0);
+      navigate(item.href);
+    }  
   };  
 
   const tabs = navigationItems.map(item => ({  
@@ -189,94 +193,83 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   useLayoutEffect(() => {  
     const updateHeights = () => {  
       if (headerRef.current) setHeaderHeight(headerRef.current.offsetHeight || 0);  
-      if (sellerInfoRef.current) setSellerInfoHeight(sellerInfoRef.current.offsetHeight || 0);  
+      if (isProductsTab && sellerInfoRef.current)  
+        setSellerInfoHeight(sellerInfoRef.current.offsetHeight || 0);  
       if (tabsRef.current) setTabsHeight(tabsRef.current.offsetHeight || 0);  
     };  
 
     updateHeights();  
     const resizeObserver = new ResizeObserver(updateHeights);  
     if (headerRef.current) resizeObserver.observe(headerRef.current);  
-    if (sellerInfoRef.current) resizeObserver.observe(sellerInfoRef.current);  
+    if (isProductsTab && sellerInfoRef.current) resizeObserver.observe(sellerInfoRef.current);  
     if (tabsRef.current) resizeObserver.observe(tabsRef.current);  
 
     return () => resizeObserver.disconnect();  
   }, [isProductsTab]);  
 
-  // ===== STICKY TABS BEHAVIOR =====  
-  useEffect(() => {  
-    const tabsEl = tabsContainerRef.current;  
-    if (!tabsEl) return;  
+  // ===== STICKY TABS BEHAVIOR =====
+  useEffect(() => {
+    const tabsEl = tabsContainerRef.current;
+    if (!tabsEl) return;
 
-    let lastScrollY = window.scrollY;  
-    let ticking = false;  
+    let lastSticky = isTabsSticky;
+    let lastScrollY = window.scrollY;
+    let ticking = false;
 
-    const handleScroll = () => {  
-      if (!ticking) {  
-        requestAnimationFrame(() => {  
-          const rect = tabsEl.getBoundingClientRect();  
-          const currentY = window.scrollY;  
-          const scrollingDown = currentY > lastScrollY;  
-          lastScrollY = currentY;  
+    const handleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const rect = tabsEl.getBoundingClientRect();
+          const currentY = window.scrollY;
+          const scrollingDown = currentY > lastScrollY;
+          lastScrollY = currentY;
 
-          const buffer = 4;  
+          const buffer = 4;
           
-          // If we're not on products tab, always make tabs sticky regardless of scroll  
-          if (!isProductsTab) {  
-            if (!isTabsSticky) {  
-              setIsTabsSticky(true);  
-            }  
-            ticking = false;  
-            return;  
-          }  
+          // If we're not on products tab, always make tabs sticky regardless of scroll
+          if (!isProductsTab) {
+            if (!lastSticky) {
+              setIsTabsSticky(true);
+              lastSticky = true;
+            }
+            ticking = false;
+            return;
+          }
 
-          // For products tab, use the original scroll-based behavior  
-          const shouldBeSticky = rect.top <= headerHeight + buffer && scrollingDown;  
-          const shouldUnstick = rect.top > headerHeight + buffer && !scrollingDown;  
+          // Original behavior for products tab
+          const shouldBeSticky = rect.top <= headerHeight + buffer && scrollingDown;
+          const shouldUnstick = rect.top > headerHeight + buffer && !scrollingDown;
 
-          if (shouldBeSticky && !isTabsSticky) {  
-            setIsTabsSticky(true);  
-          } else if (shouldUnstick && isTabsSticky) {  
-            setIsTabsSticky(false);  
-          }  
+          if (shouldBeSticky && !lastSticky) {
+            setIsTabsSticky(true);
+            lastSticky = true;
+          } else if (shouldUnstick && lastSticky) {
+            setIsTabsSticky(false);
+            lastSticky = false;
+          }
 
-          ticking = false;  
-        });  
-        ticking = true;  
-      }  
-    };  
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
 
-    // Handle initial tab state  
-    if (!isProductsTab) {  
-      setIsTabsSticky(true);  
-    } else {  
-      // When on products tab, check if we should be sticky based on scroll position  
-      const rect = tabsEl.getBoundingClientRect();  
-      const shouldBeSticky = rect.top <= headerHeight;  
-      if (shouldBeSticky !== isTabsSticky) {  
-        setIsTabsSticky(shouldBeSticky);  
-      }  
-    }  
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [headerHeight, isProductsTab]);
 
-    window.addEventListener('scroll', handleScroll, { passive: true });  
-    return () => {  
-      window.removeEventListener('scroll', handleScroll);  
-    };  
-  }, [headerHeight, isProductsTab, isTabsSticky]);  
-
-  // ===== HANDLE TAB SWITCH =====  
-  useEffect(() => {  
-    // When switching to non-products tabs, make tabs sticky immediately  
-    if (!isProductsTab) {  
-      setIsTabsSticky(true);  
-    } else {  
-      // When switching to products tab, ensure proper scroll position  
-      const scrollToTop = headerHeight + (sellerInfoRef.current?.offsetHeight || 0);  
-      if (window.scrollY > scrollToTop) {  
-        window.scrollTo({ top: scrollToTop, behavior: 'smooth' });  
-      }  
-      // Don't immediately set sticky to false - let the scroll handler handle it  
-    }  
-  }, [isProductsTab, headerHeight]);  
+  // ===== HANDLE TAB SWITCH =====
+  useEffect(() => {
+    // When switching to non-products tabs, make tabs sticky immediately
+    if (!isProductsTab) {
+      setIsTabsSticky(true);
+    } else {
+      // When switching to products tab, ensure tabs are not sticky
+      setIsTabsSticky(false);
+    }
+  }, [isProductsTab, activeTab]);
 
   // ===== REDIRECT HANDLER =====  
   useEffect(() => {  
@@ -378,9 +371,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       </div>  
 
       {/* CONTENT */}  
-      <div style={{ 
-        paddingTop: !isProductsTab ? `${headerHeight + tabsHeight}px` : '0px' 
-      }}>  
+      <div style={{ paddingTop: !isProductsTab ? `${headerHeight}px` : '0px' }}>  
         {React.Children.map(children, child => {  
           if (React.isValidElement(child)) {  
             if (activeTab !== 'products') {  
@@ -398,4 +389,4 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   );  
 };  
 
-export default SellerLayout;  
+export default SellerLayout;
