@@ -9,7 +9,7 @@ import { Heart, Share } from 'lucide-react';
 import { useProductDetailState } from './useProductDetailState';
 
 // Import sub-components
-import ProductGallerySection from './ProductGallerySection';
+import ProductImageGallery from "@/components/ProductImageGallery";
 import ProductVariantManager from './ProductVariantManager';
 import ProductStickyComponents from './ProductStickyComponents';
 import StickyTabsLayout from '@/components/layout/StickyTabsLayout';
@@ -48,6 +48,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
   // Refs
   const headerRef = useRef<HTMLDivElement>(null);
   const topContentRef = useRef<HTMLDivElement>(null);
+  const galleryRef = useRef<any>(null);
 
   const {
     state,
@@ -70,8 +71,8 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
   // Sync active tab with gallery
   useEffect(() => {
     const syncActiveTab = () => {
-      if (refs.galleryRef.current) {
-        const galleryActiveTab = refs.galleryRef.current.getActiveTab?.();
+      if (galleryRef.current) {
+        const galleryActiveTab = galleryRef.current.getActiveTab?.();
         if (galleryActiveTab && galleryActiveTab !== state.activeTab) {
           console.log('🔄 Syncing active tab from gallery:', galleryActiveTab);
           state.setActiveTab(galleryActiveTab);
@@ -86,7 +87,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     const interval = setInterval(syncActiveTab, 500);
 
     return () => clearInterval(interval);
-  }, [refs.galleryRef, state.activeTab, state.setActiveTab]);
+  }, [galleryRef, state.activeTab, state.setActiveTab]);
 
   // Initialize gallery items
   useEffect(() => {
@@ -148,7 +149,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
       }
     } else {
       // For overview tab or other tabs
-      if (refs.galleryRef.current) {
+      if (galleryRef.current) {
         state.setCurrentImageIndex(index);
       }
     }
@@ -195,8 +196,8 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
   const handleTabChange = (tabId: string) => {
     console.log('🔄 Tab changed to:', tabId);
     // Update the gallery's active tab
-    if (refs.galleryRef.current) {
-      refs.galleryRef.current.setActiveTab(tabId);
+    if (galleryRef.current) {
+      galleryRef.current.setActiveTab(tabId);
     }
 
     // Update local state
@@ -272,26 +273,36 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
       ref={topContentRef}
       className="w-full bg-white"
     >
-      <ProductGallerySection
-        ref={refs.overviewRef}
-        galleryRef={refs.galleryRef}
-        displayImages={state.displayImages}
-        product={product}
-        focusMode={state.focusMode}
-        onFocusModeChange={state.setFocusMode}
-        onProductDetailsClick={() => state.setProductDetailsSheetOpen(true)}
-        onImageIndexChange={(currentIndex, totalItems) => {
-          state.setCurrentImageIndex(currentIndex);
-          state.setTotalImages(totalItems);
-        }}
-        onVariantImageChange={handlers.handleVariantImageSelection}
-        onSellerClick={() => {
-          if (product?.sellers?.id) {
-            navigate(`/seller/${product?.sellers?.id}`);
-          }
-        }}
-        onReadMore={onReadMore}
-      />
+      {/* ProductImageGallery directly integrated */}
+      <div 
+        className="relative z-0 w-full bg-transparent" 
+        onClick={() => { if (state.focusMode) state.setFocusMode(false); }}
+      >
+        <ProductImageGallery 
+          ref={galleryRef}
+          images={state.displayImages.length > 0 ? state.displayImages : ["/placeholder.svg"]}
+          videos={product?.product_videos || []}
+          model3dUrl={product?.model_3d_url}
+          focusMode={state.focusMode}
+          onFocusModeChange={state.setFocusMode}
+          seller={product?.sellers}
+          product={product}
+          onSellerClick={() => {
+            if (product?.sellers?.id) {
+              navigate(`/seller/${product?.sellers?.id}`);
+            }
+          }}
+          onProductDetailsClick={() => state.setProductDetailsSheetOpen(true)}
+          onImageIndexChange={(currentIndex, totalItems) => {
+            state.setCurrentImageIndex(currentIndex);
+            state.setTotalImages(totalItems);
+          }}
+          onVariantImageChange={handlers.handleVariantImageSelection}
+          activeTab={state.activeTab}
+          onBuyNow={buyNow}
+          onReadMore={onReadMore}
+        />
+      </div>
 
       {/* GalleryThumbnails - FIXED: Render conditionally based on available images */}
       {shouldRenderThumbnails && (
