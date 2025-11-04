@@ -208,45 +208,68 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   }, [isProductsTab]);  
   
   // ===== SLIDE-DOWN STICKY TABS WITH BOUNCE =====  
-  useEffect(() => {  
-    const tabsEl = tabsContainerRef.current;  
-    if (!tabsEl) return;  
-  
-    let lastSticky = false;  
-    let lastScrollY = window.scrollY;  
-    let ticking = false;  
-  
-    const handleScroll = () => {  
-      if (!ticking) {  
-        requestAnimationFrame(() => {  
-          const rect = tabsEl.getBoundingClientRect();  
-          const currentY = window.scrollY;  
-          const scrollingDown = currentY > lastScrollY;  
-          lastScrollY = currentY;  
-  
-          const buffer = 4;  
-          const shouldBeSticky = rect.top <= headerHeight + buffer && scrollingDown;  
-          const shouldUnstick = rect.top > headerHeight + buffer && !scrollingDown;  
-  
-          if (shouldBeSticky && !lastSticky) {  
-            setIsTabsSticky(true);  
-            lastSticky = true;  
-          } else if (shouldUnstick && lastSticky) {  
-            setIsTabsSticky(false);  
-            lastSticky = false;  
-          }  
-  
-          ticking = false;  
-        });  
-        ticking = true;  
-      }  
-    };  
-  
-    window.addEventListener('scroll', handleScroll, { passive: true });  
-    return () => {  
-      window.removeEventListener('scroll', handleScroll);  
-    };  
-  }, [headerHeight]);  
+  // ===== STICKY TABS BEHAVIOR =====
+useEffect(() => {
+  const tabsEl = tabsContainerRef.current;
+  if (!tabsEl) return;
+
+  let lastSticky = false;
+  let lastScrollY = window.scrollY;
+  let ticking = false;
+
+  const handleScroll = () => {
+    if (!ticking) {
+      requestAnimationFrame(() => {
+        const rect = tabsEl.getBoundingClientRect();
+        const currentY = window.scrollY;
+        const scrollingDown = currentY > lastScrollY;
+        lastScrollY = currentY;
+
+        const buffer = 4;
+        
+        // If we're not on products tab, always make tabs sticky regardless of scroll
+        if (!isProductsTab) {
+          if (!lastSticky) {
+            setIsTabsSticky(true);
+            lastSticky = true;
+          }
+          ticking = false;
+          return;
+        }
+
+        // Original behavior for products tab
+        const shouldBeSticky = rect.top <= headerHeight + buffer && scrollingDown;
+        const shouldUnstick = rect.top > headerHeight + buffer && !scrollingDown;
+
+        if (shouldBeSticky && !lastSticky) {
+          setIsTabsSticky(true);
+          lastSticky = true;
+        } else if (shouldUnstick && lastSticky) {
+          setIsTabsSticky(false);
+          lastSticky = false;
+        }
+
+        ticking = false;
+      });
+      ticking = true;
+    }
+  };
+
+  // Also check immediately when tab changes
+  if (!isProductsTab) {
+    setIsTabsSticky(true);
+    lastSticky = true;
+  } else {
+    // Reset to non-sticky when switching back to products tab
+    setIsTabsSticky(false);
+    lastSticky = false;
+  }
+
+  window.addEventListener('scroll', handleScroll, { passive: true });
+  return () => {
+    window.removeEventListener('scroll', handleScroll);
+  };
+}, [headerHeight, isProductsTab]); // Added isProductsTab dependency
   
   // ===== REDIRECT HANDLER =====  
   useEffect(() => {  
