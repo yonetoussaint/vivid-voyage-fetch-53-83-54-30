@@ -340,12 +340,9 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         style={{ height: isTabsSticky ? `${tabsHeight}px` : 'auto' }}  
       >  
         <div className="relative">  
-          {/* Normal Tabs - Slides DOWN when unsticking */}  
+          {/* Normal Tabs - Always visible in document flow, no animation */}  
           <div  
             ref={tabsRef}  
-            className={`transition-transform duration-300 ease-out ${  
-              isTabsSticky ? 'translate-y-6 opacity-0' : 'translate-y-0 opacity-100'  
-            }`}  
             style={{ position: 'relative', zIndex: 30 }}  
           >  
             <TabsNavigation  
@@ -358,11 +355,11 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
             />  
           </div>  
 
-          {/* Sticky Tabs - Slides UP when sticking */}  
+          {/* Sticky Tabs - Slides UP when sticking, fades out when unsticking */}  
           <div  
-            className={`fixed left-0 right-0 z-40 bg-white shadow-sm transition-transform duration-500 ease-out ${  
+            className={`fixed left-0 right-0 z-40 bg-white shadow-sm transition-all duration-300 ease-out ${  
               isTabsSticky  
-                ? 'translate-y-0 opacity-100 animate-slideUpBounce'  
+                ? 'translate-y-0 opacity-100'  
                 : '-translate-y-full opacity-0'  
             }`}  
             style={{  
