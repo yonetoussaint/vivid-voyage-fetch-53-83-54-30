@@ -74,8 +74,23 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
     return () => resizeObserver.disconnect();
   }, [isProductsTab, headerRef, topContentRef]);
 
+  // ===== RESET STICKY STATE WHEN SWITCHING TO PRODUCTS TAB =====
+  useEffect(() => {
+    // When switching to products tab, immediately unstick the tabs
+    if (isProductsTab) {
+      setIsTabsSticky(false);
+    }
+  }, [isProductsTab]);
+
   // ===== STICKY TABS BEHAVIOR =====
   useEffect(() => {
+    // If we're not on products tab and alwaysStickyForNonProducts is true, 
+    // make tabs sticky immediately and don't set up scroll listener
+    if (!isProductsTab && alwaysStickyForNonProducts) {
+      setIsTabsSticky(true);
+      return;
+    }
+
     const tabsEl = tabsContainerRef.current;
     if (!tabsEl) return;
 
@@ -91,18 +106,7 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
           const scrollingDown = currentY > lastScrollY;
           lastScrollY = currentY;
 
-          // If we're not on products tab and alwaysStickyForNonProducts is true, 
-          // always make tabs sticky regardless of scroll
-          if (!isProductsTab && alwaysStickyForNonProducts) {
-            if (!lastSticky) {
-              setIsTabsSticky(true);
-              lastSticky = true;
-            }
-            ticking = false;
-            return;
-          }
-
-          // Original behavior for products tab
+          // Only apply sticky behavior for products tab
           const shouldBeSticky = rect.top <= headerHeight + stickyBuffer && scrollingDown;
           const shouldUnstick = rect.top > headerHeight + stickyBuffer && !scrollingDown;
 
@@ -124,15 +128,7 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [headerHeight, isProductsTab, stickyBuffer, alwaysStickyForNonProducts]);
-
-  // ===== HANDLE TAB SWITCH =====
-  useEffect(() => {
-    // When switching to non-products tabs, make tabs sticky immediately
-    if (!isProductsTab && alwaysStickyForNonProducts) {
-      setIsTabsSticky(true);
-    }
-  }, [isProductsTab, alwaysStickyForNonProducts]);
+  }, [headerHeight, isProductsTab, stickyBuffer, alwaysStickyForNonProducts, isTabsSticky]);
 
   // Reset scroll when switching to first tab
   const handleInternalTabChange = (tabId: string) => {
