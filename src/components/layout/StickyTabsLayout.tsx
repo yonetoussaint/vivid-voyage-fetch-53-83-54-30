@@ -48,21 +48,36 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
   const [isTabsSticky, setIsTabsSticky] = useState(false);
   const [tabsHeight, setTabsHeight] = useState(0);
   const [headerHeight, setHeaderHeight] = useState(0);
+  const [topContentHeight, setTopContentHeight] = useState(0);
+
+  // Debug logging
+  console.log('🎯 StickyTabsLayout rendering:', {
+    tabsCount: tabs.length,
+    activeTab,
+    headerHeight,
+    isTabsSticky,
+    inPanel,
+    hasHeader: !!header,
+    hasTopContent: !!topContent
+  });
 
   // ===== MEASURE HEIGHTS =====
   useLayoutEffect(() => {
     const updateHeights = () => {
       if (headerRef.current) setHeaderHeight(headerRef.current.offsetHeight || 0);
+      if (isProductsTab && topContentRef?.current)
+        setTopContentHeight(topContentRef.current.offsetHeight || 0);
       if (tabsRef.current) setTabsHeight(tabsRef.current.offsetHeight || 0);
     };
 
     updateHeights();
     const resizeObserver = new ResizeObserver(updateHeights);
     if (headerRef.current) resizeObserver.observe(headerRef.current);
+    if (isProductsTab && topContentRef?.current) resizeObserver.observe(topContentRef.current);
     if (tabsRef.current) resizeObserver.observe(tabsRef.current);
 
     return () => resizeObserver.disconnect();
-  }, [headerRef]);
+  }, [isProductsTab, headerRef, topContentRef]);
 
   // ===== RESET STICKY STATE WHEN SWITCHING TO PRODUCTS TAB =====
   useEffect(() => {
@@ -112,7 +127,7 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
             return;
           }
 
-          // FLEXIBLE STICKY BEHAVIOR: Tabs become sticky when they reach the header bottom
+          // Original behavior for products tab
           const shouldBeSticky = rect.top <= headerHeight + buffer && scrollingDown;
           const shouldUnstick = rect.top > headerHeight + buffer && !scrollingDown;
 
@@ -175,7 +190,7 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
           </div>
         )}
 
-        {/* NORMAL TABS */}
+        {/* NORMAL TABS - ALWAYS RENDER TABS */}
         <div ref={tabsContainerRef}>
           <div className="relative">
             <div
@@ -208,26 +223,35 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
       {/* HEADER */}
       {header}
 
-      {/* TOP CONTENT - Flexible positioning, let the parent component handle the pull-up logic */}
+      {/* TOP CONTENT - Pulled up by header height */}
       {topContent && (
         <div 
           ref={topContentRef}
           className="w-full relative"
+          style={{ 
+            marginTop: `-${headerHeight}px`,
+            paddingTop: `${headerHeight}px`,
+          }}
         >
           {topContent}
         </div>
       )}
 
-      {/* STICKY TABS - Flexible behavior */}
+      {/* STICKY TABS - ALWAYS RENDER TABS REGARDLESS OF GALLERY CONTENT */}
       <div
         ref={tabsContainerRef}
         style={{ height: isTabsSticky ? `${tabsHeight}px` : 'auto' }}
+        className="bg-white"
       >
         <div className="relative">
           {/* Normal Tabs - Always visible in document flow */}
           <div
             ref={tabsRef}
-            style={{ position: 'relative', zIndex: 30 }}
+            style={{ 
+              position: 'relative', 
+              zIndex: 40,
+              backgroundColor: 'white'
+            }}
           >
             <TabsNavigation
               ref={normalTabsNavigationRef}
@@ -241,7 +265,7 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
 
           {/* Sticky Tabs */}
           <div
-            className={`fixed left-0 right-0 z-40 bg-white shadow-sm transition-all duration-300 ease-out ${
+            className={`fixed left-0 right-0 z-50 bg-white shadow-sm transition-all duration-300 ease-out border-b ${
               isTabsSticky
                 ? 'translate-y-0 opacity-100'
                 : '-translate-y-full opacity-0'
@@ -258,7 +282,7 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
               onTabChange={handleInternalTabChange}
               showTopBorder={true}
               variant={variant}
-              className="bg-white shadow-sm"
+              className="bg-white"
             />
           </div>
         </div>
