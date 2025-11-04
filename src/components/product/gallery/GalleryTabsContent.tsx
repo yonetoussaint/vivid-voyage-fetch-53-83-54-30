@@ -1,7 +1,8 @@
+// In GalleryTabsContent.tsx - Remove GalleryThumbnails
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GalleryThumbnails } from '@/components/product/GalleryThumbnails';
-import { IPhoneXRListing } from '@/components/product/iPhoneXRListing';
+import { IPhoneXRListing } from '@/components/product/IPhoneXRListing';
 import CustomerReviewsEnhanced from '@/components/product/CustomerReviewsEnhanced';
 import ProductQA from '@/components/product/ProductQA';
 import { GalleryItem } from './types';
@@ -69,20 +70,6 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
 
   // Determine thumbnails data based on active tab
   const isVariantsTab = activeTab === 'variants';
-  const thumbnailImages = isVariantsTab && productData?.variant_names
-    ? productData.variant_names.map((vn: any) => vn.mainImage || vn.image || '')
-    : galleryItems.map(item => item.src);
-
-  const thumbnailGalleryItems = isVariantsTab && productData?.variant_names
-    ? productData.variant_names.map((vn: any) => ({
-        type: 'image' as const,
-        src: vn.mainImage || vn.image || ''
-      }))
-    : galleryItems;
-
-  const variantNames = isVariantsTab && productData?.variant_names
-    ? productData.variant_names.map((vn: any) => vn.name)
-    : [];
 
   const handleThumbnailClick = (index: number) => {
     if (isVariantsTab && productData?.variant_names) {
@@ -100,15 +87,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
     <div className="mt-2 w-full">
       {activeTab === 'overview' && (
         <div className="space-y-3">
-          <GalleryThumbnails
-            images={thumbnailImages}
-            currentIndex={currentIndex}
-            onThumbnailClick={onThumbnailClick}
-            isPlaying={isPlaying}
-            videoIndices={videoIndices}
-            galleryItems={galleryItems}
-            variantNames={[]}
-          />
+          {/* GalleryThumbnails removed - now in ProductDetailLayout */}
 
           <IPhoneXRListing
             product={product}
@@ -147,15 +126,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
 
       {activeTab === 'variants' && (
         <div className="space-y-3">
-          <GalleryThumbnails
-            images={thumbnailImages}
-            currentIndex={selectedColorIndex}
-            onThumbnailClick={handleThumbnailClick}
-            isPlaying={false}
-            videoIndices={[]}
-            galleryItems={thumbnailGalleryItems}
-            variantNames={variantNames}
-          />
+          {/* GalleryThumbnails removed - now in ProductDetailLayout */}
 
           <IPhoneXRListing
             product={product}
@@ -193,9 +164,7 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
       )}
 
       {activeTab === 'reviews' && (
-        
           <CustomerReviewsEnhanced productId={productId || ''} limit={10} />
-        
       )}
 
       {activeTab === 'qna' && (
