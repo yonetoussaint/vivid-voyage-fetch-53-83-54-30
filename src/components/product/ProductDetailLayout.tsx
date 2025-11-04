@@ -195,7 +195,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     </div>
   );
 
-  // Tabs configuration
+  // Tabs configuration - Passed to StickyTabsLayout
   const tabs = [
     { id: 'overview', label: 'Overview' },
     ...(product && (
@@ -228,7 +228,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     </>
   );
 
-  // Use StickyTabsLayout with flexible configuration
+  // Use StickyTabsLayout - IT HANDLES ALL TABS NAVIGATION
   return (
     <StickyTabsLayout
       header={header}
