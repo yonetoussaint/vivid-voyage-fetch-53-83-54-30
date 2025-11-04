@@ -16,6 +16,10 @@ interface StickyTabsLayoutProps {
   // Additional props for scroll behavior customization
   stickyBuffer?: number;
   alwaysStickyForNonProducts?: boolean;
+  // ProductDetailLayout specific props
+  inPanel?: boolean;
+  scrollContainerRef?: React.RefObject<HTMLDivElement>;
+  stickyTopOffset?: number;
 }
 
 const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
@@ -31,7 +35,10 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
   showTopBorder = false,
   variant = "underline",
   stickyBuffer = 4,
-  alwaysStickyForNonProducts = true
+  alwaysStickyForNonProducts = true,
+  inPanel = false,
+  scrollContainerRef,
+  stickyTopOffset
 }) => {
   // Refs
   const tabsContainerRef = useRef<HTMLDivElement>(null);
@@ -91,6 +98,11 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
       return;
     }
 
+    // For panel mode, use the existing StickyTabsNavigation logic
+    if (inPanel) {
+      return;
+    }
+
     const tabsEl = tabsContainerRef.current;
     if (!tabsEl) return;
 
@@ -128,7 +140,7 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [headerHeight, isProductsTab, stickyBuffer, alwaysStickyForNonProducts, isTabsSticky]);
+  }, [headerHeight, isProductsTab, stickyBuffer, alwaysStickyForNonProducts, isTabsSticky, inPanel]);
 
   // Reset scroll when switching to first tab
   const handleInternalTabChange = (tabId: string) => {
@@ -144,12 +156,63 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
     onTabChange(tabId);
   };
 
+  // For panel mode, use the existing StickyTabsNavigation component
+  if (inPanel) {
+    return (
+      <div className="min-h-screen bg-white">
+        {/* HEADER */}
+        {header}
+
+        {/* TOP CONTENT */}
+        {topContent && (
+          <div 
+            ref={topContentRef}
+            className="w-full relative"
+            style={{ 
+              marginTop: `-${headerHeight}px`,
+              paddingTop: `${headerHeight}px`,
+            }}
+          >
+            {topContent}
+          </div>
+        )}
+
+        {/* NORMAL TABS - Always visible in panel mode */}
+        <div
+          ref={tabsContainerRef}
+        >
+          <div className="relative">
+            <div
+              ref={tabsRef}
+              style={{ position: 'relative', zIndex: 30 }}
+            >
+              <TabsNavigation
+                ref={normalTabsNavigationRef}
+                tabs={tabs}
+                activeTab={activeTab}
+                onTabChange={handleInternalTabChange}
+                showTopBorder={showTopBorder}
+                variant={variant}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* CONTENT */}
+        <div>
+          {children}
+        </div>
+      </div>
+    );
+  }
+
+  // Regular mode with sticky behavior
   return (
     <div className="min-h-screen bg-white">
       {/* HEADER */}
       {header}
 
-      {/* TOP CONTENT (Seller Info, etc.) */}
+      {/* TOP CONTENT */}
       {topContent && (
         <div 
           ref={topContentRef}
