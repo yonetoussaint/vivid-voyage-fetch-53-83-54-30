@@ -41,8 +41,9 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const sellerInfoRef = useRef<HTMLDivElement>(null);  
   const tabsContainerRef = useRef<HTMLDivElement>(null);  
   const tabsRef = useRef<HTMLDivElement>(null);  
-  const normalTabsNavigationRef = useRef<TabsNavigationRef>(null); // Ref for normal TabsNavigation
-  const stickyTabsNavigationRef = useRef<TabsNavigationRef>(null); // Ref for sticky TabsNavigation
+  const normalTabsNavigationRef = useRef<TabsNavigationRef>(null);
+  const stickyTabsNavigationRef = useRef<TabsNavigationRef>(null);
+  const previousTabRef = useRef<string>('products'); // Track previous tab
 
   // States  
   const [isTabsSticky, setIsTabsSticky] = useState(false);  
@@ -136,20 +137,21 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       // Scroll to top when changing tabs to ensure proper layout
       window.scrollTo(0, 0);
       
-      // If switching to products tab, ensure tabs are not sticky and reset normal tabs scroll
-      if (tabId === 'products') {
+      // Store the previous tab before navigation
+      const previousTab = activeTab;
+      
+      // If switching to products tab from a non-products tab, reset normal tabs scroll
+      if (tabId === 'products' && previousTab !== 'products') {
         setIsTabsSticky(false);
-        // Reset scroll position of normal tabs
-        if (normalTabsNavigationRef.current) {
-          normalTabsNavigationRef.current.resetScroll();
-        }
-      } else {
+        // Use setTimeout to ensure the reset happens after the tab change
+        setTimeout(() => {
+          if (normalTabsNavigationRef.current) {
+            normalTabsNavigationRef.current.resetScroll();
+          }
+        }, 100);
+      } else if (tabId !== 'products') {
         // For other tabs, make tabs sticky
         setIsTabsSticky(true);
-        // Also reset sticky tabs scroll when switching to non-products tabs
-        if (stickyTabsNavigationRef.current) {
-          stickyTabsNavigationRef.current.resetScroll();
-        }
       }
       
       navigate(item.href);
@@ -285,9 +287,9 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     if (!isProductsTab) {
       setIsTabsSticky(true);
     }
-    // Don't automatically set to false when switching to products tab
-    // Let the scroll behavior handle it
-  }, [isProductsTab]);
+    // Update previous tab ref
+    previousTabRef.current = activeTab;
+  }, [isProductsTab, activeTab]);
 
   // ===== REDIRECT HANDLER =====  
   useEffect(() => {  
