@@ -9,10 +9,9 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchAllProducts } from '@/integrations/supabase/products';  
 import { useAuth } from '@/contexts/auth/AuthContext';  
 import { supabase } from '@/integrations/supabase/client';  
-import { TabsNavigationRef } from '@/components/home/TabsNavigation';  
-import StickyTabsLayout from '@/components/layout/StickyTabsLayout';
+import TabsNavigation, { TabsNavigationRef } from '@/components/home/TabsNavigation';  
 import SellerInfoSection from './SellerInfoSection';  
-import ProductHeader from '@/components/product/ProductHeader';
+import ProductHeader from '@/components/product/ProductHeader';  
 
 interface SellerLayoutProps {  
   children: React.ReactNode;  
@@ -40,12 +39,18 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   // Refs  
   const headerRef = useRef<HTMLDivElement>(null);  
   const sellerInfoRef = useRef<HTMLDivElement>(null);  
+  const tabsContainerRef = useRef<HTMLDivElement>(null);  
+  const tabsRef = useRef<HTMLDivElement>(null);  
   const normalTabsNavigationRef = useRef<TabsNavigationRef>(null);
   const stickyTabsNavigationRef = useRef<TabsNavigationRef>(null);
+  const previousTabRef = useRef<string>('products');
 
   // States  
+  const [isTabsSticky, setIsTabsSticky] = useState(false);  
+  const [tabsHeight, setTabsHeight] = useState(0);  
   const [headerHeight, setHeaderHeight] = useState(0);  
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [sellerInfoHeight, setSellerInfoHeight] = useState(0);  
+  const [isFavorite, setIsFavorite] = useState(false);  
 
   const handleBackClick = () => navigate('/profile');  
   const handleBecomeSeller = () => navigate('/seller-onboarding');  
@@ -131,17 +136,22 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     if (item) {
       window.scrollTo(0, 0);
       
-      if (tabId === 'products') {
+      const previousTab = activeTab;
+      
+      if (tabId === 'products' && previousTab !== 'products') {
+        setIsTabsSticky(false);
         setTimeout(() => {
           if (normalTabsNavigationRef.current) {
             normalTabsNavigationRef.current.resetScroll();
           }
         }, 100);
+      } else if (tabId !== 'products') {
+        setIsTabsSticky(true);
       }
       
       navigate(item.href);
     }  
-  };
+  };  
 
   const tabs = navigationItems.map(item => ({  
     id: item.id,  
@@ -195,20 +205,82 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }  
   ];  
 
-  // ===== MEASURE HEADER HEIGHT =====  
+  // ===== MEASURE HEIGHTS =====  
   useLayoutEffect(() => {  
-    const updateHeaderHeight = () => {  
-      if (headerRef.current) {
-        setHeaderHeight(headerRef.current.offsetHeight || 0);
-      }
+    const updateHeights = () => {  
+      if (headerRef.current) setHeaderHeight(headerRef.current.offsetHeight || 0);  
+      if (isProductsTab && sellerInfoRef.current)  
+        setSellerInfoHeight(sellerInfoRef.current.offsetHeight || 0);  
+      if (tabsRef.current) setTabsHeight(tabsRef.current.offsetHeight || 0);  
     };  
 
-    updateHeaderHeight();  
-    const resizeObserver = new ResizeObserver(updateHeaderHeight);  
+    updateHeights();  
+    const resizeObserver = new ResizeObserver(updateHeights);  
     if (headerRef.current) resizeObserver.observe(headerRef.current);  
+    if (isProductsTab && sellerInfoRef.current) resizeObserver.observe(sellerInfoRef.current);  
+    if (tabsRef.current) resizeObserver.observe(tabsRef.current);  
 
     return () => resizeObserver.disconnect();  
-  }, []);
+  }, [isProductsTab]);  
+
+  // ===== STICKY TABS BEHAVIOR =====
+  useEffect(() => {
+    const tabsEl = tabsContainerRef.current;
+    if (!tabsEl) return;
+
+    let lastSticky = isTabsSticky;
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const rect = tabsEl.getBoundingClientRect();
+          const currentY = window.scrollY;
+          const scrollingDown = currentY > lastScrollY;
+          lastScrollY = currentY;
+
+          const buffer = 4;
+          
+          if (!isProductsTab) {
+            if (!lastSticky) {
+              setIsTabsSticky(true);
+              lastSticky = true;
+            }
+            ticking = false;
+            return;
+          }
+
+          const shouldBeSticky = rect.top <= headerHeight + buffer && scrollingDown;
+          const shouldUnstick = rect.top > headerHeight + buffer && !scrollingDown;
+
+          if (shouldBeSticky && !lastSticky) {
+            setIsTabsSticky(true);
+            lastSticky = true;
+          } else if (shouldUnstick && lastSticky) {
+            setIsTabsSticky(false);
+            lastSticky = false;
+          }
+
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [headerHeight, isProductsTab]);
+
+  // ===== HANDLE TAB SWITCH =====
+  useEffect(() => {
+    if (!isProductsTab) {
+      setIsTabsSticky(true);
+    }
+    previousTabRef.current = activeTab;
+  }, [isProductsTab, activeTab]);
 
   // ===== REDIRECT HANDLER =====  
   useEffect(() => {  
@@ -225,35 +297,30 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }  
   }, [location.pathname, navigate]);  
 
-  const header = (
-    <div ref={headerRef}>
-      <ProductHeader  
-        onCloseClick={handleBackClick}  
-        onShareClick={handleShareClick}  
-        actionButtons={actionButtons}  
-        forceScrolledState={!isProductsTab}  
-      />
-    </div>
-  );
-
   return (  
-    <StickyTabsLayout
-      header={header}
-      headerHeight={headerHeight}
-      tabs={tabs}
-      activeTab={activeTab}
-      onTabChange={handleTabChange}
-      variant="underline"
-      stickImmediately={!isProductsTab}
-      normalTabsRef={normalTabsNavigationRef}
-      stickyTabsRef={stickyTabsNavigationRef}
-    >
-      {/* SELLER INFO for Products Tab */}  
+    <div className="min-h-screen bg-white">  
+      {/* HEADER */}  
+      <div   
+        ref={headerRef}   
+        className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"  
+      >  
+        <ProductHeader  
+          onCloseClick={handleBackClick}  
+          onShareClick={handleShareClick}  
+          actionButtons={actionButtons}  
+          forceScrolledState={!isProductsTab}  
+        />  
+      </div>  
+
+      {/* SELLER INFO */}  
       {isProductsTab && (  
         <div   
           ref={sellerInfoRef}   
-          className="w-full bg-black text-white"  
-          style={{ marginTop: `-${headerHeight}px` }}  
+          className="w-full bg-black text-white relative"  
+          style={{   
+            marginTop: `-${headerHeight}px`,  
+            paddingTop: `${headerHeight}px`,  
+          }}  
         >  
           <SellerInfoSection  
             sellerData={sellerData}  
@@ -265,23 +332,71 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
             showActionButtons={showActionButtons}  
           />  
         </div>  
-      )}
+      )}  
+
+      {/* STICKY TABS */}  
+      <div  
+        ref={tabsContainerRef}  
+        style={{ height: isTabsSticky ? `${tabsHeight}px` : 'auto' }}  
+      >  
+        <div className="relative">  
+          {/* Normal Tabs - Always visible in document flow, no animation */}  
+          <div  
+            ref={tabsRef}  
+            style={{ position: 'relative', zIndex: 30 }}  
+          >  
+            <TabsNavigation  
+              ref={normalTabsNavigationRef}
+              tabs={tabs}  
+              activeTab={activeTab}  
+              onTabChange={handleTabChange}  
+              showTopBorder={false}  
+              variant="underline"  
+            />  
+          </div>  
+
+          {/* Sticky Tabs - Slides UP when sticking, fades out when unsticking */}  
+          <div  
+            className={`fixed left-0 right-0 z-40 bg-white shadow-sm transition-all duration-300 ease-out ${  
+              isTabsSticky  
+                ? 'translate-y-0 opacity-100'  
+                : '-translate-y-full opacity-0'  
+            }`}  
+            style={{  
+              top: `${headerHeight}px`,  
+              willChange: 'transform, opacity',  
+            }}  
+          >  
+            <TabsNavigation  
+              ref={stickyTabsNavigationRef}
+              tabs={tabs}  
+              activeTab={activeTab}  
+              onTabChange={handleTabChange}  
+              showTopBorder={true}  
+              variant="underline"  
+              className="bg-white shadow-sm"  
+            />  
+          </div>  
+        </div>  
+      </div>  
 
       {/* CONTENT */}  
-      {React.Children.map(children, child => {  
-        if (React.isValidElement(child)) {  
-          if (activeTab !== 'products') {  
-            return React.cloneElement(child, {  
-              products,  
-              isLoading: productsLoading || sellerLoading  
-            } as any);  
+      <div style={{ paddingTop: !isProductsTab ? `${headerHeight}px` : '0px' }}>  
+        {React.Children.map(children, child => {  
+          if (React.isValidElement(child)) {  
+            if (activeTab !== 'products') {  
+              return React.cloneElement(child, {  
+                products,  
+                isLoading: productsLoading || sellerLoading  
+              } as any);  
+            }  
+            return React.cloneElement(child, { isLoading: sellerLoading } as any);  
           }  
-          return React.cloneElement(child, { isLoading: sellerLoading } as any);  
-        }  
-        return child;  
-      })}
-    </StickyTabsLayout>
-  );
+          return child;  
+        })}  
+      </div>  
+    </div>  
+  );  
 };  
 
 export default SellerLayout;
