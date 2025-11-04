@@ -1,5 +1,5 @@
 // ProductDetailLayout.tsx
-import React, { useState, useRef, useLayoutEffect } from "react";
+import React, { useState, useRef, useLayoutEffect, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/RedirectAuthContext';
@@ -67,6 +67,27 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
 
     return () => resizeObserver.disconnect();
   }, []);
+
+  // Sync active tab with gallery
+  useEffect(() => {
+    const syncActiveTab = () => {
+      if (refs.galleryRef.current) {
+        const galleryActiveTab = refs.galleryRef.current.getActiveTab?.();
+        if (galleryActiveTab && galleryActiveTab !== state.activeTab) {
+          console.log('🔄 Syncing active tab from gallery:', galleryActiveTab);
+          state.setActiveTab(galleryActiveTab);
+        }
+      }
+    };
+
+    // Check initially
+    syncActiveTab();
+    
+    // Set up interval to monitor tab changes
+    const interval = setInterval(syncActiveTab, 500);
+    
+    return () => clearInterval(interval);
+  }, [refs.galleryRef, state.activeTab, state.setActiveTab]);
 
   // Header action handlers
   const handleBackClick = () => navigate(-1);
@@ -143,6 +164,17 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     navigate(`/product-checkout?${checkoutParams.toString()}`);
   };
 
+  // Handle tab change - sync with gallery
+  const handleTabChange = (tabId: string) => {
+    // Update the gallery's active tab
+    if (refs.galleryRef.current) {
+      refs.galleryRef.current.setActiveTab(tabId);
+    }
+    
+    // Update local state
+    state.setActiveTab(tabId);
+  };
+
   // Header component
   const header = !hideHeader ? (
     <div 
@@ -195,7 +227,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     </div>
   );
 
-  // Tabs configuration - Passed to StickyTabsLayout
+  // Tabs configuration
   const tabs = [
     { id: 'overview', label: 'Overview' },
     ...(product && (
@@ -228,7 +260,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     </>
   );
 
-  // Use StickyTabsLayout - IT HANDLES ALL TABS NAVIGATION
+  // Use StickyTabsLayout with proper tab synchronization
   return (
     <StickyTabsLayout
       header={header}
@@ -236,7 +268,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
       topContent={topContent}
       tabs={tabs}
       activeTab={state.activeTab}
-      onTabChange={state.setActiveTab}
+      onTabChange={handleTabChange}
       isProductsTab={state.activeTab === 'overview'}
       showTopBorder={false}
       variant="underline"
