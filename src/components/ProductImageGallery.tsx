@@ -1,3 +1,4 @@
+// ProductImageGallery.tsx
 import React, { forwardRef, useImperativeHandle, useEffect } from "react";
 import { 
   Carousel,
@@ -14,7 +15,6 @@ import ConfigurationSummary from "@/components/product/ConfigurationSummary";
 import { ProductImageGalleryRef, ProductImageGalleryProps } from './product/gallery/types';
 import { useGalleryState } from './product/gallery/useGalleryState';
 import GalleryItem from './product/gallery/GalleryItem';
-import GalleryTabsContent from './product/gallery/GalleryTabsContent';
 import FullscreenGallery from './product/gallery/FullscreenGallery';
 import { AutoScrollIndicator } from './product/gallery/AutoScrollIndicator';
 
@@ -399,23 +399,7 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
       {/* Updated InfoBand with product data */}
       <InfoBand product={product} />
 
-      {/* REMOVED: Internal TabsNavigation - Now handled by StickyTabsLayout */}
-
-      <GalleryTabsContent
-        activeTab={internalActiveTab}
-        totalItems={totalItems}
-        galleryItems={galleryItems}
-        currentIndex={currentIndex}
-        isPlaying={isPlaying}
-        videoIndices={videoIndices}
-        productId={product?.id}
-        product={product}
-        onThumbnailClick={handleThumbnailClick}
-        onImageSelect={handleVariantImageChange}
-        onConfigurationChange={setInternalConfigData}
-        onBuyNow={onBuyNow}
-        onReadMore={onReadMore}
-      />
+      {/* REMOVED: GalleryTabsContent - Now moved to ProductDetailLayout */}
 
       <FullscreenGallery
         isVisible={isFullscreenMode}
