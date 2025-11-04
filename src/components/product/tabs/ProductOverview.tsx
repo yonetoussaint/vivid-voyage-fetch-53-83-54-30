@@ -35,16 +35,14 @@ const ProductOverview: React.FC<ProductOverviewProps> = ({ product }) => {
     reviewCount: product?.review_count,
     inventory: product?.inventory,
     sold_count: product?.sold_count,
-    change: product?.sales_change // You might need to calculate this
+    change: product?.sales_change
   };
 
   // Prepare data for BookGenreFlashDeals
   const relatedProducts = product?.related_products || [];
 
   return (
-    <div className="px-2 space-y-2">
-      <h2 className="text-xl font-bold">Product Overview</h2>
-      
+    <div className="w-full space-y-2">
       {/* 1. GalleryThumbnails */}
       <GalleryThumbnails
         images={galleryImages}
@@ -70,15 +68,7 @@ const ProductOverview: React.FC<ProductOverviewProps> = ({ product }) => {
         showSummary={false}
         showFilters={false}
         summaryMode="products"
-        className="mt-4"
       />
-
-      {/* Original description */}
-      <div className="pt-2">
-        <p className="text-gray-700 leading-relaxed">
-          {product?.description || 'No description available.'}
-        </p>
-      </div>
     </div>
   );
 };
