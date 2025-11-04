@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { IPhoneXRListing } from '@/components/product/IPhoneXRListing';
+import { IPhoneXRListing } from '@/components/product/iPhoneXRListing';
 import CustomerReviewsEnhanced from '@/components/product/CustomerReviewsEnhanced';
 import ProductQA from '@/components/product/ProductQA';
 import { GalleryItem } from './types';
