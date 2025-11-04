@@ -13,6 +13,9 @@ interface StickyTabsLayoutProps {
   isProductsTab?: boolean;
   showTopBorder?: boolean;
   variant?: "underline" | "pills";
+  // Additional props for scroll behavior customization
+  stickyBuffer?: number;
+  alwaysStickyForNonProducts?: boolean;
 }
 
 const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
@@ -26,7 +29,9 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
   children,
   isProductsTab = true,
   showTopBorder = false,
-  variant = "underline"
+  variant = "underline",
+  stickyBuffer = 4,
+  alwaysStickyForNonProducts = true
 }) => {
   // Refs
   const tabsContainerRef = useRef<HTMLDivElement>(null);
@@ -43,11 +48,20 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
   // ===== MEASURE HEIGHTS =====
   useLayoutEffect(() => {
     const updateHeights = () => {
-      if (headerRef.current) setHeaderHeight(headerRef.current.offsetHeight || 0);
-      if (isProductsTab && topContentRef?.current) {
-        setTopContentHeight(topContentRef.current.offsetHeight || 0);
+      if (headerRef.current) {
+        const newHeaderHeight = headerRef.current.offsetHeight || 0;
+        setHeaderHeight(newHeaderHeight);
       }
-      if (tabsRef.current) setTabsHeight(tabsRef.current.offsetHeight || 0);
+      
+      if (isProductsTab && topContentRef?.current) {
+        const newTopContentHeight = topContentRef.current.offsetHeight || 0;
+        setTopContentHeight(newTopContentHeight);
+      }
+      
+      if (tabsRef.current) {
+        const newTabsHeight = tabsRef.current.offsetHeight || 0;
+        setTabsHeight(newTabsHeight);
+      }
     };
 
     updateHeights();
@@ -77,10 +91,9 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
           const scrollingDown = currentY > lastScrollY;
           lastScrollY = currentY;
 
-          const buffer = 4;
-          
-          // If we're not on products tab, always make tabs sticky regardless of scroll
-          if (!isProductsTab) {
+          // If we're not on products tab and alwaysStickyForNonProducts is true, 
+          // always make tabs sticky regardless of scroll
+          if (!isProductsTab && alwaysStickyForNonProducts) {
             if (!lastSticky) {
               setIsTabsSticky(true);
               lastSticky = true;
@@ -89,10 +102,9 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
             return;
           }
 
-          // Calculate the point where tabs should become sticky
-          const stickyThreshold = headerHeight + (topContentRef?.current ? topContentHeight : 0) + buffer;
-          const shouldBeSticky = rect.top <= stickyThreshold && scrollingDown;
-          const shouldUnstick = rect.top > stickyThreshold && !scrollingDown;
+          // Original behavior for products tab
+          const shouldBeSticky = rect.top <= headerHeight + stickyBuffer && scrollingDown;
+          const shouldUnstick = rect.top > headerHeight + stickyBuffer && !scrollingDown;
 
           if (shouldBeSticky && !lastSticky) {
             setIsTabsSticky(true);
@@ -112,18 +124,18 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [headerHeight, topContentHeight, isProductsTab]);
+  }, [headerHeight, isProductsTab, stickyBuffer, alwaysStickyForNonProducts]);
 
   // ===== HANDLE TAB SWITCH =====
   useEffect(() => {
     // When switching to non-products tabs, make tabs sticky immediately
-    if (!isProductsTab) {
+    if (!isProductsTab && alwaysStickyForNonProducts) {
       setIsTabsSticky(true);
     }
-  }, [isProductsTab]);
+  }, [isProductsTab, alwaysStickyForNonProducts]);
 
   // Reset scroll when switching to first tab
-  const handleTabChange = (tabId: string) => {
+  const handleInternalTabChange = (tabId: string) => {
     // If switching to first tab, reset normal tabs scroll
     if (tabId === tabs[0]?.id) {
       setTimeout(() => {
@@ -170,7 +182,7 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
               ref={normalTabsNavigationRef}
               tabs={tabs}
               activeTab={activeTab}
-              onTabChange={handleTabChange}
+              onTabChange={handleInternalTabChange}
               showTopBorder={showTopBorder}
               variant={variant}
             />
@@ -192,7 +204,7 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
               ref={stickyTabsNavigationRef}
               tabs={tabs}
               activeTab={activeTab}
-              onTabChange={handleTabChange}
+              onTabChange={handleInternalTabChange}
               showTopBorder={true}
               variant={variant}
               className="bg-white shadow-sm"
@@ -202,7 +214,9 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
       </div>
 
       {/* CONTENT */}
-      <div style={{ paddingTop: !isProductsTab ? `${headerHeight}px` : '0px' }}>
+      <div style={{ 
+        paddingTop: !isProductsTab && alwaysStickyForNonProducts ? `${headerHeight}px` : '0px' 
+      }}>
         {children}
       </div>
     </div>
