@@ -1,4 +1,3 @@
-// ProductDetailLayout.tsx
 import React, { useState, useRef, useLayoutEffect, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -166,6 +165,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
 
   // Handle tab change - sync with gallery
   const handleTabChange = (tabId: string) => {
+    console.log('🔄 Tab changed to:', tabId);
     // Update the gallery's active tab
     if (refs.galleryRef.current) {
       refs.galleryRef.current.setActiveTab(tabId);
@@ -179,7 +179,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
   const header = !hideHeader ? (
     <div 
       ref={headerRef} 
-      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-white"
     >
       <ProductHeader
         onCloseClick={handleBackClick}
@@ -198,7 +198,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
   // Top content (Gallery Section) - Handle pull-up logic here
   const topContent = (
     <div 
-      className="w-full relative"
+      className="w-full relative bg-white"
       style={{ 
         marginTop: `-${headerHeight}px`,
         paddingTop: `${headerHeight}px`,
@@ -242,7 +242,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
 
   // Main content
   const mainContent = (
-    <>
+    <div className="bg-white">
       <ProductVariantManager
         product={product}
         displayImages={state.displayImages}
@@ -257,8 +257,11 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
         setSharePanelOpen={state.setSharePanelOpen}
         activeTab={state.activeTab}
       />
-    </>
+    </div>
   );
+
+  console.log('🎯 ProductDetailLayout rendering with activeTab:', state.activeTab);
+  console.log('🎯 Tabs configuration:', tabs);
 
   // Use StickyTabsLayout with proper tab synchronization
   return (
