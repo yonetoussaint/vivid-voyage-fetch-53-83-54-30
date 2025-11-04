@@ -24,8 +24,6 @@ import StoreReviews from "@/components/product/tabs/StoreReviews";
 import ReviewsGallery from "@/components/product/tabs/ReviewsGallery";
 import ProductQnA from "@/components/product/tabs/ProductQnA";
 
-// Remove DEFAULT_PRODUCT_ID - we don't want fallback to a specific product
-
 interface ProductDetailProps {
   productId?: string;
   hideHeader?: boolean;
@@ -394,4 +392,6 @@ const ProductDetail: React.FC = () => {
   );
 };
 
+// Export both components for flexibility
+export { ProductDetailContent };
 export default ProductDetail;
