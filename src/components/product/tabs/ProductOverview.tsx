@@ -42,44 +42,39 @@ const ProductOverview: React.FC<ProductOverviewProps> = ({ product }) => {
   const relatedProducts = product?.related_products || [];
 
   return (
-    <div className="p-4 space-y-6">
-      <h2 className="text-xl font-bold mb-4">Product Overview</h2>
+    <div className="px-2 space-y-2">
+      <h2 className="text-xl font-bold">Product Overview</h2>
       
       {/* 1. GalleryThumbnails */}
-      <div className="mb-6">
-        <GalleryThumbnails
-          images={galleryImages}
-          currentIndex={0}
-          onThumbnailClick={(index) => console.log('Thumbnail clicked:', index)}
-          videoIndices={videoIndices}
-          galleryItems={allGalleryItems}
-          variantNames={product?.variants?.map((v: any) => v.name) || []}
-        />
-      </div>
+      <GalleryThumbnails
+        images={galleryImages}
+        currentIndex={0}
+        onThumbnailClick={(index) => console.log('Thumbnail clicked:', index)}
+        videoIndices={videoIndices}
+        galleryItems={allGalleryItems}
+        variantNames={product?.variants?.map((v: any) => v.name) || []}
+      />
 
       {/* 2. IPhoneXRListing */}
-      <div className="mb-6">
-        <IPhoneXRListing 
-          product={listingProduct}
-          onReadMore={() => console.log('Read more clicked')}
-        />
-      </div>
+      <IPhoneXRListing 
+        product={listingProduct}
+        onReadMore={() => console.log('Read more clicked')}
+      />
 
       {/* 3. BookGenreFlashDeals - Show related products */}
-      <div className="mt-8">
-        <BookGenreFlashDeals
-          title="Related Products"
-          subtitle="Customers also viewed"
-          products={relatedProducts}
-          showSectionHeader={true}
-          showSummary={false}
-          showFilters={false}
-          summaryMode="products"
-        />
-      </div>
+      <BookGenreFlashDeals
+        title="Related Products"
+        subtitle="Customers also viewed"
+        products={relatedProducts}
+        showSectionHeader={true}
+        showSummary={false}
+        showFilters={false}
+        summaryMode="products"
+        className="mt-4"
+      />
 
       {/* Original description */}
-      <div className="mt-6">
+      <div className="pt-2">
         <p className="text-gray-700 leading-relaxed">
           {product?.description || 'No description available.'}
         </p>
