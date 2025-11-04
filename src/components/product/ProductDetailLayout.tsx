@@ -1,5 +1,5 @@
 // ProductDetailLayout.tsx
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useLayoutEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/RedirectAuthContext';
@@ -41,8 +41,9 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
   const { openAuthOverlay } = useAuthOverlay();
   const { startLoading } = useNavigationLoading();
 
-  // Refs - Same as SellerLayout
+  // Refs
   const headerRef = useRef<HTMLDivElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
 
   const {
     state,
@@ -50,11 +51,24 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     handlers
   } = useProductDetailState(product);
 
-  // States for header actions - Same as SellerLayout
+  // States for header actions
   const [isFavorite, setIsFavorite] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Header action handlers - Same as SellerLayout pattern
+  // Measure header height
+  useLayoutEffect(() => {
+    const updateHeaderHeight = () => {
+      if (headerRef.current) setHeaderHeight(headerRef.current.offsetHeight || 0);
+    };
+
+    updateHeaderHeight();
+    const resizeObserver = new ResizeObserver(updateHeaderHeight);
+    if (headerRef.current) resizeObserver.observe(headerRef.current);
+
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  // Header action handlers
   const handleBackClick = () => navigate(-1);
   
   const handleShareClick = async () => {
@@ -96,7 +110,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     navigate('/search');
   };
 
-  // Action buttons - Same as SellerLayout pattern
+  // Action buttons
   const actionButtons = [
     {
       Icon: Heart,
@@ -129,7 +143,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     navigate(`/product-checkout?${checkoutParams.toString()}`);
   };
 
-  // Header component - Same as SellerLayout
+  // Header component
   const header = !hideHeader ? (
     <div 
       ref={headerRef} 
@@ -149,31 +163,39 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     </div>
   ) : null;
 
-  // Top content (Gallery Section) - Same as SellerLayout
+  // Top content (Gallery Section) - Handle pull-up logic here
   const topContent = (
-    <ProductGallerySection
-      ref={refs.overviewRef}
-      galleryRef={refs.galleryRef}
-      displayImages={state.displayImages}
-      product={product}
-      focusMode={state.focusMode}
-      onFocusModeChange={state.setFocusMode}
-      onProductDetailsClick={() => state.setProductDetailsSheetOpen(true)}
-      onImageIndexChange={(currentIndex, totalItems) => {
-        state.setCurrentImageIndex(currentIndex);
-        state.setTotalImages(totalItems);
+    <div 
+      className="w-full relative"
+      style={{ 
+        marginTop: `-${headerHeight}px`,
+        paddingTop: `${headerHeight}px`,
       }}
-      onVariantImageChange={handlers.handleVariantImageSelection}
-      onSellerClick={() => {
-        if (product?.sellers?.id) {
-          navigate(`/seller/${product?.sellers?.id}`);
-        }
-      }}
-      onReadMore={onReadMore}
-    />
+    >
+      <ProductGallerySection
+        ref={refs.overviewRef}
+        galleryRef={refs.galleryRef}
+        displayImages={state.displayImages}
+        product={product}
+        focusMode={state.focusMode}
+        onFocusModeChange={state.setFocusMode}
+        onProductDetailsClick={() => state.setProductDetailsSheetOpen(true)}
+        onImageIndexChange={(currentIndex, totalItems) => {
+          state.setCurrentImageIndex(currentIndex);
+          state.setTotalImages(totalItems);
+        }}
+        onVariantImageChange={handlers.handleVariantImageSelection}
+        onSellerClick={() => {
+          if (product?.sellers?.id) {
+            navigate(`/seller/${product?.sellers?.id}`);
+          }
+        }}
+        onReadMore={onReadMore}
+      />
+    </div>
   );
 
-  // Tabs configuration - Same pattern as SellerLayout
+  // Tabs configuration
   const tabs = [
     { id: 'overview', label: 'Overview' },
     ...(product && (
@@ -186,10 +208,9 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     { id: 'qna', label: 'Q&A' }
   ];
 
-  // Main content that goes below the tabs
+  // Main content
   const mainContent = (
     <>
-      {/* Variant Management */}
       <ProductVariantManager
         product={product}
         displayImages={state.displayImages}
@@ -197,7 +218,6 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
         setCurrentImageIndex={state.setCurrentImageIndex}
       />
 
-      {/* Sticky Components */}
       <ProductStickyComponents
         product={product}
         onBuyNow={buyNow}
@@ -208,13 +228,12 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     </>
   );
 
-  // Use StickyTabsLayout exactly like SellerLayout does
+  // Use StickyTabsLayout with flexible configuration
   return (
     <StickyTabsLayout
       header={header}
       headerRef={headerRef}
       topContent={topContent}
-      topContentRef={refs.overviewRef}
       tabs={tabs}
       activeTab={state.activeTab}
       onTabChange={state.setActiveTab}
