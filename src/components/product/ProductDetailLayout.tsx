@@ -306,7 +306,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
 
       {/* GalleryThumbnails - FIXED: Render conditionally based on available images */}
       {shouldRenderThumbnails && (
-        <div className="mt-2 px-4 border border-transparent">
+        <div className="mt-2 px-2 border border-transparent">
           <GalleryThumbnails
             images={thumbnailImages}
             currentIndex={currentThumbnailIndex}
