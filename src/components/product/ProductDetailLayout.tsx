@@ -24,6 +24,7 @@ interface ProductDetailLayoutProps {
   onReadMore?: () => void;
   scrollContainerRef?: React.RefObject<HTMLDivElement>;
   stickyTopOffset?: number;
+  children?: React.ReactNode;
 }
 
 const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
@@ -33,7 +34,8 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
   inPanel = false,
   scrollContainerRef,
   stickyTopOffset,
-  onReadMore
+  onReadMore,
+  children
 }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
