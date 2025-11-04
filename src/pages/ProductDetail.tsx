@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import ProductDetailError from "@/components/product/ProductDetailError";
 import SlideUpPanel from "@/components/shared/SlideUpPanel";
 
-// Import tab components (you'll need to create these)
+// Import tab components
 import ProductOverview from "@/components/product/tabs/ProductOverview";
 import ProductVariants from "@/components/product/tabs/ProductVariants";
 import ProductReviews from "@/components/product/tabs/ProductReviews";
@@ -34,10 +34,12 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
 }) => {
   console.log('🚀 ProductDetailContent component loaded');
 
-  const { id: paramId, "*": splat } = useParams<{ id: string; "*": string }>();
+  const { id: paramId } = useParams<{ id: string }>();
   const location = useLocation();
+  
+  // Use prop productId first, then param, then default - ensure it's never undefined
   const productId = propProductId || paramId || DEFAULT_PRODUCT_ID;
-  const { data: product, isLoading } = useProduct(productId);
+  const { data: product, isLoading, error } = useProduct(productId);
 
   // State for description panel
   const [isDescriptionPanelOpen, setIsDescriptionPanelOpen] = React.useState(false);
@@ -107,7 +109,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     );
   }
 
-  if (!product) {
+  if (error || !product) {
     return <ProductDetailError />;
   }
 
@@ -122,19 +124,19 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
         stickyTopOffset={stickyTopOffset}
         onReadMore={handleReadMore}
       >
-        {/* This is where the tab content will be rendered based on the current URL */}
+        {/* Tab content routing */}
         <div className="product-tab-content">
-          {location.pathname.includes('/variants') && <ProductVariants product={product} />}
-          {location.pathname.includes('/reviews') && !location.pathname.includes('store-reviews') && <ProductReviews product={product} />}
-          {location.pathname.includes('/store-reviews') && <StoreReviews product={product} />}
-          {location.pathname.includes('/reviews-gallery') && <ReviewsGallery product={product} />}
-          {location.pathname.includes('/qna') && <ProductQnA product={product} />}
-          {(location.pathname.endsWith(`/product/${productId}`) || 
-            location.pathname.includes('/overview') || 
-            !location.pathname.includes('/variants') && 
-            !location.pathname.includes('/reviews') && 
-            !location.pathname.includes('/qna')) && 
-            <ProductOverview product={product} />}
+          <Routes>
+            <Route path="/variants" element={<ProductVariants product={product} />} />
+            <Route path="/reviews" element={<ProductReviews product={product} />} />
+            <Route path="/store-reviews" element={<StoreReviews product={product} />} />
+            <Route path="/reviews-gallery" element={<ReviewsGallery product={product} />} />
+            <Route path="/qna" element={<ProductQnA product={product} />} />
+            <Route path="/overview" element={<ProductOverview product={product} />} />
+            <Route path="/" element={<ProductOverview product={product} />} />
+            {/* Catch-all route for any unmatched paths */}
+            <Route path="*" element={<Navigate to={`/product/${productId}/overview`} replace />} />
+          </Routes>
         </div>
       </ProductDetailLayout>
 
@@ -155,32 +157,36 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   );
 };
 
-// Main wrapper component with routing (like SellerDashboard)
+// Main wrapper component with routing
 const ProductDetail: React.FC = () => {
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
 
-  // Scroll to top when route changes (same as SellerDashboard)
+  // Scroll to top when route changes
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [location.pathname]);
 
-  // Log for debugging
   console.log('🔍 ProductDetail routing debug:', {
     location: location.pathname,
     params: { id },
     fullPath: location.pathname
   });
 
+  // If no ID is found in params, use the default
+  const productId = id || DEFAULT_PRODUCT_ID;
+
   return (
     <Routes>
-      <Route path="/" element={<Navigate to={`/product/${id}/overview`} replace />} />
+      <Route path="/" element={<Navigate to={`/product/${productId}/overview`} replace />} />
       <Route path="/overview" element={<ProductDetailContent />} />
       <Route path="/variants" element={<ProductDetailContent />} />
       <Route path="/reviews" element={<ProductDetailContent />} />
       <Route path="/store-reviews" element={<ProductDetailContent />} />
       <Route path="/reviews-gallery" element={<ProductDetailContent />} />
       <Route path="/qna" element={<ProductDetailContent />} />
+      {/* Catch-all route */}
+      <Route path="*" element={<Navigate to={`/product/${productId}/overview`} replace />} />
     </Routes>
   );
 };
