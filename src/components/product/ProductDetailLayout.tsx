@@ -1,3 +1,5 @@
+// In ProductDetailLayout.tsx - Add GalleryThumbnails import and move the logic
+
 import React, { useState, useRef, useLayoutEffect, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +16,7 @@ import ProductStickyComponents from './ProductStickyComponents';
 import StickyTabsLayout from '@/components/layout/StickyTabsLayout';
 import ProductHeader from '@/components/product/ProductHeader';
 import { useNavigationLoading } from '@/hooks/useNavigationLoading';
+import { GalleryThumbnails } from '@/components/product/GalleryThumbnails'; // Add this import
 
 interface ProductDetailLayoutProps {
   product: any;
@@ -54,6 +57,9 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
   const [isFavorite, setIsFavorite] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // State for GalleryThumbnails
+  const [selectedColorIndex, setSelectedColorIndex] = useState(0);
+
   // Measure header height
   useLayoutEffect(() => {
     const updateHeaderHeight = () => {
@@ -81,16 +87,16 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
 
     // Check initially
     syncActiveTab();
-    
+
     // Set up interval to monitor tab changes
     const interval = setInterval(syncActiveTab, 500);
-    
+
     return () => clearInterval(interval);
   }, [refs.galleryRef, state.activeTab, state.setActiveTab]);
 
   // Header action handlers
   const handleBackClick = () => navigate(-1);
-  
+
   const handleShareClick = async () => {
     try {
       if (navigator.share && product) {
@@ -128,6 +134,28 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
   const handleSearchFocus = () => {
     startLoading();
     navigate('/search');
+  };
+
+  // GalleryThumbnails handlers
+  const handleThumbnailClick = (index: number) => {
+    if (state.activeTab === 'variants' && product?.variant_names) {
+      setSelectedColorIndex(index);
+      const variant = product.variant_names[index];
+      if (variant?.mainImage || variant?.image) {
+        handlers.handleVariantImageSelection(variant.mainImage || variant.image, variant.name);
+      }
+    } else {
+      // For overview tab or other tabs
+      if (refs.galleryRef.current) {
+        // You might need to add a method to the gallery ref to handle thumbnail clicks
+        // For now, we'll update the current image index in state
+        state.setCurrentImageIndex(index);
+      }
+    }
+  };
+
+  const handleVariantImageSelect = (imageUrl: string, variantName: string) => {
+    handlers.handleVariantImageSelection(imageUrl, variantName);
   };
 
   // Action buttons
@@ -170,10 +198,29 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     if (refs.galleryRef.current) {
       refs.galleryRef.current.setActiveTab(tabId);
     }
-    
+
     // Update local state
     state.setActiveTab(tabId);
   };
+
+  // Prepare data for GalleryThumbnails
+  const isVariantsTab = state.activeTab === 'variants';
+  const thumbnailImages = isVariantsTab && product?.variant_names
+    ? product.variant_names.map((vn: any) => vn.mainImage || vn.image || '')
+    : state.displayImages;
+
+  const thumbnailGalleryItems = isVariantsTab && product?.variant_names
+    ? product.variant_names.map((vn: any) => ({
+        type: 'image' as const,
+        src: vn.mainImage || vn.image || ''
+      }))
+    : state.displayImages.map(src => ({ type: 'image' as const, src }));
+
+  const variantNames = isVariantsTab && product?.variant_names
+    ? product.variant_names.map((vn: any) => vn.name)
+    : [];
+
+  const currentThumbnailIndex = isVariantsTab ? selectedColorIndex : state.currentImageIndex;
 
   // Header component
   const header = !hideHeader ? (
@@ -195,7 +242,7 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
     </div>
   ) : null;
 
-  // Top content (Gallery Section) - Handle pull-up logic here
+  // Top content (Gallery Section + GalleryThumbnails)
   const topContent = (
     <div 
       className="w-full relative bg-white"
@@ -224,6 +271,21 @@ const ProductDetailLayout: React.FC<ProductDetailLayoutProps> = ({
         }}
         onReadMore={onReadMore}
       />
+      
+      {/* GalleryThumbnails moved here */}
+      {(state.displayImages.length > 1 || (isVariantsTab && product?.variant_names)) && (
+        <div className="mt-2 px-4">
+          <GalleryThumbnails
+            images={thumbnailImages}
+            currentIndex={currentThumbnailIndex}
+            onThumbnailClick={handleThumbnailClick}
+            isPlaying={false} // You might need to track video playing state
+            videoIndices={[]} // You might need to track video indices
+            galleryItems={thumbnailGalleryItems}
+            variantNames={variantNames}
+          />
+        </div>
+      )}
     </div>
   );
 
