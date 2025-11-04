@@ -34,7 +34,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
 }) => {
   console.log('🚀 ProductDetailContent component loaded');
 
-  const { id: paramId } = useParams<{ id: string }>();
+  const { id: paramId, "*": splat } = useParams<{ id: string; "*": string }>();
   const location = useLocation();
   const productId = propProductId || paramId || DEFAULT_PRODUCT_ID;
   const { data: product, isLoading } = useProduct(productId);
@@ -122,16 +122,20 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
         stickyTopOffset={stickyTopOffset}
         onReadMore={handleReadMore}
       >
-        {/* This is where the tab content will be rendered */}
-        <Routes>
-          <Route path="/" element={<ProductOverview product={product} />} />
-          <Route path="/overview" element={<ProductOverview product={product} />} />
-          <Route path="/variants" element={<ProductVariants product={product} />} />
-          <Route path="/reviews" element={<ProductReviews product={product} />} />
-          <Route path="/store-reviews" element={<StoreReviews product={product} />} />
-          <Route path="/reviews-gallery" element={<ReviewsGallery product={product} />} />
-          <Route path="/qna" element={<ProductQnA product={product} />} />
-        </Routes>
+        {/* This is where the tab content will be rendered based on the current URL */}
+        <div className="product-tab-content">
+          {location.pathname.includes('/variants') && <ProductVariants product={product} />}
+          {location.pathname.includes('/reviews') && !location.pathname.includes('store-reviews') && <ProductReviews product={product} />}
+          {location.pathname.includes('/store-reviews') && <StoreReviews product={product} />}
+          {location.pathname.includes('/reviews-gallery') && <ReviewsGallery product={product} />}
+          {location.pathname.includes('/qna') && <ProductQnA product={product} />}
+          {(location.pathname.endsWith(`/product/${productId}`) || 
+            location.pathname.includes('/overview') || 
+            !location.pathname.includes('/variants') && 
+            !location.pathname.includes('/reviews') && 
+            !location.pathname.includes('/qna')) && 
+            <ProductOverview product={product} />}
+        </div>
       </ProductDetailLayout>
 
       {/* SlideUpPanel at the root level */}
@@ -154,21 +158,29 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
 // Main wrapper component with routing (like SellerDashboard)
 const ProductDetail: React.FC = () => {
   const location = useLocation();
+  const { id } = useParams<{ id: string }>();
 
   // Scroll to top when route changes (same as SellerDashboard)
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [location.pathname]);
 
+  // Log for debugging
+  console.log('🔍 ProductDetail routing debug:', {
+    location: location.pathname,
+    params: { id },
+    fullPath: location.pathname
+  });
+
   return (
     <Routes>
-      <Route path="/:id" element={<Navigate to="./overview" replace />} />
-      <Route path="/:id/overview" element={<ProductDetailContent />} />
-      <Route path="/:id/variants" element={<ProductDetailContent />} />
-      <Route path="/:id/reviews" element={<ProductDetailContent />} />
-      <Route path="/:id/store-reviews" element={<ProductDetailContent />} />
-      <Route path="/:id/reviews-gallery" element={<ProductDetailContent />} />
-      <Route path="/:id/qna" element={<ProductDetailContent />} />
+      <Route path="/" element={<Navigate to={`/product/${id}/overview`} replace />} />
+      <Route path="/overview" element={<ProductDetailContent />} />
+      <Route path="/variants" element={<ProductDetailContent />} />
+      <Route path="/reviews" element={<ProductDetailContent />} />
+      <Route path="/store-reviews" element={<ProductDetailContent />} />
+      <Route path="/reviews-gallery" element={<ProductDetailContent />} />
+      <Route path="/qna" element={<ProductDetailContent />} />
     </Routes>
   );
 };
