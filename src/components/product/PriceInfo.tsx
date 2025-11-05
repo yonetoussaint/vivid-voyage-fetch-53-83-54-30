@@ -1,5 +1,3 @@
-remove the bulk pricing section 
-
 import React, { createContext, useContext, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 
