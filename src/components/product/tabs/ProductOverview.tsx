@@ -74,7 +74,7 @@ const ProductOverview: React.FC<ProductOverviewProps> = ({ product }) => {
   }, [allProducts, product?.id, isLoadingProducts]);
 
   return (
-    <div className="w-full space-y-2">
+    <div className="w-full mt-2 space-y-2">
       {/* 1. GalleryThumbnails - Synced with product data */}
       <GalleryThumbnails
         images={galleryImages}
