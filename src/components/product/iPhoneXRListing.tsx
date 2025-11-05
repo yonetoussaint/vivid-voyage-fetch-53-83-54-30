@@ -1,4 +1,4 @@
-// iPhoneXRListing.tsx - Enhanced with B2B Trade Details
+// iPhoneXRListing.tsx - Simplified with Price and Currency Switcher
 import React from 'react';
 import { Star, ShieldCheck, Video, CreditCard } from 'lucide-react';
 import PriceInfo from "@/components/product/PriceInfo";
@@ -13,32 +13,14 @@ interface IPhoneXRListingProps {
     inventory?: number;
     sold_count?: number;
     change?: number;
-
-    // 🧱 New B2B trade data
     unitPrice?: number;
-    bulkPrices?: { minQty: number; price: number }[]; // example: [{ minQty: 100, price: 145 }]
-    minOrderQty?: number;
-    paymentTerms?: string;
-    tradeAssurance?: boolean;
-    demoVideoUrl?: string;
   };
   onReadMore?: () => void;
 }
 
 // Mock data for demonstration
 const mockB2BData = {
-  // B2B Trade Data
   unitPrice: 189.99,
-  bulkPrices: [
-    { minQty: 50, price: 185.00 },
-    { minQty: 100, price: 179.99 },
-    { minQty: 500, price: 169.99 },
-    { minQty: 1000, price: 159.99 }
-  ],
-  minOrderQty: 20,
-  paymentTerms: "30% deposit upon order confirmation, 70% balance before shipment. T/T, L/C accepted.",
-  tradeAssurance: true,
-  demoVideoUrl: "https://example.com/demo-video"
 };
 
 export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
@@ -52,8 +34,6 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
 
   const inStock = mergedProduct?.inventory || 0;
   const sold = mergedProduct?.sold_count || 0;
-  const total = inStock + sold;
-  const stockPct = total > 0 ? (inStock / total) * 100 : 0;
   const isPositive = (mergedProduct?.change || 0) >= 0;
 
   const handleReadMore = () => {
@@ -64,7 +44,7 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
 
   return (
     <div className="w-full px-2 bg-white font-sans">
-     
+
       {/* Product Title */}
       {mergedProduct?.name && (
         <h2 className="text-lg font-semibold text-gray-900 mb-2">
@@ -72,15 +52,8 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
         </h2>
       )}
 
-      {/* PriceInfo Component - Now properly styled for inline display */}
-      <PriceInfo
-        product={mergedProduct}
-        focusMode={false}
-        isPlaying={false}
-        configurationData={null}
-        variant="inline"
-        showBulkPricing={true}
-      />
+      {/* Simplified PriceInfo Component - Just price and currency switcher */}
+      <PriceInfo price={mergedProduct.unitPrice} />
 
       {/* Description with "Read More" */}
       <div className="mb-3">
@@ -135,7 +108,7 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
         </div>
       </div>
 
-      {/* 🧱 B2B Trade Details */}
+      {/* Simplified B2B Trade Details */}
       <div className="border-t border-gray-100 pt-3 space-y-3 text-sm">
         {/* Demo Video */}
         {mergedProduct?.demoVideoUrl && (
@@ -150,26 +123,6 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
                 </div>
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Pricing */}
-        {mergedProduct?.unitPrice && (
-          <div>
-            <h4 className="text-gray-800 font-medium mb-1">Pricing:</h4>
-            <p className="text-gray-700">
-              <span className="font-semibold">${mergedProduct.unitPrice.toFixed(2)}</span> per unit
-            </p>
-
-            {mergedProduct.bulkPrices && mergedProduct.bulkPrices.length > 0 && (
-              <div className="mt-1 ml-2">
-                {mergedProduct.bulkPrices.map((tier, idx) => (
-                  <div key={idx} className="text-gray-600">
-                    {tier.minQty}+ units — ${tier.price.toFixed(2)} each
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         )}
 
