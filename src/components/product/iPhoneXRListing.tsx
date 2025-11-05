@@ -167,15 +167,15 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
 )}
 
       {/* Price Row - Always present */}
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl font-bold text-orange-500">
-            {formatPrice(currentPrice)}
-          </span>
-          <span className="text-sm text-gray-500">/ unit</span>
-        </div>
-        <CurrencySwitcher />
-      </div>
+<div className="flex justify-between items-center">
+  <div className="flex items-center gap-2">
+    <span className="text-2xl font-bold text-orange-500 leading-none">
+      {formatPrice(currentPrice)}
+    </span>
+    <span className="text-sm text-gray-500">/ unit</span>
+  </div>
+  <CurrencySwitcher />
+</div>
 
       {/* MOQ Row - Always present */}
       <div className="flex justify-between items-center bg-orange-50 rounded px-3 py-2 border border-orange-200">
