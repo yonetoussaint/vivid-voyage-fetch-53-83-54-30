@@ -1,4 +1,4 @@
-// PriceInfo.tsx - Self-contained version
+// PriceInfo.tsx - Simplified version
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 
@@ -24,33 +24,27 @@ const exchangeRates = {
   JPY: 149.50
 };
 
-// CurrencySwitcher Component
+// Simplified CurrencySwitcher Component
 const CurrencySwitcher = ({ 
   currentCurrency, 
-  onCurrencyChange, 
-  className = "" 
+  onCurrencyChange 
 }) => {
   return (
     <>
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.3.2/css/flag-icons.min.css" />
       <button
         onClick={onCurrencyChange}
-        className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 bg-gray-100 text-gray-900 border border-gray-200 hover:bg-gray-200 cursor-pointer transition-colors ${className}`}
+        className="p-1 rounded flex items-center gap-1 bg-gray-100 hover:bg-gray-200 cursor-pointer transition-colors text-xs"
         aria-label="Change currency"
       >
-        <div className="w-5 h-5 rounded-full overflow-hidden flex items-center justify-center">
-          <span className={`fi fi-${currencyToCountry[currentCurrency]} scale-150`}></span>
-        </div>
-        <ChevronDown className="w-4 h-4 stroke-2" />
-        <span className="font-bold text-gray-600">
-          {currencies[currentCurrency]}
-        </span>
+        <span className={`fi fi-${currencyToCountry[currentCurrency]}`}></span>
+        <ChevronDown className="w-3 h-3" />
       </button>
     </>
   );
 };
 
-// Simple PriceInfo Component
+// Simplified PriceInfo Component
 const PriceInfo = ({ price = 0 }) => {
   const [currentCurrency, setCurrentCurrency] = useState('USD');
 
@@ -72,8 +66,8 @@ const PriceInfo = ({ price = 0 }) => {
   };
 
   return (
-    <div className="flex items-center gap-3 mb-4">
-      <span className="text-2xl font-bold text-gray-900">
+    <div className="flex items-center gap-2">
+      <span className="text-xl font-bold text-gray-900">
         {formatPrice(price)}
       </span>
       <CurrencySwitcher 
