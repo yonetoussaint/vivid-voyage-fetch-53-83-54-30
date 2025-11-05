@@ -25,7 +25,7 @@ interface IPhoneXRListingProps {
 }
 
 // Mock data for demonstration
-const mockProduct = {
+const mockB2BData = {
   // B2B Trade Data
   unitPrice: 189.99,
   bulkPrices: [
@@ -40,17 +40,20 @@ const mockProduct = {
   demoVideoUrl: "https://example.com/demo-video"
 };
 
-export function IPhoneXRListing({ product = mockProduct, onReadMore }: IPhoneXRListingProps) {
+export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
+  // Merge product with mock B2B data
+  const mergedProduct = { ...mockB2BData, ...product };
+  
   const displayDescription =
-    product?.short_description || product?.description || 'Product description not available.';
+    mergedProduct?.short_description || mergedProduct?.description || 'Product description not available.';
   const needsTruncation = displayDescription.length > 150;
   const truncatedDescription = displayDescription.slice(0, 150) + (displayDescription.length > 150 ? '...' : '');
 
-  const inStock = product?.inventory || 0;
-  const sold = product?.sold_count || 0;
+  const inStock = mergedProduct?.inventory || 0;
+  const sold = mergedProduct?.sold_count || 0;
   const total = inStock + sold;
   const stockPct = total > 0 ? (inStock / total) * 100 : 0;
-  const isPositive = (product?.change || 0) >= 0;
+  const isPositive = (mergedProduct?.change || 0) >= 0;
 
   const handleReadMore = () => {
     if (onReadMore) {
@@ -61,9 +64,9 @@ export function IPhoneXRListing({ product = mockProduct, onReadMore }: IPhoneXRL
   return (
     <div className="w-full px-2 bg-white font-sans">
       {/* Product Title */}
-      {product?.name && (
+      {mergedProduct?.name && (
         <h2 className="text-lg font-semibold text-gray-900 mb-2">
-          {product.name}
+          {mergedProduct.name}
         </h2>
       )}
 
@@ -95,16 +98,16 @@ export function IPhoneXRListing({ product = mockProduct, onReadMore }: IPhoneXRL
                 <Star
                   key={i}
                   className={`w-3 h-3 ${
-                    i <= Math.floor(product?.rating || 4.8)
+                    i <= Math.floor(mergedProduct?.rating || 4.8)
                       ? 'fill-amber-400 text-amber-400'
                       : 'text-gray-300'
                   }`}
                 />
               ))}
             </div>
-            <span className="ml-1">({product?.rating?.toFixed(1) || '4.8'})</span>
+            <span className="ml-1">({mergedProduct?.rating?.toFixed(1) || '4.8'})</span>
             <span className="text-gray-400">•</span>
-            <span>{product?.reviewCount || 0} reviews</span>
+            <span>{mergedProduct?.reviewCount || 0} reviews</span>
           </div>
 
           {/* Stock Info */}
@@ -123,7 +126,7 @@ export function IPhoneXRListing({ product = mockProduct, onReadMore }: IPhoneXRL
       {/* 🧱 B2B Trade Details */}
       <div className="border-t border-gray-100 pt-3 space-y-3 text-sm">
         {/* Demo Video */}
-        {product?.demoVideoUrl && (
+        {mergedProduct?.demoVideoUrl && (
           <div>
             <div className="relative bg-gray-900 rounded-lg overflow-hidden" style={{ paddingBottom: '56.25%' }}>
               <div className="absolute top-2 left-2 bg-pink-400 bg-opacity-80 backdrop-blur-sm text-white text-xs font-medium px-2 py-1 rounded">
@@ -139,16 +142,16 @@ export function IPhoneXRListing({ product = mockProduct, onReadMore }: IPhoneXRL
         )}
 
         {/* Pricing */}
-        {product?.unitPrice && (
+        {mergedProduct?.unitPrice && (
           <div>
             <h4 className="text-gray-800 font-medium mb-1">Pricing:</h4>
             <p className="text-gray-700">
-              <span className="font-semibold">${product.unitPrice.toFixed(2)}</span> per unit
+              <span className="font-semibold">${mergedProduct.unitPrice.toFixed(2)}</span> per unit
             </p>
 
-            {product.bulkPrices && product.bulkPrices.length > 0 && (
+            {mergedProduct.bulkPrices && mergedProduct.bulkPrices.length > 0 && (
               <div className="mt-1 ml-2">
-                {product.bulkPrices.map((tier, idx) => (
+                {mergedProduct.bulkPrices.map((tier, idx) => (
                   <div key={idx} className="text-gray-600">
                     {tier.minQty}+ units — ${tier.price.toFixed(2)} each
                   </div>
@@ -159,26 +162,26 @@ export function IPhoneXRListing({ product = mockProduct, onReadMore }: IPhoneXRL
         )}
 
         {/* Minimum Order Quantity */}
-        {product?.minOrderQty && (
+        {mergedProduct?.minOrderQty && (
           <div>
             <h4 className="text-gray-800 font-medium">Minimum Order:</h4>
-            <p className="text-gray-700">{product.minOrderQty} units</p>
+            <p className="text-gray-700">{mergedProduct.minOrderQty} units</p>
           </div>
         )}
 
         {/* Payment Terms */}
-        {product?.paymentTerms && (
+        {mergedProduct?.paymentTerms && (
           <div className="flex items-start gap-2">
             <CreditCard className="w-4 h-4 text-green-500 mt-0.5" />
             <div>
               <h4 className="text-gray-800 font-medium">Payment Terms:</h4>
-              <p className="text-gray-700">{product.paymentTerms}</p>
+              <p className="text-gray-700">{mergedProduct.paymentTerms}</p>
             </div>
           </div>
         )}
 
         {/* Trade Assurance / Buyer Protection */}
-        {product?.tradeAssurance && (
+        {mergedProduct?.tradeAssurance && (
           <div className="flex items-center gap-2 text-green-600">
             <ShieldCheck className="w-4 h-4" />
             <span className="font-medium">Trade Assurance / Buyer Protection available</span>
