@@ -477,31 +477,35 @@ const handleThumbnailClick = (index: number) => {
     : product?.product_images?.map(img => img.src) || product?.images || ["/placeholder.svg"];
 
   const topContent = showGallery ? (
-    <div ref={topContentRef} className="w-full bg-white">
-      <ProductImageGallery 
-        ref={galleryRef}
-        images={galleryImages}
-        videos={isVariantsTab ? [] : (product?.product_videos || [])}
-        model3dUrl={isVariantsTab ? undefined : product?.model_3d_url}
-        seller={product?.sellers}
-        product={{
-          id: product?.id || '',
-          name: product?.name || '',
-          price: product?.price || 0,
-          discount_price: product?.discount_price,
-          inventory: product?.inventory || 0,
-          sold_count: product?.sold_count || 0
-        }}
-        onSellerClick={() => {
-          if (product?.sellers?.id) {
-            navigate(`/seller/${product?.sellers?.id}`);
-          }
-        }}
-        onBuyNow={buyNow}
-        onReadMore={handleReadMore}
-      />
-    </div>
-  ) : undefined;
+  <div ref={topContentRef} className="w-full bg-white">
+    <ProductImageGallery 
+      ref={galleryRef} // Make sure this ref is passed
+      images={galleryImages}
+      videos={isVariantsTab ? [] : (product?.product_videos || [])}
+      model3dUrl={isVariantsTab ? undefined : product?.model_3d_url}
+      seller={product?.sellers}
+      product={{
+        id: product?.id || '',
+        name: product?.name || '',
+        price: product?.price || 0,
+        discount_price: product?.discount_price,
+        inventory: product?.inventory || 0,
+        sold_count: product?.sold_count || 0
+      }}
+      onSellerClick={() => {
+        if (product?.sellers?.id) {
+          navigate(`/seller/${product?.sellers?.id}`);
+        }
+      }}
+      onBuyNow={buyNow}
+      onReadMore={handleReadMore}
+      onImageIndexChange={(index) => {
+        // Sync the current index when user swipes in the gallery
+        setCurrentGalleryIndex(index);
+      }}
+    />
+  </div>
+) : undefined;
 
   console.log('🎯 ProductDetail rendering with product:', product?.name);
   console.log('🎯 Active tab:', activeTab);
