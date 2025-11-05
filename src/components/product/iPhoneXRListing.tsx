@@ -1,6 +1,6 @@
 // iPhoneXRListing.tsx - Enhanced with B2B Trade Details
-import React from 'react';
-import { Star, ShieldCheck, DollarSign, Video, CreditCard } from 'lucide-react';
+import React, { useState } from 'react';
+import { Star, ShieldCheck, Video, CreditCard } from 'lucide-react';
 
 interface IPhoneXRListingProps {
   product?: {
@@ -25,6 +25,8 @@ interface IPhoneXRListingProps {
 }
 
 export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
   const displayDescription =
     product?.short_description || product?.description || 'Product description not available.';
   const needsTruncation = displayDescription.length > 150;
@@ -37,6 +39,7 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
   const isPositive = (product?.change || 0) >= 0;
 
   const handleReadMore = () => {
+    setIsExpanded(true);
     if (onReadMore) onReadMore();
   };
 
@@ -52,19 +55,16 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
       {/* Description with "Read More" */}
       <div className="mb-4">
         <div className="relative">
-          <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">
-            {truncatedDescription}
+          <p className="text-sm text-gray-600 leading-relaxed">
+            {isExpanded || !needsTruncation ? displayDescription : truncatedDescription}
           </p>
-          {needsTruncation && (
-            <div className="absolute bottom-0 right-0 flex items-center">
-              <span className="bg-gradient-to-r from-transparent to-white pl-8 pr-1">&nbsp;</span>
-              <button
-                onClick={handleReadMore}
-                className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors bg-white"
-              >
-                Read more
-              </button>
-            </div>
+          {needsTruncation && !isExpanded && (
+            <button
+              onClick={handleReadMore}
+              className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors mt-1 inline-block"
+            >
+              Read more
+            </button>
           )}
         </div>
 
@@ -85,22 +85,13 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
               ))}
             </div>
             <span className="ml-1">({product?.rating?.toFixed(1) || '4.8'})</span>
-            <span className="text-gray-400 ml-1">•</span>
+            <span className="text-gray-400">•</span>
             <span>{product?.reviewCount || 0} reviews</span>
           </div>
 
           {/* Stock Info */}
           {inStock > 0 && (
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1">
-                <span className={`text-xs font-semibold ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                  {isPositive ? '+' : ''}{(product?.change || 0).toFixed(1)}%
-                </span>
-                <span className={`text-[10px] ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                  {isPositive ? '▲' : '▼'}
-                </span>
-              </div>
-              <span className="text-gray-400">|</span>
               <div className="flex gap-1 text-[10px] text-gray-600">
                 <span>{sold} sold</span>
                 <span>•</span>
@@ -115,16 +106,17 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
       <div className="border-t border-gray-100 pt-3 space-y-3 text-sm">
         {/* Demo Video */}
         {product?.demoVideoUrl && (
-          <div className="flex items-center gap-2">
-            <Video className="w-4 h-4 text-blue-500" />
-            <a
-              href={product.demoVideoUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              Watch Demo Video
-            </a>
+          <div>
+            <div className="relative bg-gray-900 rounded-lg overflow-hidden" style={{ paddingBottom: '56.25%' }}>
+              <div className="absolute top-2 left-2 bg-pink-400 bg-opacity-80 backdrop-blur-sm text-white text-xs font-medium px-2 py-1 rounded">
+                Demo
+              </div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-16 h-16 bg-white bg-opacity-90 rounded-full flex items-center justify-center">
+                  <div className="w-0 h-0 border-t-8 border-t-transparent border-l-12 border-l-gray-900 border-b-8 border-b-transparent ml-1"></div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
