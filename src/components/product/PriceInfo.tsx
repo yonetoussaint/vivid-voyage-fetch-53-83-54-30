@@ -1,3 +1,5 @@
+remove the bulk pricing section 
+
 import React, { createContext, useContext, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 
@@ -114,8 +116,7 @@ const PriceInfo = ({
   focusMode,
   isPlaying,
   configurationData,
-  variant = 'inline',
-  showBulkPricing = true
+  variant = 'inline'
 }) => {
   const { formatPrice } = useCurrency();
 
@@ -175,18 +176,6 @@ const PriceInfo = ({
           buttonClassName="text-sm"
         />
       </div>
-
-      {showBulkPricing && product.bulkPrices && product.bulkPrices.length > 0 && (
-        <div className="text-sm text-gray-600 space-y-1">
-          <div className="font-medium text-gray-700">Bulk pricing:</div>
-          {product.bulkPrices.map((tier, idx) => (
-            <div key={idx} className="flex justify-between">
-              <span>{tier.minQty}+ units</span>
-              <span className="font-semibold">{formatPrice(tier.price)} each</span>
-            </div>
-          ))}
-        </div>
-      )}
 
       {product.unitPrice && product.unitPrice !== currentPrice && (
         <div className="text-sm text-gray-500 mt-1">
