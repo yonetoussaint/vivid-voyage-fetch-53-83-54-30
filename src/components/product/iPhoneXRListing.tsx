@@ -1,6 +1,6 @@
-// iPhoneXRListing.tsx - Description with Reviews on same line + Stock Info
+// iPhoneXRListing.tsx - Enhanced with B2B Trade Details
 import React from 'react';
-import { Star } from 'lucide-react';
+import { Star, ShieldCheck, DollarSign, Video, CreditCard } from 'lucide-react';
 
 interface IPhoneXRListingProps {
   product?: {
@@ -12,19 +12,24 @@ interface IPhoneXRListingProps {
     inventory?: number;
     sold_count?: number;
     change?: number;
+
+    // 🧱 New B2B trade data
+    unitPrice?: number;
+    bulkPrices?: { minQty: number; price: number }[]; // example: [{ minQty: 100, price: 145 }]
+    minOrderQty?: number;
+    paymentTerms?: string;
+    tradeAssurance?: boolean;
+    demoVideoUrl?: string;
   };
   onReadMore?: () => void;
 }
 
 export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
-  // Use short_description if available, otherwise fall back to description
-  const displayDescription = product?.short_description || product?.description || 'Product description not available.';
-
-  // Check if description needs truncation (rough estimate - more than ~150 characters)
+  const displayDescription =
+    product?.short_description || product?.description || 'Product description not available.';
   const needsTruncation = displayDescription.length > 150;
   const truncatedDescription = displayDescription.slice(0, 150) + (displayDescription.length > 150 ? '...' : '');
 
-  // Stock data calculations
   const inStock = product?.inventory || 0;
   const sold = product?.sold_count || 0;
   const total = inStock + sold;
@@ -32,32 +37,28 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
   const isPositive = (product?.change || 0) >= 0;
 
   const handleReadMore = () => {
-    if (onReadMore) {
-      onReadMore();
-    }
+    if (onReadMore) onReadMore();
   };
 
   return (
-    <div className="w-full px-2 bg-white font-sans">
+    <div className="w-full px-3 py-4 bg-white font-sans rounded-xl shadow-sm">
       {/* Product Title */}
       {product?.name && (
         <h2 className="text-lg font-semibold text-gray-900 mb-2">
           {product.name}
         </h2>
       )}
-      
-      {/* Description with truncation and read more button positioned at the end of third line */}
-      <div className="mb-3">
+
+      {/* Description with "Read More" */}
+      <div className="mb-4">
         <div className="relative">
           <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">
             {truncatedDescription}
           </p>
-          
-          {/* Read More Button fixed overlay at bottom right of third line */}
           {needsTruncation && (
             <div className="absolute bottom-0 right-0 flex items-center">
               <span className="bg-gradient-to-r from-transparent to-white pl-8 pr-1">&nbsp;</span>
-              <button 
+              <button
                 onClick={handleReadMore}
                 className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors bg-white"
               >
@@ -67,19 +68,19 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
           )}
         </div>
 
-        {/* Full width Stats Section with Reviews and Stock Info */}
-        <div className="flex items-center justify-between gap-1 text-xs text-gray-600 rounded w-full mt-2">
-          {/* Reviews Section */}
+        {/* Reviews + Stock Info */}
+        <div className="flex items-center justify-between gap-1 text-xs text-gray-600 rounded w-full mt-3">
+          {/* Reviews */}
           <div className="flex items-center gap-1">
             <div className="flex">
               {[1, 2, 3, 4, 5].map((i) => (
-                <Star 
-                  key={i} 
+                <Star
+                  key={i}
                   className={`w-3 h-3 ${
-                    i <= Math.floor(product?.rating || 4.8) 
-                      ? 'fill-amber-400 text-amber-400' 
+                    i <= Math.floor(product?.rating || 4.8)
+                      ? 'fill-amber-400 text-amber-400'
                       : 'text-gray-300'
-                  }`} 
+                  }`}
                 />
               ))}
             </div>
@@ -88,7 +89,7 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
             <span>{product?.reviewCount || 0} reviews</span>
           </div>
 
-          {/* Stock Info Section */}
+          {/* Stock Info */}
           {inStock > 0 && (
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1">
@@ -108,6 +109,71 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
             </div>
           )}
         </div>
+      </div>
+
+      {/* 🧱 B2B Trade Details */}
+      <div className="border-t border-gray-100 pt-3 space-y-3 text-sm">
+        {/* Demo Video */}
+        {product?.demoVideoUrl && (
+          <div className="flex items-center gap-2">
+            <Video className="w-4 h-4 text-blue-500" />
+            <a
+              href={product.demoVideoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              Watch Demo Video
+            </a>
+          </div>
+        )}
+
+        {/* Pricing */}
+        {product?.unitPrice && (
+          <div>
+            <h4 className="text-gray-800 font-medium mb-1">Pricing:</h4>
+            <p className="text-gray-700">
+              <span className="font-semibold">${product.unitPrice.toFixed(2)}</span> per unit
+            </p>
+
+            {product.bulkPrices && product.bulkPrices.length > 0 && (
+              <div className="mt-1 ml-2">
+                {product.bulkPrices.map((tier, idx) => (
+                  <div key={idx} className="text-gray-600">
+                    {tier.minQty}+ units — ${tier.price.toFixed(2)} each
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Minimum Order Quantity */}
+        {product?.minOrderQty && (
+          <div>
+            <h4 className="text-gray-800 font-medium">Minimum Order:</h4>
+            <p className="text-gray-700">{product.minOrderQty} units</p>
+          </div>
+        )}
+
+        {/* Payment Terms */}
+        {product?.paymentTerms && (
+          <div className="flex items-start gap-2">
+            <CreditCard className="w-4 h-4 text-green-500 mt-0.5" />
+            <div>
+              <h4 className="text-gray-800 font-medium">Payment Terms:</h4>
+              <p className="text-gray-700">{product.paymentTerms}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Trade Assurance / Buyer Protection */}
+        {product?.tradeAssurance && (
+          <div className="flex items-center gap-2 text-green-600">
+            <ShieldCheck className="w-4 h-4" />
+            <span className="font-medium">Trade Assurance / Buyer Protection available</span>
+          </div>
+        )}
       </div>
     </div>
   );
