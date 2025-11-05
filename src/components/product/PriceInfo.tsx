@@ -1,6 +1,6 @@
-// PriceInfo.tsx - MOQ background extended to toggle
+// PriceInfo.tsx - Simplified with only two rows
 import React, { useState, useMemo } from 'react';
-import { ChevronDown, Info, Truck, Shield, Check } from 'lucide-react';
+import { ChevronDown, Info } from 'lucide-react';
 
 // Currency data
 const currencies = {
@@ -33,16 +33,6 @@ const productPricing = {
     { minQty: 500, maxQty: 999, discount: 0.05 },
     { minQty: 1000, maxQty: 4999, discount: 0.10 },
     { minQty: 5000, maxQty: null, discount: 0.15 }
-  ],
-  shipping: {
-    freeThreshold: 1000,
-    cost: 50
-  },
-  features: [
-    "Trade Assurance",
-    "7-day delivery",
-    "Customization available",
-    "Quality guaranteed"
   ]
 };
 
@@ -109,45 +99,7 @@ const BulkPricingToggle = ({ showPriceTiers, setShowPriceTiers }) => {
   );
 };
 
-// Shipping Info Component
-const ShippingInfo = ({ freeThreshold, cost, currentCurrency }) => {
-  const formatPrice = (price, currency) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(price * exchangeRates[currency]);
-  };
-
-  return (
-    <div className="flex items-center gap-2 text-sm text-gray-600">
-      <Truck className="w-4 h-4" />
-      <span>
-        Shipping: {freeThreshold ? 
-          `Free on orders over ${formatPrice(freeThreshold, currentCurrency)}` : 
-          `${formatPrice(cost, currentCurrency)}`
-        }
-      </span>
-    </div>
-  );
-};
-
-// Feature List Component
-const FeatureList = ({ features }) => {
-  return (
-    <div className="space-y-1">
-      {features.map((feature, index) => (
-        <div key={index} className="flex items-center gap-2 text-sm text-gray-600">
-          <Check className="w-4 h-4 text-green-500" />
-          <span>{feature}</span>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-// Enhanced PriceInfo Component with Extended MOQ Background
+// Simplified PriceInfo Component with Only Two Rows
 const PriceInfo = () => {
   const [currentCurrency, setCurrentCurrency] = useState('USD');
   const [showPriceTiers, setShowPriceTiers] = useState(false);
@@ -195,7 +147,7 @@ const PriceInfo = () => {
       </div>
 
       {/* Second Row: MOQ and Bulk Pricing Toggle with Shared Background */}
-      <div className="flex justify-between items-center mb-4 bg-blue-50 rounded px-3 py-2">
+      <div className="flex justify-between items-center bg-blue-50 rounded px-3 py-2">
         {/* MOQ Section */}
         <div className="flex items-center gap-1 text-blue-700 text-xs">
           <Info className="w-3 h-3" />
@@ -211,7 +163,7 @@ const PriceInfo = () => {
 
       {/* Price Tiers (expands below) */}
       {showPriceTiers && (
-        <div className="mb-4">
+        <div className="mt-4">
           <div className="bg-gray-50 rounded-lg border border-gray-200 divide-y divide-gray-200">
             {productPricing.priceTiers.map((tier, index) => (
               <PriceTier
@@ -224,49 +176,6 @@ const PriceInfo = () => {
           </div>
         </div>
       )}
-
-      {/* Shipping Information */}
-      <div className="mb-4">
-        <ShippingInfo
-          freeThreshold={productPricing.shipping.freeThreshold}
-          cost={productPricing.shipping.cost}
-          currentCurrency={currentCurrency}
-        />
-      </div>
-
-      {/* Features */}
-      <div className="mb-4">
-        <FeatureList features={productPricing.features} />
-      </div>
-
-      {/* Trade Assurance Badge */}
-      <div className="flex items-center gap-2 p-3 bg-orange-50 rounded-lg border border-orange-200">
-        <Shield className="w-5 h-5 text-orange-500" />
-        <div>
-          <div className="text-sm font-semibold text-orange-700">Trade Assurance</div>
-          <div className="text-xs text-orange-600">Protects your Alibaba.com order</div>
-        </div>
-      </div>
-
-      {/* Order Summary */}
-      <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-        <div className="flex justify-between text-sm mb-1">
-          <span>Unit price:</span>
-          <span>{formatPrice(currentPrice)}</span>
-        </div>
-        <div className="flex justify-between text-sm mb-1">
-          <span>MOQ ({productPricing.moq} units):</span>
-          <span className="font-semibold">
-            {formatPrice(currentPrice * productPricing.moq)}
-          </span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span>Shipping:</span>
-          <span className="text-green-600">
-            {productPricing.shipping.freeThreshold ? 'Free' : formatPrice(productPricing.shipping.cost)}
-          </span>
-        </div>
-      </div>
     </div>
   );
 };
