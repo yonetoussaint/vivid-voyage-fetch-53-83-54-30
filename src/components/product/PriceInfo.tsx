@@ -1,10 +1,11 @@
+// PriceInfo.tsx - Simplified version
 import React, { createContext, useContext, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 
 // Currency Context
 const currencies = {
   USD: 'USD',
-  EUR: 'EUR',
+  EUR: 'EUR', 
   GBP: 'GBP',
   JPY: 'JPY'
 };
@@ -89,7 +90,7 @@ const PriceInfo = ({ price = 0 }) => {
   const { formatPrice } = useCurrency();
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 mb-4">
       <span className="text-2xl font-bold text-gray-900">
         {formatPrice(price)}
       </span>
