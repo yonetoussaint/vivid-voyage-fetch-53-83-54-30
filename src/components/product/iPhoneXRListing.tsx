@@ -108,22 +108,23 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
 
   const currentPrice = (mergedProduct.unitPrice || productPricing.basePrice) * (1 - currentTier.discount);
 
-  // CurrencySwitcher Component
-  const CurrencySwitcher = () => {
-    return (
-      <>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.3.2/css/flag-icons.min.css" />
-        <button
-          onClick={toggleCurrency}
-          className="p-1 rounded flex items-center gap-1 bg-gray-100 hover:bg-gray-200 cursor-pointer transition-colors text-xs"
-          aria-label="Change currency"
-        >
-          <span className={`fi fi-${currencyToCountry[currentCurrency]}`}></span>
-          <ChevronDown className="w-3 h-3" />
-        </button>
-      </>
-    );
-  };
+  // CurrencySwitcher Component - Updated to show currency code
+const CurrencySwitcher = () => {
+  return (
+    <>
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.3.2/css/flag-icons.min.css" />
+      <button
+        onClick={toggleCurrency}
+        className="p-1 rounded flex items-center gap-1 bg-gray-100 hover:bg-gray-200 cursor-pointer transition-colors text-xs"
+        aria-label="Change currency"
+      >
+        <span className={`fi fi-${currencyToCountry[currentCurrency]}`}></span>
+        <span className="text-gray-700">{currentCurrency}</span>
+        <ChevronDown className="w-3 h-3 text-gray-500" />
+      </button>
+    </>
+  );
+};
 
   // PriceTier Component
   const PriceTier = ({ tier }) => {
