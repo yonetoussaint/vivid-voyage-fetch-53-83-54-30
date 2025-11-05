@@ -219,12 +219,19 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
   }, [isFullscreenMode, toggleFullscreen]);
 
   // Expose methods via ref
-  useImperativeHandle(ref, () => ({
-    setActiveTab: (tab: string) => setActiveTab(tab),
-    getActiveTab: () => internalActiveTab,
-    startAutoScroll: () => startAutoScroll(),
-    stopAutoScroll: () => stopAutoScroll()
-  }));
+  // In the useImperativeHandle section, add goToIndex method
+useImperativeHandle(ref, () => ({
+  setActiveTab: (tab: string) => setActiveTab(tab),
+  getActiveTab: () => internalActiveTab,
+  startAutoScroll: () => startAutoScroll(),
+  stopAutoScroll: () => stopAutoScroll(),
+  goToIndex: (index: number) => { // NEW: Add this method
+    if (api && index >= 0 && index < totalItems) {
+      api.scrollTo(index);
+      setCurrentIndex(index);
+    }
+  }
+}));
 
   // Video control handlers
   const handleMuteToggle = () => {
