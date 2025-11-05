@@ -7,7 +7,8 @@ interface CurrencySwitcherProps {
   price?: number;
   className?: string;
   buttonClassName?: string;
-  showToggle?: boolean; // Changed from showSwitcher to showToggle
+  showToggle?: boolean;
+  variant?: 'overlay' | 'inline'; // New prop to control styling variant
 }
 
 export const CurrencySwitcher: React.FC<CurrencySwitcherProps> = ({ 
@@ -15,9 +16,14 @@ export const CurrencySwitcher: React.FC<CurrencySwitcherProps> = ({
   price = 0,
   className = "",
   buttonClassName = "",
-  showToggle = true // Default to showing toggle elements
+  showToggle = true,
+  variant = 'overlay' // Default to overlay for backward compatibility
 }) => {
   const { currentCurrency, toggleCurrency, formatPrice } = useCurrency();
+
+  const baseStyles = variant === 'overlay' 
+    ? 'bg-black/60 backdrop-blur-sm text-white'
+    : 'bg-gray-100 text-gray-900 border border-gray-200';
 
   return (
     <>
@@ -26,22 +32,24 @@ export const CurrencySwitcher: React.FC<CurrencySwitcherProps> = ({
       <div className={className}>
         <button
           onClick={showToggle ? toggleCurrency : undefined}
-          className={`bg-black/60 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 ${showToggle ? 'hover:bg-black/70 cursor-pointer' : 'cursor-default'} transition-colors ${buttonClassName}`}
+          className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 ${baseStyles} ${
+            showToggle ? 'hover:bg-gray-200 cursor-pointer' : 'cursor-default'
+          } transition-colors ${buttonClassName}`}
           aria-label={showToggle ? "Change currency" : "Current price"}
           disabled={!showToggle}
         >
           {showToggle && (
-            <div className="w-4 h-4 rounded-full overflow-hidden flex items-center justify-center">
+            <div className="w-5 h-5 rounded-full overflow-hidden flex items-center justify-center">
               <span className={`fi fi-${currencyToCountry[currentCurrency]} scale-150`}></span>
             </div>
           )}
-          {showToggle && <ChevronDown className="w-3 h-3 stroke-2" />}
+          {showToggle && <ChevronDown className="w-4 h-4 stroke-2" />}
           {showPrice && (
-            <span className="text-white font-bold">
+            <span className={`font-bold ${variant === 'overlay' ? 'text-white' : 'text-gray-900'}`}>
               {formatPrice(price)}
             </span>
           )}
-          <span className="font-bold">
+          <span className={`font-bold ${variant === 'overlay' ? 'text-white' : 'text-gray-600'}`}>
             {currencies[currentCurrency]}
           </span>
         </button>
@@ -56,6 +64,8 @@ interface PriceInfoProps {
     name: string;
     price?: number;
     variants?: any[];
+    unitPrice?: number; // Add B2B pricing support
+    bulkPrices?: { minQty: number; price: number }[];
   };
   focusMode?: boolean;
   isPlaying?: boolean;
@@ -69,13 +79,17 @@ interface PriceInfoProps {
     getSelectedNetworkVariant: () => any;
     getSelectedConditionVariant: () => any;
   } | null;
+  variant?: 'overlay' | 'inline'; // New prop to control styling
+  showBulkPricing?: boolean; // Show bulk pricing details
 }
 
 const PriceInfo: React.FC<PriceInfoProps> = ({ 
   product, 
   focusMode,
   isPlaying,
-  configurationData 
+  configurationData,
+  variant = 'inline', // Default to inline for IPhoneXRListing
+  showBulkPricing = true
 }) => {
   const { formatPrice } = useCurrency();
 
@@ -106,19 +120,61 @@ const PriceInfo: React.FC<PriceInfoProps> = ({
       }
     }
 
-    // Use the product price (which now defaults to first variant price when variants exist)
-    return product.price || 0;
+    // Use B2B unit price if available, otherwise product price
+    return product.unitPrice || product.price || 0;
   };
 
   const currentPrice = getCurrentVariantPrice();
 
+  // For overlay variant (original behavior)
+  if (variant === 'overlay') {
+    return (
+      <div className={`absolute bottom-12 left-3 z-30 transition-opacity duration-300 ${(focusMode || isPlaying) ? 'opacity-0' : ''}`}>
+        <CurrencySwitcher 
+          showPrice={true}
+          price={currentPrice}
+          showToggle={false}
+          variant="overlay"
+        />
+      </div>
+    );
+  }
+
+  // For inline variant (new behavior for IPhoneXRListing)
   return (
-    <div className={`absolute bottom-12 left-3 z-30 transition-opacity duration-300 ${(focusMode || isPlaying) ? 'opacity-0' : ''}`}>
-      <CurrencySwitcher 
-        showPrice={true}
-        price={currentPrice}
-        showToggle={false} // This will hide flag and chevron but keep currency code
-      />
+    <div className="mb-4">
+      {/* Main Price Display */}
+      <div className="flex items-center gap-3 mb-2">
+        <span className="text-2xl font-bold text-gray-900">
+          {formatPrice(currentPrice)}
+        </span>
+        <CurrencySwitcher 
+          showPrice={false}
+          showToggle={true}
+          variant="inline"
+          buttonClassName="text-sm"
+        />
+      </div>
+
+      {/* Bulk Pricing */}
+      {showBulkPricing && product.bulkPrices && product.bulkPrices.length > 0 && (
+        <div className="text-sm text-gray-600 space-y-1">
+          <div className="font-medium text-gray-700">Bulk pricing:</div>
+          {product.bulkPrices.map((tier, idx) => (
+            <div key={idx} className="flex justify-between">
+              <span>{tier.minQty}+ units</span>
+              <span className="font-semibold">{formatPrice(tier.price)} each</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Unit Price for B2B */}
+      {product.unitPrice && product.unitPrice !== currentPrice && (
+        <div className="text-sm text-gray-500 mt-1">
+          Unit price: {formatPrice(product.unitPrice)}
+        </div>
+      )}
     </div>
   );
 };
