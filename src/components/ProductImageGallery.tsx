@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/carousel";
 import { X } from "lucide-react";
 import InfoBand from "@/components/product/InfoBand";
-import PriceInfo from "@/components/product/PriceInfo";
 import SellerInfoOverlay from "@/components/product/SellerInfoOverlay";
 import ConfigurationSummary from "@/components/product/ConfigurationSummary";
 
@@ -350,13 +349,6 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
               onDotClick={handleThumbnailClick}
             />
           </div>
-
-          <PriceInfo
-            product={product}
-            focusMode={focusMode}
-            isPlaying={isCurrentVideo ? isPlaying : false}
-            configurationData={configurationData || internalConfigData}
-          />
 
           <SellerInfoOverlay 
             seller={seller}
