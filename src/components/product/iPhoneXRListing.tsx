@@ -64,6 +64,7 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
 
   return (
     <div className="w-full px-2 bg-white font-sans">
+      // In IPhoneXRListing.tsx - after the product title
       {/* Product Title */}
       {mergedProduct?.name && (
         <h2 className="text-lg font-semibold text-gray-900 mb-2">
@@ -71,12 +72,14 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
         </h2>
       )}
 
-      {/* PriceInfo Component - Moved from ProductImageGallery */}
+      {/* PriceInfo Component - Now properly styled for inline display */}
       <PriceInfo
         product={mergedProduct}
         focusMode={false}
         isPlaying={false}
         configurationData={null}
+        variant="inline"
+        showBulkPricing={true}
       />
 
       {/* Description with "Read More" */}
