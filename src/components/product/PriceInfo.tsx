@@ -1,4 +1,4 @@
-// PriceInfo.tsx - Simplified with only two rows
+// PriceInfo.tsx - Without main wrapper
 import React, { useState, useMemo } from 'react';
 import { ChevronDown, Info } from 'lucide-react';
 
@@ -99,7 +99,7 @@ const BulkPricingToggle = ({ showPriceTiers, setShowPriceTiers }) => {
   );
 };
 
-// Simplified PriceInfo Component with Only Two Rows
+// Simplified PriceInfo Component without main wrapper
 const PriceInfo = () => {
   const [currentCurrency, setCurrentCurrency] = useState('USD');
   const [showPriceTiers, setShowPriceTiers] = useState(false);
@@ -128,7 +128,7 @@ const PriceInfo = () => {
   const currentPrice = productPricing.basePrice * (1 - currentTier.discount);
 
   return (
-    <div className="bg-white p-6 rounded-lg border border-gray-200 max-w-md">
+    <>
       {/* First Row: Price and Currency Switcher */}
       <div className="flex justify-between items-center mb-2">
         {/* Price */}
@@ -176,7 +176,7 @@ const PriceInfo = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 
