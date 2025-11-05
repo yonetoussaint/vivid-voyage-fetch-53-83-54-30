@@ -1,5 +1,5 @@
 // iPhoneXRListing.tsx - Enhanced with B2B Trade Details
-import React, { useState } from 'react';
+import React from 'react';
 import { Star, ShieldCheck, Video, CreditCard } from 'lucide-react';
 
 interface IPhoneXRListingProps {
@@ -24,9 +24,23 @@ interface IPhoneXRListingProps {
   onReadMore?: () => void;
 }
 
-export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  
+// Mock data for demonstration
+const mockProduct = {
+  // B2B Trade Data
+  unitPrice: 189.99,
+  bulkPrices: [
+    { minQty: 50, price: 185.00 },
+    { minQty: 100, price: 179.99 },
+    { minQty: 500, price: 169.99 },
+    { minQty: 1000, price: 159.99 }
+  ],
+  minOrderQty: 20,
+  paymentTerms: "30% deposit upon order confirmation, 70% balance before shipment. T/T, L/C accepted.",
+  tradeAssurance: true,
+  demoVideoUrl: "https://example.com/demo-video"
+};
+
+export function IPhoneXRListing({ product = mockProduct, onReadMore }: IPhoneXRListingProps) {
   const displayDescription =
     product?.short_description || product?.description || 'Product description not available.';
   const needsTruncation = displayDescription.length > 150;
@@ -39,8 +53,9 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
   const isPositive = (product?.change || 0) >= 0;
 
   const handleReadMore = () => {
-    setIsExpanded(true);
-    if (onReadMore) onReadMore();
+    if (onReadMore) {
+      onReadMore();
+    }
   };
 
   return (
@@ -58,7 +73,7 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
           <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">
             {truncatedDescription}
           </p>
-          {needsTruncation && !isExpanded && (
+          {needsTruncation && (
             <div className="absolute bottom-0 right-0 flex items-center">
               <span className="bg-gradient-to-r from-transparent to-white pl-8 pr-1">&nbsp;</span>
               <button
