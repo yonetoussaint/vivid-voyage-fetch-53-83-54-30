@@ -166,12 +166,11 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
   return (
     <div className="w-full px-2 bg-white font-sans space-y-2">
 
-      {/* Product Title - Always render but conditionally show content */}
       {mergedProduct?.name && (
-        <h2 className="text-sm font-medium text-gray-700 leading-none">
-          {mergedProduct?.name}
-        </h2>
-      )}
+  <h2 className="text-sm font-medium text-gray-700 leading-none opacity-50">
+    {mergedProduct?.name}
+  </h2>
+)}
 
       {/* Price Row - Always present */}
       <div className="flex justify-between items-center">
