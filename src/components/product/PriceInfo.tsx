@@ -108,7 +108,7 @@ const CurrencySwitcher = ({
   );
 };
 
-// PriceInfo Component
+// PriceInfo Component with fallback for useCurrency
 const PriceInfo = ({ 
   product, 
   focusMode,
@@ -116,7 +116,20 @@ const PriceInfo = ({
   configurationData,
   variant = 'inline'
 }) => {
-  const { formatPrice } = useCurrency();
+  // Safe use of useCurrency with fallback
+  let formatPrice;
+  try {
+    const currencyContext = useCurrency();
+    formatPrice = currencyContext.formatPrice;
+  } catch (error) {
+    // Fallback formatter if not within CurrencyProvider
+    formatPrice = (price) => new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(price);
+  }
 
   if (!product) return null;
 
@@ -151,12 +164,9 @@ const PriceInfo = ({
   if (variant === 'overlay') {
     return (
       <div className={`absolute bottom-12 left-3 z-30 transition-opacity duration-300 ${(focusMode || isPlaying) ? 'opacity-0' : ''}`}>
-        <CurrencySwitcher 
-          showPrice={true}
-          price={currentPrice}
-          showToggle={false}
-          variant="overlay"
-        />
+        <div className="px-3 py-2 rounded-lg text-sm font-medium bg-black/60 backdrop-blur-sm text-white">
+          {formatPrice(currentPrice)}
+        </div>
       </div>
     );
   }
