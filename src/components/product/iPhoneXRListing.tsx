@@ -1,4 +1,4 @@
-// iPhoneXRListing.tsx - Full fixed code with consistent spacing
+// iPhoneXRListing.tsx - Fixed bulk pricing table to show unit prices
 import React, { useState, useMemo } from 'react';
 import { Star, ShieldCheck, Video, CreditCard, ChevronDown, Info } from 'lucide-react';
 
@@ -109,30 +109,30 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
   const currentPrice = (mergedProduct.unitPrice || productPricing.basePrice) * (1 - currentTier.discount);
 
   // CurrencySwitcher Component - Updated to show currency code
-const CurrencySwitcher = () => {
-  return (
-    <>
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.3.2/css/flag-icons.min.css" />
-      <button
-        onClick={toggleCurrency}
-        className="p-1 rounded flex items-center gap-1 bg-gray-100 hover:bg-gray-200 cursor-pointer transition-colors text-xs"
-        aria-label="Change currency"
-      >
-        <span className={`fi fi-${currencyToCountry[currentCurrency]}`}></span>
-        <span className="text-gray-700">{currentCurrency}</span>
-        <ChevronDown className="w-3 h-3 text-gray-500" />
-      </button>
-    </>
-  );
-};
+  const CurrencySwitcher = () => {
+    return (
+      <>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.3.2/css/flag-icons.min.css" />
+        <button
+          onClick={toggleCurrency}
+          className="p-1 rounded flex items-center gap-1 bg-gray-100 hover:bg-gray-200 cursor-pointer transition-colors text-xs"
+          aria-label="Change currency"
+        >
+          <span className={`fi fi-${currencyToCountry[currentCurrency]}`}></span>
+          <span className="text-gray-700">{currentCurrency}</span>
+          <ChevronDown className="w-3 h-3 text-gray-500" />
+        </button>
+      </>
+    );
+  };
 
-  // PriceTier Component
+  // PriceTier Component - FIXED: Now shows price per unit instead of total
   const PriceTier = ({ tier }) => {
-    const calculatePrice = (basePrice, discount) => {
-      return basePrice * (1 - discount) * exchangeRates[currentCurrency];
+    const calculateUnitPrice = (basePrice, discount) => {
+      return basePrice * (1 - discount);
     };
 
-    const tierPrice = calculatePrice(mergedProduct.unitPrice || productPricing.basePrice, tier.discount);
+    const unitPrice = calculateUnitPrice(mergedProduct.unitPrice || productPricing.basePrice, tier.discount);
     const rangeText = tier.maxQty 
       ? `${tier.minQty}-${tier.maxQty} units`
       : `≥${tier.minQty} units`;
@@ -140,9 +140,12 @@ const CurrencySwitcher = () => {
     return (
       <div className="flex justify-between items-center py-2 px-3 hover:bg-gray-50 rounded">
         <span className="text-sm text-gray-600">{rangeText}</span>
-        <span className="text-sm font-semibold text-orange-500">
-          {formatPrice(tierPrice, currentCurrency)}
-        </span>
+        <div className="flex flex-col items-end">
+          <span className="text-sm font-semibold text-orange-500">
+            {formatPrice(unitPrice, currentCurrency)}
+          </span>
+          <span className="text-xs text-gray-500">per unit</span>
+        </div>
       </div>
     );
   };
@@ -163,23 +166,23 @@ const CurrencySwitcher = () => {
   return (
     <div className="w-full px-2 bg-white font-sans space-y-2">
 
-     {/* Product Title - Always render but conditionally show content */}
-{mergedProduct?.name && (
-  <h2 className="text-sm font-medium text-gray-700 leading-none">
-    {mergedProduct?.name}
-  </h2>
-)}
+      {/* Product Title - Always render but conditionally show content */}
+      {mergedProduct?.name && (
+        <h2 className="text-sm font-medium text-gray-700 leading-none">
+          {mergedProduct?.name}
+        </h2>
+      )}
 
       {/* Price Row - Always present */}
-<div className="flex justify-between items-center">
-  <div className="flex items-center gap-2">
-    <span className="text-2xl font-bold text-orange-500 leading-none">
-      {formatPrice(currentPrice)}
-    </span>
-    <span className="text-sm text-gray-500">/ unit</span>
-  </div>
-  <CurrencySwitcher />
-</div>
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl font-bold text-orange-500 leading-none">
+            {formatPrice(currentPrice)}
+          </span>
+          <span className="text-sm text-gray-500">/ unit</span>
+        </div>
+        <CurrencySwitcher />
+      </div>
 
       {/* MOQ Row - Always present */}
       <div className="flex justify-between items-center bg-orange-50 rounded px-3 py-2 border border-orange-200">
