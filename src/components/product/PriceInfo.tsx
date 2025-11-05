@@ -1,4 +1,4 @@
-// PriceInfo.tsx - Without main wrapper
+// PriceInfo.tsx - AliExpress themed
 import React, { useState, useMemo } from 'react';
 import { ChevronDown, Info } from 'lucide-react';
 
@@ -79,7 +79,7 @@ const PriceTier = ({ tier, currentCurrency, basePrice }) => {
   return (
     <div className="flex justify-between items-center py-2 px-3 hover:bg-gray-50 rounded">
       <span className="text-sm text-gray-600">{rangeText}</span>
-      <span className="text-sm font-semibold text-green-600">
+      <span className="text-sm font-semibold text-orange-500">
         {formatPrice(tierPrice, currentCurrency)}
       </span>
     </div>
@@ -91,7 +91,7 @@ const BulkPricingToggle = ({ showPriceTiers, setShowPriceTiers }) => {
   return (
     <button
       onClick={() => setShowPriceTiers(!showPriceTiers)}
-      className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 transition-colors"
+      className="flex items-center gap-1 text-xs text-orange-500 hover:text-orange-600 transition-colors"
     >
       <span>Bulk pricing</span>
       <ChevronDown className={`w-3 h-3 transition-transform ${showPriceTiers ? 'rotate-180' : ''}`} />
@@ -99,7 +99,7 @@ const BulkPricingToggle = ({ showPriceTiers, setShowPriceTiers }) => {
   );
 };
 
-// Simplified PriceInfo Component without main wrapper
+// AliExpress Themed PriceInfo Component
 const PriceInfo = () => {
   const [currentCurrency, setCurrentCurrency] = useState('USD');
   const [showPriceTiers, setShowPriceTiers] = useState(false);
@@ -133,7 +133,7 @@ const PriceInfo = () => {
       <div className="flex justify-between items-center mb-2">
         {/* Price */}
         <div className="flex items-center gap-2">
-          <span className="text-2xl font-bold text-gray-900">
+          <span className="text-2xl font-bold text-orange-500">
             {formatPrice(currentPrice)}
           </span>
           <span className="text-sm text-gray-500">/ unit</span>
@@ -146,10 +146,10 @@ const PriceInfo = () => {
         />
       </div>
 
-      {/* Second Row: MOQ and Bulk Pricing Toggle with Shared Background */}
-      <div className="flex justify-between items-center bg-blue-50 rounded px-3 py-2">
+      {/* Second Row: MOQ and Bulk Pricing Toggle with AliExpress Orange Background */}
+      <div className="flex justify-between items-center bg-orange-50 rounded px-3 py-2 border border-orange-200">
         {/* MOQ Section */}
-        <div className="flex items-center gap-1 text-blue-700 text-xs">
+        <div className="flex items-center gap-1 text-orange-700 text-xs">
           <Info className="w-3 h-3" />
           <span>MOQ: {productPricing.moq} units</span>
         </div>
