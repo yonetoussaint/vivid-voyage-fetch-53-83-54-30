@@ -216,15 +216,15 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   }, [productId]);
 
   // NEW: Handle thumbnail clicks from ProductOverview
-  const handleThumbnailClick = (index: number) => {
-    console.log('🖼️ Thumbnail clicked, updating gallery to index:', index);
-    setCurrentGalleryIndex(index);
-    
-    // Use the ref to update ProductImageGallery
-    if (galleryRef.current) {
-      galleryRef.current.goToIndex(index);
-    }
-  };
+const handleThumbnailClick = (index: number) => {
+  console.log('🖼️ Thumbnail clicked, updating gallery to index:', index);
+  setCurrentGalleryIndex(index);
+  
+  // Use the ref to update ProductImageGallery
+  if (galleryRef.current) {
+    galleryRef.current.goToIndex(index);
+  }
+};
 
   // Tabs configuration - conditionally show variants tab
   const tabs = React.useMemo(() => {
