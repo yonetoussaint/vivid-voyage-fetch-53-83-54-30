@@ -108,7 +108,7 @@ const CurrencySwitcher = ({
   );
 };
 
-// PriceInfo Component with fallback for useCurrency
+// PriceInfo Component - Only uses useCurrency when within provider
 const PriceInfo = ({ 
   product, 
   focusMode,
@@ -116,21 +116,6 @@ const PriceInfo = ({
   configurationData,
   variant = 'inline'
 }) => {
-  // Safe use of useCurrency with fallback
-  let formatPrice;
-  try {
-    const currencyContext = useCurrency();
-    formatPrice = currencyContext.formatPrice;
-  } catch (error) {
-    // Fallback formatter if not within CurrencyProvider
-    formatPrice = (price) => new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(price);
-  }
-
   if (!product) return null;
 
   const getCurrentVariantPrice = () => {
@@ -164,9 +149,7 @@ const PriceInfo = ({
   if (variant === 'overlay') {
     return (
       <div className={`absolute bottom-12 left-3 z-30 transition-opacity duration-300 ${(focusMode || isPlaying) ? 'opacity-0' : ''}`}>
-        <div className="px-3 py-2 rounded-lg text-sm font-medium bg-black/60 backdrop-blur-sm text-white">
-          {formatPrice(currentPrice)}
-        </div>
+        <PriceDisplay price={currentPrice} variant="overlay" />
       </div>
     );
   }
@@ -174,10 +157,8 @@ const PriceInfo = ({
   return (
     <div className="mb-4">
       <div className="flex items-center gap-3 mb-2">
-        <span className="text-2xl font-bold text-gray-900">
-          {formatPrice(currentPrice)}
-        </span>
-        <CurrencySwitcher 
+        <PriceDisplay price={currentPrice} variant="inline" />
+        <CurrencySwitcherWrapper 
           showPrice={false}
           showToggle={true}
           variant="inline"
@@ -187,11 +168,61 @@ const PriceInfo = ({
 
       {product.unitPrice && product.unitPrice !== currentPrice && (
         <div className="text-sm text-gray-500 mt-1">
-          Unit price: {formatPrice(product.unitPrice)}
+          <PriceDisplay price={product.unitPrice} prefix="Unit price: " />
         </div>
       )}
     </div>
   );
+};
+
+// Helper component that safely uses currency context
+const PriceDisplay = ({ price, variant = 'inline', prefix = '' }) => {
+  try {
+    const { formatPrice } = useCurrency();
+    if (variant === 'overlay') {
+      return (
+        <div className="px-3 py-2 rounded-lg text-sm font-medium bg-black/60 backdrop-blur-sm text-white">
+          {prefix}{formatPrice(price)}
+        </div>
+      );
+    }
+    return (
+      <span className="text-2xl font-bold text-gray-900">
+        {prefix}{formatPrice(price)}
+      </span>
+    );
+  } catch (error) {
+    // Fallback formatting without currency context
+    const fallbackFormat = (price) => new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(price);
+
+    if (variant === 'overlay') {
+      return (
+        <div className="px-3 py-2 rounded-lg text-sm font-medium bg-black/60 backdrop-blur-sm text-white">
+          {prefix}{fallbackFormat(price)}
+        </div>
+      );
+    }
+    return (
+      <span className="text-2xl font-bold text-gray-900">
+        {prefix}{fallbackFormat(price)}
+      </span>
+    );
+  }
+};
+
+// Wrapper component for CurrencySwitcher that handles context safely
+const CurrencySwitcherWrapper = (props) => {
+  try {
+    return <CurrencySwitcher {...props} />;
+  } catch (error) {
+    // Return null or a fallback if not within CurrencyProvider
+    return null;
+  }
 };
 
 export default PriceInfo;
