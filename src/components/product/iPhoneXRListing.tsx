@@ -161,7 +161,7 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
 
      {/* Product Title - Always render but conditionally show content */}
 {mergedProduct?.name && (
-  <h2 className="text-lg font-semibold text-gray-900">
+  <h2 className="text-lg font-semibold text-gray-900 leading-none">
     {mergedProduct?.name}
   </h2>
 )}
