@@ -8,9 +8,16 @@ import BookGenreFlashDeals from '@/components/home/BookGenreFlashDeals';
 interface ProductOverviewProps {
   product: any;
   activeTab?: string;
+  currentGalleryIndex?: number; // NEW: Receive current index
+  onThumbnailClick?: (index: number) => void; // NEW: Receive click handler
 }
 
-const ProductOverview: React.FC<ProductOverviewProps> = ({ product, activeTab = 'overview' }) => {
+const ProductOverview: React.FC<ProductOverviewProps> = ({ 
+  product, 
+  activeTab = 'overview',
+  currentGalleryIndex = 0, // NEW: Default to 0
+  onThumbnailClick // NEW: Click handler
+}) => {
   // Fetch ALL products for the related products section
   const { data: allProducts = [], isLoading: isLoadingProducts } = useQuery({
     queryKey: ['all-products-overview'],
@@ -19,6 +26,7 @@ const ProductOverview: React.FC<ProductOverviewProps> = ({ product, activeTab = 
 
   console.log('📦 All products fetched:', allProducts.length);
   console.log('📦 Current product:', product?.id);
+  console.log('🖼️ Current gallery index in ProductOverview:', currentGalleryIndex); // NEW: Debug log
 
   // Prepare data for GalleryThumbnails
   const galleryImages = product?.images?.length > 0 
@@ -76,12 +84,12 @@ const ProductOverview: React.FC<ProductOverviewProps> = ({ product, activeTab = 
 
   // Determine what to show in GalleryThumbnails based on active tab
   const isVariantsTab = activeTab === 'variants';
-  
+
   // For variants tab, show variant images if available, otherwise show product images
   const thumbnailImages = isVariantsTab && product?.variants?.length > 0
     ? product.variants.map((v: any) => v.image || v.src || '/placeholder.svg')
     : galleryImages;
-  
+
   const thumbnailVariantNames = isVariantsTab
     ? product?.variants?.map((v: any) => v.name) || []
     : [];
@@ -90,13 +98,21 @@ const ProductOverview: React.FC<ProductOverviewProps> = ({ product, activeTab = 
     ? thumbnailImages.map((src: string) => ({ type: 'image' as const, src }))
     : allGalleryItems;
 
+  // NEW: Handle thumbnail click
+  const handleThumbnailClick = (index: number) => {
+    console.log('🖼️ Thumbnail clicked in ProductOverview:', index);
+    if (onThumbnailClick) {
+      onThumbnailClick(index);
+    }
+  };
+
   return (
     <div className="w-full mt-2 space-y-2">
       {/* 1. GalleryThumbnails - Show on both overview and variants tabs */}
       <GalleryThumbnails
         images={thumbnailImages}
-        currentIndex={0}
-        onThumbnailClick={(index) => console.log('Thumbnail clicked:', index)}
+        currentIndex={currentGalleryIndex} // NEW: Use prop instead of hardcoded 0
+        onThumbnailClick={handleThumbnailClick} // NEW: Use handler instead of console.log
         videoIndices={isVariantsTab ? [] : videoIndices}
         galleryItems={thumbnailGalleryItems}
         variantNames={thumbnailVariantNames}
