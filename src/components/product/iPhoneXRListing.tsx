@@ -47,7 +47,7 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
 
       {/* Product Title */}
       {mergedProduct?.name && (
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">
+        <h2 className="text-lg font-semibold text-gray-900">
           {mergedProduct.name}
         </h2>
       )}
