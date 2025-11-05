@@ -1,4 +1,4 @@
-// ProductDetail.tsx - Fixed version
+// ProductDetail.tsx - Fixed version with CustomerReviewsEnhanced
 import React, { useState, useRef, useEffect } from "react";
 import { Routes, Route, Navigate, useParams, useLocation, useNavigate } from "react-router-dom";
 import { useProduct } from "@/hooks/useProduct";
@@ -19,7 +19,7 @@ import { useNavigationLoading } from '@/hooks/useNavigationLoading';
 // Import tab components
 import ProductOverview from "@/components/product/tabs/ProductOverview";
 import ProductVariants from "@/components/product/tabs/ProductVariants";
-import ProductReviews from "@/components/product/tabs/ProductReviews";
+import CustomerReviewsEnhanced from "@/components/product/CustomerReviewsEnhanced"; // Updated import
 import StoreReviews from "@/components/product/tabs/StoreReviews";
 import ReviewsGallery from "@/components/product/tabs/ReviewsGallery";
 import ProductQnA from "@/components/product/tabs/ProductQnA";
@@ -280,7 +280,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
       case 'variants':
         return <ProductOverview product={product} activeTab={activeTab} />;
       case 'reviews':
-        return <ProductReviews product={product} />;
+        return <CustomerReviewsEnhanced productId={productId} />; // Updated to use CustomerReviewsEnhanced
       case 'store-reviews':
         return <StoreReviews product={product} />;
       case 'reviews-gallery':
