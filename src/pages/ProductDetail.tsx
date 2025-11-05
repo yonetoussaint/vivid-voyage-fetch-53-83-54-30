@@ -51,7 +51,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
 
   // Use prop productId first, then param
   const productId = propProductId || paramId;
-  
+
   console.log('🔍 Product ID debug:', { propProductId, paramId, finalProductId: productId });
 
   const { data: product, isLoading, error } = useProduct(productId!);
@@ -66,6 +66,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [isDescriptionPanelOpen, setIsDescriptionPanelOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [currentGalleryIndex, setCurrentGalleryIndex] = useState(0); // NEW: Track gallery index
 
   // Scroll to top when component mounts or productId changes
   useEffect(() => {
@@ -101,7 +102,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   // Sync URL with active tab - only if we're not in a panel
   useEffect(() => {
     if (inPanel) return; // Don't sync URL in panel mode
-    
+
     const currentTabFromURL = getCurrentTab();
     if (currentTabFromURL !== activeTab) {
       console.log('🔄 Syncing active tab from URL:', currentTabFromURL);
@@ -140,6 +141,17 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
 
     // Scroll to top when changing tabs
     window.scrollTo(0, 0);
+  };
+
+  // NEW: Handle thumbnail click to update gallery
+  const handleThumbnailClick = (index: number) => {
+    console.log('🖼️ Thumbnail clicked, setting gallery index to:', index);
+    setCurrentGalleryIndex(index);
+    
+    // If galleryRef has a method to go to specific index, call it here
+    if (galleryRef.current && galleryRef.current.goToIndex) {
+      galleryRef.current.goToIndex(index);
+    }
   };
 
   // Event handlers
@@ -278,9 +290,16 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     switch (activeTab) {
       case 'overview':
       case 'variants':
-        return <ProductOverview product={product} activeTab={activeTab} />;
+        return (
+          <ProductOverview 
+            product={product} 
+            activeTab={activeTab}
+            currentGalleryIndex={currentGalleryIndex}
+            onThumbnailClick={handleThumbnailClick}
+          />
+        );
       case 'reviews':
-        return <CustomerReviewsEnhanced productId={productId} />; // Updated to use CustomerReviewsEnhanced
+        return <CustomerReviewsEnhanced productId={productId} />;
       case 'store-reviews':
         return <StoreReviews product={product} />;
       case 'reviews-gallery':
@@ -288,7 +307,14 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
       case 'qna':
         return <ProductQnA product={product} />;
       default:
-        return <ProductOverview product={product} activeTab="overview" />;
+        return (
+          <ProductOverview 
+            product={product} 
+            activeTab="overview"
+            currentGalleryIndex={currentGalleryIndex}
+            onThumbnailClick={handleThumbnailClick}
+          />
+        );
     }
   };
 
@@ -338,12 +364,14 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
         }}
         onBuyNow={buyNow}
         onReadMore={handleReadMore}
+        onImageIndexChange={setCurrentGalleryIndex} // NEW: Sync gallery changes to state
       />
     </div>
   ) : undefined;
 
   console.log('🎯 ProductDetail rendering with product:', product?.name);
   console.log('🎯 Active tab:', activeTab);
+  console.log('🎯 Current gallery index:', currentGalleryIndex);
   console.log('🎯 In panel mode:', inPanel);
 
   return (
@@ -355,7 +383,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
         topContentRef={topContentRef}
         tabs={tabs}
         activeTab={activeTab}
-        onTabChange={inPanel ? setActiveTab : handleTabChange} // Simplified tab change in panel
+        onTabChange={inPanel ? setActiveTab : handleTabChange}
         isProductsTab={showGallery}
         showTopBorder={false}
         variant="underline"
