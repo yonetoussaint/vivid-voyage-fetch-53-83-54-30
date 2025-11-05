@@ -59,16 +59,6 @@ export const useGalleryState = (
     setDisplayImages(images);
   }, [images]);
 
-  // NEW: Handle external index changes (from thumbnail clicks)
-  const goToIndex = useCallback((index: number) => {
-    console.log('🎯 goToIndex called with:', index);
-    if (api && index >= 0 && index < totalItems) {
-      api.scrollTo(index);
-      setAutoScrollProgress(0); // Reset progress when manually navigating
-      // The onApiChange will handle updating currentIndex via the "select" event
-    }
-  }, [api, totalItems]);
-
   // Carousel API callback
   const onApiChange = useCallback((api: CarouselApi | null) => {
     if (!api) return;
@@ -80,7 +70,6 @@ export const useGalleryState = (
 
     api.on("select", () => {
       const newIndex = api.selectedScrollSnap();
-      console.log('🔄 Carousel selected index:', newIndex);
       setCurrentIndex(newIndex);
       onImageIndexChange?.(newIndex, totalItems);
       setIsRotated(0);
@@ -157,8 +146,11 @@ export const useGalleryState = (
 
   // Navigation handlers
   const handleThumbnailClick = useCallback((index: number) => {
-    goToIndex(index);
-  }, [goToIndex]);
+    if (api) {
+      api.scrollTo(index);
+      setAutoScrollProgress(0); // Reset progress when manually navigating
+    }
+  }, [api]);
 
   const handlePrevious = useCallback(() => {
     if (api) {
@@ -319,7 +311,6 @@ export const useGalleryState = (
     toggleFullscreen,
     toggleAutoScroll,
     startAutoScroll,
-    stopAutoScroll,
-    goToIndex // NEW: Export the goToIndex method
+    stopAutoScroll
   };
 };

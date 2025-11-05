@@ -1,4 +1,4 @@
-// ProductDetail.tsx - Fixed version with CustomerReviewsEnhanced and inline ProductOverview
+// ProductDetail.tsx - Fixed version with CustomerReviewsEnhanced
 import React, { useState, useRef, useEffect } from "react";
 import { Routes, Route, Navigate, useParams, useLocation, useNavigate } from "react-router-dom";
 import { useProduct } from "@/hooks/useProduct";
@@ -17,18 +17,12 @@ import ProductHeader from '@/components/product/ProductHeader';
 import { useNavigationLoading } from '@/hooks/useNavigationLoading';
 
 // Import tab components
+import ProductOverview from "@/components/product/tabs/ProductOverview";
 import ProductVariants from "@/components/product/tabs/ProductVariants";
 import CustomerReviewsEnhanced from "@/components/product/CustomerReviewsEnhanced"; // Updated import
 import StoreReviews from "@/components/product/tabs/StoreReviews";
 import ReviewsGallery from "@/components/product/tabs/ReviewsGallery";
 import ProductQnA from "@/components/product/tabs/ProductQnA";
-
-// Import components for inline ProductOverview
-import { useQuery } from '@tanstack/react-query';
-import { fetchAllProducts } from '@/integrations/supabase/products';
-import { GalleryThumbnails } from '@/components/product/GalleryThumbnails';
-import { IPhoneXRListing } from '@/components/product/iPhoneXRListing';
-import BookGenreFlashDeals from '@/components/home/BookGenreFlashDeals';
 
 interface ProductDetailProps {
   productId?: string;
@@ -37,142 +31,6 @@ interface ProductDetailProps {
   scrollContainerRef?: React.RefObject<HTMLDivElement>;
   stickyTopOffset?: number;
 }
-
-// Inline ProductOverview component
-interface ProductOverviewProps {
-  product: any;
-  activeTab?: string;
-  currentGalleryIndex?: number;
-  onThumbnailClick?: (index: number) => void;
-}
-
-const ProductOverview: React.FC<ProductOverviewProps> = ({ 
-  product, 
-  activeTab = 'overview',
-  currentGalleryIndex = 0,
-  onThumbnailClick
-}) => {
-  // Fetch ALL products for the related products section
-  const { data: allProducts = [], isLoading: isLoadingProducts } = useQuery({
-    queryKey: ['all-products-overview'],
-    queryFn: fetchAllProducts,
-  });
-
-  console.log('📦 All products fetched:', allProducts.length);
-  console.log('📦 Current product:', product?.id);
-  console.log('🖼️ Current gallery index in ProductOverview:', currentGalleryIndex);
-
-  // Prepare data for GalleryThumbnails
-  const galleryImages = product?.images?.length > 0 
-    ? product.images 
-    : product?.product_images?.map((img: any) => img.src) || ["https://placehold.co/300x300?text=No+Image"];
-
-  const videoIndices = product?.product_videos?.length > 0 ? [galleryImages.length] : [];
-
-  // Combine images and videos for gallery
-  const allGalleryItems = [
-    ...(galleryImages.map((src: string) => ({ type: 'image' as const, src }))),
-    ...(product?.product_videos?.map((video: any) => ({ 
-      type: 'video' as const, 
-      src: video.url,
-      videoData: video 
-    })) || [])
-  ];
-
-  // Prepare data for IPhoneXRListing
-  const listingProduct = {
-    name: product?.name,
-    short_description: product?.short_description,
-    description: product?.description,
-    rating: product?.rating,
-    reviewCount: product?.review_count,
-    inventory: product?.inventory,
-    sold_count: product?.sold_count,
-    change: product?.sales_change
-  };
-
-  // Prepare related products - use all products excluding current one
-  const relatedProducts = React.useMemo(() => {
-    if (isLoadingProducts) {
-      return [];
-    }
-
-    const filteredProducts = allProducts
-      .filter(p => p.id !== product?.id)
-      .slice(0, 8) // Limit to 8 products
-      .map(p => ({
-        id: p.id,
-        name: p.name || 'Unnamed Product',
-        price: Number(p.price) || 0,
-        discount_price: p.discount_price ? Number(p.discount_price) : undefined,
-        product_images: p.product_images || [{ src: "https://placehold.co/300x300?text=No+Image" }],
-        inventory: p.inventory || 0,
-        category: p.category || 'Uncategorized',
-        flash_start_time: p.flash_start_time,
-        seller_id: p.seller_id,
-      }));
-
-    console.log('🔄 Related products prepared:', filteredProducts.length);
-    return filteredProducts;
-  }, [allProducts, product?.id, isLoadingProducts]);
-
-  // Determine what to show in GalleryThumbnails based on active tab
-  const isVariantsTab = activeTab === 'variants';
-
-  // For variants tab, show variant images if available, otherwise show product images
-  const thumbnailImages = isVariantsTab && product?.variants?.length > 0
-    ? product.variants.map((v: any) => v.image || v.src || '/placeholder.svg')
-    : galleryImages;
-
-  const thumbnailVariantNames = isVariantsTab
-    ? product?.variants?.map((v: any) => v.name) || []
-    : [];
-
-  const thumbnailGalleryItems = isVariantsTab && product?.variants?.length > 0
-    ? thumbnailImages.map((src: string) => ({ type: 'image' as const, src }))
-    : allGalleryItems;
-
-  // Handle thumbnail click
-  const handleThumbnailClick = (index: number) => {
-    console.log('🖼️ Thumbnail clicked in ProductOverview:', index);
-    if (onThumbnailClick) {
-      onThumbnailClick(index);
-    }
-  };
-
-  return (
-    <div className="w-full mt-2 space-y-2">
-      {/* 1. GalleryThumbnails - Show on both overview and variants tabs */}
-      <GalleryThumbnails
-        images={thumbnailImages}
-        currentIndex={currentGalleryIndex}
-        onThumbnailClick={handleThumbnailClick}
-        videoIndices={isVariantsTab ? [] : videoIndices}
-        galleryItems={thumbnailGalleryItems}
-        variantNames={thumbnailVariantNames}
-      />
-
-      {/* 2. IPhoneXRListing */}
-      <IPhoneXRListing 
-        product={listingProduct}
-        onReadMore={() => console.log('Read more clicked')}
-      />
-
-      {/* 3. BookGenreFlashDeals - Show related products */}
-      {!isLoadingProducts && relatedProducts.length > 0 && (
-        <BookGenreFlashDeals
-          title="Related Products"
-          subtitle="Customers also viewed"
-          products={relatedProducts}
-          showSectionHeader={true}
-          showSummary={false}
-          showFilters={false}
-          summaryMode="products"
-        />
-      )}
-    </div>
-  );
-};
 
 const ProductDetailContent: React.FC<ProductDetailProps> = ({ 
   productId: propProductId, 
@@ -208,23 +66,11 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [isDescriptionPanelOpen, setIsDescriptionPanelOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
-  const [currentGalleryIndex, setCurrentGalleryIndex] = useState(0); // NEW: Gallery index state
 
   // Scroll to top when component mounts or productId changes
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [productId]);
-
-  // NEW: Handle thumbnail clicks from ProductOverview
-const handleThumbnailClick = (index: number) => {
-  console.log('🖼️ Thumbnail clicked, updating gallery to index:', index);
-  setCurrentGalleryIndex(index);
-  
-  // Use the ref to update ProductImageGallery
-  if (galleryRef.current) {
-    galleryRef.current.goToIndex(index);
-  }
-};
 
   // Tabs configuration - conditionally show variants tab
   const tabs = React.useMemo(() => {
@@ -432,16 +278,9 @@ const handleThumbnailClick = (index: number) => {
     switch (activeTab) {
       case 'overview':
       case 'variants':
-        return (
-          <ProductOverview 
-            product={product} 
-            activeTab={activeTab}
-            currentGalleryIndex={currentGalleryIndex}
-            onThumbnailClick={handleThumbnailClick}
-          />
-        );
+        return <ProductOverview product={product} activeTab={activeTab} />;
       case 'reviews':
-        return <CustomerReviewsEnhanced productId={productId} />;
+        return <CustomerReviewsEnhanced productId={productId} />; // Updated to use CustomerReviewsEnhanced
       case 'store-reviews':
         return <StoreReviews product={product} />;
       case 'reviews-gallery':
@@ -477,40 +316,35 @@ const handleThumbnailClick = (index: number) => {
     : product?.product_images?.map(img => img.src) || product?.images || ["/placeholder.svg"];
 
   const topContent = showGallery ? (
-  <div ref={topContentRef} className="w-full bg-white">
-    <ProductImageGallery 
-      ref={galleryRef} // Make sure this ref is passed
-      images={galleryImages}
-      videos={isVariantsTab ? [] : (product?.product_videos || [])}
-      model3dUrl={isVariantsTab ? undefined : product?.model_3d_url}
-      seller={product?.sellers}
-      product={{
-        id: product?.id || '',
-        name: product?.name || '',
-        price: product?.price || 0,
-        discount_price: product?.discount_price,
-        inventory: product?.inventory || 0,
-        sold_count: product?.sold_count || 0
-      }}
-      onSellerClick={() => {
-        if (product?.sellers?.id) {
-          navigate(`/seller/${product?.sellers?.id}`);
-        }
-      }}
-      onBuyNow={buyNow}
-      onReadMore={handleReadMore}
-      onImageIndexChange={(index) => {
-        // Sync the current index when user swipes in the gallery
-        setCurrentGalleryIndex(index);
-      }}
-    />
-  </div>
-) : undefined;
+    <div ref={topContentRef} className="w-full bg-white">
+      <ProductImageGallery 
+        ref={galleryRef}
+        images={galleryImages}
+        videos={isVariantsTab ? [] : (product?.product_videos || [])}
+        model3dUrl={isVariantsTab ? undefined : product?.model_3d_url}
+        seller={product?.sellers}
+        product={{
+          id: product?.id || '',
+          name: product?.name || '',
+          price: product?.price || 0,
+          discount_price: product?.discount_price,
+          inventory: product?.inventory || 0,
+          sold_count: product?.sold_count || 0
+        }}
+        onSellerClick={() => {
+          if (product?.sellers?.id) {
+            navigate(`/seller/${product?.sellers?.id}`);
+          }
+        }}
+        onBuyNow={buyNow}
+        onReadMore={handleReadMore}
+      />
+    </div>
+  ) : undefined;
 
   console.log('🎯 ProductDetail rendering with product:', product?.name);
   console.log('🎯 Active tab:', activeTab);
   console.log('🎯 In panel mode:', inPanel);
-  console.log('🎯 Current gallery index:', currentGalleryIndex);
 
   return (
     <>
@@ -521,7 +355,7 @@ const handleThumbnailClick = (index: number) => {
         topContentRef={topContentRef}
         tabs={tabs}
         activeTab={activeTab}
-        onTabChange={inPanel ? setActiveTab : handleTabChange}
+        onTabChange={inPanel ? setActiveTab : handleTabChange} // Simplified tab change in panel
         isProductsTab={showGallery}
         showTopBorder={false}
         variant="underline"
