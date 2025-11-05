@@ -61,169 +61,42 @@ const useCurrency = () => {
 };
 
 // CurrencySwitcher Component
-const CurrencySwitcher = ({ 
-  showPrice = true, 
-  price = 0,
-  className = "",
-  buttonClassName = "",
-  showToggle = true,
-  variant = 'overlay'
-}) => {
-  const { currentCurrency, toggleCurrency, formatPrice } = useCurrency();
-
-  const baseStyles = variant === 'overlay' 
-    ? 'bg-black/60 backdrop-blur-sm text-white'
-    : 'bg-gray-100 text-gray-900 border border-gray-200';
+const CurrencySwitcher = ({ className = "" }) => {
+  const { currentCurrency, toggleCurrency } = useCurrency();
 
   return (
     <>
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.3.2/css/flag-icons.min.css" />
-
-      <div className={className}>
-        <button
-          onClick={showToggle ? toggleCurrency : undefined}
-          className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 ${baseStyles} ${
-            showToggle ? 'hover:bg-gray-200 cursor-pointer' : 'cursor-default'
-          } transition-colors ${buttonClassName}`}
-          aria-label={showToggle ? "Change currency" : "Current price"}
-          disabled={!showToggle}
-        >
-          {showToggle && (
-            <div className="w-5 h-5 rounded-full overflow-hidden flex items-center justify-center">
-              <span className={`fi fi-${currencyToCountry[currentCurrency]} scale-150`}></span>
-            </div>
-          )}
-          {showToggle && <ChevronDown className="w-4 h-4 stroke-2" />}
-          {showPrice && (
-            <span className={`font-bold ${variant === 'overlay' ? 'text-white' : 'text-gray-900'}`}>
-              {formatPrice(price)}
-            </span>
-          )}
-          <span className={`font-bold ${variant === 'overlay' ? 'text-white' : 'text-gray-600'}`}>
-            {currencies[currentCurrency]}
-          </span>
-        </button>
-      </div>
+      <button
+        onClick={toggleCurrency}
+        className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 bg-gray-100 text-gray-900 border border-gray-200 hover:bg-gray-200 cursor-pointer transition-colors ${className}`}
+        aria-label="Change currency"
+      >
+        <div className="w-5 h-5 rounded-full overflow-hidden flex items-center justify-center">
+          <span className={`fi fi-${currencyToCountry[currentCurrency]} scale-150`}></span>
+        </div>
+        <ChevronDown className="w-4 h-4 stroke-2" />
+        <span className="font-bold text-gray-600">
+          {currencies[currentCurrency]}
+        </span>
+      </button>
     </>
   );
 };
 
-// PriceInfo Component - Only uses useCurrency when within provider
-const PriceInfo = ({ 
-  product, 
-  focusMode,
-  isPlaying,
-  configurationData,
-  variant = 'inline'
-}) => {
-  if (!product) return null;
-
-  const getCurrentVariantPrice = () => {
-    if (configurationData) {
-      const selectedConditionVariant = configurationData.getSelectedConditionVariant();
-      if (selectedConditionVariant && selectedConditionVariant.price !== undefined) {
-        return selectedConditionVariant.price;
-      }
-
-      const selectedNetworkVariant = configurationData.getSelectedNetworkVariant();
-      if (selectedNetworkVariant && selectedNetworkVariant.price !== undefined) {
-        return selectedNetworkVariant.price;
-      }
-
-      const selectedStorageVariant = configurationData.getSelectedStorageVariant();
-      if (selectedStorageVariant && selectedStorageVariant.price !== undefined) {
-        return selectedStorageVariant.price;
-      }
-
-      const selectedColorVariant = configurationData.getSelectedColorVariant();
-      if (selectedColorVariant && selectedColorVariant.price !== undefined) {
-        return selectedColorVariant.price;
-      }
-    }
-
-    return product.unitPrice || product.price || 0;
-  };
-
-  const currentPrice = getCurrentVariantPrice();
-
-  if (variant === 'overlay') {
-    return (
-      <div className={`absolute bottom-12 left-3 z-30 transition-opacity duration-300 ${(focusMode || isPlaying) ? 'opacity-0' : ''}`}>
-        <PriceDisplay price={currentPrice} variant="overlay" />
-      </div>
-    );
-  }
+// Simple PriceInfo Component
+const PriceInfo = ({ price = 0 }) => {
+  const { formatPrice } = useCurrency();
 
   return (
-    <div className="mb-4">
-      <div className="flex items-center gap-3 mb-2">
-        <PriceDisplay price={currentPrice} variant="inline" />
-        <CurrencySwitcherWrapper 
-          showPrice={false}
-          showToggle={true}
-          variant="inline"
-          buttonClassName="text-sm"
-        />
-      </div>
-
-      {product.unitPrice && product.unitPrice !== currentPrice && (
-        <div className="text-sm text-gray-500 mt-1">
-          <PriceDisplay price={product.unitPrice} prefix="Unit price: " />
-        </div>
-      )}
+    <div className="flex items-center gap-3">
+      <span className="text-2xl font-bold text-gray-900">
+        {formatPrice(price)}
+      </span>
+      <CurrencySwitcher />
     </div>
   );
 };
 
-// Helper component that safely uses currency context
-const PriceDisplay = ({ price, variant = 'inline', prefix = '' }) => {
-  try {
-    const { formatPrice } = useCurrency();
-    if (variant === 'overlay') {
-      return (
-        <div className="px-3 py-2 rounded-lg text-sm font-medium bg-black/60 backdrop-blur-sm text-white">
-          {prefix}{formatPrice(price)}
-        </div>
-      );
-    }
-    return (
-      <span className="text-2xl font-bold text-gray-900">
-        {prefix}{formatPrice(price)}
-      </span>
-    );
-  } catch (error) {
-    // Fallback formatting without currency context
-    const fallbackFormat = (price) => new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(price);
-
-    if (variant === 'overlay') {
-      return (
-        <div className="px-3 py-2 rounded-lg text-sm font-medium bg-black/60 backdrop-blur-sm text-white">
-          {prefix}{fallbackFormat(price)}
-        </div>
-      );
-    }
-    return (
-      <span className="text-2xl font-bold text-gray-900">
-        {prefix}{fallbackFormat(price)}
-      </span>
-    );
-  }
-};
-
-// Wrapper component for CurrencySwitcher that handles context safely
-const CurrencySwitcherWrapper = (props) => {
-  try {
-    return <CurrencySwitcher {...props} />;
-  } catch (error) {
-    // Return null or a fallback if not within CurrencyProvider
-    return null;
-  }
-};
-
 export default PriceInfo;
-export { CurrencyProvider, useCurrency, CurrencySwitcher, currencies, currencyToCountry };
+export { CurrencyProvider, useCurrency, CurrencySwitcher };
