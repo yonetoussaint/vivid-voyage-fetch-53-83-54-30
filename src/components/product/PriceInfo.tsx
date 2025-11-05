@@ -1,23 +1,73 @@
-import React from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { useCurrency, currencies, currencyToCountry } from '@/contexts/CurrencyContext';
 
-interface CurrencySwitcherProps {
-  showPrice?: boolean;
-  price?: number;
-  className?: string;
-  buttonClassName?: string;
-  showToggle?: boolean;
-  variant?: 'overlay' | 'inline'; // New prop to control styling variant
-}
+// Currency Context
+const currencies = {
+  USD: 'USD',
+  EUR: 'EUR',
+  GBP: 'GBP',
+  JPY: 'JPY'
+};
 
-export const CurrencySwitcher: React.FC<CurrencySwitcherProps> = ({ 
+const currencyToCountry = {
+  USD: 'us',
+  EUR: 'eu',
+  GBP: 'gb',
+  JPY: 'jp'
+};
+
+const exchangeRates = {
+  USD: 1,
+  EUR: 0.92,
+  GBP: 0.79,
+  JPY: 149.50
+};
+
+const CurrencyContext = createContext(null);
+
+const CurrencyProvider = ({ children }) => {
+  const [currentCurrency, setCurrentCurrency] = useState('USD');
+
+  const toggleCurrency = () => {
+    const currencyKeys = Object.keys(currencies);
+    const currentIndex = currencyKeys.indexOf(currentCurrency);
+    const nextIndex = (currentIndex + 1) % currencyKeys.length;
+    setCurrentCurrency(currencyKeys[nextIndex]);
+  };
+
+  const formatPrice = (price) => {
+    const convertedPrice = price * exchangeRates[currentCurrency];
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currentCurrency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(convertedPrice);
+  };
+
+  return (
+    <CurrencyContext.Provider value={{ currentCurrency, toggleCurrency, formatPrice }}>
+      {children}
+    </CurrencyContext.Provider>
+  );
+};
+
+const useCurrency = () => {
+  const context = useContext(CurrencyContext);
+  if (!context) {
+    throw new Error('useCurrency must be used within CurrencyProvider');
+  }
+  return context;
+};
+
+// CurrencySwitcher Component
+export const CurrencySwitcher = ({ 
   showPrice = true, 
   price = 0,
   className = "",
   buttonClassName = "",
   showToggle = true,
-  variant = 'overlay' // Default to overlay for backward compatibility
+  variant = 'overlay'
 }) => {
   const { currentCurrency, toggleCurrency, formatPrice } = useCurrency();
 
@@ -58,47 +108,21 @@ export const CurrencySwitcher: React.FC<CurrencySwitcherProps> = ({
   );
 };
 
-interface PriceInfoProps {
-  product?: {
-    id: string;
-    name: string;
-    price?: number;
-    variants?: any[];
-    unitPrice?: number; // Add B2B pricing support
-    bulkPrices?: { minQty: number; price: number }[];
-  };
-  focusMode?: boolean;
-  isPlaying?: boolean;
-  configurationData?: {
-    selectedColor?: string;
-    selectedStorage?: string;
-    selectedNetwork?: string;
-    selectedCondition?: string;
-    getSelectedColorVariant: () => any;
-    getSelectedStorageVariant: () => any;
-    getSelectedNetworkVariant: () => any;
-    getSelectedConditionVariant: () => any;
-  } | null;
-  variant?: 'overlay' | 'inline'; // New prop to control styling
-  showBulkPricing?: boolean; // Show bulk pricing details
-}
-
-const PriceInfo: React.FC<PriceInfoProps> = ({ 
+// PriceInfo Component
+const PriceInfo = ({ 
   product, 
   focusMode,
   isPlaying,
   configurationData,
-  variant = 'inline', // Default to inline for IPhoneXRListing
+  variant = 'inline',
   showBulkPricing = true
 }) => {
   const { formatPrice } = useCurrency();
 
   if (!product) return null;
 
-  // Always get the price from the selected variant
   const getCurrentVariantPrice = () => {
     if (configurationData) {
-      // Try to get price from the deepest level variant (condition > network > storage > color)
       const selectedConditionVariant = configurationData.getSelectedConditionVariant();
       if (selectedConditionVariant && selectedConditionVariant.price !== undefined) {
         return selectedConditionVariant.price;
@@ -120,13 +144,11 @@ const PriceInfo: React.FC<PriceInfoProps> = ({
       }
     }
 
-    // Use B2B unit price if available, otherwise product price
     return product.unitPrice || product.price || 0;
   };
 
   const currentPrice = getCurrentVariantPrice();
 
-  // For overlay variant (original behavior)
   if (variant === 'overlay') {
     return (
       <div className={`absolute bottom-12 left-3 z-30 transition-opacity duration-300 ${(focusMode || isPlaying) ? 'opacity-0' : ''}`}>
@@ -140,10 +162,8 @@ const PriceInfo: React.FC<PriceInfoProps> = ({
     );
   }
 
-  // For inline variant (new behavior for IPhoneXRListing)
   return (
     <div className="mb-4">
-      {/* Main Price Display */}
       <div className="flex items-center gap-3 mb-2">
         <span className="text-2xl font-bold text-gray-900">
           {formatPrice(currentPrice)}
@@ -156,7 +176,6 @@ const PriceInfo: React.FC<PriceInfoProps> = ({
         />
       </div>
 
-      {/* Bulk Pricing */}
       {showBulkPricing && product.bulkPrices && product.bulkPrices.length > 0 && (
         <div className="text-sm text-gray-600 space-y-1">
           <div className="font-medium text-gray-700">Bulk pricing:</div>
@@ -169,7 +188,6 @@ const PriceInfo: React.FC<PriceInfoProps> = ({
         </div>
       )}
 
-      {/* Unit Price for B2B */}
       {product.unitPrice && product.unitPrice !== currentPrice && (
         <div className="text-sm text-gray-500 mt-1">
           Unit price: {formatPrice(product.unitPrice)}
@@ -180,3 +198,5 @@ const PriceInfo: React.FC<PriceInfoProps> = ({
 };
 
 export default PriceInfo;
+
+export { CurrencyProvider, useCurrency, CurrencySwitcher, currencies, currencyToCountry };
