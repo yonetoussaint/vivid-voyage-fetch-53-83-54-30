@@ -1,4 +1,4 @@
-// PriceInfo.tsx - AliExpress themed
+// PriceInfo.tsx - AliExpress themed with space-y-2
 import React, { useState, useMemo } from 'react';
 import { ChevronDown, Info } from 'lucide-react';
 
@@ -99,7 +99,7 @@ const BulkPricingToggle = ({ showPriceTiers, setShowPriceTiers }) => {
   );
 };
 
-// AliExpress Themed PriceInfo Component
+// AliExpress Themed PriceInfo Component with space-y-2
 const PriceInfo = () => {
   const [currentCurrency, setCurrentCurrency] = useState('USD');
   const [showPriceTiers, setShowPriceTiers] = useState(false);
@@ -128,9 +128,9 @@ const PriceInfo = () => {
   const currentPrice = productPricing.basePrice * (1 - currentTier.discount);
 
   return (
-    <>
+    <div className="space-y-2">
       {/* First Row: Price and Currency Switcher */}
-      <div className="flex justify-between items-center mb-2">
+      <div className="flex justify-between items-center">
         {/* Price */}
         <div className="flex items-center gap-2">
           <span className="text-2xl font-bold text-orange-500">
@@ -163,7 +163,7 @@ const PriceInfo = () => {
 
       {/* Price Tiers (expands below) */}
       {showPriceTiers && (
-        <div className="mt-4">
+        <div className="space-y-2">
           <div className="bg-gray-50 rounded-lg border border-gray-200 divide-y divide-gray-200">
             {productPricing.priceTiers.map((tier, index) => (
               <PriceTier
@@ -176,7 +176,7 @@ const PriceInfo = () => {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 };
 
