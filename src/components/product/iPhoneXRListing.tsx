@@ -1,6 +1,7 @@
 // iPhoneXRListing.tsx - Enhanced with B2B Trade Details
 import React from 'react';
 import { Star, ShieldCheck, Video, CreditCard } from 'lucide-react';
+import PriceInfo from "@/components/product/PriceInfo";
 
 interface IPhoneXRListingProps {
   product?: {
@@ -43,7 +44,7 @@ const mockB2BData = {
 export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
   // Merge product with mock B2B data
   const mergedProduct = { ...mockB2BData, ...product };
-  
+
   const displayDescription =
     mergedProduct?.short_description || mergedProduct?.description || 'Product description not available.';
   const needsTruncation = displayDescription.length > 150;
@@ -69,6 +70,14 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
           {mergedProduct.name}
         </h2>
       )}
+
+      {/* PriceInfo Component - Moved from ProductImageGallery */}
+      <PriceInfo
+        product={mergedProduct}
+        focusMode={false}
+        isPlaying={false}
+        configurationData={null}
+      />
 
       {/* Description with "Read More" */}
       <div className="mb-3">
