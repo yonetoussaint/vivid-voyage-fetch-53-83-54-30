@@ -64,7 +64,7 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
 
   return (
     <div className="w-full px-2 bg-white font-sans">
-      // In IPhoneXRListing.tsx - after the product title
+     
       {/* Product Title */}
       {mergedProduct?.name && (
         <h2 className="text-lg font-semibold text-gray-900 mb-2">
