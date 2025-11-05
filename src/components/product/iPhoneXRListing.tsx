@@ -7,21 +7,24 @@ const currencies = {
   USD: 'USD',
   EUR: 'EUR', 
   GBP: 'GBP',
-  JPY: 'JPY'
+  JPY: 'JPY',
+  HTG: 'HTG'
 };
 
 const currencyToCountry = {
   USD: 'us',
   EUR: 'eu',
   GBP: 'gb',
-  JPY: 'jp'
+  JPY: 'jp',
+  HTG: 'ht' // Haiti
 };
 
 const exchangeRates = {
   USD: 1,
   EUR: 0.92,
   GBP: 0.79,
-  JPY: 149.50
+  JPY: 149.50,
+  HTG: 132.50 // Example exchange rate
 };
 
 // Product pricing data structure
@@ -249,7 +252,7 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
       </div>
 
       {/* B2B Trade Details - Always present */}
-      <div className="border-t border-gray-100 pt-2 space-y-2 text-sm">
+      <div className="pt-2 space-y-2 text-sm">
         {/* Demo Video */}
         {mergedProduct?.demoVideoUrl && (
           <div>
