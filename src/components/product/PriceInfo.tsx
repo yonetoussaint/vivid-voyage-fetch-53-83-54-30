@@ -61,7 +61,7 @@ const useCurrency = () => {
 };
 
 // CurrencySwitcher Component
-export const CurrencySwitcher = ({ 
+const CurrencySwitcher = ({ 
   showPrice = true, 
   price = 0,
   className = "",
@@ -185,5 +185,4 @@ const PriceInfo = ({
 };
 
 export default PriceInfo;
-
 export { CurrencyProvider, useCurrency, CurrencySwitcher, currencies, currencyToCountry };
