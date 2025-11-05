@@ -1,4 +1,4 @@
-// PriceInfo.tsx - Reorganized with two-column layout
+// PriceInfo.tsx - Reorganized two-column layout
 import React, { useState, useMemo } from 'react';
 import { ChevronDown, Info, Truck, Shield, Check } from 'lucide-react';
 
@@ -56,37 +56,13 @@ const CurrencySwitcher = ({
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.3.2/css/flag-icons.min.css" />
       <button
         onClick={onCurrencyChange}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 hover:border-gray-400 bg-white cursor-pointer transition-all hover:shadow-sm text-sm font-medium"
+        className="p-1 rounded flex items-center gap-1 bg-gray-100 hover:bg-gray-200 cursor-pointer transition-colors text-xs"
         aria-label="Change currency"
       >
-        <span className={`fi fi-${currencyToCountry[currentCurrency]} rounded-sm`}></span>
-        <span>{currentCurrency}</span>
-        <ChevronDown className="w-4 h-4 text-gray-500" />
+        <span className={`fi fi-${currencyToCountry[currentCurrency]}`}></span>
+        <ChevronDown className="w-3 h-3" />
       </button>
     </>
-  );
-};
-
-// MOQ Badge Component
-const MOQBadge = ({ moq }) => {
-  return (
-    <div className="flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg text-sm">
-      <Info className="w-4 h-4" />
-      <span className="font-medium">MOQ: {moq.toLocaleString()} units</span>
-    </div>
-  );
-};
-
-// Bulk Pricing Toggle Component
-const BulkPricingToggle = ({ isOpen, onToggle }) => {
-  return (
-    <button
-      onClick={onToggle}
-      className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 hover:border-gray-400 bg-white cursor-pointer transition-all hover:shadow-sm text-sm font-medium text-gray-700"
-    >
-      <span>Bulk pricing</span>
-      <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-    </button>
   );
 };
 
@@ -107,25 +83,39 @@ const PriceTier = ({ tier, currentCurrency, basePrice }) => {
 
   const tierPrice = calculatePrice(basePrice, tier.discount);
   const rangeText = tier.maxQty 
-    ? `${tier.minQty.toLocaleString()}-${tier.maxQty.toLocaleString()} units`
-    : `≥${tier.minQty.toLocaleString()} units`;
-
-  const discountPercent = tier.discount * 100;
+    ? `${tier.minQty}-${tier.maxQty} units`
+    : `≥${tier.minQty} units`;
 
   return (
-    <div className="flex justify-between items-center py-3 px-4 hover:bg-gray-50 rounded-lg border border-gray-200">
-      <div>
-        <span className="text-sm font-medium text-gray-700 block">{rangeText}</span>
-        {discountPercent > 0 && (
-          <span className="text-xs text-green-600 font-medium">
-            Save {discountPercent}%
-          </span>
-        )}
-      </div>
+    <div className="flex justify-between items-center py-2 px-3 hover:bg-gray-50 rounded">
+      <span className="text-sm text-gray-600">{rangeText}</span>
       <span className="text-sm font-semibold text-green-600">
         {formatPrice(tierPrice, currentCurrency)}
       </span>
     </div>
+  );
+};
+
+// MOQ Badge Component
+const MOQBadge = ({ moq }) => {
+  return (
+    <div className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs">
+      <Info className="w-3 h-3" />
+      <span>MOQ: {moq} units</span>
+    </div>
+  );
+};
+
+// Bulk Pricing Toggle Component
+const BulkPricingToggle = ({ showPriceTiers, setShowPriceTiers }) => {
+  return (
+    <button
+      onClick={() => setShowPriceTiers(!showPriceTiers)}
+      className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 p-1 rounded hover:bg-gray-100 transition-colors"
+    >
+      <span>Bulk pricing</span>
+      <ChevronDown className={`w-3 h-3 transition-transform ${showPriceTiers ? 'rotate-180' : ''}`} />
+    </button>
   );
 };
 
@@ -156,7 +146,7 @@ const ShippingInfo = ({ freeThreshold, cost, currentCurrency }) => {
 // Feature List Component
 const FeatureList = ({ features }) => {
   return (
-    <div className="space-y-2">
+    <div className="space-y-1">
       {features.map((feature, index) => (
         <div key={index} className="flex items-center gap-2 text-sm text-gray-600">
           <Check className="w-4 h-4 text-green-500" />
@@ -167,7 +157,7 @@ const FeatureList = ({ features }) => {
   );
 };
 
-// Enhanced PriceInfo Component
+// Enhanced PriceInfo Component with Two-Column Layout
 const PriceInfo = () => {
   const [currentCurrency, setCurrentCurrency] = useState('USD');
   const [showPriceTiers, setShowPriceTiers] = useState(false);
@@ -197,10 +187,10 @@ const PriceInfo = () => {
 
   return (
     <div className="bg-white p-6 rounded-lg border border-gray-200 max-w-md">
-      {/* Main Price Row - Two Columns */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        {/* Left Column - Price and MOQ */}
-        <div className="space-y-3">
+      {/* Main Row - Two Columns */}
+      <div className="flex justify-between items-start mb-4">
+        {/* First Column: Price and MOQ */}
+        <div className="flex flex-col gap-2">
           {/* Price */}
           <div className="flex items-center gap-2">
             <span className="text-2xl font-bold text-gray-900">
@@ -213,27 +203,23 @@ const PriceInfo = () => {
           <MOQBadge moq={productPricing.moq} />
         </div>
 
-        {/* Right Column - Currency Switcher and Bulk Pricing Toggle */}
-        <div className="space-y-3">
+        {/* Second Column: Currency Switcher and Bulk Pricing Toggle */}
+        <div className="flex flex-col items-end gap-2">
           {/* Currency Switcher */}
-          <div className="flex justify-end">
-            <CurrencySwitcher 
-              currentCurrency={currentCurrency}
-              onCurrencyChange={toggleCurrency}
-            />
-          </div>
+          <CurrencySwitcher 
+            currentCurrency={currentCurrency}
+            onCurrencyChange={toggleCurrency}
+          />
           
           {/* Bulk Pricing Toggle */}
-          <div className="flex justify-end">
-            <BulkPricingToggle 
-              isOpen={showPriceTiers}
-              onToggle={() => setShowPriceTiers(!showPriceTiers)}
-            />
-          </div>
+          <BulkPricingToggle 
+            showPriceTiers={showPriceTiers}
+            setShowPriceTiers={setShowPriceTiers}
+          />
         </div>
       </div>
 
-      {/* Price Tiers Dropdown */}
+      {/* Price Tiers (expands below) */}
       {showPriceTiers && (
         <div className="mb-4">
           <div className="bg-gray-50 rounded-lg border border-gray-200 divide-y divide-gray-200">
