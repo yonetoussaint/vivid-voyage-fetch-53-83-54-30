@@ -7,9 +7,10 @@ import BookGenreFlashDeals from '@/components/home/BookGenreFlashDeals';
 
 interface ProductOverviewProps {
   product: any;
+  activeTab?: string;
 }
 
-const ProductOverview: React.FC<ProductOverviewProps> = ({ product }) => {
+const ProductOverview: React.FC<ProductOverviewProps> = ({ product, activeTab = 'overview' }) => {
   // Fetch ALL products for the related products section
   const { data: allProducts = [], isLoading: isLoadingProducts } = useQuery({
     queryKey: ['all-products-overview'],
@@ -73,16 +74,28 @@ const ProductOverview: React.FC<ProductOverviewProps> = ({ product }) => {
     return filteredProducts;
   }, [allProducts, product?.id, isLoadingProducts]);
 
+  // Determine what to show in GalleryThumbnails based on active tab
+  const isVariantsTab = activeTab === 'variants';
+  
+  // For variants tab, show variant images if available, otherwise show product images
+  const thumbnailImages = isVariantsTab && product?.variants?.length > 0
+    ? product.variants.map((v: any) => v.image || v.src || '/placeholder.svg')
+    : galleryImages;
+  
+  const thumbnailVariantNames = isVariantsTab
+    ? product?.variants?.map((v: any) => v.name) || []
+    : [];
+
   return (
     <div className="w-full mt-2 space-y-2">
       {/* 1. GalleryThumbnails - Synced with product data */}
       <GalleryThumbnails
-        images={galleryImages}
+        images={thumbnailImages}
         currentIndex={0}
         onThumbnailClick={(index) => console.log('Thumbnail clicked:', index)}
-        videoIndices={videoIndices}
-        galleryItems={allGalleryItems}
-        variantNames={product?.variant_names?.map((v: any) => v.name) || product?.variants?.map((v: any) => v.name) || []}
+        videoIndices={isVariantsTab ? [] : videoIndices}
+        galleryItems={isVariantsTab ? thumbnailImages.map((src: string) => ({ type: 'image' as const, src })) : allGalleryItems}
+        variantNames={thumbnailVariantNames}
       />
 
       {/* 2. IPhoneXRListing */}

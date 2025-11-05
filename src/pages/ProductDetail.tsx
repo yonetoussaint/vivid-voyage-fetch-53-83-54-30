@@ -275,9 +275,8 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   const renderTabContent = () => {
     switch (activeTab) {
       case 'overview':
-        return <ProductOverview product={product} />;
       case 'variants':
-        return <ProductVariants product={product} />;
+        return <ProductOverview product={product} activeTab={activeTab} />;
       case 'reviews':
         return <ProductReviews product={product} />;
       case 'store-reviews':
@@ -287,7 +286,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
       case 'qna':
         return <ProductQnA product={product} />;
       default:
-        return <ProductOverview product={product} />;
+        return <ProductOverview product={product} activeTab="overview" />;
     }
   };
 
