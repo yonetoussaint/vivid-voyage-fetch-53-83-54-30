@@ -167,7 +167,7 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
     <div className="w-full px-2 bg-white font-sans space-y-2">
 
       {mergedProduct?.name && (
-  <h2 className="text-sm font-normal text-gray-300 leading-none !important">
+  <h2 className="text-sm font-normal text-gray-500 leading-none !important">
     {mergedProduct?.name}
   </h2>
 )}
