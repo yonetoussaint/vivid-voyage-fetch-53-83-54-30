@@ -1,4 +1,4 @@
-// PriceInfo.tsx - Two-row layout
+// PriceInfo.tsx - MOQ background extended to toggle
 import React, { useState, useMemo } from 'react';
 import { ChevronDown, Info, Truck, Shield, Check } from 'lucide-react';
 
@@ -96,22 +96,12 @@ const PriceTier = ({ tier, currentCurrency, basePrice }) => {
   );
 };
 
-// MOQ Badge Component
-const MOQBadge = ({ moq }) => {
-  return (
-    <div className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs">
-      <Info className="w-3 h-3" />
-      <span>MOQ: {moq} units</span>
-    </div>
-  );
-};
-
 // Bulk Pricing Toggle Component
 const BulkPricingToggle = ({ showPriceTiers, setShowPriceTiers }) => {
   return (
     <button
       onClick={() => setShowPriceTiers(!showPriceTiers)}
-      className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 p-1 rounded hover:bg-gray-100 transition-colors"
+      className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 transition-colors"
     >
       <span>Bulk pricing</span>
       <ChevronDown className={`w-3 h-3 transition-transform ${showPriceTiers ? 'rotate-180' : ''}`} />
@@ -157,7 +147,7 @@ const FeatureList = ({ features }) => {
   );
 };
 
-// Enhanced PriceInfo Component with Two-Row Layout
+// Enhanced PriceInfo Component with Extended MOQ Background
 const PriceInfo = () => {
   const [currentCurrency, setCurrentCurrency] = useState('USD');
   const [showPriceTiers, setShowPriceTiers] = useState(false);
@@ -204,10 +194,13 @@ const PriceInfo = () => {
         />
       </div>
 
-      {/* Second Row: MOQ and Bulk Pricing Toggle */}
-      <div className="flex justify-between items-center mb-4">
-        {/* MOQ Badge */}
-        <MOQBadge moq={productPricing.moq} />
+      {/* Second Row: MOQ and Bulk Pricing Toggle with Shared Background */}
+      <div className="flex justify-between items-center mb-4 bg-blue-50 rounded px-3 py-2">
+        {/* MOQ Section */}
+        <div className="flex items-center gap-1 text-blue-700 text-xs">
+          <Info className="w-3 h-3" />
+          <span>MOQ: {productPricing.moq} units</span>
+        </div>
         
         {/* Bulk Pricing Toggle */}
         <BulkPricingToggle 
