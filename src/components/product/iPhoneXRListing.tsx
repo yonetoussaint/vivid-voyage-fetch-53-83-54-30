@@ -44,7 +44,7 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
   };
 
   return (
-    <div className="w-full px-3 py-4 bg-white font-sans rounded-xl shadow-sm">
+    <div className="w-full px-2 bg-white font-sans">
       {/* Product Title */}
       {product?.name && (
         <h2 className="text-lg font-semibold text-gray-900 mb-2">
@@ -53,23 +53,26 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
       )}
 
       {/* Description with "Read More" */}
-      <div className="mb-4">
+      <div className="mb-3">
         <div className="relative">
-          <p className="text-sm text-gray-600 leading-relaxed">
-            {isExpanded || !needsTruncation ? displayDescription : truncatedDescription}
+          <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">
+            {truncatedDescription}
           </p>
           {needsTruncation && !isExpanded && (
-            <button
-              onClick={handleReadMore}
-              className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors mt-1 inline-block"
-            >
-              Read more
-            </button>
+            <div className="absolute bottom-0 right-0 flex items-center">
+              <span className="bg-gradient-to-r from-transparent to-white pl-8 pr-1">&nbsp;</span>
+              <button
+                onClick={handleReadMore}
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors bg-white"
+              >
+                Read more
+              </button>
+            </div>
           )}
         </div>
 
         {/* Reviews + Stock Info */}
-        <div className="flex items-center justify-between gap-1 text-xs text-gray-600 rounded w-full mt-3">
+        <div className="flex items-center justify-between gap-1 text-xs text-gray-600 rounded w-full mt-2">
           {/* Reviews */}
           <div className="flex items-center gap-1">
             <div className="flex">
