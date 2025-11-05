@@ -1,4 +1,4 @@
-// PriceInfo.tsx - Reorganized two-column layout
+// PriceInfo.tsx - Two-row layout
 import React, { useState, useMemo } from 'react';
 import { ChevronDown, Info, Truck, Shield, Check } from 'lucide-react';
 
@@ -157,7 +157,7 @@ const FeatureList = ({ features }) => {
   );
 };
 
-// Enhanced PriceInfo Component with Two-Column Layout
+// Enhanced PriceInfo Component with Two-Row Layout
 const PriceInfo = () => {
   const [currentCurrency, setCurrentCurrency] = useState('USD');
   const [showPriceTiers, setShowPriceTiers] = useState(false);
@@ -187,36 +187,33 @@ const PriceInfo = () => {
 
   return (
     <div className="bg-white p-6 rounded-lg border border-gray-200 max-w-md">
-      {/* Main Row - Two Columns */}
-      <div className="flex justify-between items-start mb-4">
-        {/* First Column: Price and MOQ */}
-        <div className="flex flex-col gap-2">
-          {/* Price */}
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-gray-900">
-              {formatPrice(currentPrice)}
-            </span>
-            <span className="text-sm text-gray-500">/ unit</span>
-          </div>
-          
-          {/* MOQ Badge */}
-          <MOQBadge moq={productPricing.moq} />
+      {/* First Row: Price and Currency Switcher */}
+      <div className="flex justify-between items-center mb-2">
+        {/* Price */}
+        <div className="flex items-center gap-2">
+          <span className="text-2xl font-bold text-gray-900">
+            {formatPrice(currentPrice)}
+          </span>
+          <span className="text-sm text-gray-500">/ unit</span>
         </div>
+        
+        {/* Currency Switcher */}
+        <CurrencySwitcher 
+          currentCurrency={currentCurrency}
+          onCurrencyChange={toggleCurrency}
+        />
+      </div>
 
-        {/* Second Column: Currency Switcher and Bulk Pricing Toggle */}
-        <div className="flex flex-col items-end gap-2">
-          {/* Currency Switcher */}
-          <CurrencySwitcher 
-            currentCurrency={currentCurrency}
-            onCurrencyChange={toggleCurrency}
-          />
-          
-          {/* Bulk Pricing Toggle */}
-          <BulkPricingToggle 
-            showPriceTiers={showPriceTiers}
-            setShowPriceTiers={setShowPriceTiers}
-          />
-        </div>
+      {/* Second Row: MOQ and Bulk Pricing Toggle */}
+      <div className="flex justify-between items-center mb-4">
+        {/* MOQ Badge */}
+        <MOQBadge moq={productPricing.moq} />
+        
+        {/* Bulk Pricing Toggle */}
+        <BulkPricingToggle 
+          showPriceTiers={showPriceTiers}
+          setShowPriceTiers={setShowPriceTiers}
+        />
       </div>
 
       {/* Price Tiers (expands below) */}
