@@ -12,8 +12,8 @@ import AskQuestionPage from "../pages/AskQuestionPage";
 export function ProductRoutes() {
   return (
     <>
-      {/* Single catch-all route for all product tabs */}
-      <Route path="product/:id/*" element={
+      {/* Product routes with tabs */}
+      <Route path="product/:id/:tab" element={
         <CachedRoute>
           <ProductDetail />
         </CachedRoute>
@@ -21,9 +21,7 @@ export function ProductRoutes() {
 
       {/* Redirect base product route to overview */}
       <Route path="product/:id" element={
-        <CachedRoute>
-          <Navigate to="overview" replace />
-        </CachedRoute>
+        <Navigate to="overview" replace />
       } />
 
       {/* Legacy routes - keep for backward compatibility */}

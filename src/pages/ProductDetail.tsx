@@ -401,12 +401,7 @@ const ProductDetail: React.FC = () => {
   }
 
   return (
-    <Routes>
-      <Route path="/product/:id">
-        <Route path=":tab" element={<ProductDetailContent />} />
-        <Route path="" element={<Navigate to={`/product/${id}/overview`} replace />} />
-      </Route>
-    </Routes>
+    <ProductDetailContent productId={id} />
   );
 };
 
