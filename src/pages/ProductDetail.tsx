@@ -218,6 +218,8 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   ];
 
   const isOverviewTab = activeTab === 'overview';
+  const isVariantsTab = activeTab === 'variants';
+  const showGallery = isOverviewTab || isVariantsTab;
 
   // Show error if no productId
   if (!productId) {
@@ -308,13 +310,18 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   ) : null;
 
   // Top content - ProductImageGallery with proper data sync
-  const topContent = isOverviewTab ? (
+  // Show gallery for both overview and variants tabs, but with different images
+  const galleryImages = isVariantsTab && product?.variants?.length > 0
+    ? product.variants.map((v: any) => v.image || v.src || '/placeholder.svg')
+    : product?.product_images?.map(img => img.src) || product?.images || ["/placeholder.svg"];
+
+  const topContent = showGallery ? (
     <div ref={topContentRef} className="w-full bg-white">
       <ProductImageGallery 
         ref={galleryRef}
-        images={product?.product_images?.map(img => img.src) || product?.images || ["/placeholder.svg"]}
-        videos={product?.product_videos || []}
-        model3dUrl={product?.model_3d_url}
+        images={galleryImages}
+        videos={isVariantsTab ? [] : (product?.product_videos || [])}
+        model3dUrl={isVariantsTab ? undefined : product?.model_3d_url}
         seller={product?.sellers}
         product={{
           id: product?.id || '',

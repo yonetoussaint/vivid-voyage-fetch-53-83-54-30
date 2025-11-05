@@ -86,17 +86,22 @@ const ProductOverview: React.FC<ProductOverviewProps> = ({ product, activeTab = 
     ? product?.variants?.map((v: any) => v.name) || []
     : [];
 
+  // Don't render thumbnails on variants tab since they're in the gallery
+  const shouldShowThumbnails = !isVariantsTab;
+
   return (
     <div className="w-full mt-2 space-y-2">
-      {/* 1. GalleryThumbnails - Synced with product data */}
-      <GalleryThumbnails
-        images={thumbnailImages}
-        currentIndex={0}
-        onThumbnailClick={(index) => console.log('Thumbnail clicked:', index)}
-        videoIndices={isVariantsTab ? [] : videoIndices}
-        galleryItems={isVariantsTab ? thumbnailImages.map((src: string) => ({ type: 'image' as const, src })) : allGalleryItems}
-        variantNames={thumbnailVariantNames}
-      />
+      {/* 1. GalleryThumbnails - Only show on overview tab, hidden on variants since gallery handles it */}
+      {shouldShowThumbnails && (
+        <GalleryThumbnails
+          images={galleryImages}
+          currentIndex={0}
+          onThumbnailClick={(index) => console.log('Thumbnail clicked:', index)}
+          videoIndices={videoIndices}
+          galleryItems={allGalleryItems}
+          variantNames={[]}
+        />
+      )}
 
       {/* 2. IPhoneXRListing */}
       <IPhoneXRListing 
