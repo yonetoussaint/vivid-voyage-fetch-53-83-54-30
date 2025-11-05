@@ -75,14 +75,14 @@ const ProductOverview: React.FC<ProductOverviewProps> = ({ product }) => {
 
   return (
     <div className="w-full space-y-2">
-      {/* 1. GalleryThumbnails */}
+      {/* 1. GalleryThumbnails - Synced with product data */}
       <GalleryThumbnails
         images={galleryImages}
         currentIndex={0}
         onThumbnailClick={(index) => console.log('Thumbnail clicked:', index)}
         videoIndices={videoIndices}
         galleryItems={allGalleryItems}
-        variantNames={product?.variants?.map((v: any) => v.name) || []}
+        variantNames={product?.variant_names?.map((v: any) => v.name) || product?.variants?.map((v: any) => v.name) || []}
       />
 
       {/* 2. IPhoneXRListing */}
@@ -92,7 +92,7 @@ const ProductOverview: React.FC<ProductOverviewProps> = ({ product }) => {
       />
 
       {/* 3. BookGenreFlashDeals - Show related products */}
-      {!isLoadingProducts && (
+      {!isLoadingProducts && relatedProducts.length > 0 && (
         <BookGenreFlashDeals
           title="Related Products"
           subtitle="Customers also viewed"

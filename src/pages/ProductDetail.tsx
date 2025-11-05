@@ -72,14 +72,23 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     window.scrollTo(0, 0);
   }, [productId]);
 
-  // Tabs configuration
-  const tabs = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'reviews', label: 'Reviews' },
-    { id: 'store-reviews', label: 'Store Reviews' },
-    { id: 'reviews-gallery', label: 'Reviews Gallery' },
-    { id: 'qna', label: 'Q&A' }
-  ];
+  // Tabs configuration - conditionally show variants tab
+  const tabs = React.useMemo(() => {
+    const baseTabs = [
+      { id: 'overview', label: 'Overview' },
+      { id: 'reviews', label: 'Reviews' },
+      { id: 'store-reviews', label: 'Store Reviews' },
+      { id: 'reviews-gallery', label: 'Reviews Gallery' },
+      { id: 'qna', label: 'Q&A' }
+    ];
+
+    // Add variants tab if product has variants
+    if (product?.variants?.length > 0 || product?.variant_names?.length > 0) {
+      baseTabs.splice(1, 0, { id: 'variants', label: 'Variants' });
+    }
+
+    return baseTabs;
+  }, [product?.variants, product?.variant_names]);
 
   // ===== Tab Management =====
   const getCurrentTab = () => {
@@ -299,16 +308,23 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     </div>
   ) : null;
 
-  // Top content - ONLY ProductImageGallery on overview tab
+  // Top content - ProductImageGallery with proper data sync
   const topContent = isOverviewTab ? (
     <div ref={topContentRef} className="w-full bg-white">
       <ProductImageGallery 
         ref={galleryRef}
-        images={product?.images?.length > 0 ? product.images : ["/placeholder.svg"]}
+        images={product?.product_images?.map(img => img.src) || product?.images || ["/placeholder.svg"]}
         videos={product?.product_videos || []}
         model3dUrl={product?.model_3d_url}
         seller={product?.sellers}
-        product={product}
+        product={{
+          id: product?.id || '',
+          name: product?.name || '',
+          price: product?.price || 0,
+          discount_price: product?.discount_price,
+          inventory: product?.inventory || 0,
+          sold_count: product?.sold_count || 0
+        }}
         onSellerClick={() => {
           if (product?.sellers?.id) {
             navigate(`/seller/${product?.sellers?.id}`);

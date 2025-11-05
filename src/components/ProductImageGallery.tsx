@@ -396,8 +396,8 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
         </Carousel>
       </div>
 
-      {/* Updated InfoBand with product data */}
-      <InfoBand product={product} />
+      {/* InfoBand */}
+      <InfoBand />
 
       {/* REMOVED: GalleryTabsContent - Now moved to ProductDetailLayout */}
 
