@@ -219,17 +219,15 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
   }, [isFullscreenMode, toggleFullscreen]);
 
   // Expose methods via ref
-  // In the useImperativeHandle section, add goToIndex method
+  // In the useImperativeHandle section of ProductImageGallery.tsx, update to:
 useImperativeHandle(ref, () => ({
   setActiveTab: (tab: string) => setActiveTab(tab),
   getActiveTab: () => internalActiveTab,
   startAutoScroll: () => startAutoScroll(),
   stopAutoScroll: () => stopAutoScroll(),
-  goToIndex: (index: number) => { // NEW: Add this method
-    if (api && index >= 0 && index < totalItems) {
-      api.scrollTo(index);
-      setCurrentIndex(index);
-    }
+  goToIndex: (index: number) => {
+    console.log('🎯 ProductImageGallery.goToIndex called with:', index);
+    galleryState.goToIndex(index); // Use the method from useGalleryState
   }
 }));
 
