@@ -223,7 +223,8 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
     setActiveTab: (tab: string) => setActiveTab(tab),
     getActiveTab: () => internalActiveTab,
     startAutoScroll: () => startAutoScroll(),
-    stopAutoScroll: () => stopAutoScroll()
+    stopAutoScroll: () => stopAutoScroll(),
+    scrollTo: (index: number) => handleThumbnailClick(index)
   }));
 
   // Video control handlers

@@ -66,6 +66,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [isDescriptionPanelOpen, setIsDescriptionPanelOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [currentGalleryIndex, setCurrentGalleryIndex] = useState(0);
 
   // Scroll to top when component mounts or productId changes
   useEffect(() => {
@@ -278,7 +279,19 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     switch (activeTab) {
       case 'overview':
       case 'variants':
-        return <ProductOverview product={product} activeTab={activeTab} />;
+        return (
+          <ProductOverview 
+            product={product} 
+            activeTab={activeTab}
+            currentIndex={currentGalleryIndex}
+            onThumbnailClick={(index) => {
+              setCurrentGalleryIndex(index);
+              if (galleryRef.current) {
+                galleryRef.current.scrollTo?.(index);
+              }
+            }}
+          />
+        );
       case 'reviews':
         return <CustomerReviewsEnhanced productId={productId} />; // Updated to use CustomerReviewsEnhanced
       case 'store-reviews':
@@ -338,6 +351,9 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
         }}
         onBuyNow={buyNow}
         onReadMore={handleReadMore}
+        onImageIndexChange={(currentIndex, totalItems) => {
+          setCurrentGalleryIndex(currentIndex);
+        }}
       />
     </div>
   ) : undefined;
