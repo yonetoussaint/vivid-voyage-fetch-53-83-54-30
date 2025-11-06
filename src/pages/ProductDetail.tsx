@@ -20,8 +20,6 @@ import { useNavigationLoading } from '@/hooks/useNavigationLoading';
 import ProductOverview from "@/components/product/tabs/ProductOverview";
 import ProductVariants from "@/components/product/tabs/ProductVariants";
 import CustomerReviewsEnhanced from "@/components/product/CustomerReviewsEnhanced"; // Updated import
-import StoreReviews from "@/components/product/tabs/StoreReviews";
-import ReviewsGallery from "@/components/product/tabs/ReviewsGallery";
 import ProductQnA from "@/components/product/tabs/ProductQnA";
 
 interface ProductDetailProps {
@@ -51,7 +49,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
 
   // Use prop productId first, then param
   const productId = propProductId || paramId;
-  
+
   console.log('🔍 Product ID debug:', { propProductId, paramId, finalProductId: productId });
 
   const { data: product, isLoading, error } = useProduct(productId!);
@@ -78,8 +76,6 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     const baseTabs = [
       { id: 'overview', label: 'Overview' },
       { id: 'reviews', label: 'Reviews' },
-      { id: 'store-reviews', label: 'Store Reviews' },
-      { id: 'reviews-gallery', label: 'Reviews Gallery' },
       { id: 'qna', label: 'Q&A' }
     ];
 
@@ -102,7 +98,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   // Sync URL with active tab - only if we're not in a panel
   useEffect(() => {
     if (inPanel) return; // Don't sync URL in panel mode
-    
+
     const currentTabFromURL = getCurrentTab();
     if (currentTabFromURL !== activeTab) {
       console.log('🔄 Syncing active tab from URL:', currentTabFromURL);
@@ -260,7 +256,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
         {/* Tabs skeleton */}
         <div className="space-y-4">
           <div className="flex space-x-4">
-            {[...Array(4)].map((_, i) => (
+            {[...Array(3)].map((_, i) => (
               <Skeleton key={i} className="h-8 w-20" />
             ))}
           </div>
@@ -293,11 +289,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
           />
         );
       case 'reviews':
-        return <CustomerReviewsEnhanced productId={productId} />; // Updated to use CustomerReviewsEnhanced
-      case 'store-reviews':
-        return <StoreReviews product={product} />;
-      case 'reviews-gallery':
-        return <ReviewsGallery product={product} />;
+        return <CustomerReviewsEnhanced productId={productId} />;
       case 'qna':
         return <ProductQnA product={product} />;
       default:
