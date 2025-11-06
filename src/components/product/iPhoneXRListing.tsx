@@ -2,29 +2,29 @@
 import React, { useState, useMemo } from 'react';
 import { Star, ShieldCheck, Video, CreditCard, ChevronDown, Info } from 'lucide-react';
 
-// Currency data
+// Currency data - HTG moved to first position
 const currencies = {
+  HTG: 'HTG',
   USD: 'USD',
   EUR: 'EUR', 
   GBP: 'GBP',
-  JPY: 'JPY',
-  HTG: 'HTG'
+  JPY: 'JPY'
 };
 
 const currencyToCountry = {
+  HTG: 'ht', // Haiti - now first
   USD: 'us',
   EUR: 'eu',
   GBP: 'gb',
-  JPY: 'jp',
-  HTG: 'ht' // Haiti
+  JPY: 'jp'
 };
 
 const exchangeRates = {
+  HTG: 132.50, // Example exchange rate - now first
   USD: 1,
   EUR: 0.92,
   GBP: 0.79,
-  JPY: 149.50,
-  HTG: 132.50 // Example exchange rate
+  JPY: 149.50
 };
 
 // Product pricing data structure
@@ -81,8 +81,8 @@ export function IPhoneXRListing({ product, onReadMore }: IPhoneXRListingProps) {
     }
   };
 
-  // PriceInfo logic moved inline
-  const [currentCurrency, setCurrentCurrency] = useState('USD');
+  // PriceInfo logic moved inline - HTG set as default
+  const [currentCurrency, setCurrentCurrency] = useState('HTG'); // Changed from 'USD' to 'HTG'
   const [showPriceTiers, setShowPriceTiers] = useState(false);
 
   const toggleCurrency = () => {
