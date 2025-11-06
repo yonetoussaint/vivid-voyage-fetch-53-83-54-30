@@ -99,6 +99,16 @@ const ProductOverview: React.FC<ProductOverviewProps> = ({
 
   return (
     <div className="w-full mt-2 space-y-2">
+      {/* GalleryThumbnails - synced with ProductImageGallery */}
+      <GalleryThumbnails
+        images={thumbnailImages}
+        currentIndex={currentIndex}
+        onThumbnailClick={onThumbnailClick || (() => {})}
+        videoIndices={isVariantsTab ? [] : videoIndices}
+        galleryItems={thumbnailGalleryItems}
+        variantNames={thumbnailVariantNames}
+      />
+
       {/* IPhoneXRListing */}
       <IPhoneXRListing 
         product={listingProduct}
