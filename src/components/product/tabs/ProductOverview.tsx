@@ -8,9 +8,16 @@ import BookGenreFlashDeals from '@/components/home/BookGenreFlashDeals';
 interface ProductOverviewProps {
   product: any;
   activeTab?: string;
+  currentIndex?: number;
+  onThumbnailClick?: (index: number) => void;
 }
 
-const ProductOverview: React.FC<ProductOverviewProps> = ({ product, activeTab = 'overview' }) => {
+const ProductOverview: React.FC<ProductOverviewProps> = ({ 
+  product, 
+  activeTab = 'overview',
+  currentIndex = 0,
+  onThumbnailClick
+}) => {
   // Fetch ALL products for the related products section
   const { data: allProducts = [], isLoading: isLoadingProducts } = useQuery({
     queryKey: ['all-products-overview'],
@@ -92,23 +99,13 @@ const ProductOverview: React.FC<ProductOverviewProps> = ({ product, activeTab = 
 
   return (
     <div className="w-full mt-2 space-y-2">
-      {/* 1. GalleryThumbnails - Show on both overview and variants tabs */}
-      <GalleryThumbnails
-        images={thumbnailImages}
-        currentIndex={0}
-        onThumbnailClick={(index) => console.log('Thumbnail clicked:', index)}
-        videoIndices={isVariantsTab ? [] : videoIndices}
-        galleryItems={thumbnailGalleryItems}
-        variantNames={thumbnailVariantNames}
-      />
-
-      {/* 2. IPhoneXRListing */}
+      {/* IPhoneXRListing */}
       <IPhoneXRListing 
         product={listingProduct}
         onReadMore={() => console.log('Read more clicked')}
       />
 
-      {/* 3. BookGenreFlashDeals - Show related products */}
+      {/* BookGenreFlashDeals - Show related products */}
       {!isLoadingProducts && relatedProducts.length > 0 && (
         <BookGenreFlashDeals
           title="Related Products"

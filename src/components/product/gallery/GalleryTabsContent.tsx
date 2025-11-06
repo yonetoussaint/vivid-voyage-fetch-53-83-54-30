@@ -86,24 +86,11 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
     <div className="mt-2 w-full">
       {activeTab === 'overview' && (
         <div className="space-y-3">
-          <IPhoneXRListing
-            product={product}
-            onReadMore={onReadMore}
-          />
-
           {productId && (
             <SearchInfoComponent productId={productId} />
           )}
 
           <ProductSpecifications productId={productId} />
-
-          <BookGenreFlashDeals
-            className="overflow-hidden"
-            title="Related Products"
-            showSectionHeader={false}
-            showFilters={false}
-            showSummary={false}
-          />
 
           {/* StickyCheckoutBar - conditions removed */}
           <StickyCheckoutBar
@@ -123,24 +110,11 @@ const GalleryTabsContent: React.FC<GalleryTabsContentProps> = ({
 
       {activeTab === 'variants' && (
         <div className="space-y-3">
-          <IPhoneXRListing
-            product={product}
-            onReadMore={onReadMore}
-          />
-
           {productId && (
             <SearchInfoComponent productId={productId} />
           )}
 
           <ProductSpecifications productId={productId} />
-
-          <BookGenreFlashDeals
-            className="overflow-hidden"
-            title="Related Products"
-            showSectionHeader={false}
-            showFilters={false}
-            showSummary={false}
-          />
 
           {/* StickyCheckoutBar - added to variants tab */}
           <StickyCheckoutBar
