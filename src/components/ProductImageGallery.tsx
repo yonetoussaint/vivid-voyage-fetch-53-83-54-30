@@ -340,7 +340,7 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
           </CarouselContent>
 
           {/* Auto Scroll Indicator */}
-          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-20 w-4/5 max-w-64">
+          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-20 w-full px-2">
             <AutoScrollIndicator
               totalItems={totalItems}
               currentIndex={currentIndex}
