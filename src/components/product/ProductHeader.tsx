@@ -10,6 +10,7 @@ import HeaderActionButton from "./header/HeaderActionButton";
 import { useNavigate } from 'react-router-dom';
 import { useNavigationLoading } from '@/hooks/useNavigationLoading';
 import SearchPageSkeleton from '@/components/search/SearchPageSkeleton';
+import SellerInfoOverlay from "@/components/product/SellerInfoOverlay";
 
 interface ActionButton {
   Icon: any;
@@ -37,6 +38,14 @@ interface ProductHeaderProps {
   onCloseClick?: () => void;
   actionButtons?: ActionButton[];
   forceScrolledState?: boolean;
+  seller?: {
+    id: string;
+    name: string;
+    image_url?: string;
+    verified: boolean;
+    followers_count: number;
+  };
+  onSellerClick?: () => void;
 }
 
 const ProductHeader: React.FC<ProductHeaderProps> = ({
@@ -57,6 +66,8 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
   onCloseClick,
   actionButtons = [],
   forceScrolledState = false,
+  seller,
+  onSellerClick,
 }) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const { progress: scrollProgress } = useScrollProgress();
@@ -101,13 +112,52 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
         }}
       >
         <div className="flex items-center justify-between w-full max-w-6xl mx-auto">
-          {/* Left side - Back button */}
+          {/* Left side - Back button and Seller Info */}
           <div className="flex items-center gap-3 flex-shrink-0">
             <BackButton
               progress={displayProgress}
               showCloseIcon={showCloseIcon}
               onClick={onCloseClick || (() => navigate(-1))}
             />
+            
+            {/* Show seller info when not scrolled */}
+            {displayProgress < 0.5 && seller && (
+              <div className="transition-opacity duration-300">
+                <button
+                  onClick={() => {
+                    if (onSellerClick) {
+                      onSellerClick();
+                    } else {
+                      navigate(`/seller/${seller.id}`);
+                    }
+                  }}
+                  className="bg-white/80 backdrop-blur-sm border border-gray-200 text-gray-900 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 hover:bg-white transition-colors shadow-sm"
+                >
+                  <div className="w-5 h-5 rounded-full bg-gray-100 overflow-hidden flex-shrink-0">
+                    <img 
+                      src={seller.image_url || "https://picsum.photos/100/100?random=1"}
+                      alt={`${seller.name} seller`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = "https://picsum.photos/100/100?random=1";
+                        target.onerror = null;
+                      }}
+                    />
+                  </div>
+                  <span className="truncate max-w-[80px]">{seller.name}</span>
+                  {seller.verified && <span className="text-blue-500">✓</span>}
+                  <span className="text-xs opacity-70">
+                    {seller.followers_count >= 1000000 
+                      ? `${(seller.followers_count / 1000000).toFixed(1)}M`
+                      : seller.followers_count >= 1000
+                      ? `${(seller.followers_count / 1000).toFixed(1)}K`
+                      : seller.followers_count.toString()
+                    }
+                  </span>
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Center - Search bar when scrolled */}

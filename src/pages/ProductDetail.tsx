@@ -318,6 +318,12 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
         onSearch={handleSearch}
         onSearchFocus={handleSearchFocus}
         inPanel={inPanel}
+        seller={product?.sellers}
+        onSellerClick={() => {
+          if (product?.sellers?.id) {
+            navigate(`/seller/${product?.sellers?.id}`);
+          }
+        }}
       />
     </div>
   ) : null;

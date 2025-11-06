@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/carousel";
 import { X } from "lucide-react";
 import InfoBand from "@/components/product/InfoBand";
-import SellerInfoOverlay from "@/components/product/SellerInfoOverlay";
 import ConfigurationSummary from "@/components/product/ConfigurationSummary";
 
 // Import new modular components
@@ -351,12 +350,6 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
             />
           </div>
 
-          <SellerInfoOverlay 
-            seller={seller}
-            onSellerClick={onSellerClick}
-            focusMode={focusMode}
-            isPlaying={isCurrentVideo && isPlaying}
-          />
 
           {focusMode && showConfiguration && (configurationData || internalConfigData) && (
             <div className="absolute right-0 top-1/2 transform -translate-y-1/2 z-30">
