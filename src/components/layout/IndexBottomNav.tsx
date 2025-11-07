@@ -154,7 +154,7 @@ const moreMenuItems = [
 export default function BottomNav() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, setIsAuthOverlayOpen } = useAuth();
   const { hasActiveOverlay } = useScreenOverlay();
   const { t } = useTranslation('home');
   const navRef = useRef<HTMLDivElement>(null); // Add ref
@@ -259,6 +259,12 @@ export default function BottomNav() {
   // Handle tab click navigation
   const handleTabClick = (item: BottomNavTab) => {
     if (item.path === '#') return;
+
+    // Check if clicking on profile/account tab and user is not authenticated
+    if (item.id === 'profile' && !user) {
+      setIsAuthOverlayOpen(true);
+      return;
+    }
 
     setActiveTab(item.id);
     setPreviousTab(activeTab);
