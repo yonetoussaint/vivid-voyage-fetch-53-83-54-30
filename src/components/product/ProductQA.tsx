@@ -635,72 +635,76 @@ const ProductQA = ({
                     <div className="mt-4 ml-6 space-y-3 px-2">
                       {/* Official Answer */}
                       {question.answer && (
-                        <div className="border-l-2 border-blue-200 pl-4">
-                          <div className="flex items-start gap-2">
-                            <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-xs font-semibold text-white">
-                              {question.answer_author?.charAt(0) || 'A'}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-sm">{question.answer_author || 'Team'}</span>
-                                {question.is_official && (
-                                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                    Official
-                                  </span>
-                                )}
-                              </div>
-                              <div className="text-xs text-muted-foreground" style={{color: '#666'}}>
-                                {formatDate(question.answered_at)}
-                              </div>
-                              <div className="text-sm text-foreground mt-1">
-                                {expandedQuestions.has(question.id) ? question.answer : truncateText(question.answer)}
-                                {question.answer.length > 120 && (
-                                  <button
-                                    onClick={() => toggleReadMore(question.id)}
-                                    className="text-blue-600 hover:text-blue-800 text-sm font-medium ml-1"
-                                  >
-                                    {expandedQuestions.has(question.id) ? 'Read less' : 'Read more'}
-                                  </button>
-                                )}
-                              </div>
+  <div className="border-l-2 border-blue-200 pl-4">
+    <div className="flex items-start gap-2">
+      <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-xs font-semibold text-white">
+        {question.answer_author?.charAt(0) || 'A'}
+      </div>
+      <div className="flex-1">
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-sm">{question.answer_author || 'Team'}</span>
+          {question.is_official && (
+            <div className="flex items-center gap-1">
+              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                Official
+              </span>
+              <span className="text-xs text-gray-500">•</span>
+              <span className="font-bold text-sm text-orange-500">Seller</span>
+            </div>
+          )}
+        </div>
+        <div className="text-xs text-muted-foreground" style={{color: '#666'}}>
+          {formatDate(question.answered_at)}
+        </div>
+        <div className="text-sm text-foreground mt-1">
+          {expandedQuestions.has(question.id) ? question.answer : truncateText(question.answer)}
+          {question.answer.length > 120 && (
+            <button
+              onClick={() => toggleReadMore(question.id)}
+              className="text-blue-600 hover:text-blue-800 text-sm font-medium ml-1"
+            >
+              {expandedQuestions.has(question.id) ? 'Read less' : 'Read more'}
+            </button>
+          )}
+        </div>
 
-                              {/* Media Section for Official Answer */}
-                              {question.media && question.media.length > 0 && (
-                                <div className="mt-3">
-                                  <div className="flex gap-2 overflow-x-auto pb-2">
-                                    {question.media.map((item, index) => (
-                                      <div key={index} className="flex-shrink-0 relative">
-                                        {item.type === 'image' ? (
-                                          <img
-                                            src={item.url}
-                                            alt={item.alt}
-                                            className="w-24 h-24 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                            onClick={() => window.open(item.url, '_blank')}
-                                          />
-                                        ) : item.type === 'video' ? (
-                                          <div
-                                            className="w-24 h-24 relative cursor-pointer hover:opacity-90 transition-opacity rounded-lg overflow-hidden"
-                                            onClick={() => window.open(item.url, '_blank')}
-                                          >
-                                            <img
-                                              src={item.thumbnail}
-                                              alt={item.alt}
-                                              className="w-full h-full object-cover"
-                                            />
-                                            <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-                                              <Play className="w-6 h-6 text-white fill-white" />
-                                            </div>
-                                          </div>
-                                        ) : null}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )}
+        {/* Media Section for Official Answer */}
+        {question.media && question.media.length > 0 && (
+          <div className="mt-3">
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {question.media.map((item, index) => (
+                <div key={index} className="flex-shrink-0 relative">
+                  {item.type === 'image' ? (
+                    <img
+                      src={item.url}
+                      alt={item.alt}
+                      className="w-24 h-24 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                      onClick={() => window.open(item.url, '_blank')}
+                    />
+                  ) : item.type === 'video' ? (
+                    <div
+                      className="w-24 h-24 relative cursor-pointer hover:opacity-90 transition-opacity rounded-lg overflow-hidden"
+                      onClick={() => window.open(item.url, '_blank')}
+                    >
+                      <img
+                        src={item.thumbnail}
+                        alt={item.alt}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+                        <Play className="w-6 h-6 text-white fill-white" />
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+)}
 
                       {/* Regular Replies */}
                       {question.replies && question.replies.length > 0 && (
