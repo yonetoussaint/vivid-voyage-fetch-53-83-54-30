@@ -3,13 +3,14 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, Package, ShoppingCart, Users, BarChart3, 
   Heart, Settings, User, MapPin, CreditCard,
-  Bell, Store
+  Bell, Store, LogIn, Shield, Star
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import TabsNavigation from '@/components/home/TabsNavigation';
 import ReusableSearchBar from '@/components/shared/ReusableSearchBar';
+import { Button } from '@/components/ui/button';
 
 interface ProfileLayoutProps {
   children: React.ReactNode;
@@ -19,7 +20,7 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const headerRef = useRef<HTMLDivElement>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
   const userInfoRef = useRef<HTMLDivElement>(null);
@@ -29,6 +30,11 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
   const [headerHeight, setHeaderHeight] = useState<number | null>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
+
+  // If user is not authenticated, show login prompt
+  if (!isAuthenticated) {
+    return <LoginPrompt onLogin={() => navigate('/login')} onSignup={() => navigate('/signup')} />;
+  }
 
   const handleBackClick = () => {
     navigate('/');
@@ -286,6 +292,102 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
             {children}
           </div>
         </main>
+      </div>
+    </div>
+  );
+};
+
+// Beautiful Login Prompt Component
+interface LoginPromptProps {
+  onLogin: () => void;
+  onSignup: () => void;
+}
+
+const LoginPrompt: React.FC<LoginPromptProps> = ({ onLogin, onSignup }) => {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+      <div className="max-w-md w-full">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-200 rounded-full opacity-20 blur-xl"></div>
+          <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-purple-200 rounded-full opacity-20 blur-xl"></div>
+        </div>
+
+        <div className="relative">
+          {/* Card Container */}
+          <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-xl border border-white/20 p-8 text-center">
+            {/* Icon */}
+            <div className="mb-6">
+              <div className="relative inline-flex">
+                <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                  <Shield className="w-10 h-10 text-white" />
+                </div>
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center shadow-md">
+                  <Star className="w-4 h-4 text-yellow-800" fill="currentColor" />
+                </div>
+              </div>
+            </div>
+
+            {/* Text Content */}
+            <h1 className="text-3xl font-bold text-gray-900 mb-3">
+              Welcome to Your Dashboard
+            </h1>
+            <p className="text-gray-600 mb-2 text-lg">
+              Access your personalized profile and manage your account
+            </p>
+            <p className="text-gray-500 mb-8">
+              Sign in to view your orders, wishlist, settings, and more
+            </p>
+
+            {/* Feature Highlights */}
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              {[
+                { icon: ShoppingCart, text: 'Order History' },
+                { icon: Heart, text: 'Wishlist' },
+                { icon: BarChart3, text: 'Analytics' },
+                { icon: Settings, text: 'Settings' }
+              ].map((item, index) => (
+                <div key={index} className="flex flex-col items-center gap-2 p-3 bg-white/50 rounded-xl">
+                  <item.icon className="w-6 h-6 text-blue-600" />
+                  <span className="text-sm text-gray-600 font-medium">{item.text}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-4">
+              <Button
+                onClick={onLogin}
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+                size="lg"
+              >
+                <LogIn className="w-5 h-5 mr-2" />
+                Sign In to Continue
+              </Button>
+              
+              <Button
+                onClick={onSignup}
+                variant="outline"
+                className="w-full border-2 border-gray-300 text-gray-700 py-3 px-6 rounded-xl font-semibold hover:border-blue-500 hover:text-blue-600 transition-all duration-200"
+                size="lg"
+              >
+                Create New Account
+              </Button>
+            </div>
+
+            {/* Security Note */}
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+                <Shield className="w-4 h-4" />
+                <span>Your data is securely protected</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Decorative Elements */}
+          <div className="absolute -z-10 top-4 left-4 w-8 h-8 bg-blue-200 rounded-full opacity-60"></div>
+          <div className="absolute -z-10 bottom-4 right-4 w-6 h-6 bg-purple-200 rounded-full opacity-60"></div>
+        </div>
       </div>
     </div>
   );
