@@ -295,20 +295,20 @@ const ProductQA = ({
   ], []);
 
   // Initialize filters with "All" options directly in useState
-  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({
+  const [selectedFilters, setSelectedFilters] = useState({
     status: 'All Status',
     sort: 'All Sorting',
     topic: 'All Topics'
   });
 
-  const handleFilterSelect = (filterId: string, option: string) => {
+  const handleFilterSelect = (filterId, option) => {
     setSelectedFilters(prev => ({
       ...prev,
       [filterId]: option
     }));
 
     if (filterId === 'sort') {
-      const sortMap: Record<string, string> = {
+      const sortMap = {
         'All Sorting': 'recent',
         'Most Recent': 'recent',
         'Most Helpful': 'helpful',
@@ -320,7 +320,7 @@ const ProductQA = ({
         setSortBy('unanswered');
       }
     } else if (filterId === 'status') {
-      const statusMap: Record<string, string> = {
+      const statusMap = {
         'All Status': 'all',
         'Answered': 'answered',
         'Unanswered': 'unanswered',
@@ -335,7 +335,7 @@ const ProductQA = ({
     }
   };
 
-  const handleFilterClear = (filterId: string) => {
+  const handleFilterClear = (filterId) => {
     setSelectedFilters(prev => {
       const newFilters = { ...prev };
       delete newFilters[filterId];
@@ -353,10 +353,9 @@ const ProductQA = ({
     setFilterStatus('all');
   };
 
-  const handleFilterButtonClick = (filterId: string) => {
+  const handleFilterButtonClick = (filterId) => {
     console.log('Filter button clicked:', filterId);
   };
-
 
   return (
     <div className="w-full bg-white pb-20">
@@ -379,236 +378,177 @@ const ProductQA = ({
       </div>
 
       <div className="py-4">
-        {/* Enhanced Filters */}
-        <div className="flex items-center justify-center gap-4 mb-4">
-        {/* Sort Filter */}
-        <div className="flex items-center gap-2 px-4 py-2 bg-muted/30 rounded-lg min-w-0" style={{backgroundColor: 'rgba(0,0,0,0.03)'}}>
-          <Filter className="w-4 h-4 text-muted-foreground flex-shrink-0" style={{color: '#666'}} />
-          <select
-            value={sortBy}
-            onChange={(e) => {
-              const selectedValue = e.target.value;
-              setSortBy(selectedValue);
-              // Update selectedFilters state to reflect the current dropdown selection
-              setSelectedFilters(prev => ({
-                ...prev,
-                sort: selectedValue === 'recent' ? 'Most Recent' :
-                      selectedValue === 'helpful' ? 'Most Helpful' :
-                      selectedValue === 'answered' ? 'Most Answered' :
-                      'All Sorting' // Default or fallback
-              }));
-            }}
-            className="bg-transparent border-none outline-none text-sm font-medium cursor-pointer appearance-none min-w-0 flex-1"
-          >
-            <option value="recent">Most Recent</option>
-            <option value="helpful">Most Helpful</option>
-            <option value="answered">Most Answered</option>
-            <option value="unanswered">Unanswered First</option>
-          </select>
-          <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" style={{color: '#666'}} />
-        </div>
-
-        {/* Status Filter */}
-        <div className="flex items-center gap-2 px-4 py-2 bg-muted/30 rounded-lg min-w-0" style={{backgroundColor: 'rgba(0,0,0,0.03)'}}>
-          <MessageCircle className="w-4 h-4 text-muted-foreground flex-shrink-0" style={{color: '#666'}} />
-          <select
-            value={filterStatus}
-            onChange={(e) => {
-              const selectedValue = e.target.value;
-              setFilterStatus(selectedValue);
-              // Update selectedFilters state to reflect the current dropdown selection
-              setSelectedFilters(prev => ({
-                ...prev,
-                status: selectedValue === 'all' ? 'All Status' :
-                        selectedValue === 'answered' ? 'Answered' :
-                        selectedValue === 'unanswered' ? 'Unanswered' :
-                        'All Status' // Default or fallback
-              }));
-            }}
-            className="bg-transparent border-none outline-none text-sm font-medium cursor-pointer appearance-none min-w-0 flex-1"
-          >
-            <option value="all">All Status</option>
-            <option value="answered">Answered</option>
-            <option value="unanswered">Unanswered</option>
-            <option value="official">Official Answers</option>
-          </select>
-          <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" style={{color: '#666'}} />
-        </div>
-      </div>
-
-      {/* Questions List */}
-      <div className="space-y-4">
-        {finalQuestions.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground" style={{color: '#666'}}>No questions yet.</p>
-            <p className="text-sm text-muted-foreground mt-1" style={{color: '#666'}}>Be the first to ask a question!</p>
-          </div>
-        ) : (
-          finalQuestions.map((qa, index) => (
-            <div key={qa.id} className="border-b pb-6 last:border-b-0" style={{borderBottom: '1px solid #e5e5e5'}}>
-              {/* Question */}
-              <div className="flex items-start justify-between mb-3 px-2"></div>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center text-sm font-semibold" style={{backgroundColor: 'rgba(0,0,0,0.1)'}}>
-                  {qa.user_name.charAt(0)}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{qa.user_name}</span>
+        {/* Questions List */}
+        <div className="space-y-4">
+          {finalQuestions.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground" style={{color: '#666'}}>No questions yet.</p>
+              <p className="text-sm text-muted-foreground mt-1" style={{color: '#666'}}>Be the first to ask a question!</p>
+            </div>
+          ) : (
+            finalQuestions.map((qa, index) => (
+              <div key={qa.id} className="border-b pb-6 last:border-b-0" style={{borderBottom: '1px solid #e5e5e5'}}>
+                {/* Question */}
+                <div className="flex items-start justify-between mb-3 px-2"></div>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center text-sm font-semibold" style={{backgroundColor: 'rgba(0,0,0,0.1)'}}>
+                    {qa.user_name.charAt(0)}
                   </div>
-                  <div className="text-sm text-muted-foreground" style={{color: '#666'}}>
-                    {formatDate(qa.created_at)}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{qa.user_name}</span>
+                    </div>
+                    <div className="text-sm text-muted-foreground" style={{color: '#666'}}>
+                      {formatDate(qa.created_at)}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="font-medium text-sm mb-3 px-2">
-                {qa.question}
-              </div>
+                <div className="font-medium text-sm mb-3 px-2">
+                  {qa.question}
+                </div>
 
+                {/* Actions */}
+                <div className="flex gap-2 mt-3 px-2">
+                  <button className="flex items-center gap-2 text-muted-foreground hover:bg-muted transition-colors py-2 px-4 rounded-full bg-muted/50" style={{backgroundColor: 'rgba(0,0,0,0.05)', color: '#666'}}>
+                    <Heart className="w-4 h-4" />
+                    <span className="text-sm">{qa.helpful_count}</span>
+                  </button>
+                  <button className="flex items-center gap-2 text-muted-foreground hover:bg-muted transition-colors py-2 px-4 rounded-full bg-muted/50" style={{backgroundColor: 'rgba(0,0,0,0.05)', color: '#666'}}>
+                    <MessageCircle className="w-4 h-4" />
+                    <span className="text-sm">{qa.reply_count}</span>
+                  </button>
+                </div>
 
-
-              {/* Actions */}
-              <div className="flex gap-2 mt-3 px-2">
-                <button className="flex items-center gap-2 text-muted-foreground hover:bg-muted transition-colors py-2 px-4 rounded-full bg-muted/50" style={{backgroundColor: 'rgba(0,0,0,0.05)', color: '#666'}}>
-                  <Heart className="w-4 h-4" />
-                  <span className="text-sm">{qa.helpful_count}</span>
-                </button>
-                <button className="flex items-center gap-2 text-muted-foreground hover:bg-muted transition-colors py-2 px-4 rounded-full bg-muted/50" style={{backgroundColor: 'rgba(0,0,0,0.05)', color: '#666'}}>
-                  <MessageCircle className="w-4 h-4" />
-                  <span className="text-sm">{qa.reply_count}</span>
-                </button>
-              </div>
-
-              {/* Replies Section */}
-              {(qa.answer || (qa.replies && qa.replies.length > 0)) && (
-                <div className="mt-4 ml-6 space-y-3">
-                  {/* Official Answer - Always shown first if exists */}
-                  {qa.answer && (
-                    <div className="border-l-2 border-gray-200 pl-4">
-                      <div className="flex items-start gap-2">
-                        <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-xs font-semibold text-white">
-                          {qa.answer_author.charAt(0)}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-sm">{qa.answer_author}</span>
-                            {qa.is_official && (
-                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                Official
+                {/* Replies Section */}
+                {(qa.answer || (qa.replies && qa.replies.length > 0)) && (
+                  <div className="mt-4 ml-6 space-y-3">
+                    {/* Official Answer - Always shown first if exists */}
+                    {qa.answer && (
+                      <div className="border-l-2 border-gray-200 pl-4">
+                        <div className="flex items-start gap-2">
+                          <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-xs font-semibold text-white">
+                            {qa.answer_author.charAt(0)}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-sm">{qa.answer_author}</span>
+                              {qa.is_official && (
+                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                  Official
+                                </span>
+                              )}
+                              <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded font-medium">
+                                Pinned
                               </span>
-                            )}
-                            <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded font-medium">
-                              Pinned
-                            </span>
-                          </div>
-                          <div className="text-xs text-muted-foreground" style={{color: '#666'}}>
-                            {formatDate(qa.answered_at)}
-                          </div>
-                          <div className="text-sm text-foreground mt-1">
-                            {expandedQuestions.has(qa.id) ? qa.answer : truncateText(qa.answer || '')}
-                            {(qa.answer || '').length > 120 && (
-                              <button
-                                onClick={() => toggleReadMore(qa.id)}
-                                className="text-blue-600 hover:text-blue-800 text-sm font-medium ml-1"
-                              >
-                                {expandedQuestions.has(qa.id) ? 'Read less' : 'Read more'}
-                              </button>
-                            )}
-                          </div>
-
-                          {/* Media Section for Official Answer */}
-                          {qa.media && qa.media.length > 0 && (
-                            <div className="mt-3">
-                              <div className="flex gap-2 overflow-x-auto pb-2">
-                                {qa.media.map((item, index) => (
-                                  <div key={index} className="flex-shrink-0 relative">
-                                    {item.type === 'image' ? (
-                                      <img
-                                        src={item.url}
-                                        alt={item.alt}
-                                        className="w-24 h-24 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                        onClick={() => window.open(item.url, '_blank')}
-                                      />
-                                    ) : item.type === 'video' ? (
-                                      <div
-                                        className="w-24 h-24 relative cursor-pointer hover:opacity-90 transition-opacity rounded-lg overflow-hidden"
-                                        onClick={() => window.open(item.url, '_blank')}
-                                      >
-                                        <img
-                                          src={item.thumbnail}
-                                          alt={item.alt}
-                                          className="w-full h-full object-cover"
-                                        />
-                                        <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-                                          <Play className="w-6 h-6 text-white fill-white" />
-                                        </div>
-                                      </div>
-                                    ) : null}
-                                  </div>
-                                ))}
-                              </div>
                             </div>
-                          )}
+                            <div className="text-xs text-muted-foreground" style={{color: '#666'}}>
+                              {formatDate(qa.answered_at)}
+                            </div>
+                            <div className="text-sm text-foreground mt-1">
+                              {expandedQuestions.has(qa.id) ? qa.answer : truncateText(qa.answer || '')}
+                              {(qa.answer || '').length > 120 && (
+                                <button
+                                  onClick={() => toggleReadMore(qa.id)}
+                                  className="text-blue-600 hover:text-blue-800 text-sm font-medium ml-1"
+                                >
+                                  {expandedQuestions.has(qa.id) ? 'Read less' : 'Read more'}
+                                </button>
+                              )}
+                            </div>
+
+                            {/* Media Section for Official Answer */}
+                            {qa.media && qa.media.length > 0 && (
+                              <div className="mt-3">
+                                <div className="flex gap-2 overflow-x-auto pb-2">
+                                  {qa.media.map((item, index) => (
+                                    <div key={index} className="flex-shrink-0 relative">
+                                      {item.type === 'image' ? (
+                                        <img
+                                          src={item.url}
+                                          alt={item.alt}
+                                          className="w-24 h-24 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                          onClick={() => window.open(item.url, '_blank')}
+                                        />
+                                      ) : item.type === 'video' ? (
+                                        <div
+                                          className="w-24 h-24 relative cursor-pointer hover:opacity-90 transition-opacity rounded-lg overflow-hidden"
+                                          onClick={() => window.open(item.url, '_blank')}
+                                        >
+                                          <img
+                                            src={item.thumbnail}
+                                            alt={item.alt}
+                                            className="w-full h-full object-cover"
+                                          />
+                                          <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+                                            <Play className="w-6 h-6 text-white fill-white" />
+                                          </div>
+                                        </div>
+                                      ) : null}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Regular Replies */}
-                  {qa.replies && qa.replies.length > 0 && (
-                    <>
-                      {(expandedReplies.has(qa.id) ? qa.replies : qa.replies.slice(0, 2)).map((reply) => (
-                        <div key={reply.id} className="border-l-2 border-gray-200 pl-4">
-                          <div className="flex items-start gap-2">
-                            <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center text-xs font-semibold" style={{backgroundColor: reply.is_seller ? '#3b82f6' : 'rgba(0,0,0,0.1)', color: reply.is_seller ? 'white' : 'black'}}>
-                              {reply.user_name.charAt(0)}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-sm">{reply.user_name}</span>
-                                {reply.is_seller && (
-                                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                    Seller
-                                  </span>
-                                )}
+                    {/* Regular Replies */}
+                    {qa.replies && qa.replies.length > 0 && (
+                      <>
+                        {(expandedReplies.has(qa.id) ? qa.replies : qa.replies.slice(0, 2)).map((reply) => (
+                          <div key={reply.id} className="border-l-2 border-gray-200 pl-4">
+                            <div className="flex items-start gap-2">
+                              <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center text-xs font-semibold" style={{backgroundColor: reply.is_seller ? '#3b82f6' : 'rgba(0,0,0,0.1)', color: reply.is_seller ? 'white' : 'black'}}>
+                                {reply.user_name.charAt(0)}
                               </div>
-                              <div className="text-xs text-muted-foreground" style={{color: '#666'}}>
-                                {formatDate(reply.created_at)}
-                              </div>
-                              <div className="text-sm text-foreground mt-1">
-                                {reply.comment}
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-sm">{reply.user_name}</span>
+                                  {reply.is_seller && (
+                                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                      Seller
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-xs text-muted-foreground" style={{color: '#666'}}>
+                                  {formatDate(reply.created_at)}
+                                </div>
+                                <div className="text-sm text-foreground mt-1">
+                                  {reply.comment}
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
 
-                      {qa.replies.length > 2 && (
-                        <button
-                          onClick={() => toggleShowMoreReplies(qa.id)}
-                          className="text-blue-600 hover:text-blue-800 text-sm font-medium ml-4 transition-colors"
-                        >
-                          {expandedReplies.has(qa.id)
-                            ? 'Show fewer replies'
-                            : `Show ${qa.replies.length - 2} more replies`
-                          }
-                        </button>
-                      )}
-                    </>
-                  )}
-                </div>
-              )}
+                        {qa.replies.length > 2 && (
+                          <button
+                            onClick={() => toggleShowMoreReplies(qa.id)}
+                            className="text-blue-600 hover:text-blue-800 text-sm font-medium ml-4 transition-colors"
+                          >
+                            {expandedReplies.has(qa.id)
+                              ? 'Show fewer replies'
+                              : `Show ${qa.replies.length - 2} more replies`
+                            }
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
 
-              {/* Insert SearchInfoComponent after the second question (index 1) */}
-              {index === 1 && (
-                <div className="my-6 px-2">
-                  <SearchInfoComponent productId={productId} />
-                </div>
-              )}
-            </div>
-          ))
-        )}
+                {/* Insert SearchInfoComponent after the second question (index 1) */}
+                {index === 1 && (
+                  <div className="my-6 px-2">
+                    <SearchInfoComponent productId={productId} />
+                  </div>
+                )}
+              </div>
+            ))
+          )}
         </div>
       </div>
 
