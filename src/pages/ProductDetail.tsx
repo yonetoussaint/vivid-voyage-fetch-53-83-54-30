@@ -19,8 +19,8 @@ import { useNavigationLoading } from '@/hooks/useNavigationLoading';
 // Import tab components
 import ProductOverview from "@/components/product/tabs/ProductOverview";
 import ProductVariants from "@/components/product/tabs/ProductVariants";
-import CustomerReviewsEnhanced from "@/components/product/CustomerReviewsEnhanced"; // Updated import
-import ProductQnA from "@/components/product/tabs/ProductQnA";
+import CustomerReviewsEnhanced from "@/components/product/CustomerReviewsEnhanced";
+import ProductQA from "@/components/product/ProductQA"; // Updated import
 
 interface ProductDetailProps {
   productId?: string;
@@ -291,7 +291,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
       case 'reviews':
         return <CustomerReviewsEnhanced productId={productId} />;
       case 'qna':
-        return <ProductQnA product={product} />;
+        return <ProductQA product={product} />; // Updated to use ProductQA
       default:
         return <ProductOverview product={product} activeTab="overview" />;
     }
