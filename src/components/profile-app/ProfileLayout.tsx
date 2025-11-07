@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, Package, ShoppingCart, Users, BarChart3, 
   Heart, Settings, User, MapPin, CreditCard,
-  Bell, Store, LogIn, Shield, Lock
+  Bell, Store, LogIn, Shield, Star, Lock, ArrowRight
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -12,7 +12,6 @@ import TabsNavigation from '@/components/home/TabsNavigation';
 import ReusableSearchBar from '@/components/shared/ReusableSearchBar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import SellerLayout from './SellerLayout'; // Import SellerLayout
 
 interface ProfileLayoutProps {
   children: React.ReactNode;
@@ -24,20 +23,12 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
   const isMobile = useIsMobile();
   const { user, isAuthenticated } = useAuth();
 
-  // If not authenticated, wrap with SellerLayout and show login prompt
+  // If user is not authenticated, show the dedicated login page
   if (!isAuthenticated) {
-    return (
-      <SellerLayout showActionButtons={false} isOwnProfile={false}>
-        <LoginPromptSection 
-          onLogin={() => navigate('/login')} 
-          onSignup={() => navigate('/signup')}
-          currentTab={getCurrentTab(location.pathname)}
-        />
-      </SellerLayout>
-    );
+    return <ProfileLoginPage onLogin={() => navigate('/login')} onSignup={() => navigate('/signup')} />;
   }
 
-  // Original ProfileLayout implementation for authenticated users
+  // Original authenticated user layout continues below...
   const headerRef = useRef<HTMLDivElement>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
   const userInfoRef = useRef<HTMLDivElement>(null);
@@ -53,12 +44,12 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
   };
 
   // Extract current tab from pathname
-  const getCurrentTab = (pathname: string) => {
-    const path = pathname.split('/profile/')[1];
+  const getCurrentTab = () => {
+    const path = location.pathname.split('/profile/')[1];
     return path || 'dashboard';
   };
 
-  const [activeTab, setActiveTab] = useState(getCurrentTab(location.pathname));
+  const [activeTab, setActiveTab] = useState(getCurrentTab());
 
   // Check if we're on the dashboard tab
   const isDashboardTab = location.pathname === '/profile/dashboard' || 
@@ -309,99 +300,176 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
   );
 };
 
-// Login Prompt Section that shows under the tabs
-interface LoginPromptSectionProps {
+// Separate Login Page for Non-Authenticated Users
+interface ProfileLoginPageProps {
   onLogin: () => void;
   onSignup: () => void;
-  currentTab: string;
 }
 
-const LoginPromptSection: React.FC<LoginPromptSectionProps> = ({ 
-  onLogin, 
-  onSignup, 
-  currentTab 
-}) => {
-  const getTabDescription = (tab: string) => {
-    const descriptions: { [key: string]: string } = {
-      dashboard: 'Access your personalized dashboard with overview of your activity',
-      orders: 'View and manage your order history and track current orders',
-      wishlist: 'See all your saved items and create multiple wishlists',
-      addresses: 'Manage your shipping addresses for faster checkout',
-      payments: 'Securely manage your payment methods and billing info',
-      analytics: 'View your shopping analytics and spending insights',
-      reviews: 'Manage your product reviews and ratings',
-      settings: 'Customize your account settings and preferences'
-    };
-    return descriptions[tab] || 'Access all your profile features and settings';
-  };
-
+const ProfileLoginPage: React.FC<ProfileLoginPageProps> = ({ onLogin, onSignup }) => {
   return (
-    <div className="max-w-4xl mx-auto py-8">
-      <Card className="border-2 border-dashed border-gray-300 bg-gradient-to-br from-gray-50 to-blue-50">
-        <CardHeader className="text-center pb-4">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg mb-4">
-            <Lock className="w-8 h-8 text-white" />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      {/* Simple Header */}
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <User className="w-5 h-5 text-white" />
+              </div>
+              <span className="font-semibold text-gray-900">Profile</span>
+            </div>
+            <Button
+              variant="ghost"
+              onClick={onLogin}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              Back to Home
+            </Button>
           </div>
-          <CardTitle className="text-2xl font-bold text-gray-900 mb-2">
-            Sign In Required
-          </CardTitle>
-          <CardDescription className="text-lg text-gray-600">
-            {getTabDescription(currentTab)}
-          </CardDescription>
-        </CardHeader>
-        
-        <CardContent className="space-y-6">
-          {/* Feature Preview */}
-          <div className="bg-white/80 rounded-2xl p-6 border border-gray-200">
-            <h3 className="font-semibold text-gray-900 mb-4 text-center">
-              What you'll get access to:
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        {/* Hero Section */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            Welcome to Your
+            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              {' '}Profile Dashboard
+            </span>
+          </h1>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Sign in to access your personalized dashboard, order history, wishlists, and much more.
+          </p>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          {/* Left Column - Features */}
+          <div className="space-y-8">
+            <div className="grid sm:grid-cols-2 gap-6">
               {[
-                { icon: ShoppingCart, label: 'Order History', desc: 'Track all your purchases' },
-                { icon: Heart, label: 'Wishlists', desc: 'Save your favorite items' },
-                { icon: MapPin, label: 'Addresses', desc: 'Quick checkout setup' },
-                { icon: BarChart3, label: 'Analytics', desc: 'Shopping insights' }
+                {
+                  icon: ShoppingCart,
+                  title: 'Order History',
+                  description: 'Track all your purchases and order status',
+                  color: 'from-green-500 to-emerald-600'
+                },
+                {
+                  icon: Heart,
+                  title: 'Wishlists',
+                  description: 'Save and organize your favorite products',
+                  color: 'from-pink-500 to-rose-600'
+                },
+                {
+                  icon: MapPin,
+                  title: 'Addresses',
+                  description: 'Manage shipping addresses for quick checkout',
+                  color: 'from-blue-500 to-cyan-600'
+                },
+                {
+                  icon: BarChart3,
+                  title: 'Analytics',
+                  description: 'View your shopping insights and trends',
+                  color: 'from-purple-500 to-indigo-600'
+                },
+                {
+                  icon: CreditCard,
+                  title: 'Payment Methods',
+                  description: 'Secure payment information storage',
+                  color: 'from-orange-500 to-red-600'
+                },
+                {
+                  icon: Settings,
+                  title: 'Settings',
+                  description: 'Customize your account preferences',
+                  color: 'from-gray-500 to-gray-700'
+                }
               ].map((feature, index) => (
-                <div key={index} className="text-center p-4 bg-white rounded-lg border border-gray-100 shadow-sm">
-                  <feature.icon className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                  <div className="font-medium text-gray-900">{feature.label}</div>
-                  <div className="text-sm text-gray-500 mt-1">{feature.desc}</div>
+                <div key={index} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
+                  <div className={`w-12 h-12 bg-gradient-to-r ${feature.color} rounded-xl flex items-center justify-center mb-4`}>
+                    <feature.icon className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-2">{feature.title}</h3>
+                  <p className="text-gray-600 text-sm">{feature.description}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              onClick={onLogin}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 px-8 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
-              size="lg"
-            >
-              <LogIn className="w-5 h-5 mr-2" />
-              Sign In to Continue
-            </Button>
-            
-            <Button
-              onClick={onSignup}
-              variant="outline"
-              className="border-2 border-gray-300 text-gray-700 py-3 px-8 rounded-xl font-semibold hover:border-blue-500 hover:text-blue-600 transition-all duration-200"
-              size="lg"
-            >
-              Create New Account
-            </Button>
-          </div>
+          {/* Right Column - Login Card */}
+          <div className="flex justify-center">
+            <Card className="w-full max-w-md border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+              <CardHeader className="text-center space-y-4 pb-6">
+                <div className="mx-auto w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                  <Lock className="w-10 h-10 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-2xl font-bold text-gray-900">
+                    Sign In Required
+                  </CardTitle>
+                  <CardDescription className="text-lg text-gray-600 mt-2">
+                    Access your personalized profile dashboard
+                  </CardDescription>
+                </div>
+              </CardHeader>
 
-          {/* Security Note */}
-          <div className="text-center pt-4 border-t border-gray-200">
-            <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-              <Shield className="w-4 h-4" />
-              <span>Your data is securely protected and encrypted</span>
-            </div>
+              <CardContent className="space-y-6">
+                {/* Benefits List */}
+                <div className="space-y-3">
+                  {[
+                    'Personalized shopping experience',
+                    'Secure order tracking and history',
+                    'Quick checkout with saved addresses',
+                    'Wishlist and favorites management',
+                    'Shopping analytics and insights'
+                  ].map((benefit, index) => (
+                    <div key={index} className="flex items-center gap-3 text-gray-700">
+                      <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg className="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <span className="text-sm">{benefit}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="space-y-4">
+                  <Button
+                    onClick={onLogin}
+                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+                    size="lg"
+                  >
+                    <LogIn className="w-5 h-5 mr-2" />
+                    Sign In to Continue
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                  
+                  <Button
+                    onClick={onSignup}
+                    variant="outline"
+                    className="w-full border-2 border-gray-300 text-gray-700 py-3 px-6 rounded-xl font-semibold hover:border-blue-500 hover:text-blue-600 transition-all duration-200"
+                    size="lg"
+                  >
+                    Create New Account
+                  </Button>
+                </div>
+
+                {/* Security Note */}
+                <div className="pt-4 border-t border-gray-200">
+                  <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+                    <Shield className="w-4 h-4" />
+                    <span>256-bit SSL encryption • Your data is safe with us</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </main>
     </div>
   );
 };
