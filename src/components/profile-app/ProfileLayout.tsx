@@ -12,6 +12,7 @@ import TabsNavigation from '@/components/home/TabsNavigation';
 import ReusableSearchBar from '@/components/shared/ReusableSearchBar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import SellerLayout from './SellerLayout'; // Import SellerLayout
 
 interface ProfileLayoutProps {
   children: React.ReactNode;
@@ -22,6 +23,21 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { user, isAuthenticated } = useAuth();
+
+  // If not authenticated, wrap with SellerLayout and show login prompt
+  if (!isAuthenticated) {
+    return (
+      <SellerLayout showActionButtons={false} isOwnProfile={false}>
+        <LoginPromptSection 
+          onLogin={() => navigate('/login')} 
+          onSignup={() => navigate('/signup')}
+          currentTab={getCurrentTab(location.pathname)}
+        />
+      </SellerLayout>
+    );
+  }
+
+  // Original ProfileLayout implementation for authenticated users
   const headerRef = useRef<HTMLDivElement>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
   const userInfoRef = useRef<HTMLDivElement>(null);
@@ -37,12 +53,12 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
   };
 
   // Extract current tab from pathname
-  const getCurrentTab = () => {
-    const path = location.pathname.split('/profile/')[1];
+  const getCurrentTab = (pathname: string) => {
+    const path = pathname.split('/profile/')[1];
     return path || 'dashboard';
   };
 
-  const [activeTab, setActiveTab] = useState(getCurrentTab());
+  const [activeTab, setActiveTab] = useState(getCurrentTab(location.pathname));
 
   // Check if we're on the dashboard tab
   const isDashboardTab = location.pathname === '/profile/dashboard' || 
@@ -215,93 +231,41 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
         }}
       >
         <main>
-        {/* User Info Section - Only show on dashboard tab */}
+          {/* User Info Section - Only show on dashboard tab */}
           {isDashboardTab && (
-            <div ref={userInfoRef} className="w-full bg-[#E42424] relative overflow-hidden">
-              {/* Background decorative elements */}
-              <div className="absolute right-0 top-0 bottom-0 w-1/2 opacity-10">
-                <div className="absolute right-8 top-4 w-32 h-32 bg-white rounded-full blur-2xl"></div>
-                <div className="absolute right-20 bottom-4 w-24 h-24 bg-white rounded-full blur-xl"></div>
-              </div>
+            <div ref={userInfoRef} className="w-full bg-white border-b">
+              <div className="px-4 py-4">
+                <div className="flex items-center gap-4">
+                  {/* Profile Picture */}
+                  <Avatar className="w-16 h-16 flex-shrink-0">
+                    <AvatarImage src={mockUser.avatar_url} />
+                    <AvatarFallback>
+                      {mockUser.full_name.split(' ').map(n => n[0]).join('')}
+                    </AvatarFallback>
+                  </Avatar>
 
-              <div className="relative px-4 py-6">
-                {/* Top icons row */}
-                <div className="flex justify-end gap-3 mb-4">
-                  <button className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                    <Bell className="w-5 h-5 text-white" />
-                  </button>
-                  <button className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                    <Settings className="w-5 h-5 text-white" />
-                  </button>
-                </div>
-
-                {isAuthenticated ? (
-                  /* Authenticated User View */
-                  <div>
-                    <div className="flex items-center gap-4 mb-4">
-                      <Avatar className="w-16 h-16 border-3 border-white/50 shadow-lg">
-                        <AvatarImage src={mockUser.avatar_url} />
-                        <AvatarFallback className="bg-white text-red-500 text-xl font-bold">
-                          {mockUser.full_name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h1 className="text-2xl font-bold text-white">
-                            {mockUser.full_name}
-                          </h1>
-                          {mockUser.verified && (
-                            <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                              <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                              </svg>
-                            </div>
-                          )}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-1">
+                      <div className="w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <User className="w-4 h-4 text-white" />
+                      </div>
+                      <h1 className="text-xl font-bold text-gray-900">{mockUser.full_name}</h1>
+                      {mockUser.verified && (
+                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
                         </div>
-                        <p className="text-sm text-white/90">
-                          Member since {mockUser.member_since}
-                        </p>
-                      </div>
+                      )}
                     </div>
-
-                    {/* User stats/benefits */}
-                    <div className="flex gap-2 overflow-x-auto pb-1">
-                      <div className="px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-lg whitespace-nowrap">
-                        <div className="text-xs text-white/80">Coins</div>
-                        <div className="text-sm font-bold text-white">1,234</div>
-                      </div>
-                      <div className="px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-lg whitespace-nowrap">
-                        <div className="text-xs text-white/80">Coupons</div>
-                        <div className="text-sm font-bold text-white">5</div>
-                      </div>
-                      <div className="px-3 py-1.5 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-lg whitespace-nowrap">
-                        <div className="text-xs text-yellow-900">VIP Status</div>
-                        <div className="text-sm font-bold text-yellow-900">⭐ Gold</div>
-                      </div>
+                    <p className="text-sm text-gray-500 mb-2">{mockUser.email}</p>
+                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <span>👤 Member since {mockUser.member_since}</span>
+                      <span>📊 Profile Dashboard</span>
+                      {mockUser.verified && <span>✅ Verified Account</span>}
                     </div>
                   </div>
-                ) : (
-                  /* Guest User View - Welcome Message */
-                  <div>
-                    <h1 className="text-3xl font-bold text-white mb-2">
-                      Welcome to
-                    </h1>
-                    <h2 className="text-3xl font-bold text-white mb-3">
-                      <span className="inline-block">⚡</span>AliExpress
-                    </h2>
-                    <p className="text-white/95 text-base mb-4 leading-relaxed">
-                      Your first order starts at just $0.99,<br />
-                      with free shipping included
-                    </p>
-                    <button
-                      onClick={() => navigate('/login')}
-                      className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 rounded-full font-semibold text-base shadow-lg transition-all duration-200"
-                    >
-                      Sign in / Register
-                    </button>
-                  </div>
-                )}
+                </div>
               </div>
             </div>
           )}
@@ -337,15 +301,7 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
 
           {/* Main Content */}
           <div className="px-2">
-            {isAuthenticated ? (
-              children
-            ) : (
-              <LoginPromptSection 
-                onLogin={() => navigate('/login')} 
-                onSignup={() => navigate('/signup')}
-                currentTab={activeTab}
-              />
-            )}
+            {children}
           </div>
         </main>
       </div>
