@@ -645,9 +645,7 @@ const ProductQA = ({
           <span className="font-medium text-sm">{question.answer_author || 'Team'}</span>
           {question.is_official && (
             <div className="flex items-center gap-1">
-              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                Official
-              </span>
+              <VerificationBadge size="sm" />
               <span className="text-xs text-gray-500">•</span>
               <span className="font-bold text-sm text-orange-500">Seller</span>
             </div>
