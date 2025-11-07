@@ -1,234 +1,811 @@
-import React, { useState, useMemo } from 'react';
-import { Heart, MessageCircle, Send, ChevronDown } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { 
+  Star, 
+  Play,
+  Send,
+  Heart
+} from 'lucide-react';
 import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
 import ProductFilterBar from '@/components/home/ProductFilterBar';
-import SearchInfoComponent from './SearchInfoComponent';
+import { EngagementSection } from '@/components/shared/EngagementSection';
+import { 
+  formatDate, 
+  formatDateForReply 
+} from './DateUtils';
+import VerificationBadge from '@/components/shared/VerificationBadge';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
-// Mock data and utility functions
-const mockQAs = [
-  {
-    id: 1,
-    user_name: "John Smith",
-    question: "What are the dimensions of this product?",
-    answer: "The dimensions are 12\" x 8\" x 4\" (L x W x H). It's compact enough to fit on most desks while providing ample space for your needs.",
-    answer_author: "Product Team",
-    is_official: true,
-    created_at: "2024-08-15T10:30:00Z",
-    answered_at: "2024-08-15T14:30:00Z",
-    helpful_count: 12,
-    reply_count: 4,
-    media: [
-      { type: 'image', url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop', alt: 'Product dimensions' },
-      { type: 'image', url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=300&fit=crop', alt: 'Product size comparison' }
-    ],
-    replies: [
-      {
-        id: 101,
-        user_name: "Lisa Wong",
-        comment: "Thanks for asking this! I was wondering the same thing.",
-        created_at: "2024-08-16T09:15:00Z",
-        is_seller: false
-      },
-      {
-        id: 102,
-        user_name: "David Kim",
-        comment: "Perfect size for my desk setup!",
-        created_at: "2024-08-17T14:30:00Z",
-        is_seller: false
-      },
-      {
-        id: 103,
-        user_name: "Rachel Green",
-        comment: "Exactly what I needed to know before purchasing.",
-        created_at: "2024-08-18T11:20:00Z",
-        is_seller: false
-      },
-      {
-        id: 104,
-        user_name: "Mike Johnson",
-        comment: "Great question! This helped me decide.",
-        created_at: "2024-08-19T16:45:00Z",
-        is_seller: false
-      }
-    ]
-  },
-  {
-    id: 2,
-    user_name: "Sarah Johnson",
-    question: "Is this product compatible with Mac computers?",
-    answer: "Yes, it's fully compatible with Mac computers running macOS 10.14 or later. We also provide dedicated Mac drivers for optimal performance.",
-    answer_author: "Tech Support",
-    is_official: true,
-    created_at: "2024-08-10T14:20:00Z",
-    answered_at: "2024-08-10T16:45:00Z",
-    helpful_count: 8,
-    reply_count: 1,
-    media: [
-      { type: 'video', url: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4', thumbnail: 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=400&h=300&fit=crop', alt: 'Mac compatibility demo' }
-    ],
-    replies: [
-      {
-        id: 201,
-        user_name: "Tech Support",
-        comment: "If you need help with Mac setup, our support team is here to help!",
-        created_at: "2024-08-11T10:45:00Z",
-        is_seller: true
-      }
-    ]
-  },
-  {
-    id: 3,
-    user_name: "Mike Chen",
-    question: "How long is the warranty period?",
-    answer: "We offer a 2-year limited warranty covering manufacturing defects. Extended warranty options are available at checkout.",
-    answer_author: "Customer Service",
-    is_official: true,
-    created_at: "2024-08-05T09:15:00Z",
-    answered_at: "2024-08-05T11:30:00Z",
-    helpful_count: 15,
-    reply_count: 0,
-    media: [],
-    replies: []
-  },
-  {
-    id: 4,
-    user_name: "Emma Davis",
-    question: "What's included in the box?",
-    answer: "The box includes: the main unit, power adapter, USB cable, quick start guide, and a premium carrying case.",
-    answer_author: "Product Team",
-    is_official: true,
-    created_at: "2024-08-01T16:45:00Z",
-    answered_at: "2024-08-01T17:20:00Z",
-    helpful_count: 22,
-    reply_count: 1,
-    media: [
-      { type: 'image', url: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop', alt: 'Box contents' },
-      { type: 'image', url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop', alt: 'Unboxing view' },
-      { type: 'image', url: 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=400&h=300&fit=crop', alt: 'All accessories' }
-    ],
-    replies: [
-      {
-        id: 401,
-        user_name: "Product Team",
-        comment: "Everything you need to get started is included!",
-        created_at: "2024-08-02T08:20:00Z",
-        is_seller: true
-      }
-    ]
-  },
-  {
-    id: 5,
-    user_name: "Tom Wilson",
-    question: "Does it work with wireless charging?",
-    answer: "This model doesn't support wireless charging, but our Pro version does. You can upgrade during checkout for an additional $29.",
-    answer_author: "Product Expert",
-    is_official: true,
-    created_at: "2024-07-28T11:30:00Z",
-    answered_at: "2024-07-28T15:45:00Z",
-    helpful_count: 5,
-    reply_count: 1,
-    media: [],
-    replies: [
-      {
-        id: 501,
-        user_name: "Product Expert",
-        comment: "Feel free to reach out if you have questions about the Pro version features!",
-        created_at: "2024-07-29T13:15:00Z",
-        is_seller: true
-      }
-    ]
+// Error Boundary Component
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
   }
-];
 
-const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  });
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Error caught by boundary:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-4 bg-red-50 border border-red-200 rounded m-4">
+          <h2 className="text-red-800 font-semibold">Something went wrong with the reviews.</h2>
+          <p className="text-red-600 text-sm mt-1">{this.state.error?.message}</p>
+          <button 
+            onClick={() => this.setState({ hasError: false, error: null })}
+            className="mt-2 px-4 py-2 bg-red-600 text-white rounded text-sm"
+          >
+            Try again
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// Mock Button component
+const Button = ({ children, variant, className, onClick }) => (
+  <button 
+    className={`px-4 py-2 rounded border ${variant === 'outline' ? 'border-gray-300 bg-white hover:bg-gray-50' : 'bg-blue-600 text-white hover:bg-blue-700'} ${className}`}
+    onClick={onClick}
+  >
+    {children}
+  </button>
+);
+
+// Skeleton Loader Component
+const CustomerReviewsSkeleton = () => {
+  return (
+    <div className="w-full bg-white animate-pulse">
+      {/* Seller Summary Header Skeleton */}
+      <div className="p-4 border-b border-gray-200">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-4">
+            {/* Rating stars skeleton */}
+            <div className="flex gap-1">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="w-5 h-5 bg-gray-200 rounded"></div>
+              ))}
+            </div>
+            {/* Average rating skeleton */}
+            <div className="w-12 h-6 bg-gray-200 rounded"></div>
+          </div>
+          {/* Total reviews skeleton */}
+          <div className="w-16 h-6 bg-gray-200 rounded"></div>
+        </div>
+        
+        {/* Rating distribution skeleton */}
+        <div className="space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <div className="w-8 h-4 bg-gray-200 rounded"></div>
+              <div className="flex-1 h-2 bg-gray-200 rounded-full"></div>
+              <div className="w-8 h-4 bg-gray-200 rounded"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Filter Bar Skeleton */}
+      <div className="p-4 border-b border-gray-200">
+        <div className="flex gap-3 overflow-x-auto pb-2">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="flex-shrink-0 w-24 h-8 bg-gray-200 rounded-full"></div>
+          ))}
+        </div>
+      </div>
+
+      {/* Reviews List Skeleton */}
+      <div className="py-4 space-y-6">
+        {[...Array(3)].map((_, reviewIndex) => (
+          <div key={reviewIndex} className="border-b border-gray-200 pb-6 px-4">
+            {/* Review Header Skeleton */}
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center gap-3">
+                {/* User avatar skeleton */}
+                <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                <div className="space-y-2">
+                  {/* User name skeleton */}
+                  <div className="w-24 h-4 bg-gray-200 rounded"></div>
+                  <div className="flex items-center gap-2">
+                    {/* Rating stars skeleton */}
+                    <div className="flex gap-1">
+                      {[...Array(5)].map((_, i) => (
+                        <div key={i} className="w-3 h-3 bg-gray-200 rounded"></div>
+                      ))}
+                    </div>
+                    {/* Date skeleton */}
+                    <div className="w-16 h-3 bg-gray-200 rounded"></div>
+                  </div>
+                </div>
+              </div>
+              {/* Verified purchase badge skeleton */}
+              <div className="w-20 h-6 bg-gray-200 rounded"></div>
+            </div>
+
+            {/* Review Comment Skeleton */}
+            <div className="space-y-2 mb-3">
+              <div className="w-full h-3 bg-gray-200 rounded"></div>
+              <div className="w-3/4 h-3 bg-gray-200 rounded"></div>
+              <div className="w-1/2 h-3 bg-gray-200 rounded"></div>
+            </div>
+
+            {/* Media Gallery Skeleton */}
+            <div className="flex gap-2 overflow-x-auto pb-3 mb-3">
+              {[...Array(2)].map((_, mediaIndex) => (
+                <div key={mediaIndex} className="flex-shrink-0 w-20 h-20 bg-gray-200 rounded-lg"></div>
+              ))}
+            </div>
+
+            {/* Engagement Section Skeleton */}
+            <div className="flex items-center gap-6">
+              {[...Array(3)].map((_, engagementIndex) => (
+                <div key={engagementIndex} className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-gray-200 rounded"></div>
+                  <div className="w-6 h-3 bg-gray-200 rounded"></div>
+                </div>
+              ))}
+            </div>
+
+            {/* Replies Section Skeleton */}
+            <div className="mt-4 ml-6 space-y-4">
+              {[...Array(2)].map((_, replyIndex) => (
+                <div key={replyIndex} className="border-l-2 border-gray-200 pl-4">
+                  <div className="flex items-start gap-2">
+                    {/* Reply user avatar skeleton */}
+                    <div className="w-6 h-6 bg-gray-200 rounded-full"></div>
+                    <div className="flex-1 space-y-2">
+                      {/* Reply user info skeleton */}
+                      <div className="flex items-center gap-2">
+                        <div className="w-16 h-3 bg-gray-200 rounded"></div>
+                        <div className="w-12 h-3 bg-gray-200 rounded"></div>
+                      </div>
+                      {/* Reply comment skeleton */}
+                      <div className="space-y-1">
+                        <div className="w-full h-3 bg-gray-200 rounded"></div>
+                        <div className="w-2/3 h-3 bg-gray-200 rounded"></div>
+                      </div>
+                      {/* Reply engagement skeleton */}
+                      <div className="flex items-center gap-4">
+                        {[...Array(3)].map((_, actionIndex) => (
+                          <div key={actionIndex} className="flex items-center gap-1">
+                            <div className="w-4 h-3 bg-gray-200 rounded"></div>
+                            <div className="w-6 h-3 bg-gray-200 rounded"></div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* View All Button Skeleton */}
+      <div className="p-4">
+        <div className="w-full h-10 bg-gray-200 rounded"></div>
+      </div>
+    </div>
+  );
 };
 
-const ProductQA = ({
-  productId = "123",
-  questions = mockQAs,
-  limit = null
+const truncateText = (text, maxLength = 120) => {
+  if (!text) return '';
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength) + '...';
+};
+
+const CustomerReviews = ({ 
+  productId, 
+  limit = null 
 }) => {
   const [sortBy, setSortBy] = useState('recent');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [expandedQuestions, setExpandedQuestions] = useState(new Set());
+  const [filterRating, setFilterRating] = useState(0);
+  const [expandedReviews, setExpandedReviews] = useState(new Set());
   const [expandedReplies, setExpandedReplies] = useState(new Set());
-  const [questionText, setQuestionText] = useState('');
+  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
+  const [localReviews, setLocalReviews] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { user } = useAuth();
 
-  const toggleReadMore = (questionId) => {
-    const newExpanded = new Set(expandedQuestions);
-    if (newExpanded.has(questionId)) {
-      newExpanded.delete(questionId);
+  // Enhanced state for reply functionality
+  const [replyingTo, setReplyingTo] = useState<{ type: 'review' | 'reply'; reviewId: string; replyId?: string; userName: string; isSeller?: boolean; verifiedSeller?: boolean } | null>(null);
+  const [replyText, setReplyText] = useState('');
+
+  // Debug useEffect
+  useEffect(() => {
+    console.log('Current replyingTo state:', replyingTo);
+    console.log('Current localReviews count:', localReviews.length);
+  }, [replyingTo, localReviews]);
+
+  // Fetch reviews from Supabase
+  const fetchReviews = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      console.log('Fetching reviews for product:', productId);
+
+      if (!productId) {
+        setError('Product ID is required');
+        setIsLoading(false);
+        return;
+      }
+
+      // Fetch reviews
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from('reviews')
+        .select('*')
+        .eq('product_id', productId)
+        .order('created_at', { ascending: false });
+
+      if (reviewsError) {
+        console.error('Error fetching reviews:', reviewsError);
+        throw reviewsError;
+      }
+
+      console.log('Reviews found:', reviewsData?.length || 0);
+
+      // If no reviews found, set empty array and return
+      if (!reviewsData || reviewsData.length === 0) {
+        console.log('No reviews found for this product');
+        setLocalReviews([]);
+        setIsLoading(false);
+        return;
+      }
+
+      // Fetch all data in parallel for better performance
+      const reviewsWithDetails = await Promise.all(
+        reviewsData.map(async (review) => {
+          try {
+            // Fetch media for this review
+            const { data: mediaData, error: mediaError } = await supabase
+              .from('review_media')
+              .select('*')
+              .eq('review_id', review.id);
+
+            if (mediaError) {
+              console.error('Error fetching media for review', review.id, mediaError);
+            }
+
+            // Fetch replies for this review
+            const { data: repliesData, error: repliesError } = await supabase
+              .from('reviews_replies')
+              .select('*')
+              .eq('review_id', review.id)
+              .order('created_at', { ascending: true });
+
+            if (repliesError) {
+              console.error('Error fetching replies for review', review.id, repliesError);
+            }
+
+            // Format media
+            const media = (mediaData || []).map(mediaItem => ({
+              type: mediaItem.media_type || 'image',
+              url: mediaItem.url || '',
+              thumbnail: mediaItem.thumbnail_url,
+              alt: mediaItem.alt_text || 'Review media'
+            }));
+
+            // Format replies
+            const replies = (repliesData || []).map(reply => ({
+              id: reply.id,
+              user_name: reply.user_name || 'Anonymous',
+              comment: reply.comment || '',
+              created_at: reply.created_at,
+              is_seller: reply.is_seller || false,
+              verified_seller: reply.verified_seller || false,
+              likeCount: reply.like_count || 0,
+              liked: reply.liked || false,
+              parent_reply_id: reply.parent_reply_id,
+              replying_to: reply.replying_to
+            }));
+
+            return {
+              id: review.id,
+              user_name: review.user_name || 'Anonymous',
+              rating: review.rating || 0,
+              comment: review.comment || '',
+              created_at: review.created_at,
+              verified_purchase: review.verified_purchase || false,
+              helpful_count: review.helpful_count || 0,
+              reply_count: replies.length,
+              likeCount: review.like_count || 0,
+              commentCount: replies.length,
+              shareCount: review.share_count || 0,
+              media: media,
+              replies: replies
+            };
+          } catch (err) {
+            console.error('Error processing review', review.id, err);
+            // Return basic review data even if media/replies fail
+            return {
+              id: review.id,
+              user_name: review.user_name || 'Anonymous',
+              rating: review.rating || 0,
+              comment: review.comment || '',
+              created_at: review.created_at,
+              verified_purchase: review.verified_purchase || false,
+              helpful_count: review.helpful_count || 0,
+              reply_count: 0,
+              likeCount: review.like_count || 0,
+              commentCount: 0,
+              shareCount: review.share_count || 0,
+              media: [],
+              replies: []
+            };
+          }
+        })
+      );
+
+      console.log('Processed reviews:', reviewsWithDetails.length);
+      setLocalReviews(reviewsWithDetails);
+    } catch (err) {
+      console.error('Error in fetchReviews:', err);
+      setError(err.message || 'Failed to load reviews');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (productId) {
+      fetchReviews();
     } else {
-      newExpanded.add(questionId);
+      setIsLoading(false);
+      setError('Product ID is required');
     }
-    setExpandedQuestions(newExpanded);
+  }, [productId]);
+
+  // Function to handle liking a reply
+  const handleLikeReply = async (reviewId: string, replyId: string) => {
+    try {
+      // Find the current reply to get like count
+      const review = localReviews.find(r => r.id === reviewId);
+      const reply = review?.replies?.find(r => r.id === replyId);
+      
+      if (!reply) {
+        console.error('Reply not found for liking:', replyId);
+        return;
+      }
+
+      const newLikeCount = reply.liked ? (reply.likeCount || 0) - 1 : (reply.likeCount || 0) + 1;
+      const newLikedStatus = !reply.liked;
+
+      // Update local state optimistically
+      setLocalReviews(prevReviews => 
+        prevReviews.map(review => {
+          if (review.id === reviewId) {
+            const updatedReplies = (review.replies || []).map(reply => {
+              if (reply.id === replyId) {
+                return {
+                  ...reply,
+                  liked: newLikedStatus,
+                  likeCount: newLikeCount
+                };
+              }
+              return reply;
+            });
+            return {
+              ...review,
+              replies: updatedReplies
+            };
+          }
+          return review;
+        })
+      );
+
+      // Update in database
+      const { error } = await supabase
+        .from('reviews_replies')
+        .update({ 
+          like_count: newLikeCount,
+          liked: newLikedStatus
+        })
+        .eq('id', replyId);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error liking reply:', error);
+      // Revert optimistic update
+      fetchReviews();
+    }
   };
 
-  const toggleShowMoreReplies = (questionId) => {
-    const newExpanded = new Set(expandedReplies);
-    if (newExpanded.has(questionId)) {
-      newExpanded.delete(questionId);
-    } else {
-      newExpanded.add(questionId);
+  // Get the item being replied to
+  const itemBeingReplied = useMemo(() => {
+    if (!replyingTo) return null;
+
+    try {
+      const review = localReviews.find(r => r.id === replyingTo.reviewId);
+      if (!review) return null;
+
+      if (replyingTo.type === 'review') {
+        return { type: 'review' as const, item: review };
+      } else {
+        const reply = (review.replies || []).find(r => r.id === replyingTo.replyId);
+        return reply ? { type: 'reply' as const, item: reply } : null;
+      }
+    } catch (error) {
+      console.error('Error in itemBeingReplied:', error);
+      return null;
     }
-    setExpandedReplies(newExpanded);
+  }, [replyingTo, localReviews]);
+
+  const toggleReadMore = (reviewId) => {
+    try {
+      const newExpanded = new Set(expandedReviews);
+      if (newExpanded.has(reviewId)) {
+        newExpanded.delete(reviewId);
+      } else {
+        newExpanded.add(reviewId);
+      }
+      setExpandedReviews(newExpanded);
+    } catch (error) {
+      console.error('Error in toggleReadMore:', error);
+    }
   };
 
-  const handleSubmitQuestion = () => {
-    if (questionText.trim()) {
-      alert(`Question submitted: "${questionText}"`);
-      setQuestionText('');
+  const toggleShowMoreReplies = (reviewId) => {
+    try {
+      const newExpanded = new Set(expandedReplies);
+      if (newExpanded.has(reviewId)) {
+        newExpanded.delete(reviewId);
+      } else {
+        newExpanded.add(reviewId);
+      }
+      setExpandedReplies(newExpanded);
+    } catch (error) {
+      console.error('Error in toggleShowMoreReplies:', error);
     }
   };
 
-  // Calculate Q&A statistics
-  const qaStats = useMemo(() => {
-    const count = questions.length;
-    const answeredCount = questions.filter(q => q.answer).length;
-    const helpfulCount = questions.reduce((sum, q) => sum + q.helpful_count, 0);
+  const handleCommentClick = (reviewId: string) => {
+    try {
+      console.log('Comment button clicked for review:', reviewId);
 
-    return { count, answeredCount, helpfulCount };
-  }, [questions]);
+      const review = localReviews.find(r => r.id === reviewId);
+      if (!review) {
+        console.error('Review not found:', reviewId);
+        return;
+      }
 
-  // Filter and sort questions
-  const finalQuestions = useMemo(() => {
-    let filtered = [...questions];
+      // Set the review we're replying to with safe property access
+      setReplyingTo({
+        type: 'review',
+        reviewId: reviewId,
+        userName: review.user_name || 'User',
+        isSeller: false,
+        verifiedSeller: false
+      });
+      setReplyText('');
 
-    // Apply status filter
-    if (filterStatus !== 'all') {
-      switch (filterStatus) {
-        case 'answered':
-          filtered = filtered.filter(q => q.answer);
+      // Also expand replies for this review
+      const newExpanded = new Set(expandedReplies);
+      if (!newExpanded.has(reviewId)) {
+        newExpanded.add(reviewId);
+        setExpandedReplies(newExpanded);
+      }
+    } catch (error) {
+      console.error('Error in handleCommentClick:', error);
+    }
+  };
+
+  const handleReplyToReply = (reviewId: string, replyId: string, userName: string) => {
+    try {
+      console.log('Reply button clicked for reply:', replyId, 'in review:', reviewId);
+
+      const review = localReviews.find(r => r.id === reviewId);
+      if (!review) {
+        console.error('Review not found:', reviewId);
+        return;
+      }
+
+      const reply = (review.replies || []).find(r => r.id === replyId);
+      if (!reply) {
+        console.error('Reply not found:', replyId);
+        return;
+      }
+
+      setReplyingTo({
+        type: 'reply',
+        reviewId: reviewId,
+        replyId: replyId,
+        userName: userName || reply.user_name || 'User',
+        isSeller: reply.is_seller || false,
+        verifiedSeller: reply.verified_seller || false
+      });
+      setReplyText('');
+    } catch (error) {
+      console.error('Error in handleReplyToReply:', error);
+    }
+  };
+
+  const handleShareClick = (reviewId: string) => {
+    try {
+      console.log('Share button clicked for review:', reviewId);
+      if (navigator.share) {
+        navigator.share({
+          title: 'Product Review',
+          text: 'Check out this product review!',
+          url: `${window.location.origin}/product/${productId}?review=${reviewId}`,
+        });
+      } else {
+        navigator.clipboard.writeText(`${window.location.origin}/product/${productId}?review=${reviewId}`);
+        alert('Review link copied to clipboard!');
+      }
+    } catch (error) {
+      console.error('Error in handleShareClick:', error);
+    }
+  };
+
+  const handleSubmitReply = async () => {
+    if (!replyText.trim() || !replyingTo) return;
+
+    try {
+      console.log(`Submitting reply to ${replyingTo.type} ${replyingTo.type === 'review' ? replyingTo.reviewId : replyingTo.replyId}: "${replyText}"`);
+
+      // Get user profile data to display proper name
+      let userName = 'User'; // fallback
+      
+      if (user) {
+        // Try to get user's full name from profiles table
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('full_name, username')
+          .eq('id', user.id)
+          .single();
+
+        if (!profileError && profileData) {
+          // Use full_name if available, otherwise username, otherwise fallback
+          userName = profileData.full_name || profileData.username || user.email?.split('@')[0] || 'User';
+        } else {
+          // Fallback to email username if profile not found
+          userName = user.email?.split('@')[0] || 'User';
+        }
+      }
+
+      // Create new reply object for database
+      const newReplyData = {
+        review_id: replyingTo.reviewId,
+        user_id: user?.id || null,
+        user_name: userName, // Use the properly fetched name
+        comment: replyText.trim(),
+        is_seller: replyingTo.isSeller || false,
+        verified_seller: replyingTo.verifiedSeller || false,
+        parent_reply_id: replyingTo.type === 'reply' ? replyingTo.replyId : null,
+        replying_to: replyingTo.type === 'reply' ? replyingTo.userName : null
+      };
+
+      // Insert into database
+      const { data: insertedReply, error } = await supabase
+        .from('reviews_replies')
+        .insert([newReplyData])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Update local state
+      setLocalReviews(prevReviews => 
+        prevReviews.map(review => {
+          if (review.id === replyingTo.reviewId) {
+            const newReply = {
+              id: insertedReply.id,
+              user_name: insertedReply.user_name || userName, // Use the same name here
+              comment: insertedReply.comment || '',
+              created_at: insertedReply.created_at,
+              is_seller: insertedReply.is_seller || false,
+              verified_seller: insertedReply.verified_seller || false,
+              likeCount: 0,
+              liked: false,
+              parent_reply_id: insertedReply.parent_reply_id,
+              replying_to: insertedReply.replying_to
+            };
+
+            return {
+              ...review,
+              replies: [...(review.replies || []), newReply],
+              reply_count: (review.reply_count || 0) + 1
+            };
+          }
+          return review;
+        })
+      );
+
+      console.log('Reply submitted successfully:', insertedReply);
+
+      setReplyText('');
+      setReplyingTo(null);
+    } catch (error) {
+      console.error('Error submitting reply:', error);
+      alert('Failed to submit reply. Please try again.');
+    }
+  };
+
+  const handleCancelReply = () => {
+    setReplyingTo(null);
+    setReplyText('');
+  };
+
+  // Calculate review statistics
+  const reviewStats = useMemo(() => {
+    const count = localReviews.length;
+    const totalRating = localReviews.reduce((sum, review) => sum + (review.rating || 0), 0);
+    const averageRating = count > 0 ? totalRating / count : 0;
+    return { count, averageRating };
+  }, [localReviews]);
+
+  // Calculate rating distribution
+  const ratingCounts = useMemo(() => {
+    const counts = [0, 0, 0, 0, 0];
+    localReviews.forEach(review => {
+      const rating = review.rating || 0;
+      if (rating >= 1 && rating <= 5) {
+        counts[5 - rating]++;
+      }
+    });
+    return counts;
+  }, [localReviews]);
+
+  const filterCategories = React.useMemo(() => [
+    {
+      id: 'rating',
+      label: 'Rating',
+      options: ['All Ratings', '5 Stars', '4 Stars', '3 Stars', '2 Stars', '1 Star']
+    },
+    {
+      id: 'media',
+      label: 'Media',
+      options: ['All Media', 'With Photos', 'With Videos', 'No Media']
+    },
+    {
+      id: 'sort',
+      label: 'Sort By',
+      options: ['All Sorts', 'Most Recent', 'Oldest First', 'Most Liked']
+    }
+  ], []);
+
+  // Initialize filters with "All" options on mount only
+  React.useEffect(() => {
+    const initialFilters: Record<string, string> = {};
+    filterCategories.forEach((filter) => {
+      initialFilters[filter.id] = filter.options[0];
+    });
+    setSelectedFilters(initialFilters);
+  }, []);
+
+  const handleFilterSelect = (filterId: string, option: string) => {
+    setSelectedFilters(prev => ({
+      ...prev,
+      [filterId]: option
+    }));
+
+    if (filterId === 'sort') {
+      if (option.toLowerCase().startsWith('all')) {
+        setSortBy('recent');
+      } else {
+        const sortMap: Record<string, string> = {
+          'Most Recent': 'recent',
+          'Oldest First': 'oldest',
+          'Most Liked': 'helpful'
+        };
+        if (sortMap[option]) {
+          setSortBy(sortMap[option]);
+        }
+      }
+    } else if (filterId === 'rating') {
+      if (option.toLowerCase().startsWith('all')) {
+        setFilterRating(0);
+      } else {
+        const ratingMap: Record<string, number> = {
+          '5 Stars': 5,
+          '4 Stars': 4,
+          '3 Stars': 3,
+          '2 Stars': 2,
+          '1 Star': 1
+        };
+        if (option in ratingMap) {
+          setFilterRating(ratingMap[option]);
+        }
+      }
+    }
+  };
+
+  const handleFilterClear = (filterId: string) => {
+    setSelectedFilters(prev => {
+      const defaultOption = filterCategories.find(cat => cat.id === filterId)?.options[0];
+      if (defaultOption) {
+        return {
+          ...prev,
+          [filterId]: defaultOption
+        };
+      }
+      return prev;
+    });
+
+    // Also reset the corresponding state
+    if (filterId === 'rating') {
+      setFilterRating(0);
+    } else if (filterId === 'sort') {
+      setSortBy('recent');
+    }
+  };
+
+  const handleClearAll = () => {
+    const resetFilters: Record<string, string> = {};
+    filterCategories.forEach(category => {
+      resetFilters[category.id] = category.options[0];
+    });
+    setSelectedFilters(resetFilters);
+    setSortBy('recent');
+    setFilterRating(0);
+  };
+
+  const handleFilterButtonClick = (filterId: string) => {
+    console.log('Filter button clicked:', filterId);
+  };
+
+  // Filter and sort reviews
+  const finalReviews = useMemo(() => {
+    let filtered = localReviews;
+
+    // Filter by rating
+    if (filterRating > 0) {
+      filtered = filtered.filter(review => (review.rating || 0) === filterRating);
+    }
+
+    // Filter by media
+    const mediaFilter = selectedFilters.media;
+    if (mediaFilter && !mediaFilter.toLowerCase().startsWith('all')) {
+      switch (mediaFilter) {
+        case 'With Photos':
+          filtered = filtered.filter(review => 
+            review.media && review.media.some(item => item.type === 'image')
+          );
           break;
-        case 'unanswered':
-          filtered = filtered.filter(q => !q.answer);
+        case 'With Videos':
+          filtered = filtered.filter(review => 
+            review.media && review.media.some(item => item.type === 'video')
+          );
           break;
-        case 'official':
-          filtered = filtered.filter(q => q.answer && q.is_official);
+        case 'No Media':
+          filtered = filtered.filter(review => 
+            !review.media || review.media.length === 0
+          );
           break;
       }
     }
 
-    // Sort questions
-    filtered = filtered.sort((a, b) => {
+    // Sort reviews
+    filtered = [...filtered].sort((a, b) => {
       switch (sortBy) {
         case 'recent':
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case 'oldest':
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
         case 'helpful':
-          return b.helpful_count - a.helpful_count;
-        case 'answered':
-          if (a.answer && !b.answer) return -1;
-          if (!a.answer && b.answer) return 1;
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        case 'unanswered':
-          if (!a.answer && b.answer) return -1;
-          if (a.answer && !b.answer) return 1;
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+          return (b.helpful_count || 0) - (a.helpful_count || 0);
         default:
           return 0;
       }
@@ -240,280 +817,352 @@ const ProductQA = ({
     }
 
     return filtered;
-  }, [questions, sortBy, filterStatus, limit]);
+  }, [localReviews, sortBy, filterRating, selectedFilters.media, limit]);
 
   const summaryStats = [
-    { value: qaStats.count, label: 'Questions', color: 'text-gray-900' },
-    { value: qaStats.answeredCount, label: 'Answered', color: 'text-green-600' },
-    { value: qaStats.count - qaStats.answeredCount, label: 'Pending', color: 'text-orange-600' },
-    { value: `${Math.round(qaStats.count > 0 ? (qaStats.answeredCount / qaStats.count) * 100 : 0)}%`, label: 'Response Rate', color: 'text-blue-600' }
+    { value: reviewStats.averageRating.toFixed(1), label: 'Average', color: 'text-yellow-600' },
+    { value: reviewStats.count, label: 'Total', color: 'text-blue-600' },
+    { value: `${Math.round((ratingCounts[0] / Math.max(reviewStats.count, 1)) * 100)}%`, label: 'Positivity', color: 'text-green-600' },
+    { value: ratingCounts[0], label: '5 Star', color: 'text-purple-600' }
   ];
 
-  const filterCategories = [
-    {
-      id: 'status',
-      label: 'Status',
-      options: ['All Status', 'Answered', 'Unanswered', 'Official Answers']
-    },
-    {
-      id: 'sort',
-      label: 'Sort By',
-      options: ['Most Recent', 'Most Helpful', 'Most Answered', 'Unanswered First']
-    }
-  ];
+  // Show skeleton loader while loading
+  if (isLoading) {
+    return <CustomerReviewsSkeleton />;
+  }
 
-  const [selectedFilters, setSelectedFilters] = useState({
-    status: 'All Status',
-    sort: 'Most Recent'
-  });
-
-  const handleFilterSelect = (filterId, option) => {
-    setSelectedFilters(prev => ({
-      ...prev,
-      [filterId]: option
-    }));
-
-    if (filterId === 'sort') {
-      const sortMap = {
-        'Most Recent': 'recent',
-        'Most Helpful': 'helpful',
-        'Most Answered': 'answered',
-        'Unanswered First': 'unanswered',
-      };
-      setSortBy(sortMap[option] || 'recent');
-    } else if (filterId === 'status') {
-      const statusMap = {
-        'All Status': 'all',
-        'Answered': 'answered',
-        'Unanswered': 'unanswered',
-        'Official Answers': 'official',
-      };
-      setFilterStatus(statusMap[option] || 'all');
-    }
-  };
-
-  const handleFilterClear = (filterId) => {
-    setSelectedFilters(prev => {
-      const newFilters = { ...prev };
-      delete newFilters[filterId];
-      return newFilters;
-    });
-  };
-
-  const handleClearAll = () => {
-    setSelectedFilters({
-      status: 'All Status',
-      sort: 'Most Recent'
-    });
-    setSortBy('recent');
-    setFilterStatus('all');
-  };
+  if (error) {
+    return (
+      <div className="w-full bg-white">
+        <div className="text-center py-8">
+          <p className="text-red-600">Error: {error}</p>
+          <Button 
+            variant="outline" 
+            className="mt-4"
+            onClick={fetchReviews}
+          >
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="w-full max-w-6xl mx-auto bg-white">
-      <SellerSummaryHeader
-        title="Questions & Answers"
-        subtitle={`${qaStats.helpfulCount} helpful votes from the community`}
-        stats={summaryStats}
-        showStats={qaStats.count > 0}
-      />
+    <ErrorBoundary>
+      <div className="w-full bg-white">
+        
 
-      <div className="mb-6">
+          <SellerSummaryHeader 
+  mode="reviews"
+  reviewsSummary={{
+    averageRating: reviewStats.averageRating,
+    totalReviews: reviewStats.count,
+    distribution: [
+      { 
+        stars: 5, 
+        count: ratingCounts[0], 
+        percentage: reviewStats.count > 0 ? Math.round((ratingCounts[0] / reviewStats.count) * 100) : 0 
+      },
+      { 
+        stars: 4, 
+        count: ratingCounts[1], 
+        percentage: reviewStats.count > 0 ? Math.round((ratingCounts[1] / reviewStats.count) * 100) : 0 
+      },
+      { 
+        stars: 3, 
+        count: ratingCounts[2], 
+        percentage: reviewStats.count > 0 ? Math.round((ratingCounts[2] / reviewStats.count) * 100) : 0 
+      },
+      { 
+        stars: 2, 
+        count: ratingCounts[3], 
+        percentage: reviewStats.count > 0 ? Math.round((ratingCounts[3] / reviewStats.count) * 100) : 0 
+      },
+      { 
+        stars: 1, 
+        count: ratingCounts[4], 
+        percentage: reviewStats.count > 0 ? Math.round((ratingCounts[4] / reviewStats.count) * 100) : 0 
+      }
+    ]
+  }}
+/>
+
         <ProductFilterBar
           filterCategories={filterCategories}
           selectedFilters={selectedFilters}
           onFilterSelect={handleFilterSelect}
           onFilterClear={handleFilterClear}
           onClearAll={handleClearAll}
+          onFilterButtonClick={handleFilterButtonClick}
         />
-      </div>
 
-      <div className="space-y-6">
-        {finalQuestions.length === 0 ? (
-          <div className="text-center py-12">
-            <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 text-lg font-medium">No questions yet</p>
-            <p className="text-gray-500 mt-1">Be the first to ask a question!</p>
-          </div>
-        ) : (
-          finalQuestions.map((qa, index) => (
-            <div key={qa.id} className="border-b border-gray-200 pb-6 last:border-b-0">
-              {/* Question Header */}
-              <div className="flex items-start gap-3 mb-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-sm font-semibold text-white">
-                  {qa.user_name.charAt(0)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-semibold text-gray-900">{qa.user_name}</span>
-                    <span className="text-gray-500 text-sm">•</span>
-                    <span className="text-gray-500 text-sm">{formatDate(qa.created_at)}</span>
-                  </div>
-                  <h3 className="text-gray-900 font-medium text-base leading-relaxed">
-                    {qa.question}
-                  </h3>
-                </div>
+        <div className="py-4">
+          {/* Reviews List */}
+          <div className="space-y-4">
+            {finalReviews.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground" style={{color: '#666'}}>No reviews found for this product.</p>
+                <p className="text-sm text-muted-foreground mt-1" style={{color: '#666'}}>Be the first to leave a review!</p>
               </div>
-
-              {/* Question Actions */}
-              <div className="flex items-center gap-4 mb-4">
-                <button className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors">
-                  <Heart className="w-4 h-4" />
-                  <span className="text-sm font-medium">{qa.helpful_count} helpful</span>
-                </button>
-                <button className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors">
-                  <MessageCircle className="w-4 h-4" />
-                  <span className="text-sm font-medium">{qa.reply_count} replies</span>
-                </button>
-              </div>
-
-              {/* Replies Section */}
-              {(qa.answer || (qa.replies && qa.replies.length > 0)) && (
-                <div className="ml-13 space-y-4">
-                  {/* Official Answer */}
-                  {qa.answer && (
-                    <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-xs font-semibold text-white flex-shrink-0">
-                          {qa.answer_author.charAt(0)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="font-semibold text-blue-900 text-sm">{qa.answer_author}</span>
-                            {qa.is_official && (
-                              <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
-                                Official
-                              </span>
-                            )}
-                            <span className="text-gray-500 text-sm">•</span>
-                            <span className="text-gray-500 text-sm">{formatDate(qa.answered_at)}</span>
-                          </div>
-                          <div className="text-gray-700 text-sm leading-relaxed">
-                            {qa.answer}
-                          </div>
-
-                          {/* Media Section */}
-                          {qa.media && qa.media.length > 0 && (
-                            <div className="mt-3">
-                              <div className="flex gap-2 overflow-x-auto">
-                                {qa.media.map((item, index) => (
-                                  <div key={index} className="flex-shrink-0">
-                                    {item.type === 'image' ? (
-                                      <img
-                                        src={item.url}
-                                        alt={item.alt}
-                                        className="w-20 h-20 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                      />
-                                    ) : (
-                                      <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center">
-                                        <span className="text-gray-600 text-xs">Video</span>
-                                      </div>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
+            ) : (
+              finalReviews.map((review) => (
+                <div key={review.id} className="border-b pb-4" style={{borderBottom: '1px solid #e5e5e5'}}>
+                  <div className="flex items-start justify-between mb-2 px-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center text-sm font-semibold" style={{backgroundColor: 'rgba(0,0,0,0.1)'}}>
+                        {review.user_name?.charAt(0) || 'U'}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{review.user_name || 'Anonymous'}</span>
+                          {review.verified_purchase && (
+                            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Verified Purchase</span>
                           )}
                         </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground" style={{color: '#666'}}>
+                          <div className="flex">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star 
+                                key={star}
+                                className={`w-3 h-3 ${star <= (review.rating || 0) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`}
+                              />
+                            ))}
+                          </div>
+                          <span>•</span>
+                          <span>{formatDate(review.created_at)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Review Comment Only - No Title */}
+                  <div className="text-foreground text-sm mb-2 px-2">
+                    <span>
+                      {expandedReviews.has(review.id) ? (review.comment || '') : truncateText(review.comment || '')}
+                      {(review.comment || '').length > 120 && (
+                        <button
+                          onClick={() => toggleReadMore(review.id)}
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium ml-1"
+                        >
+                          {expandedReviews.has(review.id) ? 'Read less' : 'Read more'}
+                        </button>
+                      )}
+                    </span>
+                  </div>
+
+                  {/* Media Section */}
+                  {review.media && review.media.length > 0 && (
+                    <div className="px-2">
+                      <div className="flex gap-2 overflow-x-auto pb-2">
+                        {review.media.map((item, index) => (
+                          <div key={index} className="flex-shrink-0 relative">
+                            {item.type === 'image' ? (
+                              <img
+                                src={item.url}
+                                alt={item.alt}
+                                className="w-24 h-24 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                onClick={() => window.open(item.url, '_blank')}
+                              />
+                            ) : item.type === 'video' ? (
+                              <div 
+                                className="w-24 h-24 relative cursor-pointer hover:opacity-90 transition-opacity rounded-lg overflow-hidden"
+                                onClick={() => window.open(item.url, '_blank')}
+                              >
+                                <img
+                                  src={item.thumbnail}
+                                  alt={item.alt}
+                                  className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+                                  <Play className="w-6 h-6 text-white fill-white" />
+                                </div>
+                              </div>
+                            ) : null}
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
 
-                  {/* Regular Replies */}
-                  {qa.replies && qa.replies.length > 0 && (
-                    <div className="space-y-3">
-                      {(expandedReplies.has(qa.id) ? qa.replies : qa.replies.slice(0, 2)).map((reply) => (
-                        <div key={reply.id} className="flex items-start gap-3">
-                          <div 
-                            className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 ${
-                              reply.is_seller 
-                                ? 'bg-green-500 text-white' 
-                                : 'bg-gray-300 text-gray-700'
-                            }`}
-                          >
-                            {reply.user_name.charAt(0)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium text-gray-900 text-sm">{reply.user_name}</span>
-                              {reply.is_seller && (
-                                <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
-                                  Seller
-                                </span>
-                              )}
-                              <span className="text-gray-500 text-sm">•</span>
-                              <span className="text-gray-500 text-sm">{formatDate(reply.created_at)}</span>
+                  {/* Facebook-style Engagement Section */}
+                  <EngagementSection
+                    likeCount={review.likeCount || 0}
+                    commentCount={review.commentCount || 0}
+                    shareCount={review.shareCount || 0}
+                    onComment={() => handleCommentClick(review.id)}
+                    onShare={() => handleShareClick(review.id)}
+                  />
+
+                  {/* Replies Section - Flat structure like TikTok */}
+                  {review.replies && review.replies.length > 0 && (
+                    <div className="mt-4 ml-6 space-y-3 px-2">
+                      {(expandedReplies.has(review.id) ? review.replies : review.replies.slice(0, 2)).map((reply) => (
+                        <div key={reply.id} className="border-l-2 border-gray-200 pl-4">
+                          <div className="flex items-start gap-2">
+                            <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center text-xs font-semibold" style={{backgroundColor: reply.is_seller ? '#3b82f6' : 'rgba(0,0,0,0.1)', color: reply.is_seller ? 'white' : 'black'}}>
+                              {reply.user_name?.charAt(0) || 'U'}
                             </div>
-                            <p className="text-gray-700 text-sm leading-relaxed">
-                              {reply.comment}
-                            </p>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-sm">{reply.user_name || 'Anonymous'}</span>
+                                {reply.is_seller && (
+                                  <div className="flex items-center gap-1">
+                                    {reply.verified_seller && <VerificationBadge size="sm" />}
+                                    <span className="text-xs text-gray-500">•</span>
+                                    <span className="font-bold text-sm text-orange-500">Seller</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Show who this reply is replying to */}
+                              {reply.replying_to && (
+                                <div className="text-xs text-gray-500 mt-1">
+                                  Replying to <span className="font-medium">{reply.replying_to}</span>
+                                </div>
+                              )}
+
+                              <div className="text-sm text-foreground mt-1">
+                                {reply.comment}
+                              </div>
+
+                              {/* TikTok-style Like and Reply Buttons with Date - PERFECT ALIGNMENT */}
+                              <div className="flex items-center gap-4 mt-2">
+                                {/* Heart Button with Counter */}
+                                <button
+                                  onClick={() => handleLikeReply(review.id, reply.id)}
+                                  className="flex items-center gap-1.5 text-gray-600 hover:text-red-600 text-sm font-medium transition-colors"
+                                  style={{ 
+                                    background: 'none',
+                                    border: 'none',
+                                    padding: 0,
+                                    cursor: 'pointer',
+                                    font: 'inherit',
+                                    lineHeight: '1'
+                                  }}
+                                >
+                                  <Heart 
+                                    className={`w-4 h-4 flex-shrink-0 ${reply.liked ? 'fill-red-600 text-red-600' : ''}`}
+                                  />
+                                  <span style={{ lineHeight: '1' }}>{reply.likeCount || 0}</span>
+                                </button>
+
+                                {/* Reply Button */}
+                                <button
+                                  onClick={() => handleReplyToReply(review.id, reply.id, reply.user_name || 'User')}
+                                  className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                                  style={{ 
+                                    background: 'none',
+                                    border: 'none',
+                                    padding: 0,
+                                    cursor: 'pointer',
+                                    font: 'inherit',
+                                    lineHeight: '1'
+                                  }}
+                                >
+                                  Reply
+                                </button>
+
+                                {/* Date */}
+                                <span 
+                                  className="text-sm text-muted-foreground font-medium"
+                                  style={{ 
+                                    color: '#666',
+                                    lineHeight: '1'
+                                  }}
+                                >
+                                  {formatDateForReply(reply.created_at)}
+                                </span>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       ))}
 
-                      {qa.replies.length > 2 && (
+                      {review.replies.length > 2 && (
                         <button
-                          onClick={() => toggleShowMoreReplies(qa.id)}
-                          className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors ml-11"
+                          onClick={() => toggleShowMoreReplies(review.id)}
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium ml-4 transition-colors"
                         >
-                          {expandedReplies.has(qa.id)
-                            ? 'Show fewer replies'
-                            : `Show ${qa.replies.length - 2} more replies`
+                          {expandedReplies.has(review.id) 
+                            ? 'Show fewer replies' 
+                            : `Show ${review.replies.length - 2} more replies`
                           }
                         </button>
                       )}
                     </div>
                   )}
                 </div>
-              )}
-
-              {/* Insert SearchInfoComponent after the second question */}
-              {index === 1 && (
-                <div className="mt-6">
-                  <SearchInfoComponent productId={productId} />
-                </div>
-              )}
-            </div>
-          ))
-        )}
-      </div>
-
-      {limit && questions.length > limit && (
-        <div className="text-center mt-8">
-          <button className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-gray-700 font-medium">
-            View All {questions.length} Questions
-          </button>
-        </div>
-      )}
-
-      {/* Sticky Question Input */}
-      <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 py-4 mt-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-sm font-semibold text-gray-600">
-              ?
-            </div>
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                value={questionText}
-                onChange={(e) => setQuestionText(e.target.value)}
-                placeholder="Ask a question about this product..."
-                className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                onKeyPress={(e) => e.key === 'Enter' && handleSubmitQuestion()}
-              />
-              <button
-                onClick={handleSubmitQuestion}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-blue-600 transition-colors"
-              >
-                <Send className="w-5 h-5" />
-              </button>
-            </div>
+              ))
+            )}
           </div>
         </div>
+
+        {limit && localReviews.length > limit && (
+          <Button 
+            variant="outline" 
+            className="w-full mt-4"
+            onClick={() => window.location.href = `/product/${productId}/reviews`}
+          >
+            View All {localReviews.length} Reviews
+          </Button>
+        )}
+
+        {/* Enhanced Conditional Reply Bar - Shows who you're replying to */}
+        {replyingTo && itemBeingReplied && (
+          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-3 shadow-lg z-40">
+            <div className="max-w-4xl mx-auto">
+              {/* User info header */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">Replying to</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center text-xs font-semibold" style={{backgroundColor: 'rgba(0,0,0,0.1)'}}>
+                      {replyingTo.userName?.charAt(0) || 'U'}
+                    </div>
+                    <span className="text-sm font-medium">{replyingTo.userName || 'User'}</span>
+                    {replyingTo.isSeller && (
+                      <div className="flex items-center gap-1">
+                        {replyingTo.verifiedSeller && <VerificationBadge size="sm" />}
+                        <span className="text-xs text-gray-500">•</span>
+                        <span className="font-bold text-sm text-orange-500">Seller</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <button 
+                  onClick={handleCancelReply}
+                  className="text-gray-400 hover:text-gray-600 text-lg font-bold"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Reply input */}
+              <div className="relative">
+                <input
+                  ref={(el) => el && !replyText.trim() && el.focus()}
+                  type="text"
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  placeholder="Type your reply here..."
+                  className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-full bg-gray-50 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  onKeyPress={(e) => e.key === 'Enter' && handleSubmitReply()}
+                />
+                <button 
+                  onClick={handleSubmitReply}
+                  disabled={!replyText.trim()}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-    </div>
+    </ErrorBoundary>
   );
 };
 
-export default ProductQA;
+export default CustomerReviews;
