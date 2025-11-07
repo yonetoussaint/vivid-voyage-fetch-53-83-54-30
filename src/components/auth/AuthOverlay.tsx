@@ -1,6 +1,15 @@
 import React from 'react';
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { useAuth } from '@/contexts/auth/AuthContext';
+import {
+  MainLoginScreenSkeleton,
+  EmailAuthScreenSkeleton,
+  VerificationCodeScreenSkeleton,
+  PasswordAuthScreenSkeleton,
+  ResetPasswordScreenSkeleton,
+  AccountCreationScreenSkeleton,
+  SuccessScreenSkeleton
+} from './AuthSkeletonLoaders';
 
 const AuthOverlay: React.FC = () => {
   const {
@@ -63,7 +72,7 @@ const AuthOverlay: React.FC = () => {
     switch (currentScreen) {
       case 'main':
         return (
-          <React.Suspense fallback={<div className="p-4">Loading...</div>}>
+          <React.Suspense fallback={<MainLoginScreenSkeleton />}>
             <MainLoginScreen
               selectedLanguage={selectedLanguage}
               setSelectedLanguage={setSelectedLanguage}
@@ -75,7 +84,7 @@ const AuthOverlay: React.FC = () => {
         );
       case 'email':
         return (
-          <React.Suspense fallback={<div className="p-4">Loading...</div>}>
+          <React.Suspense fallback={<EmailAuthScreenSkeleton />}>
             <EmailAuthScreen
               onBack={handleBackToMain}
               selectedLanguage={selectedLanguage}
@@ -91,7 +100,7 @@ const AuthOverlay: React.FC = () => {
         );
       case 'verification':
         return (
-          <React.Suspense fallback={<div className="p-4">Loading...</div>}>
+          <React.Suspense fallback={<VerificationCodeScreenSkeleton />}>
             <VerificationCodeScreen
               email={userEmail}
               onBack={handleBackFromVerification}
@@ -103,7 +112,7 @@ const AuthOverlay: React.FC = () => {
         );
       case 'password':
         return (
-          <React.Suspense fallback={<div className="p-4">Loading...</div>}>
+          <React.Suspense fallback={<PasswordAuthScreenSkeleton />}>
             <PasswordAuthScreen
               email={userEmail}
               onBack={handleBackFromPassword}
@@ -116,7 +125,7 @@ const AuthOverlay: React.FC = () => {
         );
       case 'reset-password':
         return (
-          <React.Suspense fallback={<div className="p-4">Loading...</div>}>
+          <React.Suspense fallback={<ResetPasswordScreenSkeleton />}>
             <ResetPasswordScreen
               onBack={() => setCurrentScreen('password')}
               onResetSuccess={(email) => {
@@ -130,7 +139,7 @@ const AuthOverlay: React.FC = () => {
         );
       case 'otp-reset':
         return (
-          <React.Suspense fallback={<div className="p-4">Loading...</div>}>
+          <React.Suspense fallback={<VerificationCodeScreenSkeleton />}>
             <OTPResetScreen
               email={userEmail}
               onBack={() => setCurrentScreen('reset-password')}
@@ -144,7 +153,7 @@ const AuthOverlay: React.FC = () => {
         );
       case 'new-password':
         return (
-          <React.Suspense fallback={<div className="p-4">Loading...</div>}>
+          <React.Suspense fallback={<PasswordAuthScreenSkeleton />}>
             <NewPasswordScreen
               email={userEmail}
               otp={resetOTP}
@@ -156,7 +165,7 @@ const AuthOverlay: React.FC = () => {
         );
       case 'account-creation':
         return (
-          <React.Suspense fallback={<div className="p-4">Loading...</div>}>
+          <React.Suspense fallback={<AccountCreationScreenSkeleton />}>
             <AccountCreationScreen
               email={userEmail}
               onBack={handleBackFromAccountCreation}
@@ -167,7 +176,7 @@ const AuthOverlay: React.FC = () => {
         );
       case 'success':
         return (
-          <React.Suspense fallback={<div className="p-4">Loading...</div>}>
+          <React.Suspense fallback={<SuccessScreenSkeleton />}>
             <SuccessScreen
               email={userEmail}
               onContinue={handleContinueToApp}
