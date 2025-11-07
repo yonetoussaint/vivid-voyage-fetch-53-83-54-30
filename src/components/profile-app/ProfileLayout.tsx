@@ -217,48 +217,76 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
         <main>
           {/* User Info Section - Only show on dashboard tab */}
           {isDashboardTab && (
-            <div ref={userInfoRef} className="w-full bg-white border-b">
-              <div className="px-4 py-4">
+            <div ref={userInfoRef} className="w-full bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 border-b border-orange-600">
+              <div className="px-4 py-5">
                 <div className="flex items-center gap-4">
-                  {/* Profile Picture */}
-                  <Avatar className="w-16 h-16 flex-shrink-0">
-                    <AvatarImage src={mockUser.avatar_url} />
-                    <AvatarFallback>
-                      {mockUser.full_name.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
+                  {/* Profile Picture with border */}
+                  <div className="relative flex-shrink-0">
+                    <Avatar className="w-20 h-20 border-4 border-white shadow-lg">
+                      <AvatarImage src={mockUser.avatar_url} />
+                      <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-orange-500 text-white text-xl font-bold">
+                        {mockUser.full_name.split(' ').map(n => n[0]).join('')}
+                      </AvatarFallback>
+                    </Avatar>
+                    {isAuthenticated && mockUser.verified && (
+                      <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-green-500 rounded-full flex items-center justify-center border-2 border-white shadow-md">
+                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
 
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-1">
-                      <div className="w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center">
-                        <User className="w-4 h-4 text-white" />
-                      </div>
-                      <h1 className="text-xl font-bold text-gray-900">
+                    {/* Name and badges */}
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      <h1 className="text-xl font-bold text-white drop-shadow-md">
                         {isAuthenticated ? mockUser.full_name : 'Guest User'}
                       </h1>
-                      {isAuthenticated && mockUser.verified && (
-                        <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        </div>
+                      {isAuthenticated && (
+                        <>
+                          <span className="px-2.5 py-0.5 bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 text-xs font-bold rounded-full shadow-sm border border-yellow-600">
+                            ⭐ VIP
+                          </span>
+                          <span className="px-2.5 py-0.5 bg-white/90 backdrop-blur-sm text-orange-600 text-xs font-semibold rounded-full shadow-sm">
+                            🎖️ Verified
+                          </span>
+                        </>
                       )}
                     </div>
-                    <p className="text-sm text-gray-500 mb-2">
-                      {isAuthenticated ? mockUser.email : 'Sign in to access your profile'}
+                    
+                    {/* Email or prompt */}
+                    <p className="text-sm text-white/90 mb-2.5 drop-shadow">
+                      {isAuthenticated ? mockUser.email : 'Sign in to unlock exclusive deals'}
                     </p>
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                    
+                    {/* Stats/badges row */}
+                    <div className="flex items-center gap-3 flex-wrap">
                       {isAuthenticated ? (
                         <>
-                          <span>👤 Member since {mockUser.member_since}</span>
-                          <span>📊 Profile Dashboard</span>
-                          {mockUser.verified && <span>✅ Verified Account</span>}
+                          <div className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-lg text-xs text-white font-medium border border-white/30">
+                            <span className="opacity-90">📅 Since </span>
+                            <span className="font-bold">{mockUser.member_since}</span>
+                          </div>
+                          <div className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-lg text-xs text-white font-medium border border-white/30">
+                            <span className="opacity-90">💎 </span>
+                            <span className="font-bold">Premium Member</span>
+                          </div>
+                          <div className="px-3 py-1 bg-gradient-to-r from-green-400 to-emerald-500 rounded-lg text-xs text-white font-bold shadow-sm">
+                            <span>🎁 Free Shipping</span>
+                          </div>
                         </>
                       ) : (
                         <>
-                          <span>🔒 Secure Login</span>
-                          <span>📱 Access All Features</span>
-                          <span>🚀 Fast & Easy</span>
+                          <div className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-lg text-xs text-white font-medium border border-white/30">
+                            <span>🔥 Hot Deals</span>
+                          </div>
+                          <div className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-lg text-xs text-white font-medium border border-white/30">
+                            <span>💰 Best Prices</span>
+                          </div>
+                          <div className="px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-lg text-xs text-orange-900 font-bold shadow-sm">
+                            <span>⚡ Flash Sale</span>
+                          </div>
                         </>
                       )}
                     </div>
