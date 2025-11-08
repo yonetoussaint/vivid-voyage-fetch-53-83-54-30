@@ -46,18 +46,17 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
   // Extract current tab from pathname
   const getCurrentTab = () => {
     const path = location.pathname.split('/profile/')[1];
-    return path || 'dashboard';
+    return path || 'orders'; // Default to 'orders' instead of 'dashboard'
   };
 
   const [activeTab, setActiveTab] = useState(getCurrentTab());
 
-  // Check if we're on the dashboard tab
-  const isDashboardTab = location.pathname === '/profile/dashboard' || 
-                        location.pathname === '/profile' ||
-                        location.pathname.endsWith('/profile/');
+  // Check if we're on the orders tab (which is now the first/default tab)
+  const isOrdersTab = location.pathname === '/profile/orders' || 
+                     location.pathname === '/profile' ||
+                     location.pathname.endsWith('/profile/');
 
   const navigationItems = [
-    { id: 'dashboard', name: 'Dashboard', href: '/profile/dashboard', icon: LayoutDashboard },
     { id: 'orders', name: 'Orders', href: '/profile/orders', icon: ShoppingCart },
     { id: 'wishlist', name: 'Wishlist', href: '/profile/wishlist', icon: Heart },
     { id: 'addresses', name: 'Addresses', href: '/profile/addresses', icon: MapPin },
@@ -150,8 +149,8 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
       // Get current dimensions
       const currentTabsHeight = tabsRef.current.offsetHeight;
 
-      // For non-dashboard tabs, we don't have user info, so use a smaller threshold
-      const userInfoHeight = isDashboardTab ? (userInfoRef.current?.offsetHeight || 0) : 0;
+      // For non-orders tabs, we don't have user info, so use a smaller threshold
+      const userInfoHeight = isOrdersTab ? (userInfoRef.current?.offsetHeight || 0) : 0;
 
       // Update tabs height if it changed
       if (currentTabsHeight !== tabsHeight) {
@@ -163,8 +162,8 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
       setScrollProgress(calculatedProgress);
 
       // Determine if tabs should be sticky
-      // For non-dashboard tabs, always make tabs sticky since there's no user info
-      const shouldBeSticky = !isDashboardTab || scrollY >= userInfoHeight;
+      // For non-orders tabs, always make tabs sticky since there's no user info
+      const shouldBeSticky = !isOrdersTab || scrollY >= userInfoHeight;
 
       // Only update state if it changed
       if (shouldBeSticky !== isTabsSticky) {
@@ -191,7 +190,7 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
         cancelAnimationFrame(rafId);
       }
     };
-  }, [isTabsSticky, tabsHeight, headerHeight, isDashboardTab]);
+  }, [isTabsSticky, tabsHeight, headerHeight, isOrdersTab]);
 
   // Determine header mode based on scroll progress
   const isScrolledState = scrollProgress > 0.3;
@@ -222,8 +221,8 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
         }}
       >
         <main>
-          {/* User Info Section - Only show on dashboard tab */}
-          {isDashboardTab && (
+          {/* User Info Section - Only show on orders tab (which is now the first tab) */}
+          {isOrdersTab && (
             <div ref={userInfoRef} className="w-full bg-white border-b">
               <div className="px-4 py-4">
                 <div className="flex items-center gap-4">
@@ -447,7 +446,7 @@ const ProfileLoginPage: React.FC<ProfileLoginPageProps> = ({ onLogin, onSignup }
                     Sign In to Continue
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
-                  
+
                   <Button
                     onClick={onSignup}
                     variant="outline"
