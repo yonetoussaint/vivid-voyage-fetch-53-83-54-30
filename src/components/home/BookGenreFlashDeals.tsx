@@ -175,50 +175,20 @@ export default function BookGenreFlashDeals({
   };
 
   // Default marketing product info renderer
-// Update the renderMarketingProduct function:
-const renderMarketingProduct = (product: Product) => (
-  <div className="relative">
-    {/* Status Badge - Top Left */}
-    {showStatusBadge && product.status && (
-      <div className="absolute top-2 left-2 z-10">
-        <Badge
-          variant="secondary"
-          className={`${getStatusColor(product.status)} text-xs`}
-        >
-          {product.status}
-        </Badge>
+  const renderMarketingProductInfo = (product: Product) => (
+    <div className="mt-2 space-y-1">
+      <div className="flex justify-between text-xs text-gray-600">
+        <span>Clicks: {product.clicks || 0}</span>
       </div>
-    )}
-    
-    {/* Views with Eye Icon - Top Right */}
-    {showMarketingMetrics && product.views !== undefined && (
-      <div className="absolute top-2 right-2 z-10 flex items-center gap-1 bg-black/80 text-white text-xs px-2 py-1 rounded-md">
-        <Eye className="w-3 h-3" />
-        <span className="font-medium">{product.views}</span>
-      </div>
-    )}
-  </div>
-);
-
-  // Default marketing product renderer
-  const renderMarketingProduct = (product: Product) => (
-    <div className="relative">
-      {showStatusBadge && product.status && (
-        <div className="absolute top-2 left-2 z-10">
-          <Badge
-            variant="secondary"
-            className={`${getStatusColor(product.status)} text-xs`}
-          >
-            {product.status}
-          </Badge>
-        </div>
-      )}
-      
-      {/* Views with Eye Icon - Top Right */}
-      {showMarketingMetrics && product.views !== undefined && (
-        <div className="absolute top-2 right-2 z-10 flex items-center gap-1 bg-black/70 text-white text-xs px-2 py-1 rounded-md">
-          <Eye className="w-3 h-3" />
-          <span>{product.views}</span>
+      {product.clicks && product.clicks > 0 && (
+        <div className="mt-1">
+          <div className="flex justify-between text-xs mb-1">
+            <span>CTR: {((product.clicks / (product.views || 1)) * 100).toFixed(1)}%</span>
+          </div>
+          <Progress
+            value={product.clicks > 0 ? (product.clicks / (product.views || 1)) * 100 : 0}
+            className="h-1.5"
+          />
         </div>
       )}
     </div>
@@ -563,14 +533,32 @@ const renderMarketingProduct = (product: Product) => (
                           }}
                         />
 
-                        {/* Custom product render section */}
-                        {customProductRender ? customProductRender(product) : 
-                         showMarketingMetrics ? renderMarketingProduct(product) : null}
+                        {/* Status Badge - Top Left */}
+                        {showStatusBadge && product.status && (
+                          <div className="absolute top-2 left-2 z-20">
+                            <Badge
+                              variant="secondary"
+                              className={`${getStatusColor(product.status)} text-xs`}
+                            >
+                              {product.status}
+                            </Badge>
+                          </div>
+                        )}
+
+                        {/* Views with Eye Icon - Top Right */}
+                        {showMarketingMetrics && product.views !== undefined && (
+                          <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/80 text-white text-xs px-2 py-1 rounded-md">
+                            <Eye className="w-3 h-3" />
+                            <span className="font-medium">{product.views}</span>
+                          </div>
+                        )}
 
                         {/* Barred price badge - replaces discount badge */}
                         {product.discount_price && product.discount_price < product.price && (
-                          <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 font-medium z-10">
-                            <span className="line-through">${Number(product.price).toFixed(2)}</span>
+                          <div className="absolute top-2 left-2 z-10">
+                            <div className="bg-red-500 text-white text-xs px-2 py-1 font-medium rounded-md">
+                              <span className="line-through">${Number(product.price).toFixed(2)}</span>
+                            </div>
                           </div>
                         )}
 
