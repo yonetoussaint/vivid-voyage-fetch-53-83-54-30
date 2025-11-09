@@ -9,6 +9,7 @@ import { useSellerByUserId } from "@/hooks/useSellerByUserId";
 import { supabase } from "@/integrations/supabase/client";
 import SellerSummaryHeader from "@/components/seller-app/SellerSummaryHeader";
 import ProductFilterBar from "@/components/home/ProductFilterBar";
+import PriceInfo from "@/components/product/PriceInfo";
 
 interface Product {
   id: string;
@@ -177,6 +178,7 @@ export default function BookGenreFlashDeals({
   const isLoading = allProductsLoading && !externalProducts;
 
   const [timeLeft, setTimeLeft] = useState({
+    days: 0,
     hours: 0,
     minutes: 0,
     seconds: 0
@@ -206,31 +208,32 @@ export default function BookGenreFlashDeals({
   }, [allProducts]);
 
   // Calculate expiry time left for each product
-  const [expiryTimes, setExpiryTimes] = useState<Record<string, { hours: number; minutes: number; seconds: number }>>({});
+  const [expiryTimes, setExpiryTimes] = useState<Record<string, { days: number; hours: number; minutes: number; seconds: number }>>({});
 
   // Calculate time remaining for flash deals
   useEffect(() => {
     const calculateTimeLeft = () => {
-      if (!allProducts || allProducts.length === 0) return { hours: 0, minutes: 0, seconds: 0 };
+      if (!allProducts || allProducts.length === 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
 
       const latestFlashStart = allProducts.reduce((latest, product) => {
         const startTime = new Date(product.flash_start_time || '').getTime();
         return startTime > latest ? startTime : latest;
       }, 0);
 
-      if (latestFlashStart === 0) return { hours: 0, minutes: 0, seconds: 0 };
+      if (latestFlashStart === 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
 
       const endTime = latestFlashStart + (24 * 60 * 60 * 1000);
       const now = Date.now();
       const difference = endTime - now;
 
-      if (difference <= 0) return { hours: 0, minutes: 0, seconds: 0 };
+      if (difference <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
 
-      const hours = Math.floor(difference / (1000 * 60 * 60));
+      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((difference % (1000 * 60)) / 1000);
 
-      return { hours, minutes, seconds };
+      return { days, hours, minutes, seconds };
     };
 
     const timer = setInterval(() => {
@@ -245,7 +248,7 @@ export default function BookGenreFlashDeals({
   // Calculate expiry times for each product
   useEffect(() => {
     const calculateExpiryTimes = () => {
-      const newExpiryTimes: Record<string, { hours: number; minutes: number; seconds: number }> = {};
+      const newExpiryTimes: Record<string, { days: number; hours: number; minutes: number; seconds: number }> = {};
       
       allProducts.forEach(product => {
         const expiryDate = product[expiryField as keyof Product] as string;
@@ -255,12 +258,13 @@ export default function BookGenreFlashDeals({
           const difference = endTime - now;
 
           if (difference > 0) {
-            const hours = Math.floor(difference / (1000 * 60 * 60));
+            const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-            newExpiryTimes[product.id] = { hours, minutes, seconds };
+            newExpiryTimes[product.id] = { days, hours, minutes, seconds };
           } else {
-            newExpiryTimes[product.id] = { hours: 0, minutes: 0, seconds: 0 };
+            newExpiryTimes[product.id] = { days: 0, hours: 0, minutes: 0, seconds: 0 };
           }
         }
       });
@@ -281,10 +285,10 @@ export default function BookGenreFlashDeals({
   const formattedCountdown = React.useMemo(() => {
     if (customCountdown) return customCountdown;
 
-    const totalSeconds = timeLeft.hours * 3600 + timeLeft.minutes * 60 + timeLeft.seconds;
-    if (totalSeconds <= 0) return "00:00:00";
+    const totalSeconds = timeLeft.days * 86400 + timeLeft.hours * 3600 + timeLeft.minutes * 60 + timeLeft.seconds;
+    if (totalSeconds <= 0) return "00:00:00:00";
 
-    return `${timeLeft.hours.toString().padStart(2, "0")}:${timeLeft.minutes.toString().padStart(2, "0")}:${timeLeft.seconds.toString().padStart(2, "0")}`;
+    return `${timeLeft.days.toString().padStart(2, "0")}:${timeLeft.hours.toString().padStart(2, "0")}:${timeLeft.minutes.toString().padStart(2, "0")}:${timeLeft.seconds.toString().padStart(2, "0")}`;
   }, [timeLeft, customCountdown]);
 
   // Process products with memoization to prevent infinite re-renders
@@ -467,7 +471,7 @@ export default function BookGenreFlashDeals({
               {processedProducts.slice(0, displayCount).map((product) => {
                 const productExpiryTime = expiryTimes[product.id];
                 const hasExpiryTimer = showExpiryTimer && productExpiryTime && 
-                  (productExpiryTime.hours > 0 || productExpiryTime.minutes > 0 || productExpiryTime.seconds > 0);
+                  (productExpiryTime.days > 0 || productExpiryTime.hours > 0 || productExpiryTime.minutes > 0 || productExpiryTime.seconds > 0);
 
                 return (
                   <div key={product.id} className="bg-white border border-gray-200 overflow-hidden">
@@ -507,19 +511,19 @@ export default function BookGenreFlashDeals({
                             <Timer className="w-3 h-3" />
                             <span className="font-medium">Ends in</span>
                             <span className="font-mono font-bold">
+                              {productExpiryTime.days.toString().padStart(2, "0")}:
                               {productExpiryTime.hours.toString().padStart(2, "0")}:
-                              {productExpiryTime.minutes.toString().padStart(2, "0")}:
-                              {productExpiryTime.seconds.toString().padStart(2, "0")}
+                              {productExpiryTime.minutes.toString().padStart(2, "0")}
                             </span>
                           </div>
                         )}
 
                         {/* Timer for flash deals */}
-                        {!hasExpiryTimer && (timeLeft.hours > 0 || timeLeft.minutes > 0 || timeLeft.seconds > 0) ? (
+                        {!hasExpiryTimer && (timeLeft.days > 0 || timeLeft.hours > 0 || timeLeft.minutes > 0 || timeLeft.seconds > 0) ? (
                           <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs flex items-center justify-center py-2 gap-1 z-10">
                             <Timer className="w-3 h-3" />
                             <span className="font-mono">
-                              {[timeLeft.hours, timeLeft.minutes, timeLeft.seconds].map((unit, i) => (
+                              {[timeLeft.days, timeLeft.hours, timeLeft.minutes].map((unit, i) => (
                                 <span key={i}>
                                   {unit.toString().padStart(2, "0")}
                                   {i < 2 && <span className="mx-0.5">:</span>}
@@ -530,21 +534,18 @@ export default function BookGenreFlashDeals({
                         ) : null}
                       </div>
 
-                      <div className="p-3 space-y-2">
-                        <h4 className="text-sm font-medium line-clamp-2 text-gray-900 leading-tight">
+                      <div className="p-1 space-y-2">
+                        <h4 className="text-xs font-medium line-clamp-2 text-gray-900 leading-tight">
                           {product.name}
                         </h4>
 
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-red-600 font-bold text-base">
-                            ${Number(product.discount_price || product.price).toFixed(2)}
-                          </span>
-                          {product.discount_price && (
-                            <span className="text-xs text-gray-400 line-through">
-                              ${Number(product.price).toFixed(2)}
-                            </span>
-                          )}
-                        </div>
+                        {/* Replace inline price with PriceInfo component */}
+                        <PriceInfo 
+                          price={product.discount_price || product.price}
+                          originalPrice={product.discount_price ? product.price : undefined}
+                          size="sm"
+                          showCurrencyBadge={true}
+                        />
 
                         {/* Custom product info section */}
                         {customProductInfo ? (
