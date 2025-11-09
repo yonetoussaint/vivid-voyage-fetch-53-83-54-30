@@ -54,6 +54,9 @@ interface GenreFlashDealsProps {
   // New custom render props
   customProductRender?: (product: Product) => React.ReactNode;
   customProductInfo?: (product: Product) => React.ReactNode;
+  // Expiry timer props
+  showExpiryTimer?: boolean;
+  expiryField?: string;
 }
 
 interface SummaryStats {
@@ -86,6 +89,8 @@ export default function BookGenreFlashDeals({
   summaryMode = 'products',
   customProductRender,
   customProductInfo,
+  showExpiryTimer = false,
+  expiryField = 'expiry'
 }: GenreFlashDealsProps) {
   const [displayCount, setDisplayCount] = useState(8);
 
@@ -177,28 +182,8 @@ export default function BookGenreFlashDeals({
     seconds: 0
   });
 
-  // Calculate summary statistics
-  const summaryStats: SummaryStats = React.useMemo(() => {
-    const totalProducts = allProducts.length;
-    const inStock = allProducts.filter(product => (product.inventory || 0) > 0).length;
-    const outOfStock = allProducts.filter(product => (product.inventory || 0) === 0).length;
-    const onDiscount = allProducts.filter(product => product.discount_price && product.discount_price < product.price).length;
-    const totalValue = allProducts.reduce((sum, product) => sum + (product.discount_price || product.price), 0);
-    const lowStock = allProducts.filter(product => (product.inventory || 0) > 0 && (product.inventory || 0) <= 10).length;
-
-    // Calculate unique categories count
-    const categories = new Set(allProducts.map(product => product.category).filter(Boolean)).size;
-
-    return {
-      totalProducts,
-      inStock,
-      outOfStock,
-      onDiscount,
-      totalValue,
-      lowStock,
-      categories
-    };
-  }, [allProducts]);
+  // Calculate expiry time left for each product
+  const [expiryTimes, setExpiryTimes] = useState<Record<string, { hours: number; minutes: number; seconds: number }>>({});
 
   // Calculate time remaining for flash deals
   useEffect(() => {
@@ -233,6 +218,41 @@ export default function BookGenreFlashDeals({
 
     return () => clearInterval(timer);
   }, [allProducts]);
+
+  // Calculate expiry times for each product
+  useEffect(() => {
+    const calculateExpiryTimes = () => {
+      const newExpiryTimes: Record<string, { hours: number; minutes: number; seconds: number }> = {};
+      
+      allProducts.forEach(product => {
+        const expiryDate = product[expiryField as keyof Product] as string;
+        if (expiryDate) {
+          const endTime = new Date(expiryDate).getTime();
+          const now = Date.now();
+          const difference = endTime - now;
+
+          if (difference > 0) {
+            const hours = Math.floor(difference / (1000 * 60 * 60));
+            const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+            newExpiryTimes[product.id] = { hours, minutes, seconds };
+          } else {
+            newExpiryTimes[product.id] = { hours: 0, minutes: 0, seconds: 0 };
+          }
+        }
+      });
+
+      return newExpiryTimes;
+    };
+
+    const timer = setInterval(() => {
+      setExpiryTimes(calculateExpiryTimes());
+    }, 1000);
+
+    setExpiryTimes(calculateExpiryTimes());
+
+    return () => clearInterval(timer);
+  }, [allProducts, expiryField]);
 
   // Format countdown for SectionHeader
   const formattedCountdown = React.useMemo(() => {
@@ -421,89 +441,108 @@ export default function BookGenreFlashDeals({
         ) : processedProducts.length > 0 ? (
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-2">
-              {processedProducts.slice(0, displayCount).map((product) => (
-                <div key={product.id} className="bg-white border border-gray-200 overflow-hidden">
-                  <Link
-                    to={`/product/${product.id}`}
-                    onClick={() => trackProductView(product.id)}
-                    className="block"
-                  >
-                    <div className="relative aspect-square overflow-hidden bg-gray-50">
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                        style={{
-                          objectFit: 'cover',
-                          aspectRatio: '1/1'
-                        }}
-                        onError={(e) => {
-                          e.currentTarget.src = "https://placehold.co/300x300?text=No+Image";
-                        }}
-                      />
+              {processedProducts.slice(0, displayCount).map((product) => {
+                const productExpiryTime = expiryTimes[product.id];
+                const hasExpiryTimer = showExpiryTimer && productExpiryTime && 
+                  (productExpiryTime.hours > 0 || productExpiryTime.minutes > 0 || productExpiryTime.seconds > 0);
 
-                      {/* Custom product render section */}
-                      {customProductRender && customProductRender(product)}
+                return (
+                  <div key={product.id} className="bg-white border border-gray-200 overflow-hidden">
+                    <Link
+                      to={`/product/${product.id}`}
+                      onClick={() => trackProductView(product.id)}
+                      className="block"
+                    >
+                      <div className="relative aspect-square overflow-hidden bg-gray-50">
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          style={{
+                            objectFit: 'cover',
+                            aspectRatio: '1/1'
+                          }}
+                          onError={(e) => {
+                            e.currentTarget.src = "https://placehold.co/300x300?text=No+Image";
+                          }}
+                        />
 
-                      {/* Only show discount badge - removed bundle, shipping, loyalty badges */}
-                      {product.discountPercentage > 0 && (
-                        <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 font-medium z-10">
-                          -{product.discountPercentage}%
-                        </div>
-                      )}
+                        {/* Custom product render section */}
+                        {customProductRender && customProductRender(product)}
 
-                      {/* Timer for flash deals */}
-                      {timeLeft.hours > 0 || timeLeft.minutes > 0 || timeLeft.seconds > 0 ? (
-                        <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs flex items-center justify-center py-2 gap-1 z-10">
-                          <Timer className="w-3 h-3" />
-                          <span className="font-mono">
-                            {[timeLeft.hours, timeLeft.minutes, timeLeft.seconds].map((unit, i) => (
-                              <span key={i}>
-                                {unit.toString().padStart(2, "0")}
-                                {i < 2 && <span className="mx-0.5">:</span>}
-                              </span>
-                            ))}
-                          </span>
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <div className="p-3 space-y-2">
-                      <h4 className="text-sm font-medium line-clamp-2 text-gray-900 leading-tight">
-                        {product.name}
-                      </h4>
-
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-red-600 font-bold text-base">
-                          ${Number(product.discount_price || product.price).toFixed(2)}
-                        </span>
-                        {product.discount_price && (
-                          <span className="text-xs text-gray-400 line-through">
-                            ${Number(product.price).toFixed(2)}
-                          </span>
+                        {/* Only show discount badge - removed bundle, shipping, loyalty badges */}
+                        {product.discountPercentage > 0 && (
+                          <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 font-medium z-10">
+                            -{product.discountPercentage}%
+                          </div>
                         )}
+
+                        {/* Expiry Timer - Full width band at bottom */}
+                        {hasExpiryTimer && (
+                          <div className="absolute bottom-0 left-0 right-0 bg-red-50/90 text-red-700 text-xs flex items-center justify-center py-1.5 gap-1 z-10 border-t border-red-200">
+                            <Timer className="w-3 h-3" />
+                            <span className="font-medium">Ends in</span>
+                            <span className="font-mono font-bold">
+                              {productExpiryTime.hours.toString().padStart(2, "0")}:
+                              {productExpiryTime.minutes.toString().padStart(2, "0")}:
+                              {productExpiryTime.seconds.toString().padStart(2, "0")}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Timer for flash deals */}
+                        {!hasExpiryTimer && (timeLeft.hours > 0 || timeLeft.minutes > 0 || timeLeft.seconds > 0) ? (
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs flex items-center justify-center py-2 gap-1 z-10">
+                            <Timer className="w-3 h-3" />
+                            <span className="font-mono">
+                              {[timeLeft.hours, timeLeft.minutes, timeLeft.seconds].map((unit, i) => (
+                                <span key={i}>
+                                  {unit.toString().padStart(2, "0")}
+                                  {i < 2 && <span className="mx-0.5">:</span>}
+                                </span>
+                              ))}
+                            </span>
+                          </div>
+                        ) : null}
                       </div>
 
-                      {/* Custom product info section */}
-                      {customProductInfo ? (
-                        customProductInfo(product)
-                      ) : (
-                        <div className="flex items-center justify-between">
-                          <div className="text-xs text-gray-500">
-                            {product.stock} in stock
-                          </div>
-                          {product.discountPercentage > 0 && (
-                            <div className="text-xs text-green-600 font-medium">
-                              Save ${(product.price - (product.discount_price || product.price)).toFixed(2)}
-                            </div>
+                      <div className="p-3 space-y-2">
+                        <h4 className="text-sm font-medium line-clamp-2 text-gray-900 leading-tight">
+                          {product.name}
+                        </h4>
+
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-red-600 font-bold text-base">
+                            ${Number(product.discount_price || product.price).toFixed(2)}
+                          </span>
+                          {product.discount_price && (
+                            <span className="text-xs text-gray-400 line-through">
+                              ${Number(product.price).toFixed(2)}
+                            </span>
                           )}
                         </div>
-                      )}
-                    </div>
-                  </Link>
-                </div>
-              ))}
+
+                        {/* Custom product info section */}
+                        {customProductInfo ? (
+                          customProductInfo(product)
+                        ) : (
+                          <div className="flex items-center justify-between">
+                            <div className="text-xs text-gray-500">
+                              {product.stock} in stock
+                            </div>
+                            {product.discountPercentage > 0 && (
+                              <div className="text-xs text-green-600 font-medium">
+                                Save ${(product.price - (product.discount_price || product.price)).toFixed(2)}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </Link>
+                  </div>
+                );
+              })}
             </div>
 
             {/* Show "Load More" indicator if there are more products */}
