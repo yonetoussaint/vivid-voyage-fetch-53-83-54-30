@@ -103,13 +103,12 @@ const SellerReels = () => {
         />
       </div>
 
-      <div className="py-4">
         <MobileOptimizedReels
           videoCount={12}
           layoutMode="grid"
           showSectionHeader={false}
         />
-      </div>
+      
     </div>
   );
 };
