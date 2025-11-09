@@ -26,9 +26,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
 import ProductFilterBar from '@/components/home/ProductFilterBar';
+import BookGenreFlashDeals from '@/components/home/BookGenreFlashDeals';
 
 const SellerMarketing = () => {
-  const [activeTab, setActiveTab] = useState('campaigns');
+  const [activeTab, setActiveTab] = useState('products');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [displayCount, setDisplayCount] = useState(8);
@@ -84,15 +85,21 @@ const SellerMarketing = () => {
     console.log('Filter button clicked:', filterId);
   };
 
-  const campaigns = [
+  // Mock campaigns data formatted as products for BookGenreFlashDeals
+  const campaignProducts = [
     {
       id: '1',
       name: 'Summer Sale 2024',
-      type: 'Discount',
+      price: 100,
+      discount_price: 75,
+      product_images: [{ src: 'https://placehold.co/300x300?text=Summer+Sale' }],
+      inventory: 1250,
+      category: 'Discount',
       status: 'Active',
-      discount: '25%',
+      type: 'Discount',
       startDate: '2024-01-15',
       endDate: '2024-02-15',
+      expiry: '2024-02-15',
       views: 1250,
       clicks: 89,
       conversions: 23,
@@ -101,11 +108,16 @@ const SellerMarketing = () => {
     {
       id: '2',
       name: 'Free Shipping Weekend',
-      type: 'Shipping',
+      price: 50,
+      discount_price: 0,
+      product_images: [{ src: 'https://placehold.co/300x300?text=Free+Shipping' }],
+      inventory: 890,
+      category: 'Shipping',
       status: 'Active',
-      discount: 'Free Shipping',
+      type: 'Shipping',
       startDate: '2024-01-20',
       endDate: '2024-01-22',
+      expiry: '2024-01-22',
       views: 890,
       clicks: 67,
       conversions: 34,
@@ -114,11 +126,16 @@ const SellerMarketing = () => {
     {
       id: '3',
       name: 'Electronics Bundle Deal',
-      type: 'Bundle',
+      price: 200,
+      discount_price: 150,
+      product_images: [{ src: 'https://placehold.co/300x300?text=Bundle+Deal' }],
+      inventory: 0,
+      category: 'Bundle',
       status: 'Scheduled',
-      discount: 'Buy 2 Get 1',
+      type: 'Bundle',
       startDate: '2024-01-25',
       endDate: '2024-02-25',
+      expiry: '2024-02-25',
       views: 0,
       clicks: 0,
       conversions: 0,
@@ -127,11 +144,16 @@ const SellerMarketing = () => {
     {
       id: '4',
       name: 'Customer Loyalty Rewards',
-      type: 'Loyalty',
+      price: 100,
+      discount_price: 90,
+      product_images: [{ src: 'https://placehold.co/300x300?text=Loyalty' }],
+      inventory: 0,
+      category: 'Loyalty',
       status: 'Ended',
-      discount: '10% Cashback',
+      type: 'Loyalty',
       startDate: '2024-01-01',
       endDate: '2024-01-14',
+      expiry: '2024-01-14',
       views: 2100,
       clicks: 156,
       conversions: 78,
@@ -214,36 +236,6 @@ const SellerMarketing = () => {
     }
   };
 
-  const filteredCampaigns = campaigns.filter(campaign => {
-    const matchesSearch = campaign.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || campaign.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  // Infinite scroll logic matching BookGenreFlashDeals
-  React.useEffect(() => {
-    const handleScroll = () => {
-      const currentItems = activeTab === 'campaigns' ? filteredCampaigns : promotions;
-      if (displayCount >= currentItems.length) return;
-
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      const windowHeight = window.innerHeight;
-      const documentHeight = document.documentElement.scrollHeight;
-
-      if (scrollTop + windowHeight >= documentHeight - 200) {
-        setDisplayCount(prev => Math.min(prev + 8, currentItems.length));
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [displayCount, filteredCampaigns.length, promotions.length, activeTab]);
-
-  // Reset display count when data changes
-  React.useEffect(() => {
-    setDisplayCount(8);
-  }, [filteredCampaigns.length, promotions.length, activeTab]);
-
   return (
     <div className="w-full bg-white">
       {/* Header & Stats Section - Same structure as BookGenreFlashDeals */}
@@ -275,12 +267,12 @@ const SellerMarketing = () => {
       <div className="py-4">
         <div className="flex space-x-1 bg-muted p-1 rounded-lg w-fit">
           <Button
-            variant={activeTab === 'campaigns' ? 'default' : 'ghost'}
+            variant={activeTab === 'products' ? 'default' : 'ghost'}
             size="sm"
-            onClick={() => setActiveTab('campaigns')}
+            onClick={() => setActiveTab('products')}
             className="text-xs h-7"
           >
-            Campaigns
+            Products
           </Button>
           <Button
             variant={activeTab === 'promotions' ? 'default' : 'ghost'}
@@ -293,85 +285,76 @@ const SellerMarketing = () => {
         </div>
       </div>
 
-      {/* Campaigns Tab */}
-      {activeTab === 'campaigns' && (
-        <div className="py-4">
-          {filteredCampaigns.length > 0 ? (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 gap-3">
-                {filteredCampaigns.slice(0, displayCount).map((campaign) => (
-                  <Card key={campaign.id} className="overflow-hidden border border-gray-200">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h3 className="text-sm font-semibold text-foreground">{campaign.name}</h3>
-                          <p className="text-xs text-muted-foreground">{campaign.discount}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="secondary" className={`${getTypeColor(campaign.type)} text-xs`}>
-                            {campaign.type}
-                          </Badge>
-                          <Badge variant="secondary" className={`${getStatusColor(campaign.status)} text-xs`}>
-                            {campaign.status}
-                          </Badge>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                                <Edit className="w-3 h-3" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
-                                <Eye className="w-4 h-4 mr-2" />
-                                View
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Edit className="w-4 h-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3 mb-3">
-                        <div>
-                          <p className="text-xs text-muted-foreground">Duration</p>
-                          <p className="text-xs font-medium">{campaign.startDate} to {campaign.endDate}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Revenue</p>
-                          <p className="text-xs font-medium text-green-600">${campaign.revenue.toFixed(2)}</p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-xs">
-                          <span>CTR: {campaign.clicks > 0 ? ((campaign.clicks / campaign.views) * 100).toFixed(1) : '0'}%</span>
-                          <span>{campaign.views} views • {campaign.conversions} conversions</span>
-                        </div>
-                        <Progress 
-                          value={campaign.clicks > 0 ? (campaign.clicks / campaign.views) * 100 : 0} 
-                          className="h-1.5" 
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+      {/* Products Tab - Using Customized BookGenreFlashDeals */}
+      {activeTab === 'products' && (
+        <BookGenreFlashDeals
+          products={campaignProducts}
+          title="Marketing Campaigns"
+          subtitle="Manage your marketing campaigns and promotions"
+          showSectionHeader={false}
+          showSummary={false}
+          showFilters={false}
+          className="marketing-campaigns"
+          // Custom render function to add expiry badge
+          customProductRender={(product: any) => (
+            <div className="relative">
+              {/* Expiry Date Badge */}
+              {product.expiry && (
+                <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 font-medium z-10 rounded">
+                  Expires: {new Date(product.expiry).toLocaleDateString()}
+                </div>
+              )}
+              
+              {/* Campaign Status Badge */}
+              <div className="absolute top-2 left-2 z-10">
+                <Badge 
+                  variant="secondary" 
+                  className={`${getStatusColor(product.status)} text-xs`}
+                >
+                  {product.status}
+                </Badge>
               </div>
-            </div>
-          ) : (
-            <div className="text-center py-12 text-gray-500">
-              <Megaphone className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-              <div className="text-lg font-medium">No campaigns found</div>
-              <div className="text-sm mt-1">Try adjusting your search terms or filters</div>
-              <Button size="sm" className="mt-4">
-                <Plus className="w-4 h-4 mr-2" />
-                Create Campaign
-              </Button>
+
+              {/* Campaign Type Badge */}
+              {product.type && (
+                <div className="absolute bottom-16 left-2 z-10">
+                  <Badge 
+                    variant="secondary" 
+                    className={`${getTypeColor(product.type)} text-xs`}
+                  >
+                    {product.type}
+                  </Badge>
+                </div>
+              )}
             </div>
           )}
-        </div>
+          // Additional campaign metrics in product info
+          customProductInfo={(product: any) => (
+            <div className="mt-2 space-y-1">
+              <div className="flex justify-between text-xs text-gray-600">
+                <span>Views: {product.views}</span>
+                <span>Clicks: {product.clicks}</span>
+              </div>
+              <div className="flex justify-between text-xs text-gray-600">
+                <span>Conversions: {product.conversions}</span>
+                <span className="text-green-600 font-medium">
+                  ${product.revenue?.toFixed(2)}
+                </span>
+              </div>
+              {product.clicks > 0 && (
+                <div className="mt-1">
+                  <div className="flex justify-between text-xs mb-1">
+                    <span>CTR: {((product.clicks / product.views) * 100).toFixed(1)}%</span>
+                  </div>
+                  <Progress 
+                    value={product.clicks > 0 ? (product.clicks / product.views) * 100 : 0} 
+                    className="h-1.5" 
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        />
       )}
 
       {/* Promotions Tab */}
