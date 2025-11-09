@@ -10,6 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import SellerSummaryHeader from "@/components/seller-app/SellerSummaryHeader";
 import ProductFilterBar from "@/components/home/ProductFilterBar";
 import PriceInfo from "@/components/product/PriceInfo";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 
 interface Product {
   id: string;
@@ -58,6 +60,9 @@ interface GenreFlashDealsProps {
   // Expiry timer props
   showExpiryTimer?: boolean;
   expiryField?: string;
+  // Marketing specific props
+  showMarketingMetrics?: boolean;
+  showStatusBadge?: boolean;
 }
 
 interface SummaryStats {
@@ -91,7 +96,9 @@ export default function BookGenreFlashDeals({
   customProductRender,
   customProductInfo,
   showExpiryTimer = false,
-  expiryField = 'expiry'
+  expiryField = 'expiry',
+  showMarketingMetrics = false,
+  showStatusBadge = false
 }: GenreFlashDealsProps) {
   const [displayCount, setDisplayCount] = useState(8);
 
@@ -155,6 +162,54 @@ export default function BookGenreFlashDeals({
   const handleFilterButtonClick = (filterId: string) => {
     console.log('Filter button clicked:', filterId);
   };
+
+  // Helper function to get status color (moved from SellerMarketing)
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Active': return 'bg-green-100 text-green-800';
+      case 'Scheduled': return 'bg-blue-100 text-blue-800';
+      case 'Ended': return 'bg-gray-100 text-gray-800';
+      case 'Paused': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Default marketing product info renderer
+  const renderMarketingProductInfo = (product: Product) => (
+    <div className="mt-2 space-y-1">
+      <div className="flex justify-between text-xs text-gray-600">
+        <span>Views: {product.views || 0}</span>
+        <span>Clicks: {product.clicks || 0}</span>
+      </div>
+      {product.clicks && product.clicks > 0 && (
+        <div className="mt-1">
+          <div className="flex justify-between text-xs mb-1">
+            <span>CTR: {((product.clicks / (product.views || 1)) * 100).toFixed(1)}%</span>
+          </div>
+          <Progress
+            value={product.clicks > 0 ? (product.clicks / (product.views || 1)) * 100 : 0}
+            className="h-1.5"
+          />
+        </div>
+      )}
+    </div>
+  );
+
+  // Default marketing product renderer
+  const renderMarketingProduct = (product: Product) => (
+    <div className="relative">
+      {showStatusBadge && product.status && (
+        <div className="absolute top-2 left-2 z-10">
+          <Badge
+            variant="secondary"
+            className={`${getStatusColor(product.status)} text-xs`}
+          >
+            {product.status}
+          </Badge>
+        </div>
+      )}
+    </div>
+  );
 
   // Fetch ALL products only if no external products provided
   const { data: fetchedProducts = [], isLoading: allProductsLoading } = useQuery({
@@ -505,7 +560,8 @@ export default function BookGenreFlashDeals({
                         </div>
 
                         {/* Custom product render section */}
-                        {customProductRender && customProductRender(product)}
+                        {customProductRender ? customProductRender(product) : 
+                         showMarketingMetrics ? renderMarketingProduct(product) : null}
 
                         {/* Barred price badge - replaces discount badge */}
                         {product.discount_price && product.discount_price < product.price && (
@@ -556,10 +612,9 @@ export default function BookGenreFlashDeals({
                         showOnlyBadge={false}
                       />
 
-                      {/* Custom product info section - REMOVED the green "Save $X.XX" element */}
-                      {customProductInfo ? (
-                        customProductInfo(product)
-                      ) : (
+                      {/* Product info section */}
+                      {customProductInfo ? customProductInfo(product) : 
+                       showMarketingMetrics ? renderMarketingProductInfo(product) : (
                         <div className="flex items-center justify-between">
                           <div className="text-xs text-gray-500">
                             {product.stock} in stock
