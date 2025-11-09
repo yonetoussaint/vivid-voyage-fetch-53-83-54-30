@@ -446,12 +446,14 @@ export default function BookGenreFlashDeals({
                       {/* Custom product render section */}
                       {customProductRender && customProductRender(product)}
 
+                      {/* Only show discount badge - removed bundle, shipping, loyalty badges */}
                       {product.discountPercentage > 0 && (
                         <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 font-medium z-10">
                           -{product.discountPercentage}%
                         </div>
                       )}
 
+                      {/* Timer for flash deals */}
                       {timeLeft.hours > 0 || timeLeft.minutes > 0 || timeLeft.seconds > 0 ? (
                         <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs flex items-center justify-center py-2 gap-1 z-10">
                           <Timer className="w-3 h-3" />
