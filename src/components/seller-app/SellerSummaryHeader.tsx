@@ -179,6 +179,31 @@ interface SellerSummaryHeaderProps {
   showStats?: boolean;
 }
 
+// Icon components
+const InventoryIcon = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+  </svg>
+);
+
+const ReviewIcon = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+  </svg>
+);
+
+const ProductIcon = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+  </svg>
+);
+
+const InfoIcon = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+
 const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
   title = "Inventory Overview",
   subtitle = "Manage your stock levels and product availability",
@@ -233,15 +258,30 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
   const getSubtitleIcon = () => {
     switch (mode) {
       case 'inventory':
-        return '📊';
+        return <InventoryIcon className="w-4 h-4 text-gray-500" />;
       case 'reviews':
-        return '⭐';
+        return <ReviewIcon className="w-4 h-4 text-gray-500" />;
       case 'products':
-        return '📦';
+        return <ProductIcon className="w-4 h-4 text-gray-500" />;
       default:
-        return 'ℹ️';
+        return <InfoIcon className="w-4 h-4 text-gray-500" />;
     }
   };
+
+  const getDefaultSubtitle = () => {
+    switch (mode) {
+      case 'inventory':
+        return "Manage your stock levels and product availability";
+      case 'reviews':
+        return "Ratings and reviews are verified and are from people who use the same type of device that you use";
+      case 'products':
+        return "Manage your products and inventory levels";
+      default:
+        return subtitle;
+    }
+  };
+
+  const currentSubtitle = subtitle || getDefaultSubtitle();
 
   return (
     <div className={`bg-white border-b ${className}`}>
@@ -249,11 +289,11 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
         {showStats && (
           <>
             {/* Subtitle with icon at the top */}
-            {subtitle && (
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-sm">{getSubtitleIcon()}</span>
-                <p className="text-xs text-gray-500">
-                  {subtitle}
+            {currentSubtitle && (
+              <div className="flex items-start gap-2 mb-3">
+                {getSubtitleIcon()}
+                <p className="text-xs text-gray-500 flex-1">
+                  {currentSubtitle}
                 </p>
               </div>
             )}
