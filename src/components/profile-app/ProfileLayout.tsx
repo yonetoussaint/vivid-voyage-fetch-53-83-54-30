@@ -51,10 +51,19 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
 
   const [activeTab, setActiveTab] = useState(getCurrentTab());
 
+  // Keep activeTab in sync with route changes
+  useEffect(() => {
+    const currentTab = getCurrentTab();
+    if (currentTab !== activeTab) {
+      setActiveTab(currentTab);
+    }
+  }, [location.pathname]);
+
   // Redirect to orders tab if on root profile path
   useEffect(() => {
     if (location.pathname === '/profile' || location.pathname.endsWith('/profile/')) {
       navigate('/profile/orders', { replace: true });
+      setActiveTab('orders');
     }
   }, [location.pathname, navigate]);
 
