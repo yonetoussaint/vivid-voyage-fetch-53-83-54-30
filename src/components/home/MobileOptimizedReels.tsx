@@ -68,9 +68,40 @@ const MobileOptimizedReels: React.FC<MobileOptimizedReelsProps> = ({
   };
 
   if (isLoading) {
+    if (layoutMode === 'grid') {
+      return (
+        <div className="w-full overflow-hidden">
+          <div className="grid grid-cols-3 gap-1">
+            {Array(12).fill(0).map((_, i) => (
+              <div 
+                key={i}
+                className="relative aspect-[3/4] bg-gray-200 overflow-hidden animate-pulse"
+                // Flat borders for grid mode - no rounded corners
+              >
+                {/* Main video area */}
+                <div className="absolute inset-0 bg-gray-300"></div>
+                
+                {/* Top right duration badge */}
+                <div className="absolute top-2 right-2 bg-gray-400 w-10 h-5"></div>
+                
+                {/* Bottom gradient with view count */}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-gray-400/80 to-transparent p-3">
+                  <div className="flex items-center gap-1.5">
+                    <div className="bg-gray-500 rounded-full w-4 h-4"></div>
+                    <div className="bg-gray-500 w-12 h-3"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Carousel skeleton (with rounded borders)
     return (
       <div className="w-full overflow-hidden">
-        {showSectionHeader && layoutMode !== 'grid' && (
+        {showSectionHeader && (
           <SectionHeader
             title="SHORTS"
             icon={Zap}
@@ -80,19 +111,17 @@ const MobileOptimizedReels: React.FC<MobileOptimizedReelsProps> = ({
             onCustomButtonClick={handleCustomButtonClick}
           />
         )}
-        <div className={layoutMode === 'grid' ? 'grid grid-cols-3 gap-1' : 'flex overflow-x-auto pl-2 scrollbar-none w-full'}>
-          {Array(layoutMode === 'grid' ? 12 : 6).fill(0).map((_, i) => (
+        <div className="flex overflow-x-auto pl-2 scrollbar-none w-full">
+          {Array(6).fill(0).map((_, i) => (
             <div 
               key={i}
-              className={`rounded-lg overflow-hidden shadow-lg bg-gray-200 relative animate-pulse ${
-                layoutMode === 'grid' ? 'w-full aspect-[3/4]' : 'flex-shrink-0 mr-[3vw]'
-              }`}
-              style={layoutMode === 'carousel' ? { 
+              className="flex-shrink-0 mr-[3vw] rounded-lg overflow-hidden shadow-lg bg-gray-200 relative animate-pulse"
+              style={{ 
                 width: '35vw', 
                 maxWidth: '160px',
                 height: '49vw', 
                 maxHeight: '220px'
-              } : {}}
+              }}
             />
           ))}
         </div>
@@ -123,7 +152,7 @@ const MobileOptimizedReels: React.FC<MobileOptimizedReelsProps> = ({
       )}
 
       {layoutMode === 'grid' ? (
-        // Grid layout - 3 columns
+        // Grid layout - 3 columns with flat borders
         <div className="grid grid-cols-3 gap-1">
           {videos?.map((video) => (
             <div 
@@ -168,7 +197,7 @@ const MobileOptimizedReels: React.FC<MobileOptimizedReelsProps> = ({
           ))}
         </div>
       ) : (
-        // Carousel layout
+        // Carousel layout with rounded borders
         <div 
           ref={scrollContainerRef}
           className="reels-container flex overflow-x-auto pl-2 scrollbar-none w-full"
