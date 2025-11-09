@@ -495,7 +495,7 @@ export default function BookGenreFlashDeals({
                           }}
                         />
 
-                        {/* Currency switcher badge - positioned outside the Link */}
+                        {/* Currency switcher badge */}
                         <div className="absolute top-2 right-2 z-20">
                           <PriceInfo 
                             price={product.discount_price || product.price}
@@ -507,10 +507,10 @@ export default function BookGenreFlashDeals({
                         {/* Custom product render section */}
                         {customProductRender && customProductRender(product)}
 
-                        {/* Only show discount badge */}
-                        {product.discountPercentage > 0 && (
+                        {/* Barred price badge - replaces discount badge */}
+                        {product.discount_price && product.discount_price < product.price && (
                           <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 font-medium z-10">
-                            -{product.discountPercentage}%
+                            <span className="line-through">${Number(product.price).toFixed(2)}</span>
                           </div>
                         )}
 
@@ -549,10 +549,9 @@ export default function BookGenreFlashDeals({
                         {product.name}
                       </h4>
 
-                      {/* PriceInfo component */}
+                      {/* PriceInfo component - without original price since it's now in the badge */}
                       <PriceInfo 
                         price={product.discount_price || product.price}
-                        originalPrice={product.discount_price ? product.price : undefined}
                         size="sm"
                         showOnlyBadge={false}
                       />
