@@ -106,9 +106,7 @@ const mockInventoryStats: InventoryItem[] = [
   { value: '1,248', label: 'Total Items', color: 'text-blue-600' },
   { value: '47', label: 'Low Stock', color: 'text-red-600', status: 'low' },
   { value: '92%', label: 'Availability', color: 'text-green-600' },
-  { value: '28', label: 'Categories', color: 'text-purple-600' },
-  { value: '15', label: 'New Arrivals', color: 'text-orange-600' },
-  { value: '89', label: 'Restocking', color: 'text-yellow-600' }
+  { value: '28', label: 'Categories', color: 'text-purple-600' }
 ];
 
 interface RatingDistribution {
@@ -184,7 +182,7 @@ interface SellerSummaryHeaderProps {
 
 const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
   title = "Inventory Overview",
-  subtitle = "Manage your stock levels and product availability",
+  subtitle,
   stats = mockInventoryStats,
   progressPercentage = 65,
   progressVariant = 'stock-level',
@@ -196,8 +194,9 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
   actionButton,
   showStats = true
 }) => {
-  const [visibleCards, setVisibleCards] = React.useState(0);
-  const [hiddenCardsCount, setHiddenCardsCount] = React.useState(0);
+  const [scrollPosition, setScrollPosition] = React.useState(0);
+  const [scrollableWidth, setScrollableWidth] = React.useState(0);
+  const [containerWidth, setContainerWidth] = React.useState(0);
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 
   const renderStars = (rating: number) => {
@@ -259,47 +258,45 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
       case 'products':
         return "Manage your products and inventory levels";
       default:
-        return subtitle;
+        return "Overview of your store performance";
     }
   };
 
-  // Calculate visible and hidden cards for dots
-  React.useEffect(() => {
-    const calculateVisibleCards = () => {
-      const container = scrollContainerRef.current;
-      if (!container) return;
-
-      const containerWidth = container.clientWidth;
-      const cards = container.children[0]?.children;
-      if (!cards || cards.length === 0) return;
-
-      let totalWidth = 0;
-      let visibleCount = 0;
-
-      for (let i = 0; i < cards.length; i++) {
-        const card = cards[i] as HTMLElement;
-        const cardWidth = card.offsetWidth + 8; // including gap
-        if (totalWidth + cardWidth <= containerWidth) {
-          totalWidth += cardWidth;
-          visibleCount++;
-        } else {
-          break;
-        }
-      }
-
-      setVisibleCards(visibleCount);
-      setHiddenCardsCount(Math.max(0, stats.length - visibleCount));
-    };
-
-    calculateVisibleCards();
-    window.addEventListener('resize', calculateVisibleCards);
-    
-    return () => {
-      window.removeEventListener('resize', calculateVisibleCards);
-    };
-  }, [stats.length]);
-
   const currentSubtitle = subtitle || getDefaultSubtitle();
+
+  // Calculate scroll indicators
+  React.useEffect(() => {
+    const updateScrollInfo = () => {
+      if (scrollContainerRef.current) {
+        const container = scrollContainerRef.current;
+        setScrollPosition(container.scrollLeft);
+        setScrollableWidth(container.scrollWidth - container.clientWidth);
+        setContainerWidth(container.clientWidth);
+      }
+    };
+
+    const container = scrollContainerRef.current;
+    if (container) {
+      updateScrollInfo();
+      container.addEventListener('scroll', updateScrollInfo);
+      window.addEventListener('resize', updateScrollInfo);
+
+      return () => {
+        container.removeEventListener('scroll', updateScrollInfo);
+        window.removeEventListener('resize', updateScrollInfo);
+      };
+    }
+  }, [stats.length, mode]);
+
+  // Calculate dynamic dots
+  const cardWidth = 90 + 8; // min-w-[90px] + gap-2
+  const visibleCards = Math.floor(containerWidth / cardWidth);
+  const totalCards = stats.length;
+  const hiddenCards = Math.max(0, totalCards - visibleCards);
+  
+  // Calculate active dot based on scroll position
+  const scrollProgress = scrollableWidth > 0 ? scrollPosition / scrollableWidth : 0;
+  const activeDotIndex = hiddenCards > 0 ? Math.floor(scrollProgress * hiddenCards) : 0;
 
   return (
     <div className={`bg-white border-b ${className}`}>
@@ -310,7 +307,7 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
             {currentSubtitle && (
               <div className="flex items-start gap-2 mb-3">
                 {getSubtitleIcon()}
-                <p className="text-xs text-gray-500 flex-1">
+                <p className="text-xs text-gray-500 flex-1 leading-relaxed">
                   {currentSubtitle}
                 </p>
               </div>
@@ -323,13 +320,14 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
                   <div className="relative">
                     <div 
                       ref={scrollContainerRef}
-                      className="overflow-x-auto -mx-4 px-4 scrollbar-hide"
+                      className="overflow-x-auto -mx-4 px-4 scrollbar-hide scroll-smooth"
+                      style={{ scrollBehavior: 'smooth' }}
                     >
                       <div className="flex gap-2 min-w-max">
                         {stats.map((stat, index) => (
                           <div 
                             key={index} 
-                            className="flex-shrink-0 bg-gray-50 rounded-lg px-3 py-2 min-w-[90px] transition-all duration-300 hover:bg-gray-100"
+                            className="flex-shrink-0 bg-gray-50 rounded-lg px-3 py-2 min-w-[90px] transition-all duration-200 hover:bg-gray-100"
                           >
                             <div className={`text-lg font-bold ${stat.color || 'text-blue-600'} leading-none`}>
                               {stat.value}
@@ -343,39 +341,22 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
                     </div>
                     
                     {/* Dynamic scroll indicator dots */}
-                    {hiddenCardsCount > 0 && (
-                      <div className="flex justify-center items-center gap-1 mt-2">
-                        <div className="flex gap-1 items-center">
-                          {/* Visible cards indicator (faint dots) */}
-                          {Array.from({ length: visibleCards }).map((_, index) => (
-                            <div 
-                              key={`visible-${index}`}
-                              className="w-1 h-1 rounded-full bg-gray-200 transition-all duration-300"
-                            />
-                          ))}
-                          
-                          {/* Hidden cards indicator (animated dots) */}
-                          {Array.from({ length: hiddenCardsCount }).map((_, index) => (
-                            <div 
-                              key={`hidden-${index}`}
-                              className="w-1 h-1 rounded-full bg-gray-400 animate-pulse transition-all duration-300"
-                              style={{
-                                animationDelay: `${index * 0.2}s`,
-                                opacity: 0.6 + (index * 0.1)
-                              }}
-                            />
-                          ))}
-                          
-                          {/* Chevron indicator */}
-                          <ChevronRight className="w-3 h-3 text-gray-400 ml-1" />
-                        </div>
-                        
-                        {/* Hidden count badge */}
-                        <div className="bg-gray-100 rounded-full px-2 py-0.5 ml-1">
-                          <span className="text-xs text-gray-600 font-medium">
-                            +{hiddenCardsCount}
-                          </span>
-                        </div>
+                    {hiddenCards > 0 && (
+                      <div className="flex justify-center gap-1.5 mt-3">
+                        {Array.from({ length: hiddenCards + 1 }).map((_, index) => (
+                          <div 
+                            key={index}
+                            className={`transition-all duration-300 ease-out rounded-full ${
+                              index === activeDotIndex 
+                                ? 'bg-blue-500 w-2.5 h-2.5' 
+                                : 'bg-gray-300 w-1.5 h-1.5'
+                            }`}
+                            style={{
+                              transform: index === activeDotIndex ? 'scale(1.2)' : 'scale(1)',
+                              opacity: index === activeDotIndex ? 1 : 0.6,
+                            }}
+                          />
+                        ))}
                       </div>
                     )}
                   </div>
@@ -391,25 +372,28 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
                       <div className="text-6xl font-light text-gray-900 leading-none">
                         {reviewsSummary.averageRating.toFixed(1)}
                       </div>
-                      <div className="flex gap-0.5">
+                      <div className="flex gap-0.5 mt-1">
                         {renderStars(reviewsSummary.averageRating)}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-500 mt-1">
                         {formatNumber(reviewsSummary.totalReviews)} reviews
                       </div>
                     </div>
 
                     {/* Rating bars */}
-                    <div className="flex-1 flex flex-col justify-center gap-1">
+                    <div className="flex-1 flex flex-col justify-center gap-1.5">
                       {reviewsSummary.distribution.map((dist) => (
                         <div key={dist.stars} className="flex items-center gap-2">
                           <span className="text-xs text-gray-500 w-3">{dist.stars}</span>
-                          <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="flex-1 h-2.5 bg-gray-200 rounded-full overflow-hidden">
                             <div 
-                              className="h-full bg-blue-500 transition-all duration-500"
+                              className="h-full bg-blue-500 transition-all duration-500 ease-out"
                               style={{ width: `${dist.percentage}%` }}
                             />
                           </div>
+                          <span className="text-xs text-gray-500 w-8 text-right">
+                            {dist.percentage}%
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -441,7 +425,7 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
                     {/* Product metrics - compact 2x2 grid */}
                     <div className="flex-1 grid grid-cols-2 gap-2">
                       {productsSummary.metrics.map((metric, index) => (
-                        <div key={index} className="bg-gray-50 rounded-lg px-2 py-1.5">
+                        <div key={index} className="bg-gray-50 rounded-lg px-2 py-1.5 transition-all duration-200 hover:bg-gray-100">
                           <div className={`text-sm font-bold ${metric.color} leading-none`}>
                             {metric.value}
                           </div>
