@@ -1,5 +1,5 @@
 import React from 'react';
-import { Package, Star, Box, Info, ChevronRight } from 'lucide-react';
+import { Package, Star, Box, Info } from 'lucide-react';
 
 interface InventoryItem {
   value: string | number;
@@ -109,6 +109,15 @@ const mockInventoryStats: InventoryItem[] = [
   { value: '28', label: 'Categories', color: 'text-purple-600' }
 ];
 
+const mockProductStats: InventoryItem[] = [
+  { value: '847', label: 'Total Products', color: 'text-blue-600' },
+  { value: '47', label: 'Out of Stock', color: 'text-red-600' },
+  { value: '89', label: 'Low Stock', color: 'text-yellow-600' },
+  { value: '28', label: 'Categories', color: 'text-purple-600' },
+  { value: '812', label: 'Active', color: 'text-green-600' },
+  { value: '12', label: 'Preorder', color: 'text-indigo-600' }
+];
+
 interface RatingDistribution {
   stars: number;
   count: number;
@@ -197,7 +206,8 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
   const [scrollPosition, setScrollPosition] = React.useState(0);
   const [scrollableWidth, setScrollableWidth] = React.useState(0);
   const [containerWidth, setContainerWidth] = React.useState(0);
-  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+  const inventoryScrollRef = React.useRef<HTMLDivElement>(null);
+  const productsScrollRef = React.useRef<HTMLDivElement>(null);
 
   const renderStars = (rating: number) => {
     const fullStars = Math.floor(rating);
@@ -262,20 +272,44 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
     }
   };
 
+  const getStatsForMode = () => {
+    switch (mode) {
+      case 'inventory':
+        return stats;
+      case 'products':
+        return mockProductStats;
+      default:
+        return stats;
+    }
+  };
+
+  const getScrollRefForMode = () => {
+    switch (mode) {
+      case 'inventory':
+        return inventoryScrollRef;
+      case 'products':
+        return productsScrollRef;
+      default:
+        return { current: null };
+    }
+  };
+
   const currentSubtitle = subtitle || getDefaultSubtitle();
+  const currentStats = getStatsForMode();
+  const currentScrollRef = getScrollRefForMode();
 
   // Calculate scroll indicators
   React.useEffect(() => {
     const updateScrollInfo = () => {
-      if (scrollContainerRef.current) {
-        const container = scrollContainerRef.current;
+      if (currentScrollRef.current) {
+        const container = currentScrollRef.current;
         setScrollPosition(container.scrollLeft);
         setScrollableWidth(container.scrollWidth - container.clientWidth);
         setContainerWidth(container.clientWidth);
       }
     };
 
-    const container = scrollContainerRef.current;
+    const container = currentScrollRef.current;
     if (container) {
       updateScrollInfo();
       container.addEventListener('scroll', updateScrollInfo);
@@ -286,12 +320,12 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
         window.removeEventListener('resize', updateScrollInfo);
       };
     }
-  }, [stats.length, mode]);
+  }, [currentStats.length, mode]);
 
   // Calculate dynamic dots
   const cardWidth = 90 + 8; // min-w-[90px] + gap-2
   const visibleCards = Math.floor(containerWidth / cardWidth);
-  const totalCards = stats.length;
+  const totalCards = currentStats.length;
   const hiddenCards = Math.max(0, totalCards - visibleCards);
   
   // Calculate active dot based on scroll position
@@ -313,18 +347,18 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
               </div>
             )}
 
-            {mode === 'inventory' ? (
+            {mode === 'inventory' || mode === 'products' ? (
               <>
-                {/* Inventory stats - horizontal scroll */}
-                {stats.length > 0 && (
+                {/* Inventory/Products stats - horizontal scroll */}
+                {currentStats.length > 0 && (
                   <div className="relative">
                     <div 
-                      ref={scrollContainerRef}
+                      ref={currentScrollRef}
                       className="overflow-x-auto -mx-4 px-4 scrollbar-hide scroll-smooth"
                       style={{ scrollBehavior: 'smooth' }}
                     >
                       <div className="flex gap-2 min-w-max">
-                        {stats.map((stat, index) => (
+                        {currentStats.map((stat, index) => (
                           <div 
                             key={index} 
                             className="flex-shrink-0 bg-gray-50 rounded-lg px-3 py-2 min-w-[90px] transition-all duration-200 hover:bg-gray-100"
@@ -348,12 +382,11 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
                             key={index}
                             className={`transition-all duration-300 ease-out rounded-full ${
                               index === activeDotIndex 
-                                ? 'bg-blue-500 w-2.5 h-2.5' 
+                                ? 'bg-blue-500 w-1.5 h-1.5' 
                                 : 'bg-gray-300 w-1.5 h-1.5'
                             }`}
                             style={{
-                              transform: index === activeDotIndex ? 'scale(1.2)' : 'scale(1)',
-                              opacity: index === activeDotIndex ? 1 : 0.6,
+                              opacity: index === activeDotIndex ? 1 : 0.5,
                             }}
                           />
                         ))}
@@ -394,44 +427,6 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
                           <span className="text-xs text-gray-500 w-8 text-right">
                             {dist.percentage}%
                           </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </>
-            ) : mode === 'products' ? (
-              <>
-                {/* Products mode - compact */}
-                <div>
-                  <div className="flex items-center gap-4">
-                    {/* Total products - compact */}
-                    <div className="flex-shrink-0 flex items-center gap-3 pr-4 border-r border-gray-200">
-                      <div className="text-center">
-                        <div className="text-3xl font-light text-gray-900 leading-none">
-                          {productsSummary.totalProducts}
-                        </div>
-                        <div className="text-xs text-gray-500 mt-0.5">
-                          Total
-                        </div>
-                      </div>
-                      <div className="px-2 py-1 bg-green-50 rounded-full">
-                        <span className="text-xs font-semibold text-green-700 whitespace-nowrap">
-                          {productsSummary.activeProducts} Active
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Product metrics - compact 2x2 grid */}
-                    <div className="flex-1 grid grid-cols-2 gap-2">
-                      {productsSummary.metrics.map((metric, index) => (
-                        <div key={index} className="bg-gray-50 rounded-lg px-2 py-1.5 transition-all duration-200 hover:bg-gray-100">
-                          <div className={`text-sm font-bold ${metric.color} leading-none`}>
-                            {metric.value}
-                          </div>
-                          <div className="text-xs text-gray-500 leading-tight mt-0.5">
-                            {metric.label}
-                          </div>
                         </div>
                       ))}
                     </div>
