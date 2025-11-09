@@ -224,18 +224,6 @@ const SellerMarketing = () => {
     }
   };
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'Discount': return 'bg-purple-100 text-purple-800';
-      case 'Shipping': return 'bg-blue-100 text-blue-800';
-      case 'Bundle': return 'bg-orange-100 text-orange-800';
-      case 'Loyalty': return 'bg-pink-100 text-pink-800';
-      case 'Flash Sale': return 'bg-red-100 text-red-800';
-      case 'Welcome': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
   return (
     <div className="w-full bg-white">
       {/* Header & Stats Section - Same structure as BookGenreFlashDeals */}
@@ -295,7 +283,7 @@ const SellerMarketing = () => {
           showSummary={false}
           showFilters={false}
           className="marketing-campaigns"
-          // Custom render function to add expiry badge
+          // Custom render function - REMOVED the campaign type badge
           customProductRender={(product: any) => (
             <div className="relative">
               {/* Expiry Date Badge */}
@@ -304,7 +292,7 @@ const SellerMarketing = () => {
                   Expires: {new Date(product.expiry).toLocaleDateString()}
                 </div>
               )}
-              
+
               {/* Campaign Status Badge */}
               <div className="absolute top-2 left-2 z-10">
                 <Badge 
@@ -315,17 +303,7 @@ const SellerMarketing = () => {
                 </Badge>
               </div>
 
-              {/* Campaign Type Badge */}
-              {product.type && (
-                <div className="absolute bottom-16 left-2 z-10">
-                  <Badge 
-                    variant="secondary" 
-                    className={`${getTypeColor(product.type)} text-xs`}
-                  >
-                    {product.type}
-                  </Badge>
-                </div>
-              )}
+              {/* REMOVED: Campaign Type Badge (bundle, discount, shipping, loyalty) */}
             </div>
           )}
           // Additional campaign metrics in product info
@@ -371,7 +349,7 @@ const SellerMarketing = () => {
                           <h3 className="text-sm font-semibold text-foreground">{promotion.title}</h3>
                           <p className="text-xs text-muted-foreground">{promotion.description}</p>
                         </div>
-                        <Badge variant="secondary" className={`${getTypeColor(promotion.type)} text-xs`}>
+                        <Badge variant="secondary" className="bg-gray-100 text-gray-800 text-xs">
                           {promotion.type}
                         </Badge>
                       </div>
