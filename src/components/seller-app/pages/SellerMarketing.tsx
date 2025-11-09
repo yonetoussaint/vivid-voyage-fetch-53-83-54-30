@@ -60,7 +60,7 @@ const SellerMarketing = () => {
     console.log('Filter button clicked:', filterId);
   };
 
-  // Campaign products data (same as before)
+  // Campaign products data
   const campaignProducts = [
     {
       id: '1',
@@ -80,12 +80,91 @@ const SellerMarketing = () => {
       conversions: 23,
       revenue: 1450.50
     },
-    // ... other products
+    {
+      id: '2',
+      name: 'Black Friday Free Shipping',
+      price: 50,
+      discount_price: 0,
+      product_images: [{ src: 'https://placehold.co/300x300?text=Free+Shipping' }],
+      inventory: 890,
+      category: 'Shipping',
+      status: 'Active',
+      type: 'Shipping',
+      startDate: '2025-11-25',
+      endDate: '2025-11-30',
+      expiry: '2025-11-30T23:59:59',
+      views: 890,
+      clicks: 67,
+      conversions: 34,
+      revenue: 2100.75
+    },
+    {
+      id: '3',
+      name: 'New Year Electronics Bundle',
+      price: 200,
+      discount_price: 150,
+      product_images: [{ src: 'https://placehold.co/300x300?text=Bundle+Deal' }],
+      inventory: 0,
+      category: 'Bundle',
+      status: 'Scheduled',
+      type: 'Bundle',
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+      expiry: '2026-01-31T23:59:59',
+      views: 0,
+      clicks: 0,
+      conversions: 0,
+      revenue: 0
+    },
+    {
+      id: '4',
+      name: 'Customer Loyalty Rewards 2025',
+      price: 100,
+      discount_price: 90,
+      product_images: [{ src: 'https://placehold.co/300x300?text=Loyalty' }],
+      inventory: 0,
+      category: 'Loyalty',
+      status: 'Ended',
+      type: 'Loyalty',
+      startDate: '2025-09-01',
+      endDate: '2025-10-01',
+      expiry: '2025-10-01T23:59:59',
+      views: 2100,
+      clicks: 156,
+      conversions: 78,
+      revenue: 3250.25
+    }
   ];
 
-  // Promotions data (same as before)
+  // Promotions data
   const promotions = [
-    // ... promotions data
+    {
+      id: '1',
+      title: 'Flash Sale - Wireless Earbuds',
+      description: 'Limited time offer on premium wireless earbuds',
+      type: 'Flash Sale',
+      discount: '40%',
+      expiry: '2025-11-30',
+      status: 'Active'
+    },
+    {
+      id: '2',
+      title: 'Bundle Deal - Smart Home Kit',
+      description: 'Complete smart home setup at unbeatable price',
+      type: 'Bundle',
+      discount: 'Save $150',
+      expiry: '2026-01-15',
+      status: 'Scheduled'
+    },
+    {
+      id: '3',
+      title: 'New Customer Welcome',
+      description: 'Special discount for first-time buyers',
+      type: 'Welcome',
+      discount: '15%',
+      expiry: 'Ongoing',
+      status: 'Active'
+    }
   ];
 
   const stats = [
@@ -159,7 +238,59 @@ const SellerMarketing = () => {
 
       {activeTab === 'promotions' && (
         <div className="py-4">
-          {/* Promotions tab content remains the same */}
+          {promotions.length > 0 ? (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 gap-3">
+                {promotions.slice(0, displayCount).map((promotion) => (
+                  <Card key={promotion.id} className="overflow-hidden border border-gray-200">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h3 className="text-sm font-semibold text-foreground">{promotion.title}</h3>
+                          <p className="text-xs text-muted-foreground">{promotion.description}</p>
+                        </div>
+                        <Badge variant="secondary" className="bg-gray-100 text-gray-800 text-xs">
+                          {promotion.type}
+                        </Badge>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div>
+                          <p className="text-xs text-muted-foreground">Discount</p>
+                          <p className="text-xs font-medium text-green-600">{promotion.discount}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Expires</p>
+                          <p className="text-xs font-medium">{promotion.expiry}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" className="flex-1 text-xs h-7">
+                          <Edit className="w-3 h-3 mr-1" />
+                          Edit
+                        </Button>
+                        <Button variant="outline" size="sm" className="flex-1 text-xs h-7">
+                          <Share2 className="w-3 h-3 mr-1" />
+                          Share
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-12 text-gray-500">
+              <Gift className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+              <div className="text-lg font-medium">No promotions found</div>
+              <div className="text-sm mt-1">Create your first promotion to get started</div>
+              <Button size="sm" className="mt-4">
+                <Plus className="w-4 h-4 mr-2" />
+                Create Promotion
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>
