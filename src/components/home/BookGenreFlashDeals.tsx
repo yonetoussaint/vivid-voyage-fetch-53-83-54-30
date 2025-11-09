@@ -182,6 +182,29 @@ export default function BookGenreFlashDeals({
     seconds: 0
   });
 
+  // Calculate summary statistics
+  const summaryStats: SummaryStats = React.useMemo(() => {
+    const totalProducts = allProducts.length;
+    const inStock = allProducts.filter(product => (product.inventory || 0) > 0).length;
+    const outOfStock = allProducts.filter(product => (product.inventory || 0) === 0).length;
+    const onDiscount = allProducts.filter(product => product.discount_price && product.discount_price < product.price).length;
+    const totalValue = allProducts.reduce((sum, product) => sum + (product.discount_price || product.price), 0);
+    const lowStock = allProducts.filter(product => (product.inventory || 0) > 0 && (product.inventory || 0) <= 10).length;
+
+    // Calculate unique categories count
+    const categories = new Set(allProducts.map(product => product.category).filter(Boolean)).size;
+
+    return {
+      totalProducts,
+      inStock,
+      outOfStock,
+      onDiscount,
+      totalValue,
+      lowStock,
+      categories
+    };
+  }, [allProducts]);
+
   // Calculate expiry time left for each product
   const [expiryTimes, setExpiryTimes] = useState<Record<string, { hours: number; minutes: number; seconds: number }>>({});
 
