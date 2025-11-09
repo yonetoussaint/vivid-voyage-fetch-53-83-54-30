@@ -230,11 +230,34 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
     return num.toString();
   };
 
+  const getSubtitleIcon = () => {
+    switch (mode) {
+      case 'inventory':
+        return '📊';
+      case 'reviews':
+        return '⭐';
+      case 'products':
+        return '📦';
+      default:
+        return 'ℹ️';
+    }
+  };
+
   return (
     <div className={`bg-white border-b ${className}`}>
       <div className="px-4 py-3">
         {showStats && (
           <>
+            {/* Subtitle with icon at the top */}
+            {subtitle && (
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-sm">{getSubtitleIcon()}</span>
+                <p className="text-xs text-gray-500">
+                  {subtitle}
+                </p>
+              </div>
+            )}
+
             {mode === 'inventory' ? (
               <>
                 {/* Inventory stats - horizontal scroll */}
@@ -267,13 +290,6 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
                       ))}
                     </div>
                   </div>
-                )}
-
-                {/* Subtitle at bottom */}
-                {subtitle && (
-                  <p className="text-xs text-gray-500 mt-3">
-                    {subtitle}
-                  </p>
                 )}
               </>
             ) : mode === 'reviews' ? (
@@ -309,11 +325,6 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
                       ))}
                     </div>
                   </div>
-
-                  {/* Subtitle at bottom */}
-                  <p className="text-xs text-gray-500 mt-3">
-                    Ratings and reviews are verified and are from people who use the same type of device that you use
-                  </p>
                 </div>
               </>
             ) : mode === 'products' ? (
@@ -352,13 +363,6 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
                       ))}
                     </div>
                   </div>
-
-                  {/* Subtitle at bottom */}
-                  {subtitle && (
-                    <p className="text-xs text-gray-500 mt-3">
-                      {subtitle}
-                    </p>
-                  )}
                 </div>
               </>
             ) : null}
