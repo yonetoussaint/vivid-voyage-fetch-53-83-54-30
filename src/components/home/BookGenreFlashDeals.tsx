@@ -495,7 +495,7 @@ export default function BookGenreFlashDeals({
                           }}
                         />
 
-                        {/* Currency switcher badge */}
+                        {/* Currency switcher badge - positioned outside the Link */}
                         <div className="absolute top-2 right-2 z-20">
                           <PriceInfo 
                             price={product.discount_price || product.price}
@@ -542,37 +542,37 @@ export default function BookGenreFlashDeals({
                           </div>
                         ) : null}
                       </div>
-
-                      <div className="p-1 space-y-2">
-                        <h4 className="text-xs font-medium line-clamp-2 text-gray-900 leading-tight">
-                          {product.name}
-                        </h4>
-
-                        {/* PriceInfo component */}
-                        <PriceInfo 
-                          price={product.discount_price || product.price}
-                          originalPrice={product.discount_price ? product.price : undefined}
-                          size="sm"
-                          showOnlyBadge={false}
-                        />
-
-                        {/* Custom product info section */}
-                        {customProductInfo ? (
-                          customProductInfo(product)
-                        ) : (
-                          <div className="flex items-center justify-between">
-                            <div className="text-xs text-gray-500">
-                              {product.stock} in stock
-                            </div>
-                            {product.discountPercentage > 0 && (
-                              <div className="text-xs text-green-600 font-medium">
-                                Save ${(product.price - (product.discount_price || product.price)).toFixed(2)}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
                     </Link>
+
+                    <div className="p-1 space-y-2">
+                      <h4 className="text-xs font-medium line-clamp-2 text-gray-900 leading-tight">
+                        {product.name}
+                      </h4>
+
+                      {/* PriceInfo component */}
+                      <PriceInfo 
+                        price={product.discount_price || product.price}
+                        originalPrice={product.discount_price ? product.price : undefined}
+                        size="sm"
+                        showOnlyBadge={false}
+                      />
+
+                      {/* Custom product info section */}
+                      {customProductInfo ? (
+                        customProductInfo(product)
+                      ) : (
+                        <div className="flex items-center justify-between">
+                          <div className="text-xs text-gray-500">
+                            {product.stock} in stock
+                          </div>
+                          {product.discountPercentage > 0 && (
+                            <div className="text-xs text-green-600 font-medium">
+                              Save ${(product.price - (product.discount_price || product.price)).toFixed(2)}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 );
               })}
