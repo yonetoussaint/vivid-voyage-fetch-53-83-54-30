@@ -1,4 +1,5 @@
 import React from 'react';
+import { Package, Star, Box, Info, ChevronRight } from 'lucide-react';
 
 interface InventoryItem {
   value: string | number;
@@ -105,7 +106,9 @@ const mockInventoryStats: InventoryItem[] = [
   { value: '1,248', label: 'Total Items', color: 'text-blue-600' },
   { value: '47', label: 'Low Stock', color: 'text-red-600', status: 'low' },
   { value: '92%', label: 'Availability', color: 'text-green-600' },
-  { value: '28', label: 'Categories', color: 'text-purple-600' }
+  { value: '28', label: 'Categories', color: 'text-purple-600' },
+  { value: '15', label: 'New Arrivals', color: 'text-orange-600' },
+  { value: '89', label: 'Restocking', color: 'text-yellow-600' }
 ];
 
 interface RatingDistribution {
@@ -179,31 +182,6 @@ interface SellerSummaryHeaderProps {
   showStats?: boolean;
 }
 
-// Icon components
-const InventoryIcon = ({ className = "w-4 h-4" }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-  </svg>
-);
-
-const ReviewIcon = ({ className = "w-4 h-4" }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-  </svg>
-);
-
-const ProductIcon = ({ className = "w-4 h-4" }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-  </svg>
-);
-
-const InfoIcon = ({ className = "w-4 h-4" }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-  </svg>
-);
-
 const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
   title = "Inventory Overview",
   subtitle = "Manage your stock levels and product availability",
@@ -218,6 +196,10 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
   actionButton,
   showStats = true
 }) => {
+  const [visibleCards, setVisibleCards] = React.useState(0);
+  const [hiddenCardsCount, setHiddenCardsCount] = React.useState(0);
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+
   const renderStars = (rating: number) => {
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 >= 0.5;
@@ -258,13 +240,13 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
   const getSubtitleIcon = () => {
     switch (mode) {
       case 'inventory':
-        return <InventoryIcon className="w-4 h-4 text-gray-500" />;
+        return <Package className="w-4 h-4 text-gray-500 flex-shrink-0" />;
       case 'reviews':
-        return <ReviewIcon className="w-4 h-4 text-gray-500" />;
+        return <Star className="w-4 h-4 text-gray-500 flex-shrink-0" />;
       case 'products':
-        return <ProductIcon className="w-4 h-4 text-gray-500" />;
+        return <Box className="w-4 h-4 text-gray-500 flex-shrink-0" />;
       default:
-        return <InfoIcon className="w-4 h-4 text-gray-500" />;
+        return <Info className="w-4 h-4 text-gray-500 flex-shrink-0" />;
     }
   };
 
@@ -280,6 +262,42 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
         return subtitle;
     }
   };
+
+  // Calculate visible and hidden cards for dots
+  React.useEffect(() => {
+    const calculateVisibleCards = () => {
+      const container = scrollContainerRef.current;
+      if (!container) return;
+
+      const containerWidth = container.clientWidth;
+      const cards = container.children[0]?.children;
+      if (!cards || cards.length === 0) return;
+
+      let totalWidth = 0;
+      let visibleCount = 0;
+
+      for (let i = 0; i < cards.length; i++) {
+        const card = cards[i] as HTMLElement;
+        const cardWidth = card.offsetWidth + 8; // including gap
+        if (totalWidth + cardWidth <= containerWidth) {
+          totalWidth += cardWidth;
+          visibleCount++;
+        } else {
+          break;
+        }
+      }
+
+      setVisibleCards(visibleCount);
+      setHiddenCardsCount(Math.max(0, stats.length - visibleCount));
+    };
+
+    calculateVisibleCards();
+    window.addEventListener('resize', calculateVisibleCards);
+    
+    return () => {
+      window.removeEventListener('resize', calculateVisibleCards);
+    };
+  }, [stats.length]);
 
   const currentSubtitle = subtitle || getDefaultSubtitle();
 
@@ -303,12 +321,15 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
                 {/* Inventory stats - horizontal scroll */}
                 {stats.length > 0 && (
                   <div className="relative">
-                    <div className="overflow-x-auto -mx-4 px-4 scrollbar-hide">
+                    <div 
+                      ref={scrollContainerRef}
+                      className="overflow-x-auto -mx-4 px-4 scrollbar-hide"
+                    >
                       <div className="flex gap-2 min-w-max">
                         {stats.map((stat, index) => (
                           <div 
                             key={index} 
-                            className="flex-shrink-0 bg-gray-50 rounded-lg px-3 py-2 min-w-[90px]"
+                            className="flex-shrink-0 bg-gray-50 rounded-lg px-3 py-2 min-w-[90px] transition-all duration-300 hover:bg-gray-100"
                           >
                             <div className={`text-lg font-bold ${stat.color || 'text-blue-600'} leading-none`}>
                               {stat.value}
@@ -320,15 +341,43 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
                         ))}
                       </div>
                     </div>
-                    {/* Scroll indicator dots */}
-                    <div className="flex justify-center gap-1 mt-2">
-                      {stats.map((_, index) => (
-                        <div 
-                          key={index} 
-                          className="w-1 h-1 rounded-full bg-gray-300"
-                        />
-                      ))}
-                    </div>
+                    
+                    {/* Dynamic scroll indicator dots */}
+                    {hiddenCardsCount > 0 && (
+                      <div className="flex justify-center items-center gap-1 mt-2">
+                        <div className="flex gap-1 items-center">
+                          {/* Visible cards indicator (faint dots) */}
+                          {Array.from({ length: visibleCards }).map((_, index) => (
+                            <div 
+                              key={`visible-${index}`}
+                              className="w-1 h-1 rounded-full bg-gray-200 transition-all duration-300"
+                            />
+                          ))}
+                          
+                          {/* Hidden cards indicator (animated dots) */}
+                          {Array.from({ length: hiddenCardsCount }).map((_, index) => (
+                            <div 
+                              key={`hidden-${index}`}
+                              className="w-1 h-1 rounded-full bg-gray-400 animate-pulse transition-all duration-300"
+                              style={{
+                                animationDelay: `${index * 0.2}s`,
+                                opacity: 0.6 + (index * 0.1)
+                              }}
+                            />
+                          ))}
+                          
+                          {/* Chevron indicator */}
+                          <ChevronRight className="w-3 h-3 text-gray-400 ml-1" />
+                        </div>
+                        
+                        {/* Hidden count badge */}
+                        <div className="bg-gray-100 rounded-full px-2 py-0.5 ml-1">
+                          <span className="text-xs text-gray-600 font-medium">
+                            +{hiddenCardsCount}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </>
