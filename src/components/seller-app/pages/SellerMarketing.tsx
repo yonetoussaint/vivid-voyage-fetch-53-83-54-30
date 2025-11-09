@@ -281,12 +281,7 @@ const SellerMarketing = () => {
                 <span>Views: {product.views}</span>
                 <span>Clicks: {product.clicks}</span>
               </div>
-              <div className="flex justify-between text-xs text-gray-600">
-                <span>Conversions: {product.conversions}</span>
-                <span className="text-green-600 font-medium">
-                  ${product.revenue?.toFixed(2)}
-                </span>
-              </div>
+              {/* REMOVED: Conversions and revenue display */}
               {product.clicks > 0 && (
                 <div className="mt-1">
                   <div className="flex justify-between text-xs mb-1">
