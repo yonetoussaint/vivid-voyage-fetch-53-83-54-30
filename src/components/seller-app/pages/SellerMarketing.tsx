@@ -286,78 +286,76 @@ const SellerMarketing = () => {
       </div>
 
       {/* Products Tab - Using Customized BookGenreFlashDeals */}
-      // In the SellerMarketing component, update the BookGenreFlashDeals usage:
+      {activeTab === 'products' && (
+        <BookGenreFlashDeals
+          products={campaignProducts}
+          title="Marketing Campaigns"
+          subtitle="Manage your marketing campaigns and promotions"
+          showSectionHeader={false}
+          showSummary={false}
+          showFilters={false}
+          className="marketing-campaigns"
+          // Custom render function to add expiry badge
+          customProductRender={(product: any) => (
+            <div className="relative">
+              {/* Expiry Date Badge */}
+              {product.expiry && (
+                <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 font-medium z-10 rounded">
+                  Expires: {new Date(product.expiry).toLocaleDateString()}
+                </div>
+              )}
+              
+              {/* Campaign Status Badge */}
+              <div className="absolute top-2 left-2 z-10">
+                <Badge 
+                  variant="secondary" 
+                  className={`${getStatusColor(product.status)} text-xs`}
+                >
+                  {product.status}
+                </Badge>
+              </div>
 
-{activeTab === 'products' && (
-  <BookGenreFlashDeals
-    products={campaignProducts}
-    title="Marketing Campaigns"
-    subtitle="Manage your marketing campaigns and promotions"
-    showSectionHeader={false}
-    showSummary={false}
-    showFilters={false}
-    className="marketing-campaigns"
-    // Custom render function to add expiry badge
-    customProductRender={(product: any) => (
-      <div className="relative w-full h-full">
-        {/* Expiry Date Badge - Top Right */}
-        {product.expiry && (
-          <div className="absolute top-2 right-2 bg-black/80 text-white text-xs px-2 py-1 font-medium z-20 rounded-md">
-            Exp: {new Date(product.expiry).toLocaleDateString()}
-          </div>
-        )}
-        
-        {/* Campaign Status Badge - Top Left */}
-        <div className="absolute top-2 left-2 z-20">
-          <Badge 
-            variant="secondary" 
-            className={`${getStatusColor(product.status)} text-xs`}
-          >
-            {product.status}
-          </Badge>
-        </div>
-
-        {/* Campaign Type Badge - Bottom Left */}
-        {product.type && (
-          <div className="absolute bottom-2 left-2 z-20">
-            <Badge 
-              variant="secondary" 
-              className={`${getTypeColor(product.type)} text-xs`}
-            >
-              {product.type}
-            </Badge>
-          </div>
-        )}
-      </div>
-    )}
-    // Additional campaign metrics in product info
-    customProductInfo={(product: any) => (
-      <div className="mt-2 space-y-2">
-        <div className="flex justify-between text-xs text-gray-600">
-          <span>Views: {product.views}</span>
-          <span>Clicks: {product.clicks}</span>
-        </div>
-        <div className="flex justify-between text-xs text-gray-600">
-          <span>Conversions: {product.conversions}</span>
-          <span className="text-green-600 font-medium">
-            ${product.revenue?.toFixed(2)}
-          </span>
-        </div>
-        {product.clicks > 0 && (
-          <div className="mt-1">
-            <div className="flex justify-between text-xs mb-1">
-              <span>CTR: {((product.clicks / product.views) * 100).toFixed(1)}%</span>
+              {/* Campaign Type Badge */}
+              {product.type && (
+                <div className="absolute bottom-16 left-2 z-10">
+                  <Badge 
+                    variant="secondary" 
+                    className={`${getTypeColor(product.type)} text-xs`}
+                  >
+                    {product.type}
+                  </Badge>
+                </div>
+              )}
             </div>
-            <Progress 
-              value={product.clicks > 0 ? (product.clicks / product.views) * 100 : 0} 
-              className="h-1.5" 
-            />
-          </div>
-        )}
-      </div>
-    )}
-  />
-)}
+          )}
+          // Additional campaign metrics in product info
+          customProductInfo={(product: any) => (
+            <div className="mt-2 space-y-1">
+              <div className="flex justify-between text-xs text-gray-600">
+                <span>Views: {product.views}</span>
+                <span>Clicks: {product.clicks}</span>
+              </div>
+              <div className="flex justify-between text-xs text-gray-600">
+                <span>Conversions: {product.conversions}</span>
+                <span className="text-green-600 font-medium">
+                  ${product.revenue?.toFixed(2)}
+                </span>
+              </div>
+              {product.clicks > 0 && (
+                <div className="mt-1">
+                  <div className="flex justify-between text-xs mb-1">
+                    <span>CTR: {((product.clicks / product.views) * 100).toFixed(1)}%</span>
+                  </div>
+                  <Progress 
+                    value={product.clicks > 0 ? (product.clicks / product.views) * 100 : 0} 
+                    className="h-1.5" 
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        />
+      )}
 
       {/* Promotions Tab */}
       {activeTab === 'promotions' && (
