@@ -99,7 +99,7 @@ const SellerMarketing = () => {
       type: 'Discount',
       startDate: '2024-01-15',
       endDate: '2024-02-15',
-      expiry: '2024-02-15',
+      expiry: '2024-02-15T23:59:59',
       views: 1250,
       clicks: 89,
       conversions: 23,
@@ -117,7 +117,7 @@ const SellerMarketing = () => {
       type: 'Shipping',
       startDate: '2024-01-20',
       endDate: '2024-01-22',
-      expiry: '2024-01-22',
+      expiry: '2024-01-22T23:59:59',
       views: 890,
       clicks: 67,
       conversions: 34,
@@ -135,7 +135,7 @@ const SellerMarketing = () => {
       type: 'Bundle',
       startDate: '2024-01-25',
       endDate: '2024-02-25',
-      expiry: '2024-02-25',
+      expiry: '2024-02-25T23:59:59',
       views: 0,
       clicks: 0,
       conversions: 0,
@@ -153,7 +153,7 @@ const SellerMarketing = () => {
       type: 'Loyalty',
       startDate: '2024-01-01',
       endDate: '2024-01-14',
-      expiry: '2024-01-14',
+      expiry: '2024-01-14T23:59:59',
       views: 2100,
       clicks: 156,
       conversions: 78,
@@ -283,16 +283,12 @@ const SellerMarketing = () => {
           showSummary={false}
           showFilters={false}
           className="marketing-campaigns"
+          // Enable expiry timer for marketing campaigns
+          showExpiryTimer={true}
+          expiryField="expiry"
           // Custom render function - REMOVED the campaign type badge
           customProductRender={(product: any) => (
             <div className="relative">
-              {/* Expiry Date Badge */}
-              {product.expiry && (
-                <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 font-medium z-10 rounded">
-                  Expires: {new Date(product.expiry).toLocaleDateString()}
-                </div>
-              )}
-
               {/* Campaign Status Badge */}
               <div className="absolute top-2 left-2 z-10">
                 <Badge 
