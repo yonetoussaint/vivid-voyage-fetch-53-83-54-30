@@ -175,24 +175,30 @@ export default function BookGenreFlashDeals({
   };
 
   // Default marketing product info renderer
-  const renderMarketingProductInfo = (product: Product) => (
-    <div className="mt-2 space-y-1">
-      <div className="flex justify-between text-xs text-gray-600">
-        <span>Clicks: {product.clicks || 0}</span>
+// Update the renderMarketingProduct function:
+const renderMarketingProduct = (product: Product) => (
+  <div className="relative">
+    {/* Status Badge - Top Left */}
+    {showStatusBadge && product.status && (
+      <div className="absolute top-2 left-2 z-10">
+        <Badge
+          variant="secondary"
+          className={`${getStatusColor(product.status)} text-xs`}
+        >
+          {product.status}
+        </Badge>
       </div>
-      {product.clicks && product.clicks > 0 && (
-        <div className="mt-1">
-          <div className="flex justify-between text-xs mb-1">
-            <span>CTR: {((product.clicks / (product.views || 1)) * 100).toFixed(1)}%</span>
-          </div>
-          <Progress
-            value={product.clicks > 0 ? (product.clicks / (product.views || 1)) * 100 : 0}
-            className="h-1.5"
-          />
-        </div>
-      )}
-    </div>
-  );
+    )}
+    
+    {/* Views with Eye Icon - Top Right */}
+    {showMarketingMetrics && product.views !== undefined && (
+      <div className="absolute top-2 right-2 z-10 flex items-center gap-1 bg-black/80 text-white text-xs px-2 py-1 rounded-md">
+        <Eye className="w-3 h-3" />
+        <span className="font-medium">{product.views}</span>
+      </div>
+    )}
+  </div>
+);
 
   // Default marketing product renderer
   const renderMarketingProduct = (product: Product) => (
