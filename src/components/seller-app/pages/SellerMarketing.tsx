@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { 
-  Megaphone, Mail, Users, TrendingUp, 
-  Plus, Eye, Edit, Calendar, Target, 
+import {
+  Megaphone, Mail, Users, TrendingUp,
+  Plus, Eye, Edit, Calendar, Target,
   BarChart3, Share2, Gift, Zap, Filter, Search
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,19 +10,19 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
 import ProductFilterBar from '@/components/home/ProductFilterBar';
@@ -34,10 +34,8 @@ const SellerMarketing = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [displayCount, setDisplayCount] = useState(8);
 
-  // Add filter state matching BookGenreFlashDeals
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
 
-  // Define filter categories matching BookGenreFlashDeals structure
   const filterCategories = [
     {
       id: 'status',
@@ -61,7 +59,6 @@ const SellerMarketing = () => {
     }
   ];
 
-  // Filter handler functions matching BookGenreFlashDeals
   const handleFilterSelect = (filterId: string, option: string) => {
     setSelectedFilters(prev => ({
       ...prev,
@@ -85,21 +82,21 @@ const SellerMarketing = () => {
     console.log('Filter button clicked:', filterId);
   };
 
-  // Mock campaigns data formatted as products for BookGenreFlashDeals
+  // 🆕 Updated campaigns data (Dates: Nov 2025 – Feb 2026)
   const campaignProducts = [
     {
       id: '1',
-      name: 'Summer Sale 2024',
+      name: 'Holiday Sale 2025',
       price: 100,
       discount_price: 75,
-      product_images: [{ src: 'https://placehold.co/300x300?text=Summer+Sale' }],
+      product_images: [{ src: 'https://placehold.co/300x300?text=Holiday+Sale' }],
       inventory: 1250,
       category: 'Discount',
       status: 'Active',
       type: 'Discount',
-      startDate: '2024-01-15',
-      endDate: '2024-02-15',
-      expiry: '2024-02-15T23:59:59',
+      startDate: '2025-11-01',
+      endDate: '2025-12-31',
+      expiry: '2025-12-31T23:59:59',
       views: 1250,
       clicks: 89,
       conversions: 23,
@@ -107,7 +104,7 @@ const SellerMarketing = () => {
     },
     {
       id: '2',
-      name: 'Free Shipping Weekend',
+      name: 'Black Friday Free Shipping',
       price: 50,
       discount_price: 0,
       product_images: [{ src: 'https://placehold.co/300x300?text=Free+Shipping' }],
@@ -115,9 +112,9 @@ const SellerMarketing = () => {
       category: 'Shipping',
       status: 'Active',
       type: 'Shipping',
-      startDate: '2024-01-20',
-      endDate: '2024-01-22',
-      expiry: '2024-01-22T23:59:59',
+      startDate: '2025-11-25',
+      endDate: '2025-11-30',
+      expiry: '2025-11-30T23:59:59',
       views: 890,
       clicks: 67,
       conversions: 34,
@@ -125,7 +122,7 @@ const SellerMarketing = () => {
     },
     {
       id: '3',
-      name: 'Electronics Bundle Deal',
+      name: 'New Year Electronics Bundle',
       price: 200,
       discount_price: 150,
       product_images: [{ src: 'https://placehold.co/300x300?text=Bundle+Deal' }],
@@ -133,9 +130,9 @@ const SellerMarketing = () => {
       category: 'Bundle',
       status: 'Scheduled',
       type: 'Bundle',
-      startDate: '2024-01-25',
-      endDate: '2024-02-25',
-      expiry: '2024-02-25T23:59:59',
+      startDate: '2026-01-01',
+      endDate: '2026-01-31',
+      expiry: '2026-01-31T23:59:59',
       views: 0,
       clicks: 0,
       conversions: 0,
@@ -143,7 +140,7 @@ const SellerMarketing = () => {
     },
     {
       id: '4',
-      name: 'Customer Loyalty Rewards',
+      name: 'Customer Loyalty Rewards 2025',
       price: 100,
       discount_price: 90,
       product_images: [{ src: 'https://placehold.co/300x300?text=Loyalty' }],
@@ -151,9 +148,9 @@ const SellerMarketing = () => {
       category: 'Loyalty',
       status: 'Ended',
       type: 'Loyalty',
-      startDate: '2024-01-01',
-      endDate: '2024-01-14',
-      expiry: '2024-01-14T23:59:59',
+      startDate: '2025-09-01',
+      endDate: '2025-10-01',
+      expiry: '2025-10-01T23:59:59',
       views: 2100,
       clicks: 156,
       conversions: 78,
@@ -161,6 +158,7 @@ const SellerMarketing = () => {
     }
   ];
 
+  // 🆕 Updated promotions (Dates: current & near-future)
   const promotions = [
     {
       id: '1',
@@ -168,7 +166,7 @@ const SellerMarketing = () => {
       description: 'Limited time offer on premium wireless earbuds',
       type: 'Flash Sale',
       discount: '40%',
-      expiry: '2024-01-22',
+      expiry: '2025-11-30',
       status: 'Active'
     },
     {
@@ -177,8 +175,8 @@ const SellerMarketing = () => {
       description: 'Complete smart home setup at unbeatable price',
       type: 'Bundle',
       discount: 'Save $150',
-      expiry: '2024-01-30',
-      status: 'Active'
+      expiry: '2026-01-15',
+      status: 'Scheduled'
     },
     {
       id: '3',
@@ -192,26 +190,10 @@ const SellerMarketing = () => {
   ];
 
   const stats = [
-    {
-      value: '5',
-      label: 'Active',
-      color: 'text-blue-600'
-    },
-    {
-      value: '2,456',
-      label: 'Clicks',
-      color: 'text-green-600'
-    },
-    {
-      value: '189',
-      label: 'Conversions',
-      color: 'text-purple-600'
-    },
-    {
-      value: '$8,901',
-      label: 'Revenue',
-      color: 'text-orange-600'
-    }
+    { value: '5', label: 'Active', color: 'text-blue-600' },
+    { value: '2,456', label: 'Clicks', color: 'text-green-600' },
+    { value: '189', label: 'Conversions', color: 'text-purple-600' },
+    { value: '$8,901', label: 'Revenue', color: 'text-orange-600' }
   ];
 
   const getStatusColor = (status: string) => {
@@ -226,7 +208,6 @@ const SellerMarketing = () => {
 
   return (
     <div className="w-full bg-white">
-      {/* Header & Stats Section - Same structure as BookGenreFlashDeals */}
       <SellerSummaryHeader
         title="Marketing"
         subtitle="Create and manage campaigns"
@@ -239,7 +220,6 @@ const SellerMarketing = () => {
         showStats={true}
       />
 
-      {/* Filter Bar Section - Same as BookGenreFlashDeals */}
       <div className="-mx-2">
         <ProductFilterBar
           filterCategories={filterCategories}
@@ -251,7 +231,6 @@ const SellerMarketing = () => {
         />
       </div>
 
-      {/* Tabs */}
       <div className="py-4">
         <div className="flex space-x-1 bg-muted p-1 rounded-lg w-fit">
           <Button
@@ -273,7 +252,6 @@ const SellerMarketing = () => {
         </div>
       </div>
 
-      {/* Products Tab - Using Customized BookGenreFlashDeals */}
       {activeTab === 'products' && (
         <BookGenreFlashDeals
           products={campaignProducts}
@@ -283,26 +261,20 @@ const SellerMarketing = () => {
           showSummary={false}
           showFilters={false}
           className="marketing-campaigns"
-          // Enable expiry timer for marketing campaigns
           showExpiryTimer={true}
           expiryField="expiry"
-          // Custom render function - REMOVED the campaign type badge
           customProductRender={(product: any) => (
             <div className="relative">
-              {/* Campaign Status Badge */}
               <div className="absolute top-2 left-2 z-10">
-                <Badge 
-                  variant="secondary" 
+                <Badge
+                  variant="secondary"
                   className={`${getStatusColor(product.status)} text-xs`}
                 >
                   {product.status}
                 </Badge>
               </div>
-
-              {/* REMOVED: Campaign Type Badge (bundle, discount, shipping, loyalty) */}
             </div>
           )}
-          // Additional campaign metrics in product info
           customProductInfo={(product: any) => (
             <div className="mt-2 space-y-1">
               <div className="flex justify-between text-xs text-gray-600">
@@ -320,9 +292,9 @@ const SellerMarketing = () => {
                   <div className="flex justify-between text-xs mb-1">
                     <span>CTR: {((product.clicks / product.views) * 100).toFixed(1)}%</span>
                   </div>
-                  <Progress 
-                    value={product.clicks > 0 ? (product.clicks / product.views) * 100 : 0} 
-                    className="h-1.5" 
+                  <Progress
+                    value={product.clicks > 0 ? (product.clicks / product.views) * 100 : 0}
+                    className="h-1.5"
                   />
                 </div>
               )}
@@ -331,7 +303,6 @@ const SellerMarketing = () => {
         />
       )}
 
-      {/* Promotions Tab */}
       {activeTab === 'promotions' && (
         <div className="py-4">
           {promotions.length > 0 ? (
