@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 
-// Currency data
+// Currency data - Gourdes as default
 const currencies = {
+  HTG: 'HTG',
   USD: 'USD',
   EUR: 'EUR', 
   GBP: 'GBP',
@@ -10,6 +11,7 @@ const currencies = {
 };
 
 const currencyToCountry = {
+  HTG: 'ht', // Haiti
   USD: 'us',
   EUR: 'eu',
   GBP: 'gb', 
@@ -17,10 +19,11 @@ const currencyToCountry = {
 };
 
 const exchangeRates = {
-  USD: 1,
-  EUR: 0.92,
-  GBP: 0.79,
-  JPY: 149.50
+  HTG: 1,     // Base currency
+  USD: 0.0078, // Approximate conversion: 1 HTG = 0.0078 USD
+  EUR: 0.0072, // Approximate conversion: 1 HTG = 0.0072 EUR
+  GBP: 0.0062, // Approximate conversion: 1 HTG = 0.0062 GBP
+  JPY: 1.16    // Approximate conversion: 1 HTG = 1.16 JPY
 };
 
 interface PriceInfoProps {
@@ -38,7 +41,7 @@ export default function PriceInfo({
   showOnlyBadge = false,
   className = ''
 }: PriceInfoProps) {
-  const [currentCurrency, setCurrentCurrency] = useState('USD');
+  const [currentCurrency, setCurrentCurrency] = useState('HTG'); // Default to Gourdes
 
   const toggleCurrency = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent event from bubbling up to parent Link
@@ -50,6 +53,12 @@ export default function PriceInfo({
 
   const formatPrice = (price: number, currency: string = currentCurrency) => {
     const convertedPrice = price * exchangeRates[currency as keyof typeof exchangeRates];
+    
+    // Special formatting for HTG (Gourdes)
+    if (currency === 'HTG') {
+      return `G ${convertedPrice.toFixed(2)}`;
+    }
+    
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency,
@@ -110,7 +119,7 @@ export default function PriceInfo({
           </span>
           <span className={`text-gray-500 ${sizeStyles[size].original}`}>/ unit</span>
         </div>
-        
+
         {/* Currency Switcher */}
         <CurrencySwitcher />
       </div>
