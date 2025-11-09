@@ -40,7 +40,8 @@ export default function PriceInfo({
 }: PriceInfoProps) {
   const [currentCurrency, setCurrentCurrency] = useState('USD');
 
-  const toggleCurrency = () => {
+  const toggleCurrency = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent event from bubbling up to parent Link
     const currencyKeys = Object.keys(currencies);
     const currentIndex = currencyKeys.indexOf(currentCurrency);
     const nextIndex = (currentIndex + 1) % currencyKeys.length;
@@ -60,26 +61,23 @@ export default function PriceInfo({
   // Size-based styling
   const sizeStyles = {
     sm: {
-      price: 'text-base',
-      original: 'text-xs',
+      price: 'text-base leading-none',
+      original: 'text-xs leading-none',
       currency: 'text-xs'
     },
     md: {
-      price: 'text-lg',
-      original: 'text-sm', 
+      price: 'text-lg leading-none',
+      original: 'text-sm leading-none', 
       currency: 'text-sm'
     },
     lg: {
-      price: 'text-xl',
-      original: 'text-base',
+      price: 'text-xl leading-none',
+      original: 'text-base leading-none',
       currency: 'text-base'
     }
   };
 
-  const formattedPrice = formatPrice(price);
-  const isLongPrice = formattedPrice.length > 8;
-
-  // CurrencySwitcher Component - Simplified
+  // CurrencySwitcher Component
   const CurrencySwitcher = () => {
     return (
       <>
@@ -106,7 +104,7 @@ export default function PriceInfo({
       {/* Main price display with currency switcher */}
       <div className="flex justify-between items-center">
         {/* Price */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 leading-none">
           <span className={`font-bold text-orange-500 ${sizeStyles[size].price}`}>
             {formatPrice(price)}
           </span>
@@ -116,15 +114,6 @@ export default function PriceInfo({
         {/* Currency Switcher */}
         <CurrencySwitcher />
       </div>
-
-      {/* Show original price if provided and different from current price */}
-      {originalPrice && originalPrice > price && (
-        <div className="mt-1">
-          <span className={`text-gray-400 line-through ${sizeStyles[size].original}`}>
-            {formatPrice(originalPrice)}
-          </span>
-        </div>
-      )}
     </div>
   );
 }
