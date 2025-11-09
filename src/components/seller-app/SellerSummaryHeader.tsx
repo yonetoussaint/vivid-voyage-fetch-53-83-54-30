@@ -233,53 +233,53 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
   return (
     <div className={`bg-white border-b ${className}`}>
       <div className="px-4 py-3">
-        {/* Title - Compact */}
-        {title && (
-          <div className="mb-2">
-            <h1 className="text-lg sm:text-xl font-bold text-gray-900">{title}</h1>
-          </div>
-        )}
-
         {showStats && (
           <>
             {mode === 'inventory' ? (
               <>
-                {/* Inventory mode - compact subtitle */}
-                {subtitle && (
-                  <p className="text-xs text-gray-500 mb-2">
-                    {subtitle}
-                  </p>
-                )}
-
                 {/* Inventory stats - horizontal scroll */}
                 {stats.length > 0 && (
-                  <div className="overflow-x-auto -mx-4 px-4">
-                    <div className="flex gap-2 min-w-max">
-                      {stats.map((stat, index) => (
+                  <div className="relative">
+                    <div className="overflow-x-auto -mx-4 px-4 scrollbar-hide">
+                      <div className="flex gap-2 min-w-max">
+                        {stats.map((stat, index) => (
+                          <div 
+                            key={index} 
+                            className="flex-shrink-0 bg-gray-50 rounded-lg px-3 py-2 min-w-[90px]"
+                          >
+                            <div className={`text-lg font-bold ${stat.color || 'text-blue-600'} leading-none`}>
+                              {stat.value}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-0.5 leading-tight">
+                              {stat.label}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    {/* Scroll indicator dots */}
+                    <div className="flex justify-center gap-1 mt-2">
+                      {stats.map((_, index) => (
                         <div 
                           key={index} 
-                          className="flex-shrink-0 bg-gray-50 rounded-lg px-3 py-2 min-w-[90px]"
-                        >
-                          <div className={`text-lg font-bold ${stat.color || 'text-blue-600'} leading-none`}>
-                            {stat.value}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-0.5 leading-tight">
-                            {stat.label}
-                          </div>
-                        </div>
+                          className="w-1 h-1 rounded-full bg-gray-300"
+                        />
                       ))}
                     </div>
                   </div>
+                )}
+
+                {/* Subtitle at bottom */}
+                {subtitle && (
+                  <p className="text-xs text-gray-500 mt-3">
+                    {subtitle}
+                  </p>
                 )}
               </>
             ) : mode === 'reviews' ? (
               <>
                 {/* Reviews mode - original layout */}
                 <div>
-                  <p className="text-xs text-gray-500 mb-3">
-                    Ratings and reviews are verified and are from people who use the same type of device that you use
-                  </p>
-
                   <div className="flex items-stretch gap-6">
                     {/* Rating number and stars */}
                     <div className="flex-shrink-0 flex flex-col items-center justify-center text-center">
@@ -309,18 +309,17 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
                       ))}
                     </div>
                   </div>
+
+                  {/* Subtitle at bottom */}
+                  <p className="text-xs text-gray-500 mt-3">
+                    Ratings and reviews are verified and are from people who use the same type of device that you use
+                  </p>
                 </div>
               </>
             ) : mode === 'products' ? (
               <>
                 {/* Products mode - compact */}
                 <div>
-                  {subtitle && (
-                    <p className="text-xs text-gray-500 mb-2 line-clamp-2">
-                      {subtitle}
-                    </p>
-                  )}
-
                   <div className="flex items-center gap-4">
                     {/* Total products - compact */}
                     <div className="flex-shrink-0 flex items-center gap-3 pr-4 border-r border-gray-200">
@@ -353,6 +352,13 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
                       ))}
                     </div>
                   </div>
+
+                  {/* Subtitle at bottom */}
+                  {subtitle && (
+                    <p className="text-xs text-gray-500 mt-3">
+                      {subtitle}
+                    </p>
+                  )}
                 </div>
               </>
             ) : null}
@@ -361,18 +367,12 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
       </div>
 
       <style jsx>{`
-        .overflow-x-auto::-webkit-scrollbar {
+        .scrollbar-hide::-webkit-scrollbar {
           display: none;
         }
-        .overflow-x-auto {
+        .scrollbar-hide {
           -ms-overflow-style: none;
           scrollbar-width: none;
-        }
-        .line-clamp-2 {
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
         }
       `}</style>
     </div>
