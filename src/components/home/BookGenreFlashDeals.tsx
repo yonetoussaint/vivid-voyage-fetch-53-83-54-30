@@ -556,7 +556,7 @@ export default function BookGenreFlashDeals({
                         showOnlyBadge={false}
                       />
 
-                      {/* Custom product info section */}
+                      {/* Custom product info section - REMOVED the green "Save $X.XX" element */}
                       {customProductInfo ? (
                         customProductInfo(product)
                       ) : (
@@ -564,11 +564,7 @@ export default function BookGenreFlashDeals({
                           <div className="text-xs text-gray-500">
                             {product.stock} in stock
                           </div>
-                          {product.discountPercentage > 0 && (
-                            <div className="text-xs text-green-600 font-medium">
-                              Save ${(product.price - (product.discount_price || product.price)).toFixed(2)}
-                            </div>
-                          )}
+                          {/* REMOVED: The green "Save $X.XX" element */}
                         </div>
                       )}
                     </div>
