@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { Timer, Plus, ChevronRight, Package } from "lucide-react";
@@ -249,7 +250,7 @@ export default function BookGenreFlashDeals({
   useEffect(() => {
     const calculateExpiryTimes = () => {
       const newExpiryTimes: Record<string, { days: number; hours: number; minutes: number; seconds: number }> = {};
-      
+
       allProducts.forEach(product => {
         const expiryDate = product[expiryField as keyof Product] as string;
         if (expiryDate) {
