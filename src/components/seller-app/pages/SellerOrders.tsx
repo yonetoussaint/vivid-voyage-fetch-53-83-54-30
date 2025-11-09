@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Search, Filter, MoreHorizontal, Eye, MessageCircle,
-  Download, Plus, Package, RefreshCw, Copy, MapPin
+  Download, Plus, Package, RefreshCw, Copy, MapPin, X
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -31,14 +31,16 @@ const SellerOrders = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [displayCount, setDisplayCount] = useState(8);
+  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
+  const [showFilters, setShowFilters] = useState(false);
+  const [expandedProduct, setExpandedProduct] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [touchStart, setTouchStart] = useState(0);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast.success('Tracking number copied to clipboard');
   };
-
-  // Add filter state
-  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
 
   // Define filter categories matching BookGenreFlashDeals structure
   const filterCategories = [
@@ -238,6 +240,32 @@ const SellerOrders = () => {
     { value: '979', label: 'Completed', color: 'text-green-600' }
   ];
 
+  // Pull to refresh functionality
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (window.scrollY === 0) {
+      setTouchStart(e.touches[0].clientY);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStart > 0) {
+      const touchCurrent = e.touches[0].clientY;
+      const diff = touchCurrent - touchStart;
+      if (diff > 100 && window.scrollY === 0) {
+        handleRefresh();
+        setTouchStart(0);
+      }
+    }
+  };
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setRefreshing(false);
+      setDisplayCount(8);
+    }, 1000);
+  };
+
   // Infinite scroll logic matching BookGenreFlashDeals
   React.useEffect(() => {
     const handleScroll = () => {
@@ -261,23 +289,102 @@ const SellerOrders = () => {
     setDisplayCount(8);
   }, [filteredOrders.length]);
 
-  return (
-    <div className="w-full bg-white">
-      {/* Header & Stats Section - Same structure as BookGenreFlashDeals */}
-      <SellerSummaryHeader
-        title="Orders"
-        subtitle="Manage your orders"
-        stats={orderStats}
-        actionButton={{
-          label: 'New Order',
-          icon: Plus,
-          onClick: () => console.log('New order clicked')
-        }}
-        showStats={filteredOrders.length > 0}
-      />
+  const activeFilterCount = Object.keys(selectedFilters).length;
 
-      {/* Filter Bar Section - Same as BookGenreFlashDeals */}
-      <div className="-mx-2">
+  return (
+    <div 
+      className="w-full bg-white min-h-screen"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+    >
+      {/* Refresh Indicator */}
+      {refreshing && (
+        <div className="fixed top-0 left-0 right-0 h-1 bg-blue-500 animate-pulse z-50" />
+      )}
+
+      {/* Header & Stats Section - Mobile Optimized */}
+      <div className="sticky top-0 z-40 bg-white border-b border-gray-200">
+        <SellerSummaryHeader
+          title="Orders"
+          subtitle="Manage your orders"
+          stats={orderStats}
+          actionButton={{
+            label: 'New Order',
+            icon: Plus,
+            onClick: () => console.log('New order clicked')
+          }}
+          showStats={filteredOrders.length > 0}
+        />
+
+        {/* Search Bar - Larger touch target */}
+        <div className="px-4 pb-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+            <Input
+              type="text"
+              placeholder="Search orders or customers..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-12 pl-10 pr-4 text-base w-full"
+            />
+          </div>
+
+          {/* Filter Button with Count Badge */}
+          <div className="flex gap-2 mt-3">
+            <Button
+              variant="outline"
+              onClick={() => setShowFilters(true)}
+              className="flex-1 h-11 relative"
+            >
+              <Filter className="w-5 h-5 mr-2" />
+              Filters
+              {activeFilterCount > 0 && (
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                  {activeFilterCount}
+                </Badge>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleRefresh}
+              className="h-11 w-11 p-0"
+              disabled={refreshing}
+            >
+              <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
+
+          {/* Active Filters Display */}
+          {activeFilterCount > 0 && (
+            <div className="flex gap-2 flex-wrap mt-3">
+              {Object.entries(selectedFilters).map(([key, value]) => (
+                <Badge key={key} variant="secondary" className="pl-3 pr-1 py-1.5 gap-1">
+                  {value}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleFilterClear(key)}
+                    className="h-4 w-4 p-0 hover:bg-transparent"
+                  >
+                    <X className="w-3 h-3" />
+                  </Button>
+                </Badge>
+              ))}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearAll}
+                className="h-7 text-xs"
+              >
+                Clear all
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Filter Bar Section - Hidden on mobile, shown via modal */}
+      <div className="hidden lg:block">
         <ProductFilterBar
           filterCategories={filterCategories}
           selectedFilters={selectedFilters}
@@ -288,143 +395,267 @@ const SellerOrders = () => {
         />
       </div>
 
-      {/* Orders Grid - Using same spacing and structure as BookGenreFlashDeals */}
-      <div className="py-4">
+      {/* Orders Grid - Mobile Optimized Layout */}
+      <div className="py-4 px-4">
         {filteredOrders.length > 0 ? (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 gap-3">
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4">
               {filteredOrders.slice(0, displayCount).map((order) => (
-                <Card key={order.id} className="overflow-hidden border border-gray-200">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <span className="font-semibold text-foreground">{order.id}</span>
-                        <Badge variant="secondary" className={getStatusColor(order.status)}>
-                          {order.status}
-                        </Badge>
+                <Card key={order.id} className="overflow-hidden border border-gray-200 shadow-sm">
+                  <CardContent className="p-0">
+                    {/* Order Header - Mobile Optimized */}
+                    <div className="p-4 border-b border-gray-100">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-base text-foreground">{order.id}</span>
+                          <Badge variant="secondary" className={`${getStatusColor(order.status)} px-2.5 py-1`}>
+                            {order.status}
+                          </Badge>
+                        </div>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">{order.date}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">{order.date}</span>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <Eye className="w-4 h-4 mr-2" />
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <MessageCircle className="w-4 h-4 mr-2" />
-                              Contact Customer
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Download className="w-4 h-4 mr-2" />
-                              Download Invoice
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {/* Customer Info */}
+                      {/* Customer Info - Better spacing */}
                       <div className="flex items-center gap-3">
-                        <Avatar className="w-10 h-10">
+                        <Avatar className="w-12 h-12 flex-shrink-0">
                           <AvatarImage src={order.customer.avatar} />
                           <AvatarFallback>{order.customer.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                         </Avatar>
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{order.customer.name}</p>
-                          <p className="text-xs text-muted-foreground">{order.customer.email}</p>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{order.customer.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{order.customer.email}</p>
                         </div>
-                      </div>
-
-                      {/* Products */}
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Products</p>
-                        <div className="space-y-2">
-                          {order.products.map((product, index) => (
-                            <div key={index} className="flex items-center gap-2">
-                              <img 
-                                src={product.image} 
-                                alt={product.name}
-                                className="w-10 h-10 object-cover rounded"
-                              />
-                              <div className="flex-1 min-w-0">
-                                <div className="flex justify-between items-start gap-2">
-                                  <span className="text-sm truncate">{product.quantity}x {product.name}</span>
-                                  <span className="text-sm font-medium whitespace-nowrap">${(product.price * product.quantity).toFixed(2)}</span>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Order Total */}
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Order Total</p>
-                        <div className="text-lg font-bold text-foreground">${order.total.toFixed(2)}</div>
-                        <p className="text-xs text-muted-foreground mt-1">{order.paymentMethod}</p>
                       </div>
                     </div>
 
-                    {/* Tracking Number */}
-                    <div className="mt-3 pt-3 border-t border-border">
-                      <div className="flex items-center justify-between">
+                    {/* Products Section - Improved for mobile */}
+                    <div className="p-4 border-b border-gray-100">
+                      <p className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wide">Products</p>
+                      <div className="space-y-3">
+                        {order.products.map((product, index) => (
+                          <div key={index} className="flex items-start gap-3">
+                            <img 
+                              src={product.image} 
+                              alt={product.name}
+                              className="w-16 h-16 object-cover rounded-lg flex-shrink-0 bg-gray-100"
+                              loading="lazy"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <button
+                                onClick={() => setExpandedProduct(
+                                  expandedProduct === `${order.id}-${index}` 
+                                    ? null 
+                                    : `${order.id}-${index}`
+                                )}
+                                className="text-left w-full group"
+                              >
+                                <p className={`text-sm font-medium text-foreground transition-all ${
+                                  expandedProduct === `${order.id}-${index}` ? '' : 'line-clamp-2'
+                                }`}>
+                                  {product.quantity}x {product.name}
+                                </p>
+                              </button>
+                              <div className="flex items-center justify-between mt-1">
+                                <span className="text-xs text-muted-foreground">${product.price.toFixed(2)} each</span>
+                                <span className="text-sm font-semibold text-foreground whitespace-nowrap">
+                                  ${(product.price * product.quantity).toFixed(2)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Order Total - Better hierarchy */}
+                      <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
                         <div>
-                          <p className="text-xs text-muted-foreground mb-1">Tracking Number</p>
-                          <p className="text-sm font-mono text-foreground">{order.trackingNumber}</p>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wide">Total Amount</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{order.paymentMethod}</p>
+                        </div>
+                        <div className="text-xl font-bold text-foreground">${order.total.toFixed(2)}</div>
+                      </div>
+                    </div>
+
+                    {/* Tracking Number - Larger touch target for copy */}
+                    <div className="p-4 border-b border-gray-100">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-muted-foreground mb-1 uppercase tracking-wide">Tracking Number</p>
+                          <p className="text-sm font-mono text-foreground truncate">{order.trackingNumber}</p>
                         </div>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => copyToClipboard(order.trackingNumber)}
-                          className="h-8 w-8 p-0"
+                          className="h-11 w-11 p-0 flex-shrink-0 hover:bg-gray-100"
                         >
-                          <Copy className="w-4 h-4" />
+                          <Copy className="w-5 h-5" />
                         </Button>
                       </div>
                     </div>
 
-                    {/* Pickup Station */}
-                    <div className="mt-3 pt-3 border-t border-border">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <p className="text-xs text-muted-foreground mb-1">Pickup Station</p>
-                          <p className="text-sm text-foreground">{order.pickupStation}</p>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => navigate(`/pickup-station/overview`)}
-                          className="flex items-center gap-2"
-                        >
-                          <MapPin className="w-4 h-4" />
-                          Visit Pickup Station
-                        </Button>
-                      </div>
+                    {/* Pickup Station - Better mobile button */}
+                    <div className="p-4 border-b border-gray-100">
+                      <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">Pickup Station</p>
+                      <p className="text-sm text-foreground mb-3">{order.pickupStation}</p>
+                      <Button
+                        variant="outline"
+                        onClick={() => navigate(`/pickup-station/overview`)}
+                        className="w-full h-11 flex items-center justify-center gap-2"
+                      >
+                        <MapPin className="w-5 h-5" />
+                        <span className="font-medium">View Station</span>
+                      </Button>
+                    </div>
+
+                    {/* Action Buttons - Grid layout for mobile */}
+                    <div className="p-3 bg-gray-50 grid grid-cols-3 gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-11 flex flex-col items-center justify-center gap-1 bg-white"
+                      >
+                        <Eye className="w-5 h-5" />
+                        <span className="text-xs">View</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-11 flex flex-col items-center justify-center gap-1 bg-white"
+                      >
+                        <MessageCircle className="w-5 h-5" />
+                        <span className="text-xs">Contact</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-11 flex flex-col items-center justify-center gap-1 bg-white"
+                      >
+                        <Download className="w-5 h-5" />
+                        <span className="text-xs">Invoice</span>
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
+
+            {/* Loading More Indicator */}
+            {displayCount < filteredOrders.length && (
+              <div className="text-center py-6">
+                <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  Loading more orders...
+                </div>
+              </div>
+            )}
           </div>
         ) : (
-          <div className="text-center py-12 text-gray-500">
-            <Package className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-            <div className="text-lg font-medium">No orders found</div>
-            <div className="text-sm mt-1">Try adjusting your search terms or filters</div>
-            <Button size="sm" className="mt-4">
-              <RefreshCw className="w-4 h-4 mr-2" />
+          <div className="text-center py-16 px-4">
+            <div className="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+              <Package className="w-10 h-10 text-gray-400" />
+            </div>
+            <div className="text-lg font-semibold text-foreground mb-1">No orders found</div>
+            <div className="text-sm text-muted-foreground mb-6">Try adjusting your search terms or filters</div>
+            <Button onClick={handleRefresh} className="h-11 px-6">
+              <RefreshCw className="w-5 h-5 mr-2" />
               Refresh Orders
             </Button>
           </div>
         )}
       </div>
+
+      {/* Mobile Filter Modal - Bottom Sheet */}
+      {showFilters && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-50 lg:hidden animate-fade-in"
+          onClick={() => setShowFilters(false)}
+        >
+          <div
+            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[80vh] overflow-y-auto animate-slide-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-foreground">Filters</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowFilters(false)}
+                className="h-10 w-10 p-0 rounded-full"
+              >
+                <X className="w-6 h-6" />
+              </Button>
+            </div>
+
+            {/* Filter Categories */}
+            <div className="p-4 space-y-6">
+              {filterCategories.map((category) => (
+                <div key={category.id}>
+                  <h3 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wide">
+                    {category.label}
+                  </h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {category.options.map((option) => (
+                      <Button
+                        key={option}
+                        variant={selectedFilters[category.id] === option ? 'default' : 'outline'}
+                        onClick={() => handleFilterSelect(category.id, option)}
+                        className="h-11 justify-center"
+                      >
+                        {option}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  handleClearAll();
+                  setShowFilters(false);
+                }}
+                className="flex-1 h-12"
+              >
+                Clear All
+              </Button>
+              <Button
+                onClick={() => setShowFilters(false)}
+                className="flex-1 h-12"
+              >
+                Apply Filters
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style jsx>{`
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+        @keyframes fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slide-up {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.2s ease-out;
+        }
+        .animate-slide-up {
+          animation: slide-up 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 };
