@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Timer, Plus, ChevronRight, Package } from "lucide-react";
+import { Timer, Plus, ChevronRight, Package, Eye } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllProducts, trackProductView } from "@/integrations/supabase/products";
@@ -178,7 +178,6 @@ export default function BookGenreFlashDeals({
   const renderMarketingProductInfo = (product: Product) => (
     <div className="mt-2 space-y-1">
       <div className="flex justify-between text-xs text-gray-600">
-        <span>Views: {product.views || 0}</span>
         <span>Clicks: {product.clicks || 0}</span>
       </div>
       {product.clicks && product.clicks > 0 && (
@@ -206,6 +205,14 @@ export default function BookGenreFlashDeals({
           >
             {product.status}
           </Badge>
+        </div>
+      )}
+      
+      {/* Views with Eye Icon - Top Right */}
+      {showMarketingMetrics && product.views !== undefined && (
+        <div className="absolute top-2 right-2 z-10 flex items-center gap-1 bg-black/70 text-white text-xs px-2 py-1 rounded-md">
+          <Eye className="w-3 h-3" />
+          <span>{product.views}</span>
         </div>
       )}
     </div>
@@ -549,15 +556,6 @@ export default function BookGenreFlashDeals({
                             e.currentTarget.src = "https://placehold.co/300x300?text=No+Image";
                           }}
                         />
-
-                        {/* Currency switcher badge */}
-                        <div className="absolute top-2 right-2 z-20">
-                          <PriceInfo 
-                            price={product.discount_price || product.price}
-                            size="sm"
-                            showOnlyBadge={true}
-                          />
-                        </div>
 
                         {/* Custom product render section */}
                         {customProductRender ? customProductRender(product) : 
