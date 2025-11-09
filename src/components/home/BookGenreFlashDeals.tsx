@@ -20,6 +20,16 @@ interface Product {
   flash_start_time?: string;
   seller_id?: string;
   category?: string;
+  // Additional fields for marketing campaigns
+  status?: string;
+  type?: string;
+  startDate?: string;
+  endDate?: string;
+  expiry?: string;
+  views?: number;
+  clicks?: number;
+  conversions?: number;
+  revenue?: number;
 }
 
 interface GenreFlashDealsProps {
@@ -41,6 +51,9 @@ interface GenreFlashDealsProps {
   showVerifiedSellers?: boolean;
   verifiedSellersText?: string;
   summaryMode?: 'inventory' | 'reviews' | 'products';
+  // New custom render props
+  customProductRender?: (product: Product) => React.ReactNode;
+  customProductInfo?: (product: Product) => React.ReactNode;
 }
 
 interface SummaryStats {
@@ -71,6 +84,8 @@ export default function BookGenreFlashDeals({
   showVerifiedSellers = false,
   verifiedSellersText = "Verified Sellers",
   summaryMode = 'products',
+  customProductRender,
+  customProductInfo,
 }: GenreFlashDealsProps) {
   const [displayCount, setDisplayCount] = useState(8);
 
@@ -151,7 +166,7 @@ export default function BookGenreFlashDeals({
 
   // Determine which products to use
   let allProducts = externalProducts || fetchedProducts || [];
-  
+
   console.log('Total products to display:', allProducts.length);
 
   const isLoading = allProductsLoading && !externalProducts;
@@ -428,6 +443,9 @@ export default function BookGenreFlashDeals({
                         }}
                       />
 
+                      {/* Custom product render section */}
+                      {customProductRender && customProductRender(product)}
+
                       {product.discountPercentage > 0 && (
                         <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 font-medium z-10">
                           -{product.discountPercentage}%
@@ -465,16 +483,21 @@ export default function BookGenreFlashDeals({
                         )}
                       </div>
 
-                      <div className="flex items-center justify-between">
-                        <div className="text-xs text-gray-500">
-                          {product.stock} in stock
-                        </div>
-                        {product.discountPercentage > 0 && (
-                          <div className="text-xs text-green-600 font-medium">
-                            Save ${(product.price - (product.discount_price || product.price)).toFixed(2)}
+                      {/* Custom product info section */}
+                      {customProductInfo ? (
+                        customProductInfo(product)
+                      ) : (
+                        <div className="flex items-center justify-between">
+                          <div className="text-xs text-gray-500">
+                            {product.stock} in stock
                           </div>
-                        )}
-                      </div>
+                          {product.discountPercentage > 0 && (
+                            <div className="text-xs text-green-600 font-medium">
+                              Save ${(product.price - (product.discount_price || product.price)).toFixed(2)}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </Link>
                 </div>
