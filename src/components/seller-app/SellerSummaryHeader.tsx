@@ -233,23 +233,10 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
   return (
     <div className={`bg-white border-b ${className}`}>
       <div className="px-4 py-3">
-        {/* Title and Action Button - Compact */}
-        {(title || actionButton) && (
-          <div className="flex items-center justify-between mb-2">
-            {title && (
-              <div className="flex-1 min-w-0">
-                <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">{title}</h1>
-              </div>
-            )}
-            {actionButton && (
-              <button
-                onClick={actionButton.onClick}
-                className="ml-3 h-10 w-10 flex-shrink-0 flex items-center justify-center bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 active:scale-95 transition-all"
-                aria-label={actionButton.label}
-              >
-                {actionButton.icon && <actionButton.icon className="w-5 h-5" />}
-              </button>
-            )}
+        {/* Title - Compact */}
+        {title && (
+          <div className="mb-2">
+            <h1 className="text-lg sm:text-xl font-bold text-gray-900">{title}</h1>
           </div>
         )}
 
