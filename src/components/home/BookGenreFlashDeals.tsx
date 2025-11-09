@@ -174,6 +174,19 @@ export default function BookGenreFlashDeals({
     }
   };
 
+
+// Add this helper function to format large numbers
+const formatNumber = (num: number): string => {
+  if (num >= 1000000) {
+    return (num / 1000000).toFixed(1) + 'm';
+  } else if (num >= 1000) {
+    return (num / 1000).toFixed(1) + 'k';
+  }
+  return num.toString();
+};
+
+
+
   // Default marketing product info renderer
   const renderMarketingProductInfo = (product: Product) => (
     <div className="mt-2 space-y-1">
@@ -546,12 +559,13 @@ export default function BookGenreFlashDeals({
                         )}
 
                         {/* Views with Eye Icon - Top Right */}
-                        {showMarketingMetrics && product.views !== undefined && (
-                          <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/80 text-white text-xs px-2 py-1 rounded-md">
-                            <Eye className="w-3 h-3" />
-                            <span className="font-medium">{product.views}</span>
-                          </div>
-                        )}
+                        // Then update the views badge section:
+{showMarketingMetrics && product.views !== undefined && (
+  <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/80 text-white text-xs px-2 py-1 rounded-md">
+    <Eye className="w-3 h-3" />
+    <span className="font-medium">{formatNumber(product.views)}</span>
+  </div>
+)}
 
                         {/* Barred price badge - replaces discount badge */}
                         {product.discount_price && product.discount_price < product.price && (
