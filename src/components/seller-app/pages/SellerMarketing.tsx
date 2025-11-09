@@ -222,18 +222,18 @@ const SellerMarketing = () => {
 
       {activeTab === 'products' && (
         <BookGenreFlashDeals
-          products={campaignProducts}
-          title="Marketing Campaigns"
-          subtitle="Manage your marketing campaigns and promotions"
-          showSectionHeader={false}
-          showSummary={false}
-          showFilters={false}
-          className="marketing-campaigns"
-          showExpiryTimer={true}
-          expiryField="expiry"
-          showMarketingMetrics={true}
-          showStatusBadge={true}
-        />
+  products={campaignProducts}
+  title="Marketing Campaigns"
+  subtitle="Manage your marketing campaigns and promotions"
+  showSectionHeader={false}
+  showSummary={false}
+  showFilters={false}
+  className="marketing-campaigns"
+  showExpiryTimer={true}
+  expiryField="expiry"
+  showMarketingMetrics={true}
+  // showStatusBadge is not passed, so it defaults to false
+/>
       )}
 
       {activeTab === 'promotions' && (
