@@ -495,10 +495,19 @@ export default function BookGenreFlashDeals({
                           }}
                         />
 
+                        {/* Currency switcher badge */}
+                        <div className="absolute top-2 right-2 z-20">
+                          <PriceInfo 
+                            price={product.discount_price || product.price}
+                            size="sm"
+                            showOnlyBadge={true}
+                          />
+                        </div>
+
                         {/* Custom product render section */}
                         {customProductRender && customProductRender(product)}
 
-                        {/* Only show discount badge - removed bundle, shipping, loyalty badges */}
+                        {/* Only show discount badge */}
                         {product.discountPercentage > 0 && (
                           <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 font-medium z-10">
                             -{product.discountPercentage}%
@@ -539,12 +548,12 @@ export default function BookGenreFlashDeals({
                           {product.name}
                         </h4>
 
-                        {/* Replace inline price with PriceInfo component */}
+                        {/* PriceInfo component */}
                         <PriceInfo 
                           price={product.discount_price || product.price}
                           originalPrice={product.discount_price ? product.price : undefined}
                           size="sm"
-                          showCurrencyBadge={true}
+                          showOnlyBadge={false}
                         />
 
                         {/* Custom product info section */}
@@ -586,7 +595,7 @@ export default function BookGenreFlashDeals({
         )}
       </div>
 
-      {/* Floating Add Product Button - Updated Design */}
+      {/* Floating Add Product Button */}
       {onAddProduct && (
         <button
           onClick={onAddProduct}
