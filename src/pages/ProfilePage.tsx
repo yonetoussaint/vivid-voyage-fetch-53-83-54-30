@@ -22,8 +22,7 @@ const ProfilePage = () => {
   return (
     <ProfileLayout>
       <Routes>
-        <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="dashboard" element={<ProfileDashboard />} />
+        <Route index element={<Navigate to="orders" replace />} />
         <Route path="orders" element={<ProfileOrders />} />
         <Route 
           path="wishlist" 

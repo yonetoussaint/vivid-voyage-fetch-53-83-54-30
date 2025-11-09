@@ -91,7 +91,7 @@ const getNavItems = (
 
   let profileLabel = 'navigation.account';
   let profileIcon: any = User;
-  let profilePath = '/profile/dashboard';
+  let profilePath = '/profile/orders';
 
   // Update if on specific pages
   if (isReelsPage) {
@@ -115,7 +115,7 @@ const getNavItems = (
   if (isProfilePage) {
     profileLabel = 'navigation.account';
     profileIcon = User as any;
-    profilePath = '/profile/dashboard';
+    profilePath = '/profile/orders';
   }
 
   return [
@@ -392,7 +392,7 @@ export default function BottomNav() {
                         else if (item.id === 'shorts') navigate('/reels');
                         else if (item.id === 'messages') navigate('/messages');
                         else if (item.id === 'wallet') navigate('/wallet');
-                        else if (item.id === 'profile') navigate('/profile/dashboard');
+                        else if (item.id === 'profile') navigate('/profile/orders');
                         setActiveTab(item.id);
                       }}
                       className="ml-2 p-1 hover:bg-red-700 rounded-full transition-colors cursor-pointer inline-flex"
@@ -405,7 +405,7 @@ export default function BottomNav() {
                           else if (item.id === 'shorts') navigate('/reels');
                           else if (item.id === 'messages') navigate('/messages');
                           else if (item.id === 'wallet') navigate('/wallet');
-                          else if (item.id === 'profile') navigate('/profile/dashboard');
+                          else if (item.id === 'profile') navigate('/profile/orders');
                           setActiveTab(item.id);
                         }
                       }}

@@ -22,7 +22,7 @@ const MenuPage = () => {
       icon: Users,
       color: 'bg-blue-600',
       iconColor: 'text-white',
-      path: '/profile/dashboard',
+      path: '/profile/orders',
       fullWidth: true
     },
     {
