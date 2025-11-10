@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';  
 import {   
   Package, ShoppingCart, Users, BarChart3, DollarSign, Megaphone, Settings,  
-  Home, Share, MessageCircle, MessageSquare, Star, Heart, Save  
+  Home, Share, MessageCircle, MessageSquare, Star, Heart, Save, Edit  
 } from 'lucide-react';  
 import { useIsMobile } from '@/hooks/use-mobile';  
 import { useQuery } from '@tanstack/react-query';  
@@ -46,7 +46,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
   const handleBackClick = () => navigate('/profile');  
   const handleBecomeSeller = () => navigate('/seller-onboarding');  
-  const handleEditProfile = () => navigate('/seller-dashboard/edit-profile');
 
   const handleShareClick = () => {  
     if (navigator.share) {  
@@ -99,7 +98,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     ? '/pickup-station'  
     : `/seller/${location.pathname.split('/seller/')[1]?.split('/')[0] || ''}`;  
 
-  // PRESERVED ORIGINAL NAVIGATION ITEMS
+  // UPDATED NAVIGATION ITEMS - Include edit-profile but mark it as hidden
   const navigationItems = isPickupStation  
     ? [  
         { id: 'overview', name: 'Overview', href: '/pickup-station/overview', icon: Home },  
@@ -121,6 +120,8 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         { id: 'marketing', name: 'Marketing', href: '/seller-dashboard/marketing', icon: Megaphone },  
         { id: 'reels', name: 'Reels', href: '/seller-dashboard/reels', icon: Megaphone },  
         { id: 'settings', name: 'Settings', href: '/seller-dashboard/settings', icon: Settings },  
+        // Add edit-profile as a hidden navigation item
+        { id: 'edit-profile', name: 'Edit Profile', href: '/seller-dashboard/edit-profile', icon: Edit, hidden: true },  
       ]  
     : [  
         { id: 'products', name: 'Products', href: `${baseRoute}/products`, icon: Package },  
@@ -144,7 +145,9 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }  
   };  
 
-  const tabs = navigationItems.map(item => ({  
+  // Filter out hidden tabs from display but keep them in navigation
+  const visibleTabs = navigationItems.filter(item => !item.hidden);
+  const tabs = visibleTabs.map(item => ({  
     id: item.id,  
     label: item.name  
   }));  
@@ -240,7 +243,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         getSellerLogoUrl={getSellerLogoUrl}  
         onBecomeSeller={handleBecomeSeller}  
         onBack={handleBackClick}  
-        onEditProfile={handleEditProfile}
+        onEditProfile={() => navigate('/seller-dashboard/edit-profile')}
         isOwnProfile={isOwnProfile}  
         showActionButtons={showActionButtons}  
       />  
@@ -282,7 +285,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       headerRef={headerRef}
       topContent={topContent}
       topContentRef={sellerInfoRef}
-      tabs={isEditProfilePage ? [] : tabs} // Hide tabs on edit profile page
+      tabs={tabs} // Use filtered tabs (hidden ones are excluded)
       activeTab={activeTab}
       onTabChange={handleTabChange}
       isProductsTab={isProductsTab}
