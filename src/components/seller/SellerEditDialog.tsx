@@ -1,152 +1,395 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Save, Loader2, X } from 'lucide-react';
-import { toast } from 'sonner';
-import { updateSeller } from '@/integrations/supabase/sellers';
+import { useNavigate } from 'react-router-dom';
+import { Camera, Upload, Edit2 } from 'lucide-react';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import HeroBanner from '@/components/home/HeroBanner';
 
-interface SellerEditDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  seller: any;
-  onSuccess: () => void;
-}
+const SellerEditProfile = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
 
-export const SellerEditDialog: React.FC<SellerEditDialogProps> = ({
-  open,
-  onOpenChange,
-  seller,
-  onSuccess
-}) => {
   const [formData, setFormData] = useState({
-    address: '',
-    phone: '',
-    email: '',
-    description: ''
+    name: '',
+    bio: '',
+    business_type: '',
+    location: '',
+    website: '',
   });
-  const [isUpdating, setIsUpdating] = useState(false);
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [bannerImage, setBannerImage] = useState<File | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isEditingBanner, setIsEditingBanner] = useState(false);
 
+  // Fetch current seller data
+  const { data: sellerData, isLoading: sellerLoading } = useQuery({
+    queryKey: ['seller', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from('sellers')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Initialize form with current data
   useEffect(() => {
-    if (seller && open) {
+    if (sellerData) {
       setFormData({
-        address: seller.address || '',
-        phone: seller.phone || '',
-        email: seller.email || '',
-        description: seller.description || ''
+        name: sellerData.name || '',
+        bio: sellerData.bio || '',
+        business_type: sellerData.business_type || '',
+        location: sellerData.location || '',
+        website: sellerData.website || '',
       });
     }
-  }, [seller, open]);
+  }, [sellerData]);
 
-  const handleInputChange = (field: string, value: string) => {
+  // Listen for save event from header
+  useEffect(() => {
+    const handleSave = () => {
+      handleSubmit();
+    };
+
+    window.addEventListener('saveEditProfile', handleSave);
+    return () => {
+      window.removeEventListener('saveEditProfile', handleSave);
+    };
+  }, [formData, profileImage, bannerImage]);
+
+  // Update mutation
+  const updateSellerMutation = useMutation({
+    mutationFn: async (updatedData: any) => {
+      if (!user?.id) throw new Error('No user logged in');
+      
+      const { data, error } = await supabase
+        .from('sellers')
+        .update(updatedData)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['seller', user?.id] });
+      navigate('/seller-dashboard/products');
+    },
+    onError: (error) => {
+      console.error('Error updating profile:', error);
+      setIsLoading(false);
+    },
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [name]: value
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!seller) return;
-
-    setIsUpdating(true);
-
-    try {
-      await updateSeller(seller.id, formData);
-      toast.success('Seller information updated successfully');
-      onSuccess();
-      onOpenChange(false);
-    } catch (error) {
-      console.error('Error updating seller:', error);
-      toast.error('Failed to update seller information');
-    } finally {
-      setIsUpdating(false);
+  const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setProfileImage(file);
+      console.log('Profile image selected:', file.name);
+      // TODO: Upload profile image to Supabase storage
     }
   };
 
+  const handleBannerImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setBannerImage(file);
+      console.log('Banner image selected:', file.name);
+      // TODO: Upload banner image to Supabase storage
+      setIsEditingBanner(false); // Close banner edit mode after selection
+    }
+  };
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+    
+    if (isLoading) return;
+    
+    setIsLoading(true);
+    
+    try {
+      let image_url = sellerData?.image_url;
+      if (profileImage) {
+        // TODO: Implement profile image upload
+        console.log('Would upload profile image:', profileImage.name);
+      }
+
+      let banner_url = sellerData?.banner_url;
+      if (bannerImage) {
+        // TODO: Implement banner image upload
+        console.log('Would upload banner image:', bannerImage.name);
+      }
+
+      await updateSellerMutation.mutateAsync({
+        ...formData,
+        ...(image_url && { image_url }),
+        ...(banner_url && { banner_url }),
+        updated_at: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    }
+  };
+
+  if (sellerLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            Edit Contact Information
-          </DialogTitle>
-        </DialogHeader>
+    <div className="min-h-screen bg-background">
+      {/* Banner Section with HeroBanner Component */}
+      <div className="relative">
+        <HeroBanner 
+          asCarousel={false} 
+          showNewsTicker={false} 
+          customHeight="180px" 
+          sellerId={sellerData?.id}
+        />
+        
+        {/* Banner Edit Overlay */}
+        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
+          <button
+            onClick={() => setIsEditingBanner(true)}
+            className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-white transition-colors"
+          >
+            <Edit2 className="w-4 h-4" />
+            Edit Banner
+          </button>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Address */}
-          <div className="space-y-2">
-            <Label htmlFor="address">Address</Label>
-            <Input
-              id="address"
-              value={formData.address}
-              onChange={(e) => handleInputChange('address', e.target.value)}
-              placeholder="Enter your business address"
-            />
+        {/* Banner Upload Modal */}
+        {isEditingBanner && (
+          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl p-6 max-w-md w-full">
+              <h3 className="text-lg font-semibold mb-4">Change Banner Image</h3>
+              <div className="space-y-4">
+                <label className="block">
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors">
+                    <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm font-medium">Upload Banner Image</p>
+                    <p className="text-xs text-gray-500 mt-1">Recommended: 1200×400px</p>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleBannerImageChange}
+                      className="hidden"
+                    />
+                  </div>
+                </label>
+                
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setIsEditingBanner(false)}
+                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => document.querySelector('input[type="file"]')?.click()}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                  >
+                    Choose File
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
+        )}
+      </div>
 
-          {/* Phone */}
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
-            <Input
-              id="phone"
-              value={formData.phone}
-              onChange={(e) => handleInputChange('phone', e.target.value)}
-              placeholder="Enter your phone number"
-            />
-          </div>
-
-          {/* Email */}
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleInputChange('email', e.target.value)}
-              placeholder="Enter your business email"
-            />
-          </div>
-
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
-              placeholder="Enter a short description about your business"
-              rows={3}
-            />
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={isUpdating}
-              className="flex-1 flex items-center gap-2"
-            >
-              {isUpdating ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+      {/* Edit Form */}
+      <form onSubmit={handleSubmit} className="p-4 space-y-6">
+        {/* Profile Image Section */}
+        <div className="flex justify-center -mt-16 relative">
+          <div className="relative">
+            <div className="w-24 h-24 bg-gray-300 rounded-full border-4 border-white overflow-hidden">
+              {sellerData?.image_url ? (
+                <img 
+                  src={sellerData.image_url} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover"
+                />
               ) : (
-                <Save className="w-4 h-4" />
+                <div className="w-full h-full bg-gray-400 flex items-center justify-center">
+                  <Camera className="w-6 h-6 text-white" />
+                </div>
               )}
-              {isUpdating ? 'Saving...' : 'Save Changes'}
-            </Button>
+            </div>
+            <label className="absolute bottom-0 right-0 bg-blue-600 text-white p-1.5 rounded-full cursor-pointer hover:bg-blue-700 transition-colors">
+              <Camera className="w-4 h-4" />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleProfileImageChange}
+                className="hidden"
+              />
+            </label>
           </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+        </div>
+
+        {/* Form Fields */}
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Business Name *
+            </label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Enter your business name"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Bio
+            </label>
+            <textarea
+              name="bio"
+              value={formData.bio}
+              onChange={handleInputChange}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              placeholder="Tell customers about your business..."
+              maxLength={500}
+            />
+            <div className="text-right text-xs text-gray-500 mt-1">
+              {formData.bio.length}/500
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Business Type
+            </label>
+            <input
+              type="text"
+              name="business_type"
+              value={formData.business_type}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="e.g., Fashion, Electronics, Food"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Location
+            </label>
+            <input
+              type="text"
+              name="location"
+              value={formData.location}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Where are you located?"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Website
+            </label>
+            <input
+              type="url"
+              name="website"
+              value={formData.website}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="https://example.com"
+            />
+          </div>
+        </div>
+
+        {/* Social Media Links Section */}
+        <div className="pt-4 border-t border-gray-200">
+          <h3 className="text-lg font-semibold mb-4">Social Media Links</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Facebook
+              </label>
+              <input
+                type="url"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="https://facebook.com/yourpage"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Instagram
+              </label>
+              <input
+                type="url"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="https://instagram.com/yourprofile"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                X (Twitter)
+              </label>
+              <input
+                type="url"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="https://x.com/yourprofile"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                TikTok
+              </label>
+              <input
+                type="url"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="https://tiktok.com/@yourprofile"
+              />
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" className="hidden">
+          Save
+        </button>
+      </form>
+
+      {/* Loading overlay */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-4 flex items-center gap-3">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <span className="text-sm font-medium">Saving changes...</span>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
+
+export default SellerEditProfile;
