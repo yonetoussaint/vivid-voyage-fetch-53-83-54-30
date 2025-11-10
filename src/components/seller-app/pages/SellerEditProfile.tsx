@@ -64,9 +64,10 @@ const SellerEditProfile = () => {
     }
   }, [sellerData]);
 
-  // Listen for save event from header
+  // Listen for save event from header - FIXED: Remove dependencies
   useEffect(() => {
     const handleSave = () => {
+      console.log('Save event received, current formData:', formData);
       handleSubmit();
     };
 
@@ -74,13 +75,47 @@ const SellerEditProfile = () => {
     return () => {
       window.removeEventListener('saveEditProfile', handleSave);
     };
-  }, [formData, profileImage]);
+  }, []); // Empty dependencies to use latest state via closure
 
-  // Update mutation
+  // Profile image upload function
+  const uploadProfileImage = async (file: File): Promise<string | null> => {
+    try {
+      if (!user?.id) throw new Error('No user logged in');
+      
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/profile-${Date.now()}.${fileExt}`;
+      const filePath = `seller-logos/${fileName}`;
+
+      console.log('Uploading profile image to:', filePath);
+
+      const { error: uploadError } = await supabase.storage
+        .from('seller-logos')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('seller-logos')
+        .getPublicUrl(filePath);
+
+      console.log('Profile image uploaded successfully:', publicUrl);
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading profile image:', error);
+      return null;
+    }
+  };
+
+  // Update mutation - FIXED: Better error handling and logging
   const updateSellerMutation = useMutation({
     mutationFn: async (updatedData: any) => {
       if (!user?.id) throw new Error('No user logged in');
 
+      console.log('Sending update to Supabase:', updatedData);
+      
       const { data, error } = await supabase
         .from('sellers')
         .update(updatedData)
@@ -88,19 +123,34 @@ const SellerEditProfile = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase update error:', error);
+        throw error;
+      }
+      
+      console.log('Update successful:', data);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Mutation successful, data:', data);
       queryClient.invalidateQueries({ queryKey: ['seller', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['seller-banners', sellerData?.id] });
       navigate('/seller-dashboard/products');
     },
     onError: (error) => {
-      console.error('Error updating profile:', error);
+      console.error('Mutation error:', error);
       setIsLoading(false);
     },
   });
+
+  // Form validation
+  const validateForm = () => {
+    if (!formData.name.trim()) {
+      alert('Business name is required');
+      return false;
+    }
+    return true;
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -115,7 +165,6 @@ const SellerEditProfile = () => {
     if (file) {
       setProfileImage(file);
       console.log('Profile image selected:', file.name);
-      // TODO: Implement actual upload
     }
   };
 
@@ -124,29 +173,51 @@ const SellerEditProfile = () => {
     queryClient.invalidateQueries({ queryKey: ['seller-banners', sellerData?.id] });
   };
 
+  // FIXED: Complete handleSubmit function with image upload
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) {
       e.preventDefault();
     }
 
     if (isLoading) return;
+    
+    if (!validateForm()) {
+      return;
+    }
 
     setIsLoading(true);
+    console.log('Starting form submission...');
 
     try {
       let image_url = sellerData?.image_url;
+      
+      // Upload profile image if selected
       if (profileImage) {
-        console.log('Would upload profile image:', profileImage.name);
-        // TODO: Implement actual upload
+        console.log('Uploading profile image:', profileImage.name);
+        const uploadedImageUrl = await uploadProfileImage(profileImage);
+        if (uploadedImageUrl) {
+          image_url = uploadedImageUrl;
+          console.log('New image URL set:', image_url);
+        }
       }
 
-      await updateSellerMutation.mutateAsync({
+      // Prepare update data
+      const updateData = {
         ...formData,
-        ...(image_url && { image_url }),
         updated_at: new Date().toISOString(),
-      });
+      };
+
+      // Only include image_url if we have one (new or existing)
+      if (image_url) {
+        updateData.image_url = image_url;
+      }
+
+      console.log('Final update data being sent:', updateData);
+      
+      await updateSellerMutation.mutateAsync(updateData);
     } catch (error) {
       console.error('Error updating profile:', error);
+      setIsLoading(false);
     }
   };
 
@@ -161,18 +232,18 @@ const SellerEditProfile = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Banner Section with HeroBanner Component */}
-<div className="relative">
-  <HeroBanner 
-  asCarousel={false} 
-  showNewsTicker={false} 
-  customHeight="180px" 
-  sellerId={sellerData?.id}  // Use seller ID here too
-  showEditButton={true}
-  onEditBanner={() => setIsBannerPanelOpen(true)}
-  editButtonPosition="top-right"
-  dataSource="seller_banners"
-/>
-</div>
+      <div className="relative">
+        <HeroBanner 
+          asCarousel={false} 
+          showNewsTicker={false} 
+          customHeight="180px" 
+          sellerId={sellerData?.id}
+          showEditButton={true}
+          onEditBanner={() => setIsBannerPanelOpen(true)}
+          editButtonPosition="top-right"
+          dataSource="seller_banners"
+        />
+      </div>
 
       {/* Profile Image Section */}
       <div className="relative z-30 -mt-12 flex justify-center">
@@ -385,12 +456,12 @@ const SellerEditProfile = () => {
       </form>
 
       {/* Banner Management Panel */}
-<BannerManagementPanel
-  isOpen={isBannerPanelOpen}
-  onClose={() => setIsBannerPanelOpen(false)}
-  sellerId={sellerData?.id}  // Use the seller ID from the sellers table
-  onBannerUpdate={handleBannerUpdate}
-/>
+      <BannerManagementPanel
+        isOpen={isBannerPanelOpen}
+        onClose={() => setIsBannerPanelOpen(false)}
+        sellerId={sellerData?.id}
+        onBannerUpdate={handleBannerUpdate}
+      />
 
       {/* Loading overlay */}
       {isLoading && (
