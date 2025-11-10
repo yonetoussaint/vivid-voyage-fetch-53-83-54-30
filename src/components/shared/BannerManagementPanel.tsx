@@ -131,24 +131,17 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
   }
 
   try {
-    // Verify the sellerId matches the authenticated user
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user?.id !== sellerId) {
-      toast.error('Permission denied: seller ID does not match authenticated user');
-      return;
-    }
-
-    console.log('Adding banner:', bannerData);
+    console.log('Adding banner with seller ID:', sellerId);
     
     const { error } = await supabase
       .from('seller_banners')
       .insert({
-        seller_id: sellerId,
+        seller_id: sellerId,  // This should be the seller ID from sellers table
         name: bannerData.name,
         type: bannerData.type,
         value: bannerData.value,
         thumbnail: bannerData.thumbnail,
-        is_primary: banners.length === 0 // Set as primary if first banner
+        is_primary: banners.length === 0
       });
 
     if (error) {
