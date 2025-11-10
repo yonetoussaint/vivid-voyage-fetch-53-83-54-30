@@ -39,6 +39,8 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
     { name: 'Purple', type: 'color', value: 'bg-purple-500', thumbnail: 'bg-purple-500' },
     { name: 'Pink', type: 'color', value: 'bg-pink-500', thumbnail: 'bg-pink-500' },
     { name: 'Green', type: 'color', value: 'bg-green-500', thumbnail: 'bg-green-500' },
+    { name: 'Orange', type: 'color', value: 'bg-orange-500', thumbnail: 'bg-orange-500' },
+    { name: 'Indigo', type: 'color', value: 'bg-indigo-500', thumbnail: 'bg-indigo-500' },
     { 
       name: 'Blue Gradient', 
       type: 'gradient', 
@@ -51,14 +53,31 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
       value: 'bg-gradient-to-r from-orange-400 to-pink-500', 
       thumbnail: 'bg-gradient-to-r from-orange-400 to-pink-500'
     },
+    { 
+      name: 'Ocean Gradient', 
+      type: 'gradient', 
+      value: 'bg-gradient-to-r from-green-400 to-blue-500', 
+      thumbnail: 'bg-gradient-to-r from-green-400 to-blue-500'
+    },
+    { 
+      name: 'Sunrise Gradient', 
+      type: 'gradient', 
+      value: 'bg-gradient-to-r from-yellow-400 to-red-500', 
+      thumbnail: 'bg-gradient-to-r from-yellow-400 to-red-500'
+    },
   ];
 
   // Fetch seller banners
   const fetchBanners = async () => {
-    if (!sellerId) return;
+    if (!sellerId) {
+      console.log('No sellerId provided');
+      return;
+    }
     
     try {
       setIsLoading(true);
+      console.log('Fetching banners for seller:', sellerId);
+      
       const { data, error } = await supabase
         .from('seller_banners')
         .select('*')
@@ -66,7 +85,12 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
         .order('is_primary', { ascending: false })
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
+      console.log('Fetched banners:', data);
       setBanners(data || []);
     } catch (error) {
       console.error('Error fetching banners:', error);
@@ -134,9 +158,14 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
   };
 
   const handleAddBanner = async (bannerData: Omit<Banner, 'id' | 'is_primary' | 'created_at'>) => {
-    if (!sellerId) return;
+    if (!sellerId) {
+      toast.error('Seller ID not found');
+      return;
+    }
 
     try {
+      console.log('Adding banner:', bannerData);
+      
       const { error } = await supabase
         .from('seller_banners')
         .insert({
@@ -148,7 +177,10 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
           is_primary: banners.length === 0 // Set as primary if first banner
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase insert error:', error);
+        throw error;
+      }
 
       await fetchBanners();
       onBannerUpdate?.();
@@ -205,20 +237,25 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
       const fileExt = file.name.split('.').pop();
       const fileName = `${sellerId}/${Date.now()}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError, data: uploadData } = await supabase.storage
         .from('seller-banners')
         .upload(fileName, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('seller-banners')
         .getPublicUrl(fileName);
 
+      console.log('Upload successful, public URL:', publicUrl);
+
       // Add to database
       await handleAddBanner({
-        name: 'Custom Banner',
+        name: file.name.split('.')[0] || 'Custom Banner',
         type: 'image',
         value: publicUrl,
         thumbnail: publicUrl
@@ -229,6 +266,8 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
       console.error('Upload error:', error);
     } finally {
       setIsUploading(false);
+      // Reset file input
+      event.target.value = '';
     }
   };
 
@@ -241,6 +280,10 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
           src={banner.thumbnail || banner.value}
           alt={banner.name}
           className="w-full h-full object-cover"
+          onError={(e) => {
+            console.error('Error loading banner image:', banner.value);
+            // You can set a fallback image here if needed
+          }}
         />
       ) : (
         <div className={`w-full h-full ${banner.value}`} />
@@ -260,6 +303,8 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
     const handleSave = () => {
       if (name.trim()) {
         handleUpdateBanner(banner.id, { name: name.trim() });
+      } else {
+        toast.error('Please enter a banner name');
       }
     };
 
