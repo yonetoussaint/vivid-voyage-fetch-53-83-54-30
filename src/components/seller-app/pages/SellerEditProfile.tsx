@@ -170,7 +170,7 @@ const SellerEditProfile = () => {
   />
 </div>
 
-   </div>
+
 
       {/* Profile Image Section - Positioned to overlap the banner */}
       <div className="relative z-30 -mt-12 flex justify-center">
