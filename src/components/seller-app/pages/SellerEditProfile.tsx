@@ -149,7 +149,6 @@ const SellerEditProfile = () => {
       queryClient.invalidateQueries({ queryKey: ['seller', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['seller-banners', sellerData?.id] });
       
-      // REMOVED: alert('Profile updated successfully!');
       // Simply navigate back without showing alert
       navigate('/seller-dashboard/products');
     },
@@ -208,22 +207,52 @@ const SellerEditProfile = () => {
     };
   }, []);
 
+  // Function to check if text contains emojis
+  const containsEmoji = (text: string): boolean => {
+    const emojiRegex = /[\p{Emoji}]/gu;
+    return emojiRegex.test(text);
+  };
+
+  // Function to remove emojis from text
+  const removeEmojis = (text: string): string => {
+    const emojiRegex = /[\p{Emoji}]/gu;
+    return text.replace(emojiRegex, '');
+  };
+
   // Form validation
   const validateForm = () => {
     const currentData = formDataRef.current;
+    
     if (!currentData.name.trim()) {
       alert('Business name is required');
       return false;
     }
+    
+    // Check for emojis in business name
+    if (containsEmoji(currentData.name)) {
+      alert('Business name cannot contain emojis. Please use only letters, numbers, and standard punctuation.');
+      return false;
+    }
+    
     return true;
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    // For business name field, remove emojis automatically
+    if (name === 'name') {
+      const cleanValue = removeEmojis(value);
+      setFormData(prev => ({
+        ...prev,
+        [name]: cleanValue
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleProfileImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -298,8 +327,6 @@ const SellerEditProfile = () => {
       console.log('Final update data for sellers table:', updateData);
       
       await updateSellerMutation.mutateAsync(updateData);
-      
-      // REMOVED: alert and navigate - they are now in onSuccess
       
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -386,7 +413,13 @@ const SellerEditProfile = () => {
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Enter your business name"
+              // Add pattern to prevent emojis at browser level
+              pattern="[^\p{Emoji}]*"
+              title="Emojis are not allowed in business name"
             />
+            <div className="text-xs text-gray-500 mt-1">
+              Letters, numbers, and standard punctuation only. Emojis are not allowed.
+            </div>
           </div>
 
           <div>
@@ -482,7 +515,7 @@ const SellerEditProfile = () => {
           </div>
         </div>
 
-        {/* Social Media Links - ADDED BACK since columns now exist */}
+        {/* Social Media Links */}
         <div className="pt-4 border-t border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Social Media Links</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
