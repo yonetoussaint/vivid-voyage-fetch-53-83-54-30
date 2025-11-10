@@ -386,7 +386,6 @@ const SellerEditProfile = () => {
       </form>
 
       {/* Banner Management Panel */}
-      // In SellerEditProfile.tsx, pass the seller ID instead of user ID:
 <BannerManagementPanel
   isOpen={isBannerPanelOpen}
   onClose={() => setIsBannerPanelOpen(false)}
