@@ -4,7 +4,6 @@ import {
   Facebook, Instagram, Mail, Edit2, Share2, MoreVertical, Bell, Link2, X,
   MessageCircle, Shield, CheckCircle
 } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import HeroBanner from '@/components/home/HeroBanner';
 import { getSellerLevel } from '@/utils/sellerLevels';
 import VerificationBadge from '@/components/shared/VerificationBadge';
@@ -56,12 +55,12 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
     return num.toString();
   };
 
-  // FIXED: Properly handle seller data with correct field mapping
+  // FIXED: Use the same data structure as SellerEditProfile
   const safeSellerData = sellerData ? {
     id: sellerData.id,
     name: sellerData.name || 'Seller Name',
     username: sellerData.username || sellerData.name?.toLowerCase().replace(/\s+/g, '') || 'seller',
-    image_url: sellerData.image_url,
+    image_url: sellerData.image_url, // This is the direct image URL like in SellerEditProfile
     verified: sellerData.verified || false,
     bio: sellerData.bio || sellerData.description || 'No bio provided yet.',
     business_type: sellerData.business_type || sellerData.category || 'Business',
@@ -120,7 +119,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
 
   return (
     <div className="bg-white text-gray-900 relative overflow-hidden">
-      {/* Banner - Only shows banner image, no profile picture */}
+      {/* Banner */}
       <div className="relative w-full overflow-hidden z-0">
         <HeroBanner 
           asCarousel={false} 
@@ -133,26 +132,31 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
         />
       </div>
 
-      {/* Profile Info - KEEP the small avatar but show REAL profile picture */}
+      {/* Profile Info - USING THE SAME APPROACH AS SellerEditProfile */}
       <div className="px-2 pt-3 relative z-10">
         <div className="flex items-start gap-3 mb-3">
-          {/* Small Avatar - NOW SHOWS REAL PROFILE PICTURE */}
+          {/* Small Avatar - USING DIRECT image_url LIKE SellerEditProfile */}
           <div className="relative flex-shrink-0">
             <div className="p-0.5 rounded-full bg-gradient-to-tr from-purple-500 via-pink-500 to-orange-400">
               <div className="bg-white rounded-full p-0.5">
-                <Avatar className="w-12 h-12 rounded-full">
-                  <AvatarImage 
-                    src={getSellerLogoUrl(safeSellerData.image_url)} 
-                    className="rounded-full" 
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face";
-                    }}
-                  />
-                  <AvatarFallback className="rounded-full">
-                    {safeSellerData.name.substring(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="w-12 h-12 rounded-full overflow-hidden">
+                  {safeSellerData.image_url ? (
+                    <img 
+                      src={safeSellerData.image_url} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        console.log('Profile image failed to load, using fallback');
+                        const target = e.target as HTMLImageElement;
+                        target.src = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face";
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-400 flex items-center justify-center text-white font-semibold text-sm">
+                      {safeSellerData.name.substring(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></div>
             </div>
