@@ -161,17 +161,19 @@ const SellerEditProfile = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Banner Section with HeroBanner Component */}
-      <div className="relative">
-        <HeroBanner 
-          asCarousel={false} 
-          showNewsTicker={false} 
-          customHeight="180px" 
-          sellerId={sellerData?.id}
-          showEditButton={true}
-          onEditBanner={() => setIsBannerPanelOpen(true)}
-          editButtonPosition="top-right"
-        />
-      </div>
+<div className="relative">
+  <HeroBanner 
+    asCarousel={false} 
+    showNewsTicker={false} 
+    customHeight="180px" 
+    sellerId={sellerData?.id}
+    // Enable edit button functionality
+    showEditButton={true}
+    onEditBanner={() => setIsBannerPanelOpen(true)}
+    editButtonPosition="top-right"
+    dataSource="seller_banners"
+  />
+</div>
 
       {/* Profile Image Section */}
       <div className="relative z-30 -mt-12 flex justify-center">
