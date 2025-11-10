@@ -351,46 +351,49 @@ function MainLayoutContent() {
 
         {/* Show IndexBottomNav only on specific paths defined in the component */}
         {/* Don't show IndexBottomNav when reels is opened in modal mode (with video parameter) */}
-        {isMobile && (
-          pathname === '/for-you' ||
-          pathname === '/' ||
-          (pathname === '/reels' && !location.search.includes('video=')) ||
-          pathname === '/posts' ||
-          pathname === '/messages' ||
-          pathname === '/more-menu' ||
-          pathname === '/profile' ||
-          pathname.startsWith('/profile/') ||
-          pathname === '/videos' ||
-          pathname === '/notifications' ||
-          pathname === '/bookmarks' ||
-          pathname === '/friends' ||
-          pathname === '/shopping' ||
-          pathname === '/settings' ||
-          pathname === '/wallet' ||
-          pathname === '/explore' ||
-          pathname === '/wishlist' ||
-          pathname === '/cart' ||
-          pathname === '/addresses' ||
-          pathname === '/help' ||
-          pathname === '/my-stations' ||
-          pathname === '/products' ||
-          pathname === '/categories/electronics' ||
-          pathname === '/categories/home-living' ||
-          pathname === '/categories/fashion' ||
-          pathname === '/categories/entertainment' ||
-          pathname === '/categories/kids-hobbies' ||
-          pathname === '/categories/sports-outdoors' ||
-          pathname === '/categories/automotive' ||
-          pathname === '/categories/women' ||
-          pathname === '/categories/men' ||
-          pathname === '/categories/books' ||
-          pathname.startsWith('/seller-dashboard') ||
-          pathname.startsWith('/pickup-station')
-        ) && (
-          <div className="z-30">
-            <IndexBottomNav />
-          </div>
-        )}
+        // In MainLayout.tsx, update the IndexBottomNav rendering condition:
+
+{isMobile && (
+  (pathname === '/for-you' ||
+  pathname === '/' ||
+  (pathname === '/reels' && !location.search.includes('video=')) ||
+  pathname === '/posts' ||
+  pathname === '/messages' ||
+  pathname === '/more-menu' ||
+  pathname === '/profile' ||
+  pathname.startsWith('/profile/') ||
+  pathname === '/videos' ||
+  pathname === '/notifications' ||
+  pathname === '/bookmarks' ||
+  pathname === '/friends' ||
+  pathname === '/shopping' ||
+  pathname === '/settings' ||
+  pathname === '/wallet' ||
+  pathname === '/explore' ||
+  pathname === '/wishlist' ||
+  pathname === '/cart' ||
+  pathname === '/addresses' ||
+  pathname === '/help' ||
+  pathname === '/my-stations' ||
+  pathname === '/products' ||
+  pathname === '/categories/electronics' ||
+  pathname === '/categories/home-living' ||
+  pathname === '/categories/fashion' ||
+  pathname === '/categories/entertainment' ||
+  pathname === '/categories/kids-hobbies' ||
+  pathname === '/categories/sports-outdoors' ||
+  pathname === '/categories/automotive' ||
+  pathname === '/categories/women' ||
+  pathname === '/categories/men' ||
+  pathname === '/categories/books' ||
+  pathname.startsWith('/pickup-station') ||
+  // Include seller dashboard routes but exclude edit-profile
+  (pathname.startsWith('/seller-dashboard') && !pathname.includes('/edit-profile')))
+) && (
+  <div className="z-30">
+    <IndexBottomNav />
+  </div>
+)}
 
         {/* Product Upload Overlay */}
         <ProductUploadOverlay
