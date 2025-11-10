@@ -55,12 +55,11 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
     return num.toString();
   };
 
-  // FIXED: Use the same data structure as SellerEditProfile
   const safeSellerData = sellerData ? {
     id: sellerData.id,
     name: sellerData.name || 'Seller Name',
     username: sellerData.username || sellerData.name?.toLowerCase().replace(/\s+/g, '') || 'seller',
-    image_url: sellerData.image_url, // This is the direct image URL like in SellerEditProfile
+    image_url: sellerData.image_url,
     verified: sellerData.verified || false,
     bio: sellerData.bio || sellerData.description || 'No bio provided yet.',
     business_type: sellerData.business_type || sellerData.category || 'Business',
@@ -119,23 +118,22 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
 
   return (
     <div className="bg-white text-gray-900 relative overflow-hidden">
-      {/* Banner */}
+      {/* Banner - REMOVED showEditButton prop */}
       <div className="relative w-full overflow-hidden z-0">
         <HeroBanner 
           asCarousel={false} 
           showNewsTicker={false} 
           customHeight="180px" 
           sellerId={safeSellerData.id}
-          showEditButton={isOwnProfile}
-          editButtonPosition="top-right"
+          // REMOVED: showEditButton and editButtonPosition props
           dataSource="seller_banners"
         />
       </div>
 
-      {/* Profile Info - USING THE SAME APPROACH AS SellerEditProfile */}
+      {/* Profile Info */}
       <div className="px-2 pt-3 relative z-10">
         <div className="flex items-start gap-3 mb-3">
-          {/* Small Avatar - USING DIRECT image_url LIKE SellerEditProfile */}
+          {/* Small Avatar */}
           <div className="relative flex-shrink-0">
             <div className="p-0.5 rounded-full bg-gradient-to-tr from-purple-500 via-pink-500 to-orange-400">
               <div className="bg-white rounded-full p-0.5">
