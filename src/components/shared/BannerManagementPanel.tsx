@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, Upload, Image, X, Check, Edit2, Trash2, Star, Plus, Palette } from 'lucide-react';
+import { Camera, Upload, Image, X, Check, Edit2, Trash2, Star, Plus, Palette, Video } from 'lucide-react';
 import SlideUpPanel from '@/components/shared/SlideUpPanel';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface Banner {
   id: string;
   name: string;
-  type: 'color' | 'image' | 'gradient';
+  type: 'color' | 'image' | 'gradient' | 'video';
   value: string;
   thumbnail?: string;
   is_primary: boolean;
@@ -32,40 +32,7 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'manage' | 'add'>('manage');
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
-
-  // Predefined banner options for quick add
-  const quickAddOptions: Omit<Banner, 'id' | 'is_primary' | 'created_at'>[] = [
-    { name: 'Blue', type: 'color', value: 'bg-blue-500', thumbnail: 'bg-blue-500' },
-    { name: 'Purple', type: 'color', value: 'bg-purple-500', thumbnail: 'bg-purple-500' },
-    { name: 'Pink', type: 'color', value: 'bg-pink-500', thumbnail: 'bg-pink-500' },
-    { name: 'Green', type: 'color', value: 'bg-green-500', thumbnail: 'bg-green-500' },
-    { name: 'Orange', type: 'color', value: 'bg-orange-500', thumbnail: 'bg-orange-500' },
-    { name: 'Indigo', type: 'color', value: 'bg-indigo-500', thumbnail: 'bg-indigo-500' },
-    { 
-      name: 'Blue Gradient', 
-      type: 'gradient', 
-      value: 'bg-gradient-to-r from-blue-500 to-purple-600', 
-      thumbnail: 'bg-gradient-to-r from-blue-500 to-purple-600'
-    },
-    { 
-      name: 'Sunset Gradient', 
-      type: 'gradient', 
-      value: 'bg-gradient-to-r from-orange-400 to-pink-500', 
-      thumbnail: 'bg-gradient-to-r from-orange-400 to-pink-500'
-    },
-    { 
-      name: 'Ocean Gradient', 
-      type: 'gradient', 
-      value: 'bg-gradient-to-r from-green-400 to-blue-500', 
-      thumbnail: 'bg-gradient-to-r from-green-400 to-blue-500'
-    },
-    { 
-      name: 'Sunrise Gradient', 
-      type: 'gradient', 
-      value: 'bg-gradient-to-r from-yellow-400 to-red-500', 
-      thumbnail: 'bg-gradient-to-r from-yellow-400 to-red-500'
-    },
-  ];
+  const [uploadType, setUploadType] = useState<'image' | 'video'>('image');
 
   // Fetch seller banners
   const fetchBanners = async () => {
@@ -214,32 +181,18 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
     }
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !sellerId) return;
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select a valid image file');
-      return;
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size should be less than 5MB');
-      return;
-    }
-
-    setIsUploading(true);
-
+  const uploadFile = async (file: File, bucket: string): Promise<string> => {
     try {
       // Upload to Supabase Storage
       const fileExt = file.name.split('.').pop();
       const fileName = `${sellerId}/${Date.now()}.${fileExt}`;
 
-      const { error: uploadError, data: uploadData } = await supabase.storage
-        .from('seller-banners')
-        .upload(fileName, file);
+      const { error: uploadError } = await supabase.storage
+        .from(bucket)
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
@@ -248,21 +201,65 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('seller-banners')
+        .from(bucket)
         .getPublicUrl(fileName);
 
       console.log('Upload successful, public URL:', publicUrl);
+      return publicUrl;
+    } catch (error) {
+      console.error('Upload error:', error);
+      throw error;
+    }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !sellerId) return;
+
+    // Validate file type based on upload type
+    if (uploadType === 'image' && !file.type.startsWith('image/')) {
+      toast.error('Please select a valid image file');
+      return;
+    }
+
+    if (uploadType === 'video' && !file.type.startsWith('video/')) {
+      toast.error('Please select a valid video file');
+      return;
+    }
+
+    // Validate file size
+    const maxSize = uploadType === 'image' ? 5 * 1024 * 1024 : 20 * 1024 * 1024; // 5MB for images, 20MB for videos
+    if (file.size > maxSize) {
+      toast.error(`File size should be less than ${uploadType === 'image' ? '5MB' : '20MB'}`);
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      const bucket = uploadType === 'image' ? 'seller-banners' : 'seller-banner-videos';
+      const publicUrl = await uploadFile(file, bucket);
+
+      // Generate thumbnail for videos
+      let thumbnailUrl = publicUrl;
+      if (uploadType === 'video') {
+        // For videos, we'll use a placeholder thumbnail or you can generate one
+        // For now, we'll use a video icon placeholder
+        thumbnailUrl = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDIwMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTIwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik04MCA1MEw2NSA2MEw2NSA0MEw4MCA1MFoiIGZpbGw9IiM2QzY4N0QiLz4KPC9zdmc+';
+      }
 
       // Add to database
       await handleAddBanner({
-        name: file.name.split('.')[0] || 'Custom Banner',
-        type: 'image',
+        name: file.name.split('.')[0] || `Custom ${uploadType === 'image' ? 'Image' : 'Video'}`,
+        type: uploadType,
         value: publicUrl,
-        thumbnail: publicUrl
+        thumbnail: thumbnailUrl
       });
 
+      toast.success(`${uploadType === 'image' ? 'Image' : 'Video'} banner uploaded successfully`);
+
     } catch (error) {
-      toast.error('Failed to upload banner');
+      toast.error(`Failed to upload ${uploadType}`);
       console.error('Upload error:', error);
     } finally {
       setIsUploading(false);
@@ -282,9 +279,20 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
           className="w-full h-full object-cover"
           onError={(e) => {
             console.error('Error loading banner image:', banner.value);
-            // You can set a fallback image here if needed
+            // Fallback to placeholder
+            const target = e.target as HTMLImageElement;
+            target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDIwMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTIwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik03NSA0MEg2NVY2MEg3NVY0MFoiIGZpbGw9IiM5Q0EwQUIiLz4KPHBhdGggZD0iTTgwIDUwTDY1IDYwVjQwTDgwIDUwWiIgZmlsbD0iIzlDQTBBQiIvPgo8L3N2Zz4=';
           }}
         />
+      ) : banner.type === 'video' ? (
+        <div className="w-full h-full bg-gray-100 flex items-center justify-center relative">
+          <video className="w-full h-full object-cover" muted>
+            <source src={banner.value} type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+            <Video className="w-8 h-8 text-white" />
+          </div>
+        </div>
       ) : (
         <div className={`w-full h-full ${banner.value}`} />
       )}
@@ -292,6 +300,12 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
       {banner.is_primary && (
         <div className="absolute top-1 right-1 bg-blue-500 text-white rounded-full p-1">
           <Star className="w-3 h-3 fill-current" />
+        </div>
+      )}
+      
+      {banner.type === 'video' && (
+        <div className="absolute top-1 left-1 bg-purple-500 text-white rounded-full px-2 py-1 text-xs font-medium">
+          Video
         </div>
       )}
     </div>
@@ -464,43 +478,39 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
 
           {selectedTab === 'add' && (
             <div className="space-y-4">
-              {/* Quick Add Options */}
+              {/* Upload Type Selection */}
               <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-                  <Palette className="w-4 h-4" />
-                  Quick Add Colors & Gradients
-                </h4>
-                <div className="grid grid-cols-2 gap-3">
-                  {quickAddOptions.map((option, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleAddBanner(option)}
-                      className="text-left"
-                    >
-                      <div className="w-full h-16 rounded-lg border border-gray-200 overflow-hidden">
-                        {option.type === 'image' ? (
-                          <img
-                            src={option.thumbnail}
-                            alt={option.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className={`w-full h-full ${option.thumbnail || option.value}`} />
-                        )}
-                      </div>
-                      <p className="text-xs font-medium text-gray-700 mt-1 text-center truncate">
-                        {option.name}
-                      </p>
-                    </button>
-                  ))}
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Upload Type</h4>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setUploadType('image')}
+                    className={`flex-1 py-2 px-4 rounded-lg border-2 transition-colors ${
+                      uploadType === 'image'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                    }`}
+                  >
+                    <Image className="w-4 h-4 mx-auto mb-1" />
+                    <span className="text-xs font-medium">Image</span>
+                  </button>
+                  <button
+                    onClick={() => setUploadType('video')}
+                    className={`flex-1 py-2 px-4 rounded-lg border-2 transition-colors ${
+                      uploadType === 'video'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                    }`}
+                  >
+                    <Video className="w-4 h-4 mx-auto mb-1" />
+                    <span className="text-xs font-medium">Video</span>
+                  </button>
                 </div>
               </div>
 
               {/* Custom Upload */}
-              <div className="border-t pt-4">
-                <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-                  <Upload className="w-4 h-4" />
-                  Upload Custom Image
+              <div>
+                <h4 className="text-sm font-medium text-gray-700 mb-3">
+                  Upload Custom {uploadType === 'image' ? 'Image' : 'Video'}
                 </h4>
                 
                 <label className="block">
@@ -512,14 +522,23 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
                       </div>
                     ) : (
                       <>
-                        <Upload className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                        <p className="text-sm font-medium text-gray-700">Upload Custom Banner</p>
+                        {uploadType === 'image' ? (
+                          <Image className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                        ) : (
+                          <Video className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                        )}
+                        <p className="text-sm font-medium text-gray-700">
+                          Upload Custom {uploadType === 'image' ? 'Image' : 'Video'} Banner
+                        </p>
                         <p className="text-xs text-gray-500 mt-1">
-                          Recommended: 1200×400px, max 5MB
+                          {uploadType === 'image' 
+                            ? 'Recommended: 1200×400px, max 5MB (JPG, PNG, WebP)'
+                            : 'Recommended: MP4, WebM, max 20MB'
+                          }
                         </p>
                         <input
                           type="file"
-                          accept="image/*"
+                          accept={uploadType === 'image' ? 'image/*' : 'video/*'}
                           onChange={handleFileUpload}
                           className="hidden"
                         />
@@ -527,16 +546,6 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
                     )}
                   </div>
                 </label>
-
-                <div className="bg-blue-50 rounded-lg p-3 mt-3">
-                  <h5 className="text-sm font-medium text-blue-800 mb-1">Tips for best results:</h5>
-                  <ul className="text-xs text-blue-700 space-y-1">
-                    <li>• Use high-quality images for best appearance</li>
-                    <li>• Recommended size: 1200×400 pixels</li>
-                    <li>• File formats: JPG, PNG, WebP</li>
-                    <li>• Maximum file size: 5MB</li>
-                  </ul>
-                </div>
               </div>
             </div>
           )}
