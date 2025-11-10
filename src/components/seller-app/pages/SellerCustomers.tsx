@@ -1,31 +1,26 @@
 import React, { useState } from 'react';
 import { 
-  Search, Filter, MoreHorizontal, Mail, Phone, 
-  MapPin, Star, ShoppingBag, Calendar, Eye, Plus
+  MoreHorizontal, Mail, Phone, 
+  MapPin, Star, ShoppingBag, Eye, Plus,
+  X
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
-  DropdownMenuTrigger 
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
 import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
+import ProductFilterBar from '@/components/home/ProductFilterBar';
 
 const SellerCustomers = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState('all');
+  const [selectedFilters, setSelectedFilters] = useState({});
+  const [sortBy, setSortBy] = useState('all');
 
   const customers = [
     {
@@ -100,32 +95,136 @@ const SellerCustomers = () => {
     }
   ];
 
+  const filterCategories = [
+    {
+      id: 'status',
+      label: 'Status',
+      options: ['All Status', 'Active', 'VIP', 'New', 'Inactive']
+    },
+    {
+      id: 'orders',
+      label: 'Orders',
+      options: ['All Orders', '1-5 orders', '6-10 orders', '10+ orders']
+    },
+    {
+      id: 'spending',
+      label: 'Spending',
+      options: ['All Spending', '$0-$500', '$501-$1000', '$1000+']
+    },
+    {
+      id: 'location',
+      label: 'Location',
+      options: ['All Locations', 'New York', 'Los Angeles', 'Chicago', 'Houston', 'Miami']
+    },
+    {
+      id: 'rating',
+      label: 'Rating',
+      options: ['All Ratings', '4.5+ stars', '4.0+ stars', '3.5+ stars']
+    }
+  ];
+
   const getStatusColor = (status) => {
     switch (status) {
-      case 'VIP': return 'bg-purple-100 text-purple-800';
-      case 'Active': return 'bg-green-100 text-green-800';
-      case 'New': return 'bg-blue-100 text-blue-800';
-      case 'Inactive': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'VIP': return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'Active': return 'bg-green-100 text-green-800 border-green-200';
+      case 'New': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'Inactive': return 'bg-gray-100 text-gray-800 border-gray-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
+  const handleFilterSelect = (filterId, option) => {
+    setSelectedFilters(prev => ({
+      ...prev,
+      [filterId]: option
+    }));
+  };
+
+  const handleFilterClear = (filterId) => {
+    setSelectedFilters(prev => {
+      const newFilters = { ...prev };
+      delete newFilters[filterId];
+      return newFilters;
+    });
+  };
+
+  const handleClearAll = () => {
+    setSelectedFilters({});
+  };
+
   const filteredCustomers = customers.filter(customer => {
-    const matchesSearch = customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         customer.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = filterType === 'all' || customer.status === filterType;
-    return matchesSearch && matchesFilter;
+    // Status filter
+    if (selectedFilters.status && selectedFilters.status !== 'All Status') {
+      if (customer.status !== selectedFilters.status) return false;
+    }
+
+    // Orders filter
+    if (selectedFilters.orders && selectedFilters.orders !== 'All Orders') {
+      const orders = customer.totalOrders;
+      switch (selectedFilters.orders) {
+        case '1-5 orders':
+          if (orders < 1 || orders > 5) return false;
+          break;
+        case '6-10 orders':
+          if (orders < 6 || orders > 10) return false;
+          break;
+        case '10+ orders':
+          if (orders <= 10) return false;
+          break;
+      }
+    }
+
+    // Spending filter
+    if (selectedFilters.spending && selectedFilters.spending !== 'All Spending') {
+      const spent = customer.totalSpent;
+      switch (selectedFilters.spending) {
+        case '$0-$500':
+          if (spent < 0 || spent > 500) return false;
+          break;
+        case '$501-$1000':
+          if (spent < 501 || spent > 1000) return false;
+          break;
+        case '$1000+':
+          if (spent <= 1000) return false;
+          break;
+      }
+    }
+
+    // Location filter
+    if (selectedFilters.location && selectedFilters.location !== 'All Locations') {
+      if (!customer.location.includes(selectedFilters.location)) return false;
+    }
+
+    // Rating filter
+    if (selectedFilters.rating && selectedFilters.rating !== 'All Ratings') {
+      const rating = customer.rating;
+      switch (selectedFilters.rating) {
+        case '4.5+ stars':
+          if (rating < 4.5) return false;
+          break;
+        case '4.0+ stars':
+          if (rating < 4.0) return false;
+          break;
+        case '3.5+ stars':
+          if (rating < 3.5) return false;
+          break;
+      }
+    }
+
+    return true;
   });
 
   const stats = [
-    { value: '892', label: 'Total', color: 'text-blue-600' },
-    { value: '743', label: 'Active', color: 'text-green-600' },
-    { value: '67', label: 'VIP', color: 'text-purple-600' },
-    { value: '34', label: 'New', color: 'text-orange-600' }
+    { value: filteredCustomers.length.toString(), label: 'Showing', color: 'text-blue-600' },
+    { value: customers.filter(c => c.status === 'Active').length.toString(), label: 'Active', color: 'text-green-600' },
+    { value: customers.filter(c => c.status === 'VIP').length.toString(), label: 'VIP', color: 'text-purple-600' },
+    { value: customers.filter(c => c.status === 'New').length.toString(), label: 'New', color: 'text-orange-600' }
   ];
 
+  const hasActiveFilters = Object.keys(selectedFilters).length > 0;
+
   return (
-    <div className="w-full bg-white">
+    <div className="w-full bg-white min-h-screen">
       {/* Header & Stats Section */}
       <SellerSummaryHeader
         title="Customers"
@@ -138,134 +237,180 @@ const SellerCustomers = () => {
         }}
       />
 
-      {/* Filters */}
-      <div className="bg-white border-b py-3">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search customers..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-9"
-            />
-          </div>
-          <Select value={filterType} onValueChange={setFilterType}>
-            <SelectTrigger className="w-full sm:w-40 h-9">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Customers</SelectItem>
-              <SelectItem value="VIP">VIP</SelectItem>
-              <SelectItem value="Active">Active</SelectItem>
-              <SelectItem value="New">New</SelectItem>
-              <SelectItem value="Inactive">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="sm">
-            <Filter className="w-4 h-4 mr-1" />
-            Filter
-          </Button>
-        </div>
+      {/* Product Filter Bar */}
+      <div className="bg-white border-b">
+        <ProductFilterBar
+          filterCategories={filterCategories}
+          selectedFilters={selectedFilters}
+          onFilterSelect={handleFilterSelect}
+          onFilterClear={handleFilterClear}
+          onClearAll={handleClearAll}
+        />
       </div>
 
+      {/* Active Filters Summary */}
+      {hasActiveFilters && (
+        <div className="bg-orange-50 border-b border-orange-200 px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm text-orange-800 font-medium">Active filters:</span>
+              {Object.entries(selectedFilters).map(([filterId, value]) => (
+                <Badge 
+                  key={filterId} 
+                  variant="secondary" 
+                  className="bg-orange-100 text-orange-800 border-orange-200 px-2 py-1"
+                >
+                  {filterCategories.find(f => f.id === filterId)?.label}: {value}
+                  <button
+                    onClick={() => handleFilterClear(filterId)}
+                    className="ml-1 hover:text-orange-900"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+            <button
+              onClick={handleClearAll}
+              className="text-sm text-orange-700 hover:text-orange-800 font-medium flex items-center gap-1"
+            >
+              Clear all
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Customers Grid */}
-      <div className="py-4">
-        <div className="grid grid-cols-1 gap-3">
-          {filteredCustomers.map((customer) => (
-            <Card key={customer.id} className="overflow-hidden">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="w-10 h-10">
-                      <AvatarImage src={customer.avatar} />
-                      <AvatarFallback>{customer.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h3 className="text-sm font-semibold text-foreground">{customer.name}</h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="secondary" className={`${getStatusColor(customer.status)} text-xs`}>
-                          {customer.status}
-                        </Badge>
-                        <div className="flex items-center gap-1">
-                          <Star className="w-3 h-3 text-yellow-500 fill-current" />
-                          <span className="text-xs text-muted-foreground">{customer.rating}</span>
+      <div className="p-4">
+        {filteredCustomers.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredCustomers.map((customer) => (
+              <Card key={customer.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-200">
+                <CardContent className="p-4">
+                  {/* Header Section */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <Avatar className="w-12 h-12 flex-shrink-0">
+                        <AvatarImage src={customer.avatar} />
+                        <AvatarFallback className="text-sm">
+                          {customer.name.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-base font-semibold text-foreground truncate">{customer.name}</h3>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          <Badge 
+                            variant="secondary" 
+                            className={`${getStatusColor(customer.status)} border text-xs px-2 py-0`}
+                          >
+                            {customer.status}
+                          </Badge>
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                            <span className="text-xs text-muted-foreground">{customer.rating}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 flex-shrink-0">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem>
+                          <Eye className="w-4 h-4 mr-2" />
+                          View Profile
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <Mail className="w-4 h-4 mr-2" />
+                          Send Email
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <Phone className="w-4 h-4 mr-2" />
+                          Call Customer
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-red-600">
+                          <X className="w-4 h-4 mr-2" />
+                          Remove Customer
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
-                        <Eye className="w-4 h-4 mr-2" />
-                        View Profile
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Mail className="w-4 h-4 mr-2" />
-                        Send Email
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Phone className="w-4 h-4 mr-2" />
-                        Call Customer
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
 
-                <div className="space-y-2 mb-3">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Mail className="w-3 h-3" />
-                    {customer.email}
+                  {/* Contact Info */}
+                  <div className="space-y-3 mb-4">
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                      <Mail className="w-4 h-4 flex-shrink-0" />
+                      <span className="truncate">{customer.email}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                      <Phone className="w-4 h-4 flex-shrink-0" />
+                      <span>{customer.phone}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                      <MapPin className="w-4 h-4 flex-shrink-0" />
+                      <span>{customer.location}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Phone className="w-3 h-3" />
-                    {customer.phone}
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <MapPin className="w-3 h-3" />
-                    {customer.location}
-                  </div>
-                </div>
 
-                <div className="flex justify-between items-center pt-3 border-t border-border">
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground">Orders</p>
-                    <p className="text-sm font-semibold text-foreground">{customer.totalOrders}</p>
+                  {/* Stats Section */}
+                  <div className="pt-4 border-t border-border">
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Orders</p>
+                        <p className="text-sm font-semibold text-foreground">{customer.totalOrders}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Spent</p>
+                        <p className="text-sm font-semibold text-foreground">${customer.totalSpent.toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Last Order</p>
+                        <p className="text-sm font-semibold text-foreground text-xs">
+                          {new Date(customer.lastOrder).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground">Spent</p>
-                    <p className="text-sm font-semibold text-foreground">${customer.totalSpent.toFixed(2)}</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground">Last Order</p>
-                    <p className="text-sm font-semibold text-foreground">{customer.lastOrder}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          /* Enhanced Empty State */
+          <div className="text-center py-12 px-4">
+            <div className="max-w-md mx-auto">
+              <ShoppingBag className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+              <h3 className="text-xl font-semibold text-foreground mb-2">
+                {hasActiveFilters ? 'No customers found' : 'No customers yet'}
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                {hasActiveFilters 
+                  ? "No customers match your current filters. Try adjusting your filter criteria."
+                  : "Get started by adding your first customer to your store."
+                }
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button size="lg" className="h-11">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Customer
+                </Button>
+                {hasActiveFilters && (
+                  <Button variant="outline" size="lg" className="h-11" onClick={handleClearAll}>
+                    Clear Filters
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-
-      {/* Empty State */}
-      {filteredCustomers.length === 0 && (
-        <div className="p-8 text-center">
-          <ShoppingBag className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">No customers found</h3>
-          <p className="text-muted-foreground mb-4">
-            Try adjusting your search terms or filters.
-          </p>
-          <Button size="sm">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Customer
-          </Button>
-        </div>
-      )}
     </div>
   );
 };
