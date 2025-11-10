@@ -169,7 +169,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
                   title="Edit Profile"
                 >
                   <Edit2 className="w-4 h-4" />
-                  <span>Edit</span>
+                  <span>Edit Profile</span>
                 </button>
               ) : (
                 // Message and Follow buttons for other profiles
@@ -212,7 +212,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
         <div className="grid grid-cols-4 gap-2 mb-2">
           {/* Followers Card */}
           <div className="bg-gray-50 rounded-lg p-2 text-center hover:bg-gray-100 transition-colors">
-            <div className="font-bold text-red-600 text-sm">
+            <div className="font-bold text-black text-sm">
               {formatNumber(safeSellerData.followers_count)}
             </div>
             <div className="text-gray-600 text-xs">Followers</div>
@@ -220,7 +220,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
 
           {/* Orders Card */}
           <div className="bg-gray-50 rounded-lg p-2 text-center hover:bg-gray-100 transition-colors">
-            <div className="text-red-600 font-bold text-sm">
+            <div className="text-black font-bold text-sm">
               {formatNumber(safeSellerData.total_sales)}
             </div>
             <div className="text-gray-600 text-xs">Orders</div>
@@ -228,7 +228,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
 
           {/* Average Rating Card */}
           <div className="bg-gray-50 rounded-lg p-2 text-center hover:bg-gray-100 transition-colors">
-            <div className="text-red-600 font-bold text-sm">
+            <div className="text-black font-bold text-sm">
               {safeSellerData.rating || '0.0'}
             </div>
             <div className="text-gray-600 text-xs">Average</div>
@@ -236,7 +236,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
 
           {/* Years Card */}
           <div className="bg-gray-50 rounded-lg p-2 text-center hover:bg-gray-100 transition-colors">
-            <div className="text-red-600 font-bold text-sm">
+            <div className="text-black font-bold text-sm">
               {safeSellerData.store_age_years}
             </div>
             <div className="text-gray-600 text-xs">Years</div>
