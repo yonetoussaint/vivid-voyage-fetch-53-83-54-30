@@ -279,24 +279,25 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }  
   }, [location.pathname, navigate]);  
 
-  return (  
-    <StickyTabsLayout
-      header={header}
-      headerRef={headerRef}
-      topContent={topContent}
-      topContentRef={sellerInfoRef}
-      tabs={tabs} // Use filtered tabs (hidden ones are excluded)
-      activeTab={activeTab}
-      onTabChange={handleTabChange}
-      isProductsTab={isProductsTab}
-      showTopBorder={false}
-      variant="underline"
-      stickyBuffer={4} // Matches original buffer value
-      alwaysStickyForNonProducts={true} // Matches original behavior
-    >
-      {enhancedChildren}
-    </StickyTabsLayout>
-  );  
+ return (  
+  <StickyTabsLayout
+    header={header}
+    headerRef={headerRef}
+    topContent={topContent}
+    topContentRef={sellerInfoRef}
+    tabs={tabs}
+    activeTab={activeTab}
+    onTabChange={handleTabChange}
+    isProductsTab={isProductsTab}
+    showTopBorder={false}
+    variant="underline"
+    stickyBuffer={4}
+    alwaysStickyForNonProducts={true}
+    hideTabs={isEditProfilePage} // NEW: Hide tabs on edit profile page
+  >
+    {enhancedChildren}
+  </StickyTabsLayout>
+);  
 };  
 
 export default SellerLayout;
