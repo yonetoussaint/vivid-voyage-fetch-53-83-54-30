@@ -652,18 +652,15 @@ const formatNumber = (num: number): string => {
       </div>
 
       {/* Floating Add Product Button */}
-      {onAddProduct && (
-        <button
-          onClick={onAddProduct}
-          className="fixed bottom-20 right-4 z-50 bg-gradient-to-r from-red-400/80 to-pink-500/80 backdrop-blur-md text-white rounded-2xl px-4 py-3 shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-105 active:scale-95 border border-white/20"
-          aria-label="Add Product"
-        >
-          <div className="flex items-center gap-2">
-            <Plus className="w-5 h-5" />
-            <span className="font-medium text-sm">Add Product</span>
-          </div>
-        </button>
-      )}
+{onAddProduct && (
+  <button
+    onClick={onAddProduct}
+    className="fixed bottom-20 right-4 z-50 bg-white text-gray-900 rounded-full p-3 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 active:scale-95 border border-gray-200 backdrop-blur-sm"
+    aria-label="Add Product"
+  >
+    <Plus className="w-6 h-6" />
+  </button>
+)}
     </div>
   );
 }
