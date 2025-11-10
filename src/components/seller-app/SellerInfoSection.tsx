@@ -118,7 +118,9 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
     <div className="bg-white text-gray-900 relative overflow-hidden">
       {/* Banner */}
       <div className="relative w-full overflow-hidden z-0">
-        <HeroBanner asCarousel={false} showNewsTicker={false} customHeight="180px" sellerId={safeSellerData.id} />
+        <HeroBanner asCarousel={false} showNewsTicker={false} customHeight="180px"
+position="top"
+sellerId={safeSellerData.id} />
       </div>
 
       <div className="px-2 pt-3 relative z-10">
