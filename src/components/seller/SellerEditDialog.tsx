@@ -157,27 +157,48 @@ const SellerEditProfile = () => {
     );
   }
 
+  // Create a safe seller data object for HeroBanner
+  const safeSellerData = sellerData ? {
+    id: sellerData.id,
+    name: sellerData.name || 'Seller Name',
+    banner_url: sellerData.banner_url,
+    // Add other properties that HeroBanner might need
+  } : null;
+
   return (
     <div className="min-h-screen bg-background">
       {/* Banner Section with HeroBanner Component */}
       <div className="relative">
-        <HeroBanner 
-          asCarousel={false} 
-          showNewsTicker={false} 
-          customHeight="180px" 
-          sellerId={sellerData?.id}
-        />
-        
-        {/* Banner Edit Overlay */}
-        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
-          <button
-            onClick={() => setIsEditingBanner(true)}
-            className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-white transition-colors"
-          >
-            <Edit2 className="w-4 h-4" />
-            Edit Banner
-          </button>
-        </div>
+        {safeSellerData ? (
+          <>
+            <HeroBanner 
+              asCarousel={false} 
+              showNewsTicker={false} 
+              customHeight="180px" 
+              sellerId={safeSellerData.id}
+              sellerData={safeSellerData} // Pass seller data directly
+            />
+            
+            {/* Banner Edit Overlay */}
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300 cursor-pointer">
+              <button
+                onClick={() => setIsEditingBanner(true)}
+                className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-white transition-colors"
+              >
+                <Edit2 className="w-4 h-4" />
+                Edit Banner
+              </button>
+            </div>
+          </>
+        ) : (
+          // Fallback banner if no seller data
+          <div className="w-full h-48 bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center">
+            <div className="text-white text-center">
+              <Camera className="w-12 h-12 mx-auto mb-2 opacity-70" />
+              <p className="text-sm">No banner image set</p>
+            </div>
+          </div>
+        )}
 
         {/* Banner Upload Modal */}
         {isEditingBanner && (
@@ -207,7 +228,10 @@ const SellerEditProfile = () => {
                     Cancel
                   </button>
                   <button
-                    onClick={() => document.querySelector('input[type="file"]')?.click()}
+                    onClick={() => {
+                      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+                      fileInput?.click();
+                    }}
                     className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
                   >
                     Choose File
@@ -230,6 +254,10 @@ const SellerEditProfile = () => {
                   src={sellerData.image_url} 
                   alt="Profile" 
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face";
+                  }}
                 />
               ) : (
                 <div className="w-full h-full bg-gray-400 flex items-center justify-center">
