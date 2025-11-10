@@ -324,6 +324,7 @@ const SellerOrders = () => {
           }}
           showStats={filteredOrders.length > 0}
         />
+      </div>
 
       {/* Product Filter Bar - Now used for orders filtering */}
       <ProductFilterBar
