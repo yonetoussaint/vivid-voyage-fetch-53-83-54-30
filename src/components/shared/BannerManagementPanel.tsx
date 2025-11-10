@@ -1,8 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, Upload, Image, X, Check, Edit2, Trash2, Star, Plus, Palette, Video } from 'lucide-react';
+import { Camera, Upload, Image, X, Check, Edit2, Trash2, Star, Plus, Palette, Video, GripVertical } from 'lucide-react';
 import SlideUpPanel from '@/components/shared/SlideUpPanel';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface Banner {
   id: string;
@@ -22,6 +39,127 @@ interface BannerManagementPanelProps {
   onBannerUpdate?: () => void;
 }
 
+// Sortable Banner Item Component
+const SortableBannerItem = ({ banner, onSetPrimary, onEdit, onDelete, isEditing }: {
+  banner: Banner;
+  onSetPrimary: (id: string) => void;
+  onEdit: (banner: Banner) => void;
+  onDelete: (id: string) => void;
+  isEditing: boolean;
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: banner.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const BannerThumbnail = ({ banner, size = "small" }: { banner: Banner, size?: "small" | "medium" }) => {
+    const dimensions = size === "small" ? "w-16 h-12" : "w-20 h-14";
+    
+    return (
+      <div className={`${dimensions} rounded-lg border border-gray-200 overflow-hidden flex-shrink-0`}>
+        {banner.type === 'image' ? (
+          <img
+            src={banner.thumbnail || banner.value}
+            alt={banner.name}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDIwMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTIwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik03NSA0MEg2NVY2MEg3NVY0MFoiIGZpbGw9IiM5Q0EwQUIiLz4KPHBhdGggZD0iTTgwIDUwTDY1IDYwVjQwTDgwIDUwWiIgZmlsbD0iIzlDQTBBQiIvPgo8L3N2Zz4=';
+            }}
+          />
+        ) : banner.type === 'video' ? (
+          <div className="w-full h-full bg-gray-100 flex items-center justify-center relative">
+            <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
+              <Video className="w-4 h-4 text-gray-600" />
+            </div>
+          </div>
+        ) : (
+          <div className={`w-full h-full ${banner.value}`} />
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors relative group"
+    >
+      {/* Drag Handle */}
+      <div 
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600"
+      >
+        <GripVertical className="w-4 h-4" />
+      </div>
+
+      <BannerThumbnail banner={banner} size="small" />
+      
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <h4 className="font-medium text-gray-900 truncate">{banner.name}</h4>
+          {banner.is_primary && (
+            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
+              Primary
+            </span>
+          )}
+        </div>
+        
+        <div className="flex items-center gap-3 text-sm text-gray-500">
+          <span className="capitalize">{banner.type}</span>
+          <span>•</span>
+          <span>{new Date(banner.created_at).toLocaleDateString()}</span>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-1">
+        {!banner.is_primary && (
+          <button
+            onClick={() => onSetPrimary(banner.id)}
+            className="p-2 text-gray-400 hover:text-yellow-500 transition-colors"
+            title="Set as primary"
+            disabled={isEditing}
+          >
+            <Star className="w-4 h-4" />
+          </button>
+        )}
+        
+        <button
+          onClick={() => onEdit(banner)}
+          className="p-2 text-gray-400 hover:text-blue-500 transition-colors"
+          title="Edit banner"
+          disabled={isEditing}
+        >
+          <Edit2 className="w-4 h-4" />
+        </button>
+        
+        {!banner.is_primary && (
+          <button
+            onClick={() => onDelete(banner.id)}
+            className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+            title="Delete banner"
+            disabled={isEditing}
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
   isOpen,
   onClose,
@@ -31,9 +169,18 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
   const [banners, setBanners] = useState<Banner[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
-  const [selectedTab, setSelectedTab] = useState<'manage' | 'add'>('manage');
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
+  const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [uploadType, setUploadType] = useState<'image' | 'video'>('image');
+  const [isReordering, setIsReordering] = useState(false);
+
+  // DnD Sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Fetch seller banners
   const fetchBanners = async () => {
@@ -126,6 +273,43 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
     }
   };
 
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) return;
+
+    setIsReordering(true);
+
+    try {
+      const oldIndex = banners.findIndex((banner) => banner.id === active.id);
+      const newIndex = banners.findIndex((banner) => banner.id === over.id);
+
+      const reorderedBanners = arrayMove(banners, oldIndex, newIndex);
+      setBanners(reorderedBanners);
+
+      // Update sort_order in database
+      const updates = reorderedBanners.map((banner, index) => ({
+        id: banner.id,
+        sort_order: index
+      }));
+
+      const { error } = await supabase
+        .from('seller_banners')
+        .upsert(updates);
+
+      if (error) throw error;
+
+      toast.success('Banner order updated');
+    } catch (error) {
+      console.error('Error reordering banners:', error);
+      toast.error('Failed to update banner order');
+      // Revert on error
+      await fetchBanners();
+    } finally {
+      setIsReordering(false);
+    }
+  };
+
   const handleAddBanner = async (bannerData: Omit<Banner, 'id' | 'is_primary' | 'created_at'>) => {
     if (!sellerId) {
       toast.error('Seller ID not found');
@@ -154,7 +338,7 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
 
       await fetchBanners();
       onBannerUpdate?.();
-      setSelectedTab('manage');
+      setShowMediaPicker(false);
       toast.success('Banner added successfully');
     } catch (error) {
       console.error('Error adding banner:', error);
@@ -271,90 +455,9 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
     }
   };
 
-  const BannerThumbnail = ({ banner, size = "medium" }: { banner: Banner, size?: "small" | "medium" }) => {
-    const dimensions = size === "small" ? "w-16 h-12" : "w-20 h-14";
-    
-    return (
-      <div className={`${dimensions} rounded-lg border border-gray-200 overflow-hidden flex-shrink-0`}>
-        {banner.type === 'image' ? (
-          <img
-            src={banner.thumbnail || banner.value}
-            alt={banner.name}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDIwMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTIwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik03NSA0MEg2NVY2MEg3NVY0MFoiIGZpbGw9IiM5Q0EwQUIiLz4KPHBhdGggZD0iTTgwIDUwTDY1IDYwVjQwTDgwIDUwWiIgZmlsbD0iIzlDQTBBQiIvPgo8L3N2Zz4=';
-            }}
-          />
-        ) : banner.type === 'video' ? (
-          <div className="w-full h-full bg-gray-100 flex items-center justify-center relative">
-            <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
-              <Video className="w-4 h-4 text-gray-600" />
-            </div>
-          </div>
-        ) : (
-          <div className={`w-full h-full ${banner.value}`} />
-        )}
-      </div>
-    );
-  };
-
-  const BannerItem = ({ banner }: { banner: Banner }) => (
-    <div className="flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-      <BannerThumbnail banner={banner} size="small" />
-      
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <h4 className="font-medium text-gray-900 truncate">{banner.name}</h4>
-          {banner.is_primary && (
-            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
-              Primary
-            </span>
-          )}
-        </div>
-        
-        <div className="flex items-center gap-3 text-sm text-gray-500">
-          <span className="capitalize">{banner.type}</span>
-          <span>•</span>
-          <span>{new Date(banner.created_at).toLocaleDateString()}</span>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-1">
-        {!banner.is_primary && (
-          <button
-            onClick={() => handleSetPrimary(banner.id)}
-            className="p-2 text-gray-400 hover:text-yellow-500 transition-colors"
-            title="Set as primary"
-          >
-            <Star className="w-4 h-4" />
-          </button>
-        )}
-        
-        <button
-          onClick={() => setEditingBanner(banner)}
-          className="p-2 text-gray-400 hover:text-blue-500 transition-colors"
-          title="Edit banner"
-        >
-          <Edit2 className="w-4 h-4" />
-        </button>
-        
-        {!banner.is_primary && (
-          <button
-            onClick={() => handleDeleteBanner(banner.id)}
-            className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-            title="Delete banner"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        )}
-      </div>
-    </div>
-  );
-
   const AddNewBannerItem = () => (
     <button
-      onClick={() => setSelectedTab('add')}
+      onClick={() => setShowMediaPicker(true)}
       className="w-full flex items-center gap-4 p-4 bg-white border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 group"
     >
       <div className="w-16 h-12 rounded-lg border-2 border-dashed border-gray-300 group-hover:border-blue-400 flex items-center justify-center transition-colors">
@@ -382,7 +485,21 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
     return (
       <div className="bg-white border border-blue-200 rounded-lg p-4 space-y-4">
         <div className="flex items-center gap-4">
-          <BannerThumbnail banner={banner} size="small" />
+          <div className="w-16 h-12 rounded-lg border border-gray-200 overflow-hidden flex-shrink-0">
+            {banner.type === 'image' ? (
+              <img
+                src={banner.thumbnail || banner.value}
+                alt={banner.name}
+                className="w-full h-full object-cover"
+              />
+            ) : banner.type === 'video' ? (
+              <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                <Video className="w-4 h-4 text-gray-600" />
+              </div>
+            ) : (
+              <div className={`w-full h-full ${banner.value}`} />
+            )}
+          </div>
           <div className="flex-1">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Banner Name
@@ -416,181 +533,197 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
     );
   };
 
+  const MediaPicker = () => (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 mb-4">
+        <button
+          onClick={() => setShowMediaPicker(false)}
+          className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+        >
+          <X className="w-4 h-4" />
+        </button>
+        <h3 className="text-lg font-semibold">Add New Banner</h3>
+      </div>
+
+      {/* Media Type Selection */}
+      <div className="flex gap-2 mb-4">
+        <button
+          onClick={() => setUploadType('image')}
+          className={`flex-1 py-3 px-4 rounded-lg border-2 transition-colors flex items-center justify-center gap-2 ${
+            uploadType === 'image'
+              ? 'border-blue-500 bg-blue-50 text-blue-700'
+              : 'border-gray-200 text-gray-600 hover:border-gray-300'
+          }`}
+        >
+          <Image className="w-4 h-4" />
+          Image
+        </button>
+        <button
+          onClick={() => setUploadType('video')}
+          className={`flex-1 py-3 px-4 rounded-lg border-2 transition-colors flex items-center justify-center gap-2 ${
+            uploadType === 'video'
+              ? 'border-blue-500 bg-blue-50 text-blue-700'
+              : 'border-gray-200 text-gray-600 hover:border-gray-300'
+          }`}
+        >
+          <Video className="w-4 h-4" />
+          Video
+        </button>
+      </div>
+
+      {/* Quick Colors & Gradients */}
+      <div>
+        <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+          <Palette className="w-4 h-4" />
+          Colors & Gradients
+        </h4>
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          {[
+            { name: 'Blue', value: 'bg-blue-500', type: 'color' as const },
+            { name: 'Purple', value: 'bg-purple-500', type: 'color' as const },
+            { name: 'Pink', value: 'bg-pink-500', type: 'color' as const },
+            { name: 'Green', value: 'bg-green-500', type: 'color' as const },
+            { name: 'Orange', value: 'bg-orange-500', type: 'color' as const },
+            { name: 'Indigo', value: 'bg-indigo-500', type: 'color' as const },
+            { name: 'Blue Gradient', value: 'bg-gradient-to-r from-blue-500 to-purple-600', type: 'gradient' as const },
+            { name: 'Sunset Gradient', value: 'bg-gradient-to-r from-orange-400 to-pink-500', type: 'gradient' as const },
+          ].map((option, index) => (
+            <button
+              key={index}
+              onClick={() => handleAddBanner({
+                name: option.name,
+                type: option.type,
+                value: option.value,
+                thumbnail: option.value
+              })}
+              className="text-left"
+            >
+              <div className="w-full h-16 rounded-lg border border-gray-200 overflow-hidden">
+                <div className={`w-full h-full ${option.value}`} />
+              </div>
+              <p className="text-xs font-medium text-gray-700 mt-1 text-center truncate">
+                {option.name}
+              </p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* File Upload */}
+      <div>
+        <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+          <Upload className="w-4 h-4" />
+          Upload {uploadType === 'image' ? 'Image' : 'Video'}
+        </h4>
+        
+        <label className="block">
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors">
+            {isUploading ? (
+              <div className="space-y-3">
+                <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin mx-auto"></div>
+                <p className="text-sm font-medium text-gray-700">Uploading...</p>
+              </div>
+            ) : (
+              <>
+                {uploadType === 'image' ? (
+                  <Image className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                ) : (
+                  <Video className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                )}
+                <p className="text-sm font-medium text-gray-700">
+                  Upload Custom {uploadType === 'image' ? 'Image' : 'Video'} Banner
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {uploadType === 'image' 
+                    ? 'Recommended: 1200×400px, max 5MB (JPG, PNG, WebP)'
+                    : 'Recommended: MP4, WebM, max 20MB'
+                  }
+                </p>
+                <input
+                  type="file"
+                  accept={uploadType === 'image' ? 'image/*' : 'video/*'}
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              </>
+            )}
+          </div>
+        </label>
+      </div>
+    </div>
+  );
+
   return (
     <SlideUpPanel
       isOpen={isOpen}
       onClose={onClose}
-      title="Manage Banners"
+      title={showMediaPicker ? "Add New Banner" : "Manage Banners"}
       showCloseButton={true}
       preventBodyScroll={true}
       className="p-4"
       stickyFooter={null}
     >
       <div className="space-y-4">
-        {/* Tab Navigation */}
-        <div className="flex border-b border-gray-200">
-          <button
-            onClick={() => setSelectedTab('manage')}
-            className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${
-              selectedTab === 'manage'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            My Banners
-          </button>
-          <button
-            onClick={() => setSelectedTab('add')}
-            className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${
-              selectedTab === 'add'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Add New
-          </button>
-        </div>
-
-        {/* Tab Content */}
-        <div className="max-h-96 overflow-y-auto">
-          {selectedTab === 'manage' && (
-            <div className="space-y-3">
-              {isLoading ? (
-                <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                </div>
-              ) : banners.length === 0 ? (
-                <div className="text-center py-8">
-                  <Image className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-500 text-sm mb-2">No banners yet</p>
-                  <AddNewBannerItem />
-                </div>
-              ) : (
-                <>
-                  <div className="space-y-3">
-                    {banners.map((banner) => (
-                      editingBanner?.id === banner.id ? (
-                        <EditBannerForm key={banner.id} banner={banner} />
-                      ) : (
-                        <BannerItem key={banner.id} banner={banner} />
-                      )
-                    ))}
-                  </div>
-                  
-                  {/* Add New Banner as last item */}
-                  <AddNewBannerItem />
-                </>
-              )}
-            </div>
-          )}
-
-          {selectedTab === 'add' && (
-            <div className="space-y-4">
-              {/* Quick Add Options */}
-              <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-                  <Palette className="w-4 h-4" />
-                  Quick Add Colors & Gradients
-                </h4>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { name: 'Blue', value: 'bg-blue-500' },
-                    { name: 'Purple', value: 'bg-purple-500' },
-                    { name: 'Pink', value: 'bg-pink-500' },
-                    { name: 'Green', value: 'bg-green-500' },
-                    { name: 'Orange', value: 'bg-orange-500' },
-                    { name: 'Indigo', value: 'bg-indigo-500' },
-                    { name: 'Blue Gradient', value: 'bg-gradient-to-r from-blue-500 to-purple-600' },
-                    { name: 'Sunset Gradient', value: 'bg-gradient-to-r from-orange-400 to-pink-500' },
-                  ].map((option, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleAddBanner({
-                        name: option.name,
-                        type: option.name.includes('Gradient') ? 'gradient' : 'color',
-                        value: option.value,
-                        thumbnail: option.value
-                      })}
-                      className="text-left"
-                    >
-                      <div className="w-full h-16 rounded-lg border border-gray-200 overflow-hidden">
-                        <div className={`w-full h-full ${option.value}`} />
-                      </div>
-                      <p className="text-xs font-medium text-gray-700 mt-1 text-center truncate">
-                        {option.name}
-                      </p>
-                    </button>
-                  ))}
-                </div>
+        {showMediaPicker ? (
+          <MediaPicker />
+        ) : (
+          <div className="space-y-3">
+            {isLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
               </div>
-
-              {/* Custom Upload */}
-              <div className="border-t pt-4">
-                <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-                  <Upload className="w-4 h-4" />
-                  Upload Custom {uploadType === 'image' ? 'Image' : 'Video'}
-                </h4>
-                
-                <div className="flex gap-2 mb-3">
-                  <button
-                    onClick={() => setUploadType('image')}
-                    className={`flex-1 py-2 px-3 rounded-lg border transition-colors text-sm ${
-                      uploadType === 'image'
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                    }`}
-                  >
-                    Image
-                  </button>
-                  <button
-                    onClick={() => setUploadType('video')}
-                    className={`flex-1 py-2 px-3 rounded-lg border transition-colors text-sm ${
-                      uploadType === 'video'
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                    }`}
-                  >
-                    Video
-                  </button>
+            ) : banners.length === 0 ? (
+              <div className="text-center py-8">
+                <Image className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-500 text-sm mb-2">No banners yet</p>
+                <AddNewBannerItem />
+              </div>
+            ) : (
+              <>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-700 text-center">
+                    💡 Drag and drop banners to reorder them
+                  </p>
                 </div>
                 
-                <label className="block">
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors">
-                    {isUploading ? (
-                      <div className="space-y-3">
-                        <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin mx-auto"></div>
-                        <p className="text-sm font-medium text-gray-700">Uploading...</p>
-                      </div>
-                    ) : (
-                      <>
-                        {uploadType === 'image' ? (
-                          <Image className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext items={banners.map(b => b.id)} strategy={verticalListSortingStrategy}>
+                    <div className="space-y-3">
+                      {banners.map((banner) => (
+                        editingBanner?.id === banner.id ? (
+                          <EditBannerForm key={banner.id} banner={banner} />
                         ) : (
-                          <Video className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                        )}
-                        <p className="text-sm font-medium text-gray-700">
-                          Upload Custom {uploadType === 'image' ? 'Image' : 'Video'} Banner
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {uploadType === 'image' 
-                            ? 'Recommended: 1200×400px, max 5MB (JPG, PNG, WebP)'
-                            : 'Recommended: MP4, WebM, max 20MB'
-                          }
-                        </p>
-                        <input
-                          type="file"
-                          accept={uploadType === 'image' ? 'image/*' : 'video/*'}
-                          onChange={handleFileUpload}
-                          className="hidden"
-                        />
-                      </>
-                    )}
+                          <SortableBannerItem
+                            key={banner.id}
+                            banner={banner}
+                            onSetPrimary={handleSetPrimary}
+                            onEdit={setEditingBanner}
+                            onDelete={handleDeleteBanner}
+                            isEditing={!!editingBanner}
+                          />
+                        )
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+                
+                {isReordering && (
+                  <div className="flex justify-center py-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                    <span className="text-sm text-gray-500 ml-2">Updating order...</span>
                   </div>
-                </label>
-              </div>
-            </div>
-          )}
-        </div>
+                )}
+                
+                {/* Add New Banner as last item */}
+                <AddNewBannerItem />
+              </>
+            )}
+          </div>
+        )}
       </div>
     </SlideUpPanel>
   );
