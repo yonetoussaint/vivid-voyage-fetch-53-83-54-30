@@ -244,38 +244,26 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
         </div>
       </div>
 
-      {/* Verification Banner - Only show if seller is not verified */}
-      {!safeSellerData.verified && isOwnProfile && (
-        <div className="mx-2 mb-2 mt-1">
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
-                  <Shield className="w-5 h-5 text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-1.5">
-                    Get Verified
-                    <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
-                      Recommended
-                    </span>
-                  </h3>
-                  <p className="text-xs text-gray-600 mt-0.5">
-                    Verify your account to build trust and unlock premium features
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={onVerifySeller}
-                className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
-              >
-                <CheckCircle className="w-4 h-4" />
-                Verify Now
-              </button>
-            </div>
-          </div>
+     {/* Verification Banner - Only show if seller is not verified */}
+{!safeSellerData.verified && isOwnProfile && (
+  <div className="mx-2 mb-2">
+    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg px-3 py-2">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 flex-1">
+          <Shield className="w-4 h-4 text-blue-600 flex-shrink-0" />
+          <span className="text-sm font-medium text-gray-900">Get verified to build trust</span>
         </div>
-      )}
+        <button
+          onClick={onVerifySeller}
+          className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors whitespace-nowrap"
+        >
+          <CheckCircle className="w-3 h-3" />
+          Verify Now
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       {/* Social Media Bottom Sheet */}
       {showSocialPanel && (
