@@ -38,16 +38,13 @@ interface HeroBannerProps {
   onClearAll?: () => void;
   onFilterButtonClick?: (filterId: string) => void;
   isFilterDisabled?: (filterId: string) => boolean;
-  // NEW PROPS: For seller banners and edit functionality
   sellerId?: string;
   showEditButton?: boolean;
   onEditBanner?: () => void;
   editButtonPosition?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
-  // Data source configuration
   dataSource?: 'default' | 'seller_banners';
 }
 
-// Function to fetch seller banners
 const fetchSellerBanners = async (sellerId: string) => {
   if (!sellerId) return [];
   
@@ -67,13 +64,12 @@ const fetchSellerBanners = async (sellerId: string) => {
   }
 };
 
-// Default placeholder banner
 const defaultPlaceholderBanner: BannerType = {
   id: 'placeholder',
   image: '',
-  alt: 'Add your first banner',
-  title: 'Add Your Banner',
-  subtitle: 'Click the edit button to customize your banner',
+  alt: 'Add your banner',
+  title: '',
+  subtitle: '',
   type: 'color' as const,
   duration: 5000,
   rowType: 'product' as const,
@@ -95,7 +91,6 @@ export default function HeroBanner({
   onClearAll = () => {},
   onFilterButtonClick = () => {},
   isFilterDisabled = () => false,
-  // NEW PROPS with defaults
   sellerId,
   showEditButton = false,
   onEditBanner = () => {},
@@ -113,17 +108,14 @@ export default function HeroBanner({
   const heroBannerRef = useRef<HTMLDivElement>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
 
-  // Update showNews state when showNewsTicker prop changes
   useEffect(() => {
     setShowNews(showNewsTicker);
   }, [showNewsTicker]);
 
-  // Dynamically measure header height
   useEffect(() => {
     function updateOffset() {
       const header = document.getElementById("ali-header");
       if (header) {
-        const computedStyle = window.getComputedStyle(header);
         const height = header.getBoundingClientRect().height;
         setOffset(Math.ceil(height));
       } else {
@@ -141,16 +133,13 @@ export default function HeroBanner({
     };
   }, []);
 
-  // Initialize storage buckets if needed
   useEffect(() => {
     const initStorage = async () => {
       await setupStorageBuckets();
-      console.log('Storage buckets initialized');
     };
     initStorage();
   }, []);
 
-  // Fetch banners based on data source
   const { data: bannersData, isLoading: bannersLoading, error } = useQuery({
     queryKey: dataSource === 'seller_banners' 
       ? ["seller-banners", sellerId]
@@ -160,10 +149,9 @@ export default function HeroBanner({
       : fetchHeroBanners,
     staleTime: dataSource === 'seller_banners' ? 30000 : 5000,
     refetchInterval: dataSource === 'seller_banners' ? 30000 : 10000,
-    enabled: !customBanners, // Disable if custom banners provided
+    enabled: !customBanners,
   });
 
-  // Show error if banner fetch fails
   useEffect(() => {
     if (error) {
       toast.error("Failed to load banner images");
@@ -171,11 +159,8 @@ export default function HeroBanner({
     }
   }, [error]);
 
-  // Transform banners to match BannerType interface based on data source
   const transformedBanners: BannerType[] = useMemo(() => {
-    // If custom banners provided, use those
     if (customBanners) {
-      console.log('Using custom banners');
       return customBanners.map((banner, index) => {
         const rowTypes: ('product' | 'seller' | 'catalog')[] = ['product', 'seller', 'catalog'];
         const rowType = rowTypes[index % 3] || 'product';
@@ -193,17 +178,11 @@ export default function HeroBanner({
       });
     }
 
-    // If using seller banners data source
     if (dataSource === 'seller_banners' && bannersData) {
-      console.log('Using seller banners:', bannersData);
-      
-      // If no seller banners, return placeholder
       if (bannersData.length === 0) {
-        console.log('No seller banners found, using placeholder');
         return [{
           ...defaultPlaceholderBanner,
-          // For seller banners, use a gradient placeholder
-          image: 'bg-gradient-to-r from-blue-400 to-purple-500'
+          image: 'bg-gradient-to-br from-blue-50 to-indigo-100'
         }];
       }
       
@@ -225,16 +204,11 @@ export default function HeroBanner({
       });
     }
 
-    // Default banners (original behavior)
     if (bannersData && dataSource === 'default') {
-      console.log('Using default banners');
-      
-      // If no default banners, return placeholder
       if (bannersData.length === 0) {
-        console.log('No default banners found, using placeholder');
         return [{
           ...defaultPlaceholderBanner,
-          image: 'bg-gradient-to-r from-gray-400 to-gray-600'
+          image: 'bg-gray-100'
         }];
       }
       
@@ -284,23 +258,19 @@ export default function HeroBanner({
       }) || [];
     }
 
-    // Fallback to placeholder
-    console.log('No banners available, using fallback placeholder');
     return [{
       ...defaultPlaceholderBanner,
-      image: 'bg-gradient-to-r from-gray-300 to-gray-400'
+      image: 'bg-gray-100'
     }];
   }, [bannersData, customBanners, dataSource]);
 
   const slidesToShow = transformedBanners;
   const isPlaceholder = slidesToShow.length === 1 && slidesToShow[0].id === 'placeholder';
 
-  // Handle video duration updates
   const handleVideoDurationChange = useCallback((index: number, duration: number) => {
     setVideoDurations(prev => ({ ...prev, [index]: duration }));
   }, []);
 
-  // Get duration for current slide
   const getCurrentSlideDuration = useCallback(() => {
     const slide = slidesToShow[activeIndex];
     if (!slide) return 5000;
@@ -312,7 +282,6 @@ export default function HeroBanner({
     return slide.duration || 5000;
   }, [activeIndex, slidesToShow, videoDurations]);
 
-  // Banner rotation (disabled for carousel mode and placeholder)
   useEffect(() => {
     if (asCarousel || slidesToShow.length <= 1 || isPlaceholder) return;
 
@@ -346,21 +315,35 @@ export default function HeroBanner({
     };
   }, [activeIndex, slidesToShow.length, videoDurations, asCarousel, getCurrentSlideDuration, isPlaceholder]);
 
-  // Edit Button Component
+  const handleCloseFloatingVideo = useCallback(() => {
+    setShowFloatingVideo(false);
+  }, []);
+
+  const handleExpandFloatingVideo = useCallback(() => {
+    setShowFloatingVideo(false);
+    heroBannerRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
+  const currentSlide = slidesToShow[activeIndex];
+
+  const handleCarouselScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    // Allow natural scrolling
+  }, []);
+
   const EditButton = useMemo(() => {
     if (!showEditButton) return null;
 
     const positionClasses = {
-      'top-right': 'top-4 right-4',
-      'top-left': 'top-4 left-4',
-      'bottom-right': 'bottom-4 right-4',
-      'bottom-left': 'bottom-4 left-4'
+      'top-right': 'top-3 right-3',
+      'top-left': 'top-3 left-3',
+      'bottom-right': 'bottom-3 right-3',
+      'bottom-left': 'bottom-3 left-3'
     };
 
     return (
       <button
         onClick={onEditBanner}
-        className={`absolute ${positionClasses[editButtonPosition]} bg-white/90 backdrop-blur-sm px-3 py-2 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-white transition-all duration-200 shadow-lg z-20`}
+        className={`absolute ${positionClasses[editButtonPosition]} bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-white transition-all duration-200 shadow-lg z-20`}
         title="Edit Banner"
       >
         <Edit2 className="w-4 h-4" />
@@ -369,44 +352,72 @@ export default function HeroBanner({
     );
   }, [showEditButton, onEditBanner, editButtonPosition]);
 
-  // Placeholder Banner Component
   const PlaceholderBanner = useMemo(() => {
     if (!isPlaceholder) return null;
 
-    const currentSlide = slidesToShow[activeIndex];
+    const isSellerBanner = dataSource === 'seller_banners';
     
     return (
       <div 
-        className={`w-full h-full flex items-center justify-center ${currentSlide.image} relative`}
+        className={`w-full h-full flex items-center justify-center ${
+          isSellerBanner 
+            ? 'bg-gradient-to-br from-blue-50 to-indigo-100 border border-dashed border-blue-200' 
+            : 'bg-gray-100 border border-dashed border-gray-300'
+        }`}
         style={customHeight ? { height: customHeight } : { aspectRatio: '2 / 1' }}
       >
-        <div className="text-center text-white p-6">
-          <div className="bg-white/20 backdrop-blur-sm rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+        <div className="text-center p-4">
+          <div className={`rounded-full w-10 h-10 flex items-center justify-center mx-auto mb-2 ${
+            isSellerBanner ? 'bg-blue-100 text-blue-600' : 'bg-gray-200 text-gray-600'
+          }`}>
             {showEditButton ? (
-              <Plus className="w-8 h-8" />
+              <Plus className="w-5 h-5" />
             ) : (
-              <Image className="w-8 h-8" />
+              <Image className="w-5 h-5" />
             )}
           </div>
-          <h3 className="text-xl font-semibold mb-2 drop-shadow-md">
-            {currentSlide.title}
-          </h3>
-          <p className="text-white/90 drop-shadow-sm max-w-md mx-auto">
-            {currentSlide.subtitle}
-          </p>
           
-          {showEditButton && (
-            <button
-              onClick={onEditBanner}
-              className="mt-4 bg-white text-blue-600 px-6 py-2 rounded-full font-medium hover:bg-gray-100 transition-colors shadow-lg"
-            >
-              Add Your First Banner
-            </button>
+          {showEditButton ? (
+            <>
+              <p className={`text-sm font-medium mb-1 ${
+                isSellerBanner ? 'text-blue-900' : 'text-gray-700'
+              }`}>
+                No banner set
+              </p>
+              <p className={`text-xs mb-2 ${
+                isSellerBanner ? 'text-blue-700' : 'text-gray-600'
+              }`}>
+                Add a banner to personalize your profile
+              </p>
+              <button
+                onClick={onEditBanner}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  isSellerBanner 
+                    ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                    : 'bg-gray-600 text-white hover:bg-gray-700'
+                }`}
+              >
+                Add Banner
+              </button>
+            </>
+          ) : (
+            <>
+              <p className={`text-sm font-medium ${
+                isSellerBanner ? 'text-blue-900' : 'text-gray-700'
+              }`}>
+                No banner available
+              </p>
+              <p className={`text-xs mt-1 ${
+                isSellerBanner ? 'text-blue-700' : 'text-gray-600'
+              }`}>
+                Banner will appear here
+              </p>
+            </>
           )}
         </div>
       </div>
     );
-  }, [isPlaceholder, slidesToShow, activeIndex, customHeight, showEditButton, onEditBanner]);
+  }, [isPlaceholder, customHeight, showEditButton, onEditBanner, dataSource]);
 
   return (
     <>
@@ -417,11 +428,9 @@ export default function HeroBanner({
         style={{ marginTop: asCarousel ? 0 : offset }}
       >
         {asCarousel ? (
-          // Carousel rendering logic would go here
           <div>Carousel content...</div>
         ) : (
           <>
-            {/* Main banner content */}
             <div 
               className="relative w-full" 
               style={customHeight ? { height: customHeight } : { aspectRatio: '2 / 1' }}
@@ -429,7 +438,6 @@ export default function HeroBanner({
               {isPlaceholder ? (
                 <>
                   {PlaceholderBanner}
-                  {/* Edit Button for placeholder */}
                   {EditButton}
                 </>
               ) : (
@@ -441,7 +449,6 @@ export default function HeroBanner({
                     onVideoDurationChange={handleVideoDurationChange}
                   />
                   
-                  {/* Edit Button for regular banners */}
                   {EditButton}
                   
                   <BannerControls
@@ -456,7 +463,6 @@ export default function HeroBanner({
               )}
             </div>
 
-            {/* NewsTicker/FilterBar */}
             <div className="relative z-10">
               {showNews ? (
                 <NewsTicker />
@@ -476,7 +482,6 @@ export default function HeroBanner({
         )}
       </div>
 
-      {/* Floating Video - Disabled for placeholder */}
       {!asCarousel && !isPlaceholder && showFloatingVideo && currentSlide && currentSlide.type === "video" && (
         <FloatingVideo
           src={currentSlide.image}
