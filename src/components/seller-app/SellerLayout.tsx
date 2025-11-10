@@ -215,24 +215,24 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }  
   ];  
 
-  // Header component - DYNAMIC based on page type
-  const header = (
-    <div   
-      ref={headerRef}   
-      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"  
-    >  
-      <ProductHeader  
-        onCloseClick={handleBackClick}  
-        onShareClick={handleShareClick}  
-        actionButtons={isEditProfilePage ? editProfileActionButtons : regularActionButtons}
-        forceScrolledState={!isProductsTab || isEditProfilePage}
-        // For edit profile page, show title and hide search
-        title={isEditProfilePage ? "Edit Profile" : undefined}
-        hideSearch={isEditProfilePage}
-        showSellerInfo={!isEditProfilePage} // Don't show seller info on edit page
-      />  
-    </div>  
-  );
+  
+
+const header = (
+  <div   
+    ref={headerRef}   
+    className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"  
+  >  
+    <ProductHeader  
+      onCloseClick={isEditProfilePage ? () => navigate('/seller-dashboard/products') : handleBackClick}  
+      onShareClick={handleShareClick}  
+      actionButtons={isEditProfilePage ? editProfileActionButtons : regularActionButtons}
+      forceScrolledState={!isProductsTab || isEditProfilePage}
+      title={isEditProfilePage ? "Edit Profile" : undefined}
+      hideSearch={isEditProfilePage}
+      showSellerInfo={!isEditProfilePage}
+    />  
+  </div>  
+);
 
   // Top content (Seller Info) - Hide on edit profile page
   const topContent = isProductsTab && !isEditProfilePage ? (
