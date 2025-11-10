@@ -20,7 +20,8 @@ interface SellerInfoSectionProps {
   onBack: () => void;
   showActionButtons?: boolean;
   isOwnProfile?: boolean;
-  onVerifySeller?: () => void; // Add this prop for verification action
+  onVerifySeller?: () => void;
+  onEditProfile?: () => void; // New prop for edit profile navigation
 }
 
 const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
@@ -31,7 +32,8 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
   onBack,
   showActionButtons = true,
   isOwnProfile = false,
-  onVerifySeller = () => console.log('Verify seller clicked') // Default handler
+  onVerifySeller = () => console.log('Verify seller clicked'),
+  onEditProfile = () => console.log('Edit profile clicked') // Default handler
 }) => {
   const [showBusinessHours, setShowBusinessHours] = useState(false);
   const [showSocialPanel, setShowSocialPanel] = useState(false);
@@ -165,6 +167,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
               {isOwnProfile ? (
                 // Edit Profile Button for own profile
                 <button
+                  onClick={onEditProfile}
                   className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                   title="Edit Profile"
                 >
