@@ -18,6 +18,12 @@ const SellerEditProfile = () => {
     business_type: '',
     location: '',
     website: '',
+    phone: '',
+    email: '',
+    instagram: '',
+    facebook: '',
+    twitter: '',
+    tiktok: '',
   });
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -48,6 +54,12 @@ const SellerEditProfile = () => {
         business_type: sellerData.business_type || '',
         location: sellerData.location || '',
         website: sellerData.website || '',
+        phone: sellerData.phone || '',
+        email: sellerData.email || '',
+        instagram: sellerData.instagram || '',
+        facebook: sellerData.facebook || '',
+        twitter: sellerData.twitter || '',
+        tiktok: sellerData.tiktok || '',
       });
     }
   }, [sellerData]);
@@ -155,7 +167,6 @@ const SellerEditProfile = () => {
           showNewsTicker={false} 
           customHeight="180px" 
           sellerId={sellerData?.id}
-          // Enable edit button functionality
           showEditButton={true}
           onEditBanner={() => setIsBannerPanelOpen(true)}
           editButtonPosition="top-right"
@@ -194,11 +205,12 @@ const SellerEditProfile = () => {
         </div>
       </div>
 
-      {/* Edit Form - Rest of the form remains the same */}
+      {/* Edit Form */}
       <form onSubmit={handleSubmit} className="p-4 space-y-6 mt-4">
-        {/* ... existing form fields ... */}
-        
+        {/* Basic Information */}
         <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Business Name *
@@ -214,7 +226,156 @@ const SellerEditProfile = () => {
             />
           </div>
 
-          {/* ... other form fields ... */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Bio
+            </label>
+            <textarea
+              name="bio"
+              value={formData.bio}
+              onChange={handleInputChange}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              placeholder="Tell customers about your business..."
+              maxLength={500}
+            />
+            <div className="text-right text-xs text-gray-500 mt-1">
+              {formData.bio.length}/500
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Business Type
+            </label>
+            <input
+              type="text"
+              name="business_type"
+              value={formData.business_type}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="e.g., Fashion, Electronics, Food"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Location
+            </label>
+            <input
+              type="text"
+              name="location"
+              value={formData.location}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Where are you located?"
+            />
+          </div>
+        </div>
+
+        {/* Contact Information */}
+        <div className="pt-4 border-t border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Phone
+              </label>
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="+1 (555) 123-4567"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email
+              </label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="your@email.com"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Website
+              </label>
+              <input
+                type="url"
+                name="website"
+                value={formData.website}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="https://example.com"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Social Media Links */}
+        <div className="pt-4 border-t border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Social Media Links</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Instagram
+              </label>
+              <input
+                type="url"
+                name="instagram"
+                value={formData.instagram}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="https://instagram.com/yourprofile"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Facebook
+              </label>
+              <input
+                type="url"
+                name="facebook"
+                value={formData.facebook}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="https://facebook.com/yourpage"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                X (Twitter)
+              </label>
+              <input
+                type="url"
+                name="twitter"
+                value={formData.twitter}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="https://x.com/yourprofile"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                TikTok
+              </label>
+              <input
+                type="url"
+                name="tiktok"
+                value={formData.tiktok}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="https://tiktok.com/@yourprofile"
+              />
+            </div>
+          </div>
         </div>
 
         <button type="submit" className="hidden">
