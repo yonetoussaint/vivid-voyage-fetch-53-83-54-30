@@ -153,7 +153,7 @@ const SellerEditProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-16">
+    <div className="min-h-screen bg-background">
       {/* Edit Form - No header here, using the one from SellerLayout */}
       <form onSubmit={handleSubmit} className="p-4 space-y-6">
         {/* Banner Image */}
