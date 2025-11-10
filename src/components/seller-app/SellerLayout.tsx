@@ -223,8 +223,10 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         onShareClick={handleShareClick}  
         actionButtons={isEditProfilePage ? editProfileActionButtons : regularActionButtons}
         forceScrolledState={!isProductsTab || isEditProfilePage}
-        // For edit profile page, we want to show a custom title
-        seller={isEditProfilePage ? undefined : sellerData} // Hide seller info on edit page
+        // For edit profile page, show title and hide search
+        title={isEditProfilePage ? "Edit Profile" : undefined}
+        hideSearch={isEditProfilePage}
+        showSellerInfo={!isEditProfilePage} // Don't show seller info on edit page
       />  
     </div>  
   );
