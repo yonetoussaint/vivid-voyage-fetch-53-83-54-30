@@ -59,6 +59,11 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }  
   };  
 
+
+const handleBackClick = () => {
+  navigate('/seller-dashboard/products');
+};
+
   const handleFavoriteClick = () => setIsFavorite(!isFavorite);  
 
   // Check if current route is edit profile
