@@ -10,7 +10,7 @@ import FloatingVideo from '../hero/FloatingVideo';
 import { BannerType } from './hero/types';
 import ProductFilterBar from './ProductFilterBar';
 import { supabase } from '@/integrations/supabase/client';
-import { Edit2 } from 'lucide-react';
+import { Edit2, Image, Plus } from 'lucide-react';
 
 interface HeroBannerProps {
   asCarousel?: boolean;
@@ -67,6 +67,21 @@ const fetchSellerBanners = async (sellerId: string) => {
   }
 };
 
+// Default placeholder banner
+const defaultPlaceholderBanner: BannerType = {
+  id: 'placeholder',
+  image: '',
+  alt: 'Add your first banner',
+  title: 'Add Your Banner',
+  subtitle: 'Click the edit button to customize your banner',
+  type: 'color' as const,
+  duration: 5000,
+  rowType: 'product' as const,
+  product: undefined,
+  seller: undefined,
+  catalog: undefined
+};
+
 export default function HeroBanner({ 
   asCarousel = false, 
   showNewsTicker = true,
@@ -85,7 +100,7 @@ export default function HeroBanner({
   showEditButton = false,
   onEditBanner = () => {},
   editButtonPosition = 'top-right',
-  dataSource = 'default' // Default to original data source
+  dataSource = 'default'
 }: HeroBannerProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [previousIndex, setPreviousIndex] = useState<number | null>(null);
@@ -181,6 +196,17 @@ export default function HeroBanner({
     // If using seller banners data source
     if (dataSource === 'seller_banners' && bannersData) {
       console.log('Using seller banners:', bannersData);
+      
+      // If no seller banners, return placeholder
+      if (bannersData.length === 0) {
+        console.log('No seller banners found, using placeholder');
+        return [{
+          ...defaultPlaceholderBanner,
+          // For seller banners, use a gradient placeholder
+          image: 'bg-gradient-to-r from-blue-400 to-purple-500'
+        }];
+      }
+      
       return bannersData.map((banner: any, index: number) => {
         const isImage = banner.type === 'image';
         
@@ -202,6 +228,16 @@ export default function HeroBanner({
     // Default banners (original behavior)
     if (bannersData && dataSource === 'default') {
       console.log('Using default banners');
+      
+      // If no default banners, return placeholder
+      if (bannersData.length === 0) {
+        console.log('No default banners found, using placeholder');
+        return [{
+          ...defaultPlaceholderBanner,
+          image: 'bg-gradient-to-r from-gray-400 to-gray-600'
+        }];
+      }
+      
       return bannersData.map((banner: any, index: number) => {
         const decodedUrl = decodeURIComponent(banner.image);
         const isVideo = /\.(mp4|webm|ogg|mov|avi)$/i.test(decodedUrl) || 
@@ -248,11 +284,16 @@ export default function HeroBanner({
       }) || [];
     }
 
-    // Fallback to empty array
-    return [];
+    // Fallback to placeholder
+    console.log('No banners available, using fallback placeholder');
+    return [{
+      ...defaultPlaceholderBanner,
+      image: 'bg-gradient-to-r from-gray-300 to-gray-400'
+    }];
   }, [bannersData, customBanners, dataSource]);
 
   const slidesToShow = transformedBanners;
+  const isPlaceholder = slidesToShow.length === 1 && slidesToShow[0].id === 'placeholder';
 
   // Handle video duration updates
   const handleVideoDurationChange = useCallback((index: number, duration: number) => {
@@ -271,9 +312,9 @@ export default function HeroBanner({
     return slide.duration || 5000;
   }, [activeIndex, slidesToShow, videoDurations]);
 
-  // Banner rotation (disabled for carousel mode)
+  // Banner rotation (disabled for carousel mode and placeholder)
   useEffect(() => {
-    if (asCarousel || slidesToShow.length <= 1) return;
+    if (asCarousel || slidesToShow.length <= 1 || isPlaceholder) return;
 
     let timeoutRef: ReturnType<typeof setTimeout> | null = null;
     let progressIntervalRef: ReturnType<typeof setInterval> | null = null;
@@ -303,61 +344,7 @@ export default function HeroBanner({
       if (timeoutRef) clearTimeout(timeoutRef);
       if (progressIntervalRef) clearInterval(progressIntervalRef);
     };
-  }, [activeIndex, slidesToShow.length, videoDurations, asCarousel, getCurrentSlideDuration]);
-
-  // Scroll detection for floating video (disabled for carousel mode)
-  useEffect(() => {
-    if (asCarousel) return;
-
-    const handleScroll = () => {
-      if (!heroBannerRef.current) return;
-
-      const currentSlide = slidesToShow[activeIndex];
-      if (!currentSlide || currentSlide.type !== "video") {
-        setShowFloatingVideo(false);
-        return;
-      }
-
-      const rect = heroBannerRef.current.getBoundingClientRect();
-      const isVisible = rect.bottom > 0 && rect.top < window.innerHeight;
-
-      if (!isVisible && !showFloatingVideo) {
-        const videoElement = heroBannerRef.current.querySelector('video');
-        if (videoElement && !videoElement.paused) {
-          const exactTime = videoElement.currentTime;
-          videoElement.pause();
-          videoElement.muted = true;
-          setVideoCurrentTime(exactTime);
-          setShowFloatingVideo(true);
-        }
-      } else if (isVisible && showFloatingVideo) {
-        const videoElement = heroBannerRef.current.querySelector('video');
-        if (videoElement && videoElement.paused) {
-          videoElement.play().catch(console.error);
-        }
-        setShowFloatingVideo(false);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [activeIndex, slidesToShow, showFloatingVideo, asCarousel]);
-
-  const handleCloseFloatingVideo = useCallback(() => {
-    setShowFloatingVideo(false);
-  }, []);
-
-  const handleExpandFloatingVideo = useCallback(() => {
-    setShowFloatingVideo(false);
-    heroBannerRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, []);
-
-  const currentSlide = slidesToShow[activeIndex];
-
-  // Simple carousel scroll handler
-  const handleCarouselScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    // Allow natural scrolling
-  }, []);
+  }, [activeIndex, slidesToShow.length, videoDurations, asCarousel, getCurrentSlideDuration, isPlaceholder]);
 
   // Edit Button Component
   const EditButton = useMemo(() => {
@@ -382,8 +369,44 @@ export default function HeroBanner({
     );
   }, [showEditButton, onEditBanner, editButtonPosition]);
 
-  // Rest of the component remains the same...
-  // [Keep all the existing carousel and rendering logic from the previous HeroBanner]
+  // Placeholder Banner Component
+  const PlaceholderBanner = useMemo(() => {
+    if (!isPlaceholder) return null;
+
+    const currentSlide = slidesToShow[activeIndex];
+    
+    return (
+      <div 
+        className={`w-full h-full flex items-center justify-center ${currentSlide.image} relative`}
+        style={customHeight ? { height: customHeight } : { aspectRatio: '2 / 1' }}
+      >
+        <div className="text-center text-white p-6">
+          <div className="bg-white/20 backdrop-blur-sm rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            {showEditButton ? (
+              <Plus className="w-8 h-8" />
+            ) : (
+              <Image className="w-8 h-8" />
+            )}
+          </div>
+          <h3 className="text-xl font-semibold mb-2 drop-shadow-md">
+            {currentSlide.title}
+          </h3>
+          <p className="text-white/90 drop-shadow-sm max-w-md mx-auto">
+            {currentSlide.subtitle}
+          </p>
+          
+          {showEditButton && (
+            <button
+              onClick={onEditBanner}
+              className="mt-4 bg-white text-blue-600 px-6 py-2 rounded-full font-medium hover:bg-gray-100 transition-colors shadow-lg"
+            >
+              Add Your First Banner
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }, [isPlaceholder, slidesToShow, activeIndex, customHeight, showEditButton, onEditBanner]);
 
   return (
     <>
@@ -394,7 +417,7 @@ export default function HeroBanner({
         style={{ marginTop: asCarousel ? 0 : offset }}
       >
         {asCarousel ? (
-          // Carousel rendering logic (keep existing)
+          // Carousel rendering logic would go here
           <div>Carousel content...</div>
         ) : (
           <>
@@ -403,24 +426,34 @@ export default function HeroBanner({
               className="relative w-full" 
               style={customHeight ? { height: customHeight } : { aspectRatio: '2 / 1' }}
             >
-              <BannerSlides 
-                slides={slidesToShow}
-                activeIndex={activeIndex}
-                previousIndex={previousIndex}
-                onVideoDurationChange={handleVideoDurationChange}
-              />
-              
-              {/* Edit Button for non-carousel mode */}
-              {EditButton}
-              
-              <BannerControls
-                slidesCount={slidesToShow.length}
-                activeIndex={activeIndex}
-                previousIndex={previousIndex}
-                setActiveIndex={setActiveIndex}
-                setPreviousIndex={setPreviousIndex}
-                progress={progress}
-              />
+              {isPlaceholder ? (
+                <>
+                  {PlaceholderBanner}
+                  {/* Edit Button for placeholder */}
+                  {EditButton}
+                </>
+              ) : (
+                <>
+                  <BannerSlides 
+                    slides={slidesToShow}
+                    activeIndex={activeIndex}
+                    previousIndex={previousIndex}
+                    onVideoDurationChange={handleVideoDurationChange}
+                  />
+                  
+                  {/* Edit Button for regular banners */}
+                  {EditButton}
+                  
+                  <BannerControls
+                    slidesCount={slidesToShow.length}
+                    activeIndex={activeIndex}
+                    previousIndex={previousIndex}
+                    setActiveIndex={setActiveIndex}
+                    setPreviousIndex={setPreviousIndex}
+                    progress={progress}
+                  />
+                </>
+              )}
             </div>
 
             {/* NewsTicker/FilterBar */}
@@ -443,8 +476,8 @@ export default function HeroBanner({
         )}
       </div>
 
-      {/* Floating Video */}
-      {!asCarousel && showFloatingVideo && currentSlide && currentSlide.type === "video" && (
+      {/* Floating Video - Disabled for placeholder */}
+      {!asCarousel && !isPlaceholder && showFloatingVideo && currentSlide && currentSlide.type === "video" && (
         <FloatingVideo
           src={currentSlide.image}
           alt={currentSlide.alt}
