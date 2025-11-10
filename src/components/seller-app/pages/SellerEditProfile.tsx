@@ -149,7 +149,7 @@ const SellerEditProfile = () => {
       queryClient.invalidateQueries({ queryKey: ['seller', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['seller-banners', sellerData?.id] });
       
-      // Simply navigate back without showing alert
+      // Navigate back to dashboard
       navigate('/seller-dashboard/products');
     },
     onError: (error: any) => {
@@ -206,6 +206,11 @@ const SellerEditProfile = () => {
       window.removeEventListener('saveEditProfile', handleSave);
     };
   }, []);
+
+  // Handle back button click - navigate to dashboard
+  const handleBackClick = () => {
+    navigate('/seller-dashboard/products');
+  };
 
   // Function to check if text contains emojis
   const containsEmoji = (text: string): boolean => {
