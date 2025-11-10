@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Camera, Upload, Edit2 } from 'lucide-react';
+import { Camera, Upload } from 'lucide-react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import HeroBanner from '@/components/home/HeroBanner';
+import BannerManagementPanel from '@/components/shared/BannerManagementPanel';
 
 const SellerEditProfile = () => {
   const navigate = useNavigate();
@@ -21,7 +22,8 @@ const SellerEditProfile = () => {
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [bannerImage, setBannerImage] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isEditingBanner, setIsEditingBanner] = useState(false);
+  const [isBannerPanelOpen, setIsBannerPanelOpen] = useState(false);
+  const [currentBanner, setCurrentBanner] = useState<string>('');
 
   // Fetch current seller data
   const { data: sellerData, isLoading: sellerLoading } = useQuery({
@@ -33,7 +35,7 @@ const SellerEditProfile = () => {
         .select('*')
         .eq('user_id', user.id)
         .single();
-      
+
       if (error) throw error;
       return data;
     },
@@ -49,6 +51,10 @@ const SellerEditProfile = () => {
         location: sellerData.location || '',
         website: sellerData.website || '',
       });
+      // Set current banner if available
+      if (sellerData.banner_url) {
+        setCurrentBanner(sellerData.banner_url);
+      }
     }
   }, [sellerData]);
 
@@ -68,14 +74,14 @@ const SellerEditProfile = () => {
   const updateSellerMutation = useMutation({
     mutationFn: async (updatedData: any) => {
       if (!user?.id) throw new Error('No user logged in');
-      
+
       const { data, error } = await supabase
         .from('sellers')
         .update(updatedData)
         .eq('user_id', user.id)
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     },
@@ -102,36 +108,37 @@ const SellerEditProfile = () => {
     if (file) {
       setProfileImage(file);
       console.log('Profile image selected:', file.name);
+      // TODO: Implement actual upload
     }
   };
 
-  const handleBannerImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setBannerImage(file);
-      console.log('Banner image selected:', file.name);
-      setIsEditingBanner(false);
-    }
+  const handleBannerSelect = (banner: any) => {
+    console.log('Selected banner:', banner);
+    setCurrentBanner(banner.value);
+    // TODO: Save banner selection to database
+    // For now, we'll just update the local state
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) {
       e.preventDefault();
     }
-    
+
     if (isLoading) return;
-    
+
     setIsLoading(true);
-    
+
     try {
       let image_url = sellerData?.image_url;
       if (profileImage) {
         console.log('Would upload profile image:', profileImage.name);
+        // TODO: Implement actual upload
       }
 
       let banner_url = sellerData?.banner_url;
-      if (bannerImage) {
-        console.log('Would upload banner image:', bannerImage.name);
+      if (currentBanner && currentBanner !== sellerData?.banner_url) {
+        banner_url = currentBanner;
+        console.log('Updating banner to:', currentBanner);
       }
 
       await updateSellerMutation.mutateAsync({
@@ -156,23 +163,20 @@ const SellerEditProfile = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Banner Section with HeroBanner Component */}
-      
-<div className="relative">
-  <HeroBanner 
-    asCarousel={false} 
-    showNewsTicker={false} 
-    customHeight="180px" 
-    sellerId={sellerData?.id}
-    // NEW: Enable edit button functionality
-    showEditButton={true}
-    onEditBanner={() => setIsEditingBanner(true)}
-    editButtonPosition="top-right"
-  />
-</div>
+      <div className="relative">
+        <HeroBanner 
+          asCarousel={false} 
+          showNewsTicker={false} 
+          customHeight="180px" 
+          sellerId={sellerData?.id}
+          // Enable edit button functionality
+          showEditButton={true}
+          onEditBanner={() => setIsBannerPanelOpen(true)}
+          editButtonPosition="top-right"
+        />
+      </div>
 
-
-
-      {/* Profile Image Section - Positioned to overlap the banner */}
+      {/* Profile Image Section */}
       <div className="relative z-30 -mt-12 flex justify-center">
         <div className="relative">
           <div className="w-24 h-24 bg-gray-300 rounded-full border-4 border-white overflow-hidden shadow-lg">
@@ -206,7 +210,7 @@ const SellerEditProfile = () => {
 
       {/* Edit Form */}
       <form onSubmit={handleSubmit} className="p-4 space-y-6 mt-4">
-        {/* Form Fields */}
+        {/* Form Fields - same as before */}
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -336,47 +340,13 @@ const SellerEditProfile = () => {
         </button>
       </form>
 
-      {/* Banner Upload Modal */}
-      {isEditingBanner && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold mb-4">Change Banner Image</h3>
-            <div className="space-y-4">
-              <label className="block">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors">
-                  <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-sm font-medium">Upload Banner Image</p>
-                  <p className="text-xs text-gray-500 mt-1">Recommended: 1200×400px</p>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleBannerImageChange}
-                    className="hidden"
-                  />
-                </div>
-              </label>
-              
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setIsEditingBanner(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-                    fileInput?.click();
-                  }}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                >
-                  Choose File
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Banner Management Panel */}
+      <BannerManagementPanel
+        isOpen={isBannerPanelOpen}
+        onClose={() => setIsBannerPanelOpen(false)}
+        onBannerSelect={handleBannerSelect}
+        currentBanner={currentBanner}
+      />
 
       {/* Loading overlay */}
       {isLoading && (
