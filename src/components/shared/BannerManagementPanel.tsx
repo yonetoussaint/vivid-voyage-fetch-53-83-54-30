@@ -125,39 +125,46 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
   };
 
   const handleAddBanner = async (bannerData: Omit<Banner, 'id' | 'is_primary' | 'created_at'>) => {
-    if (!sellerId) {
-      toast.error('Seller ID not found');
+  if (!sellerId) {
+    toast.error('Seller ID not found');
+    return;
+  }
+
+  try {
+    // Verify the sellerId matches the authenticated user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.id !== sellerId) {
+      toast.error('Permission denied: seller ID does not match authenticated user');
       return;
     }
 
-    try {
-      console.log('Adding banner:', bannerData);
-      
-      const { error } = await supabase
-        .from('seller_banners')
-        .insert({
-          seller_id: sellerId,
-          name: bannerData.name,
-          type: bannerData.type,
-          value: bannerData.value,
-          thumbnail: bannerData.thumbnail,
-          is_primary: banners.length === 0 // Set as primary if first banner
-        });
+    console.log('Adding banner:', bannerData);
+    
+    const { error } = await supabase
+      .from('seller_banners')
+      .insert({
+        seller_id: sellerId,
+        name: bannerData.name,
+        type: bannerData.type,
+        value: bannerData.value,
+        thumbnail: bannerData.thumbnail,
+        is_primary: banners.length === 0 // Set as primary if first banner
+      });
 
-      if (error) {
-        console.error('Supabase insert error:', error);
-        throw error;
-      }
-
-      await fetchBanners();
-      onBannerUpdate?.();
-      setSelectedTab('manage');
-      toast.success('Banner added successfully');
-    } catch (error) {
-      console.error('Error adding banner:', error);
-      toast.error('Failed to add banner');
+    if (error) {
+      console.error('Supabase insert error:', error);
+      throw error;
     }
-  };
+
+    await fetchBanners();
+    onBannerUpdate?.();
+    setSelectedTab('manage');
+    toast.success('Banner added successfully');
+  } catch (error) {
+    console.error('Error adding banner:', error);
+    toast.error('Failed to add banner');
+  }
+};
 
   const handleUpdateBanner = async (bannerId: string, updates: Partial<Banner>) => {
     if (!sellerId) return;
