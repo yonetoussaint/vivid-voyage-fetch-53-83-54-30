@@ -156,7 +156,7 @@ const SellerEditProfile = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Banner Section with HeroBanner Component */}
-      // In the HeroBanner section of SellerEditProfile.tsx, update it to:
+      
 <div className="relative">
   <HeroBanner 
     asCarousel={false} 
