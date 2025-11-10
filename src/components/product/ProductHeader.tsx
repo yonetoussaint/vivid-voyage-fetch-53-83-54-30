@@ -1,4 +1,24 @@
-// ProductHeader.tsx - Add these new props to the interface
+import React, { useState } from "react"; // Add useState import here
+import { 
+  Heart, 
+  Search
+} from "lucide-react";
+import { useScrollProgress } from "./header/useScrollProgress";
+import BackButton from "./header/BackButton";
+import HeaderActionButton from "./header/HeaderActionButton";
+import { useNavigate } from 'react-router-dom';
+import { useNavigationLoading } from '@/hooks/useNavigationLoading';
+import SearchPageSkeleton from '@/components/search/SearchPageSkeleton';
+import SellerInfoOverlay from "@/components/product/SellerInfoOverlay";
+
+interface ActionButton {
+  Icon: any;
+  onClick?: () => void;
+  active?: boolean;
+  activeColor?: string;
+  count?: number;
+}
+
 interface ProductHeaderProps {
   activeSection?: string;
   onTabChange?: (section: string) => void;
