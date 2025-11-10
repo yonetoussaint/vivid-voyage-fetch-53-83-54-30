@@ -18,6 +18,7 @@ interface StickyTabsLayoutProps {
   inPanel?: boolean;
   scrollContainerRef?: React.RefObject<HTMLDivElement>;
   stickyTopOffset?: number;
+  hideTabs?: boolean; // NEW PROP: Conditionally hide tabs
 }
 
 const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
@@ -36,7 +37,8 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
   alwaysStickyForNonProducts = true,
   inPanel = false,
   scrollContainerRef,
-  stickyTopOffset
+  stickyTopOffset,
+  hideTabs = false // NEW: Default to false
 }) => {
   // Refs
   const tabsContainerRef = useRef<HTMLDivElement>(null);
@@ -58,11 +60,18 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
     isTabsSticky,
     inPanel,
     hasHeader: !!header,
-    hasTopContent: !!topContent
+    hasTopContent: !!topContent,
+    hideTabs // NEW: Log hideTabs state
   });
 
   // ===== MEASURE HEIGHTS =====
   useLayoutEffect(() => {
+    // If tabs are hidden, we don't need to measure tabs height
+    if (hideTabs) {
+      setTabsHeight(0);
+      return;
+    }
+
     const updateHeights = () => {
       if (headerRef.current) setHeaderHeight(headerRef.current.offsetHeight || 0);
       if (isProductsTab && topContentRef?.current)
@@ -74,10 +83,10 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
     const resizeObserver = new ResizeObserver(updateHeights);
     if (headerRef.current) resizeObserver.observe(headerRef.current);
     if (isProductsTab && topContentRef?.current) resizeObserver.observe(topContentRef.current);
-    if (tabsRef.current) resizeObserver.observe(tabsRef.current);
+    if (tabsRef.current && !hideTabs) resizeObserver.observe(tabsRef.current);
 
     return () => resizeObserver.disconnect();
-  }, [isProductsTab, headerRef, topContentRef]);
+  }, [isProductsTab, headerRef, topContentRef, hideTabs]); // Added hideTabs dependency
 
   // ===== RESET STICKY STATE WHEN SWITCHING TO PRODUCTS TAB =====
   useEffect(() => {
@@ -88,6 +97,12 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
 
   // ===== STICKY TABS BEHAVIOR =====
   useEffect(() => {
+    // If tabs are hidden, don't set up sticky behavior
+    if (hideTabs) {
+      setIsTabsSticky(false);
+      return;
+    }
+
     // If we're not on products tab and alwaysStickyForNonProducts is true, 
     // make tabs sticky immediately
     if (!isProductsTab && alwaysStickyForNonProducts) {
@@ -116,7 +131,7 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
           lastScrollY = currentY;
 
           const buffer = 4;
-          
+
           // If we're not on products tab, always make tabs sticky regardless of scroll
           if (!isProductsTab && alwaysStickyForNonProducts) {
             if (!lastSticky) {
@@ -149,15 +164,15 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [headerHeight, isProductsTab, alwaysStickyForNonProducts, isTabsSticky, inPanel]);
+  }, [headerHeight, isProductsTab, alwaysStickyForNonProducts, isTabsSticky, inPanel, hideTabs]); // Added hideTabs dependency
 
   // ===== HANDLE TAB SWITCH =====
   useEffect(() => {
     // When switching to non-products tabs, make tabs sticky immediately
-    if (!isProductsTab && alwaysStickyForNonProducts) {
+    if (!isProductsTab && alwaysStickyForNonProducts && !hideTabs) {
       setIsTabsSticky(true);
     }
-  }, [isProductsTab, alwaysStickyForNonProducts]);
+  }, [isProductsTab, alwaysStickyForNonProducts, hideTabs]);
 
   // Reset scroll when switching to first tab
   const handleInternalTabChange = (tabId: string) => {
@@ -169,7 +184,7 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
         }
       }, 100);
     }
-    
+
     onTabChange(tabId);
   };
 
@@ -190,24 +205,26 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
           </div>
         )}
 
-        {/* NORMAL TABS - ALWAYS RENDER TABS */}
-        <div ref={tabsContainerRef}>
-          <div className="relative">
-            <div
-              ref={tabsRef}
-              style={{ position: 'relative', zIndex: 30 }}
-            >
-              <TabsNavigation
-                ref={normalTabsNavigationRef}
-                tabs={tabs}
-                activeTab={activeTab}
-                onTabChange={handleInternalTabChange}
-                showTopBorder={showTopBorder}
-                variant={variant}
-              />
+        {/* NORMAL TABS - Conditionally render tabs */}
+        {!hideTabs && (
+          <div ref={tabsContainerRef}>
+            <div className="relative">
+              <div
+                ref={tabsRef}
+                style={{ position: 'relative', zIndex: 30 }}
+              >
+                <TabsNavigation
+                  ref={normalTabsNavigationRef}
+                  tabs={tabs}
+                  activeTab={activeTab}
+                  onTabChange={handleInternalTabChange}
+                  showTopBorder={showTopBorder}
+                  variant={variant}
+                />
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* CONTENT */}
         <div>
@@ -237,60 +254,62 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
         </div>
       )}
 
-      {/* STICKY TABS - ALWAYS RENDER TABS REGARDLESS OF GALLERY CONTENT */}
-      <div
-        ref={tabsContainerRef}
-        style={{ height: isTabsSticky ? `${tabsHeight}px` : 'auto' }}
-        className="bg-white"
-      >
-        <div className="relative">
-          {/* Normal Tabs - Always visible in document flow */}
-          <div
-            ref={tabsRef}
-            style={{ 
-              position: 'relative', 
-              zIndex: 40,
-              backgroundColor: 'white'
-            }}
-          >
-            <TabsNavigation
-              ref={normalTabsNavigationRef}
-              tabs={tabs}
-              activeTab={activeTab}
-              onTabChange={handleInternalTabChange}
-              showTopBorder={showTopBorder}
-              variant={variant}
-            />
-          </div>
+      {/* STICKY TABS - Conditionally render tabs */}
+      {!hideTabs && (
+        <div
+          ref={tabsContainerRef}
+          style={{ height: isTabsSticky ? `${tabsHeight}px` : 'auto' }}
+          className="bg-white"
+        >
+          <div className="relative">
+            {/* Normal Tabs - Always visible in document flow */}
+            <div
+              ref={tabsRef}
+              style={{ 
+                position: 'relative', 
+                zIndex: 40,
+                backgroundColor: 'white'
+              }}
+            >
+              <TabsNavigation
+                ref={normalTabsNavigationRef}
+                tabs={tabs}
+                activeTab={activeTab}
+                onTabChange={handleInternalTabChange}
+                showTopBorder={showTopBorder}
+                variant={variant}
+              />
+            </div>
 
-          {/* Sticky Tabs */}
-          <div
-            className={`fixed left-0 right-0 z-50 bg-white shadow-sm transition-all duration-300 ease-out border-b ${
-              isTabsSticky
-                ? 'translate-y-0 opacity-100'
-                : '-translate-y-full opacity-0'
-            }`}
-            style={{
-              top: `${headerHeight}px`,
-              willChange: 'transform, opacity',
-            }}
-          >
-            <TabsNavigation
-              ref={stickyTabsNavigationRef}
-              tabs={tabs}
-              activeTab={activeTab}
-              onTabChange={handleInternalTabChange}
-              showTopBorder={true}
-              variant={variant}
-              className="bg-white"
-            />
+            {/* Sticky Tabs */}
+            <div
+              className={`fixed left-0 right-0 z-50 bg-white shadow-sm transition-all duration-300 ease-out border-b ${
+                isTabsSticky
+                  ? 'translate-y-0 opacity-100'
+                  : '-translate-y-full opacity-0'
+              }`}
+              style={{
+                top: `${headerHeight}px`,
+                willChange: 'transform, opacity',
+              }}
+            >
+              <TabsNavigation
+                ref={stickyTabsNavigationRef}
+                tabs={tabs}
+                activeTab={activeTab}
+                onTabChange={handleInternalTabChange}
+                showTopBorder={true}
+                variant={variant}
+                className="bg-white"
+              />
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* CONTENT */}
       <div style={{ 
-        paddingTop: !isProductsTab && alwaysStickyForNonProducts ? `${headerHeight}px` : '0px' 
+        paddingTop: !isProductsTab && alwaysStickyForNonProducts && !hideTabs ? `${headerHeight}px` : '0px' 
       }}>
         {children}
       </div>
