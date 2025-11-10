@@ -66,17 +66,11 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
 
   // ===== MEASURE HEIGHTS =====
   useLayoutEffect(() => {
-    // If tabs are hidden, we don't need to measure tabs height
-    if (hideTabs) {
-      setTabsHeight(0);
-      return;
-    }
-
     const updateHeights = () => {
       if (headerRef.current) setHeaderHeight(headerRef.current.offsetHeight || 0);
       if (isProductsTab && topContentRef?.current)
         setTopContentHeight(topContentRef.current.offsetHeight || 0);
-      if (tabsRef.current) setTabsHeight(tabsRef.current.offsetHeight || 0);
+      if (tabsRef.current && !hideTabs) setTabsHeight(tabsRef.current.offsetHeight || 0);
     };
 
     updateHeights();
@@ -188,6 +182,21 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
     onTabChange(tabId);
   };
 
+  // Calculate content padding top based on various conditions
+  const getContentPaddingTop = () => {
+    // When tabs are hidden, we need to account for header height
+    if (hideTabs) {
+      return headerHeight;
+    }
+    
+    // Original logic for when tabs are visible
+    if (!isProductsTab && alwaysStickyForNonProducts) {
+      return headerHeight;
+    }
+    
+    return 0;
+  };
+
   // For panel mode, simplified layout
   if (inPanel) {
     return (
@@ -227,7 +236,9 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
         )}
 
         {/* CONTENT */}
-        <div>
+        <div style={{ 
+          paddingTop: hideTabs ? `${headerHeight}px` : '0px' 
+        }}>
           {children}
         </div>
       </div>
@@ -309,7 +320,7 @@ const StickyTabsLayout: React.FC<StickyTabsLayoutProps> = ({
 
       {/* CONTENT */}
       <div style={{ 
-        paddingTop: !isProductsTab && alwaysStickyForNonProducts && !hideTabs ? `${headerHeight}px` : '0px' 
+        paddingTop: getContentPaddingTop()
       }}>
         {children}
       </div>
