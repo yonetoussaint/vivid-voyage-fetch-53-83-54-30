@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Camera, Upload } from 'lucide-react';
 import { useAuth } from '@/contexts/auth/AuthContext';
@@ -9,6 +9,7 @@ const SellerEditProfile = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const formRef = useRef<HTMLFormElement>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -20,6 +21,7 @@ const SellerEditProfile = () => {
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [bannerImage, setBannerImage] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [headerHeight, setHeaderHeight] = useState(64); // Default height
 
   // Fetch current seller data
   const { data: sellerData, isLoading: sellerLoading } = useQuery({
@@ -49,6 +51,31 @@ const SellerEditProfile = () => {
       });
     }
   }, [sellerData]);
+
+  // Calculate header height dynamically
+  useEffect(() => {
+    const updateHeaderHeight = () => {
+      const header = document.querySelector('[class*="fixed top-0"]');
+      if (header) {
+        const height = header.getBoundingClientRect().height;
+        setHeaderHeight(height);
+      }
+    };
+
+    // Initial calculation
+    updateHeaderHeight();
+
+    // Update on resize
+    window.addEventListener('resize', updateHeaderHeight);
+    
+    // Update after a small delay to ensure DOM is fully rendered
+    const timeoutId = setTimeout(updateHeaderHeight, 100);
+
+    return () => {
+      window.removeEventListener('resize', updateHeaderHeight);
+      clearTimeout(timeoutId);
+    };
+  }, []);
 
   // Listen for save event from header
   useEffect(() => {
@@ -81,6 +108,10 @@ const SellerEditProfile = () => {
       queryClient.invalidateQueries({ queryKey: ['seller', user?.id] });
       navigate(-1); // Go back to previous page
     },
+    onError: (error) => {
+      console.error('Error updating profile:', error);
+      setIsLoading(false);
+    },
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -96,6 +127,7 @@ const SellerEditProfile = () => {
     if (file) {
       setProfileImage(file);
       // Here you would upload to Supabase Storage
+      console.log('Profile image selected:', file.name);
     }
   };
 
@@ -104,6 +136,7 @@ const SellerEditProfile = () => {
     if (file) {
       setBannerImage(file);
       // Here you would upload to Supabase Storage
+      console.log('Banner image selected:', file.name);
     }
   };
 
@@ -111,6 +144,8 @@ const SellerEditProfile = () => {
     if (e) {
       e.preventDefault();
     }
+    
+    if (isLoading) return;
     
     setIsLoading(true);
     
@@ -121,6 +156,7 @@ const SellerEditProfile = () => {
         // Upload profile image logic here
         // const { data } = await supabase.storage.from('seller-logos').upload(...)
         // image_url = data?.path;
+        console.log('Would upload profile image:', profileImage.name);
       }
 
       let banner_url = sellerData?.banner_url;
@@ -128,6 +164,7 @@ const SellerEditProfile = () => {
         // Upload banner image logic here
         // const { data } = await supabase.storage.from('seller-banners').upload(...)
         // banner_url = data?.path;
+        console.log('Would upload banner image:', bannerImage.name);
       }
 
       // Update seller data
@@ -139,23 +176,27 @@ const SellerEditProfile = () => {
       });
     } catch (error) {
       console.error('Error updating profile:', error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
   if (sellerLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center pt-16">
+      <div 
+        className="min-h-screen bg-background flex items-center justify-center"
+        style={{ paddingTop: `${headerHeight}px` }}
+      >
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div 
+      className="min-h-screen bg-background"
+      style={{ paddingTop: `${headerHeight}px` }}
+    >
       {/* Edit Form - No header here, using the one from SellerLayout */}
-      <form onSubmit={handleSubmit} className="p-4 space-y-6">
+      <form ref={formRef} onSubmit={handleSubmit} className="p-4 space-y-6">
         {/* Banner Image */}
         <div className="relative">
           <div className="w-full h-40 bg-gray-200 rounded-lg overflow-hidden">
@@ -274,7 +315,22 @@ const SellerEditProfile = () => {
             />
           </div>
         </div>
+
+        {/* Hidden submit button for form submission */}
+        <button type="submit" className="hidden">
+          Save
+        </button>
       </form>
+
+      {/* Loading overlay */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-4 flex items-center gap-3">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <span className="text-sm font-medium">Saving changes...</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
