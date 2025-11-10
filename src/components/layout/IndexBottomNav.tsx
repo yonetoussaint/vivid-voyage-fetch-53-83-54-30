@@ -159,6 +159,9 @@ export default function BottomNav() {
   const { t } = useTranslation('home');
   const navRef = useRef<HTMLDivElement>(null); // Add ref
 
+  // Check if we're on the seller edit profile page
+  const isSellerEditProfile = location.pathname.includes('/seller-dashboard/edit-profile');
+
   const [activeTab, setActiveTab] = useState('home');
   const [previousTab, setPreviousTab] = useState(null);
   const [animating, setAnimating] = useState(false);
@@ -290,8 +293,8 @@ export default function BottomNav() {
 
   const visibleItems = navItems;
 
-  // Don't render if overlay screens are active
-  if (hasActiveOverlay) {
+  // Don't render if overlay screens are active OR if we're on seller edit profile page
+  if (hasActiveOverlay || isSellerEditProfile) {
     return null;
   }
 
