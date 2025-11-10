@@ -29,7 +29,7 @@ export default function BannerControls({
 
   // Position styles
   const positionStyles = {
-    top: "top-2", // Minimal padding at top
+    top: "top-1", // Minimal padding at top
     bottom: "bottom-4" // Original bottom positioning
   };
 
