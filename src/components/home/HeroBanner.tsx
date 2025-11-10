@@ -10,26 +10,23 @@ import FloatingVideo from '../hero/FloatingVideo';
 import SellerInfoOverlay from '../product/SellerInfoOverlay';
 import { BannerType } from './hero/types';
 import ProductFilterBar from './ProductFilterBar';
+import { Edit2 } from 'lucide-react'; // Import Edit icon
 
 interface HeroBannerProps {
   asCarousel?: boolean;
   showNewsTicker?: boolean;
-  // New prop to control bottom row in carousel mode
   showCarouselBottomRow?: boolean;
-  // Custom height prop - allows setting custom height (e.g., "400px", "50vh", "h-96")
   customHeight?: string;
-  // Custom banners prop - allows passing custom banner data including colors
   customBanners?: Array<{
     id: string;
-    image?: string; // Image URL or gradient class
-    color?: string; // Gradient or solid color
+    image?: string;
+    color?: string;
     alt: string;
     title?: string;
     subtitle?: string;
     type?: 'image' | 'video' | 'color';
     duration?: number;
   }>;
-  // Filter props
   filterCategories?: Array<{
     id: string;
     label: string;
@@ -41,25 +38,29 @@ interface HeroBannerProps {
   onClearAll?: () => void;
   onFilterButtonClick?: (filterId: string) => void;
   isFilterDisabled?: (filterId: string) => boolean;
+  // NEW PROPS: For edit functionality
+  showEditButton?: boolean;
+  onEditBanner?: () => void;
+  editButtonPosition?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
 }
 
 export default function HeroBanner({ 
   asCarousel = false, 
   showNewsTicker = true,
-  // New prop - default to true for backward compatibility
   showCarouselBottomRow = true,
-  // Custom height
   customHeight,
-  // Custom banners
   customBanners,
-  // Filter props with defaults
   filterCategories = [],
   selectedFilters = {},
   onFilterSelect = () => {},
   onFilterClear = () => {},
   onClearAll = () => {},
   onFilterButtonClick = () => {},
-  isFilterDisabled = () => false
+  isFilterDisabled = () => false,
+  // NEW PROPS with defaults
+  showEditButton = false,
+  onEditBanner = () => {},
+  editButtonPosition = 'top-right'
 }: HeroBannerProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [previousIndex, setPreviousIndex] = useState<number | null>(null);
@@ -82,7 +83,6 @@ export default function HeroBanner({
     function updateOffset() {
       const header = document.getElementById("ali-header");
       if (header) {
-        // Get the actual rendered height including borders and padding
         const computedStyle = window.getComputedStyle(header);
         const height = header.getBoundingClientRect().height;
         setOffset(Math.ceil(height));
@@ -91,10 +91,7 @@ export default function HeroBanner({
       }
     }
 
-    // Initial calculation
     updateOffset();
-
-    // Recalculate on resize and after a short delay to ensure DOM is ready
     const timeoutId = setTimeout(updateOffset, 100);
     window.addEventListener('resize', updateOffset);
 
@@ -119,7 +116,7 @@ export default function HeroBanner({
     queryFn: fetchHeroBanners,
     staleTime: 5000,
     refetchInterval: 10000,
-    enabled: !customBanners, // Only fetch if no custom banners provided
+    enabled: !customBanners,
   });
 
   // Show error if banner fetch fails
@@ -145,7 +142,6 @@ export default function HeroBanner({
 
   // Transform banners to match BannerType interface
   const transformedBanners: BannerType[] = useMemo(() => {
-    // If customBanners provided, use those instead
     if (customBanners) {
       return customBanners.map((banner, index) => {
         const rowTypes: ('product' | 'seller' | 'catalog')[] = ['product', 'seller', 'catalog'];
@@ -153,7 +149,7 @@ export default function HeroBanner({
 
         return {
           ...banner,
-          image: banner.image || banner.color || '', // Use image field or fallback to color
+          image: banner.image || banner.color || '',
           type: (banner.type || 'color') as 'image' | 'video' | 'color',
           duration: banner.duration || 5000,
           rowType,
@@ -164,13 +160,11 @@ export default function HeroBanner({
       });
     }
 
-    // Otherwise use fetched banners
     return banners?.map((banner, index) => {
       const decodedUrl = decodeURIComponent(banner.image);
       const isVideo = /\.(mp4|webm|ogg|mov|avi)$/i.test(decodedUrl) || 
                       /\.(mp4|webm|ogg|mov|avi)$/i.test(banner.image);
 
-      // Determine row type based on index or banner data
       const rowTypes: ('product' | 'seller' | 'catalog')[] = ['product', 'seller', 'catalog'];
       const rowType = rowTypes[index % 3] || 'product';
 
@@ -319,11 +313,33 @@ export default function HeroBanner({
     // Allow natural scrolling without any position restoration
   }, []);
 
+  // Edit Button Component
+  const EditButton = useMemo(() => {
+    if (!showEditButton) return null;
+
+    const positionClasses = {
+      'top-right': 'top-4 right-4',
+      'top-left': 'top-4 left-4',
+      'bottom-right': 'bottom-4 right-4',
+      'bottom-left': 'bottom-4 left-4'
+    };
+
+    return (
+      <button
+        onClick={onEditBanner}
+        className={`absolute ${positionClasses[editButtonPosition]} bg-white/90 backdrop-blur-sm px-3 py-2 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-white transition-all duration-200 shadow-lg z-20`}
+        title="Edit Banner"
+      >
+        <Edit2 className="w-4 h-4" />
+        <span>Edit</span>
+      </button>
+    );
+  }, [showEditButton, onEditBanner, editButtonPosition]);
+
   // Carousel component as JSX - memoized to prevent re-renders
   const CarouselBanners = useMemo(() => {
     const renderProductRow = (slide: BannerType) => (
       <div className="flex items-center justify-between gap-3">
-        {/* Product image and info */}
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <img
             src={slide.product?.image || "/placeholder-product.jpg"}
@@ -340,7 +356,6 @@ export default function HeroBanner({
             </p>
           </div>
         </div>
-        {/* Add to cart button */}
         <button
           className="bg-white border border-gray-300 text-gray-800 px-3 py-2 rounded-lg font-medium text-xs transition-colors duration-200 flex-shrink-0 whitespace-nowrap"
           onClick={() => console.log('Add to cart:', slide.product)}
@@ -352,7 +367,6 @@ export default function HeroBanner({
 
     const renderSellerRow = (slide: BannerType) => (
       <div className="flex items-center justify-between gap-3">
-        {/* Seller image and info */}
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className="relative">
             <img
@@ -385,7 +399,6 @@ export default function HeroBanner({
             </p>
           </div>
         </div>
-        {/* Action buttons */}
         <div className="flex gap-2 flex-shrink-0">
           <button
             className="bg-black text-white px-3 py-2 rounded-lg font-medium text-xs transition-colors duration-200 whitespace-nowrap"
@@ -399,10 +412,8 @@ export default function HeroBanner({
 
     const renderCatalogRow = (slide: BannerType) => (
       <div className="flex items-center justify-between gap-3">
-        {/* Catalog images and info */}
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className="relative w-12 h-12 flex-shrink-0">
-            {/* Stacked images effect */}
             <img
               src={slide.catalog?.images?.[0] || "/placeholder-catalog.jpg"}
               alt={slide.catalog?.name || "Catalog"}
@@ -417,7 +428,6 @@ export default function HeroBanner({
                 loading="lazy"
               />
             )}
-            {/* Overlay count for more images */}
             {(slide.catalog?.images?.length || 0) > 2 && (
               <div className="absolute -bottom-1 -right-1 bg-black bg-opacity-70 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                 +{(slide.catalog?.images?.length || 0) - 2}
@@ -433,7 +443,6 @@ export default function HeroBanner({
             </p>
           </div>
         </div>
-        {/* View catalog button */}
         <button
           className="bg-black text-white px-4 py-2 rounded-lg font-medium text-xs transition-colors duration-200 flex-shrink-0 whitespace-nowrap"
           onClick={() => console.log('View catalog:', slide.catalog)}
@@ -513,6 +522,18 @@ export default function HeroBanner({
                     />
                   )}
 
+                  {/* Edit Button for each carousel item */}
+                  {showEditButton && (
+                    <button
+                      onClick={onEditBanner}
+                      className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 hover:bg-white transition-all duration-200 shadow-lg z-20"
+                      title="Edit Banner"
+                    >
+                      <Edit2 className="w-3 h-3" />
+                      <span>Edit</span>
+                    </button>
+                  )}
+
                   {/* Content overlay */}
                   {(slide.title || slide.subtitle) && (
                     <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-none">
@@ -545,9 +566,8 @@ export default function HeroBanner({
         </div>
       </div>
     );
-  }, [slidesToShow, handleCarouselScroll, handleVideoDurationChange, showCarouselBottomRow]);
+  }, [slidesToShow, handleCarouselScroll, handleVideoDurationChange, showCarouselBottomRow, showEditButton, onEditBanner, customHeight]);
 
-  // In HeroBanner.tsx - restructure the return statement
   return (
     <>
       <div
@@ -571,6 +591,10 @@ export default function HeroBanner({
                 previousIndex={previousIndex}
                 onVideoDurationChange={handleVideoDurationChange}
               />
+              
+              {/* Edit Button for non-carousel mode */}
+              {EditButton}
+              
               <BannerControls
                 slidesCount={slidesToShow.length}
                 activeIndex={activeIndex}
@@ -617,5 +641,4 @@ export default function HeroBanner({
   );
 }
 
-// Add this export at the end of HeroBanner.tsx
 export { default as ProductFilterBar } from './ProductFilterBar';
