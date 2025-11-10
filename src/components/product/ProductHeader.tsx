@@ -1,25 +1,4 @@
-// ProductHeader.tsx - SIMPLIFIED (No tabs logic)
-import React, { useState } from "react";
-import { 
-  Heart, 
-  Search
-} from "lucide-react";
-import { useScrollProgress } from "./header/useScrollProgress";
-import BackButton from "./header/BackButton";
-import HeaderActionButton from "./header/HeaderActionButton";
-import { useNavigate } from 'react-router-dom';
-import { useNavigationLoading } from '@/hooks/useNavigationLoading';
-import SearchPageSkeleton from '@/components/search/SearchPageSkeleton';
-import SellerInfoOverlay from "@/components/product/SellerInfoOverlay";
-
-interface ActionButton {
-  Icon: any;
-  onClick?: () => void;
-  active?: boolean;
-  activeColor?: string;
-  count?: number;
-}
-
+// ProductHeader.tsx - Add these new props to the interface
 interface ProductHeaderProps {
   activeSection?: string;
   onTabChange?: (section: string) => void;
@@ -46,6 +25,10 @@ interface ProductHeaderProps {
     followers_count: number;
   };
   onSellerClick?: () => void;
+  // NEW PROPS:
+  title?: string; // For showing a title in the center
+  hideSearch?: boolean; // For hiding search bar
+  showSellerInfo?: boolean; // For controlling seller info display
 }
 
 const ProductHeader: React.FC<ProductHeaderProps> = ({
@@ -68,6 +51,10 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
   forceScrolledState = false,
   seller,
   onSellerClick,
+  // NEW PROPS:
+  title,
+  hideSearch = false,
+  showSellerInfo = true,
 }) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const { progress: scrollProgress } = useScrollProgress();
@@ -119,9 +106,9 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
               showCloseIcon={showCloseIcon}
               onClick={onCloseClick || (() => navigate(-1))}
             />
-            
-            {/* Show seller info when not scrolled */}
-            {displayProgress < 0.5 && seller && (
+
+            {/* Show seller info when not scrolled AND showSellerInfo is true */}
+            {displayProgress < 0.5 && seller && showSellerInfo && (
               <div className="transition-opacity duration-300">
                 <button
                   onClick={() => {
@@ -160,29 +147,39 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
             )}
           </div>
 
-          {/* Center - Search bar when scrolled */}
+          {/* Center - Title or Search bar */}
           <div className="flex-1 mx-4">
-            {displayProgress >= 0.5 && (
-              <div className="flex-1 relative max-w-md mx-auto">
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onFocus={() => {
-                    if (onSearchFocus) {
-                      onSearchFocus();
-                    }
-                  }}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      handleSearchSubmit();
-                    }
-                  }}
-                  className="w-full px-3 py-1 text-sm font-medium border-2 border-gray-800 rounded-full focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-300 bg-white shadow-sm"
-                />
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-600 font-bold" />
+            {title ? (
+              // Show title when provided
+              <div className="text-center">
+                <h1 className="text-lg font-semibold text-gray-900 truncate">
+                  {title}
+                </h1>
               </div>
+            ) : (
+              // Show search bar when scrolled (unless hideSearch is true)
+              !hideSearch && displayProgress >= 0.5 && (
+                <div className="flex-1 relative max-w-md mx-auto">
+                  <input
+                    type="text"
+                    placeholder="Search products..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => {
+                      if (onSearchFocus) {
+                        onSearchFocus();
+                      }
+                    }}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleSearchSubmit();
+                      }
+                    }}
+                    className="w-full px-3 py-1 text-sm font-medium border-2 border-gray-800 rounded-full focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-300 bg-white shadow-sm"
+                  />
+                  <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-600 font-bold" />
+                </div>
+              )
             )}
           </div>
 
