@@ -156,25 +156,21 @@ const SellerEditProfile = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Banner Section with HeroBanner Component */}
-      <div className="relative">
-        <HeroBanner 
-          asCarousel={false} 
-          showNewsTicker={false} 
-          customHeight="180px" 
-          sellerId={sellerData?.id}
-        />
-        
-        {/* Banner Edit Overlay */}
-        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300 cursor-pointer z-20">
-          <button
-            onClick={() => setIsEditingBanner(true)}
-            className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-white transition-colors"
-          >
-            <Edit2 className="w-4 h-4" />
-            Edit Banner
-          </button>
-        </div>
-      </div>
+      // In the HeroBanner section of SellerEditProfile.tsx, update it to:
+<div className="relative">
+  <HeroBanner 
+    asCarousel={false} 
+    showNewsTicker={false} 
+    customHeight="180px" 
+    sellerId={sellerData?.id}
+    // NEW: Enable edit button functionality
+    showEditButton={true}
+    onEditBanner={() => setIsEditingBanner(true)}
+    editButtonPosition="top-right"
+  />
+</div>
+
+   </div>
 
       {/* Profile Image Section - Positioned to overlap the banner */}
       <div className="relative z-30 -mt-12 flex justify-center">
