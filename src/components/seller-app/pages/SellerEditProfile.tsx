@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Camera, Upload } from 'lucide-react';
 import { useAuth } from '@/contexts/auth/AuthContext';
@@ -11,6 +11,21 @@ const SellerEditProfile = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  
+  // Use ref to always have latest formData in event listener
+  const formDataRef = useRef({
+    name: '',
+    bio: '',
+    business_type: '',
+    location: '',
+    website: '',
+    phone: '',
+    email: '',
+    instagram: '',
+    facebook: '',
+    twitter: '',
+    tiktok: '',
+  });
 
   const [formData, setFormData] = useState({
     name: '',
@@ -28,6 +43,11 @@ const SellerEditProfile = () => {
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isBannerPanelOpen, setIsBannerPanelOpen] = useState(false);
+
+  // Update ref whenever formData changes
+  useEffect(() => {
+    formDataRef.current = formData;
+  }, [formData]);
 
   // Fetch current seller data
   const { data: sellerData, isLoading: sellerLoading } = useQuery({
@@ -52,7 +72,7 @@ const SellerEditProfile = () => {
   useEffect(() => {
     if (sellerData) {
       console.log('Initializing form with seller data:', sellerData);
-      setFormData({
+      const newFormData = {
         name: sellerData.name || '',
         bio: sellerData.bio || '',
         business_type: sellerData.business_type || '',
@@ -64,22 +84,11 @@ const SellerEditProfile = () => {
         facebook: sellerData.facebook || '',
         twitter: sellerData.twitter || '',
         tiktok: sellerData.tiktok || '',
-      });
+      };
+      setFormData(newFormData);
+      formDataRef.current = newFormData;
     }
   }, [sellerData]);
-
-  // Listen for save event from header
-  useEffect(() => {
-    const handleSave = () => {
-      console.log('Save event received, current formData:', formData);
-      handleSubmit();
-    };
-
-    window.addEventListener('saveEditProfile', handleSave);
-    return () => {
-      window.removeEventListener('saveEditProfile', handleSave);
-    };
-  }, []);
 
   // Profile image upload function
   const uploadProfileImage = async (file: File): Promise<string | null> => {
@@ -113,14 +122,13 @@ const SellerEditProfile = () => {
     }
   };
 
-  // Update mutation - FIXED: Proper data structure for sellers table
+  // Update mutation for seller data
   const updateSellerMutation = useMutation({
     mutationFn: async (updatedData: any) => {
       if (!user?.id) throw new Error('No user logged in');
 
       console.log('Sending update to Supabase sellers table:', updatedData);
       
-      // Ensure we're updating the correct seller record by user_id
       const { data, error } = await supabase
         .from('sellers')
         .update(updatedData)
@@ -140,11 +148,6 @@ const SellerEditProfile = () => {
       console.log('Mutation successful, updated seller:', data);
       queryClient.invalidateQueries({ queryKey: ['seller', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['seller-banners', sellerData?.id] });
-      
-      // Show success message
-      alert('Profile updated successfully!');
-      
-      navigate('/seller-dashboard/products');
     },
     onError: (error: any) => {
       console.error('Mutation error:', error);
@@ -153,9 +156,58 @@ const SellerEditProfile = () => {
     },
   });
 
-  // Form validation
+  // Separate mutation for profile image only
+  const updateProfileImageMutation = useMutation({
+    mutationFn: async (imageUrl: string) => {
+      if (!user?.id) throw new Error('No user logged in');
+
+      console.log('Updating profile image only:', imageUrl);
+      
+      const { data, error } = await supabase
+        .from('sellers')
+        .update({ 
+          image_url: imageUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Supabase image update error:', error);
+        throw error;
+      }
+      
+      console.log('Profile image update successful:', data);
+      return data;
+    },
+    onSuccess: (data) => {
+      console.log('Profile image saved successfully');
+      queryClient.invalidateQueries({ queryKey: ['seller', user?.id] });
+    },
+    onError: (error: any) => {
+      console.error('Profile image update error:', error);
+      alert(`Error updating profile image: ${error.message}`);
+    },
+  });
+
+  // Listen for save event from header - FIXED: Use ref to get latest data
+  useEffect(() => {
+    const handleSave = () => {
+      console.log('Save event received, current formData:', formDataRef.current);
+      handleSubmit();
+    };
+
+    window.addEventListener('saveEditProfile', handleSave);
+    return () => {
+      window.removeEventListener('saveEditProfile', handleSave);
+    };
+  }, []);
+
+  // Form validation - FIXED: Use ref data
   const validateForm = () => {
-    if (!formData.name.trim()) {
+    const currentData = formDataRef.current;
+    if (!currentData.name.trim()) {
       alert('Business name is required');
       return false;
     }
@@ -170,13 +222,13 @@ const SellerEditProfile = () => {
     }));
   };
 
-  const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfileImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setProfileImage(file);
       console.log('Profile image selected:', file.name);
       
-      // Preview the image
+      // Preview the image immediately
       const reader = new FileReader();
       reader.onload = (e) => {
         const img = document.querySelector('.profile-image') as HTMLImageElement;
@@ -185,6 +237,19 @@ const SellerEditProfile = () => {
         }
       };
       reader.readAsDataURL(file);
+
+      // AUTO-SAVE: Upload and save profile image immediately
+      try {
+        console.log('Auto-saving profile image...');
+        const uploadedImageUrl = await uploadProfileImage(file);
+        if (uploadedImageUrl) {
+          console.log('Profile image uploaded, saving to database...');
+          await updateProfileImageMutation.mutateAsync(uploadedImageUrl);
+          console.log('Profile image saved to database successfully!');
+        }
+      } catch (error) {
+        console.error('Error auto-saving profile image:', error);
+      }
     }
   };
 
@@ -192,6 +257,7 @@ const SellerEditProfile = () => {
     queryClient.invalidateQueries({ queryKey: ['seller-banners', sellerData?.id] });
   };
 
+  // FIXED: Use ref data for submission
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) {
       e.preventDefault();
@@ -199,6 +265,7 @@ const SellerEditProfile = () => {
 
     if (isLoading) return;
     
+    // Use ref data for validation
     if (!validateForm()) {
       return;
     }
@@ -207,43 +274,33 @@ const SellerEditProfile = () => {
     console.log('Starting form submission...');
 
     try {
-      let image_url = sellerData?.image_url;
-      
-      // Upload profile image if selected
-      if (profileImage) {
-        console.log('Uploading profile image:', profileImage.name);
-        const uploadedImageUrl = await uploadProfileImage(profileImage);
-        if (uploadedImageUrl) {
-          image_url = uploadedImageUrl;
-          console.log('New image URL set:', image_url);
-        }
-      }
+      // Get current data from ref
+      const currentData = formDataRef.current;
 
       // Prepare update data - match the sellers table columns exactly
       const updateData: any = {
-        name: formData.name,
-        bio: formData.bio,
-        business_type: formData.business_type,
-        location: formData.location,
-        website: formData.website,
-        phone: formData.phone,
-        email: formData.email,
-        // Social media fields - these should match your sellers table columns
-        instagram: formData.instagram,
-        facebook: formData.facebook,
-        twitter: formData.twitter,
-        tiktok: formData.tiktok,
+        name: currentData.name,
+        bio: currentData.bio,
+        business_type: currentData.business_type,
+        location: currentData.location,
+        website: currentData.website,
+        phone: currentData.phone,
+        email: currentData.email,
+        instagram: currentData.instagram,
+        facebook: currentData.facebook,
+        twitter: currentData.twitter,
+        tiktok: currentData.tiktok,
         updated_at: new Date().toISOString(),
       };
-
-      // Only include image_url if we have one (new or existing)
-      if (image_url) {
-        updateData.image_url = image_url;
-      }
 
       console.log('Final update data for sellers table:', updateData);
       
       await updateSellerMutation.mutateAsync(updateData);
+      
+      // Show success message and navigate
+      alert('Profile updated successfully!');
+      navigate('/seller-dashboard/products');
+      
     } catch (error) {
       console.error('Error updating profile:', error);
       setIsLoading(false);
@@ -278,9 +335,9 @@ const SellerEditProfile = () => {
       <div className="relative z-30 -mt-12 flex justify-center">
         <div className="relative">
           <div className="w-24 h-24 bg-gray-300 rounded-full border-4 border-white overflow-hidden shadow-lg">
-            {sellerData?.image_url || profileImage ? (
+            {sellerData?.image_url ? (
               <img 
-                src={sellerData?.image_url} 
+                src={sellerData.image_url} 
                 alt="Profile" 
                 className="w-full h-full object-cover profile-image"
                 onError={(e) => {
@@ -303,6 +360,11 @@ const SellerEditProfile = () => {
               className="hidden"
             />
           </label>
+          {updateProfileImageMutation.isPending && (
+            <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+            </div>
+          )}
         </div>
       </div>
 
