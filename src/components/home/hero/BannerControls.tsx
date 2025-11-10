@@ -1,4 +1,3 @@
-
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -52,27 +51,39 @@ export default function BannerControls({
         </>
       )}
 
-      {/* Animated Dots - Responsive positioning */}
-      <div className="absolute left-0 right-0 flex justify-center gap-1.5 z-20" style={{ bottom: 'clamp(8px, 2%, 16px)' }}>
+      {/* WhatsApp-style Progress Bars - Full width with transparent background */}
+      <div 
+        className="absolute left-4 right-4 flex justify-between gap-2 z-20" 
+        style={{ bottom: 'clamp(12px, 3%, 20px)' }}
+      >
         {Array.from({ length: slidesCount }).map((_, index) => (
           <button
             key={index}
-            className="relative rounded-full bg-gray-300 overflow-hidden"
+            className="flex-1 relative rounded-full bg-white/30 overflow-hidden backdrop-blur-sm transition-all duration-200 hover:bg-white/40"
             style={{ 
-              height: 'clamp(3px, 0.8vh, 6px)',
-              width: 'clamp(16px, 3vw, 24px)'
+              height: 'clamp(3px, 0.6vh, 4px)',
+              minWidth: '0' // Ensure flex items can shrink
             }}
             onClick={() => handleDotClick(index)}
           >
-            <div className="absolute inset-0 bg-gray-300 rounded-full"></div>
-            {activeIndex === index && (
+            {/* Background track - fully transparent */}
+            <div className="absolute inset-0 bg-transparent rounded-full"></div>
+            
+            {/* Progress fill - white with slight transparency */}
+            {activeIndex === index ? (
               <div
-                className="absolute inset-0 bg-orange-500 rounded-full origin-left"
+                className="absolute inset-0 bg-white/90 rounded-full origin-left"
                 style={{
                   width: `${progress}%`,
                   transition: 'width 0.05s linear'
                 }}
               ></div>
+            ) : activeIndex > index ? (
+              /* Completed state - full white */
+              <div className="absolute inset-0 bg-white/90 rounded-full"></div>
+            ) : (
+              /* Upcoming state - transparent */
+              <div className="absolute inset-0 bg-transparent rounded-full"></div>
             )}
           </button>
         ))}
