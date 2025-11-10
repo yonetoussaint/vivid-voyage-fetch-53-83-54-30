@@ -1,13 +1,12 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, Camera, Upload, Save, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Camera, Upload } from 'lucide-react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 const SellerEditProfile = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -39,7 +38,7 @@ const SellerEditProfile = () => {
   });
 
   // Initialize form with current data
-  React.useEffect(() => {
+  useEffect(() => {
     if (sellerData) {
       setFormData({
         name: sellerData.name || '',
@@ -50,6 +49,18 @@ const SellerEditProfile = () => {
       });
     }
   }, [sellerData]);
+
+  // Listen for save event from header
+  useEffect(() => {
+    const handleSave = () => {
+      handleSubmit();
+    };
+
+    window.addEventListener('saveEditProfile', handleSave);
+    return () => {
+      window.removeEventListener('saveEditProfile', handleSave);
+    };
+  }, [formData, profileImage, bannerImage]);
 
   // Update mutation
   const updateSellerMutation = useMutation({
@@ -96,8 +107,11 @@ const SellerEditProfile = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+    
     setIsLoading(true);
     
     try {
@@ -130,41 +144,17 @@ const SellerEditProfile = () => {
     }
   };
 
-  const handleCancel = () => {
-    navigate(-1);
-  };
-
   if (sellerLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center pt-16">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="px-4 py-3 flex items-center justify-between">
-          <button
-            onClick={handleCancel}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-lg font-semibold">Edit Profile</h1>
-          <button
-            onClick={handleSubmit}
-            disabled={isLoading}
-            className="px-4 py-1 bg-blue-600 text-white rounded-full text-sm font-medium disabled:opacity-50"
-          >
-            {isLoading ? 'Saving...' : 'Save'}
-          </button>
-        </div>
-      </div>
-
-      {/* Edit Form */}
+    <div className="min-h-screen bg-background pt-16">
+      {/* Edit Form - No header here, using the one from SellerLayout */}
       <form onSubmit={handleSubmit} className="p-4 space-y-6">
         {/* Banner Image */}
         <div className="relative">
@@ -283,25 +273,6 @@ const SellerEditProfile = () => {
               placeholder="https://example.com"
             />
           </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-3 pt-4">
-          <button
-            type="button"
-            onClick={handleCancel}
-            className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
-          >
-            <Save className="w-4 h-4" />
-            {isLoading ? 'Saving...' : 'Save Changes'}
-          </button>
         </div>
       </form>
     </div>
