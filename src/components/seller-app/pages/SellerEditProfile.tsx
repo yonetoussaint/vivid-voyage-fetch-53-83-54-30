@@ -40,7 +40,10 @@ const SellerEditProfile = () => {
         .eq('user_id', user.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching seller data:', error);
+        throw error;
+      }
       return data;
     },
   });
@@ -48,6 +51,7 @@ const SellerEditProfile = () => {
   // Initialize form with current data
   useEffect(() => {
     if (sellerData) {
+      console.log('Initializing form with seller data:', sellerData);
       setFormData({
         name: sellerData.name || '',
         bio: sellerData.bio || '',
@@ -64,7 +68,7 @@ const SellerEditProfile = () => {
     }
   }, [sellerData]);
 
-  // Listen for save event from header - FIXED: Remove dependencies
+  // Listen for save event from header
   useEffect(() => {
     const handleSave = () => {
       console.log('Save event received, current formData:', formData);
@@ -75,7 +79,7 @@ const SellerEditProfile = () => {
     return () => {
       window.removeEventListener('saveEditProfile', handleSave);
     };
-  }, []); // Empty dependencies to use latest state via closure
+  }, []);
 
   // Profile image upload function
   const uploadProfileImage = async (file: File): Promise<string | null> => {
@@ -84,7 +88,7 @@ const SellerEditProfile = () => {
       
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}/profile-${Date.now()}.${fileExt}`;
-      const filePath = `seller-logos/${fileName}`;
+      const filePath = fileName;
 
       console.log('Uploading profile image to:', filePath);
 
@@ -109,13 +113,14 @@ const SellerEditProfile = () => {
     }
   };
 
-  // Update mutation - FIXED: Better error handling and logging
+  // Update mutation - FIXED: Proper data structure for sellers table
   const updateSellerMutation = useMutation({
     mutationFn: async (updatedData: any) => {
       if (!user?.id) throw new Error('No user logged in');
 
-      console.log('Sending update to Supabase:', updatedData);
+      console.log('Sending update to Supabase sellers table:', updatedData);
       
+      // Ensure we're updating the correct seller record by user_id
       const { data, error } = await supabase
         .from('sellers')
         .update(updatedData)
@@ -128,17 +133,22 @@ const SellerEditProfile = () => {
         throw error;
       }
       
-      console.log('Update successful:', data);
+      console.log('Seller update successful:', data);
       return data;
     },
     onSuccess: (data) => {
-      console.log('Mutation successful, data:', data);
+      console.log('Mutation successful, updated seller:', data);
       queryClient.invalidateQueries({ queryKey: ['seller', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['seller-banners', sellerData?.id] });
+      
+      // Show success message
+      alert('Profile updated successfully!');
+      
       navigate('/seller-dashboard/products');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Mutation error:', error);
+      alert(`Error updating profile: ${error.message}`);
       setIsLoading(false);
     },
   });
@@ -165,15 +175,23 @@ const SellerEditProfile = () => {
     if (file) {
       setProfileImage(file);
       console.log('Profile image selected:', file.name);
+      
+      // Preview the image
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = document.querySelector('.profile-image') as HTMLImageElement;
+        if (img && e.target?.result) {
+          img.src = e.target.result as string;
+        }
+      };
+      reader.readAsDataURL(file);
     }
   };
 
   const handleBannerUpdate = () => {
-    // Refresh any banner-related data
     queryClient.invalidateQueries({ queryKey: ['seller-banners', sellerData?.id] });
   };
 
-  // FIXED: Complete handleSubmit function with image upload
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) {
       e.preventDefault();
@@ -201,9 +219,20 @@ const SellerEditProfile = () => {
         }
       }
 
-      // Prepare update data
-      const updateData = {
-        ...formData,
+      // Prepare update data - match the sellers table columns exactly
+      const updateData: any = {
+        name: formData.name,
+        bio: formData.bio,
+        business_type: formData.business_type,
+        location: formData.location,
+        website: formData.website,
+        phone: formData.phone,
+        email: formData.email,
+        // Social media fields - these should match your sellers table columns
+        instagram: formData.instagram,
+        facebook: formData.facebook,
+        twitter: formData.twitter,
+        tiktok: formData.tiktok,
         updated_at: new Date().toISOString(),
       };
 
@@ -212,7 +241,7 @@ const SellerEditProfile = () => {
         updateData.image_url = image_url;
       }
 
-      console.log('Final update data being sent:', updateData);
+      console.log('Final update data for sellers table:', updateData);
       
       await updateSellerMutation.mutateAsync(updateData);
     } catch (error) {
@@ -249,11 +278,11 @@ const SellerEditProfile = () => {
       <div className="relative z-30 -mt-12 flex justify-center">
         <div className="relative">
           <div className="w-24 h-24 bg-gray-300 rounded-full border-4 border-white overflow-hidden shadow-lg">
-            {sellerData?.image_url ? (
+            {sellerData?.image_url || profileImage ? (
               <img 
-                src={sellerData.image_url} 
+                src={sellerData?.image_url} 
                 alt="Profile" 
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover profile-image"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face";
