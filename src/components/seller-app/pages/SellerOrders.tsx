@@ -325,20 +325,6 @@ const SellerOrders = () => {
           showStats={filteredOrders.length > 0}
         />
 
-        {/* Refresh Button */}
-        <div className="px-4 pb-3">
-          <Button
-            variant="outline"
-            onClick={handleRefresh}
-            className="w-full h-11"
-            disabled={refreshing}
-          >
-            <RefreshCw className={`w-5 h-5 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh Orders
-          </Button>
-        </div>
-      </div>
-
       {/* Product Filter Bar - Now used for orders filtering */}
       <ProductFilterBar
         filterCategories={filterCategories}
