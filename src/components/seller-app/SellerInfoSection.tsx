@@ -120,7 +120,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
 
   return (
     <div className="bg-white text-gray-900 relative overflow-hidden">
-      {/* Banner - REMOVED profile picture overlay from HeroBanner */}
+      {/* Banner - Only shows banner image, no profile picture */}
       <div className="relative w-full overflow-hidden z-0">
         <HeroBanner 
           asCarousel={false} 
@@ -130,46 +130,13 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
           showEditButton={isOwnProfile}
           editButtonPosition="top-right"
           dataSource="seller_banners"
-          hideProfileImage={true} // Add this prop to hide profile image in HeroBanner
         />
       </div>
 
-      {/* Profile Image Section - This is where the REAL profile picture should be */}
-      <div className="relative z-30 -mt-12 flex justify-center">
-        <div className="relative">
-          <div className="w-24 h-24 bg-gray-300 rounded-full border-4 border-white overflow-hidden shadow-lg">
-            {safeSellerData.image_url ? (
-              <img 
-                src={getSellerLogoUrl(safeSellerData.image_url)} 
-                alt="Profile" 
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face";
-                }}
-              />
-            ) : (
-              <div className="w-full h-full bg-gray-400 flex items-center justify-center">
-                <Store className="w-6 h-6 text-white" />
-              </div>
-            )}
-          </div>
-          {isOwnProfile && (
-            <button
-              onClick={onEditProfile}
-              className="absolute -bottom-1 -right-1 bg-blue-600 text-white p-1.5 rounded-full cursor-pointer hover:bg-blue-700 transition-colors border-2 border-white shadow-lg"
-              title="Edit Profile"
-            >
-              <Edit2 className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Profile Info */}
+      {/* Profile Info - KEEP the small avatar but show REAL profile picture */}
       <div className="px-2 pt-3 relative z-10">
         <div className="flex items-start gap-3 mb-3">
-          {/* Avatar in the info section - using the SAME real data */}
+          {/* Small Avatar - NOW SHOWS REAL PROFILE PICTURE */}
           <div className="relative flex-shrink-0">
             <div className="p-0.5 rounded-full bg-gradient-to-tr from-purple-500 via-pink-500 to-orange-400">
               <div className="bg-white rounded-full p-0.5">
@@ -177,6 +144,10 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
                   <AvatarImage 
                     src={getSellerLogoUrl(safeSellerData.image_url)} 
                     className="rounded-full" 
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face";
+                    }}
                   />
                   <AvatarFallback className="rounded-full">
                     {safeSellerData.name.substring(0, 2).toUpperCase()}
