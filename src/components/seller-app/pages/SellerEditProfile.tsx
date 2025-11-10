@@ -1,0 +1,311 @@
+import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { ArrowLeft, Camera, Upload, Save, X } from 'lucide-react';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+
+const SellerEditProfile = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const [formData, setFormData] = useState({
+    name: '',
+    bio: '',
+    business_type: '',
+    location: '',
+    website: '',
+  });
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [bannerImage, setBannerImage] = useState<File | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Fetch current seller data
+  const { data: sellerData, isLoading: sellerLoading } = useQuery({
+    queryKey: ['seller', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from('sellers')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Initialize form with current data
+  React.useEffect(() => {
+    if (sellerData) {
+      setFormData({
+        name: sellerData.name || '',
+        bio: sellerData.bio || '',
+        business_type: sellerData.business_type || '',
+        location: sellerData.location || '',
+        website: sellerData.website || '',
+      });
+    }
+  }, [sellerData]);
+
+  // Update mutation
+  const updateSellerMutation = useMutation({
+    mutationFn: async (updatedData: any) => {
+      if (!user?.id) throw new Error('No user logged in');
+      
+      const { data, error } = await supabase
+        .from('sellers')
+        .update(updatedData)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['seller', user?.id] });
+      navigate(-1); // Go back to previous page
+    },
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setProfileImage(file);
+      // Here you would upload to Supabase Storage
+    }
+  };
+
+  const handleBannerImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setBannerImage(file);
+      // Here you would upload to Supabase Storage
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    try {
+      // Upload images first if selected
+      let image_url = sellerData?.image_url;
+      if (profileImage) {
+        // Upload profile image logic here
+        // const { data } = await supabase.storage.from('seller-logos').upload(...)
+        // image_url = data?.path;
+      }
+
+      let banner_url = sellerData?.banner_url;
+      if (bannerImage) {
+        // Upload banner image logic here
+        // const { data } = await supabase.storage.from('seller-banners').upload(...)
+        // banner_url = data?.path;
+      }
+
+      // Update seller data
+      await updateSellerMutation.mutateAsync({
+        ...formData,
+        ...(image_url && { image_url }),
+        ...(banner_url && { banner_url }),
+        updated_at: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancel = () => {
+    navigate(-1);
+  };
+
+  if (sellerLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div className="px-4 py-3 flex items-center justify-between">
+          <button
+            onClick={handleCancel}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-lg font-semibold">Edit Profile</h1>
+          <button
+            onClick={handleSubmit}
+            disabled={isLoading}
+            className="px-4 py-1 bg-blue-600 text-white rounded-full text-sm font-medium disabled:opacity-50"
+          >
+            {isLoading ? 'Saving...' : 'Save'}
+          </button>
+        </div>
+      </div>
+
+      {/* Edit Form */}
+      <form onSubmit={handleSubmit} className="p-4 space-y-6">
+        {/* Banner Image */}
+        <div className="relative">
+          <div className="w-full h-40 bg-gray-200 rounded-lg overflow-hidden">
+            {/* Current banner or placeholder */}
+            <div className="w-full h-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center">
+              <Camera className="w-8 h-8 text-white opacity-70" />
+            </div>
+          </div>
+          <label className="absolute bottom-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2 cursor-pointer hover:bg-white transition-colors">
+            <Upload className="w-4 h-4" />
+            Change Banner
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleBannerImageChange}
+              className="hidden"
+            />
+          </label>
+        </div>
+
+        {/* Profile Image */}
+        <div className="flex justify-center -mt-16 relative">
+          <div className="relative">
+            <div className="w-24 h-24 bg-gray-300 rounded-full border-4 border-white overflow-hidden">
+              {/* Current profile image or placeholder */}
+              <div className="w-full h-full bg-gray-400 flex items-center justify-center">
+                <Camera className="w-6 h-6 text-white" />
+              </div>
+            </div>
+            <label className="absolute bottom-0 right-0 bg-blue-600 text-white p-1.5 rounded-full cursor-pointer hover:bg-blue-700 transition-colors">
+              <Camera className="w-4 h-4" />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleProfileImageChange}
+                className="hidden"
+              />
+            </label>
+          </div>
+        </div>
+
+        {/* Form Fields */}
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Business Name *
+            </label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Enter your business name"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Bio
+            </label>
+            <textarea
+              name="bio"
+              value={formData.bio}
+              onChange={handleInputChange}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              placeholder="Tell customers about your business..."
+              maxLength={500}
+            />
+            <div className="text-right text-xs text-gray-500 mt-1">
+              {formData.bio.length}/500
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Business Type
+            </label>
+            <input
+              type="text"
+              name="business_type"
+              value={formData.business_type}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="e.g., Fashion, Electronics, Food"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Location
+            </label>
+            <input
+              type="text"
+              name="location"
+              value={formData.location}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Where are you located?"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Website
+            </label>
+            <input
+              type="url"
+              name="website"
+              value={formData.website}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="https://example.com"
+            />
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-3 pt-4">
+          <button
+            type="button"
+            onClick={handleCancel}
+            className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+          >
+            <Save className="w-4 h-4" />
+            {isLoading ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+export default SellerEditProfile;
