@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   Clock, ChevronUp, ArrowLeft, ChevronDown, Store, MapPin, Calendar, Star,
   Facebook, Instagram, Mail, Edit2, Share2, MoreVertical, Bell, Link2, X,
-  MessageCircle
+  MessageCircle, Shield, CheckCircle
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import HeroBanner from '@/components/home/HeroBanner';
@@ -19,7 +19,8 @@ interface SellerInfoSectionProps {
   onBecomeSeller: () => void;
   onBack: () => void;
   showActionButtons?: boolean;
-  isOwnProfile?: boolean; // Add this prop to determine if it's the user's own profile
+  isOwnProfile?: boolean;
+  onVerifySeller?: () => void; // Add this prop for verification action
 }
 
 const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
@@ -29,11 +30,12 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
   onBecomeSeller,
   onBack,
   showActionButtons = true,
-  isOwnProfile = false // Default to false
+  isOwnProfile = false,
+  onVerifySeller = () => console.log('Verify seller clicked') // Default handler
 }) => {
   const [showBusinessHours, setShowBusinessHours] = useState(false);
   const [showSocialPanel, setShowSocialPanel] = useState(false);
-  const [isFollowing, setIsFollowing] = useState(false); // State for follow status
+  const [isFollowing, setIsFollowing] = useState(false);
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '2008';
@@ -75,18 +77,16 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
       : typeof sellerData.followed_by === 'string'
         ? JSON.parse(sellerData.followed_by || "[]")
         : [],
-    // Calculate store age in years with fallback
     store_age_years: (() => {
       const joinDate = sellerData.join_date || sellerData.created_at;
-      if (!joinDate) return 3; // Default fallback
+      if (!joinDate) return 3;
       try {
         const date = new Date(joinDate);
         const now = new Date();
         const years = now.getFullYear() - date.getFullYear();
-        // If less than 1 year old, show as 1 year
         return years > 0 ? years : 1;
       } catch {
-        return 3; // Default fallback
+        return 3;
       }
     })()
   } : null;
@@ -243,6 +243,39 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Verification Banner - Only show if seller is not verified */}
+      {!safeSellerData.verified && isOwnProfile && (
+        <div className="mx-2 mb-2 mt-1">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
+                  <Shield className="w-5 h-5 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-1.5">
+                    Get Verified
+                    <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+                      Recommended
+                    </span>
+                  </h3>
+                  <p className="text-xs text-gray-600 mt-0.5">
+                    Verify your account to build trust and unlock premium features
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={onVerifySeller}
+                className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+              >
+                <CheckCircle className="w-4 h-4" />
+                Verify Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Social Media Bottom Sheet */}
       {showSocialPanel && (
