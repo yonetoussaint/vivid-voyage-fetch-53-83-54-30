@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';  
 import {   
   Package, ShoppingCart, Users, BarChart3, DollarSign, Megaphone, Settings,  
-  Home, Share, MessageCircle, MessageSquare, Star, Heart  
+  Home, Share, MessageCircle, MessageSquare, Star, Heart, Save  
 } from 'lucide-react';  
 import { useIsMobile } from '@/hooks/use-mobile';  
 import { useQuery } from '@tanstack/react-query';  
@@ -61,6 +61,9 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   };  
 
   const handleFavoriteClick = () => setIsFavorite(!isFavorite);  
+
+  // Check if current route is edit profile
+  const isEditProfilePage = location.pathname.includes('/edit-profile');
 
   // PRESERVED ALL ORIGINAL PATH CALCULATIONS
   const isDashboard = location.pathname.includes('/seller-dashboard');  
@@ -180,8 +183,21 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       return data.publicUrl;  
     });  
 
-  // PRESERVED ORIGINAL ACTION BUTTONS
-  const actionButtons = [  
+  // Custom action buttons for edit profile page
+  const editProfileActionButtons = [  
+    {  
+      Icon: Save,  
+      onClick: () => {
+        // This will be handled by the edit profile component
+        const saveEvent = new CustomEvent('saveEditProfile');
+        window.dispatchEvent(saveEvent);
+      },  
+      active: false  
+    }  
+  ];  
+
+  // Regular action buttons for other pages
+  const regularActionButtons = [  
     {  
       Icon: Heart,  
       onClick: handleFavoriteClick,  
@@ -196,7 +212,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }  
   ];  
 
-  // Header component - PRESERVED ORIGINAL STYLING AND PROPS
+  // Header component - DYNAMIC based on page type
   const header = (
     <div   
       ref={headerRef}   
@@ -205,14 +221,16 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       <ProductHeader  
         onCloseClick={handleBackClick}  
         onShareClick={handleShareClick}  
-        actionButtons={actionButtons}  
-        forceScrolledState={!isProductsTab}  
+        actionButtons={isEditProfilePage ? editProfileActionButtons : regularActionButtons}
+        forceScrolledState={!isProductsTab || isEditProfilePage}
+        // For edit profile page, we want to show a custom title
+        seller={isEditProfilePage ? undefined : sellerData} // Hide seller info on edit page
       />  
     </div>  
   );
 
-  // Top content (Seller Info) - PRESERVED ORIGINAL STYLING AND CALCULATIONS
-  const topContent = isProductsTab ? (
+  // Top content (Seller Info) - Hide on edit profile page
+  const topContent = isProductsTab && !isEditProfilePage ? (
     <div className="w-full bg-black text-white">  
       <SellerInfoSection  
         sellerData={sellerData}  
@@ -262,7 +280,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       headerRef={headerRef}
       topContent={topContent}
       topContentRef={sellerInfoRef}
-      tabs={tabs}
+      tabs={isEditProfilePage ? [] : tabs} // Hide tabs on edit profile page
       activeTab={activeTab}
       onTabChange={handleTabChange}
       isProductsTab={isProductsTab}
