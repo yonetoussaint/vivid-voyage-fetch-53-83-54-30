@@ -8,7 +8,6 @@ interface BannerControlsProps {
   setActiveIndex: (index: number) => void;
   setPreviousIndex: (index: number | null) => void;
   progress: number;
-  position?: 'top' | 'bottom'; // New prop for positioning
 }
 
 export default function BannerControls({
@@ -17,20 +16,13 @@ export default function BannerControls({
   previousIndex,
   setActiveIndex,
   setPreviousIndex,
-  progress,
-  position = 'bottom' // Default to bottom for backward compatibility
+  progress
 }: BannerControlsProps) {
   const isMobile = useIsMobile();
 
   const handleDotClick = (index: number) => {
     setPreviousIndex(activeIndex);
     setActiveIndex(index);
-  };
-
-  // Position styles
-  const positionStyles = {
-    top: "top-0.5", // Minimal padding at top
-    bottom: "bottom-4" // Original bottom positioning
   };
 
   return (
@@ -59,17 +51,18 @@ export default function BannerControls({
         </>
       )}
 
-      {/* WhatsApp-style Progress Bars - Position optional */}
+      {/* WhatsApp-style Progress Bars - Full width with transparent background */}
       <div 
-        className={`absolute left-4 right-4 flex justify-between gap-2 z-20 ${positionStyles[position]}`}
+        className="absolute left-4 right-4 flex justify-between gap-2 z-20" 
+        style={{ bottom: 'clamp(12px, 3%, 20px)' }}
       >
         {Array.from({ length: slidesCount }).map((_, index) => (
           <button
             key={index}
             className="flex-1 relative rounded-full bg-white/30 overflow-hidden backdrop-blur-sm transition-all duration-200 hover:bg-white/40"
             style={{ 
-              height: position === 'top' ? '2px' : 'clamp(3px, 0.6vh, 4px)',
-              minWidth: '0'
+              height: 'clamp(3px, 0.6vh, 4px)',
+              minWidth: '0' // Ensure flex items can shrink
             }}
             onClick={() => handleDotClick(index)}
           >

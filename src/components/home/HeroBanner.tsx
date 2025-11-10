@@ -548,26 +548,29 @@ export default function HeroBanner({
   }, [slidesToShow, handleCarouselScroll, handleVideoDurationChange, showCarouselBottomRow]);
 
   // In HeroBanner.tsx - restructure the return statement
-  // In HeroBanner.tsx - update the return statement
-return (
-  <>
-    <div
-      ref={heroBannerRef}
-      data-testid="hero-banner"
-      className={`relative overflow-hidden w-full ${asCarousel ? '' : ''}`}
-      style={{ marginTop: asCarousel ? 0 : offset }}
-    >
-      {asCarousel ? (
-        CarouselBanners
-      ) : (
-        <>
-          {/* Main banner content with fixed 2:1 aspect ratio or custom height */}
-          <div 
-            className="relative w-full" 
-            style={customHeight ? { height: customHeight } : { aspectRatio: '2 / 1' }}
-          >
-            {/* Progress bars at the top */}
-            <div className="absolute top-0 left-0 right-0 z-20">
+  return (
+    <>
+      <div
+        ref={heroBannerRef}
+        data-testid="hero-banner"
+        className={`relative overflow-hidden w-full ${asCarousel ? '' : ''}`}
+        style={{ marginTop: asCarousel ? 0 : offset }}
+      >
+        {asCarousel ? (
+          CarouselBanners
+        ) : (
+          <>
+            {/* Main banner content with fixed 2:1 aspect ratio or custom height */}
+            <div 
+              className="relative w-full" 
+              style={customHeight ? { height: customHeight } : { aspectRatio: '2 / 1' }}
+            >
+              <BannerSlides 
+                slides={slidesToShow}
+                activeIndex={activeIndex}
+                previousIndex={previousIndex}
+                onVideoDurationChange={handleVideoDurationChange}
+              />
               <BannerControls
                 slidesCount={slidesToShow.length}
                 activeIndex={activeIndex}
@@ -575,52 +578,43 @@ return (
                 setActiveIndex={setActiveIndex}
                 setPreviousIndex={setPreviousIndex}
                 progress={progress}
-                position="top"
               />
             </div>
 
-            <BannerSlides 
-              slides={slidesToShow}
-              activeIndex={activeIndex}
-              previousIndex={previousIndex}
-              onVideoDurationChange={handleVideoDurationChange}
-            />
-          </div>
+            {/* NewsTicker/FilterBar positioned below the banner content */}
+            <div className="relative z-10">
+              {showNews ? (
+                <NewsTicker />
+              ) : (
+                <ProductFilterBar 
+                  filterCategories={filterCategories}
+                  selectedFilters={selectedFilters}
+                  onFilterSelect={onFilterSelect}
+                  onFilterClear={onFilterClear}
+                  onClearAll={onClearAll}
+                  onFilterButtonClick={onFilterButtonClick}
+                  isFilterDisabled={isFilterDisabled}
+                />
+              )}
+            </div>
+          </>
+        )}
+      </div>
 
-          {/* NewsTicker/FilterBar positioned below the banner content */}
-          <div className="relative z-10">
-            {showNews ? (
-              <NewsTicker />
-            ) : (
-              <ProductFilterBar 
-                filterCategories={filterCategories}
-                selectedFilters={selectedFilters}
-                onFilterSelect={onFilterSelect}
-                onFilterClear={onFilterClear}
-                onClearAll={onClearAll}
-                onFilterButtonClick={onFilterButtonClick}
-                isFilterDisabled={isFilterDisabled}
-              />
-            )}
-          </div>
-        </>
+      {/* Floating Video only in non-carousel mode */}
+      {!asCarousel && showFloatingVideo && currentSlide && currentSlide.type === "video" && (
+        <FloatingVideo
+          src={currentSlide.image}
+          alt={currentSlide.alt}
+          isVisible={showFloatingVideo}
+          onClose={handleCloseFloatingVideo}
+          onExpand={handleExpandFloatingVideo}
+          currentTime={videoCurrentTime}
+          headerOffset={offset}
+        />
       )}
-    </div>
-
-    {/* Floating Video only in non-carousel mode */}
-    {!asCarousel && showFloatingVideo && currentSlide && currentSlide.type === "video" && (
-      <FloatingVideo
-        src={currentSlide.image}
-        alt={currentSlide.alt}
-        isVisible={showFloatingVideo}
-        onClose={handleCloseFloatingVideo}
-        onExpand={handleExpandFloatingVideo}
-        currentTime={videoCurrentTime}
-        headerOffset={offset}
-      />
-    )}
-  </>
-);
+    </>
+  );
 }
 
 // Add this export at the end of HeroBanner.tsx
