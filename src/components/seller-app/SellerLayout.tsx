@@ -44,7 +44,15 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   // States - PRESERVED ALL ORIGINAL STATES
   const [isFavorite, setIsFavorite] = useState(false);  
 
-  const handleBackClick = () => navigate('/profile');  
+  // FIXED: Single handleBackClick function
+  const handleBackClick = () => {
+    if (isPublicPage) {
+      navigate('/profile');
+    } else {
+      navigate('/seller-dashboard/products');
+    }
+  };
+
   const handleBecomeSeller = () => navigate('/seller-onboarding');  
 
   const handleShareClick = () => {  
@@ -58,11 +66,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       console.log('Link copied to clipboard');  
     }  
   };  
-
-
-const handleBackClick = () => {
-  navigate('/seller-dashboard/products');
-};
 
   const handleFavoriteClick = () => setIsFavorite(!isFavorite);  
 
@@ -142,10 +145,10 @@ const handleBackClick = () => {
     if (item) {
       // Scroll to top when changing tabs to ensure proper layout
       window.scrollTo(0, 0);
-      
+
       const previousTab = activeTab;
       previousTabRef.current = previousTab;
-      
+
       navigate(item.href);
     }  
   };  
@@ -220,40 +223,37 @@ const handleBackClick = () => {
     }  
   ];  
 
-  
+  const header = (
+    <div   
+      ref={headerRef}   
+      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"  
+    >  
+      <ProductHeader  
+        onCloseClick={isEditProfilePage ? () => navigate('/seller-dashboard/products') : handleBackClick}  
+        onShareClick={handleShareClick}  
+        actionButtons={isEditProfilePage ? editProfileActionButtons : regularActionButtons}
+        forceScrolledState={!isProductsTab || isEditProfilePage}
+        title={isEditProfilePage ? "Edit Profile" : undefined}
+        hideSearch={isEditProfilePage}
+        showSellerInfo={!isEditProfilePage}
+      />  
+    </div>  
+  );
 
-const header = (
-  <div   
-    ref={headerRef}   
-    className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"  
-  >  
-    <ProductHeader  
-      onCloseClick={isEditProfilePage ? () => navigate('/seller-dashboard/products') : handleBackClick}  
-      onShareClick={handleShareClick}  
-      actionButtons={isEditProfilePage ? editProfileActionButtons : regularActionButtons}
-      forceScrolledState={!isProductsTab || isEditProfilePage}
-      title={isEditProfilePage ? "Edit Profile" : undefined}
-      hideSearch={isEditProfilePage}
-      showSellerInfo={!isEditProfilePage}
-    />  
-  </div>  
-);
-
-
-const topContent = isProductsTab && !isEditProfilePage ? (
-  <div className="w-full bg-black text-white">  
-    <SellerInfoSection  
-      sellerData={sellerData}  
-      sellerLoading={sellerLoading}  
-      getSellerLogoUrl={getSellerLogoUrl}  
-      onBecomeSeller={handleBecomeSeller}  
-      onBack={handleBackClick}  
-      onEditProfile={() => navigate('/seller-dashboard/edit-profile')}
-      isOwnProfile={isOwnProfile}  
-      showActionButtons={showActionButtons}  
-    />  
-  </div>  
-) : undefined;
+  const topContent = isProductsTab && !isEditProfilePage ? (
+    <div className="w-full bg-black text-white">  
+      <SellerInfoSection  
+        sellerData={sellerData}  
+        sellerLoading={sellerLoading}  
+        getSellerLogoUrl={getSellerLogoUrl}  
+        onBecomeSeller={handleBecomeSeller}  
+        onBack={handleBackClick}  
+        onEditProfile={() => navigate('/seller-dashboard/edit-profile')}
+        isOwnProfile={isOwnProfile}  
+        showActionButtons={showActionButtons}  
+      />  
+    </div>  
+  ) : undefined;
 
   // Enhanced children with additional props - PRESERVED ORIGINAL LOGIC
   const enhancedChildren = React.Children.map(children, child => {  
@@ -284,25 +284,25 @@ const topContent = isProductsTab && !isEditProfilePage ? (
     }  
   }, [location.pathname, navigate]);  
 
- return (  
-  <StickyTabsLayout
-    header={header}
-    headerRef={headerRef}
-    topContent={topContent}
-    topContentRef={sellerInfoRef}
-    tabs={tabs}
-    activeTab={activeTab}
-    onTabChange={handleTabChange}
-    isProductsTab={isProductsTab}
-    showTopBorder={false}
-    variant="underline"
-    stickyBuffer={4}
-    alwaysStickyForNonProducts={true}
-    hideTabs={isEditProfilePage} // NEW: Hide tabs on edit profile page
-  >
-    {enhancedChildren}
-  </StickyTabsLayout>
-);  
+  return (  
+    <StickyTabsLayout
+      header={header}
+      headerRef={headerRef}
+      topContent={topContent}
+      topContentRef={sellerInfoRef}
+      tabs={tabs}
+      activeTab={activeTab}
+      onTabChange={handleTabChange}
+      isProductsTab={isProductsTab}
+      showTopBorder={false}
+      variant="underline"
+      stickyBuffer={4}
+      alwaysStickyForNonProducts={true}
+      hideTabs={isEditProfilePage} // NEW: Hide tabs on edit profile page
+    >
+      {enhancedChildren}
+    </StickyTabsLayout>
+  );  
 };  
 
 export default SellerLayout;
