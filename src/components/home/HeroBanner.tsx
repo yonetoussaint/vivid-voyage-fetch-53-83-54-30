@@ -370,54 +370,23 @@ export default function HeroBanner({
           <div className={`rounded-full w-10 h-10 flex items-center justify-center mx-auto mb-2 ${
             isSellerBanner ? 'bg-blue-100 text-blue-600' : 'bg-gray-200 text-gray-600'
           }`}>
-            {showEditButton ? (
-              <Plus className="w-5 h-5" />
-            ) : (
-              <Image className="w-5 h-5" />
-            )}
+            <Image className="w-5 h-5" />
           </div>
           
-          {showEditButton ? (
-            <>
-              <p className={`text-sm font-medium mb-1 ${
-                isSellerBanner ? 'text-blue-900' : 'text-gray-700'
-              }`}>
-                No banner set
-              </p>
-              <p className={`text-xs mb-2 ${
-                isSellerBanner ? 'text-blue-700' : 'text-gray-600'
-              }`}>
-                Add a banner to personalize your profile
-              </p>
-              <button
-                onClick={onEditBanner}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  isSellerBanner 
-                    ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                    : 'bg-gray-600 text-white hover:bg-gray-700'
-                }`}
-              >
-                Add Banner
-              </button>
-            </>
-          ) : (
-            <>
-              <p className={`text-sm font-medium ${
-                isSellerBanner ? 'text-blue-900' : 'text-gray-700'
-              }`}>
-                No banner available
-              </p>
-              <p className={`text-xs mt-1 ${
-                isSellerBanner ? 'text-blue-700' : 'text-gray-600'
-              }`}>
-                Banner will appear here
-              </p>
-            </>
-          )}
+          <p className={`text-sm font-medium ${
+            isSellerBanner ? 'text-blue-900' : 'text-gray-700'
+          }`}>
+            No banner available
+          </p>
+          <p className={`text-xs mt-1 ${
+            isSellerBanner ? 'text-blue-700' : 'text-gray-600'
+          }`}>
+            Banner will appear here
+          </p>
         </div>
       </div>
     );
-  }, [isPlaceholder, customHeight, showEditButton, onEditBanner, dataSource]);
+  }, [isPlaceholder, customHeight, dataSource]);
 
   return (
     <>
