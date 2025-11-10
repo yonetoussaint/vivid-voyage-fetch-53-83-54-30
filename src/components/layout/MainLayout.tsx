@@ -351,8 +351,7 @@ function MainLayoutContent() {
 
         {/* Show IndexBottomNav only on specific paths defined in the component */}
         {/* Don't show IndexBottomNav when reels is opened in modal mode (with video parameter) */}
-        // In MainLayout.tsx, update the IndexBottomNav rendering condition:
-
+        
 {isMobile && (
   (pathname === '/for-you' ||
   pathname === '/' ||
