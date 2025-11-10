@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, Upload, Image, X, Check, Edit2, Trash2, Star, Plus, Palette, Video, GripVertical } from 'lucide-react';
+import { Camera, Upload, Image, X, Check, Edit2, Trash2, Star, Plus, Video, GripVertical } from 'lucide-react';
 import SlideUpPanel from '@/components/shared/SlideUpPanel';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,7 +24,7 @@ import { CSS } from '@dnd-kit/utilities';
 interface Banner {
   id: string;
   name: string;
-  type: 'color' | 'image' | 'gradient' | 'video';
+  type: 'image' | 'video';
   value: string;
   thumbnail?: string;
   is_primary: boolean;
@@ -77,14 +77,12 @@ const SortableBannerItem = ({ banner, onSetPrimary, onEdit, onDelete, isEditing 
               target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDIwMCAxMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMTIwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik03NSA0MEg2NVY2MEg3NVY0MFoiIGZpbGw9IiM5Q0EwQUIiLz4KPHBhdGggZD0iTTgwIDUwTDY1IDYwVjQwTDgwIDUwWiIgZmlsbD0iIzlDQTBBQiIvPgo8L3N2Zz4=';
             }}
           />
-        ) : banner.type === 'video' ? (
+        ) : (
           <div className="w-full h-full bg-gray-100 flex items-center justify-center relative">
             <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
               <Video className="w-4 h-4 text-gray-600" />
             </div>
           </div>
-        ) : (
-          <div className={`w-full h-full ${banner.value}`} />
         )}
       </div>
     );
@@ -466,7 +464,7 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
       
       <div className="text-left">
         <h4 className="font-medium text-gray-900 group-hover:text-blue-700">Add New Banner</h4>
-        <p className="text-sm text-gray-500 group-hover:text-blue-600">Upload image, video, or choose color</p>
+        <p className="text-sm text-gray-500 group-hover:text-blue-600">Upload image or video banner</p>
       </div>
     </button>
   );
@@ -492,12 +490,10 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
                 alt={banner.name}
                 className="w-full h-full object-cover"
               />
-            ) : banner.type === 'video' ? (
+            ) : (
               <div className="w-full h-full bg-gray-100 flex items-center justify-center">
                 <Video className="w-4 h-4 text-gray-600" />
               </div>
-            ) : (
-              <div className={`w-full h-full ${banner.value}`} />
             )}
           </div>
           <div className="flex-1">
@@ -546,7 +542,7 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
       </div>
 
       {/* Media Type Selection */}
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-2 mb-6">
         <button
           onClick={() => setUploadType('image')}
           className={`flex-1 py-3 px-4 rounded-lg border-2 transition-colors flex items-center justify-center gap-2 ${
@@ -571,49 +567,10 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
         </button>
       </div>
 
-      {/* Quick Colors & Gradients */}
-      <div>
-        <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-          <Palette className="w-4 h-4" />
-          Colors & Gradients
-        </h4>
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          {[
-            { name: 'Blue', value: 'bg-blue-500', type: 'color' as const },
-            { name: 'Purple', value: 'bg-purple-500', type: 'color' as const },
-            { name: 'Pink', value: 'bg-pink-500', type: 'color' as const },
-            { name: 'Green', value: 'bg-green-500', type: 'color' as const },
-            { name: 'Orange', value: 'bg-orange-500', type: 'color' as const },
-            { name: 'Indigo', value: 'bg-indigo-500', type: 'color' as const },
-            { name: 'Blue Gradient', value: 'bg-gradient-to-r from-blue-500 to-purple-600', type: 'gradient' as const },
-            { name: 'Sunset Gradient', value: 'bg-gradient-to-r from-orange-400 to-pink-500', type: 'gradient' as const },
-          ].map((option, index) => (
-            <button
-              key={index}
-              onClick={() => handleAddBanner({
-                name: option.name,
-                type: option.type,
-                value: option.value,
-                thumbnail: option.value
-              })}
-              className="text-left"
-            >
-              <div className="w-full h-16 rounded-lg border border-gray-200 overflow-hidden">
-                <div className={`w-full h-full ${option.value}`} />
-              </div>
-              <p className="text-xs font-medium text-gray-700 mt-1 text-center truncate">
-                {option.name}
-              </p>
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* File Upload */}
       <div>
-        <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-          <Upload className="w-4 h-4" />
-          Upload {uploadType === 'image' ? 'Image' : 'Video'}
+        <h4 className="text-sm font-medium text-gray-700 mb-3">
+          Upload {uploadType === 'image' ? 'Image' : 'Video'} Banner
         </h4>
         
         <label className="block">
@@ -631,7 +588,7 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
                   <Video className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                 )}
                 <p className="text-sm font-medium text-gray-700">
-                  Upload Custom {uploadType === 'image' ? 'Image' : 'Video'} Banner
+                  Upload {uploadType === 'image' ? 'Image' : 'Video'} Banner
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
                   {uploadType === 'image' 
