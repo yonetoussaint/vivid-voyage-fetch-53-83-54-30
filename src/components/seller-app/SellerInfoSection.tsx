@@ -58,10 +58,10 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
 
   // FIXED: Properly handle seller data with correct field mapping
   const safeSellerData = sellerData ? {
-    id: sellerData.id, // Make sure ID is included
+    id: sellerData.id,
     name: sellerData.name || 'Seller Name',
     username: sellerData.username || sellerData.name?.toLowerCase().replace(/\s+/g, '') || 'seller',
-    image_url: sellerData.image_url, // Use the actual image_url from database
+    image_url: sellerData.image_url,
     verified: sellerData.verified || false,
     bio: sellerData.bio || sellerData.description || 'No bio provided yet.',
     business_type: sellerData.business_type || sellerData.category || 'Business',
@@ -120,20 +120,21 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
 
   return (
     <div className="bg-white text-gray-900 relative overflow-hidden">
-      {/* Banner - FIXED: Pass correct sellerId and use seller-logos bucket */}
+      {/* Banner - REMOVED profile picture overlay from HeroBanner */}
       <div className="relative w-full overflow-hidden z-0">
         <HeroBanner 
           asCarousel={false} 
           showNewsTicker={false} 
           customHeight="180px" 
-          sellerId={safeSellerData.id} // Use the actual seller ID
+          sellerId={safeSellerData.id}
           showEditButton={isOwnProfile}
           editButtonPosition="top-right"
           dataSource="seller_banners"
+          hideProfileImage={true} // Add this prop to hide profile image in HeroBanner
         />
       </div>
 
-      {/* Profile Image Section - FIXED: Use the actual image_url */}
+      {/* Profile Image Section - This is where the REAL profile picture should be */}
       <div className="relative z-30 -mt-12 flex justify-center">
         <div className="relative">
           <div className="w-24 h-24 bg-gray-300 rounded-full border-4 border-white overflow-hidden shadow-lg">
@@ -141,7 +142,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
               <img 
                 src={getSellerLogoUrl(safeSellerData.image_url)} 
                 alt="Profile" 
-                className="w-full h-full object-cover profile-image"
+                className="w-full h-full object-cover"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face";
@@ -165,10 +166,10 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
         </div>
       </div>
 
-      {/* Rest of the component remains the same */}
+      {/* Profile Info */}
       <div className="px-2 pt-3 relative z-10">
-        {/* Profile Info */}
         <div className="flex items-start gap-3 mb-3">
+          {/* Avatar in the info section - using the SAME real data */}
           <div className="relative flex-shrink-0">
             <div className="p-0.5 rounded-full bg-gradient-to-tr from-purple-500 via-pink-500 to-orange-400">
               <div className="bg-white rounded-full p-0.5">
@@ -304,10 +305,84 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
         </div>
       )}
 
-      {/* Social Media Panel - Remains the same */}
+      {/* Social Media Panel */}
       {showSocialPanel && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center">
-          {/* ... social panel content ... */}
+          <div className="bg-white w-full max-w-md rounded-t-2xl shadow-lg p-6 animate-slide-up">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold">Social Links</h2>
+              <button
+                onClick={() => setShowSocialPanel(false)}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex justify-center gap-6 pb-4">
+              <a 
+                href={safeSellerData.social_media?.whatsapp || '#'} 
+                target="_blank" 
+                className="flex flex-col items-center gap-2 text-green-600 hover:text-green-700 transition-colors"
+              >
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                  <WhatsAppIcon className="w-6 h-6" />
+                </div>
+                <span className="text-xs font-medium">WhatsApp</span>
+              </a>
+
+              <a 
+                href={safeSellerData.social_media?.facebook || '#'} 
+                target="_blank" 
+                className="flex flex-col items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors"
+              >
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Facebook className="w-6 h-6" />
+                </div>
+                <span className="text-xs font-medium">Facebook</span>
+              </a>
+
+              <a 
+                href={safeSellerData.social_media?.instagram || '#'} 
+                target="_blank" 
+                className="flex flex-col items-center gap-2 text-pink-600 hover:text-pink-700 transition-colors"
+              >
+                <div className="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center">
+                  <Instagram className="w-6 h-6" />
+                </div>
+                <span className="text-xs font-medium">Instagram</span>
+              </a>
+
+              <a 
+                href={safeSellerData.social_media?.x || '#'} 
+                target="_blank" 
+                className="flex flex-col items-center gap-2 text-black hover:text-gray-800 transition-colors"
+              >
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                  <XIcon className="w-6 h-6" />
+                </div>
+                <span className="text-xs font-medium">X</span>
+              </a>
+
+              <a 
+                href={safeSellerData.social_media?.tiktok || '#'} 
+                target="_blank" 
+                className="flex flex-col items-center gap-2 text-black hover:text-gray-800 transition-colors"
+              >
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                  <TikTokIcon className="w-6 h-6" />
+                </div>
+                <span className="text-xs font-medium">TikTok</span>
+              </a>
+            </div>
+
+            <button
+              onClick={() => setShowSocialPanel(false)}
+              className="w-full mt-4 py-3 bg-gray-100 text-gray-900 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+            >
+              Close
+            </button>
+          </div>
         </div>
       )}
     </div>
