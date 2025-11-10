@@ -1,38 +1,27 @@
 import React, { useState } from 'react';
 import { 
-  Search, Filter, MoreHorizontal, Eye, MessageCircle,
-  Download, Plus, Package, RefreshCw, Copy, MapPin, X
+  MoreHorizontal, Eye, MessageCircle,
+  Download, Plus, Package, RefreshCw, Copy, MapPin
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
 import ProductFilterBar from '@/components/home/ProductFilterBar';
 
 const SellerOrders = () => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [displayCount, setDisplayCount] = useState(8);
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
-  const [showFilters, setShowFilters] = useState(false);
   const [expandedProduct, setExpandedProduct] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [touchStart, setTouchStart] = useState(0);
@@ -226,10 +215,32 @@ const SellerOrders = () => {
   };
 
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         order.customer.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    // Apply filters based on selectedFilters
+    if (selectedFilters.status && selectedFilters.status !== 'All') {
+      if (order.status !== selectedFilters.status) return false;
+    }
+    
+    if (selectedFilters.amount && selectedFilters.amount !== 'All') {
+      const amount = order.total;
+      switch (selectedFilters.amount) {
+        case 'Under $50':
+          if (amount >= 50) return false;
+          break;
+        case '$50-$100':
+          if (amount < 50 || amount > 100) return false;
+          break;
+        case '$100-$200':
+          if (amount < 100 || amount > 200) return false;
+          break;
+        case 'Over $200':
+          if (amount <= 200) return false;
+          break;
+      }
+    }
+    
+    // Add more filter logic for other categories as needed
+    
+    return true;
   });
 
   const orderStats = [
@@ -289,8 +300,6 @@ const SellerOrders = () => {
     setDisplayCount(8);
   }, [filteredOrders.length]);
 
-  const activeFilterCount = Object.keys(selectedFilters).length;
-
   return (
     <div 
       className="w-full bg-white min-h-screen"
@@ -316,84 +325,29 @@ const SellerOrders = () => {
           showStats={filteredOrders.length > 0}
         />
 
-        {/* Search Bar - Larger touch target */}
+        {/* Refresh Button */}
         <div className="px-4 pb-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-            <Input
-              type="text"
-              placeholder="Search orders or customers..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-12 pl-10 pr-4 text-base w-full"
-            />
-          </div>
-
-          {/* Filter Button with Count Badge */}
-          <div className="flex gap-2 mt-3">
-            <Button
-              variant="outline"
-              onClick={() => setShowFilters(true)}
-              className="flex-1 h-11 relative"
-            >
-              <Filter className="w-5 h-5 mr-2" />
-              Filters
-              {activeFilterCount > 0 && (
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
-                  {activeFilterCount}
-                </Badge>
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleRefresh}
-              className="h-11 w-11 p-0"
-              disabled={refreshing}
-            >
-              <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
-            </Button>
-          </div>
-
-          {/* Active Filters Display */}
-          {activeFilterCount > 0 && (
-            <div className="flex gap-2 flex-wrap mt-3">
-              {Object.entries(selectedFilters).map(([key, value]) => (
-                <Badge key={key} variant="secondary" className="pl-3 pr-1 py-1.5 gap-1">
-                  {value}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleFilterClear(key)}
-                    className="h-4 w-4 p-0 hover:bg-transparent"
-                  >
-                    <X className="w-3 h-3" />
-                  </Button>
-                </Badge>
-              ))}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleClearAll}
-                className="h-7 text-xs"
-              >
-                Clear all
-              </Button>
-            </div>
-          )}
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            className="w-full h-11"
+            disabled={refreshing}
+          >
+            <RefreshCw className={`w-5 h-5 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh Orders
+          </Button>
         </div>
       </div>
 
-      {/* Filter Bar Section - Hidden on mobile, shown via modal */}
-      <div className="hidden lg:block">
-        <ProductFilterBar
-          filterCategories={filterCategories}
-          selectedFilters={selectedFilters}
-          onFilterSelect={handleFilterSelect}
-          onFilterClear={handleFilterClear}
-          onClearAll={handleClearAll}
-          onFilterButtonClick={handleFilterButtonClick}
-        />
-      </div>
+      {/* Product Filter Bar - Now used for orders filtering */}
+      <ProductFilterBar
+        filterCategories={filterCategories}
+        selectedFilters={selectedFilters}
+        onFilterSelect={handleFilterSelect}
+        onFilterClear={handleFilterClear}
+        onClearAll={handleClearAll}
+        onFilterButtonClick={handleFilterButtonClick}
+      />
 
       {/* Orders Grid - Mobile Optimized Layout */}
       <div className="py-4 px-4">
@@ -556,7 +510,7 @@ const SellerOrders = () => {
               <Package className="w-10 h-10 text-gray-400" />
             </div>
             <div className="text-lg font-semibold text-foreground mb-1">No orders found</div>
-            <div className="text-sm text-muted-foreground mb-6">Try adjusting your search terms or filters</div>
+            <div className="text-sm text-muted-foreground mb-6">Try adjusting your filters</div>
             <Button onClick={handleRefresh} className="h-11 px-6">
               <RefreshCw className="w-5 h-5 mr-2" />
               Refresh Orders
@@ -565,95 +519,12 @@ const SellerOrders = () => {
         )}
       </div>
 
-      {/* Mobile Filter Modal - Bottom Sheet */}
-      {showFilters && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-50 lg:hidden animate-fade-in"
-          onClick={() => setShowFilters(false)}
-        >
-          <div
-            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[80vh] overflow-y-auto animate-slide-up"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-foreground">Filters</h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowFilters(false)}
-                className="h-10 w-10 p-0 rounded-full"
-              >
-                <X className="w-6 h-6" />
-              </Button>
-            </div>
-
-            {/* Filter Categories */}
-            <div className="p-4 space-y-6">
-              {filterCategories.map((category) => (
-                <div key={category.id}>
-                  <h3 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wide">
-                    {category.label}
-                  </h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {category.options.map((option) => (
-                      <Button
-                        key={option}
-                        variant={selectedFilters[category.id] === option ? 'default' : 'outline'}
-                        onClick={() => handleFilterSelect(category.id, option)}
-                        className="h-11 justify-center"
-                      >
-                        {option}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 flex gap-3">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  handleClearAll();
-                  setShowFilters(false);
-                }}
-                className="flex-1 h-12"
-              >
-                Clear All
-              </Button>
-              <Button
-                onClick={() => setShowFilters(false)}
-                className="flex-1 h-12"
-              >
-                Apply Filters
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <style jsx>{`
         .line-clamp-2 {
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           overflow: hidden;
-        }
-        @keyframes fade-in {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes slide-up {
-          from { transform: translateY(100%); }
-          to { transform: translateY(0); }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.2s ease-out;
-        }
-        .animate-slide-up {
-          animation: slide-up 0.3s ease-out;
         }
       `}</style>
     </div>
