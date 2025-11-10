@@ -148,6 +148,10 @@ const SellerEditProfile = () => {
       console.log('Mutation successful, updated seller:', data);
       queryClient.invalidateQueries({ queryKey: ['seller', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['seller-banners', sellerData?.id] });
+      
+      // REMOVED: alert('Profile updated successfully!');
+      // Simply navigate back without showing alert
+      navigate('/seller-dashboard/products');
     },
     onError: (error: any) => {
       console.error('Mutation error:', error);
@@ -191,7 +195,7 @@ const SellerEditProfile = () => {
     },
   });
 
-  // Listen for save event from header - FIXED: Use ref to get latest data
+  // Listen for save event from header
   useEffect(() => {
     const handleSave = () => {
       console.log('Save event received, current formData:', formDataRef.current);
@@ -204,7 +208,7 @@ const SellerEditProfile = () => {
     };
   }, []);
 
-  // Form validation - FIXED: Use ref data
+  // Form validation
   const validateForm = () => {
     const currentData = formDataRef.current;
     if (!currentData.name.trim()) {
@@ -257,7 +261,6 @@ const SellerEditProfile = () => {
     queryClient.invalidateQueries({ queryKey: ['seller-banners', sellerData?.id] });
   };
 
-  // FIXED: Use ref data for submission
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) {
       e.preventDefault();
@@ -265,7 +268,6 @@ const SellerEditProfile = () => {
 
     if (isLoading) return;
     
-    // Use ref data for validation
     if (!validateForm()) {
       return;
     }
@@ -277,7 +279,7 @@ const SellerEditProfile = () => {
       // Get current data from ref
       const currentData = formDataRef.current;
 
-      // Prepare update data - match the sellers table columns exactly
+      // Prepare update data - all columns now exist
       const updateData: any = {
         name: currentData.name,
         bio: currentData.bio,
@@ -297,9 +299,7 @@ const SellerEditProfile = () => {
       
       await updateSellerMutation.mutateAsync(updateData);
       
-      // Show success message and navigate
-      alert('Profile updated successfully!');
-      navigate('/seller-dashboard/products');
+      // REMOVED: alert and navigate - they are now in onSuccess
       
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -482,7 +482,7 @@ const SellerEditProfile = () => {
           </div>
         </div>
 
-        {/* Social Media Links */}
+        {/* Social Media Links - ADDED BACK since columns now exist */}
         <div className="pt-4 border-t border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Social Media Links</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
