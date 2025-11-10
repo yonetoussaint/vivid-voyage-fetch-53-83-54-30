@@ -102,7 +102,6 @@ const SellerEditProfile = () => {
     if (file) {
       setProfileImage(file);
       console.log('Profile image selected:', file.name);
-      // TODO: Upload profile image to Supabase storage
     }
   };
 
@@ -111,8 +110,7 @@ const SellerEditProfile = () => {
     if (file) {
       setBannerImage(file);
       console.log('Banner image selected:', file.name);
-      // TODO: Upload banner image to Supabase storage
-      setIsEditingBanner(false); // Close banner edit mode after selection
+      setIsEditingBanner(false);
     }
   };
 
@@ -128,13 +126,11 @@ const SellerEditProfile = () => {
     try {
       let image_url = sellerData?.image_url;
       if (profileImage) {
-        // TODO: Implement profile image upload
         console.log('Would upload profile image:', profileImage.name);
       }
 
       let banner_url = sellerData?.banner_url;
       if (bannerImage) {
-        // TODO: Implement banner image upload
         console.log('Would upload banner image:', bannerImage.name);
       }
 
@@ -157,126 +153,63 @@ const SellerEditProfile = () => {
     );
   }
 
-  // Create a safe seller data object for HeroBanner
-  const safeSellerData = sellerData ? {
-    id: sellerData.id,
-    name: sellerData.name || 'Seller Name',
-    banner_url: sellerData.banner_url,
-    // Add other properties that HeroBanner might need
-  } : null;
-
   return (
     <div className="min-h-screen bg-background">
       {/* Banner Section with HeroBanner Component */}
       <div className="relative">
-        {safeSellerData ? (
-          <>
-            <HeroBanner 
-              asCarousel={false} 
-              showNewsTicker={false} 
-              customHeight="180px" 
-              sellerId={safeSellerData.id}
-              sellerData={safeSellerData} // Pass seller data directly
-            />
-            
-            {/* Banner Edit Overlay */}
-            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300 cursor-pointer">
-              <button
-                onClick={() => setIsEditingBanner(true)}
-                className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-white transition-colors"
-              >
-                <Edit2 className="w-4 h-4" />
-                Edit Banner
-              </button>
-            </div>
-          </>
-        ) : (
-          // Fallback banner if no seller data
-          <div className="w-full h-48 bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center">
-            <div className="text-white text-center">
-              <Camera className="w-12 h-12 mx-auto mb-2 opacity-70" />
-              <p className="text-sm">No banner image set</p>
-            </div>
-          </div>
-        )}
+        <HeroBanner 
+          asCarousel={false} 
+          showNewsTicker={false} 
+          customHeight="180px" 
+          sellerId={sellerData?.id}
+        />
+        
+        {/* Banner Edit Overlay */}
+        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300 cursor-pointer z-20">
+          <button
+            onClick={() => setIsEditingBanner(true)}
+            className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-white transition-colors"
+          >
+            <Edit2 className="w-4 h-4" />
+            Edit Banner
+          </button>
+        </div>
+      </div>
 
-        {/* Banner Upload Modal */}
-        {isEditingBanner && (
-          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl p-6 max-w-md w-full">
-              <h3 className="text-lg font-semibold mb-4">Change Banner Image</h3>
-              <div className="space-y-4">
-                <label className="block">
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors">
-                    <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm font-medium">Upload Banner Image</p>
-                    <p className="text-xs text-gray-500 mt-1">Recommended: 1200×400px</p>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleBannerImageChange}
-                      className="hidden"
-                    />
-                  </div>
-                </label>
-                
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setIsEditingBanner(false)}
-                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => {
-                      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-                      fileInput?.click();
-                    }}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                  >
-                    Choose File
-                  </button>
-                </div>
+      {/* Profile Image Section - Positioned to overlap the banner */}
+      <div className="relative z-30 -mt-12 flex justify-center">
+        <div className="relative">
+          <div className="w-24 h-24 bg-gray-300 rounded-full border-4 border-white overflow-hidden shadow-lg">
+            {sellerData?.image_url ? (
+              <img 
+                src={sellerData.image_url} 
+                alt="Profile" 
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face";
+                }}
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-400 flex items-center justify-center">
+                <Camera className="w-6 h-6 text-white" />
               </div>
-            </div>
+            )}
           </div>
-        )}
+          <label className="absolute -bottom-1 -right-1 bg-blue-600 text-white p-1.5 rounded-full cursor-pointer hover:bg-blue-700 transition-colors border-2 border-white shadow-lg">
+            <Camera className="w-4 h-4" />
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleProfileImageChange}
+              className="hidden"
+            />
+          </label>
+        </div>
       </div>
 
       {/* Edit Form */}
-      <form onSubmit={handleSubmit} className="p-4 space-y-6">
-        {/* Profile Image Section */}
-        <div className="flex justify-center -mt-16 relative">
-          <div className="relative">
-            <div className="w-24 h-24 bg-gray-300 rounded-full border-4 border-white overflow-hidden">
-              {sellerData?.image_url ? (
-                <img 
-                  src={sellerData.image_url} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face";
-                  }}
-                />
-              ) : (
-                <div className="w-full h-full bg-gray-400 flex items-center justify-center">
-                  <Camera className="w-6 h-6 text-white" />
-                </div>
-              )}
-            </div>
-            <label className="absolute bottom-0 right-0 bg-blue-600 text-white p-1.5 rounded-full cursor-pointer hover:bg-blue-700 transition-colors">
-              <Camera className="w-4 h-4" />
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleProfileImageChange}
-                className="hidden"
-              />
-            </label>
-          </div>
-        </div>
-
+      <form onSubmit={handleSubmit} className="p-4 space-y-6 mt-4">
         {/* Form Fields */}
         <div className="space-y-4">
           <div>
@@ -406,6 +339,48 @@ const SellerEditProfile = () => {
           Save
         </button>
       </form>
+
+      {/* Banner Upload Modal */}
+      {isEditingBanner && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full">
+            <h3 className="text-lg font-semibold mb-4">Change Banner Image</h3>
+            <div className="space-y-4">
+              <label className="block">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors">
+                  <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-sm font-medium">Upload Banner Image</p>
+                  <p className="text-xs text-gray-500 mt-1">Recommended: 1200×400px</p>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleBannerImageChange}
+                    className="hidden"
+                  />
+                </div>
+              </label>
+              
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setIsEditingBanner(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+                    fileInput?.click();
+                  }}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                >
+                  Choose File
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Loading overlay */}
       {isLoading && (
