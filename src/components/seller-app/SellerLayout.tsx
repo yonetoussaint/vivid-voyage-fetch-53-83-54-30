@@ -239,21 +239,21 @@ const header = (
   </div>  
 );
 
-  // Top content (Seller Info) - Hide on edit profile page
-  const topContent = isProductsTab && !isEditProfilePage ? (
-    <div className="w-full bg-black text-white">  
-      <SellerInfoSection  
-        sellerData={sellerData}  
-        sellerLoading={sellerLoading}  
-        getSellerLogoUrl={getSellerLogoUrl}  
-        onBecomeSeller={handleBecomeSeller}  
-        onBack={handleBackClick}  
-        onEditProfile={() => navigate('/seller-dashboard/edit-profile')}
-        isOwnProfile={isOwnProfile}  
-        showActionButtons={showActionButtons}  
-      />  
-    </div>  
-  ) : undefined;
+
+const topContent = isProductsTab && !isEditProfilePage ? (
+  <div className="w-full bg-black text-white">  
+    <SellerInfoSection  
+      sellerData={sellerData}  
+      sellerLoading={sellerLoading}  
+      getSellerLogoUrl={getSellerLogoUrl}  
+      onBecomeSeller={handleBecomeSeller}  
+      onBack={handleBackClick}  
+      onEditProfile={() => navigate('/seller-dashboard/edit-profile')}
+      isOwnProfile={isOwnProfile}  
+      showActionButtons={showActionButtons}  
+    />  
+  </div>  
+) : undefined;
 
   // Enhanced children with additional props - PRESERVED ORIGINAL LOGIC
   const enhancedChildren = React.Children.map(children, child => {  
