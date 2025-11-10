@@ -312,7 +312,7 @@ const SellerOrders = () => {
       )}
 
       {/* Header & Stats Section - Mobile Optimized */}
-      <div className="sticky top-0 z-40 bg-white border-b border-gray-200">
+      <div className="sticky top-0 z-40 bg-white">
         <SellerSummaryHeader
           title="Orders"
           subtitle="Manage your orders"
