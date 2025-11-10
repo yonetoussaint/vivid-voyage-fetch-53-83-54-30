@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Camera, Upload } from 'lucide-react';
+import { Camera, Upload, Edit2 } from 'lucide-react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import HeroBanner from '@/components/home/HeroBanner';
 
 const SellerEditProfile = () => {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ const SellerEditProfile = () => {
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [bannerImage, setBannerImage] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isEditingBanner, setIsEditingBanner] = useState(false);
 
   // Fetch current seller data
   const { data: sellerData, isLoading: sellerLoading } = useQuery({
@@ -79,7 +81,7 @@ const SellerEditProfile = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['seller', user?.id] });
-      navigate('/seller-dashboard/products'); // Navigate back to products tab
+      navigate('/seller-dashboard/products');
     },
     onError: (error) => {
       console.error('Error updating profile:', error);
@@ -100,6 +102,7 @@ const SellerEditProfile = () => {
     if (file) {
       setProfileImage(file);
       console.log('Profile image selected:', file.name);
+      // TODO: Upload profile image to Supabase storage
     }
   };
 
@@ -108,6 +111,8 @@ const SellerEditProfile = () => {
     if (file) {
       setBannerImage(file);
       console.log('Banner image selected:', file.name);
+      // TODO: Upload banner image to Supabase storage
+      setIsEditingBanner(false); // Close banner edit mode after selection
     }
   };
 
@@ -123,11 +128,13 @@ const SellerEditProfile = () => {
     try {
       let image_url = sellerData?.image_url;
       if (profileImage) {
+        // TODO: Implement profile image upload
         console.log('Would upload profile image:', profileImage.name);
       }
 
       let banner_url = sellerData?.banner_url;
       if (bannerImage) {
+        // TODO: Implement banner image upload
         console.log('Would upload banner image:', bannerImage.name);
       }
 
@@ -150,36 +157,113 @@ const SellerEditProfile = () => {
     );
   }
 
+  // Create a safe seller data object for HeroBanner
+  const safeSellerData = sellerData ? {
+    id: sellerData.id,
+    name: sellerData.name || 'Seller Name',
+    banner_url: sellerData.banner_url,
+    // Add other properties that HeroBanner might need
+  } : null;
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Edit Form - No manual header spacing needed, handled by StickyTabsLayout */}
-      <form onSubmit={handleSubmit} className="p-4 space-y-6">
-        {/* Banner Image */}
-        <div className="relative">
-          <div className="w-full h-40 bg-gray-200 rounded-lg overflow-hidden">
-            <div className="w-full h-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center">
-              <Camera className="w-8 h-8 text-white opacity-70" />
+      {/* Banner Section with HeroBanner Component */}
+      <div className="relative">
+        {safeSellerData ? (
+          <>
+            <HeroBanner 
+              asCarousel={false} 
+              showNewsTicker={false} 
+              customHeight="180px" 
+              sellerId={safeSellerData.id}
+              sellerData={safeSellerData} // Pass seller data directly
+            />
+            
+            {/* Banner Edit Overlay */}
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300 cursor-pointer">
+              <button
+                onClick={() => setIsEditingBanner(true)}
+                className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-white transition-colors"
+              >
+                <Edit2 className="w-4 h-4" />
+                Edit Banner
+              </button>
+            </div>
+          </>
+        ) : (
+          // Fallback banner if no seller data
+          <div className="w-full h-48 bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center">
+            <div className="text-white text-center">
+              <Camera className="w-12 h-12 mx-auto mb-2 opacity-70" />
+              <p className="text-sm">No banner image set</p>
             </div>
           </div>
-          <label className="absolute bottom-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2 cursor-pointer hover:bg-white transition-colors">
-            <Upload className="w-4 h-4" />
-            Change Banner
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleBannerImageChange}
-              className="hidden"
-            />
-          </label>
-        </div>
+        )}
 
-        {/* Profile Image */}
+        {/* Banner Upload Modal */}
+        {isEditingBanner && (
+          <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl p-6 max-w-md w-full">
+              <h3 className="text-lg font-semibold mb-4">Change Banner Image</h3>
+              <div className="space-y-4">
+                <label className="block">
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors">
+                    <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm font-medium">Upload Banner Image</p>
+                    <p className="text-xs text-gray-500 mt-1">Recommended: 1200×400px</p>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleBannerImageChange}
+                      className="hidden"
+                    />
+                  </div>
+                </label>
+                
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setIsEditingBanner(false)}
+                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+                      fileInput?.click();
+                    }}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                  >
+                    Choose File
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Edit Form */}
+      <form onSubmit={handleSubmit} className="p-4 space-y-6">
+        {/* Profile Image Section */}
         <div className="flex justify-center -mt-16 relative">
           <div className="relative">
             <div className="w-24 h-24 bg-gray-300 rounded-full border-4 border-white overflow-hidden">
-              <div className="w-full h-full bg-gray-400 flex items-center justify-center">
-                <Camera className="w-6 h-6 text-white" />
-              </div>
+              {sellerData?.image_url ? (
+                <img 
+                  src={sellerData.image_url} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face";
+                  }}
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-400 flex items-center justify-center">
+                  <Camera className="w-6 h-6 text-white" />
+                </div>
+              )}
             </div>
             <label className="absolute bottom-0 right-0 bg-blue-600 text-white p-1.5 rounded-full cursor-pointer hover:bg-blue-700 transition-colors">
               <Camera className="w-4 h-4" />
@@ -268,6 +352,53 @@ const SellerEditProfile = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="https://example.com"
             />
+          </div>
+        </div>
+
+        {/* Social Media Links Section */}
+        <div className="pt-4 border-t border-gray-200">
+          <h3 className="text-lg font-semibold mb-4">Social Media Links</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Facebook
+              </label>
+              <input
+                type="url"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="https://facebook.com/yourpage"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Instagram
+              </label>
+              <input
+                type="url"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="https://instagram.com/yourprofile"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                X (Twitter)
+              </label>
+              <input
+                type="url"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="https://x.com/yourprofile"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                TikTok
+              </label>
+              <input
+                type="url"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="https://tiktok.com/@yourprofile"
+              />
+            </div>
           </div>
         </div>
 
