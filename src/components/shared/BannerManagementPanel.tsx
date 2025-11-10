@@ -182,35 +182,46 @@ const BannerManagementPanel: React.FC<BannerManagementPanelProps> = ({
   };
 
   const uploadFile = async (file: File, bucket: string): Promise<string> => {
-    try {
-      // Upload to Supabase Storage
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${sellerId}/${Date.now()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from(bucket)
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw uploadError;
-      }
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(fileName);
-
-      console.log('Upload successful, public URL:', publicUrl);
-      return publicUrl;
-    } catch (error) {
-      console.error('Upload error:', error);
-      throw error;
+  try {
+    // Upload to Supabase Storage
+    const fileExt = file.name.split('.').pop();
+    
+    // Use the authenticated user's ID as the folder name to match RLS policy
+    const { data: { user } } = await supabase.auth.getUser();
+    const userFolder = user?.id;
+    
+    if (!userFolder) {
+      throw new Error('User not authenticated');
     }
-  };
+    
+    const fileName = `${userFolder}/${Date.now()}.${fileExt}`;
+
+    console.log('Uploading file to bucket:', bucket, 'with name:', fileName);
+
+    const { error: uploadError } = await supabase.storage
+      .from(bucket)
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (uploadError) {
+      console.error('Upload error details:', uploadError);
+      throw uploadError;
+    }
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(fileName);
+
+    console.log('Upload successful, public URL:', publicUrl);
+    return publicUrl;
+  } catch (error) {
+    console.error('Upload error:', error);
+    throw error;
+  }
+};
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
