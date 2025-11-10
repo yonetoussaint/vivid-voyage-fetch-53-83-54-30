@@ -46,6 +46,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
   const handleBackClick = () => navigate('/profile');  
   const handleBecomeSeller = () => navigate('/seller-onboarding');  
+  const handleEditProfile = () => navigate('/seller-dashboard/edit-profile');
 
   const handleShareClick = () => {  
     if (navigator.share) {  
@@ -219,6 +220,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         getSellerLogoUrl={getSellerLogoUrl}  
         onBecomeSeller={handleBecomeSeller}  
         onBack={handleBackClick}  
+        onEditProfile={handleEditProfile}
         isOwnProfile={isOwnProfile}  
         showActionButtons={showActionButtons}  
       />  
