@@ -152,7 +152,7 @@ const SellerEditProfile = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Edit Form - No header spacing needed, handled by layout */}
+      {/* Edit Form - No manual header spacing needed, handled by StickyTabsLayout */}
       <form onSubmit={handleSubmit} className="p-4 space-y-6">
         {/* Banner Image */}
         <div className="relative">
