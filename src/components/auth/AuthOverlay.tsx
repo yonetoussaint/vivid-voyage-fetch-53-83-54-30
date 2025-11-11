@@ -108,7 +108,7 @@ const AuthOverlay: React.FC = () => {
               onCreateAccount={handleCreateAccount}
               onSignUpClick={handleSignUpClick}
               initialEmail={userEmail}
-              {...getScreenProps('email')} // This will pass isCompact: false and showHeader: true
+              {...getScreenProps('email')}
             />
           </React.Suspense>
         );
@@ -228,11 +228,11 @@ const AuthOverlay: React.FC = () => {
       isOpen={isAuthOverlayOpen}
       onClose={handleClose}
       headerContent={panelHeaderContent}
-      showCloseButton={false} // We'll handle closing through the auth flow
+      showCloseButton={false}
       preventBodyScroll={true}
       className="bg-white"
     >
-      <div className="px-4 pb-6 pt-2">
+      <div className="px-4 pb-6">
         {renderCurrentScreen()}
       </div>
     </SlideUpPanel>
