@@ -56,6 +56,20 @@ const SellerProductEdit = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isNewProduct] = useState(productId === 'new');
 
+
+
+useEffect(() => {
+  const handleSave = () => {
+    console.log('Save event received from header, current formData:', formDataRef.current);
+    handleSubmit();
+  };
+
+  window.addEventListener('saveEditProfile', handleSave);
+  return () => {
+    window.removeEventListener('saveEditProfile', handleSave);
+  };
+}, []);
+
   // Update ref whenever formData changes
   useEffect(() => {
     formDataRef.current = formData;
