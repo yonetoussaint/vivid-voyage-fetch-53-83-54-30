@@ -50,14 +50,26 @@ const AuthOverlay: React.FC = () => {
   const handleBackFromAccountCreation = () => setCurrentScreen('email');
   const handleAccountCreated = () => setCurrentScreen('success');
 
-  const getCompactProps = () => ({
-    isCompact: true,
-    onExpand: undefined
-  });
+  // Remove compact props for EmailAuthScreen to show full UI
+  const getScreenProps = (screen: string) => {
+    // For EmailAuthScreen, don't use compact mode to show all UI elements
+    if (screen === 'email') {
+      return {
+        isCompact: false, // Set to false to show full UI including email providers
+        onExpand: undefined,
+        showHeader: true // Show header for back navigation
+      };
+    }
+    
+    // For other screens, use compact mode
+    return {
+      isCompact: true,
+      onExpand: undefined,
+      showHeader: false
+    };
+  };
 
   const renderCurrentScreen = () => {
-    const compactProps = getCompactProps();
-
     // Lazy load components
     const MainLoginScreen = React.lazy(() => import('./MainLoginScreen'));
     const EmailAuthScreen = React.lazy(() => import('./EmailAuthScreen'));
@@ -77,8 +89,7 @@ const AuthOverlay: React.FC = () => {
               selectedLanguage={selectedLanguage}
               setSelectedLanguage={setSelectedLanguage}
               onContinueWithEmail={handleContinueWithEmail}
-              showHeader={false}
-              {...compactProps}
+              {...getScreenProps('main')}
             />
           </React.Suspense>
         );
@@ -93,8 +104,7 @@ const AuthOverlay: React.FC = () => {
               onCreateAccount={handleCreateAccount}
               onSignUpClick={handleSignUpClick}
               initialEmail={userEmail}
-              showHeader={false}
-              {...compactProps}
+              {...getScreenProps('email')} // This will pass isCompact: false and showHeader: true
             />
           </React.Suspense>
         );
@@ -105,8 +115,7 @@ const AuthOverlay: React.FC = () => {
               email={userEmail}
               onBack={handleBackFromVerification}
               onVerificationSuccess={handleVerificationSuccess}
-              showHeader={false}
-              {...compactProps}
+              {...getScreenProps('verification')}
             />
           </React.Suspense>
         );
@@ -118,8 +127,7 @@ const AuthOverlay: React.FC = () => {
               onBack={handleBackFromPassword}
               onSignInSuccess={handleSignInSuccess}
               onForgotPasswordClick={handleForgotPasswordClick}
-              showHeader={false}
-              {...compactProps}
+              {...getScreenProps('password')}
             />
           </React.Suspense>
         );
@@ -133,8 +141,7 @@ const AuthOverlay: React.FC = () => {
                 setCurrentScreen('otp-reset');
               }}
               initialEmail={userEmail}
-              showHeader={false}
-              {...compactProps}
+              {...getScreenProps('reset-password')}
             />
           </React.Suspense>
         );
@@ -148,8 +155,7 @@ const AuthOverlay: React.FC = () => {
                 setResetOTP(otp);
                 setCurrentScreen('new-password');
               }}
-              showHeader={false}
-              {...compactProps}
+              {...getScreenProps('otp-reset')}
             />
           </React.Suspense>
         );
@@ -161,8 +167,7 @@ const AuthOverlay: React.FC = () => {
               otp={resetOTP}
               onBack={() => setCurrentScreen('otp-reset')}
               onPasswordResetSuccess={() => setCurrentScreen('success')}
-              showHeader={false}
-              {...compactProps}
+              {...getScreenProps('new-password')}
             />
           </React.Suspense>
         );
@@ -173,8 +178,7 @@ const AuthOverlay: React.FC = () => {
               email={userEmail}
               onBack={handleBackFromAccountCreation}
               onAccountCreated={handleAccountCreated}
-              showHeader={false}
-              {...compactProps}
+              {...getScreenProps('account-creation')}
             />
           </React.Suspense>
         );
@@ -184,8 +188,7 @@ const AuthOverlay: React.FC = () => {
             <SuccessScreen
               email={userEmail}
               onContinue={handleContinueToApp}
-              showHeader={false}
-              {...compactProps}
+              {...getScreenProps('success')}
             />
           </React.Suspense>
         );
