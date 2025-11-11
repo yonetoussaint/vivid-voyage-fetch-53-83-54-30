@@ -82,8 +82,8 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     <div
       className={`${
         isCompact
-          ? 'bg-white flex flex-col px-5 pb-5' // compact layout
-          : 'min-h-screen bg-white flex flex-col px-5 pb-6' // balanced bottom padding
+          ? 'bg-white flex flex-col px-5 pb-4'
+          : 'min-h-screen bg-white flex flex-col justify-between px-5 pb-5'
       }`}
     >
       {/* Header */}
@@ -121,18 +121,16 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="flex flex-col w-full max-w-md mx-auto relative flex-1 overflow-y-auto">
-        <div className="text-center mb-5 px-2">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-1">
-            What's your email?
-          </h1>
-          <p className="text-gray-600 text-sm">
-            We'll check if you already have an account.
-          </p>
-        </div>
+      {/* Centered Content */}
+      <div className="flex flex-col items-center text-center flex-grow justify-center px-2">
+        <h1 className="text-2xl font-semibold text-gray-900 mb-1">
+          What's your email?
+        </h1>
+        <p className="text-gray-600 text-sm mb-5">
+          We'll check if you already have an account.
+        </p>
 
-        <div className="flex flex-col gap-2 px-2">
+        <div className="flex flex-col gap-2 w-full max-w-md">
           <EmailStatusMessage
             emailCheckState={emailCheckState}
             isUntrustedProvider={isUntrustedProvider}
