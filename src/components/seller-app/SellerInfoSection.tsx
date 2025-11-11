@@ -66,7 +66,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
     const center = size / 2;
     const radius = 26;
     const strokeWidth = 2.5;
-    const gapAngle = 5; // Gap between segments in degrees
+    const gapAngle = 8; // Gap between segments in degrees
     const segmentAngle = (360 / storiesCount) - gapAngle;
 
     return (
@@ -223,13 +223,6 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
               </div>
               <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></div>
             </div>
-            
-            {/* Stories count badge */}
-            {sellerStories.length > 0 && (
-              <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-white shadow-sm">
-                {sellerStories.length}
-              </div>
-            )}
           </div>
 
           <div className="flex items-start justify-between w-full h-12">
