@@ -119,8 +119,9 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
           </p>
         </div>
 
+        {/* Email element - same height as password field */}
         <div className="mb-3">
-          <div className="flex items-center justify-between gap-2 p-2.5 bg-gray-50 rounded-lg">
+          <div className="flex items-center justify-between gap-2 p-2.5 border border-gray-300 rounded-lg bg-white h-[42px]">
             <div className="flex items-center gap-2">
               {faviconUrl ? (
                 <img
@@ -190,6 +191,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
           </div>
         </div>
 
+        {/* Forgot password button first */}
         <div className="text-center mb-3">
           <button
             className="text-red-500 text-sm hover:text-red-600 font-medium disabled:opacity-50"
@@ -201,6 +203,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
           </button>
         </div>
 
+        {/* Sign in button after forgot password */}
         <div className="space-y-2.5 mb-4">
           <button
             disabled={!isPasswordValid || isLoading || authLoading}
