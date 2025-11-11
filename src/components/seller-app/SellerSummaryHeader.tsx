@@ -334,7 +334,7 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
 
   return (
     <div className={`bg-white border-b ${className}`}>
-      <div className="px-4 py-3">
+      <div className="px-2 py-3">
         {showStats && (
           <>
             {/* Subtitle with icon at the top */}
