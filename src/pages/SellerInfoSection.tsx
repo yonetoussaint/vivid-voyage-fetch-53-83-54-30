@@ -166,7 +166,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
             <div className="flex flex-col gap-0.5 flex-1 min-w-0 h-full justify-center">
               <div className="flex items-center gap-1.5">
                 <h1 className="text-lg font-bold truncate">{safeSellerData.name}</h1>
-                {safeSellerData.verified && <VerificationBadge size="md" />}
+                {safeSellerData.verified && <VerificationBadge size="lg" />}
               </div>
 
               <div className="flex items-center gap-1 text-xs text-gray-500">
