@@ -120,8 +120,8 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
         </div>
 
         {/* Email element - same height as password field */}
-        <div className="mb-3">
-          <div className="flex items-center justify-between gap-2 p-2.5 border border-gray-300 rounded-lg bg-white h-[42px]">
+        <div className="mb-3 h-[42px]">
+          <div className="flex items-center justify-between gap-2 p-2.5 bg-gray-50 rounded-lg h-full">
             <div className="flex items-center gap-2">
               {faviconUrl ? (
                 <img
@@ -155,7 +155,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
           </div>
         )}
 
-        <div className="mb-2 relative">
+        <div className="mb-3 relative">
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
             <input
@@ -191,20 +191,8 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
           </div>
         </div>
 
-        {/* Forgot password button first */}
-        <div className="text-center mb-3">
-          <button
-            className="text-red-500 text-sm hover:text-red-600 font-medium disabled:opacity-50"
-            type="button"
-            onClick={onForgotPasswordClick}
-            disabled={isLoading || authLoading}
-          >
-            Forgot password?
-          </button>
-        </div>
-
-        {/* Sign in button after forgot password */}
-        <div className="space-y-2.5 mb-4">
+        {/* Sign in button first */}
+        <div className="space-y-2.5 mb-3">
           <button
             disabled={!isPasswordValid || isLoading || authLoading}
             onClick={handleSignIn}
@@ -221,6 +209,18 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
               <Lock className="w-4 h-4" />
             )}
             <span>{isLoading || authLoading ? 'Signing In...' : 'Sign In'}</span>
+          </button>
+        </div>
+
+        {/* Forgot password button after sign in button */}
+        <div className="text-center mb-4">
+          <button
+            className="text-red-500 text-sm hover:text-red-600 font-medium disabled:opacity-50"
+            type="button"
+            onClick={onForgotPasswordClick}
+            disabled={isLoading || authLoading}
+          >
+            Forgot password?
           </button>
         </div>
 
