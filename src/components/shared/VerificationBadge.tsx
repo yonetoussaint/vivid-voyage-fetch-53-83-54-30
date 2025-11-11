@@ -11,7 +11,7 @@ const VerificationBadge: React.FC<VerificationBadgeProps> = ({
   className = "" 
 }) => {
   // Determine the size class directly based on the prop
-  let sizeClass = "w-4 h-4"; // default (md)
+  let sizeClass = "w-6 h-6"; // default (md)
   
   if (size === "xs") {
     sizeClass = "w-3 h-3";
