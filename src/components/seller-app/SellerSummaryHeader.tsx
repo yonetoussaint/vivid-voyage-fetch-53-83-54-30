@@ -1,5 +1,5 @@
 import React from 'react';
-import { Package, Star, Box, Info } from 'lucide-react';
+import { Package, Star, Box, Info, LucideIcon } from 'lucide-react';
 
 interface InventoryItem {
   value: string | number;
@@ -173,6 +173,7 @@ const mockProductsSummary: ProductsSummary = {
 interface SellerSummaryHeaderProps {
   title?: string;
   subtitle?: string;
+  subtitleIcon?: React.ComponentType<{ className?: string }>; // New prop for custom icon
   stats?: InventoryItem[];
   progressPercentage?: number;
   progressVariant?: 'stock-level' | 'category' | 'turnover' | 'capacity';
@@ -192,6 +193,7 @@ interface SellerSummaryHeaderProps {
 const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
   title = "Inventory Overview",
   subtitle,
+  subtitleIcon, // Custom icon prop
   stats = mockInventoryStats,
   progressPercentage = 65,
   progressVariant = 'stock-level',
@@ -247,6 +249,13 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
   };
 
   const getSubtitleIcon = () => {
+    // Use custom icon if provided
+    if (subtitleIcon) {
+      const CustomIcon = subtitleIcon;
+      return <CustomIcon className="w-4 h-4 text-gray-500 flex-shrink-0" />;
+    }
+    
+    // Fall back to mode-based icons
     switch (mode) {
       case 'inventory':
         return <Package className="w-4 h-4 text-gray-500 flex-shrink-0" />;
@@ -327,7 +336,7 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
   const visibleCards = Math.floor(containerWidth / cardWidth);
   const totalCards = currentStats.length;
   const hiddenCards = Math.max(0, totalCards - visibleCards);
-  
+
   // Calculate active dot based on scroll position
   const scrollProgress = scrollableWidth > 0 ? scrollPosition / scrollableWidth : 0;
   const activeDotIndex = hiddenCards > 0 ? Math.floor(scrollProgress * hiddenCards) : 0;
@@ -373,7 +382,7 @@ const SellerSummaryHeader: React.FC<SellerSummaryHeaderProps> = ({
                         ))}
                       </div>
                     </div>
-                    
+
                     {/* Dynamic scroll indicator dots */}
                     {hiddenCards > 0 && (
                       <div className="flex justify-center gap-1.5 mt-3">
