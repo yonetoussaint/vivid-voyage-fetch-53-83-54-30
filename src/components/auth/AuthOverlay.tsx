@@ -1,5 +1,5 @@
 import React from 'react';
-import { Drawer, DrawerContent } from "@/components/ui/drawer";
+import SlideUpPanel from '@/components/shared/SlideUpPanel';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import {
   MainLoginScreenSkeleton,
@@ -49,6 +49,10 @@ const AuthOverlay: React.FC = () => {
   const handleContinueToApp = () => setIsAuthOverlayOpen(false);
   const handleBackFromAccountCreation = () => setCurrentScreen('email');
   const handleAccountCreated = () => setCurrentScreen('success');
+
+  const handleClose = () => {
+    setIsAuthOverlayOpen(false);
+  };
 
   // Remove compact props for EmailAuthScreen to show full UI
   const getScreenProps = (screen: string) => {
@@ -197,21 +201,41 @@ const AuthOverlay: React.FC = () => {
     }
   };
 
-  return (
-    <Drawer open={isAuthOverlayOpen} onOpenChange={(open) => {
-      if (!open) setIsAuthOverlayOpen(false);
-    }}>
-      <DrawerContent className="max-h-[95vh] overflow-y-auto">
-        {/* Drag handle */}
-        <div className="flex flex-col items-center pt-2 pb-3 flex-shrink-0">
-          <div className="w-16 h-1.5 bg-gray-300 rounded-full shadow-sm" />
-        </div>
+  // Custom header content with drag handle
+  const panelHeaderContent = (
+    <div className="flex flex-col items-center w-full">
+      {/* Drag handle */}
+      <div className="w-16 h-1.5 bg-gray-300 rounded-full shadow-sm mb-2" />
+      {/* Screen title based on current screen */}
+      <div className="text-center">
+        <h3 className="text-lg font-semibold text-gray-900">
+          {currentScreen === 'main' && 'Sign In'}
+          {currentScreen === 'email' && 'Continue with Email'}
+          {currentScreen === 'verification' && 'Verification Code'}
+          {currentScreen === 'password' && 'Enter Password'}
+          {currentScreen === 'reset-password' && 'Reset Password'}
+          {currentScreen === 'otp-reset' && 'Verify Code'}
+          {currentScreen === 'new-password' && 'New Password'}
+          {currentScreen === 'account-creation' && 'Create Account'}
+          {currentScreen === 'success' && 'Success'}
+        </h3>
+      </div>
+    </div>
+  );
 
-        <div className="px-0 pb-4">
-          {renderCurrentScreen()}
-        </div>
-      </DrawerContent>
-    </Drawer>
+  return (
+    <SlideUpPanel
+      isOpen={isAuthOverlayOpen}
+      onClose={handleClose}
+      headerContent={panelHeaderContent}
+      showCloseButton={false} // We'll handle closing through the auth flow
+      preventBodyScroll={true}
+      className="bg-white"
+    >
+      <div className="px-4 pb-6 pt-2">
+        {renderCurrentScreen()}
+      </div>
+    </SlideUpPanel>
   );
 };
 
