@@ -10,20 +10,19 @@ const VerificationBadge: React.FC<VerificationBadgeProps> = ({
   size = "md", 
   className = "" 
 }) => {
-  const sizeMap = {
-    xs: 12,
-    sm: 14, 
-    md: 16,
-    lg: 20
-  };
-
-  const pixels = sizeMap[size];
+  // Determine the size class directly based on the prop
+  let sizeClass = "w-4 h-4"; // default (md)
+  
+  if (size === "xs") {
+    sizeClass = "w-3 h-3";
+  } else if (size === "sm") {
+    sizeClass = "w-3.5 h-3.5";
+  } else if (size === "lg") {
+    sizeClass = "w-5 h-5";
+  }
 
   return (
-    <div 
-      className={`flex-shrink-0 ${className}`}
-      style={{ width: `${pixels}px`, height: `${pixels}px` }}
-    >
+    <div className={`${sizeClass} ${className} flex-shrink-0`}>
       <svg 
         width="100%" 
         height="100%" 
