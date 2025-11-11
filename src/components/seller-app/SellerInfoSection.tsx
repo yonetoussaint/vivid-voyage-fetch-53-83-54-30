@@ -21,6 +21,7 @@ interface SellerInfoSectionProps {
   isOwnProfile?: boolean;
   onVerifySeller?: () => void;
   onEditProfile?: () => void;
+  sellerStories?: any[]; // Add stories data
 }
 
 const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
@@ -32,7 +33,8 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
   showActionButtons = true,
   isOwnProfile = false,
   onVerifySeller = () => console.log('Verify seller clicked'),
-  onEditProfile = () => console.log('Edit profile clicked')
+  onEditProfile = () => console.log('Edit profile clicked'),
+  sellerStories = [] // Default to empty array
 }) => {
   const [showBusinessHours, setShowBusinessHours] = useState(false);
   const [showSocialPanel, setShowSocialPanel] = useState(false);
@@ -53,6 +55,70 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
     if (num >= 1000000) return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'm';
     if (num >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
     return num.toString();
+  };
+
+  // Stories ring configuration
+  const getStoriesRing = () => {
+    const storiesCount = sellerStories.length;
+    if (storiesCount === 0) return null;
+
+    const segmentAngle = 360 / storiesCount;
+    const radius = 26; // Outer radius of the ring
+    const strokeWidth = 2.5;
+    const center = radius + strokeWidth;
+
+    return (
+      <svg 
+        width={(center + strokeWidth) * 2} 
+        height={(center + strokeWidth) * 2} 
+        className="absolute top-0 left-0 transform -rotate-90"
+        style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}
+      >
+        {sellerStories.map((_, index) => {
+          const startAngle = index * segmentAngle;
+          const endAngle = (index + 1) * segmentAngle;
+          
+          // Convert angles to radians
+          const startRad = (startAngle * Math.PI) / 180;
+          const endRad = (endAngle * Math.PI) / 180;
+          
+          // Calculate coordinates for arc
+          const x1 = center + radius * Math.cos(startRad);
+          const y1 = center + radius * Math.sin(startRad);
+          const x2 = center + radius * Math.cos(endRad);
+          const y2 = center + radius * Math.sin(endRad);
+          
+          // Determine if the arc is large (more than 180 degrees)
+          const largeArcFlag = segmentAngle > 180 ? 1 : 0;
+          
+          // Create the path data for the arc segment
+          const pathData = [
+            `M ${x1} ${y1}`,
+            `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`
+          ].join(' ');
+          
+          return (
+            <path
+              key={index}
+              d={pathData}
+              fill="none"
+              stroke="url(#storyGradient)"
+              strokeWidth={strokeWidth}
+              strokeLinecap="round"
+            />
+          );
+        })}
+        
+        {/* Gradient definition */}
+        <defs>
+          <linearGradient id="storyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#833AB4" />
+            <stop offset="50%" stopColor="#FD1D1D" />
+            <stop offset="100%" stopColor="#FCAF45" />
+          </linearGradient>
+        </defs>
+      </svg>
+    );
   };
 
   const safeSellerData = sellerData ? {
@@ -125,7 +191,6 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
           showNewsTicker={false} 
           customHeight="180px" 
           sellerId={safeSellerData.id}
-          // REMOVED: showEditButton and editButtonPosition props
           dataSource="seller_banners"
         />
       </div>
@@ -133,9 +198,12 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
       {/* Profile Info */}
       <div className="px-2 pt-3 relative z-10">
         <div className="flex items-start gap-3 mb-3">
-          {/* Small Avatar */}
+          {/* Small Avatar with Stories Ring */}
           <div className="relative flex-shrink-0">
-            <div className="p-0.5 rounded-full bg-gradient-to-tr from-purple-500 via-pink-500 to-orange-400">
+            <div className="relative p-0.5 rounded-full bg-gradient-to-tr from-purple-500 via-pink-500 to-orange-400">
+              {/* Stories Ring */}
+              {sellerStories.length > 0 && getStoriesRing()}
+              
               <div className="bg-white rounded-full p-0.5">
                 <div className="w-12 h-12 rounded-full overflow-hidden">
                   {safeSellerData.image_url ? (
@@ -158,6 +226,13 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
               </div>
               <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></div>
             </div>
+            
+            {/* Stories count badge */}
+            {sellerStories.length > 0 && (
+              <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-white shadow-sm">
+                {sellerStories.length}
+              </div>
+            )}
           </div>
 
           <div className="flex items-start justify-between w-full h-12">
