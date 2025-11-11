@@ -62,40 +62,46 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
     const storiesCount = sellerStories.length;
     if (storiesCount === 0) return null;
 
-    const segmentAngle = 360 / storiesCount;
-    const radius = 26; // Outer radius of the ring
+    const size = 60; // Total size of the SVG
+    const center = size / 2;
+    const radius = 26;
     const strokeWidth = 2.5;
-    const center = radius + strokeWidth;
+    const gapAngle = 5; // Gap between segments in degrees
+    const segmentAngle = (360 / storiesCount) - gapAngle;
 
     return (
       <svg 
-        width={(center + strokeWidth) * 2} 
-        height={(center + strokeWidth) * 2} 
-        className="absolute top-0 left-0 transform -rotate-90"
-        style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}
+        width={size} 
+        height={size} 
+        className="absolute -top-0.5 -left-0.5 transform -rotate-90"
+        style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}
       >
+        <defs>
+          <linearGradient id="storyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#833AB4" />
+            <stop offset="50%" stopColor="#FD1D1D" />
+            <stop offset="100%" stopColor="#FCAF45" />
+          </linearGradient>
+        </defs>
+        
         {sellerStories.map((_, index) => {
-          const startAngle = index * segmentAngle;
-          const endAngle = (index + 1) * segmentAngle;
+          const startAngle = index * (segmentAngle + gapAngle);
+          const endAngle = startAngle + segmentAngle;
           
           // Convert angles to radians
           const startRad = (startAngle * Math.PI) / 180;
           const endRad = (endAngle * Math.PI) / 180;
           
-          // Calculate coordinates for arc
+          // Calculate start and end points
           const x1 = center + radius * Math.cos(startRad);
           const y1 = center + radius * Math.sin(startRad);
           const x2 = center + radius * Math.cos(endRad);
           const y2 = center + radius * Math.sin(endRad);
           
-          // Determine if the arc is large (more than 180 degrees)
+          // Large arc flag
           const largeArcFlag = segmentAngle > 180 ? 1 : 0;
           
-          // Create the path data for the arc segment
-          const pathData = [
-            `M ${x1} ${y1}`,
-            `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`
-          ].join(' ');
+          const pathData = `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`;
           
           return (
             <path
@@ -108,15 +114,6 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
             />
           );
         })}
-        
-        {/* Gradient definition */}
-        <defs>
-          <linearGradient id="storyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#833AB4" />
-            <stop offset="50%" stopColor="#FD1D1D" />
-            <stop offset="100%" stopColor="#FCAF45" />
-          </linearGradient>
-        </defs>
       </svg>
     );
   };
@@ -184,7 +181,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
 
   return (
     <div className="bg-white text-gray-900 relative overflow-hidden">
-      {/* Banner - REMOVED showEditButton prop */}
+      {/* Banner */}
       <div className="relative w-full overflow-hidden z-0">
         <HeroBanner 
           asCarousel={false} 
@@ -200,7 +197,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
         <div className="flex items-start gap-3 mb-3">
           {/* Small Avatar with Stories Ring */}
           <div className="relative flex-shrink-0">
-            <div className="relative p-0.5 rounded-full bg-gradient-to-tr from-purple-500 via-pink-500 to-orange-400">
+            <div className="relative p-0.5 rounded-full">
               {/* Stories Ring */}
               {sellerStories.length > 0 && getStoriesRing()}
               
