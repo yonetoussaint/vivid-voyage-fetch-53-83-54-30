@@ -75,10 +75,10 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
   const faviconUrl = FAVICON_OVERRIDES[domain] || `https://www.google.com/s2/favicons?domain=${domain}`;
 
   return (
-    <div className={isCompact ? "bg-white flex flex-col px-4 pb-6" : "min-h-screen bg-white flex flex-col px-4"}>
+    <div className={isCompact ? "bg-white flex flex-col px-4 pb-4" : "bg-white flex flex-col px-4 min-h-0"}>
       {/* Header - optional */}
       {showHeader && !isCompact && (
-        <div className="pt-2 pb-3 flex items-center justify-between">
+        <div className="pt-2 pb-3 flex items-center justify-between flex-shrink-0">
           <button
             onClick={onBack}
             disabled={isLoading || authLoading}
@@ -105,7 +105,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
       )}
 
       {/* Progress Bar - always show */}
-      <div className="mb-4 px-0">
+      <div className="mb-4 px-0 flex-shrink-0">
         <div className="flex items-center gap-2 mb-2">
           <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
           <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
@@ -114,38 +114,39 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col w-full max-w-md mx-auto relative">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-semibold text-gray-900 mb-2">
+      {/* Scrollable content area */}
+      <div className="flex flex-col w-full max-w-md mx-auto min-h-0 flex-1 overflow-y-auto">
+        <div className="text-center mb-6 flex-shrink-0">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-2">
             Enter your password
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 text-sm sm:text-base">
             Sign in with your password
           </p>
         </div>
 
-        <div className="mb-4">
+        <div className="mb-4 flex-shrink-0">
           <div className="flex items-center justify-between gap-3 p-3 bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
               {faviconUrl ? (
                 <img
                   src={faviconUrl}
                   alt="Email provider favicon"
-                  className="w-5 h-5 rounded"
+                  className="w-5 h-5 rounded flex-shrink-0"
                   onError={(e) => {
                     e.currentTarget.onerror = null;
                     e.currentTarget.src = '';
                   }}
                 />
               ) : (
-                <Mail className="w-5 h-5 text-gray-400" />
+                <Mail className="w-5 h-5 text-gray-400 flex-shrink-0" />
               )}
-              <span className="text-gray-700">{email}</span>
+              <span className="text-gray-700 truncate">{email}</span>
             </div>
             <button
               onClick={onBack}
               disabled={isLoading || authLoading}
-              className="text-red-500 font-medium hover:text-red-600 text-sm disabled:opacity-50"
+              className="text-red-500 font-medium hover:text-red-600 text-sm disabled:opacity-50 flex-shrink-0 ml-2"
               type="button"
             >
               Change
@@ -154,12 +155,12 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex-shrink-0">
             <p className="text-red-600 text-sm text-center">{error}</p>
           </div>
         )}
 
-        <div className="mb-6 relative">
+        <div className="mb-4 relative flex-shrink-0">
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
 
@@ -200,10 +201,10 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
           </div>
         </div>
 
-        {/* Forgot Password Button - Moved to be more prominent */}
-        <div className="text-center mb-6">
+        {/* Forgot Password Button */}
+        <div className="text-center mb-4 flex-shrink-0">
           <button 
-            className="text-red-500 font-medium hover:text-red-600 transition-colors disabled:opacity-50" 
+            className="text-red-500 font-medium hover:text-red-600 transition-colors disabled:opacity-50 text-sm sm:text-base" 
             type="button"
             onClick={onForgotPasswordClick}
             disabled={isLoading || authLoading}
@@ -212,11 +213,12 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
           </button>
         </div>
 
-        <div className="space-y-3 mb-8">
+        {/* Sign In Button - Sticky at the bottom on small screens */}
+        <div className="mt-auto space-y-3 mb-4 flex-shrink-0">
           <button
             disabled={!isPasswordValid || isLoading || authLoading}
             onClick={handleSignIn}
-            className={`w-full flex items-center justify-center gap-3 py-4 px-4 rounded-lg font-medium transition-all ${
+            className={`w-full flex items-center justify-center gap-3 py-3 sm:py-4 px-4 rounded-lg font-medium transition-all ${
               isPasswordValid && !isLoading && !authLoading
                 ? 'bg-red-500 text-white hover:bg-red-600 active:scale-98'
                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'
@@ -228,18 +230,19 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
             ) : (
               <Lock className="w-5 h-5" />
             )}
-            <span>
+            <span className="text-sm sm:text-base">
               {isLoading || authLoading ? 'Signing In...' : 'Sign In'}
             </span>
           </button>
         </div>
 
-        <div className="text-center">
+        {/* Security footer */}
+        <div className="text-center pb-2 flex-shrink-0">
           <div className="flex items-center justify-center gap-2">
-            <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M18,8A6,6 0 0,0 12,2A6,6 0 0,0 6,8H4C2.89,8 2,8.89 2,10V20A2,2 0 0,0 4,22H20A2,2 0 0,0 22,20V10C22,8.89 21.1,8 20,8H18M12,4A4,4 0 0,1 16,8H8A4,4 0 0,1 12,4Z"/>
             </svg>
-            <span className="text-gray-500 text-sm">Your session is secured with HTTP-only cookies</span>
+            <span className="text-gray-500 text-xs sm:text-sm">Your session is secured with HTTP-only cookies</span>
           </div>
         </div>
       </div>
