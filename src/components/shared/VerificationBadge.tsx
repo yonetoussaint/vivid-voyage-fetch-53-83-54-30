@@ -1,28 +1,9 @@
 // VerificationBadge.tsx
 import React from "react";
 
-interface VerificationBadgeProps {
-  size?: "xs" | "sm" | "md" | "lg";
-  className?: string;
-}
-
-const VerificationBadge: React.FC<VerificationBadgeProps> = ({ 
-  size = "md", 
-  className = "" 
-}) => {
-  // Determine the size class directly based on the prop
-  let sizeClass = "w-6 h-6"; // default (md)
-  
-  if (size === "xs") {
-    sizeClass = "w-3 h-3";
-  } else if (size === "sm") {
-    sizeClass = "w-3.5 h-3.5";
-  } else if (size === "lg") {
-    sizeClass = "w-5 h-5";
-  }
-
+const VerificationBadge: React.FC = () => {
   return (
-    <div className={`${sizeClass} ${className} flex-shrink-0`}>
+    <div className="w-4 h-4 flex-shrink-0">
       <svg 
         width="100%" 
         height="100%" 
