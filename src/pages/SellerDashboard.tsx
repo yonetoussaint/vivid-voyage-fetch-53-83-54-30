@@ -11,12 +11,12 @@ import SellerFinances from '@/components/seller-app/pages/SellerFinances';
 import SellerSettings from '@/components/seller-app/pages/SellerSettings';
 import SellerMarketing from '@/components/seller-app/pages/SellerMarketing';
 import SellerSupport from '@/components/seller-app/pages/SellerSupport';
-import SellerEditProfile from '@/components/seller-app/pages/SellerEditProfile'; // Add this import
+import SellerEditProfile from '@/components/seller-app/pages/SellerEditProfile';
+import SellerProductEdit from '@/components/seller-app/pages/SellerProductEdit'; // Add this import
 
 const SellerDashboard = () => {
   const location = useLocation();
 
-  // Scroll to top when route changes (similar to SellerPage behavior)
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [location.pathname]);
@@ -27,6 +27,7 @@ const SellerDashboard = () => {
         <Route path="/" element={<Navigate to="/seller-dashboard/overview" replace />} />
         <Route path="/overview" element={<SellerOverview />} />
         <Route path="/products" element={<SellerProducts />} />
+        <Route path="/products/edit/:productId" element={<SellerProductEdit />} />
         <Route path="/orders" element={<SellerOrders />} />
         <Route path="/customers" element={<SellerCustomers />} />
         <Route path="/reels" element={<SellerReels />} />
@@ -34,7 +35,6 @@ const SellerDashboard = () => {
         <Route path="/finances" element={<SellerFinances />} />
         <Route path="/marketing" element={<SellerMarketing />} />
         <Route path="/settings" element={<SellerSettings />} />
-        {/* Add the edit profile route */}
         <Route path="/edit-profile" element={<SellerEditProfile />} />
       </Routes>
     </SellerLayout>
