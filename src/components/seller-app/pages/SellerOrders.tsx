@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  MoreHorizontal, Eye, MessageCircle,
+  MoreHorizontal, Truck, Eye, MessageCircle,
   Download, Plus, Package, RefreshCw, Copy, MapPin
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -314,16 +314,17 @@ const SellerOrders = () => {
       {/* Header & Stats Section - Mobile Optimized */}
       <div className="sticky top-0 z-40 bg-white">
         <SellerSummaryHeader
-          title="Orders"
-          subtitle="Manage your orders"
-          stats={orderStats}
-          actionButton={{
-            label: 'New Order',
-            icon: Plus,
-            onClick: () => console.log('New order clicked')
-          }}
-          showStats={filteredOrders.length > 0}
-        />
+  title="Orders"
+  subtitle="Manage your orders"
+  subtitleIcon={Truck}
+  stats={orderStats}
+  actionButton={{
+    label: 'New Order',
+    icon: Plus,
+    onClick: () => console.log('New order clicked')
+  }}
+  showStats={filteredOrders.length > 0}
+/>
       </div>
 
       {/* Product Filter Bar - Now used for orders filtering */}
