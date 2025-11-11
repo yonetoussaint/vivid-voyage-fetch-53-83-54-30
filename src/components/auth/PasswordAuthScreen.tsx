@@ -70,10 +70,10 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
   const faviconUrl = FAVICON_OVERRIDES[domain] || `https://www.google.com/s2/favicons?domain=${domain}`;
 
   return (
-    <div className={isCompact ? "bg-white flex flex-col px-4 pb-4" : "min-h-screen bg-white flex flex-col px-4"}>
+    <div className={isCompact ? "bg-white flex flex-col px-4 pb-8" : "min-h-screen bg-white flex flex-col px-4 pb-8"}>
       {/* Header */}
       {showHeader && !isCompact && (
-        <div className="pt-1 pb-2 flex items-center justify-between">
+        <div className="pt-2 pb-2 flex items-center justify-between">
           <button
             onClick={onBack}
             disabled={isLoading || authLoading}
@@ -101,7 +101,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
 
       {/* Progress Bar */}
       <div className="mb-3">
-        <div className="flex items-center gap-1.5 mb-1.5">
+        <div className="flex items-center gap-2 mb-1.5">
           <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
           <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
           <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
@@ -109,7 +109,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col w-full max-w-md mx-auto relative">
+      <div className="flex flex-col w-full max-w-md mx-auto relative mb-8">
         <div className="text-center mb-5">
           <h1 className="text-2xl font-semibold text-gray-900 mb-1">
             Enter your password
@@ -119,43 +119,44 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
           </p>
         </div>
 
-        {/* Email element - same height as password field */}
-        <div className="mb-3 h-[42px]">
-          <div className="flex items-center justify-between gap-2 p-2.5 bg-gray-50 rounded-lg h-full">
-            <div className="flex items-center gap-2">
-              {faviconUrl ? (
-                <img
-                  src={faviconUrl}
-                  alt="Email provider favicon"
-                  className="w-5 h-5 rounded"
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src = '';
-                  }}
-                />
-              ) : (
-                <Mail className="w-5 h-5 text-gray-400" />
-              )}
-              <span className="text-gray-700 text-sm">{email}</span>
+        <div className="flex flex-col gap-4">
+          {/* Email element - consistent with EmailAuthScreen input height */}
+          <div>
+            <div className="flex items-center justify-between gap-2 p-2.5 bg-gray-50 rounded-lg h-[42px]">
+              <div className="flex items-center gap-2">
+                {faviconUrl ? (
+                  <img
+                    src={faviconUrl}
+                    alt="Email provider favicon"
+                    className="w-5 h-5 rounded"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = '';
+                    }}
+                  />
+                ) : (
+                  <Mail className="w-5 h-5 text-gray-400" />
+                )}
+                <span className="text-gray-700 text-sm">{email}</span>
+              </div>
+              <button
+                onClick={onBack}
+                disabled={isLoading || authLoading}
+                className="text-red-500 hover:text-red-600 text-xs font-medium disabled:opacity-50"
+                type="button"
+              >
+                Change
+              </button>
             </div>
-            <button
-              onClick={onBack}
-              disabled={isLoading || authLoading}
-              className="text-red-500 hover:text-red-600 text-xs font-medium disabled:opacity-50"
-              type="button"
-            >
-              Change
-            </button>
           </div>
-        </div>
 
-        {error && (
-          <div className="mb-2 p-2.5 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-600 text-xs text-center">{error}</p>
-          </div>
-        )}
+          {error && (
+            <div className="p-2.5 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-600 text-xs text-center">{error}</p>
+            </div>
+          )}
 
-        <div className="mb-3 relative">
+          {/* Password field - consistent with EmailAuthScreen input styling */}
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
             <input
@@ -189,55 +190,55 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
               <Check className="absolute right-9 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-500" />
             )}
           </div>
-        </div>
 
-        {/* Sign in button first */}
-        <div className="space-y-2.5 mb-3">
-          <button
-            disabled={!isPasswordValid || isLoading || authLoading}
-            onClick={handleSignIn}
-            className={`w-full flex items-center justify-center gap-2.5 py-3 rounded-lg font-medium transition-all ${
-              isPasswordValid && !isLoading && !authLoading
-                ? 'bg-red-500 text-white hover:bg-red-600 active:scale-98'
-                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-            }`}
-            type="button"
-          >
-            {isLoading || authLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Lock className="w-4 h-4" />
-            )}
-            <span>{isLoading || authLoading ? 'Signing In...' : 'Sign In'}</span>
-          </button>
-        </div>
-
-        {/* Forgot password button after sign in button */}
-        <div className="text-center mb-4">
-          <button
-            className="text-red-500 text-sm hover:text-red-600 font-medium disabled:opacity-50"
-            type="button"
-            onClick={onForgotPasswordClick}
-            disabled={isLoading || authLoading}
-          >
-            Forgot password?
-          </button>
-        </div>
-
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-1.5">
-            <svg
-              className="w-3.5 h-3.5 text-gray-500"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
+          {/* Sign in button - consistent with EmailAuthScreen button styling */}
+          <div>
+            <button
+              disabled={!isPasswordValid || isLoading || authLoading}
+              onClick={handleSignIn}
+              className={`w-full flex items-center justify-center gap-2.5 py-3 rounded-lg font-medium transition-all ${
+                isPasswordValid && !isLoading && !authLoading
+                  ? 'bg-red-500 text-white hover:bg-red-600 active:scale-98'
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              }`}
+              type="button"
             >
-              <path d="M18,8A6,6 0 0,0 12,2A6,6 0 0,0 6,8H4C2.89,8 2,8.89 2,10V20A2,2 0 0,0 4,22H20A2,2 0 0,0 22,20V10C22,8.89 21.1,8 20,8H18M12,4A4,4 0 0,1 16,8H8A4,4 0 0,1 12,4Z"/>
-            </svg>
-            <span className="text-gray-500 text-xs">
-              Your session is secured with HTTP-only cookies
-            </span>
+              {isLoading || authLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Lock className="w-4 h-4" />
+              )}
+              <span>{isLoading || authLoading ? 'Signing In...' : 'Sign In'}</span>
+            </button>
           </div>
+
+          {/* Forgot password button after sign in button */}
+          <div className="text-center">
+            <button
+              className="text-red-500 text-sm hover:text-red-600 font-medium disabled:opacity-50"
+              type="button"
+              onClick={onForgotPasswordClick}
+              disabled={isLoading || authLoading}
+            >
+              Forgot password?
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="text-center">
+        <div className="flex items-center justify-center gap-1.5">
+          <svg
+            className="w-3.5 h-3.5 text-gray-500"
+            fill="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path d="M18,8A6,6 0 0,0 12,2A6,6 0 0,0 6,8H4C2.89,8 2,8.89 2,10V20A2,2 0 0,0 4,22H20A2,2 0 0,0 22,20V10C22,8.89 21.1,8 20,8H18M12,4A4,4 0 0,1 16,8H8A4,4 0 0,1 12,4Z"/>
+          </svg>
+          <span className="text-gray-500 text-xs">
+            Your session is secured with HTTP-only cookies
+          </span>
         </div>
       </div>
     </div>
