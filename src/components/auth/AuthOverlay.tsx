@@ -133,6 +133,7 @@ const AuthOverlay: React.FC = () => {
                 setCurrentScreen('otp-reset');
               }}
               initialEmail={userEmail}
+              showHeader={false}
               {...compactProps}
             />
           </React.Suspense>
@@ -147,6 +148,7 @@ const AuthOverlay: React.FC = () => {
                 setResetOTP(otp);
                 setCurrentScreen('new-password');
               }}
+              showHeader={false}
               {...compactProps}
             />
           </React.Suspense>
@@ -159,6 +161,7 @@ const AuthOverlay: React.FC = () => {
               otp={resetOTP}
               onBack={() => setCurrentScreen('otp-reset')}
               onPasswordResetSuccess={() => setCurrentScreen('success')}
+              showHeader={false}
               {...compactProps}
             />
           </React.Suspense>
@@ -170,6 +173,7 @@ const AuthOverlay: React.FC = () => {
               email={userEmail}
               onBack={handleBackFromAccountCreation}
               onAccountCreated={handleAccountCreated}
+              showHeader={false}
               {...compactProps}
             />
           </React.Suspense>
@@ -180,6 +184,7 @@ const AuthOverlay: React.FC = () => {
             <SuccessScreen
               email={userEmail}
               onContinue={handleContinueToApp}
+              showHeader={false}
               {...compactProps}
             />
           </React.Suspense>
