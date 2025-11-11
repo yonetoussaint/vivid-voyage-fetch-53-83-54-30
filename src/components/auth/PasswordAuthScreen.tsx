@@ -149,12 +149,12 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
         </div>
 
         {error && (
-          <div className="mb-3 p-2.5 bg-red-50 border border-red-200 rounded-lg">
+          <div className="mb-2 p-2.5 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-red-600 text-xs text-center">{error}</p>
           </div>
         )}
 
-        <div className="mb-4 relative">
+        <div className="mb-2 relative">
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
             <input
@@ -190,7 +190,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
           </div>
         </div>
 
-        <div className="text-center mb-4">
+        <div className="text-center mb-3">
           <button
             className="text-red-500 text-sm hover:text-red-600 font-medium disabled:opacity-50"
             type="button"
@@ -201,7 +201,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
           </button>
         </div>
 
-        <div className="space-y-2.5 mb-5">
+        <div className="space-y-2.5 mb-4">
           <button
             disabled={!isPasswordValid || isLoading || authLoading}
             onClick={handleSignIn}
