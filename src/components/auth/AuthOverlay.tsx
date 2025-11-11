@@ -190,22 +190,22 @@ const AuthOverlay: React.FC = () => {
     }
   };
 
-  return (
-    <Drawer open={isAuthOverlayOpen} onOpenChange={(open) => {
-      if (!open) setIsAuthOverlayOpen(false);
-    }}>
-      <DrawerContent className="max-h-[95vh] overflow-y-auto">
-        {/* Drag handle */}
-        <div className="flex flex-col items-center pt-2 pb-3 flex-shrink-0">
-          <div className="w-16 h-1.5 bg-gray-300 rounded-full shadow-sm" />
-        </div>
+  
+return (
+  <Drawer open={isAuthOverlayOpen} onOpenChange={(open) => {
+    if (!open) setIsAuthOverlayOpen(false);
+  }}>
+    <DrawerContent className="overflow-hidden">
+      {/* Drag handle */}
+      <div className="flex flex-col items-center pt-2 pb-3 flex-shrink-0">
+        <div className="w-16 h-1.5 bg-gray-300 rounded-full shadow-sm" />
+      </div>
 
-        <div className="px-0 pb-4">
-          {renderCurrentScreen()}
-        </div>
-      </DrawerContent>
-    </Drawer>
-  );
-};
+      <div className="flex-1 overflow-hidden">
+        {renderCurrentScreen()}
+      </div>
+    </DrawerContent>
+  </Drawer>
+);
 
 export default AuthOverlay;
