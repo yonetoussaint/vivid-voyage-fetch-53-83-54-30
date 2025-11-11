@@ -1,6 +1,6 @@
 // components/shared/SlideUpPanel.tsx
 import { X } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface SlideUpPanelProps {
   isOpen: boolean;
@@ -26,7 +26,30 @@ export default function SlideUpPanel({
   stickyFooter
 }: SlideUpPanelProps) {
   const contentRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const scrollYRef = useRef(0);
+  const [contentHeight, setContentHeight] = useState<number>(0);
+
+  // Calculate content height when panel opens or children change
+  useEffect(() => {
+    if (isOpen && contentRef.current) {
+      const calculateHeight = () => {
+        const contentElement = contentRef.current;
+        if (contentElement) {
+          // Get the actual height of the content
+          const height = contentElement.scrollHeight;
+          setContentHeight(height);
+        }
+      };
+
+      // Calculate immediately
+      calculateHeight();
+
+      // Also calculate after a brief delay to ensure everything is rendered
+      const timeoutId = setTimeout(calculateHeight, 100);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isOpen, children]);
 
   // Handle body scroll locking
   useEffect(() => {
@@ -54,6 +77,11 @@ export default function SlideUpPanel({
 
       const contentElement = contentRef.current;
       if (contentElement && contentElement.contains(e.target as Node)) {
+        // Allow scrolling only if content exceeds available space
+        const isScrollable = contentElement.scrollHeight > contentElement.clientHeight;
+        if (!isScrollable) {
+          e.preventDefault();
+        }
         return;
       }
 
@@ -65,6 +93,11 @@ export default function SlideUpPanel({
 
       const contentElement = contentRef.current;
       if (contentElement && contentElement.contains(e.target as Node)) {
+        // Allow scrolling only if content exceeds available space
+        const isScrollable = contentElement.scrollHeight > contentElement.clientHeight;
+        if (!isScrollable) {
+          e.preventDefault();
+        }
         return;
       }
 
@@ -80,9 +113,12 @@ export default function SlideUpPanel({
       document.removeEventListener('wheel', handleWheel);
       document.removeEventListener('touchmove', handleTouchMove);
     };
-  }, [isOpen, preventBodyScroll]);
+  }, [isOpen, preventBodyScroll, contentHeight]);
 
   if (!isOpen) return null;
+
+  // Calculate if we need scrolling
+  const needsScrolling = contentHeight > window.innerHeight * 0.8; // If content exceeds 80% of viewport height
 
   return (
     <>
@@ -92,12 +128,13 @@ export default function SlideUpPanel({
         onClick={onClose}
       />
 
-      {/* Panel - Remove fixed height, use max-height with auto height */}
+      {/* Panel - Dynamic height based on content */}
       <div
+        ref={panelRef}
         className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 rounded-t-2xl shadow-lg z-[70] animate-in slide-in-from-bottom duration-300 flex flex-col"
         style={{
-          maxHeight: '90vh', // Still limit to 90vh max
-          height: 'auto', // Let content determine height
+          maxHeight: needsScrolling ? '90vh' : 'auto',
+          height: needsScrolling ? '90vh' : 'auto',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -118,12 +155,12 @@ export default function SlideUpPanel({
           </div>
         )}
 
-        {/* Scrollable Content Area - Add min-height: 0 for proper flex behavior */}
+        {/* Content Area - Only scrollable when needed */}
         <div 
           ref={contentRef}
-          className={`flex-1 overflow-y-auto min-h-0 ${className}`}
+          className={`flex-1 ${needsScrolling ? 'overflow-y-auto min-h-0' : 'overflow-hidden'} ${className}`}
           style={{
-            WebkitOverflowScrolling: 'touch',
+            WebkitOverflowScrolling: needsScrolling ? 'touch' : 'auto',
             scrollBehavior: 'smooth',
           }}
         >
