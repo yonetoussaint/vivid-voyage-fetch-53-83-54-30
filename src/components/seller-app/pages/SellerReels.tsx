@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Video } from 'lucide-react';
 import MobileOptimizedReels from '@/components/home/MobileOptimizedReels';
 import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
 import ProductFilterBar from '@/components/home/ProductFilterBar';
@@ -81,16 +81,17 @@ const SellerReels = () => {
   return (
     <div className="w-full bg-white">
       <SellerSummaryHeader
-        title="Reels"
-        subtitle="Create and manage video content"
-        stats={stats}
-        actionButton={{
-          label: 'Create Reel',
-          icon: Plus,
-          onClick: () => console.log('Create reel clicked')
-        }}
-        showStats={true}
-      />
+  title="Reels"
+  subtitle="Create and manage video content"
+  subtitleIcon={Video} // or Clapperboard, Film, etc.
+  stats={stats}
+  actionButton={{
+    label: 'Create Reel',
+    icon: Plus,
+    onClick: () => console.log('Create reel clicked')
+  }}
+  showStats={true}
+/>
 
       <div className="-mx-2">
         <ProductFilterBar
