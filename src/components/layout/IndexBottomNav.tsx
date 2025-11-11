@@ -161,6 +161,8 @@ export default function BottomNav() {
 
   // Check if we're on the seller edit profile page
   const isSellerEditProfile = location.pathname.includes('/seller-dashboard/edit-profile');
+  // Check if we're on the product edit page
+  const isProductEditPage = location.pathname.includes('/products/edit/');
 
   const [activeTab, setActiveTab] = useState('home');
   const [previousTab, setPreviousTab] = useState(null);
@@ -293,8 +295,8 @@ export default function BottomNav() {
 
   const visibleItems = navItems;
 
-  // Don't render if overlay screens are active OR if we're on seller edit profile page
-  if (hasActiveOverlay || isSellerEditProfile) {
+  // Don't render if overlay screens are active OR if we're on seller edit profile page OR product edit page
+  if (hasActiveOverlay || isSellerEditProfile || isProductEditPage) {
     return null;
   }
 
