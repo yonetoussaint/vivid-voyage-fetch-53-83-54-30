@@ -57,8 +57,9 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
         options: { shouldCreateUser: true },
       });
 
-      if (error) toast.error(error.message || 'Failed to send verification code');
-      else {
+      if (error) {
+        toast.error(error.message || 'Failed to send verification code');
+      } else {
         toast.success('Verification code sent to your email');
         onContinueWithCode(email);
       }
@@ -82,11 +83,11 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
   return (
     <div
-      className={
+      className={`${
         isCompact
-          ? 'bg-white flex flex-col px-4 pb-4'
-          : 'min-h-screen bg-white flex flex-col px-4'
-      }
+          ? 'bg-white flex flex-col px-4 pb-6' // Added pb-6 for bottom space
+          : 'min-h-screen bg-white flex flex-col px-4 pb-10' // Added pb-10 to avoid cutoff
+      }`}
     >
       {showHeader && !isCompact && (
         <div className="pt-2 pb-2 flex items-center justify-between">
@@ -112,6 +113,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
         </div>
       )}
 
+      {/* Progress bar */}
       <div className="mb-3">
         <div className="flex items-center gap-2">
           <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
@@ -121,7 +123,8 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
         </div>
       </div>
 
-      <div className="flex flex-col w-full max-w-md mx-auto relative">
+      {/* Main Content */}
+      <div className="flex flex-col w-full max-w-md mx-auto relative flex-1 overflow-y-auto">
         <div className="text-center mb-5">
           <h1 className="text-2xl font-semibold text-gray-900 mb-1">
             What's your email?
@@ -131,7 +134,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
           </p>
         </div>
 
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1.5 mb-6">
           <EmailStatusMessage
             emailCheckState={emailCheckState}
             isUntrustedProvider={isUntrustedProvider}
