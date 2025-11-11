@@ -32,9 +32,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleEmailChange = (value: string) => {
-    setEmail(value);
-  };
+  const handleEmailChange = (value: string) => setEmail(value);
 
   const handleContinueWithPassword = async () => {
     if (!isEmailValid || isLoading || emailCheckState !== 'exists') return;
@@ -57,9 +55,8 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
         options: { shouldCreateUser: true },
       });
 
-      if (error) {
-        toast.error(error.message || 'Failed to send verification code');
-      } else {
+      if (error) toast.error(error.message || 'Failed to send verification code');
+      else {
         toast.success('Verification code sent to your email');
         onContinueWithCode(email);
       }
@@ -85,12 +82,13 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     <div
       className={`${
         isCompact
-          ? 'bg-white flex flex-col px-4 pb-6' // Added pb-6 for bottom space
-          : 'min-h-screen bg-white flex flex-col px-4 pb-10' // Added pb-10 to avoid cutoff
+          ? 'bg-white flex flex-col px-5 pb-5' // compact layout
+          : 'min-h-screen bg-white flex flex-col px-5 pb-6' // balanced bottom padding
       }`}
     >
+      {/* Header */}
       {showHeader && !isCompact && (
-        <div className="pt-2 pb-2 flex items-center justify-between">
+        <div className="pt-3 pb-2 flex items-center justify-between">
           <button
             onClick={onBack}
             className="flex items-center justify-center w-9 h-9 hover:bg-gray-100 rounded-full transition-colors active:scale-95"
@@ -113,8 +111,8 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
         </div>
       )}
 
-      {/* Progress bar */}
-      <div className="mb-3">
+      {/* Progress Bar */}
+      <div className="mb-4">
         <div className="flex items-center gap-2">
           <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
           <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
@@ -123,9 +121,9 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main content */}
       <div className="flex flex-col w-full max-w-md mx-auto relative flex-1 overflow-y-auto">
-        <div className="text-center mb-5">
+        <div className="text-center mb-5 px-2">
           <h1 className="text-2xl font-semibold text-gray-900 mb-1">
             What's your email?
           </h1>
@@ -134,7 +132,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
           </p>
         </div>
 
-        <div className="flex flex-col gap-1.5 mb-6">
+        <div className="flex flex-col gap-2 px-2">
           <EmailStatusMessage
             emailCheckState={emailCheckState}
             isUntrustedProvider={isUntrustedProvider}
