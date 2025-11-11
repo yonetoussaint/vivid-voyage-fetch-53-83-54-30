@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Video } from 'lucide-react';
+import { Plus, Play} from 'lucide-react';
 import MobileOptimizedReels from '@/components/home/MobileOptimizedReels';
 import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
 import ProductFilterBar from '@/components/home/ProductFilterBar';
@@ -83,7 +83,7 @@ const SellerReels = () => {
       <SellerSummaryHeader
   title="Reels"
   subtitle="Create and manage video content"
-  subtitleIcon={Video} // or Clapperboard, Film, etc.
+  subtitleIcon={Play} // or Clapperboard, Film, etc.
   stats={stats}
   actionButton={{
     label: 'Create Reel',
