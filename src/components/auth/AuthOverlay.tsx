@@ -232,7 +232,7 @@ const AuthOverlay: React.FC = () => {
       preventBodyScroll={true}
       className="bg-white"
     >
-      <div className="px-4 pb-6">
+      <div className="px-4">
         {renderCurrentScreen()}
       </div>
     </SlideUpPanel>
