@@ -1,24 +1,21 @@
-// VerificationBadge.tsx
-import React from "react";
-
-interface VerificationBadgeProps {
-  size?: "xs" | "sm" | "md" | "lg";
-  className?: string;
-}
-
 const VerificationBadge: React.FC<VerificationBadgeProps> = ({ 
   size = "md", 
   className = "" 
 }) => {
   const sizeMap = {
-    xs: "w-3 h-3",
-    sm: "w-3.5 h-3.5", 
-    md: "w-4 h-4",
-    lg: "w-5 h-5"
+    xs: 12,
+    sm: 14, 
+    md: 16,
+    lg: 20
   };
 
+  const pixels = sizeMap[size];
+
   return (
-    <div className={`${sizeMap[size]} ${className} flex-shrink-0`}>
+    <div 
+      className={`flex-shrink-0 ${className}`}
+      style={{ width: `${pixels}px`, height: `${pixels}px` }}
+    >
       <svg 
         width="100%" 
         height="100%" 
@@ -31,5 +28,3 @@ const VerificationBadge: React.FC<VerificationBadgeProps> = ({
     </div>
   );
 };
-
-export default VerificationBadge;
