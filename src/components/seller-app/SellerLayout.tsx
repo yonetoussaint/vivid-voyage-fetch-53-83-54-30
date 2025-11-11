@@ -249,7 +249,13 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         onBecomeSeller={handleBecomeSeller}  
         onBack={handleBackClick}  
         onEditProfile={() => navigate('/seller-dashboard/edit-profile')}
-        isOwnProfile={isOwnProfile}  
+        isOwnProfile={isOwnProfile} 
+sellerStories={[
+    { id: 1, type: 'image', url: 'story1.jpg' },
+    { id: 2, type: 'video', url: 'story2.mp4' },
+    { id: 3, type: 'image', url: 'story3.jpg' },
+    // ... more stories
+  ]} 
         showActionButtons={showActionButtons}  
       />  
     </div>  
