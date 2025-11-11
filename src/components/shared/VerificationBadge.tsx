@@ -1,3 +1,11 @@
+// VerificationBadge.tsx
+import React from "react";
+
+interface VerificationBadgeProps {
+  size?: "xs" | "sm" | "md" | "lg";
+  className?: string;
+}
+
 const VerificationBadge: React.FC<VerificationBadgeProps> = ({ 
   size = "md", 
   className = "" 
@@ -28,3 +36,7 @@ const VerificationBadge: React.FC<VerificationBadgeProps> = ({
     </div>
   );
 };
+
+// Export both as named and default for maximum compatibility
+export { VerificationBadge };
+export default VerificationBadge;
