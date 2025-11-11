@@ -149,7 +149,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
           />
 
           {/* Increased spacing between field and buttons */}
-          <div className="mt-1">
+          <div>
             <EmailActionButtons
               isEmailValid={isEmailValid}
               emailCheckState={emailCheckState}
