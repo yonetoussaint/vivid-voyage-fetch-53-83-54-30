@@ -11,6 +11,17 @@ import {
   SuccessScreenSkeleton
 } from './AuthSkeletonLoaders';
 
+// Import components directly to avoid lazy loading issues
+import MainLoginScreen from './MainLoginScreen';
+import EmailAuthScreen from './EmailAuthScreen';
+import VerificationCodeScreen from './VerificationCodeScreen';
+import PasswordAuthScreen from './PasswordAuthScreen';
+import ResetPasswordScreen from './ResetPasswordScreen';
+import OTPResetScreen from './OTPResetScreen';
+import NewPasswordScreen from './NewPasswordScreen';
+import AccountCreationScreen from './AccountCreationScreen';
+import SuccessScreen from './SuccessScreen';
+
 const AuthOverlay: React.FC = () => {
   const {
     isAuthOverlayOpen,
@@ -54,171 +65,180 @@ const AuthOverlay: React.FC = () => {
     setIsAuthOverlayOpen(false);
   };
 
-  // Remove compact props for EmailAuthScreen to show full UI
-  const getScreenProps = (screen: string) => {
-    // For EmailAuthScreen, don't use compact mode to show all UI elements
-    if (screen === 'email') {
-      return {
-        isCompact: false, // Set to false to show full UI including email providers
-        onExpand: undefined,
-        showHeader: true // Show header for back navigation
-      };
-    }
-    
-    // For other screens, use compact mode
-    return {
-      isCompact: true,
-      onExpand: undefined,
-      showHeader: false
-    };
+  // Consistent props for all screens
+  const screenProps = {
+    isCompact: false,
+    onExpand: undefined,
+    showHeader: false
   };
 
   const renderCurrentScreen = () => {
-    // Lazy load components
-    const MainLoginScreen = React.lazy(() => import('./MainLoginScreen'));
-    const EmailAuthScreen = React.lazy(() => import('./EmailAuthScreen'));
-    const VerificationCodeScreen = React.lazy(() => import('./VerificationCodeScreen'));
-    const PasswordAuthScreen = React.lazy(() => import('./PasswordAuthScreen'));
-    const ResetPasswordScreen = React.lazy(() => import('./ResetPasswordScreen'));
-    const OTPResetScreen = React.lazy(() => import('./OTPResetScreen'));
-    const NewPasswordScreen = React.lazy(() => import('./NewPasswordScreen'));
-    const AccountCreationScreen = React.lazy(() => import('./AccountCreationScreen'));
-    const SuccessScreen = React.lazy(() => import('./SuccessScreen'));
-
     switch (currentScreen) {
       case 'main':
         return (
-          <React.Suspense fallback={<MainLoginScreenSkeleton />}>
-            <MainLoginScreen
-              selectedLanguage={selectedLanguage}
-              setSelectedLanguage={setSelectedLanguage}
-              onContinueWithEmail={handleContinueWithEmail}
-              {...getScreenProps('main')}
-            />
-          </React.Suspense>
+          <MainLoginScreen
+            selectedLanguage={selectedLanguage}
+            setSelectedLanguage={setSelectedLanguage}
+            onContinueWithEmail={handleContinueWithEmail}
+            {...screenProps}
+          />
         );
       case 'email':
         return (
-          <React.Suspense fallback={<EmailAuthScreenSkeleton />}>
-            <EmailAuthScreen
-              onBack={handleBackToMain}
-              selectedLanguage={selectedLanguage}
-              onContinueWithPassword={handleContinueWithPassword}
-              onContinueWithCode={handleContinueWithCode}
-              onCreateAccount={handleCreateAccount}
-              onSignUpClick={handleSignUpClick}
-              initialEmail={userEmail}
-              {...getScreenProps('email')}
-            />
-          </React.Suspense>
+          <EmailAuthScreen
+            onBack={handleBackToMain}
+            selectedLanguage={selectedLanguage}
+            onContinueWithPassword={handleContinueWithPassword}
+            onContinueWithCode={handleContinueWithCode}
+            onCreateAccount={handleCreateAccount}
+            onSignUpClick={handleSignUpClick}
+            initialEmail={userEmail}
+            {...screenProps}
+          />
         );
       case 'verification':
         return (
-          <React.Suspense fallback={<VerificationCodeScreenSkeleton />}>
-            <VerificationCodeScreen
-              email={userEmail}
-              onBack={handleBackFromVerification}
-              onVerificationSuccess={handleVerificationSuccess}
-              {...getScreenProps('verification')}
-            />
-          </React.Suspense>
+          <VerificationCodeScreen
+            email={userEmail}
+            onBack={handleBackFromVerification}
+            onVerificationSuccess={handleVerificationSuccess}
+            {...screenProps}
+          />
         );
       case 'password':
         return (
-          <React.Suspense fallback={<PasswordAuthScreenSkeleton />}>
-            <PasswordAuthScreen
-              email={userEmail}
-              onBack={handleBackFromPassword}
-              onSignInSuccess={handleSignInSuccess}
-              onForgotPasswordClick={handleForgotPasswordClick}
-              {...getScreenProps('password')}
-            />
-          </React.Suspense>
+          <PasswordAuthScreen
+            email={userEmail}
+            onBack={handleBackFromPassword}
+            onSignInSuccess={handleSignInSuccess}
+            onForgotPasswordClick={handleForgotPasswordClick}
+            {...screenProps}
+          />
         );
       case 'reset-password':
         return (
-          <React.Suspense fallback={<ResetPasswordScreenSkeleton />}>
-            <ResetPasswordScreen
-              onBack={() => setCurrentScreen('password')}
-              onResetSuccess={(email) => {
-                setUserEmail(email);
-                setCurrentScreen('otp-reset');
-              }}
-              initialEmail={userEmail}
-              {...getScreenProps('reset-password')}
-            />
-          </React.Suspense>
+          <ResetPasswordScreen
+            onBack={() => setCurrentScreen('password')}
+            onResetSuccess={(email) => {
+              setUserEmail(email);
+              setCurrentScreen('otp-reset');
+            }}
+            initialEmail={userEmail}
+            {...screenProps}
+          />
         );
       case 'otp-reset':
         return (
-          <React.Suspense fallback={<VerificationCodeScreenSkeleton />}>
-            <OTPResetScreen
-              email={userEmail}
-              onBack={() => setCurrentScreen('reset-password')}
-              onOTPVerified={(email, otp) => {
-                setResetOTP(otp);
-                setCurrentScreen('new-password');
-              }}
-              {...getScreenProps('otp-reset')}
-            />
-          </React.Suspense>
+          <OTPResetScreen
+            email={userEmail}
+            onBack={() => setCurrentScreen('reset-password')}
+            onOTPVerified={(email, otp) => {
+              setResetOTP(otp);
+              setCurrentScreen('new-password');
+            }}
+            {...screenProps}
+          />
         );
       case 'new-password':
         return (
-          <React.Suspense fallback={<PasswordAuthScreenSkeleton />}>
-            <NewPasswordScreen
-              email={userEmail}
-              otp={resetOTP}
-              onBack={() => setCurrentScreen('otp-reset')}
-              onPasswordResetSuccess={() => setCurrentScreen('success')}
-              {...getScreenProps('new-password')}
-            />
-          </React.Suspense>
+          <NewPasswordScreen
+            email={userEmail}
+            otp={resetOTP}
+            onBack={() => setCurrentScreen('otp-reset')}
+            onPasswordResetSuccess={() => setCurrentScreen('success')}
+            {...screenProps}
+          />
         );
       case 'account-creation':
         return (
-          <React.Suspense fallback={<AccountCreationScreenSkeleton />}>
-            <AccountCreationScreen
-              email={userEmail}
-              onBack={handleBackFromAccountCreation}
-              onAccountCreated={handleAccountCreated}
-              {...getScreenProps('account-creation')}
-            />
-          </React.Suspense>
+          <AccountCreationScreen
+            email={userEmail}
+            onBack={handleBackFromAccountCreation}
+            onAccountCreated={handleAccountCreated}
+            {...screenProps}
+          />
         );
       case 'success':
         return (
-          <React.Suspense fallback={<SuccessScreenSkeleton />}>
-            <SuccessScreen
-              email={userEmail}
-              onContinue={handleContinueToApp}
-              {...getScreenProps('success')}
-            />
-          </React.Suspense>
+          <SuccessScreen
+            email={userEmail}
+            onContinue={handleContinueToApp}
+            {...screenProps}
+          />
         );
       default:
         return null;
     }
   };
 
-  // Custom header content with drag handle
+  // Custom header content with drag handle and back button when needed
   const panelHeaderContent = (
     <div className="flex flex-col items-center w-full">
       {/* Drag handle */}
       <div className="w-16 h-1.5 bg-gray-300 rounded-full shadow-sm mb-2" />
-      {/* Screen title based on current screen */}
-      <div className="text-center">
-        <h3 className="text-lg font-semibold text-gray-900">
-          {currentScreen === 'main' && 'Sign In'}
-          {currentScreen === 'email' && 'Continue with Email'}
-          {currentScreen === 'verification' && 'Verification Code'}
-          {currentScreen === 'password' && 'Enter Password'}
-          {currentScreen === 'reset-password' && 'Reset Password'}
-          {currentScreen === 'otp-reset' && 'Verify Code'}
-          {currentScreen === 'new-password' && 'New Password'}
-          {currentScreen === 'account-creation' && 'Create Account'}
-          {currentScreen === 'success' && 'Success'}
-        </h3>
+      
+      {/* Header with back button and title */}
+      <div className="flex items-center justify-between w-full px-4">
+        {/* Back button - show on all screens except main */}
+        {currentScreen !== 'main' && (
+          <button
+            onClick={() => {
+              // Handle back navigation based on current screen
+              switch (currentScreen) {
+                case 'email':
+                  handleBackToMain();
+                  break;
+                case 'verification':
+                  handleBackFromVerification();
+                  break;
+                case 'password':
+                  handleBackFromPassword();
+                  break;
+                case 'reset-password':
+                  setCurrentScreen('password');
+                  break;
+                case 'otp-reset':
+                  setCurrentScreen('reset-password');
+                  break;
+                case 'new-password':
+                  setCurrentScreen('otp-reset');
+                  break;
+                case 'account-creation':
+                  handleBackFromAccountCreation();
+                  break;
+                case 'success':
+                  // Success screen typically doesn't have back navigation
+                  break;
+                default:
+                  handleBackToMain();
+              }
+            }}
+            className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-full transition-colors active:scale-95"
+            aria-label="Go back"
+          >
+            <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        )}
+        
+        {/* Center title */}
+        <div className={`text-center ${currentScreen !== 'main' ? 'flex-1' : 'w-full'}`}>
+          <h3 className="text-lg font-semibold text-gray-900">
+            {currentScreen === 'main' && 'Sign In'}
+            {currentScreen === 'email' && 'Continue with Email'}
+            {currentScreen === 'verification' && 'Verification Code'}
+            {currentScreen === 'password' && 'Enter Password'}
+            {currentScreen === 'reset-password' && 'Reset Password'}
+            {currentScreen === 'otp-reset' && 'Verify Code'}
+            {currentScreen === 'new-password' && 'New Password'}
+            {currentScreen === 'account-creation' && 'Create Account'}
+            {currentScreen === 'success' && 'Success'}
+          </h3>
+        </div>
+        
+        {/* Spacer for alignment when back button is present */}
+        {currentScreen !== 'main' && <div className="w-10" />}
       </div>
     </div>
   );
@@ -232,7 +252,7 @@ const AuthOverlay: React.FC = () => {
       preventBodyScroll={true}
       className="bg-white"
     >
-      <div className="px-4">
+      <div className="px-4 pb-6">
         {renderCurrentScreen()}
       </div>
     </SlideUpPanel>
