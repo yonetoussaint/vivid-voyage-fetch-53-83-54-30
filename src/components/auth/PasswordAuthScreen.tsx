@@ -32,8 +32,6 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
 
   const passwordInputRef = useRef<HTMLInputElement>(null);
 
-  const API_BASE_URL = 'https://supabase-y8ak.onrender.com/api';
-
   const handlePasswordChange = (value: string) => {
     setPassword(value);
     setIsPasswordValid(value.length >= 8);
@@ -77,7 +75,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
   const faviconUrl = FAVICON_OVERRIDES[domain] || `https://www.google.com/s2/favicons?domain=${domain}`;
 
   return (
-    <div className="bg-white flex flex-col px-4">
+    <div className={isCompact ? "bg-white flex flex-col px-4 pb-6" : "min-h-screen bg-white flex flex-col px-4"}>
       {/* Header - optional */}
       {showHeader && !isCompact && (
         <div className="pt-2 pb-3 flex items-center justify-between">
@@ -162,7 +160,6 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
         )}
 
         <div className="mb-6 relative">
-
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
 
@@ -203,6 +200,18 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
           </div>
         </div>
 
+        {/* Forgot Password Button - Moved to be more prominent */}
+        <div className="text-center mb-6">
+          <button 
+            className="text-red-500 font-medium hover:text-red-600 transition-colors disabled:opacity-50" 
+            type="button"
+            onClick={onForgotPasswordClick}
+            disabled={isLoading || authLoading}
+          >
+            Forgot password?
+          </button>
+        </div>
+
         <div className="space-y-3 mb-8">
           <button
             disabled={!isPasswordValid || isLoading || authLoading}
@@ -226,15 +235,6 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
         </div>
 
         <div className="text-center">
-          <button 
-            className="text-red-500 font-medium hover:text-red-600 mb-4" 
-            type="button"
-            onClick={onForgotPasswordClick}
-            disabled={isLoading || authLoading}
-          >
-            Forgot password?
-          </button>
-
           <div className="flex items-center justify-center gap-2">
             <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M18,8A6,6 0 0,0 12,2A6,6 0 0,0 6,8H4C2.89,8 2,8.89 2,10V20A2,2 0 0,0 4,22H20A2,2 0 0,0 22,20V10C22,8.89 21.1,8 20,8H18M12,4A4,4 0 0,1 16,8H8A4,4 0 0,1 12,4Z"/>
