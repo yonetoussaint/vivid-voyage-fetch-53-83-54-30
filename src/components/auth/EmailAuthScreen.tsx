@@ -134,7 +134,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
           </p>
         </div>
 
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-4">
           <EmailStatusMessage
             emailCheckState={emailCheckState}
             isUntrustedProvider={isUntrustedProvider}
@@ -148,15 +148,18 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
             isUntrustedProvider={isUntrustedProvider}
           />
 
-          <EmailActionButtons
-            isEmailValid={isEmailValid}
-            emailCheckState={emailCheckState}
-            isLoading={isLoading || authLoading}
-            isUntrustedProvider={isUntrustedProvider}
-            onContinueWithPassword={handleContinueWithPassword}
-            onContinueWithCode={handleContinueWithCode}
-            onCreateAccount={handleCreateAccountClick}
-          />
+          {/* Increased spacing between field and buttons */}
+          <div className="mt-2">
+            <EmailActionButtons
+              isEmailValid={isEmailValid}
+              emailCheckState={emailCheckState}
+              isLoading={isLoading || authLoading}
+              isUntrustedProvider={isUntrustedProvider}
+              onContinueWithPassword={handleContinueWithPassword}
+              onContinueWithCode={handleContinueWithCode}
+              onCreateAccount={handleCreateAccountClick}
+            />
+          </div>
         </div>
       </div>
     </div>
