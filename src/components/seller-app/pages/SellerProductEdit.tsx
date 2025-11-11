@@ -4,6 +4,7 @@ import { Camera, Upload, Package, DollarSign, Tag, FileText, Box, Layers } from 
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import ProductImageGallery from '@/components/ProductImageGallery';
 
 const SellerProductEdit = () => {
   const navigate = useNavigate();
@@ -55,20 +56,6 @@ const SellerProductEdit = () => {
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isNewProduct] = useState(productId === 'new');
-
-
-
-useEffect(() => {
-  const handleSave = () => {
-    console.log('Save event received from header, current formData:', formDataRef.current);
-    handleSubmit();
-  };
-
-  window.addEventListener('saveEditProfile', handleSave);
-  return () => {
-    window.removeEventListener('saveEditProfile', handleSave);
-  };
-}, []);
 
   // Update ref whenever formData changes
   useEffect(() => {
@@ -165,6 +152,34 @@ useEffect(() => {
       setExistingImages(imagesData.map(img => img.src));
     }
   }, [imagesData, productId]);
+
+  // Prepare images for ProductImageGallery
+  const galleryImages = React.useMemo(() => {
+    const images = [];
+    
+    // Add existing images
+    if (existingImages.length > 0) {
+      images.push(...existingImages.map(src => ({ src, alt: formData.name || 'Product image' })));
+    }
+    
+    // Add new uploaded images
+    if (productImages.length > 0) {
+      images.push(...productImages.map(file => ({ 
+        src: URL.createObjectURL(file), 
+        alt: 'New product image' 
+      })));
+    }
+    
+    // If no images, add placeholder
+    if (images.length === 0) {
+      images.push({ 
+        src: "https://placehold.co/600x600?text=No+Image", 
+        alt: "No product image available" 
+      });
+    }
+    
+    return images;
+  }, [existingImages, productImages, formData.name]);
 
   // Product images upload function
   const uploadProductImages = async (files: File[]): Promise<string[]> => {
@@ -469,30 +484,19 @@ useEffect(() => {
 
   return (
     <div className="min-h-screen bg-background pb-8">
-      {/* Product Images Section */}
-      <div className="relative bg-gray-100 h-48">
-        <div className="absolute inset-0 flex items-center justify-center">
-          {existingImages.length > 0 ? (
-            <img 
-              src={existingImages[0]} 
-              alt="Product" 
-              className="w-full h-full object-cover"
-            />
-          ) : productImages.length > 0 ? (
-            <img 
-              src={URL.createObjectURL(productImages[0])} 
-              alt="Product preview" 
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="text-gray-400 text-center">
-              <Package className="w-12 h-12 mx-auto mb-2" />
-              <p>No product images</p>
-            </div>
-          )}
-        </div>
+      {/* Product Images Section with ProductImageGallery */}
+      <div className="relative bg-gray-100">
+        <ProductImageGallery 
+          images={galleryImages}
+          product={{
+            name: formData.name,
+            inventory: parseInt(formData.inventory) || 0,
+            sold_count: 0 // You might want to fetch this from productData if editing
+          }}
+        />
         
-        <label className="absolute bottom-4 right-4 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700 transition-colors border-2 border-white shadow-lg">
+        {/* Upload Button Overlay */}
+        <label className="absolute bottom-4 right-4 z-30 bg-blue-600 text-white p-3 rounded-full cursor-pointer hover:bg-blue-700 transition-colors border-2 border-white shadow-lg">
           <Camera className="w-5 h-5" />
           <input
             type="file"
@@ -504,9 +508,10 @@ useEffect(() => {
         </label>
       </div>
 
-      {/* Image Thumbnails */}
+      {/* Image Management Section */}
       {(existingImages.length > 0 || productImages.length > 0) && (
         <div className="px-4 py-3 bg-white border-b">
+          <h4 className="text-sm font-medium text-gray-700 mb-2">Manage Images</h4>
           <div className="flex gap-2 overflow-x-auto">
             {existingImages.map((url, index) => (
               <div key={`existing-${index}`} className="relative">
