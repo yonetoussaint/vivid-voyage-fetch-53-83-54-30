@@ -54,17 +54,18 @@ const SellerProductEdit = () => {
   const [productImages, setProductImages] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isNewProduct] = useState(productId === 'new');
 
   // Update ref whenever formData changes
   useEffect(() => {
     formDataRef.current = formData;
   }, [formData]);
 
-  // Fetch current product data
+  // Fetch current product data only if editing existing product
   const { data: productData, isLoading: productLoading } = useQuery({
     queryKey: ['product', productId],
     queryFn: async () => {
-      if (!productId) return null;
+      if (!productId || productId === 'new') return null;
       
       const { data, error } = await supabase
         .from('products')
@@ -78,14 +79,14 @@ const SellerProductEdit = () => {
       }
       return data;
     },
-    enabled: !!productId,
+    enabled: !!productId && productId !== 'new',
   });
 
-  // Fetch product images
+  // Fetch product images only if editing existing product
   const { data: imagesData } = useQuery({
     queryKey: ['product-images', productId],
     queryFn: async () => {
-      if (!productId) return [];
+      if (!productId || productId === 'new') return [];
       
       const { data, error } = await supabase
         .from('product_images')
@@ -99,12 +100,12 @@ const SellerProductEdit = () => {
       }
       return data || [];
     },
-    enabled: !!productId,
+    enabled: !!productId && productId !== 'new',
   });
 
-  // Initialize form with current data
+  // Initialize form with current data only if editing
   useEffect(() => {
-    if (productData) {
+    if (productData && productId !== 'new') {
       console.log('Initializing form with product data:', productData);
       const newFormData = {
         name: productData.name || '',
@@ -142,25 +143,25 @@ const SellerProductEdit = () => {
       setFormData(newFormData);
       formDataRef.current = newFormData;
     }
-  }, [productData]);
+  }, [productData, productId]);
 
   // Set existing images when images data loads
   useEffect(() => {
-    if (imagesData && imagesData.length > 0) {
+    if (imagesData && imagesData.length > 0 && productId !== 'new') {
       setExistingImages(imagesData.map(img => img.src));
     }
-  }, [imagesData]);
+  }, [imagesData, productId]);
 
   // Product images upload function
   const uploadProductImages = async (files: File[]): Promise<string[]> => {
     try {
-      if (!user?.id || !productId) throw new Error('No user logged in or product ID missing');
+      if (!user?.id) throw new Error('No user logged in');
       
       const uploadedUrls: string[] = [];
       
       for (const file of files) {
         const fileExt = file.name.split('.').pop();
-        const fileName = `${user.id}/products/${productId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const fileName = `${user.id}/products/${productId === 'new' ? 'new' : productId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
         const filePath = fileName;
 
         console.log('Uploading product image to:', filePath);
@@ -189,12 +190,50 @@ const SellerProductEdit = () => {
     }
   };
 
-  // Update mutation for product data
+  // Create mutation for new product
+  const createProductMutation = useMutation({
+    mutationFn: async (newProductData: any) => {
+      if (!user?.id) throw new Error('No user logged in');
+
+      console.log('Creating new product:', newProductData);
+      
+      const { data, error } = await supabase
+        .from('products')
+        .insert([{
+          ...newProductData,
+          seller_id: user.id,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Supabase create error:', error);
+        throw error;
+      }
+      
+      console.log('Product creation successful:', data);
+      return data;
+    },
+    onSuccess: (data) => {
+      console.log('Product created successfully:', data);
+      queryClient.invalidateQueries({ queryKey: ['products', 'all'] });
+      navigate('/seller-dashboard/products');
+    },
+    onError: (error: any) => {
+      console.error('Product creation error:', error);
+      alert(`Error creating product: ${error.message}`);
+      setIsLoading(false);
+    },
+  });
+
+  // Update mutation for existing product
   const updateProductMutation = useMutation({
     mutationFn: async (updatedData: any) => {
-      if (!productId) throw new Error('No product ID');
+      if (!productId || productId === 'new') throw new Error('No product ID');
 
-      console.log('Sending update to Supabase products table:', updatedData);
+      console.log('Updating product:', updatedData);
       
       const { data, error } = await supabase
         .from('products')
@@ -212,15 +251,13 @@ const SellerProductEdit = () => {
       return data;
     },
     onSuccess: (data) => {
-      console.log('Mutation successful, updated product:', data);
+      console.log('Product updated successfully:', data);
       queryClient.invalidateQueries({ queryKey: ['product', productId] });
       queryClient.invalidateQueries({ queryKey: ['products', 'all'] });
-      
-      // Navigate back to products page
       navigate('/seller-dashboard/products');
     },
     onError: (error: any) => {
-      console.error('Mutation error:', error);
+      console.error('Product update error:', error);
       alert(`Error updating product: ${error.message}`);
       setIsLoading(false);
     },
@@ -228,18 +265,18 @@ const SellerProductEdit = () => {
 
   // Mutation for product images
   const updateProductImagesMutation = useMutation({
-    mutationFn: async (imageUrls: string[]) => {
-      if (!productId) throw new Error('No product ID');
+    mutationFn: async (imageUrls: string[], targetProductId: string) => {
+      if (!targetProductId) throw new Error('No product ID');
 
       // First, delete existing images
       await supabase
         .from('product_images')
         .delete()
-        .eq('product_id', productId);
+        .eq('product_id', targetProductId);
 
       // Then insert new images
       const imageRecords = imageUrls.map((url, index) => ({
-        product_id: productId,
+        product_id: targetProductId,
         src: url,
         alt: formData.name || 'Product image',
         created_at: new Date().toISOString(),
@@ -261,7 +298,9 @@ const SellerProductEdit = () => {
     },
     onSuccess: (data) => {
       console.log('Product images saved successfully');
-      queryClient.invalidateQueries({ queryKey: ['product-images', productId] });
+      if (productId && productId !== 'new') {
+        queryClient.invalidateQueries({ queryKey: ['product-images', productId] });
+      }
     },
     onError: (error: any) => {
       console.error('Product images update error:', error);
@@ -269,7 +308,7 @@ const SellerProductEdit = () => {
     },
   });
 
-  // Listen for save event from header
+  // Listen for save event from header (same as SellerEditProfile)
   useEffect(() => {
     const handleSave = () => {
       console.log('Save event received, current formData:', formDataRef.current);
@@ -281,6 +320,11 @@ const SellerProductEdit = () => {
       window.removeEventListener('saveEditProfile', handleSave);
     };
   }, []);
+
+  // Handle back button click - navigate to products page
+  const handleBackClick = () => {
+    navigate('/seller-dashboard/products');
+  };
 
   // Form validation
   const validateForm = () => {
@@ -345,8 +389,8 @@ const SellerProductEdit = () => {
       // Get current data from ref
       const currentData = formDataRef.current;
 
-      // Prepare update data
-      const updateData: any = {
+      // Prepare product data
+      const productData: any = {
         name: currentData.name,
         description: currentData.description,
         short_description: currentData.short_description,
@@ -367,33 +411,41 @@ const SellerProductEdit = () => {
         updated_at: new Date().toISOString(),
       };
 
-      console.log('Final update data for products table:', updateData);
-      
-      // Update product data
-      await updateProductMutation.mutateAsync(updateData);
-      
-      // Handle image uploads if there are new images
-      if (productImages.length > 0) {
+      let targetProductId = productId;
+
+      if (isNewProduct) {
+        // Create new product
+        console.log('Creating new product with data:', productData);
+        const newProduct = await createProductMutation.mutateAsync(productData);
+        targetProductId = newProduct.id;
+      } else {
+        // Update existing product
+        console.log('Updating product with data:', productData);
+        await updateProductMutation.mutateAsync(productData);
+      }
+
+      // Handle image uploads if there are new images and we have a product ID
+      if (productImages.length > 0 && targetProductId) {
         console.log('Uploading new product images...');
         const uploadedImageUrls = await uploadProductImages(productImages);
         
         if (uploadedImageUrls.length > 0) {
           // Combine existing images (that weren't removed) with new uploaded images
           const allImageUrls = [...existingImages, ...uploadedImageUrls];
-          await updateProductImagesMutation.mutateAsync(allImageUrls);
+          await updateProductImagesMutation.mutateAsync(allImageUrls, targetProductId);
         }
-      } else if (existingImages.length > 0) {
+      } else if (existingImages.length > 0 && targetProductId && targetProductId !== 'new') {
         // Just update with existing images (in case some were removed)
-        await updateProductImagesMutation.mutateAsync(existingImages);
+        await updateProductImagesMutation.mutateAsync(existingImages, targetProductId);
       }
       
     } catch (error) {
-      console.error('Error updating product:', error);
+      console.error('Error saving product:', error);
       setIsLoading(false);
     }
   };
 
-  if (productLoading) {
+  if (productLoading && !isNewProduct) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -685,7 +737,9 @@ const SellerProductEdit = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-4 flex items-center gap-3">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-            <span className="text-sm font-medium">Saving product...</span>
+            <span className="text-sm font-medium">
+              {isNewProduct ? 'Creating product...' : 'Saving product...'}
+            </span>
           </div>
         </div>
       )}
