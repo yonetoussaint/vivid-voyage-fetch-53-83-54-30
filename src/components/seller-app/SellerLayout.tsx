@@ -69,8 +69,9 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
   const handleFavoriteClick = () => setIsFavorite(!isFavorite);  
 
-  // Check if current route is edit profile
+  // Check if current route is edit profile OR product edit
   const isEditProfilePage = location.pathname.includes('/edit-profile');
+  const isProductEditPage = location.pathname.includes('/products/edit/'); // NEW: Detect product edit pages
 
   // PRESERVED ALL ORIGINAL PATH CALCULATIONS
   const isDashboard = location.pathname.includes('/seller-dashboard');  
@@ -106,7 +107,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     ? '/pickup-station'  
     : `/seller/${location.pathname.split('/seller/')[1]?.split('/')[0] || ''}`;  
 
-  // UPDATED NAVIGATION ITEMS - Include edit-profile but mark it as hidden
+  // UPDATED NAVIGATION ITEMS - Include edit-profile and product-edit as hidden
   const navigationItems = isPickupStation  
     ? [  
         { id: 'overview', name: 'Overview', href: '/pickup-station/overview', icon: Home },  
@@ -130,6 +131,8 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         { id: 'settings', name: 'Settings', href: '/seller-dashboard/settings', icon: Settings },  
         // Add edit-profile as a hidden navigation item
         { id: 'edit-profile', name: 'Edit Profile', href: '/seller-dashboard/edit-profile', icon: Edit, hidden: true },  
+        // Add product-edit as a hidden navigation item
+        { id: 'product-edit', name: 'Edit Product', href: '/seller-dashboard/products/edit/:productId', icon: Edit, hidden: true },  
       ]  
     : [  
         { id: 'products', name: 'Products', href: `${baseRoute}/products`, icon: Package },  
@@ -194,18 +197,33 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       return data.publicUrl;  
     });  
 
-  // Custom action buttons for edit profile page
-  const editProfileActionButtons = [  
-    {  
-      Icon: Save,  
-      onClick: () => {
-        // This will be handled by the edit profile component
-        const saveEvent = new CustomEvent('saveEditProfile');
-        window.dispatchEvent(saveEvent);
-      },  
-      active: false  
-    }  
-  ];  
+  // Custom action buttons for edit pages
+  const getEditPageActionButtons = () => {
+    if (isEditProfilePage) {
+      return [  
+        {  
+          Icon: Save,  
+          onClick: () => {
+            const saveEvent = new CustomEvent('saveEditProfile');
+            window.dispatchEvent(saveEvent);
+          },  
+          active: false  
+        }  
+      ];
+    } else if (isProductEditPage) {
+      return [  
+        {  
+          Icon: Save,  
+          onClick: () => {
+            const saveEvent = new CustomEvent('saveEditProfile');
+            window.dispatchEvent(saveEvent);
+          },  
+          active: false  
+        }  
+      ];
+    }
+    return null;
+  };
 
   // Regular action buttons for other pages
   const regularActionButtons = [  
@@ -223,24 +241,34 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }  
   ];  
 
+  // Get page title based on current route
+  const getPageTitle = () => {
+    if (isEditProfilePage) return "Edit Profile";
+    if (isProductEditPage) {
+      const productId = location.pathname.split('/edit/')[1];
+      return productId === 'new' ? "Create Product" : "Edit Product";
+    }
+    return undefined;
+  };
+
   const header = (
     <div   
       ref={headerRef}   
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"  
     >  
       <ProductHeader  
-        onCloseClick={isEditProfilePage ? () => navigate('/seller-dashboard/products') : handleBackClick}  
+        onCloseClick={(isEditProfilePage || isProductEditPage) ? () => navigate('/seller-dashboard/products') : handleBackClick}  
         onShareClick={handleShareClick}  
-        actionButtons={isEditProfilePage ? editProfileActionButtons : regularActionButtons}
-        forceScrolledState={!isProductsTab || isEditProfilePage}
-        title={isEditProfilePage ? "Edit Profile" : undefined}
-        hideSearch={isEditProfilePage}
-        showSellerInfo={!isEditProfilePage}
+        actionButtons={getEditPageActionButtons() || regularActionButtons}
+        forceScrolledState={!isProductsTab || isEditProfilePage || isProductEditPage}
+        title={getPageTitle()}
+        hideSearch={isEditProfilePage || isProductEditPage}
+        showSellerInfo={!(isEditProfilePage || isProductEditPage)}
       />  
     </div>  
   );
 
-  const topContent = isProductsTab && !isEditProfilePage ? (
+  const topContent = isProductsTab && !isEditProfilePage && !isProductEditPage ? (
     <div className="w-full bg-black text-white">  
       <SellerInfoSection  
         sellerData={sellerData}  
@@ -250,12 +278,11 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         onBack={handleBackClick}  
         onEditProfile={() => navigate('/seller-dashboard/edit-profile')}
         isOwnProfile={isOwnProfile} 
-sellerStories={[
-    { id: 1, type: 'image', url: 'story1.jpg' },
-    { id: 2, type: 'video', url: 'story2.mp4' },
-    { id: 3, type: 'image', url: 'story3.jpg' },
-    // ... more stories
-  ]} 
+        sellerStories={[
+          { id: 1, type: 'image', url: 'story1.jpg' },
+          { id: 2, type: 'video', url: 'story2.mp4' },
+          { id: 3, type: 'image', url: 'story3.jpg' },
+        ]} 
         showActionButtons={showActionButtons}  
       />  
     </div>  
@@ -304,7 +331,7 @@ sellerStories={[
       variant="underline"
       stickyBuffer={4}
       alwaysStickyForNonProducts={true}
-      hideTabs={isEditProfilePage} // NEW: Hide tabs on edit profile page
+      hideTabs={isEditProfilePage || isProductEditPage} // UPDATED: Hide tabs for both edit pages
     >
       {enhancedChildren}
     </StickyTabsLayout>
