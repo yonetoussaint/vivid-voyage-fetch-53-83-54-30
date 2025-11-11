@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Timer, Plus, ChevronRight, Package, Eye } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -100,6 +100,7 @@ export default function BookGenreFlashDeals({
   showMarketingMetrics = false,
   showStatusBadge = false
 }: GenreFlashDealsProps) {
+  const navigate = useNavigate();
   const [displayCount, setDisplayCount] = useState(8);
 
   // Define filter categories
@@ -174,18 +175,26 @@ export default function BookGenreFlashDeals({
     }
   };
 
+  // Add this helper function to format large numbers
+  const formatNumber = (num: number): string => {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'm';
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'k';
+    }
+    return num.toString();
+  };
 
-// Add this helper function to format large numbers
-const formatNumber = (num: number): string => {
-  if (num >= 1000000) {
-    return (num / 1000000).toFixed(1) + 'm';
-  } else if (num >= 1000) {
-    return (num / 1000).toFixed(1) + 'k';
-  }
-  return num.toString();
-};
-
-
+  // Default handler for adding new product
+  const handleAddProduct = () => {
+    if (onAddProduct) {
+      // If a custom handler is provided, use it
+      onAddProduct();
+    } else {
+      // Default behavior: navigate to product edit page for new product
+      navigate('/seller-dashboard/products/edit/new');
+    }
+  };
 
   // Default marketing product info renderer
   const renderMarketingProductInfo = (product: Product) => (
@@ -559,13 +568,12 @@ const formatNumber = (num: number): string => {
                         )}
 
                         {/* Views with Eye Icon - Top Right */}
-                        // Then update the views badge section:
-{showMarketingMetrics && product.views !== undefined && (
-  <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/80 text-white text-xs px-2 py-1 rounded-md">
-    <Eye className="w-3 h-3" />
-    <span className="font-medium">{formatNumber(product.views)}</span>
-  </div>
-)}
+                        {showMarketingMetrics && product.views !== undefined && (
+                          <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/80 text-white text-xs px-2 py-1 rounded-md">
+                            <Eye className="w-3 h-3" />
+                            <span className="font-medium">{formatNumber(product.views)}</span>
+                          </div>
+                        )}
 
                         {/* Barred price badge - replaces discount badge */}
                         {product.discount_price && product.discount_price < product.price && (
@@ -652,15 +660,13 @@ const formatNumber = (num: number): string => {
       </div>
 
       {/* Floating Add Product Button */}
-{onAddProduct && (
-  <button
-    onClick={onAddProduct}
-    className="fixed bottom-20 right-4 z-50 bg-white text-gray-900 rounded-full p-3 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 active:scale-95 border border-gray-200 backdrop-blur-sm"
-    aria-label="Add Product"
-  >
-    <Plus className="w-6 h-6" />
-  </button>
-)}
+      <button
+        onClick={handleAddProduct}
+        className="fixed bottom-20 right-4 z-50 bg-white text-gray-900 rounded-full p-3 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 active:scale-95 border border-gray-200 backdrop-blur-sm"
+        aria-label="Add Product"
+      >
+        <Plus className="w-6 h-6" />
+      </button>
     </div>
   );
 }
