@@ -42,25 +42,26 @@ const SuccessScreen: React.FC<SuccessScreenProps> = ({
 
   return (
     <div className={isCompact ? "px-4 pb-4" : "min-h-screen bg-white flex flex-col px-4"}>
-      {/* Main Content - Centered Animation Only */}
-      <div className={isCompact ? "" : "flex-1 flex flex-col justify-center items-center w-full p-0"}>
-        {/* Animated Checkmark - Centered */}
-        <div className="flex flex-col items-center justify-center">
+      {/* Main Content - Centered Animation Only with proper spacing */}
+      <div className={isCompact ? "py-8" : "flex-1 flex flex-col justify-center items-center w-full p-0"}>
+        {/* Animated Checkmark - Centered with extra space for pulsing rings */}
+        <div className="flex flex-col items-center justify-center p-8"> {/* Added padding for ring clearance */}
           <div className={`relative ${
-            isCompact ? 'w-16 h-16' : 'w-24 h-24'
+            isCompact ? 'w-20 h-20' : 'w-32 h-32' // Increased size to accommodate rings
           }`}>
+            {/* Main checkmark container */}
             <div className={`rounded-full border-4 border-green-500 flex items-center justify-center transition-all duration-500 ${
               showCheckmark ? 'scale-100 opacity-100' : 'scale-50 opacity-0'
-            } ${isCompact ? 'w-16 h-16' : 'w-24 h-24'}`}>
+            } ${isCompact ? 'w-20 h-20' : 'w-32 h-32'} bg-white z-10 relative`}>
               <Check className={`text-green-500 transition-all duration-300 delay-300 ${
                 showCheckmark ? 'scale-100 opacity-100' : 'scale-0 opacity-0'
-              } ${isCompact ? 'w-8 h-8' : 'w-12 h-12'}`} />
+              } ${isCompact ? 'w-10 h-10' : 'w-16 h-16'}`} />
             </div>
 
-            {/* Pulsing background effect */}
+            {/* Pulsing background effect - positioned absolutely with enough space */}
             <div className={`absolute inset-0 rounded-full bg-green-500 opacity-20 transition-all duration-1000 ${
               showCheckmark ? 'animate-ping' : ''
-            } ${isCompact ? 'w-16 h-16' : 'w-24 h-24'}`}></div>
+            } ${isCompact ? 'w-20 h-20 -m-4' : 'w-32 h-32 -m-8'}`}></div>
           </div>
         </div>
       </div>
