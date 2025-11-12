@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Lock, Eye, EyeOff, Mail, ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+// AccountCreationPasswordStep.tsx (simplified)
+import React from 'react';
+import { Lock, Eye, EyeOff, Mail } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 interface AccountCreationPasswordStepProps {
@@ -11,15 +11,18 @@ interface AccountCreationPasswordStepProps {
   onContinue: () => void;
   onError: (error: string) => void;
   isLoading?: boolean;
+  password: string;
+  confirmPassword: string;
+  showPassword: boolean;
+  showConfirmPassword: boolean;
+  onPasswordChange: (password: string) => void;
+  onConfirmPasswordChange: (password: string) => void;
+  onShowPasswordChange: (show: boolean) => void;
+  onShowConfirmPasswordChange: (show: boolean) => void;
+  isFormValid: boolean;
+  faviconUrl: string | null;
   isCompact?: boolean;
-  onExpand?: () => void;
 }
-
-const FAVICON_OVERRIDES: Record<string, string> = {
-  'gmail.com': 'https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico',
-  'outlook.com': 'https://outlook.live.com/favicon.ico',
-  'yahoo.com': 'https://s.yimg.com/rz/l/favicon.ico',
-};
 
 const AccountCreationPasswordStep: React.FC<AccountCreationPasswordStepProps> = ({
   email,
@@ -27,81 +30,20 @@ const AccountCreationPasswordStep: React.FC<AccountCreationPasswordStepProps> = 
   lastName,
   onBack,
   onContinue,
-  onError,
-  isLoading: parentLoading = false,
+  isLoading = false,
+  password,
+  confirmPassword,
+  showPassword,
+  showConfirmPassword,
+  onPasswordChange,
+  onConfirmPasswordChange,
+  onShowPasswordChange,
+  onShowConfirmPasswordChange,
+  isFormValid,
+  faviconUrl,
   isCompact = false,
-  onExpand
 }) => {
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const extractDomain = (emailValue: string): string => {
-    if (!emailValue.includes('@')) return '';
-    const parts = emailValue.split('@');
-    if (parts.length !== 2) return '';
-    const domain = parts[1].trim();
-    return domain.includes('.') && domain.length > 3 ? domain : '';
-  };
-
-  const getFaviconUrl = (emailValue: string) => {
-    const domain = extractDomain(emailValue);
-    if (domain) {
-      return FAVICON_OVERRIDES[domain] || `https://www.google.com/s2/favicons?domain=${domain}&sz=20`;
-    }
-    return null;
-  };
-
-  const faviconUrl = getFaviconUrl(email);
-
-  const validatePassword = (pwd: string): string | null => {
-    if (pwd.length < 8) {
-      return 'Password must be at least 8 characters long';
-    }
-    if (!/(?=.*[a-z])/.test(pwd)) {
-      return 'Password must contain at least one lowercase letter';
-    }
-    if (!/(?=.*[A-Z])/.test(pwd)) {
-      return 'Password must contain at least one uppercase letter';
-    }
-    if (!/(?=.*\d)/.test(pwd)) {
-      return 'Password must contain at least one number';
-    }
-    return null;
-  };
-
-  const isFormValid = () => {
-    return (
-      password.length >= 8 &&
-      confirmPassword.length >= 8 &&
-      password === confirmPassword &&
-      validatePassword(password) === null
-    );
-  };
-
-  const handleCreateAccount = async () => {
-    if (!isFormValid() || isLoading) return;
-
-    console.log('AccountCreationPasswordStep: handleCreateAccount called');
-    setIsLoading(true);
-
-    try {
-      // Simulate signup
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      console.log('AccountCreationPasswordStep: Account created successfully, calling onContinue');
-      onContinue();
-    } catch (error) {
-      console.error('Account creation error:', error);
-      onError('An unexpected error occurred. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loading = isLoading || parentLoading;
+  const loading = isLoading;
 
   return (
     <div className={isCompact ? "px-4 pb-4" : "min-h-screen bg-white flex flex-col px-4"}>
@@ -180,14 +122,14 @@ const AccountCreationPasswordStep: React.FC<AccountCreationPasswordStepProps> = 
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => onPasswordChange(e.target.value)}
                   placeholder="Enter your password"
                   className="pl-10 pr-10"
                   disabled={loading}
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onClick={() => onShowPasswordChange(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   disabled={loading}
                 >
@@ -209,14 +151,14 @@ const AccountCreationPasswordStep: React.FC<AccountCreationPasswordStepProps> = 
                   id="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onChange={(e) => onConfirmPasswordChange(e.target.value)}
                   placeholder="Confirm your password"
                   className="pl-10 pr-10"
                   disabled={loading}
                 />
                 <button
                   type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  onClick={() => onShowConfirmPasswordChange(!showConfirmPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   disabled={loading}
                 >
@@ -227,10 +169,10 @@ const AccountCreationPasswordStep: React.FC<AccountCreationPasswordStepProps> = 
 
             {/* Create Account Button */}
             <button 
-              onClick={handleCreateAccount}
-              disabled={!isFormValid() || loading}
+              onClick={onContinue}
+              disabled={!isFormValid || loading}
               className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg transition-colors ${
-                !isFormValid() || loading
+                !isFormValid || loading
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
                   : 'bg-red-500 text-white hover:bg-red-600 border-red-500'
               } ${isCompact ? 'shadow-sm' : ''}`}
