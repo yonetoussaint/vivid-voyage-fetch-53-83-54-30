@@ -43,7 +43,9 @@ const AuthOverlay: React.FC = () => {
     userEmail,
     setUserEmail,
     resetOTP,
-    setResetOTP
+    setResetOTP,
+    signup,
+    login
   } = useAuth();
 
   // Account creation state
@@ -167,6 +169,14 @@ const AuthOverlay: React.FC = () => {
   // Handler functions
   const handleClose = () => {
     setIsAuthOverlayOpen(false);
+    // Reset all states when closing
+    setAccountCreationStep('name');
+    setFirstName('');
+    setLastName('');
+    setPassword('');
+    setConfirmPassword('');
+    setError(null);
+    setNameErrors({ firstName: '', lastName: '' });
   };
 
   const handleContinueWithEmail = () => setCurrentScreen('email');
@@ -221,16 +231,26 @@ const AuthOverlay: React.FC = () => {
   const handlePasswordStepContinue = async () => {
     if (!isPasswordFormValid() || isLoading) return;
 
-    console.log('AuthOverlay: handlePasswordStepContinue called');
+    console.log('AuthOverlay: Starting account creation process');
     setIsLoading(true);
+    setError(null);
 
     try {
-      // Simulate signup
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const fullName = `${firstName} ${lastName}`.trim();
+      
+      console.log('Calling signup with:', { email: userEmail, fullName });
+      
+      const result = await signup(userEmail, password, fullName);
+      
+      if (result.error) {
+        console.error('Signup error:', result.error);
+        setError(result.error);
+        return;
+      }
 
       console.log('AuthOverlay: Account created successfully, moving to success step');
       setAccountCreationStep('success');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Account creation error:', error);
       setError('An unexpected error occurred. Please try again.');
     } finally {
@@ -260,9 +280,28 @@ const AuthOverlay: React.FC = () => {
   const handleBackFromVerification = () => setCurrentScreen('email');
   const handleBackFromPassword = () => setCurrentScreen('email');
   const handleVerificationSuccess = () => setCurrentScreen('success');
-  const handleSignInSuccess = () => setCurrentScreen('success');
+  
+  const handleSignInSuccess = () => {
+    setCurrentScreen('success');
+    // Close overlay after a brief delay to show success message
+    setTimeout(() => {
+      setIsAuthOverlayOpen(false);
+    }, 2000);
+  };
+  
   const handleForgotPasswordClick = () => setCurrentScreen('reset-password');
-  const handleContinueToApp = () => setIsAuthOverlayOpen(false);
+  
+  const handleContinueToApp = () => {
+    setIsAuthOverlayOpen(false);
+    // Reset all states when continuing to app
+    setAccountCreationStep('name');
+    setFirstName('');
+    setLastName('');
+    setPassword('');
+    setConfirmPassword('');
+    setError(null);
+    setNameErrors({ firstName: '', lastName: '' });
+  };
 
   // Name step handlers
   const handleFirstNameChange = (value: string) => {
@@ -428,8 +467,6 @@ const AuthOverlay: React.FC = () => {
                           onBack={handleBackFromAccountCreation}
                           onChangeEmail={handleChangeEmail}
                           onContinue={handleNameStepContinue}
-                          initialFirstName={firstName}
-                          initialLastName={lastName}
                           firstName={firstName}
                           lastName={lastName}
                           onFirstNameChange={handleFirstNameChange}
