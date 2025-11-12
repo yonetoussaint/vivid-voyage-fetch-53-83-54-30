@@ -204,7 +204,7 @@ export default function SlideUpPanel({
         style={panelStyle}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Drag Handle Area */}
+        {/* Single Drag Handle at the Top */}
         <div 
           className="flex-shrink-0 cursor-grab active:cursor-grabbing touch-none"
           onMouseDown={handleDragStart}
@@ -244,7 +244,7 @@ export default function SlideUpPanel({
           {children}
         </div>
 
-        {/* Sticky Footer Area */}
+        {/* Sticky Footer Area - No drag handle here */}
         {stickyFooter && (
           <div className="flex-shrink-0 border-t border-gray-200 bg-white rounded-b-2xl">
             {stickyFooter}
@@ -256,10 +256,6 @@ export default function SlideUpPanel({
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 0.5; }
-        }
-        @keyframes slideInFromBottom {
-          from { transform: translateY(100%); }
-          to { transform: translateY(0); }
         }
       `}</style>
     </>
