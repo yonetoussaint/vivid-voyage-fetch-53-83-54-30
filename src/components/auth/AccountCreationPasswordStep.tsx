@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Lock, Eye, EyeOff, Mail } from 'lucide-react';
+import { Lock, Eye, EyeOff, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -11,8 +11,6 @@ interface AccountCreationPasswordStepProps {
   onContinue: () => void;
   onError: (error: string) => void;
   isLoading?: boolean;
-  isCompact?: boolean;
-  onExpand?: () => void;
 }
 
 const FAVICON_OVERRIDES: Record<string, string> = {
@@ -29,8 +27,6 @@ const AccountCreationPasswordStep: React.FC<AccountCreationPasswordStepProps> = 
   onContinue,
   onError,
   isLoading: parentLoading = false,
-  isCompact = false,
-  onExpand
 }) => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -90,7 +86,7 @@ const AccountCreationPasswordStep: React.FC<AccountCreationPasswordStepProps> = 
     try {
       // Simulate signup
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       console.log('AccountCreationPasswordStep: Account created successfully, calling onContinue');
       onContinue();
     } catch (error) {
@@ -105,21 +101,6 @@ const AccountCreationPasswordStep: React.FC<AccountCreationPasswordStepProps> = 
 
   return (
     <div className="flex flex-col px-4">
-      {/* Header - hide in compact mode */}
-      {!isCompact && (
-        <div className="pt-2 pb-3 flex items-center justify-between">
-          <button
-            onClick={onBack}
-            className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-full transition-colors active:scale-95"
-            disabled={loading}
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-700" />
-          </button>
-          <h2 className="text-lg font-semibold text-gray-900">Create Account</h2>
-          <div className="w-10 h-10"></div>
-        </div>
-      )}
-
       {/* Progress Bar */}
       <div className="mb-4 px-0">
         <div className="flex items-center gap-2">
