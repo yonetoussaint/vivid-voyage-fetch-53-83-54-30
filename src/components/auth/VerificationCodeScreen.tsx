@@ -92,43 +92,33 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
   };
 
   const handleVerifyCode = async () => {
-    if (!isComplete) return;
+  if (!isComplete) return;
 
-    setIsLoading(true);
-    setError('');
+  setIsLoading(true);
+  setError('');
 
-    const verificationCode = code.join(''); // Renamed from otpCode for clarity with Supabase
+  const verificationCode = code.join('');
 
-    try {
-      // Use Supabase's built-in OTP verification
-      const { supabase } = await import('../../integrations/supabase/client');
-
-      const { data, error } = await supabase.auth.verifyOtp({
-        email,
-        token: verificationCode,
-        type: 'email'
-      });
-
-      if (error) {
-        console.error('Verification failed:', error);
-        setError(error.message || 'Invalid verification code. Please try again.');
-        // Clear the code inputs on error
-        setCode(['', '', '', '', '', '']);
-        setIsComplete(false);
-        // Focus first input
-        inputRefs.current[0]?.focus();
-      } else if (data.user) {
-        console.log('Verification successful');
-        toast.success('Email verified successfully!');
-        onVerificationSuccess();
-      }
-    } catch (error) {
-      console.error('Error during verification:', error);
-      setError('An unexpected error occurred. Please try again.');
-    } finally {
-      setIsLoading(false);
+  try {
+    const result = await verifyCustomOTP(email, verificationCode);
+    
+    if (result.success) {
+      toast.success('Email verified successfully!');
+      onVerificationSuccess();
+    } else {
+      setError(result.error || 'Invalid verification code. Please try again.');
+      // Clear the code inputs on error
+      setCode(['', '', '', '', '', '']);
+      setIsComplete(false);
+      inputRefs.current[0]?.focus();
     }
-  };
+  } catch (error: any) {
+    console.error('Error during verification:', error);
+    setError('An unexpected error occurred. Please try again.');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const domain = email.split('@')[1] || '';
   const faviconUrl = FAVICON_OVERRIDES[domain] || `https://www.google.com/s2/favicons?domain=${domain}`;
