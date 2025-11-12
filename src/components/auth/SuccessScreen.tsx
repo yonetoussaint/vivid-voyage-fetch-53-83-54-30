@@ -44,10 +44,10 @@ const SuccessScreen: React.FC<SuccessScreenProps> = ({
     <div className={isCompact ? "px-4 pb-4" : "min-h-screen bg-white flex flex-col px-4"}>
       {/* Main Content - Centered Animation Only with proper spacing */}
       <div className={isCompact ? "py-8" : "flex-1 flex flex-col justify-center items-center w-full p-0"}>
-        {/* Animated Checkmark - Centered with extra space for pulsing rings */}
-        <div className="flex flex-col items-center justify-center p-8"> {/* Added padding for ring clearance */}
+        {/* Animated Checkmark - Centered with proper ring alignment */}
+        <div className="flex flex-col items-center justify-center p-8">
           <div className={`relative ${
-            isCompact ? 'w-20 h-20' : 'w-32 h-32' // Increased size to accommodate rings
+            isCompact ? 'w-20 h-20' : 'w-32 h-32'
           }`}>
             {/* Main checkmark container */}
             <div className={`rounded-full border-4 border-green-500 flex items-center justify-center transition-all duration-500 ${
@@ -58,10 +58,10 @@ const SuccessScreen: React.FC<SuccessScreenProps> = ({
               } ${isCompact ? 'w-10 h-10' : 'w-16 h-16'}`} />
             </div>
 
-            {/* Pulsing background effect - positioned absolutely with enough space */}
-            <div className={`absolute inset-0 rounded-full bg-green-500 opacity-20 transition-all duration-1000 ${
+            {/* Pulsing background effect - properly centered */}
+            <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-full bg-green-500 opacity-20 transition-all duration-1000 ${
               showCheckmark ? 'animate-ping' : ''
-            } ${isCompact ? 'w-20 h-20 -m-4' : 'w-32 h-32 -m-8'}`}></div>
+            } ${isCompact ? 'w-20 h-20' : 'w-32 h-32'}`}></div>
           </div>
         </div>
       </div>
