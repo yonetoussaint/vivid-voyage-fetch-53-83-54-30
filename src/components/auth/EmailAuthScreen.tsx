@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { ArrowLeft, HelpCircle } from 'lucide-react';
 import { EmailAuthScreenProps } from '../../types/auth/email';
 import { useEmailValidation } from '../../hooks/auth/useEmailValidation';
@@ -20,7 +20,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   onExpand,
   showHeader = true,
 }) => {
-  const { login, signup, isLoading: authLoading } = useAuth();
+  const { sendCustomOTPEmail, isLoading: authLoading } = useAuth();
 
   const {
     email,
@@ -49,21 +49,20 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
   const handleContinueWithCode = async () => {
     if (!isEmailValid || isLoading || emailCheckState === 'checking') return;
+    
     setIsLoading(true);
     try {
-      const { supabase } = await import('../../integrations/supabase/client');
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: { shouldCreateUser: true },
-      });
-
-      if (error) toast.error(error.message || 'Failed to send verification code');
-      else {
+      // ✅ Use custom OTP function instead of Supabase's built-in
+      const result = await sendCustomOTPEmail(email);
+      
+      if (result.success) {
         toast.success('Verification code sent to your email');
         onContinueWithCode(email);
+      } else {
+        toast.error(result.error || 'Failed to send verification code');
       }
-    } catch {
-      toast.error('Unexpected error. Please try again.');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to send verification code');
     } finally {
       setIsLoading(false);
     }
