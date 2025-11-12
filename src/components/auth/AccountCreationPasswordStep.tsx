@@ -104,7 +104,7 @@ const AccountCreationPasswordStep: React.FC<AccountCreationPasswordStepProps> = 
   const loading = isLoading || parentLoading;
 
   return (
-    <div className="flex flex-col px-4">
+    <div className="flex flex-col px-4 pb-12">
       {/* Header - hide in compact mode */}
       {!isCompact && (
         <div className="pt-2 pb-3 flex items-center justify-between">
@@ -121,8 +121,8 @@ const AccountCreationPasswordStep: React.FC<AccountCreationPasswordStepProps> = 
       )}
 
       {/* Progress Bar */}
-      <div className="mb-6 px-0">
-        <div className="flex items-center gap-2 mb-2">
+      <div className="mb-4 px-0">
+        <div className="flex items-center gap-2">
           <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
           <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
           <div className="flex-1 h-1 bg-gray-300 rounded-full"></div>
@@ -131,17 +131,17 @@ const AccountCreationPasswordStep: React.FC<AccountCreationPasswordStepProps> = 
 
       {/* Main Content */}
       <div className="flex flex-col w-full max-w-md mx-auto">
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-semibold text-gray-900 mb-2">
+        <div className="text-center mb-4">
+          <h1 className="text-2xl font-semibold text-gray-900 mb-1">
             Create your password
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 text-sm">
             Choose a secure password for your account
           </p>
         </div>
 
         {/* Account Info Summary */}
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 flex-shrink-0">
               {faviconUrl ? (
@@ -155,8 +155,8 @@ const AccountCreationPasswordStep: React.FC<AccountCreationPasswordStepProps> = 
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-gray-900 font-medium truncate">{email}</div>
-              <div className="text-gray-600 text-sm">
+              <div className="text-gray-900 font-medium truncate text-sm">{email}</div>
+              <div className="text-gray-600 text-xs">
                 {firstName} {lastName}
               </div>
             </div>
@@ -164,9 +164,9 @@ const AccountCreationPasswordStep: React.FC<AccountCreationPasswordStepProps> = 
         </div>
 
         {/* Password Form */}
-        <div className="space-y-4 mb-6">
+        <div className="space-y-3 mb-4">
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
               Password
             </label>
             <div className="relative">
@@ -195,7 +195,7 @@ const AccountCreationPasswordStep: React.FC<AccountCreationPasswordStepProps> = 
           </div>
 
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1.5">
               Confirm Password
             </label>
             <div className="relative">
