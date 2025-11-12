@@ -150,16 +150,16 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
           )}
 
           {resetState === 'sent' && (
-            <div className={`p-4 border border-green-200 bg-green-50 text-green-700 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
-              <div className="flex items-center gap-2 mb-2">
-                <Mail className="w-5 h-5" />
-                <p className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Verification code sent!</p>
-              </div>
-              <p className={isCompact ? 'text-xs' : 'text-sm'}>
-                Check your email for a 6-digit verification code. If it doesn't appear within a few minutes, check your spam folder.
-              </p>
-            </div>
-          )}
+  <div className={`p-4 border border-green-200 bg-green-50 text-green-700 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
+    <div className="flex items-center gap-2 mb-2">
+      <Mail className="w-5 h-5" />
+      <p className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Password reset code sent!</p>
+    </div>
+    <p className={isCompact ? 'text-xs' : 'text-sm'}>
+      Check your email for a 6-digit password reset code. If it doesn't appear within a few minutes, check your spam folder.
+    </p>
+  </div>
+)}
 
           {/* Email Display */}
           <div className={`p-4 bg-gray-50 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
