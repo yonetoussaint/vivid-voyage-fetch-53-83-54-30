@@ -137,12 +137,12 @@ const AccountCreationNameStep: React.FC<AccountCreationNameStepProps> = ({
 
   // Disable last name field if there's an error in first name
   const isLastNameDisabled = !!errors.firstName;
-  
+
   // Get the current error to display (prioritize first name errors)
   const currentError = errors.firstName || errors.lastName;
 
   return (
-    <div className="min-h-screen bg-white flex flex-col px-4">
+    <div className={isCompact ? "bg-white flex flex-col px-4" : "min-h-screen bg-white flex flex-col px-4"}>
       {/* Header - hide in compact mode */}
       {!isCompact && (
         <div className="pt-2 pb-3 flex items-center justify-between">
