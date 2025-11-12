@@ -331,7 +331,7 @@ const AuthOverlay: React.FC = () => {
 
         {/* Content with conditional bottom padding */}
         <div className={cn(
-          currentScreen === 'account-creation' && accountCreationStep === 'password' ? 'pb-12' : 'pb-4'
+          currentScreen === 'account-creation' && accountCreationStep === 'password' ? 'pb-24' : 'pb-4'
         )}>
           {renderCurrentScreen()}
         </div>
