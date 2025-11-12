@@ -301,20 +301,22 @@ const AuthOverlay: React.FC = () => {
     return screenContent;
   };
 
-  return (
-    <SlideUpPanel
-      isOpen={isAuthOverlayOpen}
-      onClose={handleClose}
-      showCloseButton={false}
-      preventBodyScroll={true}
-      className="bg-white"
-    >
-      {/* Content area */}
-      <div className="px-0">
-        {renderCurrentScreen()}
-      </div>
-    </SlideUpPanel>
-  );
+  
+return (
+  <SlideUpPanel
+    isOpen={isAuthOverlayOpen}
+    onClose={handleClose}
+    showCloseButton={false}
+    preventBodyScroll={true}
+    className="bg-white"
+    dynamicHeight={true} // Add this line
+  >
+    {/* Content area */}
+    <div className="px-0">
+      {renderCurrentScreen()}
+    </div>
+  </SlideUpPanel>
+);
 };
 
 export default AuthOverlay;
