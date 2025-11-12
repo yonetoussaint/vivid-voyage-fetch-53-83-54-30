@@ -25,6 +25,7 @@ interface AuthContextType {
 
   // OTP Functions
   sendCustomOTPEmail: (email: string) => Promise<{ success: boolean; error?: string }>;
+  sendPasswordResetOTP: (email: string) => Promise<{ success: boolean; error?: string }>;
   verifyCustomOTP: (email: string, otp: string) => Promise<{ success: boolean; error?: string; user?: any }>;
   resendOTPEmail: (email: string) => Promise<{ success: boolean; error?: string }>;
 
@@ -161,6 +162,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { 
         success: false, 
         error: error.message || 'Failed to send verification code' 
+      };
+    }
+  };
+
+  const sendPasswordResetOTP = async (email: string) => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/send-reset-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to send password reset code');
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Failed to send password reset OTP:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Failed to send password reset code' 
       };
     }
   };
@@ -770,6 +797,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // OTP Functions
     sendCustomOTPEmail,
+    sendPasswordResetOTP,
     verifyCustomOTP,
     resendOTPEmail,
 
