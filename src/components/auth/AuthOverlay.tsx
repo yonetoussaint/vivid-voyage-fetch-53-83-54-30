@@ -1,3 +1,4 @@
+// AuthOverlay.tsx
 import React, { useState } from 'react';
 import SlideUpPanel from '@/components/shared/SlideUpPanel';
 import { useAuth } from '@/contexts/auth/AuthContext';
@@ -24,6 +25,13 @@ const AccountCreationPasswordStep = React.lazy(() => import('./AccountCreationPa
 const AccountCreationSuccessStep = React.lazy(() => import('./AccountCreationSuccessStep'));
 const SuccessScreen = React.lazy(() => import('./SuccessScreen'));
 
+// Favicon overrides constant
+const FAVICON_OVERRIDES: Record<string, string> = {
+  'gmail.com': 'https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico',
+  'outlook.com': 'https://outlook.live.com/favicon.ico',
+  'yahoo.com': 'https://s.yimg.com/rz/l/favicon.ico',
+};
+
 const AuthOverlay: React.FC = () => {
   const {
     isAuthOverlayOpen,
@@ -38,10 +46,123 @@ const AuthOverlay: React.FC = () => {
     setResetOTP
   } = useAuth();
 
+  // Account creation state
   const [accountCreationStep, setAccountCreationStep] = useState<'name' | 'password' | 'success'>('name');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [nameErrors, setNameErrors] = useState({
+    firstName: '',
+    lastName: ''
+  });
+
+  // Utility functions
+  const extractDomain = (emailValue: string): string => {
+    if (!emailValue.includes('@')) return '';
+    const parts = emailValue.split('@');
+    if (parts.length !== 2) return '';
+    const domain = parts[1].trim();
+    return domain.includes('.') && domain.length > 3 ? domain : '';
+  };
+
+  const getFaviconUrl = (emailValue: string) => {
+    const domain = extractDomain(emailValue);
+    if (domain) {
+      return FAVICON_OVERRIDES[domain] || `https://www.google.com/s2/favicons?domain=${domain}&sz=20`;
+    }
+    return null;
+  };
+
+  const validateName = (name: string, fieldName: string, options: any = {}) => {
+    const {
+      minLength = 2,
+      maxLength = 50,
+      allowNumbers = false,
+      allowUnicode = true,
+      allowAllCaps = false,
+    } = options;
+
+    let basePattern = allowUnicode ? '\\p{L}' : 'a-zA-Z';
+    if (allowNumbers) basePattern += '0-9';
+
+    const nameRegex = new RegExp(
+      `^[${basePattern}\\s\\-'."]+$`, 
+      allowUnicode ? 'u' : ''
+    );
+
+    const trimmedName = name.trim();
+
+    if (!trimmedName) {
+      return `${fieldName} is required`;
+    }
+
+    if (trimmedName.length < minLength) {
+      return `${fieldName} must be at least ${minLength} character${minLength === 1 ? '' : 's'}`;
+    }
+    if (trimmedName.length > maxLength) {
+      return `${fieldName} must be less than ${maxLength} characters`;
+    }
+
+    if (!nameRegex.test(trimmedName)) {
+      const allowedChars = [
+        'letters (including accented ones like é, ü, ñ)',
+        allowNumbers && 'numbers',
+        'spaces',
+        'hyphens (-)',
+        'apostrophes (\')',
+        'periods (.)'
+      ].filter(Boolean).join(', ');
+      return `${fieldName} can only contain ${allowedChars}`;
+    }
+
+    if (!allowAllCaps && trimmedName === trimmedName.toUpperCase()) {
+      return `${fieldName} should not be in all capital letters`;
+    }
+
+    if (/(['\-."])\1/.test(trimmedName)) {
+      return `${fieldName} contains repeated special characters`;
+    }
+
+    if (/^['\-."]|['\-."]$/.test(trimmedName)) {
+      return `${fieldName} cannot start or end with a special character`;
+    }
+
+    if (/\s{2,}/.test(trimmedName)) {
+      return `${fieldName} cannot contain multiple consecutive spaces`;
+    }
+
+    return '';
+  };
+
+  const validatePassword = (pwd: string): string | null => {
+    if (pwd.length < 8) {
+      return 'Password must be at least 8 characters long';
+    }
+    if (!/(?=.*[a-z])/.test(pwd)) {
+      return 'Password must contain at least one lowercase letter';
+    }
+    if (!/(?=.*[A-Z])/.test(pwd)) {
+      return 'Password must contain at least one uppercase letter';
+    }
+    if (!/(?=.*\d)/.test(pwd)) {
+      return 'Password must contain at least one number';
+    }
+    return null;
+  };
+
+  const isPasswordFormValid = () => {
+    return (
+      password.length >= 8 &&
+      confirmPassword.length >= 8 &&
+      password === confirmPassword &&
+      validatePassword(password) === null
+    );
+  };
 
   // Handler functions
   const handleClose = () => {
@@ -67,7 +188,10 @@ const AuthOverlay: React.FC = () => {
     setAccountCreationStep('name');
     setFirstName('');
     setLastName('');
+    setPassword('');
+    setConfirmPassword('');
     setError(null);
+    setNameErrors({ firstName: '', lastName: '' });
   };
 
   const handleSignUpClick = () => {
@@ -75,7 +199,10 @@ const AuthOverlay: React.FC = () => {
     setAccountCreationStep('name');
     setFirstName('');
     setLastName('');
+    setPassword('');
+    setConfirmPassword('');
     setError(null);
+    setNameErrors({ firstName: '', lastName: '' });
   };
 
   const handleNameStepContinue = (newFirstName: string, newLastName: string) => {
@@ -91,8 +218,24 @@ const AuthOverlay: React.FC = () => {
     setAccountCreationStep('password');
   };
 
-  const handlePasswordStepContinue = () => {
-    setAccountCreationStep('success');
+  const handlePasswordStepContinue = async () => {
+    if (!isPasswordFormValid() || isLoading) return;
+
+    console.log('AuthOverlay: handlePasswordStepContinue called');
+    setIsLoading(true);
+
+    try {
+      // Simulate signup
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      console.log('AuthOverlay: Account created successfully, moving to success step');
+      setAccountCreationStep('success');
+    } catch (error) {
+      console.error('Account creation error:', error);
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleAccountCreated = () => {
@@ -121,6 +264,24 @@ const AuthOverlay: React.FC = () => {
   const handleForgotPasswordClick = () => setCurrentScreen('reset-password');
   const handleContinueToApp = () => setIsAuthOverlayOpen(false);
 
+  // Name step handlers
+  const handleFirstNameChange = (value: string) => {
+    setFirstName(value);
+    const error = validateName(value, 'First name');
+    setNameErrors(prev => ({ ...prev, firstName: error }));
+  };
+
+  const handleLastNameChange = (value: string) => {
+    setLastName(value);
+    const error = validateName(value, 'Last name');
+    setNameErrors(prev => ({ ...prev, lastName: error }));
+  };
+
+  const isNameFormValid = firstName.trim() !== '' && 
+                         lastName.trim() !== '' && 
+                         !nameErrors.firstName && 
+                         !nameErrors.lastName;
+
   const getCompactProps = () => ({
     isCompact: true,
     onExpand: undefined
@@ -148,6 +309,7 @@ const AuthOverlay: React.FC = () => {
 
   const renderCurrentScreen = () => {
     const compactProps = getCompactProps();
+    const faviconUrl = getFaviconUrl(userEmail);
 
     const screenContent = (() => {
       switch (currentScreen) {
@@ -268,6 +430,13 @@ const AuthOverlay: React.FC = () => {
                           onContinue={handleNameStepContinue}
                           initialFirstName={firstName}
                           initialLastName={lastName}
+                          firstName={firstName}
+                          lastName={lastName}
+                          onFirstNameChange={handleFirstNameChange}
+                          onLastNameChange={handleLastNameChange}
+                          nameErrors={nameErrors}
+                          isFormValid={isNameFormValid}
+                          faviconUrl={faviconUrl}
                           {...compactProps}
                         />
                       </React.Suspense>
@@ -283,7 +452,17 @@ const AuthOverlay: React.FC = () => {
                           onBack={handleBackFromAccountCreation}
                           onContinue={handlePasswordStepContinue}
                           onError={setError}
-                          isLoading={false}
+                          isLoading={isLoading}
+                          password={password}
+                          confirmPassword={confirmPassword}
+                          showPassword={showPassword}
+                          showConfirmPassword={showConfirmPassword}
+                          onPasswordChange={setPassword}
+                          onConfirmPasswordChange={setConfirmPassword}
+                          onShowPasswordChange={setShowPassword}
+                          onShowConfirmPasswordChange={setShowConfirmPassword}
+                          isFormValid={isPasswordFormValid()}
+                          faviconUrl={faviconUrl}
                           {...compactProps}
                         />
                       </React.Suspense>
@@ -297,6 +476,7 @@ const AuthOverlay: React.FC = () => {
                           firstName={firstName}
                           lastName={lastName}
                           onContinue={handleAccountCreated}
+                          faviconUrl={faviconUrl}
                           {...compactProps}
                         />
                       </React.Suspense>
@@ -336,8 +516,6 @@ const AuthOverlay: React.FC = () => {
       preventBodyScroll={true}
       className="bg-white"
     >
-      {/* REMOVED the drag handle from here - SlideUpPanel now handles it internally */}
-      
       {/* Content area */}
       <div className="px-0">
         {renderCurrentScreen()}
