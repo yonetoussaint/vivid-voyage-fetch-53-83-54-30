@@ -46,20 +46,20 @@ const SuccessScreen: React.FC<SuccessScreenProps> = ({
       <div className={isCompact ? "py-8" : "flex-1 flex flex-col justify-center items-center w-full p-0"}>
         {/* Animated Checkmark - Centered with proper ring alignment */}
         <div className="flex flex-col items-center justify-center p-8">
-          <div className={`relative ${
+          <div className={`relative flex items-center justify-center ${
             isCompact ? 'w-20 h-20' : 'w-32 h-32'
           }`}>
             {/* Main checkmark container */}
             <div className={`rounded-full border-4 border-green-500 flex items-center justify-center transition-all duration-500 ${
               showCheckmark ? 'scale-100 opacity-100' : 'scale-50 opacity-0'
-            } ${isCompact ? 'w-20 h-20' : 'w-32 h-32'} bg-white z-10 relative`}>
+            } ${isCompact ? 'w-20 h-20' : 'w-32 h-32'} bg-white z-10`}>
               <Check className={`text-green-500 transition-all duration-300 delay-300 ${
                 showCheckmark ? 'scale-100 opacity-100' : 'scale-0 opacity-0'
               } ${isCompact ? 'w-10 h-10' : 'w-16 h-16'}`} />
             </div>
 
-            {/* Pulsing background effect - properly centered */}
-            <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-full bg-green-500 opacity-20 transition-all duration-1000 ${
+            {/* Pulsing background effect - properly centered using the same container */}
+            <div className={`absolute rounded-full bg-green-500 opacity-20 transition-all duration-1000 ${
               showCheckmark ? 'animate-ping' : ''
             } ${isCompact ? 'w-20 h-20' : 'w-32 h-32'}`}></div>
           </div>
