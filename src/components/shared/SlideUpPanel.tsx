@@ -13,6 +13,7 @@ interface SlideUpPanelProps {
   preventBodyScroll?: boolean;
   stickyFooter?: React.ReactNode;
   maxHeight?: number; // 0-1 representing percentage of screen height
+  dynamicHeight?: boolean; // Add this prop to allow dynamic height adjustment
 }
 
 export default function SlideUpPanel({
@@ -25,7 +26,8 @@ export default function SlideUpPanel({
   showCloseButton = true,
   preventBodyScroll = true,
   stickyFooter,
-  maxHeight = 0.9 // 90% of screen height by default
+  maxHeight = 0.9, // 90% of screen height by default
+  dynamicHeight = false // Default to false for consistency
 }: SlideUpPanelProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -35,20 +37,41 @@ export default function SlideUpPanel({
   const [startY, setStartY] = useState(0);
   const [currentTranslate, setCurrentTranslate] = useState(0);
 
-  // Calculate content height when panel opens or children change
+  // Improved height calculation with ResizeObserver
   useEffect(() => {
     if (isOpen && contentRef.current) {
+      const contentElement = contentRef.current;
+      
       const calculateHeight = () => {
-        const contentElement = contentRef.current;
         if (contentElement) {
+          // Use getBoundingClientRect for more accurate measurement
           const height = contentElement.scrollHeight;
           setContentHeight(height);
         }
       };
 
-      calculateHeight();
-      const timeoutId = setTimeout(calculateHeight, 100);
-      return () => clearTimeout(timeoutId);
+      // Use ResizeObserver for better dynamic content handling
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (let entry of entries) {
+          calculateHeight();
+        }
+      });
+
+      if (contentElement) {
+        resizeObserver.observe(contentElement);
+        // Initial calculation
+        calculateHeight();
+      }
+
+      // Fallback timeout for initial render
+      const timeoutId = setTimeout(calculateHeight, 150);
+
+      return () => {
+        resizeObserver.disconnect();
+        clearTimeout(timeoutId);
+      };
+    } else {
+      setContentHeight(0);
     }
   }, [isOpen, children]);
 
@@ -81,10 +104,10 @@ export default function SlideUpPanel({
 
   const handleDragMove = useCallback((e: MouseEvent | TouchEvent) => {
     if (!isDragging) return;
-    
+
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
     const deltaY = clientY - startY;
-    
+
     // Only allow dragging downward (closing)
     if (deltaY > 0) {
       setCurrentTranslate(deltaY);
@@ -93,13 +116,13 @@ export default function SlideUpPanel({
 
   const handleDragEnd = useCallback(() => {
     if (!isDragging) return;
-    
+
     setIsDragging(false);
-    
+
     // If dragged more than 40% of panel height or 100px, close it
     const panelHeight = panelRef.current?.offsetHeight || 0;
     const closeThreshold = Math.max(panelHeight * 0.4, 100);
-    
+
     if (currentTranslate > closeThreshold) {
       onClose();
     } else {
@@ -115,7 +138,7 @@ export default function SlideUpPanel({
       document.addEventListener('touchmove', handleDragMove);
       document.addEventListener('mouseup', handleDragEnd);
       document.addEventListener('touchend', handleDragEnd);
-      
+
       return () => {
         document.removeEventListener('mousemove', handleDragMove);
         document.removeEventListener('touchmove', handleDragMove);
@@ -170,14 +193,17 @@ export default function SlideUpPanel({
 
   if (!isOpen) return null;
 
-  // Calculate if we need scrolling
+  // Calculate if we need scrolling - with dynamic height option
   const maxPanelHeight = window.innerHeight * maxHeight;
-  const needsScrolling = contentHeight > maxPanelHeight;
+  const needsScrolling = dynamicHeight ? false : contentHeight > maxPanelHeight;
+  
+  // For dynamic height, use auto height, otherwise use calculated height
+  const panelHeight = dynamicHeight ? 'auto' : (needsScrolling ? maxPanelHeight : contentHeight);
 
   // Calculate dynamic styles for drag animation
   const panelStyle = {
-    maxHeight: needsScrolling ? `${maxPanelHeight}px` : 'auto',
-    height: needsScrolling ? `${maxPanelHeight}px` : 'auto',
+    maxHeight: dynamicHeight ? 'none' : `${maxPanelHeight}px`,
+    height: panelHeight,
     transform: `translateY(${currentTranslate}px)`,
     transition: isDragging ? 'none' : 'transform 0.2s ease-out'
   };
@@ -232,10 +258,10 @@ export default function SlideUpPanel({
           </div>
         )}
 
-        {/* Content Area - Only scrollable when needed */}
+        {/* Content Area - Handle scrolling based on dynamicHeight prop */}
         <div 
           ref={contentRef}
-          className={`flex-1 ${needsScrolling ? 'overflow-y-auto' : 'overflow-hidden'} ${className}`}
+          className={`flex-1 ${dynamicHeight ? 'overflow-visible' : (needsScrolling ? 'overflow-y-auto' : 'overflow-hidden')} ${className}`}
           style={{
             WebkitOverflowScrolling: needsScrolling ? 'touch' : 'auto',
             scrollBehavior: 'smooth',
