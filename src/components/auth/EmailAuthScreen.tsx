@@ -1,4 +1,5 @@
 import React from 'react';
+import React, { useState } from 'react';
 import { ArrowLeft, HelpCircle } from 'lucide-react';
 import { EmailAuthScreenProps } from '../../types/auth/email';
 import { useEmailValidation } from '../../hooks/auth/useEmailValidation';
