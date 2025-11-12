@@ -27,23 +27,17 @@ const AccountCreationScreen: React.FC<AccountCreationScreenProps> = ({
   const [isLoading, setIsLoading] = useState(false);
 
   const handleNameStepContinue = (newFirstName: string, newLastName: string) => {
-    // Clear any previous errors
     setError(null);
-
-    // Validate names
     if (!newFirstName.trim() || !newLastName.trim()) {
       setError('First name and last name are required');
       return;
     }
-
     setFirstName(newFirstName.trim());
     setLastName(newLastName.trim());
     setCurrentStep('password');
   };
 
   const handlePasswordStepContinue = () => {
-    // Account creation is now handled in the password step component
-    // Just move to success step when called
     setCurrentStep('success');
   };
 
@@ -56,7 +50,7 @@ const AccountCreationScreen: React.FC<AccountCreationScreenProps> = ({
   };
 
   const handlePasswordStepBack = () => {
-    setError(null); // Clear errors when going back
+    setError(null);
     setCurrentStep('name');
   };
 
@@ -66,9 +60,6 @@ const AccountCreationScreen: React.FC<AccountCreationScreenProps> = ({
 
   const handleError = (errorMessage: string) => {
     setError(errorMessage);
-    console.error('Account creation error:', errorMessage);
-
-    // Optional: Clear error after a few seconds
     setTimeout(() => setError(null), 5000);
   };
 
@@ -76,7 +67,6 @@ const AccountCreationScreen: React.FC<AccountCreationScreenProps> = ({
     setError(null);
   };
 
-  // Error display component
   const ErrorBanner = () => (
     error ? (
       <div className="fixed top-4 left-4 right-4 z-50 bg-red-50 border border-red-200 rounded-lg p-4 shadow-lg">
@@ -99,7 +89,7 @@ const AccountCreationScreen: React.FC<AccountCreationScreenProps> = ({
 
   if (currentStep === 'name') {
     return (
-      <div className="pb-6"> {/* Added padding bottom here */}
+      <div> {/* REMOVED pb-6 */}
         <ErrorBanner />
         <AccountCreationNameStep
           email={email}
@@ -117,7 +107,7 @@ const AccountCreationScreen: React.FC<AccountCreationScreenProps> = ({
 
   if (currentStep === 'password') {
     return (
-      <div> {/* Added padding bottom here */}
+      <div> {/* REMOVED pb-6 */}
         <ErrorBanner />
         <AccountCreationPasswordStep
           email={email}
@@ -136,7 +126,7 @@ const AccountCreationScreen: React.FC<AccountCreationScreenProps> = ({
 
   if (currentStep === 'success') {
     return (
-      <div className="pb-6"> {/* Added padding bottom here */}
+      <div> {/* REMOVED pb-6 */}
         <AccountCreationSuccessStep
           email={email}
           firstName={firstName}
