@@ -166,14 +166,16 @@ const AuthOverlay: React.FC = () => {
         );
       case 'account-creation':
         return (
-          <React.Suspense fallback={<AccountCreationScreenSkeleton />}>
-            <AccountCreationScreen
-              email={userEmail}
-              onBack={handleBackFromAccountCreation}
-              onAccountCreated={handleAccountCreated}
-              {...compactProps}
-            />
-          </React.Suspense>
+          <div className="pb-6"> {/* Added padding bottom container */}
+            <React.Suspense fallback={<AccountCreationScreenSkeleton />}>
+              <AccountCreationScreen
+                email={userEmail}
+                onBack={handleBackFromAccountCreation}
+                onAccountCreated={handleAccountCreated}
+                {...compactProps}
+              />
+            </React.Suspense>
+          </div>
         );
       case 'success':
         return (
