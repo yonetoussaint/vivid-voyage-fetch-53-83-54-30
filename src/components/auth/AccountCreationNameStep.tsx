@@ -1,18 +1,21 @@
-import React, { useState } from 'react';
+// AccountCreationNameStep.tsx (simplified)
+import React from 'react';
 import { ArrowLeft, Mail } from 'lucide-react';
-import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { FAVICON_OVERRIDES } from '../../constants/email';
 
 interface AccountCreationNameStepProps {
   email: string;
   onBack: () => void;
   onChangeEmail: () => void;
   onContinue: (firstName: string, lastName: string) => void;
-  initialFirstName?: string;
-  initialLastName?: string;
+  firstName: string;
+  lastName: string;
+  onFirstNameChange: (value: string) => void;
+  onLastNameChange: (value: string) => void;
+  nameErrors: { firstName: string; lastName: string };
+  isFormValid: boolean;
+  faviconUrl: string | null;
   isCompact?: boolean;
-  onExpand?: () => void;
 }
 
 const AccountCreationNameStep: React.FC<AccountCreationNameStepProps> = ({
@@ -20,123 +23,16 @@ const AccountCreationNameStep: React.FC<AccountCreationNameStepProps> = ({
   onBack,
   onChangeEmail,
   onContinue,
-  initialFirstName = '',
-  initialLastName = '',
+  firstName,
+  lastName,
+  onFirstNameChange,
+  onLastNameChange,
+  nameErrors,
+  isFormValid,
+  faviconUrl,
   isCompact = false,
-  onExpand
 }) => {
-  const [firstName, setFirstName] = useState(initialFirstName);
-  const [lastName, setLastName] = useState(initialLastName);
-  const [errors, setErrors] = useState({
-    firstName: '',
-    lastName: ''
-  });
-
-  const extractDomain = (emailValue: string): string => {
-    if (!emailValue.includes('@')) return '';
-    const parts = emailValue.split('@');
-    if (parts.length !== 2) return '';
-    const domain = parts[1].trim();
-    return domain.includes('.') && domain.length > 3 ? domain : '';
-  };
-
-  const getFaviconUrl = (emailValue: string) => {
-    const domain = extractDomain(emailValue);
-    if (domain) {
-      return FAVICON_OVERRIDES[domain] || `https://www.google.com/s2/favicons?domain=${domain}&sz=20`;
-    }
-    return null;
-  };
-
-  const faviconUrl = getFaviconUrl(email);
-
-  const handleContinue = () => {
-    if (!firstName.trim() || !lastName.trim()) return;
-    onContinue(firstName.trim(), lastName.trim());
-  };
-
-  const validateName = (name: string, fieldName: string, options: any = {}) => {
-    const {
-      minLength = 2,
-      maxLength = 50,
-      allowNumbers = false,
-      allowUnicode = true,
-      allowAllCaps = false,
-    } = options;
-
-    let basePattern = allowUnicode ? '\\p{L}' : 'a-zA-Z';
-    if (allowNumbers) basePattern += '0-9';
-
-    const nameRegex = new RegExp(
-      `^[${basePattern}\\s\\-'."]+$`, 
-      allowUnicode ? 'u' : ''
-    );
-
-    const trimmedName = name.trim();
-
-    if (!trimmedName) {
-      return `${fieldName} is required`;
-    }
-
-    if (trimmedName.length < minLength) {
-      return `${fieldName} must be at least ${minLength} character${minLength === 1 ? '' : 's'}`;
-    }
-    if (trimmedName.length > maxLength) {
-      return `${fieldName} must be less than ${maxLength} characters`;
-    }
-
-    if (!nameRegex.test(trimmedName)) {
-      const allowedChars = [
-        'letters (including accented ones like é, ü, ñ)',
-        allowNumbers && 'numbers',
-        'spaces',
-        'hyphens (-)',
-        'apostrophes (\')',
-        'periods (.)'
-      ].filter(Boolean).join(', ');
-      return `${fieldName} can only contain ${allowedChars}`;
-    }
-
-    if (!allowAllCaps && trimmedName === trimmedName.toUpperCase()) {
-      return `${fieldName} should not be in all capital letters`;
-    }
-
-    if (/(['\-."])\1/.test(trimmedName)) {
-      return `${fieldName} contains repeated special characters`;
-    }
-
-    if (/^['\-."]|['\-."]$/.test(trimmedName)) {
-      return `${fieldName} cannot start or end with a special character`;
-    }
-
-    if (/\s{2,}/.test(trimmedName)) {
-      return `${fieldName} cannot contain multiple consecutive spaces`;
-    }
-
-    return '';
-  };
-
-  const handleFirstNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setFirstName(value);
-    const error = validateName(value, 'First name');
-    setErrors(prev => ({ ...prev, firstName: error }));
-  };
-
-  const handleLastNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setLastName(value);
-    const error = validateName(value, 'Last name');
-    setErrors(prev => ({ ...prev, lastName: error }));
-  };
-
-  const isFormValid = firstName.trim() !== '' && 
-                     lastName.trim() !== '' && 
-                     !errors.firstName && 
-                     !errors.lastName;
-
-  const isLastNameDisabled = !!errors.firstName;
-  const currentError = errors.firstName || errors.lastName;
+  const currentError = nameErrors.firstName || nameErrors.lastName;
 
   return (
     <div className={isCompact ? "px-4 pb-4" : "min-h-screen bg-white flex flex-col px-4"}>
@@ -219,10 +115,10 @@ const AccountCreationNameStep: React.FC<AccountCreationNameStepProps> = ({
                   id="firstName"
                   type="text"
                   value={firstName}
-                  onChange={handleFirstNameChange}
+                  onChange={(e) => onFirstNameChange(e.target.value)}
                   placeholder="First name"
                   className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg transition-colors ${
-                    errors.firstName ? 'border-red-500' : ''
+                    nameErrors.firstName ? 'border-red-500' : ''
                   } ${isCompact ? 'shadow-sm' : ''}`}
                 />
               </div>
@@ -232,21 +128,18 @@ const AccountCreationNameStep: React.FC<AccountCreationNameStepProps> = ({
                   id="lastName"
                   type="text"
                   value={lastName}
-                  onChange={handleLastNameChange}
+                  onChange={(e) => onLastNameChange(e.target.value)}
                   placeholder="Last name"
                   className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg transition-colors ${
-                    errors.lastName ? 'border-red-500' : ''
-                  } ${isCompact ? 'shadow-sm' : ''} ${
-                    isLastNameDisabled ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-                  disabled={isLastNameDisabled}
+                    nameErrors.lastName ? 'border-red-500' : ''
+                  } ${isCompact ? 'shadow-sm' : ''}`}
                 />
               </div>
             </div>
 
             {/* Continue Button */}
             <button 
-              onClick={handleContinue}
+              onClick={() => onContinue(firstName, lastName)}
               disabled={!isFormValid}
               className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg transition-colors ${
                 isFormValid 
