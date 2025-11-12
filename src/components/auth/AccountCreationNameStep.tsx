@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, User, Mail, Lock } from 'lucide-react';
+import { ArrowLeft, Mail } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { FAVICON_OVERRIDES } from '../../constants/email';
@@ -135,14 +135,11 @@ const AccountCreationNameStep: React.FC<AccountCreationNameStepProps> = ({
                      !errors.firstName && 
                      !errors.lastName;
 
-  // Disable last name field if there's an error in first name
   const isLastNameDisabled = !!errors.firstName;
-
-  // Get the current error to display (prioritize first name errors)
   const currentError = errors.firstName || errors.lastName;
 
   return (
-    <div className={isCompact ? "bg-white flex flex-col px-4" : "min-h-screen bg-white flex flex-col px-4"}>
+    <div className={isCompact ? "px-4" : "min-h-screen bg-white flex flex-col px-4"}>
       {/* Header - hide in compact mode */}
       {!isCompact && (
         <div className="pt-2 pb-3 flex items-center justify-between">
@@ -157,7 +154,7 @@ const AccountCreationNameStep: React.FC<AccountCreationNameStepProps> = ({
         </div>
       )}
 
-      {/* Progress Bar - always show */}
+      {/* Progress Bar */}
       <div className="mb-6 px-0">
         <div className="flex items-center gap-2 mb-2">
           <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
@@ -166,8 +163,8 @@ const AccountCreationNameStep: React.FC<AccountCreationNameStepProps> = ({
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col w-full max-w-md mx-auto">
+      {/* Main Content - Remove flex-1 and let content determine height */}
+      <div className="w-full max-w-md mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-semibold text-gray-900 mb-2">
             What's your name?
@@ -203,7 +200,7 @@ const AccountCreationNameStep: React.FC<AccountCreationNameStepProps> = ({
           </div>
         </div>
 
-        {/* Status Message Box - Simplified to show one error at a time */}
+        {/* Status Message Box */}
         {currentError && (
           <div className="mb-6 p-4 border border-red-200 bg-red-50 text-red-700 rounded-lg">
             <p className="text-sm">{currentError}</p>
@@ -241,7 +238,7 @@ const AccountCreationNameStep: React.FC<AccountCreationNameStepProps> = ({
         <Button
           onClick={handleContinue}
           disabled={!isFormValid}
-          className="w-full mb-6"
+          className="w-full"
           size="lg"
         >
           Continue
