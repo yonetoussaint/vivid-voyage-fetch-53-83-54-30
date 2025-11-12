@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { useAuth } from '@/contexts/auth/AuthContext';
 import {
@@ -25,35 +25,117 @@ const AuthOverlay: React.FC = () => {
     setResetOTP
   } = useAuth();
 
+  // Account creation state moved to main component
+  const [accountCreationStep, setAccountCreationStep] = useState<'name' | 'password' | 'success'>('name');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
   // Auth flow handlers
   const handleContinueWithEmail = () => setCurrentScreen('email');
   const handleBackToMain = () => setCurrentScreen('main');
+  
   const handleContinueWithPassword = (email: string) => {
     setUserEmail(email);
     setCurrentScreen('password');
   };
+  
   const handleContinueWithCode = (email: string) => {
     setUserEmail(email);
     setCurrentScreen('verification');
   };
+  
   const handleCreateAccount = (email: string) => {
     setUserEmail(email);
     setCurrentScreen('account-creation');
+    setAccountCreationStep('name'); // Reset to first step
+    setFirstName('');
+    setLastName('');
+    setError(null);
   };
-  const handleSignUpClick = () => setCurrentScreen('account-creation');
+
+  const handleSignUpClick = () => {
+    setCurrentScreen('account-creation');
+    setAccountCreationStep('name');
+    setFirstName('');
+    setLastName('');
+    setError(null);
+  };
+
+  // Account creation handlers
+  const handleNameStepContinue = (newFirstName: string, newLastName: string) => {
+    setError(null);
+    
+    if (!newFirstName.trim() || !newLastName.trim()) {
+      setError('First name and last name are required');
+      return;
+    }
+
+    setFirstName(newFirstName.trim());
+    setLastName(newLastName.trim());
+    setAccountCreationStep('password');
+  };
+
+  const handlePasswordStepContinue = () => {
+    setAccountCreationStep('success');
+  };
+
+  const handleAccountCreated = () => {
+    setCurrentScreen('success');
+  };
+
+  const handleBackFromAccountCreation = () => {
+    if (accountCreationStep === 'name') {
+      setCurrentScreen('email');
+    } else if (accountCreationStep === 'password') {
+      setAccountCreationStep('name');
+    } else if (accountCreationStep === 'success') {
+      setAccountCreationStep('password');
+    }
+    setError(null);
+  };
+
+  const handleChangeEmail = () => {
+    setCurrentScreen('email');
+  };
+
+  // Other auth flow handlers
   const handleBackFromVerification = () => setCurrentScreen('email');
   const handleBackFromPassword = () => setCurrentScreen('email');
   const handleVerificationSuccess = () => setCurrentScreen('success');
   const handleSignInSuccess = () => setCurrentScreen('success');
   const handleForgotPasswordClick = () => setCurrentScreen('reset-password');
   const handleContinueToApp = () => setIsAuthOverlayOpen(false);
-  const handleBackFromAccountCreation = () => setCurrentScreen('email');
-  const handleAccountCreated = () => setCurrentScreen('success');
 
   const getCompactProps = () => ({
     isCompact: true,
     onExpand: undefined
   });
+
+  // Error banner component (can be used across all screens)
+  const ErrorBanner = () => (
+    error ? (
+      <div className="fixed top-4 left-4 right-4 z-50 bg-red-50 border border-red-200 rounded-lg p-4 shadow-lg">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="text-red-600 text-sm font-medium">
+              {error}
+            </div>
+          </div>
+          <button
+            onClick={() => setError(null)}
+            className="text-red-600 hover:text-red-800 text-sm font-medium ml-4"
+          >
+            ×
+          </button>
+        </div>
+      </div>
+    ) : null
+  );
+
+  const clearError = () => {
+    setError(null);
+  };
 
   const renderCurrentScreen = () => {
     const compactProps = getCompactProps();
@@ -66,7 +148,12 @@ const AuthOverlay: React.FC = () => {
     const ResetPasswordScreen = React.lazy(() => import('./ResetPasswordScreen'));
     const OTPResetScreen = React.lazy(() => import('./OTPResetScreen'));
     const NewPasswordScreen = React.lazy(() => import('./NewPasswordScreen'));
-    const AccountCreationScreen = React.lazy(() => import('./AccountCreationScreen'));
+    
+    // Import individual account creation steps
+    const AccountCreationNameStep = React.lazy(() => import('./AccountCreationNameStep'));
+    const AccountCreationPasswordStep = React.lazy(() => import('./AccountCreationPasswordStep'));
+    const AccountCreationSuccessStep = React.lazy(() => import('./AccountCreationSuccessStep'));
+    
     const SuccessScreen = React.lazy(() => import('./SuccessScreen'));
 
     switch (currentScreen) {
@@ -82,6 +169,7 @@ const AuthOverlay: React.FC = () => {
             />
           </React.Suspense>
         );
+      
       case 'email':
         return (
           <React.Suspense fallback={<EmailAuthScreenSkeleton />}>
@@ -98,6 +186,7 @@ const AuthOverlay: React.FC = () => {
             />
           </React.Suspense>
         );
+      
       case 'verification':
         return (
           <React.Suspense fallback={<VerificationCodeScreenSkeleton />}>
@@ -110,6 +199,7 @@ const AuthOverlay: React.FC = () => {
             />
           </React.Suspense>
         );
+      
       case 'password':
         return (
           <React.Suspense fallback={<PasswordAuthScreenSkeleton />}>
@@ -124,6 +214,7 @@ const AuthOverlay: React.FC = () => {
             />
           </React.Suspense>
         );
+      
       case 'reset-password':
         return (
           <React.Suspense fallback={<ResetPasswordScreenSkeleton />}>
@@ -138,6 +229,7 @@ const AuthOverlay: React.FC = () => {
             />
           </React.Suspense>
         );
+      
       case 'otp-reset':
         return (
           <React.Suspense fallback={<VerificationCodeScreenSkeleton />}>
@@ -152,6 +244,7 @@ const AuthOverlay: React.FC = () => {
             />
           </React.Suspense>
         );
+      
       case 'new-password':
         return (
           <React.Suspense fallback={<PasswordAuthScreenSkeleton />}>
@@ -164,19 +257,64 @@ const AuthOverlay: React.FC = () => {
             />
           </React.Suspense>
         );
+      
       case 'account-creation':
         return (
-          <div className="pb-6"> {/* Added padding bottom container */}
-            <React.Suspense fallback={<AccountCreationScreenSkeleton />}>
-              <AccountCreationScreen
-                email={userEmail}
-                onBack={handleBackFromAccountCreation}
-                onAccountCreated={handleAccountCreated}
-                {...compactProps}
-              />
-            </React.Suspense>
+          <div className="pb-6">
+            <ErrorBanner />
+            {(() => {
+              switch (accountCreationStep) {
+                case 'name':
+                  return (
+                    <React.Suspense fallback={<AccountCreationScreenSkeleton />}>
+                      <AccountCreationNameStep
+                        email={userEmail}
+                        onBack={handleBackFromAccountCreation}
+                        onChangeEmail={handleChangeEmail}
+                        onContinue={handleNameStepContinue}
+                        initialFirstName={firstName}
+                        initialLastName={lastName}
+                        {...compactProps}
+                      />
+                    </React.Suspense>
+                  );
+                
+                case 'password':
+                  return (
+                    <React.Suspense fallback={<AccountCreationScreenSkeleton />}>
+                      <AccountCreationPasswordStep
+                        email={userEmail}
+                        firstName={firstName}
+                        lastName={lastName}
+                        onBack={handleBackFromAccountCreation}
+                        onContinue={handlePasswordStepContinue}
+                        onError={setError}
+                        isLoading={false}
+                        {...compactProps}
+                      />
+                    </React.Suspense>
+                  );
+                
+                case 'success':
+                  return (
+                    <React.Suspense fallback={<AccountCreationScreenSkeleton />}>
+                      <AccountCreationSuccessStep
+                        email={userEmail}
+                        firstName={firstName}
+                        lastName={lastName}
+                        onContinue={handleAccountCreated}
+                        {...compactProps}
+                      />
+                    </React.Suspense>
+                  );
+                
+                default:
+                  return null;
+              }
+            })()}
           </div>
         );
+      
       case 'success':
         return (
           <React.Suspense fallback={<SuccessScreenSkeleton />}>
@@ -187,6 +325,7 @@ const AuthOverlay: React.FC = () => {
             />
           </React.Suspense>
         );
+      
       default:
         return null;
     }
