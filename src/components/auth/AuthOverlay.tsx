@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { cn } from '@/lib/utils';
 import {
   MainLoginScreenSkeleton,
   EmailAuthScreenSkeleton,
@@ -330,9 +329,11 @@ const AuthOverlay: React.FC = () => {
         </div>
 
         {/* Content with conditional bottom padding */}
-        <div className={cn(
-          currentScreen === 'account-creation' && accountCreationStep === 'password' ? 'pb-24' : 'pb-4'
-        )}>
+        <div className={
+          currentScreen === 'account-creation' && accountCreationStep === 'password' 
+            ? 'pb-12' 
+            : 'pb-4'
+        }>
           {renderCurrentScreen()}
         </div>
       </DrawerContent>
