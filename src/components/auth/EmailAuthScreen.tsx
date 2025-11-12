@@ -1,5 +1,4 @@
-import React from 'react';
-import React, { useState } from 'react';
+import React, { useState } from 'react'; // Add useState import here
 import { ArrowLeft, HelpCircle } from 'lucide-react';
 import { EmailAuthScreenProps } from '../../types/auth/email';
 import { useEmailValidation } from '../../hooks/auth/useEmailValidation';
@@ -50,12 +49,12 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
   const handleContinueWithCode = async () => {
     if (!isEmailValid || isLoading || emailCheckState === 'checking') return;
-    
+
     setIsLoading(true);
     try {
       // ✅ Use custom OTP function instead of Supabase's built-in
       const result = await sendCustomOTPEmail(email);
-      
+
       if (result.success) {
         toast.success('Verification code sent to your email');
         onContinueWithCode(email);
