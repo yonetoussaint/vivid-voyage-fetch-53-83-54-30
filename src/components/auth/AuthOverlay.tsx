@@ -334,15 +334,11 @@ const AuthOverlay: React.FC = () => {
       onClose={handleClose}
       showCloseButton={false}
       preventBodyScroll={true}
-      className="bg-white pb-0" // Remove bottom padding here
-      headerContent={
-        // Drag handle as header content
-        <div className="w-full flex justify-center pt-2 pb-1">
-          <div className="w-16 h-1.5 bg-gray-300 rounded-full shadow-sm" />
-        </div>
-      }
+      className="bg-white"
     >
-      {/* Content area - no extra padding needed */}
+      {/* REMOVED the drag handle from here - SlideUpPanel now handles it internally */}
+      
+      {/* Content area */}
       <div className="px-0">
         {renderCurrentScreen()}
       </div>
