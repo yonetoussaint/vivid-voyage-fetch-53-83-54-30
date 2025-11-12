@@ -135,20 +135,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     lastName: ''
   });
 
+  // Backend URL - using your Render.com server
+  const BACKEND_URL = 'https://resend-u11p.onrender.com';
+
   // OTP Functions
   const sendCustomOTPEmail = async (email: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke('send-otp', {
-        body: { email },
+      const response = await fetch(`${BACKEND_URL}/api/send-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
       });
 
-      if (error) {
-        console.error('Send OTP edge function error:', error);
-        throw new Error(error.message || 'Failed to send verification code');
-      }
+      const result = await response.json();
 
-      if (data?.error) {
-        throw new Error(data.error);
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to send verification code');
       }
 
       return { success: true };
@@ -163,34 +167,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const verifyCustomOTP = async (email: string, otp: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke('verify-otp', {
-        body: { email, otp },
+      const response = await fetch(`${BACKEND_URL}/api/verify-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, otp }),
       });
 
-      if (error) {
-        console.error('Verify OTP edge function error:', error);
-        throw new Error(error.message || 'Invalid verification code');
-      }
+      const result = await response.json();
 
-      if (data?.error) {
-        throw new Error(data.error);
+      if (!response.ok) {
+        throw new Error(result.error || 'Invalid verification code');
       }
 
       // If we get a session back, set it in Supabase client
-      if (data.session) {
-        const { error: sessionError } = await supabase.auth.setSession(data.session);
+      if (result.session) {
+        const { error: sessionError } = await supabase.auth.setSession(result.session);
         if (sessionError) throw sessionError;
         
         // Update auth state
-        const userData = mapSupabaseUser(data.user);
+        const userData = mapSupabaseUser(result.user);
         setUser(userData);
         setIsAuthenticated(true);
       }
 
       return { 
         success: true, 
-        user: data.user,
-        message: data.message 
+        user: result.user,
+        message: result.message 
       };
     } catch (error: any) {
       console.error('Failed to verify OTP:', error);
@@ -203,17 +208,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const resendOTPEmail = async (email: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke('resend-otp', {
-        body: { email },
+      const response = await fetch(`${BACKEND_URL}/api/resend-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
       });
 
-      if (error) {
-        console.error('Resend OTP edge function error:', error);
-        throw new Error(error.message || 'Failed to resend verification code');
-      }
+      const result = await response.json();
 
-      if (data?.error) {
-        throw new Error(data.error);
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to resend verification code');
       }
 
       return { success: true };
