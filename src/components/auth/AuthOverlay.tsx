@@ -25,13 +25,11 @@ const AuthOverlay: React.FC = () => {
     setResetOTP
   } = useAuth();
 
-  // Account creation state moved to main component
   const [accountCreationStep, setAccountCreationStep] = useState<'name' | 'password' | 'success'>('name');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  // Auth flow handlers
   const handleContinueWithEmail = () => setCurrentScreen('email');
   const handleBackToMain = () => setCurrentScreen('main');
 
@@ -48,7 +46,7 @@ const AuthOverlay: React.FC = () => {
   const handleCreateAccount = (email: string) => {
     setUserEmail(email);
     setCurrentScreen('account-creation');
-    setAccountCreationStep('name'); // Reset to first step
+    setAccountCreationStep('name');
     setFirstName('');
     setLastName('');
     setError(null);
@@ -62,7 +60,6 @@ const AuthOverlay: React.FC = () => {
     setError(null);
   };
 
-  // Account creation handlers
   const handleNameStepContinue = (newFirstName: string, newLastName: string) => {
     setError(null);
 
@@ -99,7 +96,6 @@ const AuthOverlay: React.FC = () => {
     setCurrentScreen('email');
   };
 
-  // Other auth flow handlers
   const handleBackFromVerification = () => setCurrentScreen('email');
   const handleBackFromPassword = () => setCurrentScreen('email');
   const handleVerificationSuccess = () => setCurrentScreen('success');
@@ -112,7 +108,6 @@ const AuthOverlay: React.FC = () => {
     onExpand: undefined
   });
 
-  // Error banner component (can be used across all screens)
   const ErrorBanner = () => (
     error ? (
       <div className="fixed top-4 left-4 right-4 z-50 bg-red-50 border border-red-200 rounded-lg p-4 shadow-lg">
@@ -133,14 +128,9 @@ const AuthOverlay: React.FC = () => {
     ) : null
   );
 
-  const clearError = () => {
-    setError(null);
-  };
-
   const renderCurrentScreen = () => {
     const compactProps = getCompactProps();
 
-    // Lazy load components
     const MainLoginScreen = React.lazy(() => import('./MainLoginScreen'));
     const EmailAuthScreen = React.lazy(() => import('./EmailAuthScreen'));
     const VerificationCodeScreen = React.lazy(() => import('./VerificationCodeScreen'));
@@ -148,12 +138,9 @@ const AuthOverlay: React.FC = () => {
     const ResetPasswordScreen = React.lazy(() => import('./ResetPasswordScreen'));
     const OTPResetScreen = React.lazy(() => import('./OTPResetScreen'));
     const NewPasswordScreen = React.lazy(() => import('./NewPasswordScreen'));
-
-    // Import individual account creation steps
     const AccountCreationNameStep = React.lazy(() => import('./AccountCreationNameStep'));
     const AccountCreationPasswordStep = React.lazy(() => import('./AccountCreationPasswordStep'));
     const AccountCreationSuccessStep = React.lazy(() => import('./AccountCreationSuccessStep'));
-
     const SuccessScreen = React.lazy(() => import('./SuccessScreen'));
 
     switch (currentScreen) {
@@ -260,7 +247,7 @@ const AuthOverlay: React.FC = () => {
 
       case 'account-creation':
         return (
-          <div className="min-h-0 flex-1"> {/* Changed to allow natural height */}
+          <>
             <ErrorBanner />
             {(() => {
               switch (accountCreationStep) {
@@ -312,7 +299,7 @@ const AuthOverlay: React.FC = () => {
                   return null;
               }
             })()}
-          </div>
+          </>
         );
 
       case 'success':
@@ -335,14 +322,17 @@ const AuthOverlay: React.FC = () => {
     <Drawer open={isAuthOverlayOpen} onOpenChange={(open) => {
       if (!open) setIsAuthOverlayOpen(false);
     }}>
-      <DrawerContent className="h-auto max-h-[95vh]"> {/* Removed overflow-y-auto */}
+      <DrawerContent className="h-auto max-h-[95vh] overflow-hidden flex flex-col">
         {/* Drag handle */}
         <div className="flex flex-col items-center pt-2 pb-3 flex-shrink-0">
           <div className="w-16 h-1.5 bg-gray-300 rounded-full shadow-sm" />
         </div>
 
-        <div className="px-0 flex-1 min-h-0"> {/* Added flex properties for proper sizing */}
-          {renderCurrentScreen()}
+        {/* Scrollable content container */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="pb-8">
+            {renderCurrentScreen()}
+          </div>
         </div>
       </DrawerContent>
     </Drawer>
