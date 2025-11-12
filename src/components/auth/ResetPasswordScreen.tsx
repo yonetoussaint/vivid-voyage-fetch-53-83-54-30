@@ -90,10 +90,10 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
   };
 
   return (
-    <div className="bg-white flex flex-col px-4">
+    <div className={isCompact ? "px-4 pb-4" : "min-h-screen bg-white flex flex-col px-4"}>
       {/* Header - hide in compact mode */}
       {!isCompact && (
-        <div className="pt-2 pb-3 flex items-center justify-between">
+        <div className="pt-4 pb-4 flex items-center justify-between">
           <button
             onClick={onBack}
             className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-full transition-colors active:scale-95"
@@ -119,8 +119,8 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
         </div>
       )}
 
-      {/* Progress Bar - always show */}
-      <div className="mb-4 px-0">
+      {/* Progress Bar */}
+      <div className="mb-6 px-0">
         <div className="flex items-center gap-2 mb-2">
           <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
           <div className="flex-1 h-1 bg-gray-300 rounded-full"></div>
@@ -129,119 +129,116 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
         </div>
       </div>
 
-      {/* Main content container */}
-      <div className="flex-1 flex flex-col w-full max-w-md mx-auto relative">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-semibold text-gray-900 mb-2">
-            Forgot your password?
-          </h1>
-          <p className="text-gray-600">
-            We'll send a reset code to your email address below
-          </p>
-        </div>
-
-        {/* Status Messages */}
-        {resetState === 'error' && errorMessage && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl">
-            <p className="text-red-700 text-sm">{errorMessage}</p>
-          </div>
-        )}
-
-        {resetState === 'sent' && (
-          <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl">
-            <div className="flex items-center gap-2 mb-2">
-              <Mail className="w-5 h-5 text-green-600" />
-              <p className="text-green-800 font-medium">Reset code sent!</p>
-            </div>
-            <p className="text-green-700 text-sm">
-              Check your email for a reset code. If it doesn't appear within a few minutes, check your spam folder.
+      {/* Main Content */}
+      <div className={isCompact ? "" : "flex-1 flex flex-col justify-center w-full p-0"}>
+        <div className={isCompact ? "space-y-3 mb-4" : "space-y-3 mb-6"}>
+          {/* Header Text */}
+          <div className="text-center mb-6">
+            <h1 className={`text-gray-900 font-semibold mb-2 ${isCompact ? 'text-xl' : 'text-2xl'}`}>
+              Forgot your password?
+            </h1>
+            <p className={`text-gray-600 ${isCompact ? 'text-sm' : 'text-base'}`}>
+              We'll send a reset link to your email address below
             </p>
           </div>
-        )}
 
-        {/* Email Input */}
-        <div className="mb-4">
-          <div className="relative">
-            <div className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 z-10">
-              {showFavicon && faviconUrl ? (
-                <img
-                  src={faviconUrl}
-                  alt="Email provider favicon"
-                  className="w-full h-full object-contain"
-                  onError={handleFaviconError}
-                />
-              ) : (
-                <Mail className="w-full h-full text-gray-400" />
-              )}
+          {/* Status Messages */}
+          {resetState === 'error' && errorMessage && (
+            <div className={`p-4 border border-red-200 bg-red-50 text-red-700 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
+              <p className={isCompact ? 'text-xs' : 'text-sm'}>{errorMessage}</p>
             </div>
+          )}
 
-            <input
-              type="email"
-              value={email}
-              placeholder="Your email address"
-              className={`w-full pl-10 pr-4 py-3 text-base border-2 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed focus:outline-none ${
-                resetState === 'error'
-                  ? 'border-red-300'
-                  : resetState === 'sent'
-                  ? 'border-green-300'
-                  : 'border-gray-200'
-              }`}
-              disabled={true}
-              readOnly={true}
-              autoComplete="email"
-            />
+          {resetState === 'sent' && (
+            <div className={`p-4 border border-green-200 bg-green-50 text-green-700 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
+              <div className="flex items-center gap-2 mb-2">
+                <Mail className="w-5 h-5" />
+                <p className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Reset link sent!</p>
+              </div>
+              <p className={isCompact ? 'text-xs' : 'text-sm'}>
+                Check your email for a reset link. If it doesn't appear within a few minutes, check your spam folder.
+              </p>
+            </div>
+          )}
+
+          {/* Email Display */}
+          <div className={`p-4 bg-gray-50 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-6 h-6">
+                  {showFavicon && faviconUrl ? (
+                    <img
+                      src={faviconUrl}
+                      alt="Email provider favicon"
+                      className="w-full h-full object-contain"
+                      onError={handleFaviconError}
+                    />
+                  ) : (
+                    <Mail className="w-full h-full text-gray-400" />
+                  )}
+                </div>
+                <span className={`text-gray-700 font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>
+                  {email}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Send Reset Link Button */}
+          <button
+            onClick={handleSendResetCode}
+            disabled={!canSendReset}
+            className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg transition-colors ${
+              canSendReset
+                ? 'bg-red-500 text-white hover:bg-red-600 border-red-500'
+                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            } ${isCompact ? 'shadow-sm' : ''}`}
+          >
+            {resetState === 'sending' ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Sending...</span>
+              </>
+            ) : resetState === 'sent' ? (
+              <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Reset link sent</span>
+            ) : (
+              <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Send reset link</span>
+            )}
+          </button>
+
+          {/* Back to Sign In */}
+          <div className="text-center">
+            <p className={`text-gray-600 ${isCompact ? 'text-sm' : 'text-base'}`}>
+              Remember your password?{' '}
+              <button
+                type="button"
+                onClick={onBack}
+                className="text-red-500 hover:text-red-600 font-medium focus:outline-none disabled:opacity-50"
+                disabled={isLoading}
+              >
+                Back to sign in
+              </button>
+            </p>
           </div>
         </div>
 
-        {/* Send Reset Code Button */}
-        <button
-          onClick={handleSendResetCode}
-          disabled={!canSendReset}
-          className={`w-full py-4 px-6 rounded-xl text-lg font-medium transition-all duration-200 mb-6 ${
-            canSendReset
-              ? 'bg-red-500 hover:bg-red-600 text-white shadow-lg hover:shadow-xl active:scale-[0.98]'
-              : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-          }`}
-        >
-          {resetState === 'sending' ? (
-            <div className="flex items-center justify-center gap-2">
-              <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-              Sending...
-            </div>
-          ) : resetState === 'sent' ? (
-            'Reset code sent'
-          ) : (
-            'Send reset code'
-          )}
-        </button>
-
-        {/* Back to Sign In */}
-        <div className="text-center mb-6">
-          <p className="text-gray-600 text-sm">
-            Remember your password?{' '}
-            <button
-              type="button"
-              onClick={onBack}
-              className="text-red-500 hover:underline font-medium focus:outline-none"
-              disabled={isLoading}
-            >
-              Back to sign in
-            </button>
-          </p>
-        </div>
-
-        {/* Security Notice */}
-        <div className="flex items-center justify-center gap-2">
-          <svg
-            className="w-4 h-4 text-gray-500"
-            fill="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path d="M18,8A6,6 0 0,0 12,2A6,6 0 0,0 6,8H4C2.89,8 2,8.89 2,10V20A2,2 0 0,0 4,22H20A2,2 0 0,0 22,20V10C22,8.89 21.1,8 20,8H18M12,4A4,4 0 0,1 16,8H8A4,4 0 0,1 12,4Z" />
+        {/* Secure Authentication Footer */}
+        <div className={`flex items-center justify-center gap-2 ${isCompact ? 'mb-3' : 'mb-4'}`}>
+          <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M18,8A6,6 0 0,0 12,2A6,6 0 0,0 6,8H4C2.89,8 2,8.89 2,10V20A2,2 0 0,0 4,22H20A2,2 0 0,0 22,20V10C22,8.89 21.1,8 20,8H18M12,4A4,4 0 0,1 16,8H8A4,4 0 0,1 12,4Z"/>
           </svg>
-          <span className="text-gray-500 text-sm">Reset codes expire in 10 minutes</span>
+          <span className={`text-gray-500 ${isCompact ? 'text-xs' : 'text-sm'}`}>
+            Secure Authentication
+          </span>
         </div>
+
+        {/* Terms Footer */}
+        <p className={`text-gray-500 text-center ${isCompact ? 'text-[10px] leading-tight px-2' : 'text-xs leading-relaxed'}`}>
+          By proceeding, you confirm that you've read and agree to our{' '}
+          <span className="text-red-500">Terms of Service</span>{' '}
+          and{' '}
+          <span className="text-red-500">Privacy Policy</span>
+        </p>
       </div>
     </div>
   );
