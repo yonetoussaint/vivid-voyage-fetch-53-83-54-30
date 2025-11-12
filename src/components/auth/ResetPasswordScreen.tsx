@@ -24,7 +24,7 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
   const [resetState, setResetState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
-  // ✅ Import the correct function from AuthContext
+  // ✅ Make sure this is using sendPasswordResetOTP
   const { sendPasswordResetOTP } = useAuth();
 
   const isEmailValid = (email: string): boolean => {
@@ -56,10 +56,10 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
 
     setIsLoading(true);
     setResetState('sending');
-    setErrorMessage(''); // Clear previous error messages
+    setErrorMessage('');
 
     try {
-      // ✅ Now this will call the correct function
+      // ✅ This should call the password reset endpoint
       const result = await sendPasswordResetOTP(email);
 
       if (result.success) {
