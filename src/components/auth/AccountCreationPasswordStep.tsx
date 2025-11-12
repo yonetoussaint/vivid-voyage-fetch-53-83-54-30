@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Lock, Eye, EyeOff, Mail } from 'lucide-react';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { FAVICON_OVERRIDES } from '../../constants/email';
-import { useAuth } from '../../contexts/auth/AuthContext';
-import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 interface AccountCreationPasswordStepProps {
   email: string;
@@ -18,6 +15,12 @@ interface AccountCreationPasswordStepProps {
   onExpand?: () => void;
 }
 
+const FAVICON_OVERRIDES: Record<string, string> = {
+  'gmail.com': 'https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico',
+  'outlook.com': 'https://outlook.live.com/favicon.ico',
+  'yahoo.com': 'https://s.yimg.com/rz/l/favicon.ico',
+};
+
 const AccountCreationPasswordStep: React.FC<AccountCreationPasswordStepProps> = ({
   email,
   firstName,
@@ -29,7 +32,6 @@ const AccountCreationPasswordStep: React.FC<AccountCreationPasswordStepProps> = 
   isCompact = false,
   onExpand
 }) => {
-  const { signup, isLoading: authLoading } = useAuth();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -80,35 +82,29 @@ const AccountCreationPasswordStep: React.FC<AccountCreationPasswordStepProps> = 
   };
 
   const handleCreateAccount = async () => {
-    if (!isFormValid() || isLoading || authLoading) return;
+    if (!isFormValid() || isLoading) return;
 
     console.log('AccountCreationPasswordStep: handleCreateAccount called');
     setIsLoading(true);
 
     try {
-      const { error } = await signup(email, password, `${firstName} ${lastName}`);
-
-      if (error) {
-        console.error('Signup error:', error);
-        toast.error(error || 'Failed to create account. Please try again.');
-        return;
-      }
-
+      // Simulate signup
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       console.log('AccountCreationPasswordStep: Account created successfully, calling onContinue');
-      toast.success('Account created successfully!');
       onContinue();
     } catch (error) {
       console.error('Account creation error:', error);
-      toast.error('An unexpected error occurred. Please try again.');
+      onError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const loading = isLoading || parentLoading || authLoading;
+  const loading = isLoading || parentLoading;
 
   return (
-    <div className="flex flex-col px-4 pb-6"> {/* Removed min-h-screen, added pb-6 */}
+    <div className="flex flex-col px-4">
       {/* Header - hide in compact mode */}
       {!isCompact && (
         <div className="pt-2 pb-3 flex items-center justify-between">
@@ -124,7 +120,7 @@ const AccountCreationPasswordStep: React.FC<AccountCreationPasswordStepProps> = 
         </div>
       )}
 
-      {/* Progress Bar - always show */}
+      {/* Progress Bar */}
       <div className="mb-6 px-0">
         <div className="flex items-center gap-2 mb-2">
           <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
@@ -135,7 +131,7 @@ const AccountCreationPasswordStep: React.FC<AccountCreationPasswordStepProps> = 
 
       {/* Main Content */}
       <div className="flex flex-col w-full max-w-md mx-auto">
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <h1 className="text-3xl font-semibold text-gray-900 mb-2">
             Create your password
           </h1>
@@ -146,7 +142,7 @@ const AccountCreationPasswordStep: React.FC<AccountCreationPasswordStepProps> = 
 
         {/* Account Info Summary */}
         <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-          <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center gap-3">
             <div className="w-8 h-8 flex-shrink-0">
               {faviconUrl ? (
                 <img
@@ -168,7 +164,7 @@ const AccountCreationPasswordStep: React.FC<AccountCreationPasswordStepProps> = 
         </div>
 
         {/* Password Form */}
-        <div className="space-y-4 mb-8">
+        <div className="space-y-4 mb-6">
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
               Password
@@ -227,8 +223,8 @@ const AccountCreationPasswordStep: React.FC<AccountCreationPasswordStepProps> = 
 
         <Button
           onClick={handleCreateAccount}
-          disabled={!isFormValid() || isLoading || authLoading}
-          className="w-full mb-6"
+          disabled={!isFormValid() || loading}
+          className="w-full"
           size="lg"
         >
           {loading ? 'Creating Account...' : 'Create Account'}
