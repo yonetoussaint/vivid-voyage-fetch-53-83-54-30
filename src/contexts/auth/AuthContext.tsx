@@ -22,7 +22,12 @@ interface AuthContextType {
   checkIfFollowing: (sellerId: string) => Promise<boolean>;
   toggleFollowSeller: (sellerId: string, sellerName: string, currentFollowStatus: boolean) => Promise<{ success: boolean; error?: string }>;
   followedSellers: string[];
-  
+
+  // OTP Functions
+  sendCustomOTPEmail: (email: string) => Promise<{ success: boolean; error?: string }>;
+  verifyCustomOTP: (email: string, otp: string) => Promise<{ success: boolean; error?: string; user?: any }>;
+  resendOTPEmail: (email: string) => Promise<{ success: boolean; error?: string }>;
+
   // Auth overlay state and methods
   isAuthOverlayOpen: boolean;
   setIsAuthOverlayOpen: (open: boolean) => void;
@@ -34,7 +39,7 @@ interface AuthContextType {
   setUserEmail: (email: string) => void;
   resetOTP: string;
   setResetOTP: (otp: string) => void;
-  
+
   // Account creation state and methods
   accountCreationStep: 'name' | 'password' | 'success';
   setAccountCreationStep: (step: 'name' | 'password' | 'success') => void;
@@ -53,7 +58,7 @@ interface AuthContextType {
   authError: string | null;
   setAuthError: (error: string | null) => void;
   nameErrors: { firstName: string; lastName: string };
-  
+
   // Auth overlay handlers
   handleContinueWithEmail: () => void;
   handleBackToMain: () => void;
@@ -74,14 +79,14 @@ interface AuthContextType {
   handleContinueToApp: () => void;
   handleFirstNameChange: (value: string) => void;
   handleLastNameChange: (value: string) => void;
-  
+
   // Utility methods
   getFaviconUrl: (emailValue: string) => string | null;
   isNameFormValid: boolean;
   isPasswordFormValid: boolean;
   validateName: (name: string, fieldName: string, options?: any) => string;
   validatePassword: (pwd: string) => string | null;
-  
+
   // Reset auth overlay
   resetAuthOverlay: () => void;
 }
@@ -130,6 +135,97 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     lastName: ''
   });
 
+  // OTP Functions
+  const sendCustomOTPEmail = async (email: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('send-otp', {
+        body: { email },
+      });
+
+      if (error) {
+        console.error('Send OTP edge function error:', error);
+        throw new Error(error.message || 'Failed to send verification code');
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Failed to send OTP:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Failed to send verification code' 
+      };
+    }
+  };
+
+  const verifyCustomOTP = async (email: string, otp: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-otp', {
+        body: { email, otp },
+      });
+
+      if (error) {
+        console.error('Verify OTP edge function error:', error);
+        throw new Error(error.message || 'Invalid verification code');
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      // If we get a session back, set it in Supabase client
+      if (data.session) {
+        const { error: sessionError } = await supabase.auth.setSession(data.session);
+        if (sessionError) throw sessionError;
+        
+        // Update auth state
+        const userData = mapSupabaseUser(data.user);
+        setUser(userData);
+        setIsAuthenticated(true);
+      }
+
+      return { 
+        success: true, 
+        user: data.user,
+        message: data.message 
+      };
+    } catch (error: any) {
+      console.error('Failed to verify OTP:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Invalid verification code' 
+      };
+    }
+  };
+
+  const resendOTPEmail = async (email: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('resend-otp', {
+        body: { email },
+      });
+
+      if (error) {
+        console.error('Resend OTP edge function error:', error);
+        throw new Error(error.message || 'Failed to resend verification code');
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Failed to resend OTP:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Failed to resend verification code' 
+      };
+    }
+  };
+
   // Utility functions
   const extractDomain = useCallback((emailValue: string): string => {
     if (!emailValue.includes('@')) return '';
@@ -146,48 +242,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     return null;
   }, [extractDomain]);
-
-
-// Add to your AuthContext
-const verifyCustomOTP = async (email: string, otp: string) => {
-  try {
-    const { supabase } = await import('@/integrations/supabase/client');
-    
-    const { data, error } = await supabase.functions.invoke('verify-otp', {
-      body: { email, otp },
-    });
-
-    if (error) {
-      console.error('Verify OTP edge function error:', error);
-      throw new Error(error.message || 'Invalid verification code');
-    }
-
-    if (data?.error) {
-      throw new Error(data.error);
-    }
-
-    // If we get a session back, set it in Supabase client
-    if (data.session) {
-      const { error: sessionError } = await supabase.auth.setSession(data.session);
-      if (sessionError) throw sessionError;
-    }
-
-    return { 
-      success: true, 
-      user: data.user,
-      message: data.message 
-    };
-  } catch (error: any) {
-    console.error('Failed to verify OTP:', error);
-    return { 
-      success: false, 
-      error: error.message || 'Invalid verification code' 
-    };
-  }
-};
-
-
-
 
   const validateName = useCallback((name: string, fieldName: string, options: any = {}) => {
     const {
@@ -612,11 +666,11 @@ const verifyCustomOTP = async (email: string, otp: string) => {
 
     try {
       const fullName = `${firstName} ${lastName}`.trim();
-      
+
       console.log('Calling signup with:', { email: userEmail, fullName });
-      
+
       const result = await signup(userEmail, password, fullName);
-      
+
       if (result.error) {
         console.error('Signup error:', result.error);
         setAuthError(result.error);
@@ -655,7 +709,7 @@ const verifyCustomOTP = async (email: string, otp: string) => {
   const handleBackFromVerification = () => setCurrentScreen('email');
   const handleBackFromPassword = () => setCurrentScreen('email');
   const handleVerificationSuccess = () => setCurrentScreen('success');
-  
+
   const handleSignInSuccess = () => {
     setCurrentScreen('success');
     // Close overlay after a brief delay to show success message
@@ -663,9 +717,9 @@ const verifyCustomOTP = async (email: string, otp: string) => {
       setIsAuthOverlayOpen(false);
     }, 2000);
   };
-  
+
   const handleForgotPasswordClick = () => setCurrentScreen('reset-password');
-  
+
   const handleContinueToApp = () => {
     setIsAuthOverlayOpen(false);
     resetAuthOverlay();
@@ -696,82 +750,85 @@ const verifyCustomOTP = async (email: string, otp: string) => {
     setShowConfirmPassword(false);
   };
 
-  // Add these missing functions to your AuthContext value object:
+  const value: AuthContextType = {
+    user,
+    isAuthenticated,
+    isLoading,
+    login,
+    signup,
+    logout,
+    checkAuthStatus,
+    checkIfFollowing,
+    toggleFollowSeller,
+    followedSellers,
 
-const value: AuthContextType = {
-  user,
-  isAuthenticated,
-  isLoading,
-  login,
-  signup,
-  logout,
-  checkAuthStatus,
-  checkIfFollowing,
-  toggleFollowSeller,
-  followedSellers,
-  
-  // Auth overlay state
-  isAuthOverlayOpen,
-  setIsAuthOverlayOpen,
-  currentScreen,
-  setCurrentScreen,
-  selectedLanguage,
-  setSelectedLanguage,
-  userEmail,
-  setUserEmail,
-  resetOTP,
-  setResetOTP,
-  
-  // Account creation state
-  accountCreationStep,
-  setAccountCreationStep,
-  firstName,
-  setFirstName,
-  lastName,
-  setLastName,
-  password,
-  setPassword,
-  confirmPassword,
-  setConfirmPassword,
-  showPassword,
-  setShowPassword,
-  showConfirmPassword,
-  setShowConfirmPassword,
-  authError,
-  setAuthError,
-  nameErrors,
-  
-  // Auth overlay handlers
-  handleContinueWithEmail,
-  handleBackToMain,
-  handleContinueWithPassword,
-  handleContinueWithCode,
-  handleCreateAccount,
-  handleSignUpClick,
-  handleNameStepContinue,
-  handlePasswordStepContinue,
-  handleAccountCreated,
-  handleBackFromAccountCreation,
-  handleChangeEmail,
-  handleBackFromVerification,
-  handleBackFromPassword,
-  handleVerificationSuccess,
-  handleSignInSuccess,
-  handleForgotPasswordClick,
-  handleContinueToApp,
-  handleFirstNameChange,
-  handleLastNameChange,
-  
-  // Utility methods
-  getFaviconUrl,
-  isNameFormValid: isNameFormValid(),
-  isPasswordFormValid: isPasswordFormValid(),
-  validateName,
-  validatePassword,
-  
-  // Reset method
-  resetAuthOverlay,
-};
+    // OTP Functions
+    sendCustomOTPEmail,
+    verifyCustomOTP,
+    resendOTPEmail,
+
+    // Auth overlay state
+    isAuthOverlayOpen,
+    setIsAuthOverlayOpen,
+    currentScreen,
+    setCurrentScreen,
+    selectedLanguage,
+    setSelectedLanguage,
+    userEmail,
+    setUserEmail,
+    resetOTP,
+    setResetOTP,
+
+    // Account creation state
+    accountCreationStep,
+    setAccountCreationStep,
+    firstName,
+    setFirstName,
+    lastName,
+    setLastName,
+    password,
+    setPassword,
+    confirmPassword,
+    setConfirmPassword,
+    showPassword,
+    setShowPassword,
+    showConfirmPassword,
+    setShowConfirmPassword,
+    authError,
+    setAuthError,
+    nameErrors,
+
+    // Auth overlay handlers
+    handleContinueWithEmail,
+    handleBackToMain,
+    handleContinueWithPassword,
+    handleContinueWithCode,
+    handleCreateAccount,
+    handleSignUpClick,
+    handleNameStepContinue,
+    handlePasswordStepContinue,
+    handleAccountCreated,
+    handleBackFromAccountCreation,
+    handleChangeEmail,
+    handleBackFromVerification,
+    handleBackFromPassword,
+    handleVerificationSuccess,
+    handleSignInSuccess,
+    handleForgotPasswordClick,
+    handleContinueToApp,
+    handleFirstNameChange,
+    handleLastNameChange,
+
+    // Utility methods
+    getFaviconUrl,
+    isNameFormValid: isNameFormValid(),
+    isPasswordFormValid: isPasswordFormValid(),
+    validateName,
+    validatePassword,
+
+    // Reset method
+    resetAuthOverlay,
+  };
 
   return (
     <AuthContext.Provider value={value}>
