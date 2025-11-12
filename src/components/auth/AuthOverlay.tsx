@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Drawer, DrawerContent } from "@/components/ui/drawer";
+import SlideUpPanel from '@/components/shared/SlideUpPanel';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import {
   MainLoginScreenSkeleton,
@@ -44,6 +44,10 @@ const AuthOverlay: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Handler functions
+  const handleClose = () => {
+    setIsAuthOverlayOpen(false);
+  };
+
   const handleContinueWithEmail = () => setCurrentScreen('email');
   const handleBackToMain = () => setCurrentScreen('main');
 
@@ -325,21 +329,23 @@ const AuthOverlay: React.FC = () => {
   };
 
   return (
-    <Drawer open={isAuthOverlayOpen} onOpenChange={(open) => {
-      if (!open) setIsAuthOverlayOpen(false);
-    }}>
-      <DrawerContent className="h-auto max-h-[90vh] overflow-y-auto">
-        {/* Drag handle */}
-        <div className="flex-shrink-0 pt-2 pb-3">
-          <div className="w-16 h-1.5 bg-gray-300 rounded-full shadow-sm mx-auto" />
-        </div>
+    <SlideUpPanel
+      isOpen={isAuthOverlayOpen}
+      onClose={handleClose}
+      showCloseButton={false}
+      preventBodyScroll={true}
+      className="bg-white"
+    >
+      {/* Drag handle */}
+      <div className="flex-shrink-0 pt-2 pb-3">
+        <div className="w-16 h-1.5 bg-gray-300 rounded-full shadow-sm mx-auto" />
+      </div>
 
-        {/* Content area - will size based on content */}
-        <div className="px-0 pb-6">
-          {renderCurrentScreen()}
-        </div>
-      </DrawerContent>
-    </Drawer>
+      {/* Content area - will size based on content */}
+      <div className="px-0 pb-6">
+        {renderCurrentScreen()}
+      </div>
+    </SlideUpPanel>
   );
 };
 
