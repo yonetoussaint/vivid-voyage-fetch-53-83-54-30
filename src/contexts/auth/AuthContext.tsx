@@ -147,6 +147,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return null;
   }, [extractDomain]);
 
+
+// Add to your AuthContext
+const verifyCustomOTP = async (email: string, otp: string) => {
+  try {
+    const { supabase } = await import('@/integrations/supabase/client');
+    
+    const { data, error } = await supabase.functions.invoke('verify-otp', {
+      body: { email, otp },
+    });
+
+    if (error) {
+      console.error('Verify OTP edge function error:', error);
+      throw new Error(error.message || 'Invalid verification code');
+    }
+
+    if (data?.error) {
+      throw new Error(data.error);
+    }
+
+    // If we get a session back, set it in Supabase client
+    if (data.session) {
+      const { error: sessionError } = await supabase.auth.setSession(data.session);
+      if (sessionError) throw sessionError;
+    }
+
+    return { 
+      success: true, 
+      user: data.user,
+      message: data.message 
+    };
+  } catch (error: any) {
+    console.error('Failed to verify OTP:', error);
+    return { 
+      success: false, 
+      error: error.message || 'Invalid verification code' 
+    };
+  }
+};
+
+
+
+
   const validateName = useCallback((name: string, fieldName: string, options: any = {}) => {
     const {
       minLength = 2,
