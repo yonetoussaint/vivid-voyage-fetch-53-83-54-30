@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft, HelpCircle, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { FAVICON_OVERRIDES } from '../../constants/email';
+import { useAuth } from '../../contexts/auth/AuthContext';
 
 interface ResetPasswordScreenProps {
   onBack: () => void;
@@ -22,6 +23,9 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [resetState, setResetState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Use the custom OTP function from AuthContext
+  const { sendCustomOTPEmail } = useAuth();
 
   const isEmailValid = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -55,27 +59,23 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
     setErrorMessage(''); // Clear previous error messages
 
     try {
-      // Use Supabase's built-in password reset
-      const { supabase } = await import('../../integrations/supabase/client');
+      // ✅ Use custom OTP function instead of Supabase's built-in password reset
+      const result = await sendCustomOTPEmail(email);
 
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password/new`,
-      });
-
-      if (error) {
-        console.error('Failed to send reset email:', error);
-        setErrorMessage(error.message || 'Failed to send reset email. Please try again.');
-        setResetState('error');
-      } else {
-        console.log('Password reset email sent successfully');
-        toast.success('Password reset link sent to your email');
+      if (result.success) {
+        console.log('Password reset OTP sent successfully');
+        toast.success('Verification code sent to your email');
         setResetState('sent');
         setTimeout(() => {
           onResetSuccess(email);
         }, 2000);
+      } else {
+        console.error('Failed to send reset OTP:', result.error);
+        setErrorMessage(result.error || 'Failed to send verification code. Please try again.');
+        setResetState('error');
       }
-    } catch (error) {
-      console.error('Error sending reset email:', error);
+    } catch (error: any) {
+      console.error('Error sending reset OTP:', error);
       setErrorMessage('An unexpected error occurred. Please try again.');
       setResetState('error');
     } finally {
@@ -135,10 +135,10 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
           {/* Header Text */}
           <div className="text-center mb-6">
             <h1 className={`text-gray-900 font-semibold mb-2 ${isCompact ? 'text-xl' : 'text-2xl'}`}>
-              Forgot your password?
+              Reset your password
             </h1>
             <p className={`text-gray-600 ${isCompact ? 'text-sm' : 'text-base'}`}>
-              We'll send a reset link to your email address below
+              We'll send a verification code to your email address
             </p>
           </div>
 
@@ -153,10 +153,10 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
             <div className={`p-4 border border-green-200 bg-green-50 text-green-700 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
               <div className="flex items-center gap-2 mb-2">
                 <Mail className="w-5 h-5" />
-                <p className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Reset link sent!</p>
+                <p className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Verification code sent!</p>
               </div>
               <p className={isCompact ? 'text-xs' : 'text-sm'}>
-                Check your email for a reset link. If it doesn't appear within a few minutes, check your spam folder.
+                Check your email for a 6-digit verification code. If it doesn't appear within a few minutes, check your spam folder.
               </p>
             </div>
           )}
@@ -184,7 +184,7 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
             </div>
           </div>
 
-          {/* Send Reset Link Button */}
+          {/* Send Verification Code Button */}
           <button
             onClick={handleSendResetCode}
             disabled={!canSendReset}
@@ -197,12 +197,12 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
             {resetState === 'sending' ? (
               <>
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-                <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Sending...</span>
+                <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Sending code...</span>
               </>
             ) : resetState === 'sent' ? (
-              <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Reset link sent</span>
+              <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Code sent successfully</span>
             ) : (
-              <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Send reset link</span>
+              <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Send verification code</span>
             )}
           </button>
 
