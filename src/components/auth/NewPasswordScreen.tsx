@@ -1,6 +1,7 @@
-
 import React, { useState } from 'react';
 import { ArrowLeft, HelpCircle, Lock, Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '../../contexts/auth/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface NewPasswordScreenProps {
   email: string;
@@ -26,7 +27,7 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const API_BASE_URL = 'https://supabase-y8ak.onrender.com/api';
+  const { verifyCustomOTP } = useAuth();
 
   const isPasswordValid = password.length >= 6;
   const doPasswordsMatch = password === confirmPassword && confirmPassword.length > 0;
@@ -49,37 +50,48 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
     setError('');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/reset-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          otp,
-          newPassword: password,
-        }),
+      // Step 1: Verify the OTP first to get a session
+      const verificationResult = await verifyCustomOTP(email, otp);
+
+      if (!verificationResult.success) {
+        setError('Verification code has expired. Please request a new one.');
+        return;
+      }
+
+      // Step 2: Update the user's password using Supabase
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !userData.user) {
+        setError('Unable to update password. Please try signing in again.');
+        return;
+      }
+
+      // Update the user's password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: password
       });
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        // Store auth token if provided
-        if (data.token) {
-          localStorage.setItem('authToken', data.token);
-          localStorage.setItem('isAuthenticated', 'true');
-          
-          // Dispatch auth state change event
-          window.dispatchEvent(new Event('authStateChanged'));
+      if (updateError) {
+        console.error('Password update error:', updateError);
+        
+        let errorMessage = 'Failed to update password. Please try again.';
+        if (updateError.message.includes('password should be at least')) {
+          errorMessage = 'Password must be at least 6 characters long.';
+        } else if (updateError.message.includes('Auth session missing')) {
+          errorMessage = 'Session expired. Please start the password reset process again.';
         }
         
-        onPasswordResetSuccess();
-      } else {
-        setError(data.message || 'Failed to reset password. Please try again.');
+        setError(errorMessage);
+        return;
       }
-    } catch (error) {
+
+      // Password updated successfully
+      console.log('Password updated successfully for:', email);
+      onPasswordResetSuccess();
+
+    } catch (error: any) {
       console.error('Error resetting password:', error);
-      setError('Network error. Please check your connection and try again.');
+      setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -114,6 +126,7 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
             aria-label="Help"
             onClick={() => alert('Need help? Contact support@example.com')}
             type="button"
+            disabled={isLoading}
           >
             <HelpCircle className="w-5 h-5 text-gray-700" />
           </button>
@@ -126,7 +139,7 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
           <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
           <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
           <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
-          <div className="flex-1 h-1 bg-gray-300 rounded-full"></div>
+          <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
         </div>
       </div>
 
