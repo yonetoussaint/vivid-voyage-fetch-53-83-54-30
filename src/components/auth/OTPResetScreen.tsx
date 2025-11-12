@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Key, HelpCircle, Mail, Loader2 } from 'lucide-react';
 import { FAVICON_OVERRIDES } from '../../constants/email';
+import { useAuth } from '../../contexts/auth/AuthContext';
 
 interface OTPResetScreenProps {
   email: string;
   onBack: () => void;
-  onOTPVerified: (email: string, otp: string, token?: string) => void;
+  onOTPVerified: (email: string, otp: string) => void;
   isCompact?: boolean;
   onExpand?: () => void;
 }
@@ -23,7 +24,9 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
   const [resendCooldown, setResendCooldown] = useState(0);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const API_BASE_URL = 'https://supabase-y8ak.onrender.com/api';
+  
+  // Use the AuthContext functions
+  const { verifyCustomOTP, resendOTPEmail } = useAuth();
 
   // Initialize input refs
   useEffect(() => {
@@ -90,35 +93,19 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
     setError('');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/verify-reset-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email,
-          otp: codeToVerify,
-          purpose: 'password_reset',
-          action: 'verify_only' // Explicitly tell the backend not to consume the OTP
-        }),
-      });
+      // ✅ Use the verifyCustomOTP function from AuthContext
+      const result = await verifyCustomOTP(email, codeToVerify);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Invalid verification code');
-      }
-
-      if (data.success) {
-        // Pass along the information that OTP is valid but not consumed yet
-        onOTPVerified(email, codeToVerify, data.token);
+      if (result.success) {
+        // OTP is valid - proceed to password reset
+        onOTPVerified(email, codeToVerify);
       } else {
-        setError(data.message || 'Invalid verification code');
+        setError(result.error || 'Invalid verification code');
         // Clear OTP fields on error
         setOtp(['', '', '', '', '', '']);
         inputRefs.current[0]?.focus();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error during OTP verification:', error);
       setError(error.message || 'Verification failed. Please try again.');
       // Clear OTP fields on error
@@ -136,24 +123,17 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
     setError('');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/request-password-reset`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
+      // ✅ Use the resendOTPEmail function from AuthContext
+      const result = await resendOTPEmail(email);
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
+      if (result.success) {
         setResendCooldown(60);
         setOtp(['', '', '', '', '', '']);
         inputRefs.current[0]?.focus();
       } else {
-        setError(data.message || 'Failed to resend code. Please try again.');
+        setError(result.error || 'Failed to resend code. Please try again.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error resending code:', error);
       setError('Network error. Please check your connection and try again.');
     } finally {
@@ -170,6 +150,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
             onClick={onBack}
             className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-full transition-colors active:scale-95"
             aria-label="Go back"
+            disabled={isLoading}
           >
             <ArrowLeft className="w-5 h-5 text-gray-700" />
           </button>
@@ -183,6 +164,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
             aria-label="Help"
             onClick={() => alert('Need help? Contact support@example.com')}
             type="button"
+            disabled={isLoading}
           >
             <HelpCircle className="w-5 h-5 text-gray-700" />
           </button>
@@ -239,6 +221,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
                 onClick={onBack}
                 className={`text-red-500 hover:text-red-600 font-medium ${isCompact ? 'text-xs' : 'text-sm'}`}
                 type="button"
+                disabled={isLoading}
               >
                 Change
               </button>
@@ -290,7 +273,10 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
                   className={`text-red-500 hover:text-red-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto ${isCompact ? 'text-sm' : 'text-base'}`}
                   type="button"
                 >
-                  Resend reset code
+                  {isLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : null}
+                  {isLoading ? 'Sending...' : 'Resend reset code'}
                 </button>
               ) : (
                 <p className={`text-gray-500 ${isCompact ? 'text-xs' : 'text-sm'}`}>
