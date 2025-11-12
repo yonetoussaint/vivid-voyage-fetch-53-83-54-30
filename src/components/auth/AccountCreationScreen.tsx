@@ -117,7 +117,7 @@ const AccountCreationScreen: React.FC<AccountCreationScreenProps> = ({
 
   if (currentStep === 'password') {
     return (
-      <div className="pb-6"> {/* Added padding bottom here */}
+      <div> {/* Added padding bottom here */}
         <ErrorBanner />
         <AccountCreationPasswordStep
           email={email}
