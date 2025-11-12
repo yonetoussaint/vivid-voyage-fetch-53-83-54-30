@@ -329,7 +329,7 @@ const AuthOverlay: React.FC = () => {
         </div>
 
         {/* Content with bottom padding */}
-        <div className="pb-8">
+        <div className="pb-16">
           {renderCurrentScreen()}
         </div>
       </DrawerContent>
