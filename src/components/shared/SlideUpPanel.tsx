@@ -1,6 +1,6 @@
 // components/shared/SlideUpPanel.tsx
 import { X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 interface SlideUpPanelProps {
   isOpen: boolean;
@@ -12,6 +12,7 @@ interface SlideUpPanelProps {
   showCloseButton?: boolean;
   preventBodyScroll?: boolean;
   stickyFooter?: React.ReactNode;
+  maxHeight?: number; // 0-1 representing percentage of screen height
 }
 
 export default function SlideUpPanel({
@@ -23,12 +24,16 @@ export default function SlideUpPanel({
   className = '',
   showCloseButton = true,
   preventBodyScroll = true,
-  stickyFooter
+  stickyFooter,
+  maxHeight = 0.9 // 90% of screen height by default
 }: SlideUpPanelProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const scrollYRef = useRef(0);
   const [contentHeight, setContentHeight] = useState<number>(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startY, setStartY] = useState(0);
+  const [currentTranslate, setCurrentTranslate] = useState(0);
 
   // Calculate content height when panel opens or children change
   useEffect(() => {
@@ -36,16 +41,12 @@ export default function SlideUpPanel({
       const calculateHeight = () => {
         const contentElement = contentRef.current;
         if (contentElement) {
-          // Get the actual height of the content
           const height = contentElement.scrollHeight;
           setContentHeight(height);
         }
       };
 
-      // Calculate immediately
       calculateHeight();
-
-      // Also calculate after a brief delay to ensure everything is rendered
       const timeoutId = setTimeout(calculateHeight, 100);
       return () => clearTimeout(timeoutId);
     }
@@ -70,6 +71,60 @@ export default function SlideUpPanel({
     }
   }, [isOpen, preventBodyScroll]);
 
+  // Drag handlers inspired by React Native BottomSheet
+  const handleDragStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    setIsDragging(true);
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    setStartY(clientY);
+    setCurrentTranslate(0);
+  }, []);
+
+  const handleDragMove = useCallback((e: MouseEvent | TouchEvent) => {
+    if (!isDragging) return;
+    
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const deltaY = clientY - startY;
+    
+    // Only allow dragging downward (closing)
+    if (deltaY > 0) {
+      setCurrentTranslate(deltaY);
+    }
+  }, [isDragging, startY]);
+
+  const handleDragEnd = useCallback(() => {
+    if (!isDragging) return;
+    
+    setIsDragging(false);
+    
+    // If dragged more than 40% of panel height or 100px, close it
+    const panelHeight = panelRef.current?.offsetHeight || 0;
+    const closeThreshold = Math.max(panelHeight * 0.4, 100);
+    
+    if (currentTranslate > closeThreshold) {
+      onClose();
+    } else {
+      // Animate back to original position
+      setCurrentTranslate(0);
+    }
+  }, [isDragging, currentTranslate, onClose]);
+
+  // Add/remove global event listeners for drag
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleDragMove);
+      document.addEventListener('touchmove', handleDragMove);
+      document.addEventListener('mouseup', handleDragEnd);
+      document.addEventListener('touchend', handleDragEnd);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleDragMove);
+        document.removeEventListener('touchmove', handleDragMove);
+        document.removeEventListener('mouseup', handleDragEnd);
+        document.removeEventListener('touchend', handleDragEnd);
+      };
+    }
+  }, [isDragging, handleDragMove, handleDragEnd]);
+
   // Scroll prevention logic
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
@@ -77,7 +132,6 @@ export default function SlideUpPanel({
 
       const contentElement = contentRef.current;
       if (contentElement && contentElement.contains(e.target as Node)) {
-        // Allow scrolling only if content exceeds available space
         const isScrollable = contentElement.scrollHeight > contentElement.clientHeight;
         if (!isScrollable) {
           e.preventDefault();
@@ -93,7 +147,6 @@ export default function SlideUpPanel({
 
       const contentElement = contentRef.current;
       if (contentElement && contentElement.contains(e.target as Node)) {
-        // Allow scrolling only if content exceeds available space
         const isScrollable = contentElement.scrollHeight > contentElement.clientHeight;
         if (!isScrollable) {
           e.preventDefault();
@@ -118,29 +171,53 @@ export default function SlideUpPanel({
   if (!isOpen) return null;
 
   // Calculate if we need scrolling
-  const needsScrolling = contentHeight > window.innerHeight * 0.8; // If content exceeds 80% of viewport height
+  const maxPanelHeight = window.innerHeight * maxHeight;
+  const needsScrolling = contentHeight > maxPanelHeight;
+
+  // Calculate dynamic styles for drag animation
+  const panelStyle = {
+    maxHeight: needsScrolling ? `${maxPanelHeight}px` : 'auto',
+    height: needsScrolling ? `${maxPanelHeight}px` : 'auto',
+    transform: `translateY(${currentTranslate}px)`,
+    transition: isDragging ? 'none' : 'transform 0.2s ease-out'
+  };
+
+  // Calculate opacity for backdrop based on drag
+  const backdropOpacity = Math.max(0, 0.5 - (currentTranslate / (window.innerHeight * 0.8)));
 
   return (
     <>
-      {/* Blurred Backdrop */}
+      {/* Dynamic Backdrop */}
       <div 
-        className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-md z-[70] animate-in fade-in duration-300"
+        className="fixed inset-0 bg-black backdrop-blur-md z-[70] transition-opacity duration-200"
+        style={{ 
+          opacity: backdropOpacity,
+          animation: !isDragging ? 'fadeIn 0.3s ease-out' : 'none'
+        }}
         onClick={onClose}
       />
 
-      {/* Panel - Dynamic height based on content */}
+      {/* Panel with drag handle */}
       <div
         ref={panelRef}
-        className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 rounded-t-2xl shadow-lg z-[70] animate-in slide-in-from-bottom duration-300 flex flex-col"
-        style={{
-          maxHeight: needsScrolling ? '90vh' : 'auto',
-          height: needsScrolling ? '90vh' : 'auto',
-        }}
+        className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 rounded-t-2xl shadow-lg z-[70] flex flex-col"
+        style={panelStyle}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Drag Handle Area */}
+        <div 
+          className="flex-shrink-0 cursor-grab active:cursor-grabbing touch-none"
+          onMouseDown={handleDragStart}
+          onTouchStart={handleDragStart}
+        >
+          <div className="flex justify-center pt-3 pb-2">
+            <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+          </div>
+        </div>
+
         {/* Sticky Header */}
         {(title || headerContent || showCloseButton) && (
-          <div className="flex-shrink-0 bg-white z-10 flex items-center justify-between px-4 py-2 border-b border-gray-100 rounded-t-2xl">
+          <div className="flex-shrink-0 bg-white z-10 flex items-center justify-between px-4 py-2 border-b border-gray-100">
             <div className="flex-1 min-w-0">
               {headerContent ? headerContent : (title && <h3 className="font-medium text-gray-900">{title}</h3>)}
             </div>
@@ -158,7 +235,7 @@ export default function SlideUpPanel({
         {/* Content Area - Only scrollable when needed */}
         <div 
           ref={contentRef}
-          className={`flex-1 ${needsScrolling ? 'overflow-y-auto min-h-0' : 'overflow-hidden'} ${className}`}
+          className={`flex-1 ${needsScrolling ? 'overflow-y-auto' : 'overflow-hidden'} ${className}`}
           style={{
             WebkitOverflowScrolling: needsScrolling ? 'touch' : 'auto',
             scrollBehavior: 'smooth',
@@ -174,6 +251,17 @@ export default function SlideUpPanel({
           </div>
         )}
       </div>
+
+      <style jsx>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 0.5; }
+        }
+        @keyframes slideInFromBottom {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
+        }
+      `}</style>
     </>
   );
 }
