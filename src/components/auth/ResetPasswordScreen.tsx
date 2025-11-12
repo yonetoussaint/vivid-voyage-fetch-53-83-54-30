@@ -185,26 +185,26 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
           </div>
 
           {/* Send Verification Code Button */}
-          <button
-            onClick={handleSendResetCode}
-            disabled={!canSendReset}
-            className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg transition-colors ${
-              canSendReset
-                ? 'bg-red-500 text-white hover:bg-red-600 border-red-500'
-                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-            } ${isCompact ? 'shadow-sm' : ''}`}
-          >
-            {resetState === 'sending' ? (
-              <>
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-                <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Sending code...</span>
-              </>
-            ) : resetState === 'sent' ? (
-              <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Code sent successfully</span>
-            ) : (
-              <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Send verification code</span>
-            )}
-          </button>
+         <button
+  onClick={handleSendResetCode}
+  disabled={!canSendReset}
+  className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg transition-colors ${
+    canSendReset
+      ? 'bg-red-500 text-white hover:bg-red-600 border-red-500'
+      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+  } ${isCompact ? 'shadow-sm' : ''}`}
+>
+  {resetState === 'sending' ? (
+    <>
+      <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+      <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Sending code...</span>
+    </>
+  ) : resetState === 'sent' ? (
+    <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Reset code sent</span>
+  ) : (
+    <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Send password reset code</span>
+  )}
+</button>
 
           {/* Back to Sign In */}
           <div className="text-center">
