@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
@@ -22,7 +22,8 @@ interface AuthContextType {
   checkIfFollowing: (sellerId: string) => Promise<boolean>;
   toggleFollowSeller: (sellerId: string, sellerName: string, currentFollowStatus: boolean) => Promise<{ success: boolean; error?: string }>;
   followedSellers: string[];
-  // Auth overlay state
+  
+  // Auth overlay state and methods
   isAuthOverlayOpen: boolean;
   setIsAuthOverlayOpen: (open: boolean) => void;
   currentScreen: ScreenType;
@@ -33,9 +34,66 @@ interface AuthContextType {
   setUserEmail: (email: string) => void;
   resetOTP: string;
   setResetOTP: (otp: string) => void;
+  
+  // Account creation state and methods
+  accountCreationStep: 'name' | 'password' | 'success';
+  setAccountCreationStep: (step: 'name' | 'password' | 'success') => void;
+  firstName: string;
+  setFirstName: (name: string) => void;
+  lastName: string;
+  setLastName: (name: string) => void;
+  password: string;
+  setPassword: (password: string) => void;
+  confirmPassword: string;
+  setConfirmPassword: (password: string) => void;
+  showPassword: boolean;
+  setShowPassword: (show: boolean) => void;
+  showConfirmPassword: boolean;
+  setShowConfirmPassword: (show: boolean) => void;
+  authError: string | null;
+  setAuthError: (error: string | null) => void;
+  nameErrors: { firstName: string; lastName: string };
+  
+  // Auth overlay handlers
+  handleContinueWithEmail: () => void;
+  handleBackToMain: () => void;
+  handleContinueWithPassword: (email: string) => void;
+  handleContinueWithCode: (email: string) => void;
+  handleCreateAccount: (email: string) => void;
+  handleSignUpClick: () => void;
+  handleNameStepContinue: (newFirstName: string, newLastName: string) => void;
+  handlePasswordStepContinue: () => Promise<void>;
+  handleAccountCreated: () => void;
+  handleBackFromAccountCreation: () => void;
+  handleChangeEmail: () => void;
+  handleBackFromVerification: () => void;
+  handleBackFromPassword: () => void;
+  handleVerificationSuccess: () => void;
+  handleSignInSuccess: () => void;
+  handleForgotPasswordClick: () => void;
+  handleContinueToApp: () => void;
+  handleFirstNameChange: (value: string) => void;
+  handleLastNameChange: (value: string) => void;
+  
+  // Utility methods
+  getFaviconUrl: (emailValue: string) => string | null;
+  isNameFormValid: boolean;
+  isPasswordFormValid: boolean;
+  validateName: (name: string, fieldName: string, options?: any) => string;
+  validatePassword: (pwd: string) => string | null;
+  
+  // Reset auth overlay
+  resetAuthOverlay: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Favicon overrides constant
+const FAVICON_OVERRIDES: Record<string, string> = {
+  'gmail.com': 'https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico',
+  'outlook.com': 'https://outlook.live.com/favicon.ico',
+  'yahoo.com': 'https://s.yimg.com/rz/l/favicon.ico',
+};
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -58,6 +116,130 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userEmail, setUserEmail] = useState('');
   const [resetOTP, setResetOTP] = useState('');
 
+  // Account creation state
+  const [accountCreationStep, setAccountCreationStep] = useState<'name' | 'password' | 'success'>('name');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [nameErrors, setNameErrors] = useState({
+    firstName: '',
+    lastName: ''
+  });
+
+  // Utility functions
+  const extractDomain = useCallback((emailValue: string): string => {
+    if (!emailValue.includes('@')) return '';
+    const parts = emailValue.split('@');
+    if (parts.length !== 2) return '';
+    const domain = parts[1].trim();
+    return domain.includes('.') && domain.length > 3 ? domain : '';
+  }, []);
+
+  const getFaviconUrl = useCallback((emailValue: string) => {
+    const domain = extractDomain(emailValue);
+    if (domain) {
+      return FAVICON_OVERRIDES[domain] || `https://www.google.com/s2/favicons?domain=${domain}&sz=20`;
+    }
+    return null;
+  }, [extractDomain]);
+
+  const validateName = useCallback((name: string, fieldName: string, options: any = {}) => {
+    const {
+      minLength = 2,
+      maxLength = 50,
+      allowNumbers = false,
+      allowUnicode = true,
+      allowAllCaps = false,
+    } = options;
+
+    let basePattern = allowUnicode ? '\\p{L}' : 'a-zA-Z';
+    if (allowNumbers) basePattern += '0-9';
+
+    const nameRegex = new RegExp(
+      `^[${basePattern}\\s\\-'."]+$`, 
+      allowUnicode ? 'u' : ''
+    );
+
+    const trimmedName = name.trim();
+
+    if (!trimmedName) {
+      return `${fieldName} is required`;
+    }
+
+    if (trimmedName.length < minLength) {
+      return `${fieldName} must be at least ${minLength} character${minLength === 1 ? '' : 's'}`;
+    }
+    if (trimmedName.length > maxLength) {
+      return `${fieldName} must be less than ${maxLength} characters`;
+    }
+
+    if (!nameRegex.test(trimmedName)) {
+      const allowedChars = [
+        'letters (including accented ones like é, ü, ñ)',
+        allowNumbers && 'numbers',
+        'spaces',
+        'hyphens (-)',
+        'apostrophes (\')',
+        'periods (.)'
+      ].filter(Boolean).join(', ');
+      return `${fieldName} can only contain ${allowedChars}`;
+    }
+
+    if (!allowAllCaps && trimmedName === trimmedName.toUpperCase()) {
+      return `${fieldName} should not be in all capital letters`;
+    }
+
+    if (/(['\-."])\1/.test(trimmedName)) {
+      return `${fieldName} contains repeated special characters`;
+    }
+
+    if (/^['\-."]|['\-."]$/.test(trimmedName)) {
+      return `${fieldName} cannot start or end with a special character`;
+    }
+
+    if (/\s{2,}/.test(trimmedName)) {
+      return `${fieldName} cannot contain multiple consecutive spaces`;
+    }
+
+    return '';
+  }, []);
+
+  const validatePassword = useCallback((pwd: string): string | null => {
+    if (pwd.length < 8) {
+      return 'Password must be at least 8 characters long';
+    }
+    if (!/(?=.*[a-z])/.test(pwd)) {
+      return 'Password must contain at least one lowercase letter';
+    }
+    if (!/(?=.*[A-Z])/.test(pwd)) {
+      return 'Password must contain at least one uppercase letter';
+    }
+    if (!/(?=.*\d)/.test(pwd)) {
+      return 'Password must contain at least one number';
+    }
+    return null;
+  }, []);
+
+  const isPasswordFormValid = useCallback(() => {
+    return (
+      password.length >= 8 &&
+      confirmPassword.length >= 8 &&
+      password === confirmPassword &&
+      validatePassword(password) === null
+    );
+  }, [password, confirmPassword, validatePassword]);
+
+  const isNameFormValid = useCallback(() => {
+    return firstName.trim() !== '' && 
+           lastName.trim() !== '' && 
+           !nameErrors.firstName && 
+           !nameErrors.lastName;
+  }, [firstName, lastName, nameErrors]);
+
   // Reset overlay state when opening
   useEffect(() => {
     if (isAuthOverlayOpen) {
@@ -68,14 +250,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [isAuthOverlayOpen]);
 
   // Convert Supabase user to our User type
-  const mapSupabaseUser = (supabaseUser: SupabaseUser): User => {
+  const mapSupabaseUser = useCallback((supabaseUser: SupabaseUser): User => {
     return {
       id: supabaseUser.id,
       email: supabaseUser.email || '',
       full_name: supabaseUser.user_metadata?.full_name,
       profile_picture: supabaseUser.user_metadata?.profile_picture,
     };
-  };
+  }, []);
 
   // Load followed sellers when user logs in
   const loadFollowedSellers = async (userId: string) => {
@@ -100,8 +282,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Check if user is following a seller - SIMPLIFIED VERSION
   const checkIfFollowing = async (sellerId: string): Promise<boolean> => {
     if (!user) return false;
-
-    // Check cache first - this is the main optimization
     return followedSellers.includes(sellerId);
   };
 
@@ -331,6 +511,149 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Auth overlay handlers
+  const handleContinueWithEmail = () => setCurrentScreen('email');
+  const handleBackToMain = () => setCurrentScreen('main');
+
+  const handleContinueWithPassword = (email: string) => {
+    setUserEmail(email);
+    setCurrentScreen('password');
+  };
+
+  const handleContinueWithCode = (email: string) => {
+    setUserEmail(email);
+    setCurrentScreen('verification');
+  };
+
+  const handleCreateAccount = (email: string) => {
+    setUserEmail(email);
+    setCurrentScreen('account-creation');
+    setAccountCreationStep('name');
+    setFirstName('');
+    setLastName('');
+    setPassword('');
+    setConfirmPassword('');
+    setAuthError(null);
+    setNameErrors({ firstName: '', lastName: '' });
+  };
+
+  const handleSignUpClick = () => {
+    setCurrentScreen('account-creation');
+    setAccountCreationStep('name');
+    setFirstName('');
+    setLastName('');
+    setPassword('');
+    setConfirmPassword('');
+    setAuthError(null);
+    setNameErrors({ firstName: '', lastName: '' });
+  };
+
+  const handleNameStepContinue = (newFirstName: string, newLastName: string) => {
+    setAuthError(null);
+
+    if (!newFirstName.trim() || !newLastName.trim()) {
+      setAuthError('First name and last name are required');
+      return;
+    }
+
+    setFirstName(newFirstName.trim());
+    setLastName(newLastName.trim());
+    setAccountCreationStep('password');
+  };
+
+  const handlePasswordStepContinue = async () => {
+    if (!isPasswordFormValid()) return;
+
+    console.log('AuthContext: Starting account creation process');
+    setIsLoading(true);
+    setAuthError(null);
+
+    try {
+      const fullName = `${firstName} ${lastName}`.trim();
+      
+      console.log('Calling signup with:', { email: userEmail, fullName });
+      
+      const result = await signup(userEmail, password, fullName);
+      
+      if (result.error) {
+        console.error('Signup error:', result.error);
+        setAuthError(result.error);
+        return;
+      }
+
+      console.log('AuthContext: Account created successfully, moving to success step');
+      setAccountCreationStep('success');
+    } catch (error: any) {
+      console.error('Account creation error:', error);
+      setAuthError('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAccountCreated = () => {
+    setCurrentScreen('success');
+  };
+
+  const handleBackFromAccountCreation = () => {
+    if (accountCreationStep === 'name') {
+      setCurrentScreen('email');
+    } else if (accountCreationStep === 'password') {
+      setAccountCreationStep('name');
+    } else if (accountCreationStep === 'success') {
+      setAccountCreationStep('password');
+    }
+    setAuthError(null);
+  };
+
+  const handleChangeEmail = () => {
+    setCurrentScreen('email');
+  };
+
+  const handleBackFromVerification = () => setCurrentScreen('email');
+  const handleBackFromPassword = () => setCurrentScreen('email');
+  const handleVerificationSuccess = () => setCurrentScreen('success');
+  
+  const handleSignInSuccess = () => {
+    setCurrentScreen('success');
+    // Close overlay after a brief delay to show success message
+    setTimeout(() => {
+      setIsAuthOverlayOpen(false);
+    }, 2000);
+  };
+  
+  const handleForgotPasswordClick = () => setCurrentScreen('reset-password');
+  
+  const handleContinueToApp = () => {
+    setIsAuthOverlayOpen(false);
+    resetAuthOverlay();
+  };
+
+  // Name step handlers
+  const handleFirstNameChange = (value: string) => {
+    setFirstName(value);
+    const error = validateName(value, 'First name');
+    setNameErrors(prev => ({ ...prev, firstName: error }));
+  };
+
+  const handleLastNameChange = (value: string) => {
+    setLastName(value);
+    const error = validateName(value, 'Last name');
+    setNameErrors(prev => ({ ...prev, lastName: error }));
+  };
+
+  const resetAuthOverlay = () => {
+    setAccountCreationStep('name');
+    setFirstName('');
+    setLastName('');
+    setPassword('');
+    setConfirmPassword('');
+    setAuthError(null);
+    setNameErrors({ firstName: '', lastName: '' });
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+  };
+
   const value: AuthContextType = {
     user,
     isAuthenticated,
@@ -342,6 +665,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkIfFollowing,
     toggleFollowSeller,
     followedSellers,
+    
     // Auth overlay state
     isAuthOverlayOpen,
     setIsAuthOverlayOpen,
@@ -352,7 +676,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     userEmail,
     setUserEmail,
     resetOTP,
-    setResetOTP
+    setResetOTP,
+    
+    // Account creation state
+    accountCreationStep,
+    setAccountCreationStep,
+    firstName,
+    setFirstName,
+    lastName,
+    setLastName,
+    password,
+    setPassword,
+    confirmPassword,
+    setConfirmPassword,
+    showPassword,
+    setShowPassword,
+    showConfirmPassword,
+    setShowConfirmPassword,
+    authError,
+    setAuthError,
+    nameErrors,
+    
+    // Auth overlay handlers
+    handleContinueWithEmail,
+    handleBackToMain,
+    handleContinueWithPassword,
+    handleContinueWithCode,
+    handleCreateAccount,
+    handleSignUpClick,
+    handleNameStepContinue,
+    handlePasswordStepContinue,
+    handleAccountCreated,
+    handleBackFromAccountCreation,
+    handleChangeEmail,
+    handleBackFromVerification,
+    handleBackFromPassword,
+    handleVerificationSuccess,
+    handleSignInSuccess,
+    handleForgotPasswordClick,
+    handleContinueToApp,
+    handleFirstNameChange,
+    handleLastNameChange,
+    
+    // Utility methods
+    getFaviconUrl,
+    isNameFormValid: isNameFormValid(),
+    isPasswordFormValid: isPasswordFormValid(),
+    validateName,
+    validatePassword,
+    
+    // Reset method
+    resetAuthOverlay,
   };
 
   return (
