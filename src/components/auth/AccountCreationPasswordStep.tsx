@@ -104,7 +104,7 @@ const AccountCreationPasswordStep: React.FC<AccountCreationPasswordStepProps> = 
   const loading = isLoading || parentLoading;
 
   return (
-    <div className="flex flex-col px-4 mb-16">
+    <div className="flex flex-col px-4">
       {/* Header - hide in compact mode */}
       {!isCompact && (
         <div className="pt-2 pb-3 flex items-center justify-between">
