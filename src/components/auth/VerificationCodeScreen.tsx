@@ -57,39 +57,62 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
     }
   };
 
-  const handleResendCode = async () => {
-    setIsResending(true);
-    setError('');
+  // In VerificationCodeScreen - Update handleResendCode
+const handleResendCode = async () => {
+  setIsResending(true);
+  setError('');
 
-    try {
-      // Use Supabase's resend email OTP functionality
-      const { supabase } = await import('../../integrations/supabase/client');
-
-      const { error: resendError } = await supabase.auth.resend({
-        email,
-        type: 'email',
-      });
-
-      if (resendError) {
-        console.error('Error resending OTP:', resendError);
-        setError(resendError.message || 'Failed to resend code. Please try again.');
-      } else {
-        toast.success('Verification code resent!');
-        setTimeLeft(60);
-        setCanResend(false);
-        // Clear the code inputs
-        setCode(['', '', '', '', '', '']);
-        setIsComplete(false);
-        // Focus first input
-        inputRefs.current[0]?.focus();
-      }
-    } catch (error) {
-      console.error('Error resending OTP:', error);
-      setError('Network error. Please check your connection and try again.');
-    } finally {
-      setIsResending(false);
+  try {
+    // ✅ Use custom resend function instead of Supabase's resend
+    const result = await resendOTPEmail(email);
+    
+    if (result.success) {
+      toast.success('New verification code sent!');
+      setTimeLeft(60);
+      setCanResend(false);
+      setCode(['', '', '', '', '', '']);
+      setIsComplete(false);
+      inputRefs.current[0]?.focus();
+    } else {
+      setError(result.error || 'Failed to resend code. Please try again.');
     }
-  };
+  } catch (error: any) {
+    console.error('Error resending OTP:', error);
+    setError('Network error. Please check your connection and try again.');
+  } finally {
+    setIsResending(false);
+  }
+};
+
+// And update handleVerifyCode to use custom verification
+const handleVerifyCode = async () => {
+  if (!isComplete) return;
+
+  setIsLoading(true);
+  setError('');
+
+  const verificationCode = code.join('');
+
+  try {
+    // ✅ Use custom verification instead of Supabase's verifyOtp
+    const result = await verifyCustomOTP(email, verificationCode);
+    
+    if (result.success) {
+      toast.success('Email verified successfully!');
+      onVerificationSuccess();
+    } else {
+      setError(result.error || 'Invalid verification code. Please try again.');
+      setCode(['', '', '', '', '', '']);
+      setIsComplete(false);
+      inputRefs.current[0]?.focus();
+    }
+  } catch (error: any) {
+    console.error('Error during verification:', error);
+    setError('An unexpected error occurred. Please try again.');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleVerifyCode = async () => {
   if (!isComplete) return;
