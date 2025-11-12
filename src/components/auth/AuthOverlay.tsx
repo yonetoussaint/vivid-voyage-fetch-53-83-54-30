@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { useAuth } from '@/contexts/auth/AuthContext';
 import {
@@ -11,54 +11,18 @@ import {
   SuccessScreenSkeleton
 } from './AuthSkeletonLoaders';
 
-// Height measurement wrapper component with optimizations
-const HeightMeasurer: React.FC<{
-  onHeightChange: (height: number) => void;
-  children: React.ReactNode;
-  screenKey: string; // Unique key for each screen to prevent unnecessary updates
-}> = ({ onHeightChange, children, screenKey }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const currentHeightRef = useRef<number>(0);
-
-  useEffect(() => {
-    const updateHeight = () => {
-      if (ref.current) {
-        const height = ref.current.scrollHeight;
-        // Only update if height actually changed significantly (more than 1px)
-        if (Math.abs(height - currentHeightRef.current) > 1) {
-          currentHeightRef.current = height;
-          onHeightChange(height);
-        }
-      }
-    };
-
-    // Initial measurement with debounce
-    const timeoutId = setTimeout(updateHeight, 10);
-
-    // Use ResizeObserver for dynamic content changes with debouncing
-    let resizeTimeout: NodeJS.Timeout;
-    const resizeObserver = new ResizeObserver(() => {
-      clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(updateHeight, 50); // Debounce resize events
-    });
-
-    if (ref.current) {
-      resizeObserver.observe(ref.current);
-    }
-
-    return () => {
-      clearTimeout(timeoutId);
-      clearTimeout(resizeTimeout);
-      resizeObserver.disconnect();
-    };
-  }, [onHeightChange, screenKey]); // Use screenKey instead of children
-
-  return (
-    <div ref={ref} className="w-full">
-      {children}
-    </div>
-  );
-};
+// Move lazy imports outside component to prevent recreation
+const MainLoginScreen = React.lazy(() => import('./MainLoginScreen'));
+const EmailAuthScreen = React.lazy(() => import('./EmailAuthScreen'));
+const VerificationCodeScreen = React.lazy(() => import('./VerificationCodeScreen'));
+const PasswordAuthScreen = React.lazy(() => import('./PasswordAuthScreen'));
+const ResetPasswordScreen = React.lazy(() => import('./ResetPasswordScreen'));
+const OTPResetScreen = React.lazy(() => import('./OTPResetScreen'));
+const NewPasswordScreen = React.lazy(() => import('./NewPasswordScreen'));
+const AccountCreationNameStep = React.lazy(() => import('./AccountCreationNameStep'));
+const AccountCreationPasswordStep = React.lazy(() => import('./AccountCreationPasswordStep'));
+const AccountCreationSuccessStep = React.lazy(() => import('./AccountCreationSuccessStep'));
+const SuccessScreen = React.lazy(() => import('./SuccessScreen'));
 
 const AuthOverlay: React.FC = () => {
   const {
@@ -78,78 +42,87 @@ const AuthOverlay: React.FC = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [contentHeight, setContentHeight] = useState<number>(400);
 
-  // Memoize handlers to prevent unnecessary re-renders
-  const handlers = useMemo(() => ({
-    handleContinueWithEmail: () => setCurrentScreen('email'),
-    handleBackToMain: () => setCurrentScreen('main'),
-    handleContinueWithPassword: (email: string) => {
-      setUserEmail(email);
-      setCurrentScreen('password');
-    },
-    handleContinueWithCode: (email: string) => {
-      setUserEmail(email);
-      setCurrentScreen('verification');
-    },
-    handleCreateAccount: (email: string) => {
-      setUserEmail(email);
-      setCurrentScreen('account-creation');
-      setAccountCreationStep('name');
-      setFirstName('');
-      setLastName('');
-      setError(null);
-    },
-    handleSignUpClick: () => {
-      setCurrentScreen('account-creation');
-      setAccountCreationStep('name');
-      setFirstName('');
-      setLastName('');
-      setError(null);
-    },
-    handleNameStepContinue: (newFirstName: string, newLastName: string) => {
-      setError(null);
-      if (!newFirstName.trim() || !newLastName.trim()) {
-        setError('First name and last name are required');
-        return;
-      }
-      setFirstName(newFirstName.trim());
-      setLastName(newLastName.trim());
-      setAccountCreationStep('password');
-    },
-    handlePasswordStepContinue: () => {
-      setAccountCreationStep('success');
-    },
-    handleAccountCreated: () => {
-      setCurrentScreen('success');
-    },
-    handleBackFromAccountCreation: () => {
-      if (accountCreationStep === 'name') {
-        setCurrentScreen('email');
-      } else if (accountCreationStep === 'password') {
-        setAccountCreationStep('name');
-      } else if (accountCreationStep === 'success') {
-        setAccountCreationStep('password');
-      }
-      setError(null);
-    },
-    handleChangeEmail: () => {
+  // Handler functions
+  const handleContinueWithEmail = () => setCurrentScreen('email');
+  const handleBackToMain = () => setCurrentScreen('main');
+
+  const handleContinueWithPassword = (email: string) => {
+    setUserEmail(email);
+    setCurrentScreen('password');
+  };
+
+  const handleContinueWithCode = (email: string) => {
+    setUserEmail(email);
+    setCurrentScreen('verification');
+  };
+
+  const handleCreateAccount = (email: string) => {
+    setUserEmail(email);
+    setCurrentScreen('account-creation');
+    setAccountCreationStep('name');
+    setFirstName('');
+    setLastName('');
+    setError(null);
+  };
+
+  const handleSignUpClick = () => {
+    setCurrentScreen('account-creation');
+    setAccountCreationStep('name');
+    setFirstName('');
+    setLastName('');
+    setError(null);
+  };
+
+  const handleNameStepContinue = (newFirstName: string, newLastName: string) => {
+    setError(null);
+
+    if (!newFirstName.trim() || !newLastName.trim()) {
+      setError('First name and last name are required');
+      return;
+    }
+
+    setFirstName(newFirstName.trim());
+    setLastName(newLastName.trim());
+    setAccountCreationStep('password');
+  };
+
+  const handlePasswordStepContinue = () => {
+    setAccountCreationStep('success');
+  };
+
+  const handleAccountCreated = () => {
+    setCurrentScreen('success');
+  };
+
+  const handleBackFromAccountCreation = () => {
+    if (accountCreationStep === 'name') {
       setCurrentScreen('email');
-    },
-    handleBackFromVerification: () => setCurrentScreen('email'),
-    handleBackFromPassword: () => setCurrentScreen('email'),
-    handleVerificationSuccess: () => setCurrentScreen('success'),
-    handleSignInSuccess: () => setCurrentScreen('success'),
-    handleForgotPasswordClick: () => setCurrentScreen('reset-password'),
-    handleContinueToApp: () => setIsAuthOverlayOpen(false),
-  }), [accountCreationStep, setCurrentScreen, setUserEmail, setIsAuthOverlayOpen]);
+    } else if (accountCreationStep === 'password') {
+      setAccountCreationStep('name');
+    } else if (accountCreationStep === 'success') {
+      setAccountCreationStep('password');
+    }
+    setError(null);
+  };
 
-  const getCompactProps = useCallback(() => ({
+  const handleChangeEmail = () => {
+    setCurrentScreen('email');
+  };
+
+  const handleBackFromVerification = () => setCurrentScreen('email');
+  const handleBackFromPassword = () => setCurrentScreen('email');
+  const handleVerificationSuccess = () => setCurrentScreen('success');
+  const handleSignInSuccess = () => setCurrentScreen('success');
+  const handleForgotPasswordClick = () => setCurrentScreen('reset-password');
+  const handleContinueToApp = () => setIsAuthOverlayOpen(false);
+
+  const getCompactProps = () => ({
     isCompact: true,
     onExpand: undefined
-  }), []);
+  });
 
-  const ErrorBanner = useMemo(() => (
+  const ErrorBanner = () => (
     error ? (
       <div className="fixed top-4 left-4 right-4 z-50 bg-red-50 border border-red-200 rounded-lg p-4 shadow-lg">
         <div className="flex items-center justify-between">
@@ -167,40 +140,10 @@ const AuthOverlay: React.FC = () => {
         </div>
       </div>
     ) : null
-  ), [error]);
-
-  // Stable height change handler
-  const handleHeightChange = useCallback((height: number) => {
-    setContentHeight(height);
-  }, []);
-
-  // Calculate max height for the drawer
-  const drawerHeight = useMemo(() => {
-    const viewportHeight = window.innerHeight;
-    const maxHeight = Math.min(contentHeight + 80, viewportHeight * 0.9);
-    return `${maxHeight}px`;
-  }, [contentHeight]);
-
-  // Generate a unique key for each screen to help HeightMeasurer
-  const screenKey = useMemo(() => 
-    `${currentScreen}-${accountCreationStep}-${userEmail}`, 
-    [currentScreen, accountCreationStep, userEmail]
   );
 
-  const renderCurrentScreen = useCallback(() => {
+  const renderCurrentScreen = () => {
     const compactProps = getCompactProps();
-
-    const MainLoginScreen = React.lazy(() => import('./MainLoginScreen'));
-    const EmailAuthScreen = React.lazy(() => import('./EmailAuthScreen'));
-    const VerificationCodeScreen = React.lazy(() => import('./VerificationCodeScreen'));
-    const PasswordAuthScreen = React.lazy(() => import('./PasswordAuthScreen'));
-    const ResetPasswordScreen = React.lazy(() => import('./ResetPasswordScreen'));
-    const OTPResetScreen = React.lazy(() => import('./OTPResetScreen'));
-    const NewPasswordScreen = React.lazy(() => import('./NewPasswordScreen'));
-    const AccountCreationNameStep = React.lazy(() => import('./AccountCreationNameStep'));
-    const AccountCreationPasswordStep = React.lazy(() => import('./AccountCreationPasswordStep'));
-    const AccountCreationSuccessStep = React.lazy(() => import('./AccountCreationSuccessStep'));
-    const SuccessScreen = React.lazy(() => import('./SuccessScreen'));
 
     const screenContent = (() => {
       switch (currentScreen) {
@@ -210,7 +153,7 @@ const AuthOverlay: React.FC = () => {
               <MainLoginScreen
                 selectedLanguage={selectedLanguage}
                 setSelectedLanguage={setSelectedLanguage}
-                onContinueWithEmail={handlers.handleContinueWithEmail}
+                onContinueWithEmail={handleContinueWithEmail}
                 showHeader={false}
                 {...compactProps}
               />
@@ -221,12 +164,12 @@ const AuthOverlay: React.FC = () => {
           return (
             <React.Suspense fallback={<EmailAuthScreenSkeleton />}>
               <EmailAuthScreen
-                onBack={handlers.handleBackToMain}
+                onBack={handleBackToMain}
                 selectedLanguage={selectedLanguage}
-                onContinueWithPassword={handlers.handleContinueWithPassword}
-                onContinueWithCode={handlers.handleContinueWithCode}
-                onCreateAccount={handlers.handleCreateAccount}
-                onSignUpClick={handlers.handleSignUpClick}
+                onContinueWithPassword={handleContinueWithPassword}
+                onContinueWithCode={handleContinueWithCode}
+                onCreateAccount={handleCreateAccount}
+                onSignUpClick={handleSignUpClick}
                 initialEmail={userEmail}
                 showHeader={false}
                 {...compactProps}
@@ -239,8 +182,8 @@ const AuthOverlay: React.FC = () => {
             <React.Suspense fallback={<VerificationCodeScreenSkeleton />}>
               <VerificationCodeScreen
                 email={userEmail}
-                onBack={handlers.handleBackFromVerification}
-                onVerificationSuccess={handlers.handleVerificationSuccess}
+                onBack={handleBackFromVerification}
+                onVerificationSuccess={handleVerificationSuccess}
                 showHeader={false}
                 {...compactProps}
               />
@@ -252,9 +195,9 @@ const AuthOverlay: React.FC = () => {
             <React.Suspense fallback={<PasswordAuthScreenSkeleton />}>
               <PasswordAuthScreen
                 email={userEmail}
-                onBack={handlers.handleBackFromPassword}
-                onSignInSuccess={handlers.handleSignInSuccess}
-                onForgotPasswordClick={handlers.handleForgotPasswordClick}
+                onBack={handleBackFromPassword}
+                onSignInSuccess={handleSignInSuccess}
+                onForgotPasswordClick={handleForgotPasswordClick}
                 isCompact={compactProps.isCompact}
                 onExpand={compactProps.onExpand}
                 showHeader={false}
@@ -308,7 +251,7 @@ const AuthOverlay: React.FC = () => {
         case 'account-creation':
           return (
             <>
-              {ErrorBanner}
+              <ErrorBanner />
               {(() => {
                 switch (accountCreationStep) {
                   case 'name':
@@ -316,9 +259,9 @@ const AuthOverlay: React.FC = () => {
                       <React.Suspense fallback={<AccountCreationScreenSkeleton />}>
                         <AccountCreationNameStep
                           email={userEmail}
-                          onBack={handlers.handleBackFromAccountCreation}
-                          onChangeEmail={handlers.handleChangeEmail}
-                          onContinue={handlers.handleNameStepContinue}
+                          onBack={handleBackFromAccountCreation}
+                          onChangeEmail={handleChangeEmail}
+                          onContinue={handleNameStepContinue}
                           initialFirstName={firstName}
                           initialLastName={lastName}
                           {...compactProps}
@@ -333,8 +276,8 @@ const AuthOverlay: React.FC = () => {
                           email={userEmail}
                           firstName={firstName}
                           lastName={lastName}
-                          onBack={handlers.handleBackFromAccountCreation}
-                          onContinue={handlers.handlePasswordStepContinue}
+                          onBack={handleBackFromAccountCreation}
+                          onContinue={handlePasswordStepContinue}
                           onError={setError}
                           isLoading={false}
                           {...compactProps}
@@ -349,7 +292,7 @@ const AuthOverlay: React.FC = () => {
                           email={userEmail}
                           firstName={firstName}
                           lastName={lastName}
-                          onContinue={handlers.handleAccountCreated}
+                          onContinue={handleAccountCreated}
                           {...compactProps}
                         />
                       </React.Suspense>
@@ -367,7 +310,7 @@ const AuthOverlay: React.FC = () => {
             <React.Suspense fallback={<SuccessScreenSkeleton />}>
               <SuccessScreen
                 email={userEmail}
-                onContinue={handlers.handleContinueToApp}
+                onContinue={handleContinueToApp}
                 {...compactProps}
               />
             </React.Suspense>
@@ -378,47 +321,21 @@ const AuthOverlay: React.FC = () => {
       }
     })();
 
-    return (
-      <HeightMeasurer onHeightChange={handleHeightChange} screenKey={screenKey}>
-        {screenContent}
-      </HeightMeasurer>
-    );
-  }, [
-    currentScreen,
-    accountCreationStep,
-    userEmail,
-    firstName,
-    lastName,
-    selectedLanguage,
-    resetOTP,
-    ErrorBanner,
-    handlers,
-    getCompactProps,
-    handleHeightChange,
-    screenKey,
-    setCurrentScreen,
-    setUserEmail,
-    setResetOTP
-  ]);
+    return screenContent;
+  };
 
   return (
     <Drawer open={isAuthOverlayOpen} onOpenChange={(open) => {
       if (!open) setIsAuthOverlayOpen(false);
     }}>
-      <DrawerContent 
-        className="transition-all duration-200 ease-in-out"
-        style={{ 
-          height: drawerHeight,
-          maxHeight: '90vh'
-        }}
-      >
+      <DrawerContent className="max-h-[90vh] flex flex-col">
         {/* Drag handle */}
         <div className="flex flex-col items-center pt-2 pb-3 flex-shrink-0">
           <div className="w-16 h-1.5 bg-gray-300 rounded-full shadow-sm" />
         </div>
 
-        {/* Content area */}
-        <div className="flex-1">
+        {/* Content area - will size based on content */}
+        <div className="flex-1 overflow-y-auto">
           {renderCurrentScreen()}
         </div>
       </DrawerContent>
