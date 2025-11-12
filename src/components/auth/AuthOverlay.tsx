@@ -34,17 +34,17 @@ const AuthOverlay: React.FC = () => {
   // Auth flow handlers
   const handleContinueWithEmail = () => setCurrentScreen('email');
   const handleBackToMain = () => setCurrentScreen('main');
-  
+
   const handleContinueWithPassword = (email: string) => {
     setUserEmail(email);
     setCurrentScreen('password');
   };
-  
+
   const handleContinueWithCode = (email: string) => {
     setUserEmail(email);
     setCurrentScreen('verification');
   };
-  
+
   const handleCreateAccount = (email: string) => {
     setUserEmail(email);
     setCurrentScreen('account-creation');
@@ -65,7 +65,7 @@ const AuthOverlay: React.FC = () => {
   // Account creation handlers
   const handleNameStepContinue = (newFirstName: string, newLastName: string) => {
     setError(null);
-    
+
     if (!newFirstName.trim() || !newLastName.trim()) {
       setError('First name and last name are required');
       return;
@@ -148,12 +148,12 @@ const AuthOverlay: React.FC = () => {
     const ResetPasswordScreen = React.lazy(() => import('./ResetPasswordScreen'));
     const OTPResetScreen = React.lazy(() => import('./OTPResetScreen'));
     const NewPasswordScreen = React.lazy(() => import('./NewPasswordScreen'));
-    
+
     // Import individual account creation steps
     const AccountCreationNameStep = React.lazy(() => import('./AccountCreationNameStep'));
     const AccountCreationPasswordStep = React.lazy(() => import('./AccountCreationPasswordStep'));
     const AccountCreationSuccessStep = React.lazy(() => import('./AccountCreationSuccessStep'));
-    
+
     const SuccessScreen = React.lazy(() => import('./SuccessScreen'));
 
     switch (currentScreen) {
@@ -169,7 +169,7 @@ const AuthOverlay: React.FC = () => {
             />
           </React.Suspense>
         );
-      
+
       case 'email':
         return (
           <React.Suspense fallback={<EmailAuthScreenSkeleton />}>
@@ -186,7 +186,7 @@ const AuthOverlay: React.FC = () => {
             />
           </React.Suspense>
         );
-      
+
       case 'verification':
         return (
           <React.Suspense fallback={<VerificationCodeScreenSkeleton />}>
@@ -199,7 +199,7 @@ const AuthOverlay: React.FC = () => {
             />
           </React.Suspense>
         );
-      
+
       case 'password':
         return (
           <React.Suspense fallback={<PasswordAuthScreenSkeleton />}>
@@ -214,7 +214,7 @@ const AuthOverlay: React.FC = () => {
             />
           </React.Suspense>
         );
-      
+
       case 'reset-password':
         return (
           <React.Suspense fallback={<ResetPasswordScreenSkeleton />}>
@@ -229,7 +229,7 @@ const AuthOverlay: React.FC = () => {
             />
           </React.Suspense>
         );
-      
+
       case 'otp-reset':
         return (
           <React.Suspense fallback={<VerificationCodeScreenSkeleton />}>
@@ -244,7 +244,7 @@ const AuthOverlay: React.FC = () => {
             />
           </React.Suspense>
         );
-      
+
       case 'new-password':
         return (
           <React.Suspense fallback={<PasswordAuthScreenSkeleton />}>
@@ -257,10 +257,10 @@ const AuthOverlay: React.FC = () => {
             />
           </React.Suspense>
         );
-      
+
       case 'account-creation':
         return (
-          <div className="pb-6">
+          <div className="min-h-0 flex-1"> {/* Changed to allow natural height */}
             <ErrorBanner />
             {(() => {
               switch (accountCreationStep) {
@@ -278,7 +278,7 @@ const AuthOverlay: React.FC = () => {
                       />
                     </React.Suspense>
                   );
-                
+
                 case 'password':
                   return (
                     <React.Suspense fallback={<AccountCreationScreenSkeleton />}>
@@ -294,7 +294,7 @@ const AuthOverlay: React.FC = () => {
                       />
                     </React.Suspense>
                   );
-                
+
                 case 'success':
                   return (
                     <React.Suspense fallback={<AccountCreationScreenSkeleton />}>
@@ -307,14 +307,14 @@ const AuthOverlay: React.FC = () => {
                       />
                     </React.Suspense>
                   );
-                
+
                 default:
                   return null;
               }
             })()}
           </div>
         );
-      
+
       case 'success':
         return (
           <React.Suspense fallback={<SuccessScreenSkeleton />}>
@@ -325,7 +325,7 @@ const AuthOverlay: React.FC = () => {
             />
           </React.Suspense>
         );
-      
+
       default:
         return null;
     }
@@ -335,13 +335,13 @@ const AuthOverlay: React.FC = () => {
     <Drawer open={isAuthOverlayOpen} onOpenChange={(open) => {
       if (!open) setIsAuthOverlayOpen(false);
     }}>
-      <DrawerContent className="max-h-[95vh] overflow-y-auto">
+      <DrawerContent className="h-auto max-h-[95vh]"> {/* Removed overflow-y-auto */}
         {/* Drag handle */}
         <div className="flex flex-col items-center pt-2 pb-3 flex-shrink-0">
           <div className="w-16 h-1.5 bg-gray-300 rounded-full shadow-sm" />
         </div>
 
-        <div className="px-0 pb-4">
+        <div className="px-0 flex-1 min-h-0"> {/* Added flex properties for proper sizing */}
           {renderCurrentScreen()}
         </div>
       </DrawerContent>
