@@ -52,36 +52,36 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
   const { url: faviconUrl, show: showFavicon } = updateFavicon(email);
 
   const handleSendResetCode = async () => {
-    if (!isEmailValid(email) || isLoading) return;
+  if (!isEmailValid(email) || isLoading) return;
 
-    setIsLoading(true);
-    setResetState('sending');
-    setErrorMessage(''); // Clear previous error messages
+  setIsLoading(true);
+  setResetState('sending');
+  setErrorMessage(''); // Clear previous error messages
 
-    try {
-      // ✅ Use custom OTP function instead of Supabase's built-in password reset
-      const result = await sendCustomOTPEmail(email);
+  try {
+    // ✅ Use the password reset OTP function instead of sign-in OTP
+    const result = await sendPasswordResetOTP(email);
 
-      if (result.success) {
-        console.log('Password reset OTP sent successfully');
-        toast.success('Verification code sent to your email');
-        setResetState('sent');
-        setTimeout(() => {
-          onResetSuccess(email);
-        }, 2000);
-      } else {
-        console.error('Failed to send reset OTP:', result.error);
-        setErrorMessage(result.error || 'Failed to send verification code. Please try again.');
-        setResetState('error');
-      }
-    } catch (error: any) {
-      console.error('Error sending reset OTP:', error);
-      setErrorMessage('An unexpected error occurred. Please try again.');
+    if (result.success) {
+      console.log('Password reset OTP sent successfully');
+      toast.success('Password reset code sent to your email');
+      setResetState('sent');
+      setTimeout(() => {
+        onResetSuccess(email);
+      }, 2000);
+    } else {
+      console.error('Failed to send password reset OTP:', result.error);
+      setErrorMessage(result.error || 'Failed to send password reset code. Please try again.');
       setResetState('error');
-    } finally {
-      setIsLoading(false);
     }
-  };
+  } catch (error: any) {
+    console.error('Error sending password reset OTP:', error);
+    setErrorMessage('An unexpected error occurred. Please try again.');
+    setResetState('error');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const canSendReset = isEmailValid(email) && !isLoading && resetState !== 'sent';
 
