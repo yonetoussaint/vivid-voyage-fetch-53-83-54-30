@@ -24,8 +24,8 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
   const [resetState, setResetState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Use the custom OTP function from AuthContext
-  const { sendCustomOTPEmail } = useAuth();
+  // ✅ Import the correct function from AuthContext
+  const { sendPasswordResetOTP } = useAuth();
 
   const isEmailValid = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -52,36 +52,36 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
   const { url: faviconUrl, show: showFavicon } = updateFavicon(email);
 
   const handleSendResetCode = async () => {
-  if (!isEmailValid(email) || isLoading) return;
+    if (!isEmailValid(email) || isLoading) return;
 
-  setIsLoading(true);
-  setResetState('sending');
-  setErrorMessage(''); // Clear previous error messages
+    setIsLoading(true);
+    setResetState('sending');
+    setErrorMessage(''); // Clear previous error messages
 
-  try {
-    // ✅ Use the password reset OTP function instead of sign-in OTP
-    const result = await sendPasswordResetOTP(email);
+    try {
+      // ✅ Now this will call the correct function
+      const result = await sendPasswordResetOTP(email);
 
-    if (result.success) {
-      console.log('Password reset OTP sent successfully');
-      toast.success('Password reset code sent to your email');
-      setResetState('sent');
-      setTimeout(() => {
-        onResetSuccess(email);
-      }, 2000);
-    } else {
-      console.error('Failed to send password reset OTP:', result.error);
-      setErrorMessage(result.error || 'Failed to send password reset code. Please try again.');
+      if (result.success) {
+        console.log('Password reset OTP sent successfully');
+        toast.success('Password reset code sent to your email');
+        setResetState('sent');
+        setTimeout(() => {
+          onResetSuccess(email);
+        }, 2000);
+      } else {
+        console.error('Failed to send password reset OTP:', result.error);
+        setErrorMessage(result.error || 'Failed to send password reset code. Please try again.');
+        setResetState('error');
+      }
+    } catch (error: any) {
+      console.error('Error sending password reset OTP:', error);
+      setErrorMessage('An unexpected error occurred. Please try again.');
       setResetState('error');
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error: any) {
-    console.error('Error sending password reset OTP:', error);
-    setErrorMessage('An unexpected error occurred. Please try again.');
-    setResetState('error');
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   const canSendReset = isEmailValid(email) && !isLoading && resetState !== 'sent';
 
@@ -150,16 +150,16 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
           )}
 
           {resetState === 'sent' && (
-  <div className={`p-4 border border-green-200 bg-green-50 text-green-700 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
-    <div className="flex items-center gap-2 mb-2">
-      <Mail className="w-5 h-5" />
-      <p className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Password reset code sent!</p>
-    </div>
-    <p className={isCompact ? 'text-xs' : 'text-sm'}>
-      Check your email for a 6-digit password reset code. If it doesn't appear within a few minutes, check your spam folder.
-    </p>
-  </div>
-)}
+            <div className={`p-4 border border-green-200 bg-green-50 text-green-700 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
+              <div className="flex items-center gap-2 mb-2">
+                <Mail className="w-5 h-5" />
+                <p className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Password reset code sent!</p>
+              </div>
+              <p className={isCompact ? 'text-xs' : 'text-sm'}>
+                Check your email for a 6-digit password reset code. If it doesn't appear within a few minutes, check your spam folder.
+              </p>
+            </div>
+          )}
 
           {/* Email Display */}
           <div className={`p-4 bg-gray-50 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
@@ -185,26 +185,26 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
           </div>
 
           {/* Send Verification Code Button */}
-         <button
-  onClick={handleSendResetCode}
-  disabled={!canSendReset}
-  className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg transition-colors ${
-    canSendReset
-      ? 'bg-red-500 text-white hover:bg-red-600 border-red-500'
-      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-  } ${isCompact ? 'shadow-sm' : ''}`}
->
-  {resetState === 'sending' ? (
-    <>
-      <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-      <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Sending code...</span>
-    </>
-  ) : resetState === 'sent' ? (
-    <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Reset code sent</span>
-  ) : (
-    <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Send password reset code</span>
-  )}
-</button>
+          <button
+            onClick={handleSendResetCode}
+            disabled={!canSendReset}
+            className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg transition-colors ${
+              canSendReset
+                ? 'bg-red-500 text-white hover:bg-red-600 border-red-500'
+                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            } ${isCompact ? 'shadow-sm' : ''}`}
+          >
+            {resetState === 'sending' ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Sending code...</span>
+              </>
+            ) : resetState === 'sent' ? (
+              <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Reset code sent</span>
+            ) : (
+              <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Send password reset code</span>
+            )}
+          </button>
 
           {/* Back to Sign In */}
           <div className="text-center">
