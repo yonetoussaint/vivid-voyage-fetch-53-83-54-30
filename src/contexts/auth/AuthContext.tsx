@@ -654,80 +654,82 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setShowConfirmPassword(false);
   };
 
-  const value: AuthContextType = {
-    user,
-    isAuthenticated,
-    isLoading,
-    login,
-    signup,
-    logout,
-    checkAuthStatus,
-    checkIfFollowing,
-    toggleFollowSeller,
-    followedSellers,
-    
-    // Auth overlay state
-    isAuthOverlayOpen,
-    setIsAuthOverlayOpen,
-    currentScreen,
-    setCurrentScreen,
-    selectedLanguage,
-    setSelectedLanguage,
-    userEmail,
-    setUserEmail,
-    resetOTP,
-    setResetOTP,
-    
-    // Account creation state
-    accountCreationStep,
-    setAccountCreationStep,
-    firstName,
-    setFirstName,
-    lastName,
-    setLastName,
-    password,
-    setPassword,
-    confirmPassword,
-    setConfirmPassword,
-    showPassword,
-    setShowPassword,
-    showConfirmPassword,
-    setShowConfirmPassword,
-    authError,
-    setAuthError,
-    nameErrors,
-    
-    // Auth overlay handlers
-    handleContinueWithEmail,
-    handleBackToMain,
-    handleContinueWithPassword,
-    handleContinueWithCode,
-    handleCreateAccount,
-    handleSignUpClick,
-    handleNameStepContinue,
-    handlePasswordStepContinue,
-    handleAccountCreated,
-    handleBackFromAccountCreation,
-    handleChangeEmail,
-    handleBackFromVerification,
-    handleBackFromPassword,
-    handleVerificationSuccess,
-    handleSignInSuccess,
-    handleForgotPasswordClick,
-    handleContinueToApp,
-    handleFirstNameChange,
-    handleLastNameChange,
-    
-    // Utility methods
-    getFaviconUrl,
-    isNameFormValid: isNameFormValid(),
-    isPasswordFormValid: isPasswordFormValid(),
-    validateName,
-    validatePassword,
-    
-    // Reset method
-    resetAuthOverlay,
-  };
+  // Add these missing functions to your AuthContext value object:
+
+const value: AuthContextType = {
+  user,
+  isAuthenticated,
+  isLoading,
+  login,
+  signup,
+  logout,
+  checkAuthStatus,
+  checkIfFollowing,
+  toggleFollowSeller,
+  followedSellers,
+  
+  // Auth overlay state
+  isAuthOverlayOpen,
+  setIsAuthOverlayOpen,
+  currentScreen,
+  setCurrentScreen,
+  selectedLanguage,
+  setSelectedLanguage,
+  userEmail,
+  setUserEmail,
+  resetOTP,
+  setResetOTP,
+  
+  // Account creation state
+  accountCreationStep,
+  setAccountCreationStep,
+  firstName,
+  setFirstName,
+  lastName,
+  setLastName,
+  password,
+  setPassword,
+  confirmPassword,
+  setConfirmPassword,
+  showPassword,
+  setShowPassword,
+  showConfirmPassword,
+  setShowConfirmPassword,
+  authError,
+  setAuthError,
+  nameErrors,
+  
+  // Auth overlay handlers
+  handleContinueWithEmail,
+  handleBackToMain,
+  handleContinueWithPassword,
+  handleContinueWithCode,
+  handleCreateAccount,
+  handleSignUpClick,
+  handleNameStepContinue,
+  handlePasswordStepContinue,
+  handleAccountCreated,
+  handleBackFromAccountCreation,
+  handleChangeEmail,
+  handleBackFromVerification,
+  handleBackFromPassword,
+  handleVerificationSuccess,
+  handleSignInSuccess,
+  handleForgotPasswordClick,
+  handleContinueToApp,
+  handleFirstNameChange,
+  handleLastNameChange,
+  
+  // Utility methods
+  getFaviconUrl,
+  isNameFormValid: isNameFormValid(),
+  isPasswordFormValid: isPasswordFormValid(),
+  validateName,
+  validatePassword,
+  
+  // Reset method
+  resetAuthOverlay,
+};
 
   return (
     <AuthContext.Provider value={value}>
