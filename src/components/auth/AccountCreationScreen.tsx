@@ -29,13 +29,13 @@ const AccountCreationScreen: React.FC<AccountCreationScreenProps> = ({
   const handleNameStepContinue = (newFirstName: string, newLastName: string) => {
     // Clear any previous errors
     setError(null);
-    
+
     // Validate names
     if (!newFirstName.trim() || !newLastName.trim()) {
       setError('First name and last name are required');
       return;
     }
-    
+
     setFirstName(newFirstName.trim());
     setLastName(newLastName.trim());
     setCurrentStep('password');
@@ -67,7 +67,7 @@ const AccountCreationScreen: React.FC<AccountCreationScreenProps> = ({
   const handleError = (errorMessage: string) => {
     setError(errorMessage);
     console.error('Account creation error:', errorMessage);
-    
+
     // Optional: Clear error after a few seconds
     setTimeout(() => setError(null), 5000);
   };
@@ -99,7 +99,7 @@ const AccountCreationScreen: React.FC<AccountCreationScreenProps> = ({
 
   if (currentStep === 'name') {
     return (
-      <div>
+      <div className="pb-6"> {/* Added padding bottom here */}
         <ErrorBanner />
         <AccountCreationNameStep
           email={email}
@@ -117,7 +117,7 @@ const AccountCreationScreen: React.FC<AccountCreationScreenProps> = ({
 
   if (currentStep === 'password') {
     return (
-      <div>
+      <div className="pb-6"> {/* Added padding bottom here */}
         <ErrorBanner />
         <AccountCreationPasswordStep
           email={email}
@@ -136,14 +136,16 @@ const AccountCreationScreen: React.FC<AccountCreationScreenProps> = ({
 
   if (currentStep === 'success') {
     return (
-      <AccountCreationSuccessStep
-        email={email}
-        firstName={firstName}
-        lastName={lastName}
-        onContinue={handleSuccessStepContinue}
-        isCompact={isCompact}
-        onExpand={onExpand}
-      />
+      <div className="pb-6"> {/* Added padding bottom here */}
+        <AccountCreationSuccessStep
+          email={email}
+          firstName={firstName}
+          lastName={lastName}
+          onContinue={handleSuccessStepContinue}
+          isCompact={isCompact}
+          onExpand={onExpand}
+        />
+      </div>
     );
   }
 
