@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
@@ -27,7 +28,7 @@ interface AuthContextType {
   sendCustomOTPEmail: (email: string) => Promise<{ success: boolean; error?: string }>;
   sendPasswordResetOTP: (email: string) => Promise<{ success: boolean; error?: string }>;
   verifyCustomOTP: (email: string, otp: string) => Promise<{ success: boolean; error?: string; user?: any }>;
-  resendOTPEmail: (email: string) => Promise<{ success: boolean; error?: string }>;
+  resendOTPEmail: (email: string, purpose?: string) => Promise<{ success: boolean; error?: string }>;
 
   // Auth overlay state and methods
   isAuthOverlayOpen: boolean;
@@ -90,6 +91,7 @@ interface AuthContextType {
 
   // Reset auth overlay
   resetAuthOverlay: () => void;
+  handleClose: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -141,72 +143,68 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // OTP Functions
   const sendCustomOTPEmail = async (email: string) => {
-  try {
-    console.log('🔄 Sending OTP to:', email);
-    console.log('🌐 Backend URL:', BACKEND_URL);
+    try {
+      console.log('🔄 Sending sign-in OTP to:', email);
+      console.log('🌐 Backend URL:', BACKEND_URL);
 
-    const response = await fetch(`${BACKEND_URL}/api/send-otp`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email }),
-    });
+      const response = await fetch(`${BACKEND_URL}/api/send-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
 
-    console.log('📊 Response status:', response.status);
-    console.log('📊 Response ok:', response.ok);
+      console.log('📊 Response status:', response.status);
+      console.log('📊 Response ok:', response.ok);
 
-    if (!response.ok) {
-      // Try to get error message from response
-      let errorMessage = `Server error: ${response.status}`;
-      try {
-        const errorData = await response.json();
-        errorMessage = errorData.error || errorMessage;
-      } catch (e) {
-        // If response is not JSON, get text
-        const errorText = await response.text();
-        errorMessage = errorText || errorMessage;
+      if (!response.ok) {
+        let errorMessage = `Server error: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        
+        console.error('❌ Server error response:', errorMessage);
+        throw new Error(errorMessage);
+      }
+
+      const result = await response.json();
+      console.log('✅ Sign-in OTP sent successfully:', result);
+      
+      return { success: true };
+    } catch (error: any) {
+      console.error('💥 Failed to send sign-in OTP:', error);
+      
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        return { 
+          success: false, 
+          error: 'Cannot connect to server. Please check your internet connection and try again.' 
+        };
       }
       
-      console.error('❌ Server error response:', errorMessage);
-      throw new Error(errorMessage);
-    }
-
-    const result = await response.json();
-    console.log('✅ OTP sent successfully:', result);
-    
-    return { success: true };
-  } catch (error: any) {
-    console.error('💥 Failed to send OTP - Full error details:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
-    });
-    
-    // More specific error messages
-    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      if (error.message.includes('Failed to fetch')) {
+        return { 
+          success: false, 
+          error: 'Server is not responding. Please try again in a few moments.' 
+        };
+      }
+      
       return { 
         success: false, 
-        error: 'Cannot connect to server. Please check your internet connection and try again.' 
+        error: error.message || 'Failed to send verification code. Please try again.' 
       };
     }
-    
-    if (error.message.includes('Failed to fetch')) {
-      return { 
-        success: false, 
-        error: 'Server is not responding. Please try again in a few moments.' 
-      };
-    }
-    
-    return { 
-      success: false, 
-      error: error.message || 'Failed to send verification code. Please try again.' 
-    };
-  }
-};
+  };
 
   const sendPasswordResetOTP = async (email: string) => {
     try {
+      console.log('🔄 Sending password reset OTP to:', email);
+      console.log('🌐 Backend URL:', BACKEND_URL);
+
       const response = await fetch(`${BACKEND_URL}/api/send-reset-otp`, {
         method: 'POST',
         headers: {
@@ -215,24 +213,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({ email }),
       });
 
-      const result = await response.json();
+      console.log('📊 Response status:', response.status);
+      console.log('📊 Response ok:', response.ok);
 
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to send password reset code');
+        let errorMessage = `Server error: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        
+        console.error('❌ Server error response:', errorMessage);
+        throw new Error(errorMessage);
       }
 
+      const result = await response.json();
+      console.log('✅ Password reset OTP sent successfully:', result);
+      
       return { success: true };
     } catch (error: any) {
-      console.error('Failed to send password reset OTP:', error);
+      console.error('💥 Failed to send password reset OTP:', error);
+      
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        return { 
+          success: false, 
+          error: 'Cannot connect to server. Please check your internet connection and try again.' 
+        };
+      }
+      
+      if (error.message.includes('Failed to fetch')) {
+        return { 
+          success: false, 
+          error: 'Server is not responding. Please try again in a few moments.' 
+        };
+      }
+      
       return { 
         success: false, 
-        error: error.message || 'Failed to send password reset code' 
+        error: error.message || 'Failed to send password reset code. Please try again.' 
       };
     }
   };
 
   const verifyCustomOTP = async (email: string, otp: string) => {
     try {
+      console.log('🔄 Verifying OTP for:', email);
+      
       const response = await fetch(`${BACKEND_URL}/api/verify-otp`, {
         method: 'POST',
         headers: {
@@ -261,6 +290,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { 
         success: true, 
         user: result.user,
+        purpose: result.purpose,
         message: result.message 
       };
     } catch (error: any) {
@@ -272,14 +302,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const resendOTPEmail = async (email: string) => {
+  const resendOTPEmail = async (email: string, purpose = 'signin') => {
     try {
+      console.log(`🔄 Resending ${purpose} OTP to:`, email);
+      
       const response = await fetch(`${BACKEND_URL}/api/resend-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, purpose }),
       });
 
       const result = await response.json();
@@ -797,6 +829,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     resetAuthOverlay();
   };
 
+  const handleClose = () => {
+    setIsAuthOverlayOpen(false);
+    resetAuthOverlay();
+  };
+
   // Name step handlers
   const handleFirstNameChange = (value: string) => {
     setFirstName(value);
@@ -811,6 +848,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const resetAuthOverlay = () => {
+    setCurrentScreen('main');
     setAccountCreationStep('name');
     setFirstName('');
     setLastName('');
@@ -820,88 +858,91 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setNameErrors({ firstName: '', lastName: '' });
     setShowPassword(false);
     setShowConfirmPassword(false);
+    setUserEmail('');
+    setResetOTP('');
   };
 
   const value: AuthContextType = {
-  user,
-  isAuthenticated,
-  isLoading,
-  login,
-  signup,
-  logout,
-  checkAuthStatus,
-  checkIfFollowing,
-  toggleFollowSeller,
-  followedSellers,
+    user,
+    isAuthenticated,
+    isLoading,
+    login,
+    signup,
+    logout,
+    checkAuthStatus,
+    checkIfFollowing,
+    toggleFollowSeller,
+    followedSellers,
 
-  // OTP Functions - ALL INCLUDED
-  sendCustomOTPEmail,
-  sendPasswordResetOTP, // ✅ NOW INCLUDED
-  verifyCustomOTP,
-  resendOTPEmail,
+    // OTP Functions - ALL INCLUDED
+    sendCustomOTPEmail,
+    sendPasswordResetOTP,
+    verifyCustomOTP,
+    resendOTPEmail,
 
-  // Auth overlay state
-  isAuthOverlayOpen,
-  setIsAuthOverlayOpen,
-  currentScreen,
-  setCurrentScreen,
-  selectedLanguage,
-  setSelectedLanguage,
-  userEmail,
-  setUserEmail,
-  resetOTP,
-  setResetOTP,
+    // Auth overlay state
+    isAuthOverlayOpen,
+    setIsAuthOverlayOpen,
+    currentScreen,
+    setCurrentScreen,
+    selectedLanguage,
+    setSelectedLanguage,
+    userEmail,
+    setUserEmail,
+    resetOTP,
+    setResetOTP,
 
-  // Account creation state
-  accountCreationStep,
-  setAccountCreationStep,
-  firstName,
-  setFirstName,
-  lastName,
-  setLastName,
-  password,
-  setPassword,
-  confirmPassword,
-  setConfirmPassword,
-  showPassword,
-  setShowPassword,
-  showConfirmPassword,
-  setShowConfirmPassword,
-  authError,
-  setAuthError,
-  nameErrors,
+    // Account creation state
+    accountCreationStep,
+    setAccountCreationStep,
+    firstName,
+    setFirstName,
+    lastName,
+    setLastName,
+    password,
+    setPassword,
+    confirmPassword,
+    setConfirmPassword,
+    showPassword,
+    setShowPassword,
+    showConfirmPassword,
+    setShowConfirmPassword,
+    authError,
+    setAuthError,
+    nameErrors,
 
-  // Auth overlay handlers
-  handleContinueWithEmail,
-  handleBackToMain,
-  handleContinueWithPassword,
-  handleContinueWithCode,
-  handleCreateAccount,
-  handleSignUpClick,
-  handleNameStepContinue,
-  handlePasswordStepContinue,
-  handleAccountCreated,
-  handleBackFromAccountCreation,
-  handleChangeEmail,
-  handleBackFromVerification,
-  handleBackFromPassword,
-  handleVerificationSuccess,
-  handleSignInSuccess,
-  handleForgotPasswordClick,
-  handleContinueToApp,
-  handleFirstNameChange,
-  handleLastNameChange,
+    // Auth overlay handlers
+    handleContinueWithEmail,
+    handleBackToMain,
+    handleContinueWithPassword,
+    handleContinueWithCode,
+    handleCreateAccount,
+    handleSignUpClick,
+    handleNameStepContinue,
+    handlePasswordStepContinue,
+    handleAccountCreated,
+    handleBackFromAccountCreation,
+    handleChangeEmail,
+    handleBackFromVerification,
+    handleBackFromPassword,
+    handleVerificationSuccess,
+    handleSignInSuccess,
+    handleForgotPasswordClick,
+    handleContinueToApp,
+    handleFirstNameChange,
+    handleLastNameChange,
+    handleClose,
 
-  // Utility methods
-  getFaviconUrl,
-  isNameFormValid: isNameFormValid(),
-  isPasswordFormValid: isPasswordFormValid(),
-  validateName,
-  validatePassword,
+    // Utility methods
+    getFaviconUrl,
+    isNameFormValid: isNameFormValid(),
+    isPasswordFormValid: isPasswordFormValid(),
+    validateName,
+    validatePassword,
 
-  // Reset method
-  resetAuthOverlay,
-};
+    // Reset method
+    resetAuthOverlay,
+  };
 
   return (
     <AuthContext.Provider value={value}>
