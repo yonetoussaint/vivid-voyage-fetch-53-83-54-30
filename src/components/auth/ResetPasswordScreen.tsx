@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ArrowLeft, HelpCircle, Mail } from 'lucide-react';
 import { toast } from 'sonner';
@@ -24,7 +25,7 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
   const [resetState, setResetState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
-  // ✅ Make sure this is using sendPasswordResetOTP
+  // ✅ Use the password reset OTP function
   const { sendPasswordResetOTP } = useAuth();
 
   const isEmailValid = (email: string): boolean => {
@@ -59,7 +60,7 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
     setErrorMessage('');
 
     try {
-      // ✅ This should call the password reset endpoint
+      // ✅ This calls the password reset endpoint specifically
       const result = await sendPasswordResetOTP(email);
 
       if (result.success) {
@@ -138,7 +139,7 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
               Reset your password
             </h1>
             <p className={`text-gray-600 ${isCompact ? 'text-sm' : 'text-base'}`}>
-              We'll send a verification code to your email address
+              We'll send a password reset code to your email address
             </p>
           </div>
 
