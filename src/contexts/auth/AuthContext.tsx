@@ -27,8 +27,9 @@ interface AuthContextType {
   // OTP Functions
   sendCustomOTPEmail: (email: string) => Promise<{ success: boolean; error?: string }>;
   sendPasswordResetOTP: (email: string) => Promise<{ success: boolean; error?: string }>;
-  verifyCustomOTP: (email: string, otp: string) => Promise<{ success: boolean; error?: string; user?: any }>;
+  verifyCustomOTP: (email: string, otp: string) => Promise<{ success: boolean; error?: string; user?: any; purpose?: string }>;
   resendOTPEmail: (email: string, purpose?: string) => Promise<{ success: boolean; error?: string }>;
+  completePasswordReset: (email: string, otp: string, newPassword: string) => Promise<{ success: boolean; error?: string; message?: string }>;
 
   // Auth overlay state and methods
   isAuthOverlayOpen: boolean;
@@ -167,32 +168,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const errorText = await response.text();
           errorMessage = errorText || errorMessage;
         }
-        
+
         console.error('❌ Server error response:', errorMessage);
         throw new Error(errorMessage);
       }
 
       const result = await response.json();
       console.log('✅ Sign-in OTP sent successfully:', result);
-      
+
       return { success: true };
     } catch (error: any) {
       console.error('💥 Failed to send sign-in OTP:', error);
-      
+
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
         return { 
           success: false, 
           error: 'Cannot connect to server. Please check your internet connection and try again.' 
         };
       }
-      
+
       if (error.message.includes('Failed to fetch')) {
         return { 
           success: false, 
           error: 'Server is not responding. Please try again in a few moments.' 
         };
       }
-      
+
       return { 
         success: false, 
         error: error.message || 'Failed to send verification code. Please try again.' 
@@ -225,32 +226,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const errorText = await response.text();
           errorMessage = errorText || errorMessage;
         }
-        
+
         console.error('❌ Server error response:', errorMessage);
         throw new Error(errorMessage);
       }
 
       const result = await response.json();
       console.log('✅ Password reset OTP sent successfully:', result);
-      
+
       return { success: true };
     } catch (error: any) {
       console.error('💥 Failed to send password reset OTP:', error);
-      
+
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
         return { 
           success: false, 
           error: 'Cannot connect to server. Please check your internet connection and try again.' 
         };
       }
-      
+
       if (error.message.includes('Failed to fetch')) {
         return { 
           success: false, 
           error: 'Server is not responding. Please try again in a few moments.' 
         };
       }
-      
+
       return { 
         success: false, 
         error: error.message || 'Failed to send password reset code. Please try again.' 
@@ -259,70 +260,113 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const verifyCustomOTP = async (email: string, otp: string) => {
-  try {
-    console.log('🔄 Verifying OTP for:', email);
-    
-    const response = await fetch(`${BACKEND_URL}/api/verify-otp`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, otp }),
-    });
+    try {
+      console.log('🔄 Verifying OTP for:', email);
 
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || 'Invalid verification code');
-    }
-
-    // If we get a session back, set it in Supabase client
-    if (result.session) {
-      console.log('✅ Setting Supabase session...');
-      const { error: sessionError } = await supabase.auth.setSession({
-        access_token: result.session.access_token,
-        refresh_token: result.session.refresh_token,
+      const response = await fetch(`${BACKEND_URL}/api/verify-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, otp }),
       });
-      
-      if (sessionError) {
-        console.error('❌ Error setting session:', sessionError);
-        throw sessionError;
-      }
-      
-      // Verify the session was set correctly
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      if (!currentSession) {
-        console.error('❌ Session not set properly after verification');
-        throw new Error('Failed to establish secure session');
-      }
-      
-      console.log('✅ Session set successfully, user authenticated');
 
-      // Update auth state
-      const userData = mapSupabaseUser(result.user);
-      setUser(userData);
-      setIsAuthenticated(true);
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Invalid verification code');
+      }
+
+      console.log(`✅ OTP verified successfully, purpose: ${result.purpose}`);
+
+      // Only create session for sign-in OTPs, not for password reset
+      if (result.purpose === 'signin' && result.session) {
+        console.log('✅ Setting Supabase session for sign-in...');
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: result.session.access_token,
+          refresh_token: result.session.refresh_token,
+        });
+
+        if (sessionError) {
+          console.error('❌ Error setting session:', sessionError);
+          throw sessionError;
+        }
+
+        // Verify the session was set correctly
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        if (!currentSession) {
+          console.error('❌ Session not set properly after verification');
+          throw new Error('Failed to establish secure session');
+        }
+
+        console.log('✅ Session set successfully, user authenticated');
+
+        // Update auth state
+        const userData = mapSupabaseUser(result.user);
+        setUser(userData);
+        setIsAuthenticated(true);
+      } else if (result.purpose === 'password-reset') {
+        console.log('🔄 Password reset OTP verified - no session needed');
+        // For password reset, we don't create a session here
+        // The session will be handled by the complete-password-reset endpoint
+      }
+
+      return { 
+        success: true, 
+        user: result.user,
+        purpose: result.purpose,
+        message: result.message 
+      };
+    } catch (error: any) {
+      console.error('❌ Failed to verify OTP:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Invalid verification code' 
+      };
     }
+  };
 
-    return { 
-      success: true, 
-      user: result.user,
-      purpose: result.purpose,
-      message: result.message 
-    };
-  } catch (error: any) {
-    console.error('❌ Failed to verify OTP:', error);
-    return { 
-      success: false, 
-      error: error.message || 'Invalid verification code' 
-    };
-  }
-};
+  const completePasswordReset = async (email: string, otp: string, newPassword: string) => {
+    try {
+      console.log('🔄 Completing password reset for:', email);
+
+      const response = await fetch(`${BACKEND_URL}/api/complete-password-reset`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          email, 
+          otp, 
+          newPassword 
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to reset password');
+      }
+
+      console.log('✅ Password reset completed successfully');
+
+      return { 
+        success: true, 
+        message: result.message 
+      };
+    } catch (error: any) {
+      console.error('❌ Failed to complete password reset:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Failed to reset password' 
+      };
+    }
+  };
 
   const resendOTPEmail = async (email: string, purpose = 'signin') => {
     try {
       console.log(`🔄 Resending ${purpose} OTP to:`, email);
-      
+
       const response = await fetch(`${BACKEND_URL}/api/resend-otp`, {
         method: 'POST',
         headers: {
@@ -896,6 +940,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     sendPasswordResetOTP,
     verifyCustomOTP,
     resendOTPEmail,
+    completePasswordReset,
 
     // Auth overlay state
     isAuthOverlayOpen,
