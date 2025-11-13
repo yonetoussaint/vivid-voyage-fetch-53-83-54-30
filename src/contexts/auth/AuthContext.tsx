@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
@@ -30,6 +29,9 @@ interface AuthContextType {
   verifyCustomOTP: (email: string, otp: string) => Promise<{ success: boolean; error?: string; user?: any; purpose?: string }>;
   resendOTPEmail: (email: string, purpose?: string) => Promise<{ success: boolean; error?: string }>;
   completePasswordReset: (email: string, otp: string, newPassword: string) => Promise<{ success: boolean; error?: string; message?: string }>;
+
+  // Google OAuth Function
+  googleSignIn: () => Promise<{ error?: string }>;
 
   // Auth overlay state and methods
   isAuthOverlayOpen: boolean;
@@ -141,6 +143,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Backend URL - using your Render.com server
   const BACKEND_URL = 'https://resend-u11p.onrender.com';
+
+  // Google OAuth Function
+  const googleSignIn = async () => {
+    try {
+      console.log('🔐 Initializing Google OAuth via server...');
+      
+      const response = await fetch(`${BACKEND_URL}/api/auth/google`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          redirectTo: `${window.location.origin}/auth/callback`
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        console.error('❌ Server Google OAuth error:', result.error);
+        return { error: result.error || 'Failed to initialize Google sign in' };
+      }
+
+      console.log('✅ Redirecting to Google OAuth...');
+      // Redirect to Google OAuth URL
+      window.location.href = result.authUrl;
+
+      return {};
+
+    } catch (error: any) {
+      console.error('💥 Google OAuth initialization error:', error);
+      return { error: error.message || 'Failed to sign in with Google' };
+    }
+  };
 
   // OTP Functions
   const sendCustomOTPEmail = async (email: string) => {
@@ -326,68 +362,68 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-const completePasswordReset = async (email: string, otp: string, newPassword: string) => {
-  try {
-    console.log('🔄 Completing password reset for:', email);
-    console.log('📧 Email:', email);
-    console.log('🔑 OTP length:', otp.length);
-    console.log('🔒 New password length:', newPassword.length);
+  const completePasswordReset = async (email: string, otp: string, newPassword: string) => {
+    try {
+      console.log('🔄 Completing password reset for:', email);
+      console.log('📧 Email:', email);
+      console.log('🔑 OTP length:', otp.length);
+      console.log('🔒 New password length:', newPassword.length);
 
-    const response = await fetch(`${BACKEND_URL}/api/complete-password-reset`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        email: email.toLowerCase().trim(), 
-        otp: otp.trim(),
-        newPassword 
-      }),
-    });
+      const response = await fetch(`${BACKEND_URL}/api/complete-password-reset`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          email: email.toLowerCase().trim(), 
+          otp: otp.trim(),
+          newPassword 
+        }),
+      });
 
-    const result = await response.json();
+      const result = await response.json();
 
-    console.log('📊 Server response:', {
-      status: response.status,
-      ok: response.ok,
-      result: result
-    });
+      console.log('📊 Server response:', {
+        status: response.status,
+        ok: response.ok,
+        result: result
+      });
 
-    if (!response.ok) {
-      console.error('❌ Server returned error:', result.error);
-      throw new Error(result.error || 'Failed to reset password');
+      if (!response.ok) {
+        console.error('❌ Server returned error:', result.error);
+        throw new Error(result.error || 'Failed to reset password');
+      }
+
+      if (!result.success) {
+        console.error('❌ Server reported failure:', result);
+        throw new Error(result.error || 'Password reset failed');
+      }
+
+      console.log('✅ Password reset completed successfully');
+      return { 
+        success: true, 
+        message: result.message 
+      };
+    } catch (error: any) {
+      console.error('❌ Failed to complete password reset:', error);
+      
+      // Provide more specific error messages
+      let userFriendlyError = error.message;
+      
+      if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
+        userFriendlyError = 'Network error. Please check your internet connection and try again.';
+      } else if (error.message.includes('OTP') || error.message.includes('code')) {
+        userFriendlyError = 'Invalid or expired verification code. Please request a new password reset code.';
+      } else if (error.message.includes('User not found')) {
+        userFriendlyError = 'No account found with this email address. Please check your email and try again.';
+      }
+      
+      return { 
+        success: false, 
+        error: userFriendlyError 
+      };
     }
-
-    if (!result.success) {
-      console.error('❌ Server reported failure:', result);
-      throw new Error(result.error || 'Password reset failed');
-    }
-
-    console.log('✅ Password reset completed successfully');
-    return { 
-      success: true, 
-      message: result.message 
-    };
-  } catch (error: any) {
-    console.error('❌ Failed to complete password reset:', error);
-    
-    // Provide more specific error messages
-    let userFriendlyError = error.message;
-    
-    if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
-      userFriendlyError = 'Network error. Please check your internet connection and try again.';
-    } else if (error.message.includes('OTP') || error.message.includes('code')) {
-      userFriendlyError = 'Invalid or expired verification code. Please request a new password reset code.';
-    } else if (error.message.includes('User not found')) {
-      userFriendlyError = 'No account found with this email address. Please check your email and try again.';
-    }
-    
-    return { 
-      success: false, 
-      error: userFriendlyError 
-    };
-  }
-};
+  };
 
   const resendOTPEmail = async (email: string, purpose = 'signin') => {
     try {
@@ -967,6 +1003,9 @@ const completePasswordReset = async (email: string, otp: string, newPassword: st
     verifyCustomOTP,
     resendOTPEmail,
     completePasswordReset,
+
+    // Google OAuth Function
+    googleSignIn,
 
     // Auth overlay state
     isAuthOverlayOpen,
