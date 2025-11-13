@@ -1,7 +1,6 @@
+
 import React, { useState } from 'react';
 import { ArrowLeft, HelpCircle, Lock, Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '../../contexts/auth/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface NewPasswordScreenProps {
@@ -42,95 +41,36 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
     setError('');
   };
 
-  const verifyOTPForPasswordUpdate = async (email: string, otp: string) => {
-    try {
-      console.log('🔄 Verifying OTP for password update:', email);
-      
-      const response = await fetch('https://resend-u11p.onrender.com/api/verify-otp-for-password-update', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, otp }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Invalid verification code');
-      }
-
-      return { 
-        success: true, 
-        user: result.user,
-        session: result.session,
-        message: result.message 
-      };
-    } catch (error: any) {
-      console.error('Failed to verify OTP for password update:', error);
-      return { 
-        success: false, 
-        error: error.message || 'Invalid verification code' 
-      };
-    }
-  };
-
-  const handleResetPassword = async () => {
+  const handleCompletePasswordReset = async () => {
     if (!canResetPassword) return;
 
     setIsLoading(true);
     setError('');
 
     try {
-      console.log('🔄 Starting password reset process for:', email);
+      console.log('🔄 Starting complete password reset for:', email);
       
-      // Step 1: Verify the OTP specifically for password update
-      console.log('🔐 Verifying OTP for password update...');
-      const verificationResult = await verifyOTPForPasswordUpdate(email, otp);
-
-      if (!verificationResult.success) {
-        console.error('❌ OTP verification failed:', verificationResult.error);
-        setError(verificationResult.error || 'Verification code has expired or is invalid. Please request a new one.');
-        return;
-      }
-
-      console.log('✅ OTP verified successfully for password update');
-
-      // Step 2: Get the current user session
-      console.log('👤 Getting user session...');
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !session) {
-        console.error('❌ No active session found:', sessionError);
-        setError('Session expired. Please start the password reset process again.');
-        return;
-      }
-
-      console.log('✅ Session found, updating password...');
-
-      // Step 3: Update the user's password using the current session
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: password
+      const response = await fetch('https://resend-u11p.onrender.com/api/complete-password-reset', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          email, 
+          otp, 
+          newPassword: password 
+        }),
       });
 
-      if (updateError) {
-        console.error('❌ Password update error:', updateError);
-        
-        let errorMessage = 'Failed to update password. Please try again.';
-        if (updateError.message.includes('password should be at least')) {
-          errorMessage = 'Password must be at least 6 characters long.';
-        } else if (updateError.message.includes('Auth session missing')) {
-          errorMessage = 'Session expired. Please start the password reset process again.';
-        } else if (updateError.message.includes('invalid refresh token')) {
-          errorMessage = 'Session invalid. Please request a new reset code.';
-        }
-        
-        setError(errorMessage);
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.error('❌ Password reset failed:', result.error);
+        setError(result.error || 'Failed to reset password. Please try again.');
         return;
       }
 
-      // Password updated successfully
-      console.log('✅ Password updated successfully for:', email);
+      console.log('✅ Password reset successful');
       
       // Show success message
       toast.success('Password reset successfully!');
@@ -142,7 +82,7 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
 
     } catch (error: any) {
       console.error('💥 Error resetting password:', error);
-      setError('An unexpected error occurred. Please try again.');
+      setError('Network error. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -150,7 +90,7 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && canResetPassword) {
-      handleResetPassword();
+      handleCompletePasswordReset();
     }
   };
 
@@ -286,7 +226,7 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
 
         {/* Reset Password Button */}
         <button
-          onClick={handleResetPassword}
+          onClick={handleCompletePasswordReset}
           disabled={!canResetPassword}
           className={`w-full py-4 px-6 rounded-xl text-lg font-medium transition-all duration-200 mb-6 ${
             canResetPassword
