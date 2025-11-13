@@ -259,48 +259,65 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const verifyCustomOTP = async (email: string, otp: string) => {
-    try {
-      console.log('🔄 Verifying OTP for:', email);
-      
-      const response = await fetch(`${BACKEND_URL}/api/verify-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, otp }),
-      });
+  try {
+    console.log('🔄 Verifying OTP for:', email);
+    
+    const response = await fetch(`${BACKEND_URL}/api/verify-otp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, otp }),
+    });
 
-      const result = await response.json();
+    const result = await response.json();
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Invalid verification code');
-      }
-
-      // If we get a session back, set it in Supabase client
-      if (result.session) {
-        const { error: sessionError } = await supabase.auth.setSession(result.session);
-        if (sessionError) throw sessionError;
-        
-        // Update auth state
-        const userData = mapSupabaseUser(result.user);
-        setUser(userData);
-        setIsAuthenticated(true);
-      }
-
-      return { 
-        success: true, 
-        user: result.user,
-        purpose: result.purpose,
-        message: result.message 
-      };
-    } catch (error: any) {
-      console.error('Failed to verify OTP:', error);
-      return { 
-        success: false, 
-        error: error.message || 'Invalid verification code' 
-      };
+    if (!response.ok) {
+      throw new Error(result.error || 'Invalid verification code');
     }
-  };
+
+    // If we get a session back, set it in Supabase client
+    if (result.session) {
+      console.log('✅ Setting Supabase session...');
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: result.session.access_token,
+        refresh_token: result.session.refresh_token,
+      });
+      
+      if (sessionError) {
+        console.error('❌ Error setting session:', sessionError);
+        throw sessionError;
+      }
+      
+      // Verify the session was set correctly
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (!currentSession) {
+        console.error('❌ Session not set properly after verification');
+        throw new Error('Failed to establish secure session');
+      }
+      
+      console.log('✅ Session set successfully, user authenticated');
+
+      // Update auth state
+      const userData = mapSupabaseUser(result.user);
+      setUser(userData);
+      setIsAuthenticated(true);
+    }
+
+    return { 
+      success: true, 
+      user: result.user,
+      purpose: result.purpose,
+      message: result.message 
+    };
+  } catch (error: any) {
+    console.error('❌ Failed to verify OTP:', error);
+    return { 
+      success: false, 
+      error: error.message || 'Invalid verification code' 
+    };
+  }
+};
 
   const resendOTPEmail = async (email: string, purpose = 'signin') => {
     try {
