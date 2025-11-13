@@ -1,6 +1,5 @@
-
-import React, { useState } from 'react';
-import { ArrowLeft, HelpCircle, Lock, Eye, EyeOff } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, HelpCircle, Lock, Eye, EyeOff, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../contexts/auth/AuthContext';
 
@@ -27,13 +26,40 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [serverStatus, setServerStatus] = useState<'checking' | 'online' | 'offline'>('checking');
 
   // Use the AuthContext function
   const { completePasswordReset } = useAuth();
 
-  const isPasswordValid = password.length >= 6;
-  const doPasswordsMatch = password === confirmPassword && confirmPassword.length > 0;
+  // Password validation criteria
+  const hasMinLength = password.length >= 6;
+  const hasMatch = password === confirmPassword && confirmPassword.length > 0;
+
+  const isPasswordValid = hasMinLength;
+  const doPasswordsMatch = hasMatch;
   const canResetPassword = isPasswordValid && doPasswordsMatch && !isLoading;
+
+  // Check server health on component mount
+  useEffect(() => {
+    const checkServerHealth = async () => {
+      try {
+        console.log('🔍 Checking server health...');
+        const response = await fetch('https://resend-u11p.onrender.com/health');
+        if (response.ok) {
+          console.log('✅ Server is online');
+          setServerStatus('online');
+        } else {
+          console.warn('⚠️ Server health check failed');
+          setServerStatus('offline');
+        }
+      } catch (error) {
+        console.error('❌ Cannot reach server:', error);
+        setServerStatus('offline');
+      }
+    };
+
+    checkServerHealth();
+  }, []);
 
   const handlePasswordChange = (value: string) => {
     setPassword(value);
@@ -52,21 +78,41 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
     setError('');
 
     try {
-      console.log('🔄 Starting complete password reset for:', email);
+      console.log('🔄 Starting complete password reset process...');
+      console.log('📧 Email:', email);
+      console.log('🔑 OTP:', otp);
+      console.log('🔒 Password length:', password.length);
+      console.log('🌐 Server status:', serverStatus);
       
+      if (serverStatus === 'offline') {
+        throw new Error('Server is currently unavailable. Please try again later.');
+      }
+
       // Use the AuthContext function
       const result = await completePasswordReset(email, otp, password);
 
       if (!result.success) {
         console.error('❌ Password reset failed:', result.error);
-        setError(result.error || 'Failed to reset password. Please try again.');
+        
+        // Provide more specific error messages
+        let userFriendlyError = result.error || 'Failed to reset password. Please try again.';
+        
+        if (result.error?.includes('OTP')) {
+          userFriendlyError = 'Invalid or expired verification code. Please request a new code.';
+        } else if (result.error?.includes('User not found')) {
+          userFriendlyError = 'No account found with this email address.';
+        } else if (result.error?.includes('network') || result.error?.includes('fetch')) {
+          userFriendlyError = 'Network error. Please check your internet connection.';
+        }
+        
+        setError(userFriendlyError);
         return;
       }
 
       console.log('✅ Password reset successful');
       
       // Show success message
-      toast.success('Password reset successfully!');
+      toast.success('Password reset successfully! You can now sign in with your new password.');
       
       // Wait a moment before redirecting
       setTimeout(() => {
@@ -74,8 +120,8 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
       }, 1500);
 
     } catch (error: any) {
-      console.error('💥 Error resetting password:', error);
-      setError('Network error. Please check your connection and try again.');
+      console.error('💥 Unexpected error during password reset:', error);
+      setError(error.message || 'An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -87,6 +133,15 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
     }
   };
 
+  const getPasswordStrength = () => {
+    if (password.length === 0) return { text: 'Enter a password', color: 'text-gray-400' };
+    if (password.length < 6) return { text: 'Too short', color: 'text-red-500' };
+    if (password.length < 8) return { text: 'Fair', color: 'text-yellow-500' };
+    return { text: 'Good', color: 'text-green-500' };
+  };
+
+  const passwordStrength = getPasswordStrength();
+
   return (
     <div className="bg-white flex flex-col px-4">
       {/* Header - hide in compact mode */}
@@ -95,7 +150,7 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
           <button
             onClick={onBack}
             disabled={isLoading}
-            className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-full transition-colors active:scale-95"
+            className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-full transition-colors active:scale-95 disabled:opacity-50"
             aria-label="Go back"
           >
             <ArrowLeft className="w-5 h-5 text-gray-700" />
@@ -106,9 +161,9 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
           </h2>
 
           <button
-            className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-full transition-colors active:scale-95"
+            className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-full transition-colors active:scale-95 disabled:opacity-50"
             aria-label="Help"
-            onClick={() => alert('Need help? Contact support@example.com')}
+            onClick={() => alert('Need help? Contact support@mimaht.com')}
             type="button"
             disabled={isLoading}
           >
@@ -127,6 +182,18 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
         </div>
       </div>
 
+      {/* Server Status Indicator */}
+      {serverStatus === 'offline' && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center gap-2">
+            <X className="w-4 h-4 text-red-600" />
+            <p className="text-red-600 text-sm">
+              Server is currently unavailable. Some features may not work.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Main content container */}
       <div className="flex-1 flex flex-col w-full max-w-md mx-auto">
         <div className="text-center mb-8">
@@ -141,7 +208,10 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
         {/* Error message */}
         {error && (
           <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-600 text-sm text-center">{error}</p>
+            <div className="flex items-center gap-2">
+              <X className="w-4 h-4 text-red-600 flex-shrink-0" />
+              <p className="text-red-600 text-sm">{error}</p>
+            </div>
           </div>
         )}
 
@@ -169,15 +239,25 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               disabled={isLoading}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:opacity-50"
               aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
               {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
           </div>
-          <p className={`text-xs mt-1 ${isPasswordValid ? 'text-green-600' : 'text-gray-500'}`}>
-            Password must be at least 6 characters
-          </p>
+          <div className="flex items-center justify-between mt-1">
+            <p className={`text-xs ${passwordStrength.color}`}>
+              {passwordStrength.text}
+            </p>
+            <p className={`text-xs ${hasMinLength ? 'text-green-600' : 'text-gray-500'}`}>
+              {hasMinLength ? (
+                <Check className="w-4 h-4 inline" />
+              ) : (
+                <X className="w-4 h-4 inline" />
+              )}{' '}
+              At least 6 characters
+            </p>
+          </div>
         </div>
 
         {/* Confirm Password Input */}
@@ -204,14 +284,19 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               disabled={isLoading}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:opacity-50"
               aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
             >
               {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
           </div>
           {confirmPassword.length > 0 && (
-            <p className={`text-xs mt-1 ${doPasswordsMatch ? 'text-green-600' : 'text-red-600'}`}>
+            <p className={`text-xs mt-1 flex items-center gap-1 ${doPasswordsMatch ? 'text-green-600' : 'text-red-600'}`}>
+              {doPasswordsMatch ? (
+                <Check className="w-4 h-4" />
+              ) : (
+                <X className="w-4 h-4" />
+              )}
               {doPasswordsMatch ? 'Passwords match' : 'Passwords do not match'}
             </p>
           )}
@@ -223,7 +308,7 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
           disabled={!canResetPassword}
           className={`w-full py-4 px-6 rounded-xl text-lg font-medium transition-all duration-200 mb-6 ${
             canResetPassword
-              ? 'bg-red-500 hover:bg-red-600 text-white shadow-lg hover:shadow-xl active:scale-[0.98]'
+              ? 'bg-red-500 hover:bg-red-600 text-white shadow-lg hover:shadow-xl active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed'
               : 'bg-gray-200 text-gray-500 cursor-not-allowed'
           }`}
         >
@@ -248,6 +333,20 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
           </svg>
           <span className="text-gray-500 text-sm">Your password is secure with us</span>
         </div>
+
+        {/* Debug Info (only show in development) */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-4 p-3 bg-gray-100 rounded-lg">
+            <p className="text-xs text-gray-600">
+              <strong>Debug Info:</strong><br />
+              Email: {email}<br />
+              OTP: {otp}<br />
+              Password Length: {password.length}<br />
+              Server: {serverStatus}<br />
+              Can Reset: {canResetPassword ? 'Yes' : 'No'}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
