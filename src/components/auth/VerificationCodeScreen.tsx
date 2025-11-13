@@ -1,8 +1,9 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Key, Mail, HelpCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { FAVICON_OVERRIDES } from '../../constants/email';
-import { useAuth } from '../../contexts/auth/AuthContext'; // Add this import
+import { useAuth } from '../../contexts/auth/AuthContext';
 
 interface VerificationCodeScreenProps {
   email: string;
@@ -66,11 +67,11 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
     setError('');
 
     try {
-      // Use custom resend function
-      const result = await resendOTPEmail(email);
+      // Use custom resend function for sign-in
+      const result = await resendOTPEmail(email, 'signin');
 
       if (result.success) {
-        toast.success('New verification code sent!');
+        toast.success('New sign-in code sent!');
         setTimeLeft(60);
         setCanResend(false);
         setCode(['', '', '', '', '', '']);
@@ -164,10 +165,10 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
           {/* Header Text */}
           <div className="text-center mb-6">
             <h1 className={`text-gray-900 font-semibold mb-2 ${isCompact ? 'text-xl' : 'text-2xl'}`}>
-              Enter verification code
+              Enter sign-in code
             </h1>
             <p className={`text-gray-600 ${isCompact ? 'text-sm' : 'text-base'}`}>
-              We sent a 6-digit code to your email address
+              We sent a 6-digit sign-in code to your email address
             </p>
           </div>
 
@@ -215,7 +216,7 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
           <div className={isCompact ? "space-y-3" : "space-y-4"}>
             <div>
               <label className={`block font-medium text-gray-700 mb-4 ${isCompact ? 'text-sm' : 'text-base'}`}>
-                Verification Code
+                Sign-In Code
               </label>
               <div className="flex gap-2 justify-center">
                 {code.map((digit, index) => (
@@ -249,7 +250,7 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
                   type="button"
                 >
                   {isResending && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {isResending ? 'Sending...' : 'Resend verification code'}
+                  {isResending ? 'Sending...' : 'Resend sign-in code'}
                 </button>
               ) : (
                 <p className={`text-gray-500 ${isCompact ? 'text-xs' : 'text-sm'}`}>
@@ -275,7 +276,7 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
                 <Key className="w-5 h-5" />
               )}
               <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>
-                {isLoading ? 'Verifying...' : 'Verify & Sign In'}
+                {isLoading ? 'Signing In...' : 'Verify & Sign In'}
               </span>
             </button>
           </div>
