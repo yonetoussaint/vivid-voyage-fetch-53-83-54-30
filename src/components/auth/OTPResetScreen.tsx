@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Key, HelpCircle, Mail, Loader2 } from 'lucide-react';
 import { FAVICON_OVERRIDES } from '../../constants/email';
@@ -25,7 +26,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   
-  // Use the AuthContext functions
+  // Use the AuthContext functions with password reset purpose
   const { verifyCustomOTP, resendOTPEmail } = useAuth();
 
   // Initialize input refs
@@ -123,8 +124,8 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
     setError('');
 
     try {
-      // ✅ Use the resendOTPEmail function from AuthContext
-      const result = await resendOTPEmail(email);
+      // ✅ Use the resendOTPEmail function with password reset purpose
+      const result = await resendOTPEmail(email, 'password-reset');
 
       if (result.success) {
         setResendCooldown(60);
@@ -190,7 +191,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
               Enter reset code
             </h1>
             <p className={`text-gray-600 ${isCompact ? 'text-sm' : 'text-base'}`}>
-              We sent a 6-digit code to your email address
+              We sent a 6-digit password reset code to your email address
             </p>
           </div>
 
@@ -239,7 +240,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
           <div className={isCompact ? "space-y-3" : "space-y-4"}>
             <div>
               <label className={`block font-medium text-gray-700 mb-4 ${isCompact ? 'text-sm' : 'text-base'}`}>
-                Reset Code
+                Password Reset Code
               </label>
               <div className="flex gap-2 justify-center">
                 {otp.map((digit, index) => (
@@ -302,7 +303,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
                 <Key className="w-5 h-5" />
               )}
               <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>
-                {isLoading ? 'Verifying...' : 'Verify Code'}
+                {isLoading ? 'Verifying...' : 'Verify & Reset Password'}
               </span>
             </button>
           </div>
