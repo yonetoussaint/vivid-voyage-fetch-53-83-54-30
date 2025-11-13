@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, HelpCircle, Lock, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '../../contexts/auth/AuthContext';
 
 interface NewPasswordScreenProps {
   email: string;
@@ -27,6 +28,9 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Use the AuthContext function
+  const { completePasswordReset } = useAuth();
+
   const isPasswordValid = password.length >= 6;
   const doPasswordsMatch = password === confirmPassword && confirmPassword.length > 0;
   const canResetPassword = isPasswordValid && doPasswordsMatch && !isLoading;
@@ -50,21 +54,10 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
     try {
       console.log('🔄 Starting complete password reset for:', email);
       
-      const response = await fetch('https://resend-u11p.onrender.com/api/complete-password-reset', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          email, 
-          otp, 
-          newPassword: password 
-        }),
-      });
+      // Use the AuthContext function
+      const result = await completePasswordReset(email, otp, password);
 
-      const result = await response.json();
-
-      if (!response.ok) {
+      if (!result.success) {
         console.error('❌ Password reset failed:', result.error);
         setError(result.error || 'Failed to reset password. Please try again.');
         return;
