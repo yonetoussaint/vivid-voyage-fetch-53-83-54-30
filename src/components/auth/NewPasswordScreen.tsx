@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ArrowLeft, HelpCircle, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../contexts/auth/AuthContext';
@@ -29,8 +28,6 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const { verifyCustomOTP } = useAuth();
-
   const isPasswordValid = password.length >= 6;
   const doPasswordsMatch = password === confirmPassword && confirmPassword.length > 0;
   const canResetPassword = isPasswordValid && doPasswordsMatch && !isLoading;
@@ -45,6 +42,39 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
     setError('');
   };
 
+  const verifyOTPForPasswordUpdate = async (email: string, otp: string) => {
+    try {
+      console.log('🔄 Verifying OTP for password update:', email);
+      
+      const response = await fetch('https://resend-u11p.onrender.com/api/verify-otp-for-password-update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, otp }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Invalid verification code');
+      }
+
+      return { 
+        success: true, 
+        user: result.user,
+        session: result.session,
+        message: result.message 
+      };
+    } catch (error: any) {
+      console.error('Failed to verify OTP for password update:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Invalid verification code' 
+      };
+    }
+  };
+
   const handleResetPassword = async () => {
     if (!canResetPassword) return;
 
@@ -54,17 +84,17 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
     try {
       console.log('🔄 Starting password reset process for:', email);
       
-      // Step 1: Verify the OTP first to get a session
-      console.log('🔐 Verifying OTP...');
-      const verificationResult = await verifyCustomOTP(email, otp);
+      // Step 1: Verify the OTP specifically for password update
+      console.log('🔐 Verifying OTP for password update...');
+      const verificationResult = await verifyOTPForPasswordUpdate(email, otp);
 
       if (!verificationResult.success) {
         console.error('❌ OTP verification failed:', verificationResult.error);
-        setError('Verification code has expired or is invalid. Please request a new one.');
+        setError(verificationResult.error || 'Verification code has expired or is invalid. Please request a new one.');
         return;
       }
 
-      console.log('✅ OTP verified successfully');
+      console.log('✅ OTP verified successfully for password update');
 
       // Step 2: Get the current user session
       console.log('👤 Getting user session...');
