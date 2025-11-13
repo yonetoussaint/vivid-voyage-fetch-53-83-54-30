@@ -15,7 +15,7 @@ const AuthCallback: React.FC = () => {
       try {
         console.log('🔄 Handling OAuth callback...');
         console.log('📦 Search params:', Object.fromEntries([...searchParams]));
-        
+
         const success = searchParams.get('success');
         const accessToken = searchParams.get('access_token');
         const refreshToken = searchParams.get('refresh_token');
@@ -25,10 +25,17 @@ const AuthCallback: React.FC = () => {
         const avatarUrl = searchParams.get('avatar_url');
         const isNewUser = searchParams.get('is_new_user') === 'true';
 
+        console.log('🔍 Checking OAuth parameters...');
+        console.log('   Success:', success);
+        console.log('   Access Token present:', !!accessToken);
+        console.log('   Refresh Token present:', !!refreshToken);
+        console.log('   User ID:', userId);
+        console.log('   Email:', email);
+
         // Check if this is a successful OAuth callback
         if (success === 'true' && accessToken && refreshToken) {
-          console.log('✅ OAuth success detected');
-          
+          console.log('✅ OAuth success detected - setting session...');
+
           // Set the session with tokens from server
           const { error: sessionError } = await supabase.auth.setSession({
             access_token: accessToken,
@@ -42,17 +49,29 @@ const AuthCallback: React.FC = () => {
 
           console.log('✅ Session set successfully');
 
+          // Verify the session was set
+          const { data: { session: currentSession } } = await supabase.auth.getSession();
+          console.log('🔍 Current session after setting:', currentSession ? 'Session exists' : 'No session');
+
+          if (!currentSession) {
+            throw new Error('Session not set properly after OAuth');
+          }
+
+          console.log('✅ Session verified, updating auth context...');
+
           // Update auth context
           await checkAuthStatus();
-          
+
           setStatus('success');
-          
+
           // Show success message
           if (isNewUser) {
             toast.success(`Welcome to Mimaht, ${fullName || email}!`);
           } else {
             toast.success(`Welcome back, ${fullName || email}!`);
           }
+
+          console.log('✅ Auth context updated, closing overlay and redirecting...');
 
           // Close auth overlay and redirect to home
           setTimeout(() => {
@@ -61,7 +80,6 @@ const AuthCallback: React.FC = () => {
           }, 1500);
 
         } else {
-          // Fallback: Check if there's already a valid session
           console.log('🔄 No OAuth params, checking existing session...');
           const { data: { session } } = await supabase.auth.getSession();
           
@@ -107,6 +125,10 @@ const AuthCallback: React.FC = () => {
             <p className="text-gray-600">
               Please wait while we sign you in.
             </p>
+            <div className="mt-4 text-sm text-gray-500">
+              <p>Debug Info:</p>
+              <p>URL: {window.location.href}</p>
+            </div>
           </>
         )}
         
