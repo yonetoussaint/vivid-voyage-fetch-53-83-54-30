@@ -326,42 +326,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const completePasswordReset = async (email: string, otp: string, newPassword: string) => {
-    try {
-      console.log('🔄 Completing password reset for:', email);
+const completePasswordReset = async (email: string, otp: string, newPassword: string) => {
+  try {
+    console.log('🔄 Completing password reset for:', email);
 
-      const response = await fetch(`${BACKEND_URL}/api/complete-password-reset`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          email, 
-          otp, 
-          newPassword 
-        }),
-      });
+    const response = await fetch(`${BACKEND_URL}/api/complete-password-reset`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        email, 
+        otp, 
+        newPassword 
+      }),
+    });
 
-      const result = await response.json();
+    const result = await response.json();
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to reset password');
-      }
-
-      console.log('✅ Password reset completed successfully');
-
-      return { 
-        success: true, 
-        message: result.message 
-      };
-    } catch (error: any) {
-      console.error('❌ Failed to complete password reset:', error);
-      return { 
-        success: false, 
-        error: error.message || 'Failed to reset password' 
-      };
+    if (!response.ok) {
+      console.error('❌ Password reset failed:', result.error);
+      throw new Error(result.error || 'Failed to reset password');
     }
-  };
+
+    console.log('✅ Password reset completed successfully');
+    return { 
+      success: true, 
+      message: result.message 
+    };
+  } catch (error: any) {
+    console.error('❌ Failed to complete password reset:', error);
+    return { 
+      success: false, 
+      error: error.message || 'Failed to reset password. Please try again.' 
+    };
+  }
+};
 
   const resendOTPEmail = async (email: string, purpose = 'signin') => {
     try {
