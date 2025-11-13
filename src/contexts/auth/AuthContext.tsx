@@ -141,30 +141,69 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // OTP Functions
   const sendCustomOTPEmail = async (email: string) => {
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/send-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
+  try {
+    console.log('🔄 Sending OTP to:', email);
+    console.log('🌐 Backend URL:', BACKEND_URL);
 
-      const result = await response.json();
+    const response = await fetch(`${BACKEND_URL}/api/send-otp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to send verification code');
+    console.log('📊 Response status:', response.status);
+    console.log('📊 Response ok:', response.ok);
+
+    if (!response.ok) {
+      // Try to get error message from response
+      let errorMessage = `Server error: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+      } catch (e) {
+        // If response is not JSON, get text
+        const errorText = await response.text();
+        errorMessage = errorText || errorMessage;
       }
+      
+      console.error('❌ Server error response:', errorMessage);
+      throw new Error(errorMessage);
+    }
 
-      return { success: true };
-    } catch (error: any) {
-      console.error('Failed to send OTP:', error);
+    const result = await response.json();
+    console.log('✅ OTP sent successfully:', result);
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error('💥 Failed to send OTP - Full error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
+    
+    // More specific error messages
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
       return { 
         success: false, 
-        error: error.message || 'Failed to send verification code' 
+        error: 'Cannot connect to server. Please check your internet connection and try again.' 
       };
     }
-  };
+    
+    if (error.message.includes('Failed to fetch')) {
+      return { 
+        success: false, 
+        error: 'Server is not responding. Please try again in a few moments.' 
+      };
+    }
+    
+    return { 
+      success: false, 
+      error: error.message || 'Failed to send verification code. Please try again.' 
+    };
+  }
+};
 
   const sendPasswordResetOTP = async (email: string) => {
     try {
