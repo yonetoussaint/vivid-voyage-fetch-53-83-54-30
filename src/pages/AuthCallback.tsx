@@ -9,31 +9,26 @@ const AuthCallback: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { checkAuthStatus, setIsAuthOverlayOpen } = useAuth();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const [userInfo, setUserInfo] = useState<{
-    email: string;
-    full_name: string;
-    avatar_url: string;
-    is_new_user: boolean;
-  } | null>(null);
 
   useEffect(() => {
     const handleCallback = async () => {
       try {
         console.log('🔄 Handling OAuth callback...');
+        console.log('📦 Search params:', Object.fromEntries([...searchParams]));
         
         const success = searchParams.get('success');
-        const errorMessage = searchParams.get('message');
         const accessToken = searchParams.get('access_token');
         const refreshToken = searchParams.get('refresh_token');
+        const userId = searchParams.get('user_id');
+        const email = searchParams.get('email');
+        const fullName = searchParams.get('full_name');
+        const avatarUrl = searchParams.get('avatar_url');
+        const isNewUser = searchParams.get('is_new_user') === 'true';
 
-        if (errorMessage) {
-          console.error('❌ OAuth error:', errorMessage);
-          toast.error(decodeURIComponent(errorMessage));
-          setStatus('error');
-          return;
-        }
-
+        // Check if this is a successful OAuth callback
         if (success === 'true' && accessToken && refreshToken) {
+          console.log('✅ OAuth success detected');
+          
           // Set the session with tokens from server
           const { error: sessionError } = await supabase.auth.setSession({
             access_token: accessToken,
@@ -42,50 +37,46 @@ const AuthCallback: React.FC = () => {
 
           if (sessionError) {
             console.error('❌ Session error:', sessionError);
-            throw new Error('Failed to set user session');
+            throw new Error('Failed to set user session: ' + sessionError.message);
           }
 
-          // Get user info from URL parameters
-          const userData = {
-            email: searchParams.get('email') || '',
-            full_name: searchParams.get('full_name') || '',
-            avatar_url: searchParams.get('avatar_url') || '',
-            is_new_user: searchParams.get('is_new_user') === 'true',
-          };
+          console.log('✅ Session set successfully');
 
-          setUserInfo(userData);
-          
           // Update auth context
           await checkAuthStatus();
           
           setStatus('success');
           
           // Show success message
-          if (userData.is_new_user) {
-            toast.success(`Welcome to Mimaht, ${userData.full_name || userData.email}!`);
+          if (isNewUser) {
+            toast.success(`Welcome to Mimaht, ${fullName || email}!`);
           } else {
-            toast.success(`Welcome back, ${userData.full_name || userData.email}!`);
+            toast.success(`Welcome back, ${fullName || email}!`);
           }
 
-          // Close auth overlay and redirect
+          // Close auth overlay and redirect to home
           setTimeout(() => {
             setIsAuthOverlayOpen(false);
             navigate('/', { replace: true });
-          }, 2000);
+          }, 1500);
 
         } else {
-          // Fallback to Supabase session check
+          // Fallback: Check if there's already a valid session
+          console.log('🔄 No OAuth params, checking existing session...');
           const { data: { session } } = await supabase.auth.getSession();
           
           if (session) {
+            console.log('✅ Existing session found');
             await checkAuthStatus();
             setStatus('success');
+            
             setTimeout(() => {
               setIsAuthOverlayOpen(false);
               navigate('/', { replace: true });
             }, 1000);
           } else {
-            throw new Error('No valid session found');
+            console.error('❌ No valid session found');
+            throw new Error('No valid authentication session found');
           }
         }
 
@@ -93,6 +84,11 @@ const AuthCallback: React.FC = () => {
         console.error('💥 OAuth callback error:', error);
         toast.error(error.message || 'Authentication failed');
         setStatus('error');
+        
+        // Redirect to error page after a delay
+        setTimeout(() => {
+          navigate('/auth/error?message=' + encodeURIComponent(error.message || 'Authentication failed'), { replace: true });
+        }, 2000);
       }
     };
 
@@ -114,7 +110,7 @@ const AuthCallback: React.FC = () => {
           </>
         )}
         
-        {status === 'success' && userInfo && (
+        {status === 'success' && (
           <>
             <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -122,31 +118,17 @@ const AuthCallback: React.FC = () => {
               </svg>
             </div>
             
-            {userInfo.avatar_url && (
-              <img 
-                src={userInfo.avatar_url} 
-                alt="Profile" 
-                className="w-20 h-20 rounded-full mx-auto mb-4 border-4 border-green-500"
-              />
-            )}
-            
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              {userInfo.is_new_user ? 'Welcome to Mimaht!' : 'Welcome Back!'}
+              Successfully Signed In!
             </h2>
             
-            <p className="text-gray-600 mb-2">
-              {userInfo.full_name && <strong>{userInfo.full_name}</strong>}
-              {userInfo.full_name && <br />}
-              {userInfo.email}
+            <p className="text-gray-600 mb-4">
+              You are being redirected to the homepage...
             </p>
             
-            <p className="text-green-600 font-medium">
-              {userInfo.is_new_user ? 'Your account has been created!' : 'Successfully signed in!'}
-            </p>
-            
-            <p className="text-gray-500 text-sm mt-4">
-              Redirecting to homepage...
-            </p>
+            <div className="animate-pulse text-green-600 font-medium">
+              ✓ Authentication Successful
+            </div>
           </>
         )}
         
@@ -161,14 +143,8 @@ const AuthCallback: React.FC = () => {
               Authentication Failed
             </h2>
             <p className="text-gray-600 mb-4">
-              We couldn't sign you in. Please try again.
+              Redirecting to error page...
             </p>
-            <button
-              onClick={() => navigate('/')}
-              className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors"
-            >
-              Return to Home
-            </button>
           </>
         )}
       </div>
