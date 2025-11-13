@@ -1,7 +1,9 @@
+
 import React, { useState } from 'react';
 import { ArrowLeft, HelpCircle, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../contexts/auth/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface NewPasswordScreenProps {
   email: string;
@@ -50,35 +52,47 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
     setError('');
 
     try {
+      console.log('🔄 Starting password reset process for:', email);
+      
       // Step 1: Verify the OTP first to get a session
+      console.log('🔐 Verifying OTP...');
       const verificationResult = await verifyCustomOTP(email, otp);
 
       if (!verificationResult.success) {
-        setError('Verification code has expired. Please request a new one.');
+        console.error('❌ OTP verification failed:', verificationResult.error);
+        setError('Verification code has expired or is invalid. Please request a new one.');
         return;
       }
 
-      // Step 2: Update the user's password using Supabase
-      const { data: userData, error: userError } = await supabase.auth.getUser();
+      console.log('✅ OTP verified successfully');
+
+      // Step 2: Get the current user session
+      console.log('👤 Getting user session...');
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      if (userError || !userData.user) {
-        setError('Unable to update password. Please try signing in again.');
+      if (sessionError || !session) {
+        console.error('❌ No active session found:', sessionError);
+        setError('Session expired. Please start the password reset process again.');
         return;
       }
 
-      // Update the user's password
+      console.log('✅ Session found, updating password...');
+
+      // Step 3: Update the user's password using the current session
       const { error: updateError } = await supabase.auth.updateUser({
         password: password
       });
 
       if (updateError) {
-        console.error('Password update error:', updateError);
+        console.error('❌ Password update error:', updateError);
         
         let errorMessage = 'Failed to update password. Please try again.';
         if (updateError.message.includes('password should be at least')) {
           errorMessage = 'Password must be at least 6 characters long.';
         } else if (updateError.message.includes('Auth session missing')) {
           errorMessage = 'Session expired. Please start the password reset process again.';
+        } else if (updateError.message.includes('invalid refresh token')) {
+          errorMessage = 'Session invalid. Please request a new reset code.';
         }
         
         setError(errorMessage);
@@ -86,11 +100,18 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
       }
 
       // Password updated successfully
-      console.log('Password updated successfully for:', email);
-      onPasswordResetSuccess();
+      console.log('✅ Password updated successfully for:', email);
+      
+      // Show success message
+      toast.success('Password reset successfully!');
+      
+      // Wait a moment before redirecting
+      setTimeout(() => {
+        onPasswordResetSuccess();
+      }, 1500);
 
     } catch (error: any) {
-      console.error('Error resetting password:', error);
+      console.error('💥 Error resetting password:', error);
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
@@ -260,7 +281,7 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
             fill="currentColor"
             viewBox="0 0 24 24"
           >
-            <path d="M18,8A6,6 0 0,0 12,2A6,6 0 0,0 6,8H4C2.89,8 2,8.89 2,10V20A2,2 0 0,0 4,22H20A2,2 0 0,0 22,20V10C22,8.89 21.1,8 20,8H18M12,4A4,4 0 0,1 16,8H8A4,4 0 0,1 12,4Z" />
+            <path d="M18,8A6,6 0 0,0 12,2A6,6 0 0,0 6,8H4C2.89,8 2,8.89 2,10V20A2,2 0 0,0 4,22H20A2,2 0 0,0 22,20V10C22,8.89 21.1,8 20,8H18M12,4A4,4 0 0,1 16,8H8A4,4 0 0,1 12,4Z"/>
           </svg>
           <span className="text-gray-500 text-sm">Your password is secure with us</span>
         </div>
