@@ -656,41 +656,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const checkAuthStatus = async () => {
-    try {
-      console.log('Checking authentication status...');
-      const { data: { session }, error } = await supabase.auth.getSession();
+  try {
+    console.log('🔍 Checking authentication status...');
+    const { data: { session }, error } = await supabase.auth.getSession();
 
-      if (error) {
-        console.error('Error getting session:', error);
-        setUser(null);
-        setIsAuthenticated(false);
-        setFollowedSellers([]);
-        setIsLoading(false);
-        return;
-      }
-
-      if (session?.user) {
-        console.log('Session found for user:', session.user.email);
-        const userData = mapSupabaseUser(session.user);
-        setUser(userData);
-        setIsAuthenticated(true);
-        // Load followed sellers in background, don't wait for it
-        loadFollowedSellers(session.user.id);
-      } else {
-        console.log('No active session');
-        setUser(null);
-        setIsAuthenticated(false);
-        setFollowedSellers([]);
-      }
-    } catch (error) {
-      console.error('Error checking auth status:', error);
+    if (error) {
+      console.error('❌ Error getting session:', error);
       setUser(null);
       setIsAuthenticated(false);
       setFollowedSellers([]);
-    } finally {
       setIsLoading(false);
+      return;
     }
-  };
+
+    if (session?.user) {
+      console.log('✅ Session found for user:', session.user.email);
+      const userData = mapSupabaseUser(session.user);
+      setUser(userData);
+      setIsAuthenticated(true);
+      // Load followed sellers in background
+      loadFollowedSellers(session.user.id);
+    } else {
+      console.log('ℹ️ No active session');
+      setUser(null);
+      setIsAuthenticated(false);
+      setFollowedSellers([]);
+    }
+  } catch (error) {
+    console.error('❌ Error checking auth status:', error);
+    setUser(null);
+    setIsAuthenticated(false);
+    setFollowedSellers([]);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   useEffect(() => {
     // Check initial session
