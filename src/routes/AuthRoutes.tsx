@@ -5,7 +5,8 @@ import CachedRoute from "../components/CachedRoute";
 import SimpleAuthPage from "../pages/SimpleAuthPage";
 import AuthPage from "../pages/AuthPage";
 import ForYou from "../pages/ForYou";
-import AuthCallback from "../pages/AuthCallback"; // Add this import
+import AuthCallback from "../pages/AuthCallback";
+import AuthErrorPage from "../pages/AuthErrorPage"; // Add this import
 
 export function AuthRoutes() {
   return (
@@ -27,13 +28,12 @@ export function AuthRoutes() {
       } />
       <Route path="auth/callback" element={
         <CachedRoute>
-          <AuthCallback /> {/* Change this from ForYou to AuthCallback */}
+          <AuthCallback />
         </CachedRoute>
       } />
-      {/* Optional: Add error page route */}
       <Route path="auth/error" element={
         <CachedRoute>
-          <AuthErrorPage /> {/* You might want to create this */}
+          <AuthErrorPage />
         </CachedRoute>
       } />
     </>
