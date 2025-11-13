@@ -329,6 +329,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 const completePasswordReset = async (email: string, otp: string, newPassword: string) => {
   try {
     console.log('🔄 Completing password reset for:', email);
+    console.log('📧 Email:', email);
+    console.log('🔑 OTP length:', otp.length);
+    console.log('🔒 New password length:', newPassword.length);
 
     const response = await fetch(`${BACKEND_URL}/api/complete-password-reset`, {
       method: 'POST',
@@ -336,17 +339,28 @@ const completePasswordReset = async (email: string, otp: string, newPassword: st
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ 
-        email, 
-        otp, 
+        email: email.toLowerCase().trim(), 
+        otp: otp.trim(),
         newPassword 
       }),
     });
 
     const result = await response.json();
 
+    console.log('📊 Server response:', {
+      status: response.status,
+      ok: response.ok,
+      result: result
+    });
+
     if (!response.ok) {
-      console.error('❌ Password reset failed:', result.error);
+      console.error('❌ Server returned error:', result.error);
       throw new Error(result.error || 'Failed to reset password');
+    }
+
+    if (!result.success) {
+      console.error('❌ Server reported failure:', result);
+      throw new Error(result.error || 'Password reset failed');
     }
 
     console.log('✅ Password reset completed successfully');
@@ -356,9 +370,21 @@ const completePasswordReset = async (email: string, otp: string, newPassword: st
     };
   } catch (error: any) {
     console.error('❌ Failed to complete password reset:', error);
+    
+    // Provide more specific error messages
+    let userFriendlyError = error.message;
+    
+    if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
+      userFriendlyError = 'Network error. Please check your internet connection and try again.';
+    } else if (error.message.includes('OTP') || error.message.includes('code')) {
+      userFriendlyError = 'Invalid or expired verification code. Please request a new password reset code.';
+    } else if (error.message.includes('User not found')) {
+      userFriendlyError = 'No account found with this email address. Please check your email and try again.';
+    }
+    
     return { 
       success: false, 
-      error: error.message || 'Failed to reset password. Please try again.' 
+      error: userFriendlyError 
     };
   }
 };
