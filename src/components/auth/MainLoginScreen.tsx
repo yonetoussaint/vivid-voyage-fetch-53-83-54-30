@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import LanguageSelector from './LanguageSelector';
 import TranslatedText from './TranslatedText';
 import { useAuth } from '@/contexts/auth/AuthContext';
@@ -28,7 +28,8 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
   onExpand,
   showHeader = true
 }) => {
-  const { googleSignIn, isLoading } = useAuth();
+  const { googleSignIn } = useAuth();
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const languages: Language[] = [
     { code: 'ht', name: 'Kreyòl Ayisyen', country: 'HT', countryName: 'Haiti' },
@@ -42,6 +43,7 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
 
   const handleGoogleSignIn = async () => {
     try {
+      setIsGoogleLoading(true);
       console.log('🔄 Initiating server-controlled Google OAuth...');
 
       const result = await googleSignIn();
@@ -49,11 +51,13 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
       if (result.error) {
         console.error('Google OAuth error:', result.error);
         toast.error(result.error || 'Failed to sign in with Google');
+        setIsGoogleLoading(false);
       }
-      // No need for else - the redirect will happen automatically
+      // If successful, the redirect will happen and we don't need to reset loading state
     } catch (error) {
       console.error('Google OAuth exception:', error);
       toast.error('An unexpected error occurred');
+      setIsGoogleLoading(false);
     }
   };
 
@@ -110,8 +114,8 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
           {/* Google Sign In Button */}
           <button 
             onClick={handleGoogleSignIn}
-            disabled={isLoading}
-            className={`w-full flex items-center justify-between py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+            disabled={isGoogleLoading}
+            className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed relative ${
               isCompact ? 'shadow-sm' : ''
             }`}
           >
@@ -128,8 +132,8 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
             </div>
             
             {/* Spinner on the right side */}
-            {isLoading && (
-              <div className="flex items-center">
+            {isGoogleLoading && (
+              <div className="absolute right-4">
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-gray-600"></div>
               </div>
             )}
