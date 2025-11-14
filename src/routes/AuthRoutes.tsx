@@ -6,7 +6,9 @@ import SimpleAuthPage from "../pages/SimpleAuthPage";
 import AuthPage from "../pages/AuthPage";
 import ForYou from "../pages/ForYou";
 import AuthCallback from "../pages/AuthCallback";
-import AuthErrorPage from "../pages/AuthErrorPage"; // Add this import
+import AuthErrorPage from "../pages/AuthErrorPage";
+import PrivacyPolicy from "../pages/PrivacyPolicy"; // Add this import
+import TermsOfService from "../pages/TermsOfService"; // Add this import
 
 export function AuthRoutes() {
   return (
@@ -34,6 +36,17 @@ export function AuthRoutes() {
       <Route path="auth/error" element={
         <CachedRoute>
           <AuthErrorPage />
+        </CachedRoute>
+      } />
+      {/* Add these new routes for OAuth requirements */}
+      <Route path="privacy" element={
+        <CachedRoute>
+          <PrivacyPolicy />
+        </CachedRoute>
+      } />
+      <Route path="terms" element={
+        <CachedRoute>
+          <TermsOfService />
         </CachedRoute>
       } />
     </>
