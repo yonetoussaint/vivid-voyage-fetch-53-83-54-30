@@ -347,7 +347,7 @@ function MainLayoutContent() {
         </main>
 
         {/* Show Footer only on non-mobile and on specific pages */}
-        {!isMobile && !isRootHomePage && <Footer />}
+       <Footer />
 
         {/* Show IndexBottomNav only on specific paths defined in the component */}
         {/* Don't show IndexBottomNav when reels is opened in modal mode (with video parameter) */}
