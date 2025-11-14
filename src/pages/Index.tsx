@@ -6,6 +6,7 @@ import SuperDealsSection from "@/components/home/SuperDealsSection";
 import FlashDeals from "@/components/home/FlashDeals";
 import SimpleFlashDeals from "@/components/home/SimpleFlashDeals";
 import SpaceSavingCategories from "@/components/home/SpaceSavingCategories";
+import Footer from "@/components/Footer";
 import TopBrands from "@/components/home/TopBrands";
 import VendorProductCarousel from "@/components/home/VendorProductCarousel";
 import BenefitsBanner from "@/components/home/BenefitsBanner";
@@ -443,18 +444,17 @@ export default function Index() {
   }, []);
 
   return (
-    <>
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeCategory}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.3, ease: "easeInOut" }}
-        >
-          <ForYouContent category={activeCategory} />
-        </motion.div>
-      </AnimatePresence>
-    </>
-  );
-}
+  <div className="overflow-hidden relative min-h-screen">
+    <div className="space-y-2">
+      {components.map((component, index) => (
+        <React.Fragment key={`section-${index}`}>
+          {component}
+          {index >= 2 && renderVendorCarousel(index)}
+        </React.Fragment>
+      ))}
+    </div>
+    
+    {/* Add Footer at the bottom */}
+    <Footer />
+  </div>
+);
