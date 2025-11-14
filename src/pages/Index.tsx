@@ -415,23 +415,23 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   ];
 
   return (
-  <div className="overflow-hidden relative min-h-screen">
-    <div className="space-y-2">
-      {components.map((component, index) => (
-        <React.Fragment key={`section-${index}`}>
-          {component}
-          {index >= 2 && renderVendorCarousel(index)}
-        </React.Fragment>
-      ))}
-    </div>
-    
-    {/* Add Footer at the bottom */}
-    <Footer />
-  </div>
-);
-}
+    <div className="overflow-hidden relative min-h-screen">
+      <div className="space-y-2">
+        {components.map((component, index) => (
+          <React.Fragment key={`section-${index}`}>
+            {component}
+            {index >= 2 && renderVendorCarousel(index)}
+          </React.Fragment>
+        ))}
+      </div>
 
-export default function Index() {
+      {/* Add Footer at the bottom */}
+      <Footer />
+    </div>
+  );
+}; // <-- CORRECT closing brace position
+
+const ForYou: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState('recommendations');
 
   // Listen for category changes from header
@@ -460,4 +460,6 @@ export default function Index() {
       </AnimatePresence>
     </>
   );
-}
+};
+
+export default ForYou;
