@@ -429,6 +429,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
     <Footer />
   </div>
 );
+}
 
 export default function Index() {
   const [activeCategory, setActiveCategory] = useState('recommendations');
