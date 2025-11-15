@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import ProfileLayout from '@/components/profile-app/ProfileLayout';
 import ProfileDashboard from '@/components/profile-app/pages/ProfileDashboard';
-import SellerOrders from '@/components/profile-app/pages/SellerOrders';
+import SellerOrders from '@/components/seller-app/pages/SellerOrders';
 import BookGenreFlashDeals from '@/components/home/BookGenreFlashDeals';
 import ProfileAddresses from '@/components/profile-app/pages/ProfileAddresses';
 import ProfilePayments from '@/components/profile-app/pages/ProfilePayments';
