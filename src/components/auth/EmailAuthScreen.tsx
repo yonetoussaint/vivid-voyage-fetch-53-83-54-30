@@ -1,13 +1,3 @@
-import React, { useState } from 'react'; // Add useState import here
-import { ArrowLeft, HelpCircle } from 'lucide-react';
-import { EmailAuthScreenProps } from '../../types/auth/email';
-import { useEmailValidation } from '../../hooks/auth/useEmailValidation';
-import { useAuth } from '../../contexts/auth/AuthContext';
-import { toast } from 'sonner';
-import EmailInput from './EmailInput';
-import EmailStatusMessage from './EmailStatusMessage';
-import EmailActionButtons from './EmailActionButtons';
-
 const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   onBack,
   selectedLanguage,
@@ -30,29 +20,31 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     isUntrustedProvider,
   } = useEmailValidation(initialEmail);
 
-  const [isLoading, setIsLoading] = useState(false);
+  // ✅ SOLUTION: Separate loading states for each button
+  const [isPasswordLoading, setIsPasswordLoading] = useState(false);
+  const [isCodeLoading, setIsCodeLoading] = useState(false);
+  const [isCreateAccountLoading, setIsCreateAccountLoading] = useState(false);
 
   const handleEmailChange = (value: string) => {
     setEmail(value);
   };
 
   const handleContinueWithPassword = async () => {
-    if (!isEmailValid || isLoading || emailCheckState !== 'exists') return;
-    setIsLoading(true);
+    if (!isEmailValid || isPasswordLoading || emailCheckState !== 'exists') return;
+    setIsPasswordLoading(true); // ✅ Only affects password button
     try {
       await new Promise((resolve) => setTimeout(resolve, 400));
       onContinueWithPassword(email);
     } finally {
-      setIsLoading(false);
+      setIsPasswordLoading(false); // ✅ Only affects password button
     }
   };
 
   const handleContinueWithCode = async () => {
-    if (!isEmailValid || isLoading || emailCheckState === 'checking') return;
+    if (!isEmailValid || isCodeLoading || emailCheckState === 'checking') return;
 
-    setIsLoading(true);
+    setIsCodeLoading(true); // ✅ Only affects code button
     try {
-      // ✅ Use custom OTP function instead of Supabase's built-in
       const result = await sendCustomOTPEmail(email);
 
       if (result.success) {
@@ -64,20 +56,23 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     } catch (error: any) {
       toast.error(error.message || 'Failed to send verification code');
     } finally {
-      setIsLoading(false);
+      setIsCodeLoading(false); // ✅ Only affects code button
     }
   };
 
   const handleCreateAccountClick = async () => {
-    if (!isEmailValid || isLoading || emailCheckState === 'checking') return;
-    setIsLoading(true);
+    if (!isEmailValid || isCreateAccountLoading || emailCheckState === 'checking') return;
+    setIsCreateAccountLoading(true); // ✅ Only affects create account button
     try {
       await new Promise((resolve) => setTimeout(resolve, 400));
       onCreateAccount(email);
     } finally {
-      setIsLoading(false);
+      setIsCreateAccountLoading(false); // ✅ Only affects create account button
     }
   };
+
+  // ✅ Calculate overall loading for other components (like EmailInput)
+  const isLoading = isPasswordLoading || isCodeLoading || isCreateAccountLoading || authLoading;
 
   return (
     <div className={isCompact ? "px-4 pb-4" : "min-h-screen bg-white flex flex-col px-4"}>
@@ -87,7 +82,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
           <button
             onClick={onBack}
             className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-full transition-colors active:scale-95"
-            disabled={isLoading || authLoading}
+            disabled={isLoading} // ✅ Uses combined loading state
           >
             <ArrowLeft className="w-5 h-5 text-gray-700" />
           </button>
@@ -99,7 +94,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
           <button
             className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-full transition-colors active:scale-95"
             onClick={() => alert('Need help? Contact support@example.com')}
-            disabled={isLoading || authLoading}
+            disabled={isLoading} // ✅ Uses combined loading state
           >
             <HelpCircle className="w-5 h-5 text-gray-700" />
           </button>
@@ -139,7 +134,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
               email={email}
               onEmailChange={handleEmailChange}
               emailCheckState={emailCheckState}
-              isLoading={isLoading}
+              isLoading={isLoading} // ✅ Uses combined loading state
               isUntrustedProvider={isUntrustedProvider}
             />
 
@@ -148,7 +143,9 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
               <EmailActionButtons
                 isEmailValid={isEmailValid}
                 emailCheckState={emailCheckState}
-                isLoading={isLoading || authLoading}
+                isPasswordLoading={isPasswordLoading} // ✅ Pass separate loading states
+                isCodeLoading={isCodeLoading} // ✅ Pass separate loading states
+                isCreateAccountLoading={isCreateAccountLoading} // ✅ Pass separate loading states
                 isUntrustedProvider={isUntrustedProvider}
                 onContinueWithPassword={handleContinueWithPassword}
                 onContinueWithCode={handleContinueWithCode}
