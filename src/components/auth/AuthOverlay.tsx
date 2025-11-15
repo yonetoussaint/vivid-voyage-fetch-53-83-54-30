@@ -3,7 +3,7 @@ import React from 'react';
 import SlideUpPanel from '@/components/shared/SlideUpPanel';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import {
-  MainLoginScreenSkeleton,
+  MainLoginScreenSkeletonCompact,  // Add this import
   EmailAuthScreenSkeleton,
   VerificationCodeScreenSkeleton,
   PasswordAuthScreenSkeleton,
@@ -109,17 +109,17 @@ const AuthOverlay: React.FC = () => {
     const screenContent = (() => {
       switch (currentScreen) {
         case 'main':
-          return (
-            <React.Suspense fallback={<MainLoginScreenSkeleton />}>
-              <MainLoginScreen
-                selectedLanguage={selectedLanguage}
-                setSelectedLanguage={setSelectedLanguage}
-                onContinueWithEmail={handleContinueWithEmail}
-                showHeader={false}
-                {...compactProps}
-              />
-            </React.Suspense>
-          );
+  return (
+    <React.Suspense fallback={<MainLoginScreenSkeletonCompact />}>
+      <MainLoginScreen
+        selectedLanguage={selectedLanguage}
+        setSelectedLanguage={setSelectedLanguage}
+        onContinueWithEmail={handleContinueWithEmail}
+        showHeader={false}
+        {...compactProps}
+      />
+    </React.Suspense>
+  );
 
         case 'email':
           return (
