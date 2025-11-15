@@ -306,7 +306,7 @@ const ProfileLayout: React.FC<ProfileLayoutProps> = ({ children }) => {
           )}
 
           {/* Main Content */}
-          <div className="px-2">
+          <div>
             {children}
           </div>
         </main>
