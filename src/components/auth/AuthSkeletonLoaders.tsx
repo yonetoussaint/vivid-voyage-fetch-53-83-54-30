@@ -1,6 +1,47 @@
 import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 
+
+
+export const MainLoginScreenSkeletonCompact = () => (
+  <div className="px-4 pb-4">
+    {/* Main content - compact version */}
+    <div className="space-y-3 mb-4">
+      {/* Google Sign In Button skeleton */}
+      <Skeleton className="h-12 w-full rounded-lg" />
+      
+      {/* Facebook Sign In Button skeleton */}
+      <Skeleton className="h-12 w-full rounded-lg" />
+      
+      {/* Email Sign In Button skeleton */}
+      <Skeleton className="h-12 w-full rounded-lg" />
+      
+      {/* Phone Sign In Button skeleton */}
+      <Skeleton className="h-12 w-full rounded-lg" />
+    </div>
+
+    {/* Secure Authentication Footer skeleton */}
+    <div className="flex items-center justify-center gap-2 mb-3">
+      <Skeleton className="h-4 w-4 rounded-full" />
+      <Skeleton className="h-3 w-28" />
+    </div>
+
+    {/* Terms Footer skeleton */}
+    <div className="text-center px-2">
+      <div className="flex flex-wrap justify-center gap-1 mb-1">
+        <Skeleton className="h-2 w-20" />
+        <Skeleton className="h-2 w-16" />
+        <Skeleton className="h-2 w-6" />
+        <Skeleton className="h-2 w-12" />
+      </div>
+      <div className="flex flex-wrap justify-center gap-1">
+        <Skeleton className="h-2 w-10" />
+        <Skeleton className="h-2 w-16" />
+      </div>
+    </div>
+  </div>
+);
+
 export const MainLoginScreenSkeleton = () => (
   <div className="p-6 space-y-6">
     {/* Logo skeleton */}
