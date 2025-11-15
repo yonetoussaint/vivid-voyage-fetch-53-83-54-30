@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   Package, ShoppingCart, Users, BarChart3, 
   Heart, Settings, User, MapPin, CreditCard,
-  Bell, Store, LogIn, Shield, Star, Lock, ArrowRight
+  Bell, Store, LogIn, FileText, Shield, Star, Lock, ArrowRight
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useIsMobile } from '@/hooks/use-mobile';
