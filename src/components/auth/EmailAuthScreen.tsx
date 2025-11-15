@@ -20,7 +20,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   onExpand,
   showHeader = true,
 }) => {
-  const { sendCustomOTPEmail, isLoading: authLoading } = useAuth();
+  const { sendCustomOTPEmail } = useAuth(); // Remove authLoading from here
 
   const {
     email,
@@ -55,20 +55,27 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
     setIsCodeLoading(true);
     try {
-      // ✅ Use custom OTP function instead of Supabase's built-in
+      console.log('🔄 EmailAuthScreen: Sending OTP to:', email);
+      
+      // ✅ Use custom OTP function
       const result = await sendCustomOTPEmail(email);
+      console.log('📧 EmailAuthScreen: OTP send result:', result);
 
       if (result.success) {
         toast.success('Verification code sent to your email');
         onContinueWithCode(email);
       } else {
         toast.error(result.error || 'Failed to send verification code');
+        // Reset loading state on error so user can retry
+        setIsCodeLoading(false);
       }
     } catch (error: any) {
+      console.error('💥 EmailAuthScreen: OTP send error:', error);
       toast.error(error.message || 'Failed to send verification code');
-    } finally {
       setIsCodeLoading(false);
     }
+    // Note: We don't set loading to false in finally block anymore
+    // because we want to keep the loading state during navigation
   };
 
   const handleCreateAccountClick = async () => {
@@ -82,8 +89,8 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     }
   };
 
-  // Calculate overall loading for other parts of the UI
-  const isLoading = isPasswordLoading || isCodeLoading || isCreateAccountLoading || authLoading;
+  // Calculate overall loading for other components
+  const isLoading = isPasswordLoading || isCodeLoading || isCreateAccountLoading;
 
   return (
     <div className={isCompact ? "px-4 pb-4" : "min-h-screen bg-white flex flex-col px-4"}>
