@@ -120,21 +120,21 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         { id: 'settings', name: 'Settings', href: '/pickup-station/settings', icon: Settings },  
       ]  
     : isDashboard  
-    ? [  
-        { id: 'products', name: 'Products', href: '/seller-dashboard/products', icon: Package },
-{ id: 'reels', name: 'Reels', href: '/seller-dashboard/reels', icon: Megaphone },  
-        { id: 'orders', name: 'Orders', href: '/seller-dashboard/orders', icon: ShoppingCart },  
-        { id: 'customers', name: 'Customers', href: '/seller-dashboard/customers', icon: Users },  
-        { id: 'analytics', name: 'Analytics', href: '/seller-dashboard/analytics', icon: BarChart3 },  
-        { id: 'finances', name: 'Finances', href: '/seller-dashboard/finances', icon: DollarSign },  
-        { id: 'marketing', name: 'Marketing', href: '/seller-dashboard/marketing', icon: Megaphone },  
-          
-        { id: 'settings', name: 'Settings', href: '/seller-dashboard/settings', icon: Settings },  
-        // Add edit-profile as a hidden navigation item
-        { id: 'edit-profile', name: 'Edit Profile', href: '/seller-dashboard/edit-profile', icon: Edit, hidden: true },  
-        // Add product-edit as a hidden navigation item
-        { id: 'product-edit', name: 'Edit Product', href: '/seller-dashboard/products/edit/:productId', icon: Edit, hidden: true },  
-      ]  
+? [  
+    { id: 'products', name: 'Products', href: '/seller-dashboard/products', icon: Package },
+    { id: 'reels', name: 'Reels', href: '/seller-dashboard/reels', icon: Megaphone },  
+    { id: 'posts', name: 'Posts', href: '/seller-dashboard/posts', icon: FileText },  
+    { id: 'orders', name: 'Orders', href: '/seller-dashboard/orders', icon: ShoppingCart },  
+    { id: 'customers', name: 'Customers', href: '/seller-dashboard/customers', icon: Users },  
+    { id: 'analytics', name: 'Analytics', href: '/seller-dashboard/analytics', icon: BarChart3 },  
+    { id: 'finances', name: 'Finances', href: '/seller-dashboard/finances', icon: DollarSign },  
+    { id: 'marketing', name: 'Marketing', href: '/seller-dashboard/marketing', icon: Megaphone },  
+    { id: 'settings', name: 'Settings', href: '/seller-dashboard/settings', icon: Settings },  
+    // Add edit-profile as a hidden navigation item
+    { id: 'edit-profile', name: 'Edit Profile', href: '/seller-dashboard/edit-profile', icon: Edit, hidden: true },  
+    // Add product-edit as a hidden navigation item
+    { id: 'product-edit', name: 'Edit Product', href: '/seller-dashboard/products/edit/:productId', icon: Edit, hidden: true },  
+  ]  
     : [  
         { id: 'products', name: 'Products', href: `${baseRoute}/products`, icon: Package },  
         { id: 'reels', name: 'Reels', href: `${baseRoute}/reels`, icon: Megaphone },  
