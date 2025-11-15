@@ -338,7 +338,7 @@ const SellerOrders = () => {
       />
 
       {/* Orders Grid - Mobile Optimized Layout */}
-      <div className="py-4 px-4">
+      <div className="py-4 px-2">
         {filteredOrders.length > 0 ? (
           <div className="space-y-4">
             <div className="grid grid-cols-1 gap-4">
