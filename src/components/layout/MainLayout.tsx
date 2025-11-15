@@ -346,12 +346,11 @@ function MainLayoutContent() {
           <Outlet />
         </main>
 
-        {/* Show Footer only on non-mobile and on specific pages */}
-       <Footer />
+        {/* Footer removed */}
 
         {/* Show IndexBottomNav only on specific paths defined in the component */}
         {/* Don't show IndexBottomNav when reels is opened in modal mode (with video parameter) */}
-        
+
 {isMobile && (
   (pathname === '/for-you' ||
   pathname === '/' ||
