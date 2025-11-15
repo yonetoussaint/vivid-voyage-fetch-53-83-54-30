@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';  
 import { useLocation, useNavigate } from 'react-router-dom';  
 import {   
-  Package, ShoppingCart, Users, BarChart3, DollarSign, Megaphone, Settings,  
+  Package,FileText, ShoppingCart, Users, BarChart3, DollarSign, Megaphone, Settings,  
   Home, Share, MessageCircle, MessageSquare, Star, Heart, Save, Edit  
 } from 'lucide-react';  
 import { useIsMobile } from '@/hooks/use-mobile';  
