@@ -7,7 +7,9 @@ type EmailCheckState = 'unchecked' | 'checking' | 'exists' | 'not-exists' | 'err
 interface EmailActionButtonsProps {
   isEmailValid: boolean;
   emailCheckState: EmailCheckState;
-  isLoading: boolean;
+  isPasswordLoading: boolean;
+  isCodeLoading: boolean;
+  isCreateAccountLoading: boolean;
   isUntrustedProvider: boolean;
   onContinueWithPassword: () => void;
   onContinueWithCode: () => void;
@@ -17,7 +19,9 @@ interface EmailActionButtonsProps {
 const EmailActionButtons: React.FC<EmailActionButtonsProps> = ({
   isEmailValid,
   emailCheckState,
-  isLoading,
+  isPasswordLoading,
+  isCodeLoading,
+  isCreateAccountLoading,
   isUntrustedProvider,
   onContinueWithPassword,
   onContinueWithCode,
@@ -99,21 +103,21 @@ const EmailActionButtons: React.FC<EmailActionButtonsProps> = ({
     return (
       <div className="space-y-3 mb-8">
         <button
-          disabled={isLoading}
+          disabled={isCreateAccountLoading}
           onClick={onCreateAccount}
           className={`w-full flex items-center justify-center gap-3 py-4 px-4 rounded-lg font-medium transition-all ${
-            !isLoading
+            !isCreateAccountLoading
               ? 'bg-red-500 text-white hover:bg-red-600 transform active:scale-95'
               : 'bg-gray-200 text-gray-400 cursor-not-allowed'
           }`}
           type="button"
         >
-          {isLoading ? (
+          {isCreateAccountLoading ? (
             <Loader2 className="w-5 h-5 animate-spin" />
           ) : (
             <UserPlus className="w-5 h-5" />
           )}
-          <span>{isLoading ? 'Loading...' : 'Create Account'}</span>
+          <span>{isCreateAccountLoading ? 'Loading...' : 'Create Account'}</span>
         </button>
       </div>
     );
@@ -121,36 +125,42 @@ const EmailActionButtons: React.FC<EmailActionButtonsProps> = ({
 
   return (
     <div className="space-y-3 mb-8">
+      {/* Password Button */}
       <button
-        disabled={passwordButtonState.disabled || isLoading}
+        disabled={passwordButtonState.disabled || isPasswordLoading}
         onClick={onContinueWithPassword}
         className={`w-full flex items-center justify-center gap-3 py-4 px-4 rounded-lg font-medium transition-all ${
-          !passwordButtonState.disabled && !isLoading
+          !passwordButtonState.disabled && !isPasswordLoading
             ? 'bg-red-500 text-white hover:bg-red-600 transform active:scale-95'
             : 'bg-gray-200 text-gray-400 cursor-not-allowed'
         }`}
         type="button"
       >
-        <Lock className="w-5 h-5" />
-        <span>{passwordButtonState.text}</span>
+        {isPasswordLoading ? (
+          <Loader2 className="w-5 h-5 animate-spin" />
+        ) : (
+          <Lock className="w-5 h-5" />
+        )}
+        <span>{isPasswordLoading ? 'Loading...' : passwordButtonState.text}</span>
       </button>
 
+      {/* Code Button */}
       <button
-        disabled={codeButtonState.disabled || isLoading}
+        disabled={codeButtonState.disabled || isCodeLoading}
         onClick={onContinueWithCode}
         className={`w-full flex items-center justify-center gap-3 py-4 px-4 border-2 rounded-lg font-medium transition-all ${
-          !codeButtonState.disabled && !isLoading
+          !codeButtonState.disabled && !isCodeLoading
             ? 'border-red-500 text-red-500 hover:bg-red-50 transform active:scale-95'
             : 'border-gray-300 text-gray-400 cursor-not-allowed'
         }`}
         type="button"
       >
-        {isLoading ? (
+        {isCodeLoading ? (
           <Loader2 className="w-5 h-5 animate-spin" />
         ) : (
           <Key className="w-5 h-5" />
         )}
-        <span>{isLoading ? 'Sending...' : codeButtonState.text}</span>
+        <span>{isCodeLoading ? 'Sending...' : codeButtonState.text}</span>
       </button>
     </div>
   );
