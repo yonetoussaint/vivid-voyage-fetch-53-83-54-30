@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, MoreHorizontal, Store, Send, ChevronLeft, ChevronRight } from 'lucide-react';
+import { FileText, MessageCircle, MoreHorizontal, Store, Send, ChevronLeft, ChevronRight, Grid3X3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
 import SectionHeader from './SectionHeader';
