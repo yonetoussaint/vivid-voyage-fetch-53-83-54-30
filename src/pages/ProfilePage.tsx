@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import ProfileLayout from '@/components/profile-app/ProfileLayout';
 import ProfileDashboard from '@/components/profile-app/pages/ProfileDashboard';
-import ProfileOrders from '@/components/profile-app/pages/ProfileOrders';
+import SellerOrders from '@/components/profile-app/pages/SellerOrders';
 import BookGenreFlashDeals from '@/components/home/BookGenreFlashDeals';
 import ProfileAddresses from '@/components/profile-app/pages/ProfileAddresses';
 import ProfilePayments from '@/components/profile-app/pages/ProfilePayments';
@@ -23,7 +23,7 @@ const ProfilePage = () => {
     <ProfileLayout>
       <Routes>
         <Route index element={<Navigate to="orders" replace />} />
-        <Route path="orders" element={<ProfileOrders />} />
+        <Route path="orders" element={<SellerOrders />} />
         <Route 
           path="wishlist" 
           element={
