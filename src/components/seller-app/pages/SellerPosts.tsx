@@ -44,7 +44,6 @@ const SellerPosts: React.FC<SellerPostsProps> = ({
 
   const handleCreatePost = () => {
     console.log("Create post clicked - navigating to post creation page");
-    // Navigate to the post creation page
     navigate('/seller-dashboard/posts/create');
   };
 
@@ -54,7 +53,6 @@ const SellerPosts: React.FC<SellerPostsProps> = ({
         sellerId={sellerData?.id}
         onAddProduct={handleCreatePost}
         posts={posts}
-        // You can add other props as needed for the VendorProductCarousel
         showSummary={true}
         showFilters={true}
         title="Your Posts"
