@@ -167,6 +167,9 @@ function MainLayoutContent() {
   const iconName = searchParams.get('icon');
   const sectionHeaderIcon = iconName ? iconMapper[iconName] : undefined;
 
+  // Check if current page is seller onboarding (should not show bottom nav)
+  const isSellerOnboardingPage = pathname.includes('/seller-dashboard/onboarding');
+
   // In MainLayout.tsx, update the headerHeightStyle to ensure bottom nav height is set correctly
   const headerHeightStyle = `
   :root {
@@ -385,8 +388,8 @@ function MainLayoutContent() {
   pathname === '/categories/men' ||
   pathname === '/categories/books' ||
   pathname.startsWith('/pickup-station') ||
-  // Include seller dashboard routes but exclude edit-profile
-  (pathname.startsWith('/seller-dashboard') && !pathname.includes('/edit-profile')))
+  // Include seller dashboard routes but exclude edit-profile and onboarding
+  (pathname.startsWith('/seller-dashboard') && !pathname.includes('/edit-profile') && !pathname.includes('/onboarding')))
 ) && (
   <div className="z-30">
     <IndexBottomNav />
