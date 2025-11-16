@@ -71,7 +71,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
   // Check if current route is edit profile OR product edit
   const isEditProfilePage = location.pathname.includes('/edit-profile');
-  const isProductEditPage = location.pathname.includes('/products/edit/'); // NEW: Detect product edit pages
+  const isProductEditPage = location.pathname.includes('/products/edit/');
 
   // PRESERVED ALL ORIGINAL PATH CALCULATIONS
   const isDashboard = location.pathname.includes('/seller-dashboard');  
@@ -197,6 +197,40 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       const { data } = supabase.storage.from('seller-logos').getPublicUrl(imagePath);  
       return data.publicUrl;  
     });  
+
+  // ===== NO STORE/SELLER DATA STATE =====
+  // Show only SellerInfoSection when no seller data exists (for non-public pages)
+  if (!sellerLoading && !sellerData && !isPublicPage) {
+    return (
+      <div className="min-h-screen bg-white">
+        {/* Header */}
+        <div ref={headerRef} className="fixed top-0 left-0 right-0 z-50">
+          <ProductHeader
+            onCloseClick={handleBackClick}
+            onShareClick={() => {}}
+            actionButtons={[]}
+            forceScrolledState={true}
+            title="Seller Profile"
+            hideSearch={true}
+            showSellerInfo={false}
+          />
+        </div>
+        
+        {/* SellerInfoSection only - no tabs */}
+        <div className="pt-16">
+          <SellerInfoSection
+            sellerData={null}
+            sellerLoading={false}
+            getSellerLogoUrl={getSellerLogoUrl}
+            onBecomeSeller={handleBecomeSeller}
+            onBack={handleBackClick}
+            showActionButtons={false}
+            isOwnProfile={isOwnProfile}
+          />
+        </div>
+      </div>
+    );
+  }
 
   // Custom action buttons for edit pages
   const getEditPageActionButtons = () => {
@@ -332,7 +366,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       variant="underline"
       stickyBuffer={4}
       alwaysStickyForNonProducts={true}
-      hideTabs={isEditProfilePage || isProductEditPage} // UPDATED: Hide tabs for both edit pages
+      hideTabs={isEditProfilePage || isProductEditPage}
     >
       {enhancedChildren}
     </StickyTabsLayout>
