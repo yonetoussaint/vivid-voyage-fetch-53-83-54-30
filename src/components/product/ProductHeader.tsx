@@ -1,4 +1,4 @@
-import React, { useState } from "react"; // Add useState import here
+import React, { useState } from "react";
 import { 
   Heart, 
   Search
@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { useNavigationLoading } from '@/hooks/useNavigationLoading';
 import SearchPageSkeleton from '@/components/search/SearchPageSkeleton';
 import SellerInfoOverlay from "@/components/product/SellerInfoOverlay";
+import ProgressBar from "@/components/shared/ProgressBar";
 
 interface ActionButton {
   Icon: any;
@@ -49,6 +50,11 @@ interface ProductHeaderProps {
   title?: string; // For showing a title in the center
   hideSearch?: boolean; // For hiding search bar
   showSellerInfo?: boolean; // For controlling seller info display
+  // PROGRESS BAR PROPS:
+  showProgressBar?: boolean; // Conditionally show progress bar
+  currentStep?: number; // Current step for progress bar
+  totalSteps?: number; // Total steps for progress bar
+  progressBarColor?: string; // Custom color for active progress
 }
 
 const ProductHeader: React.FC<ProductHeaderProps> = ({
@@ -75,6 +81,11 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
   title,
   hideSearch = false,
   showSellerInfo = true,
+  // PROGRESS BAR PROPS:
+  showProgressBar = false,
+  currentStep = 1,
+  totalSteps = 4,
+  progressBarColor = "bg-blue-600",
 }) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const { progress: scrollProgress } = useScrollProgress();
@@ -230,6 +241,17 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Progress Bar - Conditionally shown */}
+      {showProgressBar && (
+        <ProgressBar
+          currentStep={currentStep}
+          totalSteps={totalSteps}
+          className="bg-white border-b border-gray-200"
+          activeColor={progressBarColor}
+          inactiveColor="bg-gray-300"
+        />
+      )}
 
       {/* NO TABS HERE - Tabs are managed in SellerLayout */}
     </div>
