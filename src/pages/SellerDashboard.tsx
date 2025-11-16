@@ -29,6 +29,7 @@ const SellerDashboard = () => {
         <Route path="/overview" element={<SellerOverview />} />
         <Route path="/products" element={<SellerProducts />} />
         <Route path="/products/edit/:productId" element={<SellerProductEdit />} />
+<Route path="/onboarding" element={<SellerOnboarding />} />
         <Route path="/orders" element={<SellerOrders />} />
         <Route path="/customers" element={<SellerCustomers />} />
         <Route path="/reels" element={<SellerReels />} />
