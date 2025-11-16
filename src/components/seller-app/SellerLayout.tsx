@@ -43,9 +43,8 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
   // States
   const [isFavorite, setIsFavorite] = useState(false);  
-  const [shouldShowNoStoreState, setShouldShowNoStoreState] = useState(false);
 
-  // FIXED: Single handleBackClick function
+  // Handler functions
   const handleBackClick = () => {
     if (isPublicPage) {
       navigate('/profile');
@@ -74,7 +73,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const isEditProfilePage = location.pathname.includes('/edit-profile');
   const isProductEditPage = location.pathname.includes('/products/edit/');
 
-  // PRESERVED ALL ORIGINAL PATH CALCULATIONS
+  // Path calculations
   const isDashboard = location.pathname.includes('/seller-dashboard');  
   const isPickupStation = location.pathname.includes('/pickup-station');  
 
@@ -95,20 +94,20 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const activeTab = getCurrentTab();  
   const isProductsTab = activeTab === 'products';  
 
-  // PRESERVED ORIGINAL PRODUCTS FETCH
+  // Fetch products
   const { data: products = [], isLoading: productsLoading } = useQuery({  
     queryKey: ['products', 'all'],  
     queryFn: fetchAllProducts,  
   });  
 
-  // PRESERVED ORIGINAL ROUTE CALCULATIONS
+  // Route calculations
   const baseRoute = isDashboard  
     ? '/seller-dashboard'  
     : isPickupStation  
     ? '/pickup-station'  
     : `/seller/${location.pathname.split('/seller/')[1]?.split('/')[0] || ''}`;  
 
-  // UPDATED NAVIGATION ITEMS
+  // Navigation items
   const navigationItems = isPickupStation  
     ? [  
         { id: 'overview', name: 'Overview', href: '/pickup-station/overview', icon: Home },  
@@ -121,19 +120,19 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         { id: 'settings', name: 'Settings', href: '/pickup-station/settings', icon: Settings },  
       ]  
     : isDashboard  
-? [  
-    { id: 'products', name: 'Products', href: '/seller-dashboard/products', icon: Package },
-    { id: 'reels', name: 'Reels', href: '/seller-dashboard/reels', icon: Megaphone },  
-    { id: 'posts', name: 'Posts', href: '/seller-dashboard/posts', icon: FileText },  
-    { id: 'orders', name: 'Orders', href: '/seller-dashboard/orders', icon: ShoppingCart },  
-    { id: 'customers', name: 'Customers', href: '/seller-dashboard/customers', icon: Users },  
-    { id: 'analytics', name: 'Analytics', href: '/seller-dashboard/analytics', icon: BarChart3 },  
-    { id: 'finances', name: 'Finances', href: '/seller-dashboard/finances', icon: DollarSign },  
-    { id: 'marketing', name: 'Marketing', href: '/seller-dashboard/marketing', icon: Megaphone },  
-    { id: 'settings', name: 'Settings', href: '/seller-dashboard/settings', icon: Settings },  
-    { id: 'edit-profile', name: 'Edit Profile', href: '/seller-dashboard/edit-profile', icon: Edit, hidden: true },  
-    { id: 'product-edit', name: 'Edit Product', href: '/seller-dashboard/products/edit/:productId', icon: Edit, hidden: true },  
-  ]  
+    ? [  
+        { id: 'products', name: 'Products', href: '/seller-dashboard/products', icon: Package },
+        { id: 'reels', name: 'Reels', href: '/seller-dashboard/reels', icon: Megaphone },  
+        { id: 'posts', name: 'Posts', href: '/seller-dashboard/posts', icon: FileText },  
+        { id: 'orders', name: 'Orders', href: '/seller-dashboard/orders', icon: ShoppingCart },  
+        { id: 'customers', name: 'Customers', href: '/seller-dashboard/customers', icon: Users },  
+        { id: 'analytics', name: 'Analytics', href: '/seller-dashboard/analytics', icon: BarChart3 },  
+        { id: 'finances', name: 'Finances', href: '/seller-dashboard/finances', icon: DollarSign },  
+        { id: 'marketing', name: 'Marketing', href: '/seller-dashboard/marketing', icon: Megaphone },  
+        { id: 'settings', name: 'Settings', href: '/seller-dashboard/settings', icon: Settings },  
+        { id: 'edit-profile', name: 'Edit Profile', href: '/seller-dashboard/edit-profile', icon: Edit, hidden: true },  
+        { id: 'product-edit', name: 'Edit Product', href: '/seller-dashboard/products/edit/:productId', icon: Edit, hidden: true },  
+      ]  
     : [  
         { id: 'products', name: 'Products', href: `${baseRoute}/products`, icon: Package },  
         { id: 'reels', name: 'Reels', href: `${baseRoute}/reels`, icon: Megaphone },  
@@ -142,7 +141,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         { id: 'reviews', name: 'Reviews', href: `${baseRoute}/reviews`, icon: Star },  
       ];  
 
-  // PRESERVED ORIGINAL TAB CHANGE LOGIC
+  // Tab change handler
   const handleTabChange = (tabId: string) => {  
     const item = navigationItems.find(nav => nav.id === tabId);  
     if (item) {
@@ -153,14 +152,14 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }  
   };  
 
-  // Filter out hidden tabs from display
+  // Filter visible tabs
   const visibleTabs = navigationItems.filter(item => !item.hidden);
   const tabs = visibleTabs.map(item => ({  
     id: item.id,  
     label: item.name  
   }));  
 
-  // PRESERVED ORIGINAL SELLER DATA FETCHING
+  // Fetch seller data
   const { user } = useAuth();  
 
   const { data: privateSellerData, isLoading: privateSellerLoading } = useQuery({  
@@ -184,7 +183,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const sellerData = isPublicPage ? publicSellerData : privateSellerData;  
   const sellerLoading = isPublicPage ? publicSellerLoading : privateSellerLoading;  
 
-  // PRESERVED ORIGINAL LOGO URL FUNCTION
+  // Logo URL function
   const getSellerLogoUrl =  
     externalGetSellerLogoUrl ||  
     ((imagePath?: string): string => {  
@@ -194,30 +193,12 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       return data.publicUrl;  
     });  
 
-  // ===== USE EFFECT TO HANDLE NO STORE STATE =====
-  useEffect(() => {
-    // Set the no store state after all hooks are processed
-    if (!sellerLoading && !sellerData && !isPublicPage) {
-      setShouldShowNoStoreState(true);
-    } else {
-      setShouldShowNoStoreState(false);
-    }
-  }, [sellerLoading, sellerData, isPublicPage]);
+  // **NEW: Check if seller has a store (has products or is verified)**
+  const hasStore = sellerData && (products.length > 0 || sellerData.verified);
 
   // Custom action buttons for edit pages
   const getEditPageActionButtons = () => {
-    if (isEditProfilePage) {
-      return [  
-        {  
-          Icon: Save,  
-          onClick: () => {
-            const saveEvent = new CustomEvent('saveEditProfile');
-            window.dispatchEvent(saveEvent);
-          },  
-          active: false  
-        }  
-      ];
-    } else if (isProductEditPage) {
+    if (isEditProfilePage || isProductEditPage) {
       return [  
         {  
           Icon: Save,  
@@ -232,7 +213,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     return null;
   };
 
-  // Regular action buttons for other pages
+  // Regular action buttons
   const regularActionButtons = [  
     {  
       Icon: Heart,  
@@ -248,7 +229,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }  
   ];  
 
-  // Get page title based on current route
+  // Get page title
   const getPageTitle = () => {
     if (isEditProfilePage) return "Edit Profile";
     if (isProductEditPage) {
@@ -275,39 +256,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     </div>  
   );
 
-  // ===== CONDITIONAL RENDER FOR NO STORE STATE =====
-  if (shouldShowNoStoreState) {
-    return (
-      <div className="min-h-screen bg-white">
-        {/* Header */}
-        <div ref={headerRef} className="fixed top-0 left-0 right-0 z-50">
-          <ProductHeader
-            onCloseClick={handleBackClick}
-            onShareClick={() => {}}
-            actionButtons={[]}
-            forceScrolledState={true}
-            title="Seller Profile"
-            hideSearch={true}
-            showSellerInfo={false}
-          />
-        </div>
-        
-        {/* SellerInfoSection only - no tabs */}
-        <div className="pt-16">
-          <SellerInfoSection
-            sellerData={null}
-            sellerLoading={false}
-            getSellerLogoUrl={getSellerLogoUrl}
-            onBecomeSeller={handleBecomeSeller}
-            onBack={handleBackClick}
-            showActionButtons={false}
-            isOwnProfile={isOwnProfile}
-          />
-        </div>
-      </div>
-    );
-  }
-
   const topContent = isProductsTab && !isEditProfilePage && !isProductEditPage ? (
     <div className="w-full bg-black text-white">  
       <SellerInfoSection  
@@ -328,7 +276,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     </div>  
   ) : undefined;
 
-  // Enhanced children with additional props
+  // Enhanced children
   const enhancedChildren = React.Children.map(children, child => {  
     if (React.isValidElement(child)) {  
       if (activeTab !== 'products') {  
@@ -342,7 +290,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     return child;  
   });  
 
-  // ===== REDIRECT HANDLER =====  
+  // Redirect handler
   useEffect(() => {  
     if (  
       location.pathname === '/seller-dashboard' ||  
@@ -357,7 +305,17 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }  
   }, [location.pathname, navigate]);  
 
-  const hasStore = !sellerLoading && sellerData;
+  // **NEW: If no store and on products tab, show only SellerInfoSection**
+  if (!hasStore && isProductsTab && !isEditProfilePage && !isProductEditPage) {
+    return (
+      <div className="min-h-screen bg-white">
+        {header}
+        <div className="pt-16">
+          {topContent}
+        </div>
+      </div>
+    );
+  }
 
   return (  
     <StickyTabsLayout
@@ -373,7 +331,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       variant="underline"
       stickyBuffer={4}
       alwaysStickyForNonProducts={true}
-      hideTabs={isEditProfilePage || isProductEditPage || !hasStore}
+      hideTabs={isEditProfilePage || isProductEditPage || !hasStore} // **NEW: Hide tabs when no store**
     >
       {enhancedChildren}
     </StickyTabsLayout>
