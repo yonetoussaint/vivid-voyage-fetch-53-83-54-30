@@ -256,26 +256,47 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   };
 
   const header = (
-    <div   
-      ref={headerRef}   
-      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"  
-    >  
-      <ProductHeader  
-        onCloseClick={(isEditProfilePage || isProductEditPage || isOnboardingPage) ? () => navigate('/seller-dashboard/products') : handleBackClick}  
-        onShareClick={handleShareClick}  
-        actionButtons={getEditPageActionButtons() || regularActionButtons}
-        forceScrolledState={!isProductsTab || isEditProfilePage || isProductEditPage || isOnboardingPage}
-        title={getPageTitle()}
-        hideSearch={isEditProfilePage || isProductEditPage || isOnboardingPage}
-        showSellerInfo={!(isEditProfilePage || isProductEditPage || isOnboardingPage)}
-        // Progress Bar Props - Only show on onboarding page
-        showProgressBar={isOnboardingPage}
-        currentStep={getOnboardingStep()}
-        totalSteps={4}
-        progressBarColor="bg-blue-600"
-      />  
-    </div>  
-  );
+  <div   
+    ref={headerRef}   
+    className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"  
+  >  
+    <ProductHeader  
+      onCloseClick={(isEditProfilePage || isProductEditPage || isOnboardingPage) ? () => navigate('/seller-dashboard/products') : handleBackClick}  
+      onShareClick={handleShareClick}  
+      actionButtons={getEditPageActionButtons() || regularActionButtons}
+      forceScrolledState={!isProductsTab || isEditProfilePage || isProductEditPage || isOnboardingPage}
+      title={getPageTitle()}
+      hideSearch={isEditProfilePage || isProductEditPage || isOnboardingPage}
+      showSellerInfo={!(isEditProfilePage || isProductEditPage || isOnboardingPage)}
+      // Progress Bar Props - Only show on onboarding page
+      showProgressBar={isOnboardingPage}
+      currentStep={getOnboardingStep()}
+      totalSteps={4}
+      progressBarColor="bg-blue-600"
+      // Settings Panel Props - Show settings button on onboarding page
+      showSettingsButton={isOnboardingPage}
+      currentLanguage={{ code: 'en', name: 'English', nativeName: 'English' }}
+      currentLocation={{ name: 'United States', flag: 'us' }}
+      supportedLanguages={[
+        { code: 'en', name: 'English', nativeName: 'English' },
+        { code: 'es', name: 'Spanish', nativeName: 'Español' },
+        { code: 'fr', name: 'French', nativeName: 'Français' },
+        { code: 'de', name: 'German', nativeName: 'Deutsch' },
+        { code: 'zh', name: 'Chinese', nativeName: '中文' },
+        { code: 'ja', name: 'Japanese', nativeName: '日本語' },
+      ]}
+      onLanguageChange={(language) => {
+        console.log('Language changed to:', language);
+        // You can add your language change logic here
+        // For example: update user preferences, etc.
+      }}
+      onOpenLocationScreen={() => {
+        console.log('Open location screen');
+        // You can navigate to location selection or open another panel
+      }}
+    />  
+  </div>  
+);
 
   const topContent = isProductsTab && !isEditProfilePage && !isProductEditPage && !isOnboardingPage ? (
     <div className="w-full bg-black text-white">  
