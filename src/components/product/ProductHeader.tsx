@@ -509,135 +509,138 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
       </div>
 
       {/* Integrated Settings Panel */}
-      <SlideUpPanel
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        title="Settings"
-        preventBodyScroll={true}
-        className="p-4 space-y-6"
-      >
-        {/* Language Section */}
-        <div className="space-y-3">
-          <div className="flex items-center space-x-2 text-gray-700">
-            <span className="font-medium">Language</span>
-          </div>
+     {/* Integrated Settings Panel */}
+<SlideUpPanel
+  isOpen={isSettingsOpen}
+  onClose={() => setIsSettingsOpen(false)}
+  title="Settings"
+  preventBodyScroll={true}
+  className="p-4 space-y-6"
+  dynamicHeight={true} // Add this to allow dynamic height
+  maxHeight={0.95} // Increase max height to 95% of screen
+>
+  {/* Language Section */}
+  <div className="space-y-3">
+    <div className="flex items-center space-x-2 text-gray-700">
+      <span className="font-medium">Language</span>
+    </div>
 
-          {/* Language Search Input */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search languages..."
-              value={languageQuery}
-              onChange={(e) => setLanguageQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-            />
-          </div>
+    {/* Language Search Input */}
+    <div className="relative">
+      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+      <input
+        type="text"
+        placeholder="Search languages..."
+        value={languageQuery}
+        onChange={(e) => setLanguageQuery(e.target.value)}
+        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+      />
+    </div>
 
-          {/* Current Language Display */}
-          <div className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-            <div className="flex items-center space-x-3">
-              <div className="text-left">
-                <div className="font-medium text-gray-900">
-                  {currentLanguage.nativeName || currentLanguage.name || 'English'}
-                </div>
-                <div className="text-xs text-gray-500">
-                  {currentLanguage.name || 'English'} • {currentLanguage.code.toUpperCase()}
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              {pinnedLanguages.has(currentLanguage.code) && (
-                <span className="h-4 w-4 text-orange-600">📍</span>
-              )}
-              <span className="h-4 w-4 text-orange-600">✓</span>
-            </div>
+    {/* Current Language Display */}
+    <div className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+      <div className="flex items-center space-x-3">
+        <div className="text-left">
+          <div className="font-medium text-gray-900">
+            {currentLanguage.nativeName || currentLanguage.name || 'English'}
           </div>
-
-          {/* Language Grid */}
-          <div className="grid grid-cols-2 gap-2">
-            {supportedLanguages
-              .filter((lang) =>
-                lang.name.toLowerCase().includes(languageQuery.toLowerCase()) ||
-                lang.nativeName.toLowerCase().includes(languageQuery.toLowerCase())
-              )
-              .slice(0, 4)
-              .map((language) => (
-                <button
-                  key={language.code}
-                  onClick={() => handleLanguageChange(language)}
-                  className={`p-2 text-sm rounded-lg border transition-all flex items-center justify-between ${
-                    currentLanguage.code === language.code
-                      ? 'border-orange-500 bg-orange-50 text-orange-700'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  <span>{language.nativeName}</span>
-                  <button
-                    onClick={(e) => handleToggleLanguagePin(language.code, e)}
-                    className={`p-1 rounded ${
-                      pinnedLanguages.has(language.code) 
-                        ? 'text-orange-600' 
-                        : 'text-gray-400 hover:text-gray-600'
-                    }`}
-                  >
-                    <span className={`h-3 w-3 ${pinnedLanguages.has(language.code) ? 'text-orange-600' : ''}`}>
-                      📍
-                    </span>
-                  </button>
-                </button>
-              ))}
+          <div className="text-xs text-gray-500">
+            {currentLanguage.name || 'English'} • {currentLanguage.code.toUpperCase()}
           </div>
+        </div>
+      </div>
+      <div className="flex items-center space-x-2">
+        {pinnedLanguages.has(currentLanguage.code) && (
+          <span className="h-4 w-4 text-orange-600">📍</span>
+        )}
+        <span className="h-4 w-4 text-orange-600">✓</span>
+      </div>
+    </div>
 
-          {/* Show more languages if there are more than 4 */}
-          {supportedLanguages.filter((lang) =>
+    {/* Language Grid */}
+    <div className="grid grid-cols-2 gap-2">
+      {supportedLanguages
+        .filter((lang) =>
+          lang.name.toLowerCase().includes(languageQuery.toLowerCase()) ||
+          lang.nativeName.toLowerCase().includes(languageQuery.toLowerCase())
+        )
+        .slice(0, 4)
+        .map((language) => (
+          <button
+            key={language.code}
+            onClick={() => handleLanguageChange(language)}
+            className={`p-2 text-sm rounded-lg border transition-all flex items-center justify-between ${
+              currentLanguage.code === language.code
+                ? 'border-orange-500 bg-orange-50 text-orange-700'
+                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            <span>{language.nativeName}</span>
+            <button
+              onClick={(e) => handleToggleLanguagePin(language.code, e)}
+              className={`p-1 rounded ${
+                pinnedLanguages.has(language.code) 
+                  ? 'text-orange-600' 
+                  : 'text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              <span className={`h-3 w-3 ${pinnedLanguages.has(language.code) ? 'text-orange-600' : ''}`}>
+                📍
+              </span>
+            </button>
+          </button>
+        ))}
+    </div>
+
+    {/* Show more languages if there are more than 4 */}
+    {supportedLanguages.filter((lang) =>
+      lang.name.toLowerCase().includes(languageQuery.toLowerCase()) ||
+      lang.nativeName.toLowerCase().includes(languageQuery.toLowerCase())
+    ).length > 4 && (
+      <div className="text-center">
+        <button className="text-xs text-orange-600 hover:text-orange-700 font-medium">
+          Show {supportedLanguages.filter((lang) =>
             lang.name.toLowerCase().includes(languageQuery.toLowerCase()) ||
             lang.nativeName.toLowerCase().includes(languageQuery.toLowerCase())
-          ).length > 4 && (
-            <div className="text-center">
-              <button className="text-xs text-orange-600 hover:text-orange-700 font-medium">
-                Show {supportedLanguages.filter((lang) =>
-                  lang.name.toLowerCase().includes(languageQuery.toLowerCase()) ||
-                  lang.nativeName.toLowerCase().includes(languageQuery.toLowerCase())
-                ).length - 4} more languages
-              </button>
-            </div>
-          )}
-        </div>
+          ).length - 4} more languages
+        </button>
+      </div>
+    )}
+  </div>
 
-        {/* Location Section */}
-        <div className="space-y-3">
-          <div className="flex items-center space-x-2 text-gray-700">
-            <span className="font-medium">Location</span>
+  {/* Location Section */}
+  <div className="space-y-3">
+    <div className="flex items-center space-x-2 text-gray-700">
+      <span className="font-medium">Location</span>
+    </div>
+
+    <button
+      onClick={onOpenLocationScreen}
+      className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-orange-300 hover:bg-orange-50 transition-colors"
+    >
+      <div className="flex items-center space-x-3">
+        {currentLocation.flag ? (
+          <img
+            src={`https://flagcdn.com/${currentLocation.flag.toLowerCase()}.svg`}
+            alt={currentLocation.name}
+            className="h-5 w-5 rounded object-cover"
+          />
+        ) : (
+          <span className="h-5 w-5 text-orange-600">📍</span>
+        )}
+        <div className="text-left">
+          <div className="font-medium text-gray-900">
+            {currentLocation.name.split(',')[0]}
           </div>
-
-          <button
-            onClick={onOpenLocationScreen}
-            className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-orange-300 hover:bg-orange-50 transition-colors"
-          >
-            <div className="flex items-center space-x-3">
-              {currentLocation.flag ? (
-                <img
-                  src={`https://flagcdn.com/${currentLocation.flag.toLowerCase()}.svg`}
-                  alt={currentLocation.name}
-                  className="h-5 w-5 rounded object-cover"
-                />
-              ) : (
-                <span className="h-5 w-5 text-orange-600">📍</span>
-              )}
-              <div className="text-left">
-                <div className="font-medium text-gray-900">
-                  {currentLocation.name.split(',')[0]}
-                </div>
-                <div className="text-xs text-gray-500">
-                  {currentLocation.name}
-                </div>
-              </div>
-            </div>
-            <span className="h-4 w-4 text-gray-400 hover:text-orange-600">✏️</span>
-          </button>
+          <div className="text-xs text-gray-500">
+            {currentLocation.name}
+          </div>
         </div>
-      </SlideUpPanel>
+      </div>
+      <span className="h-4 w-4 text-gray-400 hover:text-orange-600">✏️</span>
+    </button>
+  </div>
+</SlideUpPanel>
     </>
   );
 };
