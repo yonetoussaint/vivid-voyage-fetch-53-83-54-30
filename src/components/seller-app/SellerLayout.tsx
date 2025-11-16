@@ -309,7 +309,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   // **NEW: If no store and on products tab, redirect to separate onboarding page**
   useEffect(() => {
     if (!hasStore && isProductsTab && !isEditProfilePage && !isProductEditPage && !sellerLoading) {
-      navigate('/seller-onboarding', { replace: true });
+      navigate('/seller-dashboard/onboarding', { replace: true });
     }
   }, [hasStore, isProductsTab, isEditProfilePage, isProductEditPage, sellerLoading, navigate]);
 
