@@ -60,7 +60,7 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
     id: sellerData.id,
     name: sellerData.name || 'Seller Name',
     username: sellerData.username || sellerData.name?.toLowerCase().replace(/\s+/g, '') || 'seller',
-    image_url: sellerData.image_url, // This is the direct image URL like in SellerEditProfile
+    image_url: sellerData.image_url,
     verified: sellerData.verified || false,
     bio: sellerData.bio || sellerData.description || 'No bio provided yet.',
     business_type: sellerData.business_type || sellerData.category || 'Business',
@@ -102,17 +102,51 @@ const SellerInfoSection: React.FC<SellerInfoSectionProps> = ({
     );
   }
 
+  // Enhanced "No Seller Data" state for when used without tabs
   if (!safeSellerData) {
     return (
-      <div className="bg-white text-gray-900 min-h-screen flex flex-col items-center justify-center py-8 px-4 text-center space-y-4">
-        <p className="text-lg font-medium">No seller profile found</p>
-        <p className="text-sm text-gray-400">You need to create a seller account to access the dashboard.</p>
+      <div className="bg-white text-gray-900 min-h-[80vh] flex flex-col items-center justify-center py-8 px-4 text-center space-y-6">
+        {/* Large Store Icon */}
+        <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-2">
+          <Store className="w-12 h-12 text-gray-400" />
+        </div>
+        
+        {/* Main Message */}
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold text-gray-900">No Seller Profile Found</h2>
+          <p className="text-gray-500 max-w-md mx-auto">
+            You need to create a seller account to access the dashboard and start selling your products.
+          </p>
+        </div>
+
+        {/* Stats Placeholder */}
+        <div className="grid grid-cols-3 gap-4 w-full max-w-xs mt-4">
+          <div className="text-center p-3 bg-gray-50 rounded-lg">
+            <div className="font-bold text-gray-900 text-lg">0</div>
+            <div className="text-gray-500 text-xs">Products</div>
+          </div>
+          <div className="text-center p-3 bg-gray-50 rounded-lg">
+            <div className="font-bold text-gray-900 text-lg">0</div>
+            <div className="text-gray-500 text-xs">Orders</div>
+          </div>
+          <div className="text-center p-3 bg-gray-50 rounded-lg">
+            <div className="font-bold text-gray-900 text-lg">0</div>
+            <div className="text-gray-500 text-xs">Years</div>
+          </div>
+        </div>
+
+        {/* CTA Button */}
         <button
           onClick={onBecomeSeller}
-          className="px-6 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors font-bold"
+          className="px-8 py-4 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors font-bold text-lg mt-6 shadow-lg"
         >
           Become a Seller
         </button>
+
+        {/* Additional Info */}
+        <p className="text-sm text-gray-400 mt-4 max-w-md">
+          Set up your store in minutes and start reaching customers worldwide
+        </p>
       </div>
     );
   }
