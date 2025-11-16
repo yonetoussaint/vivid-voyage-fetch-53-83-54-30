@@ -11,7 +11,8 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import { supabase } from '@/integrations/supabase/client';  
 import StickyTabsLayout from '@/components/layout/StickyTabsLayout';  
 import SellerInfoSection from './SellerInfoSection';  
-import ProductHeader from '@/components/product/ProductHeader';  
+import ProductHeader from '@/components/product/ProductHeader';
+import HeroBanner from '@/components/home/HeroBanner';  
 
 interface SellerLayoutProps {  
   children: React.ReactNode;  
