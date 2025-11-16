@@ -255,7 +255,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     setOnboardingStep(step);
   };
 
-  const header = (
+const header = (
   <div   
     ref={headerRef}   
     className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"  
@@ -275,24 +275,17 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       progressBarColor="bg-blue-600"
       // Settings Panel Props - Show settings button on onboarding page
       showSettingsButton={isOnboardingPage}
-      currentLanguage={{ code: 'en', name: 'English', nativeName: 'English' }}
-      currentLocation={{ name: 'United States', flag: 'us' }}
-      supportedLanguages={[
-        { code: 'en', name: 'English', nativeName: 'English' },
-        { code: 'es', name: 'Spanish', nativeName: 'Español' },
-        { code: 'fr', name: 'French', nativeName: 'Français' },
-        { code: 'de', name: 'German', nativeName: 'Deutsch' },
-        { code: 'zh', name: 'Chinese', nativeName: '中文' },
-        { code: 'ja', name: 'Japanese', nativeName: '日本語' },
-      ]}
+      // Make sure these props are passed from your language context
+      currentLanguage={/* pass your current language here */}
+      currentLocation={/* pass your current location here */}
+      supportedLanguages={/* pass your supported languages here */}
       onLanguageChange={(language) => {
-        console.log('Language changed to:', language);
-        // You can add your language change logic here
-        // For example: update user preferences, etc.
+        console.log('Language changed in ProductHeader:', language);
+        // This should trigger your language change logic
       }}
       onOpenLocationScreen={() => {
-        console.log('Open location screen');
-        // You can navigate to location selection or open another panel
+        console.log('Open location screen clicked');
+        // Add your location screen logic here
       }}
     />  
   </div>  
