@@ -8,6 +8,7 @@ import { useScrollProgress } from "./header/useScrollProgress";
 import BackButton from "./header/BackButton";
 import { useNavigate } from 'react-router-dom';
 import { useNavigationLoading } from '@/hooks/useNavigationLoading';
+import { VerificationBadge } from '@/components/shared/VerificationBadge';
 
 interface ActionButton {
   Icon: any;
@@ -331,16 +332,7 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
                     >
                       {seller.name}
                     </span>
-                    {seller.verified && (
-                      <span 
-                        className="text-xs transition-all duration-700"
-                        style={{
-                          color: `rgba(59, 130, 246, ${0.95 - (displayProgress * 0.2)})`
-                        }}
-                      >
-                        ✓
-                      </span>
-                    )}
+                    {seller.verified && <VerificationBadge />}
                     <span 
                       className="text-xs font-medium transition-all duration-700"
                       style={{
