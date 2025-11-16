@@ -199,38 +199,9 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     });  
 
   // ===== NO STORE/SELLER DATA STATE =====
-  // Show only SellerInfoSection when no seller data exists (for non-public pages)
-  if (!sellerLoading && !sellerData && !isPublicPage) {
-    return (
-      <div className="min-h-screen bg-white">
-        {/* Header */}
-        <div ref={headerRef} className="fixed top-0 left-0 right-0 z-50">
-          <ProductHeader
-            onCloseClick={handleBackClick}
-            onShareClick={() => {}}
-            actionButtons={[]}
-            forceScrolledState={true}
-            title="Seller Profile"
-            hideSearch={true}
-            showSellerInfo={false}
-          />
-        </div>
-        
-        {/* SellerInfoSection only - no tabs */}
-        <div className="pt-16">
-          <SellerInfoSection
-            sellerData={null}
-            sellerLoading={false}
-            getSellerLogoUrl={getSellerLogoUrl}
-            onBecomeSeller={handleBecomeSeller}
-            onBack={handleBackClick}
-            showActionButtons={false}
-            isOwnProfile={isOwnProfile}
-          />
-        </div>
-      </div>
-    );
-  }
+  // MOVED AFTER ALL HOOKS - Fixes React error #310
+  const hasStore = !sellerLoading && sellerData;
+  const shouldShowNoStoreState = !sellerLoading && !sellerData && !isPublicPage;
 
   // Custom action buttons for edit pages
   const getEditPageActionButtons = () => {
@@ -303,6 +274,39 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     </div>  
   );
 
+  // ===== CONDITIONAL RENDER FOR NO STORE STATE =====
+  if (shouldShowNoStoreState) {
+    return (
+      <div className="min-h-screen bg-white">
+        {/* Header */}
+        <div ref={headerRef} className="fixed top-0 left-0 right-0 z-50">
+          <ProductHeader
+            onCloseClick={handleBackClick}
+            onShareClick={() => {}}
+            actionButtons={[]}
+            forceScrolledState={true}
+            title="Seller Profile"
+            hideSearch={true}
+            showSellerInfo={false}
+          />
+        </div>
+        
+        {/* SellerInfoSection only - no tabs */}
+        <div className="pt-16">
+          <SellerInfoSection
+            sellerData={null}
+            sellerLoading={false}
+            getSellerLogoUrl={getSellerLogoUrl}
+            onBecomeSeller={handleBecomeSeller}
+            onBack={handleBackClick}
+            showActionButtons={false}
+            isOwnProfile={isOwnProfile}
+          />
+        </div>
+      </div>
+    );
+  }
+
   const topContent = isProductsTab && !isEditProfilePage && !isProductEditPage ? (
     <div className="w-full bg-black text-white">  
       <SellerInfoSection  
@@ -366,7 +370,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       variant="underline"
       stickyBuffer={4}
       alwaysStickyForNonProducts={true}
-      hideTabs={isEditProfilePage || isProductEditPage}
+      hideTabs={isEditProfilePage || isProductEditPage || !hasStore} // Hide tabs when no store
     >
       {enhancedChildren}
     </StickyTabsLayout>
