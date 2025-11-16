@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Package, DollarSign, Users, BarChart3, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/auth/AuthContext';
@@ -9,6 +9,10 @@ import HeroBanner from '@/components/home/HeroBanner';
 const SellerOnboarding = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  
+  // Use ref to always have latest formData in event listener (for consistency with other pages)
+  const formDataRef = useRef({});
+  const [isLoading, setIsLoading] = useState(false);
 
   // Fetch current seller data
   const { data: sellerData, isLoading: sellerLoading } = useQuery({
@@ -29,6 +33,19 @@ const SellerOnboarding = () => {
     },
   });
 
+  // Listen for save event from header (same as SellerEditProfile and SellerProductEdit)
+  useEffect(() => {
+    const handleSave = () => {
+      console.log('Save event received');
+      handleSubmit();
+    };
+
+    window.addEventListener('saveEditProfile', handleSave);
+    return () => {
+      window.removeEventListener('saveEditProfile', handleSave);
+    };
+  }, []);
+
   const handleBecomeSeller = () => {
     // Navigate to seller registration/setup
     navigate('/seller-onboarding/setup');
@@ -36,6 +53,25 @@ const SellerOnboarding = () => {
 
   const handleBackClick = () => {
     navigate('/seller-dashboard/products');
+  };
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+
+    if (isLoading) return;
+    
+    setIsLoading(true);
+    console.log('Starting seller onboarding...');
+
+    try {
+      // Navigate to edit profile to complete setup
+      navigate('/seller-dashboard/edit-profile');
+    } catch (error) {
+      console.error('Error in onboarding:', error);
+      setIsLoading(false);
+    }
   };
 
   if (sellerLoading) {
@@ -48,22 +84,8 @@ const SellerOnboarding = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header with Back Button */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
-        <div className="flex items-center justify-between px-4 py-3">
-          <button
-            onClick={handleBackClick}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-lg font-semibold">Become a Seller</h1>
-          <div className="w-9"></div> {/* Spacer for centering */}
-        </div>
-      </div>
-
       {/* Banner Section */}
-      <div className="relative pt-16">
+      <div className="relative">
         <HeroBanner 
           asCarousel={false} 
           showNewsTicker={false} 
@@ -247,6 +269,21 @@ const SellerOnboarding = () => {
           </div>
         </div>
       </div>
+
+      {/* Hidden form for save event */}
+      <form onSubmit={handleSubmit} className="hidden">
+        <button type="submit">Save</button>
+      </form>
+
+      {/* Loading overlay */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-4 flex items-center gap-3">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <span className="text-sm font-medium">Setting up your store...</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
