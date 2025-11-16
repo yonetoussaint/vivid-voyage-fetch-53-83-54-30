@@ -399,7 +399,7 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
 
       {/* Progress Bar - Integrated directly into component */}
       {showProgressBar && (
-        <div className="bg-white border-b border-gray-200 px-4 py-4">
+        <div className="bg-white border-b border-gray-200 px-4 py-1">
           <div className="max-w-2xl mx-auto">
             {/* Progress Bar - Bars Only */}
             <div className="flex items-center gap-1">
