@@ -399,9 +399,9 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
           </div>
         </div>
 
-        {/* Progress Bar - Now inside the same background container */}
+        {/* Progress Bar - Now inside the same background container without border */}
         {showProgressBar && (
-          <div className="px-4 py-1 border-t border-gray-200">
+          <div className="px-4 py-1">
             <div className="max-w-2xl mx-auto">
               {/* Progress Bar - Bars Only */}
               <div className="flex items-center gap-1">
