@@ -78,14 +78,20 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const isPickupStation = location.pathname.includes('/pickup-station');  
 
   const getCurrentTab = () => {  
+    const path = location.pathname;
+    
     if (isDashboard) {  
-      const path = location.pathname.split('/seller-dashboard/')[1];  
-      return !path || path === '' ? 'products' : path;  
+      const dashboardPath = path.split('/seller-dashboard/')[1];  
+      if (!dashboardPath || dashboardPath === '') return 'products';
+      // Handle edit paths
+      if (dashboardPath === 'edit-profile') return 'edit-profile';
+      if (dashboardPath.startsWith('products/edit/')) return 'product-edit';
+      return dashboardPath.split('/')[0]; // Get first segment only
     } else if (isPickupStation) {  
-      const path = location.pathname.split('/pickup-station/')[1];  
-      return !path || path === '' ? 'overview' : path;  
+      const stationPath = path.split('/pickup-station/')[1];  
+      return !stationPath || stationPath === '' ? 'overview' : stationPath.split('/')[0];  
     } else {  
-      const pathParts = location.pathname.split('/seller/')[1]?.split('/');  
+      const pathParts = path.split('/seller/')[1]?.split('/');  
       if (pathParts && pathParts.length > 1) return pathParts[1];  
       return 'products';  
     }  
@@ -146,12 +152,11 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   // PRESERVED ORIGINAL TAB CHANGE LOGIC WITH SCROLL RESET
   const handleTabChange = (tabId: string) => {  
     const item = navigationItems.find(nav => nav.id === tabId);  
-    if (item) {
+    if (item && item.id !== activeTab) { // Prevent navigation to same tab
       // Scroll to top when changing tabs to ensure proper layout
       window.scrollTo(0, 0);
 
-      const previousTab = activeTab;
-      previousTabRef.current = previousTab;
+      previousTabRef.current = activeTab;
 
       navigate(item.href);
     }  
@@ -343,15 +348,12 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
   // ===== REDIRECT HANDLER =====  
   useEffect(() => {  
-    if (  
-      location.pathname === '/seller-dashboard' ||  
-      location.pathname.endsWith('/seller-dashboard/')  
-    ) {  
+    const path = location.pathname;
+    
+    // Only redirect if we're at the exact base path
+    if (path === '/seller-dashboard' || path === '/seller-dashboard/') {
       navigate('/seller-dashboard/products', { replace: true });  
-    } else if (  
-      location.pathname === '/pickup-station' ||  
-      location.pathname.endsWith('/pickup-station/')  
-    ) {  
+    } else if (path === '/pickup-station' || path === '/pickup-station/') {
       navigate('/pickup-station/overview', { replace: true });  
     }  
   }, [location.pathname, navigate]);  
