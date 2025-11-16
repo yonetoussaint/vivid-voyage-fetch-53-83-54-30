@@ -251,8 +251,55 @@ const SellerOnboarding = () => {
     );
   }
 
+  // Sticky button component
+  const StickyButton = () => {
+    if (currentStep === 4) return null; // Don't show on success step
+
+    return (
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-40">
+        <div className="max-w-2xl mx-auto flex justify-between items-center">
+          {currentStep > 1 ? (
+            <>
+              <button
+                onClick={prevStep}
+                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+              >
+                Back
+              </button>
+              {currentStep === 2 && (
+                <button
+                  onClick={nextStep}
+                  className="px-8 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors"
+                >
+                  Continue to Payment
+                </button>
+              )}
+              {currentStep === 3 && (
+                <button
+                  onClick={handleSubmit}
+                  disabled={!applicationData.agreeToTerms || isLoading}
+                  className="px-8 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
+                >
+                  <CreditCard className="w-5 h-5" />
+                  <span>{isLoading ? 'Processing...' : 'Pay 1,000 HTG & Register'}</span>
+                </button>
+              )}
+            </>
+          ) : (
+            <button
+              onClick={nextStep}
+              className="w-full px-8 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors"
+            >
+              Start Application
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-24"> {/* Added padding bottom for sticky button */}
       {/* Banner Section */}
       <div className="relative">
         <HeroBanner 
@@ -354,16 +401,6 @@ const SellerOnboarding = () => {
                 <div className="text-sm text-gray-600">Support</div>
               </div>
             </div>
-          </div>
-
-          {/* Next Button */}
-          <div className="text-center mt-8">
-            <button
-              onClick={nextStep}
-              className="px-8 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors"
-            >
-              Start Application
-            </button>
           </div>
         </div>
       )}
@@ -559,22 +596,6 @@ const SellerOnboarding = () => {
               </div>
             </div>
           </form>
-
-          {/* Navigation Buttons */}
-          <div className="flex justify-between pt-6">
-            <button
-              onClick={prevStep}
-              className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
-            >
-              Back
-            </button>
-            <button
-              onClick={nextStep}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-            >
-              Continue to Payment
-            </button>
-          </div>
         </div>
       )}
 
@@ -683,24 +704,6 @@ const SellerOnboarding = () => {
               </div>
             </label>
           </div>
-
-          {/* Navigation Buttons */}
-          <div className="flex justify-between pt-6">
-            <button
-              onClick={prevStep}
-              className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
-            >
-              Back
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={!applicationData.agreeToTerms || isLoading}
-              className="px-8 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
-            >
-              <CreditCard className="w-5 h-5" />
-              <span>{isLoading ? 'Processing...' : 'Pay 1,000 HTG & Register'}</span>
-            </button>
-          </div>
         </div>
       )}
 
@@ -757,6 +760,9 @@ const SellerOnboarding = () => {
           </div>
         </div>
       )}
+
+      {/* Sticky Continue Button */}
+      <StickyButton />
 
       {/* Hidden form for save event */}
       <form onSubmit={handleSubmit} className="hidden">
