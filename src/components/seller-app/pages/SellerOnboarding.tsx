@@ -8,7 +8,6 @@ import {
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import HeroBanner from '@/components/home/HeroBanner';
 
 const SellerOnboarding = () => {
   const navigate = useNavigate();
@@ -251,6 +250,14 @@ const SellerOnboarding = () => {
     );
   }
 
+  // Progress bar steps
+  const steps = [
+    { number: 1, label: 'Overview' },
+    { number: 2, label: 'Business Info' },
+    { number: 3, label: 'Payment' },
+    { number: 4, label: 'Complete' }
+  ];
+
   // Sticky button component
   const StickyButton = () => {
     if (currentStep === 4) return null; // Don't show on success step
@@ -299,40 +306,54 @@ const SellerOnboarding = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24"> {/* Added padding bottom for sticky button */}
-      {/* Banner Section */}
-      <div className="relative">
-        <HeroBanner 
-          asCarousel={false} 
-          showNewsTicker={false} 
-          customHeight="180px" 
-          sellerId={sellerData?.id}
-          showEditButton={false}
-          editButtonPosition="top-right"
-          dataSource="seller_banners"
-        />
-      </div>
-
-      {/* Progress Steps */}
-      <div className="px-4 py-6 bg-white border-b">
-        <div className="flex justify-between items-center max-w-2xl mx-auto">
-          {[1, 2, 3, 4].map((step) => (
-            <div key={step} className="flex flex-col items-center">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 ${
-                currentStep >= step 
-                  ? 'bg-blue-600 border-blue-600 text-white' 
-                  : 'border-gray-300 text-gray-400'
-              }`}>
-                {currentStep > step ? <Check className="w-5 h-5" /> : step}
-              </div>
-              <span className="text-xs mt-2 text-gray-600">
-                {step === 1 && 'Overview'}
-                {step === 2 && 'Business Info'}
-                {step === 3 && 'Payment'}
-                {step === 4 && 'Complete'}
-              </span>
+    <div className="min-h-screen bg-background pb-24">
+      {/* Progress Steps Bar */}
+      <div className="bg-white border-b border-gray-200 px-4 py-6">
+        <div className="max-w-2xl mx-auto">
+          {/* Progress Bar */}
+          <div className="relative mb-4">
+            <div className="flex justify-between">
+              {steps.map((step, index) => (
+                <div key={step.number} className="flex flex-col items-center flex-1">
+                  {/* Connection Line */}
+                  {index > 0 && (
+                    <div 
+                      className={`absolute top-4 h-0.5 -translate-y-1/2 ${
+                        currentStep >= step.number ? 'bg-blue-600' : 'bg-gray-300'
+                      }`}
+                      style={{
+                        left: `${(index - 1) * 33.33 + 16.66}%`,
+                        width: '33.33%'
+                      }}
+                    />
+                  )}
+                  
+                  {/* Step Circle */}
+                  <div className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center border-2 ${
+                    currentStep >= step.number 
+                      ? 'bg-blue-600 border-blue-600 text-white' 
+                      : 'bg-white border-gray-300 text-gray-400'
+                  }`}>
+                    {currentStep > step.number ? <Check className="w-4 h-4" /> : step.number}
+                  </div>
+                  
+                  {/* Step Label */}
+                  <span className={`text-xs mt-2 text-center ${
+                    currentStep >= step.number ? 'text-blue-600 font-medium' : 'text-gray-500'
+                  }`}>
+                    {step.label}
+                  </span>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+          
+          {/* Progress Text */}
+          <div className="text-center">
+            <p className="text-sm text-gray-600">
+              Step {currentStep} of {steps.length}
+            </p>
+          </div>
         </div>
       </div>
 
