@@ -321,7 +321,7 @@ const header = (
           currentStep: onboardingStep
         } as any);  
       }
-      
+
       if (activeTab !== 'products') {  
         return React.cloneElement(child, {  
           products,  
