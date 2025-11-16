@@ -45,6 +45,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
   // States
   const [isFavorite, setIsFavorite] = useState(false);  
+  const [onboardingStep, setOnboardingStep] = useState(1); // Track onboarding progress
 
   // Handler functions
   const handleBackClick = () => {
@@ -244,6 +245,16 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     return undefined;
   };
 
+  // Get onboarding step from children (passed up from SellerOnboarding)
+  const getOnboardingStep = () => {
+    return onboardingStep;
+  };
+
+  // Function to update onboarding step (will be passed to children)
+  const updateOnboardingStep = (step: number) => {
+    setOnboardingStep(step);
+  };
+
   const header = (
     <div   
       ref={headerRef}   
@@ -257,6 +268,11 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         title={getPageTitle()}
         hideSearch={isEditProfilePage || isProductEditPage || isOnboardingPage}
         showSellerInfo={!(isEditProfilePage || isProductEditPage || isOnboardingPage)}
+        // Progress Bar Props - Only show on onboarding page
+        showProgressBar={isOnboardingPage}
+        currentStep={getOnboardingStep()}
+        totalSteps={4}
+        progressBarColor="bg-blue-600"
       />  
     </div>  
   );
@@ -281,9 +297,17 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     </div>  
   ) : undefined;
 
-  // Enhanced children
+  // Enhanced children with onboarding step tracking
   const enhancedChildren = React.Children.map(children, child => {  
     if (React.isValidElement(child)) {  
+      // Pass onboarding step tracking to SellerOnboarding
+      if (isOnboardingPage) {
+        return React.cloneElement(child, {  
+          onStepChange: updateOnboardingStep,
+          currentStep: onboardingStep
+        } as any);  
+      }
+      
       if (activeTab !== 'products') {  
         return React.cloneElement(child, {  
           products,  
@@ -316,6 +340,13 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       navigate('/seller-dashboard/onboarding', { replace: true });
     }
   }, [hasStore, isProductsTab, isEditProfilePage, isProductEditPage, isOnboardingPage, sellerLoading, navigate]);
+
+  // Reset onboarding step when leaving onboarding page
+  useEffect(() => {
+    if (!isOnboardingPage) {
+      setOnboardingStep(1);
+    }
+  }, [isOnboardingPage]);
 
   return (  
     <StickyTabsLayout
