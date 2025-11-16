@@ -297,7 +297,10 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
 
               {/* Show seller info when not scrolled AND showSellerInfo is true */}
               {displayProgress < 0.5 && seller && showSellerInfo && (
-                <div className="transition-opacity duration-300">
+                <div 
+                  className="rounded-full transition-all duration-700"
+                  style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})` }}
+                >
                   <button
                     onClick={() => {
                       if (onSellerClick) {
@@ -306,7 +309,7 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
                         navigate(`/seller/${seller.id}`);
                       }
                     }}
-                    className="bg-white/80 backdrop-blur-sm border border-gray-200 text-gray-900 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 hover:bg-white transition-colors shadow-sm"
+                    className="flex items-center gap-1.5 px-2.5 h-8 rounded-full transition-all duration-700 relative"
                   >
                     <div className="w-5 h-5 rounded-full bg-gray-100 overflow-hidden flex-shrink-0">
                       <img 
@@ -320,9 +323,30 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
                         }}
                       />
                     </div>
-                    <span className="truncate max-w-[80px]">{seller.name}</span>
-                    {seller.verified && <span className="text-blue-500">✓</span>}
-                    <span className="text-xs opacity-70">
+                    <span 
+                      className="text-xs font-medium transition-all duration-700"
+                      style={{
+                        color: `rgba(255, 255, 255, ${0.95 - (displayProgress * 0.2)})`
+                      }}
+                    >
+                      {seller.name}
+                    </span>
+                    {seller.verified && (
+                      <span 
+                        className="text-xs transition-all duration-700"
+                        style={{
+                          color: `rgba(59, 130, 246, ${0.95 - (displayProgress * 0.2)})`
+                        }}
+                      >
+                        ✓
+                      </span>
+                    )}
+                    <span 
+                      className="text-xs font-medium transition-all duration-700"
+                      style={{
+                        color: `rgba(255, 255, 255, ${0.7 - (displayProgress * 0.2)})`
+                      }}
+                    >
                       {seller.followers_count >= 1000000 
                         ? `${(seller.followers_count / 1000000).toFixed(1)}M`
                         : seller.followers_count >= 1000
