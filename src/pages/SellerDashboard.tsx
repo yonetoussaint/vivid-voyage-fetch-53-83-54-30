@@ -14,6 +14,7 @@ import SellerMarketing from '@/components/seller-app/pages/SellerMarketing';
 import SellerSupport from '@/components/seller-app/pages/SellerSupport';
 import SellerEditProfile from '@/components/seller-app/pages/SellerEditProfile';
 import SellerProductEdit from '@/components/seller-app/pages/SellerProductEdit';
+import SellerOnboarding from '@/components/seller-app/pages/SellerOnboarding'; // Add this import
 
 const SellerDashboard = () => {
   const location = useLocation();
@@ -29,7 +30,6 @@ const SellerDashboard = () => {
         <Route path="/overview" element={<SellerOverview />} />
         <Route path="/products" element={<SellerProducts />} />
         <Route path="/products/edit/:productId" element={<SellerProductEdit />} />
-<Route path="/onboarding" element={<SellerOnboarding />} />
         <Route path="/orders" element={<SellerOrders />} />
         <Route path="/customers" element={<SellerCustomers />} />
         <Route path="/reels" element={<SellerReels />} />
@@ -39,6 +39,7 @@ const SellerDashboard = () => {
         <Route path="/marketing" element={<SellerMarketing />} />
         <Route path="/settings" element={<SellerSettings />} />
         <Route path="/edit-profile" element={<SellerEditProfile />} />
+        <Route path="/onboarding" element={<SellerOnboarding />} /> {/* Add this route */}
       </Routes>
     </SellerLayout>
   );
