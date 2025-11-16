@@ -8,15 +8,36 @@ import {
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import ProgressBar from '@/components/shared/ProgressBar';
 
-const SellerOnboarding = () => {
+interface SellerOnboardingProps {
+  onStepChange?: (step: number) => void;
+  currentStep?: number;
+}
+
+const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
+  onStepChange,
+  currentStep: externalCurrentStep
+}) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   
+  // Use ref to always have latest formData in event listener
   const formDataRef = useRef({});
   const [isLoading, setIsLoading] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1);
+
+  // Use external currentStep if provided, otherwise use internal state
+  const [internalCurrentStep, setInternalCurrentStep] = useState(1);
+  const currentStep = externalCurrentStep !== undefined ? externalCurrentStep : internalCurrentStep;
+
+  const setCurrentStep = (step: number) => {
+    if (externalCurrentStep !== undefined && onStepChange) {
+      // If controlled by parent, notify parent of step change
+      onStepChange(step);
+    } else {
+      // If uncontrolled, use internal state
+      setInternalCurrentStep(step);
+    }
+  };
 
   // Application form state
   const [applicationData, setApplicationData] = useState({
@@ -179,11 +200,13 @@ const SellerOnboarding = () => {
   };
 
   const nextStep = () => {
-    setCurrentStep(prev => prev + 1);
+    const next = currentStep + 1;
+    setCurrentStep(next);
   };
 
   const prevStep = () => {
-    setCurrentStep(prev => prev - 1);
+    const prev = currentStep - 1;
+    setCurrentStep(prev);
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -295,15 +318,6 @@ const SellerOnboarding = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Progress Bar */}
-      <ProgressBar
-        currentStep={currentStep}
-        totalSteps={4}
-        className="bg-white border-b border-gray-200"
-        activeColor="bg-blue-600"
-        inactiveColor="bg-gray-300"
-      />
-
       {/* Step 1: Overview */}
       {currentStep === 1 && (
         <div className="p-4 space-y-6">
