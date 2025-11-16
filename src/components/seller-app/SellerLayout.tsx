@@ -41,8 +41,9 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const sellerInfoRef = useRef<HTMLDivElement>(null);
   const previousTabRef = useRef<string>('products');
 
-  // States - PRESERVED ALL ORIGINAL STATES
+  // States
   const [isFavorite, setIsFavorite] = useState(false);  
+  const [shouldShowNoStoreState, setShouldShowNoStoreState] = useState(false);
 
   // FIXED: Single handleBackClick function
   const handleBackClick = () => {
@@ -78,20 +79,14 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   const isPickupStation = location.pathname.includes('/pickup-station');  
 
   const getCurrentTab = () => {  
-    const path = location.pathname;
-    
     if (isDashboard) {  
-      const dashboardPath = path.split('/seller-dashboard/')[1];  
-      if (!dashboardPath || dashboardPath === '') return 'products';
-      // Handle edit paths
-      if (dashboardPath === 'edit-profile') return 'edit-profile';
-      if (dashboardPath.startsWith('products/edit/')) return 'product-edit';
-      return dashboardPath.split('/')[0]; // Get first segment only
+      const path = location.pathname.split('/seller-dashboard/')[1];  
+      return !path || path === '' ? 'products' : path;  
     } else if (isPickupStation) {  
-      const stationPath = path.split('/pickup-station/')[1];  
-      return !stationPath || stationPath === '' ? 'overview' : stationPath.split('/')[0];  
+      const path = location.pathname.split('/pickup-station/')[1];  
+      return !path || path === '' ? 'overview' : path;  
     } else {  
-      const pathParts = path.split('/seller/')[1]?.split('/');  
+      const pathParts = location.pathname.split('/seller/')[1]?.split('/');  
       if (pathParts && pathParts.length > 1) return pathParts[1];  
       return 'products';  
     }  
@@ -113,7 +108,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     ? '/pickup-station'  
     : `/seller/${location.pathname.split('/seller/')[1]?.split('/')[0] || ''}`;  
 
-  // UPDATED NAVIGATION ITEMS - Include edit-profile and product-edit as hidden
+  // UPDATED NAVIGATION ITEMS
   const navigationItems = isPickupStation  
     ? [  
         { id: 'overview', name: 'Overview', href: '/pickup-station/overview', icon: Home },  
@@ -136,9 +131,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     { id: 'finances', name: 'Finances', href: '/seller-dashboard/finances', icon: DollarSign },  
     { id: 'marketing', name: 'Marketing', href: '/seller-dashboard/marketing', icon: Megaphone },  
     { id: 'settings', name: 'Settings', href: '/seller-dashboard/settings', icon: Settings },  
-    // Add edit-profile as a hidden navigation item
     { id: 'edit-profile', name: 'Edit Profile', href: '/seller-dashboard/edit-profile', icon: Edit, hidden: true },  
-    // Add product-edit as a hidden navigation item
     { id: 'product-edit', name: 'Edit Product', href: '/seller-dashboard/products/edit/:productId', icon: Edit, hidden: true },  
   ]  
     : [  
@@ -149,20 +142,18 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         { id: 'reviews', name: 'Reviews', href: `${baseRoute}/reviews`, icon: Star },  
       ];  
 
-  // PRESERVED ORIGINAL TAB CHANGE LOGIC WITH SCROLL RESET
+  // PRESERVED ORIGINAL TAB CHANGE LOGIC
   const handleTabChange = (tabId: string) => {  
     const item = navigationItems.find(nav => nav.id === tabId);  
-    if (item && item.id !== activeTab) { // Prevent navigation to same tab
-      // Scroll to top when changing tabs to ensure proper layout
+    if (item) {
       window.scrollTo(0, 0);
-
-      previousTabRef.current = activeTab;
-
+      const previousTab = activeTab;
+      previousTabRef.current = previousTab;
       navigate(item.href);
     }  
   };  
 
-  // Filter out hidden tabs from display but keep them in navigation
+  // Filter out hidden tabs from display
   const visibleTabs = navigationItems.filter(item => !item.hidden);
   const tabs = visibleTabs.map(item => ({  
     id: item.id,  
@@ -203,10 +194,15 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       return data.publicUrl;  
     });  
 
-  // ===== NO STORE/SELLER DATA STATE =====
-  // MOVED AFTER ALL HOOKS - Fixes React error #310
-  const hasStore = !sellerLoading && sellerData;
-  const shouldShowNoStoreState = !sellerLoading && !sellerData && !isPublicPage;
+  // ===== USE EFFECT TO HANDLE NO STORE STATE =====
+  useEffect(() => {
+    // Set the no store state after all hooks are processed
+    if (!sellerLoading && !sellerData && !isPublicPage) {
+      setShouldShowNoStoreState(true);
+    } else {
+      setShouldShowNoStoreState(false);
+    }
+  }, [sellerLoading, sellerData, isPublicPage]);
 
   // Custom action buttons for edit pages
   const getEditPageActionButtons = () => {
@@ -332,7 +328,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     </div>  
   ) : undefined;
 
-  // Enhanced children with additional props - PRESERVED ORIGINAL LOGIC
+  // Enhanced children with additional props
   const enhancedChildren = React.Children.map(children, child => {  
     if (React.isValidElement(child)) {  
       if (activeTab !== 'products') {  
@@ -348,15 +344,20 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
   // ===== REDIRECT HANDLER =====  
   useEffect(() => {  
-    const path = location.pathname;
-    
-    // Only redirect if we're at the exact base path
-    if (path === '/seller-dashboard' || path === '/seller-dashboard/') {
+    if (  
+      location.pathname === '/seller-dashboard' ||  
+      location.pathname.endsWith('/seller-dashboard/')  
+    ) {  
       navigate('/seller-dashboard/products', { replace: true });  
-    } else if (path === '/pickup-station' || path === '/pickup-station/') {
+    } else if (  
+      location.pathname === '/pickup-station' ||  
+      location.pathname.endsWith('/pickup-station/')  
+    ) {  
       navigate('/pickup-station/overview', { replace: true });  
     }  
   }, [location.pathname, navigate]);  
+
+  const hasStore = !sellerLoading && sellerData;
 
   return (  
     <StickyTabsLayout
@@ -372,7 +373,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       variant="underline"
       stickyBuffer={4}
       alwaysStickyForNonProducts={true}
-      hideTabs={isEditProfilePage || isProductEditPage || !hasStore} // Hide tabs when no store
+      hideTabs={isEditProfilePage || isProductEditPage || !hasStore}
     >
       {enhancedChildren}
     </StickyTabsLayout>
