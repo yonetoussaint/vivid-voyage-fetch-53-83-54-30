@@ -71,9 +71,10 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
   const handleFavoriteClick = () => setIsFavorite(!isFavorite);  
 
-  // Check if current route is edit profile OR product edit
+  // Check if current route is edit profile, product edit, or onboarding
   const isEditProfilePage = location.pathname.includes('/edit-profile');
   const isProductEditPage = location.pathname.includes('/products/edit/');
+  const isOnboardingPage = location.pathname.includes('/onboarding');
 
   // Path calculations
   const isDashboard = location.pathname.includes('/seller-dashboard');  
@@ -134,6 +135,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
         { id: 'settings', name: 'Settings', href: '/seller-dashboard/settings', icon: Settings },  
         { id: 'edit-profile', name: 'Edit Profile', href: '/seller-dashboard/edit-profile', icon: Edit, hidden: true },  
         { id: 'product-edit', name: 'Edit Product', href: '/seller-dashboard/products/edit/:productId', icon: Edit, hidden: true },  
+        { id: 'onboarding', name: 'Onboarding', href: '/seller-dashboard/onboarding', icon: Package, hidden: true },  
       ]  
     : [  
         { id: 'products', name: 'Products', href: `${baseRoute}/products`, icon: Package },  
@@ -198,9 +200,9 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   // **NEW: Check if seller has a store (has products or is verified)**
   const hasStore = sellerData && (products.length > 0 || sellerData.verified);
 
-  // Custom action buttons for edit pages
+  // Custom action buttons for edit pages and onboarding
   const getEditPageActionButtons = () => {
-    if (isEditProfilePage || isProductEditPage) {
+    if (isEditProfilePage || isProductEditPage || isOnboardingPage) {
       return [  
         {  
           Icon: Save,  
@@ -238,6 +240,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       const productId = location.pathname.split('/edit/')[1];
       return productId === 'new' ? "Create Product" : "Edit Product";
     }
+    if (isOnboardingPage) return "Become a Seller";
     return undefined;
   };
 
@@ -247,18 +250,18 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"  
     >  
       <ProductHeader  
-        onCloseClick={(isEditProfilePage || isProductEditPage) ? () => navigate('/seller-dashboard/products') : handleBackClick}  
+        onCloseClick={(isEditProfilePage || isProductEditPage || isOnboardingPage) ? () => navigate('/seller-dashboard/products') : handleBackClick}  
         onShareClick={handleShareClick}  
         actionButtons={getEditPageActionButtons() || regularActionButtons}
-        forceScrolledState={!isProductsTab || isEditProfilePage || isProductEditPage}
+        forceScrolledState={!isProductsTab || isEditProfilePage || isProductEditPage || isOnboardingPage}
         title={getPageTitle()}
-        hideSearch={isEditProfilePage || isProductEditPage}
-        showSellerInfo={!(isEditProfilePage || isProductEditPage)}
+        hideSearch={isEditProfilePage || isProductEditPage || isOnboardingPage}
+        showSellerInfo={!(isEditProfilePage || isProductEditPage || isOnboardingPage)}
       />  
     </div>  
   );
 
-  const topContent = isProductsTab && !isEditProfilePage && !isProductEditPage ? (
+  const topContent = isProductsTab && !isEditProfilePage && !isProductEditPage && !isOnboardingPage ? (
     <div className="w-full bg-black text-white">  
       <SellerInfoSection  
         sellerData={sellerData}  
@@ -309,10 +312,10 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
   // **NEW: If no store and on products tab, redirect to separate onboarding page**
   useEffect(() => {
-    if (!hasStore && isProductsTab && !isEditProfilePage && !isProductEditPage && !sellerLoading) {
+    if (!hasStore && isProductsTab && !isEditProfilePage && !isProductEditPage && !isOnboardingPage && !sellerLoading) {
       navigate('/seller-dashboard/onboarding', { replace: true });
     }
-  }, [hasStore, isProductsTab, isEditProfilePage, isProductEditPage, sellerLoading, navigate]);
+  }, [hasStore, isProductsTab, isEditProfilePage, isProductEditPage, isOnboardingPage, sellerLoading, navigate]);
 
   return (  
     <StickyTabsLayout
@@ -328,7 +331,7 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       variant="underline"
       stickyBuffer={4}
       alwaysStickyForNonProducts={true}
-      hideTabs={isEditProfilePage || isProductEditPage || !hasStore} // **NEW: Hide tabs when no store**
+      hideTabs={isEditProfilePage || isProductEditPage || isOnboardingPage || !hasStore} // **NEW: Hide tabs when no store or on edit/onboarding pages**
     >
       {enhancedChildren}
     </StickyTabsLayout>
