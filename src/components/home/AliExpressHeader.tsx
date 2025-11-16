@@ -1,664 +1,736 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { useScrollProgress } from '@/hooks/useScrollProgress';
-import { Home, Search, ShoppingBag, Tv, Sofa, ShoppingCart, Car, Gamepad2, Settings, X, Globe, User, Book, Languages, Check, Pin, MapPin, Edit, ScanLine, Mic } from 'lucide-react';
-import HeaderSearchBar from './header/HeaderSearchBar';
-import CategoryTabs from './header/CategoryTabs';
-import CategoryPanel from './header/CategoryPanel';
-import VoiceSearchOverlay from './header/VoiceSearchOverlay';
-import NotificationBadge from './header/NotificationBadge';
-import HeaderLogoToggle from './header/HeaderLogoToggle';
-import HomepageDropdown from './header/HomepageDropdown';
-import SectionHeader from './SectionHeader';
-import { useAuthOverlay } from '@/context/AuthOverlayContext';
+import React, { useState } from "react";
+import { 
+  Heart, 
+  Search,
+  Settings,
+  Globe,
+  MapPin,
+  Edit,
+  Pin,
+  Check,
+  Languages,
+  LucideIcon
+} from "lucide-react";
+import { useScrollProgress } from "./header/useScrollProgress";
+import BackButton from "./header/BackButton";
+import { useNavigate } from 'react-router-dom';
+import { useNavigationLoading } from '@/hooks/useNavigationLoading';
+import { VerificationBadge } from '@/components/shared/VerificationBadge';
+import SlideUpPanel from '@/components/shared/SlideUpPanel';
 import { useLanguageSwitcher } from '@/hooks/useLanguageSwitcher';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import ProductFilterBar from './ProductFilterBar';
-import LocationScreen from './header/LocationScreen';
-import SearchOverlay from './SearchOverlay';
-import ReusableSearchBar from '@/components/shared/ReusableSearchBar';
-import SettingsPanel from './header/SettingsPanel';
-import { useHeaderFilter } from "@/contexts/HeaderFilterContext";
 
-interface AliExpressHeaderProps {
-  activeTabId?: string;
-  showFilterBar?: boolean;
-  showCategoryTabs?: boolean;
-  filterCategories?: Array<{
-    id: string;
-    label: string;
-    options: string[];
-  }>;
-  selectedFilters?: Record<string, string>;
-  onFilterSelect?: (filterId: string, option: string) => void;
-  onFilterClear?: (filterId: string) => void;
-  onClearAll?: () => void;
-  onFilterButtonClick?: (filterId: string) => void;
-  isFilterDisabled?: (filterId: string) => boolean;
-  customTabs?: Array<{ id: string; name: string; path?: string }>;
-  onCustomTabChange?: (tabId: string) => void;
-  showSectionHeader?: boolean;
-  sectionHeaderTitle?: string;
-  sectionHeaderViewAllLink?: string;
-  sectionHeaderViewAllText?: string;
-  sectionHeaderShowStackedProfiles?: boolean;
-  sectionHeaderStackedProfiles?: Array<{ id: string; image: string; alt?: string }>;
-  sectionHeaderStackedProfilesText?: string;
-  sectionHeaderShowCountdown?: boolean;
-  sectionHeaderCountdown?: string; // Added for countdown
-  sectionHeaderShowSponsorCount?: boolean;
-  sectionHeaderShowVerifiedSellers?: boolean;
-  sectionHeaderVerifiedSellersText?: string;
-  sectionHeaderIcon?: React.ComponentType<{ className?: string }>;
+// Language and Location interfaces
+interface Language {
+  code: string;
+  name: string;
+  nativeName: string;
 }
 
-export default function AliExpressHeader({ 
-  activeTabId = 'recommendations', 
-  showFilterBar = false,
-  showCategoryTabs = true,
-  filterCategories = [],
-  selectedFilters = {},
-  onFilterSelect = () => {},
-  onFilterClear = () => {},
-  onClearAll = () => {},
-  onFilterButtonClick = () => {},
-  isFilterDisabled = () => false,
-  customTabs,
-  onCustomTabChange,
-  showSectionHeader = false,
-  sectionHeaderTitle = '',
-  sectionHeaderViewAllLink,
-  sectionHeaderViewAllText = 'View All',
-  sectionHeaderShowStackedProfiles = false,
-  sectionHeaderStackedProfiles = [],
-  sectionHeaderStackedProfilesText = "Handpicked by",
-  sectionHeaderShowCountdown = false, // Added for countdown
-  sectionHeaderCountdown, // Added for countdown
-  sectionHeaderShowSponsorCount = false,
-  sectionHeaderShowVerifiedSellers = false,
-  sectionHeaderVerifiedSellersText = 'Verified Sellers',
-  sectionHeaderIcon,
-}: AliExpressHeaderProps) {
-  const { progress } = useScrollProgress();
-  const { currentLanguage, setLanguage, supportedLanguages, currentLocation } = useLanguageSwitcher();
-  const { t } = useTranslation();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const homepageType = 'marketplace';
+interface Location {
+  name: string;
+  flag?: string;
+}
 
-  // Add this line to get headerMode from context
-  const { headerMode } = useHeaderFilter();
+interface ActionButton {
+  Icon: any;
+  onClick?: () => void;
+  active?: boolean;
+  activeColor?: string;
+  count?: number;
+}
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState(activeTabId);
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [voiceSearchActive, setVoiceSearchActive] = useState(false);
-  const [isSearchGlowing, setIsSearchGlowing] = useState(false);
-  const [showSettingsPanel, setShowSettingsPanel] = useState(false);
-  const [showLocationScreen, setShowLocationScreen] = useState(false);
+interface ProductHeaderProps {
+  activeSection?: string;
+  onTabChange?: (section: string) => void;
+  focusMode?: boolean;
+  showHeaderInFocus?: boolean;
+  onProductDetailsClick?: () => void;
+  currentImageIndex?: number;
+  totalImages?: number;
+  onShareClick?: () => void;
+  searchQuery?: string;
+  setSearchQuery?: (query: string) => void;
+  onSearch?: (query: string) => void;
+  onSearchFocus?: () => void;
+  inPanel?: boolean;
+  showCloseIcon?: boolean;
+  onCloseClick?: () => void;
+  actionButtons?: ActionButton[];
+  forceScrolledState?: boolean;
+  seller?: {
+    id: string;
+    name: string;
+    image_url?: string;
+    verified: boolean;
+    followers_count: number;
+  };
+  onSellerClick?: () => void;
+  // NEW PROPS:
+  title?: string; // For showing a title in the center
+  hideSearch?: boolean; // For hiding search bar
+  showSellerInfo?: boolean; // For controlling seller info display
+  // PROGRESS BAR PROPS:
+  showProgressBar?: boolean; // Conditionally show progress bar
+  currentStep?: number; // Current step for progress bar
+  totalSteps?: number; // Total steps for progress bar
+  progressBarColor?: string; // Custom color for active progress
+  // SETTINGS PANEL PROPS:
+  currentLanguage?: Language;
+  currentLocation?: Location;
+  supportedLanguages?: Language[];
+  onLanguageChange?: (language: Language) => void;
+  onOpenLocationScreen?: () => void;
+  showSettingsButton?: boolean; // Control whether to show settings button
+}
+
+// Header Action Button Component - Integrated directly
+interface HeaderActionButtonProps {
+  Icon: LucideIcon;
+  active?: boolean;
+  onClick?: () => void;
+  progress: number;
+  activeColor?: string;
+  badge?: number;
+  fillWhenActive?: boolean;
+  transform?: string;
+  likeCount?: number;
+  shareCount?: number;
+}
+
+const HeaderActionButton = ({ 
+  Icon, 
+  active = false, 
+  onClick, 
+  progress, 
+  activeColor = '#f97316',
+  badge,
+  fillWhenActive = true,
+  transform = '',
+  likeCount,
+  shareCount
+}: HeaderActionButtonProps) => {
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    }
+
+    // Only trigger animation for heart icon
+    if (Icon.name === "Heart" || Icon.displayName === "Heart") {
+      setIsAnimating(true);
+      setTimeout(() => setIsAnimating(false), 700);
+    }
+  };
+
+  // Determine which count to show
+  const count = likeCount ?? shareCount;
+
+  // Improved transition thresholds for smoother animation
+  const expandedThreshold = 0.2;
+  const fadingThreshold = 0.4;
+
+  // Show horizontal layout with count in non-scroll state
+  if (count !== undefined && progress < expandedThreshold) {
+    return (
+      <div 
+        className="rounded-full transition-all duration-700 hover-scale"
+        style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - progress)})` }}
+      >
+        <button
+          onClick={handleClick}
+          className="flex items-center gap-1.5 px-2.5 h-8 rounded-full transition-all duration-700 relative"
+        >
+          <Icon
+            size={20}
+            strokeWidth={2.5}
+            className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
+            style={{
+              fill: active && fillWhenActive ? activeColor : 'transparent',
+              color: `rgba(255, 255, 255, ${0.9 - (progress * 0.2)})`
+            }}
+          />
+          <span 
+            className="text-xs font-medium transition-all duration-700 ease-out animate-fade-in"
+            style={{
+              color: active ? activeColor : `rgba(255, 255, 255, ${0.95 - (progress * 0.2)})`,
+              opacity: 1 - (progress / expandedThreshold),
+            }}
+          >
+            {count}
+          </span>
+        </button>
+      </div>
+    );
+  }
+
+  // Transitional state - fading count while shrinking
+  if (count !== undefined && progress < fadingThreshold) {
+    const transitionProgress = (progress - expandedThreshold) / (fadingThreshold - expandedThreshold);
+
+    return (
+      <div 
+        className="rounded-full transition-all duration-700"
+        style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - progress)})` }}
+      >
+        <button
+          onClick={handleClick}
+          className="flex items-center h-8 px-3 rounded-full transition-all duration-700 relative"
+          style={{
+            gap: `${6 - (transitionProgress * 6)}px`,
+          }}
+        >
+          <Icon
+            size={20}
+            strokeWidth={2.5}
+            className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
+            style={{
+              fill: active && fillWhenActive ? activeColor : 'transparent',
+              color: progress > 0.5 
+                ? `rgba(75, 85, 99, ${0.7 + (progress * 0.3)})` 
+                : `rgba(255, 255, 255, ${0.9 - (progress * 0.3)})`
+            }}
+          />
+          <span 
+            className="text-xs font-medium transition-all duration-700"
+            style={{
+              color: active ? activeColor : `rgba(255, 255, 255, ${0.9 - (progress * 0.3)})`,
+              opacity: 1 - transitionProgress,
+              transform: `scaleX(${1 - transitionProgress})`,
+              transformOrigin: 'left center',
+              width: `${20 * (1 - transitionProgress)}px`,
+              overflow: 'hidden',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {count}
+          </span>
+        </button>
+      </div>
+    );
+  }
+
+  // Compact circular button state (matches back button exactly)
+  return (
+    <div 
+      className="rounded-full transition-all duration-700"
+      style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - progress)})` }}
+    >
+      <button
+        onClick={handleClick}
+        className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700 relative"
+      >
+        <Icon
+          size={20}
+          strokeWidth={2.5}
+          className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
+          style={{
+            fill: active && fillWhenActive ? activeColor : 'transparent',
+            color: progress > 0.5 
+              ? `rgba(75, 85, 99, ${0.7 + (progress * 0.3)})` 
+              : `rgba(255, 255, 255, ${0.9 - (progress * 0.2)})`
+          }}
+        />
+        {badge && (
+          <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[8px] rounded-full h-3 w-3 flex items-center justify-center animate-scale-in">
+            {badge}
+          </span>
+        )}
+      </button>
+    </div>
+  );
+};
+
+const ProductHeader: React.FC<ProductHeaderProps> = ({
+  activeSection = "overview",
+  onTabChange,
+  focusMode = false,
+  showHeaderInFocus = false,
+  onProductDetailsClick,
+  currentImageIndex,
+  totalImages,
+  onShareClick,
+  searchQuery: externalSearchQuery,
+  setSearchQuery: externalSetSearchQuery,
+  onSearch,
+  onSearchFocus,
+  inPanel = false,
+  showCloseIcon = false,
+  onCloseClick,
+  actionButtons = [],
+  forceScrolledState = false,
+  seller,
+  onSellerClick,
+  // NEW PROPS:
+  title,
+  hideSearch = false,
+  showSellerInfo = true,
+  // PROGRESS BAR PROPS:
+  showProgressBar = false,
+  currentStep = 1,
+  totalSteps = 4,
+  progressBarColor = "bg-blue-600",
+  // SETTINGS PANEL PROPS:
+  currentLanguage: propCurrentLanguage,
+  currentLocation: propCurrentLocation,
+  supportedLanguages: propSupportedLanguages,
+  onLanguageChange = () => {},
+  onOpenLocationScreen = () => {},
+  showSettingsButton = false,
+}) => {
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [languageQuery, setLanguageQuery] = useState('');
   const [pinnedLanguages, setPinnedLanguages] = useState(new Set(['en', 'es']));
-  const [showSearchOverlay, setShowSearchOverlay] = useState(false);
-  const [headerHeight, setHeaderHeight] = useState(0);
+  const [showLocationScreen, setShowLocationScreen] = useState(false);
+  
+  const { progress: scrollProgress } = useScrollProgress();
+  const displayProgress = forceScrolledState ? 1 : scrollProgress;
+  const [internalSearchQuery, setInternalSearchQuery] = useState('');
+  const navigate = useNavigate();
+  const { isLoading } = useNavigationLoading();
+  
+  // Use language context
+  const { 
+    currentLanguage: contextCurrentLanguage, 
+    setLanguage, 
+    supportedLanguages: contextSupportedLanguages,
+    currentLocation: contextCurrentLocation
+  } = useLanguageSwitcher();
 
-  const scrollY = useRef(0);
-  const searchRef = useRef<HTMLInputElement>(null);
-  const settingsPanelRef = useRef<HTMLDivElement>(null);
-  const headerRef = useRef<HTMLHeadElement>(null);
+  // Use props if provided, otherwise use context
+  const currentLanguage = propCurrentLanguage || contextCurrentLanguage;
+  const currentLocation = propCurrentLocation || contextCurrentLocation;
+  const supportedLanguages = propSupportedLanguages || contextSupportedLanguages;
 
-  // Popular searches data
-  const popularSearches = useRef([
-    "Wireless earbuds",
-    "Smart watches",
-    "Summer dresses",
-    "Phone cases",
-    "Home decor",
-    "Fitness trackers",
-    "LED strip lights"
-  ]).current;
+  // Use external search query if provided, otherwise use internal
+  const searchQuery = externalSearchQuery !== undefined ? externalSearchQuery : internalSearchQuery;
+  const setSearchQuery = externalSetSearchQuery || setInternalSearchQuery;
 
-  const [currentPopularSearch, setCurrentPopularSearch] = useState(0);
-  const [placeholder, setPlaceholder] = useState(popularSearches[0]);
-  const [showSearchBar, setShowSearchBar] = useState(false);
-  const showSearchBarRef = useRef(showSearchBar);
-
-  // Define search-specific tabs
-  const searchTabs = useMemo(() => [
-    { id: 'products', name: 'Products' },
-    { id: 'sellers', name: 'Sellers' },
-    { id: 'posts', name: 'Posts' },
-    { id: 'shorts', name: 'Shorts' },
-    { id: 'articles', name: 'Articles' },
-  ], []);
-
-  const categories = useMemo(() => [
-    { id: 'recommendations', name: t('forYou', { ns: 'home' }), path: '/for-you' },
-    { id: 'electronics', name: t('electronics', { ns: 'categories' }), path: '/categories/electronics' },
-    { id: 'home', name: t('homeLiving', { ns: 'categories' }), path: '/categories/home-living' },
-    { id: 'fashion', name: t('fashion', { ns: 'categories' }), path: '/categories/fashion' },
-    { id: 'entertainment', name: t('entertainment', { ns: 'categories' }), path: '/categories/entertainment' },
-    { id: 'kids', name: t('kidsHobbies', { ns: 'categories' }), path: '/categories/kids-hobbies' },
-    { id: 'sports', name: t('sports', { ns: 'categories' }), path: '/categories/sports-outdoors' },
-    { id: 'automotive', name: t('automotive', { ns: 'categories' }), path: '/categories/automotive' },
-    { id: 'women', name: t('women', { ns: 'categories' }), path: '/categories/women' },
-    { id: 'men', name: t('men', { ns: 'categories' }), path: '/categories/men' },
-    { id: 'books', name: t('books', { ns: 'categories' }), path: '/categories/books' },
-  ], [t]);
-
-  // Determine which tabs to show based on search overlay state or custom tabs
-  const tabsToShow = customTabs || (showSearchOverlay ? searchTabs : categories);
-
-  // Generate a unique key for CategoryTabs based on the actual tabs being displayed
-  const categoryTabsKey = tabsToShow.map(tab => tab.id).join('-');
-
-  // Add this function to handle search query changes
-  const handleSearchQueryChange = (query: string) => {
-    setSearchQuery(query);
+  const toggleFavorite = () => {
+    setIsFavorite(!isFavorite);
   };
 
-  // Fix: Set active tab to products when search overlay opens
-  useEffect(() => {
-    if (showSearchOverlay) {
-      setActiveTab('products');
+  const toggleSettings = () => {
+    setIsSettingsOpen(!isSettingsOpen);
+    setLanguageQuery(''); // Clear search when opening settings
+  };
+
+  const handleSearchSubmit = () => {
+    if (searchQuery.trim() && onSearch) {
+      onSearch(searchQuery);
+    } else if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
-  }, [showSearchOverlay]);
+  };
 
-  // Calculate header height dynamically
-  useEffect(() => {
-    const calculateHeaderHeight = () => {
-      if (headerRef.current) {
-        const height = headerRef.current.getBoundingClientRect().height;
-        setHeaderHeight(height);
-      }
-    };
-
-    calculateHeaderHeight();
-    window.addEventListener('resize', calculateHeaderHeight);
-    calculateHeaderHeight();
-
-    return () => {
-      window.removeEventListener('resize', calculateHeaderHeight);
-    };
-  }, [showSearchOverlay, showSettingsPanel, showFilterBar]);
-
-  // Also recalculate when filter bar visibility changes
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (headerRef.current) {
-        const height = headerRef.current.getBoundingClientRect().height;
-        setHeaderHeight(height);
-      }
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [showFilterBar, activeTab]);
-
-  // Fallback languages
-  const languages = useMemo(() => {
-    if (supportedLanguages && Array.isArray(supportedLanguages) && supportedLanguages.length > 0) {
-      return supportedLanguages;
-    }
-
-    return [
-      { code: 'en', name: 'English', nativeName: 'English' },
-      { code: 'es', name: 'Spanish', nativeName: 'Español' },
-      { code: 'fr', name: 'French', nativeName: 'Français' },
-      { code: 'de', name: 'German', nativeName: 'Deutsch' },
-      { code: 'zh', name: 'Chinese', nativeName: '中文' },
-      { code: 'ja', name: 'Japanese', nativeName: '日本語' },
-    ];
-  }, [supportedLanguages]);
-
-  // Filter and sort languages
-  const filteredLanguages = useMemo(() => {
-    const filtered = languages.filter((lang) =>
-      lang.name.toLowerCase().includes(languageQuery.toLowerCase()) ||
-      lang.nativeName.toLowerCase().includes(languageQuery.toLowerCase())
-    );
-
-    return filtered.sort((a, b) => {
-      const aPinned = pinnedLanguages.has(a.code);
-      const bPinned = pinnedLanguages.has(b.code);
-      if (aPinned && !bPinned) return -1;
-      if (!aPinned && bPinned) return 1;
-      return 0;
-    });
-  }, [languageQuery, pinnedLanguages, languages]);
-
-  // Handle body scroll locking
-  useEffect(() => {
-    if (showSettingsPanel || showSearchOverlay) {
-      document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${window.scrollY}px`;
-      document.body.style.width = '100%';
-      document.body.style.height = '100vh';
-    } else {
-      const scrollY = document.body.style.top;
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.height = '';
-
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || '0') * -1);
-      }
-    }
-
-    return () => {
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.height = '';
-    };
-  }, [showSettingsPanel, showSearchOverlay]);
-
-  // Language functionality
-  const handleLanguageSelect = (language: any) => {
-    // Make sure we're calling setLanguage correctly
-    setLanguage(language.code); // This should change the language
+  const handleLanguageChange = (language: Language) => {
+    // Call the parent handler if provided
+    onLanguageChange(language);
+    
+    // Call the language context setter
+    setLanguage(language.code);
+    
+    // Clear search when language is selected
     setLanguageQuery('');
-    // You might want to close the panel after selection
-    // setShowSettingsPanel(false);
   };
 
-  const toggleLanguagePin = (languageCode: string, event: React.MouseEvent) => {
+  const handleToggleLanguagePin = (languageCode: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    setPinnedLanguages((prev) => {
+    setPinnedLanguages(prev => {
       const newSet = new Set(prev);
-      newSet.has(languageCode) ? newSet.delete(languageCode) : newSet.add(languageCode);
+      if (newSet.has(languageCode)) {
+        newSet.delete(languageCode);
+      } else {
+        newSet.add(languageCode);
+      }
       return newSet;
     });
   };
 
   const handleOpenLocationScreen = () => {
     setShowLocationScreen(true);
-    setShowSettingsPanel(false);
+    setIsSettingsOpen(false);
+    // Call the parent handler if provided
+    onOpenLocationScreen();
   };
 
   const handleCloseLocationScreen = () => {
     setShowLocationScreen(false);
   };
 
-  // Search functionality
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      setShowSearchOverlay(false);
-    }
-  };
+  // Fallback languages
+  const languages = supportedLanguages && Array.isArray(supportedLanguages) && supportedLanguages.length > 0 
+    ? supportedLanguages
+    : [
+        { code: 'en', name: 'English', nativeName: 'English' },
+        { code: 'es', name: 'Spanish', nativeName: 'Español' },
+        { code: 'fr', name: 'French', nativeName: 'Français' },
+        { code: 'de', name: 'German', nativeName: 'Deutsch' },
+        { code: 'zh', name: 'Chinese', nativeName: '中文' },
+        { code: 'ja', name: 'Japanese', nativeName: '日本語' },
+      ];
 
-  // Modified search focus handler - ensure products tab is active
-  const handleSearchFocus = () => {
-    setShowSearchOverlay(true);
-    setIsSearchFocused(true);
-    setActiveTab('products'); // Ensure products tab is active when search opens
-  };
+  // Filter and sort languages
+  const filteredLanguages = languages
+    .filter((lang) =>
+      lang.name.toLowerCase().includes(languageQuery.toLowerCase()) ||
+      lang.nativeName.toLowerCase().includes(languageQuery.toLowerCase())
+    )
+    .sort((a, b) => {
+      const aPinned = pinnedLanguages.has(a.code);
+      const bPinned = pinnedLanguages.has(b.code);
+      if (aPinned && !bPinned) return -1;
+      if (!aPinned && bPinned) return 1;
+      return 0;
+    });
 
-  const handleCloseSearchOverlay = () => {
-    setShowSearchOverlay(false);
-    setIsSearchFocused(false);
-
-    // Reset to the original category tab when closing search overlay
-    const currentCategory = categories.find(cat => location.pathname === cat.path);
-    if (currentCategory) {
-      setActiveTab(currentCategory.id);
-    } else if (location.pathname === '/' || location.pathname === '/for-you') {
-      setActiveTab('recommendations');
-    }
-  };
-
-  // Handle search tab click
-  const handleSearchTabClick = (tabId: string) => {
-    setActiveTab(tabId);
-    console.log(`Search tab clicked: ${tabId}`);
-  };
-
-  // Clear search query
-  const handleClearSearch = () => {
-    setSearchQuery('');
-    if (searchRef.current) {
-      searchRef.current.focus();
-    }
-  };
-
-  // Stable scroll handler
-  const handleScroll = useCallback(() => {
-    if (showSettingsPanel || showSearchOverlay) return;
-
-    const currentScrollY = window.scrollY;
-    scrollY.current = currentScrollY;
-
-    if (currentScrollY > 100 && !showSearchBarRef.current) {
-      setShowSearchBar(true);
-      showSearchBarRef.current = true;
-    } else if (currentScrollY <= 100 && showSearchBarRef.current) {
-      setShowSearchBar(false);
-      showSearchBarRef.current = false;
-    }
-  }, [showSettingsPanel, showSearchOverlay]);
-
-  // Track scroll position
-  useEffect(() => {
-    if (showSettingsPanel || showSearchOverlay) return;
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [handleScroll, showSettingsPanel, showSearchOverlay]);
-
-  // Prevent background scrolling
-  useEffect(() => {
-    const handleWheel = (e: WheelEvent) => {
-      if ((showSettingsPanel || showSearchOverlay) && 
-          !settingsPanelRef.current?.contains(e.target as Node)) {
-        e.preventDefault();
-      }
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if ((showSettingsPanel || showSearchOverlay) && 
-          !settingsPanelRef.current?.contains(e.target as Node)) {
-        e.preventDefault();
-      }
-    };
-
-    if (showSettingsPanel || showSearchOverlay) {
-      document.addEventListener('wheel', handleWheel, { passive: false });
-      document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    }
-
-    return () => {
-      document.removeEventListener('wheel', handleWheel);
-      document.removeEventListener('touchmove', handleTouchMove);
-    };
-  }, [showSettingsPanel, showSearchOverlay]);
-
-  // Determine if we should show the top bar based on current route
-  const isForYouPage = location.pathname === '/for-you' || location.pathname === '/';
-
-  // Update active tab when prop changes or route changes
-  useEffect(() => {
-    // If custom tabs are provided, ensure activeTab matches one of them
-    if (customTabs && customTabs.length > 0) {
-      // Check if activeTabId prop matches a custom tab
-      const matchingCustomTab = customTabs.find(tab => tab.id === activeTabId);
-      if (matchingCustomTab) {
-        setActiveTab(activeTabId);
-      } else {
-        // Default to first custom tab if activeTabId doesn't match
-        setActiveTab(customTabs[0].id);
-      }
-    } else {
-      // Handle regular categories
-      const currentCategory = categories.find(cat => location.pathname === cat.path);
-      if (currentCategory) {
-        setActiveTab(currentCategory.id);
-      } else if (location.pathname === '/' || location.pathname === '/for-you') {
-        setActiveTab('recommendations');
-      }
-    }
-  }, [activeTabId, location.pathname, categories, customTabs]);
-
-  // Cycle through popular searches
-  useEffect(() => {
-    if (isSearchFocused || showSearchOverlay) {
-      setPlaceholder('Search for products');
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setCurrentPopularSearch((prev) => (prev + 1) % popularSearches.length);
-      setPlaceholder(popularSearches[currentPopularSearch]);
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [isSearchFocused, currentPopularSearch, popularSearches, showSearchOverlay]);
-
-  // Stable tab change handler
-  const handleTabChange = useCallback((tabId: string) => {
-    setActiveTab(tabId);
-
-    // Handle custom tabs
-    if (customTabs && onCustomTabChange) {
-      onCustomTabChange(tabId);
-    }
-    // Handle navigation for regular categories
-    else if (!showSearchOverlay) {
-      const category = categories.find(cat => cat.id === tabId);
-      if (category && category.path) {
-        navigate(category.path);
-      }
-    } else {
-      // Handle search tabs (no navigation, just filtering)
-      handleSearchTabClick(tabId);
-    }
-  }, [showSearchOverlay, categories, navigate, customTabs, onCustomTabChange]);
-
-  const togglePanel = () => setIsOpen(!isOpen);
-  const handleVoiceSearch = () => setVoiceSearchActive(!voiceSearchActive);
-
-  // Settings panel handlers
-  const toggleSettingsPanel = () => {
-    setShowSettingsPanel(!showSettingsPanel);
-    setLanguageQuery('');
-  };
-
-  // Close panels when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      // For search bar
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        setIsSearchFocused(false);
-      }
-
-      // For settings panel
-      if (settingsPanelRef.current && 
-          !settingsPanelRef.current.contains(event.target as Node) &&
-          showSettingsPanel) {
-        const target = event.target as Element;
-        if (target.classList.contains('fixed') && target.classList.contains('inset-0')) {
-          toggleSettingsPanel();
-        }
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showSettingsPanel]);
-
-  // Render the right icons based on state
-  const renderSearchIcons = () => {
-    if (showSearchOverlay && !searchQuery.trim()) {
-      // Close button when overlay is open and search is empty
-      return (
-        <button
-          type="button"
-          onClick={handleCloseSearchOverlay}
-          className="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full transition-colors hover:bg-gray-200"
-        >
-          Close
-        </button>
-      );
-    } else if (searchQuery.trim()) {
-      // Clear button when there's text
-      return (
-        <button
-          type="button"
-          onClick={handleClearSearch}
-          className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-        >
-          <X className="h-4 w-4 text-gray-600" />
-        </button>
-      );
-    } else if (showSearchBar) {
-      // Scan + Mic icons in scrolled state
-      return (
-        <>
-          <ScanLine className="h-4 w-4 text-gray-600 cursor-pointer hover:text-gray-800" />
-          <Mic 
-            className="h-4 w-4 text-gray-600 cursor-pointer hover:text-gray-800" 
-            onClick={handleVoiceSearch}
-          />
-        </>
-      );
-    } else {
-      // Settings text button in normal state (clean like Close button)
-      return (
-        <button
-          type="button"
-          onClick={toggleSettingsPanel}
-          className="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full transition-colors hover:bg-gray-200"
-        >
-          Settings
-        </button>
-      );
-    }
-  };
+  // Removed SearchPageSkeleton - just return null if loading
+  if (isLoading) {
+    return null;
+  }
 
   return (
-    <header 
-      id="ali-header" 
-      ref={headerRef}
-      className="fixed top-0 w-full z-40 bg-white" 
-      style={{ margin: 0, padding: 0, boxShadow: 'none' }}
-    >
-      {/* Search Overlay */}
-      <SearchOverlay
-        isOpen={showSearchOverlay}
-        onClose={handleCloseSearchOverlay}
-        searchQuery={searchQuery}
-        popularSearches={popularSearches}
-        headerHeight={headerHeight}
-        activeTab={activeTab}
-        onSearchQueryChange={handleSearchQueryChange}
-      />
-
-      {/* Location Screen Overlay */}
-      {showLocationScreen && <LocationScreen onClose={handleCloseLocationScreen} />}
-
-
-      {/* Top Bar */}
-      <div 
-        className="flex items-center justify-between px-2 transition-all duration-500 ease-in-out bg-white"
-        style={{ height: '36px' }}
+    <>
+      <div
+        className={`flex flex-col transition-all duration-300 ${
+          focusMode && !showHeaderInFocus ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'
+        }`}
       >
-        {/* Always show the full-width search bar */}
-        <ReusableSearchBar
-          placeholder={placeholder}
-          value={searchQuery}
-          onChange={setSearchQuery}
-          onSubmit={(query) => {
-            if (query.trim()) {
-              navigate(`/search?q=${encodeURIComponent(query.trim())}`);
-              setShowSearchOverlay(false);
-            }
+        {/* Main Header Container - Now includes progress bar */}
+        <div
+          className="w-full transition-all duration-700"
+          style={{
+            backgroundColor: `rgba(255, 255, 255, ${displayProgress * 0.95})`,
+            backdropFilter: `blur(${displayProgress * 8}px)`,
           }}
-          onSearchFocus={handleSearchFocus}
-          // Pass the overlay state and close handler
-          isOverlayOpen={showSearchOverlay}
-          onCloseOverlay={handleCloseSearchOverlay}
-          // Conditional icon display
-          showScanMic={showSearchBar && !showSearchOverlay}
-          showSettingsButton={!showSearchBar && !showSearchOverlay}
-          onSettingsClick={toggleSettingsPanel}
-        />
-      </div>
+        >
+          {/* Main Header Content */}
+          <div className="py-2 px-3 w-full">
+            <div className="flex items-center justify-between w-full max-w-6xl mx-auto">
+              {/* Left side - Back button and Seller Info */}
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <BackButton
+                  progress={displayProgress}
+                  showCloseIcon={showCloseIcon}
+                  onClick={onCloseClick || (() => navigate(-1))}
+                />
 
-      <SettingsPanel
-        isOpen={showSettingsPanel}
-        onClose={toggleSettingsPanel}
-        currentLanguage={currentLanguage}
-        currentLocation={currentLocation}
-        supportedLanguages={supportedLanguages}
-        onLanguageChange={(language) => {
-          // This should trigger the language change
-          setLanguage(language.code);
-          setLanguageQuery('');
-        }}
-        onOpenLocationScreen={handleOpenLocationScreen}
-        // Pass the missing props
-        languageQuery={languageQuery}
-        onLanguageQueryChange={setLanguageQuery}
-        pinnedLanguages={pinnedLanguages}
-        onToggleLanguagePin={toggleLanguagePin}
-      />
+                {/* Show seller info when not scrolled AND showSellerInfo is true */}
+                {displayProgress < 0.5 && seller && showSellerInfo && (
+                  <div 
+                    className="rounded-full transition-all duration-700"
+                    style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})` }}
+                  >
+                    <button
+                      onClick={() => {
+                        if (onSellerClick) {
+                          onSellerClick();
+                        } else {
+                          navigate(`/seller/${seller.id}`);
+                        }
+                      }}
+                      className="flex items-center gap-1.5 px-2.5 h-8 rounded-full transition-all duration-700 relative"
+                    >
+                      <div className="w-5 h-5 rounded-full bg-gray-100 overflow-hidden flex-shrink-0">
+                        <img 
+                          src={seller.image_url || "https://picsum.photos/100/100?random=1"}
+                          alt={`${seller.name} seller`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = "https://picsum.photos/100/100?random=1";
+                            target.onerror = null;
+                          }}
+                        />
+                      </div>
+                      <span 
+                        className="text-xs font-medium transition-all duration-700"
+                        style={{
+                          color: `rgba(255, 255, 255, ${0.95 - (displayProgress * 0.2)})`
+                        }}
+                      >
+                        {seller.name}
+                      </span>
+                      {seller.verified && <VerificationBadge />}
+                      <span 
+                        className="text-xs font-medium transition-all duration-700"
+                        style={{
+                          color: `rgba(255, 255, 255, ${0.7 - (displayProgress * 0.2)})`
+                        }}
+                      >
+                        {seller.followers_count >= 1000000 
+                          ? `${(seller.followers_count / 1000000).toFixed(1)}M`
+                          : seller.followers_count >= 1000
+                          ? `${(seller.followers_count / 1000).toFixed(1)}K`
+                          : seller.followers_count.toString()
+                        }
+                      </span>
+                    </button>
+                  </div>
+                )}
+              </div>
 
-      {/* Conditional rendering: SectionHeader, ProductFilterBar or CategoryTabs */}
-      {showSectionHeader ? (
-<div className="py-1">
-          <SectionHeader
-            title={sectionHeaderTitle}
-            titleSize="sm"
-            icon={sectionHeaderIcon}
-            viewAllLink={sectionHeaderViewAllLink}
-            viewAllText={sectionHeaderViewAllText}
-            showStackedProfiles={sectionHeaderShowStackedProfiles}
-            stackedProfiles={sectionHeaderStackedProfiles}
-            stackedProfilesText={sectionHeaderStackedProfilesText}
-            showCountdown={sectionHeaderShowCountdown} // Pass countdown visibility
-            countdown={sectionHeaderCountdown} // Pass countdown value
-            showSponsorCount={sectionHeaderShowSponsorCount}
-            showVerifiedSellers={sectionHeaderShowVerifiedSellers}
-            verifiedSellersText={sectionHeaderVerifiedSellersText}
-            paddingBottom={false}
-            onProfileClick={(profileId) => {
-              console.log('Profile clicked:', profileId);
-            }}
-          />
+              {/* Center - Title or Search bar */}
+              <div className="flex-1 mx-4">
+                {title ? (
+                  // Show title when provided
+                  <div className="text-center">
+                    <h1 className="text-lg font-semibold text-gray-900 truncate">
+                      {title}
+                    </h1>
+                  </div>
+                ) : (
+                  // Show search bar when scrolled (unless hideSearch is true)
+                  !hideSearch && displayProgress >= 0.5 && (
+                    <div className="flex-1 relative max-w-md mx-auto">
+                      <input
+                        type="text"
+                        placeholder="Search products..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onFocus={() => {
+                          if (onSearchFocus) {
+                            onSearchFocus();
+                          }
+                        }}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            handleSearchSubmit();
+                          }
+                        }}
+                        className="w-full px-3 py-1 text-sm font-medium border-2 border-gray-800 rounded-full focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-300 bg-white shadow-sm"
+                      />
+                      <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-600 font-bold" />
+                    </div>
+                  )
+                )}
+              </div>
 
-      </div>
-
-      ) : showCategoryTabs && (
-        <div className="relative overflow-hidden">
-          {showFilterBar ? (
-            <div data-header="true" className="product-filter-bar">
-              <ProductFilterBar 
-                filterCategories={filterCategories}
-                selectedFilters={selectedFilters}
-                onFilterSelect={onFilterSelect}
-                onFilterClear={onFilterClear}
-                onClearAll={onClearAll}
-                onFilterButtonClick={onFilterButtonClick}
-                isFilterDisabled={isFilterDisabled}
-              />
+              {/* Right side - Action buttons */}
+              <div className="flex gap-2 flex-shrink-0">
+                {/* Settings Button - Conditionally shown */}
+                {showSettingsButton && (
+                  <HeaderActionButton
+                    Icon={Settings}
+                    active={isSettingsOpen}
+                    onClick={toggleSettings}
+                    progress={displayProgress}
+                    activeColor="#3b82f6"
+                  />
+                )}
+                
+                {actionButtons.length > 0 ? (
+                  actionButtons.map((button, index) => (
+                    <HeaderActionButton
+                      key={index}
+                      Icon={button.Icon}
+                      active={button.active}
+                      onClick={button.onClick}
+                      progress={displayProgress}
+                      activeColor={button.activeColor}
+                      likeCount={button.count}
+                    />
+                  ))
+                ) : (
+                  <HeaderActionButton
+                    Icon={Heart}
+                    active={isFavorite}
+                    onClick={toggleFavorite}
+                    progress={displayProgress}
+                    activeColor="#f43f5e"
+                    likeCount={147}
+                  />
+                )}
+              </div>
             </div>
-          ) : (
-            <CategoryTabs 
-              key={categoryTabsKey}
-              progress={1}
-              activeTab={activeTab}
-              setActiveTab={handleTabChange}
-              categories={tabsToShow}
-              isSearchOverlayActive={showSearchOverlay}
-            />
+          </div>
+
+          {/* Progress Bar - Now inside the same background container without border */}
+          {showProgressBar && (
+            <div className="px-4 py-1">
+              <div className="max-w-2xl mx-auto">
+                {/* Progress Bar - Bars Only */}
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalSteps }, (_, index) => {
+                    const stepNumber = index + 1;
+                    const isActive = stepNumber <= currentStep;
+
+                    return (
+                      <div
+                        key={stepNumber}
+                        className={`flex-1 h-1 rounded-full transition-colors duration-300 ${
+                          isActive ? progressBarColor : 'bg-gray-300'
+                        }`}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
           )}
         </div>
-      )}
-      {/* Category Panel */}
-      <CategoryPanel 
-        progress={1}
-        isOpen={isOpen}
-        activeTab={activeTab}
-        categories={categories.map(cat => cat.id)}
-        setActiveTab={setActiveTab}
-        setIsOpen={setIsOpen}
-      />
 
-      {/* Voice Search Overlay */}
-      <VoiceSearchOverlay
-        active={voiceSearchActive}
-        onCancel={handleVoiceSearch}
-      />
-    </header>
+        {/* NO TABS HERE - Tabs are managed in SellerLayout */}
+      </div>
+
+      {/* Integrated Settings Panel */}
+      <SlideUpPanel
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        title="Settings"
+        preventBodyScroll={true}
+        className="p-4 space-y-6"
+        dynamicHeight={true}
+        maxHeight={0.95}
+      >
+        {/* Language Section */}
+        <div className="space-y-3">
+          <div className="flex items-center space-x-2 text-gray-700">
+            <Globe className="h-4 w-4" />
+            <span className="font-medium">Language</span>
+          </div>
+
+          {/* Language Search Input */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search languages..."
+              value={languageQuery}
+              onChange={(e) => setLanguageQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            />
+          </div>
+
+          {/* Current Language Display */}
+          <div className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+            <div className="flex items-center space-x-3">
+              <Languages className="h-5 w-5 text-orange-600" />
+              <div className="text-left">
+                <div className="font-medium text-gray-900">
+                  {currentLanguage?.nativeName || currentLanguage?.name || 'English'}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {currentLanguage?.name || 'English'} • {currentLanguage?.code?.toUpperCase() || 'EN'}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              {pinnedLanguages.has(currentLanguage?.code || 'en') && (
+                <Pin className="h-4 w-4 text-orange-600 fill-current" />
+              )}
+              <Check className="h-4 w-4 text-orange-600" />
+            </div>
+          </div>
+
+          {/* Language Grid */}
+          <div className="grid grid-cols-2 gap-2">
+            {filteredLanguages.slice(0, 4).map((language) => (
+              <button
+                key={language.code}
+                onClick={() => handleLanguageChange(language)}
+                className={`p-2 text-sm rounded-lg border transition-all flex items-center justify-between ${
+                  currentLanguage?.code === language.code
+                    ? 'border-orange-500 bg-orange-50 text-orange-700'
+                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <span>{language.nativeName}</span>
+                <button
+                  onClick={(e) => handleToggleLanguagePin(language.code, e)}
+                  className={`p-1 rounded ${
+                    pinnedLanguages.has(language.code) 
+                      ? 'text-orange-600' 
+                      : 'text-gray-400 hover:text-gray-600'
+                  }`}
+                >
+                  <Pin className={`h-3 w-3 ${pinnedLanguages.has(language.code) ? 'fill-current' : ''}`} />
+                </button>
+              </button>
+            ))}
+          </div>
+
+          {/* Show more languages if there are more than 4 */}
+          {filteredLanguages.length > 4 && (
+            <div className="text-center">
+              <button className="text-xs text-orange-600 hover:text-orange-700 font-medium">
+                Show {filteredLanguages.length - 4} more languages
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Location Section */}
+        <div className="space-y-3">
+          <div className="flex items-center space-x-2 text-gray-700">
+            <MapPin className="h-4 w-4" />
+            <span className="font-medium">Location</span>
+          </div>
+
+          <button
+            onClick={handleOpenLocationScreen}
+            className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-orange-300 hover:bg-orange-50 transition-colors"
+          >
+            <div className="flex items-center space-x-3">
+              {currentLocation?.flag ? (
+                <img
+                  src={`https://flagcdn.com/${currentLocation.flag.toLowerCase()}.svg`}
+                  alt={currentLocation.name}
+                  className="h-5 w-5 rounded object-cover"
+                />
+              ) : (
+                <MapPin className="h-5 w-5 text-orange-600" />
+              )}
+              <div className="text-left">
+                <div className="font-medium text-gray-900">
+                  {currentLocation?.name?.split(',')[0] || 'Select Location'}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {currentLocation?.name || 'Choose your location'}
+                </div>
+              </div>
+            </div>
+            <Edit className="h-4 w-4 text-gray-400 hover:text-orange-600" />
+          </button>
+        </div>
+      </SlideUpPanel>
+
+      {/* Location Screen Overlay */}
+      {showLocationScreen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Select Location</h3>
+              <button 
+                onClick={handleCloseLocationScreen}
+                className="p-1 hover:bg-gray-100 rounded-full"
+              >
+                <Edit className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="text-gray-600 mb-4">
+              Location selection screen would appear here. This is a placeholder for the actual location selection functionality.
+            </p>
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={handleCloseLocationScreen}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCloseLocationScreen}
+                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
-}
+};
+
+export default ProductHeader;
