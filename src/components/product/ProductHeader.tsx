@@ -10,7 +10,6 @@ import { useNavigate } from 'react-router-dom';
 import { useNavigationLoading } from '@/hooks/useNavigationLoading';
 import SearchPageSkeleton from '@/components/search/SearchPageSkeleton';
 import SellerInfoOverlay from "@/components/product/SellerInfoOverlay";
-import ProgressBar from "@/components/shared/ProgressBar";
 
 interface ActionButton {
   Icon: any;
@@ -242,15 +241,28 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
         </div>
       </div>
 
-      {/* Progress Bar - Conditionally shown */}
+      {/* Progress Bar - Integrated directly into component */}
       {showProgressBar && (
-        <ProgressBar
-          currentStep={currentStep}
-          totalSteps={totalSteps}
-          className="bg-white border-b border-gray-200"
-          activeColor={progressBarColor}
-          inactiveColor="bg-gray-300"
-        />
+        <div className="bg-white border-b border-gray-200 px-4 py-4">
+          <div className="max-w-2xl mx-auto">
+            {/* Progress Bar - Bars Only */}
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalSteps }, (_, index) => {
+                const stepNumber = index + 1;
+                const isActive = stepNumber <= currentStep;
+                
+                return (
+                  <div
+                    key={stepNumber}
+                    className={`flex-1 h-1 rounded-full transition-colors duration-300 ${
+                      isActive ? progressBarColor : 'bg-gray-300'
+                    }`}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* NO TABS HERE - Tabs are managed in SellerLayout */}
