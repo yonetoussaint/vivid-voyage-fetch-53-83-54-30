@@ -305,139 +305,182 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     }  
   }, [location.pathname, navigate]);  
 
-  // **NEW: If no store and on products tab, show enhanced onboarding view**
+  // **NEW: If no store and on products tab, show enhanced onboarding view with SellerEditProfile structure**
   if (!hasStore && isProductsTab && !isEditProfilePage && !isProductEditPage) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
-        {header}
-        <div className="pt-16">
-          {topContent}
-          
-          {/* Enhanced Onboarding Section */}
-          <div className="max-w-4xl mx-auto px-4 py-12">
-            {/* Welcome Message */}
-            <div className="text-center mb-12">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full mb-6">
-                <Package className="w-10 h-10 text-white" />
-              </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-3">
-                Start Your Selling Journey
-              </h1>
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Join thousands of successful sellers. Set up your store, list your products, and start earning today.
-              </p>
+      <div className="min-h-screen bg-background">
+        {/* Banner Section */}
+        <div className="relative">
+          <HeroBanner 
+            asCarousel={false} 
+            showNewsTicker={false} 
+            customHeight="180px" 
+            sellerId={sellerData?.id}
+            showEditButton={false}
+            editButtonPosition="top-right"
+            dataSource="seller_banners"
+          />
+        </div>
+
+        {/* Profile Image Section - Similar to SellerEditProfile */}
+        <div className="relative z-30 -mt-12 flex justify-center">
+          <div className="relative">
+            <div className="w-24 h-24 bg-gray-300 rounded-full border-4 border-white overflow-hidden shadow-lg">
+              {sellerData?.image_url ? (
+                <img 
+                  src={sellerData.image_url} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face";
+                  }}
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-400 flex items-center justify-center">
+                  <Package className="w-8 h-8 text-white" />
+                </div>
+              )}
             </div>
+          </div>
+        </div>
 
-            {/* Benefits Grid */}
-            <div className="grid md:grid-cols-3 gap-6 mb-12">
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
-                  <DollarSign className="w-6 h-6 text-green-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Earn More</h3>
-                <p className="text-gray-600 text-sm">
-                  Competitive commission rates and fast payouts. Keep more of what you earn.
-                </p>
-              </div>
+        {/* Enhanced Onboarding Content */}
+        <div className="p-4 space-y-6 mt-4">
+          {/* Welcome Message */}
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Start Your Selling Journey
+            </h1>
+            <p className="text-base text-gray-600 max-w-2xl mx-auto">
+              Join thousands of successful sellers. Set up your store, list your products, and start earning today.
+            </p>
+          </div>
 
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                  <Users className="w-6 h-6 text-blue-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Reach Customers</h3>
-                <p className="text-gray-600 text-sm">
-                  Access millions of active buyers ready to purchase your products.
-                </p>
-              </div>
-
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
-                  <BarChart3 className="w-6 h-6 text-purple-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Grow Your Business</h3>
-                <p className="text-gray-600 text-sm">
-                  Powerful analytics and marketing tools to scale your success.
-                </p>
-              </div>
-            </div>
-
-            {/* Getting Started Steps */}
-            <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100 mb-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">How to Get Started</h2>
-              <div className="space-y-6">
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
-                    1
+          {/* Benefits Grid */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">Why Sell With Us?</h3>
+            <div className="grid gap-4">
+              <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <DollarSign className="w-5 h-5 text-green-600" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Complete Your Profile</h3>
+                    <h3 className="text-base font-semibold text-gray-900 mb-1">Earn More</h3>
                     <p className="text-gray-600 text-sm">
-                      Add your business details, logo, and description to build trust with customers.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
-                    2
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">List Your Products</h3>
-                    <p className="text-gray-600 text-sm">
-                      Upload high-quality photos and detailed descriptions to attract buyers.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-4">
-                  <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
-                    3
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Start Selling</h3>
-                    <p className="text-gray-600 text-sm">
-                      Receive orders, manage inventory, and watch your business grow.
+                      Competitive commission rates and fast payouts. Keep more of what you earn.
                     </p>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button
-                onClick={handleBecomeSeller}
-                className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-bold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-              >
-                Become a Seller
-              </button>
-              <button
-                onClick={() => navigate('/seller-guide')}
-                className="px-8 py-4 bg-white text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors border-2 border-gray-200"
-              >
-                Learn More
-              </button>
-            </div>
+              <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Users className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-900 mb-1">Reach Customers</h3>
+                    <p className="text-gray-600 text-sm">
+                      Access millions of active buyers ready to purchase your products.
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-            {/* Trust Indicators */}
-            <div className="mt-12 pt-8 border-t border-gray-200">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-                <div>
-                  <div className="text-2xl font-bold text-gray-900 mb-1">50K+</div>
-                  <div className="text-sm text-gray-600">Active Sellers</div>
+              <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <BarChart3 className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold text-gray-900 mb-1">Grow Your Business</h3>
+                    <p className="text-gray-600 text-sm">
+                      Powerful analytics and marketing tools to scale your success.
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-2xl font-bold text-gray-900 mb-1">1M+</div>
-                  <div className="text-sm text-gray-600">Products Listed</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Getting Started Steps */}
+          <div className="pt-4 border-t border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">How to Get Started</h3>
+            <div className="space-y-4">
+              <div className="flex gap-4">
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                  1
                 </div>
-                <div>
-                  <div className="text-2xl font-bold text-gray-900 mb-1">24/7</div>
-                  <div className="text-sm text-gray-600">Support</div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-gray-900 mb-1 text-sm">Complete Your Profile</h4>
+                  <p className="text-gray-600 text-sm">
+                    Add your business details, logo, and description to build trust with customers.
+                  </p>
                 </div>
-                <div>
-                  <div className="text-2xl font-bold text-gray-900 mb-1">4.8★</div>
-                  <div className="text-sm text-gray-600">Seller Rating</div>
+              </div>
+
+              <div className="flex gap-4">
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                  2
                 </div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-gray-900 mb-1 text-sm">List Your Products</h4>
+                  <p className="text-gray-600 text-sm">
+                    Upload high-quality photos and detailed descriptions to attract buyers.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                  3
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-gray-900 mb-1 text-sm">Start Selling</h4>
+                  <p className="text-gray-600 text-sm">
+                    Receive orders, manage inventory, and watch your business grow.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA Buttons */}
+          <div className="pt-6">
+            <button
+              onClick={handleBecomeSeller}
+              className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg font-bold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg mb-3"
+            >
+              Start Selling Now
+            </button>
+            <button
+              onClick={() => navigate('/seller-guide')}
+              className="w-full px-6 py-3 bg-white text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors border-2 border-gray-200"
+            >
+              Learn More
+            </button>
+          </div>
+
+          {/* Trust Indicators */}
+          <div className="pt-6 border-t border-gray-200">
+            <div className="grid grid-cols-2 gap-4 text-center">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="text-xl font-bold text-gray-900 mb-1">50K+</div>
+                <div className="text-xs text-gray-600">Active Sellers</div>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="text-xl font-bold text-gray-900 mb-1">1M+</div>
+                <div className="text-xs text-gray-600">Products</div>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="text-xl font-bold text-gray-900 mb-1">24/7</div>
+                <div className="text-xs text-gray-600">Support</div>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="text-xl font-bold text-gray-900 mb-1">4.8★</div>
+                <div className="text-xs text-gray-600">Rating</div>
               </div>
             </div>
           </div>
