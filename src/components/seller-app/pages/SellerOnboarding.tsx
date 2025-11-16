@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Package, DollarSign, Users, BarChart3, ArrowLeft, Check, Star, 
   Shield, Zap, Crown, CreditCard, Clock, BadgeCheck, TrendingUp,
-  MapPin, Phone, Mail, Building, FileText, UserCheck
+  MapPin, Phone, Mail, Building, FileText, UserCheck, CheckCircle
 } from 'lucide-react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -18,7 +18,6 @@ const SellerOnboarding = () => {
   const formDataRef = useRef({});
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
   // Application form state
   const [applicationData, setApplicationData] = useState({
@@ -40,58 +39,37 @@ const SellerOnboarding = () => {
     agreeToTerms: false
   });
 
-  // Payment plans
-  const sellerPlans = [
+  // Benefits of becoming a seller
+  const sellerBenefits = [
     {
-      id: 'basic',
-      name: 'Starter',
-      price: 49,
-      period: 'month',
-      popular: false,
-      features: [
-        'Up to 50 products',
-        'Basic analytics',
-        'Standard support',
-        'Mobile app access',
-        'Payment processing'
-      ],
-      icon: Package,
-      color: 'blue'
+      icon: Users,
+      title: 'Reach Millions of Customers',
+      description: 'Access our large customer base and grow your business'
     },
     {
-      id: 'professional',
-      name: 'Professional',
-      price: 99,
-      period: 'month',
-      popular: true,
-      features: [
-        'Up to 500 products',
-        'Advanced analytics',
-        'Priority support',
-        'Custom branding',
-        'API access',
-        'Bulk product upload'
-      ],
+      icon: BarChart3,
+      title: 'Powerful Analytics',
+      description: 'Track your sales and understand customer behavior'
+    },
+    {
+      icon: Shield,
+      title: 'Secure Payments',
+      description: 'Get paid securely with our trusted payment system'
+    },
+    {
+      icon: TrendingUp,
+      title: 'Business Growth',
+      description: 'Scale your business with our seller tools and support'
+    },
+    {
       icon: Zap,
-      color: 'purple'
+      title: 'Quick Setup',
+      description: 'Start selling in minutes with our easy setup process'
     },
     {
-      id: 'enterprise',
-      name: 'Enterprise',
-      price: 199,
-      period: 'month',
-      popular: false,
-      features: [
-        'Unlimited products',
-        'Premium analytics',
-        '24/7 dedicated support',
-        'White-label solutions',
-        'Advanced API',
-        'Custom integrations',
-        'Dedicated account manager'
-      ],
-      icon: Crown,
-      color: 'orange'
+      icon: BadgeCheck,
+      title: 'Verified Badge',
+      description: 'Build trust with customers with verified seller status'
     }
   ];
 
@@ -142,7 +120,8 @@ const SellerOnboarding = () => {
           ...applicationData,
           status: 'pending',
           applied_at: new Date().toISOString(),
-          selected_plan: selectedPlan
+          registration_fee: 1000,
+          currency: 'HTG'
         }])
         .select()
         .single();
@@ -204,10 +183,6 @@ const SellerOnboarding = () => {
     }));
   };
 
-  const handlePlanSelect = (planId: string) => {
-    setSelectedPlan(planId);
-  };
-
   const nextStep = () => {
     setCurrentStep(prev => prev + 1);
   };
@@ -239,11 +214,6 @@ const SellerOnboarding = () => {
   };
 
   const validateForm = () => {
-    if (currentStep === 1 && !selectedPlan) {
-      alert('Please select a seller plan');
-      return false;
-    }
-    
     if (currentStep === 2) {
       if (!applicationData.businessName.trim()) {
         alert('Business name is required');
@@ -271,15 +241,6 @@ const SellerOnboarding = () => {
     }
     
     return true;
-  };
-
-  const getPlanColor = (color: string) => {
-    const colors: any = {
-      blue: 'from-blue-500 to-blue-600',
-      purple: 'from-purple-500 to-purple-600',
-      orange: 'from-orange-500 to-orange-600'
-    };
-    return colors[color] || colors.blue;
   };
 
   if (sellerLoading) {
@@ -318,9 +279,9 @@ const SellerOnboarding = () => {
                 {currentStep > step ? <Check className="w-5 h-5" /> : step}
               </div>
               <span className="text-xs mt-2 text-gray-600">
-                {step === 1 && 'Choose Plan'}
+                {step === 1 && 'Overview'}
                 {step === 2 && 'Business Info'}
-                {step === 3 && 'Review & Pay'}
+                {step === 3 && 'Payment'}
                 {step === 4 && 'Complete'}
               </span>
             </div>
@@ -328,92 +289,69 @@ const SellerOnboarding = () => {
         </div>
       </div>
 
-      {/* Step 1: Plan Selection */}
+      {/* Step 1: Overview */}
       {currentStep === 1 && (
         <div className="p-4 space-y-6">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Choose Your Seller Plan
+              Become a Seller
             </h1>
             <p className="text-base text-gray-600 max-w-2xl mx-auto">
-              Select the plan that best fits your business needs. You can upgrade anytime.
+              Join thousands of successful sellers in Haiti. Start your business today with a one-time registration fee.
             </p>
           </div>
 
-          {/* Plans Grid */}
-          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {sellerPlans.map((plan) => {
-              const Icon = plan.icon;
-              return (
-                <div
-                  key={plan.id}
-                  className={`relative bg-white rounded-xl border-2 p-6 transition-all cursor-pointer ${
-                    selectedPlan === plan.id
-                      ? 'border-blue-500 shadow-lg scale-105'
-                      : 'border-gray-200 hover:border-gray-300'
-                  } ${plan.popular ? 'ring-2 ring-purple-500' : ''}`}
-                  onClick={() => handlePlanSelect(plan.id)}
-                >
-                  {plan.popular && (
-                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                      <span className="bg-purple-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                        Most Popular
-                      </span>
-                    </div>
-                  )}
-                  
-                  <div className="text-center mb-6">
-                    <div className={`w-12 h-12 ${getPlanColor(plan.color)} rounded-lg flex items-center justify-center mx-auto mb-4`}>
-                      <Icon className="w-6 h-6 text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
-                    <div className="mt-4">
-                      <span className="text-3xl font-bold text-gray-900">${plan.price}</span>
-                      <span className="text-gray-600">/{plan.period}</span>
-                    </div>
-                  </div>
-
-                  <ul className="space-y-3 mb-6">
-                    {plan.features.map((feature, index) => (
-                      <li key={index} className="flex items-center text-sm text-gray-600">
-                        <Check className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-
-                  <button
-                    className={`w-full py-3 rounded-lg font-semibold transition-colors ${
-                      selectedPlan === plan.id
-                        ? 'bg-blue-600 text-white hover:bg-blue-700'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {selectedPlan === plan.id ? 'Selected' : 'Select Plan'}
-                  </button>
-                </div>
-              );
-            })}
+          {/* Registration Fee Card */}
+          <div className="max-w-md mx-auto bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl text-white p-6 text-center">
+            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <DollarSign className="w-8 h-8" />
+            </div>
+            <h3 className="text-xl font-bold mb-2">One-Time Registration Fee</h3>
+            <div className="text-3xl font-bold mb-2">1,000 HTG</div>
+            <p className="text-blue-100 text-sm">
+              Pay once and start selling forever. No monthly fees, no hidden charges.
+            </p>
           </div>
 
-          {/* Trust Indicators */}
+          {/* Benefits Grid */}
+          <div className="max-w-4xl mx-auto">
+            <h3 className="text-lg font-semibold text-gray-900 mb-6 text-center">
+              Why Sell With Us?
+            </h3>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {sellerBenefits.map((benefit, index) => {
+                const Icon = benefit.icon;
+                return (
+                  <div key={index} className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Icon className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <h4 className="font-semibold text-gray-900 mb-2 text-sm">
+                      {benefit.title}
+                    </h4>
+                    <p className="text-gray-600 text-xs">
+                      {benefit.description}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Stats */}
           <div className="max-w-2xl mx-auto text-center">
-            <div className="grid grid-cols-4 gap-4 mt-8">
+            <div className="grid grid-cols-3 gap-4 mt-8">
               <div className="text-center">
-                <Shield className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                <div className="text-sm font-semibold">Secure</div>
+                <div className="text-2xl font-bold text-blue-600 mb-1">10K+</div>
+                <div className="text-sm text-gray-600">Active Sellers</div>
               </div>
               <div className="text-center">
-                <TrendingUp className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                <div className="text-sm font-semibold">Grow Fast</div>
+                <div className="text-2xl font-bold text-blue-600 mb-1">500K+</div>
+                <div className="text-sm text-gray-600">Products</div>
               </div>
               <div className="text-center">
-                <BadgeCheck className="w-8 h-8 text-purple-500 mx-auto mb-2" />
-                <div className="text-sm font-semibold">Verified</div>
-              </div>
-              <div className="text-center">
-                <Clock className="w-8 h-8 text-orange-500 mx-auto mb-2" />
-                <div className="text-sm font-semibold">24/7 Support</div>
+                <div className="text-2xl font-bold text-blue-600 mb-1">24/7</div>
+                <div className="text-sm text-gray-600">Support</div>
               </div>
             </div>
           </div>
@@ -422,10 +360,9 @@ const SellerOnboarding = () => {
           <div className="text-center mt-8">
             <button
               onClick={nextStep}
-              disabled={!selectedPlan}
-              className="px-8 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+              className="px-8 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors"
             >
-              Continue to Business Information
+              Start Application
             </button>
           </div>
         </div>
@@ -439,7 +376,7 @@ const SellerOnboarding = () => {
               Business Information
             </h1>
             <p className="text-base text-gray-600">
-              Tell us about your business to get started.
+              Tell us about your business to complete your registration.
             </p>
           </div>
 
@@ -472,11 +409,12 @@ const SellerOnboarding = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Select business type</option>
+                  <option value="individual">Individual Seller</option>
                   <option value="sole_proprietorship">Sole Proprietorship</option>
                   <option value="llc">LLC</option>
                   <option value="corporation">Corporation</option>
                   <option value="partnership">Partnership</option>
-                  <option value="nonprofit">Non-Profit</option>
+                  <option value="cooperative">Cooperative</option>
                 </select>
               </div>
             </div>
@@ -493,7 +431,7 @@ const SellerOnboarding = () => {
                   onChange={handleInputChange}
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="+1 (555) 123-4567"
+                  placeholder="+509 XX XX XXXX"
                 />
               </div>
 
@@ -544,16 +482,26 @@ const SellerOnboarding = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Country
+                  Department
                 </label>
-                <input
-                  type="text"
+                <select
                   name="country"
                   value={applicationData.country}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Country"
-                />
+                >
+                  <option value="">Select department</option>
+                  <option value="ouest">Ouest (Port-au-Prince)</option>
+                  <option value="nord">Nord</option>
+                  <option value="nord-est">Nord-Est</option>
+                  <option value="nord-ouest">Nord-Ouest</option>
+                  <option value="artibonite">Artibonite</option>
+                  <option value="centre">Centre</option>
+                  <option value="sud">Sud</option>
+                  <option value="sud-est">Sud-Est</option>
+                  <option value="grandanse">Grand'Anse</option>
+                  <option value="nippes">Nippes</option>
+                </select>
               </div>
             </div>
 
@@ -579,7 +527,7 @@ const SellerOnboarding = () => {
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tax ID / EIN
+                  NIF (Tax ID)
                 </label>
                 <input
                   type="text"
@@ -630,103 +578,87 @@ const SellerOnboarding = () => {
         </div>
       )}
 
-      {/* Step 3: Review & Payment */}
+      {/* Step 3: Payment */}
       {currentStep === 3 && (
         <div className="p-4 space-y-6 max-w-2xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Review & Payment
+              Payment & Registration
             </h1>
             <p className="text-base text-gray-600">
-              Review your information and complete payment to start selling.
+              Complete your registration by paying the one-time fee.
             </p>
           </div>
 
-          {/* Selected Plan Summary */}
-          <div className="bg-gray-50 rounded-lg p-6">
-            <h3 className="text-lg font-semibold mb-4">Selected Plan</h3>
-            {selectedPlan && (() => {
-              const plan = sellerPlans.find(p => p.id === selectedPlan);
-              if (!plan) return null;
-              const Icon = plan.icon;
-              return (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className={`w-12 h-12 ${getPlanColor(plan.color)} rounded-lg flex items-center justify-center`}>
-                      <Icon className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <div className="font-semibold">{plan.name} Plan</div>
-                      <div className="text-gray-600">${plan.price}/{plan.period}</div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-bold text-lg">${plan.price}</div>
-                    <div className="text-sm text-gray-600">per month</div>
-                  </div>
+          {/* Payment Summary */}
+          <div className="bg-blue-50 rounded-lg p-6">
+            <h3 className="text-lg font-semibold mb-4 text-center">Registration Summary</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-700">One-Time Registration Fee</span>
+                <span className="font-semibold">1,000 HTG</span>
+              </div>
+              <div className="flex justify-between items-center text-sm text-gray-600">
+                <span>Validity</span>
+                <span>Lifetime</span>
+              </div>
+              <div className="border-t pt-3">
+                <div className="flex justify-between items-center font-bold text-lg">
+                  <span>Total</span>
+                  <span>1,000 HTG</span>
                 </div>
-              );
-            })()}
-          </div>
-
-          {/* Business Information Summary */}
-          <div className="bg-gray-50 rounded-lg p-6">
-            <h3 className="text-lg font-semibold mb-4">Business Information</h3>
-            <div className="grid md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <div className="font-medium text-gray-700">Business Name</div>
-                <div>{applicationData.businessName}</div>
-              </div>
-              <div>
-                <div className="font-medium text-gray-700">Business Type</div>
-                <div>{applicationData.businessType}</div>
-              </div>
-              <div>
-                <div className="font-medium text-gray-700">Contact</div>
-                <div>{applicationData.phone} • {applicationData.email}</div>
-              </div>
-              <div>
-                <div className="font-medium text-gray-700">Location</div>
-                <div>{applicationData.city}, {applicationData.country}</div>
               </div>
             </div>
           </div>
 
-          {/* Payment Information */}
+          {/* Payment Methods */}
           <div className="bg-white border rounded-lg p-6">
-            <h3 className="text-lg font-semibold mb-4">Payment Information</h3>
+            <h3 className="text-lg font-semibold mb-4">Payment Method</h3>
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Card Number
+              {/* Mobile Money */}
+              <div className="border-2 border-blue-500 rounded-lg p-4">
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    defaultChecked
+                    className="text-blue-600 focus:ring-blue-500"
+                  />
+                  <div>
+                    <div className="font-semibold">Mobile Money</div>
+                    <div className="text-sm text-gray-600">Pay with NatCash, MonCash, or Digicel</div>
+                  </div>
                 </label>
-                <input
-                  type="text"
-                  placeholder="1234 5678 9012 3456"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
               </div>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Expiry Date
-                  </label>
+
+              {/* Bank Transfer */}
+              <div className="border-2 border-gray-200 rounded-lg p-4">
+                <label className="flex items-center space-x-3 cursor-pointer">
                   <input
-                    type="text"
-                    placeholder="MM/YY"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    type="radio"
+                    name="paymentMethod"
+                    className="text-blue-600 focus:ring-blue-500"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    CVV
-                  </label>
+                  <div>
+                    <div className="font-semibold">Bank Transfer</div>
+                    <div className="text-sm text-gray-600">Transfer to our bank account</div>
+                  </div>
+                </label>
+              </div>
+
+              {/* Credit Card */}
+              <div className="border-2 border-gray-200 rounded-lg p-4">
+                <label className="flex items-center space-x-3 cursor-pointer">
                   <input
-                    type="text"
-                    placeholder="123"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    type="radio"
+                    name="paymentMethod"
+                    className="text-blue-600 focus:ring-blue-500"
                   />
-                </div>
+                  <div>
+                    <div className="font-semibold">Credit/Debit Card</div>
+                    <div className="text-sm text-gray-600">Pay with Visa, Mastercard, or American Express</div>
+                  </div>
+                </label>
               </div>
             </div>
           </div>
@@ -746,7 +678,7 @@ const SellerOnboarding = () => {
                   I agree to the Seller Agreement, Terms of Service, and Privacy Policy.
                 </span>
                 <p className="text-gray-600 mt-1">
-                  By checking this box, you agree to pay the monthly subscription fee and comply with our seller policies.
+                  By checking this box, you agree to pay the one-time registration fee of 1,000 HTG and comply with our seller policies.
                 </p>
               </div>
             </label>
@@ -766,7 +698,7 @@ const SellerOnboarding = () => {
               className="px-8 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
             >
               <CreditCard className="w-5 h-5" />
-              <span>{isLoading ? 'Processing...' : 'Complete Payment & Apply'}</span>
+              <span>{isLoading ? 'Processing...' : 'Pay 1,000 HTG & Register'}</span>
             </button>
           </div>
         </div>
@@ -776,7 +708,7 @@ const SellerOnboarding = () => {
       {currentStep === 4 && (
         <div className="p-4 space-y-6 max-w-2xl mx-auto text-center">
           <div className="bg-green-50 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
-            <Check className="w-10 h-10 text-green-500" />
+            <CheckCircle className="w-10 h-10 text-green-500" />
           </div>
           
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
@@ -784,33 +716,43 @@ const SellerOnboarding = () => {
           </h1>
           
           <p className="text-base text-gray-600 mb-8">
-            Thank you for your application to become a seller. Our team will review your information and get back to you within 2-3 business days.
+            Thank you for your application to become a seller. Your registration fee of 1,000 HTG will be processed and our team will review your information.
           </p>
 
           <div className="bg-blue-50 rounded-lg p-6 text-left">
             <h3 className="font-semibold mb-4">What happens next?</h3>
             <div className="space-y-3 text-sm">
               <div className="flex items-center space-x-3">
+                <CreditCard className="w-5 h-5 text-blue-500" />
+                <span>Complete your payment of 1,000 HTG</span>
+              </div>
+              <div className="flex items-center space-x-3">
                 <UserCheck className="w-5 h-5 text-blue-500" />
                 <span>Verification team reviews your application</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="w-5 h-5 text-blue-500" />
-                <span>You'll receive an email with next steps</span>
+                <span>You'll receive confirmation within 24 hours</span>
               </div>
               <div className="flex items-center space-x-3">
-                <BadgeCheck className="w-5 h-5 text-blue-500" />
-                <span>Get approved and start selling immediately</span>
+                <Package className="w-5 h-5 text-blue-500" />
+                <span>Start selling immediately after approval</span>
               </div>
             </div>
           </div>
 
-          <div className="pt-6">
+          <div className="pt-6 space-y-3">
             <button
               onClick={() => navigate('/seller-dashboard/products')}
-              className="px-8 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors"
+              className="w-full px-8 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors"
             >
               Return to Dashboard
+            </button>
+            <button
+              onClick={() => navigate('/help')}
+              className="w-full px-8 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+            >
+              Need Help? Contact Support
             </button>
           </div>
         </div>
@@ -826,7 +768,7 @@ const SellerOnboarding = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-4 flex items-center gap-3">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-            <span className="text-sm font-medium">Processing your application...</span>
+            <span className="text-sm font-medium">Processing your registration...</span>
           </div>
         </div>
       )}
