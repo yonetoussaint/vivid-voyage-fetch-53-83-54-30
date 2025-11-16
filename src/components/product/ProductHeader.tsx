@@ -3,6 +3,12 @@ import {
   Heart, 
   Search,
   Settings,
+  Globe,
+  MapPin,
+  Edit,
+  Pin,
+  Check,
+  Languages,
   LucideIcon
 } from "lucide-react";
 import { useScrollProgress } from "./header/useScrollProgress";
@@ -11,6 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import { useNavigationLoading } from '@/hooks/useNavigationLoading';
 import { VerificationBadge } from '@/components/shared/VerificationBadge';
 import SlideUpPanel from '@/components/shared/SlideUpPanel';
+import { useLanguageSwitcher } from '@/hooks/useLanguageSwitcher';
 
 // Language and Location interfaces
 interface Language {
@@ -264,9 +271,9 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
   totalSteps = 4,
   progressBarColor = "bg-blue-600",
   // SETTINGS PANEL PROPS:
-  currentLanguage = { code: 'en', name: 'English', nativeName: 'English' },
-  currentLocation = { name: 'United States', flag: 'us' },
-  supportedLanguages = [],
+  currentLanguage: propCurrentLanguage,
+  currentLocation: propCurrentLocation,
+  supportedLanguages: propSupportedLanguages,
   onLanguageChange = () => {},
   onOpenLocationScreen = () => {},
   showSettingsButton = false,
@@ -275,11 +282,26 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [languageQuery, setLanguageQuery] = useState('');
   const [pinnedLanguages, setPinnedLanguages] = useState(new Set(['en', 'es']));
+  const [showLocationScreen, setShowLocationScreen] = useState(false);
+  
   const { progress: scrollProgress } = useScrollProgress();
   const displayProgress = forceScrolledState ? 1 : scrollProgress;
   const [internalSearchQuery, setInternalSearchQuery] = useState('');
   const navigate = useNavigate();
   const { isLoading } = useNavigationLoading();
+  
+  // Use language context
+  const { 
+    currentLanguage: contextCurrentLanguage, 
+    setLanguage, 
+    supportedLanguages: contextSupportedLanguages,
+    currentLocation: contextCurrentLocation
+  } = useLanguageSwitcher();
+
+  // Use props if provided, otherwise use context
+  const currentLanguage = propCurrentLanguage || contextCurrentLanguage;
+  const currentLocation = propCurrentLocation || contextCurrentLocation;
+  const supportedLanguages = propSupportedLanguages || contextSupportedLanguages;
 
   // Use external search query if provided, otherwise use internal
   const searchQuery = externalSearchQuery !== undefined ? externalSearchQuery : internalSearchQuery;
@@ -291,6 +313,7 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
 
   const toggleSettings = () => {
     setIsSettingsOpen(!isSettingsOpen);
+    setLanguageQuery(''); // Clear search when opening settings
   };
 
   const handleSearchSubmit = () => {
@@ -302,8 +325,14 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
   };
 
   const handleLanguageChange = (language: Language) => {
+    // Call the parent handler if provided
     onLanguageChange(language);
-    setLanguageQuery(''); // Clear search when language is selected
+    
+    // Call the language context setter
+    setLanguage(language.code);
+    
+    // Clear search when language is selected
+    setLanguageQuery('');
   };
 
   const handleToggleLanguagePin = (languageCode: string, event: React.MouseEvent) => {
@@ -318,6 +347,43 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
       return newSet;
     });
   };
+
+  const handleOpenLocationScreen = () => {
+    setShowLocationScreen(true);
+    setIsSettingsOpen(false);
+    // Call the parent handler if provided
+    onOpenLocationScreen();
+  };
+
+  const handleCloseLocationScreen = () => {
+    setShowLocationScreen(false);
+  };
+
+  // Fallback languages
+  const languages = supportedLanguages && Array.isArray(supportedLanguages) && supportedLanguages.length > 0 
+    ? supportedLanguages
+    : [
+        { code: 'en', name: 'English', nativeName: 'English' },
+        { code: 'es', name: 'Spanish', nativeName: 'Español' },
+        { code: 'fr', name: 'French', nativeName: 'Français' },
+        { code: 'de', name: 'German', nativeName: 'Deutsch' },
+        { code: 'zh', name: 'Chinese', nativeName: '中文' },
+        { code: 'ja', name: 'Japanese', nativeName: '日本語' },
+      ];
+
+  // Filter and sort languages
+  const filteredLanguages = languages
+    .filter((lang) =>
+      lang.name.toLowerCase().includes(languageQuery.toLowerCase()) ||
+      lang.nativeName.toLowerCase().includes(languageQuery.toLowerCase())
+    )
+    .sort((a, b) => {
+      const aPinned = pinnedLanguages.has(a.code);
+      const bPinned = pinnedLanguages.has(b.code);
+      if (aPinned && !bPinned) return -1;
+      if (!aPinned && bPinned) return 1;
+      return 0;
+    });
 
   // Removed SearchPageSkeleton - just return null if loading
   if (isLoading) {
@@ -509,138 +575,160 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
       </div>
 
       {/* Integrated Settings Panel */}
-     {/* Integrated Settings Panel */}
-<SlideUpPanel
-  isOpen={isSettingsOpen}
-  onClose={() => setIsSettingsOpen(false)}
-  title="Settings"
-  preventBodyScroll={true}
-  className="p-4 space-y-6"
-  dynamicHeight={true} // Add this to allow dynamic height
-  maxHeight={0.95} // Increase max height to 95% of screen
->
-  {/* Language Section */}
-  <div className="space-y-3">
-    <div className="flex items-center space-x-2 text-gray-700">
-      <span className="font-medium">Language</span>
-    </div>
-
-    {/* Language Search Input */}
-    <div className="relative">
-      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-      <input
-        type="text"
-        placeholder="Search languages..."
-        value={languageQuery}
-        onChange={(e) => setLanguageQuery(e.target.value)}
-        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-      />
-    </div>
-
-    {/* Current Language Display */}
-    <div className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-      <div className="flex items-center space-x-3">
-        <div className="text-left">
-          <div className="font-medium text-gray-900">
-            {currentLanguage.nativeName || currentLanguage.name || 'English'}
+      <SlideUpPanel
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        title="Settings"
+        preventBodyScroll={true}
+        className="p-4 space-y-6"
+        dynamicHeight={true}
+        maxHeight={0.95}
+      >
+        {/* Language Section */}
+        <div className="space-y-3">
+          <div className="flex items-center space-x-2 text-gray-700">
+            <Globe className="h-4 w-4" />
+            <span className="font-medium">Language</span>
           </div>
-          <div className="text-xs text-gray-500">
-            {currentLanguage.name || 'English'} • {currentLanguage.code.toUpperCase()}
+
+          {/* Language Search Input */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search languages..."
+              value={languageQuery}
+              onChange={(e) => setLanguageQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            />
           </div>
+
+          {/* Current Language Display */}
+          <div className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+            <div className="flex items-center space-x-3">
+              <Languages className="h-5 w-5 text-orange-600" />
+              <div className="text-left">
+                <div className="font-medium text-gray-900">
+                  {currentLanguage?.nativeName || currentLanguage?.name || 'English'}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {currentLanguage?.name || 'English'} • {currentLanguage?.code?.toUpperCase() || 'EN'}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              {pinnedLanguages.has(currentLanguage?.code || 'en') && (
+                <Pin className="h-4 w-4 text-orange-600 fill-current" />
+              )}
+              <Check className="h-4 w-4 text-orange-600" />
+            </div>
+          </div>
+
+          {/* Language Grid */}
+          <div className="grid grid-cols-2 gap-2">
+            {filteredLanguages.slice(0, 4).map((language) => (
+              <button
+                key={language.code}
+                onClick={() => handleLanguageChange(language)}
+                className={`p-2 text-sm rounded-lg border transition-all flex items-center justify-between ${
+                  currentLanguage?.code === language.code
+                    ? 'border-orange-500 bg-orange-50 text-orange-700'
+                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <span>{language.nativeName}</span>
+                <button
+                  onClick={(e) => handleToggleLanguagePin(language.code, e)}
+                  className={`p-1 rounded ${
+                    pinnedLanguages.has(language.code) 
+                      ? 'text-orange-600' 
+                      : 'text-gray-400 hover:text-gray-600'
+                  }`}
+                >
+                  <Pin className={`h-3 w-3 ${pinnedLanguages.has(language.code) ? 'fill-current' : ''}`} />
+                </button>
+              </button>
+            ))}
+          </div>
+
+          {/* Show more languages if there are more than 4 */}
+          {filteredLanguages.length > 4 && (
+            <div className="text-center">
+              <button className="text-xs text-orange-600 hover:text-orange-700 font-medium">
+                Show {filteredLanguages.length - 4} more languages
+              </button>
+            </div>
+          )}
         </div>
-      </div>
-      <div className="flex items-center space-x-2">
-        {pinnedLanguages.has(currentLanguage.code) && (
-          <span className="h-4 w-4 text-orange-600">📍</span>
-        )}
-        <span className="h-4 w-4 text-orange-600">✓</span>
-      </div>
-    </div>
 
-    {/* Language Grid */}
-    <div className="grid grid-cols-2 gap-2">
-      {supportedLanguages
-        .filter((lang) =>
-          lang.name.toLowerCase().includes(languageQuery.toLowerCase()) ||
-          lang.nativeName.toLowerCase().includes(languageQuery.toLowerCase())
-        )
-        .slice(0, 4)
-        .map((language) => (
+        {/* Location Section */}
+        <div className="space-y-3">
+          <div className="flex items-center space-x-2 text-gray-700">
+            <MapPin className="h-4 w-4" />
+            <span className="font-medium">Location</span>
+          </div>
+
           <button
-            key={language.code}
-            onClick={() => handleLanguageChange(language)}
-            className={`p-2 text-sm rounded-lg border transition-all flex items-center justify-between ${
-              currentLanguage.code === language.code
-                ? 'border-orange-500 bg-orange-50 text-orange-700'
-                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-            }`}
+            onClick={handleOpenLocationScreen}
+            className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-orange-300 hover:bg-orange-50 transition-colors"
           >
-            <span>{language.nativeName}</span>
-            <button
-              onClick={(e) => handleToggleLanguagePin(language.code, e)}
-              className={`p-1 rounded ${
-                pinnedLanguages.has(language.code) 
-                  ? 'text-orange-600' 
-                  : 'text-gray-400 hover:text-gray-600'
-              }`}
-            >
-              <span className={`h-3 w-3 ${pinnedLanguages.has(language.code) ? 'text-orange-600' : ''}`}>
-                📍
-              </span>
-            </button>
+            <div className="flex items-center space-x-3">
+              {currentLocation?.flag ? (
+                <img
+                  src={`https://flagcdn.com/${currentLocation.flag.toLowerCase()}.svg`}
+                  alt={currentLocation.name}
+                  className="h-5 w-5 rounded object-cover"
+                />
+              ) : (
+                <MapPin className="h-5 w-5 text-orange-600" />
+              )}
+              <div className="text-left">
+                <div className="font-medium text-gray-900">
+                  {currentLocation?.name?.split(',')[0] || 'Select Location'}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {currentLocation?.name || 'Choose your location'}
+                </div>
+              </div>
+            </div>
+            <Edit className="h-4 w-4 text-gray-400 hover:text-orange-600" />
           </button>
-        ))}
-    </div>
+        </div>
+      </SlideUpPanel>
 
-    {/* Show more languages if there are more than 4 */}
-    {supportedLanguages.filter((lang) =>
-      lang.name.toLowerCase().includes(languageQuery.toLowerCase()) ||
-      lang.nativeName.toLowerCase().includes(languageQuery.toLowerCase())
-    ).length > 4 && (
-      <div className="text-center">
-        <button className="text-xs text-orange-600 hover:text-orange-700 font-medium">
-          Show {supportedLanguages.filter((lang) =>
-            lang.name.toLowerCase().includes(languageQuery.toLowerCase()) ||
-            lang.nativeName.toLowerCase().includes(languageQuery.toLowerCase())
-          ).length - 4} more languages
-        </button>
-      </div>
-    )}
-  </div>
-
-  {/* Location Section */}
-  <div className="space-y-3">
-    <div className="flex items-center space-x-2 text-gray-700">
-      <span className="font-medium">Location</span>
-    </div>
-
-    <button
-      onClick={onOpenLocationScreen}
-      className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-orange-300 hover:bg-orange-50 transition-colors"
-    >
-      <div className="flex items-center space-x-3">
-        {currentLocation.flag ? (
-          <img
-            src={`https://flagcdn.com/${currentLocation.flag.toLowerCase()}.svg`}
-            alt={currentLocation.name}
-            className="h-5 w-5 rounded object-cover"
-          />
-        ) : (
-          <span className="h-5 w-5 text-orange-600">📍</span>
-        )}
-        <div className="text-left">
-          <div className="font-medium text-gray-900">
-            {currentLocation.name.split(',')[0]}
-          </div>
-          <div className="text-xs text-gray-500">
-            {currentLocation.name}
+      {/* Location Screen Overlay */}
+      {showLocationScreen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Select Location</h3>
+              <button 
+                onClick={handleCloseLocationScreen}
+                className="p-1 hover:bg-gray-100 rounded-full"
+              >
+                <Edit className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="text-gray-600 mb-4">
+              Location selection screen would appear here. This is a placeholder for the actual location selection functionality.
+            </p>
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={handleCloseLocationScreen}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCloseLocationScreen}
+                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
+              >
+                Save
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-      <span className="h-4 w-4 text-gray-400 hover:text-orange-600">✏️</span>
-    </button>
-  </div>
-</SlideUpPanel>
+      )}
     </>
   );
 };
