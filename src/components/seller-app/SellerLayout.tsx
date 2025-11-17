@@ -46,7 +46,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
   // States
   const [isFavorite, setIsFavorite] = useState(false);  
-  const [onboardingStep, setOnboardingStep] = useState(1); // Track onboarding progress
 
   // Language context
   const { 
@@ -90,8 +89,6 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
   // Location screen handler
   const handleOpenLocationScreen = () => {
     console.log('Open location screen from SellerLayout');
-    // You can implement your location screen logic here
-    // For now, we'll just log it
   };
 
   // Check if current route is edit profile, product edit, or onboarding
@@ -220,12 +217,12 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       return data.publicUrl;  
     });  
 
-  // **NEW: Check if seller has a store (has products or is verified)**
+  // Check if seller has a store (has products or is verified)
   const hasStore = sellerData && (products.length > 0 || sellerData.verified);
 
-  // Custom action buttons for edit pages and onboarding
+  // Custom action buttons for edit pages
   const getEditPageActionButtons = () => {
-    if (isEditProfilePage || isProductEditPage || isOnboardingPage) {
+    if (isEditProfilePage || isProductEditPage) {
       return [  
         {  
           Icon: Save,  
@@ -263,55 +260,34 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
       const productId = location.pathname.split('/edit/')[1];
       return productId === 'new' ? "Create Product" : "Edit Product";
     }
-    if (isOnboardingPage) return "Become a Seller";
     return undefined;
   };
 
-  // Get onboarding step from children (passed up from SellerOnboarding)
-  const getOnboardingStep = () => {
-    return onboardingStep;
-  };
-
-  // Function to update onboarding step (will be passed to children)
-  const updateOnboardingStep = (step: number) => {
-    setOnboardingStep(step);
-  };
-
-  // In the SellerLayout component, update the header section:
-
-// In the SellerLayout component, update the header section:
-
-const header = (
-  <div   
-    ref={headerRef}   
-    className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"  
-  >  
-    <ProductHeader  
-      onCloseClick={(isEditProfilePage || isProductEditPage || isOnboardingPage) ? () => navigate('/seller-dashboard/products') : handleBackClick}  
-      onShareClick={handleShareClick}  
-      // Hide action buttons (including save button) when showing language selector
-      actionButtons={isOnboardingPage ? [] : (getEditPageActionButtons() || regularActionButtons)}
-      forceScrolledState={!isProductsTab || isEditProfilePage || isProductEditPage || isOnboardingPage}
-      title={getPageTitle()}
-      hideSearch={isEditProfilePage || isProductEditPage || isOnboardingPage}
-      showSellerInfo={!(isEditProfilePage || isProductEditPage || isOnboardingPage)}
-      // Progress Bar Props - Only show on onboarding page
-      showProgressBar={isOnboardingPage}
-      currentStep={getOnboardingStep()}
-      totalSteps={4}
-      progressBarColor="bg-blue-600"
-      // Language Context Props - Pass actual values from context
-      currentLanguage={currentLanguage}
-      currentLocation={currentLocation}
-      supportedLanguages={supportedLanguages}
-      onLanguageChange={handleLanguageChange}
-      onOpenLocationScreen={handleOpenLocationScreen}
-      // NEW: Show language selector instead of settings/save buttons on onboarding page
-      showLanguageSelector={isOnboardingPage}
-      showSettingsButton={!isOnboardingPage} // Hide settings button on onboarding
-    />  
-  </div>  
-);
+  // Header component - simplified without onboarding logic
+  const header = (
+    <div   
+      ref={headerRef}   
+      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"  
+    >  
+      <ProductHeader  
+        onCloseClick={(isEditProfilePage || isProductEditPage) ? () => navigate('/seller-dashboard/products') : handleBackClick}  
+        onShareClick={handleShareClick}  
+        actionButtons={getEditPageActionButtons() || regularActionButtons}
+        forceScrolledState={!isProductsTab || isEditProfilePage || isProductEditPage}
+        title={getPageTitle()}
+        hideSearch={isEditProfilePage || isProductEditPage}
+        showSellerInfo={!(isEditProfilePage || isProductEditPage)}
+        // Language Context Props
+        currentLanguage={currentLanguage}
+        currentLocation={currentLocation}
+        supportedLanguages={supportedLanguages}
+        onLanguageChange={handleLanguageChange}
+        onOpenLocationScreen={handleOpenLocationScreen}
+        showLanguageSelector={false}
+        showSettingsButton={true}
+      />  
+    </div>  
+  );
 
   const topContent = isProductsTab && !isEditProfilePage && !isProductEditPage && !isOnboardingPage ? (
     <div className="w-full bg-black text-white">  
@@ -333,17 +309,9 @@ const header = (
     </div>  
   ) : undefined;
 
-  // Enhanced children with onboarding step tracking
+  // Enhanced children
   const enhancedChildren = React.Children.map(children, child => {  
     if (React.isValidElement(child)) {  
-      // Pass onboarding step tracking to SellerOnboarding
-      if (isOnboardingPage) {
-        return React.cloneElement(child, {  
-          onStepChange: updateOnboardingStep,
-          currentStep: onboardingStep
-        } as any);  
-      }
-
       if (activeTab !== 'products') {  
         return React.cloneElement(child, {  
           products,  
@@ -370,19 +338,12 @@ const header = (
     }  
   }, [location.pathname, navigate]);  
 
-  // **NEW: If no store and on products tab, redirect to separate onboarding page**
+  // Redirect to onboarding if no store
   useEffect(() => {
     if (!hasStore && isProductsTab && !isEditProfilePage && !isProductEditPage && !isOnboardingPage && !sellerLoading) {
       navigate('/seller-dashboard/onboarding', { replace: true });
     }
   }, [hasStore, isProductsTab, isEditProfilePage, isProductEditPage, isOnboardingPage, sellerLoading, navigate]);
-
-  // Reset onboarding step when leaving onboarding page
-  useEffect(() => {
-    if (!isOnboardingPage) {
-      setOnboardingStep(1);
-    }
-  }, [isOnboardingPage]);
 
   return (  
     <StickyTabsLayout
@@ -398,7 +359,7 @@ const header = (
       variant="underline"
       stickyBuffer={4}
       alwaysStickyForNonProducts={true}
-      hideTabs={isEditProfilePage || isProductEditPage || isOnboardingPage || !hasStore} // **NEW: Hide tabs when no store or on edit/onboarding pages**
+      hideTabs={isEditProfilePage || isProductEditPage || isOnboardingPage || !hasStore}
     >
       {enhancedChildren}
     </StickyTabsLayout>
