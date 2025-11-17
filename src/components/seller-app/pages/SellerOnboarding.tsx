@@ -56,16 +56,14 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
   });
 
   // Ben 10 Cartoon Video from Wikimedia - Fixed video configuration
-  
-
-const onboardingVideoBanner = {
-  id: 'seller-onboarding-video',
-  image: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-  alt: 'Sample Video',
-  title: 'Power Up Your Business!',
-  subtitle: 'Transform your selling potential with super-powered tools and reach',
-  type: 'video' as const,
-};
+  const onboardingVideoBanner = {
+    id: 'seller-onboarding-video',
+    image: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+    alt: 'Sample Video',
+    title: 'Power Up Your Business!',
+    subtitle: 'Transform your selling potential with super-powered tools and reach',
+    type: 'video' as const,
+  };
 
   const sellerBenefits = [
     {
@@ -320,18 +318,6 @@ const onboardingVideoBanner = {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Hero Banner with Ben 10 Cartoon Video - Only show on step 1 */}
-      {currentStep === 1 && (
-        <div className="mb-8">
-          <HeroBanner
-            customBanners={[onboardingVideoBanner]}
-            showNewsTicker={false}
-            showCarouselBottomRow={false}
-            asCarousel={false}
-          />
-        </div>
-      )}
-
       {/* Step 1: Overview */}
       {currentStep === 1 && (
         <div className="p-4 space-y-6">
@@ -342,6 +328,16 @@ const onboardingVideoBanner = {
             <p className="text-base text-gray-600 max-w-2xl mx-auto">
               Join thousands of successful sellers in Haiti. Start your business today with a one-time registration fee.
             </p>
+          </div>
+
+          {/* Hero Banner with Ben 10 Cartoon Video - Moved before registration card */}
+          <div className="mb-8">
+            <HeroBanner
+              customBanners={[onboardingVideoBanner]}
+              showNewsTicker={false}
+              showCarouselBottomRow={false}
+              asCarousel={false}
+            />
           </div>
 
           {/* Registration Fee Card */}
