@@ -1,628 +1,777 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { useQuery } from "@tanstack/react-query";
-import { fetchHeroBanners } from "@/integrations/supabase/hero";
-import { setupStorageBuckets } from "@/integrations/supabase/setupStorage";
-import { toast } from "sonner";
-import BannerControls from './hero/BannerControls';
-import NewsTicker from './hero/NewsTicker';
-import FloatingVideo from '../hero/FloatingVideo';
-import { BannerType } from './hero/types';
-import ProductFilterBar from './ProductFilterBar';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { 
+  Package, DollarSign, Users, BarChart3, CreditCard, 
+  BadgeCheck, TrendingUp, Shield, Zap, CheckCircle,
+  MapPin, Phone, Mail, UserCheck
+} from 'lucide-react';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Edit2, Image, Plus, Volume2, VolumeX } from 'lucide-react';
+import HeroBanner from '@/components/home/HeroBanner';
 
-interface HeroBannerProps {
-  asCarousel?: boolean;
-  showNewsTicker?: boolean;
-  showCarouselBottomRow?: boolean;
-  customHeight?: string;
-  customBanners?: Array<{
-    id: string;
-    image?: string;
-    color?: string;
-    alt: string;
-    title?: string;
-    subtitle?: string;
-    type?: 'image' | 'video' | 'color';
-    duration?: number;
-  }>;
-  filterCategories?: Array<{
-    id: string;
-    label: string;
-    options: string[];
-  }>;
-  selectedFilters?: Record<string, string>;
-  onFilterSelect?: (filterId: string, option: string) => void;
-  onFilterClear?: (filterId: string) => void;
-  onClearAll?: () => void;
-  onFilterButtonClick?: (filterId: string) => void;
-  isFilterDisabled?: (filterId: string) => boolean;
-  sellerId?: string;
-  showEditButton?: boolean;
-  onEditBanner?: () => void;
-  editButtonPosition?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
-  dataSource?: 'default' | 'seller_banners';
+interface SellerOnboardingProps {
+  onStepChange?: (step: number) => void;
+  currentStep?: number;
 }
 
-const fetchSellerBanners = async (sellerId: string) => {
-  if (!sellerId) return [];
-
-  try {
-    const { data, error } = await supabase
-      .from('seller_banners')
-      .select('*')
-      .eq('seller_id', sellerId)
-      .order('is_primary', { ascending: false })
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching seller banners:', error);
-    throw error;
-  }
-};
-
-const defaultPlaceholderBanner: BannerType = {
-  id: 'placeholder',
-  image: '',
-  alt: 'Add your banner',
-  title: '',
-  subtitle: '',
-  type: 'color' as const,
-  duration: 5000,
-  rowType: 'product' as const,
-  product: undefined,
-  seller: undefined,
-  catalog: undefined
-};
-
-// BannerImage component moved inline
-interface BannerImageProps {
-  src: string;
-  alt: string;
-  className?: string;
-  type?: "image" | "video";
-  isActive?: boolean;
-}
-
-const BannerImage: React.FC<BannerImageProps> = ({
-  src,
-  alt,
-  className = "",
-  type = "image",
-  isActive = false,
+const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
+  onStepChange,
+  currentStep: externalCurrentStep
 }) => {
-  const [error, setError] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
-  useEffect(() => {
-    setError(false);
-    setLoaded(false);
-  }, [src]);
+  const formDataRef = useRef({});
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (videoRef.current && type === 'video') {
-      if (isActive && loaded) {
-        // Force autoplay with error handling
-        const playVideo = async () => {
-          try {
-            videoRef.current!.currentTime = 0;
-            await videoRef.current!.play();
-          } catch (err) {
-            console.log('Autoplay failed, trying with user interaction:', err);
-            // If autoplay fails, we'll rely on the video's built-in controls
-          }
-        };
-        playVideo();
-      } else if (!isActive) {
-        videoRef.current!.pause();
-      }
-    }
-  }, [isActive, loaded, type]);
+  const [internalCurrentStep, setInternalCurrentStep] = useState(1);
+  const currentStep = externalCurrentStep !== undefined ? externalCurrentStep : internalCurrentStep;
 
-  const handleError = () => setError(true);
-  const handleLoad = () => setLoaded(true);
-
-  const handleVideoLoaded = () => {
-    setLoaded(true);
-  };
-
-  const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
+  const setCurrentStep = (step: number) => {
+    if (externalCurrentStep !== undefined && onStepChange) {
+      onStepChange(step);
+    } else {
+      setInternalCurrentStep(step);
     }
   };
 
-  if (error) {
-    return (
-      <div className={`flex items-center justify-center bg-gray-200 ${className}`}>
-        <div className="text-center p-4">
-          <span className="text-gray-500 block">{type === "video" ? "Video" : "Image"} failed to load</span>
-          <span className="text-xs text-gray-400 block mt-1">{src}</span>
-        </div>
-      </div>
-    );
-  }
+  const [applicationData, setApplicationData] = useState({
+    businessName: '',
+    businessType: '',
+    phone: '',
+    email: '',
+    address: '',
+    city: '',
+    country: '',
+    taxId: '',
+    businessRegistration: '',
+    yearsInBusiness: '',
+    annualRevenue: '',
+    productCategories: [] as string[],
+    website: '',
+    socialMedia: '',
+    references: '',
+    agreeToTerms: false
+  });
 
-  const baseClass = `w-full h-full ${className} ${
-    !loaded ? "opacity-0" : "opacity-100 transition-opacity duration-300"
-  }`;
+  // Ben 10 Cartoon Video from Wikimedia - Fixed video configuration
+  const onboardingVideoBanner = {
+    id: 'seller-onboarding-video',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/5/58/Ben_10_-_Catch_the_Power_Surge%21-_Action_Cartoon-_Cartoon_in_English_-_%40cnindia.webm',
+    alt: 'Ben 10 - Catch the Power Surge! Action Cartoon',
+    title: 'Power Up Your Business!',
+    subtitle: 'Transform your selling potential with super-powered tools and reach',
+    type: 'video' as const, // Explicitly set as video type
+    duration: 30000, // 30 seconds for the full video experience
+  };
 
-  return type === "video" ? (
-    <div className="relative w-full h-full flex items-center justify-center bg-black">
-      <video
-        ref={videoRef}
-        src={src}
-        className={`${baseClass} object-contain`}
-        onLoadedData={handleVideoLoaded}
-        onError={handleError}
-        muted={isMuted}
-        loop
-        playsInline
-        preload="auto"
-        autoPlay
-      />
-      {loaded && (
-        <button
-          onClick={toggleMute}
-          className="absolute bottom-4 right-4 h-10 w-10 rounded-full bg-black/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/30 transition-colors z-10"
-          aria-label={isMuted ? "Unmute" : "Mute"}
-        >
-          {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-        </button>
-      )}
-    </div>
-  ) : (
-    <div className="w-full h-full flex items-center justify-center bg-gray-100">
-      <img
-        src={src}
-        alt={alt}
-        className={`${baseClass} object-contain`}
-        onLoad={handleLoad}
-        onError={handleError}
-        loading="lazy"
-      />
-    </div>
-  );
-};
-
-// BannerSlides component moved inline
-interface BannerSlidesProps {
-  slides: BannerType[];
-  activeIndex: number;
-  previousIndex: number | null;
-}
-
-const BannerSlides: React.FC<BannerSlidesProps> = ({ 
-  slides, 
-  activeIndex, 
-  previousIndex,
-}) => {
-  return (
-    <div className="relative w-full h-full">
-      {slides.map((banner, index) => {
-        const isActive = index === activeIndex;
-        const isPrevious = index === previousIndex;
-
-        return (
-          <div
-            key={banner.id}
-            className={`absolute inset-0 w-full h-full transition-transform duration-500 ease-out ${
-              isActive ? "translate-y-0 z-10" : 
-              isPrevious ? "-translate-y-full z-0 hidden" : "translate-y-full z-0 hidden"
-            }`}
-          >
-            {banner.type === 'color' || banner.image.startsWith('from-') || banner.image.includes('gradient') ? (
-              <div className={`w-full h-full bg-gradient-to-r ${banner.image}`} />
-            ) : (
-              <BannerImage
-                src={banner.image}
-                alt={banner.alt || "Banner image"}
-                type={banner.type} // "image" or "video"
-                isActive={isActive}
-                className="w-full h-full"
-              />
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-};
-
-export default function HeroBanner({ 
-  asCarousel = false, 
-  showNewsTicker = true,
-  showCarouselBottomRow = true,
-  customHeight,
-  customBanners,
-  filterCategories = [],
-  selectedFilters = {},
-  onFilterSelect = () => {},
-  onFilterClear = () => {},
-  onClearAll = () => {},
-  onFilterButtonClick = () => {},
-  isFilterDisabled = () => false,
-  sellerId,
-  showEditButton = false,
-  onEditBanner = () => {},
-  editButtonPosition = 'top-right',
-  dataSource = 'default'
-}: HeroBannerProps) {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [previousIndex, setPreviousIndex] = useState<number | null>(null);
-  const [showNews, setShowNews] = useState(showNewsTicker);
-  const [progress, setProgress] = useState(0);
-  const [offset, setOffset] = useState<number>(0);
-  const [showFloatingVideo, setShowFloatingVideo] = useState(false);
-  const [videoCurrentTime, setVideoCurrentTime] = useState(0);
-  const heroBannerRef = useRef<HTMLDivElement>(null);
-  const carouselRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setShowNews(showNewsTicker);
-  }, [showNewsTicker]);
-
-  useEffect(() => {
-    function updateOffset() {
-      const header = document.getElementById("ali-header");
-      if (header) {
-        const height = header.getBoundingClientRect().height;
-        setOffset(Math.ceil(height));
-      } else {
-        setOffset(0);
-      }
+  const sellerBenefits = [
+    {
+      icon: Users,
+      title: 'Reach Millions of Customers',
+      description: 'Access our large customer base and grow your business'
+    },
+    {
+      icon: BarChart3,
+      title: 'Powerful Analytics',
+      description: 'Track your sales and understand customer behavior'
+    },
+    {
+      icon: Shield,
+      title: 'Secure Payments',
+      description: 'Get paid securely with our trusted payment system'
+    },
+    {
+      icon: TrendingUp,
+      title: 'Business Growth',
+      description: 'Scale your business with our seller tools and support'
+    },
+    {
+      icon: Zap,
+      title: 'Quick Setup',
+      description: 'Start selling in minutes with our easy setup process'
+    },
+    {
+      icon: BadgeCheck,
+      title: 'Verified Badge',
+      description: 'Build trust with customers with verified seller status'
     }
+  ];
 
-    updateOffset();
-    const timeoutId = setTimeout(updateOffset, 100);
-    window.addEventListener('resize', updateOffset);
+  const productCategories = [
+    'Electronics',
+    'Fashion & Apparel',
+    'Home & Garden',
+    'Beauty & Personal Care',
+    'Sports & Outdoors',
+    'Toys & Games',
+    'Automotive',
+    'Books & Media',
+    'Food & Beverages',
+    'Health & Wellness',
+    'Jewelry & Accessories',
+    'Arts & Crafts'
+  ];
 
-    return () => {
-      clearTimeout(timeoutId);
-      window.removeEventListener('resize', updateOffset);
-    };
-  }, []);
+  const { data: sellerData, isLoading: sellerLoading } = useQuery({
+    queryKey: ['seller', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from('sellers')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
 
-  useEffect(() => {
-    const initStorage = async () => {
-      await setupStorageBuckets();
-    };
-    initStorage();
-  }, []);
+      if (error) {
+        console.error('Error fetching seller data:', error);
+        return null;
+      }
+      return data;
+    },
+  });
 
-  const { data: bannersData, isLoading: bannersLoading, error } = useQuery({
-    queryKey: dataSource === 'seller_banners' 
-      ? ["seller-banners", sellerId]
-      : ["hero-banners"],
-    queryFn: dataSource === 'seller_banners' && sellerId
-      ? () => fetchSellerBanners(sellerId)
-      : fetchHeroBanners,
-    staleTime: dataSource === 'seller_banners' ? 30000 : 5000,
-    refetchInterval: dataSource === 'seller_banners' ? 30000 : 10000,
-    enabled: !customBanners,
+  const createSellerApplicationMutation = useMutation({
+    mutationFn: async (applicationData: any) => {
+      if (!user?.id) throw new Error('No user logged in');
+
+      const { data, error } = await supabase
+        .from('seller_applications')
+        .insert([{
+          user_id: user.id,
+          ...applicationData,
+          status: 'pending',
+          applied_at: new Date().toISOString(),
+          registration_fee: 1000,
+          currency: 'HTG'
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      console.log('Application submitted successfully:', data);
+      setCurrentStep(4);
+    },
+    onError: (error) => {
+      console.error('Application submission error:', error);
+      alert('Error submitting application. Please try again.');
+      setIsLoading(false);
+    }
   });
 
   useEffect(() => {
-    if (error) {
-      toast.error("Failed to load banner images");
-      console.error("Banner fetch error:", error);
-    }
-  }, [error]);
-
-  const transformedBanners: BannerType[] = useMemo(() => {
-    if (customBanners) {
-      return customBanners.map((banner, index) => {
-        const rowTypes: ('product' | 'seller' | 'catalog')[] = ['product', 'seller', 'catalog'];
-        const rowType = rowTypes[index % 3] || 'product';
-
-        return {
-          ...banner,
-          image: banner.image || banner.color || '',
-          type: (banner.type || 'color') as 'image' | 'video' | 'color',
-          duration: banner.duration || 5000,
-          rowType,
-          product: undefined,
-          seller: undefined,
-          catalog: undefined,
-        };
-      });
-    }
-
-    if (dataSource === 'seller_banners' && bannersData) {
-      if (bannersData.length === 0) {
-        return [{
-          ...defaultPlaceholderBanner,
-          image: 'bg-gradient-to-br from-blue-50 to-indigo-100'
-        }];
-      }
-
-      return bannersData.map((banner: any, index: number) => {
-        const isImage = banner.type === 'image';
-
-        return {
-          id: banner.id,
-          image: banner.value,
-          alt: banner.name,
-          title: banner.name,
-          type: isImage ? "image" as const : "color" as const,
-          duration: 5000,
-          rowType: 'product' as const,
-          product: undefined,
-          seller: undefined,
-          catalog: undefined
-        };
-      });
-    }
-
-    if (bannersData && dataSource === 'default') {
-      if (bannersData.length === 0) {
-        return [{
-          ...defaultPlaceholderBanner,
-          image: 'bg-gray-100'
-        }];
-      }
-
-      return bannersData.map((banner: any, index: number) => {
-        const decodedUrl = decodeURIComponent(banner.image);
-        const isVideo = /\.(mp4|webm|ogg|mov|avi)$/i.test(decodedUrl) || 
-                        /\.(mp4|webm|ogg|mov|avi)$/i.test(banner.image);
-
-        const rowTypes: ('product' | 'seller' | 'catalog')[] = ['product', 'seller', 'catalog'];
-        const rowType = rowTypes[index % 3] || 'product';
-
-        const mockSeller = {
-          id: `seller_${index + 1}`,
-          name: index === 0 ? "TechStore Pro" : "FashionHub",
-          image_url: index === 0 ? "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=200&h=200&fit=crop&crop=center" : "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=200&h=200&fit=crop&crop=center",
-          verified: true,
-          followers_count: index === 0 ? 25400 : 18200
-        };
-
-        const mockCatalog = {
-          id: `catalog_${index + 1}`,
-          name: index === 0 ? "Summer Collection" : "Winter Essentials",
-          images: [
-            "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop",
-            "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop",
-            "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop"
-          ],
-          product_count: index === 0 ? 24 : 18
-        };
-
-        const mockProduct = {
-          id: `product_${index + 1}`,
-          name: index === 0 ? "Wireless Headphones" : "Smart Watch",
-          price: index === 0 ? 199.99 : 299.99,
-          image: index === 0 ? "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop&crop=center" : "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&h=300&fit=crop&crop=center"
-        };
-
-        return {
-          ...banner,
-          type: isVideo ? "video" as const : "image" as const,
-          // For videos, don't use duration - let the video handle its own timing
-          duration: isVideo ? 0 : (banner.duration || 5000),
-          rowType,
-          seller: rowType === 'seller' ? mockSeller : undefined,
-          catalog: rowType === 'catalog' ? mockCatalog : undefined,
-          product: rowType === 'product' ? mockProduct : undefined
-        };
-      }) || [];
-    }
-
-    return [{
-      ...defaultPlaceholderBanner,
-      image: 'bg-gray-100'
-    }];
-  }, [bannersData, customBanners, dataSource]);
-
-  const slidesToShow = transformedBanners;
-  const isPlaceholder = slidesToShow.length === 1 && slidesToShow[0].id === 'placeholder';
-
-  // Don't auto-advance slides if the current slide is a video
-  const shouldAutoAdvance = useMemo(() => {
-    const currentSlide = slidesToShow[activeIndex];
-    return !asCarousel && slidesToShow.length > 1 && !isPlaceholder && currentSlide?.type !== 'video';
-  }, [activeIndex, slidesToShow, asCarousel, isPlaceholder]);
-
-  useEffect(() => {
-    if (!shouldAutoAdvance) return;
-
-    let timeoutRef: ReturnType<typeof setTimeout> | null = null;
-    let progressIntervalRef: ReturnType<typeof setInterval> | null = null;
-
-    const currentSlide = slidesToShow[activeIndex];
-    const duration = currentSlide?.duration || 5000;
-    const progressStep = (50 / duration) * 100;
-
-    const startSlideTimer = () => {
-      if (timeoutRef) clearTimeout(timeoutRef);
-      if (progressIntervalRef) clearInterval(progressIntervalRef);
-      setProgress(0);
-
-      progressIntervalRef = setInterval(() => {
-        setProgress(prev => (prev >= 100 ? 100 : prev + progressStep));
-      }, 50);
-
-      timeoutRef = setTimeout(() => {
-        setProgress(0);
-        setPreviousIndex(activeIndex);
-        setActiveIndex((current) => (current + 1) % slidesToShow.length);
-      }, duration);
+    const handleSave = () => {
+      console.log('Save event received');
+      handleSubmit();
     };
 
-    startSlideTimer();
-
+    window.addEventListener('saveEditProfile', handleSave);
     return () => {
-      if (timeoutRef) clearTimeout(timeoutRef);
-      if (progressIntervalRef) clearInterval(progressIntervalRef);
+      window.removeEventListener('saveEditProfile', handleSave);
     };
-  }, [activeIndex, slidesToShow.length, shouldAutoAdvance, slidesToShow]);
-
-  const handleCloseFloatingVideo = useCallback(() => {
-    setShowFloatingVideo(false);
   }, []);
 
-  const handleExpandFloatingVideo = useCallback(() => {
-    setShowFloatingVideo(false);
-    heroBannerRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, []);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
 
-  const currentSlide = slidesToShow[activeIndex];
+    if (type === 'checkbox') {
+      const checked = (e.target as HTMLInputElement).checked;
+      setApplicationData(prev => ({
+        ...prev,
+        [name]: checked
+      }));
+    } else {
+      setApplicationData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+  };
 
-  const handleCarouselScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    // Allow natural scrolling
-  }, []);
+  const handleCategoryToggle = (category: string) => {
+    setApplicationData(prev => ({
+      ...prev,
+      productCategories: prev.productCategories.includes(category)
+        ? prev.productCategories.filter(c => c !== category)
+        : [...prev.productCategories, category]
+    }));
+  };
 
-  const EditButton = useMemo(() => {
-    if (!showEditButton) return null;
+  const nextStep = () => {
+    const next = currentStep + 1;
+    setCurrentStep(next);
+  };
 
-    const positionClasses = {
-      'top-right': 'top-3 right-3',
-      'top-left': 'top-3 left-3',
-      'bottom-right': 'bottom-3 right-3',
-      'bottom-left': 'bottom-3 left-3'
-    };
+  const prevStep = () => {
+    const prev = currentStep - 1;
+    setCurrentStep(prev);
+  };
 
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+
+    if (isLoading) return;
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsLoading(true);
+    console.log('Submitting seller application...');
+
+    try {
+      await createSellerApplicationMutation.mutateAsync(applicationData);
+    } catch (error) {
+      console.error('Error in application:', error);
+      setIsLoading(false);
+    }
+  };
+
+  const validateForm = () => {
+    if (currentStep === 2) {
+      if (!applicationData.businessName.trim()) {
+        alert('Business name is required');
+        return false;
+      }
+      if (!applicationData.businessType.trim()) {
+        alert('Business type is required');
+        return false;
+      }
+      if (!applicationData.phone.trim()) {
+        alert('Phone number is required');
+        return false;
+      }
+      if (!applicationData.email.trim()) {
+        alert('Email is required');
+        return false;
+      }
+    }
+
+    if (currentStep === 3) {
+      if (!applicationData.agreeToTerms) {
+        alert('You must agree to the terms and conditions');
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  if (sellerLoading) {
     return (
-      <button
-        onClick={onEditBanner}
-        className={`absolute ${positionClasses[editButtonPosition]} bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-white transition-all duration-200 shadow-lg z-20`}
-        title="Edit Banner"
-      >
-        <Edit2 className="w-4 h-4" />
-        <span>Edit</span>
-      </button>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
     );
-  }, [showEditButton, onEditBanner, editButtonPosition]);
+  }
 
-  const PlaceholderBanner = useMemo(() => {
-    if (!isPlaceholder) return null;
-
-    const isSellerBanner = dataSource === 'seller_banners';
+  const StickyButton = () => {
+    if (currentStep === 4) return null;
 
     return (
-      <div 
-        className={`w-full flex items-center justify-center ${
-          isSellerBanner 
-            ? 'bg-gradient-to-br from-blue-50 to-indigo-100 border border-dashed border-blue-200' 
-            : 'bg-gray-100 border border-dashed border-gray-300'
-        }`}
-        style={{ 
-          aspectRatio: '2 / 1',
-          maxHeight: '330px'
-        }}
-      >
-        <div className="text-center p-4">
-          <div className={`rounded-full w-10 h-10 flex items-center justify-center mx-auto mb-2 ${
-            isSellerBanner ? 'bg-blue-100 text-blue-600' : 'bg-gray-200 text-gray-600'
-          }`}>
-            <Image className="w-5 h-5" />
-          </div>
-
-          <p className={`text-sm font-medium ${
-            isSellerBanner ? 'text-blue-900' : 'text-gray-700'
-          }`}>
-            No banner available
-          </p>
-          <p className={`text-xs mt-1 ${
-            isSellerBanner ? 'text-blue-700' : 'text-gray-600'
-          }`}>
-            Banner will appear here
-          </p>
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-40">
+        <div className="max-w-2xl mx-auto flex justify-between items-center">
+          {currentStep > 1 ? (
+            <>
+              <button
+                onClick={prevStep}
+                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+              >
+                Back
+              </button>
+              {currentStep === 2 && (
+                <button
+                  onClick={nextStep}
+                  className="px-8 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors"
+                >
+                  Continue to Payment
+                </button>
+              )}
+              {currentStep === 3 && (
+                <button
+                  onClick={handleSubmit}
+                  disabled={!applicationData.agreeToTerms || isLoading}
+                  className="px-8 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
+                >
+                  <CreditCard className="w-5 h-5" />
+                  <span>{isLoading ? 'Processing...' : 'Pay 1,000 HTG & Register'}</span>
+                </button>
+              )}
+            </>
+          ) : (
+            <button
+              onClick={nextStep}
+              className="w-full px-8 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors"
+            >
+              Start Application
+            </button>
+          )}
         </div>
       </div>
     );
-  }, [isPlaceholder, dataSource]);
+  };
 
   return (
-    <>
-      <div
-        ref={heroBannerRef}
-        data-testid="hero-banner"
-        className={`relative overflow-hidden w-full ${asCarousel ? '' : ''}`}
-        style={{ marginTop: asCarousel ? 0 : offset }}
-      >
-        {asCarousel ? (
-          <div>Carousel content...</div>
-        ) : (
-          <>
-            <div 
-              className="relative w-full bg-gray-100" 
-              style={customHeight ? { 
-                height: customHeight,
-                aspectRatio: customHeight ? 'unset' : '2 / 1'
-              } : { 
-                aspectRatio: '2 / 1',
-                maxHeight: '330px'
-              }}
-            >
-              {isPlaceholder ? (
-                <>
-                  {PlaceholderBanner}
-                  {EditButton}
-                </>
-              ) : (
-                <>
-                  <BannerSlides 
-                    slides={slidesToShow}
-                    activeIndex={activeIndex}
-                    previousIndex={previousIndex}
-                  />
-
-                  {EditButton}
-
-                  {/* Only show controls for non-video slides */}
-                  {currentSlide?.type !== 'video' && (
-                    <BannerControls
-                      slidesCount={slidesToShow.length}
-                      activeIndex={activeIndex}
-                      previousIndex={previousIndex}
-                      setActiveIndex={setActiveIndex}
-                      setPreviousIndex={setPreviousIndex}
-                      progress={progress}
-                    />
-                  )}
-                </>
-              )}
-            </div>
-
-            <div className="relative z-10">
-              {showNews ? (
-                <NewsTicker />
-              ) : (
-                <ProductFilterBar 
-                  filterCategories={filterCategories}
-                  selectedFilters={selectedFilters}
-                  onFilterSelect={onFilterSelect}
-                  onFilterClear={onFilterClear}
-                  onClearAll={onClearAll}
-                  onFilterButtonClick={onFilterButtonClick}
-                  isFilterDisabled={isFilterDisabled}
-                />
-              )}
-            </div>
-          </>
-        )}
-      </div>
-
-      {!asCarousel && !isPlaceholder && showFloatingVideo && currentSlide && currentSlide.type === "video" && (
-        <FloatingVideo
-          src={currentSlide.image}
-          alt={currentSlide.alt}
-          isVisible={showFloatingVideo}
-          onClose={handleCloseFloatingVideo}
-          onExpand={handleExpandFloatingVideo}
-          currentTime={videoCurrentTime}
-          headerOffset={offset}
-        />
+    <div className="min-h-screen bg-background pb-24">
+      {/* Hero Banner with Ben 10 Cartoon Video - Only show on step 1 */}
+      {currentStep === 1 && (
+        <div className="mb-8">
+          <HeroBanner
+            customBanners={[onboardingVideoBanner]}
+            showNewsTicker={false}
+            showCarouselBottomRow={false}
+            asCarousel={false}
+          />
+        </div>
       )}
-    </>
-  );
-}
 
-export { default as ProductFilterBar } from './ProductFilterBar';
+      {/* Step 1: Overview */}
+      {currentStep === 1 && (
+        <div className="p-4 space-y-6">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Become a Seller
+            </h1>
+            <p className="text-base text-gray-600 max-w-2xl mx-auto">
+              Join thousands of successful sellers in Haiti. Start your business today with a one-time registration fee.
+            </p>
+          </div>
+
+          {/* Registration Fee Card */}
+          <div className="max-w-md mx-auto bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl text-white p-6 text-center">
+            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <DollarSign className="w-8 h-8" />
+            </div>
+            <h3 className="text-xl font-bold mb-2">One-Time Registration Fee</h3>
+            <div className="text-3xl font-bold mb-2">1,000 HTG</div>
+            <p className="text-blue-100 text-sm">
+              Pay once and start selling forever. No monthly fees, no hidden charges.
+            </p>
+          </div>
+
+          {/* Benefits Grid */}
+          <div className="max-w-4xl mx-auto">
+            <h3 className="text-lg font-semibold text-gray-900 mb-6 text-center">
+              Why Sell With Us?
+            </h3>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {sellerBenefits.map((benefit, index) => {
+                const Icon = benefit.icon;
+                return (
+                  <div key={index} className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Icon className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <h4 className="font-semibold text-gray-900 mb-2 text-sm">
+                      {benefit.title}
+                    </h4>
+                    <p className="text-gray-600 text-xs">
+                      {benefit.description}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div className="max-w-2xl mx-auto text-center">
+            <div className="grid grid-cols-3 gap-4 mt-8">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600 mb-1">10K+</div>
+                <div className="text-sm text-gray-600">Active Sellers</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600 mb-1">500K+</div>
+                <div className="text-sm text-gray-600">Products</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600 mb-1">24/7</div>
+                <div className="text-sm text-gray-600">Support</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Step 2: Business Information */}
+      {currentStep === 2 && (
+        <div className="p-4 space-y-6 max-w-2xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Business Information
+            </h1>
+            <p className="text-base text-gray-600">
+              Tell us about your business to complete your registration.
+            </p>
+          </div>
+
+          <form className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Business Name *
+                </label>
+                <input
+                  type="text"
+                  name="businessName"
+                  value={applicationData.businessName}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Your business name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Business Type *
+                </label>
+                <select
+                  name="businessType"
+                  value={applicationData.businessType}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Select business type</option>
+                  <option value="individual">Individual Seller</option>
+                  <option value="sole_proprietorship">Sole Proprietorship</option>
+                  <option value="llc">LLC</option>
+                  <option value="corporation">Corporation</option>
+                  <option value="partnership">Partnership</option>
+                  <option value="cooperative">Cooperative</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Phone Number *
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={applicationData.phone}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="+509 XX XX XXXX"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={applicationData.email}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="your@business.com"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Business Address
+              </label>
+              <input
+                type="text"
+                name="address"
+                value={applicationData.address}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Street address"
+              />
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  City
+                </label>
+                <input
+                  type="text"
+                  name="city"
+                  value={applicationData.city}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="City"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Department
+                </label>
+                <select
+                  name="country"
+                  value={applicationData.country}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Select department</option>
+                  <option value="ouest">Ouest (Port-au-Prince)</option>
+                  <option value="nord">Nord</option>
+                  <option value="nord-est">Nord-Est</option>
+                  <option value="nord-ouest">Nord-Ouest</option>
+                  <option value="artibonite">Artibonite</option>
+                  <option value="centre">Centre</option>
+                  <option value="sud">Sud</option>
+                  <option value="sud-est">Sud-Est</option>
+                  <option value="grandanse">Grand'Anse</option>
+                  <option value="nippes">Nippes</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Product Categories
+              </label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {productCategories.map((category) => (
+                  <label key={category} className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={applicationData.productCategories.includes(category)}
+                      onChange={() => handleCategoryToggle(category)}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700">{category}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  NIF (Tax ID)
+                </label>
+                <input
+                  type="text"
+                  name="taxId"
+                  value={applicationData.taxId}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Tax identification number"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Years in Business
+                </label>
+                <select
+                  name="yearsInBusiness"
+                  value={applicationData.yearsInBusiness}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Select years</option>
+                  <option value="0-1">0-1 years</option>
+                  <option value="1-3">1-3 years</option>
+                  <option value="3-5">3-5 years</option>
+                  <option value="5-10">5-10 years</option>
+                  <option value="10+">10+ years</option>
+                </select>
+              </div>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Step 3: Payment */}
+      {currentStep === 3 && (
+        <div className="p-4 space-y-6 max-w-2xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Payment & Registration
+            </h1>
+            <p className="text-base text-gray-600">
+              Complete your registration by paying the one-time fee.
+            </p>
+          </div>
+
+          {/* Payment Summary */}
+          <div className="bg-blue-50 rounded-lg p-6">
+            <h3 className="text-lg font-semibold mb-4 text-center">Registration Summary</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-700">One-Time Registration Fee</span>
+                <span className="font-semibold">1,000 HTG</span>
+              </div>
+              <div className="flex justify-between items-center text-sm text-gray-600">
+                <span>Validity</span>
+                <span>Lifetime</span>
+              </div>
+              <div className="border-t pt-3">
+                <div className="flex justify-between items-center font-bold text-lg">
+                  <span>Total</span>
+                  <span>1,000 HTG</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Payment Methods */}
+          <div className="bg-white border rounded-lg p-6">
+            <h3 className="text-lg font-semibold mb-4">Payment Method</h3>
+            <div className="space-y-4">
+              {/* Mobile Money */}
+              <div className="border-2 border-blue-500 rounded-lg p-4">
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    defaultChecked
+                    className="text-blue-600 focus:ring-blue-500"
+                  />
+                  <div>
+                    <div className="font-semibold">Mobile Money</div>
+                    <div className="text-sm text-gray-600">Pay with NatCash, MonCash, or Digicel</div>
+                  </div>
+                </label>
+              </div>
+
+              {/* Bank Transfer */}
+              <div className="border-2 border-gray-200 rounded-lg p-4">
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    className="text-blue-600 focus:ring-blue-500"
+                  />
+                  <div>
+                    <div className="font-semibold">Bank Transfer</div>
+                    <div className="text-sm text-gray-600">Transfer to our bank account</div>
+                  </div>
+                </label>
+              </div>
+
+              {/* Credit Card */}
+              <div className="border-2 border-gray-200 rounded-lg p-4">
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    className="text-blue-600 focus:ring-blue-500"
+                  />
+                  <div>
+                    <div className="font-semibold">Credit/Debit Card</div>
+                    <div className="text-sm text-gray-600">Pay with Visa, Mastercard, or American Express</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* Terms and Conditions */}
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <label className="flex items-start space-x-3 cursor-pointer">
+              <input
+                type="checkbox"
+                name="agreeToTerms"
+                checked={applicationData.agreeToTerms}
+                onChange={handleInputChange}
+                className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <div className="text-sm">
+                <span className="font-medium">
+                  I agree to the Seller Agreement, Terms of Service, and Privacy Policy.
+                </span>
+                <p className="text-gray-600 mt-1">
+                  By checking this box, you agree to pay the one-time registration fee of 1,000 HTG and comply with our seller policies.
+                </p>
+              </div>
+            </label>
+          </div>
+        </div>
+      )}
+
+      {/* Step 4: Success */}
+      {currentStep === 4 && (
+        <div className="p-4 space-y-6 max-w-2xl mx-auto text-center">
+          <div className="bg-green-50 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="w-10 h-10 text-green-500" />
+          </div>
+
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            Application Submitted!
+          </h1>
+
+          <p className="text-base text-gray-600 mb-8">
+            Thank you for your application to become a seller. Your registration fee of 1,000 HTG will be processed and our team will review your information.
+          </p>
+
+          <div className="bg-blue-50 rounded-lg p-6 text-left">
+            <h3 className="font-semibold mb-4">What happens next?</h3>
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center space-x-3">
+                <CreditCard className="w-5 h-5 text-blue-500" />
+                <span>Complete your payment of 1,000 HTG</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <UserCheck className="w-5 h-5 text-blue-500" />
+                <span>Verification team reviews your application</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Mail className="w-5 h-5 text-blue-500" />
+                <span>You'll receive confirmation within 24 hours</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Package className="w-5 h-5 text-blue-500" />
+                <span>Start selling immediately after approval</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-6 space-y-3">
+            <button
+              onClick={() => navigate('/seller-dashboard/products')}
+              className="w-full px-8 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors"
+            >
+              Return to Dashboard
+            </button>
+            <button
+              onClick={() => navigate('/help')}
+              className="w-full px-8 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+            >
+              Need Help? Contact Support
+            </button>
+          </div>
+        </div>
+      )}
+
+      <StickyButton />
+
+      <form onSubmit={handleSubmit} className="hidden">
+        <button type="submit">Save</button>
+      </form>
+
+      {isLoading && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-4 flex items-center gap-3">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <span className="text-sm font-medium">Processing your registration...</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default SellerOnboarding;
