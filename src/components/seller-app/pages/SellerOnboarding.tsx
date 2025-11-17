@@ -341,35 +341,36 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-50">
-        <div className="px-4 py-3">
-          <div className="flex items-center justify-between">
-            <button onClick={prevStep} className="text-gray-600 text-sm font-medium">
-              {currentStep > 1 ? '← Back' : '× Close'}
-            </button>
-            {currentStep > 1 && currentStep < 4 && (
-              <span className="text-sm font-medium text-gray-900">
-                Step {currentStep - 1} of 3
-              </span>
-            )}
-            <div className="w-12"></div>
-          </div>
-          {currentStep > 1 && currentStep < 4 && (
-            <div className="mt-3">
-              <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-blue-600 transition-all duration-300"
-                  style={{ width: `${((currentStep - 1) / 3) * 100}%` }}
-                />
-              </div>
-            </div>
-          )}
-        </div>
+      {/* ProductHeader for Onboarding */}
+      <div className="fixed top-0 left-0 right-0 z-50">
+        <ProductHeader  
+          onCloseClick={handleBackClick}  
+          onShareClick={handleShareClick}  
+          // Hide title and action buttons on step 1 (overview)
+          title={currentStep === 1 ? undefined : "Become a Seller"}
+          actionButtons={[]}
+          forceScrolledState={true}
+          hideSearch={true}
+          showSellerInfo={false}
+          // Progress Bar - Only show from step 2 onwards
+          showProgressBar={currentStep > 1}
+          currentStep={currentStep}
+          totalSteps={4}
+          progressBarColor="bg-blue-600"
+          // Language Context
+          currentLanguage={currentLanguage}
+          currentLocation={currentLocation}
+          supportedLanguages={supportedLanguages}
+          onLanguageChange={handleLanguageChange}
+          onOpenLocationScreen={handleOpenLocationScreen}
+          // Show language selector, hide settings button
+          showLanguageSelector={true}
+          showSettingsButton={false}
+        />  
       </div>
 
-      {/* Content */}
-      <div className="pb-24">
+      {/* Content with padding for fixed header */}
+      <div className="pt-16 pb-24">
         {/* Step 1: Overview */}
         {currentStep === 1 && (
           <div className="space-y-4">
