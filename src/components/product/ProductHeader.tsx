@@ -1,12 +1,10 @@
 import React, { useState } from "react";
 import { 
   Heart, 
-  Search,
   Settings,
   Globe,
   MapPin,
   Edit,
-  Pin,
   Check,
   Languages,
   LucideIcon,
@@ -327,13 +325,10 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
 }) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [languageQuery, setLanguageQuery] = useState('');
-  const [pinnedLanguages, setPinnedLanguages] = useState(new Set(['en', 'es']));
   const [showLocationScreen, setShowLocationScreen] = useState(false);
 
   const { progress: scrollProgress } = useScrollProgress();
   const displayProgress = forceScrolledState ? 1 : scrollProgress;
-  const [internalSearchQuery, setInternalSearchQuery] = useState('');
   const navigate = useNavigate();
   const { isLoading } = useNavigationLoading();
 
@@ -350,7 +345,12 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
   const currentLocation = propCurrentLocation || contextCurrentLocation;
   
   // Enhanced supported languages with flags
-  const enhancedSupportedLanguages = (propSupportedLanguages || contextSupportedLanguages || []).map(lang => ({
+  const enhancedSupportedLanguages = (propSupportedLanguages || contextSupportedLanguages || [
+    { code: 'en', name: 'English', nativeName: 'English' },
+    { code: 'fr', name: 'French', nativeName: 'Français' },
+    { code: 'es', name: 'Spanish', nativeName: 'Español' },
+    { code: 'ht', name: 'Haitian Creole', nativeName: 'Kreyòl' }
+  ]).map(lang => ({
     ...lang,
     flag: `https://flagcdn.com/24x18/${getCountryCode(lang.code)}.png`
   }));
@@ -379,11 +379,7 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
   const enhancedCurrentLanguage = currentLanguage ? {
     ...currentLanguage,
     flag: `https://flagcdn.com/24x18/${getCountryCode(currentLanguage.code)}.png`
-  } : undefined;
-
-  // Use external search query if provided, otherwise use internal
-  const searchQuery = externalSearchQuery !== undefined ? externalSearchQuery : internalSearchQuery;
-  const setSearchQuery = externalSetSearchQuery || setInternalSearchQuery;
+  } : enhancedSupportedLanguages[0];
 
   const toggleFavorite = () => {
     setIsFavorite(!isFavorite);
@@ -391,15 +387,6 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
 
   const toggleSettings = () => {
     setIsSettingsOpen(!isSettingsOpen);
-    setLanguageQuery(''); // Clear search when opening settings
-  };
-
-  const handleSearchSubmit = () => {
-    if (searchQuery.trim() && onSearch) {
-      onSearch(searchQuery);
-    } else if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-    }
   };
 
   const handleLanguageChange = (language: Language) => {
@@ -408,23 +395,7 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
 
     // Call the language context setter
     setLanguage(language.code);
-
-    // Clear search when language is selected
-    setLanguageQuery('');
     setIsSettingsOpen(false);
-  };
-
-  const handleToggleLanguagePin = (languageCode: string, event: React.MouseEvent) => {
-    event.stopPropagation();
-    setPinnedLanguages(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(languageCode)) {
-        newSet.delete(languageCode);
-      } else {
-        newSet.add(languageCode);
-      }
-      return newSet;
-    });
   };
 
   const handleOpenLocationScreen = () => {
@@ -437,20 +408,6 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
   const handleCloseLocationScreen = () => {
     setShowLocationScreen(false);
   };
-
-  // Filter and sort languages
-  const filteredLanguages = enhancedSupportedLanguages
-    .filter((lang) =>
-      lang.name.toLowerCase().includes(languageQuery.toLowerCase()) ||
-      lang.nativeName.toLowerCase().includes(languageQuery.toLowerCase())
-    )
-    .sort((a, b) => {
-      const aPinned = pinnedLanguages.has(a.code);
-      const bPinned = pinnedLanguages.has(b.code);
-      if (aPinned && !bPinned) return -1;
-      if (!aPinned && bPinned) return 1;
-      return 0;
-    });
 
   // Removed SearchPageSkeleton - just return null if loading
   if (isLoading) {
@@ -474,9 +431,9 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
         >
           {/* Main Header Content */}
           <div className="py-2 px-3 w-full">
-            <div className="flex items-center justify-between w-full max-w-6xl mx-auto">
-              {/* Left side - Back button, Title, and Seller Info */}
-              <div className="flex items-center gap-3 flex-shrink-0 flex-1 min-w-0">
+            <div className="flex items-center justify-between w-full max-w-6xl mx-auto gap-4">
+              {/* Left side - Back button and Title */}
+              <div className="flex items-center gap-3 flex-shrink-0 min-w-0 flex-1">
                 <BackButton
                   progress={displayProgress}
                   showCloseIcon={showCloseIcon}
@@ -485,7 +442,7 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
 
                 {/* Show title next to back button when provided */}
                 {title && (
-                  <div className="flex items-center min-w-0">
+                  <div className="min-w-0 flex-1">
                     <h1 className="text-lg font-semibold text-gray-900 truncate">
                       {title}
                     </h1>
@@ -495,7 +452,7 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
                 {/* Show seller info when not scrolled AND showSellerInfo is true AND no title */}
                 {!title && displayProgress < 0.5 && seller && showSellerInfo && (
                   <div 
-                    className="rounded-full transition-all duration-700"
+                    className="rounded-full transition-all duration-700 flex-shrink-0"
                     style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})` }}
                   >
                     <button
@@ -543,32 +500,6 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
                         }
                       </span>
                     </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Center - Search bar (only when no title) */}
-              <div className="flex-1 mx-4">
-                {!title && !hideSearch && displayProgress >= 0.5 && (
-                  <div className="flex-1 relative max-w-md mx-auto">
-                    <input
-                      type="text"
-                      placeholder="Search products..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onFocus={() => {
-                        if (onSearchFocus) {
-                          onSearchFocus();
-                        }
-                      }}
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          handleSearchSubmit();
-                        }
-                      }}
-                      className="w-full px-3 py-1 text-sm font-medium border-2 border-gray-800 rounded-full focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-300 bg-white shadow-sm"
-                    />
-                    <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-600 font-bold" />
                   </div>
                 )}
               </div>
@@ -669,48 +600,9 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
             <span className="font-medium">Language</span>
           </div>
 
-          {/* Language Search Input */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search languages..."
-              value={languageQuery}
-              onChange={(e) => setLanguageQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-            />
-          </div>
-
-          {/* Current Language Display */}
-          <div className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-orange-50 border-orange-200">
-            <div className="flex items-center space-x-3">
-              {enhancedCurrentLanguage?.flag && (
-                <img 
-                  src={enhancedCurrentLanguage.flag} 
-                  alt={enhancedCurrentLanguage.name}
-                  className="h-5 w-6 object-cover rounded-sm"
-                />
-              )}
-              <div className="text-left">
-                <div className="font-medium text-gray-900">
-                  {enhancedCurrentLanguage?.nativeName || enhancedCurrentLanguage?.name || 'English'}
-                </div>
-                <div className="text-xs text-gray-500">
-                  {enhancedCurrentLanguage?.name || 'English'} • {enhancedCurrentLanguage?.code?.toUpperCase() || 'EN'}
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              {pinnedLanguages.has(enhancedCurrentLanguage?.code || 'en') && (
-                <Pin className="h-4 w-4 text-orange-600 fill-current" />
-              )}
-              <Check className="h-4 w-4 text-orange-600" />
-            </div>
-          </div>
-
-          {/* Language Grid with Flags */}
+          {/* Language List */}
           <div className="space-y-2">
-            {filteredLanguages.slice(0, 6).map((language) => (
+            {enhancedSupportedLanguages.map((language) => (
               <button
                 key={language.code}
                 onClick={() => handleLanguageChange(language)}
@@ -735,33 +627,12 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
                     <div className="text-xs text-gray-500">{language.name}</div>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={(e) => handleToggleLanguagePin(language.code, e)}
-                    className={`p-1 rounded ${
-                      pinnedLanguages.has(language.code) 
-                        ? 'text-orange-600' 
-                        : 'text-gray-400 hover:text-gray-600'
-                    }`}
-                  >
-                    <Pin className={`h-3 w-3 ${pinnedLanguages.has(language.code) ? 'fill-current' : ''}`} />
-                  </button>
-                  {enhancedCurrentLanguage?.code === language.code && (
-                    <Check className="h-4 w-4 text-orange-600" />
-                  )}
-                </div>
+                {enhancedCurrentLanguage?.code === language.code && (
+                  <Check className="h-4 w-4 text-orange-600" />
+                )}
               </button>
             ))}
           </div>
-
-          {/* Show more languages if there are more than 6 */}
-          {filteredLanguages.length > 6 && (
-            <div className="text-center">
-              <button className="text-xs text-orange-600 hover:text-orange-700 font-medium">
-                Show {filteredLanguages.length - 6} more languages
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Location Section */}
