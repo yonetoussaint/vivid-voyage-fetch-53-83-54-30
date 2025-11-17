@@ -47,7 +47,7 @@ interface HeroBannerProps {
 
 const fetchSellerBanners = async (sellerId: string) => {
   if (!sellerId) return [];
-  
+
   try {
     const { data, error } = await supabase
       .from('seller_banners')
@@ -185,10 +185,10 @@ export default function HeroBanner({
           image: 'bg-gradient-to-br from-blue-50 to-indigo-100'
         }];
       }
-      
+
       return bannersData.map((banner: any, index: number) => {
         const isImage = banner.type === 'image';
-        
+
         return {
           id: banner.id,
           image: banner.value,
@@ -211,7 +211,7 @@ export default function HeroBanner({
           image: 'bg-gray-100'
         }];
       }
-      
+
       return bannersData.map((banner: any, index: number) => {
         const decodedUrl = decodeURIComponent(banner.image);
         const isVideo = /\.(mp4|webm|ogg|mov|avi)$/i.test(decodedUrl) || 
@@ -233,7 +233,7 @@ export default function HeroBanner({
           name: index === 0 ? "Summer Collection" : "Winter Essentials",
           images: [
             "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop",
-            "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop",
             "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=300&fit=crop"
           ],
           product_count: index === 0 ? 24 : 18
@@ -356,15 +356,18 @@ export default function HeroBanner({
     if (!isPlaceholder) return null;
 
     const isSellerBanner = dataSource === 'seller_banners';
-    
+
     return (
       <div 
-        className={`w-full h-full flex items-center justify-center ${
+        className={`w-full flex items-center justify-center ${
           isSellerBanner 
             ? 'bg-gradient-to-br from-blue-50 to-indigo-100 border border-dashed border-blue-200' 
             : 'bg-gray-100 border border-dashed border-gray-300'
         }`}
-        style={customHeight ? { height: customHeight } : { aspectRatio: '2 / 1' }}
+        style={{ 
+          aspectRatio: '2 / 1',
+          maxHeight: '330px'
+        }}
       >
         <div className="text-center p-4">
           <div className={`rounded-full w-10 h-10 flex items-center justify-center mx-auto mb-2 ${
@@ -372,7 +375,7 @@ export default function HeroBanner({
           }`}>
             <Image className="w-5 h-5" />
           </div>
-          
+
           <p className={`text-sm font-medium ${
             isSellerBanner ? 'text-blue-900' : 'text-gray-700'
           }`}>
@@ -386,7 +389,7 @@ export default function HeroBanner({
         </div>
       </div>
     );
-  }, [isPlaceholder, customHeight, dataSource]);
+  }, [isPlaceholder, dataSource]);
 
   return (
     <>
@@ -401,8 +404,14 @@ export default function HeroBanner({
         ) : (
           <>
             <div 
-              className="relative w-full" 
-              style={customHeight ? { height: customHeight } : { aspectRatio: '2 / 1' }}
+              className="relative w-full bg-gray-100" 
+              style={customHeight ? { 
+                height: customHeight,
+                aspectRatio: customHeight ? 'unset' : '2 / 1'
+              } : { 
+                aspectRatio: '2 / 1',
+                maxHeight: '330px'
+              }}
             >
               {isPlaceholder ? (
                 <>
@@ -417,9 +426,9 @@ export default function HeroBanner({
                     previousIndex={previousIndex}
                     onVideoDurationChange={handleVideoDurationChange}
                   />
-                  
+
                   {EditButton}
-                  
+
                   <BannerControls
                     slidesCount={slidesToShow.length}
                     activeIndex={activeIndex}
