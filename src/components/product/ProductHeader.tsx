@@ -9,7 +9,8 @@ import {
   Pin,
   Check,
   Languages,
-  LucideIcon
+  LucideIcon,
+  ChevronDown
 } from "lucide-react";
 import { useScrollProgress } from "./header/useScrollProgress";
 import BackButton from "./header/BackButton";
@@ -24,6 +25,7 @@ interface Language {
   code: string;
   name: string;
   nativeName: string;
+  flag: string;
 }
 
 interface Location {
@@ -243,69 +245,44 @@ const HeaderActionButton = ({
   );
 };
 
-// NEW: Language Selector Component
+// NEW: Language Selector Component with Flags
 const LanguageSelector = ({ 
   currentLanguage,
-  supportedLanguages,
-  onLanguageChange,
+  onOpenSettings,
   progress
 }: {
   currentLanguage?: Language;
-  supportedLanguages?: Language[];
-  onLanguageChange?: (language: Language) => void;
+  onOpenSettings: () => void;
   progress: number;
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const handleLanguageSelect = (language: Language) => {
-    onLanguageChange?.(language);
-    setIsOpen(false);
-  };
-
-  const displayLanguages = supportedLanguages?.slice(0, 4) || [
-    { code: 'en', name: 'English', nativeName: 'English' },
-    { code: 'fr', name: 'French', nativeName: 'Français' },
-    { code: 'es', name: 'Spanish', nativeName: 'Español' },
-    { code: 'ht', name: 'Haitian Creole', nativeName: 'Kreyòl' }
-  ];
-
   return (
-    <div className="relative">
-      {/* Language Selector Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 px-2.5 h-8 rounded-full transition-all duration-700"
-        style={{ 
-          backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - progress)})`,
-          color: progress > 0.5 
-            ? `rgba(75, 85, 99, ${0.7 + (progress * 0.3)})` 
-            : `rgba(255, 255, 255, ${0.9 - (progress * 0.2)})`
-        }}
-      >
-        <Globe size={16} />
-        <span className="text-xs font-medium uppercase">
-          {currentLanguage?.code || 'EN'}
-        </span>
-      </button>
-
-      {/* Language Dropdown */}
-      {isOpen && (
-        <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-50 min-w-[140px] py-2">
-          {displayLanguages.map((language) => (
-            <button
-              key={language.code}
-              onClick={() => handleLanguageSelect(language)}
-              className={`w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-gray-50 transition-colors ${
-                currentLanguage?.code === language.code ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
-              }`}
-            >
-              <span className="font-medium uppercase">{language.code}</span>
-              <span className="text-xs text-gray-500">{language.nativeName}</span>
-            </button>
-          ))}
-        </div>
+    <button
+      onClick={onOpenSettings}
+      className="flex items-center gap-2 px-3 h-8 rounded-full transition-all duration-700 hover:bg-black/10"
+      style={{ 
+        backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - progress)})`,
+        color: progress > 0.5 
+          ? `rgba(75, 85, 99, ${0.7 + (progress * 0.3)})` 
+          : `rgba(255, 255, 255, ${0.9 - (progress * 0.2)})`
+      }}
+    >
+      {currentLanguage?.flag && (
+        <img 
+          src={currentLanguage.flag} 
+          alt={currentLanguage.name}
+          className="w-4 h-3 object-cover rounded-sm"
+          onError={(e) => {
+            // Fallback to globe icon if flag fails to load
+            const target = e.target as HTMLImageElement;
+            target.style.display = 'none';
+          }}
+        />
       )}
-    </div>
+      <span className="text-xs font-medium uppercase">
+        {currentLanguage?.code || 'EN'}
+      </span>
+      <ChevronDown size={14} className="opacity-70" />
+    </button>
   );
 };
 
@@ -371,7 +348,38 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
   // Use props if provided, otherwise use context
   const currentLanguage = propCurrentLanguage || contextCurrentLanguage;
   const currentLocation = propCurrentLocation || contextCurrentLocation;
-  const supportedLanguages = propSupportedLanguages || contextSupportedLanguages;
+  
+  // Enhanced supported languages with flags
+  const enhancedSupportedLanguages = (propSupportedLanguages || contextSupportedLanguages || []).map(lang => ({
+    ...lang,
+    flag: `https://flagcdn.com/24x18/${getCountryCode(lang.code)}.png`
+  }));
+
+  // Helper function to get country code from language code
+  function getCountryCode(languageCode: string): string {
+    const countryMap: { [key: string]: string } = {
+      'en': 'us',
+      'es': 'es',
+      'fr': 'fr',
+      'de': 'de',
+      'it': 'it',
+      'pt': 'pt',
+      'ru': 'ru',
+      'zh': 'cn',
+      'ja': 'jp',
+      'ko': 'kr',
+      'ar': 'sa',
+      'hi': 'in',
+      'ht': 'ht', // Haiti for Haitian Creole
+    };
+    return countryMap[languageCode] || languageCode;
+  }
+
+  // Enhanced current language with flag
+  const enhancedCurrentLanguage = currentLanguage ? {
+    ...currentLanguage,
+    flag: `https://flagcdn.com/24x18/${getCountryCode(currentLanguage.code)}.png`
+  } : undefined;
 
   // Use external search query if provided, otherwise use internal
   const searchQuery = externalSearchQuery !== undefined ? externalSearchQuery : internalSearchQuery;
@@ -403,6 +411,7 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
 
     // Clear search when language is selected
     setLanguageQuery('');
+    setIsSettingsOpen(false);
   };
 
   const handleToggleLanguagePin = (languageCode: string, event: React.MouseEvent) => {
@@ -429,20 +438,8 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
     setShowLocationScreen(false);
   };
 
-  // Fallback languages
-  const languages = supportedLanguages && Array.isArray(supportedLanguages) && supportedLanguages.length > 0 
-    ? supportedLanguages
-    : [
-        { code: 'en', name: 'English', nativeName: 'English' },
-        { code: 'es', name: 'Spanish', nativeName: 'Español' },
-        { code: 'fr', name: 'French', nativeName: 'Français' },
-        { code: 'de', name: 'German', nativeName: 'Deutsch' },
-        { code: 'zh', name: 'Chinese', nativeName: '中文' },
-        { code: 'ja', name: 'Japanese', nativeName: '日本語' },
-      ];
-
   // Filter and sort languages
-  const filteredLanguages = languages
+  const filteredLanguages = enhancedSupportedLanguages
     .filter((lang) =>
       lang.name.toLowerCase().includes(languageQuery.toLowerCase()) ||
       lang.nativeName.toLowerCase().includes(languageQuery.toLowerCase())
@@ -582,9 +579,8 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
                 {/* Language Selector - Show instead of settings button when showLanguageSelector is true */}
                 {showLanguageSelector ? (
                   <LanguageSelector
-                    currentLanguage={currentLanguage}
-                    supportedLanguages={supportedLanguages}
-                    onLanguageChange={handleLanguageChange}
+                    currentLanguage={enhancedCurrentLanguage}
+                    onOpenSettings={toggleSettings}
                     progress={displayProgress}
                   />
                 ) : (
@@ -600,7 +596,8 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
                   )
                 )}
 
-                {actionButtons.length > 0 ? (
+                {/* Only show action buttons if not showing language selector (hides save button) */}
+                {!showLanguageSelector && actionButtons.length > 0 ? (
                   actionButtons.map((button, index) => (
                     <HeaderActionButton
                       key={index}
@@ -613,14 +610,16 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
                     />
                   ))
                 ) : (
-                  <HeaderActionButton
-                    Icon={Heart}
-                    active={isFavorite}
-                    onClick={toggleFavorite}
-                    progress={displayProgress}
-                    activeColor="#f43f5e"
-                    likeCount={147}
-                  />
+                  !showLanguageSelector && (
+                    <HeaderActionButton
+                      Icon={Heart}
+                      active={isFavorite}
+                      onClick={toggleFavorite}
+                      progress={displayProgress}
+                      activeColor="#f43f5e"
+                      likeCount={147}
+                    />
+                  )
                 )}
               </div>
             </div>
@@ -658,7 +657,7 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
       <SlideUpPanel
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
-        title="Settings"
+        title="Language & Settings"
         preventBodyScroll={true}
         className="p-4 space-y-6"
         dynamicHeight={true}
@@ -684,58 +683,83 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
           </div>
 
           {/* Current Language Display */}
-          <div className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+          <div className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-orange-50 border-orange-200">
             <div className="flex items-center space-x-3">
-              <Languages className="h-5 w-5 text-orange-600" />
+              {enhancedCurrentLanguage?.flag && (
+                <img 
+                  src={enhancedCurrentLanguage.flag} 
+                  alt={enhancedCurrentLanguage.name}
+                  className="h-5 w-6 object-cover rounded-sm"
+                />
+              )}
               <div className="text-left">
                 <div className="font-medium text-gray-900">
-                  {currentLanguage?.nativeName || currentLanguage?.name || 'English'}
+                  {enhancedCurrentLanguage?.nativeName || enhancedCurrentLanguage?.name || 'English'}
                 </div>
                 <div className="text-xs text-gray-500">
-                  {currentLanguage?.name || 'English'} • {currentLanguage?.code?.toUpperCase() || 'EN'}
+                  {enhancedCurrentLanguage?.name || 'English'} • {enhancedCurrentLanguage?.code?.toUpperCase() || 'EN'}
                 </div>
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              {pinnedLanguages.has(currentLanguage?.code || 'en') && (
+              {pinnedLanguages.has(enhancedCurrentLanguage?.code || 'en') && (
                 <Pin className="h-4 w-4 text-orange-600 fill-current" />
               )}
               <Check className="h-4 w-4 text-orange-600" />
             </div>
           </div>
 
-          {/* Language Grid */}
-          <div className="grid grid-cols-2 gap-2">
-            {filteredLanguages.slice(0, 4).map((language) => (
+          {/* Language Grid with Flags */}
+          <div className="space-y-2">
+            {filteredLanguages.slice(0, 6).map((language) => (
               <button
                 key={language.code}
                 onClick={() => handleLanguageChange(language)}
-                className={`p-2 text-sm rounded-lg border transition-all flex items-center justify-between ${
-                  currentLanguage?.code === language.code
+                className={`w-full p-3 text-sm rounded-lg border transition-all flex items-center justify-between ${
+                  enhancedCurrentLanguage?.code === language.code
                     ? 'border-orange-500 bg-orange-50 text-orange-700'
                     : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                 }`}
               >
-                <span>{language.nativeName}</span>
-                <button
-                  onClick={(e) => handleToggleLanguagePin(language.code, e)}
-                  className={`p-1 rounded ${
-                    pinnedLanguages.has(language.code) 
-                      ? 'text-orange-600' 
-                      : 'text-gray-400 hover:text-gray-600'
-                  }`}
-                >
-                  <Pin className={`h-3 w-3 ${pinnedLanguages.has(language.code) ? 'fill-current' : ''}`} />
-                </button>
+                <div className="flex items-center space-x-3">
+                  <img 
+                    src={language.flag} 
+                    alt={language.name}
+                    className="h-4 w-5 object-cover rounded-sm"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                    }}
+                  />
+                  <div className="text-left">
+                    <div className="font-medium">{language.nativeName}</div>
+                    <div className="text-xs text-gray-500">{language.name}</div>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={(e) => handleToggleLanguagePin(language.code, e)}
+                    className={`p-1 rounded ${
+                      pinnedLanguages.has(language.code) 
+                        ? 'text-orange-600' 
+                        : 'text-gray-400 hover:text-gray-600'
+                    }`}
+                  >
+                    <Pin className={`h-3 w-3 ${pinnedLanguages.has(language.code) ? 'fill-current' : ''}`} />
+                  </button>
+                  {enhancedCurrentLanguage?.code === language.code && (
+                    <Check className="h-4 w-4 text-orange-600" />
+                  )}
+                </div>
               </button>
             ))}
           </div>
 
-          {/* Show more languages if there are more than 4 */}
-          {filteredLanguages.length > 4 && (
+          {/* Show more languages if there are more than 6 */}
+          {filteredLanguages.length > 6 && (
             <div className="text-center">
               <button className="text-xs text-orange-600 hover:text-orange-700 font-medium">
-                Show {filteredLanguages.length - 4} more languages
+                Show {filteredLanguages.length - 6} more languages
               </button>
             </div>
           )}
