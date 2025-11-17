@@ -8,7 +8,7 @@ import {
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import HeroBanner from '@/components/home/HeroBanner'; // Import the HeroBanner
+import HeroBanner from '@/components/home/HeroBanner';
 
 interface SellerOnboardingProps {
   onStepChange?: (step: number) => void;
@@ -22,25 +22,20 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Use ref to always have latest formData in event listener
   const formDataRef = useRef({});
   const [isLoading, setIsLoading] = useState(false);
 
-  // Use external currentStep if provided, otherwise use internal state
   const [internalCurrentStep, setInternalCurrentStep] = useState(1);
   const currentStep = externalCurrentStep !== undefined ? externalCurrentStep : internalCurrentStep;
 
   const setCurrentStep = (step: number) => {
     if (externalCurrentStep !== undefined && onStepChange) {
-      // If controlled by parent, notify parent of step change
       onStepChange(step);
     } else {
-      // If uncontrolled, use internal state
       setInternalCurrentStep(step);
     }
   };
 
-  // Application form state
   const [applicationData, setApplicationData] = useState({
     businessName: '',
     businessType: '',
@@ -60,18 +55,17 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     agreeToTerms: false
   });
 
-  // Video banner configuration for seller onboarding
+  // Wikimedia Commons video - "Small Business Tips" from Wikimedia
   const onboardingVideoBanner = {
     id: 'seller-onboarding-video',
-    image: 'https://customer-5p3tk6y0gv8gvyp8.cloudflarestream.com/5c54b5d5eb595e1786e9d673a3c9d8e8/manifest/video.m3u8', // Replace with your actual video URL
-    alt: 'Seller Success Story - How to Grow Your Business',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/transcoded/6/6d/Building_a_Business_from_Scratch_-_Tips_for_Young_Entrepreneurs_%28Viaframe%29.webm/Building_a_Business_from_Scratch_-_Tips_for_Young_Entrepreneurs_%28Viaframe%29.webm.480p.vp9.webm',
+    alt: 'Building a Business from Scratch - Tips for Young Entrepreneurs',
     title: 'Start Your Selling Journey Today',
-    subtitle: 'Join thousands of successful Haitian entrepreneurs',
+    subtitle: 'Join thousands of successful Haitian entrepreneurs building their businesses from scratch',
     type: 'video' as const,
-    duration: 15000, // 15 seconds for video
+    duration: 30000, // 30 seconds for the full video experience
   };
 
-  // Benefits of becoming a seller
   const sellerBenefits = [
     {
       icon: Users,
@@ -105,7 +99,6 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     }
   ];
 
-  // Product categories
   const productCategories = [
     'Electronics',
     'Fashion & Apparel',
@@ -121,7 +114,6 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     'Arts & Crafts'
   ];
 
-  // Fetch current seller data
   const { data: sellerData, isLoading: sellerLoading } = useQuery({
     queryKey: ['seller', user?.id],
     queryFn: async () => {
@@ -140,7 +132,6 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     },
   });
 
-  // Mutation for creating seller application
   const createSellerApplicationMutation = useMutation({
     mutationFn: async (applicationData: any) => {
       if (!user?.id) throw new Error('No user logged in');
@@ -163,7 +154,7 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     },
     onSuccess: (data) => {
       console.log('Application submitted successfully:', data);
-      setCurrentStep(4); // Move to success step
+      setCurrentStep(4);
     },
     onError: (error) => {
       console.error('Application submission error:', error);
@@ -172,7 +163,6 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     }
   });
 
-  // Listen for save event from header
   useEffect(() => {
     const handleSave = () => {
       console.log('Save event received');
@@ -281,7 +271,6 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     );
   }
 
-  // Sticky button component
   const StickyButton = () => {
     if (currentStep === 4) return null;
 
@@ -330,7 +319,7 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Hero Banner with Video - Only show on step 1 */}
+      {/* Hero Banner with Wikimedia Video - Only show on step 1 */}
       {currentStep === 1 && (
         <div className="mb-8">
           <HeroBanner
@@ -768,15 +757,12 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
         </div>
       )}
 
-      {/* Sticky Continue Button */}
       <StickyButton />
 
-      {/* Hidden form for save event */}
       <form onSubmit={handleSubmit} className="hidden">
         <button type="submit">Save</button>
       </form>
 
-      {/* Loading overlay */}
       {isLoading && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-4 flex items-center gap-3">
