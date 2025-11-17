@@ -84,7 +84,6 @@ interface BannerImageProps {
   className?: string;
   type?: "image" | "video";
   isActive?: boolean;
-  onVideoDurationChange?: (duration: number) => void;
 }
 
 const BannerImage: React.FC<BannerImageProps> = ({
@@ -93,7 +92,6 @@ const BannerImage: React.FC<BannerImageProps> = ({
   className = "",
   type = "image",
   isActive = false,
-  onVideoDurationChange,
 }) => {
   const [error, setError] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -106,23 +104,30 @@ const BannerImage: React.FC<BannerImageProps> = ({
   }, [src]);
 
   useEffect(() => {
-    if (videoRef.current && isActive && loaded) {
-      videoRef.current.play().catch(console.error);
-    } else if (videoRef.current && !isActive) {
-      videoRef.current.pause();
+    if (videoRef.current && type === 'video') {
+      if (isActive && loaded) {
+        // Force autoplay with error handling
+        const playVideo = async () => {
+          try {
+            videoRef.current!.currentTime = 0;
+            await videoRef.current!.play();
+          } catch (err) {
+            console.log('Autoplay failed, trying with user interaction:', err);
+            // If autoplay fails, we'll rely on the video's built-in controls
+          }
+        };
+        playVideo();
+      } else if (!isActive) {
+        videoRef.current!.pause();
+      }
     }
-  }, [isActive, loaded]);
+  }, [isActive, loaded, type]);
 
   const handleError = () => setError(true);
   const handleLoad = () => setLoaded(true);
 
-  const handleVideoLoadedMetadata = (e: React.SyntheticEvent<HTMLVideoElement>) => {
-    const video = e.currentTarget;
+  const handleVideoLoaded = () => {
     setLoaded(true);
-    if (onVideoDurationChange && video.duration && !isNaN(video.duration)) {
-      // Convert to milliseconds and add a small buffer
-      onVideoDurationChange(Math.floor(video.duration * 1000) + 500);
-    }
   };
 
   const toggleMute = () => {
@@ -153,13 +158,13 @@ const BannerImage: React.FC<BannerImageProps> = ({
         ref={videoRef}
         src={src}
         className={`${baseClass} object-contain`}
-        onLoadedMetadata={handleVideoLoadedMetadata}
+        onLoadedData={handleVideoLoaded}
         onError={handleError}
-        autoPlay={isActive}
         muted={isMuted}
         loop
         playsInline
-        preload="metadata"
+        preload="auto"
+        autoPlay
       />
       {loaded && (
         <button
@@ -190,14 +195,12 @@ interface BannerSlidesProps {
   slides: BannerType[];
   activeIndex: number;
   previousIndex: number | null;
-  onVideoDurationChange?: (index: number, duration: number) => void;
 }
 
 const BannerSlides: React.FC<BannerSlidesProps> = ({ 
   slides, 
   activeIndex, 
   previousIndex,
-  onVideoDurationChange
 }) => {
   return (
     <div className="relative w-full h-full">
@@ -222,7 +225,6 @@ const BannerSlides: React.FC<BannerSlidesProps> = ({
                 type={banner.type} // "image" or "video"
                 isActive={isActive}
                 className="w-full h-full"
-                onVideoDurationChange={(duration) => onVideoDurationChange?.(index, duration)}
               />
             )}
           </div>
@@ -256,7 +258,6 @@ export default function HeroBanner({
   const [showNews, setShowNews] = useState(showNewsTicker);
   const [progress, setProgress] = useState(0);
   const [offset, setOffset] = useState<number>(0);
-  const [videoDurations, setVideoDurations] = useState<{[key: number]: number}>({});
   const [showFloatingVideo, setShowFloatingVideo] = useState(false);
   const [videoCurrentTime, setVideoCurrentTime] = useState(0);
   const heroBannerRef = useRef<HTMLDivElement>(null);
@@ -403,7 +404,8 @@ export default function HeroBanner({
         return {
           ...banner,
           type: isVideo ? "video" as const : "image" as const,
-          duration: banner.duration || (isVideo ? 10000 : 5000),
+          // For videos, don't use duration - let the video handle its own timing
+          duration: isVideo ? 0 : (banner.duration || 5000),
           rowType,
           seller: rowType === 'seller' ? mockSeller : undefined,
           catalog: rowType === 'catalog' ? mockCatalog : undefined,
@@ -421,28 +423,20 @@ export default function HeroBanner({
   const slidesToShow = transformedBanners;
   const isPlaceholder = slidesToShow.length === 1 && slidesToShow[0].id === 'placeholder';
 
-  const handleVideoDurationChange = useCallback((index: number, duration: number) => {
-    setVideoDurations(prev => ({ ...prev, [index]: duration }));
-  }, []);
-
-  const getCurrentSlideDuration = useCallback(() => {
-    const slide = slidesToShow[activeIndex];
-    if (!slide) return 5000;
-
-    if (slide.type === "video" && videoDurations[activeIndex]) {
-      return videoDurations[activeIndex];
-    }
-
-    return slide.duration || 5000;
-  }, [activeIndex, slidesToShow, videoDurations]);
+  // Don't auto-advance slides if the current slide is a video
+  const shouldAutoAdvance = useMemo(() => {
+    const currentSlide = slidesToShow[activeIndex];
+    return !asCarousel && slidesToShow.length > 1 && !isPlaceholder && currentSlide?.type !== 'video';
+  }, [activeIndex, slidesToShow, asCarousel, isPlaceholder]);
 
   useEffect(() => {
-    if (asCarousel || slidesToShow.length <= 1 || isPlaceholder) return;
+    if (!shouldAutoAdvance) return;
 
     let timeoutRef: ReturnType<typeof setTimeout> | null = null;
     let progressIntervalRef: ReturnType<typeof setInterval> | null = null;
 
-    const duration = getCurrentSlideDuration();
+    const currentSlide = slidesToShow[activeIndex];
+    const duration = currentSlide?.duration || 5000;
     const progressStep = (50 / duration) * 100;
 
     const startSlideTimer = () => {
@@ -467,7 +461,7 @@ export default function HeroBanner({
       if (timeoutRef) clearTimeout(timeoutRef);
       if (progressIntervalRef) clearInterval(progressIntervalRef);
     };
-  }, [activeIndex, slidesToShow.length, videoDurations, asCarousel, getCurrentSlideDuration, isPlaceholder]);
+  }, [activeIndex, slidesToShow.length, shouldAutoAdvance, slidesToShow]);
 
   const handleCloseFloatingVideo = useCallback(() => {
     setShowFloatingVideo(false);
@@ -578,19 +572,21 @@ export default function HeroBanner({
                     slides={slidesToShow}
                     activeIndex={activeIndex}
                     previousIndex={previousIndex}
-                    onVideoDurationChange={handleVideoDurationChange}
                   />
 
                   {EditButton}
 
-                  <BannerControls
-                    slidesCount={slidesToShow.length}
-                    activeIndex={activeIndex}
-                    previousIndex={previousIndex}
-                    setActiveIndex={setActiveIndex}
-                    setPreviousIndex={setPreviousIndex}
-                    progress={progress}
-                  />
+                  {/* Only show controls for non-video slides */}
+                  {currentSlide?.type !== 'video' && (
+                    <BannerControls
+                      slidesCount={slidesToShow.length}
+                      activeIndex={activeIndex}
+                      previousIndex={previousIndex}
+                      setActiveIndex={setActiveIndex}
+                      setPreviousIndex={setPreviousIndex}
+                      progress={progress}
+                    />
+                  )}
                 </>
               )}
             </div>
