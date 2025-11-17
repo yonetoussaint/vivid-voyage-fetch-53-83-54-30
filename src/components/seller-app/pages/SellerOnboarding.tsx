@@ -320,8 +320,8 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     <div className="min-h-screen bg-background pb-24">
       {/* Step 1: Overview */}
       {currentStep === 1 && (
-        <div className="p-4 space-y-6">
-          <div className="text-center mb-8">
+        <div className="space-y-6">
+          <div className="text-center mb-8 pt-8 px-4">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
               Become a Seller
             </h1>
@@ -330,8 +330,8 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
             </p>
           </div>
 
-          {/* Hero Banner with Ben 10 Cartoon Video - Moved before registration card */}
-          <div className="mb-8">
+          {/* Hero Banner with Ben 10 Cartoon Video - Full width */}
+          <div className="w-full">
             <HeroBanner
               customBanners={[onboardingVideoBanner]}
               showNewsTicker={false}
@@ -341,56 +341,62 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
           </div>
 
           {/* Registration Fee Card */}
-          <div className="max-w-md mx-auto bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl text-white p-6 text-center">
-            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <DollarSign className="w-8 h-8" />
+          <div className="px-4">
+            <div className="max-w-md mx-auto bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl text-white p-6 text-center">
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <DollarSign className="w-8 h-8" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">One-Time Registration Fee</h3>
+              <div className="text-3xl font-bold mb-2">1,000 HTG</div>
+              <p className="text-blue-100 text-sm">
+                Pay once and start selling forever. No monthly fees, no hidden charges.
+              </p>
             </div>
-            <h3 className="text-xl font-bold mb-2">One-Time Registration Fee</h3>
-            <div className="text-3xl font-bold mb-2">1,000 HTG</div>
-            <p className="text-blue-100 text-sm">
-              Pay once and start selling forever. No monthly fees, no hidden charges.
-            </p>
           </div>
 
           {/* Benefits Grid */}
-          <div className="max-w-4xl mx-auto">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6 text-center">
-              Why Sell With Us?
-            </h3>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {sellerBenefits.map((benefit, index) => {
-                const Icon = benefit.icon;
-                return (
-                  <div key={index} className="bg-white rounded-lg border border-gray-200 p-4 text-center">
-                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <Icon className="w-6 h-6 text-blue-600" />
+          <div className="px-4">
+            <div className="max-w-4xl mx-auto">
+              <h3 className="text-lg font-semibold text-gray-900 mb-6 text-center">
+                Why Sell With Us?
+              </h3>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {sellerBenefits.map((benefit, index) => {
+                  const Icon = benefit.icon;
+                  return (
+                    <div key={index} className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <Icon className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <h4 className="font-semibold text-gray-900 mb-2 text-sm">
+                        {benefit.title}
+                      </h4>
+                      <p className="text-gray-600 text-xs">
+                        {benefit.description}
+                      </p>
                     </div>
-                    <h4 className="font-semibold text-gray-900 mb-2 text-sm">
-                      {benefit.title}
-                    </h4>
-                    <p className="text-gray-600 text-xs">
-                      {benefit.description}
-                    </p>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
 
           {/* Stats */}
-          <div className="max-w-2xl mx-auto text-center">
-            <div className="grid grid-cols-3 gap-4 mt-8">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600 mb-1">10K+</div>
-                <div className="text-sm text-gray-600">Active Sellers</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600 mb-1">500K+</div>
-                <div className="text-sm text-gray-600">Products</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600 mb-1">24/7</div>
-                <div className="text-sm text-gray-600">Support</div>
+          <div className="px-4">
+            <div className="max-w-2xl mx-auto text-center">
+              <div className="grid grid-cols-3 gap-4 mt-8">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600 mb-1">10K+</div>
+                  <div className="text-sm text-gray-600">Active Sellers</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600 mb-1">500K+</div>
+                  <div className="text-sm text-gray-600">Products</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600 mb-1">24/7</div>
+                  <div className="text-sm text-gray-600">Support</div>
+                </div>
               </div>
             </div>
           </div>
