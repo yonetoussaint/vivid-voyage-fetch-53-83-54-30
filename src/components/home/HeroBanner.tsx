@@ -86,6 +86,8 @@ interface BannerImageProps {
   isActive?: boolean;
 }
 
+// In the BannerImage component within HeroBanner.tsx, update the video part:
+
 const BannerImage: React.FC<BannerImageProps> = ({
   src,
   alt,
@@ -96,32 +98,37 @@ const BannerImage: React.FC<BannerImageProps> = ({
   const [error, setError] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
+  const [autoplayAttempted, setAutoplayAttempted] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     setError(false);
     setLoaded(false);
+    setAutoplayAttempted(false);
   }, [src]);
 
   useEffect(() => {
-    if (videoRef.current && type === 'video') {
-      if (isActive && loaded) {
-        // Force autoplay with error handling
-        const playVideo = async () => {
-          try {
-            videoRef.current!.currentTime = 0;
-            await videoRef.current!.play();
-          } catch (err) {
-            console.log('Autoplay failed, trying with user interaction:', err);
-            // If autoplay fails, we'll rely on the video's built-in controls
-          }
-        };
-        playVideo();
-      } else if (!isActive) {
-        videoRef.current!.pause();
+    if (videoRef.current && type === 'video' && isActive) {
+      const attemptAutoplay = async () => {
+        if (autoplayAttempted) return;
+        
+        try {
+          videoRef.current!.currentTime = 0;
+          await videoRef.current!.play();
+          console.log('Video autoplay successful');
+          setAutoplayAttempted(true);
+        } catch (err) {
+          console.log('Autoplay failed, video will require user interaction:', err);
+          // Add a play button overlay for user interaction
+          setAutoplayAttempted(true);
+        }
+      };
+
+      if (loaded) {
+        attemptAutoplay();
       }
     }
-  }, [isActive, loaded, type]);
+  }, [isActive, loaded, type, autoplayAttempted]);
 
   const handleError = () => setError(true);
   const handleLoad = () => setLoaded(true);
@@ -130,10 +137,20 @@ const BannerImage: React.FC<BannerImageProps> = ({
     setLoaded(true);
   };
 
+  const handleVideoPlay = () => {
+    console.log('Video started playing');
+  };
+
   const toggleMute = () => {
     if (videoRef.current) {
       videoRef.current.muted = !isMuted;
       setIsMuted(!isMuted);
+    }
+  };
+
+  const handlePlayClick = () => {
+    if (videoRef.current) {
+      videoRef.current.play().catch(console.error);
     }
   };
 
@@ -160,12 +177,25 @@ const BannerImage: React.FC<BannerImageProps> = ({
         className={`${baseClass} object-contain`}
         onLoadedData={handleVideoLoaded}
         onError={handleError}
+        onPlay={handleVideoPlay}
         muted={isMuted}
         loop
         playsInline
         preload="auto"
-        autoPlay
       />
+      
+      {/* Play button overlay if autoplay failed */}
+      {loaded && !autoplayAttempted && (
+        <button
+          onClick={handlePlayClick}
+          className="absolute inset-0 w-full h-full flex items-center justify-center bg-black/50 z-20"
+        >
+          <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
+            <Play className="h-12 w-12 text-white" fill="white" />
+          </div>
+        </button>
+      )}
+      
       {loaded && (
         <button
           onClick={toggleMute}
