@@ -81,6 +81,8 @@ interface ProductHeaderProps {
   onLanguageChange?: (language: Language) => void;
   onOpenLocationScreen?: () => void;
   showSettingsButton?: boolean; // Control whether to show settings button
+  // NEW: Language selector props
+  showLanguageSelector?: boolean; // Control whether to show language selector
 }
 
 // Header Action Button Component - Integrated directly
@@ -241,6 +243,72 @@ const HeaderActionButton = ({
   );
 };
 
+// NEW: Language Selector Component
+const LanguageSelector = ({ 
+  currentLanguage,
+  supportedLanguages,
+  onLanguageChange,
+  progress
+}: {
+  currentLanguage?: Language;
+  supportedLanguages?: Language[];
+  onLanguageChange?: (language: Language) => void;
+  progress: number;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleLanguageSelect = (language: Language) => {
+    onLanguageChange?.(language);
+    setIsOpen(false);
+  };
+
+  const displayLanguages = supportedLanguages?.slice(0, 4) || [
+    { code: 'en', name: 'English', nativeName: 'English' },
+    { code: 'fr', name: 'French', nativeName: 'Français' },
+    { code: 'es', name: 'Spanish', nativeName: 'Español' },
+    { code: 'ht', name: 'Haitian Creole', nativeName: 'Kreyòl' }
+  ];
+
+  return (
+    <div className="relative">
+      {/* Language Selector Button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-1.5 px-2.5 h-8 rounded-full transition-all duration-700"
+        style={{ 
+          backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - progress)})`,
+          color: progress > 0.5 
+            ? `rgba(75, 85, 99, ${0.7 + (progress * 0.3)})` 
+            : `rgba(255, 255, 255, ${0.9 - (progress * 0.2)})`
+        }}
+      >
+        <Globe size={16} />
+        <span className="text-xs font-medium uppercase">
+          {currentLanguage?.code || 'EN'}
+        </span>
+      </button>
+
+      {/* Language Dropdown */}
+      {isOpen && (
+        <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-50 min-w-[140px] py-2">
+          {displayLanguages.map((language) => (
+            <button
+              key={language.code}
+              onClick={() => handleLanguageSelect(language)}
+              className={`w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-gray-50 transition-colors ${
+                currentLanguage?.code === language.code ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+              }`}
+            >
+              <span className="font-medium uppercase">{language.code}</span>
+              <span className="text-xs text-gray-500">{language.nativeName}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ProductHeader: React.FC<ProductHeaderProps> = ({
   activeSection = "overview",
   onTabChange,
@@ -277,19 +345,21 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
   onLanguageChange = () => {},
   onOpenLocationScreen = () => {},
   showSettingsButton = false,
+  // NEW: Language selector prop
+  showLanguageSelector = false,
 }) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [languageQuery, setLanguageQuery] = useState('');
   const [pinnedLanguages, setPinnedLanguages] = useState(new Set(['en', 'es']));
   const [showLocationScreen, setShowLocationScreen] = useState(false);
-  
+
   const { progress: scrollProgress } = useScrollProgress();
   const displayProgress = forceScrolledState ? 1 : scrollProgress;
   const [internalSearchQuery, setInternalSearchQuery] = useState('');
   const navigate = useNavigate();
   const { isLoading } = useNavigationLoading();
-  
+
   // Use language context
   const { 
     currentLanguage: contextCurrentLanguage, 
@@ -327,10 +397,10 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
   const handleLanguageChange = (language: Language) => {
     // Call the parent handler if provided
     onLanguageChange(language);
-    
+
     // Call the language context setter
     setLanguage(language.code);
-    
+
     // Clear search when language is selected
     setLanguageQuery('');
   };
@@ -509,17 +579,27 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
 
               {/* Right side - Action buttons */}
               <div className="flex gap-2 flex-shrink-0">
-                {/* Settings Button - Conditionally shown */}
-                {showSettingsButton && (
-                  <HeaderActionButton
-                    Icon={Settings}
-                    active={isSettingsOpen}
-                    onClick={toggleSettings}
+                {/* Language Selector - Show instead of settings button when showLanguageSelector is true */}
+                {showLanguageSelector ? (
+                  <LanguageSelector
+                    currentLanguage={currentLanguage}
+                    supportedLanguages={supportedLanguages}
+                    onLanguageChange={handleLanguageChange}
                     progress={displayProgress}
-                    activeColor="#3b82f6"
                   />
+                ) : (
+                  // Settings Button - Conditionally shown
+                  showSettingsButton && (
+                    <HeaderActionButton
+                      Icon={Settings}
+                      active={isSettingsOpen}
+                      onClick={toggleSettings}
+                      progress={displayProgress}
+                      activeColor="#3b82f6"
+                    />
+                  )
                 )}
-                
+
                 {actionButtons.length > 0 ? (
                   actionButtons.map((button, index) => (
                     <HeaderActionButton
