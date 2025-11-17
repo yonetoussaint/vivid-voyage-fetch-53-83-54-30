@@ -1,10 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Package, DollarSign, Users, BarChart3, CreditCard, 
-  BadgeCheck, TrendingUp, Shield, Zap, CheckCircle,
-  MapPin, Phone, Mail, Play, UserCheck
-} from 'lucide-react';
+import { DollarSign, CheckCircle, CreditCard, UserCheck, Mail, Package, Store, TrendingUp, Shield, Users, Clock, Headphones } from 'lucide-react';
+
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
