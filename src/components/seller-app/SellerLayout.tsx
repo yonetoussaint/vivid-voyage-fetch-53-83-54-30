@@ -279,6 +279,8 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
 
   // In the SellerLayout component, update the header section:
 
+// In the SellerLayout component, update the header section:
+
 const header = (
   <div   
     ref={headerRef}   
@@ -287,7 +289,8 @@ const header = (
     <ProductHeader  
       onCloseClick={(isEditProfilePage || isProductEditPage || isOnboardingPage) ? () => navigate('/seller-dashboard/products') : handleBackClick}  
       onShareClick={handleShareClick}  
-      actionButtons={getEditPageActionButtons() || regularActionButtons}
+      // Hide action buttons (including save button) when showing language selector
+      actionButtons={isOnboardingPage ? [] : (getEditPageActionButtons() || regularActionButtons)}
       forceScrolledState={!isProductsTab || isEditProfilePage || isProductEditPage || isOnboardingPage}
       title={getPageTitle()}
       hideSearch={isEditProfilePage || isProductEditPage || isOnboardingPage}
@@ -303,7 +306,7 @@ const header = (
       supportedLanguages={supportedLanguages}
       onLanguageChange={handleLanguageChange}
       onOpenLocationScreen={handleOpenLocationScreen}
-      // NEW: Show language selector instead of settings button on onboarding page
+      // NEW: Show language selector instead of settings/save buttons on onboarding page
       showLanguageSelector={isOnboardingPage}
       showSettingsButton={!isOnboardingPage} // Hide settings button on onboarding
     />  
