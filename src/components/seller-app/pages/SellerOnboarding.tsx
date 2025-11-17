@@ -1,6 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DollarSign, BarChart3, CheckCircle, CreditCard,Zap, UserCheck, Mail, Package, Store, TrendingUp, Shield, Users, Clock, Headphones } from 'lucide-react';
+import { 
+  DollarSign, 
+  BarChart3, 
+  CheckCircle, 
+  CreditCard, 
+  Zap, 
+  UserCheck, 
+  Mail, 
+  Package, 
+  Store, 
+  TrendingUp, 
+  Shield, 
+  Users, 
+  Clock, 
+  Headphones, 
+  BadgeCheck 
+} from 'lucide-react';
 
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useQuery, useMutation } from '@tanstack/react-query';
