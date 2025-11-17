@@ -3,14 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchHeroBanners } from "@/integrations/supabase/hero";
 import { setupStorageBuckets } from "@/integrations/supabase/setupStorage";
 import { toast } from "sonner";
-import BannerSlides from './hero/BannerSlides';
 import BannerControls from './hero/BannerControls';
 import NewsTicker from './hero/NewsTicker';
 import FloatingVideo from '../hero/FloatingVideo';
 import { BannerType } from './hero/types';
 import ProductFilterBar from './ProductFilterBar';
 import { supabase } from '@/integrations/supabase/client';
-import { Edit2, Image, Plus } from 'lucide-react';
+import { Edit2, Image, Plus, Volume2, VolumeX } from 'lucide-react';
 
 interface HeroBannerProps {
   asCarousel?: boolean;
@@ -76,6 +75,161 @@ const defaultPlaceholderBanner: BannerType = {
   product: undefined,
   seller: undefined,
   catalog: undefined
+};
+
+// BannerImage component moved inline
+interface BannerImageProps {
+  src: string;
+  alt: string;
+  className?: string;
+  type?: "image" | "video";
+  isActive?: boolean;
+  onVideoDurationChange?: (duration: number) => void;
+}
+
+const BannerImage: React.FC<BannerImageProps> = ({
+  src,
+  alt,
+  className = "",
+  type = "image",
+  isActive = false,
+  onVideoDurationChange,
+}) => {
+  const [error, setError] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    setError(false);
+    setLoaded(false);
+  }, [src]);
+
+  useEffect(() => {
+    if (videoRef.current && isActive && loaded) {
+      videoRef.current.play().catch(console.error);
+    } else if (videoRef.current && !isActive) {
+      videoRef.current.pause();
+    }
+  }, [isActive, loaded]);
+
+  const handleError = () => setError(true);
+  const handleLoad = () => setLoaded(true);
+
+  const handleVideoLoadedMetadata = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const video = e.currentTarget;
+    setLoaded(true);
+    if (onVideoDurationChange && video.duration && !isNaN(video.duration)) {
+      // Convert to milliseconds and add a small buffer
+      onVideoDurationChange(Math.floor(video.duration * 1000) + 500);
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
+  if (error) {
+    return (
+      <div className={`flex items-center justify-center bg-gray-200 ${className}`}>
+        <div className="text-center p-4">
+          <span className="text-gray-500 block">{type === "video" ? "Video" : "Image"} failed to load</span>
+          <span className="text-xs text-gray-400 block mt-1">{src}</span>
+        </div>
+      </div>
+    );
+  }
+
+  const baseClass = `w-full h-full ${className} ${
+    !loaded ? "opacity-0" : "opacity-100 transition-opacity duration-300"
+  }`;
+
+  return type === "video" ? (
+    <div className="relative w-full h-full flex items-center justify-center bg-black">
+      <video
+        ref={videoRef}
+        src={src}
+        className={`${baseClass} object-contain`}
+        onLoadedMetadata={handleVideoLoadedMetadata}
+        onError={handleError}
+        autoPlay={isActive}
+        muted={isMuted}
+        loop
+        playsInline
+        preload="metadata"
+      />
+      {loaded && (
+        <button
+          onClick={toggleMute}
+          className="absolute bottom-4 right-4 h-10 w-10 rounded-full bg-black/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/30 transition-colors z-10"
+          aria-label={isMuted ? "Unmute" : "Mute"}
+        >
+          {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+        </button>
+      )}
+    </div>
+  ) : (
+    <div className="w-full h-full flex items-center justify-center bg-gray-100">
+      <img
+        src={src}
+        alt={alt}
+        className={`${baseClass} object-contain`}
+        onLoad={handleLoad}
+        onError={handleError}
+        loading="lazy"
+      />
+    </div>
+  );
+};
+
+// BannerSlides component moved inline
+interface BannerSlidesProps {
+  slides: BannerType[];
+  activeIndex: number;
+  previousIndex: number | null;
+  onVideoDurationChange?: (index: number, duration: number) => void;
+}
+
+const BannerSlides: React.FC<BannerSlidesProps> = ({ 
+  slides, 
+  activeIndex, 
+  previousIndex,
+  onVideoDurationChange
+}) => {
+  return (
+    <div className="relative w-full h-full">
+      {slides.map((banner, index) => {
+        const isActive = index === activeIndex;
+        const isPrevious = index === previousIndex;
+
+        return (
+          <div
+            key={banner.id}
+            className={`absolute inset-0 w-full h-full transition-transform duration-500 ease-out ${
+              isActive ? "translate-y-0 z-10" : 
+              isPrevious ? "-translate-y-full z-0 hidden" : "translate-y-full z-0 hidden"
+            }`}
+          >
+            {banner.type === 'color' || banner.image.startsWith('from-') || banner.image.includes('gradient') ? (
+              <div className={`w-full h-full bg-gradient-to-r ${banner.image}`} />
+            ) : (
+              <BannerImage
+                src={banner.image}
+                alt={banner.alt || "Banner image"}
+                type={banner.type} // "image" or "video"
+                isActive={isActive}
+                className="w-full h-full"
+                onVideoDurationChange={(duration) => onVideoDurationChange?.(index, duration)}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
 };
 
 export default function HeroBanner({ 
