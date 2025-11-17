@@ -8,6 +8,7 @@ import {
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import HeroBanner from '@/components/home/HeroBanner'; // Import the HeroBanner
 
 interface SellerOnboardingProps {
   onStepChange?: (step: number) => void;
@@ -58,6 +59,17 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     references: '',
     agreeToTerms: false
   });
+
+  // Video banner configuration for seller onboarding
+  const onboardingVideoBanner = {
+    id: 'seller-onboarding-video',
+    image: 'https://customer-5p3tk6y0gv8gvyp8.cloudflarestream.com/5c54b5d5eb595e1786e9d673a3c9d8e8/manifest/video.m3u8', // Replace with your actual video URL
+    alt: 'Seller Success Story - How to Grow Your Business',
+    title: 'Start Your Selling Journey Today',
+    subtitle: 'Join thousands of successful Haitian entrepreneurs',
+    type: 'video' as const,
+    duration: 15000, // 15 seconds for video
+  };
 
   // Benefits of becoming a seller
   const sellerBenefits = [
@@ -318,6 +330,19 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
 
   return (
     <div className="min-h-screen bg-background pb-24">
+      {/* Hero Banner with Video - Only show on step 1 */}
+      {currentStep === 1 && (
+        <div className="mb-8">
+          <HeroBanner
+            customBanners={[onboardingVideoBanner]}
+            customHeight="400px"
+            showNewsTicker={false}
+            showCarouselBottomRow={false}
+            asCarousel={false}
+          />
+        </div>
+      )}
+
       {/* Step 1: Overview */}
       {currentStep === 1 && (
         <div className="p-4 space-y-6">
