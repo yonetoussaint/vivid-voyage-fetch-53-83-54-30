@@ -263,8 +263,8 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     return undefined;
   };
 
-  // Header component - simplified without onboarding logic
-  const header = (
+  // Don't render header for onboarding page - SellerOnboarding has its own header
+  const header = isOnboardingPage ? null : (
     <div   
       ref={headerRef}   
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"  
