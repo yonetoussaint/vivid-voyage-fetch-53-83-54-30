@@ -55,13 +55,13 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     agreeToTerms: false
   });
 
-  // Wikimedia Commons video - "Small Business Tips" from Wikimedia
+  // Ben 10 Cartoon Video from Wikimedia
   const onboardingVideoBanner = {
     id: 'seller-onboarding-video',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/transcoded/6/6d/Building_a_Business_from_Scratch_-_Tips_for_Young_Entrepreneurs_%28Viaframe%29.webm/Building_a_Business_from_Scratch_-_Tips_for_Young_Entrepreneurs_%28Viaframe%29.webm.480p.vp9.webm',
-    alt: 'Building a Business from Scratch - Tips for Young Entrepreneurs',
-    title: 'Start Your Selling Journey Today',
-    subtitle: 'Join thousands of successful Haitian entrepreneurs building their businesses from scratch',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/5/58/Ben_10_-_Catch_the_Power_Surge%21-_Action_Cartoon-_Cartoon_in_English_-_%40cnindia.webm',
+    alt: 'Ben 10 - Catch the Power Surge! Action Cartoon',
+    title: 'Power Up Your Business!',
+    subtitle: 'Transform your selling potential with super-powered tools and reach',
     type: 'video' as const,
     duration: 30000, // 30 seconds for the full video experience
   };
@@ -319,7 +319,7 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Hero Banner with Wikimedia Video - Only show on step 1 */}
+      {/* Hero Banner with Ben 10 Cartoon Video - Only show on step 1 */}
       {currentStep === 1 && (
         <div className="mb-8">
           <HeroBanner
