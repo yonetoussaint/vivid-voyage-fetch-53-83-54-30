@@ -967,19 +967,19 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
             <h3 className="font-bold text-xl mb-6 text-center">What happens next?</h3>
             <div className="space-y-4">
               {[
-                { icon: CreditCard, text: 'Complete your payment of 1,000 HTG', color: 'text-blue-500' },
-                { icon: UserCheck, text: 'Verification team reviews your application', color: 'text-green-500' },
-                { icon: Mail, text: 'You'll receive confirmation within 24 hours', color: 'text-purple-500' },
-                { icon: Clock, text: 'Start selling immediately after approval', color: 'text-orange-500' },
-                { icon: Zap, text: 'Set up your store and add products', color: 'text-yellow-500' }
-              ].map(({ icon: Icon, text, color }, index) => (
-                <div key={index} className="flex items-center space-x-4">
-                  <div className={`w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center ${color}`}>
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <span className="text-gray-700 font-medium">{text}</span>
-                </div>
-              ))}
+  { icon: CreditCard, text: 'Complete your payment of 1,000 HTG', color: 'text-blue-500' },
+  { icon: UserCheck, text: 'Verification team reviews your application', color: 'text-green-500' },
+  { icon: Mail, text: "You'll receive confirmation within 24 hours", color: 'text-purple-500' },
+  { icon: Clock, text: 'Start selling immediately after approval', color: 'text-orange-500' },
+  { icon: Zap, text: 'Set up your store and add products', color: 'text-yellow-500' }
+].map(({ icon: Icon, text, color }, index) => (
+  <div key={index} className="flex items-center space-x-4">
+    <div className={`w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center ${color}`}>
+      <Icon className="w-5 h-5" />
+    </div>
+    <span className="text-gray-700 font-medium">{text}</span>
+  </div>
+))}
             </div>
           </div>
 
