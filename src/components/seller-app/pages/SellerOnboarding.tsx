@@ -55,14 +55,14 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     agreeToTerms: false
   });
 
-  // Ben 10 Cartoon Video from Wikimedia
+  // Ben 10 Cartoon Video from Wikimedia - Fixed video configuration
   const onboardingVideoBanner = {
     id: 'seller-onboarding-video',
     image: 'https://upload.wikimedia.org/wikipedia/commons/5/58/Ben_10_-_Catch_the_Power_Surge%21-_Action_Cartoon-_Cartoon_in_English_-_%40cnindia.webm',
     alt: 'Ben 10 - Catch the Power Surge! Action Cartoon',
     title: 'Power Up Your Business!',
     subtitle: 'Transform your selling potential with super-powered tools and reach',
-    type: 'video' as const,
+    type: 'video' as const, // Explicitly set as video type
     duration: 30000, // 30 seconds for the full video experience
   };
 
@@ -327,7 +327,6 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
             showNewsTicker={false}
             showCarouselBottomRow={false}
             asCarousel={false}
-            // Remove customHeight to use the default 2:1 aspect ratio
           />
         </div>
       )}
