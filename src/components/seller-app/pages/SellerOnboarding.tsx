@@ -1,23 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  DollarSign, 
-  BarChart3, 
-  CheckCircle, 
-  CreditCard, 
-  Zap, 
-  UserCheck, 
-  Mail, 
-  Package, 
-  TrendingUp, 
-  Shield, 
-  Users, 
-  BadgeCheck 
+  Package, DollarSign, Users, BarChart3, CreditCard, 
+  BadgeCheck, TrendingUp, Shield, Zap, CheckCircle,
+  MapPin, Phone, Mail, Play, UserCheck
 } from 'lucide-react';
-
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import HeroBanner from '@/components/home/HeroBanner';
+import ProductHeader from '@/components/product/ProductHeader';
 import { useLanguageSwitcher } from '@/hooks/useLanguageSwitcher';
 
 interface SellerOnboardingProps {
@@ -72,6 +64,16 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     references: '',
     agreeToTerms: false
   });
+
+  // Ben 10 Cartoon Video from Wikimedia - Fixed video configuration
+  const onboardingVideoBanner = {
+    id: 'seller-onboarding-video',
+    image: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+    alt: 'Sample Video',
+    title: 'Power Up Your Business!',
+    subtitle: 'Transform your selling potential with super-powered tools and reach',
+    type: 'video' as const,
+  };
 
   const sellerBenefits = [
     {
@@ -379,23 +381,15 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
               </p>
             </div>
 
-            {/* Video Banner */}
+            {/* Hero Banner with Video */}
             <div className="px-4">
-              <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
-                <video 
-                  className="w-full h-full object-cover"
-                  autoPlay 
-                  muted 
-                  loop 
-                  playsInline
-                  poster="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=450&fit=crop"
-                  onError={(e) => {
-                    // Fallback to poster image if video fails to load
-                    e.currentTarget.style.display = 'none';
-                  }}
-                >
-                  <source src="https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4" type="video/mp4" />
-                </video>
+              <div className="rounded-lg overflow-hidden">
+                <HeroBanner
+                  customBanners={[onboardingVideoBanner]}
+                  showNewsTicker={false}
+                  showCarouselBottomRow={false}
+                  asCarousel={false}
+                />
               </div>
             </div>
 
@@ -605,7 +599,7 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
                     value={applicationData.taxId}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Optional"
+                    placeholder="Tax identification number"
                   />
                 </div>
 
@@ -619,7 +613,7 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
                     onChange={handleInputChange}
                     className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">Select</option>
+                    <option value="">Select years</option>
                     <option value="0-1">0-1 years</option>
                     <option value="1-3">1-3 years</option>
                     <option value="3-5">3-5 years</option>
@@ -641,145 +635,178 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
             </div>
 
             {/* Payment Summary */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="bg-blue-50 rounded-lg p-4">
               <h3 className="font-semibold mb-3 text-sm">Registration Summary</h3>
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-700">Registration Fee</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-700">One-Time Registration Fee</span>
                   <span className="font-semibold">1,000 HTG</span>
                 </div>
-                <div className="flex justify-between text-xs text-gray-600">
+                <div className="flex justify-between items-center text-xs text-gray-600">
                   <span>Validity</span>
                   <span>Lifetime</span>
                 </div>
-                <div className="border-t border-blue-200 pt-2 mt-2">
-                  <div className="flex justify-between font-bold">
+                <div className="border-t pt-2">
+                  <div className="flex justify-between items-center font-bold">
                     <span>Total</span>
-                    <span className="text-blue-600">1,000 HTG</span>
+                    <span>1,000 HTG</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Payment Methods */}
-            <div>
+            <div className="bg-white border rounded-lg p-4">
               <h3 className="font-semibold mb-3 text-sm">Payment Method</h3>
-              <div className="space-y-2">
-                <label className="flex items-start space-x-3 bg-white border-2 border-blue-500 rounded-lg p-3 cursor-pointer">
-                  <input type="radio" name="paymentMethod" defaultChecked className="mt-0.5" />
-                  <div className="flex-1">
-                    <div className="font-medium text-sm">Mobile Money</div>
-                    <div className="text-xs text-gray-600">NatCash, MonCash, Digicel</div>
-                  </div>
-                </label>
+              <div className="space-y-3">
+                {/* Mobile Money */}
+                <div className="border-2 border-blue-500 rounded-lg p-3">
+                  <label className="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      defaultChecked
+                      className="text-blue-600 focus:ring-blue-500"
+                    />
+                    <div>
+                      <div className="font-semibold text-sm">Mobile Money</div>
+                      <div className="text-xs text-gray-600">Pay with NatCash, MonCash, or Digicel</div>
+                    </div>
+                  </label>
+                </div>
 
-                <label className="flex items-start space-x-3 bg-white border-2 border-gray-200 rounded-lg p-3 cursor-pointer">
-                  <input type="radio" name="paymentMethod" className="mt-0.5" />
-                  <div className="flex-1">
-                    <div className="font-medium text-sm">Bank Transfer</div>
-                    <div className="text-xs text-gray-600">Transfer to our account</div>
-                  </div>
-                </label>
+                {/* Bank Transfer */}
+                <div className="border-2 border-gray-200 rounded-lg p-3">
+                  <label className="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      className="text-blue-600 focus:ring-blue-500"
+                    />
+                    <div>
+                      <div className="font-semibold text-sm">Bank Transfer</div>
+                      <div className="text-xs text-gray-600">Transfer to our bank account</div>
+                    </div>
+                  </label>
+                </div>
 
-                <label className="flex items-start space-x-3 bg-white border-2 border-gray-200 rounded-lg p-3 cursor-pointer">
-                  <input type="radio" name="paymentMethod" className="mt-0.5" />
-                  <div className="flex-1">
-                    <div className="font-medium text-sm">Credit/Debit Card</div>
-                    <div className="text-xs text-gray-600">Visa, Mastercard, Amex</div>
-                  </div>
-                </label>
+                {/* Credit Card */}
+                <div className="border-2 border-gray-200 rounded-lg p-3">
+                  <label className="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      className="text-blue-600 focus:ring-blue-500"
+                    />
+                    <div>
+                      <div className="font-semibold text-sm">Credit/Debit Card</div>
+                      <div className="text-xs text-gray-600">Pay with Visa, Mastercard, or American Express</div>
+                    </div>
+                  </label>
+                </div>
               </div>
             </div>
 
-            {/* Terms */}
-            <label className="flex items-start space-x-3 bg-yellow-50 border border-yellow-200 rounded-lg p-3 cursor-pointer">
-              <input
-                type="checkbox"
-                name="agreeToTerms"
-                checked={applicationData.agreeToTerms}
-                onChange={handleInputChange}
-                className="mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <div className="text-xs">
-                <span className="font-medium">I agree to the Terms of Service and Privacy Policy.</span>
-                <p className="text-gray-600 mt-1">
-                  By checking this box, you agree to pay 1,000 HTG and comply with our seller policies.
-                </p>
-              </div>
-            </label>
+            {/* Terms and Conditions */}
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <label className="flex items-start space-x-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="agreeToTerms"
+                  checked={applicationData.agreeToTerms}
+                  onChange={handleInputChange}
+                  className="mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
+                />
+                <div className="text-xs">
+                  <span className="font-medium">
+                    I agree to the Seller Agreement, Terms of Service, and Privacy Policy.
+                  </span>
+                  <p className="text-gray-600 mt-1">
+                    By checking this box, you agree to pay the one-time registration fee of 1,000 HTG and comply with our seller policies.
+                  </p>
+                </div>
+              </label>
+            </div>
           </div>
         )}
 
         {/* Step 4: Success */}
         {currentStep === 4 && (
-          <div className="p-4 space-y-4 text-center">
-            <div className="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto">
-              <CheckCircle className="w-8 h-8 text-green-600" />
+          <div className="p-4 space-y-6 text-center">
+            <div className="bg-green-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-green-500" />
             </div>
 
-            <div>
-              <h1 className="text-xl font-bold text-gray-900 mb-2">Application Submitted!</h1>
-              <p className="text-sm text-gray-600">
-                Your registration will be reviewed within 24 hours. You'll receive a confirmation email.
-              </p>
-            </div>
+            <h1 className="text-xl font-bold text-gray-900 mb-2">
+              Application Submitted!
+            </h1>
+
+            <p className="text-sm text-gray-600 mb-6">
+              Thank you for your application to become a seller. Your registration fee of 1,000 HTG will be processed and our team will review your information.
+            </p>
 
             <div className="bg-blue-50 rounded-lg p-4 text-left">
-              <h3 className="font-semibold mb-3 text-sm">What's Next?</h3>
-              <div className="space-y-2.5 text-xs">
-                <div className="flex items-center space-x-2.5">
-                  <CreditCard className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                  <span>Complete payment of 1,000 HTG</span>
+              <h3 className="font-semibold mb-3 text-sm">What happens next?</h3>
+              <div className="space-y-2 text-xs">
+                <div className="flex items-center space-x-3">
+                  <CreditCard className="w-4 h-4 text-blue-500" />
+                  <span>Complete your payment of 1,000 HTG</span>
                 </div>
-                <div className="flex items-center space-x-2.5">
-                  <UserCheck className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                  <span>Team reviews your application</span>
+                <div className="flex items-center space-x-3">
+                  <UserCheck className="w-4 h-4 text-blue-500" />
+                  <span>Verification team reviews your application</span>
                 </div>
-                <div className="flex items-center space-x-2.5">
-                  <Mail className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                  <span>Receive confirmation within 24hrs</span>
+                <div className="flex items-center space-x-3">
+                  <Mail className="w-4 h-4 text-blue-500" />
+                  <span>You'll receive confirmation within 24 hours</span>
                 </div>
-                <div className="flex items-center space-x-2.5">
-                  <Package className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                  <span>Start selling after approval</span>
+                <div className="flex items-center space-x-3">
+                  <Package className="w-4 h-4 text-blue-500" />
+                  <span>Start selling immediately after approval</span>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-2 pt-2">
-              <button 
-                onClick={() => navigate('/seller-dashboard')}
-                className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold text-sm"
+            <div className="pt-4 space-y-3">
+              <button
+                onClick={() => navigate('/seller-dashboard/products')}
+                className="w-full px-8 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors text-sm"
               >
                 Return to Dashboard
               </button>
-              <button className="w-full px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium text-sm">
-                Contact Support
+              <button
+                onClick={() => navigate('/help')}
+                className="w-full px-8 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors text-sm"
+              >
+                Need Help? Contact Support
               </button>
             </div>
           </div>
         )}
       </div>
 
-      {/* Bottom CTA */}
+      {/* Bottom Sticky Button */}
       {currentStep < 4 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 shadow-lg">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4">
           <button
             onClick={getBottomButtonAction()}
-            disabled={currentStep === 3 && (!applicationData.agreeToTerms || isLoading)}
-            className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold text-sm active:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            disabled={(currentStep === 3 && !applicationData.agreeToTerms) || isLoading}
+            className="w-full py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed text-sm"
           >
             {getBottomButtonText()}
           </button>
         </div>
       )}
 
-      {/* Loading Overlay */}
+      <form onSubmit={handleSubmit} className="hidden">
+        <button type="submit">Save</button>
+      </form>
+
       {isLoading && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-4 flex items-center gap-3 mx-4">
-            <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent"></div>
-            <span className="text-sm font-medium">Processing...</span>
+          <div className="bg-white rounded-lg p-4 flex items-center gap-3">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <span className="text-sm font-medium">Processing your registration...</span>
           </div>
         </div>
       )}
