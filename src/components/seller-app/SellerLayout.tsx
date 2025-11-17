@@ -277,35 +277,38 @@ const SellerLayout: React.FC<SellerLayoutProps> = ({
     setOnboardingStep(step);
   };
 
-  const header = (
-    <div   
-      ref={headerRef}   
-      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"  
-    >  
-      <ProductHeader  
-        onCloseClick={(isEditProfilePage || isProductEditPage || isOnboardingPage) ? () => navigate('/seller-dashboard/products') : handleBackClick}  
-        onShareClick={handleShareClick}  
-        actionButtons={getEditPageActionButtons() || regularActionButtons}
-        forceScrolledState={!isProductsTab || isEditProfilePage || isProductEditPage || isOnboardingPage}
-        title={getPageTitle()}
-        hideSearch={isEditProfilePage || isProductEditPage || isOnboardingPage}
-        showSellerInfo={!(isEditProfilePage || isProductEditPage || isOnboardingPage)}
-        // Progress Bar Props - Only show on onboarding page
-        showProgressBar={isOnboardingPage}
-        currentStep={getOnboardingStep()}
-        totalSteps={4}
-        progressBarColor="bg-blue-600"
-        // Settings Panel Props - Show settings button on onboarding page
-        showSettingsButton={isOnboardingPage}
-        // Language Context Props - Pass actual values from context
-        currentLanguage={currentLanguage}
-        currentLocation={currentLocation}
-        supportedLanguages={supportedLanguages}
-        onLanguageChange={handleLanguageChange}
-        onOpenLocationScreen={handleOpenLocationScreen}
-      />  
-    </div>  
-  );
+  // In the SellerLayout component, update the header section:
+
+const header = (
+  <div   
+    ref={headerRef}   
+    className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"  
+  >  
+    <ProductHeader  
+      onCloseClick={(isEditProfilePage || isProductEditPage || isOnboardingPage) ? () => navigate('/seller-dashboard/products') : handleBackClick}  
+      onShareClick={handleShareClick}  
+      actionButtons={getEditPageActionButtons() || regularActionButtons}
+      forceScrolledState={!isProductsTab || isEditProfilePage || isProductEditPage || isOnboardingPage}
+      title={getPageTitle()}
+      hideSearch={isEditProfilePage || isProductEditPage || isOnboardingPage}
+      showSellerInfo={!(isEditProfilePage || isProductEditPage || isOnboardingPage)}
+      // Progress Bar Props - Only show on onboarding page
+      showProgressBar={isOnboardingPage}
+      currentStep={getOnboardingStep()}
+      totalSteps={4}
+      progressBarColor="bg-blue-600"
+      // Language Context Props - Pass actual values from context
+      currentLanguage={currentLanguage}
+      currentLocation={currentLocation}
+      supportedLanguages={supportedLanguages}
+      onLanguageChange={handleLanguageChange}
+      onOpenLocationScreen={handleOpenLocationScreen}
+      // NEW: Show language selector instead of settings button on onboarding page
+      showLanguageSelector={isOnboardingPage}
+      showSettingsButton={!isOnboardingPage} // Hide settings button on onboarding
+    />  
+  </div>  
+);
 
   const topContent = isProductsTab && !isEditProfilePage && !isProductEditPage && !isOnboardingPage ? (
     <div className="w-full bg-black text-white">  
