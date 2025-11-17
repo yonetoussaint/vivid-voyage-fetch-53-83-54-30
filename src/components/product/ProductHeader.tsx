@@ -475,16 +475,25 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
           {/* Main Header Content */}
           <div className="py-2 px-3 w-full">
             <div className="flex items-center justify-between w-full max-w-6xl mx-auto">
-              {/* Left side - Back button and Seller Info */}
-              <div className="flex items-center gap-3 flex-shrink-0">
+              {/* Left side - Back button, Title, and Seller Info */}
+              <div className="flex items-center gap-3 flex-shrink-0 flex-1 min-w-0">
                 <BackButton
                   progress={displayProgress}
                   showCloseIcon={showCloseIcon}
                   onClick={onCloseClick || (() => navigate(-1))}
                 />
 
-                {/* Show seller info when not scrolled AND showSellerInfo is true */}
-                {displayProgress < 0.5 && seller && showSellerInfo && (
+                {/* Show title next to back button when provided */}
+                {title && (
+                  <div className="flex items-center min-w-0">
+                    <h1 className="text-lg font-semibold text-gray-900 truncate">
+                      {title}
+                    </h1>
+                  </div>
+                )}
+
+                {/* Show seller info when not scrolled AND showSellerInfo is true AND no title */}
+                {!title && displayProgress < 0.5 && seller && showSellerInfo && (
                   <div 
                     className="rounded-full transition-all duration-700"
                     style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})` }}
@@ -538,39 +547,29 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
                 )}
               </div>
 
-              {/* Center - Title or Search bar */}
+              {/* Center - Search bar (only when no title) */}
               <div className="flex-1 mx-4">
-                {title ? (
-                  // Show title when provided
-                  <div className="text-center">
-                    <h1 className="text-lg font-semibold text-gray-900 truncate">
-                      {title}
-                    </h1>
+                {!title && !hideSearch && displayProgress >= 0.5 && (
+                  <div className="flex-1 relative max-w-md mx-auto">
+                    <input
+                      type="text"
+                      placeholder="Search products..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onFocus={() => {
+                        if (onSearchFocus) {
+                          onSearchFocus();
+                        }
+                      }}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleSearchSubmit();
+                        }
+                      }}
+                      className="w-full px-3 py-1 text-sm font-medium border-2 border-gray-800 rounded-full focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-300 bg-white shadow-sm"
+                    />
+                    <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-600 font-bold" />
                   </div>
-                ) : (
-                  // Show search bar when scrolled (unless hideSearch is true)
-                  !hideSearch && displayProgress >= 0.5 && (
-                    <div className="flex-1 relative max-w-md mx-auto">
-                      <input
-                        type="text"
-                        placeholder="Search products..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onFocus={() => {
-                          if (onSearchFocus) {
-                            onSearchFocus();
-                          }
-                        }}
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter') {
-                            handleSearchSubmit();
-                          }
-                        }}
-                        className="w-full px-3 py-1 text-sm font-medium border-2 border-gray-800 rounded-full focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-red-600 transition-all duration-300 bg-white shadow-sm"
-                      />
-                      <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-600 font-bold" />
-                    </div>
-                  )
                 )}
               </div>
 
@@ -663,90 +662,141 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
         dynamicHeight={true}
         maxHeight={0.95}
       >
-       {/* Language Section */}
-<div className="space-y-3">
-  <div className="flex items-center space-x-2 text-gray-700">
-    <Globe className="h-4 w-4" />
-    <span className="font-medium">Language</span>
-  </div>
-
-  {/* Language Grid with Flags */}
-  <div className="space-y-2">
-    {filteredLanguages.slice(0, 6).map((language) => (
-      <button
-        key={language.code}
-        onClick={() => handleLanguageChange(language)}
-        className={`w-full p-3 text-sm rounded-lg border transition-all flex items-center justify-between ${
-          enhancedCurrentLanguage?.code === language.code
-            ? 'border-orange-500 bg-orange-50 text-orange-700'
-            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-        }`}
-      >
-        <div className="flex items-center space-x-3">
-          <img 
-            src={language.flag} 
-            alt={language.name}
-            className="h-4 w-5 object-cover rounded-sm"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.style.display = 'none';
-            }}
-          />
-          <div className="text-left">
-            <div className="font-medium">{language.nativeName}</div>
-            <div className="text-xs text-gray-500">{language.name}</div>
+        {/* Language Section */}
+        <div className="space-y-3">
+          <div className="flex items-center space-x-2 text-gray-700">
+            <Globe className="h-4 w-4" />
+            <span className="font-medium">Language</span>
           </div>
-        </div>
-        {enhancedCurrentLanguage?.code === language.code && (
-          <Check className="h-4 w-4 text-orange-600" />
-        )}
-      </button>
-    ))}
-  </div>
 
-  {/* Show more languages if there are more than 6 */}
-  {filteredLanguages.length > 6 && (
-    <div className="text-center">
-      <button className="text-xs text-orange-600 hover:text-orange-700 font-medium">
-        Show {filteredLanguages.length - 6} more languages
-      </button>
-    </div>
-  )}
-</div>
+          {/* Language Search Input */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search languages..."
+              value={languageQuery}
+              onChange={(e) => setLanguageQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            />
+          </div>
 
-{/* Location Section */}
-<div className="space-y-3">
-  <div className="flex items-center space-x-2 text-gray-700">
-    <MapPin className="h-4 w-4" />
-    <span className="font-medium">Location</span>
-  </div>
+          {/* Current Language Display */}
+          <div className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-orange-50 border-orange-200">
+            <div className="flex items-center space-x-3">
+              {enhancedCurrentLanguage?.flag && (
+                <img 
+                  src={enhancedCurrentLanguage.flag} 
+                  alt={enhancedCurrentLanguage.name}
+                  className="h-5 w-6 object-cover rounded-sm"
+                />
+              )}
+              <div className="text-left">
+                <div className="font-medium text-gray-900">
+                  {enhancedCurrentLanguage?.nativeName || enhancedCurrentLanguage?.name || 'English'}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {enhancedCurrentLanguage?.name || 'English'} • {enhancedCurrentLanguage?.code?.toUpperCase() || 'EN'}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              {pinnedLanguages.has(enhancedCurrentLanguage?.code || 'en') && (
+                <Pin className="h-4 w-4 text-orange-600 fill-current" />
+              )}
+              <Check className="h-4 w-4 text-orange-600" />
+            </div>
+          </div>
 
-  <button
-    onClick={handleOpenLocationScreen}
-    className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-orange-300 hover:bg-orange-50 transition-colors"
-  >
-    <div className="flex items-center space-x-3">
-      {currentLocation?.flag ? (
-        <img
-          src={`https://flagcdn.com/${currentLocation.flag.toLowerCase()}.svg`}
-          alt={currentLocation.name}
-          className="h-5 w-5 rounded object-cover"
-        />
-      ) : (
-        <MapPin className="h-5 w-5 text-orange-600" />
-      )}
-      <div className="text-left">
-        <div className="font-medium text-gray-900">
-          {currentLocation?.name?.split(',')[0] || 'Select Location'}
+          {/* Language Grid with Flags */}
+          <div className="space-y-2">
+            {filteredLanguages.slice(0, 6).map((language) => (
+              <button
+                key={language.code}
+                onClick={() => handleLanguageChange(language)}
+                className={`w-full p-3 text-sm rounded-lg border transition-all flex items-center justify-between ${
+                  enhancedCurrentLanguage?.code === language.code
+                    ? 'border-orange-500 bg-orange-50 text-orange-700'
+                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <img 
+                    src={language.flag} 
+                    alt={language.name}
+                    className="h-4 w-5 object-cover rounded-sm"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                    }}
+                  />
+                  <div className="text-left">
+                    <div className="font-medium">{language.nativeName}</div>
+                    <div className="text-xs text-gray-500">{language.name}</div>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={(e) => handleToggleLanguagePin(language.code, e)}
+                    className={`p-1 rounded ${
+                      pinnedLanguages.has(language.code) 
+                        ? 'text-orange-600' 
+                        : 'text-gray-400 hover:text-gray-600'
+                    }`}
+                  >
+                    <Pin className={`h-3 w-3 ${pinnedLanguages.has(language.code) ? 'fill-current' : ''}`} />
+                  </button>
+                  {enhancedCurrentLanguage?.code === language.code && (
+                    <Check className="h-4 w-4 text-orange-600" />
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {/* Show more languages if there are more than 6 */}
+          {filteredLanguages.length > 6 && (
+            <div className="text-center">
+              <button className="text-xs text-orange-600 hover:text-orange-700 font-medium">
+                Show {filteredLanguages.length - 6} more languages
+              </button>
+            </div>
+          )}
         </div>
-        <div className="text-xs text-gray-500">
-          {currentLocation?.name || 'Choose your location'}
+
+        {/* Location Section */}
+        <div className="space-y-3">
+          <div className="flex items-center space-x-2 text-gray-700">
+            <MapPin className="h-4 w-4" />
+            <span className="font-medium">Location</span>
+          </div>
+
+          <button
+            onClick={handleOpenLocationScreen}
+            className="w-full flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-orange-300 hover:bg-orange-50 transition-colors"
+          >
+            <div className="flex items-center space-x-3">
+              {currentLocation?.flag ? (
+                <img
+                  src={`https://flagcdn.com/${currentLocation.flag.toLowerCase()}.svg`}
+                  alt={currentLocation.name}
+                  className="h-5 w-5 rounded object-cover"
+                />
+              ) : (
+                <MapPin className="h-5 w-5 text-orange-600" />
+              )}
+              <div className="text-left">
+                <div className="font-medium text-gray-900">
+                  {currentLocation?.name?.split(',')[0] || 'Select Location'}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {currentLocation?.name || 'Choose your location'}
+                </div>
+              </div>
+            </div>
+            <Edit className="h-4 w-4 text-gray-400 hover:text-orange-600" />
+          </button>
         </div>
-      </div>
-    </div>
-    <Edit className="h-4 w-4 text-gray-400 hover:text-orange-600" />
-  </button>
-</div>
       </SlideUpPanel>
 
       {/* Location Screen Overlay */}
