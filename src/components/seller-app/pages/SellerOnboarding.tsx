@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Package, DollarSign, Users, BarChart3, CreditCard, 
   BadgeCheck, TrendingUp, Shield, Zap, CheckCircle,
-  MapPin, Phone, Mail, UserCheck
+  MapPin, Phone, Mail,Play, UserCheck
 } from 'lucide-react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useQuery, useMutation } from '@tanstack/react-query';
