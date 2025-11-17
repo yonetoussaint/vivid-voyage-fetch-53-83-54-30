@@ -324,10 +324,10 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
         <div className="mb-8">
           <HeroBanner
             customBanners={[onboardingVideoBanner]}
-            customHeight="400px"
             showNewsTicker={false}
             showCarouselBottomRow={false}
             asCarousel={false}
+            // Remove customHeight to use the default 2:1 aspect ratio
           />
         </div>
       )}
