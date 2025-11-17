@@ -9,20 +9,15 @@ import {
   UserCheck, 
   Mail, 
   Package, 
-  Store, 
   TrendingUp, 
   Shield, 
   Users, 
-  Clock, 
-  Headphones, 
   BadgeCheck 
 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import HeroBanner from '@/components/home/HeroBanner';
-import ProductHeader from '@/components/product/ProductHeader';
 import { useLanguageSwitcher } from '@/hooks/useLanguageSwitcher';
 
 interface SellerOnboardingProps {
@@ -77,16 +72,6 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     references: '',
     agreeToTerms: false
   });
-
-  // Ben 10 Cartoon Video from Wikimedia - Fixed video configuration
-  const onboardingVideoBanner = {
-    id: 'seller-onboarding-video',
-    image: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-    alt: 'Sample Video',
-    title: 'Power Up Your Business!',
-    subtitle: 'Transform your selling potential with super-powered tools and reach',
-    type: 'video' as const,
-  };
 
   const sellerBenefits = [
     {
@@ -224,11 +209,18 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
   };
 
   const nextStep = () => {
+    if (currentStep === 2 && !validateStep2()) {
+      return;
+    }
     const next = currentStep + 1;
     setCurrentStep(next);
   };
 
   const prevStep = () => {
+    if (currentStep === 1) {
+      handleBackClick();
+      return;
+    }
     const prev = currentStep - 1;
     setCurrentStep(prev);
   };
@@ -255,24 +247,29 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     }
   };
 
+  const validateStep2 = () => {
+    if (!applicationData.businessName.trim()) {
+      alert('Business name is required');
+      return false;
+    }
+    if (!applicationData.businessType.trim()) {
+      alert('Business type is required');
+      return false;
+    }
+    if (!applicationData.phone.trim()) {
+      alert('Phone number is required');
+      return false;
+    }
+    if (!applicationData.email.trim()) {
+      alert('Email is required');
+      return false;
+    }
+    return true;
+  };
+
   const validateForm = () => {
     if (currentStep === 2) {
-      if (!applicationData.businessName.trim()) {
-        alert('Business name is required');
-        return false;
-      }
-      if (!applicationData.businessType.trim()) {
-        alert('Business type is required');
-        return false;
-      }
-      if (!applicationData.phone.trim()) {
-        alert('Phone number is required');
-        return false;
-      }
-      if (!applicationData.email.trim()) {
-        alert('Email is required');
-        return false;
-      }
+      return validateStep2();
     }
 
     if (currentStep === 3) {
@@ -314,6 +311,24 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     }
   };
 
+  const getBottomButtonAction = () => {
+    switch (currentStep) {
+      case 1: return nextStep;
+      case 2: return nextStep;
+      case 3: return handleSubmit;
+      default: return () => {};
+    }
+  };
+
+  const getBottomButtonText = () => {
+    switch (currentStep) {
+      case 1: return 'Get Started';
+      case 2: return 'Continue to Payment';
+      case 3: return isLoading ? 'Processing...' : 'Pay 1,000 HTG & Register';
+      default: return 'Continue';
+    }
+  };
+
   if (sellerLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -322,59 +337,13 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     );
   }
 
-  const StickyButton = () => {
-    if (currentStep === 4) return null;
-
-    return (
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-40">
-        <div className="max-w-2xl mx-auto flex justify-between items-center">
-          {currentStep > 1 ? (
-            <>
-              <button
-                onClick={prevStep}
-                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
-              >
-                Back
-              </button>
-              {currentStep === 2 && (
-                <button
-                  onClick={nextStep}
-                  className="px-8 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors"
-                >
-                  Continue to Payment
-                </button>
-              )}
-              {currentStep === 3 && (
-                <button
-                  onClick={handleSubmit}
-                  disabled={!applicationData.agreeToTerms || isLoading}
-                  className="px-8 py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
-                >
-                  <CreditCard className="w-5 h-5" />
-                  <span>{isLoading ? 'Processing...' : 'Pay 1,000 HTG & Register'}</span>
-                </button>
-              )}
-            </>
-          ) : (
-            <button
-              onClick={nextStep}
-              className="w-full px-8 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors"
-            >
-              Start Application
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b sticky top-0 z-50">
         <div className="px-4 py-3">
           <div className="flex items-center justify-between">
-            <button onClick={handleBack} className="text-gray-600 text-sm font-medium">
+            <button onClick={prevStep} className="text-gray-600 text-sm font-medium">
               {currentStep > 1 ? '← Back' : '× Close'}
             </button>
             {currentStep > 1 && currentStep < 4 && (
@@ -420,6 +389,10 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
                   loop 
                   playsInline
                   poster="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=450&fit=crop"
+                  onError={(e) => {
+                    // Fallback to poster image if video fails to load
+                    e.currentTarget.style.display = 'none';
+                  }}
                 >
                   <source src="https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4" type="video/mp4" />
                 </video>
@@ -774,7 +747,10 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
             </div>
 
             <div className="space-y-2 pt-2">
-              <button className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold text-sm">
+              <button 
+                onClick={() => navigate('/seller-dashboard')}
+                className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold text-sm"
+              >
                 Return to Dashboard
               </button>
               <button className="w-full px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium text-sm">
@@ -789,12 +765,11 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
       {currentStep < 4 && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 shadow-lg">
           <button
-            onClick={handleNext}
-            className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold text-sm active:bg-blue-700"
+            onClick={getBottomButtonAction()}
+            disabled={currentStep === 3 && (!applicationData.agreeToTerms || isLoading)}
+            className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold text-sm active:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            {currentStep === 1 && 'Get Started'}
-            {currentStep === 2 && 'Continue to Payment'}
-            {currentStep === 3 && 'Submit Application'}
+            {getBottomButtonText()}
           </button>
         </div>
       )}
@@ -811,6 +786,5 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     </div>
   );
 };
-
 
 export default SellerOnboarding;
