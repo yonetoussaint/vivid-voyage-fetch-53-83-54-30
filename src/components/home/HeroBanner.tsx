@@ -9,7 +9,7 @@ import FloatingVideo from '../hero/FloatingVideo';
 import { BannerType } from './hero/types';
 import ProductFilterBar from './ProductFilterBar';
 import { supabase } from '@/integrations/supabase/client';
-import { Edit2, Image, Plus, Volume2, VolumeX } from 'lucide-react';
+import { Edit2, Play, Image, Plus, Volume2, VolumeX } from 'lucide-react';
 
 interface HeroBannerProps {
   asCarousel?: boolean;
