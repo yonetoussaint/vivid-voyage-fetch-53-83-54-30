@@ -57,14 +57,14 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
 
   // Ben 10 Cartoon Video from Wikimedia - Fixed video configuration
   
+
 const onboardingVideoBanner = {
   id: 'seller-onboarding-video',
-  image: 'https://upload.wikimedia.org/wikipedia/commons/5/58/Ben_10_-_Catch_the_Power_Surge%21-_Action_Cartoon-_Cartoon_in_English_-_%40cnindia.webm',
-  alt: 'Ben 10 - Catch the Power Surge! Action Cartoon',
+  image: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+  alt: 'Sample Video',
   title: 'Power Up Your Business!',
   subtitle: 'Transform your selling potential with super-powered tools and reach',
   type: 'video' as const,
-  // Remove duration - video will handle its own timing
 };
 
   const sellerBenefits = [
