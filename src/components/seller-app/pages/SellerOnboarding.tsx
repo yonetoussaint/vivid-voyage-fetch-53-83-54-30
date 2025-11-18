@@ -78,7 +78,7 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
   const featureCards = [
     {
       id: 1,
-      image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=300&fit=crop&crop=center',
+      image: 'https://images.unsplash.com/photo-1556742049-bebda4e3858f?w=400&h=300&fit=crop&crop=center',
       title: 'Global Market Access',
       description: 'Reach customers worldwide with our international shipping and multi-language support. Expand your business beyond local boundaries.'
     },
@@ -525,10 +525,6 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
                     </div>
                   ))}
                 </div>
-                
-                {/* Gradient overlays for smooth edges */}
-                <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
-                <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
               </div>
             </div>
 
