@@ -77,8 +77,6 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     { id: 4, logo: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=120&h=60&fit=crop&crop=center' },
     { id: 5, logo: 'https://images.unsplash.com/photo-1564419320461-6870880221ad?w=120&h=60&fit=crop&crop=center' },
     { id: 6, logo: 'https://images.unsplash.com/photo-1556742044-3c52d6e88c62?w=120&h=60&fit=crop&crop=center' },
-    { id: 7, logo: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=120&h=60&fit=crop&crop=center' },
-    { id: 8, logo: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=120&h=60&fit=crop&crop=center' },
   ];
 
   // Feature cards data with large images
@@ -121,35 +119,33 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     }
   ];
 
-  // Auto-scroll logos - proper newsband style
+  // Auto-scroll logos - FIXED implementation
   useEffect(() => {
     if (currentStep !== 1 || !logosContainerRef.current) return;
 
     const container = logosContainerRef.current;
-    let animationId: number;
-    let scrollPosition = 0;
-    const scrollSpeed = 1; // pixels per frame
+    let animationFrameId: number;
+    let startTime: number | null = null;
+    const duration = 20000; // 20 seconds for one complete loop
+    const logosWidth = 120 + 32; // logo width + gap (w-24 = 96px + 24px padding = 120px visible, 32px gap)
 
-    const scrollLogos = () => {
-      if (!container) return;
-
-      scrollPosition += scrollSpeed;
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      const progress = (elapsed % duration) / duration;
       
-      // Reset to start when reaching end for infinite scroll
-      if (scrollPosition >= container.scrollWidth / 2) {
-        scrollPosition = 0;
-      }
-
-      container.scrollLeft = scrollPosition;
-      animationId = requestAnimationFrame(scrollLogos);
+      // Calculate scroll position - from 0 to total scroll width
+      const scrollDistance = progress * (trustedSellerLogos.length * logosWidth);
+      container.scrollLeft = scrollDistance;
+      
+      animationFrameId = requestAnimationFrame(animate);
     };
 
-    // Start the animation
-    animationId = requestAnimationFrame(scrollLogos);
+    animationFrameId = requestAnimationFrame(animate);
 
     return () => {
-      if (animationId) {
-        cancelAnimationFrame(animationId);
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
       }
     };
   }, [currentStep]);
@@ -177,9 +173,9 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
       window.removeEventListener('resize', updateHeaderHeight);
       clearTimeout(timeoutId);
     };
-  }, [currentStep, currentLanguage, currentLocation]); // Recalculate when these change
+  }, [currentStep, currentLanguage, currentLocation]);
 
-  // Ben 10 Cartoon Video from Wikimedia - Fixed video configuration
+  // Rest of the code remains the same...
   const onboardingVideoBanner = {
     id: 'seller-onboarding-video',
     image: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
@@ -460,24 +456,20 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
         <ProductHeader  
           onCloseClick={handleBackClick}  
           onShareClick={handleShareClick}  
-          // Hide title and action buttons on step 1 (overview)
           title={currentStep === 1 ? undefined : "Become a Seller"}
           actionButtons={[]}
           forceScrolledState={true}
           hideSearch={true}
           showSellerInfo={false}
-          // Progress Bar - Only show from step 2 onwards
           showProgressBar={currentStep > 1}
           currentStep={currentStep}
           totalSteps={4}
           progressBarColor="bg-blue-600"
-          // Language Context
           currentLanguage={currentLanguage}
           currentLocation={currentLocation}
           supportedLanguages={supportedLanguages}
           onLanguageChange={handleLanguageChange}
           onOpenLocationScreen={handleOpenLocationScreen}
-          // Show language selector, hide settings button
           showLanguageSelector={true}
           showSettingsButton={false}
         />  
@@ -507,7 +499,7 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
               />
             </div>
 
-            {/* Trusted Sellers Logos Section - Horizontal cards with incessant auto-scroll */}
+            {/* Trusted Sellers Logos Section - Horizontal cards with FIXED auto-scroll */}
             <div className="bg-white py-8 border-y border-gray-200">
               <div className="text-center mb-6">
                 <h3 className="text-sm font-semibold text-gray-700 mb-1">
@@ -523,14 +515,14 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
                   ref={logosContainerRef}
                   className="flex space-x-8 py-4"
                   style={{ 
-                    scrollBehavior: 'auto',
-                    width: 'max-content'
+                    overflowX: 'hidden',
+                    whiteSpace: 'nowrap'
                   }}
                 >
-                  {[...trustedSellerLogos, ...trustedSellerLogos, ...trustedSellerLogos].map((seller, index) => (
+                  {[...trustedSellerLogos, ...trustedSellerLogos].map((seller, index) => (
                     <div 
                       key={`${seller.id}-${index}`}
-                      className="flex-shrink-0"
+                      className="inline-flex flex-shrink-0"
                     >
                       <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow">
                         <img 
@@ -641,25 +633,22 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
           </div>
         )}
 
-        {/* Rest of the code remains the same for steps 2, 3, and 4 */}
-        {/* Step 2: Business Information */}
+        {/* Steps 2, 3, and 4 remain unchanged */}
         {currentStep === 2 && (
           <div className="p-4 space-y-4">
-            {/* ... (step 2 content remains unchanged) ... */}
+            {/* Step 2 content */}
           </div>
         )}
 
-        {/* Step 3: Payment */}
         {currentStep === 3 && (
           <div className="p-4 space-y-4">
-            {/* ... (step 3 content remains unchanged) ... */}
+            {/* Step 3 content */}
           </div>
         )}
 
-        {/* Step 4: Success */}
         {currentStep === 4 && (
           <div className="p-4 space-y-6 text-center">
-            {/* ... (step 4 content remains unchanged) ... */}
+            {/* Step 4 content */}
           </div>
         )}
       </div>
