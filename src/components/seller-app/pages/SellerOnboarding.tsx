@@ -1,11 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Package, DollarSign, Users, BarChart3, CreditCard, 
-  BadgeCheck, TrendingUp, Shield, Zap, CheckCircle,
-  MapPin, Phone, Mail, Play, UserCheck, Star,
-  ShoppingBag, Globe, Truck, Headphones
-} from 'lucide-react';
+import { Package, DollarSign, Users, BarChart3, CreditCard, BadgeCheck, TrendingUp, Shield, Zap, CheckCircle, MapPin, Phone, Mail, Play, UserCheck, Star, ShoppingBag, Globe, Truck, Headphones } from 'lucide-react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -74,8 +69,8 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     { id: 1, logo: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=120&h=60&fit=crop&crop=center' },
     { id: 2, logo: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=120&h=60&fit=crop&crop=center' },
     { id: 3, logo: 'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=120&h=60&fit=crop&crop=center' },
-    { id: 4, logo: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=120&h=60&fit=crop&crop=center' },
-    { id: 5, logo: 'https://images.unsplash.com/photo-1564419320461-6870880221ad?w=120&h=60&fit=crop&crop=center' },
+    { id: 4, logo: 'https://images.unsplash.com/photo-1556742044-3c52d6e88c62?w=120&h=60&fit=crop&crop=center' },
+    { id: 5, logo: 'https://images.unsplash.com/photo-1564419320-6870880221ad?w=120&h=60&fit=crop&crop=center' },
     { id: 6, logo: 'https://images.unsplash.com/photo-1556742044-3c52d6e88c62?w=120&h=60&fit=crop&crop=center' },
   ];
 
@@ -89,7 +84,7 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     },
     {
       id: 2,
-      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=300&fit=crop&crop=center',
+      image: 'https://images.unsplash.com/photo-1551288049-bebda4e3858f?w=400&h=300&fit=crop&crop=center',
       title: 'Advanced Analytics',
       description: 'Track your sales performance, customer behavior, and inventory with real-time analytics and detailed reporting.'
     },
@@ -119,26 +114,26 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     }
   ];
 
-  // FIXED Auto-scroll logos with infinite loop - using the working implementation
   useEffect(() => {
     if (currentStep !== 1 || !logosContainerRef.current) return;
 
     const container = logosContainerRef.current;
     let animationFrameId: number;
     let scrollPosition = 0;
-    const logoWidth = 120 + 32; // logo width (w-24 = 96px + padding = 120px visible) + gap (32px = space-x-8)
-    const totalLogos = trustedSellerLogos.length;
-    const resetPoint = totalLogos * logoWidth; // Reset when we've scrolled past first set
-
+    const speed = 0.5; // Pixels per frame (adjust for speed)
+    
     const animate = () => {
-      scrollPosition += 0.5; // Adjust speed (higher = faster)
+      scrollPosition += speed;
       
-      // Reset position for infinite loop
-      if (scrollPosition >= resetPoint) {
+      // Use transform for smoother animation
+      container.style.transform = `translateX(-${scrollPosition}px)`;
+      
+      // Reset position for infinite loop when we've scrolled one set of logos
+      const singleSetWidth = container.scrollWidth / 3; // Divided by 3 because we tripled the logos
+      if (scrollPosition >= singleSetWidth) {
         scrollPosition = 0;
       }
       
-      container.scrollLeft = scrollPosition;
       animationFrameId = requestAnimationFrame(animate);
     };
 
@@ -149,7 +144,7 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [currentStep, trustedSellerLogos.length]);
+  }, [currentStep]);
 
   // Calculate header height dynamically
   useEffect(() => {
@@ -494,7 +489,7 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
               />
             </div>
 
-            {/* Trusted Sellers Logos Section - FIXED with working infinite scroll */}
+            {/* Trusted Sellers Logos Section - Fixed with working infinite scroll using transform */}
             <div className="bg-white py-8 border-y border-gray-200">
               <div className="text-center mb-6">
                 <h3 className="text-sm font-semibold text-gray-700 mb-1">
@@ -510,8 +505,8 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
                   ref={logosContainerRef}
                   className="flex space-x-8 py-4"
                   style={{ 
-                    overflowX: 'hidden',
-                    whiteSpace: 'nowrap'
+                    whiteSpace: 'nowrap',
+                    willChange: 'transform'
                   }}
                 >
                   {/* Triple the logos for seamless infinite loop */}
@@ -522,7 +517,7 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
                     >
                       <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow">
                         <img 
-                          src={seller.logo} 
+                          src={seller.logo || "/placeholder.svg"} 
                           alt="Trusted seller" 
                           className="w-24 h-12 object-cover rounded"
                         />
@@ -532,8 +527,8 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
                 </div>
                 
                 {/* Gradient overlays for smooth edges */}
-                <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-white to-transparent z-10"></div>
-                <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-white to-transparent z-10"></div>
+                <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
+                <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
               </div>
             </div>
 
@@ -555,7 +550,7 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
                     >
                       <div className="w-full">
                         <img 
-                          src={card.image} 
+                          src={card.image || "/placeholder.svg"} 
                           alt={card.title}
                           className="w-full h-48 object-cover"
                         />
