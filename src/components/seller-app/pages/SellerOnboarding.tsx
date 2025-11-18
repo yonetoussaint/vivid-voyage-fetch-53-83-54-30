@@ -6,7 +6,7 @@ import { useLanguageSwitcher } from '@/hooks/useLanguageSwitcher';
 
 const SellerOnboarding: React.FC = () => {
   const navigate = useNavigate();
-  const { currentLanguage, setLanguage } = useLanguageSwitcher();
+  const { currentLanguage, setLanguage } = useLanguageSwitcher(); 
   
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 3;
