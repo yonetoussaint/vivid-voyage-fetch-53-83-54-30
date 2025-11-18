@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Package, DollarSign, Users, BarChart3, CreditCard, 
   BadgeCheck, TrendingUp, Shield, Zap, CheckCircle,
-  MapPin, Phone, Mail, Play, UserCheck, Star
+  MapPin, Phone, Mail, Play, UserCheck, Star,
+  ShoppingBag, Globe, Truck, Headphones
 } from 'lucide-react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -82,6 +83,46 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     { id: 10, name: 'ArtisanCo', logo: '🎨', rating: 4.9, sales: '24K+' },
     { id: 11, name: 'JewelHT', logo: '💎', rating: 4.7, sales: '18K+' },
     { id: 12, name: 'KidZone', logo: '🧸', rating: 4.8, sales: '21K+' },
+  ];
+
+  // Feature cards data
+  const featureCards = [
+    {
+      id: 1,
+      image: '🛍️',
+      title: 'Global Market Access',
+      description: 'Reach customers worldwide with our international shipping and multi-language support. Expand your business beyond local boundaries.'
+    },
+    {
+      id: 2,
+      image: '📊',
+      title: 'Advanced Analytics',
+      description: 'Track your sales performance, customer behavior, and inventory with real-time analytics and detailed reporting.'
+    },
+    {
+      id: 3,
+      image: '🔒',
+      title: 'Secure Payments',
+      description: 'Multiple payment options with bank-level security. Get paid instantly with our trusted payment processing system.'
+    },
+    {
+      id: 4,
+      image: '🚚',
+      title: 'Logistics Support',
+      description: 'Integrated shipping solutions with major carriers. Real-time tracking and automated fulfillment processes.'
+    },
+    {
+      id: 5,
+      image: '🌐',
+      title: 'Multi-Region Stores',
+      description: 'Get a store that flexes to fit multiple regions, retail locations, and B2B buyers. Each market gets its own customized shopping experience.'
+    },
+    {
+      id: 6,
+      image: '💬',
+      title: '24/7 Seller Support',
+      description: 'Dedicated support team available round the clock. Get help with listings, orders, and business growth strategies.'
+    }
   ];
 
   // Auto-scroll logos
@@ -502,6 +543,41 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Feature Cards Section - Vertical List */}
+            <div className="bg-gray-50 py-8 px-4">
+              <div className="max-w-4xl mx-auto">
+                <div className="text-center mb-8">
+                  <h2 className="text-xl font-bold text-gray-900 mb-2">Everything You Need to Succeed</h2>
+                  <p className="text-sm text-gray-600 max-w-2xl mx-auto">
+                    Powerful tools and features designed to help your business grow and reach new heights
+                  </p>
+                </div>
+
+                <div className="space-y-6">
+                  {featureCards.map((card) => (
+                    <div 
+                      key={card.id}
+                      className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow"
+                    >
+                      <div className="flex items-start space-x-4">
+                        <div className="flex-shrink-0 w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center text-xl">
+                          {card.image}
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900 mb-2 text-sm">
+                            {card.title}
+                          </h3>
+                          <p className="text-gray-600 text-xs leading-relaxed">
+                            {card.description}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
