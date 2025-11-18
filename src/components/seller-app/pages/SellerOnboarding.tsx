@@ -26,7 +26,7 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
   const { user } = useAuth();
   const headerRef = useRef<HTMLDivElement>(null);
   const logosContainerRef = useRef<HTMLDivElement>(null);
-  const [headerHeight, setHeaderHeight] = useState(64); // Default fallback
+  const [headerHeight, setHeaderHeight] = useState(64);
 
   // Language context
   const { 
@@ -69,7 +69,7 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     agreeToTerms: false
   });
 
-  // Trusted sellers logos data - rectangular logos for horizontal cards
+  // Trusted sellers logos data
   const trustedSellerLogos = [
     { id: 1, logo: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=120&h=60&fit=crop&crop=center' },
     { id: 2, logo: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=120&h=60&fit=crop&crop=center' },
@@ -119,25 +119,26 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     }
   ];
 
-  // Auto-scroll logos - FIXED implementation
+  // FIXED Auto-scroll logos with infinite loop - using the working implementation
   useEffect(() => {
     if (currentStep !== 1 || !logosContainerRef.current) return;
 
     const container = logosContainerRef.current;
     let animationFrameId: number;
-    let startTime: number | null = null;
-    const duration = 20000; // 20 seconds for one complete loop
-    const logosWidth = 120 + 32; // logo width + gap (w-24 = 96px + 24px padding = 120px visible, 32px gap)
+    let scrollPosition = 0;
+    const logoWidth = 120 + 32; // logo width (w-24 = 96px + padding = 120px visible) + gap (32px = space-x-8)
+    const totalLogos = trustedSellerLogos.length;
+    const resetPoint = totalLogos * logoWidth; // Reset when we've scrolled past first set
 
-    const animate = (timestamp: number) => {
-      if (!startTime) startTime = timestamp;
-      const elapsed = timestamp - startTime;
-      const progress = (elapsed % duration) / duration;
+    const animate = () => {
+      scrollPosition += 0.5; // Adjust speed (higher = faster)
       
-      // Calculate scroll position - from 0 to total scroll width
-      const scrollDistance = progress * (trustedSellerLogos.length * logosWidth);
-      container.scrollLeft = scrollDistance;
+      // Reset position for infinite loop
+      if (scrollPosition >= resetPoint) {
+        scrollPosition = 0;
+      }
       
+      container.scrollLeft = scrollPosition;
       animationFrameId = requestAnimationFrame(animate);
     };
 
@@ -148,7 +149,7 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [currentStep]);
+  }, [currentStep, trustedSellerLogos.length]);
 
   // Calculate header height dynamically
   useEffect(() => {
@@ -156,17 +157,11 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
       if (headerRef.current) {
         const height = headerRef.current.offsetHeight;
         setHeaderHeight(height);
-        console.log('Header height:', height);
       }
     };
 
-    // Initial calculation
     updateHeaderHeight();
-
-    // Recalculate on window resize
     window.addEventListener('resize', updateHeaderHeight);
-
-    // Recalculate after a short delay to ensure DOM is fully rendered
     const timeoutId = setTimeout(updateHeaderHeight, 100);
 
     return () => {
@@ -175,7 +170,7 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     };
   }, [currentStep, currentLanguage, currentLocation]);
 
-  // Rest of the code remains the same...
+  // Ben 10 Cartoon Video from Wikimedia
   const onboardingVideoBanner = {
     id: 'seller-onboarding-video',
     image: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
@@ -499,7 +494,7 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
               />
             </div>
 
-            {/* Trusted Sellers Logos Section - Horizontal cards with FIXED auto-scroll */}
+            {/* Trusted Sellers Logos Section - FIXED with working infinite scroll */}
             <div className="bg-white py-8 border-y border-gray-200">
               <div className="text-center mb-6">
                 <h3 className="text-sm font-semibold text-gray-700 mb-1">
@@ -519,16 +514,17 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
                     whiteSpace: 'nowrap'
                   }}
                 >
-                  {[...trustedSellerLogos, ...trustedSellerLogos].map((seller, index) => (
+                  {/* Triple the logos for seamless infinite loop */}
+                  {[...trustedSellerLogos, ...trustedSellerLogos, ...trustedSellerLogos].map((seller, index) => (
                     <div 
-                      key={`${seller.id}-${index}`}
+                      key={`logo-${index}`}
                       className="inline-flex flex-shrink-0"
                     >
                       <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow">
                         <img 
                           src={seller.logo} 
                           alt="Trusted seller" 
-                          className="w-24 h-12 object-contain"
+                          className="w-24 h-12 object-cover rounded"
                         />
                       </div>
                     </div>
@@ -633,22 +629,339 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
           </div>
         )}
 
-        {/* Steps 2, 3, and 4 remain unchanged */}
+        {/* Step 2: Business Information */}
         {currentStep === 2 && (
           <div className="p-4 space-y-4">
-            {/* Step 2 content */}
+            <div className="mb-2">
+              <h1 className="text-xl font-bold text-gray-900 mb-1">Business Information</h1>
+              <p className="text-sm text-gray-600">Tell us about your business</p>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                  Business Name *
+                </label>
+                <input
+                  type="text"
+                  name="businessName"
+                  value={applicationData.businessName}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Your business name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                  Business Type *
+                </label>
+                <select
+                  name="businessType"
+                  value={applicationData.businessType}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select business type</option>
+                  <option value="individual">Individual Seller</option>
+                  <option value="sole_proprietorship">Sole Proprietorship</option>
+                  <option value="llc">LLC</option>
+                  <option value="corporation">Corporation</option>
+                  <option value="partnership">Partnership</option>
+                  <option value="cooperative">Cooperative</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                    Phone Number *
+                  </label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={applicationData.phone}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="+509"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                    Email *
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={applicationData.email}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="email@example.com"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                  Business Address
+                </label>
+                <input
+                  type="text"
+                  name="address"
+                  value={applicationData.address}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Street address"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                    City
+                  </label>
+                  <input
+                    type="text"
+                    name="city"
+                    value={applicationData.city}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="City"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                    Department
+                  </label>
+                  <select
+                    name="country"
+                    value={applicationData.country}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select</option>
+                    <option value="ouest">Ouest</option>
+                    <option value="nord">Nord</option>
+                    <option value="nord-est">Nord-Est</option>
+                    <option value="artibonite">Artibonite</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-2">
+                  Product Categories (optional)
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {productCategories.map((category) => (
+                    <label key={category} className="flex items-center space-x-2 cursor-pointer bg-white border rounded-lg px-3 py-2">
+                      <input
+                        type="checkbox"
+                        checked={applicationData.productCategories.includes(category)}
+                        onChange={() => handleCategoryToggle(category)}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
+                      />
+                      <span className="text-xs">{category}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                    NIF (Tax ID)
+                  </label>
+                  <input
+                    type="text"
+                    name="taxId"
+                    value={applicationData.taxId}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Tax identification number"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                    Years in Business
+                  </label>
+                  <select
+                    name="yearsInBusiness"
+                    value={applicationData.yearsInBusiness}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select years</option>
+                    <option value="0-1">0-1 years</option>
+                    <option value="1-3">1-3 years</option>
+                    <option value="3-5">3-5 years</option>
+                    <option value="5-10">5-10 years</option>
+                    <option value="10+">10+ years</option>
+                  </select>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
+        {/* Step 3: Payment */}
         {currentStep === 3 && (
           <div className="p-4 space-y-4">
-            {/* Step 3 content */}
+            <div className="mb-2">
+              <h1 className="text-xl font-bold text-gray-900 mb-1">Payment & Registration</h1>
+              <p className="text-sm text-gray-600">Complete your registration</p>
+            </div>
+
+            {/* Payment Summary */}
+            <div className="bg-blue-50 rounded-lg p-4">
+              <h3 className="font-semibold mb-3 text-sm">Registration Summary</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-700">One-Time Registration Fee</span>
+                  <span className="font-semibold">1,000 HTG</span>
+                </div>
+                <div className="flex justify-between items-center text-xs text-gray-600">
+                  <span>Validity</span>
+                  <span>Lifetime</span>
+                </div>
+                <div className="border-t pt-2">
+                  <div className="flex justify-between items-center font-bold">
+                    <span>Total</span>
+                    <span>1,000 HTG</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Methods */}
+            <div className="bg-white border rounded-lg p-4">
+              <h3 className="font-semibold mb-3 text-sm">Payment Method</h3>
+              <div className="space-y-3">
+                {/* Mobile Money */}
+                <div className="border-2 border-blue-500 rounded-lg p-3">
+                  <label className="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      defaultChecked
+                      className="text-blue-600 focus:ring-blue-500"
+                    />
+                    <div>
+                      <div className="font-semibold text-sm">Mobile Money</div>
+                      <div className="text-xs text-gray-600">Pay with NatCash, MonCash, or Digicel</div>
+                    </div>
+                  </label>
+                </div>
+
+                {/* Bank Transfer */}
+                <div className="border-2 border-gray-200 rounded-lg p-3">
+                  <label className="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      className="text-blue-600 focus:ring-blue-500"
+                    />
+                    <div>
+                      <div className="font-semibold text-sm">Bank Transfer</div>
+                      <div className="text-xs text-gray-600">Transfer to our bank account</div>
+                    </div>
+                  </label>
+                </div>
+
+                {/* Credit Card */}
+                <div className="border-2 border-gray-200 rounded-lg p-3">
+                  <label className="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      className="text-blue-600 focus:ring-blue-500"
+                    />
+                    <div>
+                      <div className="font-semibold text-sm">Credit/Debit Card</div>
+                      <div className="text-xs text-gray-600">Pay with Visa, Mastercard, or American Express</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Terms and Conditions */}
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <label className="flex items-start space-x-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="agreeToTerms"
+                  checked={applicationData.agreeToTerms}
+                  onChange={handleInputChange}
+                  className="mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
+                />
+                <div className="text-xs">
+                  <span className="font-medium">
+                    I agree to the Seller Agreement, Terms of Service, and Privacy Policy.
+                  </span>
+                  <p className="text-gray-600 mt-1">
+                    By checking this box, you agree to pay the one-time registration fee of 1,000 HTG and comply with our seller policies.
+                  </p>
+                </div>
+              </label>
+            </div>
           </div>
         )}
 
+        {/* Step 4: Success */}
         {currentStep === 4 && (
           <div className="p-4 space-y-6 text-center">
-            {/* Step 4 content */}
+            <div className="bg-green-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-green-500" />
+            </div>
+
+            <h1 className="text-xl font-bold text-gray-900 mb-2">
+              Application Submitted!
+            </h1>
+
+            <p className="text-sm text-gray-600 mb-6">
+              Thank you for your application to become a seller. Your registration fee of 1,000 HTG will be processed and our team will review your information.
+            </p>
+
+            <div className="bg-blue-50 rounded-lg p-4 text-left">
+              <h3 className="font-semibold mb-3 text-sm">What happens next?</h3>
+              <div className="space-y-2 text-xs">
+                <div className="flex items-center space-x-3">
+                  <CreditCard className="w-4 h-4 text-blue-500" />
+                  <span>Complete your payment of 1,000 HTG</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <UserCheck className="w-4 h-4 text-blue-500" />
+                  <span>Verification team reviews your application</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Mail className="w-4 h-4 text-blue-500" />
+                  <span>You'll receive confirmation within 24 hours</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Package className="w-4 h-4 text-blue-500" />
+                  <span>Start selling immediately after approval</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 space-y-3">
+              <button
+                onClick={() => navigate('/seller-dashboard/products')}
+                className="w-full px-8 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors text-sm"
+              >
+                Return to Dashboard
+              </button>
+              <button
+                onClick={() => navigate('/help')}
+                className="w-full px-8 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors text-sm"
+              >
+                Need Help? Contact Support
+              </button>
+            </div>
           </div>
         )}
       </div>
