@@ -71,14 +71,14 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     { id: 3, logo: 'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=120&h=60&fit=crop&crop=center' },
     { id: 4, logo: 'https://images.unsplash.com/photo-1556742044-3c52d6e88c62?w=120&h=60&fit=crop&crop=center' },
     { id: 5, logo: 'https://images.unsplash.com/photo-1564419320-6870880221ad?w=120&h=60&fit=crop&crop=center' },
-    { id: 6, logo: 'https://images.unsplash.com/photo-1564419320-6870880221ad?w=120&h=60&fit=crop&crop=center' },
+    { id: 6, logo: 'https://images.unsplash.com/photo-1556742044-3c52d6e88c62?w=120&h=60&fit=crop&crop=center' },
   ];
 
   // Feature cards data with large images
   const featureCards = [
     {
       id: 1,
-      image: 'https://images.unsplash.com/photo-1556742049-bebda4e3858f?w=400&h=300&fit=crop&crop=center',
+      image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=300&fit=crop&crop=center',
       title: 'Global Market Access',
       description: 'Reach customers worldwide with our international shipping and multi-language support. Expand your business beyond local boundaries.'
     },
@@ -122,8 +122,6 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     let scrollPosition = 0;
     const speed = 0.5; // Pixels per frame (adjust for speed)
     
-    console.log('[v0] Logo animation started');
-    
     const animate = () => {
       scrollPosition += speed;
       
@@ -139,10 +137,9 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
       animationFrameId = requestAnimationFrame(animate);
     };
 
-    animate();
+    animationFrameId = requestAnimationFrame(animate);
 
     return () => {
-      console.log('[v0] Logo animation stopped');
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
       }
@@ -528,6 +525,10 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
                     </div>
                   ))}
                 </div>
+                
+                {/* Gradient overlays for smooth edges */}
+                <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
+                <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
               </div>
             </div>
 
