@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Package, DollarSign, Users, BarChart3, CreditCard, 
   BadgeCheck, TrendingUp, Shield, Zap, CheckCircle,
-  MapPin, Phone, Mail, Play, UserCheck
+  MapPin, Phone, Mail, Play, UserCheck, Star
 } from 'lucide-react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -24,6 +24,7 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
   const navigate = useNavigate();
   const { user } = useAuth();
   const headerRef = useRef<HTMLDivElement>(null);
+  const logosContainerRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState(64); // Default fallback
 
   // Language context
@@ -66,6 +67,55 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     references: '',
     agreeToTerms: false
   });
+
+  // Trusted sellers logos data
+  const trustedSellers = [
+    { id: 1, name: 'TechHaiti', logo: '🛒', rating: 4.9, sales: '50K+' },
+    { id: 2, name: 'FashionHT', logo: '👗', rating: 4.8, sales: '35K+' },
+    { id: 3, name: 'ElectroPlus', logo: '📱', rating: 4.7, sales: '42K+' },
+    { id: 4, name: 'HomeStyle', logo: '🏠', rating: 4.9, sales: '28K+' },
+    { id: 5, name: 'BeautyCreole', logo: '💄', rating: 4.6, sales: '31K+' },
+    { id: 6, name: 'AutoPartsHT', logo: '🚗', rating: 4.8, sales: '26K+' },
+    { id: 7, name: 'SportHaiti', logo: '⚽', rating: 4.7, sales: '22K+' },
+    { id: 8, name: 'BookWorld', logo: '📚', rating: 4.9, sales: '19K+' },
+    { id: 9, name: 'FoodMarket', logo: '🍎', rating: 4.8, sales: '33K+' },
+    { id: 10, name: 'ArtisanCo', logo: '🎨', rating: 4.9, sales: '24K+' },
+    { id: 11, name: 'JewelHT', logo: '💎', rating: 4.7, sales: '18K+' },
+    { id: 12, name: 'KidZone', logo: '🧸', rating: 4.8, sales: '21K+' },
+  ];
+
+  // Auto-scroll logos
+  useEffect(() => {
+    if (currentStep !== 1 || !logosContainerRef.current) return;
+
+    const container = logosContainerRef.current;
+    const scrollWidth = container.scrollWidth;
+    const clientWidth = container.clientWidth;
+    let scrollPosition = 0;
+    let direction = 1;
+    const scrollSpeed = 1; // pixels per frame
+
+    const scrollLogos = () => {
+      if (!container) return;
+
+      scrollPosition += scrollSpeed * direction;
+      
+      // Reverse direction when reaching edges
+      if (scrollPosition >= scrollWidth - clientWidth) {
+        direction = -1;
+      } else if (scrollPosition <= 0) {
+        direction = 1;
+      }
+
+      container.scrollLeft = scrollPosition;
+    };
+
+    const scrollInterval = setInterval(scrollLogos, 30); // Smooth scrolling
+
+    return () => {
+      clearInterval(scrollInterval);
+    };
+  }, [currentStep]);
 
   // Calculate header height dynamically
   useEffect(() => {
@@ -418,6 +468,41 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
                 asCarousel={false}
                 className="rounded-none"
               />
+            </div>
+
+            {/* Trusted Sellers Logos Section */}
+            <div className="bg-white py-6 border-y border-gray-200">
+              <div className="text-center mb-4">
+                <h3 className="text-sm font-semibold text-gray-700 mb-1">
+                  Trusted by Top Sellers in Haiti
+                </h3>
+                <p className="text-xs text-gray-500">
+                  Join these successful businesses already selling on our platform
+                </p>
+              </div>
+              
+              <div 
+                ref={logosContainerRef}
+                className="flex space-x-6 overflow-hidden py-2"
+                style={{ scrollBehavior: 'smooth' }}
+              >
+                {[...trustedSellers, ...trustedSellers].map((seller, index) => (
+                  <div 
+                    key={`${seller.id}-${index}`}
+                    className="flex-shrink-0 w-32 bg-gray-50 rounded-lg border border-gray-200 p-3 hover:shadow-md transition-shadow"
+                  >
+                    <div className="text-2xl text-center mb-2">{seller.logo}</div>
+                    <div className="text-center">
+                      <h4 className="font-semibold text-xs text-gray-800 mb-1">{seller.name}</h4>
+                      <div className="flex items-center justify-center space-x-1 mb-1">
+                        <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                        <span className="text-xs font-medium text-gray-700">{seller.rating}</span>
+                      </div>
+                      <div className="text-xs text-gray-500">{seller.sales} sales</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Fee Card */}
