@@ -23,6 +23,8 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
 }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(64); // Default fallback
 
   // Language context
   const { 
@@ -64,6 +66,31 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     references: '',
     agreeToTerms: false
   });
+
+  // Calculate header height dynamically
+  useEffect(() => {
+    const updateHeaderHeight = () => {
+      if (headerRef.current) {
+        const height = headerRef.current.offsetHeight;
+        setHeaderHeight(height);
+        console.log('Header height:', height);
+      }
+    };
+
+    // Initial calculation
+    updateHeaderHeight();
+
+    // Recalculate on window resize
+    window.addEventListener('resize', updateHeaderHeight);
+
+    // Recalculate after a short delay to ensure DOM is fully rendered
+    const timeoutId = setTimeout(updateHeaderHeight, 100);
+
+    return () => {
+      window.removeEventListener('resize', updateHeaderHeight);
+      clearTimeout(timeoutId);
+    };
+  }, [currentStep, currentLanguage, currentLocation]); // Recalculate when these change
 
   // Ben 10 Cartoon Video from Wikimedia - Fixed video configuration
   const onboardingVideoBanner = {
@@ -341,8 +368,8 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* ProductHeader for Onboarding */}
-      <div className="fixed top-0 left-0 right-0 z-50">
+      {/* ProductHeader for Onboarding with ref for height measurement */}
+      <div ref={headerRef} className="fixed top-0 left-0 right-0 z-50">
         <ProductHeader  
           onCloseClick={handleBackClick}  
           onShareClick={handleShareClick}  
@@ -369,13 +396,13 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
         />  
       </div>
 
-      {/* Content with minimal padding for fixed header */}
-      <div className="pt-16 pb-24">
+      {/* Content with dynamic padding based on header height */}
+      <div style={{ paddingTop: `${headerHeight}px` }} className="pb-24">
         {/* Step 1: Overview */}
         {currentStep === 1 && (
           <div className="space-y-0">
             {/* Hero Section - Centered and no background */}
-            <div className="text-center px-4 py-8">
+            <div className="text-center px-4 py-6">
               <h1 className="text-2xl font-bold mb-2 text-gray-900">Become a Seller</h1>
               <p className="text-gray-600 text-sm max-w-md mx-auto">
                 Join thousands of successful sellers in Haiti. Start your business today with a one-time registration fee.
