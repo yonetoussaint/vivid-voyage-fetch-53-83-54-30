@@ -1,4 +1,3 @@
-// SellerOnboardingWrapper.tsx
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useQuery } from '@tanstack/react-query';
