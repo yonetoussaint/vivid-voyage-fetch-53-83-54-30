@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -370,33 +369,32 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
         />  
       </div>
 
-      {/* Content with padding for fixed header */}
+      {/* Content with minimal padding for fixed header */}
       <div className="pt-16 pb-24">
         {/* Step 1: Overview */}
         {currentStep === 1 && (
-          <div className="space-y-4">
-            {/* Hero Section */}
-            <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white px-4 py-8">
-              <h1 className="text-2xl font-bold mb-2">Become a Seller</h1>
-              <p className="text-blue-100 text-sm">
+          <div className="space-y-0">
+            {/* Hero Section - Centered and no background */}
+            <div className="text-center px-4 py-8">
+              <h1 className="text-2xl font-bold mb-2 text-gray-900">Become a Seller</h1>
+              <p className="text-gray-600 text-sm max-w-md mx-auto">
                 Join thousands of successful sellers in Haiti. Start your business today with a one-time registration fee.
               </p>
             </div>
 
-            {/* Hero Banner with Video */}
-            <div className="px-4">
-              <div className="rounded-lg overflow-hidden">
-                <HeroBanner
-                  customBanners={[onboardingVideoBanner]}
-                  showNewsTicker={false}
-                  showCarouselBottomRow={false}
-                  asCarousel={false}
-                />
-              </div>
+            {/* Hero Banner with Video - Full width and no curves */}
+            <div className="w-full">
+              <HeroBanner
+                customBanners={[onboardingVideoBanner]}
+                showNewsTicker={false}
+                showCarouselBottomRow={false}
+                asCarousel={false}
+                className="rounded-none"
+              />
             </div>
 
             {/* Fee Card */}
-            <div className="px-4">
+            <div className="px-4 mt-6">
               <div className="bg-white rounded-lg border-2 border-blue-500 p-5 text-center">
                 <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
                   <DollarSign className="w-6 h-6 text-blue-600" />
@@ -410,7 +408,7 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
             </div>
 
             {/* Benefits */}
-            <div className="px-4">
+            <div className="px-4 mt-6">
               <h3 className="font-semibold text-gray-900 mb-3 text-sm">Why Sell With Us?</h3>
               <div className="grid grid-cols-2 gap-3">
                 {sellerBenefits.map((benefit, index) => {
@@ -429,7 +427,7 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
             </div>
 
             {/* Stats */}
-            <div className="px-4 pb-4">
+            <div className="px-4 mt-6 pb-4">
               <div className="bg-white rounded-lg border p-4">
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
