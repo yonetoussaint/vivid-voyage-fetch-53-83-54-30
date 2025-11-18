@@ -71,7 +71,7 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     { id: 3, logo: 'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=120&h=60&fit=crop&crop=center' },
     { id: 4, logo: 'https://images.unsplash.com/photo-1556742044-3c52d6e88c62?w=120&h=60&fit=crop&crop=center' },
     { id: 5, logo: 'https://images.unsplash.com/photo-1564419320-6870880221ad?w=120&h=60&fit=crop&crop=center' },
-    { id: 6, logo: 'https://images.unsplash.com/photo-1556742044-3c52d6e88c62?w=120&h=60&fit=crop&crop=center' },
+    { id: 6, logo: 'https://images.unsplash.com/photo-1564419320-6870880221ad?w=120&h=60&fit=crop&crop=center' },
   ];
 
   // Feature cards data with large images
@@ -122,6 +122,8 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     let scrollPosition = 0;
     const speed = 0.5; // Pixels per frame (adjust for speed)
     
+    console.log('[v0] Logo animation started');
+    
     const animate = () => {
       scrollPosition += speed;
       
@@ -137,9 +139,10 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
       animationFrameId = requestAnimationFrame(animate);
     };
 
-    animationFrameId = requestAnimationFrame(animate);
+    animate();
 
     return () => {
+      console.log('[v0] Logo animation stopped');
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
       }
