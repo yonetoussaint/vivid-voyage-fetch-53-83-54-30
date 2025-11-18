@@ -1,7 +1,7 @@
 // SellerOnboardingOverview.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DollarSign, Users, BarChart3, Shield, TrendingUp, Zap, BadgeCheck } from 'lucide-react';
+import { DollarSign, Users, BarChart3, Shield, TrendingUp, Zap, BadgeCheck, UserPlus, Package, CreditCard, Truck, CheckCircle2, ArrowRight } from 'lucide-react';
 import HeroBanner from '@/components/home/HeroBanner';
 import ProductHeader from '@/components/product/ProductHeader';
 import { useLanguageSwitcher } from '@/hooks/useLanguageSwitcher';
@@ -35,7 +35,7 @@ const SellerOnboardingOverview: React.FC<SellerOnboardingOverviewProps> = ({
     { id: 2, logo: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=120&h=60&fit=crop&crop=center' },
     { id: 3, logo: 'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=120&h=60&fit=crop&crop=center' },
     { id: 4, logo: 'https://images.unsplash.com/photo-1556742044-3c52d6e88c62?w=120&h=60&fit=crop&crop=center' },
-    { id: 5, logo: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=120&h=60&fit=crop&crop=center' },
+    { id: 5, logo: 'https://images.unsplash.com/photo-1556742049-bebda4e3858f?w=120&h=60&fit=crop&crop=center' },
     { id: 6, logo: 'https://images.unsplash.com/photo-1564419320-6870880221ad?w=120&h=60&fit=crop&crop=center' },
   ];
 
@@ -185,6 +185,41 @@ const SellerOnboardingOverview: React.FC<SellerOnboardingOverviewProps> = ({
     subtitle: 'Transform your selling potential with super-powered tools and reach',
     type: 'video' as const,
   };
+
+  const journeySteps = [
+    {
+      id: 1,
+      icon: UserPlus,
+      title: 'Become a Seller',
+      description: 'Complete a quick registration and pay the one-time fee of 1,000 HTG',
+      details: ['Fill out seller application', 'Verify your identity', 'Pay registration fee', 'Get seller account access'],
+      color: 'blue'
+    },
+    {
+      id: 2,
+      icon: Package,
+      title: 'List Your Products',
+      description: 'Add your products with photos, descriptions, and pricing',
+      details: ['Upload product images', 'Write compelling descriptions', 'Set competitive prices', 'Organize into categories'],
+      color: 'green'
+    },
+    {
+      id: 3,
+      icon: CreditCard,
+      title: 'Receive Payments',
+      description: 'Get paid securely when customers purchase your products',
+      details: ['Accept multiple payment methods', 'Automatic payment processing', 'Instant fund transfers', 'Track all transactions'],
+      color: 'purple'
+    },
+    {
+      id: 4,
+      icon: Truck,
+      title: 'Ship & Deliver',
+      description: 'Fulfill orders using our integrated logistics partners',
+      details: ['Print shipping labels', 'Track deliveries in real-time', 'Automated customer updates', 'Handle returns easily'],
+      color: 'orange'
+    }
+  ];
 
   useEffect(() => {
     if (!logosContainerRef.current) return;
@@ -447,6 +482,86 @@ const SellerOnboardingOverview: React.FC<SellerOnboardingOverviewProps> = ({
               {/* Scroll indicator hint */}
               <div className="text-center mt-4">
                 <p className="text-xs text-gray-400">← Scroll to see more reviews →</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Your Journey on Mima Section */}
+          <div className="bg-gradient-to-b from-gray-50 to-white py-12 px-4">
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-10">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Journey on Mima</h2>
+                <p className="text-sm text-gray-600 max-w-2xl mx-auto">
+                  Four simple steps to start selling and growing your business
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                {journeySteps.map((step, index) => {
+                  const Icon = step.icon;
+                  const colorClasses = {
+                    blue: { bg: 'bg-blue-100', icon: 'text-blue-600', border: 'border-blue-200', badge: 'bg-blue-600' },
+                    green: { bg: 'bg-green-100', icon: 'text-green-600', border: 'border-green-200', badge: 'bg-green-600' },
+                    purple: { bg: 'bg-purple-100', icon: 'text-purple-600', border: 'border-purple-200', badge: 'bg-purple-600' },
+                    orange: { bg: 'bg-orange-100', icon: 'text-orange-600', border: 'border-orange-200', badge: 'bg-orange-600' }
+                  }[step.color];
+
+                  return (
+                    <div key={step.id} className="relative">
+                      <div className={`bg-white rounded-xl border-2 ${colorClasses.border} p-6 hover:shadow-lg transition-all`}>
+                        <div className="flex items-start space-x-4">
+                          {/* Step number badge */}
+                          <div className="flex-shrink-0">
+                            <div className={`w-12 h-12 ${colorClasses.badge} rounded-full flex items-center justify-center shadow-md`}>
+                              <Icon className="w-6 h-6 text-white" />
+                            </div>
+                          </div>
+
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <span className={`${colorClasses.badge} text-white text-xs font-bold px-2 py-1 rounded`}>
+                                Step {step.id}
+                              </span>
+                              <h3 className="font-bold text-gray-900 text-lg">
+                                {step.title}
+                              </h3>
+                            </div>
+                            
+                            <p className="text-gray-600 text-sm mb-4 leading-relaxed">
+                              {step.description}
+                            </p>
+
+                            {/* Details list */}
+                            <div className="space-y-2">
+                              {step.details.map((detail, idx) => (
+                                <div key={idx} className="flex items-center space-x-2">
+                                  <CheckCircle2 className={`w-4 h-4 ${colorClasses.icon} flex-shrink-0`} />
+                                  <span className="text-xs text-gray-700">{detail}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Connector arrow */}
+                      {index < journeySteps.length - 1 && (
+                        <div className="flex justify-center py-3">
+                          <ArrowRight className="w-6 h-6 text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Call to action */}
+              <div className="mt-8 text-center">
+                <div className="inline-flex items-center space-x-2 bg-blue-50 text-blue-700 px-4 py-3 rounded-lg border border-blue-200">
+                  <Zap className="w-5 h-5" />
+                  <span className="text-sm font-semibold">Start your journey today and join 10,000+ sellers!</span>
+                </div>
               </div>
             </div>
           </div>
