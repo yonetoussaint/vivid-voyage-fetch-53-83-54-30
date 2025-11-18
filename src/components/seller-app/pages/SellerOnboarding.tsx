@@ -12,7 +12,7 @@ interface SellerOnboardingWrapperProps {
   currentStep?: number;
 }
 
-const SellerOnboardingWrapper: React.FC<SellerOnboardingWrapperProps> = ({
+const SellerOnboarding: React.FC<SellerOnboardingWrapperProps> = ({
   onStepChange,
   currentStep: externalCurrentStep
 }) => {
@@ -111,4 +111,4 @@ const SellerOnboardingWrapper: React.FC<SellerOnboardingWrapperProps> = ({
   );
 };
 
-export default SellerOnboardingWrapper;
+export default SellerOnboarding;
