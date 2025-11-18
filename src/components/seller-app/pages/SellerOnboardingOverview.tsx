@@ -35,8 +35,8 @@ const SellerOnboardingOverview: React.FC<SellerOnboardingOverviewProps> = ({
     { id: 2, logo: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=120&h=60&fit=crop&crop=center' },
     { id: 3, logo: 'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=120&h=60&fit=crop&crop=center' },
     { id: 4, logo: 'https://images.unsplash.com/photo-1556742044-3c52d6e88c62?w=120&h=60&fit=crop&crop=center' },
-    { id: 5, logo: 'https://images.unsplash.com/photo-1564419320-6870880221ad?w=120&h=60&fit=crop&crop=center' },
-    { id: 6, logo: 'https://images.unsplash.com/photo-1556742044-3c52d6e88c62?w=120&h=60&fit=crop&crop=center' },
+    { id: 5, logo: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=120&h=60&fit=crop&crop=center' },
+    { id: 6, logo: 'https://images.unsplash.com/photo-1564419320-6870880221ad?w=120&h=60&fit=crop&crop=center' },
   ];
 
   // Feature cards data with large images
@@ -76,6 +76,70 @@ const SellerOnboardingOverview: React.FC<SellerOnboardingOverviewProps> = ({
       image: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop&crop=center',
       title: '24/7 Seller Support',
       description: 'Dedicated support team available round the clock. Get help with listings, orders, and business growth strategies.'
+    }
+  ];
+
+  // Seller reviews data
+  const sellerReviews = [
+    {
+      id: 1,
+      name: 'Marie Jean-Baptiste',
+      business: 'Fashion & Accessories',
+      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face',
+      rating: 5,
+      review: 'The platform has completely transformed my business. I went from selling locally to reaching customers across Haiti. The analytics tools help me understand what my customers want.',
+      date: '3 months ago',
+      verified: true
+    },
+    {
+      id: 2,
+      name: 'Jean-Pierre Duval',
+      business: 'Electronics Store',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face',
+      rating: 5,
+      review: 'Best decision for my electronics business. The secure payment system and customer support are top-notch. I\'ve tripled my revenue in just 6 months!',
+      date: '2 months ago',
+      verified: true
+    },
+    {
+      id: 3,
+      name: 'Claudette Pierre',
+      business: 'Home & Kitchen',
+      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face',
+      rating: 5,
+      review: 'Amazing platform! The setup was so easy, and I started getting orders within the first week. The logistics support makes shipping hassle-free.',
+      date: '4 months ago',
+      verified: true
+    },
+    {
+      id: 4,
+      name: 'Robert Laurent',
+      business: 'Sports & Outdoors',
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face',
+      rating: 5,
+      review: 'The multi-region store feature is a game-changer. I can now manage different locations effortlessly and the real-time inventory tracking is incredible.',
+      date: '1 month ago',
+      verified: true
+    },
+    {
+      id: 5,
+      name: 'Sylvie Augustin',
+      business: 'Beauty & Health',
+      avatar: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=80&h=80&fit=crop&crop=face',
+      rating: 5,
+      review: 'Professional tools at an affordable price. The one-time fee was worth every gourde. My beauty products are now reaching customers I never thought possible.',
+      date: '5 months ago',
+      verified: true
+    },
+    {
+      id: 6,
+      name: 'Jacques Michel',
+      business: 'Books & Stationery',
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face',
+      rating: 5,
+      review: 'The 24/7 support team is incredibly responsive. They helped me optimize my listings and now my sales have increased by 200%. Highly recommend!',
+      date: '2 months ago',
+      verified: true
     }
   ];
 
@@ -310,6 +374,79 @@ const SellerOnboardingOverview: React.FC<SellerOnboardingOverviewProps> = ({
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Seller Reviews Section */}
+          <div className="bg-white py-10 px-4 border-t border-gray-200">
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-2">What Our Sellers Say</h2>
+                <p className="text-sm text-gray-600 max-w-2xl mx-auto">
+                  Join thousands of successful sellers who have grown their businesses with us
+                </p>
+              </div>
+
+              <div className="relative">
+                <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
+                  <div className="flex space-x-4 pb-2">
+                    {sellerReviews.map((review) => (
+                      <div 
+                        key={review.id}
+                        className="flex-shrink-0 w-80 bg-gray-50 rounded-xl p-5 border border-gray-200 hover:border-blue-300 transition-all"
+                      >
+                        {/* Header with avatar and info */}
+                        <div className="flex items-start space-x-3 mb-4">
+                          <img 
+                            src={review.avatar || "/placeholder.svg"} 
+                            alt={review.name}
+                            className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-2 mb-0.5">
+                              <h4 className="font-semibold text-gray-900 text-sm truncate">
+                                {review.name}
+                              </h4>
+                              {review.verified && (
+                                <BadgeCheck className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                              )}
+                            </div>
+                            <p className="text-xs text-gray-500 truncate">{review.business}</p>
+                          </div>
+                        </div>
+
+                        {/* Star rating */}
+                        <div className="flex items-center space-x-1 mb-3">
+                          {[...Array(5)].map((_, i) => (
+                            <svg
+                              key={i}
+                              className={`w-4 h-4 ${
+                                i < review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300 fill-current'
+                              }`}
+                              viewBox="0 0 20 20"
+                            >
+                              <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                            </svg>
+                          ))}
+                        </div>
+
+                        {/* Review text */}
+                        <p className="text-sm text-gray-700 leading-relaxed mb-4">
+                          "{review.review}"
+                        </p>
+
+                        {/* Date */}
+                        <p className="text-xs text-gray-500">{review.date}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Scroll indicator hint */}
+              <div className="text-center mt-4">
+                <p className="text-xs text-gray-400">← Scroll to see more reviews →</p>
               </div>
             </div>
           </div>
