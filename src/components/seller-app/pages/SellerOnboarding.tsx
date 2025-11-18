@@ -69,57 +69,53 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     agreeToTerms: false
   });
 
-  // Trusted sellers logos data - simple images/emojis for auto-scroll
+  // Trusted sellers logos data - real images only
   const trustedSellerLogos = [
-    { id: 1, logo: '🛒', name: 'TechHaiti' },
-    { id: 2, logo: '👗', name: 'FashionHT' },
-    { id: 3, logo: '📱', name: 'ElectroPlus' },
-    { id: 4, logo: '🏠', name: 'HomeStyle' },
-    { id: 5, logo: '💄', name: 'BeautyCreole' },
-    { id: 6, logo: '🚗', name: 'AutoPartsHT' },
-    { id: 7, logo: '⚽', name: 'SportHaiti' },
-    { id: 8, logo: '📚', name: 'BookWorld' },
-    { id: 9, logo: '🍎', name: 'FoodMarket' },
-    { id: 10, logo: '🎨', name: 'ArtisanCo' },
-    { id: 11, logo: '💎', name: 'JewelHT' },
-    { id: 12, logo: '🧸', name: 'KidZone' },
+    { id: 1, image: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=100&h=100&fit=crop&crop=center' },
+    { id: 2, image: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=100&h=100&fit=crop&crop=center' },
+    { id: 3, image: 'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=100&h=100&fit=crop&crop=center' },
+    { id: 4, image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=100&h=100&fit=crop&crop=center' },
+    { id: 5, image: 'https://images.unsplash.com/photo-1564419320461-6870880221ad?w=100&h=100&fit=crop&crop=center' },
+    { id: 6, image: 'https://images.unsplash.com/photo-1556742044-3c52d6e88c62?w=100&h=100&fit=crop&crop=center' },
+    { id: 7, image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=100&h=100&fit=crop&crop=center' },
+    { id: 8, image: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=100&h=100&fit=crop&crop=center' },
   ];
 
-  // Feature cards data
+  // Feature cards data with large images
   const featureCards = [
     {
       id: 1,
-      image: '🛍️',
+      image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=300&fit=crop&crop=center',
       title: 'Global Market Access',
       description: 'Reach customers worldwide with our international shipping and multi-language support. Expand your business beyond local boundaries.'
     },
     {
       id: 2,
-      image: '📊',
+      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=300&fit=crop&crop=center',
       title: 'Advanced Analytics',
       description: 'Track your sales performance, customer behavior, and inventory with real-time analytics and detailed reporting.'
     },
     {
       id: 3,
-      image: '🔒',
+      image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=300&fit=crop&crop=center',
       title: 'Secure Payments',
       description: 'Multiple payment options with bank-level security. Get paid instantly with our trusted payment processing system.'
     },
     {
       id: 4,
-      image: '🚚',
+      image: 'https://images.unsplash.com/photo-1556742044-3c52d6e88c62?w=400&h=300&fit=crop&crop=center',
       title: 'Logistics Support',
       description: 'Integrated shipping solutions with major carriers. Real-time tracking and automated fulfillment processes.'
     },
     {
       id: 5,
-      image: '🌐',
+      image: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=400&h=300&fit=crop&crop=center',
       title: 'Multi-Region Stores',
       description: 'Get a store that flexes to fit multiple regions, retail locations, and B2B buyers. Each market gets its own customized shopping experience.'
     },
     {
       id: 6,
-      image: '💬',
+      image: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop&crop=center',
       title: '24/7 Seller Support',
       description: 'Dedicated support team available round the clock. Get help with listings, orders, and business growth strategies.'
     }
@@ -507,8 +503,8 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
             </div>
 
             {/* Trusted Sellers Logos Section - Auto-scroll image band */}
-            <div className="bg-white py-6 border-y border-gray-200">
-              <div className="text-center mb-4">
+            <div className="bg-white py-8 border-y border-gray-200">
+              <div className="text-center mb-6">
                 <h3 className="text-sm font-semibold text-gray-700 mb-1">
                   Trusted by Top Sellers in Haiti
                 </h3>
@@ -526,14 +522,13 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
                   {[...trustedSellerLogos, ...trustedSellerLogos].map((seller, index) => (
                     <div 
                       key={`${seller.id}-${index}`}
-                      className="flex-shrink-0 flex flex-col items-center justify-center"
+                      className="flex-shrink-0 flex items-center justify-center"
                     >
-                      <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-2xl border border-gray-200">
-                        {seller.logo}
-                      </div>
-                      <span className="text-xs text-gray-600 mt-2 font-medium">
-                        {seller.name}
-                      </span>
+                      <img 
+                        src={seller.image} 
+                        alt="Trusted seller" 
+                        className="w-20 h-20 rounded-full object-cover border-2 border-gray-200 shadow-sm"
+                      />
                     </div>
                   ))}
                 </div>
@@ -544,7 +539,7 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
               </div>
             </div>
 
-            {/* Feature Cards Section - Vertical List */}
+            {/* Feature Cards Section - Vertical List with Large Images */}
             <div className="bg-gray-50 py-8 px-4">
               <div className="max-w-4xl mx-auto">
                 <div className="text-center mb-8">
@@ -554,24 +549,26 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
                   </p>
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-8">
                   {featureCards.map((card) => (
                     <div 
                       key={card.id}
-                      className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow"
+                      className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
                     >
-                      <div className="flex items-start space-x-4">
-                        <div className="flex-shrink-0 w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center text-xl">
-                          {card.image}
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900 mb-2 text-sm">
-                            {card.title}
-                          </h3>
-                          <p className="text-gray-600 text-xs leading-relaxed">
-                            {card.description}
-                          </p>
-                        </div>
+                      <div className="w-full">
+                        <img 
+                          src={card.image} 
+                          alt={card.title}
+                          className="w-full h-48 object-cover"
+                        />
+                      </div>
+                      <div className="p-6">
+                        <h3 className="font-bold text-gray-900 mb-3 text-lg">
+                          {card.title}
+                        </h3>
+                        <p className="text-gray-600 text-sm leading-relaxed">
+                          {card.description}
+                        </p>
                       </div>
                     </div>
                   ))}
