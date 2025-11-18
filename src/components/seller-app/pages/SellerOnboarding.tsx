@@ -69,20 +69,20 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     agreeToTerms: false
   });
 
-  // Trusted sellers logos data
-  const trustedSellers = [
-    { id: 1, name: 'TechHaiti', logo: '🛒', rating: 4.9, sales: '50K+' },
-    { id: 2, name: 'FashionHT', logo: '👗', rating: 4.8, sales: '35K+' },
-    { id: 3, name: 'ElectroPlus', logo: '📱', rating: 4.7, sales: '42K+' },
-    { id: 4, name: 'HomeStyle', logo: '🏠', rating: 4.9, sales: '28K+' },
-    { id: 5, name: 'BeautyCreole', logo: '💄', rating: 4.6, sales: '31K+' },
-    { id: 6, name: 'AutoPartsHT', logo: '🚗', rating: 4.8, sales: '26K+' },
-    { id: 7, name: 'SportHaiti', logo: '⚽', rating: 4.7, sales: '22K+' },
-    { id: 8, name: 'BookWorld', logo: '📚', rating: 4.9, sales: '19K+' },
-    { id: 9, name: 'FoodMarket', logo: '🍎', rating: 4.8, sales: '33K+' },
-    { id: 10, name: 'ArtisanCo', logo: '🎨', rating: 4.9, sales: '24K+' },
-    { id: 11, name: 'JewelHT', logo: '💎', rating: 4.7, sales: '18K+' },
-    { id: 12, name: 'KidZone', logo: '🧸', rating: 4.8, sales: '21K+' },
+  // Trusted sellers logos data - simple images/emojis for auto-scroll
+  const trustedSellerLogos = [
+    { id: 1, logo: '🛒', name: 'TechHaiti' },
+    { id: 2, logo: '👗', name: 'FashionHT' },
+    { id: 3, logo: '📱', name: 'ElectroPlus' },
+    { id: 4, logo: '🏠', name: 'HomeStyle' },
+    { id: 5, logo: '💄', name: 'BeautyCreole' },
+    { id: 6, logo: '🚗', name: 'AutoPartsHT' },
+    { id: 7, logo: '⚽', name: 'SportHaiti' },
+    { id: 8, logo: '📚', name: 'BookWorld' },
+    { id: 9, logo: '🍎', name: 'FoodMarket' },
+    { id: 10, logo: '🎨', name: 'ArtisanCo' },
+    { id: 11, logo: '💎', name: 'JewelHT' },
+    { id: 12, logo: '🧸', name: 'KidZone' },
   ];
 
   // Feature cards data
@@ -125,27 +125,22 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
     }
   ];
 
-  // Auto-scroll logos
+  // Auto-scroll logos - simplified for image band
   useEffect(() => {
     if (currentStep !== 1 || !logosContainerRef.current) return;
 
     const container = logosContainerRef.current;
-    const scrollWidth = container.scrollWidth;
-    const clientWidth = container.clientWidth;
     let scrollPosition = 0;
-    let direction = 1;
     const scrollSpeed = 1; // pixels per frame
 
     const scrollLogos = () => {
       if (!container) return;
 
-      scrollPosition += scrollSpeed * direction;
+      scrollPosition += scrollSpeed;
       
-      // Reverse direction when reaching edges
-      if (scrollPosition >= scrollWidth - clientWidth) {
-        direction = -1;
-      } else if (scrollPosition <= 0) {
-        direction = 1;
+      // Reset to start when reaching end for infinite scroll
+      if (scrollPosition >= container.scrollWidth / 2) {
+        scrollPosition = 0;
       }
 
       container.scrollLeft = scrollPosition;
@@ -511,7 +506,7 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
               />
             </div>
 
-            {/* Trusted Sellers Logos Section */}
+            {/* Trusted Sellers Logos Section - Auto-scroll image band */}
             <div className="bg-white py-6 border-y border-gray-200">
               <div className="text-center mb-4">
                 <h3 className="text-sm font-semibold text-gray-700 mb-1">
@@ -522,27 +517,30 @@ const SellerOnboarding: React.FC<SellerOnboardingProps> = ({
                 </p>
               </div>
               
-              <div 
-                ref={logosContainerRef}
-                className="flex space-x-6 overflow-hidden py-2"
-                style={{ scrollBehavior: 'smooth' }}
-              >
-                {[...trustedSellers, ...trustedSellers].map((seller, index) => (
-                  <div 
-                    key={`${seller.id}-${index}`}
-                    className="flex-shrink-0 w-32 bg-gray-50 rounded-lg border border-gray-200 p-3 hover:shadow-md transition-shadow"
-                  >
-                    <div className="text-2xl text-center mb-2">{seller.logo}</div>
-                    <div className="text-center">
-                      <h4 className="font-semibold text-xs text-gray-800 mb-1">{seller.name}</h4>
-                      <div className="flex items-center justify-center space-x-1 mb-1">
-                        <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                        <span className="text-xs font-medium text-gray-700">{seller.rating}</span>
+              <div className="relative overflow-hidden">
+                <div 
+                  ref={logosContainerRef}
+                  className="flex space-x-8 py-2"
+                  style={{ scrollBehavior: 'smooth' }}
+                >
+                  {[...trustedSellerLogos, ...trustedSellerLogos].map((seller, index) => (
+                    <div 
+                      key={`${seller.id}-${index}`}
+                      className="flex-shrink-0 flex flex-col items-center justify-center"
+                    >
+                      <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-2xl border border-gray-200">
+                        {seller.logo}
                       </div>
-                      <div className="text-xs text-gray-500">{seller.sales} sales</div>
+                      <span className="text-xs text-gray-600 mt-2 font-medium">
+                        {seller.name}
+                      </span>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+                
+                {/* Gradient overlays for smooth edges */}
+                <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-white to-transparent z-10"></div>
+                <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-white to-transparent z-10"></div>
               </div>
             </div>
 
