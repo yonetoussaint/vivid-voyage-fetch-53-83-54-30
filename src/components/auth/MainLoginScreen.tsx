@@ -49,7 +49,7 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
 
   const handleGoogleSignIn = async () => {
     if (isLoading) return;
-    
+
     try {
       setIsGoogleLoading(true);
       console.log('🔄 Initiating server-controlled Google OAuth...');
@@ -71,7 +71,7 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
 
   const handleFacebookSignIn = async () => {
     if (isLoading) return;
-    
+
     try {
       setIsFacebookLoading(true);
       console.log('Initiating Facebook OAuth with Supabase...');
@@ -84,7 +84,7 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
 
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       // For now, show a message since we're focusing on Google OAuth first
       toast.info('Facebook sign in coming soon!');
       setIsFacebookLoading(false);
@@ -98,7 +98,7 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
 
   const handleEmailSignIn = async () => {
     if (isLoading) return;
-    
+
     try {
       setIsEmailLoading(true);
       // Simulate a small delay for better UX
@@ -113,7 +113,7 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
 
   const handlePhoneSignIn = async () => {
     if (isLoading) return;
-    
+
     try {
       setIsPhoneLoading(true);
       console.log('Initiating Phone sign in...');
@@ -148,6 +148,18 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
         </div>
       )}
 
+      {/* Title and Subtitle for Compact Mode */}
+      {isCompact && (
+        <div className="text-center mb-4 pt-2">
+          <h2 className="text-lg font-semibold text-gray-900 mb-1">
+            <TranslatedText>Sign In Required</TranslatedText>
+          </h2>
+          <p className="text-sm text-gray-600">
+            <TranslatedText>Please sign in to continue</TranslatedText>
+          </p>
+        </div>
+      )}
+
       <div className={isCompact ? "" : "flex-1 flex flex-col justify-center w-full p-0"}>
         <div className={isCompact ? "space-y-3 mb-4" : "space-y-3 mb-6"}>
           {/* Google Sign In Button */}
@@ -169,7 +181,7 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
                 Continue with Google
               </span>
             </div>
-            
+
             {/* Spinner on the right side */}
             {isGoogleLoading && (
               <div className="absolute right-4">
@@ -194,7 +206,7 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
                 Continue with Facebook
               </TranslatedText>
             </div>
-            
+
             {/* Spinner on the right side */}
             {isFacebookLoading && (
               <div className="absolute right-4">
@@ -219,7 +231,7 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
                 Continue with Email
               </TranslatedText>
             </div>
-            
+
             {/* Spinner on the right side */}
             {isEmailLoading && (
               <div className="absolute right-4">
@@ -244,7 +256,7 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
                 Continue with Phone Number
               </TranslatedText>
             </div>
-            
+
             {/* Spinner on the right side */}
             {isPhoneLoading && (
               <div className="absolute right-4">
