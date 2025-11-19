@@ -152,10 +152,10 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
       {isCompact && (
         <div className="text-center mb-6 pt-2">
           <h2 className="text-2xl font-bold text-gray-900 mb-3">
-            <TranslatedText>Welcome Back</TranslatedText>
+            <TranslatedText>Welcome to Mima</TranslatedText>
           </h2>
           <p className="text-sm text-gray-600 leading-relaxed max-w-xs mx-auto">
-            <TranslatedText>We're glad to see you again! Sign in to pick up right where you left off and access all your saved content.</TranslatedText>
+            <TranslatedText>Join Haiti's vibrant marketplace community. Connect with local sellers, discover unique products, and be part of something special.</TranslatedText>
           </p>
         </div>
       )}
