@@ -454,79 +454,168 @@ const SellerOnboardingOverview: React.FC<SellerOnboardingOverviewProps> = ({
           </div>
 
           {/* Your Journey on Mima Section */}
-          <div className="bg-white py-12 px-4">
+          <div className="bg-white py-12 px-4 overflow-hidden">
             <div className="max-w-4xl mx-auto">
-              <div className="text-center mb-10">
+              <div className="text-center mb-12">
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Journey on Mima</h2>
                 <p className="text-sm text-gray-600 max-w-2xl mx-auto">
                   Four simple steps to start selling and growing your business
                 </p>
               </div>
 
-              <div className="space-y-6">
-                {journeySteps.map((step, index) => {
-                  const Icon = step.icon;
-                  const colorClasses = {
-                    blue: { bg: 'bg-blue-100', icon: 'text-blue-600', border: 'border-blue-200', badge: 'bg-blue-600' },
-                    green: { bg: 'bg-green-100', icon: 'text-green-600', border: 'border-green-200', badge: 'bg-green-600' },
-                    purple: { bg: 'bg-purple-100', icon: 'text-purple-600', border: 'border-purple-200', badge: 'bg-purple-600' },
-                    orange: { bg: 'bg-orange-100', icon: 'text-orange-600', border: 'border-orange-200', badge: 'bg-orange-600' }
-                  }[step.color];
+              <div className="relative">
+                {/* Animated vertical line connector */}
+                <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue-200 via-green-200 via-purple-200 to-orange-200 opacity-30" />
 
-                  return (
-                    <div key={step.id} className="relative">
-                      <div className={`bg-white rounded-xl border-2 ${colorClasses.border} p-6 hover:shadow-lg transition-all`}>
-                        <div className="flex items-start space-x-4">
-                          {/* Step number badge */}
-                          <div className="flex-shrink-0">
-                            <div className={`w-12 h-12 ${colorClasses.badge} rounded-full flex items-center justify-center shadow-md`}>
+                <div className="space-y-8">
+                  {journeySteps.map((step, index) => {
+                    const Icon = step.icon;
+                    const colorClasses = {
+                      blue: { 
+                        gradient: 'from-blue-500 to-blue-600',
+                        glow: 'shadow-blue-200',
+                        light: 'bg-blue-50',
+                        text: 'text-blue-600',
+                        ring: 'ring-blue-100'
+                      },
+                      green: { 
+                        gradient: 'from-green-500 to-green-600',
+                        glow: 'shadow-green-200',
+                        light: 'bg-green-50',
+                        text: 'text-green-600',
+                        ring: 'ring-green-100'
+                      },
+                      purple: { 
+                        gradient: 'from-purple-500 to-purple-600',
+                        glow: 'shadow-purple-200',
+                        light: 'bg-purple-50',
+                        text: 'text-purple-600',
+                        ring: 'ring-purple-100'
+                      },
+                      orange: { 
+                        gradient: 'from-orange-500 to-orange-600',
+                        glow: 'shadow-orange-200',
+                        light: 'bg-orange-50',
+                        text: 'text-orange-600',
+                        ring: 'ring-orange-100'
+                      }
+                    }[step.color];
+
+                    return (
+                      <div 
+                        key={step.id} 
+                        className="relative group"
+                        style={{
+                          animation: `fadeInUp 0.6s ease-out ${index * 0.15}s both`
+                        }}
+                      >
+                        <style>{`
+                          @keyframes fadeInUp {
+                            from {
+                              opacity: 0;
+                              transform: translateY(20px);
+                            }
+                            to {
+                              opacity: 1;
+                              transform: translateY(0);
+                            }
+                          }
+                          @keyframes pulse {
+                            0%, 100% { transform: scale(1); }
+                            50% { transform: scale(1.05); }
+                          }
+                          @keyframes slideInRight {
+                            from {
+                              opacity: 0;
+                              transform: translateX(-10px);
+                            }
+                            to {
+                              opacity: 1;
+                              transform: translateX(0);
+                            }
+                          }
+                        `}</style>
+
+                        <div className="flex items-start space-x-6">
+                          {/* Icon container with animated glow */}
+                          <div className="relative flex-shrink-0 z-10">
+                            <div 
+                              className={`w-12 h-12 bg-gradient-to-br ${colorClasses.gradient} rounded-full flex items-center justify-center shadow-lg ${colorClasses.glow} transition-all duration-300 group-hover:scale-110`}
+                              style={{
+                                animation: `pulse 2s ease-in-out ${index * 0.2}s infinite`
+                              }}
+                            >
                               <Icon className="w-6 h-6 text-white" />
+                            </div>
+                            
+                            {/* Animated ring */}
+                            <div 
+                              className={`absolute inset-0 rounded-full ring-4 ${colorClasses.ring} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+                              style={{
+                                animation: 'pulse 1.5s ease-in-out infinite'
+                              }}
+                            />
+                            
+                            {/* Step badge */}
+                            <div className={`absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br ${colorClasses.gradient} rounded-full flex items-center justify-center shadow-md`}>
+                              <span className="text-white text-xs font-bold">{step.id}</span>
                             </div>
                           </div>
 
-                          {/* Content */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center space-x-2 mb-2">
-                              <span className={`${colorClasses.badge} text-white text-xs font-bold px-2 py-1 rounded`}>
-                                Step {step.id}
-                              </span>
-                              <h3 className="font-bold text-gray-900 text-lg">
+                          {/* Content card */}
+                          <div 
+                            className="flex-1 bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-xl transition-all duration-300 group-hover:translate-x-1"
+                            style={{
+                              animation: `slideInRight 0.6s ease-out ${index * 0.15 + 0.1}s both`
+                            }}
+                          >
+                            <div className="mb-3">
+                              <h3 className="font-bold text-gray-900 text-lg mb-1 group-hover:text-gray-700 transition-colors">
                                 {step.title}
                               </h3>
+                              <p className="text-gray-600 text-sm leading-relaxed">
+                                {step.description}
+                              </p>
                             </div>
 
-                            <p className="text-gray-600 text-sm mb-4 leading-relaxed">
-                              {step.description}
-                            </p>
-
-                            {/* Details list */}
-                            <div className="space-y-2">
+                            {/* Details with staggered animation */}
+                            <div className="space-y-2.5 mt-4">
                               {step.details.map((detail, idx) => (
-                                <div key={idx} className="flex items-center space-x-2">
-                                  <CheckCircle2 className={`w-4 h-4 ${colorClasses.icon} flex-shrink-0`} />
-                                  <span className="text-xs text-gray-700">{detail}</span>
+                                <div 
+                                  key={idx} 
+                                  className="flex items-start space-x-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                                  style={{
+                                    animation: `fadeInUp 0.4s ease-out ${idx * 0.1}s both`,
+                                    animationPlayState: 'paused'
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.animationPlayState = 'running';
+                                  }}
+                                >
+                                  <div className={`${colorClasses.light} rounded-full p-1 flex-shrink-0 mt-0.5`}>
+                                    <CheckCircle2 className={`w-3.5 h-3.5 ${colorClasses.text}`} />
+                                  </div>
+                                  <span className="text-xs text-gray-700 leading-relaxed">{detail}</span>
                                 </div>
                               ))}
                             </div>
                           </div>
                         </div>
                       </div>
-
-                      {/* Connector arrow */}
-                      {index < journeySteps.length - 1 && (
-                        <div className="flex justify-center py-3">
-                          <ArrowRight className="w-6 h-6 text-gray-400" />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* Call to action */}
-              <div className="mt-8 text-center">
-                <div className="inline-flex items-center space-x-2 bg-blue-50 text-blue-700 px-4 py-3 rounded-lg border border-blue-200">
-                  <Zap className="w-5 h-5" />
+              {/* Call to action with animated gradient */}
+              <div className="mt-12 text-center">
+                <div 
+                  className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-50 to-purple-50 text-gray-800 px-6 py-4 rounded-2xl border border-blue-100 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
+                  style={{
+                    animation: 'fadeInUp 0.6s ease-out 0.8s both'
+                  }}
+                >
+                  <Zap className="w-5 h-5 text-blue-600" style={{ animation: 'pulse 2s ease-in-out infinite' }} />
                   <span className="text-sm font-semibold">Start your journey today and join 10,000+ sellers!</span>
                 </div>
               </div>
