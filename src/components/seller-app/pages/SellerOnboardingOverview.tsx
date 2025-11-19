@@ -1,7 +1,7 @@
 // SellerOnboardingOverview.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DollarSign, Users, BarChart3, Shield, TrendingUp, Zap, BadgeCheck, UserPlus, Package, CreditCard, Truck, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Users, BarChart3, Shield, TrendingUp, Zap, BadgeCheck, UserPlus, Package, CreditCard, Truck, CheckCircle2, ArrowRight } from 'lucide-react';
 import HeroBanner from '@/components/home/HeroBanner';
 import ProductHeader from '@/components/product/ProductHeader';
 import { useLanguageSwitcher } from '@/hooks/useLanguageSwitcher';
@@ -140,39 +140,6 @@ const SellerOnboardingOverview: React.FC<SellerOnboardingOverviewProps> = ({
       review: 'The 24/7 support team is incredibly responsive. They helped me optimize my listings and now my sales have increased by 200%. Highly recommend!',
       date: '2 months ago',
       verified: true
-    }
-  ];
-
-  const sellerBenefits = [
-    {
-      icon: Users,
-      title: 'Reach Millions of Customers',
-      description: 'Access our large customer base and grow your business'
-    },
-    {
-      icon: BarChart3,
-      title: 'Powerful Analytics',
-      description: 'Track your sales and understand customer behavior'
-    },
-    {
-      icon: Shield,
-      title: 'Secure Payments',
-      description: 'Get paid securely with our trusted payment system'
-    },
-    {
-      icon: TrendingUp,
-      title: 'Business Growth',
-      description: 'Scale your business with our seller tools and support'
-    },
-    {
-      icon: Zap,
-      title: 'Quick Setup',
-      description: 'Start selling in minutes with our easy setup process'
-    },
-    {
-      icon: BadgeCheck,
-      title: 'Verified Badge',
-      description: 'Build trust with customers with verified seller status'
     }
   ];
 
@@ -527,7 +494,7 @@ const SellerOnboardingOverview: React.FC<SellerOnboardingOverviewProps> = ({
                                 {step.title}
                               </h3>
                             </div>
-                            
+
                             <p className="text-gray-600 text-sm mb-4 leading-relaxed">
                               {step.description}
                             </p>
@@ -563,39 +530,6 @@ const SellerOnboardingOverview: React.FC<SellerOnboardingOverviewProps> = ({
                   <span className="text-sm font-semibold">Start your journey today and join 10,000+ sellers!</span>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Fee Card */}
-          <div className="px-4 mt-6">
-            <div className="bg-white rounded-lg border-2 border-blue-500 p-5 text-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <DollarSign className="w-6 h-6 text-blue-600" />
-              </div>
-              <h3 className="font-bold text-lg mb-1">One-Time Registration Fee</h3>
-              <div className="text-3xl font-bold text-blue-600 mb-1">1,000 HTG</div>
-              <p className="text-gray-600 text-xs">
-                Pay once and start selling forever. No monthly fees, no hidden charges.
-              </p>
-            </div>
-          </div>
-
-          {/* Benefits */}
-          <div className="px-4 mt-6">
-            <h3 className="font-semibold text-gray-900 mb-3 text-sm">Why Sell With Us?</h3>
-            <div className="grid grid-cols-2 gap-3">
-              {sellerBenefits.map((benefit, index) => {
-                const Icon = benefit.icon;
-                return (
-                  <div key={index} className="bg-white rounded-lg border p-3">
-                    <div className="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center mb-2">
-                      <Icon className="w-4 h-4 text-blue-600" />
-                    </div>
-                    <h4 className="font-semibold text-xs mb-1">{benefit.title}</h4>
-                    <p className="text-gray-600 text-xs leading-snug">{benefit.description}</p>
-                  </div>
-                );
-              })}
             </div>
           </div>
 
