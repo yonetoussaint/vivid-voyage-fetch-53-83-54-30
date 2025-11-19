@@ -1,3 +1,5 @@
+remove the cards around the logos, keep them clean without cards
+
 // SellerOnboardingOverview.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -330,13 +332,11 @@ const SellerOnboardingOverview: React.FC<SellerOnboardingOverviewProps> = ({
                     key={`logo-${index}`}
                     className="inline-flex flex-shrink-0"
                   >
-                    <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow">
-                      <img 
-                        src={seller.logo || "/placeholder.svg"} 
-                        alt="Trusted seller" 
-                        className="w-24 h-12 object-cover rounded"
-                      />
-                    </div>
+                    <img 
+                      src={seller.logo || "/placeholder.svg"} 
+                      alt="Trusted seller" 
+                      className="w-24 h-12 object-cover rounded"
+                    />
                   </div>
                 ))}
               </div>
