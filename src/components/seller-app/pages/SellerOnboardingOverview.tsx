@@ -344,7 +344,7 @@ const SellerOnboardingOverview: React.FC<SellerOnboardingOverviewProps> = ({
           </div>
 
           {/* Feature Cards Section */}
-          <div className="bg-gray-50 py-8 px-4">
+          <div className="py-8 px-4">
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-8">
                 <h2 className="text-xl font-bold text-gray-900 mb-2">Everything You Need to Succeed</h2>
