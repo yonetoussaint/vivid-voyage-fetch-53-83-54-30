@@ -454,7 +454,7 @@ const SellerOnboardingOverview: React.FC<SellerOnboardingOverviewProps> = ({
           </div>
 
           {/* Your Journey on Mima Section */}
-          <div className="bg-gradient-to-b from-gray-50 to-white py-12 px-4">
+          <div className="bg-white py-12 px-4">
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-10">
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Journey on Mima</h2>
@@ -556,7 +556,7 @@ const SellerOnboardingOverview: React.FC<SellerOnboardingOverviewProps> = ({
       </div>
 
       {/* Bottom Sticky Button */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white shadow-[0_-2px_8px_rgba(0,0,0,0.1)] p-3">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3">
         <button
           onClick={nextStep}
           className="w-full py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors text-sm"
