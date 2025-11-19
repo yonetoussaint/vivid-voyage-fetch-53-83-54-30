@@ -11,7 +11,7 @@ import PickupStationDashboard from '../pages/PickupStationDashboard';
 export function AdminSellerRoutes() {
   return (
     <>
-      <Route path="admin" element={
+      <Route path="admibhn" element={
         <CachedRoute>
           <AdminPanel />
         </CachedRoute>
