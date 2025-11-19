@@ -306,7 +306,7 @@ const SellerOnboardingOverview: React.FC<SellerOnboardingOverviewProps> = ({
           </div>
 
           {/* Trusted Sellers Logos Section */}
-          <div className="bg-white py-8 border-y border-gray-200">
+          <div className="py-8">
             <div className="text-center mb-6">
               <h3 className="text-sm font-semibold text-gray-700 mb-1">
                 Trusted by Top Sellers in Haiti
