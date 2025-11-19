@@ -12,7 +12,7 @@ import { AdminSellerRoutes } from "../routes/AdminSellerRoutes";
 import { ProductEditRoutes } from "../routes/ProductEditRoutes";
 import { PaymentRoutes } from "../routes/PaymentRoutes";
 import { MiscRoutes } from "../routes/MiscRoutes";
-import AdminPage from "@/pages/admin"; // Import the admin page
+import AdminPage from "@/pages/AdminPage"; // Import the admin page
 
 export function AppRoutes() {
   return (
