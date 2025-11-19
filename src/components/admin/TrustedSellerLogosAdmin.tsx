@@ -1,7 +1,6 @@
-// src/components/admin/TrustedSellerLogosAdmin.tsx
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Upload, X, Save, ArrowUp, ArrowDown, Eye, EyeOff } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client'; // Updated import path
 
 interface TrustedSellerLogo {
   id: string;
