@@ -1,5 +1,3 @@
-
-
 // SellerOnboardingOverview.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -7,12 +5,22 @@ import { Users, BarChart3, Shield, TrendingUp, Zap, BadgeCheck, UserPlus, Packag
 import HeroBanner from '@/components/home/HeroBanner';
 import ProductHeader from '@/components/product/ProductHeader';
 import { useLanguageSwitcher } from '@/hooks/useLanguageSwitcher';
+import { supabase } from '@/lib/supabase';
 
 interface SellerOnboardingOverviewProps {
   applicationData: any;
   setApplicationData: (data: any) => void;
   currentStep: number;
   setCurrentStep: (step: number) => void;
+}
+
+interface TrustedSellerLogo {
+  id: string;
+  logo_url: string;
+  company_name?: string;
+  website_url?: string;
+  is_active: boolean;
+  display_order: number;
 }
 
 const SellerOnboardingOverview: React.FC<SellerOnboardingOverviewProps> = ({
@@ -23,6 +31,8 @@ const SellerOnboardingOverview: React.FC<SellerOnboardingOverviewProps> = ({
   const headerRef = useRef<HTMLDivElement>(null);
   const logosContainerRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState(64);
+  const [trustedSellerLogos, setTrustedSellerLogos] = useState<TrustedSellerLogo[]>([]);
+  const [logosLoading, setLogosLoading] = useState(true);
 
   const { 
     currentLanguage, 
@@ -31,15 +41,30 @@ const SellerOnboardingOverview: React.FC<SellerOnboardingOverviewProps> = ({
     currentLocation 
   } = useLanguageSwitcher();
 
-  // Trusted sellers logos data
-  const trustedSellerLogos = [
-    { id: 1, logo: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=120&h=60&fit=crop&crop=center' },
-    { id: 2, logo: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=120&h=60&fit=crop&crop=center' },
-    { id: 3, logo: 'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=120&h=60&fit=crop&crop=center' },
-    { id: 4, logo: 'https://images.unsplash.com/photo-1556742044-3c52d6e88c62?w=120&h=60&fit=crop&crop=center' },
-    { id: 5, logo: 'https://images.unsplash.com/photo-1556742049-bebda4e3858f?w=120&h=60&fit=crop&crop=center' },
-    { id: 6, logo: 'https://images.unsplash.com/photo-1564419320-6870880221ad?w=120&h=60&fit=crop&crop=center' },
-  ];
+  // Fetch trusted seller logos from Supabase
+  useEffect(() => {
+    const fetchTrustedSellerLogos = async () => {
+      try {
+        setLogosLoading(true);
+        const { data, error } = await supabase
+          .from('trusted_seller_logos')
+          .select('*')
+          .eq('is_active', true)
+          .order('display_order', { ascending: true });
+
+        if (error) throw error;
+        setTrustedSellerLogos(data || []);
+      } catch (error) {
+        console.error('Error fetching trusted seller logos:', error);
+        // Fallback to empty array if there's an error
+        setTrustedSellerLogos([]);
+      } finally {
+        setLogosLoading(false);
+      }
+    };
+
+    fetchTrustedSellerLogos();
+  }, []);
 
   // Feature cards data with large images
   const featureCards = [
@@ -190,8 +215,9 @@ const SellerOnboardingOverview: React.FC<SellerOnboardingOverviewProps> = ({
     }
   ];
 
+  // Infinite scroll animation for logos
   useEffect(() => {
-    if (!logosContainerRef.current) return;
+    if (!logosContainerRef.current || trustedSellerLogos.length === 0) return;
 
     const container = logosContainerRef.current;
     let animationFrameId: number;
@@ -201,21 +227,27 @@ const SellerOnboardingOverview: React.FC<SellerOnboardingOverviewProps> = ({
     const animate = () => {
       scrollPosition += speed;
       container.style.transform = `translateX(-${scrollPosition}px)`;
+      
+      // Calculate the width of one complete set of logos
       const singleSetWidth = container.scrollWidth / 3;
       if (scrollPosition >= singleSetWidth) {
         scrollPosition = 0;
       }
+      
       animationFrameId = requestAnimationFrame(animate);
     };
 
-    animationFrameId = requestAnimationFrame(animate);
+    // Only start animation if there are logos
+    if (trustedSellerLogos.length > 0) {
+      animationFrameId = requestAnimationFrame(animate);
+    }
 
     return () => {
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, []);
+  }, [trustedSellerLogos]);
 
   useEffect(() => {
     const updateHeaderHeight = () => {
@@ -263,6 +295,9 @@ const SellerOnboardingOverview: React.FC<SellerOnboardingOverviewProps> = ({
   const nextStep = () => {
     setCurrentStep(2);
   };
+
+  // Prepare logos for infinite scroll (triple the array for seamless looping)
+  const infiniteLogos = [...trustedSellerLogos, ...trustedSellerLogos, ...trustedSellerLogos];
 
   return (
     <div className="min-h-screen bg-white">
@@ -318,29 +353,47 @@ const SellerOnboardingOverview: React.FC<SellerOnboardingOverviewProps> = ({
               </p>
             </div>
 
-            <div className="relative overflow-hidden">
-              <div 
-                ref={logosContainerRef}
-                className="flex space-x-8 py-4"
-                style={{ 
-                  whiteSpace: 'nowrap',
-                  willChange: 'transform'
-                }}
-              >
-                {[...trustedSellerLogos, ...trustedSellerLogos, ...trustedSellerLogos].map((seller, index) => (
-                  <div 
-                    key={`logo-${index}`}
-                    className="inline-flex flex-shrink-0"
-                  >
-                    <img 
-                      src={seller.logo || "/placeholder.svg"} 
-                      alt="Trusted seller" 
-                      className="w-24 h-12 object-cover rounded"
-                    />
-                  </div>
-                ))}
+            {logosLoading ? (
+              <div className="flex justify-center items-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
-            </div>
+            ) : trustedSellerLogos.length === 0 ? (
+              <div className="text-center py-8 text-gray-500 text-sm">
+                No trusted seller logos available at the moment.
+              </div>
+            ) : (
+              <div className="relative overflow-hidden">
+                <div 
+                  ref={logosContainerRef}
+                  className="flex space-x-8 py-4"
+                  style={{ 
+                    whiteSpace: 'nowrap',
+                    willChange: 'transform'
+                  }}
+                >
+                  {infiniteLogos.map((seller, index) => (
+                    <div 
+                      key={`logo-${seller.id}-${index}`}
+                      className="inline-flex flex-shrink-0"
+                    >
+                      <img 
+                        src={seller.logo_url} 
+                        alt={seller.company_name || "Trusted seller"} 
+                        className="w-24 h-12 object-contain rounded"
+                        onError={(e) => {
+                          // Fallback if image fails to load
+                          (e.target as HTMLImageElement).src = 'https://via.placeholder.com/96x48?text=Logo';
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Gradient overlays for smooth edges */}
+                <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-white to-transparent z-10"></div>
+                <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-white to-transparent z-10"></div>
+              </div>
+            )}
           </div>
 
           {/* Feature Cards Section */}
