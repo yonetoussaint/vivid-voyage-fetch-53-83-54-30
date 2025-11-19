@@ -150,12 +150,12 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
 
       {/* Title and Subtitle for Compact Mode */}
       {isCompact && (
-        <div className="text-center mb-4 pt-2">
-          <h2 className="text-lg font-semibold text-gray-900 mb-1">
-            <TranslatedText>Sign In Required</TranslatedText>
+        <div className="text-center mb-6 pt-2">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            <TranslatedText>Welcome Back</TranslatedText>
           </h2>
-          <p className="text-sm text-gray-600">
-            <TranslatedText>Please sign in to continue</TranslatedText>
+          <p className="text-sm text-gray-600 leading-relaxed">
+            <TranslatedText>Sign in to access your account and continue where you left off</TranslatedText>
           </p>
         </div>
       )}
