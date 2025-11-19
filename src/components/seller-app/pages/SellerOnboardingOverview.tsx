@@ -5,7 +5,7 @@ import { Users, BarChart3, Shield, TrendingUp, Zap, BadgeCheck, UserPlus, Packag
 import HeroBanner from '@/components/home/HeroBanner';
 import ProductHeader from '@/components/product/ProductHeader';
 import { useLanguageSwitcher } from '@/hooks/useLanguageSwitcher';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SellerOnboardingOverviewProps {
   applicationData: any;
