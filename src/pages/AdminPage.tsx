@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import AdminDashboard from '@/components/admin/AdminDashboard';
 import UserManagement from '@/components/admin/UserManagement';
+import TrustedSellerLogosAdmin from '@/components/admin/TrustedSellerLogosAdmin';
 
 const AdminPage: React.FC = () => {
   const { user } = useAuth();
@@ -11,6 +12,7 @@ const AdminPage: React.FC = () => {
   const navigationItems = [
     { id: 'dashboard', label: 'Dashboard', component: AdminDashboard },
     { id: 'users', label: 'User Management', component: UserManagement },
+    { id: 'trusted-sellers', label: 'Trusted Seller Logos', component: TrustedSellerLogosAdmin },
     { id: 'sellers', label: 'Seller Management', component: null },
     { id: 'products', label: 'Product Management', component: null },
     { id: 'orders', label: 'Order Management', component: null },
