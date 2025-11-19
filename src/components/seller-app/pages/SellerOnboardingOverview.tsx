@@ -396,7 +396,7 @@ const SellerOnboardingOverview: React.FC<SellerOnboardingOverviewProps> = ({
                     {sellerReviews.map((review) => (
                       <div 
                         key={review.id}
-                        className="flex-shrink-0 w-80 bg-gray-50 rounded-xl p-5 border border-gray-200 hover:border-blue-300 transition-all"
+                        className="flex-shrink-0 w-80 bg-white rounded-xl p-5 border border-gray-200 hover:border-blue-300 transition-all"
                       >
                         {/* Header with avatar and info */}
                         <div className="flex items-start space-x-3 mb-4">
