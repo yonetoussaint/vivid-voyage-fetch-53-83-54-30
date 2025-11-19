@@ -263,7 +263,7 @@ const SellerOnboardingOverview: React.FC<SellerOnboardingOverviewProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <div ref={headerRef} className="fixed top-0 left-0 right-0 z-50">
         <ProductHeader  
           onCloseClick={handleBackClick}  
@@ -556,7 +556,7 @@ const SellerOnboardingOverview: React.FC<SellerOnboardingOverviewProps> = ({
       </div>
 
       {/* Bottom Sticky Button */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4">
+      <div className="fixed bottom-0 left-0 right-0 bg-white shadow-[0_-2px_8px_rgba(0,0,0,0.1)] p-3">
         <button
           onClick={nextStep}
           className="w-full py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors text-sm"
