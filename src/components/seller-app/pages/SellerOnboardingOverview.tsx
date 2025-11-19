@@ -1,4 +1,4 @@
-remove the cards around the logos, keep them clean without cards
+
 
 // SellerOnboardingOverview.tsx
 import React, { useEffect, useRef, useState } from 'react';
