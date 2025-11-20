@@ -3,7 +3,7 @@ import React from 'react';
 import SlideUpPanel from '@/components/shared/SlideUpPanel';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import {
-  MainLoginScreenSkeletonCompact,  // Add this import
+  MainLoginScreenSkeletonCompact,
   EmailAuthScreenSkeleton,
   VerificationCodeScreenSkeleton,
   PasswordAuthScreenSkeleton,
@@ -102,6 +102,34 @@ const AuthOverlay: React.FC = () => {
     ) : null
   );
 
+  // Get SlideUpPanel props based on current screen
+  const getSlideUpPanelProps = () => {
+    const baseProps = {
+      isOpen: isAuthOverlayOpen,
+      onClose: handleClose,
+      preventBodyScroll: true,
+      className: "bg-white",
+      dynamicHeight: true
+    };
+
+    // Apply specific props only for main login screen
+    if (currentScreen === 'main') {
+      return {
+        ...baseProps,
+        showCloseButton: false,
+        showHelpButton: true,
+        showDragHandle: false // Hide drag bar only for main screen
+      };
+    }
+
+    // Default props for other screens
+    return {
+      ...baseProps,
+      showCloseButton: false, // Keep consistent with your existing code
+      showDragHandle: true // Show drag handle for other screens, or set to false if you want it hidden everywhere
+    };
+  };
+
   const renderCurrentScreen = () => {
     const compactProps = getCompactProps();
     const faviconUrl = getFaviconUrl(userEmail);
@@ -109,17 +137,17 @@ const AuthOverlay: React.FC = () => {
     const screenContent = (() => {
       switch (currentScreen) {
         case 'main':
-  return (
-    <React.Suspense fallback={<MainLoginScreenSkeletonCompact />}>
-      <MainLoginScreen
-        selectedLanguage={selectedLanguage}
-        setSelectedLanguage={setSelectedLanguage}
-        onContinueWithEmail={handleContinueWithEmail}
-        showHeader={false}
-        {...compactProps}
-      />
-    </React.Suspense>
-  );
+          return (
+            <React.Suspense fallback={<MainLoginScreenSkeletonCompact />}>
+              <MainLoginScreen
+                selectedLanguage={selectedLanguage}
+                setSelectedLanguage={setSelectedLanguage}
+                onContinueWithEmail={handleContinueWithEmail}
+                showHeader={false}
+                {...compactProps}
+              />
+            </React.Suspense>
+          );
 
         case 'email':
           return (
@@ -301,22 +329,16 @@ const AuthOverlay: React.FC = () => {
     return screenContent;
   };
 
-  
-return (
-  <SlideUpPanel
-    isOpen={isAuthOverlayOpen}
-    onClose={handleClose}
-    showCloseButton={false}
-    preventBodyScroll={true}
-    className="bg-white"
-    dynamicHeight={true} // Add this line
-  >
-    {/* Content area */}
-    <div className="px-0">
-      {renderCurrentScreen()}
-    </div>
-  </SlideUpPanel>
-);
+  const slideUpPanelProps = getSlideUpPanelProps();
+
+  return (
+    <SlideUpPanel {...slideUpPanelProps}>
+      {/* Content area */}
+      <div className="px-0">
+        {renderCurrentScreen()}
+      </div>
+    </SlideUpPanel>
+  );
 };
 
 export default AuthOverlay;
