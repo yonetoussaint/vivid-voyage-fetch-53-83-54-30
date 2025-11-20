@@ -1,11 +1,12 @@
 import React, { useState, useRef } from 'react';
-import { ArrowLeft, Lock, Check, HelpCircle, Eye, EyeOff, Mail, Loader2 } from 'lucide-react';
+import { ArrowLeft, Lock, Check, HelpCircle, Eye, EyeOff, Mail, Phone, Loader2 } from 'lucide-react';
 import { FAVICON_OVERRIDES } from '../../constants/email';
 import { useAuth } from '../../contexts/auth/AuthContext';
 import { toast } from 'sonner';
 
 interface PasswordAuthScreenProps {
-  email: string;
+  email?: string;
+  phone?: string;
   onBack: () => void;
   onSignInSuccess: () => void;
   onForgotPasswordClick: () => void;
@@ -16,6 +17,7 @@ interface PasswordAuthScreenProps {
 
 const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
   email,
+  phone,
   onBack,
   onSignInSuccess,
   onForgotPasswordClick,
@@ -23,7 +25,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
   onExpand,
   showHeader = true
 }) => {
-  const { login, isLoading: authLoading } = useAuth();
+  const { login, loginWithPhone, isLoading: authLoading } = useAuth();
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isPasswordValid, setIsPasswordValid] = useState(false);
@@ -45,7 +47,19 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
     setError('');
 
     try {
-      const { error: loginError } = await login(email.trim().toLowerCase(), password);
+      let loginError: string | null = null;
+
+      if (email) {
+        // Email-based login
+        const result = await login(email.trim().toLowerCase(), password);
+        loginError = result.error;
+      } else if (phone) {
+        // Phone-based login
+        const result = await loginWithPhone(phone.trim(), password);
+        loginError = result.error;
+      } else {
+        loginError = 'No email or phone provided';
+      }
 
       if (loginError) {
         setError(loginError);
@@ -66,8 +80,38 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
     }
   };
 
-  const domain = email.split('@')[1] || '';
-  const faviconUrl = FAVICON_OVERRIDES[domain] || `https://www.google.com/s2/favicons?domain=${domain}`;
+  // Determine if we're using email or phone
+  const isPhoneLogin = !!phone;
+  const identifier = email || phone || '';
+  
+  // Get display info based on login type
+  const getDisplayInfo = () => {
+    if (email) {
+      const domain = email.split('@')[1] || '';
+      const faviconUrl = FAVICON_OVERRIDES[domain] || `https://www.google.com/s2/favicons?domain=${domain}`;
+      return {
+        icon: <Mail className="w-full h-full text-gray-400" />,
+        faviconUrl,
+        displayText: email,
+        label: 'Email'
+      };
+    } else if (phone) {
+      return {
+        icon: <Phone className="w-full h-full text-gray-400" />,
+        faviconUrl: null,
+        displayText: phone,
+        label: 'Phone'
+      };
+    }
+    return {
+      icon: <Mail className="w-full h-full text-gray-400" />,
+      faviconUrl: null,
+      displayText: '',
+      label: 'Email'
+    };
+  };
+
+  const displayInfo = getDisplayInfo();
 
   return (
     <div className={isCompact ? "px-4 pb-4" : "min-h-screen bg-white flex flex-col px-4"}>
@@ -122,27 +166,27 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
             </p>
           </div>
 
-          {/* Email Display */}
+          {/* Email/Phone Display */}
           <div className={`p-4 bg-gray-50 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-6 h-6">
-                  {faviconUrl ? (
+                  {displayInfo.faviconUrl ? (
                     <img
-                      src={faviconUrl}
-                      alt="Email provider favicon"
+                      src={displayInfo.faviconUrl}
+                      alt={`${displayInfo.label} provider favicon`}
                       className="w-full h-full object-contain"
                       onError={(e) => {
                         e.currentTarget.onerror = null;
-                        e.currentTarget.src = '';
+                        e.currentTarget.style.display = 'none';
                       }}
                     />
                   ) : (
-                    <Mail className="w-full h-full text-gray-400" />
+                    displayInfo.icon
                   )}
                 </div>
                 <span className={`text-gray-700 font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>
-                  {email}
+                  {displayInfo.displayText}
                 </span>
               </div>
               <button
@@ -220,17 +264,19 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
               </span>
             </button>
 
-            {/* Forgot Password */}
-            <div className="text-center">
-              <button
-                className={`text-red-500 hover:text-red-600 font-medium disabled:opacity-50 ${isCompact ? 'text-sm' : 'text-base'}`}
-                type="button"
-                onClick={onForgotPasswordClick}
-                disabled={isLoading || authLoading}
-              >
-                Forgot password?
-              </button>
-            </div>
+            {/* Forgot Password - Only show for email login */}
+            {!isPhoneLogin && (
+              <div className="text-center">
+                <button
+                  className={`text-red-500 hover:text-red-600 font-medium disabled:opacity-50 ${isCompact ? 'text-sm' : 'text-base'}`}
+                  type="button"
+                  onClick={onForgotPasswordClick}
+                  disabled={isLoading || authLoading}
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
