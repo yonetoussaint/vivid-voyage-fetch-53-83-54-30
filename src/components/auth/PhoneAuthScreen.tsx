@@ -184,26 +184,15 @@ const resendOTPPhone = async (phone: string, purpose = 'signin') => {
 };
 
 // Check if phone exists in database
+// Check if phone exists in database - SIMULATED TO ALWAYS RETURN TRUE
 const checkPhoneExists = async (phoneToCheck: string): Promise<boolean> => {
-  try {
-    const response = await fetch('https://supabase-y8ak.onrender.com/api/check-phone', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ phone: phoneToCheck }),
-    });
-    const data = await response.json();
-
-    if (data.success) {
-      return data.exists;
-    } else {
-      throw new Error(data.message || 'Failed to check phone');
-    }
-  } catch (error) {
-    console.error('Error checking phone:', error);
-    throw error;
-  }
+  console.log('📱 Simulating phone check - all numbers exist:', phoneToCheck);
+  
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  // Always return true - all phone numbers exist
+  return true;
 };
 
 // Inline usePhoneValidation hook
