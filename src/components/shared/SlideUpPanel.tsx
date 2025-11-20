@@ -12,8 +12,8 @@ interface SlideUpPanelProps {
   showCloseButton?: boolean;
   preventBodyScroll?: boolean;
   stickyFooter?: React.ReactNode;
-  maxHeight?: number; // 0-1 representing percentage of screen height
-  dynamicHeight?: boolean; // Add this prop to allow dynamic height adjustment
+  maxHeight?: number;
+  dynamicHeight?: boolean;
 }
 
 export default function SlideUpPanel({
@@ -26,8 +26,8 @@ export default function SlideUpPanel({
   showCloseButton = true,
   preventBodyScroll = true,
   stickyFooter,
-  maxHeight = 0.9, // 90% of screen height by default
-  dynamicHeight = false // Default to false for consistency
+  maxHeight = 0.9,
+  dynamicHeight = false
 }: SlideUpPanelProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -36,35 +36,40 @@ export default function SlideUpPanel({
   const [isDragging, setIsDragging] = useState(false);
   const [startY, setStartY] = useState(0);
   const [currentTranslate, setCurrentTranslate] = useState(0);
+  const [velocity, setVelocity] = useState(0);
+  const lastYRef = useRef(0);
+  const lastTimeRef = useRef(0);
+  const animationFrameRef = useRef<number>();
 
-  // Improved height calculation with ResizeObserver
+  // Physics constants for ultra-smooth feel
+  const SPRING_DAMPING = 0.7;
+  const SPRING_STIFFNESS = 0.3;
+  const VELOCITY_THRESHOLD = 0.5;
+  const CLOSE_THRESHOLD = 0.3;
+  const FRICTION = 0.95;
+
+  // Improved height calculation
   useEffect(() => {
     if (isOpen && contentRef.current) {
       const contentElement = contentRef.current;
-      
+
       const calculateHeight = () => {
         if (contentElement) {
-          // Use getBoundingClientRect for more accurate measurement
           const height = contentElement.scrollHeight;
           setContentHeight(height);
         }
       };
 
-      // Use ResizeObserver for better dynamic content handling
-      const resizeObserver = new ResizeObserver((entries) => {
-        for (let entry of entries) {
-          calculateHeight();
-        }
+      const resizeObserver = new ResizeObserver(() => {
+        calculateHeight();
       });
 
       if (contentElement) {
         resizeObserver.observe(contentElement);
-        // Initial calculation
         calculateHeight();
       }
 
-      // Fallback timeout for initial render
-      const timeoutId = setTimeout(calculateHeight, 150);
+      const timeoutId = setTimeout(calculateHeight, 100);
 
       return () => {
         resizeObserver.disconnect();
@@ -75,7 +80,7 @@ export default function SlideUpPanel({
     }
   }, [isOpen, children]);
 
-  // Handle body scroll locking
+  // Body scroll locking
   useEffect(() => {
     if (preventBodyScroll && isOpen) {
       scrollYRef.current = window.scrollY;
@@ -94,12 +99,51 @@ export default function SlideUpPanel({
     }
   }, [isOpen, preventBodyScroll]);
 
-  // Drag handlers inspired by React Native BottomSheet
+  // Physics-based spring animation
+  const animateSpring = useCallback((targetY: number, initialVelocity: number = 0) => {
+    let currentY = currentTranslate;
+    let currentVelocity = initialVelocity;
+    
+    const animate = () => {
+      const displacement = targetY - currentY;
+      const springForce = displacement * SPRING_STIFFNESS;
+      const dampingForce = currentVelocity * SPRING_DAMPING;
+      
+      currentVelocity += springForce - dampingForce;
+      currentVelocity *= FRICTION;
+      currentY += currentVelocity;
+
+      setCurrentTranslate(currentY);
+
+      // Continue animation if still moving significantly
+      if (Math.abs(currentVelocity) > 0.1 || Math.abs(displacement) > 0.5) {
+        animationFrameRef.current = requestAnimationFrame(animate);
+      } else {
+        setCurrentTranslate(targetY);
+        if (targetY > 0 && targetY >= (panelRef.current?.offsetHeight || 0) * CLOSE_THRESHOLD) {
+          onClose();
+        }
+      }
+    };
+
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+    animationFrameRef.current = requestAnimationFrame(animate);
+  }, [currentTranslate, onClose]);
+
+  // Enhanced drag handlers with velocity tracking
   const handleDragStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+    
     setIsDragging(true);
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
     setStartY(clientY);
-    setCurrentTranslate(0);
+    lastYRef.current = clientY;
+    lastTimeRef.current = Date.now();
+    setVelocity(0);
   }, []);
 
   const handleDragMove = useCallback((e: MouseEvent | TouchEvent) => {
@@ -107,10 +151,24 @@ export default function SlideUpPanel({
 
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
     const deltaY = clientY - startY;
+    const currentTime = Date.now();
+    const timeDelta = currentTime - lastTimeRef.current;
 
-    // Only allow dragging downward (closing)
+    // Calculate velocity
+    if (timeDelta > 0) {
+      const newVelocity = (clientY - lastYRef.current) / timeDelta * 16; // Normalize to 60fps
+      setVelocity(newVelocity);
+    }
+
+    lastYRef.current = clientY;
+    lastTimeRef.current = currentTime;
+
+    // Only allow dragging downward with rubber band effect at top
     if (deltaY > 0) {
       setCurrentTranslate(deltaY);
+    } else {
+      // Rubber band effect when dragging up
+      setCurrentTranslate(deltaY * 0.3);
     }
   }, [isDragging, startY]);
 
@@ -119,36 +177,50 @@ export default function SlideUpPanel({
 
     setIsDragging(false);
 
-    // If dragged more than 40% of panel height or 100px, close it
     const panelHeight = panelRef.current?.offsetHeight || 0;
-    const closeThreshold = Math.max(panelHeight * 0.4, 100);
+    const shouldClose = 
+      currentTranslate > panelHeight * CLOSE_THRESHOLD || 
+      velocity > VELOCITY_THRESHOLD;
 
-    if (currentTranslate > closeThreshold) {
-      onClose();
+    if (shouldClose) {
+      // Animate out with velocity
+      animateSpring(panelHeight, velocity);
     } else {
-      // Animate back to original position
-      setCurrentTranslate(0);
+      // Snap back with spring physics
+      animateSpring(0, velocity);
     }
-  }, [isDragging, currentTranslate, onClose]);
+  }, [isDragging, currentTranslate, velocity, animateSpring]);
 
-  // Add/remove global event listeners for drag
+  // Event listeners
   useEffect(() => {
     if (isDragging) {
-      document.addEventListener('mousemove', handleDragMove);
-      document.addEventListener('touchmove', handleDragMove);
-      document.addEventListener('mouseup', handleDragEnd);
-      document.addEventListener('touchend', handleDragEnd);
+      const moveHandler = (e: MouseEvent | TouchEvent) => handleDragMove(e);
+      const endHandler = () => handleDragEnd();
+
+      document.addEventListener('mousemove', moveHandler);
+      document.addEventListener('touchmove', moveHandler, { passive: true });
+      document.addEventListener('mouseup', endHandler);
+      document.addEventListener('touchend', endHandler);
 
       return () => {
-        document.removeEventListener('mousemove', handleDragMove);
-        document.removeEventListener('touchmove', handleDragMove);
-        document.removeEventListener('mouseup', handleDragEnd);
-        document.removeEventListener('touchend', handleDragEnd);
+        document.removeEventListener('mousemove', moveHandler);
+        document.removeEventListener('touchmove', moveHandler);
+        document.removeEventListener('mouseup', endHandler);
+        document.removeEventListener('touchend', endHandler);
       };
     }
   }, [isDragging, handleDragMove, handleDragEnd]);
 
-  // Scroll prevention logic
+  // Cleanup animation frame
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
+
+  // Scroll management
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
       if (!isOpen || !preventBodyScroll) return;
@@ -189,68 +261,89 @@ export default function SlideUpPanel({
       document.removeEventListener('wheel', handleWheel);
       document.removeEventListener('touchmove', handleTouchMove);
     };
-  }, [isOpen, preventBodyScroll, contentHeight]);
+  }, [isOpen, preventBodyScroll]);
 
   if (!isOpen) return null;
 
-  // Calculate if we need scrolling - with dynamic height option
   const maxPanelHeight = window.innerHeight * maxHeight;
   const needsScrolling = dynamicHeight ? false : contentHeight > maxPanelHeight;
-  
-  // For dynamic height, use auto height, otherwise use calculated height
   const panelHeight = dynamicHeight ? 'auto' : (needsScrolling ? maxPanelHeight : contentHeight);
 
-  // Calculate dynamic styles for drag animation
-  const panelStyle = {
-    maxHeight: dynamicHeight ? 'none' : `${maxPanelHeight}px`,
-    height: panelHeight,
-    transform: `translateY(${currentTranslate}px)`,
-    transition: isDragging ? 'none' : 'transform 0.2s ease-out'
-  };
+  // Enhanced backdrop opacity with easing
+  const maxTranslate = window.innerHeight * 0.8;
+  const normalizedTranslate = Math.min(Math.max(currentTranslate, 0), maxTranslate);
+  const backdropOpacity = 0.5 * (1 - (normalizedTranslate / maxTranslate));
 
-  // Calculate opacity for backdrop based on drag
-  const backdropOpacity = Math.max(0, 0.5 - (currentTranslate / (window.innerHeight * 0.8)));
+  // Panel transform with subtle scale effect
+  const scale = 1 - (normalizedTranslate / maxTranslate) * 0.05;
+  const borderRadius = 16 + (normalizedTranslate / maxTranslate) * 8;
 
   return (
     <>
-      {/* Dynamic Backdrop */}
+      {/* Ultra-smooth backdrop */}
       <div 
-        className="fixed inset-0 bg-black backdrop-blur-md z-[70] transition-opacity duration-200"
+        className="fixed inset-0 bg-black z-[70]"
         style={{ 
           opacity: backdropOpacity,
-          animation: !isDragging ? 'fadeIn 0.3s ease-out' : 'none'
+          transition: isDragging ? 'none' : 'opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+          backdropFilter: `blur(${8 * (backdropOpacity / 0.5)}px)`,
+          WebkitBackdropFilter: `blur(${8 * (backdropOpacity / 0.5)}px)`,
         }}
         onClick={onClose}
       />
 
-      {/* Panel with drag handle */}
+      {/* Ultra-smooth panel */}
       <div
         ref={panelRef}
-        className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 rounded-t-md shadow-lg z-[70] flex flex-col"
-        style={panelStyle}
+        className="fixed bottom-0 left-0 right-0 bg-white shadow-2xl z-[70] flex flex-col"
+        style={{
+          maxHeight: dynamicHeight ? 'none' : `${maxPanelHeight}px`,
+          height: panelHeight,
+          transform: `translateY(${currentTranslate}px) scale(${scale})`,
+          transformOrigin: 'bottom center',
+          borderTopLeftRadius: `${borderRadius}px`,
+          borderTopRightRadius: `${borderRadius}px`,
+          transition: isDragging 
+            ? 'none' 
+            : 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+          willChange: 'transform',
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Single Drag Handle at the Top */}
+        {/* Enhanced drag handle */}
         <div 
-          className="flex-shrink-0 cursor-grab active:cursor-grabbing touch-none"
+          className="flex-shrink-0 cursor-grab active:cursor-grabbing touch-none select-none"
           onMouseDown={handleDragStart}
           onTouchStart={handleDragStart}
+          style={{ WebkitUserSelect: 'none', userSelect: 'none' }}
         >
           <div className="flex justify-center pt-3 pb-2">
-            <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+            <div 
+              className="w-12 h-1.5 bg-gray-300 rounded-full transition-all duration-200"
+              style={{
+                transform: isDragging ? 'scaleX(1.2)' : 'scaleX(1)',
+                opacity: isDragging ? 0.6 : 0.4,
+              }}
+            />
           </div>
         </div>
 
-        {/* Sticky Header */}
+        {/* Header with enhanced animations */}
         {(title || headerContent || showCloseButton) && (
-          <div className="flex-shrink-0 bg-white z-10 flex items-center justify-between px-4 py-2 border-b border-gray-100">
+          <div 
+            className="flex-shrink-0 bg-white z-10 flex items-center justify-between px-4 py-2 border-b border-gray-100"
+            style={{
+              opacity: 1 - (normalizedTranslate / maxTranslate) * 0.5,
+              transition: isDragging ? 'none' : 'opacity 0.3s ease-out',
+            }}
+          >
             <div className="flex-1 min-w-0">
               {headerContent ? headerContent : (title && <h3 className="font-medium text-gray-900">{title}</h3>)}
             </div>
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="p-1 hover:bg-gray-100 rounded-full transition-colors ml-2 flex-shrink-0"
+                className="p-1.5 hover:bg-gray-100 rounded-full transition-all duration-200 ml-2 flex-shrink-0 hover:scale-110 active:scale-95"
               >
                 <X className="h-4 w-4 text-gray-600" />
               </button>
@@ -258,32 +351,32 @@ export default function SlideUpPanel({
           </div>
         )}
 
-        {/* Content Area - Handle scrolling based on dynamicHeight prop */}
+        {/* Content with smooth scrolling */}
         <div 
           ref={contentRef}
           className={`flex-1 ${dynamicHeight ? 'overflow-visible' : (needsScrolling ? 'overflow-y-auto' : 'overflow-hidden')} ${className}`}
           style={{
-            WebkitOverflowScrolling: needsScrolling ? 'touch' : 'auto',
+            WebkitOverflowScrolling: 'touch',
             scrollBehavior: 'smooth',
+            overscrollBehavior: 'contain',
           }}
         >
           {children}
         </div>
 
-        {/* Sticky Footer Area - No drag handle here */}
+        {/* Footer */}
         {stickyFooter && (
-          <div className="flex-shrink-0 border-t border-gray-200 bg-white rounded-b-2xl">
+          <div 
+            className="flex-shrink-0 border-t border-gray-200 bg-white"
+            style={{
+              borderBottomLeftRadius: `${borderRadius}px`,
+              borderBottomRightRadius: `${borderRadius}px`,
+            }}
+          >
             {stickyFooter}
           </div>
         )}
       </div>
-
-      <style jsx>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 0.5; }
-        }
-      `}</style>
     </>
   );
 }
