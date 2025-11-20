@@ -226,7 +226,7 @@ export default function SlideUpPanel({
       {/* Panel with drag handle */}
       <div
         ref={panelRef}
-        className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 rounded-t-2xl shadow-lg z-[70] flex flex-col"
+        className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 rounded-t-md shadow-lg z-[70] flex flex-col"
         style={panelStyle}
         onClick={(e) => e.stopPropagation()}
       >
