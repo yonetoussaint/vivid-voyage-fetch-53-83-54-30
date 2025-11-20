@@ -1,5 +1,5 @@
 // AuthOverlay.tsx
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import SlideUpPanel from '@/components/shared/SlideUpPanel';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import {
@@ -13,10 +13,13 @@ import {
   SuccessScreenSkeleton
 } from './AuthSkeletonLoaders';
 
+// Types
+export type ScreenType = 'main' | 'email' | 'phone' | 'verification' | 'password' | 'success' | 'account-creation' | 'reset-password' | 'otp-reset' | 'new-password';
+
 // Move lazy imports outside component to prevent recreation
 const MainLoginScreen = React.lazy(() => import('./MainLoginScreen'));
 const EmailAuthScreen = React.lazy(() => import('./EmailAuthScreen'));
-const PhoneAuthScreen = React.lazy(() => import('./PhoneAuthScreen')); // Add this import
+const PhoneAuthScreen = React.lazy(() => import('./PhoneAuthScreen'));
 const VerificationCodeScreen = React.lazy(() => import('./VerificationCodeScreen'));
 const PasswordAuthScreen = React.lazy(() => import('./PasswordAuthScreen'));
 const ResetPasswordScreen = React.lazy(() => import('./ResetPasswordScreen'));
@@ -27,61 +30,234 @@ const AccountCreationPasswordStep = React.lazy(() => import('./AccountCreationPa
 const AccountCreationSuccessStep = React.lazy(() => import('./AccountCreationSuccessStep'));
 const SuccessScreen = React.lazy(() => import('./SuccessScreen'));
 
-const AuthOverlay: React.FC = () => {
+interface AuthOverlayProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const AuthOverlay: React.FC<AuthOverlayProps> = ({ isOpen, onClose }) => {
   const {
-    isAuthOverlayOpen,
-    setIsAuthOverlayOpen,
-    currentScreen,
-    setCurrentScreen,
-    selectedLanguage,
-    setSelectedLanguage,
-    userEmail,
-    setUserEmail,
-    userPhone, // Add this from your AuthContext
-    setUserPhone, // Add this from your AuthContext
-    resetOTP,
-    setResetOTP,
-    authError,
-    setAuthError,
+    signup,
+    login,
     getFaviconUrl,
-    handleClose,
-    handleContinueWithEmail,
-    handleContinueWithPhone, // Add this from your AuthContext
-    handleBackToMain,
-    handleContinueWithPassword,
-    handleContinueWithCode,
-    handleCreateAccount,
-    handleSignUpClick,
-    handleBackFromVerification,
-    handleBackFromPassword,
-    handleVerificationSuccess,
-    handleSignInSuccess,
-    handleForgotPasswordClick,
-    handleContinueToApp,
-    accountCreationStep,
-    handleBackFromAccountCreation,
-    handleChangeEmail,
-    handleChangePhone, // Add this from your AuthContext
-    handleNameStepContinue,
-    handlePasswordStepContinue,
-    handleAccountCreated,
-    firstName,
-    lastName,
-    handleFirstNameChange,
-    handleLastNameChange,
-    nameErrors,
-    isNameFormValid,
-    password,
-    confirmPassword,
-    showPassword,
-    showConfirmPassword,
-    setPassword,
-    setConfirmPassword,
-    setShowPassword,
-    setShowConfirmPassword,
-    isPasswordFormValid,
-    isLoading
+    validateName,
+    validatePassword,
+    sendCustomOTPEmail,
+    sendPasswordResetOTP,
+    verifyCustomOTP,
+    resendOTPEmail,
+    completePasswordReset,
+    googleSignIn
   } = useAuth();
+
+  // Auth overlay state
+  const [currentScreen, setCurrentScreen] = useState<ScreenType>('main');
+  const [selectedLanguage, setSelectedLanguage] = useState('en');
+  const [userEmail, setUserEmail] = useState('');
+  const [userPhone, setUserPhone] = useState('');
+  const [resetOTP, setResetOTP] = useState('');
+
+  // Account creation state
+  const [accountCreationStep, setAccountCreationStep] = useState<'name' | 'password' | 'success'>('name');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [nameErrors, setNameErrors] = useState({
+    firstName: '',
+    lastName: ''
+  });
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Utility functions
+  const isPasswordFormValid = useCallback(() => {
+    return (
+      password.length >= 8 &&
+      confirmPassword.length >= 8 &&
+      password === confirmPassword &&
+      validatePassword(password) === null
+    );
+  }, [password, confirmPassword, validatePassword]);
+
+  const isNameFormValid = useCallback(() => {
+    return firstName.trim() !== '' && 
+           lastName.trim() !== '' && 
+           !nameErrors.firstName && 
+           !nameErrors.lastName;
+  }, [firstName, lastName, nameErrors]);
+
+  // Reset overlay state when opening
+  React.useEffect(() => {
+    if (isOpen) {
+      setCurrentScreen('main');
+      setUserEmail('');
+      setUserPhone('');
+      setResetOTP('');
+      setAuthError(null);
+    }
+  }, [isOpen]);
+
+  // Auth overlay handlers
+  const handleContinueWithEmail = () => setCurrentScreen('email');
+  const handleContinueWithPhone = () => setCurrentScreen('phone');
+  const handleBackToMain = () => setCurrentScreen('main');
+
+  const handleContinueWithPassword = (email: string) => {
+    setUserEmail(email);
+    setCurrentScreen('password');
+  };
+
+  const handleContinueWithCode = (email: string) => {
+    setUserEmail(email);
+    setCurrentScreen('verification');
+  };
+
+  const handleCreateAccount = (email: string) => {
+    setUserEmail(email);
+    setCurrentScreen('account-creation');
+    setAccountCreationStep('name');
+    setFirstName('');
+    setLastName('');
+    setPassword('');
+    setConfirmPassword('');
+    setAuthError(null);
+    setNameErrors({ firstName: '', lastName: '' });
+  };
+
+  const handleSignUpClick = () => {
+    setCurrentScreen('account-creation');
+    setAccountCreationStep('name');
+    setFirstName('');
+    setLastName('');
+    setPassword('');
+    setConfirmPassword('');
+    setAuthError(null);
+    setNameErrors({ firstName: '', lastName: '' });
+  };
+
+  const handleNameStepContinue = (newFirstName: string, newLastName: string) => {
+    setAuthError(null);
+
+    if (!newFirstName.trim() || !newLastName.trim()) {
+      setAuthError('First name and last name are required');
+      return;
+    }
+
+    setFirstName(newFirstName.trim());
+    setLastName(newLastName.trim());
+    setAccountCreationStep('password');
+  };
+
+  const handlePasswordStepContinue = async () => {
+    if (!isPasswordFormValid()) return;
+
+    console.log('AuthOverlay: Starting account creation process');
+    setIsLoading(true);
+    setAuthError(null);
+
+    try {
+      const fullName = `${firstName} ${lastName}`.trim();
+
+      console.log('Calling signup with:', { email: userEmail, fullName });
+
+      const result = await signup(userEmail, password, fullName);
+
+      if (result.error) {
+        console.error('Signup error:', result.error);
+        setAuthError(result.error);
+        return;
+      }
+
+      console.log('AuthOverlay: Account created successfully, moving to success step');
+      setAccountCreationStep('success');
+    } catch (error: any) {
+      console.error('Account creation error:', error);
+      setAuthError('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAccountCreated = () => {
+    setCurrentScreen('success');
+  };
+
+  const handleBackFromAccountCreation = () => {
+    if (accountCreationStep === 'name') {
+      setCurrentScreen('email');
+    } else if (accountCreationStep === 'password') {
+      setAccountCreationStep('name');
+    } else if (accountCreationStep === 'success') {
+      setAccountCreationStep('password');
+    }
+    setAuthError(null);
+  };
+
+  const handleChangeEmail = () => {
+    setCurrentScreen('email');
+  };
+
+  const handleChangePhone = () => {
+    setCurrentScreen('phone');
+  };
+
+  const handleBackFromVerification = () => setCurrentScreen('email');
+  const handleBackFromPassword = () => setCurrentScreen('email');
+  
+  const handleVerificationSuccess = () => setCurrentScreen('success');
+
+  const handleSignInSuccess = () => {
+    setCurrentScreen('success');
+    // Close overlay after a brief delay to show success message
+    setTimeout(() => {
+      onClose();
+      resetAuthOverlay();
+    }, 2000);
+  };
+
+  const handleForgotPasswordClick = () => setCurrentScreen('reset-password');
+
+  const handleContinueToApp = () => {
+    onClose();
+    resetAuthOverlay();
+  };
+
+  const handleClose = () => {
+    onClose();
+    resetAuthOverlay();
+  };
+
+  // Name step handlers
+  const handleFirstNameChange = (value: string) => {
+    setFirstName(value);
+    const error = validateName(value, 'First name');
+    setNameErrors(prev => ({ ...prev, firstName: error }));
+  };
+
+  const handleLastNameChange = (value: string) => {
+    setLastName(value);
+    const error = validateName(value, 'Last name');
+    setNameErrors(prev => ({ ...prev, lastName: error }));
+  };
+
+  const resetAuthOverlay = () => {
+    setCurrentScreen('main');
+    setAccountCreationStep('name');
+    setFirstName('');
+    setLastName('');
+    setPassword('');
+    setConfirmPassword('');
+    setAuthError(null);
+    setNameErrors({ firstName: '', lastName: '' });
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+    setUserEmail('');
+    setUserPhone('');
+    setResetOTP('');
+  };
 
   const getCompactProps = () => ({
     isCompact: true,
@@ -111,7 +287,7 @@ const AuthOverlay: React.FC = () => {
   // Get SlideUpPanel props based on current screen
   const getSlideUpPanelProps = () => {
     const baseProps = {
-      isOpen: isAuthOverlayOpen,
+      isOpen: isOpen,
       onClose: handleClose,
       preventBodyScroll: true,
       className: "bg-white",
@@ -149,8 +325,9 @@ const AuthOverlay: React.FC = () => {
                 selectedLanguage={selectedLanguage}
                 setSelectedLanguage={setSelectedLanguage}
                 onContinueWithEmail={handleContinueWithEmail}
-                onContinueWithPhone={handleContinueWithPhone} // Add this prop
+                onContinueWithPhone={handleContinueWithPhone}
                 showHeader={false}
+                onGoogleSignIn={googleSignIn}
                 {...compactProps}
               />
             </React.Suspense>
@@ -168,12 +345,13 @@ const AuthOverlay: React.FC = () => {
                 onSignUpClick={handleSignUpClick}
                 initialEmail={userEmail}
                 showHeader={false}
+                onSendOTP={sendCustomOTPEmail}
                 {...compactProps}
               />
             </React.Suspense>
           );
 
-        case 'phone': // Add this case
+        case 'phone':
           return (
             <React.Suspense fallback={<PhoneAuthScreenSkeleton />}>
               <PhoneAuthScreen
@@ -195,10 +373,12 @@ const AuthOverlay: React.FC = () => {
             <React.Suspense fallback={<VerificationCodeScreenSkeleton />}>
               <VerificationCodeScreen
                 email={userEmail}
-                phone={userPhone} // Add phone prop
+                phone={userPhone}
                 onBack={handleBackFromVerification}
                 onVerificationSuccess={handleVerificationSuccess}
                 showHeader={false}
+                onVerifyOTP={verifyCustomOTP}
+                onResendOTP={resendOTPEmail}
                 {...compactProps}
               />
             </React.Suspense>
@@ -209,13 +389,15 @@ const AuthOverlay: React.FC = () => {
             <React.Suspense fallback={<PasswordAuthScreenSkeleton />}>
               <PasswordAuthScreen
                 email={userEmail}
-                phone={userPhone} // Add phone prop
+                phone={userPhone}
                 onBack={handleBackFromPassword}
                 onSignInSuccess={handleSignInSuccess}
                 onForgotPasswordClick={handleForgotPasswordClick}
                 isCompact={compactProps.isCompact}
                 onExpand={compactProps.onExpand}
                 showHeader={false}
+                onLogin={login}
+                {...compactProps}
               />
             </React.Suspense>
           );
@@ -230,6 +412,7 @@ const AuthOverlay: React.FC = () => {
                   setCurrentScreen('otp-reset');
                 }}
                 initialEmail={userEmail}
+                onSendResetOTP={sendPasswordResetOTP}
                 {...compactProps}
               />
             </React.Suspense>
@@ -245,6 +428,8 @@ const AuthOverlay: React.FC = () => {
                   setResetOTP(otp);
                   setCurrentScreen('new-password');
                 }}
+                onVerifyOTP={verifyCustomOTP}
+                onResendOTP={resendOTPEmail}
                 {...compactProps}
               />
             </React.Suspense>
@@ -258,6 +443,7 @@ const AuthOverlay: React.FC = () => {
                 otp={resetOTP}
                 onBack={() => setCurrentScreen('otp-reset')}
                 onPasswordResetSuccess={() => setCurrentScreen('success')}
+                onCompletePasswordReset={completePasswordReset}
                 {...compactProps}
               />
             </React.Suspense>
@@ -274,10 +460,10 @@ const AuthOverlay: React.FC = () => {
                       <React.Suspense fallback={<AccountCreationScreenSkeleton />}>
                         <AccountCreationNameStep
                           email={userEmail}
-                          phone={userPhone} // Add phone prop
+                          phone={userPhone}
                           onBack={handleBackFromAccountCreation}
                           onChangeEmail={handleChangeEmail}
-                          onChangePhone={handleChangePhone} // Add this prop
+                          onChangePhone={handleChangePhone}
                           onContinue={handleNameStepContinue}
                           firstName={firstName}
                           lastName={lastName}
@@ -296,7 +482,7 @@ const AuthOverlay: React.FC = () => {
                       <React.Suspense fallback={<AccountCreationScreenSkeleton />}>
                         <AccountCreationPasswordStep
                           email={userEmail}
-                          phone={userPhone} // Add phone prop
+                          phone={userPhone}
                           firstName={firstName}
                           lastName={lastName}
                           onBack={handleBackFromAccountCreation}
@@ -323,7 +509,7 @@ const AuthOverlay: React.FC = () => {
                       <React.Suspense fallback={<AccountCreationScreenSkeleton />}>
                         <AccountCreationSuccessStep
                           email={userEmail}
-                          phone={userPhone} // Add phone prop
+                          phone={userPhone}
                           firstName={firstName}
                           lastName={lastName}
                           onContinue={handleAccountCreated}
@@ -345,7 +531,7 @@ const AuthOverlay: React.FC = () => {
             <React.Suspense fallback={<SuccessScreenSkeleton />}>
               <SuccessScreen
                 email={userEmail}
-                phone={userPhone} // Add phone prop
+                phone={userPhone}
                 onContinue={handleContinueToApp}
                 {...compactProps}
               />
