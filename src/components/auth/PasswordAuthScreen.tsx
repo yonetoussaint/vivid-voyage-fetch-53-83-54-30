@@ -1,12 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { ArrowLeft, Lock, Check, HelpCircle, Eye, EyeOff, Mail, Phone, Loader2 } from 'lucide-react';
+import { ArrowLeft, Lock, Check, HelpCircle, Eye, EyeOff, Mail, Loader2 } from 'lucide-react';
 import { FAVICON_OVERRIDES } from '../../constants/email';
 import { useAuth } from '../../contexts/auth/AuthContext';
 import { toast } from 'sonner';
 
 interface PasswordAuthScreenProps {
-  email?: string;
-  phone?: string;
+  email: string;
   onBack: () => void;
   onSignInSuccess: () => void;
   onForgotPasswordClick: () => void;
@@ -15,108 +14,8 @@ interface PasswordAuthScreenProps {
   showHeader?: boolean;
 }
 
-// Helper function to parse phone number and get country info
-const parsePhoneNumber = (phone: string) => {
-  // Default to US if no country code detected
-  let countryCode = '+1';
-  let nationalNumber = phone;
-  
-  // Extract country code if present
-  if (phone.startsWith('+')) {
-    const plusIndex = phone.indexOf('+');
-    const spaceIndex = phone.indexOf(' ');
-    if (spaceIndex > -1) {
-      countryCode = phone.substring(plusIndex, spaceIndex);
-      nationalNumber = phone.substring(spaceIndex + 1);
-    } else {
-      // Handle cases without space
-      if (phone.startsWith('+1') && phone.length >= 11) {
-        countryCode = '+1';
-        nationalNumber = phone.substring(2);
-      } else if (phone.startsWith('+44') && phone.length >= 12) {
-        countryCode = '+44';
-        nationalNumber = phone.substring(3);
-      } else if (phone.startsWith('+91') && phone.length >= 12) {
-        countryCode = '+91';
-        nationalNumber = phone.substring(3);
-      } else if (phone.startsWith('+86') && phone.length >= 12) {
-        countryCode = '+86';
-        nationalNumber = phone.substring(3);
-      } else if (phone.startsWith('+81') && phone.length >= 12) {
-        countryCode = '+81';
-        nationalNumber = phone.substring(3);
-      } else if (phone.startsWith('+49') && phone.length >= 12) {
-        countryCode = '+49';
-        nationalNumber = phone.substring(3);
-      } else if (phone.startsWith('+33') && phone.length >= 12) {
-        countryCode = '+33';
-        nationalNumber = phone.substring(3);
-      } else if (phone.startsWith('+61') && phone.length >= 12) {
-        countryCode = '+61';
-        nationalNumber = phone.substring(3);
-      } else if (phone.startsWith('+55') && phone.length >= 12) {
-        countryCode = '+55';
-        nationalNumber = phone.substring(3);
-      } else if (phone.startsWith('+34') && phone.length >= 12) {
-        countryCode = '+34';
-        nationalNumber = phone.substring(3);
-      }
-    }
-  }
-  
-  // Get country flag emoji based on country code
-  const getFlagEmoji = (countryCode: string) => {
-    const flagMap: { [key: string]: string } = {
-      '+1': '🇺🇸', // USA/Canada
-      '+44': '🇬🇧', // UK
-      '+91': '🇮🇳', // India
-      '+86': '🇨🇳', // China
-      '+81': '🇯🇵', // Japan
-      '+49': '🇩🇪', // Germany
-      '+33': '🇫🇷', // France
-      '+61': '🇦🇺', // Australia
-      '+55': '🇧🇷', // Brazil
-      '+34': '🇪🇸', // Spain
-      '+27': '🇿🇦', // South Africa
-      '+82': '🇰🇷', // South Korea
-      '+7': '🇷🇺',  // Russia
-    };
-    
-    return flagMap[countryCode] || '📱';
-  };
-  
-  // Format national number for display
-  const formatNationalNumber = (number: string, countryCode: string) => {
-    // Remove any non-digit characters
-    const digits = number.replace(/\D/g, '');
-    
-    // Simple formatting based on country code
-    if (countryCode === '+1' && digits.length === 10) {
-      return `(${digits.substring(0, 3)}) ${digits.substring(3, 6)}-${digits.substring(6)}`;
-    } else if (countryCode === '+44' && digits.length >= 7) {
-      return `${digits.substring(0, 4)} ${digits.substring(4, 7)} ${digits.substring(7)}`;
-    } else if (countryCode === '+91' && digits.length === 10) {
-      return `${digits.substring(0, 5)} ${digits.substring(5)}`;
-    }
-    
-    // Default formatting
-    return digits;
-  };
-  
-  const formattedNational = formatNationalNumber(nationalNumber, countryCode);
-  
-  return {
-    countryCode,
-    nationalNumber: formattedNational,
-    flagEmoji: getFlagEmoji(countryCode),
-    fullDisplay: `${countryCode} ${formattedNational}`,
-    rawNationalNumber: nationalNumber.replace(/\D/g, '')
-  };
-};
-
 const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
   email,
-  phone,
   onBack,
   onSignInSuccess,
   onForgotPasswordClick,
@@ -124,7 +23,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
   onExpand,
   showHeader = true
 }) => {
-  const { login, loginWithPhone, isLoading: authLoading } = useAuth();
+  const { login, isLoading: authLoading } = useAuth();
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isPasswordValid, setIsPasswordValid] = useState(false);
@@ -146,19 +45,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
     setError('');
 
     try {
-      let loginError: string | null = null;
-
-      if (email) {
-        // Email-based login
-        const result = await login(email.trim().toLowerCase(), password);
-        loginError = result.error;
-      } else if (phone) {
-        // Phone-based login
-        const result = await loginWithPhone(phone.trim(), password);
-        loginError = result.error;
-      } else {
-        loginError = 'No email or phone provided';
-      }
+      const { error: loginError } = await login(email.trim().toLowerCase(), password);
 
       if (loginError) {
         setError(loginError);
@@ -179,39 +66,8 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
     }
   };
 
-  // Get display info based on login type
-  const getDisplayInfo = () => {
-    if (email) {
-      const domain = email.split('@')[1] || '';
-      const faviconUrl = FAVICON_OVERRIDES[domain] || `https://www.google.com/s2/favicons?domain=${domain}`;
-      return {
-        type: 'email' as const,
-        icon: <Mail className="w-full h-full text-gray-400" />,
-        faviconUrl,
-        displayText: email,
-        label: 'Email'
-      };
-    } else if (phone) {
-      const phoneInfo = parsePhoneNumber(phone);
-      return {
-        type: 'phone' as const,
-        icon: <Phone className="w-full h-full text-gray-400" />,
-        faviconUrl: null,
-        displayText: phoneInfo.fullDisplay,
-        label: 'Phone',
-        phoneInfo
-      };
-    }
-    return {
-      type: 'email' as const,
-      icon: <Mail className="w-full h-full text-gray-400" />,
-      faviconUrl: null,
-      displayText: '',
-      label: 'Email'
-    };
-  };
-
-  const displayInfo = getDisplayInfo();
+  const domain = email.split('@')[1] || '';
+  const faviconUrl = FAVICON_OVERRIDES[domain] || `https://www.google.com/s2/favicons?domain=${domain}`;
 
   return (
     <div className={isCompact ? "px-4 pb-4" : "min-h-screen bg-white flex flex-col px-4"}>
@@ -266,44 +122,28 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
             </p>
           </div>
 
-          {/* Email/Phone Display */}
+          {/* Email Display */}
           <div className={`p-4 bg-gray-50 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-6 h-6 flex items-center justify-center">
-                  {displayInfo.type === 'email' && displayInfo.faviconUrl ? (
+                <div className="w-6 h-6">
+                  {faviconUrl ? (
                     <img
-                      src={displayInfo.faviconUrl}
+                      src={faviconUrl}
                       alt="Email provider favicon"
                       className="w-full h-full object-contain"
                       onError={(e) => {
                         e.currentTarget.onerror = null;
-                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.src = '';
                       }}
                     />
-                  ) : displayInfo.type === 'phone' && displayInfo.phoneInfo ? (
-                    <span className="text-lg leading-none" style={{ fontSize: '18px' }}>
-                      {displayInfo.phoneInfo.flagEmoji}
-                    </span>
                   ) : (
-                    displayInfo.icon
+                    <Mail className="w-full h-full text-gray-400" />
                   )}
                 </div>
-                <div className="flex flex-col">
-                  <span className={`text-gray-700 font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>
-                    {displayInfo.displayText}
-                  </span>
-                  {displayInfo.type === 'phone' && displayInfo.phoneInfo && (
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                        {displayInfo.phoneInfo.countryCode}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {displayInfo.phoneInfo.nationalNumber}
-                      </span>
-                    </div>
-                  )}
-                </div>
+                <span className={`text-gray-700 font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>
+                  {email}
+                </span>
               </div>
               <button
                 onClick={onBack}
@@ -380,7 +220,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
               </span>
             </button>
 
-            {/* Forgot Password - Show for both email and phone */}
+            {/* Forgot Password */}
             <div className="text-center">
               <button
                 className={`text-red-500 hover:text-red-600 font-medium disabled:opacity-50 ${isCompact ? 'text-sm' : 'text-base'}`}

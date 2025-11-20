@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import LanguageSelector from './LanguageSelector';
 import TranslatedText from './TranslatedText';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
 
 interface Language {
@@ -14,8 +15,7 @@ interface MainLoginScreenProps {
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
   onContinueWithEmail: () => void;
-  onContinueWithPhone: () => void;
-  onGoogleSignIn: () => Promise<{ error?: string }>;
+  onContinueWithPhone: () => void; // Add this prop
   isCompact?: boolean;
   onExpand?: () => void;
   showHeader?: boolean;
@@ -25,12 +25,12 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
   selectedLanguage, 
   setSelectedLanguage, 
   onContinueWithEmail,
-  onContinueWithPhone,
-  onGoogleSignIn,
+  onContinueWithPhone, // Add this prop
   isCompact = false,
   onExpand,
   showHeader = true
 }) => {
+  const { googleSignIn } = useAuth();
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isFacebookLoading, setIsFacebookLoading] = useState(false);
   const [isEmailLoading, setIsEmailLoading] = useState(false);
@@ -56,7 +56,7 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
       setIsGoogleLoading(true);
       console.log('🔄 Initiating server-controlled Google OAuth...');
 
-      const result = await onGoogleSignIn();
+      const result = await googleSignIn();
 
       if (result.error) {
         console.error('Google OAuth error:', result.error);
@@ -122,7 +122,7 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
 
       // Simulate a small delay for better UX
       await new Promise(resolve => setTimeout(resolve, 500));
-      onContinueWithPhone();
+      onContinueWithPhone(); // Use the prop instead of toast
       // Note: We don't reset loading state here because the component will unmount
 
     } catch (error) {
@@ -137,11 +137,7 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
       {/* Header section - optional */}
       {showHeader && !isCompact && (
         <div className="pt-4 pb-4 flex items-center justify-between">
-          <LanguageSelector 
-            selectedLanguage={selectedLanguage} 
-            setSelectedLanguage={setSelectedLanguage} 
-            languages={languages}
-          />
+          <LanguageSelector selectedLanguage={selectedLanguage} setSelectedLanguage={setSelectedLanguage} />
           <div className="flex items-center">
             <img 
               src={`https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/6.6.6/flags/4x3/${currentLang?.country.toLowerCase()}.svg`}
