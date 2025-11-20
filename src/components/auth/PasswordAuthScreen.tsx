@@ -21,7 +21,7 @@ const parsePhoneNumber = (phone: string) => {
   let countryCode = '+1';
   let nationalNumber = phone;
   
-  // Extract country code if present (simple detection)
+  // Extract country code if present
   if (phone.startsWith('+')) {
     const plusIndex = phone.indexOf('+');
     const spaceIndex = phone.indexOf(' ');
@@ -29,10 +29,37 @@ const parsePhoneNumber = (phone: string) => {
       countryCode = phone.substring(plusIndex, spaceIndex);
       nationalNumber = phone.substring(spaceIndex + 1);
     } else {
-      // Handle cases like +1234567890 - assume US/Canada
+      // Handle cases without space
       if (phone.startsWith('+1') && phone.length >= 11) {
         countryCode = '+1';
         nationalNumber = phone.substring(2);
+      } else if (phone.startsWith('+44') && phone.length >= 12) {
+        countryCode = '+44';
+        nationalNumber = phone.substring(3);
+      } else if (phone.startsWith('+91') && phone.length >= 12) {
+        countryCode = '+91';
+        nationalNumber = phone.substring(3);
+      } else if (phone.startsWith('+86') && phone.length >= 12) {
+        countryCode = '+86';
+        nationalNumber = phone.substring(3);
+      } else if (phone.startsWith('+81') && phone.length >= 12) {
+        countryCode = '+81';
+        nationalNumber = phone.substring(3);
+      } else if (phone.startsWith('+49') && phone.length >= 12) {
+        countryCode = '+49';
+        nationalNumber = phone.substring(3);
+      } else if (phone.startsWith('+33') && phone.length >= 12) {
+        countryCode = '+33';
+        nationalNumber = phone.substring(3);
+      } else if (phone.startsWith('+61') && phone.length >= 12) {
+        countryCode = '+61';
+        nationalNumber = phone.substring(3);
+      } else if (phone.startsWith('+55') && phone.length >= 12) {
+        countryCode = '+55';
+        nationalNumber = phone.substring(3);
+      } else if (phone.startsWith('+34') && phone.length >= 12) {
+        countryCode = '+34';
+        nationalNumber = phone.substring(3);
       }
     }
   }
@@ -47,12 +74,9 @@ const parsePhoneNumber = (phone: string) => {
       '+81': '🇯🇵', // Japan
       '+49': '🇩🇪', // Germany
       '+33': '🇫🇷', // France
-      '+39': '🇮🇹', // Italy
-      '+34': '🇪🇸', // Spain
-      '+55': '🇧🇷', // Brazil
-      '+52': '🇲🇽', // Mexico
       '+61': '🇦🇺', // Australia
-      '+64': '🇳🇿', // New Zealand
+      '+55': '🇧🇷', // Brazil
+      '+34': '🇪🇸', // Spain
       '+27': '🇿🇦', // South Africa
       '+82': '🇰🇷', // South Korea
       '+7': '🇷🇺',  // Russia
@@ -62,19 +86,31 @@ const parsePhoneNumber = (phone: string) => {
   };
   
   // Format national number for display
-  const formatNationalNumber = (number: string) => {
-    // Simple formatting for US numbers
-    if (countryCode === '+1' && number.length === 10) {
-      return `(${number.substring(0, 3)}) ${number.substring(3, 6)}-${number.substring(6)}`;
+  const formatNationalNumber = (number: string, countryCode: string) => {
+    // Remove any non-digit characters
+    const digits = number.replace(/\D/g, '');
+    
+    // Simple formatting based on country code
+    if (countryCode === '+1' && digits.length === 10) {
+      return `(${digits.substring(0, 3)}) ${digits.substring(3, 6)}-${digits.substring(6)}`;
+    } else if (countryCode === '+44' && digits.length >= 7) {
+      return `${digits.substring(0, 4)} ${digits.substring(4, 7)} ${digits.substring(7)}`;
+    } else if (countryCode === '+91' && digits.length === 10) {
+      return `${digits.substring(0, 5)} ${digits.substring(5)}`;
     }
-    return number;
+    
+    // Default formatting
+    return digits;
   };
+  
+  const formattedNational = formatNationalNumber(nationalNumber, countryCode);
   
   return {
     countryCode,
-    nationalNumber: formatNationalNumber(nationalNumber),
+    nationalNumber: formattedNational,
     flagEmoji: getFlagEmoji(countryCode),
-    fullDisplay: `${countryCode} ${formatNationalNumber(nationalNumber)}`
+    fullDisplay: `${countryCode} ${formattedNational}`,
+    rawNationalNumber: nationalNumber.replace(/\D/g, '')
   };
 };
 
@@ -245,8 +281,10 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
                         e.currentTarget.style.display = 'none';
                       }}
                     />
-                  ) : displayInfo.type === 'phone' ? (
-                    <span className="text-lg leading-none">{displayInfo.phoneInfo?.flagEmoji}</span>
+                  ) : displayInfo.type === 'phone' && displayInfo.phoneInfo ? (
+                    <span className="text-lg leading-none" style={{ fontSize: '18px' }}>
+                      {displayInfo.phoneInfo.flagEmoji}
+                    </span>
                   ) : (
                     displayInfo.icon
                   )}
@@ -256,7 +294,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
                     {displayInfo.displayText}
                   </span>
                   {displayInfo.type === 'phone' && displayInfo.phoneInfo && (
-                    <div className="flex items-center gap-1 mt-1">
+                    <div className="flex items-center gap-2 mt-1">
                       <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
                         {displayInfo.phoneInfo.countryCode}
                       </span>
