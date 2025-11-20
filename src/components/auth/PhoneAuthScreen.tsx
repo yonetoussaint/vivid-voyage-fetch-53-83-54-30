@@ -254,26 +254,28 @@ const usePhoneValidation = (initialPhone = '') => {
   }, [countryCode]);
 
   // Debounced function to check phone existence
-  const debouncedPhoneCheck = useCallback((phoneToCheck: string) => {
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
+  // Debounced function to check phone existence
+const debouncedPhoneCheck = useCallback((phoneToCheck: string) => {
+  if (debounceTimeoutRef.current) {
+    clearTimeout(debounceTimeoutRef.current);
+  }
 
-    debounceTimeoutRef.current = setTimeout(async () => {
-      if (validatePhone(phoneToCheck) && phoneToCheck !== lastCheckedPhone) {
-        setPhoneCheckState('checking');
+  debounceTimeoutRef.current = setTimeout(async () => {
+    if (validatePhone(phoneToCheck) && phoneToCheck !== lastCheckedPhone) {
+      setPhoneCheckState('checking');
 
-        try {
-          const exists = await checkPhoneExists(phoneToCheck);
-          setPhoneCheckState(exists ? 'exists' : 'not-exists');
-          setLastCheckedPhone(phoneToCheck);
-        } catch (error) {
-          setPhoneCheckState('error');
-          setLastCheckedPhone(phoneToCheck);
-        }
+      try {
+        // This will now always return true
+        const exists = await checkPhoneExists(phoneToCheck);
+        setPhoneCheckState(exists ? 'exists' : 'not-exists');
+        setLastCheckedPhone(phoneToCheck);
+      } catch (error) {
+        setPhoneCheckState('error');
+        setLastCheckedPhone(phoneToCheck);
       }
-    }, 800);
-  }, [lastCheckedPhone, validatePhone]);
+    }
+  }, 800);
+}, [lastCheckedPhone, validatePhone]);
 
   // Handle phone input changes
   const handlePhoneChange = useCallback((input: string) => {
