@@ -151,11 +151,11 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
       {/* Title and Subtitle for Compact Mode */}
       {isCompact && (
         <div className="text-center mb-6 pt-2">
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">
+          <h2 className="text-2xl font-bold text-gray-900">
             <TranslatedText>Welcome to Mima</TranslatedText>
           </h2>
           <p className="text-sm text-gray-600 leading-relaxed max-w-xs mx-auto">
-            <TranslatedText>Join Haiti's vibrant marketplace community. Connect with local sellers, discover unique products, and be part of something special.</TranslatedText>
+            <TranslatedText>Connect with local sellers, discover unique products, and be part of something special.</TranslatedText>
           </p>
         </div>
       )}
