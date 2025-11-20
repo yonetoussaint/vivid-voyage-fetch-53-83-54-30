@@ -116,7 +116,7 @@ const AuthOverlay: React.FC = () => {
     if (currentScreen === 'main') {
       return {
         ...baseProps,
-        showCloseButton: false,
+        showCloseButton: true,
         showHelpButton: true,
         showDragHandle: false // Hide drag bar only for main screen
       };
