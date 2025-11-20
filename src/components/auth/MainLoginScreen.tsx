@@ -15,6 +15,7 @@ interface MainLoginScreenProps {
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
   onContinueWithEmail: () => void;
+  onContinueWithPhone: () => void; // Add this prop
   isCompact?: boolean;
   onExpand?: () => void;
   showHeader?: boolean;
@@ -24,6 +25,7 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
   selectedLanguage, 
   setSelectedLanguage, 
   onContinueWithEmail,
+  onContinueWithPhone, // Add this prop
   isCompact = false,
   onExpand,
   showHeader = true
@@ -118,12 +120,10 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
       setIsPhoneLoading(true);
       console.log('Initiating Phone sign in...');
 
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // For now, show a message since phone auth requires additional setup
-      toast.info('Phone number sign in coming soon!');
-      setIsPhoneLoading(false);
+      // Simulate a small delay for better UX
+      await new Promise(resolve => setTimeout(resolve, 500));
+      onContinueWithPhone(); // Use the prop instead of toast
+      // Note: We don't reset loading state here because the component will unmount
 
     } catch (error) {
       console.error('Error initiating phone sign-in:', error);
