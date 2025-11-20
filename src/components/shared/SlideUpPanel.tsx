@@ -105,6 +105,12 @@ export default function SlideUpPanel({
 
   // Drag handlers inspired by React Native BottomSheet
   const handleDragStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    // Prevent drag if user is interacting with interactive elements
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('a') || target.closest('input') || target.closest('select')) {
+      return;
+    }
+    
     setIsDragging(true);
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
     setStartY(clientY);
@@ -254,7 +260,15 @@ export default function SlideUpPanel({
 
           {/* Header Controls - Only show if we have buttons or title */}
           {hasHeaderControls && (
-            <div className={`flex items-center justify-between px-4 pb-3 ${showDragHandle ? '' : 'pt-3'}`}>
+            <div 
+              className={`flex items-center justify-between px-4 pb-3 ${showDragHandle ? '' : 'pt-3'}`}
+              // Add drag capability to header area when no drag handle is present
+              {...(!showDragHandle && {
+                onMouseDown: handleDragStart,
+                onTouchStart: handleDragStart,
+                style: { cursor: 'grab' }
+              })}
+            >
               {/* Left side - Close button */}
               <div className="flex-1 flex justify-start">
                 {showCloseButton && (
@@ -303,13 +317,27 @@ export default function SlideUpPanel({
             WebkitOverflowScrolling: needsScrolling ? 'touch' : 'auto',
             scrollBehavior: 'smooth',
           }}
+          // Add drag capability to content area when no drag handle is present
+          {...(!showDragHandle && {
+            onMouseDown: handleDragStart,
+            onTouchStart: handleDragStart,
+            style: { cursor: 'grab' }
+          })}
         >
           {children}
         </div>
 
         {/* Sticky Footer Area */}
         {stickyFooter && (
-          <div className="flex-shrink-0 border-t border-gray-200 bg-white rounded-b-md">
+          <div 
+            className="flex-shrink-0 border-t border-gray-200 bg-white rounded-b-md"
+            // Add drag capability to footer area when no drag handle is present
+            {...(!showDragHandle && {
+              onMouseDown: handleDragStart,
+              onTouchStart: handleDragStart,
+              style: { cursor: 'grab' }
+            })}
+          >
             {stickyFooter}
           </div>
         )}
