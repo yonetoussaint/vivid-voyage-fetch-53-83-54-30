@@ -1,7 +1,5 @@
 import React, { useState, useRef } from 'react';
 import { ArrowLeft, Lock, Check, HelpCircle, Eye, EyeOff, Mail, Loader2 } from 'lucide-react';
-import { FAVICON_OVERRIDES } from '../../constants/email';
-import { useAuth } from '../../contexts/auth/AuthContext';
 import { toast } from 'sonner';
 
 interface PasswordAuthScreenProps {
@@ -12,7 +10,16 @@ interface PasswordAuthScreenProps {
   isCompact?: boolean;
   onExpand?: () => void;
   showHeader?: boolean;
+  onLogin: (email: string, password: string) => Promise<{ error?: string }>;
+  isLoading?: boolean;
 }
+
+// Inline favicon overrides
+const FAVICON_OVERRIDES: Record<string, string> = {
+  'gmail.com': 'https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico',
+  'outlook.com': 'https://outlook.live.com/favicon.ico',
+  'yahoo.com': 'https://s.yimg.com/cv/apiv2/social/images/yahoo_favicon.ico'
+};
 
 const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
   email,
@@ -21,9 +28,10 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
   onForgotPasswordClick,
   isCompact = false,
   onExpand,
-  showHeader = true
+  showHeader = true,
+  onLogin,
+  isLoading: externalLoading = false
 }) => {
-  const { login, isLoading: authLoading } = useAuth();
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isPasswordValid, setIsPasswordValid] = useState(false);
@@ -39,13 +47,13 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
   };
 
   const handleSignIn = async () => {
-    if (!password.trim() || isLoading || authLoading) return;
+    if (!password.trim() || isLoading || externalLoading) return;
 
     setIsLoading(true);
     setError('');
 
     try {
-      const { error: loginError } = await login(email.trim().toLowerCase(), password);
+      const { error: loginError } = await onLogin(email.trim().toLowerCase(), password);
 
       if (loginError) {
         setError(loginError);
@@ -69,6 +77,8 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
   const domain = email.split('@')[1] || '';
   const faviconUrl = FAVICON_OVERRIDES[domain] || `https://www.google.com/s2/favicons?domain=${domain}`;
 
+  const isButtonLoading = isLoading || externalLoading;
+
   return (
     <div className={isCompact ? "px-4 pb-4" : "min-h-screen bg-white flex flex-col px-4"}>
       {/* Header */}
@@ -76,7 +86,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
         <div className="pt-4 pb-4 flex items-center justify-between">
           <button
             onClick={onBack}
-            disabled={isLoading || authLoading}
+            disabled={isButtonLoading}
             className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-full transition-colors active:scale-95 disabled:opacity-50"
             aria-label="Go back"
           >
@@ -92,7 +102,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
             aria-label="Help"
             onClick={() => alert('Need help? Contact support@example.com')}
             type="button"
-            disabled={isLoading || authLoading}
+            disabled={isButtonLoading}
           >
             <HelpCircle className="w-5 h-5 text-gray-700" />
           </button>
@@ -147,7 +157,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
               </div>
               <button
                 onClick={onBack}
-                disabled={isLoading || authLoading}
+                disabled={isButtonLoading}
                 className={`text-red-500 hover:text-red-600 font-medium ${isCompact ? 'text-xs' : 'text-sm'} disabled:opacity-50`}
                 type="button"
               >
@@ -173,12 +183,12 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
                 value={password}
                 onChange={(e) => handlePasswordChange(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && isPasswordValid && !isLoading) handleSignIn();
+                  if (e.key === 'Enter' && isPasswordValid && !isButtonLoading) handleSignIn();
                 }}
                 placeholder="Password"
                 autoComplete="current-password"
                 ref={passwordInputRef}
-                disabled={isLoading || authLoading}
+                disabled={isButtonLoading}
                 className={`relative w-full pl-10 ${
                   isPasswordValid && !error ? 'pr-16' : 'pr-10'
                 } py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors bg-white disabled:bg-gray-50 disabled:cursor-not-allowed ${
@@ -188,7 +198,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                disabled={isLoading || authLoading}
+                disabled={isButtonLoading}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:opacity-50"
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
@@ -201,22 +211,22 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
 
             {/* Sign In Button */}
             <button
-              disabled={!isPasswordValid || isLoading || authLoading}
+              disabled={!isPasswordValid || isButtonLoading}
               onClick={handleSignIn}
               className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg transition-colors ${
-                isPasswordValid && !isLoading && !authLoading
+                isPasswordValid && !isButtonLoading
                   ? 'bg-red-500 text-white hover:bg-red-600 border-red-500'
                   : 'bg-gray-100 text-gray-400 cursor-not-allowed'
               } ${isCompact ? 'shadow-sm' : ''}`}
               type="button"
             >
-              {isLoading || authLoading ? (
+              {isButtonLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <Lock className="w-5 h-5" />
               )}
               <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>
-                {isLoading || authLoading ? 'Signing In...' : 'Sign In'}
+                {isButtonLoading ? 'Signing In...' : 'Sign In'}
               </span>
             </button>
 
@@ -226,7 +236,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
                 className={`text-red-500 hover:text-red-600 font-medium disabled:opacity-50 ${isCompact ? 'text-sm' : 'text-base'}`}
                 type="button"
                 onClick={onForgotPasswordClick}
-                disabled={isLoading || authLoading}
+                disabled={isButtonLoading}
               >
                 Forgot password?
               </button>
