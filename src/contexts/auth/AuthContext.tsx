@@ -5,7 +5,7 @@ import type { User as SupabaseUser } from '@supabase/supabase-js';
 interface User {
   id: string;
   email: string;
-  phone?: string; // Add phone field
+  phone?: string;
   full_name?: string;
   profile_picture?: string;
 }
@@ -26,12 +26,9 @@ interface AuthContextType {
 
   // OTP Functions
   sendCustomOTPEmail: (email: string) => Promise<{ success: boolean; error?: string }>;
-  sendCustomOTPPhone: (phone: string) => Promise<{ success: boolean; error?: string }>; // Add phone OTP
   sendPasswordResetOTP: (email: string) => Promise<{ success: boolean; error?: string }>;
   verifyCustomOTP: (email: string, otp: string) => Promise<{ success: boolean; error?: string; user?: any; purpose?: string }>;
-  verifyPhoneOTP: (phone: string, otp: string) => Promise<{ success: boolean; error?: string; user?: any; purpose?: string }>; // Add phone OTP verification
   resendOTPEmail: (email: string, purpose?: string) => Promise<{ success: boolean; error?: string }>;
-  resendOTPPhone: (phone: string, purpose?: string) => Promise<{ success: boolean; error?: string }>; // Add phone OTP resend
   completePasswordReset: (email: string, otp: string, newPassword: string) => Promise<{ success: boolean; error?: string; message?: string }>;
 
   // Google OAuth Function
@@ -46,8 +43,8 @@ interface AuthContextType {
   setSelectedLanguage: (lang: string) => void;
   userEmail: string;
   setUserEmail: (email: string) => void;
-  userPhone: string; // Add phone state
-  setUserPhone: (phone: string) => void; // Add phone setter
+  userPhone: string;
+  setUserPhone: (phone: string) => void;
   resetOTP: string;
   setResetOTP: (otp: string) => void;
 
@@ -72,7 +69,7 @@ interface AuthContextType {
 
   // Auth overlay handlers
   handleContinueWithEmail: () => void;
-  handleContinueWithPhone: () => void; // Add phone handler
+  handleContinueWithPhone: () => void;
   handleBackToMain: () => void;
   handleContinueWithPassword: (email: string) => void;
   handleContinueWithCode: (email: string) => void;
@@ -83,7 +80,7 @@ interface AuthContextType {
   handleAccountCreated: () => void;
   handleBackFromAccountCreation: () => void;
   handleChangeEmail: () => void;
-  handleChangePhone: () => void; // Add phone change handler
+  handleChangePhone: () => void;
   handleBackFromVerification: () => void;
   handleBackFromPassword: () => void;
   handleVerificationSuccess: () => void;
@@ -99,7 +96,6 @@ interface AuthContextType {
   isPasswordFormValid: boolean;
   validateName: (name: string, fieldName: string, options?: any) => string;
   validatePassword: (pwd: string) => string | null;
-  validatePhone: (phone: string) => string | null; // Add phone validation
 
   // Reset auth overlay
   resetAuthOverlay: () => void;
@@ -134,7 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentScreen, setCurrentScreen] = useState<ScreenType>('main');
   const [selectedLanguage, setSelectedLanguage] = useState('en');
   const [userEmail, setUserEmail] = useState('');
-  const [userPhone, setUserPhone] = useState(''); // Add phone state
+  const [userPhone, setUserPhone] = useState('');
   const [resetOTP, setResetOTP] = useState('');
 
   // Account creation state
@@ -153,24 +149,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Backend URL - using your Render.com server
   const BACKEND_URL = 'https://resend-u11p.onrender.com';
-
-  // Phone validation function
-  const validatePhone = useCallback((phone: string): string | null => {
-    const phoneRegex = /^\+?[1-9]\d{1,14}$/; // E.164 format
-    if (!phone.trim()) {
-      return 'Phone number is required';
-    }
-    if (!phoneRegex.test(phone.replace(/\s/g, ''))) {
-      return 'Please enter a valid phone number with country code';
-    }
-    if (phone.length < 10) {
-      return 'Phone number is too short';
-    }
-    if (phone.length > 16) {
-      return 'Phone number is too long';
-    }
-    return null;
-  }, []);
 
   // Google OAuth Function
   const googleSignIn = async () => {
@@ -243,65 +221,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: true };
     } catch (error: any) {
       console.error('💥 Failed to send sign-in OTP:', error);
-
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        return { 
-          success: false, 
-          error: 'Cannot connect to server. Please check your internet connection and try again.' 
-        };
-      }
-
-      if (error.message.includes('Failed to fetch')) {
-        return { 
-          success: false, 
-          error: 'Server is not responding. Please try again in a few moments.' 
-        };
-      }
-
-      return { 
-        success: false, 
-        error: error.message || 'Failed to send verification code. Please try again.' 
-      };
-    }
-  };
-
-  // Add phone OTP function
-  const sendCustomOTPPhone = async (phone: string) => {
-    try {
-      console.log('🔄 Sending sign-in OTP to phone:', phone);
-      console.log('🌐 Backend URL:', BACKEND_URL);
-
-      const response = await fetch(`${BACKEND_URL}/api/send-phone-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ phone }),
-      });
-
-      console.log('📊 Response status:', response.status);
-      console.log('📊 Response ok:', response.ok);
-
-      if (!response.ok) {
-        let errorMessage = `Server error: ${response.status}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-        } catch (e) {
-          const errorText = await response.text();
-          errorMessage = errorText || errorMessage;
-        }
-
-        console.error('❌ Server error response:', errorMessage);
-        throw new Error(errorMessage);
-      }
-
-      const result = await response.json();
-      console.log('✅ Phone OTP sent successfully:', result);
-
-      return { success: true };
-    } catch (error: any) {
-      console.error('💥 Failed to send phone OTP:', error);
 
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
         return { 
@@ -449,66 +368,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Add phone OTP verification
-  const verifyPhoneOTP = async (phone: string, otp: string) => {
-    try {
-      console.log('🔄 Verifying phone OTP for:', phone);
-
-      const response = await fetch(`${BACKEND_URL}/api/verify-phone-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ phone, otp }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Invalid verification code');
-      }
-
-      console.log(`✅ Phone OTP verified successfully, purpose: ${result.purpose}`);
-
-      if (result.purpose === 'signin' && result.session) {
-        console.log('✅ Setting Supabase session for phone sign-in...');
-        const { error: sessionError } = await supabase.auth.setSession({
-          access_token: result.session.access_token,
-          refresh_token: result.session.refresh_token,
-        });
-
-        if (sessionError) {
-          console.error('❌ Error setting session:', sessionError);
-          throw sessionError;
-        }
-
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        if (!currentSession) {
-          console.error('❌ Session not set properly after verification');
-          throw new Error('Failed to establish secure session');
-        }
-
-        console.log('✅ Phone session set successfully, user authenticated');
-        const userData = mapSupabaseUser(result.user);
-        setUser(userData);
-        setIsAuthenticated(true);
-      }
-
-      return { 
-        success: true, 
-        user: result.user,
-        purpose: result.purpose,
-        message: result.message 
-      };
-    } catch (error: any) {
-      console.error('❌ Failed to verify phone OTP:', error);
-      return { 
-        success: false, 
-        error: error.message || 'Invalid verification code' 
-      };
-    }
-  };
-
   const completePasswordReset = async (email: string, otp: string, newPassword: string) => {
     try {
       console.log('🔄 Completing password reset for:', email);
@@ -593,35 +452,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: true };
     } catch (error: any) {
       console.error('Failed to resend OTP:', error);
-      return { 
-        success: false, 
-        error: error.message || 'Failed to resend verification code' 
-      };
-    }
-  };
-
-  // Add phone OTP resend
-  const resendOTPPhone = async (phone: string, purpose = 'signin') => {
-    try {
-      console.log(`🔄 Resending ${purpose} OTP to phone:`, phone);
-
-      const response = await fetch(`${BACKEND_URL}/api/resend-phone-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ phone, purpose }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to resend verification code');
-      }
-
-      return { success: true };
-    } catch (error: any) {
-      console.error('Failed to resend phone OTP:', error);
       return { 
         success: false, 
         error: error.message || 'Failed to resend verification code' 
@@ -744,7 +574,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (isAuthOverlayOpen) {
       setCurrentScreen('main');
       setUserEmail('');
-      setUserPhone(''); // Reset phone
+      setUserPhone('');
       setResetOTP('');
     }
   }, [isAuthOverlayOpen]);
@@ -754,7 +584,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return {
       id: supabaseUser.id,
       email: supabaseUser.email || '',
-      phone: supabaseUser.phone || '', // Add phone mapping
+      phone: supabaseUser.phone || '',
       full_name: supabaseUser.user_metadata?.full_name,
       profile_picture: supabaseUser.user_metadata?.profile_picture,
     };
@@ -1014,7 +844,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Auth overlay handlers
   const handleContinueWithEmail = () => setCurrentScreen('email');
-  const handleContinueWithPhone = () => setCurrentScreen('phone'); // Add phone handler
+  const handleContinueWithPhone = () => setCurrentScreen('phone');
   const handleBackToMain = () => setCurrentScreen('main');
 
   const handleContinueWithPassword = (email: string) => {
@@ -1165,7 +995,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setShowPassword(false);
     setShowConfirmPassword(false);
     setUserEmail('');
-    setUserPhone(''); // Reset phone
+    setUserPhone('');
     setResetOTP('');
   };
 
@@ -1181,14 +1011,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toggleFollowSeller,
     followedSellers,
 
-    // OTP Functions - ALL INCLUDED
+    // OTP Functions
     sendCustomOTPEmail,
-    sendCustomOTPPhone, // Add phone OTP
     sendPasswordResetOTP,
     verifyCustomOTP,
-    verifyPhoneOTP, // Add phone OTP verification
     resendOTPEmail,
-    resendOTPPhone, // Add phone OTP resend
     completePasswordReset,
 
     // Google OAuth Function
@@ -1203,8 +1030,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSelectedLanguage,
     userEmail,
     setUserEmail,
-    userPhone, // Add phone state
-    setUserPhone, // Add phone setter
+    userPhone,
+    setUserPhone,
     resetOTP,
     setResetOTP,
 
@@ -1229,7 +1056,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Auth overlay handlers
     handleContinueWithEmail,
-    handleContinueWithPhone, // Add phone handler
+    handleContinueWithPhone,
     handleBackToMain,
     handleContinueWithPassword,
     handleContinueWithCode,
@@ -1240,7 +1067,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     handleAccountCreated,
     handleBackFromAccountCreation,
     handleChangeEmail,
-    handleChangePhone, // Add phone change handler
+    handleChangePhone,
     handleBackFromVerification,
     handleBackFromPassword,
     handleVerificationSuccess,
@@ -1257,7 +1084,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isPasswordFormValid: isPasswordFormValid(),
     validateName,
     validatePassword,
-    validatePhone, // Add phone validation
 
     // Reset method
     resetAuthOverlay,
