@@ -43,6 +43,9 @@ export default function SlideUpPanel({
   const [startY, setStartY] = useState(0);
   const [currentTranslate, setCurrentTranslate] = useState(0);
 
+  // Check if header controls are present (icons or title)
+  const hasHeaderControls = showCloseButton || showHelpButton || title || headerContent;
+
   // Improved height calculation with ResizeObserver
   useEffect(() => {
     if (isOpen && contentRef.current) {
@@ -217,9 +220,6 @@ export default function SlideUpPanel({
   // Calculate opacity for backdrop based on drag
   const backdropOpacity = Math.max(0, 0.5 - (currentTranslate / (window.innerHeight * 0.8)));
 
-  // Check if we should show header controls (buttons or title)
-  const showHeaderControls = showCloseButton || showHelpButton || title || headerContent;
-
   return (
     <>
       {/* Dynamic Backdrop */}
@@ -235,12 +235,12 @@ export default function SlideUpPanel({
       {/* Panel with integrated header and drag handle */}
       <div
         ref={panelRef}
-        className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 rounded-t-2xl shadow-lg z-[70] flex flex-col"
+        className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 rounded-t-md shadow-lg z-[70] flex flex-col"
         style={panelStyle}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Combined Header Area with Drag Handle and Controls */}
-        <div className="flex-shrink-0 bg-white rounded-t-2xl">
+        <div className="flex-shrink-0 bg-white rounded-t-md">
           {/* Drag Handle - Always at the very top */}
           {showDragHandle && (
             <div 
@@ -253,8 +253,8 @@ export default function SlideUpPanel({
           )}
 
           {/* Header Controls - Only show if we have buttons or title */}
-          {showHeaderControls && (
-            <div className="flex items-center justify-between px-4 pb-3">
+          {hasHeaderControls && (
+            <div className={`flex items-center justify-between px-4 pb-3 ${showDragHandle ? '' : 'pt-3'}`}>
               {/* Left side - Close button */}
               <div className="flex-1 flex justify-start">
                 {showCloseButton && (
@@ -309,7 +309,7 @@ export default function SlideUpPanel({
 
         {/* Sticky Footer Area */}
         {stickyFooter && (
-          <div className="flex-shrink-0 border-t border-gray-200 bg-white rounded-b-2xl">
+          <div className="flex-shrink-0 border-t border-gray-200 bg-white rounded-b-md">
             {stickyFooter}
           </div>
         )}
