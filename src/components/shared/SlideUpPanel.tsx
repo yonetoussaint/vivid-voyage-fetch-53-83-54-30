@@ -217,6 +217,9 @@ export default function SlideUpPanel({
   // Calculate opacity for backdrop based on drag
   const backdropOpacity = Math.max(0, 0.5 - (currentTranslate / (window.innerHeight * 0.8)));
 
+  // Check if we should show header controls (buttons or title)
+  const showHeaderControls = showCloseButton || showHelpButton || title || headerContent;
+
   return (
     <>
       {/* Dynamic Backdrop */}
@@ -229,67 +232,68 @@ export default function SlideUpPanel({
         onClick={onClose}
       />
 
-      {/* Panel with optional drag handle */}
+      {/* Panel with integrated header and drag handle */}
       <div
         ref={panelRef}
-        className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 rounded-t-md shadow-lg z-[70] flex flex-col"
+        className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 rounded-t-2xl shadow-lg z-[70] flex flex-col"
         style={panelStyle}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Optional Drag Handle at the Top */}
-        {showDragHandle && (
-          <div 
-            className="flex-shrink-0 cursor-grab active:cursor-grabbing touch-none"
-            onMouseDown={handleDragStart}
-            onTouchStart={handleDragStart}
-          >
-            <div className="flex justify-center pt-3 pb-2">
+        {/* Combined Header Area with Drag Handle and Controls */}
+        <div className="flex-shrink-0 bg-white rounded-t-2xl">
+          {/* Drag Handle - Always at the very top */}
+          {showDragHandle && (
+            <div 
+              className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing touch-none"
+              onMouseDown={handleDragStart}
+              onTouchStart={handleDragStart}
+            >
               <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Sticky Header with X button on left and help icon on right */}
-        {(title || headerContent || showCloseButton || showHelpButton) && (
-          <div className="flex-shrink-0 bg-white z-10 flex items-center justify-between px-4 py-3 border-b border-gray-100">
-            {/* Left side - Close button */}
-            <div className="flex-1 flex justify-start">
-              {showCloseButton && (
-                <button
-                  onClick={onClose}
-                  className="p-1 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
-                >
-                  <X className="h-5 w-5 text-gray-600" />
-                </button>
-              )}
-            </div>
+          {/* Header Controls - Only show if we have buttons or title */}
+          {showHeaderControls && (
+            <div className="flex items-center justify-between px-4 pb-3">
+              {/* Left side - Close button */}
+              <div className="flex-1 flex justify-start">
+                {showCloseButton && (
+                  <button
+                    onClick={onClose}
+                    className="p-1 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+                  >
+                    <X className="h-5 w-5 text-gray-600" />
+                  </button>
+                )}
+              </div>
 
-            {/* Center - Title or header content */}
-            <div className="flex-1 flex justify-center min-w-0">
-              {headerContent ? (
-                headerContent
-              ) : (
-                title && (
-                  <h3 className="font-medium text-gray-900 truncate px-2">
-                    {title}
-                  </h3>
-                )
-              )}
-            </div>
+              {/* Center - Title or header content */}
+              <div className="flex-1 flex justify-center min-w-0">
+                {headerContent ? (
+                  headerContent
+                ) : (
+                  title && (
+                    <h3 className="font-medium text-gray-900 truncate px-2">
+                      {title}
+                    </h3>
+                  )
+                )}
+              </div>
 
-            {/* Right side - Help button */}
-            <div className="flex-1 flex justify-end">
-              {showHelpButton && (
-                <button
-                  onClick={onHelpClick}
-                  className="p-1 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
-                >
-                  <HelpCircle className="h-5 w-5 text-gray-600" />
-                </button>
-              )}
+              {/* Right side - Help button */}
+              <div className="flex-1 flex justify-end">
+                {showHelpButton && (
+                  <button
+                    onClick={onHelpClick}
+                    className="p-1 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+                  >
+                    <HelpCircle className="h-5 w-5 text-gray-600" />
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Content Area - Handle scrolling based on dynamicHeight prop */}
         <div 
@@ -303,7 +307,7 @@ export default function SlideUpPanel({
           {children}
         </div>
 
-        {/* Sticky Footer Area - No drag handle here */}
+        {/* Sticky Footer Area */}
         {stickyFooter && (
           <div className="flex-shrink-0 border-t border-gray-200 bg-white rounded-b-2xl">
             {stickyFooter}
