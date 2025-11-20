@@ -15,6 +15,69 @@ interface PasswordAuthScreenProps {
   showHeader?: boolean;
 }
 
+// Helper function to parse phone number and get country info
+const parsePhoneNumber = (phone: string) => {
+  // Default to US if no country code detected
+  let countryCode = '+1';
+  let nationalNumber = phone;
+  
+  // Extract country code if present (simple detection)
+  if (phone.startsWith('+')) {
+    const plusIndex = phone.indexOf('+');
+    const spaceIndex = phone.indexOf(' ');
+    if (spaceIndex > -1) {
+      countryCode = phone.substring(plusIndex, spaceIndex);
+      nationalNumber = phone.substring(spaceIndex + 1);
+    } else {
+      // Handle cases like +1234567890 - assume US/Canada
+      if (phone.startsWith('+1') && phone.length >= 11) {
+        countryCode = '+1';
+        nationalNumber = phone.substring(2);
+      }
+    }
+  }
+  
+  // Get country flag emoji based on country code
+  const getFlagEmoji = (countryCode: string) => {
+    const flagMap: { [key: string]: string } = {
+      '+1': '🇺🇸', // USA/Canada
+      '+44': '🇬🇧', // UK
+      '+91': '🇮🇳', // India
+      '+86': '🇨🇳', // China
+      '+81': '🇯🇵', // Japan
+      '+49': '🇩🇪', // Germany
+      '+33': '🇫🇷', // France
+      '+39': '🇮🇹', // Italy
+      '+34': '🇪🇸', // Spain
+      '+55': '🇧🇷', // Brazil
+      '+52': '🇲🇽', // Mexico
+      '+61': '🇦🇺', // Australia
+      '+64': '🇳🇿', // New Zealand
+      '+27': '🇿🇦', // South Africa
+      '+82': '🇰🇷', // South Korea
+      '+7': '🇷🇺',  // Russia
+    };
+    
+    return flagMap[countryCode] || '📱';
+  };
+  
+  // Format national number for display
+  const formatNationalNumber = (number: string) => {
+    // Simple formatting for US numbers
+    if (countryCode === '+1' && number.length === 10) {
+      return `(${number.substring(0, 3)}) ${number.substring(3, 6)}-${number.substring(6)}`;
+    }
+    return number;
+  };
+  
+  return {
+    countryCode,
+    nationalNumber: formatNationalNumber(nationalNumber),
+    flagEmoji: getFlagEmoji(countryCode),
+    fullDisplay: `${countryCode} ${formatNationalNumber(nationalNumber)}`
+  };
+};
+
 const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
   email,
   phone,
@@ -80,30 +143,31 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
     }
   };
 
-  // Determine if we're using email or phone
-  const isPhoneLogin = !!phone;
-  const identifier = email || phone || '';
-  
   // Get display info based on login type
   const getDisplayInfo = () => {
     if (email) {
       const domain = email.split('@')[1] || '';
       const faviconUrl = FAVICON_OVERRIDES[domain] || `https://www.google.com/s2/favicons?domain=${domain}`;
       return {
+        type: 'email' as const,
         icon: <Mail className="w-full h-full text-gray-400" />,
         faviconUrl,
         displayText: email,
         label: 'Email'
       };
     } else if (phone) {
+      const phoneInfo = parsePhoneNumber(phone);
       return {
+        type: 'phone' as const,
         icon: <Phone className="w-full h-full text-gray-400" />,
         faviconUrl: null,
-        displayText: phone,
-        label: 'Phone'
+        displayText: phoneInfo.fullDisplay,
+        label: 'Phone',
+        phoneInfo
       };
     }
     return {
+      type: 'email' as const,
       icon: <Mail className="w-full h-full text-gray-400" />,
       faviconUrl: null,
       displayText: '',
@@ -170,24 +234,38 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
           <div className={`p-4 bg-gray-50 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-6 h-6">
-                  {displayInfo.faviconUrl ? (
+                <div className="w-6 h-6 flex items-center justify-center">
+                  {displayInfo.type === 'email' && displayInfo.faviconUrl ? (
                     <img
                       src={displayInfo.faviconUrl}
-                      alt={`${displayInfo.label} provider favicon`}
+                      alt="Email provider favicon"
                       className="w-full h-full object-contain"
                       onError={(e) => {
                         e.currentTarget.onerror = null;
                         e.currentTarget.style.display = 'none';
                       }}
                     />
+                  ) : displayInfo.type === 'phone' ? (
+                    <span className="text-lg leading-none">{displayInfo.phoneInfo?.flagEmoji}</span>
                   ) : (
                     displayInfo.icon
                   )}
                 </div>
-                <span className={`text-gray-700 font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>
-                  {displayInfo.displayText}
-                </span>
+                <div className="flex flex-col">
+                  <span className={`text-gray-700 font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>
+                    {displayInfo.displayText}
+                  </span>
+                  {displayInfo.type === 'phone' && displayInfo.phoneInfo && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+                        {displayInfo.phoneInfo.countryCode}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {displayInfo.phoneInfo.nationalNumber}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
               <button
                 onClick={onBack}
