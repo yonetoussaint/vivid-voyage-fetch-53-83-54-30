@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { ArrowLeft, HelpCircle, Phone, AlertTriangle, Loader2, UserPlus, Lock, Key } from 'lucide-react';
-import { useAuth } from '../../contexts/auth/AuthContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
 
 // Inline type definitions
@@ -21,7 +21,6 @@ interface PhoneAuthScreenProps {
 
 // Phone validation constants
 const PHONE_REGEX = /^\+?[1-9]\d{1,14}$/; // E.164 format
-const US_PHONE_REGEX = /^\+1\d{10}$/;
 
 // Supported country codes
 const SUPPORTED_COUNTRIES = [
@@ -37,12 +36,181 @@ const SUPPORTED_COUNTRIES = [
   { code: '+34', name: 'Spain', flag: '🇪🇸' },
 ];
 
+// Backend URL - using your Render.com server
+const BACKEND_URL = 'https://resend-u11p.onrender.com';
+
+// Phone OTP functions
+const sendCustomOTPPhone = async (phone: string) => {
+  try {
+    console.log('🔄 Sending sign-in OTP to phone:', phone);
+    console.log('🌐 Backend URL:', BACKEND_URL);
+
+    const response = await fetch(`${BACKEND_URL}/api/send-phone-otp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ phone }),
+    });
+
+    console.log('📊 Response status:', response.status);
+    console.log('📊 Response ok:', response.ok);
+
+    if (!response.ok) {
+      let errorMessage = `Server error: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+      } catch (e) {
+        const errorText = await response.text();
+        errorMessage = errorText || errorMessage;
+      }
+
+      console.error('❌ Server error response:', errorMessage);
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log('✅ Phone OTP sent successfully:', result);
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('💥 Failed to send phone OTP:', error);
+
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      return { 
+        success: false, 
+        error: 'Cannot connect to server. Please check your internet connection and try again.' 
+      };
+    }
+
+    if (error.message.includes('Failed to fetch')) {
+      return { 
+        success: false, 
+        error: 'Server is not responding. Please try again in a few moments.' 
+      };
+    }
+
+    return { 
+      success: false, 
+      error: error.message || 'Failed to send verification code. Please try again.' 
+    };
+  }
+};
+
+const verifyPhoneOTP = async (phone: string, otp: string) => {
+  try {
+    console.log('🔄 Verifying phone OTP for:', phone);
+
+    const response = await fetch(`${BACKEND_URL}/api/verify-phone-otp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ phone, otp }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Invalid verification code');
+    }
+
+    console.log(`✅ Phone OTP verified successfully, purpose: ${result.purpose}`);
+
+    if (result.purpose === 'signin' && result.session) {
+      console.log('✅ Setting Supabase session for phone sign-in...');
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: result.session.access_token,
+        refresh_token: result.session.refresh_token,
+      });
+
+      if (sessionError) {
+        console.error('❌ Error setting session:', sessionError);
+        throw sessionError;
+      }
+
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (!currentSession) {
+        console.error('❌ Session not set properly after verification');
+        throw new Error('Failed to establish secure session');
+      }
+
+      console.log('✅ Phone session set successfully, user authenticated');
+    }
+
+    return { 
+      success: true, 
+      user: result.user,
+      purpose: result.purpose,
+      message: result.message 
+    };
+  } catch (error: any) {
+    console.error('❌ Failed to verify phone OTP:', error);
+    return { 
+      success: false, 
+      error: error.message || 'Invalid verification code' 
+    };
+  }
+};
+
+const resendOTPPhone = async (phone: string, purpose = 'signin') => {
+  try {
+    console.log(`🔄 Resending ${purpose} OTP to phone:`, phone);
+
+    const response = await fetch(`${BACKEND_URL}/api/resend-phone-otp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ phone, purpose }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to resend verification code');
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Failed to resend phone OTP:', error);
+    return { 
+      success: false, 
+      error: error.message || 'Failed to resend verification code' 
+    };
+  }
+};
+
+// Check if phone exists in database
+const checkPhoneExists = async (phoneToCheck: string): Promise<boolean> => {
+  try {
+    const response = await fetch('https://supabase-y8ak.onrender.com/api/check-phone', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ phone: phoneToCheck }),
+    });
+    const data = await response.json();
+
+    if (data.success) {
+      return data.exists;
+    } else {
+      throw new Error(data.message || 'Failed to check phone');
+    }
+  } catch (error) {
+    console.error('Error checking phone:', error);
+    throw error;
+  }
+};
+
 // Inline usePhoneValidation hook
 const usePhoneValidation = (initialPhone = '') => {
   // Core phone state
   const [phone, setPhone] = useState(initialPhone);
   const [countryCode, setCountryCode] = useState('+1');
-  const [phoneNumber, setPhoneNumber] = useState('');
   const [isPhoneValid, setIsPhoneValid] = useState(false);
   const [phoneCheckState, setPhoneCheckState] = useState<PhoneCheckState>('unchecked');
   const [lastCheckedPhone, setLastCheckedPhone] = useState('');
@@ -96,29 +264,6 @@ const usePhoneValidation = (initialPhone = '') => {
     return cleaned;
   }, [countryCode]);
 
-  // API call to check if phone exists in database
-  const checkPhoneExists = useCallback(async (phoneToCheck: string): Promise<boolean> => {
-    try {
-      const response = await fetch('https://supabase-y8ak.onrender.com/api/check-phone', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ phone: phoneToCheck }),
-      });
-      const data = await response.json();
-
-      if (data.success) {
-        return data.exists;
-      } else {
-        throw new Error(data.message || 'Failed to check phone');
-      }
-    } catch (error) {
-      console.error('Error checking phone:', error);
-      throw error;
-    }
-  }, []);
-
   // Debounced function to check phone existence
   const debouncedPhoneCheck = useCallback((phoneToCheck: string) => {
     if (debounceTimeoutRef.current) {
@@ -139,7 +284,7 @@ const usePhoneValidation = (initialPhone = '') => {
         }
       }
     }, 800);
-  }, [checkPhoneExists, lastCheckedPhone, validatePhone]);
+  }, [lastCheckedPhone, validatePhone]);
 
   // Handle phone input changes
   const handlePhoneChange = useCallback((input: string) => {
@@ -187,8 +332,6 @@ const usePhoneValidation = (initialPhone = '') => {
     setPhone: handlePhoneChange,
     countryCode,
     setCountryCode,
-    phoneNumber,
-    setPhoneNumber,
     isPhoneValid,
     phoneCheckState,
     isFromSupportedCountry: isSupportedCountry(phone),
@@ -211,7 +354,7 @@ const PhoneAuthScreen: React.FC<PhoneAuthScreenProps> = ({
   onExpand,
   showHeader = true,
 }) => {
-  const { sendCustomOTPPhone, isLoading: authLoading } = useAuth();
+  const { setUserPhone, isLoading: authLoading } = useAuth();
 
   const {
     phone,
@@ -236,6 +379,7 @@ const PhoneAuthScreen: React.FC<PhoneAuthScreenProps> = ({
     setIsPasswordLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 400));
+      setUserPhone(phone);
       onContinueWithPassword(phone);
     } finally {
       setIsPasswordLoading(false);
@@ -251,6 +395,7 @@ const PhoneAuthScreen: React.FC<PhoneAuthScreenProps> = ({
 
       if (result.success) {
         toast.success('Verification code sent to your phone');
+        setUserPhone(phone);
         onContinueWithCode(phone);
       } else {
         toast.error(result.error || 'Failed to send verification code');
@@ -267,6 +412,7 @@ const PhoneAuthScreen: React.FC<PhoneAuthScreenProps> = ({
     setIsCreateAccountLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 400));
+      setUserPhone(phone);
       onCreateAccount(phone);
     } finally {
       setIsCreateAccountLoading(false);
@@ -731,4 +877,6 @@ const PhoneAuthScreen: React.FC<PhoneAuthScreenProps> = ({
   );
 };
 
+// Export the OTP functions for use in other components
+export { sendCustomOTPPhone, verifyPhoneOTP, resendOTPPhone };
 export default PhoneAuthScreen;
