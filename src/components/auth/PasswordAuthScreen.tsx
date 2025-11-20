@@ -264,19 +264,17 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
               </span>
             </button>
 
-            {/* Forgot Password - Only show for email login */}
-            {!isPhoneLogin && (
-              <div className="text-center">
-                <button
-                  className={`text-red-500 hover:text-red-600 font-medium disabled:opacity-50 ${isCompact ? 'text-sm' : 'text-base'}`}
-                  type="button"
-                  onClick={onForgotPasswordClick}
-                  disabled={isLoading || authLoading}
-                >
-                  Forgot password?
-                </button>
-              </div>
-            )}
+            {/* Forgot Password - Show for both email and phone */}
+            <div className="text-center">
+              <button
+                className={`text-red-500 hover:text-red-600 font-medium disabled:opacity-50 ${isCompact ? 'text-sm' : 'text-base'}`}
+                type="button"
+                onClick={onForgotPasswordClick}
+                disabled={isLoading || authLoading}
+              >
+                Forgot password?
+              </button>
+            </div>
           </div>
         </div>
 
