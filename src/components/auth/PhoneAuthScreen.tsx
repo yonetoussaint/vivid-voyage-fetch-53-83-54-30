@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { ArrowLeft, HelpCircle, Phone, AlertTriangle, Loader2, UserPlus, Lock, Key } from 'lucide-react';
-import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
 
 // Inline type definitions
@@ -39,7 +38,7 @@ const SUPPORTED_COUNTRIES = [
 // Backend URL - using your Render.com server
 const BACKEND_URL = 'https://resend-u11p.onrender.com';
 
-// Phone OTP functions
+// Phone OTP functions - moved inside component file
 const sendCustomOTPPhone = async (phone: string) => {
   try {
     console.log('🔄 Sending sign-in OTP to phone:', phone);
@@ -98,104 +97,18 @@ const sendCustomOTPPhone = async (phone: string) => {
   }
 };
 
-const verifyPhoneOTP = async (phone: string, otp: string) => {
-  try {
-    console.log('🔄 Verifying phone OTP for:', phone);
-
-    const response = await fetch(`${BACKEND_URL}/api/verify-phone-otp`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ phone, otp }),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || 'Invalid verification code');
-    }
-
-    console.log(`✅ Phone OTP verified successfully, purpose: ${result.purpose}`);
-
-    if (result.purpose === 'signin' && result.session) {
-      console.log('✅ Setting Supabase session for phone sign-in...');
-      const { supabase } = await import('@/integrations/supabase/client');
-      const { error: sessionError } = await supabase.auth.setSession({
-        access_token: result.session.access_token,
-        refresh_token: result.session.refresh_token,
-      });
-
-      if (sessionError) {
-        console.error('❌ Error setting session:', sessionError);
-        throw sessionError;
-      }
-
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      if (!currentSession) {
-        console.error('❌ Session not set properly after verification');
-        throw new Error('Failed to establish secure session');
-      }
-
-      console.log('✅ Phone session set successfully, user authenticated');
-    }
-
-    return { 
-      success: true, 
-      user: result.user,
-      purpose: result.purpose,
-      message: result.message 
-    };
-  } catch (error: any) {
-    console.error('❌ Failed to verify phone OTP:', error);
-    return { 
-      success: false, 
-      error: error.message || 'Invalid verification code' 
-    };
-  }
-};
-
-const resendOTPPhone = async (phone: string, purpose = 'signin') => {
-  try {
-    console.log(`🔄 Resending ${purpose} OTP to phone:`, phone);
-
-    const response = await fetch(`${BACKEND_URL}/api/resend-phone-otp`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ phone, purpose }),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || 'Failed to resend verification code');
-    }
-
-    return { success: true };
-  } catch (error: any) {
-    console.error('Failed to resend phone OTP:', error);
-    return { 
-      success: false, 
-      error: error.message || 'Failed to resend verification code' 
-    };
-  }
-};
-
-// Check if phone exists in database
 // Check if phone exists in database - SIMULATED TO ALWAYS RETURN TRUE
 const checkPhoneExists = async (phoneToCheck: string): Promise<boolean> => {
   console.log('📱 Simulating phone check - all numbers exist:', phoneToCheck);
-  
+
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 500));
-  
+
   // Always return true - all phone numbers exist
   return true;
 };
 
-// Inline usePhoneValidation hook
+// Custom hook for phone validation - moved inside component file
 const usePhoneValidation = (initialPhone = '') => {
   // Core phone state
   const [phone, setPhone] = useState(initialPhone);
@@ -239,43 +152,42 @@ const usePhoneValidation = (initialPhone = '') => {
   const parsePhoneInput = useCallback((input: string): string => {
     // Remove all non-digit characters except +
     const cleaned = input.replace(/[^\d+]/g, '');
-    
+
     // If it starts with +, assume it's already in E.164 format
     if (cleaned.startsWith('+')) {
       return cleaned;
     }
-    
+
     // If it's just digits, prepend the current country code
     if (/^\d+$/.test(cleaned)) {
       return countryCode + cleaned;
     }
-    
+
     return cleaned;
   }, [countryCode]);
 
   // Debounced function to check phone existence
-  // Debounced function to check phone existence
-const debouncedPhoneCheck = useCallback((phoneToCheck: string) => {
-  if (debounceTimeoutRef.current) {
-    clearTimeout(debounceTimeoutRef.current);
-  }
-
-  debounceTimeoutRef.current = setTimeout(async () => {
-    if (validatePhone(phoneToCheck) && phoneToCheck !== lastCheckedPhone) {
-      setPhoneCheckState('checking');
-
-      try {
-        // This will now always return true
-        const exists = await checkPhoneExists(phoneToCheck);
-        setPhoneCheckState(exists ? 'exists' : 'not-exists');
-        setLastCheckedPhone(phoneToCheck);
-      } catch (error) {
-        setPhoneCheckState('error');
-        setLastCheckedPhone(phoneToCheck);
-      }
+  const debouncedPhoneCheck = useCallback((phoneToCheck: string) => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
     }
-  }, 800);
-}, [lastCheckedPhone, validatePhone]);
+
+    debounceTimeoutRef.current = setTimeout(async () => {
+      if (validatePhone(phoneToCheck) && phoneToCheck !== lastCheckedPhone) {
+        setPhoneCheckState('checking');
+
+        try {
+          // This will now always return true
+          const exists = await checkPhoneExists(phoneToCheck);
+          setPhoneCheckState(exists ? 'exists' : 'not-exists');
+          setLastCheckedPhone(phoneToCheck);
+        } catch (error) {
+          setPhoneCheckState('error');
+          setLastCheckedPhone(phoneToCheck);
+        }
+      }
+    }, 800);
+  }, [lastCheckedPhone, validatePhone]);
 
   // Handle phone input changes
   const handlePhoneChange = useCallback((input: string) => {
@@ -345,8 +257,6 @@ const PhoneAuthScreen: React.FC<PhoneAuthScreenProps> = ({
   onExpand,
   showHeader = true,
 }) => {
-  const { setUserPhone, isLoading: authLoading } = useAuth();
-
   const {
     phone,
     setPhone,
@@ -370,7 +280,7 @@ const PhoneAuthScreen: React.FC<PhoneAuthScreenProps> = ({
     setIsPasswordLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 400));
-      setUserPhone(phone);
+      // Directly call the prop with the phone number
       onContinueWithPassword(phone);
     } finally {
       setIsPasswordLoading(false);
@@ -386,7 +296,7 @@ const PhoneAuthScreen: React.FC<PhoneAuthScreenProps> = ({
 
       if (result.success) {
         toast.success('Verification code sent to your phone');
-        setUserPhone(phone);
+        // Directly call the prop with the phone number
         onContinueWithCode(phone);
       } else {
         toast.error(result.error || 'Failed to send verification code');
@@ -403,7 +313,7 @@ const PhoneAuthScreen: React.FC<PhoneAuthScreenProps> = ({
     setIsCreateAccountLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 400));
-      setUserPhone(phone);
+      // Directly call the prop with the phone number
       onCreateAccount(phone);
     } finally {
       setIsCreateAccountLoading(false);
@@ -411,7 +321,7 @@ const PhoneAuthScreen: React.FC<PhoneAuthScreenProps> = ({
   };
 
   // Calculate overall loading for other components
-  const isLoading = isPasswordLoading || isCodeLoading || isCreateAccountLoading || authLoading;
+  const isLoading = isPasswordLoading || isCodeLoading || isCreateAccountLoading;
 
   // PhoneActionButtons component logic
   const renderPhoneActionButtons = () => {
@@ -868,6 +778,4 @@ const PhoneAuthScreen: React.FC<PhoneAuthScreenProps> = ({
   );
 };
 
-// Export the OTP functions for use in other components
-export { sendCustomOTPPhone, verifyPhoneOTP, resendOTPPhone };
 export default PhoneAuthScreen;
