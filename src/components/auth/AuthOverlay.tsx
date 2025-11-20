@@ -321,15 +321,16 @@ const AuthOverlay: React.FC<AuthOverlayProps> = ({ isOpen, onClose }) => {
         case 'main':
           return (
             <React.Suspense fallback={<MainLoginScreenSkeletonCompact />}>
-              <MainLoginScreen
-                selectedLanguage={selectedLanguage}
-                setSelectedLanguage={setSelectedLanguage}
-                onContinueWithEmail={handleContinueWithEmail}
-                onContinueWithPhone={handleContinueWithPhone}
-                showHeader={false}
-                onGoogleSignIn={googleSignIn}
-                {...compactProps}
-              />
+              
+<MainLoginScreen
+  selectedLanguage={selectedLanguage}
+  setSelectedLanguage={setSelectedLanguage}
+  onContinueWithEmail={handleContinueWithEmail}
+  onContinueWithPhone={handleContinueWithPhone}
+  onGoogleSignIn={googleSignIn} // Pass the function from AuthContext
+  showHeader={false}
+  {...compactProps}
+/>
             </React.Suspense>
           );
 
