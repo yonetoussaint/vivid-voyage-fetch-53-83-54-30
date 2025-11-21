@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, HelpCircle, Lock, Eye, EyeOff, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAuth } from '../../contexts/auth/AuthContext';
 
 interface NewPasswordScreenProps {
   email: string;
@@ -28,9 +27,6 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
   const [error, setError] = useState('');
   const [serverStatus, setServerStatus] = useState<'checking' | 'online' | 'offline'>('checking');
 
-  // Use the AuthContext function
-  const { completePasswordReset } = useAuth();
-
   // Password validation criteria
   const hasMinLength = password.length >= 6;
   const hasMatch = password === confirmPassword && confirmPassword.length > 0;
@@ -39,21 +35,67 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
   const doPasswordsMatch = hasMatch;
   const canResetPassword = isPasswordValid && doPasswordsMatch && !isLoading;
 
+  // Password reset function
+  const completePasswordReset = async (email: string, otp: string, newPassword: string) => {
+    try {
+      const BACKEND_URL = 'https://resend-u11p.onrender.com';
+      const response = await fetch(`${BACKEND_URL}/api/complete-password-reset`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          email: email.toLowerCase().trim(), 
+          otp: otp.trim(),
+          newPassword 
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to reset password');
+      }
+
+      if (!result.success) {
+        throw new Error(result.error || 'Password reset failed');
+      }
+
+      return { 
+        success: true, 
+        message: result.message 
+      };
+    } catch (error: any) {
+      console.error('Failed to complete password reset:', error);
+      
+      let userFriendlyError = error.message;
+      
+      if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
+        userFriendlyError = 'Network error. Please check your internet connection and try again.';
+      } else if (error.message.includes('OTP') || error.message.includes('code')) {
+        userFriendlyError = 'Invalid or expired verification code. Please request a new password reset code.';
+      } else if (error.message.includes('User not found')) {
+        userFriendlyError = 'No account found with this email address. Please check your email and try again.';
+      }
+      
+      return { 
+        success: false, 
+        error: userFriendlyError 
+      };
+    }
+  };
+
   // Check server health on component mount
   useEffect(() => {
     const checkServerHealth = async () => {
       try {
-        console.log('🔍 Checking server health...');
         const response = await fetch('https://resend-u11p.onrender.com/health');
         if (response.ok) {
-          console.log('✅ Server is online');
           setServerStatus('online');
         } else {
-          console.warn('⚠️ Server health check failed');
           setServerStatus('offline');
         }
       } catch (error) {
-        console.error('❌ Cannot reach server:', error);
         setServerStatus('offline');
       }
     };
@@ -78,49 +120,24 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
     setError('');
 
     try {
-      console.log('🔄 Starting complete password reset process...');
-      console.log('📧 Email:', email);
-      console.log('🔑 OTP:', otp);
-      console.log('🔒 Password length:', password.length);
-      console.log('🌐 Server status:', serverStatus);
-      
       if (serverStatus === 'offline') {
         throw new Error('Server is currently unavailable. Please try again later.');
       }
 
-      // Use the AuthContext function
       const result = await completePasswordReset(email, otp, password);
 
       if (!result.success) {
-        console.error('❌ Password reset failed:', result.error);
-        
-        // Provide more specific error messages
-        let userFriendlyError = result.error || 'Failed to reset password. Please try again.';
-        
-        if (result.error?.includes('OTP')) {
-          userFriendlyError = 'Invalid or expired verification code. Please request a new code.';
-        } else if (result.error?.includes('User not found')) {
-          userFriendlyError = 'No account found with this email address.';
-        } else if (result.error?.includes('network') || result.error?.includes('fetch')) {
-          userFriendlyError = 'Network error. Please check your internet connection.';
-        }
-        
-        setError(userFriendlyError);
+        setError(result.error || 'Failed to reset password. Please try again.');
         return;
       }
 
-      console.log('✅ Password reset successful');
-      
-      // Show success message
       toast.success('Password reset successfully! You can now sign in with your new password.');
       
-      // Wait a moment before redirecting
       setTimeout(() => {
         onPasswordResetSuccess();
       }, 1500);
 
     } catch (error: any) {
-      console.error('💥 Unexpected error during password reset:', error);
       setError(error.message || 'An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
@@ -333,20 +350,6 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
           </svg>
           <span className="text-gray-500 text-sm">Your password is secure with us</span>
         </div>
-
-        {/* Debug Info (only show in development) */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-4 p-3 bg-gray-100 rounded-lg">
-            <p className="text-xs text-gray-600">
-              <strong>Debug Info:</strong><br />
-              Email: {email}<br />
-              OTP: {otp}<br />
-              Password Length: {password.length}<br />
-              Server: {serverStatus}<br />
-              Can Reset: {canResetPassword ? 'Yes' : 'No'}
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );
