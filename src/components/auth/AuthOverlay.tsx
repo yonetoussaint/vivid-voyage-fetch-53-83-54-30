@@ -75,6 +75,9 @@ const AuthOverlay: React.FC = () => {
     validatePassword
   } = useAuth();
 
+  // Add state for auth method
+  const [authMethod, setAuthMethod] = React.useState<'email' | 'phone'>('email');
+
   const getCompactProps = () => ({
     isCompact: true,
     onExpand: undefined
@@ -117,10 +120,19 @@ const AuthOverlay: React.FC = () => {
   };
 
   // Phone authentication handler
-  const handleContinueWithPhone = (phone: string) => {
-    console.log('Continue with phone:', phone);
-    // For now, navigate to verification screen with phone
-    // You'll need to implement proper phone verification flow
+  const handleContinueWithPhone = () => {
+    setAuthMethod('phone');
+    setCurrentScreen('email'); // Use the same screen but with phone mode
+  };
+
+  // Updated handlers to include method
+  const handleContinueWithPasswordWithMethod = (identifier: string, method: 'email' | 'phone') => {
+    setUserEmail(identifier);
+    setCurrentScreen('password');
+  };
+
+  const handleContinueWithCodeWithMethod = (identifier: string, method: 'email' | 'phone') => {
+    setUserEmail(identifier);
     setCurrentScreen('verification');
   };
 
@@ -185,6 +197,7 @@ const AuthOverlay: React.FC = () => {
                 selectedLanguage={selectedLanguage}
                 setSelectedLanguage={setSelectedLanguage}
                 onContinueWithEmail={handleContinueWithEmail}
+                onContinueWithPhone={handleContinueWithPhone}
                 showHeader={false}
                 {...compactProps}
               />
@@ -197,11 +210,11 @@ const AuthOverlay: React.FC = () => {
               <EmailAuthScreen
                 onBack={handleBackToMain}
                 selectedLanguage={selectedLanguage}
-                onContinueWithPassword={handleContinueWithPassword}
-                onContinueWithCode={handleContinueWithCode}
+                onContinueWithPassword={handleContinueWithPasswordWithMethod}
+                onContinueWithCode={handleContinueWithCodeWithMethod}
                 onCreateAccount={handleCreateAccount}
                 onSignUpClick={handleSignUpClick}
-                onContinueWithPhone={handleContinueWithPhone}
+                authMethod={authMethod}
                 initialEmail={userEmail}
                 showHeader={false}
                 {...compactProps}
