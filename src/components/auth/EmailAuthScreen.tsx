@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { ArrowLeft, HelpCircle, Mail, AlertTriangle, Loader2, UserPlus, Lock, Key } from 'lucide-react';
+import { useAuth } from '../../contexts/auth/AuthContext';
 import { toast } from 'sonner';
 
 // Inline type definitions
@@ -16,8 +17,6 @@ interface EmailAuthScreenProps {
   isCompact?: boolean;
   onExpand?: () => void;
   showHeader?: boolean;
-  onSendOTP: (email: string) => Promise<{ success: boolean; error?: string }>;
-  onCheckEmailExists: (email: string) => Promise<boolean>;
 }
 
 // Inline email constants
@@ -37,7 +36,7 @@ const FAVICON_OVERRIDES: Record<string, string> = {
   'yahoo.com': 'https://s.yimg.com/cv/apiv2/social/images/yahoo_favicon.ico'
 };
 
-// List of trusted email providers
+// List of trusted email providers - these are the only domains we accept
 const TRUSTED_PROVIDERS = [
   'gmail.com',
   'outlook.com',
@@ -51,43 +50,79 @@ const TRUSTED_PROVIDERS = [
   'yandex.com',
   'fastmail.com',
   'tutanota.com',
+  // Add more trusted providers as needed
 ];
 
-// Custom hook for email validation
-const useEmailValidation = (initialEmail = '', onCheckEmailExists: (email: string) => Promise<boolean>) => {
+// Inline useEmailValidation hook
+const useEmailValidation = (initialEmail = '') => {
+  // Core email state
   const [email, setEmail] = useState(initialEmail);
   const [isEmailValid, setIsEmailValid] = useState(false);
   const [emailCheckState, setEmailCheckState] = useState<EmailCheckState>('unchecked');
   const [lastCheckedEmail, setLastCheckedEmail] = useState('');
+
+  // NEW: Track when email has valid format but uses untrusted provider
   const [isUntrustedProvider, setIsUntrustedProvider] = useState(false);
 
+  // Debounce timer for API calls
   const debounceTimeoutRef = useRef<NodeJS.Timeout>();
 
+  // Function to check if email domain is from a trusted provider
   const isFromTrustedProvider = useCallback((emailAddress: string): boolean => {
     if (!emailAddress.includes('@')) return false;
+
     const domain = emailAddress.split('@')[1]?.toLowerCase();
     return domain ? TRUSTED_PROVIDERS.includes(domain) : false;
   }, []);
 
+  // Function to validate email format only (without provider check)
   const hasValidEmailFormat = useCallback((emailAddress: string): boolean => {
     return EMAIL_REGEX.test(emailAddress);
   }, []);
 
+  // Function to validate email format AND trusted provider (full validation)
   const validateEmail = useCallback((emailAddress: string): boolean => {
     return hasValidEmailFormat(emailAddress) && isFromTrustedProvider(emailAddress);
   }, [hasValidEmailFormat, isFromTrustedProvider]);
 
+  // API call to check if email exists in database
+  const checkEmailExists = useCallback(async (emailToCheck: string): Promise<boolean> => {
+    try {
+      const response = await fetch('https://supabase-y8ak.onrender.com/api/check-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: emailToCheck }),
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        return data.exists;
+      } else {
+        throw new Error(data.message || 'Failed to check email');
+      }
+    } catch (error) {
+      console.error('Error checking email:', error);
+      throw error;
+    }
+  }, []);
+
+  // Debounced function to check email existence (prevents too many API calls)
   const debouncedEmailCheck = useCallback((emailToCheck: string) => {
+    // Clear any existing timeout
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
     }
 
+    // Set new timeout for 800ms delay
     debounceTimeoutRef.current = setTimeout(async () => {
+      // Only check if email passes full validation and hasn't been checked recently
       if (validateEmail(emailToCheck) && emailToCheck !== lastCheckedEmail) {
         setEmailCheckState('checking');
 
         try {
-          const exists = await onCheckEmailExists(emailToCheck);
+          const exists = await checkEmailExists(emailToCheck);
           setEmailCheckState(exists ? 'exists' : 'not-exists');
           setLastCheckedEmail(emailToCheck);
         } catch (error) {
@@ -96,31 +131,48 @@ const useEmailValidation = (initialEmail = '', onCheckEmailExists: (email: strin
         }
       }
     }, 800);
-  }, [onCheckEmailExists, lastCheckedEmail, validateEmail]);
+  }, [checkEmailExists, lastCheckedEmail, validateEmail]);
 
+  // MAIN VALIDATION EFFECT: This runs every time the email changes
   useEffect(() => {
+    // Step 1: Check if email has basic valid format (user@domain.com)
     const hasValidFormat = hasValidEmailFormat(email);
+
+    // Step 2: Check if the domain is from a trusted provider
     const isFromTrusted = isFromTrustedProvider(email);
+
+    // Step 3: Email is only fully valid if both conditions are met
     const isFullyValid = hasValidFormat && isFromTrusted;
 
+    // Update the main validation state
     setIsEmailValid(isFullyValid);
+
+    // CRITICAL LOGIC: Determine if we should show "untrusted provider" message
+    // This happens when:
+    // 1. Email has correct format (user@domain.com)
+    // 2. Email contains @ symbol (to avoid showing message for partial input)
+    // 3. Domain is NOT in our trusted providers list
     const shouldShowUntrustedMessage = hasValidFormat && !isFromTrusted && email.includes('@');
     setIsUntrustedProvider(shouldShowUntrustedMessage);
 
+    // Reset email check state if email is not fully valid
     if (!isFullyValid) {
       setEmailCheckState('unchecked');
       setLastCheckedEmail('');
     } else {
+      // Email is fully valid, so check if it exists in our database
       debouncedEmailCheck(email);
     }
   }, [email, debouncedEmailCheck, hasValidEmailFormat, isFromTrustedProvider]);
 
+  // Initialize validation state for initial email (if provided)
   useEffect(() => {
     if (initialEmail) {
       setIsEmailValid(validateEmail(initialEmail));
     }
   }, [initialEmail, validateEmail]);
 
+  // Cleanup effect: Clear timeout when component unmounts
   useEffect(() => {
     return () => {
       if (debounceTimeoutRef.current) {
@@ -129,6 +181,7 @@ const useEmailValidation = (initialEmail = '', onCheckEmailExists: (email: strin
     };
   }, []);
 
+  // Return all the states and helper functions that components need
   return {
     email,
     setEmail,
@@ -136,8 +189,8 @@ const useEmailValidation = (initialEmail = '', onCheckEmailExists: (email: strin
     emailCheckState,
     isFromTrustedProvider: isFromTrustedProvider(email),
     trustedProviders: TRUSTED_PROVIDERS,
-    isUntrustedProvider,
-    hasValidEmailFormat: hasValidEmailFormat(email),
+    isUntrustedProvider, // NEW: This tells us when to show the untrusted provider message
+    hasValidEmailFormat: hasValidEmailFormat(email), // NEW: Useful for more granular UI feedback
   };
 };
 
@@ -152,17 +205,18 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   isCompact = false,
   onExpand,
   showHeader = true,
-  onSendOTP,
-  onCheckEmailExists,
 }) => {
+  const { sendCustomOTPEmail, isLoading: authLoading } = useAuth();
+
   const {
     email,
     setEmail,
     isEmailValid,
     emailCheckState,
     isUntrustedProvider,
-  } = useEmailValidation(initialEmail, onCheckEmailExists);
+  } = useEmailValidation(initialEmail);
 
+  // Separate loading states for each button
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
   const [isCodeLoading, setIsCodeLoading] = useState(false);
   const [isCreateAccountLoading, setIsCreateAccountLoading] = useState(false);
@@ -189,19 +243,23 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
     setIsCodeLoading(true);
     try {
-      const result = await onSendOTP(email);
+      // ✅ Use custom OTP function instead of Supabase's built-in
+      const result = await sendCustomOTPEmail(email);
 
       if (result.success) {
         toast.success('Verification code sent to your email');
         onContinueWithCode(email);
+        // ✅ DON'T reset loading state here - let the navigation happen
+        // The next screen will handle its own loading state
       } else {
         toast.error(result.error || 'Failed to send verification code');
-        setIsCodeLoading(false);
+        setIsCodeLoading(false); // ✅ Reset only on error
       }
     } catch (error: any) {
       toast.error(error.message || 'Failed to send verification code');
-      setIsCodeLoading(false);
+      setIsCodeLoading(false); // ✅ Reset only on error
     }
+    // ✅ Remove the finally block - let loading state persist during navigation
   };
 
   const handleCreateAccountClick = async () => {
@@ -215,8 +273,10 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     }
   };
 
-  const isLoading = isPasswordLoading || isCodeLoading || isCreateAccountLoading;
+  // Calculate overall loading for other components
+  const isLoading = isPasswordLoading || isCodeLoading || isCreateAccountLoading || authLoading;
 
+  // EmailActionButtons component logic
   const renderEmailActionButtons = () => {
     const getPasswordButtonState = () => {
       if (!isEmailValid) return { disabled: true, text: 'Continue with Password' };
@@ -239,8 +299,10 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     const passwordButtonState = getPasswordButtonState();
     const codeButtonState = getCodeButtonState();
 
+    // Show create account button when email doesn't exist
     const showCreateAccountButton = emailCheckState === 'not-exists';
 
+    // Show untrusted provider state
     if (isUntrustedProvider) {
       return (
         <div className="space-y-3 mb-8">
@@ -249,6 +311,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       );
     }
 
+    // Show initial waiting button when email is unchecked or invalid
     if (!isEmailValid || emailCheckState === 'unchecked') {
       return (
         <div className="space-y-3 mb-8">
@@ -270,6 +333,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       );
     }
 
+    // Show checking state
     if (emailCheckState === 'checking') {
       return (
         <div className="space-y-3 mb-8">
@@ -285,6 +349,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       );
     }
 
+    // If email doesn't exist, show only create account button
     if (showCreateAccountButton) {
       return (
         <div className="space-y-3 mb-8">
@@ -352,11 +417,15 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     );
   };
 
+  // EmailStatusMessage component logic
   const renderEmailStatusMessage = () => {
+    // Priority 1: Show untrusted provider message first
+    // This appears when email has valid format but uses unsupported domain
     if (isUntrustedProvider) {
       return (
         <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-start gap-2">
+            {/* Info icon for visual clarity */}
             <svg 
               className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" 
               fill="currentColor" 
@@ -368,6 +437,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
                 clipRule="evenodd" 
               />
             </svg>
+
             <div className="flex-1">
               <p className="text-blue-800 text-sm font-medium mb-1">
                 Email provider not supported
@@ -381,10 +451,13 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       );
     }
 
+    // Priority 2: Show connection error message
+    // This appears when there's a network issue checking if email exists
     if (emailCheckState === 'error') {
       return (
         <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
           <div className="flex items-start gap-2">
+            {/* Warning icon */}
             <svg 
               className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" 
               fill="currentColor" 
@@ -396,6 +469,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
                 clipRule="evenodd" 
               />
             </svg>
+
             <div className="flex-1">
               <p className="text-yellow-800 text-sm font-medium mb-1">
                 Connection issue
@@ -409,10 +483,14 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       );
     }
 
+    // Priority 3: No message shown when email exists
+    // This allows the UI to handle the success state without additional messaging
     if (emailCheckState === 'exists') {
       return null;
     }
 
+    // Priority 4: Show account creation message when email doesn't exist
+    // This guides users toward account creation
     if (emailCheckState === 'not-exists') {
       return (
         <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
@@ -425,9 +503,12 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       );
     }
 
+    // No message needed for other states (unchecked, checking)
+    // These states are handled by the UI buttons and loading indicators
     return null;
   };
 
+  // EmailInput component functions
   const extractDomain = (emailValue: string): string => {
     if (!emailValue.includes('@')) return '';
     const parts = emailValue.split('@');
@@ -521,6 +602,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   }, [email]);
 
   const getRightSideIcon = () => {
+    // Show alert icon for untrusted provider first
     if (isUntrustedProvider) {
       return (
         <div className="w-5 h-5">

@@ -42,29 +42,6 @@ export const MainLoginScreenSkeletonCompact = () => (
   </div>
 );
 
-
-
-
-export const PhoneAuthScreenSkeleton: React.FC = () => {
-  return (
-    <div className="min-h-screen bg-white flex flex-col px-4">
-      <div className="flex-1 flex flex-col justify-center w-full p-0">
-        <div className="space-y-6">
-          <div className="text-center">
-            <div className="h-8 bg-gray-200 rounded w-48 mx-auto mb-2 animate-pulse"></div>
-            <div className="h-4 bg-gray-200 rounded w-64 mx-auto animate-pulse"></div>
-          </div>
-          
-          <div className="space-y-4">
-            <div className="h-12 bg-gray-200 rounded-lg animate-pulse"></div>
-            <div className="h-12 bg-gray-200 rounded-lg animate-pulse"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 export const MainLoginScreenSkeleton = () => (
   <div className="p-6 space-y-6">
     {/* Logo skeleton */}

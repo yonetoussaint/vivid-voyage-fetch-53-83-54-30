@@ -5,7 +5,6 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import {
   MainLoginScreenSkeletonCompact,
   EmailAuthScreenSkeleton,
-  PhoneAuthScreenSkeleton,
   VerificationCodeScreenSkeleton,
   PasswordAuthScreenSkeleton,
   ResetPasswordScreenSkeleton,
@@ -16,7 +15,6 @@ import {
 // Move lazy imports outside component to prevent recreation
 const MainLoginScreen = React.lazy(() => import('./MainLoginScreen'));
 const EmailAuthScreen = React.lazy(() => import('./EmailAuthScreen'));
-const PhoneAuthScreen = React.lazy(() => import('./PhoneAuthScreen')); // Add this import
 const VerificationCodeScreen = React.lazy(() => import('./VerificationCodeScreen'));
 const PasswordAuthScreen = React.lazy(() => import('./PasswordAuthScreen'));
 const ResetPasswordScreen = React.lazy(() => import('./ResetPasswordScreen'));
@@ -37,8 +35,6 @@ const AuthOverlay: React.FC = () => {
     setSelectedLanguage,
     userEmail,
     setUserEmail,
-    userPhone, // Add this from your AuthContext
-    setUserPhone, // Add this from your AuthContext
     resetOTP,
     setResetOTP,
     authError,
@@ -46,7 +42,6 @@ const AuthOverlay: React.FC = () => {
     getFaviconUrl,
     handleClose,
     handleContinueWithEmail,
-    handleContinueWithPhone, // Add this from your AuthContext
     handleBackToMain,
     handleContinueWithPassword,
     handleContinueWithCode,
@@ -61,7 +56,6 @@ const AuthOverlay: React.FC = () => {
     accountCreationStep,
     handleBackFromAccountCreation,
     handleChangeEmail,
-    handleChangePhone, // Add this from your AuthContext
     handleNameStepContinue,
     handlePasswordStepContinue,
     handleAccountCreated,
@@ -131,8 +125,8 @@ const AuthOverlay: React.FC = () => {
     // Default props for other screens
     return {
       ...baseProps,
-      showCloseButton: false,
-      showDragHandle: true
+      showCloseButton: false, // Keep consistent with your existing code
+      showDragHandle: true // Show drag handle for other screens, or set to false if you want it hidden everywhere
     };
   };
 
@@ -149,7 +143,6 @@ const AuthOverlay: React.FC = () => {
                 selectedLanguage={selectedLanguage}
                 setSelectedLanguage={setSelectedLanguage}
                 onContinueWithEmail={handleContinueWithEmail}
-                onContinueWithPhone={handleContinueWithPhone} // Add this prop
                 showHeader={false}
                 {...compactProps}
               />
@@ -173,29 +166,11 @@ const AuthOverlay: React.FC = () => {
             </React.Suspense>
           );
 
-        case 'phone': // Add this case
-          return (
-            <React.Suspense fallback={<PhoneAuthScreenSkeleton />}>
-              <PhoneAuthScreen
-                onBack={handleBackToMain}
-                selectedLanguage={selectedLanguage}
-                onContinueWithPassword={handleContinueWithPassword}
-                onContinueWithCode={handleContinueWithCode}
-                onCreateAccount={handleCreateAccount}
-                onSignUpClick={handleSignUpClick}
-                initialPhone={userPhone}
-                showHeader={false}
-                {...compactProps}
-              />
-            </React.Suspense>
-          );
-
         case 'verification':
           return (
             <React.Suspense fallback={<VerificationCodeScreenSkeleton />}>
               <VerificationCodeScreen
                 email={userEmail}
-                phone={userPhone} // Add phone prop
                 onBack={handleBackFromVerification}
                 onVerificationSuccess={handleVerificationSuccess}
                 showHeader={false}
@@ -209,7 +184,6 @@ const AuthOverlay: React.FC = () => {
             <React.Suspense fallback={<PasswordAuthScreenSkeleton />}>
               <PasswordAuthScreen
                 email={userEmail}
-                phone={userPhone} // Add phone prop
                 onBack={handleBackFromPassword}
                 onSignInSuccess={handleSignInSuccess}
                 onForgotPasswordClick={handleForgotPasswordClick}
@@ -274,10 +248,8 @@ const AuthOverlay: React.FC = () => {
                       <React.Suspense fallback={<AccountCreationScreenSkeleton />}>
                         <AccountCreationNameStep
                           email={userEmail}
-                          phone={userPhone} // Add phone prop
                           onBack={handleBackFromAccountCreation}
                           onChangeEmail={handleChangeEmail}
-                          onChangePhone={handleChangePhone} // Add this prop
                           onContinue={handleNameStepContinue}
                           firstName={firstName}
                           lastName={lastName}
@@ -296,7 +268,6 @@ const AuthOverlay: React.FC = () => {
                       <React.Suspense fallback={<AccountCreationScreenSkeleton />}>
                         <AccountCreationPasswordStep
                           email={userEmail}
-                          phone={userPhone} // Add phone prop
                           firstName={firstName}
                           lastName={lastName}
                           onBack={handleBackFromAccountCreation}
@@ -323,7 +294,6 @@ const AuthOverlay: React.FC = () => {
                       <React.Suspense fallback={<AccountCreationScreenSkeleton />}>
                         <AccountCreationSuccessStep
                           email={userEmail}
-                          phone={userPhone} // Add phone prop
                           firstName={firstName}
                           lastName={lastName}
                           onContinue={handleAccountCreated}
@@ -345,7 +315,6 @@ const AuthOverlay: React.FC = () => {
             <React.Suspense fallback={<SuccessScreenSkeleton />}>
               <SuccessScreen
                 email={userEmail}
-                phone={userPhone} // Add phone prop
                 onContinue={handleContinueToApp}
                 {...compactProps}
               />
