@@ -12,40 +12,37 @@ interface User {
 type ScreenType = 'main' | 'email' | 'verification' | 'password' | 'success' | 'account-creation' | 'reset-password' | 'otp-reset' | 'new-password';
 
 interface AuthContextType {
+  // Core auth state
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  
+  // Basic auth functions (kept in context since they're used globally)
   login: (email: string, password: string) => Promise<{ error?: string }>;
   signup: (email: string, password: string, fullName?: string) => Promise<{ error?: string }>;
   logout: () => Promise<void>;
   checkAuthStatus: () => Promise<void>;
+  
+  // Follow functionality (used across app)
   checkIfFollowing: (sellerId: string) => Promise<boolean>;
   toggleFollowSeller: (sellerId: string, sellerName: string, currentFollowStatus: boolean) => Promise<{ success: boolean; error?: string }>;
   followedSellers: string[];
 
-  // OTP Functions
-  sendCustomOTPEmail: (email: string) => Promise<{ success: boolean; error?: string }>;
-  sendPasswordResetOTP: (email: string) => Promise<{ success: boolean; error?: string }>;
-  verifyCustomOTP: (email: string, otp: string) => Promise<{ success: boolean; error?: string; user?: any; purpose?: string }>;
-  resendOTPEmail: (email: string, purpose?: string) => Promise<{ success: boolean; error?: string }>;
-  completePasswordReset: (email: string, otp: string, newPassword: string) => Promise<{ success: boolean; error?: string; message?: string }>;
-
-  // Google OAuth Function
-  googleSignIn: () => Promise<{ error?: string }>;
-
-  // Auth overlay state and methods
+  // Auth overlay state and navigation
   isAuthOverlayOpen: boolean;
   setIsAuthOverlayOpen: (open: boolean) => void;
   currentScreen: ScreenType;
   setCurrentScreen: (screen: ScreenType) => void;
   selectedLanguage: string;
   setSelectedLanguage: (lang: string) => void;
+  
+  // Shared state between screens
   userEmail: string;
   setUserEmail: (email: string) => void;
   resetOTP: string;
   setResetOTP: (otp: string) => void;
 
-  // Account creation state and methods
+  // Account creation state (shared across steps)
   accountCreationStep: 'name' | 'password' | 'success';
   setAccountCreationStep: (step: 'name' | 'password' | 'success') => void;
   firstName: string;
@@ -62,9 +59,8 @@ interface AuthContextType {
   setShowConfirmPassword: (show: boolean) => void;
   authError: string | null;
   setAuthError: (error: string | null) => void;
-  nameErrors: { firstName: string; lastName: string };
 
-  // Auth overlay handlers
+  // Navigation handlers (simple screen transitions)
   handleContinueWithEmail: () => void;
   handleBackToMain: () => void;
   handleContinueWithPassword: (email: string) => void;
@@ -82,17 +78,13 @@ interface AuthContextType {
   handleSignInSuccess: () => void;
   handleForgotPasswordClick: () => void;
   handleContinueToApp: () => void;
-  handleFirstNameChange: (value: string) => void;
-  handleLastNameChange: (value: string) => void;
 
-  // Utility methods
+  // Utility methods (used by multiple components)
   getFaviconUrl: (emailValue: string) => string | null;
-  isNameFormValid: boolean;
-  isPasswordFormValid: boolean;
   validateName: (name: string, fieldName: string, options?: any) => string;
   validatePassword: (pwd: string) => string | null;
 
-  // Reset auth overlay
+  // Reset and close
   resetAuthOverlay: () => void;
   handleClose: () => void;
 }
@@ -115,6 +107,7 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Core auth state
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -136,322 +129,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [nameErrors, setNameErrors] = useState({
-    firstName: '',
-    lastName: ''
-  });
 
-  // Backend URL - using your Render.com server
-  const BACKEND_URL = 'https://resend-u11p.onrender.com';
-
-  // Google OAuth Function
-  const googleSignIn = async () => {
-    try {
-      console.log('🔐 Initializing Google OAuth via server...');
-      
-      const response = await fetch(`${BACKEND_URL}/api/auth/google`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          redirectTo: `${window.location.origin}/auth/callback`
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!result.success) {
-        console.error('❌ Server Google OAuth error:', result.error);
-        return { error: result.error || 'Failed to initialize Google sign in' };
-      }
-
-      console.log('✅ Redirecting to Google OAuth...');
-      // Redirect to Google OAuth URL
-      window.location.href = result.authUrl;
-
-      return {};
-
-    } catch (error: any) {
-      console.error('💥 Google OAuth initialization error:', error);
-      return { error: error.message || 'Failed to sign in with Google' };
+  // Reset overlay state when opening
+  useEffect(() => {
+    if (isAuthOverlayOpen) {
+      setCurrentScreen('main');
+      setUserEmail('');
+      setResetOTP('');
     }
-  };
-
-  // OTP Functions
-  const sendCustomOTPEmail = async (email: string) => {
-    try {
-      console.log('🔄 Sending sign-in OTP to:', email);
-      console.log('🌐 Backend URL:', BACKEND_URL);
-
-      const response = await fetch(`${BACKEND_URL}/api/send-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      console.log('📊 Response status:', response.status);
-      console.log('📊 Response ok:', response.ok);
-
-      if (!response.ok) {
-        let errorMessage = `Server error: ${response.status}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-        } catch (e) {
-          const errorText = await response.text();
-          errorMessage = errorText || errorMessage;
-        }
-
-        console.error('❌ Server error response:', errorMessage);
-        throw new Error(errorMessage);
-      }
-
-      const result = await response.json();
-      console.log('✅ Sign-in OTP sent successfully:', result);
-
-      return { success: true };
-    } catch (error: any) {
-      console.error('💥 Failed to send sign-in OTP:', error);
-
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        return { 
-          success: false, 
-          error: 'Cannot connect to server. Please check your internet connection and try again.' 
-        };
-      }
-
-      if (error.message.includes('Failed to fetch')) {
-        return { 
-          success: false, 
-          error: 'Server is not responding. Please try again in a few moments.' 
-        };
-      }
-
-      return { 
-        success: false, 
-        error: error.message || 'Failed to send verification code. Please try again.' 
-      };
-    }
-  };
-
-  const sendPasswordResetOTP = async (email: string) => {
-    try {
-      console.log('🔄 Sending password reset OTP to:', email);
-      console.log('🌐 Backend URL:', BACKEND_URL);
-
-      const response = await fetch(`${BACKEND_URL}/api/send-reset-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      console.log('📊 Response status:', response.status);
-      console.log('📊 Response ok:', response.ok);
-
-      if (!response.ok) {
-        let errorMessage = `Server error: ${response.status}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-        } catch (e) {
-          const errorText = await response.text();
-          errorMessage = errorText || errorMessage;
-        }
-
-        console.error('❌ Server error response:', errorMessage);
-        throw new Error(errorMessage);
-      }
-
-      const result = await response.json();
-      console.log('✅ Password reset OTP sent successfully:', result);
-
-      return { success: true };
-    } catch (error: any) {
-      console.error('💥 Failed to send password reset OTP:', error);
-
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        return { 
-          success: false, 
-          error: 'Cannot connect to server. Please check your internet connection and try again.' 
-        };
-      }
-
-      if (error.message.includes('Failed to fetch')) {
-        return { 
-          success: false, 
-          error: 'Server is not responding. Please try again in a few moments.' 
-        };
-      }
-
-      return { 
-        success: false, 
-        error: error.message || 'Failed to send password reset code. Please try again.' 
-      };
-    }
-  };
-
-  const verifyCustomOTP = async (email: string, otp: string) => {
-    try {
-      console.log('🔄 Verifying OTP for:', email);
-
-      const response = await fetch(`${BACKEND_URL}/api/verify-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, otp }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Invalid verification code');
-      }
-
-      console.log(`✅ OTP verified successfully, purpose: ${result.purpose}`);
-
-      // Only create session for sign-in OTPs, not for password reset
-      if (result.purpose === 'signin' && result.session) {
-        console.log('✅ Setting Supabase session for sign-in...');
-        const { error: sessionError } = await supabase.auth.setSession({
-          access_token: result.session.access_token,
-          refresh_token: result.session.refresh_token,
-        });
-
-        if (sessionError) {
-          console.error('❌ Error setting session:', sessionError);
-          throw sessionError;
-        }
-
-        // Verify the session was set correctly
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        if (!currentSession) {
-          console.error('❌ Session not set properly after verification');
-          throw new Error('Failed to establish secure session');
-        }
-
-        console.log('✅ Session set successfully, user authenticated');
-
-        // Update auth state
-        const userData = mapSupabaseUser(result.user);
-        setUser(userData);
-        setIsAuthenticated(true);
-      } else if (result.purpose === 'password-reset') {
-        console.log('🔄 Password reset OTP verified - no session needed');
-        // For password reset, we don't create a session here
-        // The session will be handled by the complete-password-reset endpoint
-      }
-
-      return { 
-        success: true, 
-        user: result.user,
-        purpose: result.purpose,
-        message: result.message 
-      };
-    } catch (error: any) {
-      console.error('❌ Failed to verify OTP:', error);
-      return { 
-        success: false, 
-        error: error.message || 'Invalid verification code' 
-      };
-    }
-  };
-
-  const completePasswordReset = async (email: string, otp: string, newPassword: string) => {
-    try {
-      console.log('🔄 Completing password reset for:', email);
-      console.log('📧 Email:', email);
-      console.log('🔑 OTP length:', otp.length);
-      console.log('🔒 New password length:', newPassword.length);
-
-      const response = await fetch(`${BACKEND_URL}/api/complete-password-reset`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          email: email.toLowerCase().trim(), 
-          otp: otp.trim(),
-          newPassword 
-        }),
-      });
-
-      const result = await response.json();
-
-      console.log('📊 Server response:', {
-        status: response.status,
-        ok: response.ok,
-        result: result
-      });
-
-      if (!response.ok) {
-        console.error('❌ Server returned error:', result.error);
-        throw new Error(result.error || 'Failed to reset password');
-      }
-
-      if (!result.success) {
-        console.error('❌ Server reported failure:', result);
-        throw new Error(result.error || 'Password reset failed');
-      }
-
-      console.log('✅ Password reset completed successfully');
-      return { 
-        success: true, 
-        message: result.message 
-      };
-    } catch (error: any) {
-      console.error('❌ Failed to complete password reset:', error);
-      
-      // Provide more specific error messages
-      let userFriendlyError = error.message;
-      
-      if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
-        userFriendlyError = 'Network error. Please check your internet connection and try again.';
-      } else if (error.message.includes('OTP') || error.message.includes('code')) {
-        userFriendlyError = 'Invalid or expired verification code. Please request a new password reset code.';
-      } else if (error.message.includes('User not found')) {
-        userFriendlyError = 'No account found with this email address. Please check your email and try again.';
-      }
-      
-      return { 
-        success: false, 
-        error: userFriendlyError 
-      };
-    }
-  };
-
-  const resendOTPEmail = async (email: string, purpose = 'signin') => {
-    try {
-      console.log(`🔄 Resending ${purpose} OTP to:`, email);
-
-      const response = await fetch(`${BACKEND_URL}/api/resend-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, purpose }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to resend verification code');
-      }
-
-      return { success: true };
-    } catch (error: any) {
-      console.error('Failed to resend OTP:', error);
-      return { 
-        success: false, 
-        error: error.message || 'Failed to resend verification code' 
-      };
-    }
-  };
+  }, [isAuthOverlayOpen]);
 
   // Utility functions
   const extractDomain = useCallback((emailValue: string): string => {
@@ -547,31 +233,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return null;
   }, []);
 
-  const isPasswordFormValid = useCallback(() => {
-    return (
-      password.length >= 8 &&
-      confirmPassword.length >= 8 &&
-      password === confirmPassword &&
-      validatePassword(password) === null
-    );
-  }, [password, confirmPassword, validatePassword]);
-
-  const isNameFormValid = useCallback(() => {
-    return firstName.trim() !== '' && 
-           lastName.trim() !== '' && 
-           !nameErrors.firstName && 
-           !nameErrors.lastName;
-  }, [firstName, lastName, nameErrors]);
-
-  // Reset overlay state when opening
-  useEffect(() => {
-    if (isAuthOverlayOpen) {
-      setCurrentScreen('main');
-      setUserEmail('');
-      setResetOTP('');
-    }
-  }, [isAuthOverlayOpen]);
-
   // Convert Supabase user to our User type
   const mapSupabaseUser = useCallback((supabaseUser: SupabaseUser): User => {
     return {
@@ -602,7 +263,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Check if user is following a seller - SIMPLIFIED VERSION
+  // Check if user is following a seller
   const checkIfFollowing = async (sellerId: string): Promise<boolean> => {
     if (!user) return false;
     return followedSellers.includes(sellerId);
@@ -625,9 +286,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (error) throw error;
 
-        // Update cache
         setFollowedSellers(prev => prev.filter(id => id !== sellerId));
-
         return { success: true, newFollowStatus: false };
       } else {
         // Follow
@@ -637,16 +296,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (error) {
           if (error.code === '23505') {
-            // Already following, update cache
             setFollowedSellers(prev => [...prev, sellerId]);
             return { success: true, newFollowStatus: true };
           }
           throw error;
         }
 
-        // Update cache
         setFollowedSellers(prev => [...prev, sellerId]);
-
         return { success: true, newFollowStatus: true };
       }
     } catch (error: any) {
@@ -656,47 +312,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const checkAuthStatus = async () => {
-  try {
-    console.log('🔍 Checking authentication status...');
-    const { data: { session }, error } = await supabase.auth.getSession();
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
 
-    if (error) {
-      console.error('❌ Error getting session:', error);
+      if (error) {
+        console.error('Error getting session:', error);
+        setUser(null);
+        setIsAuthenticated(false);
+        setFollowedSellers([]);
+        setIsLoading(false);
+        return;
+      }
+
+      if (session?.user) {
+        const userData = mapSupabaseUser(session.user);
+        setUser(userData);
+        setIsAuthenticated(true);
+        loadFollowedSellers(session.user.id);
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
+        setFollowedSellers([]);
+      }
+    } catch (error) {
+      console.error('Error checking auth status:', error);
       setUser(null);
       setIsAuthenticated(false);
       setFollowedSellers([]);
+    } finally {
       setIsLoading(false);
-      return;
     }
-
-    if (session?.user) {
-      console.log('✅ Session found for user:', session.user.email);
-      const userData = mapSupabaseUser(session.user);
-      setUser(userData);
-      setIsAuthenticated(true);
-      // Load followed sellers in background
-      loadFollowedSellers(session.user.id);
-    } else {
-      console.log('ℹ️ No active session');
-      setUser(null);
-      setIsAuthenticated(false);
-      setFollowedSellers([]);
-    }
-  } catch (error) {
-    console.error('❌ Error checking auth status:', error);
-    setUser(null);
-    setIsAuthenticated(false);
-    setFollowedSellers([]);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   useEffect(() => {
     // Check initial session
     checkAuthStatus();
 
-    // Listen for auth changes (login, logout, token refresh)
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event);
@@ -705,7 +357,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const userData = mapSupabaseUser(session.user);
           setUser(userData);
           setIsAuthenticated(true);
-          // Load followed sellers in background
           loadFollowedSellers(session.user.id);
         } else {
           setUser(null);
@@ -753,10 +404,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data.user) {
         console.log('User signed up successfully:', data.user.email);
         console.log('Confirmation required:', !data.session);
-
-        if (!data.session) {
-          console.log('Email confirmation required - check your inbox');
-        }
       }
 
       return {};
@@ -782,7 +429,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           name: error.name
         });
 
-        // Provide more specific error messages
         let errorMessage = error.message;
 
         if (error.message.includes('Invalid login credentials') || error.message.includes('Invalid')) {
@@ -803,7 +449,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const userData = mapSupabaseUser(data.user);
         setUser(userData);
         setIsAuthenticated(true);
-        // Load followed sellers in background
         loadFollowedSellers(data.user.id);
       } else {
         console.warn('Login succeeded but no user data returned');
@@ -834,7 +479,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Auth overlay handlers
+  // Auth overlay navigation handlers
   const handleContinueWithEmail = () => setCurrentScreen('email');
   const handleBackToMain = () => setCurrentScreen('main');
 
@@ -857,7 +502,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setPassword('');
     setConfirmPassword('');
     setAuthError(null);
-    setNameErrors({ firstName: '', lastName: '' });
   };
 
   const handleSignUpClick = () => {
@@ -868,7 +512,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setPassword('');
     setConfirmPassword('');
     setAuthError(null);
-    setNameErrors({ firstName: '', lastName: '' });
   };
 
   const handleNameStepContinue = (newFirstName: string, newLastName: string) => {
@@ -885,15 +528,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const handlePasswordStepContinue = async () => {
-    if (!isPasswordFormValid()) return;
-
     console.log('AuthContext: Starting account creation process');
     setIsLoading(true);
     setAuthError(null);
 
     try {
       const fullName = `${firstName} ${lastName}`.trim();
-
       console.log('Calling signup with:', { email: userEmail, fullName });
 
       const result = await signup(userEmail, password, fullName);
@@ -939,14 +579,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const handleSignInSuccess = () => {
     setCurrentScreen('success');
-    // Close overlay after a brief delay to show success message
     setTimeout(() => {
       setIsAuthOverlayOpen(false);
     }, 2000);
   };
 
   const handleForgotPasswordClick = () => setCurrentScreen('reset-password');
-
   const handleContinueToApp = () => {
     setIsAuthOverlayOpen(false);
     resetAuthOverlay();
@@ -957,19 +595,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     resetAuthOverlay();
   };
 
-  // Name step handlers
-  const handleFirstNameChange = (value: string) => {
-    setFirstName(value);
-    const error = validateName(value, 'First name');
-    setNameErrors(prev => ({ ...prev, firstName: error }));
-  };
-
-  const handleLastNameChange = (value: string) => {
-    setLastName(value);
-    const error = validateName(value, 'Last name');
-    setNameErrors(prev => ({ ...prev, lastName: error }));
-  };
-
   const resetAuthOverlay = () => {
     setCurrentScreen('main');
     setAccountCreationStep('name');
@@ -978,7 +603,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setPassword('');
     setConfirmPassword('');
     setAuthError(null);
-    setNameErrors({ firstName: '', lastName: '' });
     setShowPassword(false);
     setShowConfirmPassword(false);
     setUserEmail('');
@@ -986,6 +610,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const value: AuthContextType = {
+    // Core auth state
     user,
     isAuthenticated,
     isLoading,
@@ -993,19 +618,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signup,
     logout,
     checkAuthStatus,
+    
+    // Follow functionality
     checkIfFollowing,
     toggleFollowSeller,
     followedSellers,
-
-    // OTP Functions - ALL INCLUDED
-    sendCustomOTPEmail,
-    sendPasswordResetOTP,
-    verifyCustomOTP,
-    resendOTPEmail,
-    completePasswordReset,
-
-    // Google OAuth Function
-    googleSignIn,
 
     // Auth overlay state
     isAuthOverlayOpen,
@@ -1036,7 +653,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setShowConfirmPassword,
     authError,
     setAuthError,
-    nameErrors,
 
     // Auth overlay handlers
     handleContinueWithEmail,
@@ -1056,14 +672,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     handleSignInSuccess,
     handleForgotPasswordClick,
     handleContinueToApp,
-    handleFirstNameChange,
-    handleLastNameChange,
     handleClose,
 
     // Utility methods
     getFaviconUrl,
-    isNameFormValid: isNameFormValid(),
-    isPasswordFormValid: isPasswordFormValid(),
     validateName,
     validatePassword,
 
