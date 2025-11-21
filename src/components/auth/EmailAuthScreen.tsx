@@ -1,556 +1,117 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { ArrowLeft, HelpCircle, Mail, AlertTriangle, Loader2, UserPlus, Lock, Key } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { ArrowLeft, Lock, Check, HelpCircle, Eye, EyeOff, Mail, Loader2 } from 'lucide-react';
+import { FAVICON_OVERRIDES } from '../../constants/email';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client'; // ← DIRECT IMPORT
 
-// Inline type definitions
-type EmailCheckState = 'unchecked' | 'checking' | 'exists' | 'not-exists' | 'error';
-
-interface EmailAuthScreenProps {
+interface PasswordAuthScreenProps {
+  email: string;
   onBack: () => void;
-  selectedLanguage: string;
-  onContinueWithPassword: (email: string) => void;
-  onContinueWithCode: (email: string) => void;
-  onCreateAccount: (email: string) => void;
-  onSignUpClick: () => void;
-  initialEmail?: string;
+  onSignInSuccess: () => void;
+  onForgotPasswordClick: () => void;
   isCompact?: boolean;
   onExpand?: () => void;
   showHeader?: boolean;
 }
 
-// Inline email constants
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-const FAVICON_OVERRIDES: Record<string, string> = {
-  'gmail.com': 'https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico',
-  'outlook.com': 'https://outlook.live.com/favicon.ico',
-  'yahoo.com': 'https://s.yimg.com/cv/apiv2/social/images/yahoo_favicon.ico'
-};
-
-// List of trusted email providers
-const TRUSTED_PROVIDERS = [
-  'gmail.com', 'outlook.com', 'hotmail.com', 'yahoo.com', 'icloud.com',
-  'protonmail.com', 'aol.com', 'mail.com', 'zoho.com', 'yandex.com',
-  'fastmail.com', 'tutanota.com',
-];
-
-const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
+const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
+  email,
   onBack,
-  selectedLanguage,
-  onContinueWithPassword,
-  onContinueWithCode,
-  onCreateAccount,
-  onSignUpClick,
-  initialEmail = '',
+  onSignInSuccess,
+  onForgotPasswordClick,
   isCompact = false,
   onExpand,
-  showHeader = true,
+  showHeader = true
 }) => {
-  const [email, setEmail] = useState(initialEmail);
-  const [isEmailValid, setIsEmailValid] = useState(false);
-  const [emailCheckState, setEmailCheckState] = useState<EmailCheckState>('unchecked');
-  const [lastCheckedEmail, setLastCheckedEmail] = useState('');
-  const [isUntrustedProvider, setIsUntrustedProvider] = useState(false);
-  const [isPasswordLoading, setIsPasswordLoading] = useState(false);
-  const [isCodeLoading, setIsCodeLoading] = useState(false);
-  const [isCreateAccountLoading, setIsCreateAccountLoading] = useState(false);
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isPasswordValid, setIsPasswordValid] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string>('');
 
-  const debounceTimeoutRef = useRef<NodeJS.Timeout>();
-  const emailInputRef = useRef<HTMLInputElement>(null);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
 
-  // Email validation functions
-  const isFromTrustedProvider = useCallback((emailAddress: string): boolean => {
-    if (!emailAddress.includes('@')) return false;
-    const domain = emailAddress.split('@')[1]?.toLowerCase();
-    return domain ? TRUSTED_PROVIDERS.includes(domain) : false;
-  }, []);
-
-  const hasValidEmailFormat = useCallback((emailAddress: string): boolean => {
-    return EMAIL_REGEX.test(emailAddress);
-  }, []);
-
-  const validateEmail = useCallback((emailAddress: string): boolean => {
-    return hasValidEmailFormat(emailAddress) && isFromTrustedProvider(emailAddress);
-  }, [hasValidEmailFormat, isFromTrustedProvider]);
-
-  // API call to check if email exists
-  const checkEmailExists = useCallback(async (emailToCheck: string): Promise<boolean> => {
+  // Login function using Supabase - NO DYNAMIC IMPORT
+  const login = async (email: string, password: string) => {
     try {
-      const response = await fetch('https://supabase-y8ak.onrender.com/api/check-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: emailToCheck }),
-      });
-      const data = await response.json();
+      console.log('Attempting to login with email:', email);
 
-      if (data.success) {
-        return data.exists;
-      } else {
-        throw new Error(data.message || 'Failed to check email');
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
+
+      if (error) {
+        console.error('Login error details:', {
+          message: error.message,
+          status: error.status,
+          name: error.name
+        });
+
+        let errorMessage = error.message;
+
+        if (error.message.includes('Invalid login credentials') || error.message.includes('Invalid')) {
+          errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+        } else if (error.message.includes('Email not confirmed') || error.message.includes('not confirmed')) {
+          errorMessage = 'Please verify your email address before logging in. Check your inbox for a confirmation email.';
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+          errorMessage = 'Network error. Please check your internet connection.';
+        } else if (error.message.includes('User not found')) {
+          errorMessage = 'No account found with this email. Please sign up first.';
+        }
+
+        return { error: errorMessage };
       }
+
+      if (data.user) {
+        console.log('User logged in successfully:', data.user.email);
+        return {};
+      } else {
+        console.warn('Login succeeded but no user data returned');
+        return { error: 'Login failed. Please try again.' };
+      }
+    } catch (error: any) {
+      console.error('Login exception:', error);
+      return { error: error.message || 'An error occurred during login. Please try again.' };
+    }
+  };
+
+  const handlePasswordChange = (value: string) => {
+    setPassword(value);
+    setIsPasswordValid(value.length >= 8);
+    setError('');
+  };
+
+  const handleSignIn = async () => {
+    if (!password.trim() || isLoading) return;
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const { error: loginError } = await login(email.trim().toLowerCase(), password);
+
+      if (loginError) {
+        setError(loginError);
+        setPassword('');
+        setIsPasswordValid(false);
+        passwordInputRef.current?.focus();
+        toast.error(loginError);
+        return;
+      }
+
+      toast.success('Successfully signed in!');
+      onSignInSuccess();
     } catch (error) {
-      console.error('Error checking email:', error);
-      throw error;
-    }
-  }, []);
-
-  // OTP function
-  const sendCustomOTPEmail = async (email: string) => {
-    try {
-      const BACKEND_URL = 'https://resend-u11p.onrender.com';
-      const response = await fetch(`${BACKEND_URL}/api/send-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!response.ok) {
-        let errorMessage = `Server error: ${response.status}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-        } catch (e) {
-          const errorText = await response.text();
-          errorMessage = errorText || errorMessage;
-        }
-        throw new Error(errorMessage);
-      }
-
-      const result = await response.json();
-      return { success: true };
-    } catch (error: any) {
-      console.error('Failed to send OTP:', error);
-      return { 
-        success: false, 
-        error: error.message || 'Failed to send verification code. Please try again.' 
-      };
-    }
-  };
-
-  // Debounced email check
-  const debouncedEmailCheck = useCallback((emailToCheck: string) => {
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
-
-    debounceTimeoutRef.current = setTimeout(async () => {
-      if (validateEmail(emailToCheck) && emailToCheck !== lastCheckedEmail) {
-        setEmailCheckState('checking');
-        try {
-          const exists = await checkEmailExists(emailToCheck);
-          setEmailCheckState(exists ? 'exists' : 'not-exists');
-          setLastCheckedEmail(emailToCheck);
-        } catch (error) {
-          setEmailCheckState('error');
-          setLastCheckedEmail(emailToCheck);
-        }
-      }
-    }, 800);
-  }, [checkEmailExists, lastCheckedEmail, validateEmail]);
-
-  // Main validation effect
-  useEffect(() => {
-    const hasValidFormat = hasValidEmailFormat(email);
-    const isFromTrusted = isFromTrustedProvider(email);
-    const isFullyValid = hasValidFormat && isFromTrusted;
-
-    setIsEmailValid(isFullyValid);
-    setIsUntrustedProvider(hasValidFormat && !isFromTrusted && email.includes('@'));
-
-    if (!isFullyValid) {
-      setEmailCheckState('unchecked');
-      setLastCheckedEmail('');
-    } else {
-      debouncedEmailCheck(email);
-    }
-  }, [email, debouncedEmailCheck, hasValidEmailFormat, isFromTrustedProvider]);
-
-  // Initialize validation state
-  useEffect(() => {
-    if (initialEmail) {
-      setIsEmailValid(validateEmail(initialEmail));
-    }
-  }, [initialEmail, validateEmail]);
-
-  // Cleanup effect
-  useEffect(() => {
-    return () => {
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  const handleEmailChange = (value: string) => {
-    setEmail(value);
-  };
-
-  const handleContinueWithPassword = async () => {
-    if (!isEmailValid || isPasswordLoading || emailCheckState !== 'exists') return;
-    setIsPasswordLoading(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      onContinueWithPassword(email);
+      setError('Network error. Please try again.');
+      toast.error('Unexpected error occurred.');
     } finally {
-      setIsPasswordLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const handleContinueWithCode = async () => {
-    if (!isEmailValid || isCodeLoading || emailCheckState === 'checking') return;
-
-    setIsCodeLoading(true);
-    try {
-      const result = await sendCustomOTPEmail(email);
-
-      if (result.success) {
-        toast.success('Verification code sent to your email');
-        onContinueWithCode(email);
-      } else {
-        toast.error(result.error || 'Failed to send verification code');
-        setIsCodeLoading(false);
-      }
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to send verification code');
-      setIsCodeLoading(false);
-    }
-  };
-
-  const handleCreateAccountClick = async () => {
-    if (!isEmailValid || isCreateAccountLoading || emailCheckState === 'checking') return;
-    setIsCreateAccountLoading(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      onCreateAccount(email);
-    } finally {
-      setIsCreateAccountLoading(false);
-    }
-  };
-
-  const isLoading = isPasswordLoading || isCodeLoading || isCreateAccountLoading;
-
-  // Email input functions
-  const extractDomain = (emailValue: string): string => {
-    if (!emailValue.includes('@')) return '';
-    const parts = emailValue.split('@');
-    if (parts.length !== 2) return '';
-    const domain = parts[1].trim();
-    return domain.includes('.') && domain.length > 3 ? domain : '';
-  };
-
-  const updateFavicon = (emailValue: string) => {
-    const domain = extractDomain(emailValue);
-    if (domain && FAVICON_OVERRIDES[domain]) {
-      return {
-        url: FAVICON_OVERRIDES[domain],
-        show: true,
-        domain,
-      };
-    }
-    return {
-      url: '',
-      show: false,
-      domain: '',
-    };
-  };
-
-  const { url: faviconUrl, show: showFavicon } = updateFavicon(email);
-
-  // Sync input with DOM
-  useEffect(() => {
-    const input = emailInputRef.current;
-    if (!input) return;
-
-    const syncWithDOM = () => {
-      const domValue = input.value;
-      if (domValue !== email && domValue.length > 0) {
-        handleEmailChange(domValue);
-        return true;
-      }
-      return false;
-    };
-
-    const observer = new MutationObserver(() => {
-      syncWithDOM();
-    });
-
-    observer.observe(input, {
-      attributes: true,
-      attributeFilter: ['value']
-    });
-
-    const pollInterval = setInterval(() => {
-      syncWithDOM();
-    }, 100);
-
-    const stopPolling = setTimeout(() => {
-      clearInterval(pollInterval);
-    }, 5000);
-
-    return () => {
-      clearInterval(pollInterval);
-      clearTimeout(stopPolling);
-      observer.disconnect();
-    };
-  }, [email]);
-
-  // Render functions
-  const getRightSideIcon = () => {
-    if (isUntrustedProvider) {
-      return (
-        <div className="w-5 h-5">
-          <AlertTriangle className="w-full h-full text-orange-500" />
-        </div>
-      );
-    }
-
-    if (isLoading) {
-      return (
-        <div className="w-5 h-5">
-          <svg className="animate-spin text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-          </svg>
-        </div>
-      );
-    }
-
-    if (emailCheckState === 'checking') {
-      return (
-        <div className="w-5 h-5">
-          <svg className="animate-spin text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-          </svg>
-        </div>
-      );
-    }
-
-    if (emailCheckState === 'exists') {
-      return (
-        <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="20" height="20" viewBox="0 0 24 24">
-          <path fill="#10b981" d="M21.672,12.954l-1.199-1.965l0.597-2.224c0.124-0.463-0.098-0.949-0.529-1.159L18.47,6.601l-0.7-2.193        c-0.146-0.457-0.596-0.746-1.072-0.689l-2.286,0.274l-1.775-1.467c-0.37-0.306-0.904-0.306-1.274,0L9.588,3.993L7.302,3.719        C6.826,3.662,6.376,3.951,6.231,4.407l-0.7,2.193L3.459,7.606C3.028,7.815,2.806,8.302,2.93,8.765l0.597,2.224l-1.199,1.965        c-0.25,0.409-0.174,0.939,0.181,1.261l1.704,1.548l0.054,2.302c0.011,0.479,0.361,0.883,0.834,0.963l2.271,0.381l1.29,1.907        c-0.269,0.397-0.782,0.548-1.222,0.359L12,20.767l2.116,0.907c0.441,0.189,0.954,0.038,1.222-0.359l1.29-1.907l2.271-0.381        c0.473-0.079,0.823-0.483,0.834-0.963l0.054-2.302l1.704-1.548C21.846,13.892,21.922,13.363,21.672,12.954z M14.948,11.682        l-2.868,3.323c-0.197,0.229-0.476,0.347-0.758,0.347c-0.215,0-0.431-0.069-0.613-0.211l-1.665-1.295        c-0.436-0.339-0.515-0.968-0.175-1.403l0,0c0.339-0.435,0.967-0.514,1.403-0.175l0.916,0.712l2.247-2.603        c0.361-0.418,0.992-0.464,1.41-0.104C15.263,10.632,15.309,11.264,14.948,11.682z"/>
-        </svg>
-      );
-    }
-
-    if (emailCheckState === 'not-exists') {
-      return (
-        <div className="w-5 h-5">
-          <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M13 16.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0m-2.517-7.665c.112-.223.268-.424.488-.57C11.186 8.12 11.506 8 12 8c.384 0 .766.118 1.034.319a.95.95 0 0 1 .403.806c0 .48-.218.81-.62 1.186a9 9 0 0 1-.409.354l-.294.249c-.246.213-.524.474-.738.795l-.126.19V13.5a.75.75 0 0 0 1.5 0v-1.12c.09-.1.203-.208.347-.333.063-.055.14-.119.222-.187.166-.14.358-.3.52-.452.536-.5 1.098-1.2 1.098-2.283a2.45 2.45 0 0 0-1.003-2.006C13.37 6.695 12.658 6.5 12 6.5c-.756 0-1.373.191-1.861.517a2.94 2.94 0 0 0-.997 1.148.75.75 0 0 0 1.341.67"/>
-            <path fillRule="evenodd" d="M9.864 1.2a3.61 3.61 0 0 1 4.272 0l1.375 1.01c.274.2.593.333.929.384l1.686.259a3.61 3.61 0 0 1 3.021 3.02l.259 1.687c.051.336.183.655.384.929l1.01 1.375a3.61 3.61 0 0 1 0 4.272l-1.01 1.375a2.1 2.1 0 0 0-.384.929l-.259 1.686a3.61 3.61 0 0 1-3.02 3.021l-1.687.259a2.1 2.1 0 0 0-.929.384l-1.375 1.01a3.61 3.61 0 0 1-4.272 0l-1.375-1.01a2.1 2.1 0 0 0-.929-.384l-1.686-.259a3.61 3.61 0 0 1-3.021-3.02l-.259-1.687a2.1 2.1 0 0 0-.384-.929L1.2 14.136a3.61 3.61 0 0 1 0-4.272l1.01-1.375a2.1 2.1 0 0 0 .384-.929l.259-1.686a3.61 3.61 0 0 1 3.02-3.021l1.687-.259a2.1 2.1 0 0 0 .929-.384z"/>
-          </svg>
-        </div>
-      );
-    }
-
-    if (emailCheckState === 'error') {
-      return (
-        <div className="w-5 h-5">
-          <svg className="text-orange-500" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-          </svg>
-        </div>
-      );
-    }
-
-    return null;
-  };
-
-  const renderEmailStatusMessage = () => {
-    if (isUntrustedProvider) {
-      return (
-        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex items-start gap-2">
-            <svg className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-            </svg>
-            <div className="flex-1">
-              <p className="text-blue-800 text-sm font-medium mb-1">
-                Email provider not supported
-              </p>
-              <p className="text-blue-700 text-xs">
-                Please use an email from Gmail, Outlook, Yahoo, iCloud, or other supported providers.
-              </p>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    if (emailCheckState === 'error') {
-      return (
-        <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <div className="flex items-start gap-2">
-            <svg className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-            </svg>
-            <div className="flex-1">
-              <p className="text-yellow-800 text-sm font-medium mb-1">
-                Connection issue
-              </p>
-              <p className="text-yellow-700 text-xs">
-                You can still continue with verification code if the connection doesn't improve.
-              </p>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    if (emailCheckState === 'not-exists') {
-      return (
-        <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
-          <div className="flex-1">
-            <p className="text-purple-700 text-xs">
-              This email isn't registered. Click "Create Account" to continue, or check for typos.
-            </p>
-          </div>
-        </div>
-      );
-    }
-
-    return null;
-  };
-
-  const renderEmailActionButtons = () => {
-    const getPasswordButtonState = () => {
-      if (!isEmailValid) return { disabled: true, text: 'Continue with Password' };
-      if (emailCheckState === 'checking') return { disabled: true, text: 'Checking...' };
-      if (emailCheckState === 'exists') return { disabled: false, text: 'Continue with Password' };
-      if (emailCheckState === 'not-exists') return { disabled: true, text: 'Account Not Found' };
-      if (emailCheckState === 'error') return { disabled: true, text: 'Check Connection' };
-      return { disabled: true, text: 'Continue with Password' };
-    };
-
-    const getCodeButtonState = () => {
-      if (!isEmailValid) return { disabled: true, text: 'Send Verification Code' };
-      if (emailCheckState === 'checking') return { disabled: true, text: 'Checking...' };
-      if (emailCheckState === 'exists') return { disabled: false, text: 'Send One-Time Password (OTP)' };
-      if (emailCheckState === 'not-exists') return { disabled: false, text: 'Create Account' };
-      if (emailCheckState === 'error') return { disabled: false, text: 'Send Verification Code' };
-      return { disabled: true, text: 'Send Verification Code' };
-    };
-
-    const passwordButtonState = getPasswordButtonState();
-    const codeButtonState = getCodeButtonState();
-    const showCreateAccountButton = emailCheckState === 'not-exists';
-
-    if (isUntrustedProvider) {
-      return <div className="space-y-3 mb-8"></div>;
-    }
-
-    if (!isEmailValid || emailCheckState === 'unchecked') {
-      return (
-        <div className="space-y-3 mb-8">
-          <button
-            disabled={true}
-            className="w-full flex items-center justify-center gap-3 py-4 px-4 rounded-lg font-medium bg-gray-200 text-gray-400 cursor-not-allowed"
-            type="button"
-          >
-            <span className="flex items-center gap-2">
-              <span className="animate-pulse">Waiting for email address</span>
-              <span className="flex gap-1">
-                <span className="animate-bounce text-sm opacity-60" style={{ animationDelay: '0s' }}>●</span>
-                <span className="animate-bounce text-sm opacity-60" style={{ animationDelay: '0.4s' }}>●</span>
-                <span className="animate-bounce text-sm opacity-60" style={{ animationDelay: '0.8s' }}>●</span>
-              </span>
-            </span>
-          </button>
-        </div>
-      );
-    }
-
-    if (emailCheckState === 'checking') {
-      return (
-        <div className="space-y-3 mb-8">
-          <button
-            disabled={true}
-            className="w-full flex items-center justify-center gap-3 py-4 px-4 rounded-lg font-medium bg-gray-200 text-gray-400 cursor-not-allowed"
-            type="button"
-          >
-            <Loader2 className="w-5 h-5 animate-spin" />
-            <span>Checking email...</span>
-          </button>
-        </div>
-      );
-    }
-
-    if (showCreateAccountButton) {
-      return (
-        <div className="space-y-3 mb-8">
-          <button
-            disabled={isCreateAccountLoading}
-            onClick={handleCreateAccountClick}
-            className={`w-full flex items-center justify-center gap-3 py-4 px-4 rounded-lg font-medium transition-all ${
-              !isCreateAccountLoading
-                ? 'bg-red-500 text-white hover:bg-red-600 transform active:scale-95'
-                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-            }`}
-            type="button"
-          >
-            {isCreateAccountLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <UserPlus className="w-5 h-5" />
-            )}
-            <span>{isCreateAccountLoading ? 'Loading...' : 'Create Account'}</span>
-          </button>
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-3 mb-8">
-        {/* Password Button */}
-        <button
-          disabled={passwordButtonState.disabled || isPasswordLoading}
-          onClick={handleContinueWithPassword}
-          className={`w-full flex items-center justify-center gap-3 py-4 px-4 rounded-lg font-medium transition-all ${
-            !passwordButtonState.disabled && !isPasswordLoading
-              ? 'bg-red-500 text-white hover:bg-red-600 transform active:scale-95'
-              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-          }`}
-          type="button"
-        >
-          {isPasswordLoading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : (
-            <Lock className="w-5 h-5" />
-          )}
-          <span>{isPasswordLoading ? 'Loading...' : passwordButtonState.text}</span>
-        </button>
-
-        {/* Code Button */}
-        <button
-          disabled={codeButtonState.disabled || isCodeLoading}
-          onClick={handleContinueWithCode}
-          className={`w-full flex items-center justify-center gap-3 py-4 px-4 border-2 rounded-lg font-medium transition-all ${
-            !codeButtonState.disabled && !isCodeLoading
-              ? 'border-red-500 text-red-500 hover:bg-red-50 transform active:scale-95'
-              : 'border-gray-300 text-gray-400 cursor-not-allowed'
-          }`}
-          type="button"
-        >
-          {isCodeLoading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : (
-            <Key className="w-5 h-5" />
-          )}
-          <span>{isCodeLoading ? 'Sending...' : codeButtonState.text}</span>
-        </button>
-      </div>
-    );
-  };
-
-  const handleFaviconError = () => {
-    // Icon failed to load
-  };
+  const domain = email.split('@')[1] || '';
+  const faviconUrl = FAVICON_OVERRIDES[domain] || `https://www.google.com/s2/favicons?domain=${domain}`;
 
   return (
     <div className={isCompact ? "px-4 pb-4" : "min-h-screen bg-white flex flex-col px-4"}>
@@ -559,19 +120,22 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
         <div className="pt-4 pb-4 flex items-center justify-between">
           <button
             onClick={onBack}
-            className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-full transition-colors active:scale-95"
             disabled={isLoading}
+            className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-full transition-colors active:scale-95 disabled:opacity-50"
+            aria-label="Go back"
           >
             <ArrowLeft className="w-5 h-5 text-gray-700" />
           </button>
 
           <h2 className="text-lg font-semibold text-gray-900">
-            Continue with Email
+            Welcome Back
           </h2>
 
           <button
             className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-full transition-colors active:scale-95"
+            aria-label="Help"
             onClick={() => alert('Need help? Contact support@example.com')}
+            type="button"
             disabled={isLoading}
           >
             <HelpCircle className="w-5 h-5 text-gray-700" />
@@ -583,7 +147,8 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       <div className="mb-6 px-0">
         <div className="flex items-center gap-2 mb-2">
           <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
-          <div className="flex-1 h-1 bg-gray-300 rounded-full"></div>
+          <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
+          <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
           <div className="flex-1 h-1 bg-gray-300 rounded-full"></div>
         </div>
       </div>
@@ -594,59 +159,122 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
           {/* Header Text */}
           <div className="text-center mb-6">
             <h1 className={`text-gray-900 font-semibold mb-2 ${isCompact ? 'text-xl' : 'text-2xl'}`}>
-              What's your email?
+              Enter your password
             </h1>
             <p className={`text-gray-600 ${isCompact ? 'text-sm' : 'text-base'}`}>
-              We'll check if you already have an account.
+              Sign in with your password
             </p>
           </div>
 
-          {/* Email Input Section */}
-          <div className={isCompact ? "space-y-3" : "space-y-4"}>
-            {/* Inline Email Status Message */}
-            {renderEmailStatusMessage()}
-
-            {/* Inline Email Input */}
-            <div className="relative">
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-              </label>
-              <div className="relative">
-                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 z-10">
-                  {showFavicon && faviconUrl ? (
+          {/* Email Display */}
+          <div className={`p-4 bg-gray-50 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-6 h-6">
+                  {faviconUrl ? (
                     <img
                       src={faviconUrl}
                       alt="Email provider favicon"
                       className="w-full h-full object-contain"
-                      onError={handleFaviconError}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = '';
+                      }}
                     />
                   ) : (
                     <Mail className="w-full h-full text-gray-400" />
                   )}
                 </div>
-
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 z-10">
-                  {getRightSideIcon()}
-                </div>
-
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => handleEmailChange(e.target.value)}
-                  placeholder="Enter your email address"
-                  autoComplete="email"
-                  ref={emailInputRef}
-                  disabled={isLoading}
-                  className="relative w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors bg-transparent disabled:opacity-50"
-                />
+                <span className={`text-gray-700 font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>
+                  {email}
+                </span>
               </div>
+              <button
+                onClick={onBack}
+                disabled={isLoading}
+                className={`text-red-500 hover:text-red-600 font-medium ${isCompact ? 'text-xs' : 'text-sm'} disabled:opacity-50`}
+                type="button"
+              >
+                Change
+              </button>
+            </div>
+          </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className={`p-4 border border-red-200 bg-red-50 text-red-700 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
+              <p className={isCompact ? 'text-xs' : 'text-sm'}>{error}</p>
+            </div>
+          )}
+
+          {/* Password Field */}
+          <div className={isCompact ? "space-y-3" : "space-y-4"}>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
+              <input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => handlePasswordChange(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && isPasswordValid && !isLoading) handleSignIn();
+                }}
+                placeholder="Password"
+                autoComplete="current-password"
+                ref={passwordInputRef}
+                disabled={isLoading}
+                className={`relative w-full pl-10 ${
+                  isPasswordValid && !error ? 'pr-16' : 'pr-10'
+                } py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors bg-white disabled:bg-gray-50 disabled:cursor-not-allowed ${
+                  error ? 'border-red-300' : 'border-gray-300'
+                } ${isCompact ? 'shadow-sm' : ''}`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={isLoading}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+              {isPasswordValid && !error && (
+                <Check className="absolute right-10 top-1/2 transform -translate-y-1/2 w-5 h-5 text-green-500" />
+              )}
             </div>
 
-            {/* Inline Action Buttons */}
-            {renderEmailActionButtons()}
+            {/* Sign In Button */}
+            <button
+              disabled={!isPasswordValid || isLoading}
+              onClick={handleSignIn}
+              className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg transition-colors ${
+                isPasswordValid && !isLoading
+                  ? 'bg-red-500 text-white hover:bg-red-600 border-red-500'
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              } ${isCompact ? 'shadow-sm' : ''}`}
+              type="button"
+            >
+              {isLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Lock className="w-5 h-5" />
+              )}
+              <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>
+                {isLoading ? 'Signing In...' : 'Sign In'}
+              </span>
+            </button>
+
+            {/* Forgot Password */}
+            <div className="text-center">
+              <button
+                className={`text-red-500 hover:text-red-600 font-medium disabled:opacity-50 ${isCompact ? 'text-sm' : 'text-base'}`}
+                type="button"
+                onClick={onForgotPasswordClick}
+                disabled={isLoading}
+              >
+                Forgot password?
+              </button>
+            </div>
           </div>
         </div>
 
@@ -672,4 +300,4 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   );
 };
 
-export default EmailAuthScreen;
+export default PasswordAuthScreen;
