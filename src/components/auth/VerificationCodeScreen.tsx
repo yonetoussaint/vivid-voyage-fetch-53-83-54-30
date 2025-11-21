@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import { ArrowLeft, Key, Mail, HelpCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { FAVICON_OVERRIDES } from '../../constants/email';
+import { AuthContext } from '@/contexts/auth/AuthContext'; // Import your AuthContext
 
 interface VerificationCodeScreenProps {
   email: string;
@@ -26,6 +27,9 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
   const [isResending, setIsResending] = useState(false);
   const [error, setError] = useState<string>('');
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Use AuthContext to access authentication functions
+  const authContext = useContext(AuthContext);
 
   useEffect(() => {
     if (timeLeft > 0) {
@@ -154,7 +158,30 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
 
       if (result.success) {
         toast.success('Email verified successfully!');
-        onVerificationSuccess();
+        
+        // Use AuthContext to sign in the user after OTP verification
+        if (authContext) {
+          // Try to sign in using passwordless authentication
+          const { data, error } = await authContext.supabase.auth.signInWithOtp({
+            email: email.toLowerCase().trim(),
+            options: {
+              shouldCreateUser: true, // Create user if they don't exist
+            },
+          });
+
+          if (error) {
+            console.error('Error signing in after OTP:', error);
+            // Even if sign-in fails, still proceed to success screen
+            // The user can complete sign-in via email magic link
+            onVerificationSuccess();
+          } else {
+            console.log('Sign-in initiated successfully');
+            onVerificationSuccess();
+          }
+        } else {
+          // Fallback if AuthContext is not available
+          onVerificationSuccess();
+        }
       } else {
         setError(result.error || 'Invalid verification code. Please try again.');
         setCode(['', '', '', '', '', '']);
