@@ -1,9 +1,7 @@
-
 import React, { useState } from 'react';
 import { ArrowLeft, HelpCircle, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { FAVICON_OVERRIDES } from '../../constants/email';
-import { useAuth } from '../../contexts/auth/AuthContext';
 
 interface ResetPasswordScreenProps {
   onBack: () => void;
@@ -24,9 +22,6 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [resetState, setResetState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
-
-  // ✅ Use the password reset OTP function
-  const { sendPasswordResetOTP } = useAuth();
 
   const isEmailValid = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -50,7 +45,39 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
     return { url: '', show: false, domain: '' };
   };
 
-  const { url: faviconUrl, show: showFavicon } = updateFavicon(email);
+  const sendPasswordResetOTP = async (email: string) => {
+    try {
+      const BACKEND_URL = 'https://resend-u11p.onrender.com';
+      const response = await fetch(`${BACKEND_URL}/api/send-reset-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        let errorMessage = `Server error: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const result = await response.json();
+      return { success: true };
+    } catch (error: any) {
+      console.error('Failed to send password reset OTP:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Failed to send password reset code. Please try again.' 
+      };
+    }
+  };
 
   const handleSendResetCode = async () => {
     if (!isEmailValid(email) || isLoading) return;
@@ -60,7 +87,6 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
     setErrorMessage('');
 
     try {
-      // ✅ This calls the password reset endpoint specifically
       const result = await sendPasswordResetOTP(email);
 
       if (result.success) {
@@ -85,6 +111,7 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
   };
 
   const canSendReset = isEmailValid(email) && !isLoading && resetState !== 'sent';
+  const { url: faviconUrl, show: showFavicon } = updateFavicon(email);
 
   const handleFaviconError = () => {
     // Favicon failed to load
