@@ -14,6 +14,7 @@ interface MainLoginScreenProps {
   selectedLanguage: string;
   setSelectedLanguage: (language: string) => void;
   onContinueWithEmail: () => void;
+  onContinueWithPhone: () => void;
   isCompact?: boolean;
   onExpand?: () => void;
   showHeader?: boolean;
@@ -23,6 +24,7 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
   selectedLanguage, 
   setSelectedLanguage, 
   onContinueWithEmail,
+  onContinueWithPhone,
   isCompact = false,
   onExpand,
   showHeader = true
@@ -114,14 +116,13 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
     }
   };
 
-  // Remove the separate phone button since it's now integrated in EmailAuthScreen
   const handlePhoneSignIn = async () => {
     if (isLoading) return;
 
     try {
       setIsPhoneLoading(true);
-      // This will now be handled by the hybrid EmailAuthScreen
-      onContinueWithEmail(); // Navigate to the hybrid screen
+      await new Promise(resolve => setTimeout(resolve, 500));
+      onContinueWithPhone();
     } catch (error) {
       setIsPhoneLoading(false);
     }
@@ -210,7 +211,7 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
             )}
           </button>
 
-          {/* Email & Phone Sign In Button (Combined) */}
+          {/* Email Sign In Button */}
           <button 
             onClick={handleEmailSignIn}
             disabled={isLoading && !isEmailLoading}
@@ -219,21 +220,41 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
             }`}
           >
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
-                </svg>
-                <svg className="w-4 h-4 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
-                </svg>
-              </div>
+              <svg className="w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+              </svg>
               <TranslatedText className="text-gray-700 font-medium">
-                Continue with Email or Phone
+                Continue with Email
               </TranslatedText>
             </div>
 
             {/* Spinner on the right side */}
             {isEmailLoading && (
+              <div className="absolute right-4">
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-gray-600"></div>
+              </div>
+            )}
+          </button>
+
+          {/* Phone Sign In Button */}
+          <button 
+            onClick={handlePhoneSignIn}
+            disabled={isLoading && !isPhoneLoading}
+            className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed relative ${
+              isCompact ? 'shadow-sm' : ''
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <svg className="w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+              </svg>
+              <TranslatedText className="text-gray-700 font-medium">
+                Continue with Phone Number
+              </TranslatedText>
+            </div>
+
+            {/* Spinner on the right side */}
+            {isPhoneLoading && (
               <div className="absolute right-4">
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-gray-600"></div>
               </div>
