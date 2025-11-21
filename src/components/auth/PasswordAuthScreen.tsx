@@ -16,8 +16,7 @@ interface PasswordAuthScreenProps {
   showHeader?: boolean;
 }
 
-
-
+// Phone flag images using FlagCDN
 const PHONE_FLAG_IMAGES: Record<string, string> = {
   'us': 'https://flagcdn.com/us.svg',
   'ca': 'https://flagcdn.com/ca.svg',
@@ -81,7 +80,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
       }
     }
     
-    // Map country code to flag (simplified mapping)
+    // Map country code to country code for flag images
     const countryMap: Record<string, string> = {
       '+1': 'us', // US/Canada
       '+44': 'gb', // UK
@@ -111,9 +110,9 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
     };
     
     const country = countryMap[countryCode] || 'us';
-    const flag = COUNTRY_FLAGS[country] || DEFAULT_FLAG;
+    const flagImage = PHONE_FLAG_IMAGES[country] || DEFAULT_FLAG_IMAGE;
     
-    return { countryCode, displayNumber, flag };
+    return { countryCode, displayNumber, country, flagImage };
   };
 
   // Login function using Supabase
@@ -292,15 +291,19 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
                     )
                   ) : (
                     phoneInfo ? (
-                      <span className="text-2xl leading-none">{phoneInfo ? (
-  <img
-    src={PHONE_FLAG_IMAGES[phoneInfo.country] || DEFAULT_FLAG_IMAGE}
-    alt={`${phoneInfo.country} flag`}
-    className="w-6 h-4 object-contain"
-  />
-) : (
-  <Phone className="w-full h-full text-gray-400" />
-)}
+                      <img
+                        src={phoneInfo.flagImage}
+                        alt={`${phoneInfo.country} flag`}
+                        className="w-6 h-4 object-contain"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = DEFAULT_FLAG_IMAGE;
+                        }}
+                      />
+                    ) : (
+                      <Phone className="w-full h-full text-gray-400" />
+                    )
+                  )}
                 </div>
                 <div className="flex flex-col">
                   <span className={`text-gray-700 font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>
