@@ -116,6 +116,14 @@ const AuthOverlay: React.FC = () => {
     setNameErrors(prev => ({ ...prev, lastName: error }));
   };
 
+  // Phone authentication handler
+  const handleContinueWithPhone = (phone: string) => {
+    console.log('Continue with phone:', phone);
+    // For now, navigate to verification screen with phone
+    // You'll need to implement proper phone verification flow
+    setCurrentScreen('verification');
+  };
+
   const ErrorBanner = () => (
     authError ? (
       <div className="fixed top-4 left-4 right-4 z-50 bg-red-50 border border-red-200 rounded-lg p-4 shadow-lg">
@@ -193,6 +201,7 @@ const AuthOverlay: React.FC = () => {
                 onContinueWithCode={handleContinueWithCode}
                 onCreateAccount={handleCreateAccount}
                 onSignUpClick={handleSignUpClick}
+                onContinueWithPhone={handleContinueWithPhone}
                 initialEmail={userEmail}
                 showHeader={false}
                 {...compactProps}
