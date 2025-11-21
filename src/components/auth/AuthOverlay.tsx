@@ -75,8 +75,9 @@ const AuthOverlay: React.FC = () => {
     validatePassword
   } = useAuth();
 
-  // Add state for auth method
+  // Add state for auth method and phone number
   const [authMethod, setAuthMethod] = React.useState<'email' | 'phone'>('email');
+  const [userPhone, setUserPhone] = React.useState('');
 
   const getCompactProps = () => ({
     isCompact: true,
@@ -125,15 +126,35 @@ const AuthOverlay: React.FC = () => {
     setCurrentScreen('email'); // Use the same screen but with phone mode
   };
 
-  // Updated handlers to include method
+  // Updated handlers to include method and store both email/phone
   const handleContinueWithPasswordWithMethod = (identifier: string, method: 'email' | 'phone') => {
-    setUserEmail(identifier);
+    if (method === 'email') {
+      setUserEmail(identifier);
+      setUserPhone(''); // Clear phone when using email
+    } else {
+      setUserPhone(identifier);
+      setUserEmail(''); // Clear email when using phone
+    }
     setCurrentScreen('password');
   };
 
   const handleContinueWithCodeWithMethod = (identifier: string, method: 'email' | 'phone') => {
-    setUserEmail(identifier);
+    if (method === 'email') {
+      setUserEmail(identifier);
+      setUserPhone('');
+    } else {
+      setUserPhone(identifier);
+      setUserEmail('');
+    }
     setCurrentScreen('verification');
+  };
+
+  // Email-specific handler for backward compatibility
+  const handleCreateAccountWithEmail = (email: string) => {
+    setUserEmail(email);
+    setUserPhone('');
+    setAuthMethod('email');
+    handleCreateAccount(email);
   };
 
   const ErrorBanner = () => (
@@ -212,7 +233,7 @@ const AuthOverlay: React.FC = () => {
                 selectedLanguage={selectedLanguage}
                 onContinueWithPassword={handleContinueWithPasswordWithMethod}
                 onContinueWithCode={handleContinueWithCodeWithMethod}
-                onCreateAccount={handleCreateAccount}
+                onCreateAccount={handleCreateAccountWithEmail}
                 onSignUpClick={handleSignUpClick}
                 authMethod={authMethod}
                 initialEmail={userEmail}
@@ -226,7 +247,8 @@ const AuthOverlay: React.FC = () => {
           return (
             <React.Suspense fallback={<VerificationCodeScreenSkeleton />}>
               <VerificationCodeScreen
-                email={userEmail}
+                email={authMethod === 'email' ? userEmail : userPhone}
+                authMethod={authMethod}
                 onBack={handleBackFromVerification}
                 onVerificationSuccess={handleVerificationSuccess}
                 showHeader={false}
@@ -239,7 +261,9 @@ const AuthOverlay: React.FC = () => {
           return (
             <React.Suspense fallback={<PasswordAuthScreenSkeleton />}>
               <PasswordAuthScreen
-                email={userEmail}
+                email={authMethod === 'email' ? userEmail : ''}
+                phone={authMethod === 'phone' ? userPhone : ''}
+                authMethod={authMethod}
                 onBack={handleBackFromPassword}
                 onSignInSuccess={handleSignInSuccess}
                 onForgotPasswordClick={handleForgotPasswordClick}
@@ -257,6 +281,8 @@ const AuthOverlay: React.FC = () => {
                 onBack={() => setCurrentScreen('password')}
                 onResetSuccess={(email) => {
                   setUserEmail(email);
+                  setUserPhone('');
+                  setAuthMethod('email');
                   setCurrentScreen('otp-reset');
                 }}
                 initialEmail={userEmail}
