@@ -17,36 +17,35 @@ interface PasswordAuthScreenProps {
 }
 
 
-// Country code to flag code mapping (for flag images)
-const COUNTRY_FLAGS: Record<string, string> = {
-  'us': 'us',
-  'ca': 'ca',
-  'gb': 'gb',
-  'fr': 'fr',
-  'de': 'de',
-  'es': 'es',
-  'it': 'it',
-  'br': 'br',
-  'mx': 'mx',
-  'ht': 'ht',
-  'do': 'do',
-  'cn': 'cn',
-  'jp': 'jp',
-  'kr': 'kr',
-  'in': 'in',
-  'au': 'au',
-  'nz': 'nz',
-  'ru': 'ru',
-  'sa': 'sa',
-  'ae': 'ae',
-  'za': 'za',
-  'ng': 'ng',
-  'eg': 'eg',
-  'ke': 'ke',
+
+const PHONE_FLAG_IMAGES: Record<string, string> = {
+  'us': 'https://flagcdn.com/us.svg',
+  'ca': 'https://flagcdn.com/ca.svg',
+  'gb': 'https://flagcdn.com/gb.svg',
+  'fr': 'https://flagcdn.com/fr.svg',
+  'de': 'https://flagcdn.com/de.svg',
+  'es': 'https://flagcdn.com/es.svg',
+  'it': 'https://flagcdn.com/it.svg',
+  'br': 'https://flagcdn.com/br.svg',
+  'mx': 'https://flagcdn.com/mx.svg',
+  'ht': 'https://flagcdn.com/ht.svg',
+  'do': 'https://flagcdn.com/do.svg',
+  'cn': 'https://flagcdn.com/cn.svg',
+  'jp': 'https://flagcdn.com/jp.svg',
+  'kr': 'https://flagcdn.com/kr.svg',
+  'in': 'https://flagcdn.com/in.svg',
+  'au': 'https://flagcdn.com/au.svg',
+  'nz': 'https://flagcdn.com/nz.svg',
+  'ru': 'https://flagcdn.com/ru.svg',
+  'sa': 'https://flagcdn.com/sa.svg',
+  'ae': 'https://flagcdn.com/ae.svg',
+  'za': 'https://flagcdn.com/za.svg',
+  'ng': 'https://flagcdn.com/ng.svg',
+  'eg': 'https://flagcdn.com/eg.svg',
+  'ke': 'https://flagcdn.com/ke.svg',
 };
 
-// Default flag (US)
-const DEFAULT_FLAG = 'us';
+const DEFAULT_FLAG_IMAGE = 'https://flagcdn.com/us.svg';
 
 const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
   email,
@@ -293,11 +292,15 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
                     )
                   ) : (
                     phoneInfo ? (
-                      <span className="text-2xl leading-none">{phoneInfo.flag}</span>
-                    ) : (
-                      <Phone className="w-full h-full text-gray-400" />
-                    )
-                  )}
+                      <span className="text-2xl leading-none">{phoneInfo ? (
+  <img
+    src={PHONE_FLAG_IMAGES[phoneInfo.country] || DEFAULT_FLAG_IMAGE}
+    alt={`${phoneInfo.country} flag`}
+    className="w-6 h-4 object-contain"
+  />
+) : (
+  <Phone className="w-full h-full text-gray-400" />
+)}
                 </div>
                 <div className="flex flex-col">
                   <span className={`text-gray-700 font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>
