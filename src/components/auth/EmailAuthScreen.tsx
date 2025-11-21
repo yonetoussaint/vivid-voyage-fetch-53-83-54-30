@@ -34,6 +34,10 @@ const TRUSTED_PROVIDERS = [
   'fastmail.com', 'tutanota.com',
 ];
 
+// Cache for email existence checks
+const emailCheckCache = new Map<string, { exists: boolean; timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   onBack,
   selectedLanguage,
@@ -57,6 +61,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout>();
   const emailInputRef = useRef<HTMLInputElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Email validation functions
   const isFromTrustedProvider = useCallback((emailAddress: string): boolean => {
@@ -73,8 +78,24 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     return hasValidEmailFormat(emailAddress) && isFromTrustedProvider(emailAddress);
   }, [hasValidEmailFormat, isFromTrustedProvider]);
 
-  // API call to check if email exists
+  // Optimized API call to check if email exists with timeout and caching
   const checkEmailExists = useCallback(async (emailToCheck: string): Promise<boolean> => {
+    // Check cache first
+    const cached = emailCheckCache.get(emailToCheck);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      return cached.exists;
+    }
+
+    // Cancel previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+
     try {
       const response = await fetch('https://supabase-y8ak.onrender.com/api/check-email', {
         method: 'POST',
@@ -82,22 +103,47 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email: emailToCheck }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
 
       if (data.success) {
+        // Cache the successful result
+        emailCheckCache.set(emailToCheck, {
+          exists: data.exists,
+          timestamp: Date.now()
+        });
         return data.exists;
       } else {
         throw new Error(data.message || 'Failed to check email');
       }
-    } catch (error) {
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        console.warn('Email check request was aborted');
+        throw new Error('Request timeout');
+      }
       console.error('Error checking email:', error);
       throw error;
+    } finally {
+      if (abortControllerRef.current === controller) {
+        abortControllerRef.current = null;
+      }
     }
   }, []);
 
-  // OTP function
+  // Optimized OTP function with timeout
   const sendCustomOTPEmail = async (email: string) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
     try {
       const BACKEND_URL = 'https://resend-u11p.onrender.com';
       const response = await fetch(`${BACKEND_URL}/api/send-otp`, {
@@ -106,7 +152,10 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         let errorMessage = `Server error: ${response.status}`;
@@ -123,6 +172,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       const result = await response.json();
       return { success: true };
     } catch (error: any) {
+      clearTimeout(timeoutId);
       console.error('Failed to send OTP:', error);
       return { 
         success: false, 
@@ -131,7 +181,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     }
   };
 
-  // Debounced email check
+  // Faster debounced email check with reduced delay
   const debouncedEmailCheck = useCallback((emailToCheck: string) => {
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
@@ -149,7 +199,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
           setLastCheckedEmail(emailToCheck);
         }
       }
-    }, 800);
+    }, 400); // Reduced from 800ms to 400ms
   }, [checkEmailExists, lastCheckedEmail, validateEmail]);
 
   // Main validation effect
@@ -182,6 +232,9 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
       }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
     };
   }, []);
 
@@ -189,42 +242,48 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     setEmail(value);
   };
 
+  // Optimized handler without artificial delays
   const handleContinueWithPassword = async () => {
     if (!isEmailValid || isPasswordLoading || emailCheckState !== 'exists') return;
     setIsPasswordLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 400));
       onContinueWithPassword(email);
     } finally {
       setIsPasswordLoading(false);
     }
   };
 
+  // Optimized OTP handler with optimistic UI
   const handleContinueWithCode = async () => {
     if (!isEmailValid || isCodeLoading || emailCheckState === 'checking') return;
 
     setIsCodeLoading(true);
+    const loadingToast = toast.loading('Sending verification code...');
+
     try {
       const result = await sendCustomOTPEmail(email);
 
       if (result.success) {
+        toast.dismiss(loadingToast);
         toast.success('Verification code sent to your email');
         onContinueWithCode(email);
       } else {
+        toast.dismiss(loadingToast);
         toast.error(result.error || 'Failed to send verification code');
         setIsCodeLoading(false);
       }
     } catch (error: any) {
+      toast.dismiss(loadingToast);
       toast.error(error.message || 'Failed to send verification code');
       setIsCodeLoading(false);
     }
   };
 
+  // Optimized create account handler
   const handleCreateAccountClick = async () => {
     if (!isEmailValid || isCreateAccountLoading || emailCheckState === 'checking') return;
     setIsCreateAccountLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 400));
       onCreateAccount(email);
     } finally {
       setIsCreateAccountLoading(false);
@@ -260,45 +319,31 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
   const { url: faviconUrl, show: showFavicon } = updateFavicon(email);
 
-  // Sync input with DOM
+  // Preconnect to API domains for faster subsequent requests
   useEffect(() => {
-    const input = emailInputRef.current;
-    if (!input) return;
+    // Create link elements for preconnection
+    const preconnectLinks = [
+      { rel: 'preconnect', href: 'https://supabase-y8ak.onrender.com' },
+      { rel: 'preconnect', href: 'https://resend-u11p.onrender.com' },
+      { rel: 'dns-prefetch', href: 'https://supabase-y8ak.onrender.com' },
+      { rel: 'dns-prefetch', href: 'https://resend-u11p.onrender.com' },
+    ];
 
-    const syncWithDOM = () => {
-      const domValue = input.value;
-      if (domValue !== email && domValue.length > 0) {
-        handleEmailChange(domValue);
-        return true;
-      }
-      return false;
-    };
-
-    const observer = new MutationObserver(() => {
-      syncWithDOM();
+    preconnectLinks.forEach(({ rel, href }) => {
+      const link = document.createElement('link');
+      link.rel = rel;
+      link.href = href;
+      document.head.appendChild(link);
     });
-
-    observer.observe(input, {
-      attributes: true,
-      attributeFilter: ['value']
-    });
-
-    const pollInterval = setInterval(() => {
-      syncWithDOM();
-    }, 100);
-
-    const stopPolling = setTimeout(() => {
-      clearInterval(pollInterval);
-    }, 5000);
 
     return () => {
-      clearInterval(pollInterval);
-      clearTimeout(stopPolling);
-      observer.disconnect();
+      // Cleanup not strictly necessary but good practice
+      document.querySelectorAll('link[rel="preconnect"], link[rel="dns-prefetch"]')
+        .forEach(link => link.remove());
     };
-  }, [email]);
+  }, []);
 
-  // Render functions
+  // Rest of your render functions remain the same...
   const getRightSideIcon = () => {
     if (isUntrustedProvider) {
       return (
