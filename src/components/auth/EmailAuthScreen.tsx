@@ -37,6 +37,70 @@ const TRUSTED_PROVIDERS = [
   'fastmail.com', 'tutanota.com',
 ];
 
+// Backend Preloading Hook
+const useEnhancedBackendPreloader = () => {
+  useEffect(() => {
+    const BACKEND_URLS = [
+      'https://supabase-y8ak.onrender.com/api/check-email',
+      'https://resend-u11p.onrender.com/api/send-otp'
+    ];
+
+    let retryCount = 0;
+    const maxRetries = 2;
+
+    const pingBackend = async (url: string): Promise<boolean> => {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+        
+        // Use HEAD request for lighter preloading
+        const response = await fetch(url, {
+          method: 'HEAD',
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeout);
+        return response.ok;
+      } catch (error) {
+        console.log(`Preload failed for ${url}:`, error);
+        return false;
+      }
+    };
+
+    const preloadWithRetry = async () => {
+      const results = await Promise.all(
+        BACKEND_URLS.map(url => pingBackend(url))
+      );
+
+      const allSuccessful = results.every(success => success);
+      
+      if (!allSuccessful && retryCount < maxRetries) {
+        retryCount++;
+        const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 10000); // Exponential backoff max 10s
+        console.log(`Retrying preload in ${retryDelay}ms (attempt ${retryCount})`);
+        setTimeout(preloadWithRetry, retryDelay);
+      } else {
+        retryCount = 0; // Reset for next interval
+        if (allSuccessful) {
+          console.log('All backends preloaded successfully');
+        } else {
+          console.log('Some backends failed to preload after retries');
+        }
+      }
+    };
+
+    // Initial preload
+    preloadWithRetry();
+
+    // Keep-alive interval (4 minutes - Render sleeps after 5 min inactivity)
+    const interval = setInterval(preloadWithRetry, 4 * 60 * 1000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
+};
+
 const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   onBack,
   selectedLanguage,
@@ -50,6 +114,9 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   onExpand,
   showHeader = true,
 }) => {
+  // Initialize backend preloading
+  useEnhancedBackendPreloader();
+
   const [email, setEmail] = useState(initialEmail);
   const [phone, setPhone] = useState('');
   const [isEmailValid, setIsEmailValid] = useState(false);
@@ -122,7 +189,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       // For now, simulate phone check - implement actual API call
       console.log('Checking phone:', phoneToCheck);
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Simulate random result for demo
       return Math.random() > 0.5;
     } catch (error) {
@@ -172,7 +239,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       // For now, simulate phone OTP - you'll need to implement actual phone OTP service
       console.log('Sending OTP to phone:', phoneNumber);
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Simulate success for demo purposes
       return { success: true };
     } catch (error: any) {
@@ -284,12 +351,12 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     // Format phone number as user types
     const cleaned = value.replace(/\D/g, '');
     let formatted = cleaned;
-    
+
     if (cleaned.length > 0) {
       if (!cleaned.startsWith('+')) {
         formatted = `+${cleaned}`;
       }
-      
+
       // Add formatting for better readability
       if (cleaned.length > 3) {
         formatted = `${formatted.slice(0, 4)} ${formatted.slice(4)}`;
@@ -301,13 +368,13 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
         formatted = `${formatted.slice(0, 12)} ${formatted.slice(12)}`;
       }
     }
-    
+
     setPhone(formatted);
   };
 
   const handleContinueWithPassword = async () => {
     if (!isCurrentInputValid || isPasswordLoading || currentCheckState !== 'exists') return;
-    
+
     setIsPasswordLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 400));
@@ -323,7 +390,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     setIsCodeLoading(true);
     try {
       let result;
-      
+
       if (authMethod === 'email') {
         result = await sendCustomOTPEmail(email);
       } else {
@@ -345,7 +412,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
   const handleCreateAccountClick = async () => {
     if (authMethod !== 'email' || !isEmailValid || isCreateAccountLoading || emailCheckState === 'checking') return;
-    
+
     setIsCreateAccountLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 400));
