@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { ArrowLeft, Lock, Check, HelpCircle, Eye, EyeOff, Mail, Loader2 } from 'lucide-react';
 import { FAVICON_OVERRIDES } from '../../constants/email';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client'; // ← DIRECT IMPORT
 
 interface PasswordAuthScreenProps {
   email: string;
@@ -30,16 +31,23 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
 
   const passwordInputRef = useRef<HTMLInputElement>(null);
 
-  // Login function using Supabase
+  // Login function using Supabase - NO DYNAMIC IMPORT
   const login = async (email: string, password: string) => {
     try {
-      const { supabase } = await import('@/integrations/supabase/client');
+      console.log('Attempting to login with email:', email);
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
         password,
       });
 
       if (error) {
+        console.error('Login error details:', {
+          message: error.message,
+          status: error.status,
+          name: error.name
+        });
+
         let errorMessage = error.message;
 
         if (error.message.includes('Invalid login credentials') || error.message.includes('Invalid')) {
@@ -56,8 +64,10 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
       }
 
       if (data.user) {
+        console.log('User logged in successfully:', data.user.email);
         return {};
       } else {
+        console.warn('Login succeeded but no user data returned');
         return { error: 'Login failed. Please try again.' };
       }
     } catch (error: any) {
