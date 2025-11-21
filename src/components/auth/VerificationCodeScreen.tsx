@@ -1,9 +1,7 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Key, Mail, HelpCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { FAVICON_OVERRIDES } from '../../constants/email';
-import { useAuth } from '../../contexts/auth/AuthContext';
 
 interface VerificationCodeScreenProps {
   email: string;
@@ -29,9 +27,6 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
   const [error, setError] = useState<string>('');
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Add this line to get the custom functions from AuthContext
-  const { verifyCustomOTP, resendOTPEmail } = useAuth();
-
   useEffect(() => {
     if (timeLeft > 0) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
@@ -41,14 +36,73 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
     }
   }, [timeLeft]);
 
+  // OTP functions
+  const verifyCustomOTP = async (email: string, otp: string) => {
+    try {
+      const BACKEND_URL = 'https://resend-u11p.onrender.com';
+      const response = await fetch(`${BACKEND_URL}/api/verify-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, otp }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Invalid verification code');
+      }
+
+      return { 
+        success: true, 
+        purpose: result.purpose,
+        message: result.message 
+      };
+    } catch (error: any) {
+      console.error('Failed to verify OTP:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Invalid verification code' 
+      };
+    }
+  };
+
+  const resendOTPEmail = async (email: string, purpose = 'signin') => {
+    try {
+      const BACKEND_URL = 'https://resend-u11p.onrender.com';
+      const response = await fetch(`${BACKEND_URL}/api/resend-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, purpose }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to resend verification code');
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Failed to resend OTP:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Failed to resend verification code' 
+      };
+    }
+  };
+
   const handleCodeChange = (index: number, value: string) => {
-    if (value.length > 1) return; // Only allow single digit
+    if (value.length > 1) return;
 
     const newCode = [...code];
     newCode[index] = value;
     setCode(newCode);
     setIsComplete(newCode.every(digit => digit !== ''));
-    setError(''); // Clear any previous errors
+    setError('');
 
     // Auto-focus next input
     if (value && index < 5) {
@@ -67,7 +121,6 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
     setError('');
 
     try {
-      // Use custom resend function for sign-in
       const result = await resendOTPEmail(email, 'signin');
 
       if (result.success) {
@@ -97,7 +150,6 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
     const verificationCode = code.join('');
 
     try {
-      // Use custom verification function
       const result = await verifyCustomOTP(email, verificationCode);
 
       if (result.success) {
@@ -105,7 +157,6 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
         onVerificationSuccess();
       } else {
         setError(result.error || 'Invalid verification code. Please try again.');
-        // Clear the code inputs on error
         setCode(['', '', '', '', '', '']);
         setIsComplete(false);
         inputRefs.current[0]?.focus();
