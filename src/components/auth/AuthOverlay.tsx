@@ -40,9 +40,7 @@ const AuthOverlay: React.FC = () => {
     setAuthError,
     getFaviconUrl,
     handleClose,
-    handleContinueWithEmail,
     handleBackToMain,
-    handleContinueWithPassword,
     handleContinueWithCode,
     handleCreateAccount,
     handleSignUpClick,
@@ -120,9 +118,15 @@ const AuthOverlay: React.FC = () => {
     setNameErrors(prev => ({ ...prev, lastName: error }));
   };
 
+  // Email authentication handler - DEFINED LOCALLY
+  const handleContinueWithEmail = () => {
+    setAuthMethod('email'); // Set to email
+    setCurrentScreen('email');
+  };
+
   // Phone authentication handler
   const handleContinueWithPhone = () => {
-    setAuthMethod('phone');
+    setAuthMethod('phone'); // Set to phone
     setCurrentScreen('email'); // Use the same screen but with phone mode
   };
 
@@ -217,7 +221,7 @@ const AuthOverlay: React.FC = () => {
               <MainLoginScreen
                 selectedLanguage={selectedLanguage}
                 setSelectedLanguage={setSelectedLanguage}
-                onContinueWithEmail={handleContinueWithEmail}
+                onContinueWithEmail={handleContinueWithEmail} // Use local handler
                 onContinueWithPhone={handleContinueWithPhone}
                 showHeader={false}
                 {...compactProps}
