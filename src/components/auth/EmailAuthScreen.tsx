@@ -9,11 +9,11 @@ type AuthMethod = 'email' | 'phone';
 interface EmailAuthScreenProps {
   onBack: () => void;
   selectedLanguage: string;
-  onContinueWithPassword: (email: string) => void;
-  onContinueWithCode: (email: string) => void;
+  onContinueWithPassword: (identifier: string, method: 'email' | 'phone') => void;
+  onContinueWithCode: (identifier: string, method: 'email' | 'phone') => void;
   onCreateAccount: (email: string) => void;
   onSignUpClick: () => void;
-  onContinueWithPhone: (phone: string) => void;
+  authMethod: AuthMethod; // Determines which UI to show
   initialEmail?: string;
   isCompact?: boolean;
   onExpand?: () => void;
@@ -44,32 +44,33 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   onContinueWithCode,
   onCreateAccount,
   onSignUpClick,
-  onContinueWithPhone,
+  authMethod, // This determines if we show email or phone UI
   initialEmail = '',
   isCompact = false,
   onExpand,
   showHeader = true,
 }) => {
-  const [authMethod, setAuthMethod] = useState<AuthMethod>('email');
   const [email, setEmail] = useState(initialEmail);
   const [phone, setPhone] = useState('');
   const [isEmailValid, setIsEmailValid] = useState(false);
   const [isPhoneValid, setIsPhoneValid] = useState(false);
   const [emailCheckState, setEmailCheckState] = useState<EmailCheckState>('unchecked');
+  const [phoneCheckState, setPhoneCheckState] = useState<EmailCheckState>('unchecked');
   const [lastCheckedEmail, setLastCheckedEmail] = useState('');
+  const [lastCheckedPhone, setLastCheckedPhone] = useState('');
   const [isUntrustedProvider, setIsUntrustedProvider] = useState(false);
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
   const [isCodeLoading, setIsCodeLoading] = useState(false);
   const [isCreateAccountLoading, setIsCreateAccountLoading] = useState(false);
-  const [isPhoneLoading, setIsPhoneLoading] = useState(false);
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout>();
   const emailInputRef = useRef<HTMLInputElement>(null);
   const phoneInputRef = useRef<HTMLInputElement>(null);
 
-  // Get current input value based on auth method
+  // Get current input value and validity based on auth method
   const getCurrentInput = () => authMethod === 'email' ? email : phone;
   const isCurrentInputValid = authMethod === 'email' ? isEmailValid : isPhoneValid;
+  const currentCheckState = authMethod === 'email' ? emailCheckState : phoneCheckState;
 
   // Email validation functions
   const isFromTrustedProvider = useCallback((emailAddress: string): boolean => {
@@ -111,6 +112,21 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       }
     } catch (error) {
       console.error('Error checking email:', error);
+      throw error;
+    }
+  }, []);
+
+  // API call to check if phone exists
+  const checkPhoneExists = useCallback(async (phoneToCheck: string): Promise<boolean> => {
+    try {
+      // For now, simulate phone check - implement actual API call
+      console.log('Checking phone:', phoneToCheck);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Simulate random result for demo
+      return Math.random() > 0.5;
+    } catch (error) {
+      console.error('Error checking phone:', error);
       throw error;
     }
   }, []);
@@ -189,6 +205,27 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     }, 800);
   }, [checkEmailExists, lastCheckedEmail, validateEmail]);
 
+  // Debounced phone check
+  const debouncedPhoneCheck = useCallback((phoneToCheck: string) => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+
+    debounceTimeoutRef.current = setTimeout(async () => {
+      if (validatePhone(phoneToCheck) && phoneToCheck !== lastCheckedPhone) {
+        setPhoneCheckState('checking');
+        try {
+          const exists = await checkPhoneExists(phoneToCheck);
+          setPhoneCheckState(exists ? 'exists' : 'not-exists');
+          setLastCheckedPhone(phoneToCheck);
+        } catch (error) {
+          setPhoneCheckState('error');
+          setLastCheckedPhone(phoneToCheck);
+        }
+      }
+    }, 800);
+  }, [checkPhoneExists, lastCheckedPhone, validatePhone]);
+
   // Main validation effect for email
   useEffect(() => {
     if (authMethod === 'email') {
@@ -211,9 +248,17 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   // Phone validation effect
   useEffect(() => {
     if (authMethod === 'phone') {
-      setIsPhoneValid(validatePhone(phone));
+      const isValid = validatePhone(phone);
+      setIsPhoneValid(isValid);
+
+      if (!isValid) {
+        setPhoneCheckState('unchecked');
+        setLastCheckedPhone('');
+      } else {
+        debouncedPhoneCheck(phone);
+      }
     }
-  }, [phone, authMethod, validatePhone]);
+  }, [phone, authMethod, debouncedPhoneCheck, validatePhone]);
 
   // Initialize validation state
   useEffect(() => {
@@ -261,18 +306,19 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   };
 
   const handleContinueWithPassword = async () => {
-    if (!isEmailValid || isPasswordLoading || emailCheckState !== 'exists') return;
+    if (!isCurrentInputValid || isPasswordLoading || currentCheckState !== 'exists') return;
+    
     setIsPasswordLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 400));
-      onContinueWithPassword(email);
+      onContinueWithPassword(getCurrentInput(), authMethod);
     } finally {
       setIsPasswordLoading(false);
     }
   };
 
   const handleContinueWithCode = async () => {
-    if (!isCurrentInputValid || isCodeLoading || (authMethod === 'email' && emailCheckState === 'checking')) return;
+    if (!isCurrentInputValid || isCodeLoading || currentCheckState === 'checking') return;
 
     setIsCodeLoading(true);
     try {
@@ -286,11 +332,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
       if (result.success) {
         toast.success(`Verification code sent to your ${authMethod}`);
-        if (authMethod === 'email') {
-          onContinueWithCode(email);
-        } else {
-          onContinueWithPhone(phone);
-        }
+        onContinueWithCode(getCurrentInput(), authMethod);
       } else {
         toast.error(result.error || 'Failed to send verification code');
         setIsCodeLoading(false);
@@ -302,7 +344,8 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   };
 
   const handleCreateAccountClick = async () => {
-    if (!isEmailValid || isCreateAccountLoading || emailCheckState === 'checking') return;
+    if (authMethod !== 'email' || !isEmailValid || isCreateAccountLoading || emailCheckState === 'checking') return;
+    
     setIsCreateAccountLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 400));
@@ -312,18 +355,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     }
   };
 
-  const handleContinueWithPhoneClick = async () => {
-    if (!isPhoneValid || isPhoneLoading) return;
-    setIsPhoneLoading(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 400));
-      onContinueWithPhone(phone);
-    } finally {
-      setIsPhoneLoading(false);
-    }
-  };
-
-  const isLoading = isPasswordLoading || isCodeLoading || isCreateAccountLoading || isPhoneLoading;
+  const isLoading = isPasswordLoading || isCodeLoading || isCreateAccountLoading;
 
   // Email input functions
   const extractDomain = (emailValue: string): string => {
@@ -397,25 +429,6 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
   // Render functions
   const getRightSideIcon = () => {
-    if (authMethod === 'phone') {
-      if (isPhoneValid) {
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="20" height="20" viewBox="0 0 24 24">
-            <path fill="#10b981" d="M21.672,12.954l-1.199-1.965l0.597-2.224c0.124-0.463-0.098-0.949-0.529-1.159L18.47,6.601l-0.7-2.193        c-0.146-0.457-0.596-0.746-1.072-0.689l-2.286,0.274l-1.775-1.467c-0.37-0.306-0.904-0.306-1.274,0L9.588,3.993L7.302,3.719        C6.826,3.662,6.376,3.951,6.231,4.407l-0.7,2.193L3.459,7.606C3.028,7.815,2.806,8.302,2.93,8.765l0.597,2.224l-1.199,1.965        c-0.25,0.409-0.174,0.939,0.181,1.261l1.704,1.548l0.054,2.302c0.011,0.479,0.361,0.883,0.834,0.963l2.271,0.381l1.29,1.907        c-0.269,0.397-0.782,0.548-1.222,0.359L12,20.767l2.116,0.907c0.441,0.189,0.954,0.038,1.222-0.359l1.29-1.907l2.271-0.381        c0.473-0.079,0.823-0.483,0.834-0.963l0.054-2.302l1.704-1.548C21.846,13.892,21.922,13.363,21.672,12.954z M14.948,11.682        l-2.868,3.323c-0.197,0.229-0.476,0.347-0.758,0.347c-0.215,0-0.431-0.069-0.613-0.211l-1.665-1.295        c-0.436-0.339-0.515-0.968-0.175-1.403l0,0c0.339-0.435,0.967-0.514,1.403-0.175l0.916,0.712l2.247-2.603        c0.361-0.418,0.992-0.464,1.41-0.104C15.263,10.632,15.309,11.264,14.948,11.682z"/>
-          </svg>
-        );
-      }
-      return null;
-    }
-
-    if (isUntrustedProvider) {
-      return (
-        <div className="w-5 h-5">
-          <AlertTriangle className="w-full h-full text-orange-500" />
-        </div>
-      );
-    }
-
     if (isLoading) {
       return (
         <div className="w-5 h-5">
@@ -427,7 +440,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       );
     }
 
-    if (emailCheckState === 'checking') {
+    if (currentCheckState === 'checking') {
       return (
         <div className="w-5 h-5">
           <svg className="animate-spin text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -438,7 +451,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       );
     }
 
-    if (emailCheckState === 'exists') {
+    if (currentCheckState === 'exists') {
       return (
         <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="20" height="20" viewBox="0 0 24 24">
           <path fill="#10b981" d="M21.672,12.954l-1.199-1.965l0.597-2.224c0.124-0.463-0.098-0.949-0.529-1.159L18.47,6.601l-0.7-2.193        c-0.146-0.457-0.596-0.746-1.072-0.689l-2.286,0.274l-1.775-1.467c-0.37-0.306-0.904-0.306-1.274,0L9.588,3.993L7.302,3.719        C6.826,3.662,6.376,3.951,6.231,4.407l-0.7,2.193L3.459,7.606C3.028,7.815,2.806,8.302,2.93,8.765l0.597,2.224l-1.199,1.965        c-0.25,0.409-0.174,0.939,0.181,1.261l1.704,1.548l0.054,2.302c0.011,0.479,0.361,0.883,0.834,0.963l2.271,0.381l1.29,1.907        c-0.269,0.397-0.782,0.548-1.222,0.359L12,20.767l2.116,0.907c0.441,0.189,0.954,0.038,1.222-0.359l1.29-1.907l2.271-0.381        c0.473-0.079,0.823-0.483,0.834-0.963l0.054-2.302l1.704-1.548C21.846,13.892,21.922,13.363,21.672,12.954z M14.948,11.682        l-2.868,3.323c-0.197,0.229-0.476,0.347-0.758,0.347c-0.215,0-0.431-0.069-0.613-0.211l-1.665-1.295        c-0.436-0.339-0.515-0.968-0.175-1.403l0,0c0.339-0.435,0.967-0.514,1.403-0.175l0.916,0.712l2.247-2.603        c0.361-0.418,0.992-0.464,1.41-0.104C15.263,10.632,15.309,11.264,14.948,11.682z"/>
@@ -446,7 +459,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       );
     }
 
-    if (emailCheckState === 'not-exists') {
+    if (currentCheckState === 'not-exists') {
       return (
         <div className="w-5 h-5">
           <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -457,7 +470,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       );
     }
 
-    if (emailCheckState === 'error') {
+    if (currentCheckState === 'error') {
       return (
         <div className="w-5 h-5">
           <svg className="text-orange-500" fill="currentColor" viewBox="0 0 24 24">
@@ -467,15 +480,19 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       );
     }
 
+    if (authMethod === 'email' && isUntrustedProvider) {
+      return (
+        <div className="w-5 h-5">
+          <AlertTriangle className="w-full h-full text-orange-500" />
+        </div>
+      );
+    }
+
     return null;
   };
 
-  const renderEmailStatusMessage = () => {
-    if (authMethod === 'phone') {
-      return null; // No status message for phone
-    }
-
-    if (isUntrustedProvider) {
+  const renderStatusMessage = () => {
+    if (authMethod === 'email' && isUntrustedProvider) {
       return (
         <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-start gap-2">
@@ -495,7 +512,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       );
     }
 
-    if (emailCheckState === 'error') {
+    if (currentCheckState === 'error') {
       return (
         <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
           <div className="flex items-start gap-2">
@@ -515,124 +532,65 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       );
     }
 
-    if (emailCheckState === 'not-exists') {
-      return (
-        <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
-          <div className="flex-1">
-            <p className="text-purple-700 text-xs">
-              This email isn't registered. Click "Create Account" to continue, or check for typos.
-            </p>
+    if (currentCheckState === 'not-exists') {
+      if (authMethod === 'email') {
+        return (
+          <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
+            <div className="flex-1">
+              <p className="text-purple-700 text-xs">
+                This email isn't registered. Click "Create Account" to continue, or check for typos.
+              </p>
+            </div>
           </div>
-        </div>
-      );
+        );
+      } else {
+        return (
+          <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
+            <div className="flex-1">
+              <p className="text-purple-700 text-xs">
+                This phone number isn't registered. Please check for typos or use a different number.
+              </p>
+            </div>
+          </div>
+        );
+      }
     }
 
     return null;
   };
 
-  const renderMethodToggle = () => (
-    <div className="flex bg-gray-100 rounded-lg p-1 mb-4">
-      <button
-        onClick={() => setAuthMethod('email')}
-        className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-          authMethod === 'email'
-            ? 'bg-white text-gray-900 shadow-sm'
-            : 'text-gray-600 hover:text-gray-900'
-        }`}
-      >
-        <Mail className="w-4 h-4 inline mr-2" />
-        Email
-      </button>
-      <button
-        onClick={() => setAuthMethod('phone')}
-        className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-          authMethod === 'phone'
-            ? 'bg-white text-gray-900 shadow-sm'
-            : 'text-gray-600 hover:text-gray-900'
-        }`}
-      >
-        <Phone className="w-4 h-4 inline mr-2" />
-        Phone
-      </button>
-    </div>
-  );
-
-  const renderEmailActionButtons = () => {
-    if (authMethod === 'phone') {
-      // Phone-specific buttons
-      if (!isPhoneValid) {
-        return (
-          <div className="space-y-3 mb-8">
-            <button
-              disabled={true}
-              className="w-full flex items-center justify-center gap-3 py-4 px-4 rounded-lg font-medium bg-gray-200 text-gray-400 cursor-not-allowed"
-              type="button"
-            >
-              <span className="flex items-center gap-2">
-                <span className="animate-pulse">Enter your phone number</span>
-                <span className="flex gap-1">
-                  <span className="animate-bounce text-sm opacity-60" style={{ animationDelay: '0s' }}>●</span>
-                  <span className="animate-bounce text-sm opacity-60" style={{ animationDelay: '0.4s' }}>●</span>
-                  <span className="animate-bounce text-sm opacity-60" style={{ animationDelay: '0.8s' }}>●</span>
-                </span>
-              </span>
-            </button>
-          </div>
-        );
-      }
-
-      return (
-        <div className="space-y-3 mb-8">
-          {/* Send Code Button for Phone */}
-          <button
-            disabled={!isPhoneValid || isCodeLoading}
-            onClick={handleContinueWithCode}
-            className={`w-full flex items-center justify-center gap-3 py-4 px-4 border-2 rounded-lg font-medium transition-all ${
-              !isCodeLoading
-                ? 'border-red-500 text-red-500 hover:bg-red-50 transform active:scale-95'
-                : 'border-gray-300 text-gray-400 cursor-not-allowed'
-            }`}
-            type="button"
-          >
-            {isCodeLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Key className="w-5 h-5" />
-            )}
-            <span>{isCodeLoading ? 'Sending...' : 'Send Verification Code'}</span>
-          </button>
-        </div>
-      );
-    }
-
-    // Email-specific buttons
+  const renderActionButtons = () => {
     const getPasswordButtonState = () => {
-      if (!isEmailValid) return { disabled: true, text: 'Continue with Password' };
-      if (emailCheckState === 'checking') return { disabled: true, text: 'Checking...' };
-      if (emailCheckState === 'exists') return { disabled: false, text: 'Continue with Password' };
-      if (emailCheckState === 'not-exists') return { disabled: true, text: 'Account Not Found' };
-      if (emailCheckState === 'error') return { disabled: true, text: 'Check Connection' };
-      return { disabled: true, text: 'Continue with Password' };
+      if (!isCurrentInputValid) return { disabled: true, text: `Continue with Password` };
+      if (currentCheckState === 'checking') return { disabled: true, text: 'Checking...' };
+      if (currentCheckState === 'exists') return { disabled: false, text: `Continue with Password` };
+      if (currentCheckState === 'not-exists') return { disabled: true, text: `${authMethod === 'email' ? 'Account' : 'Phone'} Not Found` };
+      if (currentCheckState === 'error') return { disabled: true, text: 'Check Connection' };
+      return { disabled: true, text: `Continue with Password` };
     };
 
     const getCodeButtonState = () => {
-      if (!isEmailValid) return { disabled: true, text: 'Send Verification Code' };
-      if (emailCheckState === 'checking') return { disabled: true, text: 'Checking...' };
-      if (emailCheckState === 'exists') return { disabled: false, text: 'Send One-Time Password (OTP)' };
-      if (emailCheckState === 'not-exists') return { disabled: false, text: 'Create Account' };
-      if (emailCheckState === 'error') return { disabled: false, text: 'Send Verification Code' };
+      if (!isCurrentInputValid) return { disabled: true, text: 'Send Verification Code' };
+      if (currentCheckState === 'checking') return { disabled: true, text: 'Checking...' };
+      if (currentCheckState === 'exists') return { disabled: false, text: 'Send One-Time Password (OTP)' };
+      if (currentCheckState === 'not-exists') {
+        return authMethod === 'email' 
+          ? { disabled: false, text: 'Create Account' }
+          : { disabled: true, text: 'Phone Not Found' };
+      }
+      if (currentCheckState === 'error') return { disabled: false, text: 'Send Verification Code' };
       return { disabled: true, text: 'Send Verification Code' };
     };
 
     const passwordButtonState = getPasswordButtonState();
     const codeButtonState = getCodeButtonState();
-    const showCreateAccountButton = emailCheckState === 'not-exists';
+    const showCreateAccountButton = authMethod === 'email' && currentCheckState === 'not-exists';
 
-    if (isUntrustedProvider) {
+    if (authMethod === 'email' && isUntrustedProvider) {
       return <div className="space-y-3 mb-8"></div>;
     }
 
-    if (!isEmailValid || emailCheckState === 'unchecked') {
+    if (!isCurrentInputValid || currentCheckState === 'unchecked') {
       return (
         <div className="space-y-3 mb-8">
           <button
@@ -641,7 +599,9 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
             type="button"
           >
             <span className="flex items-center gap-2">
-              <span className="animate-pulse">Waiting for email address</span>
+              <span className="animate-pulse">
+                {authMethod === 'email' ? 'Waiting for email address' : 'Waiting for phone number'}
+              </span>
               <span className="flex gap-1">
                 <span className="animate-bounce text-sm opacity-60" style={{ animationDelay: '0s' }}>●</span>
                 <span className="animate-bounce text-sm opacity-60" style={{ animationDelay: '0.4s' }}>●</span>
@@ -653,7 +613,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       );
     }
 
-    if (emailCheckState === 'checking') {
+    if (currentCheckState === 'checking') {
       return (
         <div className="space-y-3 mb-8">
           <button
@@ -662,7 +622,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
             type="button"
           >
             <Loader2 className="w-5 h-5 animate-spin" />
-            <span>Checking email...</span>
+            <span>Checking {authMethod}...</span>
           </button>
         </div>
       );
@@ -694,24 +654,26 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
     return (
       <div className="space-y-3 mb-8">
-        {/* Password Button */}
-        <button
-          disabled={passwordButtonState.disabled || isPasswordLoading}
-          onClick={handleContinueWithPassword}
-          className={`w-full flex items-center justify-center gap-3 py-4 px-4 rounded-lg font-medium transition-all ${
-            !passwordButtonState.disabled && !isPasswordLoading
-              ? 'bg-red-500 text-white hover:bg-red-600 transform active:scale-95'
-              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-          }`}
-          type="button"
-        >
-          {isPasswordLoading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : (
-            <Lock className="w-5 h-5" />
-          )}
-          <span>{isPasswordLoading ? 'Loading...' : passwordButtonState.text}</span>
-        </button>
+        {/* Password Button - Show for both email and phone when account exists */}
+        {(currentCheckState === 'exists' || currentCheckState === 'error') && (
+          <button
+            disabled={passwordButtonState.disabled || isPasswordLoading}
+            onClick={handleContinueWithPassword}
+            className={`w-full flex items-center justify-center gap-3 py-4 px-4 rounded-lg font-medium transition-all ${
+              !passwordButtonState.disabled && !isPasswordLoading
+                ? 'bg-red-500 text-white hover:bg-red-600 transform active:scale-95'
+                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+            }`}
+            type="button"
+          >
+            {isPasswordLoading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Lock className="w-5 h-5" />
+            )}
+            <span>{isPasswordLoading ? 'Loading...' : passwordButtonState.text}</span>
+          </button>
+        )}
 
         {/* Code Button */}
         <button
@@ -786,18 +748,15 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
             <p className={`text-gray-600 ${isCompact ? 'text-sm' : 'text-base'}`}>
               {authMethod === 'email' 
                 ? "We'll check if you already have an account."
-                : "We'll send a verification code to your phone."
+                : "We'll check if you already have an account."
               }
             </p>
           </div>
 
-          {/* Method Toggle */}
-          {renderMethodToggle()}
-
-          {/* Email Input Section */}
+          {/* Input Section */}
           <div className={isCompact ? "space-y-3" : "space-y-4"}>
             {/* Inline Status Message */}
-            {renderEmailStatusMessage()}
+            {renderStatusMessage()}
 
             {/* Input Field */}
             <div className="relative">
@@ -857,7 +816,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
             </div>
 
             {/* Inline Action Buttons */}
-            {renderEmailActionButtons()}
+            {renderActionButtons()}
           </div>
         </div>
 
