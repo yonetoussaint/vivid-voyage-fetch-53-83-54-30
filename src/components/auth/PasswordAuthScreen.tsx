@@ -1,11 +1,13 @@
 import React, { useState, useRef } from 'react';
-import { ArrowLeft, Lock, Check, HelpCircle, Eye, EyeOff, Mail, Loader2 } from 'lucide-react';
+import { ArrowLeft, Lock, Check, HelpCircle, Eye, EyeOff, Mail, Phone, Loader2 } from 'lucide-react';
 import { FAVICON_OVERRIDES } from '../../constants/email';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client'; // ← DIRECT IMPORT
+import { supabase } from '@/integrations/supabase/client';
 
 interface PasswordAuthScreenProps {
   email: string;
+  phone?: string;
+  authMethod?: 'email' | 'phone';
   onBack: () => void;
   onSignInSuccess: () => void;
   onForgotPasswordClick: () => void;
@@ -14,8 +16,41 @@ interface PasswordAuthScreenProps {
   showHeader?: boolean;
 }
 
+// Country code to flag mapping
+const COUNTRY_FLAGS: Record<string, string> = {
+  'us': '🇺🇸',
+  'ca': '🇨🇦',
+  'gb': '🇬🇧',
+  'fr': '🇫🇷',
+  'de': '🇩🇪',
+  'es': '🇪🇸',
+  'it': '🇮🇹',
+  'br': '🇧🇷',
+  'mx': '🇲🇽',
+  'ht': '🇭🇹',
+  'do': '🇩🇴',
+  'cn': '🇨🇳',
+  'jp': '🇯🇵',
+  'kr': '🇰🇷',
+  'in': '🇮🇳',
+  'au': '🇦🇺',
+  'nz': '🇳🇿',
+  'ru': '🇷🇺',
+  'sa': '🇸🇦',
+  'ae': '🇦🇪',
+  'za': '🇿🇦',
+  'ng': '🇳🇬',
+  'eg': '🇪🇬',
+  'ke': '🇰🇪',
+};
+
+// Default flag (US)
+const DEFAULT_FLAG = '🇺🇸';
+
 const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
   email,
+  phone,
+  authMethod = 'email',
   onBack,
   onSignInSuccess,
   onForgotPasswordClick,
@@ -31,15 +66,81 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
 
   const passwordInputRef = useRef<HTMLInputElement>(null);
 
-  // Login function using Supabase - NO DYNAMIC IMPORT
-  const login = async (email: string, password: string) => {
-    try {
-      console.log('Attempting to login with email:', email);
+  // Extract country code and formatted phone number
+  const getPhoneDisplayInfo = (phoneNumber: string) => {
+    // Extract country code (assume +1 for US/Canada by default)
+    let countryCode = '+1';
+    let displayNumber = phoneNumber;
+    
+    // Try to extract country code from the phone number
+    if (phoneNumber.startsWith('+')) {
+      const spaceIndex = phoneNumber.indexOf(' ');
+      if (spaceIndex > 0) {
+        countryCode = phoneNumber.substring(0, spaceIndex);
+        displayNumber = phoneNumber.substring(spaceIndex + 1);
+      }
+    }
+    
+    // Map country code to flag (simplified mapping)
+    const countryMap: Record<string, string> = {
+      '+1': 'us', // US/Canada
+      '+44': 'gb', // UK
+      '+33': 'fr', // France
+      '+49': 'de', // Germany
+      '+34': 'es', // Spain
+      '+39': 'it', // Italy
+      '+55': 'br', // Brazil
+      '+52': 'mx', // Mexico
+      '+509': 'ht', // Haiti
+      '+1-809': 'do', // Dominican Republic
+      '+1-829': 'do', // Dominican Republic
+      '+1-849': 'do', // Dominican Republic
+      '+86': 'cn', // China
+      '+81': 'jp', // Japan
+      '+82': 'kr', // South Korea
+      '+91': 'in', // India
+      '+61': 'au', // Australia
+      '+64': 'nz', // New Zealand
+      '+7': 'ru', // Russia
+      '+966': 'sa', // Saudi Arabia
+      '+971': 'ae', // UAE
+      '+27': 'za', // South Africa
+      '+234': 'ng', // Nigeria
+      '+20': 'eg', // Egypt
+      '+254': 'ke', // Kenya
+    };
+    
+    const country = countryMap[countryCode] || 'us';
+    const flag = COUNTRY_FLAGS[country] || DEFAULT_FLAG;
+    
+    return { countryCode, displayNumber, flag };
+  };
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
-        password,
-      });
+  // Login function using Supabase
+  const login = async (identifier: string, method: 'email' | 'phone', password: string) => {
+    try {
+      console.log('Attempting to login with:', { identifier, method });
+
+      let loginData;
+      
+      if (method === 'email') {
+        // Email login
+        loginData = await supabase.auth.signInWithPassword({
+          email: identifier.trim().toLowerCase(),
+          password,
+        });
+      } else {
+        // Phone login - you'll need to implement this based on your auth setup
+        // For now, we'll use email as fallback or you can implement phone auth
+        console.log('Phone login would be implemented here');
+        // This is where you'd integrate with your phone authentication system
+        loginData = await supabase.auth.signInWithPassword({
+          email: identifier, // Fallback - replace with actual phone auth
+          password,
+        });
+      }
+
+      const { data, error } = loginData;
 
       if (error) {
         console.error('Login error details:', {
@@ -51,20 +152,20 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
         let errorMessage = error.message;
 
         if (error.message.includes('Invalid login credentials') || error.message.includes('Invalid')) {
-          errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+          errorMessage = 'Invalid password. Please check your credentials and try again.';
         } else if (error.message.includes('Email not confirmed') || error.message.includes('not confirmed')) {
-          errorMessage = 'Please verify your email address before logging in. Check your inbox for a confirmation email.';
+          errorMessage = 'Please verify your account before logging in. Check your inbox for a confirmation message.';
         } else if (error.message.includes('network') || error.message.includes('fetch')) {
           errorMessage = 'Network error. Please check your internet connection.';
         } else if (error.message.includes('User not found')) {
-          errorMessage = 'No account found with this email. Please sign up first.';
+          errorMessage = `No account found with this ${method}. Please sign up first.`;
         }
 
         return { error: errorMessage };
       }
 
       if (data.user) {
-        console.log('User logged in successfully:', data.user.email);
+        console.log('User logged in successfully:', data.user.id);
         return {};
       } else {
         console.warn('Login succeeded but no user data returned');
@@ -89,7 +190,8 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
     setError('');
 
     try {
-      const { error: loginError } = await login(email.trim().toLowerCase(), password);
+      const identifier = authMethod === 'email' ? email : (phone || '');
+      const { error: loginError } = await login(identifier, authMethod, password);
 
       if (loginError) {
         setError(loginError);
@@ -112,6 +214,9 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
 
   const domain = email.split('@')[1] || '';
   const faviconUrl = FAVICON_OVERRIDES[domain] || `https://www.google.com/s2/favicons?domain=${domain}`;
+
+  // Get phone display info if using phone auth
+  const phoneInfo = authMethod === 'phone' && phone ? getPhoneDisplayInfo(phone) : null;
 
   return (
     <div className={isCompact ? "px-4 pb-4" : "min-h-screen bg-white flex flex-col px-4"}>
@@ -166,28 +271,48 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
             </p>
           </div>
 
-          {/* Email Display */}
+          {/* Identifier Display */}
           <div className={`p-4 bg-gray-50 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-6 h-6">
-                  {faviconUrl ? (
-                    <img
-                      src={faviconUrl}
-                      alt="Email provider favicon"
-                      className="w-full h-full object-contain"
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = '';
-                      }}
-                    />
+                <div className="w-6 h-6 flex items-center justify-center">
+                  {authMethod === 'email' ? (
+                    faviconUrl ? (
+                      <img
+                        src={faviconUrl}
+                        alt="Email provider favicon"
+                        className="w-full h-full object-contain"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = '';
+                        }}
+                      />
+                    ) : (
+                      <Mail className="w-full h-full text-gray-400" />
+                    )
                   ) : (
-                    <Mail className="w-full h-full text-gray-400" />
+                    phoneInfo ? (
+                      <span className="text-2xl leading-none">{phoneInfo.flag}</span>
+                    ) : (
+                      <Phone className="w-full h-full text-gray-400" />
+                    )
                   )}
                 </div>
-                <span className={`text-gray-700 font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>
-                  {email}
-                </span>
+                <div className="flex flex-col">
+                  <span className={`text-gray-700 font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>
+                    {authMethod === 'email' 
+                      ? email
+                      : phoneInfo 
+                        ? `${phoneInfo.countryCode} ${phoneInfo.displayNumber}`
+                        : phone
+                    }
+                  </span>
+                  {authMethod === 'phone' && phoneInfo && (
+                    <span className={`text-gray-500 ${isCompact ? 'text-xs' : 'text-sm'}`}>
+                      Phone Number
+                    </span>
+                  )}
+                </div>
               </div>
               <button
                 onClick={onBack}
