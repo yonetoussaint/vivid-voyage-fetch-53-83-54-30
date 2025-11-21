@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import LanguageSelector from './LanguageSelector';
 import TranslatedText from './TranslatedText';
-import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
 
 interface Language {
@@ -28,7 +27,6 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
   onExpand,
   showHeader = true
 }) => {
-  const { googleSignIn } = useAuth();
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isFacebookLoading, setIsFacebookLoading] = useState(false);
   const [isEmailLoading, setIsEmailLoading] = useState(false);
@@ -43,27 +41,48 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
   ];
 
   const currentLang = languages.find(lang => lang.code === selectedLanguage);
-
-  // Check if any button is loading
   const isLoading = isGoogleLoading || isFacebookLoading || isEmailLoading || isPhoneLoading;
+
+  // Google OAuth function
+  const googleSignIn = async () => {
+    try {
+      const BACKEND_URL = 'https://resend-u11p.onrender.com';
+      const response = await fetch(`${BACKEND_URL}/api/auth/google`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          redirectTo: `${window.location.origin}/auth/callback`
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        return { error: result.error || 'Failed to initialize Google sign in' };
+      }
+
+      window.location.href = result.authUrl;
+      return {};
+
+    } catch (error: any) {
+      return { error: error.message || 'Failed to sign in with Google' };
+    }
+  };
 
   const handleGoogleSignIn = async () => {
     if (isLoading) return;
 
     try {
       setIsGoogleLoading(true);
-      console.log('🔄 Initiating server-controlled Google OAuth...');
-
       const result = await googleSignIn();
 
       if (result.error) {
-        console.error('Google OAuth error:', result.error);
         toast.error(result.error || 'Failed to sign in with Google');
         setIsGoogleLoading(false);
       }
-      // If successful, the redirect will happen and we don't need to reset loading state
     } catch (error) {
-      console.error('Google OAuth exception:', error);
       toast.error('An unexpected error occurred');
       setIsGoogleLoading(false);
     }
@@ -74,23 +93,10 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
 
     try {
       setIsFacebookLoading(true);
-      console.log('Initiating Facebook OAuth with Supabase...');
-
-      const currentOrigin = window.location.origin;
-      const redirectUrl = `${currentOrigin}/auth/callback`;
-
-      console.log('Using redirect URL:', redirectUrl);
-      console.log('Facebook OAuth would redirect to:', redirectUrl);
-
-      // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // For now, show a message since we're focusing on Google OAuth first
       toast.info('Facebook sign in coming soon!');
       setIsFacebookLoading(false);
-
     } catch (error) {
-      console.error('Error initiating Facebook sign-in:', error);
       toast.error('Facebook sign in is currently unavailable');
       setIsFacebookLoading(false);
     }
@@ -101,12 +107,9 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
 
     try {
       setIsEmailLoading(true);
-      // Simulate a small delay for better UX
       await new Promise(resolve => setTimeout(resolve, 500));
       onContinueWithEmail();
-      // Note: We don't reset loading state here because the component will unmount
     } catch (error) {
-      console.error('Error initiating email sign-in:', error);
       setIsEmailLoading(false);
     }
   };
@@ -116,17 +119,10 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
 
     try {
       setIsPhoneLoading(true);
-      console.log('Initiating Phone sign in...');
-
-      // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // For now, show a message since phone auth requires additional setup
       toast.info('Phone number sign in coming soon!');
       setIsPhoneLoading(false);
-
     } catch (error) {
-      console.error('Error initiating phone sign-in:', error);
       toast.error('Phone sign in is currently unavailable');
       setIsPhoneLoading(false);
     }
