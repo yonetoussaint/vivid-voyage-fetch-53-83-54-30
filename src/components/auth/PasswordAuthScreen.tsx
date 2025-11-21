@@ -17,35 +17,36 @@ interface PasswordAuthScreenProps {
 }
 
 
+// Country code to flag code mapping (for flag images)
 const COUNTRY_FLAGS: Record<string, string> = {
-  'us': '\u{1F1FA}\u{1F1F8}', // 🇺🇸
-  'ca': '\u{1F1E8}\u{1F1E6}', // 🇨🇦
-  'gb': '\u{1F1EC}\u{1F1E7}', // 🇬🇧
-  'fr': '\u{1F1EB}\u{1F1F7}', // 🇫🇷
-  'de': '\u{1F1E9}\u{1F1EA}', // 🇩🇪
-  'es': '\u{1F1EA}\u{1F1F8}', // 🇪🇸
-  'it': '\u{1F1EE}\u{1F1F9}', // 🇮🇹
-  'br': '\u{1F1E7}\u{1F1F7}', // 🇧🇷
-  'mx': '\u{1F1F2}\u{1F1FD}', // 🇲🇽
-  'ht': '\u{1F1ED}\u{1F1F9}', // 🇭🇹
-  'do': '\u{1F1E9}\u{1F1F4}', // 🇩🇴
-  'cn': '\u{1F1E8}\u{1F1F3}', // 🇨🇳
-  'jp': '\u{1F1EF}\u{1F1F5}', // 🇯🇵
-  'kr': '\u{1F1F0}\u{1F1F7}', // 🇰🇷
-  'in': '\u{1F1EE}\u{1F1F3}', // 🇮🇳
-  'au': '\u{1F1E6}\u{1F1FA}', // 🇦🇺
-  'nz': '\u{1F1F3}\u{1F1FF}', // 🇳🇿
-  'ru': '\u{1F1F7}\u{1F1FA}', // 🇷🇺
-  'sa': '\u{1F1F8}\u{1F1E6}', // 🇸🇦
-  'ae': '\u{1F1E6}\u{1F1EA}', // 🇦🇪
-  'za': '\u{1F1FF}\u{1F1E6}', // 🇿🇦
-  'ng': '\u{1F1F3}\u{1F1EC}', // 🇳🇬
-  'eg': '\u{1F1EA}\u{1F1EC}', // 🇪🇬
-  'ke': '\u{1F1F0}\u{1F1EA}', // 🇰🇪
+  'us': 'us',
+  'ca': 'ca',
+  'gb': 'gb',
+  'fr': 'fr',
+  'de': 'de',
+  'es': 'es',
+  'it': 'it',
+  'br': 'br',
+  'mx': 'mx',
+  'ht': 'ht',
+  'do': 'do',
+  'cn': 'cn',
+  'jp': 'jp',
+  'kr': 'kr',
+  'in': 'in',
+  'au': 'au',
+  'nz': 'nz',
+  'ru': 'ru',
+  'sa': 'sa',
+  'ae': 'ae',
+  'za': 'za',
+  'ng': 'ng',
+  'eg': 'eg',
+  'ke': 'ke',
 };
 
-
-const DEFAULT_FLAG = '\u{1F1FA}\u{1F1F8}'; // 🇺🇸
+// Default flag (US)
+const DEFAULT_FLAG = 'us';
 
 const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
   email,
