@@ -1,4 +1,3 @@
-// AuthOverlay.tsx
 import React from 'react';
 import SlideUpPanel from '@/components/shared/SlideUpPanel';
 import { useAuth } from '@/contexts/auth/AuthContext';
@@ -61,10 +60,8 @@ const AuthOverlay: React.FC = () => {
     handleAccountCreated,
     firstName,
     lastName,
-    handleFirstNameChange,
-    handleLastNameChange,
-    nameErrors,
-    isNameFormValid,
+    setFirstName,
+    setLastName,
     password,
     confirmPassword,
     showPassword,
@@ -73,14 +70,51 @@ const AuthOverlay: React.FC = () => {
     setConfirmPassword,
     setShowPassword,
     setShowConfirmPassword,
-    isPasswordFormValid,
-    isLoading
+    isLoading,
+    validateName,
+    validatePassword
   } = useAuth();
 
   const getCompactProps = () => ({
     isCompact: true,
     onExpand: undefined
   });
+
+  // Name validation state (moved from AuthContext)
+  const [nameErrors, setNameErrors] = React.useState({
+    firstName: '',
+    lastName: ''
+  });
+
+  // Form validation (moved from AuthContext)
+  const isNameFormValid = React.useMemo(() => {
+    return firstName.trim() !== '' && 
+           lastName.trim() !== '' && 
+           !nameErrors.firstName && 
+           !nameErrors.lastName;
+  }, [firstName, lastName, nameErrors]);
+
+  const isPasswordFormValid = React.useMemo(() => {
+    return (
+      password.length >= 8 &&
+      confirmPassword.length >= 8 &&
+      password === confirmPassword &&
+      validatePassword(password) === null
+    );
+  }, [password, confirmPassword, validatePassword]);
+
+  // Name change handlers (moved from AuthContext)
+  const handleFirstNameChange = (value: string) => {
+    setFirstName(value);
+    const error = validateName(value, 'First name');
+    setNameErrors(prev => ({ ...prev, firstName: error }));
+  };
+
+  const handleLastNameChange = (value: string) => {
+    setLastName(value);
+    const error = validateName(value, 'Last name');
+    setNameErrors(prev => ({ ...prev, lastName: error }));
+  };
 
   const ErrorBanner = () => (
     authError ? (
@@ -118,15 +152,15 @@ const AuthOverlay: React.FC = () => {
         ...baseProps,
         showCloseButton: true,
         showHelpButton: true,
-        showDragHandle: false // Hide drag bar only for main screen
+        showDragHandle: false
       };
     }
 
     // Default props for other screens
     return {
       ...baseProps,
-      showCloseButton: false, // Keep consistent with your existing code
-      showDragHandle: true // Show drag handle for other screens, or set to false if you want it hidden everywhere
+      showCloseButton: false,
+      showDragHandle: true
     };
   };
 
