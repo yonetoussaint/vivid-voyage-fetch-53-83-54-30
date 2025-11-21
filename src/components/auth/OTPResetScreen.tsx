@@ -1,8 +1,6 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Key, HelpCircle, Mail, Loader2 } from 'lucide-react';
 import { FAVICON_OVERRIDES } from '../../constants/email';
-import { useAuth } from '../../contexts/auth/AuthContext';
 
 interface OTPResetScreenProps {
   email: string;
@@ -26,9 +24,6 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   
-  // Use the AuthContext functions with password reset purpose
-  const { verifyCustomOTP, resendOTPEmail } = useAuth();
-
   // Initialize input refs
   useEffect(() => {
     inputRefs.current = inputRefs.current.slice(0, 6);
@@ -60,6 +55,67 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
   };
 
   const { url: faviconUrl, show: showFavicon } = updateFavicon(email);
+
+  // OTP functions
+  const verifyCustomOTP = async (email: string, otp: string) => {
+    try {
+      const BACKEND_URL = 'https://resend-u11p.onrender.com';
+      const response = await fetch(`${BACKEND_URL}/api/verify-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, otp }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Invalid verification code');
+      }
+
+      return { 
+        success: true, 
+        purpose: result.purpose,
+        message: result.message 
+      };
+    } catch (error: any) {
+      console.error('Failed to verify OTP:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Invalid verification code' 
+      };
+    }
+  };
+
+  const resendOTPEmail = async (email: string, purpose = 'password-reset') => {
+    try {
+      const BACKEND_URL = 'https://resend-u11p.onrender.com';
+      const endpoint = purpose === 'password-reset' ? '/api/send-reset-otp' : '/api/resend-otp';
+      
+      const response = await fetch(`${BACKEND_URL}${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, purpose }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to resend verification code');
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Failed to resend OTP:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Failed to resend verification code' 
+      };
+    }
+  };
 
   const handleOtpChange = (index: number, value: string) => {
     if (value.length > 1) return;
@@ -94,22 +150,18 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
     setError('');
 
     try {
-      // ✅ Use the verifyCustomOTP function from AuthContext
       const result = await verifyCustomOTP(email, codeToVerify);
 
       if (result.success) {
-        // OTP is valid - proceed to password reset
         onOTPVerified(email, codeToVerify);
       } else {
         setError(result.error || 'Invalid verification code');
-        // Clear OTP fields on error
         setOtp(['', '', '', '', '', '']);
         inputRefs.current[0]?.focus();
       }
     } catch (error: any) {
       console.error('Error during OTP verification:', error);
       setError(error.message || 'Verification failed. Please try again.');
-      // Clear OTP fields on error
       setOtp(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
     } finally {
@@ -124,7 +176,6 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
     setError('');
 
     try {
-      // ✅ Use the resendOTPEmail function with password reset purpose
       const result = await resendOTPEmail(email, 'password-reset');
 
       if (result.success) {
