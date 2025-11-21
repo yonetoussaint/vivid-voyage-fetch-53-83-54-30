@@ -67,53 +67,49 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
 
   // Extract country code and formatted phone number
   const getPhoneDisplayInfo = (phoneNumber: string) => {
-    // Extract country code (assume +1 for US/Canada by default)
-    let countryCode = '+1';
-    let displayNumber = phoneNumber;
-    
-    // Try to extract country code from the phone number
-    if (phoneNumber.startsWith('+')) {
-      const spaceIndex = phoneNumber.indexOf(' ');
-      if (spaceIndex > 0) {
-        countryCode = phoneNumber.substring(0, spaceIndex);
-        displayNumber = phoneNumber.substring(spaceIndex + 1);
-      }
+  // Remove all formatting to get clean number
+  const cleaned = phoneNumber.replace(/\s/g, '');
+  let countryCode = '+1'; // default
+  let displayNumber = phoneNumber;
+  
+  // Extract country code (common patterns)
+  if (cleaned.startsWith('+1')) {
+    countryCode = '+1';
+    displayNumber = cleaned.substring(2);
+  } else if (cleaned.startsWith('+44')) {
+    countryCode = '+44';
+    displayNumber = cleaned.substring(3);
+  } else if (cleaned.startsWith('+')) {
+    // Generic extraction for other countries
+    const match = cleaned.match(/^(\+\d+)/);
+    if (match) {
+      countryCode = match[1];
+      displayNumber = cleaned.substring(countryCode.length);
     }
-    
-    // Map country code to country code for flag images
-    const countryMap: Record<string, string> = {
-      '+1': 'us', // US/Canada
-      '+44': 'gb', // UK
-      '+33': 'fr', // France
-      '+49': 'de', // Germany
-      '+34': 'es', // Spain
-      '+39': 'it', // Italy
-      '+55': 'br', // Brazil
-      '+52': 'mx', // Mexico
-      '+509': 'ht', // Haiti
-      '+1-809': 'do', // Dominican Republic
-      '+1-829': 'do', // Dominican Republic
-      '+1-849': 'do', // Dominican Republic
-      '+86': 'cn', // China
-      '+81': 'jp', // Japan
-      '+82': 'kr', // South Korea
-      '+91': 'in', // India
-      '+61': 'au', // Australia
-      '+64': 'nz', // New Zealand
-      '+7': 'ru', // Russia
-      '+966': 'sa', // Saudi Arabia
-      '+971': 'ae', // UAE
-      '+27': 'za', // South Africa
-      '+234': 'ng', // Nigeria
-      '+20': 'eg', // Egypt
-      '+254': 'ke', // Kenya
-    };
-    
-    const country = countryMap[countryCode] || 'us';
-    const flagImage = PHONE_FLAG_IMAGES[country] || DEFAULT_FLAG_IMAGE;
-    
-    return { countryCode, displayNumber, country, flagImage };
+  }
+  
+  // Format display number with spaces for readability
+  if (displayNumber.length > 3) {
+    displayNumber = `${displayNumber.slice(0, 3)} ${displayNumber.slice(3)}`;
+  }
+  if (displayNumber.length > 7) {
+    displayNumber = `${displayNumber.slice(0, 7)} ${displayNumber.slice(7)}`;
+  }
+  
+  // Map to country code and get flag
+  const countryMap: Record<string, string> = {
+    '+1': 'us', '+44': 'gb', '+33': 'fr', '+49': 'de', '+34': 'es', 
+    '+39': 'it', '+55': 'br', '+52': 'mx', '+509': 'ht', '+86': 'cn',
+    '+81': 'jp', '+82': 'kr', '+91': 'in', '+61': 'au', '+64': 'nz',
+    '+7': 'ru', '+966': 'sa', '+971': 'ae', '+27': 'za', '+234': 'ng',
+    '+20': 'eg', '+254': 'ke',
   };
+  
+  const country = countryMap[countryCode] || 'us';
+  const flagImage = PHONE_FLAG_IMAGES[country] || DEFAULT_FLAG_IMAGE;
+  
+  return { countryCode, displayNumber, country, flagImage };
+};
 
   // Login function using Supabase
   const login = async (identifier: string, method: 'email' | 'phone', password: string) => {
