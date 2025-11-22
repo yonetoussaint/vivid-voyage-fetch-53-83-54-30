@@ -20,18 +20,76 @@ interface EmailAuthScreenProps {
   showHeader?: boolean;
 }
 
-// Constants
+// Inline email constants
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const FAVICON_OVERRIDES: Record<string, string> = {
   'gmail.com': 'https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico',
   'outlook.com': 'https://outlook.live.com/favicon.ico',
   'yahoo.com': 'https://s.yimg.com/cv/apiv2/social/images/yahoo_favicon.ico'
 };
 
+// List of trusted email providers
 const TRUSTED_PROVIDERS = [
   'gmail.com', 'outlook.com', 'hotmail.com', 'yahoo.com', 'icloud.com',
   'protonmail.com', 'aol.com', 'mail.com', 'zoho.com', 'yandex.com',
+  'fastmail.com', 'tutanota.com',
 ];
+
+// Backend Preloading Hook
+const useEnhancedBackendPreloader = () => {
+  useEffect(() => {
+    const BACKEND_URLS = [
+      'https://supabase-y8ak.onrender.com/api/check-email',
+      'https://resend-u11p.onrender.com/api/send-otp',
+      'https://resend-u11p.onrender.com/api/send-phone-otp'
+    ];
+
+    let retryCount = 0;
+    const maxRetries = 2;
+
+    const pingBackend = async (url: string): Promise<boolean> => {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+
+        const response = await fetch(url, {
+          method: 'HEAD',
+          signal: controller.signal
+        });
+
+        clearTimeout(timeout);
+        return response.ok;
+      } catch (error) {
+        console.log(`Preload failed for ${url}:`, error);
+        return false;
+      }
+    };
+
+    const preloadWithRetry = async () => {
+      const results = await Promise.all(
+        BACKEND_URLS.map(url => pingBackend(url))
+      );
+
+      const allSuccessful = results.every(success => success);
+
+      if (!allSuccessful && retryCount < maxRetries) {
+        retryCount++;
+        const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 10000);
+        setTimeout(preloadWithRetry, retryDelay);
+      } else {
+        retryCount = 0;
+      }
+    };
+
+    preloadWithRetry();
+    const interval = setInterval(preloadWithRetry, 4 * 60 * 1000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
+};
 
 const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   onBack,
@@ -46,6 +104,8 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   onExpand,
   showHeader = true,
 }) => {
+  useEnhancedBackendPreloader();
+
   const [email, setEmail] = useState(initialEmail);
   const [phone, setPhone] = useState('');
   const [isEmailValid, setIsEmailValid] = useState(false);
@@ -85,14 +145,21 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
   // Phone validation for Haitian numbers only
   const validatePhone = useCallback((phoneNumber: string): boolean => {
+    // Remove all non-digit characters
     const cleaned = phoneNumber.replace(/\D/g, '');
     
+    // Haitian numbers validation:
+    // +509XXXXXXXX (11 digits with +509)
+    // 509XXXXXXXX (10 digits without +)
+    // 09XXXXXXXX (9 digits with 0)
+    // 9XXXXXXXX (8 digits without 0)
+    
     if (cleaned.startsWith('509') && cleaned.length === 11) {
-      return true;
+      return true; // +509XXXXXXXXX
     } else if (cleaned.startsWith('09') && cleaned.length === 10) {
-      return true;
+      return true; // 09XXXXXXXX
     } else if (cleaned.startsWith('9') && cleaned.length === 9) {
-      return true;
+      return true; // 9XXXXXXXX
     }
     
     return false;
@@ -109,7 +176,12 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
         body: JSON.stringify({ email: emailToCheck }),
       });
       const data = await response.json();
-      return data.exists;
+
+      if (data.success) {
+        return data.exists;
+      } else {
+        throw new Error(data.message || 'Failed to check email');
+      }
     } catch (error) {
       console.error('Error checking email:', error);
       throw error;
@@ -119,6 +191,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   // API call to check if phone exists
   const checkPhoneExists = useCallback(async (phoneToCheck: string): Promise<boolean> => {
     try {
+      // Format phone number for the check
       const cleaned = phoneToCheck.replace(/\D/g, '');
       let formattedPhone = '';
       
@@ -161,12 +234,21 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to send verification code');
+        let errorMessage = `Server error: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
 
+      const result = await response.json();
       return { success: true };
     } catch (error: any) {
+      console.error('Failed to send OTP:', error);
       return { 
         success: false, 
         error: error.message || 'Failed to send verification code. Please try again.' 
@@ -187,12 +269,21 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to send SMS');
+        let errorMessage = `Server error: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
 
+      const result = await response.json();
       return { success: true };
     } catch (error: any) {
+      console.error('Failed to send phone OTP:', error);
       return { 
         success: false, 
         error: error.message || 'Failed to send verification code. Please try again.' 
@@ -297,25 +388,31 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   };
 
   const handlePhoneChange = (value: string) => {
-    // Format phone number as user types
-    const cleaned = value.replace(/\D/g, '');
-    let formatted = cleaned;
-
-    if (cleaned.length > 0) {
-      if (!cleaned.startsWith('+') && !cleaned.startsWith('509') && !cleaned.startsWith('09') && !cleaned.startsWith('9')) {
-        formatted = `+509${cleaned}`;
-      }
-
-      // Add formatting for better readability
-      if (formatted.startsWith('+509') && formatted.length > 4) {
-        formatted = `${formatted.slice(0, 4)} ${formatted.slice(4)}`;
-      }
-      if (formatted.length > 8) {
-        formatted = `${formatted.slice(0, 8)} ${formatted.slice(8)}`;
+    // Remove all non-digit characters except +
+    let cleaned = value.replace(/[^\d+]/g, '');
+    
+    // Ensure it starts with +509 for Haitian numbers
+    if (!cleaned.startsWith('+509') && cleaned.length > 0) {
+      if (cleaned.startsWith('509')) {
+        cleaned = '+' + cleaned;
+      } else if (cleaned.startsWith('09')) {
+        cleaned = '+509' + cleaned.substring(2);
+      } else if (cleaned.startsWith('9')) {
+        cleaned = '+509' + cleaned.substring(1);
+      } else if (cleaned.startsWith('+') && !cleaned.startsWith('+509')) {
+        // If user tries to enter non-Haitian number, restrict to Haitian
+        cleaned = '+509';
+      } else if (!cleaned.startsWith('+')) {
+        cleaned = '+509' + cleaned;
       }
     }
 
-    setPhone(formatted);
+    // Limit to 12 characters (+509XXXXXXXX)
+    if (cleaned.length > 12) {
+      cleaned = cleaned.substring(0, 12);
+    }
+
+    setPhone(cleaned);
   };
 
   const handleContinueWithPassword = async () => {
@@ -396,6 +493,49 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   };
 
   const { url: faviconUrl, show: showFavicon } = updateFavicon(email);
+
+  // Sync input with DOM
+  useEffect(() => {
+    const input = authMethod === 'email' ? emailInputRef.current : phoneInputRef.current;
+    if (!input) return;
+
+    const syncWithDOM = () => {
+      const domValue = input.value;
+      const currentValue = getCurrentInput();
+      if (domValue !== currentValue && domValue.length > 0) {
+        if (authMethod === 'email') {
+          handleEmailChange(domValue);
+        } else {
+          handlePhoneChange(domValue);
+        }
+        return true;
+      }
+      return false;
+    };
+
+    const observer = new MutationObserver(() => {
+      syncWithDOM();
+    });
+
+    observer.observe(input, {
+      attributes: true,
+      attributeFilter: ['value']
+    });
+
+    const pollInterval = setInterval(() => {
+      syncWithDOM();
+    }, 100);
+
+    const stopPolling = setTimeout(() => {
+      clearInterval(pollInterval);
+    }, 5000);
+
+    return () => {
+      clearInterval(pollInterval);
+      clearTimeout(stopPolling);
+      observer.disconnect();
+    };
+  }, [authMethod, email, phone]);
 
   // Render functions
   const getRightSideIcon = () => {
@@ -718,14 +858,9 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
             <p className={`text-gray-600 ${isCompact ? 'text-sm' : 'text-base'}`}>
               {authMethod === 'email' 
                 ? "We'll check if you already have an account."
-                : "We'll check if you already have an account."
+                : "We'll check if you already have an account. Haitian numbers only (+509)."
               }
             </p>
-            {authMethod === 'phone' && (
-              <p className={`text-gray-500 ${isCompact ? 'text-xs' : 'text-sm'} mt-2`}>
-                Haitian numbers only: +509XXXXXXXX or 09XXXXXXXX
-              </p>
-            )}
           </div>
 
           {/* Input Section */}
@@ -735,6 +870,11 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
             {/* Input Field */}
             <div className="relative">
+              <label
+                htmlFor={authMethod === 'email' ? "email" : "phone"}
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+              </label>
               <div className="relative">
                 <div className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 z-10">
                   {authMethod === 'email' ? (
@@ -775,7 +915,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
                     type="tel"
                     value={phone}
                     onChange={(e) => handlePhoneChange(e.target.value)}
-                    placeholder="+509 1234 5678"
+                    placeholder="+509XXXXXXXX"
                     autoComplete="tel"
                     ref={phoneInputRef}
                     disabled={isLoading}
