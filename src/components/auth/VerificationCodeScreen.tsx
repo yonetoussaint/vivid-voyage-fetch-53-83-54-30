@@ -145,7 +145,7 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
     }
   };
 
-  // SIMPLIFIED: Just verify OTP and sign in existing user
+  // FIXED: Proper OTP verification with auth state update
   const handleVerifyCode = async () => {
     if (!isComplete) return;
 
@@ -168,22 +168,40 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
 
       console.log('✅ OTP verified successfully');
 
-      // Step 2: User is now signed in via OTP
-      toast.success('Signed in successfully!');
-      
-      // Update auth context if available
+      // Step 2: Update global auth state using AuthContext
       if (authContext && result.user) {
-        // You might want to update your AuthContext to handle OTP-based sessions
-        // For now, we'll just trigger the success callback
-        console.log('User signed in via OTP:', result.user);
+        console.log('🔄 Updating auth state with OTP user:', result.user);
+        
+        // Use the new handleOTPSignIn method
+        if (authContext.handleOTPSignIn) {
+          await authContext.handleOTPSignIn(result.user);
+        } else {
+          // Fallback: manually check auth status
+          await authContext.checkAuthStatus();
+        }
+        
+        // Verify auth state was updated
+        setTimeout(() => {
+          if (authContext.isAuthenticated) {
+            console.log('✅ Auth state successfully updated');
+            toast.success('Signed in successfully!');
+            onVerificationSuccess();
+          } else {
+            console.log('⚠️ Auth state not updated, but OTP was valid');
+            toast.success('Email verified! Please continue.');
+            onVerificationSuccess();
+          }
+        }, 500);
+      } else {
+        // If no auth context, just proceed
+        toast.success('Email verified successfully!');
+        onVerificationSuccess();
       }
-
-      // Step 3: Proceed to success
-      onVerificationSuccess();
 
     } catch (error: any) {
       console.error('💥 Error during verification:', error);
       setError('An unexpected error occurred. Please try again.');
+      toast.error('Verification failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -201,6 +219,7 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
             onClick={onBack}
             className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-full transition-colors active:scale-95"
             aria-label="Go back"
+            disabled={isLoading}
           >
             <ArrowLeft className="w-5 h-5 text-gray-700" />
           </button>
@@ -214,6 +233,7 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
             aria-label="Help"
             onClick={() => alert('Need help? Contact support@mimaht.com')}
             type="button"
+            disabled={isLoading}
           >
             <HelpCircle className="w-5 h-5 text-gray-700" />
           </button>
@@ -268,8 +288,9 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
               </div>
               <button
                 onClick={onBack}
-                className={`text-red-500 hover:text-red-600 font-medium ${isCompact ? 'text-xs' : 'text-sm'}`}
+                className={`text-red-500 hover:text-red-600 font-medium ${isCompact ? 'text-xs' : 'text-sm'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                 type="button"
+                disabled={isLoading}
               >
                 Change
               </button>
@@ -305,7 +326,7 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
                       error
                         ? 'border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500'
                         : 'border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500'
-                    } ${isLoading ? 'bg-gray-50' : 'bg-white'} ${isCompact ? 'w-10 h-10 text-base' : 'w-12 h-12 text-lg'}`}
+                    } ${isLoading ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'} ${isCompact ? 'w-10 h-10 text-base' : 'w-12 h-12 text-lg'}`}
                   />
                 ))}
               </div>
@@ -316,7 +337,7 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
               {canResend ? (
                 <button
                   onClick={handleResendCode}
-                  disabled={isResending}
+                  disabled={isResending || isLoading}
                   className={`text-red-500 hover:text-red-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto ${isCompact ? 'text-sm' : 'text-base'}`}
                   type="button"
                 >
@@ -336,7 +357,7 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
               onClick={handleVerifyCode}
               className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg transition-colors ${
                 isComplete && !isLoading
-                  ? 'bg-red-500 text-white hover:bg-red-600 border-red-500'
+                  ? 'bg-red-500 text-white hover:bg-red-600 border-red-500 transform active:scale-95'
                   : 'bg-gray-100 text-gray-400 cursor-not-allowed'
               } ${isCompact ? 'shadow-sm' : ''}`}
               type="button"
