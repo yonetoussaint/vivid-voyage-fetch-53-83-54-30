@@ -92,6 +92,7 @@ interface AuthContextType {
   handleClose: () => void;
 }
 
+// Create the context - this is INTERNAL and should not be exported directly
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const FAVICON_OVERRIDES: Record<string, string> = {
@@ -100,6 +101,7 @@ const FAVICON_OVERRIDES: Record<string, string> = {
   'yahoo.com': 'https://s.yimg.com/rz/l/favicon.ico',
 };
 
+// Export the hook that components should use
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -108,6 +110,7 @@ export const useAuth = () => {
   return context;
 };
 
+// Export the provider component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Core auth state
   const [user, setUser] = useState<User | null>(null);
@@ -784,3 +787,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     </AuthContext.Provider>
   );
 };
+
+// ONLY export these two - do not export AuthContext directly
+export { AuthProvider, useAuth };
