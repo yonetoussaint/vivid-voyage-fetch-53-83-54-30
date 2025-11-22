@@ -101,8 +101,8 @@ const FAVICON_OVERRIDES: Record<string, string> = {
   'yahoo.com': 'https://s.yimg.com/rz/l/favicon.ico',
 };
 
-// Export the hook that components should use
-export const useAuth = () => {
+// Custom hook to use auth context
+const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
@@ -110,8 +110,8 @@ export const useAuth = () => {
   return context;
 };
 
-// Export the provider component
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// Main provider component
+const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Core auth state
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -158,12 +158,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('auth_method', 'otp');
       
       console.log('✅ OTP user signed in and auth state updated:', otpUser);
-
-      // Also try to get Supabase session to sync with existing auth system
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        console.log('✅ Supabase session also active');
-      }
 
     } catch (error) {
       console.error('Error handling OTP sign-in:', error);
@@ -715,7 +709,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signup,
     logout,
     checkAuthStatus,
-    handleOTPSignIn, // NEW: OTP sign-in function
+    handleOTPSignIn,
 
     // Follow functionality
     checkIfFollowing,
@@ -788,5 +782,5 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-// ONLY export these two - do not export AuthContext directly
+// SINGLE EXPORT STATEMENT AT THE END - NO DUPLICATES
 export { AuthProvider, useAuth };
