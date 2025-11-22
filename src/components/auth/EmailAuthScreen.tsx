@@ -13,93 +13,25 @@ interface EmailAuthScreenProps {
   onContinueWithCode: (identifier: string, method: 'email' | 'phone') => void;
   onCreateAccount: (email: string) => void;
   onSignUpClick: () => void;
-  authMethod: AuthMethod; // Determines which UI to show
+  authMethod: AuthMethod;
   initialEmail?: string;
   isCompact?: boolean;
   onExpand?: () => void;
   showHeader?: boolean;
 }
 
-// Inline email constants
+// Constants
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PHONE_REGEX = /^\+?[\d\s\-\(\)]{10,}$/;
-
 const FAVICON_OVERRIDES: Record<string, string> = {
   'gmail.com': 'https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico',
   'outlook.com': 'https://outlook.live.com/favicon.ico',
   'yahoo.com': 'https://s.yimg.com/cv/apiv2/social/images/yahoo_favicon.ico'
 };
 
-// List of trusted email providers
 const TRUSTED_PROVIDERS = [
   'gmail.com', 'outlook.com', 'hotmail.com', 'yahoo.com', 'icloud.com',
   'protonmail.com', 'aol.com', 'mail.com', 'zoho.com', 'yandex.com',
-  'fastmail.com', 'tutanota.com',
 ];
-
-// Backend Preloading Hook
-const useEnhancedBackendPreloader = () => {
-  useEffect(() => {
-    const BACKEND_URLS = [
-      'https://supabase-y8ak.onrender.com/api/check-email',
-      'https://resend-u11p.onrender.com/api/send-otp'
-    ];
-
-    let retryCount = 0;
-    const maxRetries = 2;
-
-    const pingBackend = async (url: string): Promise<boolean> => {
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 8000); // 8 second timeout
-        
-        // Use HEAD request for lighter preloading
-        const response = await fetch(url, {
-          method: 'HEAD',
-          signal: controller.signal
-        });
-        
-        clearTimeout(timeout);
-        return response.ok;
-      } catch (error) {
-        console.log(`Preload failed for ${url}:`, error);
-        return false;
-      }
-    };
-
-    const preloadWithRetry = async () => {
-      const results = await Promise.all(
-        BACKEND_URLS.map(url => pingBackend(url))
-      );
-
-      const allSuccessful = results.every(success => success);
-      
-      if (!allSuccessful && retryCount < maxRetries) {
-        retryCount++;
-        const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 10000); // Exponential backoff max 10s
-        console.log(`Retrying preload in ${retryDelay}ms (attempt ${retryCount})`);
-        setTimeout(preloadWithRetry, retryDelay);
-      } else {
-        retryCount = 0; // Reset for next interval
-        if (allSuccessful) {
-          console.log('All backends preloaded successfully');
-        } else {
-          console.log('Some backends failed to preload after retries');
-        }
-      }
-    };
-
-    // Initial preload
-    preloadWithRetry();
-
-    // Keep-alive interval (4 minutes - Render sleeps after 5 min inactivity)
-    const interval = setInterval(preloadWithRetry, 4 * 60 * 1000);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, []);
-};
 
 const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   onBack,
@@ -108,15 +40,12 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   onContinueWithCode,
   onCreateAccount,
   onSignUpClick,
-  authMethod, // This determines if we show email or phone UI
+  authMethod,
   initialEmail = '',
   isCompact = false,
   onExpand,
   showHeader = true,
 }) => {
-  // Initialize backend preloading
-  useEnhancedBackendPreloader();
-
   const [email, setEmail] = useState(initialEmail);
   const [phone, setPhone] = useState('');
   const [isEmailValid, setIsEmailValid] = useState(false);
@@ -154,10 +83,19 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     return hasValidEmailFormat(emailAddress) && isFromTrustedProvider(emailAddress);
   }, [hasValidEmailFormat, isFromTrustedProvider]);
 
+  // Phone validation for Haitian numbers only
   const validatePhone = useCallback((phoneNumber: string): boolean => {
-    // Remove all non-digit characters except + for validation
-    const cleanedPhone = phoneNumber.replace(/[^\d+]/g, '');
-    return PHONE_REGEX.test(cleanedPhone) && cleanedPhone.length >= 10;
+    const cleaned = phoneNumber.replace(/\D/g, '');
+    
+    if (cleaned.startsWith('509') && cleaned.length === 11) {
+      return true;
+    } else if (cleaned.startsWith('09') && cleaned.length === 10) {
+      return true;
+    } else if (cleaned.startsWith('9') && cleaned.length === 9) {
+      return true;
+    }
+    
+    return false;
   }, []);
 
   // API call to check if email exists
@@ -171,12 +109,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
         body: JSON.stringify({ email: emailToCheck }),
       });
       const data = await response.json();
-
-      if (data.success) {
-        return data.exists;
-      } else {
-        throw new Error(data.message || 'Failed to check email');
-      }
+      return data.exists;
     } catch (error) {
       console.error('Error checking email:', error);
       throw error;
@@ -186,12 +119,29 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   // API call to check if phone exists
   const checkPhoneExists = useCallback(async (phoneToCheck: string): Promise<boolean> => {
     try {
-      // For now, simulate phone check - implement actual API call
-      console.log('Checking phone:', phoneToCheck);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const cleaned = phoneToCheck.replace(/\D/g, '');
+      let formattedPhone = '';
+      
+      if (cleaned.startsWith('509') && cleaned.length === 11) {
+        formattedPhone = `+${cleaned}`;
+      } else if (cleaned.startsWith('09') && cleaned.length === 10) {
+        formattedPhone = `+509${cleaned.substring(1)}`;
+      } else if (cleaned.startsWith('9') && cleaned.length === 9) {
+        formattedPhone = `+509${cleaned}`;
+      } else {
+        return false;
+      }
 
-      // Simulate random result for demo
-      return Math.random() > 0.5;
+      const response = await fetch('https://resend-u11p.onrender.com/api/check-phone', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ phone: formattedPhone }),
+      });
+      
+      const data = await response.json();
+      return data.exists;
     } catch (error) {
       console.error('Error checking phone:', error);
       throw error;
@@ -211,21 +161,12 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       });
 
       if (!response.ok) {
-        let errorMessage = `Server error: ${response.status}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-        } catch (e) {
-          const errorText = await response.text();
-          errorMessage = errorText || errorMessage;
-        }
-        throw new Error(errorMessage);
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send verification code');
       }
 
-      const result = await response.json();
       return { success: true };
     } catch (error: any) {
-      console.error('Failed to send OTP:', error);
       return { 
         success: false, 
         error: error.message || 'Failed to send verification code. Please try again.' 
@@ -233,17 +174,25 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     }
   };
 
-  // OTP function for phone
+  // Real OTP function for phone using Twilio
   const sendCustomOTPPhone = async (phoneNumber: string) => {
     try {
-      // For now, simulate phone OTP - you'll need to implement actual phone OTP service
-      console.log('Sending OTP to phone:', phoneNumber);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const BACKEND_URL = 'https://resend-u11p.onrender.com';
+      const response = await fetch(`${BACKEND_URL}/api/send-phone-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ phoneNumber }),
+      });
 
-      // Simulate success for demo purposes
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send SMS');
+      }
+
       return { success: true };
     } catch (error: any) {
-      console.error('Failed to send phone OTP:', error);
       return { 
         success: false, 
         error: error.message || 'Failed to send verification code. Please try again.' 
@@ -353,19 +302,16 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     let formatted = cleaned;
 
     if (cleaned.length > 0) {
-      if (!cleaned.startsWith('+')) {
-        formatted = `+${cleaned}`;
+      if (!cleaned.startsWith('+') && !cleaned.startsWith('509') && !cleaned.startsWith('09') && !cleaned.startsWith('9')) {
+        formatted = `+509${cleaned}`;
       }
 
       // Add formatting for better readability
-      if (cleaned.length > 3) {
+      if (formatted.startsWith('+509') && formatted.length > 4) {
         formatted = `${formatted.slice(0, 4)} ${formatted.slice(4)}`;
       }
-      if (cleaned.length > 6) {
+      if (formatted.length > 8) {
         formatted = `${formatted.slice(0, 8)} ${formatted.slice(8)}`;
-      }
-      if (cleaned.length > 9) {
-        formatted = `${formatted.slice(0, 12)} ${formatted.slice(12)}`;
       }
     }
 
@@ -450,49 +396,6 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   };
 
   const { url: faviconUrl, show: showFavicon } = updateFavicon(email);
-
-  // Sync input with DOM
-  useEffect(() => {
-    const input = authMethod === 'email' ? emailInputRef.current : phoneInputRef.current;
-    if (!input) return;
-
-    const syncWithDOM = () => {
-      const domValue = input.value;
-      const currentValue = getCurrentInput();
-      if (domValue !== currentValue && domValue.length > 0) {
-        if (authMethod === 'email') {
-          handleEmailChange(domValue);
-        } else {
-          handlePhoneChange(domValue);
-        }
-        return true;
-      }
-      return false;
-    };
-
-    const observer = new MutationObserver(() => {
-      syncWithDOM();
-    });
-
-    observer.observe(input, {
-      attributes: true,
-      attributeFilter: ['value']
-    });
-
-    const pollInterval = setInterval(() => {
-      syncWithDOM();
-    }, 100);
-
-    const stopPolling = setTimeout(() => {
-      clearInterval(pollInterval);
-    }, 5000);
-
-    return () => {
-      clearInterval(pollInterval);
-      clearTimeout(stopPolling);
-      observer.disconnect();
-    };
-  }, [authMethod, email, phone]);
 
   // Render functions
   const getRightSideIcon = () => {
@@ -787,7 +690,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
           <button
             className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-full transition-colors active:scale-95"
-            onClick={() => alert('Need help? Contact support@example.com')}
+            onClick={() => alert('Need help? Contact support@mimaht.com')}
             disabled={isLoading}
           >
             <HelpCircle className="w-5 h-5 text-gray-700" />
@@ -818,6 +721,11 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
                 : "We'll check if you already have an account."
               }
             </p>
+            {authMethod === 'phone' && (
+              <p className={`text-gray-500 ${isCompact ? 'text-xs' : 'text-sm'} mt-2`}>
+                Haitian numbers only: +509XXXXXXXX or 09XXXXXXXX
+              </p>
+            )}
           </div>
 
           {/* Input Section */}
@@ -827,11 +735,6 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
             {/* Input Field */}
             <div className="relative">
-              <label
-                htmlFor={authMethod === 'email' ? "email" : "phone"}
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-              </label>
               <div className="relative">
                 <div className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 z-10">
                   {authMethod === 'email' ? (
@@ -872,7 +775,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
                     type="tel"
                     value={phone}
                     onChange={(e) => handlePhoneChange(e.target.value)}
-                    placeholder="+1 234 567 8900"
+                    placeholder="+509 1234 5678"
                     autoComplete="tel"
                     ref={phoneInputRef}
                     disabled={isLoading}
