@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect, useContext } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Key, Mail, HelpCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { FAVICON_OVERRIDES } from '../../constants/email';
-import { AuthContext } from '@/contexts/auth/AuthContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 interface VerificationCodeScreenProps {
   email: string;
@@ -28,7 +28,7 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
   const [error, setError] = useState<string>('');
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const authContext = useContext(AuthContext);
+  const authContext = useAuth();
 
   useEffect(() => {
     if (timeLeft > 0) {
