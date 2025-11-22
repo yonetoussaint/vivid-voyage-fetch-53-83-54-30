@@ -16,14 +16,17 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  
-  // Basic auth functions (kept in context since they're used globally)
+
+  // Basic auth functions
   login: (email: string, password: string) => Promise<{ error?: string }>;
   signup: (email: string, password: string, fullName?: string) => Promise<{ error?: string }>;
   logout: () => Promise<void>;
   checkAuthStatus: () => Promise<void>;
   
-  // Follow functionality (used across app)
+  // NEW: OTP sign-in function
+  handleOTPSignIn: (userData: any) => Promise<void>;
+
+  // Follow functionality
   checkIfFollowing: (sellerId: string) => Promise<boolean>;
   toggleFollowSeller: (sellerId: string, sellerName: string, currentFollowStatus: boolean) => Promise<{ success: boolean; error?: string }>;
   followedSellers: string[];
@@ -35,14 +38,14 @@ interface AuthContextType {
   setCurrentScreen: (screen: ScreenType) => void;
   selectedLanguage: string;
   setSelectedLanguage: (lang: string) => void;
-  
+
   // Shared state between screens
   userEmail: string;
   setUserEmail: (email: string) => void;
   resetOTP: string;
   setResetOTP: (otp: string) => void;
 
-  // Account creation state (shared across steps)
+  // Account creation state
   accountCreationStep: 'name' | 'password' | 'success';
   setAccountCreationStep: (step: 'name' | 'password' | 'success') => void;
   firstName: string;
@@ -60,7 +63,7 @@ interface AuthContextType {
   authError: string | null;
   setAuthError: (error: string | null) => void;
 
-  // Navigation handlers (simple screen transitions)
+  // Navigation handlers
   handleContinueWithEmail: () => void;
   handleBackToMain: () => void;
   handleContinueWithPassword: (email: string) => void;
@@ -79,7 +82,7 @@ interface AuthContextType {
   handleForgotPasswordClick: () => void;
   handleContinueToApp: () => void;
 
-  // Utility methods (used by multiple components)
+  // Utility methods
   getFaviconUrl: (emailValue: string) => string | null;
   validateName: (name: string, fieldName: string, options?: any) => string;
   validatePassword: (pwd: string) => string | null;
@@ -91,7 +94,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Favicon overrides constant
 const FAVICON_OVERRIDES: Record<string, string> = {
   'gmail.com': 'https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico',
   'outlook.com': 'https://outlook.live.com/favicon.ico',
@@ -130,6 +132,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
+  // NEW: OTP sign-in function
+  const handleOTPSignIn = async (userData: any) => {
+    try {
+      console.log('🔄 Handling OTP sign-in for user:', userData);
+
+      // Create a proper user object from OTP verification
+      const otpUser: User = {
+        id: userData.id || `otp_${userData.email}`,
+        email: userData.email,
+        full_name: userData.full_name || userData.email.split('@')[0],
+        profile_picture: userData.profile_picture,
+      };
+
+      // Update the auth state immediately
+      setUser(otpUser);
+      setIsAuthenticated(true);
+      
+      // Store in localStorage for persistence
+      localStorage.setItem('otp_user', JSON.stringify(otpUser));
+      localStorage.setItem('otp_auth', 'true');
+      localStorage.setItem('auth_method', 'otp');
+      
+      console.log('✅ OTP user signed in and auth state updated:', otpUser);
+
+      // Also try to get Supabase session to sync with existing auth system
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        console.log('✅ Supabase session also active');
+      }
+
+    } catch (error) {
+      console.error('Error handling OTP sign-in:', error);
+      throw error;
+    }
+  };
+
   // Reset overlay state when opening
   useEffect(() => {
     if (isAuthOverlayOpen) {
@@ -138,6 +176,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setResetOTP('');
     }
   }, [isAuthOverlayOpen]);
+
+  // Check for OTP auth on initial load
+  useEffect(() => {
+    const checkOTPAuth = () => {
+      try {
+        const otpAuth = localStorage.getItem('otp_auth');
+        const otpUser = localStorage.getItem('otp_user');
+        
+        if (otpAuth === 'true' && otpUser) {
+          const userData = JSON.parse(otpUser);
+          setUser(userData);
+          setIsAuthenticated(true);
+          console.log('✅ OTP auth restored from storage');
+        }
+      } catch (error) {
+        console.error('Error restoring OTP auth:', error);
+      }
+    };
+
+    checkOTPAuth();
+  }, []);
 
   // Utility functions
   const extractDomain = useCallback((emailValue: string): string => {
@@ -313,10 +372,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const checkAuthStatus = async () => {
     try {
+      // First check Supabase auth
       const { data: { session }, error } = await supabase.auth.getSession();
 
       if (error) {
         console.error('Error getting session:', error);
+        // Fall back to OTP auth check
+        const otpAuth = localStorage.getItem('otp_auth');
+        const otpUser = localStorage.getItem('otp_user');
+        
+        if (otpAuth === 'true' && otpUser) {
+          const userData = JSON.parse(otpUser);
+          setUser(userData);
+          setIsAuthenticated(true);
+          loadFollowedSellers(userData.id);
+          setIsLoading(false);
+          return;
+        }
+        
         setUser(null);
         setIsAuthenticated(false);
         setFollowedSellers([]);
@@ -330,9 +403,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsAuthenticated(true);
         loadFollowedSellers(session.user.id);
       } else {
-        setUser(null);
-        setIsAuthenticated(false);
-        setFollowedSellers([]);
+        // Check OTP auth as fallback
+        const otpAuth = localStorage.getItem('otp_auth');
+        const otpUser = localStorage.getItem('otp_user');
+        
+        if (otpAuth === 'true' && otpUser) {
+          const userData = JSON.parse(otpUser);
+          setUser(userData);
+          setIsAuthenticated(true);
+        } else {
+          setUser(null);
+          setIsAuthenticated(false);
+          setFollowedSellers([]);
+        }
       }
     } catch (error) {
       console.error('Error checking auth status:', error);
@@ -358,7 +441,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(userData);
           setIsAuthenticated(true);
           loadFollowedSellers(session.user.id);
-        } else {
+        } else if (event === 'SIGNED_OUT') {
+          // Also clear OTP auth on sign out
+          localStorage.removeItem('otp_auth');
+          localStorage.removeItem('otp_user');
+          localStorage.removeItem('auth_method');
           setUser(null);
           setIsAuthenticated(false);
           setFollowedSellers([]);
@@ -465,6 +552,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       console.log('Logging out user');
+      
+      // Clear OTP auth
+      localStorage.removeItem('otp_auth');
+      localStorage.removeItem('otp_user');
+      localStorage.removeItem('auth_method');
+      
+      // Sign out from Supabase
       const { error } = await supabase.auth.signOut();
 
       if (error) {
@@ -618,7 +712,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signup,
     logout,
     checkAuthStatus,
-    
+    handleOTPSignIn, // NEW: OTP sign-in function
+
     // Follow functionality
     checkIfFollowing,
     toggleFollowSeller,
