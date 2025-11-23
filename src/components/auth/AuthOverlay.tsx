@@ -233,7 +233,7 @@ const AuthOverlay: React.FC = () => {
       showCloseButton: false,
       showBackButton: true,
       onBack: handleBackButton,
-      showDragHandle: true,
+      showDragHandle: false,
       showHelpButton: true // Hide help button on non-main screens
     };
   };
