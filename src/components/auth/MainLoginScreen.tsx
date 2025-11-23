@@ -20,9 +20,9 @@ interface MainLoginScreenProps {
   showHeader?: boolean;
 }
 
-const MainLoginScreen: React.FC<MainLoginScreenProps> = ({ 
-  selectedLanguage, 
-  setSelectedLanguage, 
+const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
+  selectedLanguage,
+  setSelectedLanguage,
   onContinueWithEmail,
   onContinueWithPhone,
   isCompact = false,
@@ -34,6 +34,11 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
   const [isEmailLoading, setIsEmailLoading] = useState(false);
   const [isPhoneLoading, setIsPhoneLoading] = useState(false);
 
+  // NEW buttons
+  const [isAppleLoading, setIsAppleLoading] = useState(false);
+  const [isWhatsappLoading, setIsWhatsappLoading] = useState(false);
+  const [isPinLoading, setIsPinLoading] = useState(false);
+
   const languages: Language[] = [
     { code: 'ht', name: 'Kreyòl Ayisyen', country: 'HT', countryName: 'Haiti' },
     { code: 'fr', name: 'Français', country: 'FR', countryName: 'France' },
@@ -43,31 +48,30 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
   ];
 
   const currentLang = languages.find(lang => lang.code === selectedLanguage);
-  const isLoading = isGoogleLoading || isFacebookLoading || isEmailLoading || isPhoneLoading;
 
-  // Google OAuth function
+  const isLoading =
+    isGoogleLoading ||
+    isFacebookLoading ||
+    isEmailLoading ||
+    isPhoneLoading ||
+    isWhatsappLoading ||
+    isAppleLoading ||
+    isPinLoading;
+
+  // Google OAuth
   const googleSignIn = async () => {
     try {
       const BACKEND_URL = 'https://resend-u11p.onrender.com';
       const response = await fetch(`${BACKEND_URL}/api/auth/google`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          redirectTo: `${window.location.origin}/auth/callback`
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ redirectTo: `${window.location.origin}/auth/callback` }),
       });
 
       const result = await response.json();
-
-      if (!result.success) {
-        return { error: result.error || 'Failed to initialize Google sign in' };
-      }
-
+      if (!result.success) return { error: result.error || 'Failed to initialize Google sign in' };
       window.location.href = result.authUrl;
       return {};
-
     } catch (error: any) {
       return { error: error.message || 'Failed to sign in with Google' };
     }
@@ -75,76 +79,84 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
 
   const handleGoogleSignIn = async () => {
     if (isLoading) return;
-
-    try {
-      setIsGoogleLoading(true);
-      const result = await googleSignIn();
-
-      if (result.error) {
-        toast.error(result.error || 'Failed to sign in with Google');
-        setIsGoogleLoading(false);
-      }
-    } catch (error) {
-      toast.error('An unexpected error occurred');
-      setIsGoogleLoading(false);
-    }
+    setIsGoogleLoading(true);
+    const result = await googleSignIn();
+    if (result.error) toast.error(result.error);
+    setIsGoogleLoading(false);
   };
 
+  // Facebook (coming soon)
   const handleFacebookSignIn = async () => {
     if (isLoading) return;
-
-    try {
-      setIsFacebookLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      toast.info('Facebook sign in coming soon!');
-      setIsFacebookLoading(false);
-    } catch (error) {
-      toast.error('Facebook sign in is currently unavailable');
-      setIsFacebookLoading(false);
-    }
+    setIsFacebookLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 1200));
+    toast.info('Facebook sign in coming soon!');
+    setIsFacebookLoading(false);
   };
 
+  // Email
   const handleEmailSignIn = async () => {
     if (isLoading) return;
-
-    try {
-      setIsEmailLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 500));
-      onContinueWithEmail();
-    } catch (error) {
-      setIsEmailLoading(false);
-    }
+    setIsEmailLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    onContinueWithEmail();
+    setIsEmailLoading(false);
   };
 
+  // Phone
   const handlePhoneSignIn = async () => {
     if (isLoading) return;
+    setIsPhoneLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    onContinueWithPhone();
+    setIsPhoneLoading(false);
+  };
 
-    try {
-      setIsPhoneLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 500));
-      onContinueWithPhone();
-    } catch (error) {
-      setIsPhoneLoading(false);
-    }
+  // NEW: WhatsApp placeholder
+  const handleWhatsappSignIn = async () => {
+    if (isLoading) return;
+    setIsWhatsappLoading(true);
+    await new Promise(res => setTimeout(res, 1200));
+    toast.info('WhatsApp sign in coming soon!');
+    setIsWhatsappLoading(false);
+  };
+
+  // NEW: Apple placeholder
+  const handleAppleSignIn = async () => {
+    if (isLoading) return;
+    setIsAppleLoading(true);
+    await new Promise(res => setTimeout(res, 1200));
+    toast.info('Apple sign in coming soon!');
+    setIsAppleLoading(false);
+  };
+
+  // NEW: PIN placeholder
+  const handlePinSignIn = async () => {
+    if (isLoading) return;
+    setIsPinLoading(true);
+    await new Promise(res => setTimeout(res, 1200));
+    toast.info('PIN login coming soon!');
+    setIsPinLoading(false);
   };
 
   return (
     <div className={isCompact ? "px-4 pb-4" : "min-h-screen bg-white flex flex-col px-4"}>
-      {/* Header section - optional */}
+
+      {/* Header */}
       {showHeader && !isCompact && (
         <div className="pt-4 pb-4 flex items-center justify-between">
           <LanguageSelector selectedLanguage={selectedLanguage} setSelectedLanguage={setSelectedLanguage} />
           <div className="flex items-center">
             <img 
               src={`https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/6.6.6/flags/4x3/${currentLang?.country.toLowerCase()}.svg`}
-              alt={`${currentLang?.name} flag`}
+              alt="flag"
               className="w-8 h-8 rounded-full object-cover"
             />
           </div>
         </div>
       )}
 
-      {/* Title and Subtitle for Compact Mode */}
+      {/* Title for Compact Mode */}
       {isCompact && (
         <div className="text-center mb-6 pt-2">
           <h2 className="text-2xl font-bold text-gray-900">
@@ -158,108 +170,56 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
 
       <div className={isCompact ? "" : "flex-1 flex flex-col justify-center w-full p-0"}>
         <div className={isCompact ? "space-y-3 mb-4" : "space-y-3 mb-6"}>
-          {/* Google Sign In Button */}
-          <button 
-            onClick={handleGoogleSignIn}
-            disabled={isLoading && !isGoogleLoading}
-            className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed relative ${
-              isCompact ? 'shadow-sm' : ''
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
-              <span className="text-gray-700 font-medium">
-                Continue with Google
-              </span>
-            </div>
 
-            {/* Spinner on the right side */}
-            {isGoogleLoading && (
-              <div className="absolute right-4">
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-gray-600"></div>
-              </div>
-            )}
+          {/* Google */}
+          <button onClick={handleGoogleSignIn} disabled={isLoading && !isGoogleLoading}
+            className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 relative">
+            <span>Continue with Google</span>
+            {isGoogleLoading && <div className="absolute right-4 animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-gray-600" />}
           </button>
 
-          {/* Facebook Sign In Button */}
-          <button 
-            onClick={handleFacebookSignIn}
-            disabled={isLoading && !isFacebookLoading}
-            className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed relative ${
-              isCompact ? 'shadow-sm' : ''
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path fill="#1877F2" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-              </svg>
-              <TranslatedText className="text-gray-700 font-medium">
-                Continue with Facebook
-              </TranslatedText>
-            </div>
-
-            {/* Spinner on the right side */}
-            {isFacebookLoading && (
-              <div className="absolute right-4">
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-gray-600"></div>
-              </div>
-            )}
+          {/* Facebook */}
+          <button onClick={handleFacebookSignIn} disabled={isLoading && !isFacebookLoading}
+            className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 relative">
+            <span>Continue with Facebook</span>
+            {isFacebookLoading && <div className="absolute right-4 animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-gray-600" />}
           </button>
 
-          {/* Email Sign In Button */}
-          <button 
-            onClick={handleEmailSignIn}
-            disabled={isLoading && !isEmailLoading}
-            className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed relative ${
-              isCompact ? 'shadow-sm' : ''
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <svg className="w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
-              </svg>
-              <TranslatedText className="text-gray-700 font-medium">
-                Continue with Email
-              </TranslatedText>
-            </div>
-
-            {/* Spinner on the right side */}
-            {isEmailLoading && (
-              <div className="absolute right-4">
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-gray-600"></div>
-              </div>
-            )}
+          {/* Email */}
+          <button onClick={handleEmailSignIn} disabled={isLoading && !isEmailLoading}
+            className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 relative">
+            <span>Continue with Email</span>
+            {isEmailLoading && <div className="absolute right-4 animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-gray-600" />}
           </button>
 
-          {/* Phone Sign In Button */}
-          <button 
-            onClick={handlePhoneSignIn}
-            disabled={isLoading && !isPhoneLoading}
-            className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed relative ${
-              isCompact ? 'shadow-sm' : ''
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <svg className="w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
-              </svg>
-              <TranslatedText className="text-gray-700 font-medium">
-                Continue with Phone Number
-              </TranslatedText>
-            </div>
-
-            {/* Spinner on the right side */}
-            {isPhoneLoading && (
-              <div className="absolute right-4">
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-gray-600"></div>
-              </div>
-            )}
+          {/* Phone */}
+          <button onClick={handlePhoneSignIn} disabled={isLoading && !isPhoneLoading}
+            className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 relative">
+            <span>Continue with Phone Number</span>
+            {isPhoneLoading && <div className="absolute right-4 animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-gray-600" />}
           </button>
+
+          {/* WhatsApp */}
+          <button onClick={handleWhatsappSignIn} disabled={isLoading && !isWhatsappLoading}
+            className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-green-500 text-white rounded-lg relative">
+            <span>Continue with WhatsApp</span>
+            {isWhatsappLoading && <div className="absolute right-4 animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />}
+          </button>
+
+          {/* Apple */}
+          <button onClick={handleAppleSignIn} disabled={isLoading && !isAppleLoading}
+            className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-black text-white rounded-lg relative">
+            <span>Continue with Apple</span>
+            {isAppleLoading && <div className="absolute right-4 animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />}
+          </button>
+
+          {/* PIN */}
+          <button onClick={handlePinSignIn} disabled={isLoading && !isPinLoading}
+            className="w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 relative">
+            <span>Continue with PIN</span>
+            {isPinLoading && <div className="absolute right-4 animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-transparent" />}
+          </button>
+
         </div>
 
         {/* Secure Authentication Footer */}
