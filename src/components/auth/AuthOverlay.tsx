@@ -1,4 +1,5 @@
 import React from 'react';
+import { ChevronLeft } from 'lucide-react'; // Import chevron icon
 import SlideUpPanel from '@/components/shared/SlideUpPanel';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import {
@@ -161,6 +162,30 @@ const AuthOverlay: React.FC = () => {
     handleCreateAccount(email);
   };
 
+  // Back button handler for different screens
+  const handleBackButton = () => {
+    switch (currentScreen) {
+      case 'email':
+        return handleBackToMain();
+      case 'verification':
+        return handleBackFromVerification();
+      case 'password':
+        return handleBackFromPassword();
+      case 'reset-password':
+        return setCurrentScreen('password');
+      case 'otp-reset':
+        return setCurrentScreen('reset-password');
+      case 'new-password':
+        return setCurrentScreen('otp-reset');
+      case 'account-creation':
+        return handleBackFromAccountCreation();
+      case 'success':
+        return handleClose(); // Or you might want different behavior for success
+      default:
+        return handleClose();
+    }
+  };
+
   const ErrorBanner = () => (
     authError ? (
       <div className="fixed top-4 left-4 right-4 z-50 bg-red-50 border border-red-200 rounded-lg p-4 shadow-lg">
@@ -181,6 +206,54 @@ const AuthOverlay: React.FC = () => {
     ) : null
   );
 
+  // Custom header content for non-main screens with back button
+  const getHeaderContent = () => {
+    if (currentScreen === 'main') {
+      return null; // Use default header for main screen
+    }
+
+    // Get appropriate title for each screen
+    const getScreenTitle = () => {
+      switch (currentScreen) {
+        case 'email':
+          return authMethod === 'email' ? 'Sign in with Email' : 'Sign in with Phone';
+        case 'verification':
+          return 'Enter Verification Code';
+        case 'password':
+          return 'Enter Password';
+        case 'reset-password':
+          return 'Reset Password';
+        case 'otp-reset':
+          return 'Verify Your Email';
+        case 'new-password':
+          return 'Create New Password';
+        case 'account-creation':
+          switch (accountCreationStep) {
+            case 'name':
+              return 'Create Account';
+            case 'password':
+              return 'Create Password';
+            case 'success':
+              return 'Account Created';
+            default:
+              return 'Create Account';
+          }
+        case 'success':
+          return 'Success';
+        default:
+          return '';
+      }
+    };
+
+    return (
+      <div className="flex items-center justify-center w-full">
+        <h3 className="font-medium text-gray-900 text-center">
+          {getScreenTitle()}
+        </h3>
+      </div>
+    );
+  };
+
   // Get SlideUpPanel props based on current screen
   const getSlideUpPanelProps = () => {
     const baseProps = {
@@ -188,10 +261,11 @@ const AuthOverlay: React.FC = () => {
       onClose: handleClose,
       preventBodyScroll: true,
       className: "bg-white",
-      dynamicHeight: true
+      dynamicHeight: true,
+      headerContent: getHeaderContent()
     };
 
-    // Apply specific props only for main login screen
+    // Main login screen - show close button and help button
     if (currentScreen === 'main') {
       return {
         ...baseProps,
@@ -201,11 +275,14 @@ const AuthOverlay: React.FC = () => {
       };
     }
 
-    // Default props for other screens
+    // All other screens - show back button instead of close button
     return {
       ...baseProps,
       showCloseButton: false,
-      showDragHandle: true
+      showBackButton: true, // Add this new prop
+      onBack: handleBackButton, // Add back button handler
+      showDragHandle: true,
+      showHelpButton: false // Hide help button on non-main screens
     };
   };
 
