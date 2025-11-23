@@ -1,5 +1,5 @@
 // components/shared/SlideUpPanel.tsx
-import { X, HelpCircle } from 'lucide-react';
+import { X, HelpCircle, ChevronLeft } from 'lucide-react';
 import { useEffect, useRef, useState, useCallback } from 'react';
 
 interface SlideUpPanelProps {
@@ -11,12 +11,14 @@ interface SlideUpPanelProps {
   className?: string;
   showCloseButton?: boolean;
   showHelpButton?: boolean;
+  showBackButton?: boolean;
   onHelpClick?: () => void;
+  onBack?: () => void;
   preventBodyScroll?: boolean;
   stickyFooter?: React.ReactNode;
-  maxHeight?: number; // 0-1 representing percentage of screen height
-  dynamicHeight?: boolean; // Add this prop to allow dynamic height adjustment
-  showDragHandle?: boolean; // New prop to control drag handle visibility
+  maxHeight?: number;
+  dynamicHeight?: boolean;
+  showDragHandle?: boolean;
 }
 
 export default function SlideUpPanel({
@@ -28,12 +30,14 @@ export default function SlideUpPanel({
   className = '',
   showCloseButton = true,
   showHelpButton = false,
+  showBackButton = false,
   onHelpClick,
+  onBack,
   preventBodyScroll = true,
   stickyFooter,
-  maxHeight = 0.9, // 90% of screen height by default
-  dynamicHeight = false, // Default to false for consistency
-  showDragHandle = true // Default to true for backward compatibility
+  maxHeight = 0.9,
+  dynamicHeight = false,
+  showDragHandle = true
 }: SlideUpPanelProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -44,7 +48,7 @@ export default function SlideUpPanel({
   const [currentTranslate, setCurrentTranslate] = useState(0);
 
   // Check if header controls are present (icons or title)
-  const hasHeaderControls = showCloseButton || showHelpButton || title || headerContent;
+  const hasHeaderControls = showCloseButton || showHelpButton || showBackButton || title || headerContent;
 
   // Improved height calculation with ResizeObserver
   useEffect(() => {
@@ -110,7 +114,7 @@ export default function SlideUpPanel({
     if (target.closest('button') || target.closest('a') || target.closest('input') || target.closest('select')) {
       return;
     }
-    
+
     setIsDragging(true);
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
     setStartY(clientY);
@@ -269,15 +273,26 @@ export default function SlideUpPanel({
                 style: { cursor: 'grab' }
               })}
             >
-              {/* Left side - Close button */}
+              {/* Left side - Back button OR Close button */}
               <div className="flex-1 flex justify-start">
-                {showCloseButton && (
+                {showBackButton && onBack ? (
+                  <button
+                    onClick={onBack}
+                    className="p-1 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+                    aria-label="Go back"
+                  >
+                    <ChevronLeft className="h-5 w-5 text-gray-600" />
+                  </button>
+                ) : showCloseButton ? (
                   <button
                     onClick={onClose}
                     className="p-1 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+                    aria-label="Close"
                   >
                     <X className="h-5 w-5 text-gray-600" />
                   </button>
+                ) : (
+                  <div className="w-6"></div> // Spacer for alignment when no left button
                 )}
               </div>
 
@@ -294,15 +309,18 @@ export default function SlideUpPanel({
                 )}
               </div>
 
-              {/* Right side - Help button */}
+              {/* Right side - Help button or spacer */}
               <div className="flex-1 flex justify-end">
-                {showHelpButton && (
+                {showHelpButton ? (
                   <button
                     onClick={onHelpClick}
                     className="p-1 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+                    aria-label="Help"
                   >
                     <HelpCircle className="h-5 w-5 text-gray-600" />
                   </button>
+                ) : (
+                  <div className="w-6"></div> // Spacer for alignment when no right button
                 )}
               </div>
             </div>
