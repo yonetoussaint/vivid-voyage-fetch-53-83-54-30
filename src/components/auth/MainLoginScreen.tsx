@@ -365,7 +365,8 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
                 )}
               </button>
 
-              {/* PIN Sign In Button */}
+              {/* PIN Sign In Button - Commented out for now */}
+              {/*
               <button 
                 onClick={handlePinSignIn}
                 disabled={isLoading && !isPinLoading}
@@ -389,6 +390,7 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
                   </div>
                 )}
               </button>
+              */}
             </div>
           )}
 
