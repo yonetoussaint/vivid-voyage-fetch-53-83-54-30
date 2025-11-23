@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft } from 'lucide-react'; // Import chevron icon
+import { ChevronLeft } from 'lucide-react';
 import SlideUpPanel from '@/components/shared/SlideUpPanel';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import {
@@ -206,54 +206,6 @@ const AuthOverlay: React.FC = () => {
     ) : null
   );
 
-  // Custom header content for non-main screens with back button
-  const getHeaderContent = () => {
-    if (currentScreen === 'main') {
-      return null; // Use default header for main screen
-    }
-
-    // Get appropriate title for each screen
-    const getScreenTitle = () => {
-      switch (currentScreen) {
-        case 'email':
-          return authMethod === 'email' ? 'Sign in with Email' : 'Sign in with Phone';
-        case 'verification':
-          return 'Enter Verification Code';
-        case 'password':
-          return 'Enter Password';
-        case 'reset-password':
-          return 'Reset Password';
-        case 'otp-reset':
-          return 'Verify Your Email';
-        case 'new-password':
-          return 'Create New Password';
-        case 'account-creation':
-          switch (accountCreationStep) {
-            case 'name':
-              return 'Create Account';
-            case 'password':
-              return 'Create Password';
-            case 'success':
-              return 'Account Created';
-            default:
-              return 'Create Account';
-          }
-        case 'success':
-          return 'Success';
-        default:
-          return '';
-      }
-    };
-
-    return (
-      <div className="flex items-center justify-center w-full">
-        <h3 className="font-medium text-gray-900 text-center">
-          {getScreenTitle()}
-        </h3>
-      </div>
-    );
-  };
-
   // Get SlideUpPanel props based on current screen
   const getSlideUpPanelProps = () => {
     const baseProps = {
@@ -262,7 +214,7 @@ const AuthOverlay: React.FC = () => {
       preventBodyScroll: true,
       className: "bg-white",
       dynamicHeight: true,
-      headerContent: getHeaderContent()
+      headerContent: undefined // No header content - no titles
     };
 
     // Main login screen - show close button and help button
@@ -279,8 +231,8 @@ const AuthOverlay: React.FC = () => {
     return {
       ...baseProps,
       showCloseButton: false,
-      showBackButton: true, // Add this new prop
-      onBack: handleBackButton, // Add back button handler
+      showBackButton: true,
+      onBack: handleBackButton,
       showDragHandle: true,
       showHelpButton: false // Hide help button on non-main screens
     };
