@@ -262,7 +262,7 @@ export default function SlideUpPanel({
             </div>
           )}
 
-          {/* Header Controls - Only show if we have buttons or title */}
+          {/* Header Controls - Only show if we have buttons */}
           {hasHeaderControls && (
             <div 
               className={`flex items-center justify-between px-4 pb-3 ${showDragHandle ? '' : 'pt-3'}`}
@@ -291,27 +291,15 @@ export default function SlideUpPanel({
                   >
                     <X className="h-5 w-5 text-gray-600" />
                   </button>
-                ) : (
-                  <div className="w-6"></div> // Spacer for alignment when no left button
-                )}
+                ) : null}
               </div>
 
-              {/* Center - Title or header content */}
-              <div className="flex-1 flex justify-center min-w-0">
-                {headerContent ? (
-                  headerContent
-                ) : (
-                  title && (
-                    <h3 className="font-medium text-gray-900 truncate px-2">
-                      {title}
-                    </h3>
-                  )
-                )}
-              </div>
+              {/* Empty center - No title */}
+              <div className="flex-1"></div>
 
-              {/* Right side - Help button or spacer */}
+              {/* Right side - Help button */}
               <div className="flex-1 flex justify-end">
-                {showHelpButton ? (
+                {showHelpButton && (
                   <button
                     onClick={onHelpClick}
                     className="p-1 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
@@ -319,8 +307,6 @@ export default function SlideUpPanel({
                   >
                     <HelpCircle className="h-5 w-5 text-gray-600" />
                   </button>
-                ) : (
-                  <div className="w-6"></div> // Spacer for alignment when no right button
                 )}
               </div>
             </div>
