@@ -383,7 +383,6 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
                   </TranslatedText>
                 </div>
 
-                {/* Spinner on the right side */}
                 {isPinLoading && (
                   <div className="absolute right-4">
                     <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-gray-600"></div>
