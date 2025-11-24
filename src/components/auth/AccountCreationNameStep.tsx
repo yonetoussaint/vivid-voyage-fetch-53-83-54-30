@@ -50,14 +50,7 @@ const AccountCreationNameStep: React.FC<AccountCreationNameStepProps> = ({
         </div>
       )}
 
-      {/* Progress Bar */}
-      <div className="mb-6 px-0">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
-          <div className="flex-1 h-1 bg-gray-300 rounded-full"></div>
-          <div className="flex-1 h-1 bg-gray-300 rounded-full"></div>
-        </div>
-      </div>
+      
 
       {/* Main Content */}
       <div className={isCompact ? "" : "flex-1 flex flex-col justify-center w-full p-0"}>
