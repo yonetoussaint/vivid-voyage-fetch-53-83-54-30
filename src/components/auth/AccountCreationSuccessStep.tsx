@@ -49,15 +49,6 @@ const AccountCreationSuccessStep: React.FC<AccountCreationSuccessStepProps> = ({
         </div>
       )}
 
-      {/* Progress Bar */}
-      <div className="mb-6 px-0">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
-          <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
-          <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
-        </div>
-      </div>
-
       {/* Main Content */}
       <div className={isCompact ? "" : "flex-1 flex flex-col justify-center w-full p-0"}>
         <div className={isCompact ? "space-y-3 mb-4" : "space-y-3 mb-6"}>
@@ -111,16 +102,6 @@ const AccountCreationSuccessStep: React.FC<AccountCreationSuccessStepProps> = ({
               Get Started
             </span>
           </button>
-        </div>
-
-        {/* Secure Authentication Footer */}
-        <div className={`flex items-center justify-center gap-2 ${isCompact ? 'mb-3' : 'mb-4'}`}>
-          <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M18,8A6,6 0 0,0 12,2A6,6 0 0,0 6,8H4C2.89,8 2,8.89 2,10V20A2,2 0 0,0 4,22H20A2,2 0 0,0 22,20V10C22,8.89 21.1,8 20,8H18M12,4A4,4 0 0,1 16,8H8A4,4 0 0,1 12,4Z"/>
-          </svg>
-          <span className={`text-gray-500 ${isCompact ? 'text-xs' : 'text-sm'}`}>
-            Secure Authentication
-          </span>
         </div>
 
         {/* Terms Footer */}
