@@ -253,47 +253,48 @@ const AuthOverlay: React.FC = () => {
   );
 
   // Get SlideUpPanel props based on current screen
-  const getSlideUpPanelProps = () => {
-    const baseProps = {
-      isOpen: isAuthOverlayOpen,
-      onClose: handleClose,
-      preventBodyScroll: true,
-      className: "bg-white",
-      dynamicHeight: true,
-      headerContent: undefined // No header content - no titles
-    };
+  // Get SlideUpPanel props based on current screen
+const getSlideUpPanelProps = () => {
+  const baseProps = {
+    isOpen: isAuthOverlayOpen,
+    onClose: handleClose,
+    preventBodyScroll: true,
+    className: "bg-white",
+    dynamicHeight: true,
+    headerContent: undefined // No header content - no titles
+  };
 
-    // Hide all navigation for account creation success step
-    if (currentScreen === 'account-creation' && accountCreationStep === 'success') {
-      return {
-        ...baseProps,
-        showCloseButton: false,
-        showBackButton: false,
-        showHelpButton: false,
-        showDragHandle: false
-      };
-    }
-
-    // Main login screen - show close button and help button
-    if (currentScreen === 'main') {
-      return {
-        ...baseProps,
-        showCloseButton: true,
-        showHelpButton: true,
-        showDragHandle: false
-      };
-    }
-
-    // All other screens - show back button instead of close button
+  // Account creation success step - show only help icon
+  if (currentScreen === 'account-creation' && accountCreationStep === 'success') {
     return {
       ...baseProps,
       showCloseButton: false,
-      showBackButton: true,
-      onBack: handleBackButton,
-      showDragHandle: false,
-      showHelpButton: true // Hide help button on non-main screens
+      showBackButton: false,
+      showHelpButton: true,
+      showDragHandle: false
     };
+  }
+
+  // Main login screen - show close button and help button
+  if (currentScreen === 'main') {
+    return {
+      ...baseProps,
+      showCloseButton: true,
+      showHelpButton: true,
+      showDragHandle: false
+    };
+  }
+
+  // All other screens - show back button instead of close button
+  return {
+    ...baseProps,
+    showCloseButton: false,
+    showBackButton: true,
+    onBack: handleBackButton,
+    showDragHandle: false,
+    showHelpButton: true // Hide help button on non-main screens
   };
+};
 
   const renderCurrentScreen = () => {
     // Show server unavailable screen if there's a server error
