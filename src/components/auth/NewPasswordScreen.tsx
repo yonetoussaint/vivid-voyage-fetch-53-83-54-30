@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, HelpCircle, Lock, Eye, EyeOff, Check, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 interface NewPasswordScreenProps {
   email: string;
@@ -25,6 +26,7 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const { login } = useAuth();
 
   // Password validation criteria
   const hasMinLength = password.length >= 6;
@@ -97,6 +99,26 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
     }
   };
 
+  // Auto sign-in after password reset
+  const handleAutoSignIn = async (email: string, password: string) => {
+    try {
+      console.log('🔄 Attempting auto sign-in after password reset...');
+      const result = await login(email, password);
+      
+      if (result.error) {
+        console.log('⚠️ Auto sign-in failed, but password was reset:', result.error);
+        // Don't throw error here - password reset was successful, just auto sign-in failed
+        return { success: false, error: result.error };
+      }
+      
+      console.log('✅ Auto sign-in successful after password reset');
+      return { success: true };
+    } catch (error) {
+      console.error('❌ Auto sign-in error:', error);
+      return { success: false, error: 'Auto sign-in failed' };
+    }
+  };
+
   const handlePasswordChange = (value: string) => {
     setPassword(value);
     setError('');
@@ -122,11 +144,23 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
         return;
       }
 
-      toast.success('Password reset successfully! You can now sign in with your new password.');
+      toast.success('Password reset successfully! Signing you in...');
 
-      setTimeout(() => {
-        onPasswordResetSuccess();
-      }, 1500);
+      // Attempt automatic sign-in with the new password
+      const signInResult = await handleAutoSignIn(email, password);
+      
+      if (signInResult.success) {
+        // Successfully signed in - proceed to success screen
+        setTimeout(() => {
+          onPasswordResetSuccess();
+        }, 1000);
+      } else {
+        // Password reset successful but auto sign-in failed
+        toast.success('Password reset successfully! Please sign in with your new password.');
+        setTimeout(() => {
+          onPasswordResetSuccess();
+        }, 1500);
+      }
 
     } catch (error: any) {
       console.error('💥 Password reset error:', error);
