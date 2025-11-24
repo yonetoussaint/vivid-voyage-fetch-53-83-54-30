@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import LanguageSelector from './LanguageSelector';
 import TranslatedText from './TranslatedText';
 import { toast } from 'sonner';
@@ -20,6 +20,22 @@ interface MainLoginScreenProps {
   showHeader?: boolean;
 }
 
+// Extend Window interface for Google Identity Services
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: any) => void;
+          prompt: (callback?: (notification: any) => void) => void;
+          renderButton: (parent: HTMLElement, options: any) => void;
+          cancel: () => void;
+        };
+      };
+    };
+  }
+}
+
 const MainLoginScreen: React.FC<MainLoginScreenProps> = ({ 
   selectedLanguage, 
   setSelectedLanguage, 
@@ -37,6 +53,9 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
   const [isWhatsAppLoading, setIsWhatsAppLoading] = useState(false);
   const [isPinLoading, setIsPinLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isGoogleInitialized, setIsGoogleInitialized] = useState(false);
+
+  const googleButtonRef = useRef<HTMLDivElement>(null);
 
   const languages: Language[] = [
     { code: 'ht', name: 'Kreyòl Ayisyen', country: 'HT', countryName: 'Haiti' },
@@ -49,47 +68,112 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
   const currentLang = languages.find(lang => lang.code === selectedLanguage);
   const isLoading = isGoogleLoading || isFacebookLoading || isEmailLoading || isPhoneLoading || isAppleLoading || isWhatsAppLoading || isPinLoading;
 
-  // Google OAuth function
-  const googleSignIn = async () => {
+  // Initialize Google Identity Services
+  useEffect(() => {
+    const initializeGoogleSignIn = () => {
+      if (window.google && !isGoogleInitialized) {
+        try {
+          window.google.accounts.id.initialize({
+            client_id: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com', // Replace with your client ID
+            callback: handleGoogleCredentialResponse,
+            auto_select: false,
+            cancel_on_tap_outside: true,
+            context: 'signin',
+            ux_mode: 'popup', // Use popup instead of redirect
+            use_fedcm_for_prompt: true
+          });
+
+          // Render the custom button
+          if (googleButtonRef.current) {
+            window.google.accounts.id.renderButton(
+              googleButtonRef.current,
+              {
+                type: 'standard',
+                theme: 'outline',
+                size: 'large',
+                text: 'continue_with',
+                shape: 'rectangular',
+                logo_alignment: 'left',
+                width: googleButtonRef.current.offsetWidth
+              }
+            );
+          }
+
+          setIsGoogleInitialized(true);
+        } catch (error) {
+          console.error('Error initializing Google Sign-In:', error);
+        }
+      }
+    };
+
+    // Check if Google script is loaded
+    if (window.google) {
+      initializeGoogleSignIn();
+    } else {
+      // Wait for script to load
+      const checkGoogle = setInterval(() => {
+        if (window.google) {
+          initializeGoogleSignIn();
+          clearInterval(checkGoogle);
+        }
+      }, 100);
+
+      return () => clearInterval(checkGoogle);
+    }
+  }, [isGoogleInitialized]);
+
+  // Handle Google credential response
+  const handleGoogleCredentialResponse = async (response: any) => {
     try {
+      setIsGoogleLoading(true);
+      
       const BACKEND_URL = 'https://resend-u11p.onrender.com';
-      const response = await fetch(`${BACKEND_URL}/api/auth/google`, {
+      
+      // Send the credential token to your backend
+      const result = await fetch(`${BACKEND_URL}/api/auth/google/verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          redirectTo: `${window.location.origin}/auth/callback`
+          credential: response.credential
         }),
       });
 
-      const result = await response.json();
+      const data = await result.json();
 
-      if (!result.success) {
-        return { error: result.error || 'Failed to initialize Google sign in' };
+      if (data.success) {
+        toast.success('Successfully signed in with Google!');
+        // Handle successful authentication (e.g., store tokens, redirect)
+        // You can access user info from data.user
+      } else {
+        toast.error(data.error || 'Failed to sign in with Google');
       }
-
-      window.location.href = result.authUrl;
-      return {};
-
+      
+      setIsGoogleLoading(false);
     } catch (error: any) {
-      return { error: error.message || 'Failed to sign in with Google' };
+      console.error('Google sign-in error:', error);
+      toast.error('An unexpected error occurred');
+      setIsGoogleLoading(false);
     }
   };
 
+  // Custom button click handler
   const handleGoogleSignIn = async () => {
-    if (isLoading) return;
+    if (isLoading || !window.google) return;
 
     try {
       setIsGoogleLoading(true);
-      const result = await googleSignIn();
-
-      if (result.error) {
-        toast.error(result.error || 'Failed to sign in with Google');
-        setIsGoogleLoading(false);
-      }
+      // Trigger One Tap prompt programmatically
+      window.google.accounts.id.prompt((notification: any) => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          // One Tap was not displayed or was skipped
+          setIsGoogleLoading(false);
+        }
+      });
     } catch (error) {
-      toast.error('An unexpected error occurred');
+      console.error('Error triggering Google Sign-In:', error);
+      toast.error('Failed to open Google Sign-In');
       setIsGoogleLoading(false);
     }
   };
@@ -208,7 +292,14 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
 
       <div className={isCompact ? "" : "flex-1 flex flex-col justify-center w-full p-0"}>
         <div className={isCompact ? "space-y-3 mb-4" : "space-y-3 mb-6"}>
-          {/* Google Sign In Button - Always Visible */}
+          {/* Google Sign In Button - Hidden Google Button Container */}
+          <div 
+            ref={googleButtonRef}
+            className="w-full"
+            style={{ display: 'none' }}
+          />
+
+          {/* Custom Google Button */}
           <button 
             onClick={handleGoogleSignIn}
             disabled={isLoading && !isGoogleLoading}
@@ -228,7 +319,6 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
               </span>
             </div>
 
-            {/* Spinner on the right side */}
             {isGoogleLoading && (
               <div className="absolute right-4">
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-gray-600"></div>
@@ -236,7 +326,7 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
             )}
           </button>
 
-          {/* Email Sign In Button - Always Visible */}
+          {/* Email Sign In Button */}
           <button 
             onClick={handleEmailSignIn}
             disabled={isLoading && !isEmailLoading}
@@ -253,7 +343,6 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
               </TranslatedText>
             </div>
 
-            {/* Spinner on the right side */}
             {isEmailLoading && (
               <div className="absolute right-4">
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-gray-600"></div>
@@ -261,7 +350,7 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
             )}
           </button>
 
-          {/* Facebook Sign In Button - Always Visible */}
+          {/* Facebook Sign In Button */}
           <button 
             onClick={handleFacebookSignIn}
             disabled={isLoading && !isFacebookLoading}
@@ -278,7 +367,6 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
               </TranslatedText>
             </div>
 
-            {/* Spinner on the right side */}
             {isFacebookLoading && (
               <div className="absolute right-4">
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-gray-600"></div>
@@ -306,7 +394,6 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
                   </TranslatedText>
                 </div>
 
-                {/* Spinner on the right side */}
                 {isPhoneLoading && (
                   <div className="absolute right-4">
                     <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-gray-600"></div>
@@ -332,7 +419,6 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
                   </TranslatedText>
                 </div>
 
-                {/* Spinner on the right side */}
                 {isAppleLoading && (
                   <div className="absolute right-4">
                     <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-gray-600"></div>
@@ -357,39 +443,12 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
                   </TranslatedText>
                 </div>
 
-                {/* Spinner on the right side */}
                 {isWhatsAppLoading && (
                   <div className="absolute right-4">
                     <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-gray-600"></div>
                   </div>
                 )}
               </button>
-
-              {/* PIN Sign In Button - Commented out for now */}
-              {/*
-              <button 
-                onClick={handlePinSignIn}
-                disabled={isLoading && !isPinLoading}
-                className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed relative ${
-                  isCompact ? 'shadow-sm' : ''
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <svg className="w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 1C8.676 1 6 3.676 6 7v3H4v12h16V10h-2V7c0-3.324-2.676-6-6-6zm0 2c2.276 0 4 1.724 4 4v3H8V7c0-2.276 1.724-4 4-4zm-2 10c0-1.103.897-2 2-2s2 .897 2 2-.897 2-2 2-2-.897-2-2z"/>
-                  </svg>
-                  <TranslatedText className="text-gray-700 font-medium">
-                    Continue with PIN
-                  </TranslatedText>
-                </div>
-
-                {isPinLoading && (
-                  <div className="absolute right-4">
-                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-gray-600"></div>
-                  </div>
-                )}
-              </button>
-              */}
             </div>
           )}
 
