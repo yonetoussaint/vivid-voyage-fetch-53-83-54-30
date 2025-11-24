@@ -247,6 +247,8 @@ const VerificationCodeScreen: React.FC<VerificationCodeScreenProps> = ({
           <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
           <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
           <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
+          <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
+          <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
         </div>
       </div>
 
