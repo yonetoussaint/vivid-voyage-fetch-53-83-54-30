@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Key, HelpCircle, Mail, Loader2 } from 'lucide-react';
 import { FAVICON_OVERRIDES } from '../../constants/email';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 interface OTPResetScreenProps {
   email: string;
@@ -21,6 +22,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
+  const { handleOTPSignIn } = useAuth();
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -56,13 +58,34 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
 
   const { url: faviconUrl, show: showFavicon } = updateFavicon(email);
 
-  // OTP functions - UPDATED VERSION with better error handling
+  // Check server health
+  const checkServerHealth = async () => {
+    try {
+      const response = await fetch('https://resend-u11p.onrender.com/api/health', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('Server health check failed:', error);
+      return false;
+    }
+  };
+
+  // OTP functions with better error handling
   const verifyCustomOTP = async (email: string, otp: string) => {
     console.log('🔐 Frontend OTP Verification:', { email, otp });
-    
+
+    // Check server health first
+    const isServerHealthy = await checkServerHealth();
+    if (!isServerHealthy) {
+      throw new Error('Server is currently unavailable. Please try again in a few moments.');
+    }
+
     try {
       const BACKEND_URL = 'https://resend-u11p.onrender.com';
-      // Use the dedicated password reset verification endpoint
       const response = await fetch(`${BACKEND_URL}/api/verify-reset-otp`, {
         method: 'POST',
         headers: {
@@ -72,16 +95,13 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
       });
 
       console.log('📡 Backend Response Status:', response.status);
-      
-      // Check if response is OK before parsing JSON
+
       if (!response.ok) {
-        // Try to get error message from response
-        let errorMessage = `HTTP error! status: ${response.status}`;
+        let errorMessage = `Server error: ${response.status}`;
         try {
           const errorResult = await response.json();
           errorMessage = errorResult.error || errorMessage;
         } catch (e) {
-          // If response is not JSON, get text
           const text = await response.text();
           errorMessage = text || errorMessage;
         }
@@ -98,14 +118,22 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
       };
     } catch (error: any) {
       console.error('❌ OTP Verification Failed:', error);
-      return { 
-        success: false, 
-        error: error.message || 'Invalid verification code' 
-      };
+      
+      if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
+        throw new Error('Network error. Please check your internet connection and try again.');
+      }
+      
+      throw error;
     }
   };
 
   const resendOTPEmail = async (email: string, purpose = 'password_reset') => {
+    // Check server health first
+    const isServerHealthy = await checkServerHealth();
+    if (!isServerHealthy) {
+      throw new Error('Server is currently unavailable. Please try again in a few moments.');
+    }
+
     try {
       const BACKEND_URL = 'https://resend-u11p.onrender.com';
       const endpoint = purpose === 'password_reset' ? '/api/send-reset-otp' : '/api/resend-otp';
@@ -120,20 +148,30 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
         body: JSON.stringify({ email, purpose }),
       });
 
+      if (!response.ok) {
+        let errorMessage = 'Failed to resend verification code';
+        try {
+          const errorResult = await response.json();
+          errorMessage = errorResult.error || errorMessage;
+        } catch (e) {
+          const text = await response.text();
+          errorMessage = text || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
       const result = await response.json();
       console.log('📡 Resend Response:', result);
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to resend verification code');
-      }
 
       return { success: true };
     } catch (error: any) {
       console.error('Failed to resend OTP:', error);
-      return { 
-        success: false, 
-        error: error.message || 'Failed to resend verification code' 
-      };
+      
+      if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
+        throw new Error('Network error. Please check your internet connection and try again.');
+      }
+      
+      throw error;
     }
   };
 
@@ -173,6 +211,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
       const result = await verifyCustomOTP(email, codeToVerify);
 
       if (result.success) {
+        // For password reset OTP, just proceed to next screen
         onOTPVerified(email, codeToVerify);
       } else {
         setError(result.error || 'Invalid verification code');
@@ -202,12 +241,13 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
         setResendCooldown(60);
         setOtp(['', '', '', '', '', '']);
         inputRefs.current[0]?.focus();
+        setError(''); // Clear any previous errors
       } else {
         setError(result.error || 'Failed to resend code. Please try again.');
       }
     } catch (error: any) {
       console.error('Error resending code:', error);
-      setError('Network error. Please check your connection and try again.');
+      setError(error.message || 'Failed to resend code. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -234,7 +274,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
           <button
             className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-full transition-colors active:scale-95"
             aria-label="Help"
-            onClick={() => alert('Need help? Contact support@example.com')}
+            onClick={() => alert('Need help? Contact support@mimaht.com')}
             type="button"
             disabled={isLoading}
           >
