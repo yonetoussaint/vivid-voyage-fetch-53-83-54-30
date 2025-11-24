@@ -71,7 +71,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
   const cleaned = phoneNumber.replace(/\s/g, '');
   let countryCode = '+1'; // default
   let displayNumber = phoneNumber;
-  
+
   // Extract country code (common patterns)
   if (cleaned.startsWith('+1')) {
     countryCode = '+1';
@@ -87,7 +87,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
       displayNumber = cleaned.substring(countryCode.length);
     }
   }
-  
+
   // Format display number with spaces for readability
   if (displayNumber.length > 3) {
     displayNumber = `${displayNumber.slice(0, 3)} ${displayNumber.slice(3)}`;
@@ -95,7 +95,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
   if (displayNumber.length > 7) {
     displayNumber = `${displayNumber.slice(0, 7)} ${displayNumber.slice(7)}`;
   }
-  
+
   // Map to country code and get flag
   const countryMap: Record<string, string> = {
     '+1': 'us', '+44': 'gb', '+33': 'fr', '+49': 'de', '+34': 'es', 
@@ -104,10 +104,10 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
     '+7': 'ru', '+966': 'sa', '+971': 'ae', '+27': 'za', '+234': 'ng',
     '+20': 'eg', '+254': 'ke',
   };
-  
+
   const country = countryMap[countryCode] || 'us';
   const flagImage = PHONE_FLAG_IMAGES[country] || DEFAULT_FLAG_IMAGE;
-  
+
   return { countryCode, displayNumber, country, flagImage };
 };
 
@@ -117,7 +117,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
       console.log('Attempting to login with:', { identifier, method });
 
       let loginData;
-      
+
       if (method === 'email') {
         // Email login
         loginData = await supabase.auth.signInWithPassword({
@@ -242,16 +242,6 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
           </button>
         </div>
       )}
-
-      {/* Progress Bar */}
-      <div className="mb-6 px-0">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
-          <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
-          <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
-          <div className="flex-1 h-1 bg-gray-300 rounded-full"></div>
-        </div>
-      </div>
 
       {/* Main Content */}
       <div className={isCompact ? "" : "flex-1 flex flex-col justify-center w-full p-0"}>
