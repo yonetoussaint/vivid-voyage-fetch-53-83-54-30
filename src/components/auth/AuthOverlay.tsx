@@ -263,6 +263,17 @@ const AuthOverlay: React.FC = () => {
       headerContent: undefined // No header content - no titles
     };
 
+    // Hide all navigation for account creation success step
+    if (currentScreen === 'account-creation' && accountCreationStep === 'success') {
+      return {
+        ...baseProps,
+        showCloseButton: false,
+        showBackButton: false,
+        showHelpButton: false,
+        showDragHandle: false
+      };
+    }
+
     // Main login screen - show close button and help button
     if (currentScreen === 'main') {
       return {
