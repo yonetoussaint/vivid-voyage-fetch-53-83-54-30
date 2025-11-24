@@ -284,11 +284,11 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
       )}
 
       {/* Main Content */}
-      <div className={isCompact ? "" : "flex-1 flex flex-col justify-center w-full p-0"}>
-        <div className={isCompact ? "space-y-3 mb-4" : "space-y-3 mb-6"}>
+      <div className={isCompact ? "" : "flex-1 flex flex-col justify-center w-full max-w-md mx-auto"}>
+        <div className="space-y-6">
           {/* Header Text */}
-          <div className="text-center mb-6">
-            <h1 className={`text-gray-900 font-semibold mb-2 ${isCompact ? 'text-xl' : 'text-2xl'}`}>
+          <div className="text-center">
+            <h1 className={`text-gray-900 font-semibold mb-3 ${isCompact ? 'text-xl' : 'text-2xl'}`}>
               Enter reset code
             </h1>
             <p className={`text-gray-600 ${isCompact ? 'text-sm' : 'text-base'}`}>
@@ -297,10 +297,10 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
           </div>
 
           {/* Email Display */}
-          <div className={`p-4 bg-gray-50 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
+          <div className="p-4 bg-gray-50 rounded-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-6 h-6">
+                <div className="w-5 h-5">
                   {faviconUrl ? (
                     <img
                       src={faviconUrl}
@@ -332,15 +332,15 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
 
           {/* Error Message */}
           {error && (
-            <div className={`p-4 border border-red-200 bg-red-50 text-red-700 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
+            <div className="p-3 border border-red-200 bg-red-50 text-red-700 rounded-lg">
               <p className={isCompact ? 'text-xs' : 'text-sm'}>{error}</p>
             </div>
           )}
 
           {/* Code Input */}
-          <div className={isCompact ? "space-y-3" : "space-y-4"}>
+          <div className="space-y-6">
             <div>
-              <label className={`block font-medium text-gray-700 mb-4 ${isCompact ? 'text-sm' : 'text-base'}`}>
+              <label className={`block font-medium text-gray-700 mb-3 ${isCompact ? 'text-sm' : 'text-base'}`}>
                 Password Reset Code
               </label>
               <div className="flex gap-2 w-full">
@@ -359,7 +359,9 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
                       error 
                         ? 'border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500' 
                         : 'border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500'
-                    } ${isLoading ? 'bg-gray-50' : 'bg-white'} ${isCompact ? 'h-10 text-base' : 'h-12 text-lg'}`}
+                    } ${isLoading ? 'bg-gray-50' : 'bg-white'} ${
+                      isCompact ? 'h-10 text-base py-2' : 'h-12 text-lg py-3'
+                    }`}
                     autoComplete="off"
                   />
                 ))}
@@ -372,7 +374,9 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
                 <button
                   onClick={handleResendCode}
                   disabled={isLoading}
-                  className={`text-red-500 hover:text-red-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto ${isCompact ? 'text-sm' : 'text-base'}`}
+                  className={`text-red-500 hover:text-red-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto ${
+                    isCompact ? 'text-sm' : 'text-base'
+                  }`}
                   type="button"
                 >
                   {isLoading ? (
@@ -391,11 +395,11 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
             <button
               disabled={otp.some(digit => !digit) || isLoading}
               onClick={() => handleVerifyOTP()}
-              className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg transition-colors ${
+              className={`w-full flex items-center justify-center gap-3 py-3 px-4 border rounded-lg transition-colors ${
                 !otp.some(digit => !digit) && !isLoading
-                  ? 'bg-red-500 text-white hover:bg-red-600 border-red-500'
-                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              } ${isCompact ? 'shadow-sm' : ''}`}
+                  ? 'bg-red-500 text-white hover:bg-red-600 border-red-500 shadow-sm'
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-300'
+              }`}
               type="button"
             >
               {isLoading ? (
@@ -411,7 +415,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
         </div>
 
         {/* Secure Authentication Footer */}
-        <div className={`flex items-center justify-center gap-2 ${isCompact ? 'mb-3' : 'mb-4'}`}>
+        <div className={`flex items-center justify-center gap-2 mt-8 ${isCompact ? 'mb-4' : 'mb-6'}`}>
           <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
             <path d="M18,8A6,6 0 0,0 12,2A6,6 0 0,0 6,8H4C2.89,8 2,8.89 2,10V20A2,2 0 0,0 4,22H20A2,2 0 0,0 22,20V10C22,8.89 21.1,8 20,8H18M12,4A4,4 0 0,1 16,8H8A4,4 0 0,1 12,4Z"/>
           </svg>
@@ -421,7 +425,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
         </div>
 
         {/* Terms Footer */}
-        <p className={`text-gray-500 text-center ${isCompact ? 'text-[10px] leading-tight px-2' : 'text-xs leading-relaxed'}`}>
+        <p className={`text-gray-500 text-center ${isCompact ? 'text-[10px] leading-tight' : 'text-xs leading-relaxed'}`}>
           By proceeding, you confirm that you've read and agree to our{' '}
           <span className="text-red-500">Terms of Service</span>{' '}
           and{' '}
