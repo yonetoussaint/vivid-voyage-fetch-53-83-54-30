@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ArrowLeft, HelpCircle, Lock, Eye, EyeOff, Check, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -25,7 +25,6 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [serverStatus, setServerStatus] = useState<'checking' | 'online' | 'offline'>('checking');
 
   // Password validation criteria
   const hasMinLength = password.length >= 6;
@@ -38,7 +37,7 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
   // Password reset function
   const completePasswordReset = async (email: string, otp: string, newPassword: string) => {
     console.log('🔐 Completing password reset:', { email, hasOtp: !!otp, passwordLength: newPassword.length });
-    
+
     try {
       const BACKEND_URL = 'https://resend-u11p.onrender.com';
       const response = await fetch(`${BACKEND_URL}/api/complete-password-reset`, {
@@ -55,7 +54,6 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
 
       console.log('📡 Password reset response status:', response.status);
 
-      // Check if response is OK before parsing JSON
       if (!response.ok) {
         let errorMessage = `Server error: ${response.status}`;
         try {
@@ -90,8 +88,6 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
         userFriendlyError = 'Invalid or expired verification code. Please request a new password reset code.';
       } else if (error.message.includes('User not found')) {
         userFriendlyError = 'No account found with this email address. Please check your email and try again.';
-      } else if (error.message.includes('Server error')) {
-        userFriendlyError = 'Server is currently unavailable. Please try again later.';
       }
 
       return { 
@@ -100,24 +96,6 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
       };
     }
   };
-
-  // Check server health on component mount
-  useEffect(() => {
-    const checkServerHealth = async () => {
-      try {
-        const response = await fetch('https://resend-u11p.onrender.com/health');
-        if (response.ok) {
-          setServerStatus('online');
-        } else {
-          setServerStatus('offline');
-        }
-      } catch (error) {
-        setServerStatus('offline');
-      }
-    };
-
-    checkServerHealth();
-  }, []);
 
   const handlePasswordChange = (value: string) => {
     setPassword(value);
@@ -136,10 +114,6 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
     setError('');
 
     try {
-      if (serverStatus === 'offline') {
-        throw new Error('Server is currently unavailable. Please try again later.');
-      }
-
       console.log('🔄 Starting password reset process...');
       const result = await completePasswordReset(email, otp, password);
 
@@ -219,18 +193,6 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
               Your new password must be different from your previous one
             </p>
           </div>
-
-          {/* Server Status Indicator */}
-          {serverStatus === 'offline' && (
-            <div className={`p-4 border border-red-200 bg-red-50 text-red-700 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
-              <div className="flex items-center gap-2">
-                <X className="w-5 h-5 text-red-600 flex-shrink-0" />
-                <p className={isCompact ? 'text-xs' : 'text-sm'}>
-                  Server is currently unavailable. Some features may not work.
-                </p>
-              </div>
-            </div>
-          )}
 
           {/* Error message */}
           {error && (
