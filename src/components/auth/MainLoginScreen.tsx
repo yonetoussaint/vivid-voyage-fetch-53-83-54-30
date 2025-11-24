@@ -74,7 +74,7 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
       if (window.google && !isGoogleInitialized) {
         try {
           window.google.accounts.id.initialize({
-            client_id: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com', // Replace with your client ID
+            client_id: '1078931099061-443rjvd3viclnjonqh23kooia2an5fms.apps.googleusercontent.com', // Replace with your client ID
             callback: handleGoogleCredentialResponse,
             auto_select: false,
             cancel_on_tap_outside: true,
