@@ -77,6 +77,7 @@ const AuthOverlay: React.FC = () => {
   // Add state for auth method and phone number
   const [authMethod, setAuthMethod] = React.useState<'email' | 'phone'>('email');
   const [userPhone, setUserPhone] = React.useState('');
+  const [serverError, setServerError] = React.useState<string>('');
 
   const getCompactProps = () => ({
     isCompact: true,
@@ -186,17 +187,25 @@ const AuthOverlay: React.FC = () => {
     }
   };
 
+  // Clear server error when changing screens
+  React.useEffect(() => {
+    setServerError('');
+  }, [currentScreen]);
+
   const ErrorBanner = () => (
-    authError ? (
+    (authError || serverError) ? (
       <div className="fixed top-4 left-4 right-4 z-50 bg-red-50 border border-red-200 rounded-lg p-4 shadow-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <div className="text-red-600 text-sm font-medium">
-              {authError}
+              {serverError || authError}
             </div>
           </div>
           <button
-            onClick={() => setAuthError(null)}
+            onClick={() => {
+              setAuthError(null);
+              setServerError('');
+            }}
             className="text-red-600 hover:text-red-800 text-sm font-medium ml-4"
           >
             ×
@@ -204,6 +213,43 @@ const AuthOverlay: React.FC = () => {
         </div>
       </div>
     ) : null
+  );
+
+  // Server unavailable fallback screen
+  const ServerUnavailableScreen = () => (
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4">
+      <div className="text-center">
+        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          </svg>
+        </div>
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">Service Temporarily Unavailable</h2>
+        <p className="text-gray-600 mb-6">
+          We're experiencing technical difficulties. Please try again in a few moments.
+        </p>
+        <div className="space-y-3">
+          <button
+            onClick={() => {
+              setServerError('');
+              handleBackButton();
+            }}
+            className="w-full bg-red-500 text-white py-3 px-4 rounded-lg hover:bg-red-600 transition-colors font-medium"
+          >
+            Go Back
+          </button>
+          <button
+            onClick={() => {
+              setServerError('');
+              window.location.reload();
+            }}
+            className="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+          >
+            Refresh Page
+          </button>
+        </div>
+      </div>
+    </div>
   );
 
   // Get SlideUpPanel props based on current screen
@@ -239,6 +285,11 @@ const AuthOverlay: React.FC = () => {
   };
 
   const renderCurrentScreen = () => {
+    // Show server unavailable screen if there's a server error
+    if (serverError && serverError.includes('unavailable')) {
+      return <ServerUnavailableScreen />;
+    }
+
     const compactProps = getCompactProps();
     const faviconUrl = getFaviconUrl(userEmail);
 
@@ -447,12 +498,15 @@ const AuthOverlay: React.FC = () => {
   const slideUpPanelProps = getSlideUpPanelProps();
 
   return (
-    <SlideUpPanel {...slideUpPanelProps}>
-      {/* Content area */}
-      <div className="px-0">
-        {renderCurrentScreen()}
-      </div>
-    </SlideUpPanel>
+    <>
+      <ErrorBanner />
+      <SlideUpPanel {...slideUpPanelProps}>
+        {/* Content area */}
+        <div className="px-0">
+          {renderCurrentScreen()}
+        </div>
+      </SlideUpPanel>
+    </>
   );
 };
 
