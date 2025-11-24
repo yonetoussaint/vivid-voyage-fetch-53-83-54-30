@@ -23,7 +23,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
   const [resendCooldown, setResendCooldown] = useState(0);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  
+
   // Initialize input refs
   useEffect(() => {
     inputRefs.current = inputRefs.current.slice(0, 6);
@@ -56,45 +56,62 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
 
   const { url: faviconUrl, show: showFavicon } = updateFavicon(email);
 
-  // OTP functions
-  // OTP functions - UPDATED VERSION
-const verifyCustomOTP = async (email: string, otp: string) => {
-  try {
-    const BACKEND_URL = 'https://resend-u11p.onrender.com';
-    // Use the dedicated password reset verification endpoint
-    const response = await fetch(`${BACKEND_URL}/api/verify-reset-otp`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, otp }),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || 'Invalid verification code');
-    }
-
-    return { 
-      success: true, 
-      purpose: result.purpose,
-      message: result.message 
-    };
-  } catch (error: any) {
-    console.error('Failed to verify OTP:', error);
-    return { 
-      success: false, 
-      error: error.message || 'Invalid verification code' 
-    };
-  }
-};
-
-  const resendOTPEmail = async (email: string, purpose = 'password-reset') => {
+  // OTP functions - UPDATED VERSION with better error handling
+  const verifyCustomOTP = async (email: string, otp: string) => {
+    console.log('🔐 Frontend OTP Verification:', { email, otp });
+    
     try {
       const BACKEND_URL = 'https://resend-u11p.onrender.com';
-      const endpoint = purpose === 'password-reset' ? '/api/send-reset-otp' : '/api/resend-otp';
+      // Use the dedicated password reset verification endpoint
+      const response = await fetch(`${BACKEND_URL}/api/verify-reset-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, otp }),
+      });
+
+      console.log('📡 Backend Response Status:', response.status);
       
+      // Check if response is OK before parsing JSON
+      if (!response.ok) {
+        // Try to get error message from response
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorResult = await response.json();
+          errorMessage = errorResult.error || errorMessage;
+        } catch (e) {
+          // If response is not JSON, get text
+          const text = await response.text();
+          errorMessage = text || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const result = await response.json();
+      console.log('📡 Backend Response Data:', result);
+
+      return { 
+        success: true, 
+        purpose: result.purpose,
+        message: result.message 
+      };
+    } catch (error: any) {
+      console.error('❌ OTP Verification Failed:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Invalid verification code' 
+      };
+    }
+  };
+
+  const resendOTPEmail = async (email: string, purpose = 'password_reset') => {
+    try {
+      const BACKEND_URL = 'https://resend-u11p.onrender.com';
+      const endpoint = purpose === 'password_reset' ? '/api/send-reset-otp' : '/api/resend-otp';
+
+      console.log('🔄 Resending OTP:', { email, purpose, endpoint });
+
       const response = await fetch(`${BACKEND_URL}${endpoint}`, {
         method: 'POST',
         headers: {
@@ -104,6 +121,7 @@ const verifyCustomOTP = async (email: string, otp: string) => {
       });
 
       const result = await response.json();
+      console.log('📡 Resend Response:', result);
 
       if (!response.ok) {
         throw new Error(result.error || 'Failed to resend verification code');
@@ -178,7 +196,7 @@ const verifyCustomOTP = async (email: string, otp: string) => {
     setError('');
 
     try {
-      const result = await resendOTPEmail(email, 'password-reset');
+      const result = await resendOTPEmail(email, 'password_reset');
 
       if (result.success) {
         setResendCooldown(60);
@@ -224,16 +242,6 @@ const verifyCustomOTP = async (email: string, otp: string) => {
           </button>
         </div>
       )}
-
-      {/* Progress Bar */}
-      <div className="mb-6 px-0">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
-          <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
-          <div className="flex-1 h-1 bg-gray-300 rounded-full"></div>
-          <div className="flex-1 h-1 bg-gray-300 rounded-full"></div>
-        </div>
-      </div>
 
       {/* Main Content */}
       <div className={isCompact ? "" : "flex-1 flex flex-col justify-center w-full p-0"}>
