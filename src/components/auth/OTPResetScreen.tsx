@@ -57,36 +57,38 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
   const { url: faviconUrl, show: showFavicon } = updateFavicon(email);
 
   // OTP functions
-  const verifyCustomOTP = async (email: string, otp: string) => {
-    try {
-      const BACKEND_URL = 'https://resend-u11p.onrender.com';
-      const response = await fetch(`${BACKEND_URL}/api/verify-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, otp }),
-      });
+  // OTP functions - UPDATED VERSION
+const verifyCustomOTP = async (email: string, otp: string) => {
+  try {
+    const BACKEND_URL = 'https://resend-u11p.onrender.com';
+    // Use the dedicated password reset verification endpoint
+    const response = await fetch(`${BACKEND_URL}/api/verify-reset-otp`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, otp }),
+    });
 
-      const result = await response.json();
+    const result = await response.json();
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Invalid verification code');
-      }
-
-      return { 
-        success: true, 
-        purpose: result.purpose,
-        message: result.message 
-      };
-    } catch (error: any) {
-      console.error('Failed to verify OTP:', error);
-      return { 
-        success: false, 
-        error: error.message || 'Invalid verification code' 
-      };
+    if (!response.ok) {
+      throw new Error(result.error || 'Invalid verification code');
     }
-  };
+
+    return { 
+      success: true, 
+      purpose: result.purpose,
+      message: result.message 
+    };
+  } catch (error: any) {
+    console.error('Failed to verify OTP:', error);
+    return { 
+      success: false, 
+      error: error.message || 'Invalid verification code' 
+    };
+  }
+};
 
   const resendOTPEmail = async (email: string, purpose = 'password-reset') => {
     try {
