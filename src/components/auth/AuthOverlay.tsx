@@ -268,7 +268,7 @@ const getSlideUpPanelProps = () => {
   if (currentScreen === 'account-creation' && accountCreationStep === 'success') {
     return {
       ...baseProps,
-      showCloseButton: false,
+      showCloseButton: true,
       showBackButton: false,
       showHelpButton: true,
       showDragHandle: false
