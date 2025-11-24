@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, HelpCircle, Lock, Eye, EyeOff, Check, X } from 'lucide-react';
+import { ArrowLeft, HelpCircle, Lock, Eye, EyeOff, Check, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface NewPasswordScreenProps {
@@ -37,6 +37,8 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
 
   // Password reset function
   const completePasswordReset = async (email: string, otp: string, newPassword: string) => {
+    console.log('🔐 Completing password reset:', { email, hasOtp: !!otp, passwordLength: newPassword.length });
+    
     try {
       const BACKEND_URL = 'https://resend-u11p.onrender.com';
       const response = await fetch(`${BACKEND_URL}/api/complete-password-reset`, {
@@ -51,11 +53,23 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
         }),
       });
 
-      const result = await response.json();
+      console.log('📡 Password reset response status:', response.status);
 
+      // Check if response is OK before parsing JSON
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to reset password');
+        let errorMessage = `Server error: ${response.status}`;
+        try {
+          const errorResult = await response.json();
+          errorMessage = errorResult.error || errorMessage;
+        } catch (e) {
+          const text = await response.text();
+          errorMessage = text || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
+
+      const result = await response.json();
+      console.log('📡 Password reset response data:', result);
 
       if (!result.success) {
         throw new Error(result.error || 'Password reset failed');
@@ -66,18 +80,20 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
         message: result.message 
       };
     } catch (error: any) {
-      console.error('Failed to complete password reset:', error);
-      
+      console.error('❌ Failed to complete password reset:', error);
+
       let userFriendlyError = error.message;
-      
+
       if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
         userFriendlyError = 'Network error. Please check your internet connection and try again.';
-      } else if (error.message.includes('OTP') || error.message.includes('code')) {
+      } else if (error.message.includes('OTP') || error.message.includes('code') || error.message.includes('expired')) {
         userFriendlyError = 'Invalid or expired verification code. Please request a new password reset code.';
       } else if (error.message.includes('User not found')) {
         userFriendlyError = 'No account found with this email address. Please check your email and try again.';
+      } else if (error.message.includes('Server error')) {
+        userFriendlyError = 'Server is currently unavailable. Please try again later.';
       }
-      
+
       return { 
         success: false, 
         error: userFriendlyError 
@@ -124,6 +140,7 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
         throw new Error('Server is currently unavailable. Please try again later.');
       }
 
+      console.log('🔄 Starting password reset process...');
       const result = await completePasswordReset(email, otp, password);
 
       if (!result.success) {
@@ -132,12 +149,13 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
       }
 
       toast.success('Password reset successfully! You can now sign in with your new password.');
-      
+
       setTimeout(() => {
         onPasswordResetSuccess();
       }, 1500);
 
     } catch (error: any) {
+      console.error('💥 Password reset error:', error);
       setError(error.message || 'An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
@@ -160,10 +178,10 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
   const passwordStrength = getPasswordStrength();
 
   return (
-    <div className="bg-white flex flex-col px-4">
+    <div className={isCompact ? "px-4 pb-4" : "min-h-screen bg-white flex flex-col px-4"}>
       {/* Header - hide in compact mode */}
       {!isCompact && (
-        <div className="pt-2 pb-3 flex items-center justify-between">
+        <div className="pt-4 pb-4 flex items-center justify-between">
           <button
             onClick={onBack}
             disabled={isLoading}
@@ -189,167 +207,170 @@ const NewPasswordScreen: React.FC<NewPasswordScreenProps> = ({
         </div>
       )}
 
-      {/* Progress Bar - always show */}
-      <div className="mb-4 px-0">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
-          <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
-          <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
-          <div className="flex-1 h-1 bg-red-500 rounded-full"></div>
-        </div>
-      </div>
-
-      {/* Server Status Indicator */}
-      {serverStatus === 'offline' && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-          <div className="flex items-center gap-2">
-            <X className="w-4 h-4 text-red-600" />
-            <p className="text-red-600 text-sm">
-              Server is currently unavailable. Some features may not work.
-            </p>
-          </div>
-        </div>
-      )}
-
       {/* Main content container */}
-      <div className="flex-1 flex flex-col w-full max-w-md mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-semibold text-gray-900 mb-2">
-            Create new password
-          </h1>
-          <p className="text-gray-600">
-            Your new password must be different from your previous one
-          </p>
-        </div>
+      <div className={isCompact ? "" : "flex-1 flex flex-col justify-center w-full p-0"}>
+        <div className={isCompact ? "space-y-3 mb-4" : "space-y-3 mb-6"}>
+          {/* Header Text */}
+          <div className="text-center mb-6">
+            <h1 className={`text-gray-900 font-semibold mb-2 ${isCompact ? 'text-xl' : 'text-2xl'}`}>
+              Create new password
+            </h1>
+            <p className={`text-gray-600 ${isCompact ? 'text-sm' : 'text-base'}`}>
+              Your new password must be different from your previous one
+            </p>
+          </div>
 
-        {/* Error message */}
-        {error && (
-          <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-center gap-2">
-              <X className="w-4 h-4 text-red-600 flex-shrink-0" />
-              <p className="text-red-600 text-sm">{error}</p>
+          {/* Server Status Indicator */}
+          {serverStatus === 'offline' && (
+            <div className={`p-4 border border-red-200 bg-red-50 text-red-700 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
+              <div className="flex items-center gap-2">
+                <X className="w-5 h-5 text-red-600 flex-shrink-0" />
+                <p className={isCompact ? 'text-xs' : 'text-sm'}>
+                  Server is currently unavailable. Some features may not work.
+                </p>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* New Password Input */}
-        <div className="mb-4">
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-            New Password
-          </label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              id="password"
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={(e) => handlePasswordChange(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Enter new password"
-              disabled={isLoading}
-              className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors ${
-                error ? 'border-red-300' : 'border-gray-300'
-              } disabled:bg-gray-50 disabled:cursor-not-allowed`}
-              autoComplete="new-password"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              disabled={isLoading}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:opacity-50"
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
-            >
-              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-            </button>
-          </div>
-          <div className="flex items-center justify-between mt-1">
-            <p className={`text-xs ${passwordStrength.color}`}>
-              {passwordStrength.text}
-            </p>
-            <p className={`text-xs ${hasMinLength ? 'text-green-600' : 'text-gray-500'}`}>
-              {hasMinLength ? (
-                <Check className="w-4 h-4 inline" />
-              ) : (
-                <X className="w-4 h-4 inline" />
-              )}{' '}
-              At least 6 characters
-            </p>
-          </div>
-        </div>
+          {/* Error message */}
+          {error && (
+            <div className={`p-4 border border-red-200 bg-red-50 text-red-700 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
+              <div className="flex items-center gap-2">
+                <X className="w-5 h-5 text-red-600 flex-shrink-0" />
+                <p className={isCompact ? 'text-xs' : 'text-sm'}>{error}</p>
+              </div>
+            </div>
+          )}
 
-        {/* Confirm Password Input */}
-        <div className="mb-8">
-          <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-            Confirm New Password
-          </label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              id="confirmPassword"
-              type={showConfirmPassword ? 'text' : 'password'}
-              value={confirmPassword}
-              onChange={(e) => handleConfirmPasswordChange(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Confirm new password"
-              disabled={isLoading}
-              className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors ${
-                error ? 'border-red-300' : 'border-gray-300'
-              } disabled:bg-gray-50 disabled:cursor-not-allowed`}
-              autoComplete="new-password"
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              disabled={isLoading}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:opacity-50"
-              aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
-            >
-              {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-            </button>
-          </div>
-          {confirmPassword.length > 0 && (
-            <p className={`text-xs mt-1 flex items-center gap-1 ${doPasswordsMatch ? 'text-green-600' : 'text-red-600'}`}>
-              {doPasswordsMatch ? (
-                <Check className="w-4 h-4" />
-              ) : (
-                <X className="w-4 h-4" />
+          {/* Password Inputs */}
+          <div className={isCompact ? "space-y-3" : "space-y-4"}>
+            {/* New Password Input */}
+            <div>
+              <label className={`block font-medium text-gray-700 mb-3 ${isCompact ? 'text-sm' : 'text-base'}`}>
+                New Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => handlePasswordChange(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Enter new password"
+                  disabled={isLoading}
+                  className={`relative w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors ${
+                    error ? 'border-red-300' : 'border-gray-300'
+                  } disabled:bg-gray-50 disabled:cursor-not-allowed ${isCompact ? 'shadow-sm' : ''}`}
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={isLoading}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              <div className="flex items-center justify-between mt-2">
+                <span className={`text-xs ${passwordStrength.color}`}>
+                  {passwordStrength.text}
+                </span>
+                <span className={`text-xs flex items-center gap-1 ${hasMinLength ? 'text-green-600' : 'text-gray-500'}`}>
+                  {hasMinLength ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    <X className="w-4 h-4" />
+                  )}
+                  At least 6 characters
+                </span>
+              </div>
+            </div>
+
+            {/* Confirm Password Input */}
+            <div>
+              <label className={`block font-medium text-gray-700 mb-3 ${isCompact ? 'text-sm' : 'text-base'}`}>
+                Confirm New Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => handleConfirmPasswordChange(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Confirm new password"
+                  disabled={isLoading}
+                  className={`relative w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors ${
+                    error ? 'border-red-300' : 'border-gray-300'
+                  } disabled:bg-gray-50 disabled:cursor-not-allowed ${isCompact ? 'shadow-sm' : ''}`}
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  disabled={isLoading}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              {confirmPassword.length > 0 && (
+                <div className="mt-2">
+                  <span className={`text-xs flex items-center gap-1 ${doPasswordsMatch ? 'text-green-600' : 'text-red-600'}`}>
+                    {doPasswordsMatch ? (
+                      <Check className="w-4 h-4" />
+                    ) : (
+                      <X className="w-4 h-4" />
+                    )}
+                    {doPasswordsMatch ? 'Passwords match' : 'Passwords do not match'}
+                  </span>
+                </div>
               )}
-              {doPasswordsMatch ? 'Passwords match' : 'Passwords do not match'}
-            </p>
-          )}
+            </div>
+
+            {/* Reset Password Button */}
+            <button
+              onClick={handleCompletePasswordReset}
+              disabled={!canResetPassword}
+              className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg transition-colors ${
+                canResetPassword
+                  ? 'bg-red-500 text-white hover:bg-red-600 border-red-500 transform active:scale-95'
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              } ${isCompact ? 'shadow-sm' : ''}`}
+              type="button"
+            >
+              {isLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Lock className="w-5 h-5" />
+              )}
+              <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>
+                {isLoading ? 'Resetting Password...' : 'Reset Password'}
+              </span>
+            </button>
+          </div>
         </div>
 
-        {/* Reset Password Button */}
-        <button
-          onClick={handleCompletePasswordReset}
-          disabled={!canResetPassword}
-          className={`w-full py-4 px-6 rounded-xl text-lg font-medium transition-all duration-200 mb-6 ${
-            canResetPassword
-              ? 'bg-red-500 hover:bg-red-600 text-white shadow-lg hover:shadow-xl active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed'
-              : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-          }`}
-        >
-          {isLoading ? (
-            <div className="flex items-center justify-center gap-2">
-              <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-              Resetting Password...
-            </div>
-          ) : (
-            'Reset Password'
-          )}
-        </button>
-
-        {/* Security Notice */}
-        <div className="flex items-center justify-center gap-2">
-          <svg
-            className="w-4 h-4 text-gray-500"
-            fill="currentColor"
-            viewBox="0 0 24 24"
-          >
+        {/* Secure Authentication Footer */}
+        <div className={`flex items-center justify-center gap-2 ${isCompact ? 'mb-3' : 'mb-4'}`}>
+          <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
             <path d="M18,8A6,6 0 0,0 12,2A6,6 0 0,0 6,8H4C2.89,8 2,8.89 2,10V20A2,2 0 0,0 4,22H20A2,2 0 0,0 22,20V10C22,8.89 21.1,8 20,8H18M12,4A4,4 0 0,1 16,8H8A4,4 0 0,1 12,4Z"/>
           </svg>
-          <span className="text-gray-500 text-sm">Your password is secure with us</span>
+          <span className={`text-gray-500 ${isCompact ? 'text-xs' : 'text-sm'}`}>
+            Secure Authentication
+          </span>
         </div>
+
+        {/* Terms Footer */}
+        <p className={`text-gray-500 text-center ${isCompact ? 'text-[10px] leading-tight px-2' : 'text-xs leading-relaxed'}`}>
+          By proceeding, you confirm that you've read and agree to our{' '}
+          <span className="text-red-500">Terms of Service</span>{' '}
+          and{' '}
+          <span className="text-red-500">Privacy Policy</span>
+        </p>
       </div>
     </div>
   );
