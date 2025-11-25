@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
 const AuthCallback: React.FC = () => {
   const navigate = useNavigate();
@@ -13,7 +12,7 @@ const AuthCallback: React.FC = () => {
     const handleCallback = async () => {
       try {
         console.log('🔗 OAuth Callback - Processing...');
-        
+
         const success = searchParams.get('success');
         const accessToken = searchParams.get('access_token');
         const refreshToken = searchParams.get('refresh_token');
@@ -22,7 +21,7 @@ const AuthCallback: React.FC = () => {
 
         if (success === 'true' && accessToken && refreshToken) {
           console.log('✅ Setting Supabase session...');
-          
+
           // Set the session
           const { error: sessionError } = await supabase.auth.setSession({
             access_token: accessToken,
@@ -35,26 +34,22 @@ const AuthCallback: React.FC = () => {
           }
 
           console.log('✅ Session set, updating auth context...');
-          
+
           // Update auth state
           await checkAuthStatus();
-          
-          // Show success message
-          toast.success(`Welcome ${fullName || email}!`);
 
           console.log('✅ Redirecting to homepage...');
-          
+
           // Force close overlay and redirect
           setIsAuthOverlayOpen(false);
           navigate('/', { replace: true });
-          
+
         } else {
           throw new Error('Missing authentication parameters');
         }
-        
+
       } catch (error: any) {
         console.error('❌ OAuth callback error:', error);
-        toast.error('Authentication failed');
         navigate('/auth/error', { replace: true });
       }
     };
