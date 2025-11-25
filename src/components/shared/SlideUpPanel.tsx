@@ -19,6 +19,7 @@ interface SlideUpPanelProps {
   maxHeight?: number;
   dynamicHeight?: boolean;
   showDragHandle?: boolean;
+  helpButtonText?: string; // New prop for help button text
 }
 
 export default function SlideUpPanel({
@@ -37,7 +38,8 @@ export default function SlideUpPanel({
   stickyFooter,
   maxHeight = 0.9,
   dynamicHeight = false,
-  showDragHandle = true
+  showDragHandle = true,
+  helpButtonText // New prop
 }: SlideUpPanelProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -302,10 +304,13 @@ export default function SlideUpPanel({
                 {showHelpButton && (
                   <button
                     onClick={onHelpClick}
-                    className="p-1 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+                    className="flex items-center gap-1 p-1 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
                     aria-label="Help"
                   >
                     <HelpCircle className="h-5 w-5 text-gray-600" />
+                    {helpButtonText && (
+                      <span className="text-sm text-gray-600 mr-1">{helpButtonText}</span>
+                    )}
                   </button>
                 )}
               </div>
