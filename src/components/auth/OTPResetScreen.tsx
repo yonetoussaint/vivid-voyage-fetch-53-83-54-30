@@ -343,7 +343,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
               <label className={`block font-medium text-gray-700 mb-4 ${isCompact ? 'text-sm' : 'text-base'}`}>
                 Password Reset Code
               </label>
-              <div className="flex gap-2 justify-between max-w-xs mx-auto">
+              <div className="flex gap-2">
                 {otp.map((digit, index) => (
                   <input
                     key={index}
@@ -355,11 +355,11 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
                     onChange={(e) => handleOtpChange(index, e.target.value.replace(/\D/g, ''))}
                     onKeyDown={(e) => handleKeyDown(index, e)}
                     disabled={isLoading}
-                    className={`text-center font-semibold border rounded-lg outline-none transition-colors flex-1 ${
+                    className={`text-center font-semibold border rounded-lg outline-none transition-colors ${
                       error 
                         ? 'border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500' 
                         : 'border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500'
-                    } ${isLoading ? 'bg-gray-50' : 'bg-white'} ${isCompact ? 'h-10 text-base' : 'h-12 text-lg'}`}
+                    } ${isLoading ? 'bg-gray-50' : 'bg-white'} ${isCompact ? 'w-10 h-10 text-base' : 'w-12 h-12 text-lg'}`}
                     autoComplete="off"
                   />
                 ))}
