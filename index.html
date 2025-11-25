@@ -4,41 +4,42 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vivid Verse Voyage - Immersive Digital Experience</title>
-    
+
     <!-- SEO Meta Tags -->
     <meta name="description" content="Experience an immersive digital journey with Vivid Verse Voyage - A cutting-edge React application" />
     <meta name="keywords" content="react, digital experience, immersive, web application" />
     <meta name="author" content="Your Name/Company" />
     <meta name="robots" content="index, follow" />
-    
+
     <!-- Open Graph Meta Tags -->
     <meta property="og:title" content="Vivid Verse Voyage - Immersive Digital Experience" />
     <meta property="og:description" content="Experience an immersive digital journey with Vivid Verse Voyage" />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="/social-preview.png" />
     <meta property="og:url" content="https://yourdomain.com" />
-    
+
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Vivid Verse Voyage - Immersive Digital Experience" />
     <meta name="twitter:description" content="Experience an immersive digital journey with Vivid Verse Voyage" />
     <meta name="twitter:image" content="/social-preview.png" />
-    
+
     <!-- Favicon & App Icons -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    
+
     <!-- Web App Manifest -->
     <link rel="manifest" href="/site.webmanifest" />
-    
+
     <!-- Theme Color for Mobile Browsers -->
     <meta name="theme-color" content="#000000" />
-    
+
     <!-- Preload Critical Resources -->
     <link rel="preload" as="script" href="/src/main.tsx" />
-    
+    <link rel="preload" href="/20251125_090458.png" as="image" />
+
     <!-- Critical CSS -->
     <style>
       /* System font stack for better performance and native feel */
@@ -52,30 +53,19 @@
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
       }
-      
+
       /* Ensure root container takes full viewport */
       #root {
         min-height: 100vh;
         display: flex;
         flex-direction: column;
       }
-      
-      /* Loading state styles */
-      .app-loading {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        font-size: 1.2rem;
-      }
-      
+
       /* Performance optimizations */
       * {
         box-sizing: border-box;
       }
-      
+
       /* Prevent layout shifts */
       img {
         max-width: 100%;
@@ -86,13 +76,8 @@
 
   <body>
     <!-- App Root -->
-    <div id="root">
-      <!-- Loading fallback -->
-      <div class="app-loading">
-        <div>Loading Vivid Verse Voyage...</div>
-      </div>
-    </div>
-    
+    <div id="root"></div>
+
     <!-- NoScript fallback for users without JavaScript -->
     <noscript>
       <div style="text-align: center; padding: 2rem; font-family: sans-serif;">
@@ -103,7 +88,7 @@
 
     <!-- Application Scripts -->
     <script type="module" src="/src/main.tsx"></script>
-    
+
     <!-- Performance Monitoring (optional) -->
     <script>
       // Basic performance monitoring
