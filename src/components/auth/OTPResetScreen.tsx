@@ -26,6 +26,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
   const [shakeError, setShakeError] = useState(false);
   const [otpExpiry, setOtpExpiry] = useState(600); // 10 minutes in seconds
   const [showHelp, setShowHelp] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<boolean[]>([false, false, false, false, false, false]);
   const { handleOTPSignIn } = useAuth();
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -196,7 +197,12 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
     setError('');
     setShakeError(false);
 
-    // Auto-focus next input
+    // Reset validation errors for this index
+    const newValidationErrors = [...validationErrors];
+    newValidationErrors[index] = false;
+    setValidationErrors(newValidationErrors);
+
+    // Auto-focus next input only if current input has a value
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
@@ -216,6 +222,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
       setOtp(newOtp);
       setError('');
       setShakeError(false);
+      setValidationErrors([false, false, false, false, false, false]);
       inputRefs.current[5]?.focus();
       
       // Auto-submit after paste
@@ -233,6 +240,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
         setOtp(newOtp);
         setError('');
         setShakeError(false);
+        setValidationErrors([false, false, false, false, false, false]);
         inputRefs.current[5]?.focus();
         
         // Auto-submit after paste
@@ -271,6 +279,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
         setError(errorMsg);
         setShakeError(true);
         setOtp(['', '', '', '', '', '']);
+        setValidationErrors([false, false, false, false, false, false]);
         inputRefs.current[0]?.focus();
         
         // Reset shake animation
@@ -291,6 +300,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
       setError(errorMsg);
       setShakeError(true);
       setOtp(['', '', '', '', '', '']);
+      setValidationErrors([false, false, false, false, false, false]);
       inputRefs.current[0]?.focus();
       
       // Reset shake animation
@@ -314,6 +324,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
         setResendCooldown(60);
         setOtpExpiry(600); // Reset expiry timer
         setOtp(['', '', '', '', '', '']);
+        setValidationErrors([false, false, false, false, false, false]);
         inputRefs.current[0]?.focus();
         setError(''); // Clear any previous errors
       } else {
@@ -497,11 +508,11 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span className={`font-medium ${otpExpiry < 60 ? 'text-red-500' : 'text-gray-600'} ${isCompact ? 'text-xs' : 'text-sm'}`}>
-                      {formatTime(otpExpiry)}
+                      Expires in {formatTime(otpExpiry)}
                     </span>
                   </div>
                 ) : (
-                  <span className={`text-red-500 font-medium ${isCompact ? 'text-xs' : 'text-sm'}`}>Expired</span>
+                  <span className={`text-red-500 font-medium ${isCompact ? 'text-xs' : 'text-sm'}`}>Code Expired</span>
                 )}
 
                 {/* Paste Code Button - Right */}
@@ -531,22 +542,19 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
                       onKeyDown={(e) => handleKeyDown(index, e)}
                       onPaste={handlePaste}
                       disabled={isVerifying || isResending}
-                      className={`text-center font-semibold border rounded-lg outline-none transition-all duration-200 ${
+                      className={`text-center font-semibold border-2 rounded-lg outline-none transition-all duration-200 ${
                         digit ? 'scale-in' : ''
                       } ${
-                        error 
+                        validationErrors[index]
+                          ? 'border-red-500 bg-red-50 shake'
+                          : digit && !error
+                          ? 'border-green-500 bg-green-50 ring-2 ring-green-200'
+                          : error 
                           ? 'border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500' 
                           : 'border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500'
-                      } ${isVerifying || isResending ? 'bg-gray-50' : 'bg-white'} ${isCompact ? 'w-10 h-10 text-base' : 'w-12 h-12 text-lg'}`}
+                      } ${isVerifying || isResending ? 'bg-gray-50' : digit ? '' : 'bg-white'} ${isCompact ? 'w-10 h-10 text-base' : 'w-12 h-12 text-lg'}`}
                       autoComplete="off"
                     />
-                    {digit && !error && (
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <svg className="w-4 h-4 text-green-500 absolute top-1 right-1" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
