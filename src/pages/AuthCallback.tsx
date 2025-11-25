@@ -61,14 +61,14 @@ const AuthCallback: React.FC = () => {
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="text-center">
         {/* Logo */}
-        <img 
-          src="/logo.svg" 
-          alt="Brand Logo" 
-          className="h-16 w-auto mx-auto mb-8"
-          style={{
-            animation: 'fadeIn 0.5s ease-out'
-          }}
-        />
+       <img 
+  src="/Logo.svg"  // Capital L to match actual filename
+  alt="Brand Logo" 
+  className="h-16 w-auto mx-auto mb-8"
+  style={{
+    animation: 'fadeIn 0.5s ease-out'
+  }}
+/>
         
         {/* Spinner */}
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-red-500 mx-auto"></div>
