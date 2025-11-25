@@ -77,7 +77,7 @@ const AuthCallback: React.FC = () => {
       <div className="text-center">
         {/* Logo from public folder */}
         <img 
-          src="/20251125_071036.png" 
+          src="/20251125_090458.png" 
           alt="Brand Logo" 
           className="h-16 w-auto mx-auto mb-8"
           style={{
