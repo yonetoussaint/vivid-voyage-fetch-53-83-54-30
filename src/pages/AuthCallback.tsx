@@ -60,10 +60,32 @@ const AuthCallback: React.FC = () => {
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
-        <h2 className="text-lg font-semibold text-gray-900">Completing sign in...</h2>
-        <p className="text-gray-600 mt-2">Please wait a moment</p>
+        {/* Logo */}
+        <img 
+          src="/logo.svg" 
+          alt="Brand Logo" 
+          className="h-16 w-auto mx-auto mb-8"
+          style={{
+            animation: 'fadeIn 0.5s ease-out'
+          }}
+        />
+        
+        {/* Spinner */}
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-red-500 mx-auto"></div>
       </div>
+      
+      <style>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 };
