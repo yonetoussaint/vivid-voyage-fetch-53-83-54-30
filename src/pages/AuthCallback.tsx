@@ -10,8 +10,16 @@ const AuthCallback: React.FC = () => {
 
   useEffect(() => {
     let isMounted = true;
+    let hasRun = false;
 
     const handleCallback = async () => {
+      // Prevent multiple executions
+      if (hasRun) {
+        console.log('⚠️ Callback already processed, skipping...');
+        return;
+      }
+      hasRun = true;
+
       const startTime = Date.now();
       const MIN_DISPLAY_TIME = 1500; // Show loading screen for at least 1.5 seconds
 
@@ -81,7 +89,8 @@ const AuthCallback: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [navigate, searchParams, checkAuthStatus, setIsAuthOverlayOpen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - only run once on mount
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
