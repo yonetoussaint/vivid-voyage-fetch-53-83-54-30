@@ -25,6 +25,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
   const [resendCooldown, setResendCooldown] = useState(0);
   const [shakeError, setShakeError] = useState(false);
   const [otpExpiry, setOtpExpiry] = useState(600); // 10 minutes in seconds
+  const [showHelp, setShowHelp] = useState(false);
   const { handleOTPSignIn } = useAuth();
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -309,6 +310,47 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const getEmailProvider = (emailValue: string) => {
+    const domain = extractDomain(emailValue).toLowerCase();
+    
+    const providers: Record<string, { name: string; url: string; color: string }> = {
+      'gmail.com': { 
+        name: 'Gmail', 
+        url: 'https://mail.google.com',
+        color: 'bg-red-500 hover:bg-red-600'
+      },
+      'outlook.com': { 
+        name: 'Outlook', 
+        url: 'https://outlook.live.com/mail',
+        color: 'bg-blue-500 hover:bg-blue-600'
+      },
+      'hotmail.com': { 
+        name: 'Outlook', 
+        url: 'https://outlook.live.com/mail',
+        color: 'bg-blue-500 hover:bg-blue-600'
+      },
+      'yahoo.com': { 
+        name: 'Yahoo Mail', 
+        url: 'https://mail.yahoo.com',
+        color: 'bg-purple-600 hover:bg-purple-700'
+      },
+      'icloud.com': { 
+        name: 'iCloud Mail', 
+        url: 'https://www.icloud.com/mail',
+        color: 'bg-gray-700 hover:bg-gray-800'
+      },
+      'me.com': { 
+        name: 'iCloud Mail', 
+        url: 'https://www.icloud.com/mail',
+        color: 'bg-gray-700 hover:bg-gray-800'
+      },
+    };
+    
+    return providers[domain] || null;
+  };
+
+  const emailProvider = getEmailProvider(email);
+
   return (
     <div className={isCompact ? "px-4 pb-4" : "min-h-screen bg-white flex flex-col px-4"}>
       <style>{`
@@ -457,8 +499,8 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
               </div>
               
               {/* Helper text */}
-              <div className={`mt-3 space-y-1 ${isCompact ? 'text-xs' : 'text-sm'} text-gray-500`}>
-                <div className="flex items-center justify-between">
+              <div className={`mt-3 space-y-2 ${isCompact ? 'text-xs' : 'text-sm'}`}>
+                <div className="flex items-center justify-between text-gray-500">
                   <p>Check your spam folder if you don't see the email</p>
                   {otpExpiry > 0 && (
                     <span className={`font-medium ${otpExpiry < 60 ? 'text-red-500' : 'text-gray-600'}`}>
@@ -468,6 +510,22 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
                 </div>
                 {otpExpiry === 0 && (
                   <p className="text-red-500 font-medium">Code expired. Please request a new one.</p>
+                )}
+                
+                {/* Email Provider Quick Link */}
+                {emailProvider && (
+                  <a
+                    href={emailProvider.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`inline-flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors ${emailProvider.color} ${isCompact ? 'text-xs' : 'text-sm'} font-medium`}
+                  >
+                    <Mail className="w-4 h-4" />
+                    Open {emailProvider.name}
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
                 )}
               </div>
             </div>
@@ -491,6 +549,106 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
                   Resend code in {resendCooldown}s
                 </p>
               )}
+            </div>
+
+            {/* Having Trouble Section */}
+            <div className={`border border-gray-200 rounded-lg overflow-hidden transition-all duration-300 ${isCompact ? 'mt-3' : 'mt-4'}`}>
+              <button
+                onClick={() => setShowHelp(!showHelp)}
+                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                type="button"
+              >
+                <div className="flex items-center gap-2">
+                  <HelpCircle className="w-5 h-5 text-gray-600" />
+                  <span className={`font-medium text-gray-700 ${isCompact ? 'text-sm' : 'text-base'}`}>
+                    Having trouble?
+                  </span>
+                </div>
+                <svg 
+                  className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${showHelp ? 'rotate-180' : ''}`}
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {/* Expandable Content */}
+              <div 
+                className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                  showHelp ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'
+                }`}
+              >
+                <div className={`p-4 pt-0 space-y-4 border-t border-gray-100 ${isCompact ? 'text-xs' : 'text-sm'}`}>
+                  {/* Common Issues */}
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                      <svg className="w-4 h-4 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                      Common Issues
+                    </h4>
+                    <ul className="space-y-2 text-gray-600 ml-6">
+                      <li className="flex items-start gap-2">
+                        <span className="text-red-500 mt-1">•</span>
+                        <span><strong>Check spam/junk folder:</strong> Email providers sometimes filter verification emails</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-red-500 mt-1">•</span>
+                        <span><strong>Wrong email address?</strong> Click "Change" above to use a different email</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-red-500 mt-1">•</span>
+                        <span><strong>Code expired?</strong> Click "Resend reset code" to get a fresh code</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-red-500 mt-1">•</span>
+                        <span><strong>Delayed delivery:</strong> Emails can take up to 5 minutes to arrive</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* FAQ */}
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                      <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                      </svg>
+                      Frequently Asked Questions
+                    </h4>
+                    <div className="space-y-3 text-gray-600 ml-6">
+                      <div>
+                        <p className="font-medium text-gray-700">How long is the code valid?</p>
+                        <p>The reset code expires after 10 minutes for security reasons.</p>
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-700">Can I request a new code?</p>
+                        <p>Yes! Click "Resend reset code" to get a fresh code sent to your email.</p>
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-700">Is this secure?</p>
+                        <p>Yes, all communications are encrypted and codes are single-use only.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Contact Support */}
+                  <div className="pt-3 border-t border-gray-100">
+                    <p className="text-gray-600 mb-2">Still need help?</p>
+                    <a
+                      href="mailto:support@mimaht.com"
+                      className="inline-flex items-center gap-2 text-red-500 hover:text-red-600 font-medium transition-colors"
+                    >
+                      <Mail className="w-4 h-4" />
+                      Contact Support
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Verify Button */}
