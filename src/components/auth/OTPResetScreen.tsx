@@ -188,8 +188,37 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
     }
   };
 
-  const handleOtpChange = (index: number, value: string) => {
+  // Verify individual digit against backend
+  const verifyDigit = async (email: string, position: number, digit: string) => {
+    try {
+      const BACKEND_URL = 'https://resend-u11p.onrender.com';
+      const response = await fetch(`${BACKEND_URL}/api/verify-otp-digit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, position, digit }),
+      });
+
+      if (!response.ok) {
+        return { valid: false };
+      }
+
+      const result = await response.json();
+      return { valid: result.valid };
+    } catch (error: any) {
+      console.error('❌ Digit Verification Failed:', error);
+      return { valid: false };
+    }
+  };
+
+  const handleOtpChange = async (index: number, value: string) => {
     if (value.length > 1) return;
+    
+    // Don't allow input if previous digit is invalid
+    if (index > 0 && validationErrors[index - 1]) {
+      return;
+    }
 
     const newOtp = [...otp];
     newOtp[index] = value;
@@ -197,19 +226,49 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
     setError('');
     setShakeError(false);
 
-    // Reset validation errors for this index
-    const newValidationErrors = [...validationErrors];
-    newValidationErrors[index] = false;
-    setValidationErrors(newValidationErrors);
+    if (value) {
+      // Verify this digit against the backend
+      const result = await verifyDigit(email, index, value);
+      
+      const newValidationErrors = [...validationErrors];
+      newValidationErrors[index] = !result.valid;
+      setValidationErrors(newValidationErrors);
 
-    // Auto-focus next input only if current input has a value
-    if (value && index < 5) {
-      inputRefs.current[index + 1]?.focus();
-    }
+      if (!result.valid) {
+        // Shake this input
+        setTimeout(() => {
+          const errors = [...validationErrors];
+          errors[index] = true;
+          setValidationErrors(errors);
+        }, 10);
+        
+        // Clear the invalid digit after shake
+        setTimeout(() => {
+          const clearOtp = [...newOtp];
+          clearOtp[index] = '';
+          setOtp(clearOtp);
+          const errors = [...validationErrors];
+          errors[index] = false;
+          setValidationErrors(errors);
+        }, 650);
+        
+        return;
+      }
 
-    // Auto-submit when all fields are filled
-    if (newOtp.every(digit => digit !== '') && newOtp.join('').length === 6) {
-      handleVerifyOTP(newOtp.join(''));
+      // Auto-focus next input only if current digit is valid
+      if (result.valid && index < 5) {
+        inputRefs.current[index + 1]?.focus();
+      }
+
+      // Auto-submit when all fields are filled and valid
+      if (newOtp.every(digit => digit !== '') && newOtp.join('').length === 6) {
+        handleVerifyOTP(newOtp.join(''));
+      }
+    } else {
+      // Reset validation error when clearing
+      const newValidationErrors = [...validationErrors];
+      newValidationErrors[index] = false;
+      setValidationErrors(newValidationErrors);
     }
   };
 
@@ -530,33 +589,38 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
               </div>
 
               <div className={`flex gap-2 justify-between ${shakeError ? 'shake' : ''}`}>
-                {otp.map((digit, index) => (
-                  <div key={index} className="relative">
-                    <input
-                      ref={el => inputRefs.current[index] = el}
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={1}
-                      value={digit}
-                      onChange={(e) => handleOtpChange(index, e.target.value.replace(/\D/g, ''))}
-                      onKeyDown={(e) => handleKeyDown(index, e)}
-                      onPaste={handlePaste}
-                      disabled={isVerifying || isResending}
-                      className={`text-center font-semibold border-2 rounded-lg outline-none transition-all duration-200 ${
-                        digit ? 'scale-in' : ''
-                      } ${
-                        validationErrors[index]
-                          ? 'border-red-500 bg-red-50 shake'
-                          : digit && !error
-                          ? 'border-green-500 bg-green-50 ring-2 ring-green-200'
-                          : error 
-                          ? 'border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500' 
-                          : 'border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500'
-                      } ${isVerifying || isResending ? 'bg-gray-50' : digit ? '' : 'bg-white'} ${isCompact ? 'w-10 h-10 text-base' : 'w-12 h-12 text-lg'}`}
-                      autoComplete="off"
-                    />
-                  </div>
-                ))}
+                {otp.map((digit, index) => {
+                  // Check if this input should be disabled (previous digit is invalid)
+                  const isDisabled = isVerifying || isResending || (index > 0 && validationErrors[index - 1]);
+                  
+                  return (
+                    <div key={index} className="relative">
+                      <input
+                        ref={el => inputRefs.current[index] = el}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) => handleOtpChange(index, e.target.value.replace(/\D/g, ''))}
+                        onKeyDown={(e) => handleKeyDown(index, e)}
+                        onPaste={handlePaste}
+                        disabled={isDisabled}
+                        className={`text-center font-semibold border-2 rounded-lg outline-none transition-all duration-200 ${
+                          digit ? 'scale-in' : ''
+                        } ${
+                          validationErrors[index]
+                            ? 'border-red-500 bg-red-50 shake'
+                            : digit && !error
+                            ? 'border-green-500 bg-green-50 ring-2 ring-green-200'
+                            : error 
+                            ? 'border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500' 
+                            : 'border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500'
+                        } ${isDisabled ? 'bg-gray-50 cursor-not-allowed' : digit ? '' : 'bg-white'} ${isCompact ? 'w-10 h-10 text-base' : 'w-12 h-12 text-lg'}`}
+                        autoComplete="off"
+                      />
+                    </div>
+                  );
+                })}
               </div>
               
               {/* Helper text */}
