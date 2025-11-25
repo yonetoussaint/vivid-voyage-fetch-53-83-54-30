@@ -19,7 +19,8 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
   onExpand
 }) => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [error, setError] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
   const { handleOTPSignIn } = useAuth();
@@ -202,9 +203,9 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
 
   const handleVerifyOTP = async (otpCode?: string) => {
     const codeToVerify = otpCode || otp.join('');
-    if (codeToVerify.length !== 6 || isLoading) return;
+    if (codeToVerify.length !== 6 || isVerifying) return;
 
-    setIsLoading(true);
+    setIsVerifying(true);
     setError('');
 
     try {
@@ -224,14 +225,14 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
       setOtp(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
     } finally {
-      setIsLoading(false);
+      setIsVerifying(false);
     }
   };
 
   const handleResendCode = async () => {
-    if (resendCooldown > 0 || isLoading) return;
+    if (resendCooldown > 0 || isResending) return;
 
-    setIsLoading(true);
+    setIsResending(true);
     setError('');
 
     try {
@@ -249,7 +250,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
       console.error('Error resending code:', error);
       setError(error.message || 'Failed to resend code. Please try again.');
     } finally {
-      setIsLoading(false);
+      setIsResending(false);
     }
   };
 
@@ -260,9 +261,10 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
         <div className="pt-4 pb-4 flex items-center justify-between">
           <button
             onClick={onBack}
+            disabled={isVerifying || isResending}
             className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-full transition-colors active:scale-95"
             aria-label="Go back"
-            disabled={isLoading}
+            disabled={isVerifying || isResending}
           >
             <ArrowLeft className="w-5 h-5 text-gray-700" />
           </button>
@@ -276,7 +278,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
             aria-label="Help"
             onClick={() => alert('Need help? Contact support@mimaht.com')}
             type="button"
-            disabled={isLoading}
+            disabled={isVerifying || isResending}
           >
             <HelpCircle className="w-5 h-5 text-gray-700" />
           </button>
@@ -323,7 +325,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
                 onClick={onBack}
                 className={`text-red-500 hover:text-red-600 font-medium ${isCompact ? 'text-xs' : 'text-sm'}`}
                 type="button"
-                disabled={isLoading}
+                disabled={isVerifying || isResending}
               >
                 Change
               </button>
@@ -354,12 +356,12 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
                     value={digit}
                     onChange={(e) => handleOtpChange(index, e.target.value.replace(/\D/g, ''))}
                     onKeyDown={(e) => handleKeyDown(index, e)}
-                    disabled={isLoading}
+                    disabled={isVerifying || isResending}
                     className={`text-center font-semibold border rounded-lg outline-none transition-colors ${
                       error 
                         ? 'border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500' 
                         : 'border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500'
-                    } ${isLoading ? 'bg-gray-50' : 'bg-white'} ${isCompact ? 'w-10 h-10 text-base' : 'w-12 h-12 text-lg'}`}
+                    } ${isVerifying || isResending ? 'bg-gray-50' : 'bg-white'} ${isCompact ? 'w-10 h-10 text-base' : 'w-12 h-12 text-lg'}`}
                     autoComplete="off"
                   />
                 ))}
@@ -371,14 +373,14 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
               {resendCooldown === 0 ? (
                 <button
                   onClick={handleResendCode}
-                  disabled={isLoading}
+                  disabled={isResending || isVerifying}
                   className={`text-red-500 hover:text-red-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto ${isCompact ? 'text-sm' : 'text-base'}`}
                   type="button"
                 >
-                  {isLoading ? (
+                  {isResending ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : null}
-                  {isLoading ? 'Sending...' : 'Resend reset code'}
+                  Resend reset code
                 </button>
               ) : (
                 <p className={`text-gray-500 ${isCompact ? 'text-xs' : 'text-sm'}`}>
@@ -389,22 +391,22 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
 
             {/* Verify Button */}
             <button
-              disabled={otp.some(digit => !digit) || isLoading}
+              disabled={otp.some(digit => !digit) || isVerifying || isResending}
               onClick={() => handleVerifyOTP()}
               className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg transition-colors ${
-                !otp.some(digit => !digit) && !isLoading
+                !otp.some(digit => !digit) && !isVerifying && !isResending
                   ? 'bg-red-500 text-white hover:bg-red-600 border-red-500'
                   : 'bg-gray-100 text-gray-400 cursor-not-allowed'
               } ${isCompact ? 'shadow-sm' : ''}`}
               type="button"
             >
-              {isLoading ? (
+              {isVerifying ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <Key className="w-5 h-5" />
               )}
               <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>
-                {isLoading ? 'Verifying...' : 'Verify & Reset Password'}
+                {isVerifying ? 'Verifying...' : 'Verify & Reset Password'}
               </span>
             </button>
           </div>
