@@ -111,7 +111,6 @@ const AuthCallback: React.FC = () => {
           role="status"
           aria-label="Loading authentication"
         />
-        <p className="mt-4 text-gray-600">Completing authentication...</p>
       </div>
 
       {/* Inline styles for fade-in animation */}
