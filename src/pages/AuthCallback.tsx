@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import Logo from '@/Logo.svg'; // Import from root
 
 const AuthCallback: React.FC = () => {
   const navigate = useNavigate();
@@ -9,6 +10,8 @@ const AuthCallback: React.FC = () => {
   const { checkAuthStatus, setIsAuthOverlayOpen } = useAuth();
 
   useEffect(() => {
+    let isMounted = true;
+
     const handleCallback = async () => {
       try {
         console.log('🔗 OAuth Callback - Processing...');
@@ -16,13 +19,17 @@ const AuthCallback: React.FC = () => {
         const success = searchParams.get('success');
         const accessToken = searchParams.get('access_token');
         const refreshToken = searchParams.get('refresh_token');
-        const email = searchParams.get('email');
-        const fullName = searchParams.get('full_name');
+        const error = searchParams.get('error');
+
+        // Handle OAuth errors from provider
+        if (error) {
+          throw new Error(`Authentication failed: ${error}`);
+        }
 
         if (success === 'true' && accessToken && refreshToken) {
           console.log('✅ Setting Supabase session...');
 
-          // Set the session
+          // Set the session with Supabase
           const { error: sessionError } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
@@ -40,7 +47,7 @@ const AuthCallback: React.FC = () => {
 
           console.log('✅ Redirecting to homepage...');
 
-          // Force close overlay and redirect
+          // Close auth overlay and redirect to home
           setIsAuthOverlayOpen(false);
           navigate('/', { replace: true });
 
@@ -50,30 +57,45 @@ const AuthCallback: React.FC = () => {
 
       } catch (error: any) {
         console.error('❌ OAuth callback error:', error);
-        navigate('/auth/error', { replace: true });
+        if (isMounted) {
+          navigate('/auth/error', { 
+            replace: true,
+            state: { error: error.message }
+          });
+        }
       }
     };
 
     handleCallback();
+
+    return () => {
+      isMounted = false;
+    };
   }, [navigate, searchParams, checkAuthStatus, setIsAuthOverlayOpen]);
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="text-center">
-        {/* Logo */}
-       <img 
-  src="/Logo.svg"  // Capital L to match actual filename
-  alt="Brand Logo" 
-  className="h-16 w-auto mx-auto mb-8"
-  style={{
-    animation: 'fadeIn 0.5s ease-out'
-  }}
-/>
+        {/* Imported logo from root */}
+        <img 
+          src={Logo} 
+          alt="Brand Logo" 
+          className="h-16 w-auto mx-auto mb-8"
+          style={{
+            animation: 'fadeIn 0.5s ease-out'
+          }}
+        />
         
-        {/* Spinner */}
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-red-500 mx-auto"></div>
+        {/* Loading spinner */}
+        <div 
+          className="animate-spin rounded-full h-10 w-10 border-b-2 border-red-500 mx-auto"
+          role="status"
+          aria-label="Loading authentication"
+        />
+        <p className="mt-4 text-gray-600">Completing authentication...</p>
       </div>
       
+      {/* Inline styles for fade-in animation */}
       <style>{`
         @keyframes fadeIn {
           from {
