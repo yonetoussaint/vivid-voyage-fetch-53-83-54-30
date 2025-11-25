@@ -82,6 +82,13 @@ const AuthOverlay: React.FC = () => {
   const [serverError, setServerError] = React.useState<string>('');
   const [previousScreen, setPreviousScreen] = React.useState<string>('main'); // Track previous screen for FAQ back navigation
 
+
+
+const getCompactProps = () => ({
+    isCompact: true,
+    onExpand: undefined
+  });
+
   // Name validation state (moved from AuthContext)
   const [nameErrors, setNameErrors] = React.useState({
     firstName: '',
