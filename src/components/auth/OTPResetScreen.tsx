@@ -23,6 +23,8 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
   const [isResending, setIsResending] = useState(false);
   const [error, setError] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [shakeError, setShakeError] = useState(false);
+  const [otpExpiry, setOtpExpiry] = useState(600); // 10 minutes in seconds
   const { handleOTPSignIn } = useAuth();
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -39,6 +41,14 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
       return () => clearTimeout(timer);
     }
   }, [resendCooldown]);
+
+  // OTP expiry countdown
+  useEffect(() => {
+    if (otpExpiry > 0) {
+      const timer = setTimeout(() => setOtpExpiry(otpExpiry - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [otpExpiry]);
 
   const extractDomain = (emailValue: string): string => {
     if (!emailValue.includes('@')) return '';
@@ -183,6 +193,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
     newOtp[index] = value;
     setOtp(newOtp);
     setError('');
+    setShakeError(false);
 
     // Auto-focus next input
     if (value && index < 5) {
@@ -192,6 +203,22 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
     // Auto-submit when all fields are filled
     if (newOtp.every(digit => digit !== '') && newOtp.join('').length === 6) {
       handleVerifyOTP(newOtp.join(''));
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    
+    if (pastedData.length === 6) {
+      const newOtp = pastedData.split('');
+      setOtp(newOtp);
+      setError('');
+      setShakeError(false);
+      inputRefs.current[5]?.focus();
+      
+      // Auto-submit after paste
+      handleVerifyOTP(pastedData);
     }
   };
 
@@ -207,6 +234,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
 
     setIsVerifying(true);
     setError('');
+    setShakeError(false);
 
     try {
       const result = await verifyCustomOTP(email, codeToVerify);
@@ -215,15 +243,34 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
         // For password reset OTP, just proceed to next screen
         onOTPVerified(email, codeToVerify);
       } else {
-        setError(result.error || 'Invalid verification code');
+        const errorMsg = result.error || 'Invalid verification code';
+        setError(errorMsg);
+        setShakeError(true);
         setOtp(['', '', '', '', '', '']);
         inputRefs.current[0]?.focus();
+        
+        // Reset shake animation
+        setTimeout(() => setShakeError(false), 650);
       }
     } catch (error: any) {
       console.error('Error during OTP verification:', error);
-      setError(error.message || 'Verification failed. Please try again.');
+      let errorMsg = 'Verification failed. Please try again.';
+      
+      if (error.message.includes('Network')) {
+        errorMsg = 'Network error. Check your connection and try again.';
+      } else if (error.message.includes('expired')) {
+        errorMsg = 'Code has expired. Please request a new one.';
+      } else if (error.message.includes('Invalid')) {
+        errorMsg = 'Invalid code. Please check and try again.';
+      }
+      
+      setError(errorMsg);
+      setShakeError(true);
       setOtp(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
+      
+      // Reset shake animation
+      setTimeout(() => setShakeError(false), 650);
     } finally {
       setIsVerifying(false);
     }
@@ -234,12 +281,14 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
 
     setIsResending(true);
     setError('');
+    setShakeError(false);
 
     try {
       const result = await resendOTPEmail(email, 'password_reset');
 
       if (result.success) {
         setResendCooldown(60);
+        setOtpExpiry(600); // Reset expiry timer
         setOtp(['', '', '', '', '', '']);
         inputRefs.current[0]?.focus();
         setError(''); // Clear any previous errors
@@ -254,8 +303,28 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
     }
   };
 
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
     <div className={isCompact ? "px-4 pb-4" : "min-h-screen bg-white flex flex-col px-4"}>
+      <style>{`
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+          20%, 40%, 60%, 80% { transform: translateX(8px); }
+        }
+        @keyframes scaleIn {
+          0% { transform: scale(0.95); }
+          50% { transform: scale(1.05); }
+          100% { transform: scale(1); }
+        }
+        .shake { animation: shake 0.65s; }
+        .scale-in { animation: scaleIn 0.3s ease-out; }
+      `}</style>
       {/* Header - hide in compact mode */}
       {!isCompact && (
         <div className="pt-4 pb-4 flex items-center justify-between">
@@ -334,37 +403,72 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
 
           {/* Error Message */}
           {error && (
-            <div className={`p-4 border border-red-200 bg-red-50 text-red-700 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
-              <p className={isCompact ? 'text-xs' : 'text-sm'}>{error}</p>
+            <div className={`p-4 border border-red-200 bg-red-50 text-red-700 rounded-lg transition-all duration-300 ${isCompact ? 'mb-3' : 'mb-4'}`}>
+              <div className="flex items-start gap-2">
+                <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+                <div>
+                  <p className={`font-medium ${isCompact ? 'text-xs' : 'text-sm'}`}>{error}</p>
+                  {error.includes('expired') && (
+                    <p className={`mt-1 text-red-600 ${isCompact ? 'text-xs' : 'text-sm'}`}>
+                      Click "Resend reset code" below to get a new code.
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
           {/* Code Input */}
           <div className={isCompact ? "space-y-3" : "space-y-4"}>
             <div>
-              <label className={`block font-medium text-gray-700 mb-4 ${isCompact ? 'text-sm' : 'text-base'}`}>
-                Password Reset Code
-              </label>
-              <div className="flex gap-2 justify-between">
+              <div className={`flex gap-2 justify-between ${shakeError ? 'shake' : ''}`}>
                 {otp.map((digit, index) => (
-                  <input
-                    key={index}
-                    ref={el => inputRefs.current[index] = el}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => handleOtpChange(index, e.target.value.replace(/\D/g, ''))}
-                    onKeyDown={(e) => handleKeyDown(index, e)}
-                    disabled={isVerifying || isResending}
-                    className={`text-center font-semibold border rounded-lg outline-none transition-colors ${
-                      error 
-                        ? 'border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500' 
-                        : 'border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500'
-                    } ${isVerifying || isResending ? 'bg-gray-50' : 'bg-white'} ${isCompact ? 'w-10 h-10 text-base' : 'w-12 h-12 text-lg'}`}
-                    autoComplete="off"
-                  />
+                  <div key={index} className="relative">
+                    <input
+                      ref={el => inputRefs.current[index] = el}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleOtpChange(index, e.target.value.replace(/\D/g, ''))}
+                      onKeyDown={(e) => handleKeyDown(index, e)}
+                      onPaste={handlePaste}
+                      disabled={isVerifying || isResending}
+                      className={`text-center font-semibold border rounded-lg outline-none transition-all duration-200 ${
+                        digit ? 'scale-in' : ''
+                      } ${
+                        error 
+                          ? 'border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500' 
+                          : 'border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500'
+                      } ${isVerifying || isResending ? 'bg-gray-50' : 'bg-white'} ${isCompact ? 'w-10 h-10 text-base' : 'w-12 h-12 text-lg'}`}
+                      autoComplete="off"
+                    />
+                    {digit && !error && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <svg className="w-4 h-4 text-green-500 absolute top-1 right-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
                 ))}
+              </div>
+              
+              {/* Helper text */}
+              <div className={`mt-3 space-y-1 ${isCompact ? 'text-xs' : 'text-sm'} text-gray-500`}>
+                <div className="flex items-center justify-between">
+                  <p>Check your spam folder if you don't see the email</p>
+                  {otpExpiry > 0 && (
+                    <span className={`font-medium ${otpExpiry < 60 ? 'text-red-500' : 'text-gray-600'}`}>
+                      Expires in {formatTime(otpExpiry)}
+                    </span>
+                  )}
+                </div>
+                {otpExpiry === 0 && (
+                  <p className="text-red-500 font-medium">Code expired. Please request a new one.</p>
+                )}
               </div>
             </div>
 
