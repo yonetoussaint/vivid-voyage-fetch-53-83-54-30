@@ -343,7 +343,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
               <label className={`block font-medium text-gray-700 mb-4 ${isCompact ? 'text-sm' : 'text-base'}`}>
                 Password Reset Code
               </label>
-              <div className="flex gap-2 justify-center">
+              <div className="flex gap-2 justify-between">
                 {otp.map((digit, index) => (
                   <input
                     key={index}
