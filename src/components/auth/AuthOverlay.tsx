@@ -252,8 +252,7 @@ const AuthOverlay: React.FC = () => {
     </div>
   );
 
-  // Get SlideUpPanel props based on current screen
-  // Get SlideUpPanel props based on current screen
+  // Update the getSlideUpPanelProps function in AuthOverlay
 const getSlideUpPanelProps = () => {
   const baseProps = {
     isOpen: isAuthOverlayOpen,
@@ -282,6 +281,19 @@ const getSlideUpPanelProps = () => {
       showCloseButton: true,
       showHelpButton: true,
       showDragHandle: false
+    };
+  }
+
+  // OTP screens - show help button with text
+  if (currentScreen === 'verification' || currentScreen === 'otp-reset') {
+    return {
+      ...baseProps,
+      showCloseButton: false,
+      showBackButton: true,
+      onBack: handleBackButton,
+      showDragHandle: false,
+      showHelpButton: true,
+      helpButtonText: "Having Issues?" // Add text for OTP screens
     };
   }
 
