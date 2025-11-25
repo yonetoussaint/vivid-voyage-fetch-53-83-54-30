@@ -1,3 +1,4 @@
+// Update the imports in AuthOverlay
 import React from 'react';
 import { ChevronLeft } from 'lucide-react';
 import SlideUpPanel from '@/components/shared/SlideUpPanel';
@@ -12,7 +13,7 @@ import {
   SuccessScreenSkeleton
 } from './AuthSkeletonLoaders';
 
-// Move lazy imports outside component to prevent recreation
+// Add FAQScreen to lazy imports
 const MainLoginScreen = React.lazy(() => import('./MainLoginScreen'));
 const EmailAuthScreen = React.lazy(() => import('./EmailAuthScreen'));
 const VerificationCodeScreen = React.lazy(() => import('./VerificationCodeScreen'));
@@ -24,6 +25,7 @@ const AccountCreationNameStep = React.lazy(() => import('./AccountCreationNameSt
 const AccountCreationPasswordStep = React.lazy(() => import('./AccountCreationPasswordStep'));
 const AccountCreationSuccessStep = React.lazy(() => import('./AccountCreationSuccessStep'));
 const SuccessScreen = React.lazy(() => import('./SuccessScreen'));
+const FAQScreen = React.lazy(() => import('./FAQScreen')); // Add this line
 
 const AuthOverlay: React.FC = () => {
   const {
@@ -78,11 +80,7 @@ const AuthOverlay: React.FC = () => {
   const [authMethod, setAuthMethod] = React.useState<'email' | 'phone'>('email');
   const [userPhone, setUserPhone] = React.useState('');
   const [serverError, setServerError] = React.useState<string>('');
-
-  const getCompactProps = () => ({
-    isCompact: true,
-    onExpand: undefined
-  });
+  const [previousScreen, setPreviousScreen] = React.useState<string>('main'); // Track previous screen for FAQ back navigation
 
   // Name validation state (moved from AuthContext)
   const [nameErrors, setNameErrors] = React.useState({
@@ -163,6 +161,17 @@ const AuthOverlay: React.FC = () => {
     handleCreateAccount(email);
   };
 
+  // FAQ handler
+  const handleHelpClick = () => {
+    setPreviousScreen(currentScreen); // Store current screen before going to FAQ
+    setCurrentScreen('faq');
+  };
+
+  // Back from FAQ handler
+  const handleBackFromFAQ = () => {
+    setCurrentScreen(previousScreen); // Return to previous screen
+  };
+
   // Back button handler for different screens
   const handleBackButton = () => {
     switch (currentScreen) {
@@ -182,6 +191,8 @@ const AuthOverlay: React.FC = () => {
         return handleBackFromAccountCreation();
       case 'success':
         return handleClose(); // Or you might want different behavior for success
+      case 'faq':
+        return handleBackFromFAQ(); // Handle FAQ back navigation
       default:
         return handleClose();
     }
@@ -252,40 +263,67 @@ const AuthOverlay: React.FC = () => {
     </div>
   );
 
-  // Update the getSlideUpPanelProps function in AuthOverlay
-const getSlideUpPanelProps = () => {
-  const baseProps = {
-    isOpen: isAuthOverlayOpen,
-    onClose: handleClose,
-    preventBodyScroll: true,
-    className: "bg-white",
-    dynamicHeight: true,
-    headerContent: undefined // No header content - no titles
-  };
-
-  // Account creation success step - show only help icon
-  if (currentScreen === 'account-creation' && accountCreationStep === 'success') {
-    return {
-      ...baseProps,
-      showCloseButton: true,
-      showBackButton: false,
-      showHelpButton: true,
-      showDragHandle: false
+  // Get SlideUpPanel props based on current screen
+  const getSlideUpPanelProps = () => {
+    const baseProps = {
+      isOpen: isAuthOverlayOpen,
+      onClose: handleClose,
+      preventBodyScroll: true,
+      className: "bg-white",
+      dynamicHeight: true,
+      headerContent: undefined // No header content - no titles
     };
-  }
 
-  // Main login screen - show close button and help button
-  if (currentScreen === 'main') {
-    return {
-      ...baseProps,
-      showCloseButton: true,
-      showHelpButton: true,
-      showDragHandle: false
-    };
-  }
+    // FAQ Screen - special handling
+    if (currentScreen === 'faq') {
+      return {
+        ...baseProps,
+        showCloseButton: false,
+        showBackButton: true,
+        onBack: handleBackFromFAQ,
+        showHelpButton: false, // No help button on FAQ screen itself
+        showDragHandle: false
+      };
+    }
 
-  // OTP screens - show help button with text
-  if (currentScreen === 'verification' || currentScreen === 'otp-reset') {
+    // Account creation success step - show only help icon
+    if (currentScreen === 'account-creation' && accountCreationStep === 'success') {
+      return {
+        ...baseProps,
+        showCloseButton: true,
+        showBackButton: false,
+        showHelpButton: true,
+        onHelpClick: handleHelpClick,
+        showDragHandle: false
+      };
+    }
+
+    // Main login screen - show close button and help button
+    if (currentScreen === 'main') {
+      return {
+        ...baseProps,
+        showCloseButton: true,
+        showHelpButton: true,
+        onHelpClick: handleHelpClick,
+        showDragHandle: false
+      };
+    }
+
+    // OTP screens - show help button with text
+    if (currentScreen === 'verification' || currentScreen === 'otp-reset') {
+      return {
+        ...baseProps,
+        showCloseButton: false,
+        showBackButton: true,
+        onBack: handleBackButton,
+        showDragHandle: false,
+        showHelpButton: true,
+        onHelpClick: handleHelpClick,
+        helpButtonText: "Having Issues?"
+      };
+    }
+
+    // All other screens - show back button instead of close button
     return {
       ...baseProps,
       showCloseButton: false,
@@ -293,20 +331,9 @@ const getSlideUpPanelProps = () => {
       onBack: handleBackButton,
       showDragHandle: false,
       showHelpButton: true,
-      helpButtonText: "Having Issues?" // Add text for OTP screens
+      onHelpClick: handleHelpClick
     };
-  }
-
-  // All other screens - show back button instead of close button
-  return {
-    ...baseProps,
-    showCloseButton: false,
-    showBackButton: true,
-    onBack: handleBackButton,
-    showDragHandle: false,
-    showHelpButton: true // Hide help button on non-main screens
   };
-};
 
   const renderCurrentScreen = () => {
     // Show server unavailable screen if there's a server error
@@ -319,6 +346,17 @@ const getSlideUpPanelProps = () => {
 
     const screenContent = (() => {
       switch (currentScreen) {
+        case 'faq':
+          return (
+            <React.Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center">Loading FAQ...</div>}>
+              <FAQScreen
+                onBack={handleBackFromFAQ}
+                authMethod={authMethod}
+                {...compactProps}
+              />
+            </React.Suspense>
+          );
+
         case 'main':
           return (
             <React.Suspense fallback={<MainLoginScreenSkeletonCompact />}>
@@ -365,6 +403,7 @@ const getSlideUpPanelProps = () => {
             </React.Suspense>
           );
 
+        // ... rest of your existing cases remain the same
         case 'password':
           return (
             <React.Suspense fallback={<PasswordAuthScreenSkeleton />}>
