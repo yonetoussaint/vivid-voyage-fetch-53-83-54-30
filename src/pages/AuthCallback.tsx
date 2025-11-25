@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import Logo from '@/Logo.svg'; // Import from root
 
 const AuthCallback: React.FC = () => {
   const navigate = useNavigate();
@@ -76,9 +75,9 @@ const AuthCallback: React.FC = () => {
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="text-center">
-        {/* Imported logo from root */}
+        {/* Logo from public folder */}
         <img 
-          src={Logo} 
+          src="/Logo.svg" 
           alt="Brand Logo" 
           className="h-16 w-auto mx-auto mb-8"
           style={{
