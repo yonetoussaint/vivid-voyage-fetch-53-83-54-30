@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import LanguageSelector from './LanguageSelector';  
 import TranslatedText from './TranslatedText';  
 import { toast } from 'sonner';  
-  
+
 interface Language {  
   code: string;  
   name: string;  
   country: string;  
   countryName: string;  
 }  
-  
+
 interface MainLoginScreenProps {  
   selectedLanguage: string;  
   setSelectedLanguage: (language: string) => void;  
@@ -19,7 +19,7 @@ interface MainLoginScreenProps {
   onExpand?: () => void;  
   showHeader?: boolean;  
 }  
-  
+
 const MainLoginScreen: React.FC<MainLoginScreenProps> = ({   
   selectedLanguage,   
   setSelectedLanguage,   
@@ -37,7 +37,7 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
   const [isWhatsAppLoading, setIsWhatsAppLoading] = useState(false);  
   const [isPinLoading, setIsPinLoading] = useState(false);  
   const [isExpanded, setIsExpanded] = useState(false);  
-  
+
   const languages: Language[] = [  
     { code: 'ht', name: 'Kreyòl Ayisyen', country: 'HT', countryName: 'Haiti' },  
     { code: 'fr', name: 'Français', country: 'FR', countryName: 'France' },  
@@ -45,10 +45,10 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
     { code: 'es', name: 'Español', country: 'ES', countryName: 'Spain' },  
     { code: 'pt', name: 'Português', country: 'PT', countryName: 'Portugal' },  
   ];  
-  
+
   const currentLang = languages.find(lang => lang.code === selectedLanguage);  
   const isLoading = isGoogleLoading || isFacebookLoading || isEmailLoading || isPhoneLoading || isAppleLoading || isWhatsAppLoading || isPinLoading;  
-  
+
   // Google OAuth function  
   const googleSignIn = async () => {  
     try {  
@@ -62,28 +62,28 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
           redirectTo: `${window.location.origin}/auth/callback`  
         }),  
       });  
-  
+
       const result = await response.json();  
-  
+
       if (!result.success) {  
         return { error: result.error || 'Failed to initialize Google sign in' };  
       }  
-  
+
       window.location.href = result.authUrl;  
       return {};  
-  
+
     } catch (error: any) {  
       return { error: error.message || 'Failed to sign in with Google' };  
     }  
   };  
-  
+
   const handleGoogleSignIn = async () => {  
     if (isLoading) return;  
-  
+
     try {  
       setIsGoogleLoading(true);  
       const result = await googleSignIn();  
-  
+
       if (result.error) {  
         toast.error(result.error || 'Failed to sign in with Google');  
         setIsGoogleLoading(false);  
@@ -93,10 +93,11 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
       setIsGoogleLoading(false);  
     }  
   };  
-  
+
+  /* Comment out for later implementation
   const handleFacebookSignIn = async () => {  
     if (isLoading) return;  
-  
+
     try {  
       setIsFacebookLoading(true);  
       await new Promise(resolve => setTimeout(resolve, 2000));  
@@ -107,10 +108,11 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
       setIsFacebookLoading(false);  
     }  
   };  
-  
+  */
+
   const handleEmailSignIn = async () => {  
     if (isLoading) return;  
-  
+
     try {  
       setIsEmailLoading(true);  
       await new Promise(resolve => setTimeout(resolve, 500));  
@@ -119,10 +121,11 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
       setIsEmailLoading(false);  
     }  
   };  
-  
+
+  /* Comment out for later implementation
   const handlePhoneSignIn = async () => {  
     if (isLoading) return;  
-  
+
     try {  
       setIsPhoneLoading(true);  
       await new Promise(resolve => setTimeout(resolve, 500));  
@@ -131,10 +134,10 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
       setIsPhoneLoading(false);  
     }  
   };  
-  
+
   const handleAppleSignIn = async () => {  
     if (isLoading) return;  
-  
+
     try {  
       setIsAppleLoading(true);  
       await new Promise(resolve => setTimeout(resolve, 2000));  
@@ -145,10 +148,10 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
       setIsAppleLoading(false);  
     }  
   };  
-  
+
   const handleWhatsAppSignIn = async () => {  
     if (isLoading) return;  
-  
+
     try {  
       setIsWhatsAppLoading(true);  
       await new Promise(resolve => setTimeout(resolve, 2000));  
@@ -159,10 +162,10 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
       setIsWhatsAppLoading(false);  
     }  
   };  
-  
+
   const handlePinSignIn = async () => {  
     if (isLoading) return;  
-  
+
     try {  
       setIsPinLoading(true);  
       await new Promise(resolve => setTimeout(resolve, 2000));  
@@ -173,11 +176,12 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
       setIsPinLoading(false);  
     }  
   };  
-  
+  */
+
   const toggleExpand = () => {  
     setIsExpanded(!isExpanded);  
   };  
-  
+
   return (  
     <div className={isCompact ? "px-4 pb-4" : "min-h-screen bg-white flex flex-col px-4"}>  
       {/* Header section - optional */}  
@@ -193,7 +197,7 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
           </div>  
         </div>  
       )}  
-  
+
       {/* Title and Subtitle for Compact Mode */}  
       {isCompact && (  
         <div className="text-center mb-6 pt-2">  
@@ -205,7 +209,7 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
           </p>  
         </div>  
       )}  
-  
+
       <div className={isCompact ? "" : "flex-1 flex flex-col justify-center w-full p-0"}>  
         <div className={isCompact ? "space-y-3 mb-4" : "space-y-3 mb-6"}>  
           {/* Google Sign In Button - Always Visible */}  
@@ -227,7 +231,7 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
                 Continue with Google  
               </span>  
             </div>  
-  
+
             {/* Spinner on the right side */}  
             {isGoogleLoading && (  
               <div className="absolute right-4">  
@@ -235,7 +239,7 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
               </div>  
             )}  
           </button>  
-  
+
           {/* Email Sign In Button - Always Visible */}  
           <button   
             onClick={handleEmailSignIn}  
@@ -252,7 +256,7 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
                 Continue with Email  
               </TranslatedText>  
             </div>  
-  
+
             {/* Spinner on the right side */}  
             {isEmailLoading && (  
               <div className="absolute right-4">  
@@ -260,8 +264,9 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
               </div>  
             )}  
           </button>  
-  
-          {/* Facebook Sign In Button - Always Visible */}  
+
+          {/* Facebook Sign In Button - Commented out for later implementation */}
+          {/*
           <button   
             onClick={handleFacebookSignIn}  
             disabled={isLoading && !isFacebookLoading}  
@@ -277,19 +282,19 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
                 Continue with Facebook  
               </TranslatedText>  
             </div>  
-  
-            {/* Spinner on the right side */}  
+
             {isFacebookLoading && (  
               <div className="absolute right-4">  
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-gray-600"></div>  
               </div>  
             )}  
           </button>  
-  
-          {/* Expandable Section */}  
+          */}
+
+          {/* Expandable Section - Commented out for later implementation */}
+          {/*
           {isExpanded && (  
             <div className="space-y-3 animate-in fade-in duration-300">  
-              {/* Phone Sign In Button */}  
               <button   
                 onClick={handlePhoneSignIn}  
                 disabled={isLoading && !isPhoneLoading}  
@@ -305,16 +310,14 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
                     Continue with Phone  
                   </TranslatedText>  
                 </div>  
-  
-                {/* Spinner on the right side */}  
+
                 {isPhoneLoading && (  
                   <div className="absolute right-4">  
                     <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-gray-600"></div>  
                   </div>  
                 )}  
               </button>  
-  
-              {/* Apple Sign In Button */}  
+
               <button   
                 onClick={handleAppleSignIn}  
                 disabled={isLoading && !isAppleLoading}  
@@ -331,16 +334,14 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
                     Continue with Apple  
                   </TranslatedText>  
                 </div>  
-  
-                {/* Spinner on the right side */}  
+
                 {isAppleLoading && (  
                   <div className="absolute right-4">  
                     <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-gray-600"></div>  
                   </div>  
                 )}  
               </button>  
-  
-              {/* WhatsApp Sign In Button */}  
+
               <button   
                 onClick={handleWhatsAppSignIn}  
                 disabled={isLoading && !isWhatsAppLoading}  
@@ -356,17 +357,14 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
                     Continue with WhatsApp  
                   </TranslatedText>  
                 </div>  
-  
-                {/* Spinner on the right side */}  
+
                 {isWhatsAppLoading && (  
                   <div className="absolute right-4">  
                     <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-gray-600"></div>  
                   </div>  
                 )}  
               </button>  
-  
-              {/* PIN Sign In Button - Commented out for now */}  
-              {/*  
+
               <button   
                 onClick={handlePinSignIn}  
                 disabled={isLoading && !isPinLoading}  
@@ -389,11 +387,9 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
                   </div>  
                 )}  
               </button>  
-              */}  
             </div>  
           )}  
-  
-          {/* Expand/Collapse Chevron Button */}  
+
           <button  
             onClick={toggleExpand}  
             className={`w-full flex items-center justify-center gap-2 py-3 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors ${  
@@ -414,8 +410,9 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
               {isExpanded ? 'Show Less' : 'More Options'}  
             </span>  
           </button>  
+          */}
         </div>  
-  
+
         {/* Secure Authentication Footer */}  
         <div className={`flex items-center justify-center gap-2 ${isCompact ? 'mb-3' : 'mb-4'}`}>  
           <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 24 24">  
@@ -425,7 +422,7 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
             Secure Authentication  
           </TranslatedText>  
         </div>  
-  
+
         {/* Terms Footer */}  
         <p className={`text-gray-500 text-center ${isCompact ? 'text-[10px] leading-tight px-2' : 'text-xs leading-relaxed'}`}>  
           <TranslatedText>  
@@ -439,5 +436,5 @@ const MainLoginScreen: React.FC<MainLoginScreenProps> = ({
     </div>  
   );  
 };  
-  
+
 export default MainLoginScreen;  
