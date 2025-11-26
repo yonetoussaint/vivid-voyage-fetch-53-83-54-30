@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  Home, Zap, Rss, Wallet, Tv, LayoutGrid, X, MoreHorizontal,
+  Zap, Rss, Wallet, Tv, LayoutGrid, X, MoreHorizontal,
   Settings, Bell, Bookmark, Star, Users, ShoppingBag, ChevronDown, User,
   MessageCircle, Film, Calendar, Gift, Camera, PlayCircle, 
   MapPin, Heart, HelpCircle, Store, ShoppingCart
@@ -16,17 +16,32 @@ import SimpleAuthPage from '@/pages/SimpleAuthPage';
 import SignInBanner from './SignInBanner';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useScreenOverlay } from '@/context/ScreenOverlayContext';
-import Logo from '@/components/home/Logo';
 import { useTranslation } from 'react-i18next';
 
 interface BottomNavTab {
   id: string;
   nameKey: string;
-  icon: React.FC<any> | React.ForwardRefExoticComponent<any>;
+  icon: React.FC<any> | React.ForwardRefExoticComponent<any> | string;
   path: string;
   isAvatar?: boolean;
   badge?: number;
 }
+
+// Custom HomeIcon component that uses the image
+const HomeIcon = ({ className, width, height }: { className?: string; width?: number; height?: number }) => {
+  return (
+    <img 
+      src="/20251125_090458.png" 
+      alt="Home"
+      className={className}
+      style={{ 
+        width: width || 20, 
+        height: height || 20,
+        objectFit: 'contain'
+      }}
+    />
+  );
+};
 
 const getNavItems = (
   isSellerDashboard: boolean, 
@@ -43,7 +58,7 @@ const getNavItems = (
   isProfilePage: boolean
 ): BottomNavTab[] => {
   let homeLabel = 'navigation.home';
-  let homeIcon: any = Logo;
+  let homeIcon: any = HomeIcon; // Use the custom HomeIcon component
   let homePath = '/for-you';
 
   if (isSellerDashboard || isPickupStation) {
@@ -223,7 +238,7 @@ export default function BottomNav() {
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [showSignInBanner, setShowSignInBanner] = useState(true);
   const [showMorePanel, setShowMorePanel] = useState(false);
-  
+
   const [reorderedNavItems, setReorderedNavItems] = useState(navItems);
   const [selectedMoreItem, setSelectedMoreItem] = useState(() => t('navigation.more'));
 
@@ -287,7 +302,7 @@ export default function BottomNav() {
   const handleMoreItemClick = (item: any) => {
     localStorage.setItem('selectedMoreItem', item.nameKey);
     setShowMorePanel(false);
-    
+
     if (item.path !== "#") {
       navigate(item.path);
     }
@@ -358,15 +373,33 @@ export default function BottomNav() {
                 )}
               >
                 <div className="relative flex items-center justify-center">
-                  <Icon
-                    className={cn(
-                      'transition-transform duration-300',
-                      'w-5 h-5',
-                      isActive ? 'scale-110' : 'scale-100'
-                    )}
-                    width={20}
-                    height={20}
-                  />
+                  {typeof Icon === 'function' ? (
+                    <Icon
+                      className={cn(
+                        'transition-transform duration-300',
+                        'w-5 h-5',
+                        isActive ? 'scale-110' : 'scale-100'
+                      )}
+                      width={20}
+                      height={20}
+                    />
+                  ) : (
+                    // Fallback for string icons (if needed)
+                    <img 
+                      src={Icon} 
+                      alt={item.nameKey}
+                      className={cn(
+                        'transition-transform duration-300',
+                        'w-5 h-5',
+                        isActive ? 'scale-110' : 'scale-100'
+                      )}
+                      style={{ 
+                        width: 20, 
+                        height: 20,
+                        objectFit: 'contain'
+                      }}
+                    />
+                  )}
                   {item.badge && (
                     <motion.div
                       initial={{ scale: 0 }}
