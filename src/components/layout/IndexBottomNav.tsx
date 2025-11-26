@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  Zap, Rss, Wallet, Tv, LayoutGrid, X, MoreHorizontal,
-  Settings, Bell, Bookmark, Star, Users, ShoppingBag, ChevronDown, User,
+  Zap, Wallet, LayoutGrid, X,
+  Settings, Bell, Bookmark, Star, Users, ShoppingBag, User,
   MessageCircle, Film, Calendar, Gift, Camera, PlayCircle, 
   MapPin, Heart, HelpCircle, Store, ShoppingCart
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import ProductUploadOverlay from '@/components/product/ProductUploadOverlay';
@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 interface BottomNavTab {
   id: string;
   nameKey: string;
-  icon: React.FC<any> | React.ForwardRefExoticComponent<any> | string;
+  icon: React.FC<any> | React.ForwardRefExoticComponent<any>;
   path: string;
   isAvatar?: boolean;
   badge?: number;
@@ -63,31 +63,31 @@ const getNavItems = (
 
   if (isSellerDashboard || isPickupStation) {
     homeLabel = 'navigation.store';
-    homeIcon = Store as any;
+    homeIcon = Store;
     homePath = isSellerDashboard ? '/seller-dashboard' : '/pickup-station';
   } else if (isExplorePage) {
     homeLabel = 'navigation.explore';
-    homeIcon = LayoutGrid as any;
+    homeIcon = LayoutGrid;
     homePath = '/explore';
   } else if (isWishlistPage) {
     homeLabel = 'Wishlist';
-    homeIcon = Heart as any;
+    homeIcon = Heart;
     homePath = '/wishlist';
   } else if (isCartPage) {
     homeLabel = 'Cart';
-    homeIcon = ShoppingCart as any;
+    homeIcon = ShoppingCart;
     homePath = '/cart';
   } else if (isNotificationsPage) {
     homeLabel = 'Notifications';
-    homeIcon = Bell as any;
+    homeIcon = Bell;
     homePath = '/notifications';
   } else if (isAddressesPage) {
     homeLabel = 'Addresses';
-    homeIcon = MapPin as any;
+    homeIcon = MapPin;
     homePath = '/addresses';
   } else if (isHelpPage) {
     homeLabel = 'Help';
-    homeIcon = HelpCircle as any;
+    homeIcon = HelpCircle;
     homePath = '/help';
   }
 
@@ -111,25 +111,25 @@ const getNavItems = (
   // Update if on specific pages
   if (isReelsPage) {
     shortsLabel = 'navigation.shorts';
-    shortsIcon = Zap as any;
+    shortsIcon = Zap;
     shortsPath = '/reels';
   }
 
   if (isMessagesPage) {
     messagesLabel = 'navigation.messages';
-    messagesIcon = MessageCircle as any;
+    messagesIcon = MessageCircle;
     messagesPath = '/messages';
   }
 
   if (isWalletPage) {
     walletLabel = 'navigation.wallet';
-    walletIcon = Wallet as any;
+    walletIcon = Wallet;
     walletPath = '/wallet';
   }
 
   if (isProfilePage) {
     profileLabel = 'navigation.account';
-    profileIcon = User as any;
+    profileIcon = User;
     profilePath = '/profile/orders';
   }
 
@@ -151,8 +151,8 @@ const getNavItems = (
 const moreMenuItems = [
   { id: 'account', nameKey: 'navigation.account', icon: User, path: '/profile' },
   { id: 'messages', nameKey: 'navigation.messages', icon: MessageCircle, path: '/messages' },
-  { id: 'videos', nameKey: 'navigation.videos', icon: Tv, path: '/videos' },
-  { id: 'reels', nameKey: 'navigation.shorts', icon: Film, path: '/reels' },
+  { id: 'videos', nameKey: 'navigation.videos', icon: Film, path: '/videos' },
+  { id: 'reels', nameKey: 'navigation.shorts', icon: Zap, path: '/reels' },
   { id: 'marketplace', nameKey: 'navigation.shopping', icon: ShoppingBag, path: '/shopping' },
   { id: 'events', nameKey: 'navigation.events', icon: Calendar, path: '/events' },
   { id: 'memories', nameKey: 'navigation.memories', icon: Camera, path: '/memories' },
@@ -172,7 +172,7 @@ export default function BottomNav() {
   const { user, setIsAuthOverlayOpen } = useAuth();
   const { hasActiveOverlay } = useScreenOverlay();
   const { t } = useTranslation('home');
-  const navRef = useRef<HTMLDivElement>(null); // Add ref
+  const navRef = useRef<HTMLDivElement>(null);
 
   // Check if we're on the seller edit profile page
   const isSellerEditProfile = location.pathname.includes('/seller-dashboard/edit-profile');
@@ -340,8 +340,8 @@ export default function BottomNav() {
       />
 
       <motion.div
-        ref={navRef} // Add ref here
-        data-bottom-nav // Add data attribute for the hook
+        ref={navRef}
+        data-bottom-nav
         initial={{ y: 100 }}
         animate={{ y: 0 }}
         className="fixed bottom-0 left-0 right-0 z-50 shadow-lg"
@@ -350,7 +350,7 @@ export default function BottomNav() {
           backdropFilter: 'blur(12px)',
           borderTop: '1px solid rgba(255, 255, 255, 0.2)',
           boxShadow: '0 -8px 32px rgba(0, 0, 0, 0.1)',
-          paddingBottom: 'env(safe-area-inset-bottom)', // Add safe area support
+          paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
         <div className="flex justify-between items-center h-12 px-2 max-w-md mx-auto relative">
@@ -373,33 +373,15 @@ export default function BottomNav() {
                 )}
               >
                 <div className="relative flex items-center justify-center">
-                  {typeof Icon === 'function' ? (
-                    <Icon
-                      className={cn(
-                        'transition-transform duration-300',
-                        'w-5 h-5',
-                        isActive ? 'scale-110' : 'scale-100'
-                      )}
-                      width={20}
-                      height={20}
-                    />
-                  ) : (
-                    // Fallback for string icons (if needed)
-                    <img 
-                      src={Icon} 
-                      alt={item.nameKey}
-                      className={cn(
-                        'transition-transform duration-300',
-                        'w-5 h-5',
-                        isActive ? 'scale-110' : 'scale-100'
-                      )}
-                      style={{ 
-                        width: 20, 
-                        height: 20,
-                        objectFit: 'contain'
-                      }}
-                    />
-                  )}
+                  <Icon
+                    className={cn(
+                      'transition-transform duration-300',
+                      'w-5 h-5',
+                      isActive ? 'scale-110' : 'scale-100'
+                    )}
+                    width={20}
+                    height={20}
+                  />
                   {item.badge && (
                     <motion.div
                       initial={{ scale: 0 }}
