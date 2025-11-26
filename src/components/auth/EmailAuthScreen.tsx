@@ -128,6 +128,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   const [isPasswordLoading, setIsPasswordLoading] = useState(false)
   const [isCodeLoading, setIsCodeLoading] = useState(false)
   const [isCreateAccountLoading, setIsCreateAccountLoading] = useState(false)
+  const [isActionInProgress, setIsActionInProgress] = useState(false) // New state to track any action in progress
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout>()
   const emailInputRef = useRef<HTMLInputElement>(null)
@@ -435,20 +436,23 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   }
 
   const handleContinueWithPassword = async () => {
-    if (!isCurrentInputValid || isPasswordLoading || currentCheckState !== "exists") return
+    if (!isCurrentInputValid || isPasswordLoading || currentCheckState !== "exists" || isActionInProgress) return
 
+    setIsActionInProgress(true)
     setIsPasswordLoading(true)
     try {
       await new Promise((resolve) => setTimeout(resolve, 400))
       onContinueWithPassword(getCurrentInput(), authMethod)
     } finally {
       setIsPasswordLoading(false)
+      setIsActionInProgress(false)
     }
   }
 
   const handleContinueWithCode = async () => {
-    if (!isCurrentInputValid || isCodeLoading || currentCheckState === "checking") return
+    if (!isCurrentInputValid || isCodeLoading || currentCheckState === "checking" || isActionInProgress) return
 
+    setIsActionInProgress(true)
     setIsCodeLoading(true)
     try {
       let result
@@ -465,22 +469,26 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       } else {
         toast.error(result.error || "Failed to send verification code")
         setIsCodeLoading(false)
+        setIsActionInProgress(false)
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to send verification code")
       setIsCodeLoading(false)
+      setIsActionInProgress(false)
     }
   }
 
   const handleCreateAccountClick = async () => {
-    if (authMethod !== "email" || !isEmailValid || isCreateAccountLoading || emailCheckState === "checking") return
+    if (authMethod !== "email" || !isEmailValid || isCreateAccountLoading || emailCheckState === "checking" || isActionInProgress) return
 
+    setIsActionInProgress(true)
     setIsCreateAccountLoading(true)
     try {
       await new Promise((resolve) => setTimeout(resolve, 400))
       onCreateAccount(email)
     } finally {
       setIsCreateAccountLoading(false)
+      setIsActionInProgress(false)
     }
   }
 
@@ -738,6 +746,10 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     const codeButtonState = getCodeButtonState()
     const showCreateAccountButton = authMethod === "email" && currentCheckState === "not-exists"
 
+    // Check if either button should be disabled due to the other action being in progress
+    const shouldDisablePasswordButton = passwordButtonState.disabled || isActionInProgress
+    const shouldDisableCodeButton = codeButtonState.disabled || isActionInProgress
+
     if (authMethod === "email" && isUntrustedProvider) {
       return <div className="space-y-3 mb-8"></div>
     }
@@ -790,10 +802,10 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       return (
         <div className="space-y-3 mb-8">
           <button
-            disabled={isCreateAccountLoading}
+            disabled={isCreateAccountLoading || isActionInProgress}
             onClick={handleCreateAccountClick}
             className={`w-full flex items-center justify-center gap-3 py-4 px-4 rounded-lg font-medium transition-all ${
-              !isCreateAccountLoading
+              !isCreateAccountLoading && !isActionInProgress
                 ? "bg-red-500 text-white hover:bg-red-600 transform active:scale-95"
                 : "bg-gray-200 text-gray-400 cursor-not-allowed"
             }`}
@@ -811,10 +823,10 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
         {/* Password Button - Show for both email and phone when account exists */}
         {(currentCheckState === "exists" || currentCheckState === "error") && (
           <button
-            disabled={passwordButtonState.disabled || isPasswordLoading}
+            disabled={shouldDisablePasswordButton}
             onClick={handleContinueWithPassword}
             className={`w-full flex items-center justify-center gap-3 py-4 px-4 rounded-lg font-medium transition-all ${
-              !passwordButtonState.disabled && !isPasswordLoading
+              !shouldDisablePasswordButton
                 ? "bg-red-500 text-white hover:bg-red-600 transform active:scale-95"
                 : "bg-gray-200 text-gray-400 cursor-not-allowed"
             }`}
@@ -827,10 +839,10 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
         {/* Code Button */}
         <button
-          disabled={codeButtonState.disabled || isCodeLoading}
+          disabled={shouldDisableCodeButton}
           onClick={handleContinueWithCode}
           className={`w-full flex items-center justify-center gap-3 py-4 px-4 border-2 rounded-lg font-medium transition-all ${
-            !codeButtonState.disabled && !isCodeLoading
+            !shouldDisableCodeButton
               ? "border-red-500 text-red-500 hover:bg-red-50 transform active:scale-95"
               : "border-gray-300 text-gray-400 cursor-not-allowed"
           }`}
