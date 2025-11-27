@@ -356,46 +356,6 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
     return `${mins}:${secs.toString().padStart(2, "0")}`
   }
 
-  const handleOpenMail = () => {
-    const domain = extractDomain(email).toLowerCase()
-    
-    // Simple web mail URLs - let OS handle app selection
-    const webmailUrls: Record<string, string> = {
-      "gmail.com": "https://mail.google.com",
-      "outlook.com": "https://outlook.live.com/mail",
-      "hotmail.com": "https://outlook.live.com/mail", 
-      "yahoo.com": "https://mail.yahoo.com",
-      "icloud.com": "https://www.icloud.com/mail",
-      "me.com": "https://www.icloud.com/mail",
-    }
-
-    // Simple approach: try webmail first, fallback to mailto
-    const webmailUrl = webmailUrls[domain] || `https://mail.${domain}`
-    
-    // Show loading state
-    setError("Opening your email...")
-    
-    try {
-      const newWindow = window.open(webmailUrl, '_blank')
-      
-      if (!newWindow) {
-        // Popup blocked - use mailto as fallback
-        window.location.href = `mailto:${email}`
-        setError("Opening your default email app...")
-      }
-      
-      // Clear message after 3 seconds
-      setTimeout(() => setError(""), 3000)
-      
-    } catch (error) {
-      console.error("Failed to open email:", error)
-      setError("Please check your email manually")
-      
-      // Clear error after 3 seconds
-      setTimeout(() => setError(""), 3000)
-    }
-  }
-
   return (
     <div className={isCompact ? "px-4 pb-4" : "min-h-screen bg-white flex flex-col px-4"}>
       <style>{`
@@ -513,29 +473,34 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
             </div>
           )}
 
+          {/* Timer Display - Top Right */}
+          <div className="flex justify-end mb-3">
+            {otpExpiry > 0 ? (
+              <div className="flex items-center gap-1.5">
+                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <span
+                  className={`font-medium ${otpExpiry < 60 ? "text-red-500" : "text-gray-600"} ${isCompact ? "text-xs" : "text-sm"}`}
+                >
+                  Expires in {formatTime(otpExpiry)}
+                </span>
+              </div>
+            ) : (
+              <span className={`text-red-500 font-medium ${isCompact ? "text-xs" : "text-sm"}`}>Code Expired</span>
+            )}
+          </div>
+
           {/* Code Input */}
           <div className={isCompact ? "space-y-3" : "space-y-4"}>
             <div>
-              {/* Timer and Paste Code Header */}
-              <div className="flex items-center justify-between mb-3">
-                {/* Open Mail Button - Left */}
-                <button
-                  onClick={handleOpenMail}
-                  className={`flex items-center gap-1.5 text-red-500 hover:text-red-600 font-medium transition-colors ${isCompact ? "text-xs" : "text-sm"}`}
-                  type="button"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    />
-                  </svg>
-                  Open Mail
-                </button>
-
-                {/* Paste Code Button - Right */}
+              {/* Paste Code Button - Left */}
+              <div className="flex justify-start mb-3">
                 <button
                   onClick={handlePasteFromClipboard}
                   disabled={isVerifying || isResending}
@@ -587,51 +552,6 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
                 <div className="flex items-center justify-center">
                   <p>Check your spam folder if you don't see the email</p>
                 </div>
-                {otpExpiry === 0 && <p className="text-red-500 font-medium">Code expired. Please request a new one.</p>}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between mt-4">
-              {/* Expiry Timer - Far Left */}
-              <div>
-                {otpExpiry > 0 ? (
-                  <div className="flex items-center gap-1.5">
-                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    <span
-                      className={`font-medium ${otpExpiry < 60 ? "text-red-500" : "text-gray-600"} ${isCompact ? "text-xs" : "text-sm"}`}
-                    >
-                      Expires in {formatTime(otpExpiry)}
-                    </span>
-                  </div>
-                ) : (
-                  <span className={`text-red-500 font-medium ${isCompact ? "text-xs" : "text-sm"}`}>Code Expired</span>
-                )}
-              </div>
-
-              {/* Resend Code - Far Right */}
-              <div>
-                {resendCooldown === 0 ? (
-                  <button
-                    onClick={handleResendCode}
-                    disabled={isResending || isVerifying}
-                    className={`text-red-500 hover:text-red-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${isCompact ? "text-sm" : "text-base"}`}
-                    type="button"
-                  >
-                    {isResending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                    Resend reset code
-                  </button>
-                ) : (
-                  <p className={`text-gray-500 ${isCompact ? "text-xs" : "text-sm"}`}>
-                    Resend code in {resendCooldown}s
-                  </p>
-                )}
               </div>
             </div>
 
@@ -651,6 +571,33 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
                 {isVerifying ? "Verifying..." : "Verify & Reset Password"}
               </span>
             </button>
+
+            {/* Resend Code Button - Centered below Verify */}
+            <div className="flex justify-center">
+              {resendCooldown === 0 ? (
+                <button
+                  onClick={handleResendCode}
+                  disabled={isResending || isVerifying}
+                  className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg transition-colors ${
+                    !isResending && !isVerifying
+                      ? "bg-white text-red-500 hover:bg-gray-50 border-gray-300 hover:border-red-300"
+                      : "bg-gray-100 text-gray-400 cursor-not-allowed border-gray-300"
+                  } ${isCompact ? "shadow-sm" : ""}`}
+                  type="button"
+                >
+                  {isResending ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
+                  <span className={`font-medium ${isCompact ? "text-sm" : "text-base"}`}>
+                    {isResending ? "Sending..." : "Resend reset code"}
+                  </span>
+                </button>
+              ) : (
+                <div className="w-full flex justify-center py-3">
+                  <p className={`text-gray-500 ${isCompact ? "text-sm" : "text-base"}`}>
+                    Resend code in {resendCooldown}s
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
