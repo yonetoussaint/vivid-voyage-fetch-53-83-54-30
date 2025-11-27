@@ -1,14 +1,24 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Key, HelpCircle, Mail, Loader2 } from 'lucide-react';
-import { FAVICON_OVERRIDES } from '../../constants/email';
-import { useAuth } from '@/contexts/auth/AuthContext';
+"use client"
+
+import type React from "react"
+import { useState, useRef, useEffect } from "react"
+import { ArrowLeft, Key, HelpCircle, Mail, Loader2 } from "lucide-react"
+const FAVICON_OVERRIDES: Record<string, string> = {
+  "gmail.com": "https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico",
+  "outlook.com": "https://outlook.live.com/favicon.ico",
+  "hotmail.com": "https://outlook.live.com/favicon.ico",
+  "yahoo.com": "https://s.yimg.com/rz/l/favicon.ico",
+  "icloud.com": "https://www.icloud.com/favicon.ico",
+  "me.com": "https://www.icloud.com/favicon.ico",
+}
+import { useAuth } from "@/contexts/auth/AuthContext"
 
 interface OTPResetScreenProps {
-  email: string;
-  onBack: () => void;
-  onOTPVerified: (email: string, otp: string) => void;
-  isCompact?: boolean;
-  onExpand?: () => void;
+  email: string
+  onBack: () => void
+  onOTPVerified: (email: string, otp: string) => void
+  isCompact?: boolean
+  onExpand?: () => void
 }
 
 const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
@@ -16,382 +26,382 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
   onBack,
   onOTPVerified,
   isCompact = false,
-  onExpand
+  onExpand,
 }) => {
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [isResending, setIsResending] = useState(false);
-  const [error, setError] = useState('');
-  const [resendCooldown, setResendCooldown] = useState(0);
-  const [shakeError, setShakeError] = useState(false);
-  const [otpExpiry, setOtpExpiry] = useState(600); // 10 minutes in seconds
-  const [showHelp, setShowHelp] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<boolean[]>([false, false, false, false, false, false]);
-  const { handleOTPSignIn } = useAuth();
+  const [otp, setOtp] = useState(["", "", "", "", "", ""])
+  const [isVerifying, setIsVerifying] = useState(false)
+  const [isResending, setIsResending] = useState(false)
+  const [error, setError] = useState("")
+  const [resendCooldown, setResendCooldown] = useState(0)
+  const [shakeError, setShakeError] = useState(false)
+  const [otpExpiry, setOtpExpiry] = useState(600) // 10 minutes in seconds
+  const [showHelp, setShowHelp] = useState(false)
+  const [validationErrors, setValidationErrors] = useState<boolean[]>([false, false, false, false, false, false])
+  const { handleOTPSignIn } = useAuth()
 
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
   // Initialize input refs
   useEffect(() => {
-    inputRefs.current = inputRefs.current.slice(0, 6);
-  }, []);
+    inputRefs.current = inputRefs.current.slice(0, 6)
+  }, [])
 
   // Countdown timer for resend
   useEffect(() => {
     if (resendCooldown > 0) {
-      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
-      return () => clearTimeout(timer);
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000)
+      return () => clearTimeout(timer)
     }
-  }, [resendCooldown]);
+  }, [resendCooldown])
 
   // OTP expiry countdown
   useEffect(() => {
     if (otpExpiry > 0) {
-      const timer = setTimeout(() => setOtpExpiry(otpExpiry - 1), 1000);
-      return () => clearTimeout(timer);
+      const timer = setTimeout(() => setOtpExpiry(otpExpiry - 1), 1000)
+      return () => clearTimeout(timer)
     }
-  }, [otpExpiry]);
+  }, [otpExpiry])
 
   const extractDomain = (emailValue: string): string => {
-    if (!emailValue.includes('@')) return '';
-    const parts = emailValue.split('@');
-    if (parts.length !== 2) return '';
-    const domain = parts[1].trim();
-    return domain.includes('.') && domain.length > 3 ? domain : '';
-  };
+    if (!emailValue.includes("@")) return ""
+    const parts = emailValue.split("@")
+    if (parts.length !== 2) return ""
+    const domain = parts[1].trim()
+    return domain.includes(".") && domain.length > 3 ? domain : ""
+  }
 
   const updateFavicon = (emailValue: string) => {
-    const domain = extractDomain(emailValue);
+    const domain = extractDomain(emailValue)
     if (domain) {
-      const url = FAVICON_OVERRIDES[domain] || `https://www.google.com/s2/favicons?domain=${domain}&sz=20`;
-      return { url, show: true, domain };
+      const url = FAVICON_OVERRIDES[domain] || `https://www.google.com/s2/favicons?domain=${domain}&sz=20`
+      return { url, show: true, domain }
     }
-    return { url: '', show: false, domain: '' };
-  };
+    return { url: "", show: false, domain: "" }
+  }
 
-  const { url: faviconUrl, show: showFavicon } = updateFavicon(email);
+  const { url: faviconUrl, show: showFavicon } = updateFavicon(email)
 
   // Check server health
   const checkServerHealth = async () => {
     try {
-      const response = await fetch('https://resend-u11p.onrender.com/api/health', {
-        method: 'GET',
+      const response = await fetch("https://resend-u11p.onrender.com/api/health", {
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-      });
-      return response.ok;
+      })
+      return response.ok
     } catch (error) {
-      console.error('Server health check failed:', error);
-      return false;
+      console.error("Server health check failed:", error)
+      return false
     }
-  };
+  }
 
   // OTP functions with better error handling
   const verifyCustomOTP = async (email: string, otp: string) => {
-    console.log('🔐 Frontend OTP Verification:', { email, otp });
+    console.log("🔐 Frontend OTP Verification:", { email, otp })
 
     // Check server health first
-    const isServerHealthy = await checkServerHealth();
+    const isServerHealthy = await checkServerHealth()
     if (!isServerHealthy) {
-      throw new Error('Server is currently unavailable. Please try again in a few moments.');
+      throw new Error("Server is currently unavailable. Please try again in a few moments.")
     }
 
     try {
-      const BACKEND_URL = 'https://resend-u11p.onrender.com';
+      const BACKEND_URL = "https://resend-u11p.onrender.com"
       const response = await fetch(`${BACKEND_URL}/api/verify-reset-otp`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, otp }),
-      });
+      })
 
-      console.log('📡 Backend Response Status:', response.status);
+      console.log("📡 Backend Response Status:", response.status)
 
       if (!response.ok) {
-        let errorMessage = `Server error: ${response.status}`;
+        let errorMessage = `Server error: ${response.status}`
         try {
-          const errorResult = await response.json();
-          errorMessage = errorResult.error || errorMessage;
+          const errorResult = await response.json()
+          errorMessage = errorResult.error || errorMessage
         } catch (e) {
-          const text = await response.text();
-          errorMessage = text || errorMessage;
+          const text = await response.text()
+          errorMessage = text || errorMessage
         }
-        throw new Error(errorMessage);
+        throw new Error(errorMessage)
       }
 
-      const result = await response.json();
-      console.log('📡 Backend Response Data:', result);
+      const result = await response.json()
+      console.log("📡 Backend Response Data:", result)
 
-      return { 
-        success: true, 
+      return {
+        success: true,
         purpose: result.purpose,
-        message: result.message 
-      };
-    } catch (error: any) {
-      console.error('❌ OTP Verification Failed:', error);
-      
-      if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
-        throw new Error('Network error. Please check your internet connection and try again.');
+        message: result.message,
       }
-      
-      throw error;
-    }
-  };
+    } catch (error: any) {
+      console.error("❌ OTP Verification Failed:", error)
 
-  const resendOTPEmail = async (email: string, purpose = 'password_reset') => {
+      if (error.message.includes("Failed to fetch") || error.message.includes("Network")) {
+        throw new Error("Network error. Please check your internet connection and try again.")
+      }
+
+      throw error
+    }
+  }
+
+  const resendOTPEmail = async (email: string, purpose = "password_reset") => {
     // Check server health first
-    const isServerHealthy = await checkServerHealth();
+    const isServerHealthy = await checkServerHealth()
     if (!isServerHealthy) {
-      throw new Error('Server is currently unavailable. Please try again in a few moments.');
+      throw new Error("Server is currently unavailable. Please try again in a few moments.")
     }
 
     try {
-      const BACKEND_URL = 'https://resend-u11p.onrender.com';
-      const endpoint = purpose === 'password_reset' ? '/api/send-reset-otp' : '/api/resend-otp';
+      const BACKEND_URL = "https://resend-u11p.onrender.com"
+      const endpoint = purpose === "password_reset" ? "/api/send-reset-otp" : "/api/resend-otp"
 
-      console.log('🔄 Resending OTP:', { email, purpose, endpoint });
+      console.log("🔄 Resending OTP:", { email, purpose, endpoint })
 
       const response = await fetch(`${BACKEND_URL}${endpoint}`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, purpose }),
-      });
+      })
 
       if (!response.ok) {
-        let errorMessage = 'Failed to resend verification code';
+        let errorMessage = "Failed to resend verification code"
         try {
-          const errorResult = await response.json();
-          errorMessage = errorResult.error || errorMessage;
+          const errorResult = await response.json()
+          errorMessage = errorResult.error || errorMessage
         } catch (e) {
-          const text = await response.text();
-          errorMessage = text || errorMessage;
+          const text = await response.text()
+          errorMessage = text || errorMessage
         }
-        throw new Error(errorMessage);
+        throw new Error(errorMessage)
       }
 
-      const result = await response.json();
-      console.log('📡 Resend Response:', result);
+      const result = await response.json()
+      console.log("📡 Resend Response:", result)
 
-      return { success: true };
+      return { success: true }
     } catch (error: any) {
-      console.error('Failed to resend OTP:', error);
-      
-      if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
-        throw new Error('Network error. Please check your internet connection and try again.');
+      console.error("Failed to resend OTP:", error)
+
+      if (error.message.includes("Failed to fetch") || error.message.includes("Network")) {
+        throw new Error("Network error. Please check your internet connection and try again.")
       }
-      
-      throw error;
+
+      throw error
     }
-  };
+  }
 
   const handleOtpChange = (index: number, value: string) => {
-    if (value.length > 1) return;
+    if (value.length > 1) return
 
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
-    setError('');
-    setShakeError(false);
-    setValidationErrors([false, false, false, false, false, false]);
+    const newOtp = [...otp]
+    newOtp[index] = value
+    setOtp(newOtp)
+    setError("")
+    setShakeError(false)
+    setValidationErrors([false, false, false, false, false, false])
 
     // Auto-focus next input
     if (value && index < 5) {
-      inputRefs.current[index + 1]?.focus();
+      inputRefs.current[index + 1]?.focus()
     }
 
     // Auto-submit when all fields are filled
-    if (newOtp.every(digit => digit !== '') && newOtp.join('').length === 6) {
-      handleVerifyOTP(newOtp.join(''));
+    if (newOtp.every((digit) => digit !== "") && newOtp.join("").length === 6) {
+      handleVerifyOTP(newOtp.join(""))
     }
-  };
+  }
 
   const handlePaste = (e: React.ClipboardEvent) => {
-    e.preventDefault();
-    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-    
+    e.preventDefault()
+    const pastedData = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6)
+
     if (pastedData.length === 6) {
-      const newOtp = pastedData.split('');
-      setOtp(newOtp);
-      setError('');
-      setShakeError(false);
-      setValidationErrors([false, false, false, false, false, false]);
-      inputRefs.current[5]?.focus();
-      
+      const newOtp = pastedData.split("")
+      setOtp(newOtp)
+      setError("")
+      setShakeError(false)
+      setValidationErrors([false, false, false, false, false, false])
+      inputRefs.current[5]?.focus()
+
       // Auto-submit after paste
-      handleVerifyOTP(pastedData);
+      handleVerifyOTP(pastedData)
     }
-  };
+  }
 
   const handlePasteFromClipboard = async () => {
     try {
-      const text = await navigator.clipboard.readText();
-      const pastedData = text.replace(/\D/g, '').slice(0, 6);
-      
+      const text = await navigator.clipboard.readText()
+      const pastedData = text.replace(/\D/g, "").slice(0, 6)
+
       if (pastedData.length === 6) {
-        const newOtp = pastedData.split('');
-        setOtp(newOtp);
-        setError('');
-        setShakeError(false);
-        setValidationErrors([false, false, false, false, false, false]);
-        inputRefs.current[5]?.focus();
-        
+        const newOtp = pastedData.split("")
+        setOtp(newOtp)
+        setError("")
+        setShakeError(false)
+        setValidationErrors([false, false, false, false, false, false])
+        inputRefs.current[5]?.focus()
+
         // Auto-submit after paste
-        handleVerifyOTP(pastedData);
+        handleVerifyOTP(pastedData)
       } else {
-        setError('Invalid code format. Please enter a 6-digit code.');
+        setError("Invalid code format. Please enter a 6-digit code.")
       }
     } catch (err) {
-      console.error('Failed to read clipboard:', err);
-      setError('Unable to access clipboard. Please paste manually or type the code.');
+      console.error("Failed to read clipboard:", err)
+      setError("Unable to access clipboard. Please paste manually or type the code.")
     }
-  };
+  }
 
   const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus()
     }
-  };
+  }
 
   const handleVerifyOTP = async (otpCode?: string) => {
-    const codeToVerify = otpCode || otp.join('');
-    if (codeToVerify.length !== 6 || isVerifying) return;
+    const codeToVerify = otpCode || otp.join("")
+    if (codeToVerify.length !== 6 || isVerifying) return
 
-    setIsVerifying(true);
-    setError('');
-    setShakeError(false);
+    setIsVerifying(true)
+    setError("")
+    setShakeError(false)
 
     try {
-      const result = await verifyCustomOTP(email, codeToVerify);
+      const result = await verifyCustomOTP(email, codeToVerify)
 
       if (result.success) {
         // All digits correct - make them all green
-        setValidationErrors([false, false, false, false, false, false]);
-        
+        setValidationErrors([false, false, false, false, false, false])
+
         // Optional: Brief delay to show green state before proceeding
         setTimeout(() => {
-          onOTPVerified(email, codeToVerify);
-        }, 300);
+          onOTPVerified(email, codeToVerify)
+        }, 300)
       } else {
         // All digits wrong - shake and make red
-        const errorMsg = result.error || 'Invalid verification code';
-        setError(errorMsg);
-        setShakeError(true);
-        setValidationErrors([true, true, true, true, true, true]);
-        
+        const errorMsg = result.error || "Invalid verification code"
+        setError(errorMsg)
+        setShakeError(true)
+        setValidationErrors([true, true, true, true, true, true])
+
         // Reset after shake animation
         setTimeout(() => {
-          setShakeError(false);
-          setOtp(['', '', '', '', '', '']);
-          setValidationErrors([false, false, false, false, false, false]);
-          inputRefs.current[0]?.focus();
-        }, 650);
+          setShakeError(false)
+          setOtp(["", "", "", "", "", ""])
+          setValidationErrors([false, false, false, false, false, false])
+          inputRefs.current[0]?.focus()
+        }, 650)
       }
     } catch (error: any) {
-      console.error('Error during OTP verification:', error);
-      let errorMsg = 'Verification failed. Please try again.';
-      
-      if (error.message.includes('Network')) {
-        errorMsg = 'Network error. Check your connection and try again.';
-      } else if (error.message.includes('expired')) {
-        errorMsg = 'Code has expired. Please request a new one.';
-      } else if (error.message.includes('Invalid')) {
-        errorMsg = 'Invalid code. Please check and try again.';
+      console.error("Error during OTP verification:", error)
+      let errorMsg = "Verification failed. Please try again."
+
+      if (error.message.includes("Network")) {
+        errorMsg = "Network error. Check your connection and try again."
+      } else if (error.message.includes("expired")) {
+        errorMsg = "Code has expired. Please request a new one."
+      } else if (error.message.includes("Invalid")) {
+        errorMsg = "Invalid code. Please check and try again."
       }
-      
-      setError(errorMsg);
-      setShakeError(true);
-      setValidationErrors([true, true, true, true, true, true]);
-      
+
+      setError(errorMsg)
+      setShakeError(true)
+      setValidationErrors([true, true, true, true, true, true])
+
       // Reset after shake animation
       setTimeout(() => {
-        setShakeError(false);
-        setOtp(['', '', '', '', '', '']);
-        setValidationErrors([false, false, false, false, false, false]);
-        inputRefs.current[0]?.focus();
-      }, 650);
+        setShakeError(false)
+        setOtp(["", "", "", "", "", ""])
+        setValidationErrors([false, false, false, false, false, false])
+        inputRefs.current[0]?.focus()
+      }, 650)
     } finally {
-      setIsVerifying(false);
+      setIsVerifying(false)
     }
-  };
+  }
 
   const handleResendCode = async () => {
-    if (resendCooldown > 0 || isResending) return;
+    if (resendCooldown > 0 || isResending) return
 
-    setIsResending(true);
-    setError('');
-    setShakeError(false);
+    setIsResending(true)
+    setError("")
+    setShakeError(false)
 
     try {
-      const result = await resendOTPEmail(email, 'password_reset');
+      const result = await resendOTPEmail(email, "password_reset")
 
       if (result.success) {
-        setResendCooldown(60);
-        setOtpExpiry(600); // Reset expiry timer
-        setOtp(['', '', '', '', '', '']);
-        setValidationErrors([false, false, false, false, false, false]);
-        inputRefs.current[0]?.focus();
-        setError(''); // Clear any previous errors
+        setResendCooldown(60)
+        setOtpExpiry(600) // Reset expiry timer
+        setOtp(["", "", "", "", "", ""])
+        setValidationErrors([false, false, false, false, false, false])
+        inputRefs.current[0]?.focus()
+        setError("") // Clear any previous errors
       } else {
-        setError(result.error || 'Failed to resend code. Please try again.');
+        setError(result.error || "Failed to resend code. Please try again.")
       }
     } catch (error: any) {
-      console.error('Error resending code:', error);
-      setError(error.message || 'Failed to resend code. Please try again.');
+      console.error("Error resending code:", error)
+      setError(error.message || "Failed to resend code. Please try again.")
     } finally {
-      setIsResending(false);
+      setIsResending(false)
     }
-  };
+  }
 
   const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, "0")}`
+  }
 
   const getEmailProvider = (emailValue: string) => {
-    const domain = extractDomain(emailValue).toLowerCase();
-    
-    const providers: Record<string, { name: string; url: string; color: string }> = {
-      'gmail.com': { 
-        name: 'Gmail', 
-        url: 'https://mail.google.com',
-        color: 'bg-red-500 hover:bg-red-600'
-      },
-      'outlook.com': { 
-        name: 'Outlook', 
-        url: 'https://outlook.live.com/mail',
-        color: 'bg-blue-500 hover:bg-blue-600'
-      },
-      'hotmail.com': { 
-        name: 'Outlook', 
-        url: 'https://outlook.live.com/mail',
-        color: 'bg-blue-500 hover:bg-blue-600'
-      },
-      'yahoo.com': { 
-        name: 'Yahoo Mail', 
-        url: 'https://mail.yahoo.com',
-        color: 'bg-purple-600 hover:bg-purple-700'
-      },
-      'icloud.com': { 
-        name: 'iCloud Mail', 
-        url: 'https://www.icloud.com/mail',
-        color: 'bg-gray-700 hover:bg-gray-800'
-      },
-      'me.com': { 
-        name: 'iCloud Mail', 
-        url: 'https://www.icloud.com/mail',
-        color: 'bg-gray-700 hover:bg-gray-800'
-      },
-    };
-    
-    return providers[domain] || null;
-  };
+    const domain = extractDomain(emailValue).toLowerCase()
 
-  const emailProvider = getEmailProvider(email);
+    const providers: Record<string, { name: string; url: string; color: string }> = {
+      "gmail.com": {
+        name: "Gmail",
+        url: "https://mail.google.com",
+        color: "bg-red-500 hover:bg-red-600",
+      },
+      "outlook.com": {
+        name: "Outlook",
+        url: "https://outlook.live.com/mail",
+        color: "bg-blue-500 hover:bg-blue-600",
+      },
+      "hotmail.com": {
+        name: "Outlook",
+        url: "https://outlook.live.com/mail",
+        color: "bg-blue-500 hover:bg-blue-600",
+      },
+      "yahoo.com": {
+        name: "Yahoo Mail",
+        url: "https://mail.yahoo.com",
+        color: "bg-purple-600 hover:bg-purple-700",
+      },
+      "icloud.com": {
+        name: "iCloud Mail",
+        url: "https://www.icloud.com/mail",
+        color: "bg-gray-700 hover:bg-gray-800",
+      },
+      "me.com": {
+        name: "iCloud Mail",
+        url: "https://www.icloud.com/mail",
+        color: "bg-gray-700 hover:bg-gray-800",
+      },
+    }
+
+    return providers[domain] || null
+  }
+
+  const emailProvider = getEmailProvider(email)
 
   return (
     <div className={isCompact ? "px-4 pb-4" : "min-h-screen bg-white flex flex-col px-4"}>
@@ -422,14 +432,12 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
             <ArrowLeft className="w-5 h-5 text-gray-700" />
           </button>
 
-          <h2 className="text-lg font-semibold text-gray-900">
-            Enter Reset Code
-          </h2>
+          <h2 className="text-lg font-semibold text-gray-900">Enter Reset Code</h2>
 
           <button
             className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-full transition-colors active:scale-95"
             aria-label="Help"
-            onClick={() => alert('Need help? Contact support@mimaht.com')}
+            onClick={() => alert("Need help? Contact support@mimaht.com")}
             type="button"
             disabled={isVerifying || isResending}
           >
@@ -443,40 +451,38 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
         <div className={isCompact ? "space-y-3 mb-4" : "space-y-3 mb-6"}>
           {/* Header Text */}
           <div className="text-center mb-6">
-            <h1 className={`text-gray-900 font-semibold mb-2 ${isCompact ? 'text-xl' : 'text-2xl'}`}>
+            <h1 className={`text-gray-900 font-semibold mb-2 ${isCompact ? "text-xl" : "text-2xl"}`}>
               Enter reset code
             </h1>
-            <p className={`text-gray-600 ${isCompact ? 'text-sm' : 'text-base'}`}>
+            <p className={`text-gray-600 ${isCompact ? "text-sm" : "text-base"}`}>
               We sent a 6-digit password reset code to your email address
             </p>
           </div>
 
           {/* Email Display */}
-          <div className={`p-4 bg-gray-50 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
+          <div className={`p-4 bg-gray-50 rounded-lg ${isCompact ? "mb-3" : "mb-4"}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-6 h-6">
                   {faviconUrl ? (
                     <img
-                      src={faviconUrl}
+                      src={faviconUrl || "/placeholder.svg"}
                       alt="Email provider favicon"
                       className="w-full h-full object-contain"
                       onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = '';
+                        e.currentTarget.onerror = null
+                        e.currentTarget.src = ""
                       }}
                     />
                   ) : (
                     <Mail className="w-full h-full text-gray-400" />
                   )}
                 </div>
-                <span className={`text-gray-700 font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>
-                  {email}
-                </span>
+                <span className={`text-gray-700 font-medium ${isCompact ? "text-sm" : "text-base"}`}>{email}</span>
               </div>
               <button
                 onClick={onBack}
-                className={`text-red-500 hover:text-red-600 font-medium ${isCompact ? 'text-xs' : 'text-sm'}`}
+                className={`text-red-500 hover:text-red-600 font-medium ${isCompact ? "text-xs" : "text-sm"}`}
                 type="button"
                 disabled={isVerifying || isResending}
               >
@@ -487,15 +493,21 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
 
           {/* Error Message */}
           {error && (
-            <div className={`p-4 border border-red-200 bg-red-50 text-red-700 rounded-lg transition-all duration-300 ${isCompact ? 'mb-3' : 'mb-4'}`}>
+            <div
+              className={`p-4 border border-red-200 bg-red-50 text-red-700 rounded-lg transition-all duration-300 ${isCompact ? "mb-3" : "mb-4"}`}
+            >
               <div className="flex items-start gap-2">
                 <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 <div>
-                  <p className={`font-medium ${isCompact ? 'text-xs' : 'text-sm'}`}>{error}</p>
-                  {error.includes('expired') && (
-                    <p className={`mt-1 text-red-600 ${isCompact ? 'text-xs' : 'text-sm'}`}>
+                  <p className={`font-medium ${isCompact ? "text-xs" : "text-sm"}`}>{error}</p>
+                  {error.includes("expired") && (
+                    <p className={`mt-1 text-red-600 ${isCompact ? "text-xs" : "text-sm"}`}>
                       Click "Resend reset code" below to get a new code.
                     </p>
                   )}
@@ -513,133 +525,161 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
                 {otpExpiry > 0 ? (
                   <div className="flex items-center gap-1.5">
                     <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
-                    <span className={`font-medium ${otpExpiry < 60 ? 'text-red-500' : 'text-gray-600'} ${isCompact ? 'text-xs' : 'text-sm'}`}>
+                    <span
+                      className={`font-medium ${otpExpiry < 60 ? "text-red-500" : "text-gray-600"} ${isCompact ? "text-xs" : "text-sm"}`}
+                    >
                       Expires in {formatTime(otpExpiry)}
                     </span>
                   </div>
                 ) : (
-                  <span className={`text-red-500 font-medium ${isCompact ? 'text-xs' : 'text-sm'}`}>Code Expired</span>
+                  <span className={`text-red-500 font-medium ${isCompact ? "text-xs" : "text-sm"}`}>Code Expired</span>
                 )}
 
                 {/* Paste Code Button - Right */}
                 <button
                   onClick={handlePasteFromClipboard}
                   disabled={isVerifying || isResending}
-                  className={`flex items-center gap-1.5 text-red-500 hover:text-red-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${isCompact ? 'text-xs' : 'text-sm'}`}
+                  className={`flex items-center gap-1.5 text-red-500 hover:text-red-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${isCompact ? "text-xs" : "text-sm"}`}
                   type="button"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                    />
                   </svg>
                   Paste Code
                 </button>
               </div>
 
-              <div className={`flex gap-2 justify-between ${shakeError ? 'shake' : ''}`}>
+              <div className={`flex gap-2 justify-between ${shakeError ? "shake" : ""}`}>
                 {otp.map((digit, index) => (
                   <div key={index} className="relative">
                     <input
-                      ref={el => inputRefs.current[index] = el}
+                      ref={(el) => (inputRefs.current[index] = el)}
                       type="text"
                       inputMode="numeric"
                       maxLength={1}
                       value={digit}
-                      onChange={(e) => handleOtpChange(index, e.target.value.replace(/\D/g, ''))}
+                      onChange={(e) => handleOtpChange(index, e.target.value.replace(/\D/g, ""))}
                       onKeyDown={(e) => handleKeyDown(index, e)}
                       onPaste={handlePaste}
                       disabled={isVerifying || isResending}
                       className={`text-center font-semibold border-2 rounded-lg outline-none transition-all duration-200 ${
-                        digit ? 'scale-in' : ''
+                        digit ? "scale-in" : ""
                       } ${
                         validationErrors[index]
-                          ? 'border-red-500 bg-red-50'
-                          : digit && otp.every(d => d !== '') && !validationErrors.some(e => e)
-                          ? 'border-green-500 bg-green-50 ring-2 ring-green-200'
-                          : 'border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500'
-                      } ${isVerifying || isResending ? 'bg-gray-100' : digit && !validationErrors[index] && otp.every(d => d !== '') ? '' : 'bg-white'} ${isCompact ? 'w-10 h-10 text-base' : 'w-12 h-12 text-lg'}`}
+                          ? "border-red-500 bg-red-50"
+                          : digit && otp.every((d) => d !== "") && !validationErrors.some((e) => e)
+                            ? "border-green-500 bg-green-50 ring-2 ring-green-200"
+                            : "border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                      } ${isVerifying || isResending ? "bg-gray-100" : digit && !validationErrors[index] && otp.every((d) => d !== "") ? "" : "bg-white"} ${isCompact ? "w-10 h-10 text-base" : "w-12 h-12 text-lg"}`}
                       autoComplete="off"
                     />
                   </div>
                 ))}
               </div>
-              
+
               {/* Helper text */}
-              <div className={`mt-3 space-y-1 ${isCompact ? 'text-xs' : 'text-sm'} text-gray-500`}>
+              <div className={`mt-3 space-y-1 ${isCompact ? "text-xs" : "text-sm"} text-gray-500`}>
                 <div className="flex items-center justify-between">
                   <p>Check your spam folder if you don't see the email</p>
                 </div>
-                {otpExpiry === 0 && (
-                  <p className="text-red-500 font-medium">Code expired. Please request a new one.</p>
+                {otpExpiry === 0 && <p className="text-red-500 font-medium">Code expired. Please request a new one.</p>}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              {/* Expiry Timer - Far Left */}
+              <div>
+                {otpExpiry > 0 ? (
+                  <div className="flex items-center gap-1.5">
+                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <span
+                      className={`font-medium ${otpExpiry < 60 ? "text-red-500" : "text-gray-600"} ${isCompact ? "text-xs" : "text-sm"}`}
+                    >
+                      Expires in {formatTime(otpExpiry)}
+                    </span>
+                  </div>
+                ) : (
+                  <span className={`text-red-500 font-medium ${isCompact ? "text-xs" : "text-sm"}`}>Code Expired</span>
+                )}
+              </div>
+
+              {/* Resend Code - Far Right */}
+              <div>
+                {resendCooldown === 0 ? (
+                  <button
+                    onClick={handleResendCode}
+                    disabled={isResending || isVerifying}
+                    className={`text-red-500 hover:text-red-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${isCompact ? "text-sm" : "text-base"}`}
+                    type="button"
+                  >
+                    {isResending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                    Resend reset code
+                  </button>
+                ) : (
+                  <p className={`text-gray-500 ${isCompact ? "text-xs" : "text-sm"}`}>
+                    Resend code in {resendCooldown}s
+                  </p>
                 )}
               </div>
             </div>
 
-            {/* Resend Code */}
-            <div className="text-center">
-              {resendCooldown === 0 ? (
-                <button
-                  onClick={handleResendCode}
-                  disabled={isResending || isVerifying}
-                  className={`text-red-500 hover:text-red-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto ${isCompact ? 'text-sm' : 'text-base'}`}
-                  type="button"
-                >
-                  {isResending ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : null}
-                  Resend reset code
-                </button>
-              ) : (
-                <p className={`text-gray-500 ${isCompact ? 'text-xs' : 'text-sm'}`}>
-                  Resend code in {resendCooldown}s
-                </p>
-              )}
-            </div>
-
             {/* Verify Button */}
             <button
-              disabled={otp.some(digit => !digit) || isVerifying || isResending}
+              disabled={otp.some((digit) => !digit) || isVerifying || isResending}
               onClick={() => handleVerifyOTP()}
               className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg transition-colors ${
-                !otp.some(digit => !digit) && !isVerifying && !isResending
-                  ? 'bg-red-500 text-white hover:bg-red-600 border-red-500'
-                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              } ${isCompact ? 'shadow-sm' : ''}`}
+                !otp.some((digit) => !digit) && !isVerifying && !isResending
+                  ? "bg-red-500 text-white hover:bg-red-600 border-red-500"
+                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
+              } ${isCompact ? "shadow-sm" : ""}`}
               type="button"
             >
-              {isVerifying ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <Key className="w-5 h-5" />
-              )}
-              <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>
-                {isVerifying ? 'Verifying...' : 'Verify & Reset Password'}
+              {isVerifying ? <Loader2 className="w-5 h-5 animate-spin" /> : <Key className="w-5 h-5" />}
+              <span className={`font-medium ${isCompact ? "text-sm" : "text-base"}`}>
+                {isVerifying ? "Verifying..." : "Verify & Reset Password"}
               </span>
             </button>
           </div>
         </div>
 
         {/* Secure Authentication Footer */}
-        <div className={`flex items-center justify-center gap-2 ${isCompact ? 'mb-3' : 'mb-4'}`}>
+        <div className={`flex items-center justify-center gap-2 ${isCompact ? "mb-3" : "mb-4"}`}>
           <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M18,8A6,6 0 0,0 12,2A6,6 0 0,0 6,8H4C2.89,8 2,8.89 2,10V20A2,2 0 0,0 4,22H20A2,2 0 0,0 22,20V10C22,8.89 21.1,8 20,8H18M12,4A4,4 0 0,1 16,8H8A4,4 0 0,1 12,4Z"/>
+            <path d="M18,8A6,6 0 0,0 12,2A6,6 0 0,0 6,8H4C2.89,8 2,8.89 2,10V20A2,2 0 0,0 4,22H20A2,2 0 0,0 22,20V10C22,8.89 21.1,8 20,8H18M12,4A4,4 0 0,1 16,8H8A4,4 0 0,1 12,4Z" />
           </svg>
-          <span className={`text-gray-500 ${isCompact ? 'text-xs' : 'text-sm'}`}>
-            Secure Authentication
-          </span>
+          <span className={`text-gray-500 ${isCompact ? "text-xs" : "text-sm"}`}>Secure Authentication</span>
         </div>
 
         {/* Terms Footer */}
-        <p className={`text-gray-500 text-center ${isCompact ? 'text-[10px] leading-tight px-2' : 'text-xs leading-relaxed'}`}>
-          By proceeding, you confirm that you've read and agree to our{' '}
-          <span className="text-red-500">Terms of Service</span>{' '}
-          and{' '}
+        <p
+          className={`text-gray-500 text-center ${isCompact ? "text-[10px] leading-tight px-2" : "text-xs leading-relaxed"}`}
+        >
+          By proceeding, you confirm that you've read and agree to our{" "}
+          <span className="text-red-500">Terms of Service</span> and{" "}
           <span className="text-red-500">Privacy Policy</span>
         </p>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default OTPResetScreen;
+export default OTPResetScreen
