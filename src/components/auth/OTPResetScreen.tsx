@@ -591,7 +591,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
 
               {/* Helper text */}
               <div className={`mt-3 space-y-1 ${isCompact ? "text-xs" : "text-sm"} text-gray-500`}>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-center">
                   <p>Check your spam folder if you don't see the email</p>
                 </div>
                 {otpExpiry === 0 && <p className="text-red-500 font-medium">Code expired. Please request a new one.</p>}
