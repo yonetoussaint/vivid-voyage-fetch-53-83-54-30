@@ -401,45 +401,80 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
     return providers[domain] || null
   }
 
-  const handleOpenMail = () => {
-    const provider = getEmailProvider(email)
+const handleOpenMail = () => {
+    const domain = extractDomain(email).toLowerCase()
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+    const isAndroid = /Android/i.test(navigator.userAgent)
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent)
     
-    if (provider) {
-      // Use Android intent for mobile devices
-      window.location.href = provider.url
+    // Web mail URLs
+    const webmailUrls: Record<string, string> = {
+      "gmail.com": "https://mail.google.com",
+      "outlook.com": "https://outlook.live.com/mail",
+      "hotmail.com": "https://outlook.live.com/mail",
+      "yahoo.com": "https://mail.yahoo.com",
+      "icloud.com": "https://www.icloud.com/mail",
+      "me.com": "https://www.icloud.com/mail",
+    }
+
+    if (isIOS) {
+      // iOS - Use custom URL schemes that work better
+      const iosSchemes: Record<string, string> = {
+        "gmail.com": "googlegmail://",
+        "outlook.com": "ms-outlook://",
+        "hotmail.com": "ms-outlook://",
+        "yahoo.com": "ymail://",
+      }
       
-      // Fallback for desktop or if intent fails - open webmail after a short delay
-      setTimeout(() => {
-        // Check if we're still on the same page (intent didn't work)
-        if (!document.hidden) {
-          const webmailUrls: Record<string, string> = {
-            "gmail.com": "https://mail.google.com",
-            "outlook.com": "https://outlook.live.com/mail",
-            "hotmail.com": "https://outlook.live.com/mail", 
-            "yahoo.com": "https://mail.yahoo.com",
-            "icloud.com": "https://www.icloud.com/mail",
-            "me.com": "https://www.icloud.com/mail",
-          }
-          const webmailUrl = webmailUrls[extractDomain(email).toLowerCase()] || `mailto:${email}`
-          window.open(webmailUrl, '_blank')
-        }
-      }, 500)
-    } else {
-      // Generic mail app opening for unknown providers
-      const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-      
-      if (isMobile) {
-        // Try generic mail app intent for Android
-        window.location.href = "intent://com.android.email#Intent;scheme=android-app;end"
-        
-        // Fallback to mailto
-        setTimeout(() => {
-          if (!document.hidden) {
-            window.open(`mailto:${email}`, '_blank')
-          }
-        }, 500)
+      const scheme = iosSchemes[domain]
+      if (scheme) {
+        window.location.href = scheme
       } else {
-        // Desktop - open default mail client
+        // Fallback to webmail
+        const webmail = webmailUrls[domain] || `https://mail.${domain}`
+        window.open(webmail, '_blank')
+      }
+    } else if (isAndroid) {
+      // Android - Use proper intent format
+      const androidIntents: Record<string, string> = {
+        "gmail.com": "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.APP_EMAIL;package=com.google.android.gm;end",
+        "outlook.com": "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.APP_EMAIL;package=com.microsoft.office.outlook;end",
+        "hotmail.com": "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.APP_EMAIL;package=com.microsoft.office.outlook;end",
+        "yahoo.com": "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.APP_EMAIL;package=com.yahoo.mobile.client.android.mail;end",
+      }
+      
+      const intent = androidIntents[domain]
+      if (intent) {
+        try {
+          window.location.href = intent
+          // Fallback to webmail after 1.5s if app didn't open
+          setTimeout(() => {
+            const webmail = webmailUrls[domain]
+            if (webmail) window.open(webmail, '_blank')
+          }, 1500)
+        } catch (e) {
+          // If intent fails, open webmail
+          const webmail = webmailUrls[domain] || `https://mail.${domain}`
+          window.open(webmail, '_blank')
+        }
+      } else {
+        // Generic email app intent
+        try {
+          window.location.href = "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.APP_EMAIL;end"
+          setTimeout(() => {
+            window.open(webmailUrls[domain] || `https://mail.${domain}`, '_blank')
+          }, 1500)
+        } catch (e) {
+          window.open(webmailUrls[domain] || `https://mail.${domain}`, '_blank')
+        }
+      }
+    } else {
+      // Desktop - Open webmail directly (mailto often doesn't work reliably)
+      const webmail = webmailUrls[domain]
+      if (webmail) {
+        window.open(webmail, '_blank')
+      } else {
+        // Try mailto as last resort for unknown providers
         window.open(`mailto:${email}`, '_blank')
       }
     }
