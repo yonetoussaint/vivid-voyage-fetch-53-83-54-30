@@ -280,18 +280,18 @@ export default function SlideUpPanel({
                 {showBackButton && onBack ? (
                   <button
                     onClick={onBack}
-                    className="p-1 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+                    className="hover:bg-gray-100 rounded-full transition-colors flex-shrink-0 leading-none"
                     aria-label="Go back"
                   >
-                    <ChevronLeft className="h-5 w-5 text-gray-600" />
+                    <ChevronLeft className="h-6 w-6 text-gray-600 font-bold stroke-[2.5]" />
                   </button>
                 ) : showCloseButton ? (
                   <button
                     onClick={onClose}
-                    className="p-1 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+                    className="hover:bg-gray-100 rounded-full transition-colors flex-shrink-0 leading-none"
                     aria-label="Close"
                   >
-                    <X className="h-5 w-5 text-gray-600" />
+                    <X className="h-6 w-6 text-gray-600 font-bold stroke-[2.5]" />
                   </button>
                 ) : null}
               </div>
@@ -304,10 +304,10 @@ export default function SlideUpPanel({
                 {showHelpButton && (
                   <button
                     onClick={onHelpClick}
-                    className="flex items-center gap-1 p-1 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+                    className="flex items-center gap-1 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0 leading-none"
                     aria-label="Help"
                   >
-                    <HelpCircle className="h-5 w-5 text-gray-600" />
+                    <HelpCircle className="h-6 w-6 text-gray-600 font-bold stroke-[2.5]" />
                     {helpButtonText && (
                       <span className="text-sm text-gray-600 mr-1">{helpButtonText}</span>
                     )}
