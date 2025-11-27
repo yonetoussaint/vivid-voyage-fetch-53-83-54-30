@@ -213,10 +213,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
       inputRefs.current[index + 1]?.focus()
     }
 
-    // Auto-submit when all fields are filled
-    if (newOtp.every((digit) => digit !== "") && newOtp.join("").length === 6) {
-      handleVerifyOTP(newOtp.join(""))
-    }
+    // REMOVED: Auto-submit when typing manually - only paste will auto-submit
   }
 
   const handlePaste = (e: React.ClipboardEvent) => {
@@ -231,7 +228,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
       setValidationErrors([false, false, false, false, false, false])
       inputRefs.current[5]?.focus()
 
-      // Auto-submit after paste
+      // Auto-submit only on paste
       handleVerifyOTP(pastedData)
     }
   }
@@ -249,7 +246,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
         setValidationErrors([false, false, false, false, false, false])
         inputRefs.current[5]?.focus()
 
-        // Auto-submit after paste
+        // Auto-submit only on paste
         handleVerifyOTP(pastedData)
       } else {
         setError("Invalid code format. Please enter a 6-digit code.")
@@ -292,10 +289,9 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
         setShakeError(true)
         setValidationErrors([true, true, true, true, true, true])
 
-        // Reset after shake animation
+        // Reset after shake animation but DON'T clear OTP - let user correct it
         setTimeout(() => {
           setShakeError(false)
-          setOtp(["", "", "", "", "", ""])
           setValidationErrors([false, false, false, false, false, false])
           inputRefs.current[0]?.focus()
         }, 650)
@@ -316,12 +312,10 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
       setShakeError(true)
       setValidationErrors([true, true, true, true, true, true])
 
-      // Reset after shake animation
+      // Reset after shake animation but DON'T clear OTP on network errors
       setTimeout(() => {
         setShakeError(false)
-        setOtp(["", "", "", "", "", ""])
         setValidationErrors([false, false, false, false, false, false])
-        inputRefs.current[0]?.focus()
       }, 650)
     } finally {
       setIsVerifying(false)
@@ -362,121 +356,43 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
     return `${mins}:${secs.toString().padStart(2, "0")}`
   }
 
-  const getEmailProvider = (emailValue: string) => {
-    const domain = extractDomain(emailValue).toLowerCase()
-
-    const providers: Record<string, { name: string; url: string; color: string }> = {
-      "gmail.com": {
-        name: "Gmail",
-        url: "intent://com.google.android.gm#Intent;scheme=android-app;end",
-        color: "bg-red-500 hover:bg-red-600",
-      },
-      "outlook.com": {
-        name: "Outlook",
-        url: "intent://com.microsoft.office.outlook#Intent;scheme=android-app;end",
-        color: "bg-blue-500 hover:bg-blue-600",
-      },
-      "hotmail.com": {
-        name: "Outlook",
-        url: "intent://com.microsoft.office.outlook#Intent;scheme=android-app;end",
-        color: "bg-blue-500 hover:bg-blue-600",
-      },
-      "yahoo.com": {
-        name: "Yahoo Mail",
-        url: "intent://com.yahoo.mobile.client.android.mail#Intent;scheme=android-app;end",
-        color: "bg-purple-600 hover:bg-purple-700",
-      },
-      "icloud.com": {
-        name: "iCloud Mail",
-        url: "intent://com.apple.mobilemail#Intent;scheme=android-app;end",
-        color: "bg-gray-700 hover:bg-gray-800",
-      },
-      "me.com": {
-        name: "iCloud Mail",
-        url: "intent://com.apple.mobilemail#Intent;scheme=android-app;end",
-        color: "bg-gray-700 hover:bg-gray-800",
-      },
-    }
-
-    return providers[domain] || null
-  }
-
-const handleOpenMail = () => {
+  const handleOpenMail = () => {
     const domain = extractDomain(email).toLowerCase()
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
-    const isAndroid = /Android/i.test(navigator.userAgent)
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent)
     
-    // Web mail URLs
+    // Simple web mail URLs - let OS handle app selection
     const webmailUrls: Record<string, string> = {
       "gmail.com": "https://mail.google.com",
       "outlook.com": "https://outlook.live.com/mail",
-      "hotmail.com": "https://outlook.live.com/mail",
+      "hotmail.com": "https://outlook.live.com/mail", 
       "yahoo.com": "https://mail.yahoo.com",
       "icloud.com": "https://www.icloud.com/mail",
       "me.com": "https://www.icloud.com/mail",
     }
 
-    if (isIOS) {
-      // iOS - Use custom URL schemes that work better
-      const iosSchemes: Record<string, string> = {
-        "gmail.com": "googlegmail://",
-        "outlook.com": "ms-outlook://",
-        "hotmail.com": "ms-outlook://",
-        "yahoo.com": "ymail://",
+    // Simple approach: try webmail first, fallback to mailto
+    const webmailUrl = webmailUrls[domain] || `https://mail.${domain}`
+    
+    // Show loading state
+    setError("Opening your email...")
+    
+    try {
+      const newWindow = window.open(webmailUrl, '_blank')
+      
+      if (!newWindow) {
+        // Popup blocked - use mailto as fallback
+        window.location.href = `mailto:${email}`
+        setError("Opening your default email app...")
       }
       
-      const scheme = iosSchemes[domain]
-      if (scheme) {
-        window.location.href = scheme
-      } else {
-        // Fallback to webmail
-        const webmail = webmailUrls[domain] || `https://mail.${domain}`
-        window.open(webmail, '_blank')
-      }
-    } else if (isAndroid) {
-      // Android - Use proper intent format
-      const androidIntents: Record<string, string> = {
-        "gmail.com": "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.APP_EMAIL;package=com.google.android.gm;end",
-        "outlook.com": "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.APP_EMAIL;package=com.microsoft.office.outlook;end",
-        "hotmail.com": "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.APP_EMAIL;package=com.microsoft.office.outlook;end",
-        "yahoo.com": "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.APP_EMAIL;package=com.yahoo.mobile.client.android.mail;end",
-      }
+      // Clear message after 3 seconds
+      setTimeout(() => setError(""), 3000)
       
-      const intent = androidIntents[domain]
-      if (intent) {
-        try {
-          window.location.href = intent
-          // Fallback to webmail after 1.5s if app didn't open
-          setTimeout(() => {
-            const webmail = webmailUrls[domain]
-            if (webmail) window.open(webmail, '_blank')
-          }, 1500)
-        } catch (e) {
-          // If intent fails, open webmail
-          const webmail = webmailUrls[domain] || `https://mail.${domain}`
-          window.open(webmail, '_blank')
-        }
-      } else {
-        // Generic email app intent
-        try {
-          window.location.href = "intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.APP_EMAIL;end"
-          setTimeout(() => {
-            window.open(webmailUrls[domain] || `https://mail.${domain}`, '_blank')
-          }, 1500)
-        } catch (e) {
-          window.open(webmailUrls[domain] || `https://mail.${domain}`, '_blank')
-        }
-      }
-    } else {
-      // Desktop - Open webmail directly (mailto often doesn't work reliably)
-      const webmail = webmailUrls[domain]
-      if (webmail) {
-        window.open(webmail, '_blank')
-      } else {
-        // Try mailto as last resort for unknown providers
-        window.open(`mailto:${email}`, '_blank')
-      }
+    } catch (error) {
+      console.error("Failed to open email:", error)
+      setError("Please check your email manually")
+      
+      // Clear error after 3 seconds
+      setTimeout(() => setError(""), 3000)
     }
   }
 
@@ -543,11 +459,11 @@ const handleOpenMail = () => {
                   {faviconUrl ? (
                     <img
                       src={faviconUrl || "/placeholder.svg"}
-                      alt="Email provider favicon"
+                      alt="Email provider"
                       className="w-full h-full object-contain"
                       onError={(e) => {
                         e.currentTarget.onerror = null
-                        e.currentTarget.src = ""
+                        e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236B7280'%3E%3Cpath d='M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z'/%3E%3C/svg%3E"
                       }}
                     />
                   ) : (
@@ -569,14 +485,19 @@ const handleOpenMail = () => {
 
           {/* Error Message */}
           {error && (
-            <div
-              className={`p-4 border border-red-200 bg-red-50 text-red-700 rounded-lg transition-all duration-300 ${isCompact ? "mb-3" : "mb-4"}`}
-            >
+            <div className={`p-3 border rounded-lg transition-all duration-300 ${isCompact ? "mb-3" : "mb-4"} ${
+              error.includes("Opening") || error.includes("Please check") 
+                ? "border-blue-200 bg-blue-50 text-blue-700" 
+                : "border-red-200 bg-red-50 text-red-700"
+            }`}>
               <div className="flex items-start gap-2">
-                <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                   <path
                     fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    d={error.includes("Opening") || error.includes("Please check") 
+                      ? "M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                      : "M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    }
                     clipRule="evenodd"
                   />
                 </svg>
@@ -597,7 +518,7 @@ const handleOpenMail = () => {
             <div>
               {/* Timer and Paste Code Header */}
               <div className="flex items-center justify-between mb-3">
-                {/* Open Mail Button - Left - FIXED: Removed duplicate icon */}
+                {/* Open Mail Button - Left */}
                 <button
                   onClick={handleOpenMail}
                   className={`flex items-center gap-1.5 text-red-500 hover:text-red-600 font-medium transition-colors ${isCompact ? "text-xs" : "text-sm"}`}
