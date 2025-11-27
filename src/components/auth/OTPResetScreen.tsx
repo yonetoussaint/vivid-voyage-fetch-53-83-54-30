@@ -473,34 +473,12 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
             </div>
           )}
 
-          {/* Timer Display - Top Right */}
-          <div className="flex justify-end mb-3">
-            {otpExpiry > 0 ? (
-              <div className="flex items-center gap-1.5">
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <span
-                  className={`font-medium ${otpExpiry < 60 ? "text-red-500" : "text-gray-600"} ${isCompact ? "text-xs" : "text-sm"}`}
-                >
-                  Expires in {formatTime(otpExpiry)}
-                </span>
-              </div>
-            ) : (
-              <span className={`text-red-500 font-medium ${isCompact ? "text-xs" : "text-sm"}`}>Code Expired</span>
-            )}
-          </div>
-
           {/* Code Input */}
           <div className={isCompact ? "space-y-3" : "space-y-4"}>
             <div>
-              {/* Paste Code Button - Left */}
-              <div className="flex justify-start mb-3">
+              {/* Paste Code and Timer - Same Horizontal Line */}
+              <div className="flex items-center justify-between mb-3">
+                {/* Paste Code Button - Left */}
                 <button
                   onClick={handlePasteFromClipboard}
                   disabled={isVerifying || isResending}
@@ -517,6 +495,27 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
                   </svg>
                   Paste Code
                 </button>
+
+                {/* Timer Display - Right */}
+                {otpExpiry > 0 ? (
+                  <div className="flex items-center gap-1.5">
+                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <span
+                      className={`font-medium ${otpExpiry < 60 ? "text-red-500" : "text-gray-600"} ${isCompact ? "text-xs" : "text-sm"}`}
+                    >
+                      Expires in {formatTime(otpExpiry)}
+                    </span>
+                  </div>
+                ) : (
+                  <span className={`text-red-500 font-medium ${isCompact ? "text-xs" : "text-sm"}`}>Code Expired</span>
+                )}
               </div>
 
               <div className={`flex gap-2 justify-between ${shakeError ? "shake" : ""}`}>
