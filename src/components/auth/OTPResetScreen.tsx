@@ -368,32 +368,32 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
     const providers: Record<string, { name: string; url: string; color: string }> = {
       "gmail.com": {
         name: "Gmail",
-        url: "https://mail.google.com",
+        url: "intent://com.google.android.gm#Intent;scheme=android-app;end",
         color: "bg-red-500 hover:bg-red-600",
       },
       "outlook.com": {
         name: "Outlook",
-        url: "https://outlook.live.com/mail",
+        url: "intent://com.microsoft.office.outlook#Intent;scheme=android-app;end",
         color: "bg-blue-500 hover:bg-blue-600",
       },
       "hotmail.com": {
         name: "Outlook",
-        url: "https://outlook.live.com/mail",
+        url: "intent://com.microsoft.office.outlook#Intent;scheme=android-app;end",
         color: "bg-blue-500 hover:bg-blue-600",
       },
       "yahoo.com": {
         name: "Yahoo Mail",
-        url: "https://mail.yahoo.com",
+        url: "intent://com.yahoo.mobile.client.android.mail#Intent;scheme=android-app;end",
         color: "bg-purple-600 hover:bg-purple-700",
       },
       "icloud.com": {
         name: "iCloud Mail",
-        url: "https://www.icloud.com/mail",
+        url: "intent://com.apple.mobilemail#Intent;scheme=android-app;end",
         color: "bg-gray-700 hover:bg-gray-800",
       },
       "me.com": {
         name: "iCloud Mail",
-        url: "https://www.icloud.com/mail",
+        url: "intent://com.apple.mobilemail#Intent;scheme=android-app;end",
         color: "bg-gray-700 hover:bg-gray-800",
       },
     }
@@ -403,8 +403,46 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
 
   const handleOpenMail = () => {
     const provider = getEmailProvider(email)
-    const mailtoLink = provider?.url || `mailto:${email}`
-    window.location.href = mailtoLink
+    
+    if (provider) {
+      // Use Android intent for mobile devices
+      window.location.href = provider.url
+      
+      // Fallback for desktop or if intent fails - open webmail after a short delay
+      setTimeout(() => {
+        // Check if we're still on the same page (intent didn't work)
+        if (!document.hidden) {
+          const webmailUrls: Record<string, string> = {
+            "gmail.com": "https://mail.google.com",
+            "outlook.com": "https://outlook.live.com/mail",
+            "hotmail.com": "https://outlook.live.com/mail", 
+            "yahoo.com": "https://mail.yahoo.com",
+            "icloud.com": "https://www.icloud.com/mail",
+            "me.com": "https://www.icloud.com/mail",
+          }
+          const webmailUrl = webmailUrls[extractDomain(email).toLowerCase()] || `mailto:${email}`
+          window.open(webmailUrl, '_blank')
+        }
+      }, 500)
+    } else {
+      // Generic mail app opening for unknown providers
+      const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      
+      if (isMobile) {
+        // Try generic mail app intent for Android
+        window.location.href = "intent://com.android.email#Intent;scheme=android-app;end"
+        
+        // Fallback to mailto
+        setTimeout(() => {
+          if (!document.hidden) {
+            window.open(`mailto:${email}`, '_blank')
+          }
+        }, 500)
+      } else {
+        // Desktop - open default mail client
+        window.open(`mailto:${email}`, '_blank')
+      }
+    }
   }
 
   return (
@@ -431,7 +469,6 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
             disabled={isVerifying || isResending}
             className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-full transition-colors active:scale-95"
             aria-label="Go back"
-            disabled={isVerifying || isResending}
           >
             <ArrowLeft className="w-5 h-5 text-gray-700" />
           </button>
@@ -525,7 +562,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
             <div>
               {/* Timer and Paste Code Header */}
               <div className="flex items-center justify-between mb-3">
-                {/* Open Mail Button - Left */}
+                {/* Open Mail Button - Left - FIXED: Removed duplicate icon */}
                 <button
                   onClick={handleOpenMail}
                   className={`flex items-center gap-1.5 text-red-500 hover:text-red-600 font-medium transition-colors ${isCompact ? "text-xs" : "text-sm"}`}
@@ -536,7 +573,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                     />
                   </svg>
                   Open Mail
