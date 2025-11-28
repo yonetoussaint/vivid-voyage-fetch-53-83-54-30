@@ -32,59 +32,6 @@ const FAVICON_OVERRIDES: Record<string, string> = {
   "yahoo.com": "https://s.yimg.com/cv/apiv2/social/images/yahoo_favicon.ico",
 }
 
-// Backend Preloading Hook
-const useEnhancedBackendPreloader = () => {
-  useEffect(() => {
-    const BACKEND_URLS = [
-      "https://supabase-y8ak.onrender.com/api/check-email",
-      "https://resend-u11p.onrender.com/api/send-otp",
-      "https://resend-u11p.onrender.com/api/send-phone-otp",
-    ]
-
-    let retryCount = 0
-    const maxRetries = 2
-
-    const pingBackend = async (url: string): Promise<boolean> => {
-      try {
-        const controller = new AbortController()
-        const timeout = setTimeout(() => controller.abort(), 8000)
-
-        const response = await fetch(url, {
-          method: "HEAD",
-          signal: controller.signal,
-        })
-
-        clearTimeout(timeout)
-        return response.ok
-      } catch (error) {
-        console.log(`Preload failed for ${url}:`, error)
-        return false
-      }
-    }
-
-    const preloadWithRetry = async () => {
-      const results = await Promise.all(BACKEND_URLS.map((url) => pingBackend(url)))
-
-      const allSuccessful = results.every((success) => success)
-
-      if (!allSuccessful && retryCount < maxRetries) {
-        retryCount++
-        const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 10000)
-        setTimeout(preloadWithRetry, retryDelay)
-      } else {
-        retryCount = 0
-      }
-    }
-
-    preloadWithRetry()
-    const interval = setInterval(preloadWithRetry, 4 * 60 * 1000)
-
-    return () => {
-      clearInterval(interval)
-    }
-  }, [])
-}
-
 const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   onBack,
   selectedLanguage,
@@ -98,8 +45,6 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   onExpand,
   showHeader = true,
 }) => {
-  useEnhancedBackendPreloader()
-
   const [email, setEmail] = useState(initialEmail)
   const [phone, setPhone] = useState("")
   const [isEmailValid, setIsEmailValid] = useState(false)
@@ -692,102 +637,51 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     const shouldDisablePasswordButton = passwordButtonState.disabled || isActionInProgress
     const shouldDisableCodeButton = codeButtonState.disabled || isActionInProgress
 
-    if (!isCurrentInputValid || currentCheckState === "unchecked") {
-      return (
-        <div className="space-y-3 mb-8">
-          <button
-            disabled={true}
-            className="w-full flex items-center justify-center gap-3 py-4 px-4 rounded-lg font-medium bg-gray-200 text-gray-400 cursor-not-allowed"
-            type="button"
-          >
-            <span className="flex items-center gap-2">
-              <span className="animate-pulse">
-                {authMethod === "email" ? "Waiting for email address" : "Waiting for phone number"}
-              </span>
-              <span className="flex gap-1">
-                <span className="animate-bounce text-sm opacity-60" style={{ animationDelay: "0s" }}>
-                  ●
-                </span>
-                <span className="animate-bounce text-sm opacity-60" style={{ animationDelay: "0.4s" }}>
-                  ●
-                </span>
-                <span className="animate-bounce text-sm opacity-60" style={{ animationDelay: "0.8s" }}>
-                  ●
-                </span>
-              </span>
-            </span>
-          </button>
-        </div>
-      )
-    }
-
-    if (currentCheckState === "checking") {
-      return (
-        <div className="space-y-3 mb-8">
-          <button
-            disabled={true}
-            className="w-full flex items-center justify-center gap-3 py-4 px-4 rounded-lg font-medium bg-gray-200 text-gray-400 cursor-not-allowed"
-            type="button"
-          >
-            <Loader2 className="w-5 h-5 animate-spin" />
-            <span>Checking {authMethod}...</span>
-          </button>
-        </div>
-      )
-    }
-
-    if (showCreateAccountButton) {
-      return (
-        <div className="space-y-3 mb-8">
-          <button
-            disabled={isCreateAccountLoading || isActionInProgress}
-            onClick={handleCreateAccountClick}
-            className={`w-full flex items-center justify-center gap-3 py-4 px-4 rounded-lg font-medium transition-all ${
-              !isCreateAccountLoading && !isActionInProgress
-                ? "bg-red-500 text-white hover:bg-red-600 transform active:scale-95"
-                : "bg-gray-200 text-gray-400 cursor-not-allowed"
-            }`}
-            type="button"
-          >
-            {isCreateAccountLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <UserPlus className="w-5 h-5" />}
-            <span>{isCreateAccountLoading ? "Loading..." : "Create Account"}</span>
-          </button>
-        </div>
-      )
-    }
-
+    // Always show both buttons, but disabled initially
     return (
       <div className="space-y-3 mb-8">
-        {/* Password Button - Show for both email and phone when account exists */}
-        {(currentCheckState === "exists" || currentCheckState === "error") && (
-          <button
-            disabled={shouldDisablePasswordButton}
-            onClick={handleContinueWithPassword}
-            className={`w-full flex items-center justify-center gap-3 py-4 px-4 rounded-lg font-medium transition-all ${
-              !shouldDisablePasswordButton
-                ? "bg-red-500 text-white hover:bg-red-600 transform active:scale-95"
-                : "bg-gray-200 text-gray-400 cursor-not-allowed"
-            }`}
-            type="button"
-          >
-            {isPasswordLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Lock className="w-5 h-5" />}
-            <span>{isPasswordLoading ? "Loading..." : passwordButtonState.text}</span>
-          </button>
-        )}
+        {/* Password Button - Always shown */}
+        <button
+          disabled={shouldDisablePasswordButton}
+          onClick={handleContinueWithPassword}
+          className={`w-full flex items-center justify-center gap-3 py-4 px-4 rounded-lg font-medium transition-all ${
+            !shouldDisablePasswordButton
+              ? "bg-red-500 text-white hover:bg-red-600 transform active:scale-95"
+              : "bg-gray-200 text-gray-400 cursor-not-allowed"
+          }`}
+          type="button"
+        >
+          {isPasswordLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Lock className="w-5 h-5" />}
+          <span>{isPasswordLoading ? "Loading..." : passwordButtonState.text}</span>
+        </button>
 
-        {/* Code Button */}
+        {/* Code Button - Always shown */}
         <button
           disabled={shouldDisableCodeButton}
-          onClick={handleContinueWithCode}
+          onClick={showCreateAccountButton ? handleCreateAccountClick : handleContinueWithCode}
           className={`w-full flex items-center justify-center gap-3 py-4 px-4 border-2 rounded-lg font-medium transition-all ${
             !shouldDisableCodeButton
-              ? "border-red-500 text-red-500 hover:bg-red-50 transform active:scale-95"
+              ? showCreateAccountButton
+                ? "bg-red-500 text-white hover:bg-red-600 transform active:scale-95"
+                : "border-red-500 text-red-500 hover:bg-red-50 transform active:scale-95"
               : "border-gray-300 text-gray-400 cursor-not-allowed"
           }`}
           type="button"
         >
-          {isCodeLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Key className="w-5 h-5" />}
-          <span>{isCodeLoading ? "Sending..." : codeButtonState.text}</span>
+          {isCodeLoading || isCreateAccountLoading ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : showCreateAccountButton ? (
+            <UserPlus className="w-5 h-5" />
+          ) : (
+            <Key className="w-5 h-5" />
+          )}
+          <span>
+            {isCodeLoading || isCreateAccountLoading
+              ? "Loading..."
+              : showCreateAccountButton
+                ? "Create Account"
+                : codeButtonState.text}
+          </span>
         </button>
       </div>
     )
@@ -898,7 +792,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
               </div>
             </div>
 
-            {/* Inline Action Buttons */}
+            {/* Always show action buttons (initially disabled) */}
             {renderActionButtons()}
           </div>
         </div>
