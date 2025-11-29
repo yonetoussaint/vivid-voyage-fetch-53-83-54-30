@@ -51,6 +51,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   const [isCodeLoading, setIsCodeLoading] = useState(false)
   const [isCreateAccountLoading, setIsCreateAccountLoading] = useState(false)
   const [isActionInProgress, setIsActionInProgress] = useState(false)
+  const [fieldError, setFieldError] = useState<string>("")
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout>()
   const emailInputRef = useRef<HTMLInputElement>(null)
@@ -209,6 +210,23 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       }
     }
   }
+
+  // Update field error based on current state
+  useEffect(() => {
+    if (!isCurrentInputValid && getCurrentInput().length > 0) {
+      if (authMethod === "email") {
+        setFieldError("Please enter a valid email address")
+      } else {
+        setFieldError("Please enter a valid Haitian phone number (+509XXXXXXXX)")
+      }
+    } else if (currentCheckState === "error") {
+      setFieldError("Unable to verify account. Please try again or use verification code.")
+    } else if (currentCheckState === "not-exists" && authMethod === "phone") {
+      setFieldError("This phone number is not registered. Please check the number or use email instead.")
+    } else {
+      setFieldError("")
+    }
+  }, [isCurrentInputValid, currentCheckState, authMethod, getCurrentInput])
 
   // Debounced email check
   const debouncedEmailCheck = useCallback(
@@ -465,51 +483,34 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     return null
   }
 
+  const renderFieldError = () => {
+    if (!fieldError) return null
+
+    return (
+      <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+        <svg className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+          <path
+            fillRule="evenodd"
+            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+            clipRule="evenodd"
+          />
+        </svg>
+        <p className="text-red-700 text-sm">{fieldError}</p>
+      </div>
+    )
+  }
+
   const renderStatusMessage = () => {
-    if (currentCheckState === "error") {
+    if (currentCheckState === "not-exists" && authMethod === "email") {
       return (
-        <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <div className="flex items-start gap-2">
-            <svg className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path
-                fillRule="evenodd"
-                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <div className="flex-1">
-              <p className="text-yellow-800 text-sm font-medium mb-1">Connection issue</p>
-              <p className="text-yellow-700 text-xs">
-                You can still continue with verification code if the connection doesn't improve.
-              </p>
-            </div>
+        <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
+          <div className="flex-1">
+            <p className="text-purple-700 text-xs">
+              This email isn't registered. Click "Create Account" to continue.
+            </p>
           </div>
         </div>
       )
-    }
-
-    if (currentCheckState === "not-exists") {
-      if (authMethod === "email") {
-        return (
-          <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
-            <div className="flex-1">
-              <p className="text-purple-700 text-xs">
-                This email isn't registered. Click "Create Account" to continue.
-              </p>
-            </div>
-          </div>
-        )
-      } else {
-        return (
-          <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
-            <div className="flex-1">
-              <p className="text-purple-700 text-xs">
-                This phone number isn't registered. Please check for typos or use a different number.
-              </p>
-            </div>
-          </div>
-        )
-      }
     }
 
     return null
@@ -674,7 +675,9 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
                     autoComplete="email"
                     ref={emailInputRef}
                     disabled={isLoading}
-                    className="relative w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors bg-transparent disabled:opacity-50"
+                    className={`relative w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors bg-transparent disabled:opacity-50 ${
+                      fieldError ? "border-red-500" : "border-gray-300"
+                    }`}
                   />
                 ) : (
                   <input
@@ -686,10 +689,15 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
                     autoComplete="tel"
                     ref={phoneInputRef}
                     disabled={isLoading}
-                    className="relative w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors bg-transparent disabled:opacity-50"
+                    className={`relative w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors bg-transparent disabled:opacity-50 ${
+                      fieldError ? "border-red-500" : "border-gray-300"
+                    }`}
                   />
                 )}
               </div>
+
+              {/* Field-level error message */}
+              {renderFieldError()}
             </div>
 
             {/* Single primary action button based on state */}
