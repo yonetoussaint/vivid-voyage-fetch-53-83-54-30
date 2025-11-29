@@ -353,7 +353,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   }
 
   const handleContinueWithPassword = async () => {
-    if (!isCurrentInputValid || isPasswordLoading || isActionInProgress) return
+    if (!isCurrentInputValid || isPasswordLoading || isActionInProgress || currentCheckState !== "exists") return
 
     setIsActionInProgress(true)
     setIsPasswordLoading(true)
@@ -621,16 +621,23 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     const codeButtonText = getCodeButtonText()
     const showCreateAccountButton = authMethod === "email" && currentCheckState === "not-exists"
 
-    // Buttons are disabled when:
-    // - Input is invalid OR
-    // - Checking state is in progress OR  
-    // - An action is already in progress
-    const shouldDisablePasswordButton = !isCurrentInputValid || currentCheckState === "checking" || isActionInProgress
-    const shouldDisableCodeButton = !isCurrentInputValid || currentCheckState === "checking" || isActionInProgress
+    // Password button is only enabled when:
+    // - Input is valid AND
+    // - Account exists AND
+    // - No action is in progress
+    const shouldDisablePasswordButton = !isCurrentInputValid || currentCheckState !== "exists" || isActionInProgress
+
+    // Code/Create Account button is enabled when:
+    // - Input is valid AND
+    // - No action is in progress AND
+    // - For email: always enabled when valid (can send OTP or create account)
+    // - For phone: only enabled when account exists or there's an error
+    const shouldDisableCodeButton = !isCurrentInputValid || isActionInProgress || 
+      (authMethod === "phone" && currentCheckState === "not-exists")
 
     return (
       <div className="space-y-3 mb-8">
-        {/* Password Button - Always shown */}
+        {/* Password Button - Only enabled when account exists */}
         <button
           disabled={shouldDisablePasswordButton}
           onClick={handleContinueWithPassword}
@@ -645,7 +652,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
           <span>{isPasswordLoading ? "Loading..." : passwordButtonText}</span>
         </button>
 
-        {/* Code Button - Always shown */}
+        {/* Code/Create Account Button */}
         <button
           disabled={shouldDisableCodeButton}
           onClick={showCreateAccountButton ? handleCreateAccountClick : handleContinueWithCode}
