@@ -2,21 +2,19 @@
 
 import type React from "react"
 import { useState, useRef, useEffect, useCallback } from "react"
-import { ArrowLeft, HelpCircle, Mail, Loader2, UserPlus, Lock, Key, Phone } from "lucide-react"
+import { ArrowLeft, HelpCircle, Mail, Loader2, UserPlus, Lock, Key } from "lucide-react"
 import { toast } from "sonner"
 
 // Inline type definitions
 type EmailCheckState = "unchecked" | "checking" | "exists" | "not-exists" | "error"
-type AuthMethod = "email" | "phone"
 
 interface EmailAuthScreenProps {
   onBack: () => void
   selectedLanguage: string
-  onContinueWithPassword: (identifier: string, method: "email" | "phone") => void
-  onContinueWithCode: (identifier: string, method: "email" | "phone") => void
+  onContinueWithPassword: (email: string) => void
+  onContinueWithCode: (email: string) => void
   onCreateAccount: (email: string) => void
   onSignUpClick: () => void
-  authMethod: AuthMethod
   initialEmail?: string
   isCompact?: boolean
   onExpand?: () => void
@@ -33,20 +31,15 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   onContinueWithCode,
   onCreateAccount,
   onSignUpClick,
-  authMethod,
   initialEmail = "",
   isCompact = false,
   onExpand,
   showHeader = true,
 }) => {
   const [email, setEmail] = useState(initialEmail)
-  const [phone, setPhone] = useState("")
   const [isEmailValid, setIsEmailValid] = useState(false)
-  const [isPhoneValid, setIsPhoneValid] = useState(false)
   const [emailCheckState, setEmailCheckState] = useState<EmailCheckState>("unchecked")
-  const [phoneCheckState, setPhoneCheckState] = useState<EmailCheckState>("unchecked")
   const [lastCheckedEmail, setLastCheckedEmail] = useState("")
-  const [lastCheckedPhone, setLastCheckedPhone] = useState("")
   const [isPasswordLoading, setIsPasswordLoading] = useState(false)
   const [isCodeLoading, setIsCodeLoading] = useState(false)
   const [isCreateAccountLoading, setIsCreateAccountLoading] = useState(false)
@@ -55,12 +48,6 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout>()
   const emailInputRef = useRef<HTMLInputElement>(null)
-  const phoneInputRef = useRef<HTMLInputElement>(null)
-
-  // Get current input value and validity based on auth method
-  const getCurrentInput = () => (authMethod === "email" ? email : phone)
-  const isCurrentInputValid = authMethod === "email" ? isEmailValid : isPhoneValid
-  const currentCheckState = authMethod === "email" ? emailCheckState : phoneCheckState
 
   // Email validation
   const hasValidEmailFormat = useCallback((emailAddress: string): boolean => {
@@ -70,21 +57,6 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   const validateEmail = useCallback((emailAddress: string): boolean => {
     return hasValidEmailFormat(emailAddress)
   }, [hasValidEmailFormat])
-
-  // Phone validation for Haitian numbers only
-  const validatePhone = useCallback((phoneNumber: string): boolean => {
-    const cleaned = phoneNumber.replace(/\D/g, "")
-
-    if (cleaned.startsWith("509") && cleaned.length === 11) {
-      return true // +509XXXXXXXXX
-    } else if (cleaned.startsWith("09") && cleaned.length === 10) {
-      return true // 09XXXXXXXX
-    } else if (cleaned.startsWith("9") && cleaned.length === 9) {
-      return true // 9XXXXXXXX
-    }
-
-    return false
-  }, [])
 
   // API call to check if email exists
   const checkEmailExists = useCallback(async (emailToCheck: string): Promise<boolean> => {
@@ -105,38 +77,6 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       }
     } catch (error) {
       console.error("Error checking email:", error)
-      throw error
-    }
-  }, [])
-
-  // API call to check if phone exists
-  const checkPhoneExists = useCallback(async (phoneToCheck: string): Promise<boolean> => {
-    try {
-      const cleaned = phoneToCheck.replace(/\D/g, "")
-      let formattedPhone = ""
-
-      if (cleaned.startsWith("509") && cleaned.length === 11) {
-        formattedPhone = `+${cleaned}`
-      } else if (cleaned.startsWith("09") && cleaned.length === 10) {
-        formattedPhone = `+509${cleaned.substring(1)}`
-      } else if (cleaned.startsWith("9") && cleaned.length === 9) {
-        formattedPhone = `+509${cleaned}`
-      } else {
-        return false
-      }
-
-      const response = await fetch("https://resend-u11p.onrender.com/api/check-phone", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ phone: formattedPhone }),
-      })
-
-      const data = await response.json()
-      return data.exists
-    } catch (error) {
-      console.error("Error checking phone:", error)
       throw error
     }
   }, [])
@@ -176,57 +116,16 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     }
   }
 
-  // Real OTP function for phone using Twilio
-  const sendCustomOTPPhone = async (phoneNumber: string) => {
-    try {
-      const BACKEND_URL = "https://resend-u11p.onrender.com"
-      const response = await fetch(`${BACKEND_URL}/api/send-phone-otp`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ phoneNumber }),
-      })
-
-      if (!response.ok) {
-        let errorMessage = `Server error: ${response.status}`
-        try {
-          const errorData = await response.json()
-          errorMessage = errorData.error || errorMessage
-        } catch (e) {
-          const errorText = await response.text()
-          errorMessage = errorText || errorMessage
-        }
-        throw new Error(errorMessage)
-      }
-
-      const result = await response.json()
-      return { success: true }
-    } catch (error: any) {
-      console.error("Failed to send phone OTP:", error)
-      return {
-        success: false,
-        error: error.message || "Failed to send verification code. Please try again.",
-      }
-    }
-  }
-
   // Update field error based on current state
   useEffect(() => {
-    if (!isCurrentInputValid && getCurrentInput().length > 0) {
-      if (authMethod === "email") {
-        setFieldError("Please enter a valid email address")
-      } else {
-        setFieldError("Please enter a valid Haitian phone number (+509XXXXXXXX)")
-      }
-    } else if (currentCheckState === "error") {
+    if (!isEmailValid && email.length > 0) {
+      setFieldError("Please enter a valid email address")
+    } else if (emailCheckState === "error") {
       setFieldError("Unable to verify account. Please try again or use verification code.")
-    } else if (currentCheckState === "not-exists" && authMethod === "phone") {
-      setFieldError("This phone number is not registered. Please check the number or use email instead.")
     } else {
       setFieldError("")
     }
-  }, [isCurrentInputValid, currentCheckState, authMethod, getCurrentInput])
+  }, [isEmailValid, emailCheckState, email])
 
   // Debounced email check
   const debouncedEmailCheck = useCallback(
@@ -252,66 +151,25 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     [checkEmailExists, lastCheckedEmail, validateEmail],
   )
 
-  // Debounced phone check
-  const debouncedPhoneCheck = useCallback(
-    (phoneToCheck: string) => {
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current)
-      }
-
-      debounceTimeoutRef.current = setTimeout(async () => {
-        if (validatePhone(phoneToCheck) && phoneToCheck !== lastCheckedPhone) {
-          setPhoneCheckState("checking")
-          try {
-            const exists = await checkPhoneExists(phoneToCheck)
-            setPhoneCheckState(exists ? "exists" : "not-exists")
-            setLastCheckedPhone(phoneToCheck)
-          } catch (error) {
-            setPhoneCheckState("error")
-            setLastCheckedPhone(phoneToCheck)
-          }
-        }
-      }, 800)
-    },
-    [checkPhoneExists, lastCheckedPhone, validatePhone],
-  )
-
   // Main validation effect for email
   useEffect(() => {
-    if (authMethod === "email") {
-      const hasValidFormat = hasValidEmailFormat(email)
-      setIsEmailValid(hasValidFormat)
+    const hasValidFormat = hasValidEmailFormat(email)
+    setIsEmailValid(hasValidFormat)
 
-      if (!hasValidFormat) {
-        setEmailCheckState("unchecked")
-        setLastCheckedEmail("")
-      } else {
-        debouncedEmailCheck(email)
-      }
+    if (!hasValidFormat) {
+      setEmailCheckState("unchecked")
+      setLastCheckedEmail("")
+    } else {
+      debouncedEmailCheck(email)
     }
-  }, [email, authMethod, debouncedEmailCheck, hasValidEmailFormat])
-
-  // Phone validation effect
-  useEffect(() => {
-    if (authMethod === "phone") {
-      const isValid = validatePhone(phone)
-      setIsPhoneValid(isValid)
-
-      if (!isValid) {
-        setPhoneCheckState("unchecked")
-        setLastCheckedPhone("")
-      } else {
-        debouncedPhoneCheck(phone)
-      }
-    }
-  }, [phone, authMethod, debouncedPhoneCheck, validatePhone])
+  }, [email, debouncedEmailCheck, hasValidEmailFormat])
 
   // Initialize validation state
   useEffect(() => {
-    if (initialEmail && authMethod === "email") {
+    if (initialEmail) {
       setIsEmailValid(validateEmail(initialEmail))
     }
-  }, [initialEmail, authMethod, validateEmail])
+  }, [initialEmail, validateEmail])
 
   // Cleanup effect
   useEffect(() => {
@@ -326,38 +184,14 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     setEmail(value)
   }
 
-  const handlePhoneChange = (value: string) => {
-    let cleaned = value.replace(/[^\d+]/g, "")
-
-    if (!cleaned.startsWith("+509") && cleaned.length > 0) {
-      if (cleaned.startsWith("509")) {
-        cleaned = "+" + cleaned
-      } else if (cleaned.startsWith("09")) {
-        cleaned = "+509" + cleaned.substring(2)
-      } else if (cleaned.startsWith("9")) {
-        cleaned = "+509" + cleaned.substring(1)
-      } else if (cleaned.startsWith("+") && !cleaned.startsWith("+509")) {
-        cleaned = "+509"
-      } else if (!cleaned.startsWith("+")) {
-        cleaned = "+509" + cleaned
-      }
-    }
-
-    if (cleaned.length > 12) {
-      cleaned = cleaned.substring(0, 12)
-    }
-
-    setPhone(cleaned)
-  }
-
   const handleContinueWithPassword = async () => {
-    if (!isCurrentInputValid || isPasswordLoading || isActionInProgress || currentCheckState !== "exists") return
+    if (!isEmailValid || isPasswordLoading || isActionInProgress || emailCheckState !== "exists") return
 
     setIsActionInProgress(true)
     setIsPasswordLoading(true)
     try {
       await new Promise((resolve) => setTimeout(resolve, 400))
-      onContinueWithPassword(getCurrentInput(), authMethod)
+      onContinueWithPassword(email)
     } finally {
       setIsPasswordLoading(false)
       setIsActionInProgress(false)
@@ -365,22 +199,16 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   }
 
   const handleContinueWithCode = async () => {
-    if (!isCurrentInputValid || isCodeLoading || isActionInProgress) return
+    if (!isEmailValid || isCodeLoading || isActionInProgress) return
 
     setIsActionInProgress(true)
     setIsCodeLoading(true)
     try {
-      let result
-
-      if (authMethod === "email") {
-        result = await sendCustomOTPEmail(email)
-      } else {
-        result = await sendCustomOTPPhone(phone)
-      }
+      const result = await sendCustomOTPEmail(email)
 
       if (result.success) {
-        toast.success(`Verification code sent to your ${authMethod}`)
-        onContinueWithCode(getCurrentInput(), authMethod)
+        toast.success("Verification code sent to your email")
+        onContinueWithCode(email)
       } else {
         toast.error(result.error || "Failed to send verification code")
         setIsCodeLoading(false)
@@ -394,7 +222,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   }
 
   const handleCreateAccountClick = async () => {
-    if (authMethod !== "email" || !isEmailValid || isCreateAccountLoading || isActionInProgress) return
+    if (!isEmailValid || isCreateAccountLoading || isActionInProgress) return
 
     setIsActionInProgress(true)
     setIsCreateAccountLoading(true)
@@ -428,7 +256,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       )
     }
 
-    if (currentCheckState === "checking") {
+    if (emailCheckState === "checking") {
       return (
         <div className="w-5 h-5">
           <svg
@@ -445,7 +273,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       )
     }
 
-    if (currentCheckState === "exists") {
+    if (emailCheckState === "exists") {
       return (
         <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="20" height="20" viewBox="0 0 24 24">
           <path
@@ -456,7 +284,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       )
     }
 
-    if (currentCheckState === "not-exists") {
+    if (emailCheckState === "not-exists") {
       return (
         <div className="w-5 h-5">
           <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -470,7 +298,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       )
     }
 
-    if (currentCheckState === "error") {
+    if (emailCheckState === "error") {
       return (
         <div className="w-5 h-5">
           <svg className="text-orange-500" fill="currentColor" viewBox="0 0 24 24">
@@ -501,7 +329,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   }
 
   const renderStatusMessage = () => {
-    if (currentCheckState === "not-exists" && authMethod === "email") {
+    if (emailCheckState === "not-exists") {
       return (
         <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
           <div className="flex-1">
@@ -518,10 +346,10 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
   const renderActionButtons = () => {
     // Always disabled while checking or if input is invalid
-    const shouldDisableButtons = !isCurrentInputValid || currentCheckState === "checking" || isActionInProgress
+    const shouldDisableButtons = !isEmailValid || emailCheckState === "checking" || isActionInProgress
 
     // Account exists: Show "Continue with Password" as primary, "Use OTP" as secondary
-    if (currentCheckState === "exists") {
+    if (emailCheckState === "exists") {
       return (
         <div className="space-y-3 mb-8">
           {/* Primary Button - Continue with Password */}
@@ -548,8 +376,8 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       )
     }
 
-    // Account doesn't exist (email only): Show "Create Account"
-    if (currentCheckState === "not-exists" && authMethod === "email") {
+    // Account doesn't exist: Show "Create Account"
+    if (emailCheckState === "not-exists") {
       return (
         <div className="space-y-3 mb-8">
           {/* Primary Button - Create Account */}
@@ -566,8 +394,8 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       )
     }
 
-    // Error state or phone number not found: Show "Send OTP" as fallback
-    if (currentCheckState === "error" || (currentCheckState === "not-exists" && authMethod === "phone")) {
+    // Error state: Show "Send OTP" as fallback
+    if (emailCheckState === "error") {
       return (
         <div className="space-y-3 mb-8">
           {/* Primary Button - Send OTP */}
@@ -612,9 +440,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
             <ArrowLeft className="w-5 h-5 text-gray-700" />
           </button>
 
-          <h2 className="text-lg font-semibold text-gray-900">
-            Continue with {authMethod === "email" ? "Email" : "Phone"}
-          </h2>
+          <h2 className="text-lg font-semibold text-gray-900">Continue with Email</h2>
 
           <button
             className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-full transition-colors active:scale-95"
@@ -632,12 +458,10 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
           {/* Header Text */}
           <div className="text-center mb-6">
             <h1 className={`text-gray-900 font-semibold mb-2 ${isCompact ? "text-xl" : "text-2xl"}`}>
-              {authMethod === "email" ? "What's your email?" : "What's your phone number?"}
+              What's your email?
             </h1>
             <p className={`text-gray-600 ${isCompact ? "text-sm" : "text-base"}`}>
-              {authMethod === "email"
-                ? "We'll check if you already have an account."
-                : "We'll check if you already have an account. Haitian numbers only (+509)."}
+              We'll check if you already have an account.
             </p>
           </div>
 
@@ -648,52 +472,29 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
             {/* Input Field */}
             <div className="relative">
-              <label
-                htmlFor={authMethod === "email" ? "email" : "phone"}
-                className="block text-sm font-medium text-gray-700 mb-2"
-              ></label>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2"></label>
               <div className="relative">
-                {/* Simple, consistent left icon */}
+                {/* Email icon */}
                 <div className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 z-10">
-                  {authMethod === "email" ? (
-                    <Mail className="w-full h-full text-gray-400" />
-                  ) : (
-                    <Phone className="w-full h-full text-gray-400" />
-                  )}
+                  <Mail className="w-full h-full text-gray-400" />
                 </div>
 
                 {/* Status icon on the right */}
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2 z-10">{getRightSideIcon()}</div>
 
-                {authMethod === "email" ? (
-                  <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => handleEmailChange(e.target.value)}
-                    placeholder="Enter your email address"
-                    autoComplete="email"
-                    ref={emailInputRef}
-                    disabled={isLoading}
-                    className={`relative w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors bg-transparent disabled:opacity-50 ${
-                      fieldError ? "border-red-500" : "border-gray-300"
-                    }`}
-                  />
-                ) : (
-                  <input
-                    id="phone"
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => handlePhoneChange(e.target.value)}
-                    placeholder="+509XXXXXXXX"
-                    autoComplete="tel"
-                    ref={phoneInputRef}
-                    disabled={isLoading}
-                    className={`relative w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors bg-transparent disabled:opacity-50 ${
-                      fieldError ? "border-red-500" : "border-gray-300"
-                    }`}
-                  />
-                )}
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => handleEmailChange(e.target.value)}
+                  placeholder="Enter your email address"
+                  autoComplete="email"
+                  ref={emailInputRef}
+                  disabled={isLoading}
+                  className={`relative w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors bg-transparent disabled:opacity-50 ${
+                    fieldError ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
               </div>
 
               {/* Field-level error message */}
