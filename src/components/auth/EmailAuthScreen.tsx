@@ -26,12 +26,6 @@ interface EmailAuthScreenProps {
 // Inline email constants
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-const FAVICON_OVERRIDES: Record<string, string> = {
-  "gmail.com": "https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico",
-  "outlook.com": "https://outlook.live.com/favicon.ico",
-  "yahoo.com": "https://s.yimg.com/cv/apiv2/social/images/yahoo_favicon.ico",
-}
-
 const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   onBack,
   selectedLanguage,
@@ -397,76 +391,6 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
   const isLoading = isPasswordLoading || isCodeLoading || isCreateAccountLoading
 
-  // Email input functions
-  const extractDomain = (emailValue: string): string => {
-    if (!emailValue.includes("@")) return ""
-    const parts = emailValue.split("@")
-    if (parts.length !== 2) return ""
-    const domain = parts[1].trim()
-    return domain.includes(".") && domain.length > 3 ? domain : ""
-  }
-
-  const updateFavicon = (emailValue: string) => {
-    const domain = extractDomain(emailValue)
-    if (domain && FAVICON_OVERRIDES[domain]) {
-      return {
-        url: FAVICON_OVERRIDES[domain],
-        show: true,
-        domain,
-      }
-    }
-    return {
-      url: "",
-      show: false,
-      domain: "",
-    }
-  }
-
-  const { url: faviconUrl, show: showFavicon } = updateFavicon(email)
-
-  // Sync input with DOM
-  useEffect(() => {
-    const input = authMethod === "email" ? emailInputRef.current : phoneInputRef.current
-    if (!input) return
-
-    const syncWithDOM = () => {
-      const domValue = input.value
-      const currentValue = getCurrentInput()
-      if (domValue !== currentValue && domValue.length > 0) {
-        if (authMethod === "email") {
-          handleEmailChange(domValue)
-        } else {
-          handlePhoneChange(domValue)
-        }
-        return true
-      }
-      return false
-    }
-
-    const observer = new MutationObserver(() => {
-      syncWithDOM()
-    })
-
-    observer.observe(input, {
-      attributes: true,
-      attributeFilter: ["value"],
-    })
-
-    const pollInterval = setInterval(() => {
-      syncWithDOM()
-    }, 100)
-
-    const stopPolling = setTimeout(() => {
-      clearInterval(pollInterval)
-    }, 5000)
-
-    return () => {
-      clearInterval(pollInterval)
-      clearTimeout(stopPolling)
-      observer.disconnect()
-    }
-  }, [authMethod, email, phone])
-
   // Render functions
   const getRightSideIcon = () => {
     if (isLoading) {
@@ -674,10 +598,6 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     )
   }
 
-  const handleFaviconError = () => {
-    // Icon failed to load
-  }
-
   return (
     <div className={isCompact ? "px-4 pb-4" : "min-h-screen bg-white flex flex-col px-4"}>
       {/* Header */}
@@ -732,23 +652,16 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
                 className="block text-sm font-medium text-gray-700 mb-2"
               ></label>
               <div className="relative">
+                {/* Simple, consistent left icon */}
                 <div className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 z-10">
                   {authMethod === "email" ? (
-                    showFavicon && faviconUrl ? (
-                      <img
-                        src={faviconUrl || "/placeholder.svg"}
-                        alt="Email provider favicon"
-                        className="w-full h-full object-contain"
-                        onError={handleFaviconError}
-                      />
-                    ) : (
-                      <Mail className="w-full h-full text-gray-400" />
-                    )
+                    <Mail className="w-full h-full text-gray-400" />
                   ) : (
                     <Phone className="w-full h-full text-gray-400" />
                   )}
                 </div>
 
+                {/* Status icon on the right */}
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2 z-10">{getRightSideIcon()}</div>
 
                 {authMethod === "email" ? (
