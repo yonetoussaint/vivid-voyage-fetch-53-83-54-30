@@ -607,18 +607,13 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
   const renderActionButtons = () => {
     const getPasswordButtonText = () => {
-      if (currentCheckState === "checking") return "Checking..."
-      if (currentCheckState === "not-exists") return `${authMethod === "email" ? "Account" : "Phone"} Not Found`
-      if (currentCheckState === "error") return "Check Connection"
       return "Continue with Password"
     }
 
     const getCodeButtonText = () => {
-      if (currentCheckState === "checking") return "Checking..."
-      if (currentCheckState === "not-exists") {
-        return authMethod === "email" ? "Create Account" : "Phone Not Found"
+      if (currentCheckState === "not-exists" && authMethod === "email") {
+        return "Create Account"
       }
-      if (currentCheckState === "error") return "Send Verification Code"
       return "Send One-Time Password (OTP)"
     }
 
@@ -626,9 +621,12 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     const codeButtonText = getCodeButtonText()
     const showCreateAccountButton = authMethod === "email" && currentCheckState === "not-exists"
 
-    // Buttons are now only disabled when input is invalid or an action is in progress
-    const shouldDisablePasswordButton = !isCurrentInputValid || isActionInProgress
-    const shouldDisableCodeButton = !isCurrentInputValid || isActionInProgress
+    // Buttons are disabled when:
+    // - Input is invalid OR
+    // - Checking state is in progress OR  
+    // - An action is already in progress
+    const shouldDisablePasswordButton = !isCurrentInputValid || currentCheckState === "checking" || isActionInProgress
+    const shouldDisableCodeButton = !isCurrentInputValid || currentCheckState === "checking" || isActionInProgress
 
     return (
       <div className="space-y-3 mb-8">
