@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useRef, useEffect, useCallback } from "react"
-import { ArrowLeft, HelpCircle, Mail, AlertTriangle, Loader2, UserPlus, Lock, Key, Phone } from "lucide-react"
+import { ArrowLeft, HelpCircle, Mail, Loader2, UserPlus, Lock, Key, Phone } from "lucide-react"
 import { toast } from "sonner"
 
 // Inline type definitions
@@ -67,7 +67,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   const isCurrentInputValid = authMethod === "email" ? isEmailValid : isPhoneValid
   const currentCheckState = authMethod === "email" ? emailCheckState : phoneCheckState
 
-  // Email validation - REMOVED provider restriction
+  // Email validation
   const hasValidEmailFormat = useCallback((emailAddress: string): boolean => {
     return EMAIL_REGEX.test(emailAddress)
   }, [])
@@ -78,14 +78,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
   // Phone validation for Haitian numbers only
   const validatePhone = useCallback((phoneNumber: string): boolean => {
-    // Remove all non-digit characters
     const cleaned = phoneNumber.replace(/\D/g, "")
-
-    // Haitian numbers validation:
-    // +509XXXXXXXX (11 digits with +509)
-    // 509XXXXXXXX (10 digits without +)
-    // 09XXXXXXXX (9 digits with 0)
-    // 9XXXXXXXX (8 digits without 0)
 
     if (cleaned.startsWith("509") && cleaned.length === 11) {
       return true // +509XXXXXXXXX
@@ -124,7 +117,6 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   // API call to check if phone exists
   const checkPhoneExists = useCallback(async (phoneToCheck: string): Promise<boolean> => {
     try {
-      // Format phone number for the check
       const cleaned = phoneToCheck.replace(/\D/g, "")
       let formattedPhone = ""
 
@@ -272,15 +264,13 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     [checkPhoneExists, lastCheckedPhone, validatePhone],
   )
 
-  // Main validation effect for email - SIMPLIFIED
+  // Main validation effect for email
   useEffect(() => {
     if (authMethod === "email") {
       const hasValidFormat = hasValidEmailFormat(email)
-      const isFullyValid = hasValidFormat
+      setIsEmailValid(hasValidFormat)
 
-      setIsEmailValid(isFullyValid)
-
-      if (!isFullyValid) {
+      if (!hasValidFormat) {
         setEmailCheckState("unchecked")
         setLastCheckedEmail("")
       } else {
@@ -325,10 +315,8 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   }
 
   const handlePhoneChange = (value: string) => {
-    // Remove all non-digit characters except +
     let cleaned = value.replace(/[^\d+]/g, "")
 
-    // Ensure it starts with +509 for Haitian numbers
     if (!cleaned.startsWith("+509") && cleaned.length > 0) {
       if (cleaned.startsWith("509")) {
         cleaned = "+" + cleaned
@@ -337,14 +325,12 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       } else if (cleaned.startsWith("9")) {
         cleaned = "+509" + cleaned.substring(1)
       } else if (cleaned.startsWith("+") && !cleaned.startsWith("+509")) {
-        // If user tries to enter non-Haitian number, restrict to Haitian
         cleaned = "+509"
       } else if (!cleaned.startsWith("+")) {
         cleaned = "+509" + cleaned
       }
     }
 
-    // Limit to 12 characters (+509XXXXXXXX)
     if (cleaned.length > 12) {
       cleaned = cleaned.substring(0, 12)
     }
@@ -584,7 +570,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
           <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
             <div className="flex-1">
               <p className="text-purple-700 text-xs">
-                This email isn't registered. Click "Create Account" to continue, or check for typos.
+                This email isn't registered. Click "Create Account" to continue.
               </p>
             </div>
           </div>
@@ -606,74 +592,83 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   }
 
   const renderActionButtons = () => {
-    const getPasswordButtonText = () => {
-      return "Continue with Password"
-    }
-
-    const getCodeButtonText = () => {
-      if (currentCheckState === "not-exists" && authMethod === "email") {
-        return "Create Account"
-      }
-      return "Send One-Time Password (OTP)"
-    }
-
-    const passwordButtonText = getPasswordButtonText()
-    const codeButtonText = getCodeButtonText()
-    const showCreateAccountButton = authMethod === "email" && currentCheckState === "not-exists"
-
-    // Both buttons are disabled when:
-    // - Input is invalid OR
-    // - System is still checking OR  
-    // - An action is in progress
+    // Always disabled while checking or if input is invalid
     const shouldDisableButtons = !isCurrentInputValid || currentCheckState === "checking" || isActionInProgress
 
-    // Password button has additional restriction - only enabled when account exists
-    const shouldDisablePasswordButton = shouldDisableButtons || currentCheckState !== "exists"
+    // Account exists: Show "Continue with Password" as primary, "Use OTP" as secondary
+    if (currentCheckState === "exists") {
+      return (
+        <div className="space-y-3 mb-8">
+          {/* Primary Button - Continue with Password */}
+          <button
+            disabled={shouldDisableButtons}
+            onClick={handleContinueWithPassword}
+            className="w-full flex items-center justify-center gap-3 py-4 px-4 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transform active:scale-95 transition-all disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
+            type="button"
+          >
+            {isPasswordLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Lock className="w-5 h-5" />}
+            <span>{isPasswordLoading ? "Loading..." : "Continue with Password"}</span>
+          </button>
 
+          {/* Secondary Link - Use OTP instead */}
+          <button
+            onClick={handleContinueWithCode}
+            disabled={isCodeLoading || isActionInProgress}
+            className="w-full text-center text-red-500 hover:text-red-600 font-medium py-2 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+            type="button"
+          >
+            {isCodeLoading ? "Sending code..." : "Use one-time password instead"}
+          </button>
+        </div>
+      )
+    }
+
+    // Account doesn't exist (email only): Show "Create Account"
+    if (currentCheckState === "not-exists" && authMethod === "email") {
+      return (
+        <div className="space-y-3 mb-8">
+          {/* Primary Button - Create Account */}
+          <button
+            disabled={shouldDisableButtons}
+            onClick={handleCreateAccountClick}
+            className="w-full flex items-center justify-center gap-3 py-4 px-4 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transform active:scale-95 transition-all disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
+            type="button"
+          >
+            {isCreateAccountLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <UserPlus className="w-5 h-5" />}
+            <span>{isCreateAccountLoading ? "Loading..." : "Create Account"}</span>
+          </button>
+        </div>
+      )
+    }
+
+    // Error state or phone number not found: Show "Send OTP" as fallback
+    if (currentCheckState === "error" || (currentCheckState === "not-exists" && authMethod === "phone")) {
+      return (
+        <div className="space-y-3 mb-8">
+          {/* Primary Button - Send OTP */}
+          <button
+            disabled={shouldDisableButtons}
+            onClick={handleContinueWithCode}
+            className="w-full flex items-center justify-center gap-3 py-4 px-4 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transform active:scale-95 transition-all disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
+            type="button"
+          >
+            {isCodeLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Key className="w-5 h-5" />}
+            <span>{isCodeLoading ? "Sending..." : "Send One-Time Password"}</span>
+          </button>
+        </div>
+      )
+    }
+
+    // Default state (unchecked or checking): Show disabled primary button
     return (
       <div className="space-y-3 mb-8">
-        {/* Password Button - Only enabled when account exists and not checking */}
         <button
-          disabled={shouldDisablePasswordButton}
-          onClick={handleContinueWithPassword}
-          className={`w-full flex items-center justify-center gap-3 py-4 px-4 rounded-lg font-medium transition-all ${
-            !shouldDisablePasswordButton
-              ? "bg-red-500 text-white hover:bg-red-600 transform active:scale-95"
-              : "bg-gray-200 text-gray-400 cursor-not-allowed"
-          }`}
+          disabled={true}
+          className="w-full flex items-center justify-center gap-3 py-4 px-4 bg-gray-200 text-gray-400 rounded-lg font-medium cursor-not-allowed"
           type="button"
         >
-          {isPasswordLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Lock className="w-5 h-5" />}
-          <span>{isPasswordLoading ? "Loading..." : passwordButtonText}</span>
-        </button>
-
-        {/* Code/Create Account Button - Only enabled when not checking and has valid state */}
-        <button
-          disabled={shouldDisableButtons}
-          onClick={showCreateAccountButton ? handleCreateAccountClick : handleContinueWithCode}
-          className={`w-full flex items-center justify-center gap-3 py-4 px-4 border-2 rounded-lg font-medium transition-all ${
-            !shouldDisableButtons
-              ? showCreateAccountButton
-                ? "bg-red-500 text-white hover:bg-red-600 transform active:scale-95"
-                : "border-red-500 text-red-500 hover:bg-red-50 transform active:scale-95"
-              : "border-gray-300 text-gray-400 cursor-not-allowed"
-          }`}
-          type="button"
-        >
-          {isCodeLoading || isCreateAccountLoading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : showCreateAccountButton ? (
-            <UserPlus className="w-5 h-5" />
-          ) : (
-            <Key className="w-5 h-5" />
-          )}
-          <span>
-            {isCodeLoading || isCreateAccountLoading
-              ? "Loading..."
-              : showCreateAccountButton
-                ? "Create Account"
-                : codeButtonText}
-          </span>
+          <Lock className="w-5 h-5" />
+          <span>Continue</span>
         </button>
       </div>
     )
@@ -784,7 +779,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
               </div>
             </div>
 
-            {/* Always show action buttons (initially disabled) */}
+            {/* Single primary action button based on state */}
             {renderActionButtons()}
           </div>
         </div>
