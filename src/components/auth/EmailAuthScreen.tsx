@@ -621,28 +621,20 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     const codeButtonText = getCodeButtonText()
     const showCreateAccountButton = authMethod === "email" && currentCheckState === "not-exists"
 
-    // Password button is only enabled when:
-    // - Input is valid AND
-    // - Account exists AND
+    // Both buttons are disabled when:
+    // - Input is invalid OR
+    // - System is still checking OR  
     // - No action is in progress
-    const shouldDisablePasswordButton = !isCurrentInputValid || currentCheckState !== "exists" || isActionInProgress
-
-    // Code/Create Account button is enabled when:
-    // - Input is valid AND
-    // - No action is in progress AND
-    // - For email: always enabled when valid (can send OTP or create account)
-    // - For phone: only enabled when account exists or there's an error
-    const shouldDisableCodeButton = !isCurrentInputValid || isActionInProgress || 
-      (authMethod === "phone" && currentCheckState === "not-exists")
+    const shouldDisableButtons = !isCurrentInputValid || currentCheckState === "checking" || isActionInProgress
 
     return (
       <div className="space-y-3 mb-8">
-        {/* Password Button - Only enabled when account exists */}
+        {/* Password Button - Only enabled when account exists and not checking */}
         <button
-          disabled={shouldDisablePasswordButton}
+          disabled={shouldDisableButtons || currentCheckState !== "exists"}
           onClick={handleContinueWithPassword}
           className={`w-full flex items-center justify-center gap-3 py-4 px-4 rounded-lg font-medium transition-all ${
-            !shouldDisablePasswordButton
+            !shouldDisableButtons && currentCheckState === "exists"
               ? "bg-red-500 text-white hover:bg-red-600 transform active:scale-95"
               : "bg-gray-200 text-gray-400 cursor-not-allowed"
           }`}
@@ -652,12 +644,12 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
           <span>{isPasswordLoading ? "Loading..." : passwordButtonText}</span>
         </button>
 
-        {/* Code/Create Account Button */}
+        {/* Code/Create Account Button - Only enabled when not checking and has valid state */}
         <button
-          disabled={shouldDisableCodeButton}
+          disabled={shouldDisableButtons}
           onClick={showCreateAccountButton ? handleCreateAccountClick : handleContinueWithCode}
           className={`w-full flex items-center justify-center gap-3 py-4 px-4 border-2 rounded-lg font-medium transition-all ${
-            !shouldDisableCodeButton
+            !shouldDisableButtons
               ? showCreateAccountButton
                 ? "bg-red-500 text-white hover:bg-red-600 transform active:scale-95"
                 : "border-red-500 text-red-500 hover:bg-red-50 transform active:scale-95"
