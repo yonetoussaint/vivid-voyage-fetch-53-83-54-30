@@ -353,7 +353,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   }
 
   const handleContinueWithPassword = async () => {
-    if (!isCurrentInputValid || isPasswordLoading || currentCheckState !== "exists" || isActionInProgress) return
+    if (!isCurrentInputValid || isPasswordLoading || isActionInProgress) return
 
     setIsActionInProgress(true)
     setIsPasswordLoading(true)
@@ -367,7 +367,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   }
 
   const handleContinueWithCode = async () => {
-    if (!isCurrentInputValid || isCodeLoading || currentCheckState === "checking" || isActionInProgress) return
+    if (!isCurrentInputValid || isCodeLoading || isActionInProgress) return
 
     setIsActionInProgress(true)
     setIsCodeLoading(true)
@@ -396,7 +396,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   }
 
   const handleCreateAccountClick = async () => {
-    if (authMethod !== "email" || !isEmailValid || isCreateAccountLoading || emailCheckState === "checking" || isActionInProgress) return
+    if (authMethod !== "email" || !isEmailValid || isCreateAccountLoading || isActionInProgress) return
 
     setIsActionInProgress(true)
     setIsCreateAccountLoading(true)
@@ -606,38 +606,30 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   }
 
   const renderActionButtons = () => {
-    const getPasswordButtonState = () => {
-      if (!isCurrentInputValid) return { disabled: true, text: `Continue with Password` }
-      if (currentCheckState === "checking") return { disabled: true, text: "Checking..." }
-      if (currentCheckState === "exists") return { disabled: false, text: `Continue with Password` }
-      if (currentCheckState === "not-exists")
-        return { disabled: true, text: `${authMethod === "email" ? "Account" : "Phone"} Not Found` }
-      if (currentCheckState === "error") return { disabled: true, text: "Check Connection" }
-      return { disabled: true, text: `Continue with Password` }
+    const getPasswordButtonText = () => {
+      if (currentCheckState === "checking") return "Checking..."
+      if (currentCheckState === "not-exists") return `${authMethod === "email" ? "Account" : "Phone"} Not Found`
+      if (currentCheckState === "error") return "Check Connection"
+      return "Continue with Password"
     }
 
-    const getCodeButtonState = () => {
-      if (!isCurrentInputValid) return { disabled: true, text: "Send Verification Code" }
-      if (currentCheckState === "checking") return { disabled: true, text: "Checking..." }
-      if (currentCheckState === "exists") return { disabled: false, text: "Send One-Time Password (OTP)" }
+    const getCodeButtonText = () => {
+      if (currentCheckState === "checking") return "Checking..."
       if (currentCheckState === "not-exists") {
-        return authMethod === "email"
-          ? { disabled: false, text: "Create Account" }
-          : { disabled: true, text: "Phone Not Found" }
+        return authMethod === "email" ? "Create Account" : "Phone Not Found"
       }
-      if (currentCheckState === "error") return { disabled: false, text: "Send Verification Code" }
-      return { disabled: true, text: "Send Verification Code" }
+      if (currentCheckState === "error") return "Send Verification Code"
+      return "Send One-Time Password (OTP)"
     }
 
-    const passwordButtonState = getPasswordButtonState()
-    const codeButtonState = getCodeButtonState()
+    const passwordButtonText = getPasswordButtonText()
+    const codeButtonText = getCodeButtonText()
     const showCreateAccountButton = authMethod === "email" && currentCheckState === "not-exists"
 
-    // Check if either button should be disabled due to the other action being in progress
-    const shouldDisablePasswordButton = passwordButtonState.disabled || isActionInProgress
-    const shouldDisableCodeButton = codeButtonState.disabled || isActionInProgress
+    // Buttons are now only disabled when input is invalid or an action is in progress
+    const shouldDisablePasswordButton = !isCurrentInputValid || isActionInProgress
+    const shouldDisableCodeButton = !isCurrentInputValid || isActionInProgress
 
-    // Always show both buttons, but disabled initially
     return (
       <div className="space-y-3 mb-8">
         {/* Password Button - Always shown */}
@@ -652,7 +644,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
           type="button"
         >
           {isPasswordLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Lock className="w-5 h-5" />}
-          <span>{isPasswordLoading ? "Loading..." : passwordButtonState.text}</span>
+          <span>{isPasswordLoading ? "Loading..." : passwordButtonText}</span>
         </button>
 
         {/* Code Button - Always shown */}
@@ -680,7 +672,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
               ? "Loading..."
               : showCreateAccountButton
                 ? "Create Account"
-                : codeButtonState.text}
+                : codeButtonText}
           </span>
         </button>
       </div>
