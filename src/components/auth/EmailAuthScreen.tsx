@@ -624,17 +624,20 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     // Both buttons are disabled when:
     // - Input is invalid OR
     // - System is still checking OR  
-    // - No action is in progress
+    // - An action is in progress
     const shouldDisableButtons = !isCurrentInputValid || currentCheckState === "checking" || isActionInProgress
+
+    // Password button has additional restriction - only enabled when account exists
+    const shouldDisablePasswordButton = shouldDisableButtons || currentCheckState !== "exists"
 
     return (
       <div className="space-y-3 mb-8">
         {/* Password Button - Only enabled when account exists and not checking */}
         <button
-          disabled={shouldDisableButtons || currentCheckState !== "exists"}
+          disabled={shouldDisablePasswordButton}
           onClick={handleContinueWithPassword}
           className={`w-full flex items-center justify-center gap-3 py-4 px-4 rounded-lg font-medium transition-all ${
-            !shouldDisableButtons && currentCheckState === "exists"
+            !shouldDisablePasswordButton
               ? "bg-red-500 text-white hover:bg-red-600 transform active:scale-95"
               : "bg-gray-200 text-gray-400 cursor-not-allowed"
           }`}
