@@ -124,11 +124,11 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
           </p>
         </div>
 
-        {/* Email Display */}
-        <div className="p-4 bg-gray-50 rounded-lg mb-3">
+        {/* Email Display - Updated to match password input spacing */}
+        <div className="p-3 bg-gray-50 rounded-lg mb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-6 h-6 flex items-center justify-center">
+              <div className="w-5 h-5 flex items-center justify-center">
                 <Mail className="w-full h-full text-gray-400" />
               </div>
               <div className="flex flex-col">
@@ -150,7 +150,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
 
         {/* Error Message */}
         {error && (
-          <div className="p-4 border border-red-200 bg-red-50 text-red-700 rounded-lg mb-3">
+          <div className="p-3 border border-red-200 bg-red-50 text-red-700 rounded-lg mb-3">
             <p className="text-xs">{error}</p>
           </div>
         )}
