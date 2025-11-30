@@ -485,7 +485,10 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   if (!showDomainSuggestions) return null
 
   return (
-    <div className="w-full overflow-x-auto scrollbar-hide no-drag">
+    <div 
+      className="w-full overflow-x-auto scrollbar-hide no-drag"
+      style={{ touchAction: 'pan-x' }}
+    >
       <div className="flex gap-1.5 min-w-max px-1 py-1">
         {DOMAIN_SUGGESTIONS.map((suggestion) => (
           <button
