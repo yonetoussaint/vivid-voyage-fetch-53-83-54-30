@@ -414,7 +414,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     if (!fieldError) return null
 
     return (
-      <div className="flex items-start gap-2 mt-2">
+      <div className="flex items-start gap-2">
         <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
         <p className="text-red-600 text-sm">{fieldError}</p>
       </div>
@@ -428,7 +428,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     const textColor = statusType === "error" ? "text-orange-700" : "text-blue-700"
 
     return (
-      <div className={`p-3 border rounded-lg mt-2 ${bgColor}`}>
+      <div className={`p-3 border rounded-lg ${bgColor}`}>
         <p className={`text-sm ${textColor}`}>{statusMessage}</p>
       </div>
     )
@@ -441,7 +441,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     // If email is valid format but not trusted, show disabled state with message
     if (hasValidEmailFormat(email) && !isTrustedEmail) {
       return (
-        <div className="space-y-3 mb-4">
+        <div className="space-y-3">
           <button
             disabled={true}
             className="w-full flex items-center justify-center gap-3 py-4 px-4 bg-gray-200 text-gray-400 rounded-lg font-medium cursor-not-allowed"
@@ -457,7 +457,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     // Account exists: Show "Continue with Password" as primary, "Use OTP" as secondary
     if (emailCheckState === "exists") {
       return (
-        <div className="space-y-3 mb-4">
+        <div className="space-y-3">
           <button
             disabled={shouldDisableButtons}
             onClick={handleContinueWithPassword}
@@ -483,7 +483,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     // Account doesn't exist: Show "Create Account"
     if (emailCheckState === "not-exists") {
       return (
-        <div className="space-y-3 mb-4">
+        <div className="space-y-3">
           <button
             disabled={shouldDisableButtons}
             onClick={handleCreateAccountClick}
@@ -500,7 +500,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     // Error state: Show "Send OTP" as fallback
     if (emailCheckState === "error") {
       return (
-        <div className="space-y-3 mb-4">
+        <div className="space-y-3">
           <button
             disabled={shouldDisableButtons}
             onClick={handleContinueWithCode}
@@ -516,7 +516,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
     // Default state (unchecked or checking): Show disabled primary button
     return (
-      <div className="space-y-3 mb-4">
+      <div className="space-y-3">
         <button
           disabled={true}
           className="w-full flex items-center justify-center gap-3 py-4 px-4 bg-gray-200 text-gray-400 rounded-lg font-medium cursor-not-allowed"
@@ -532,9 +532,9 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   return (
     <div className="px-4 pb-4">
       {/* Main Content */}
-      <div className="space-y-3 mb-4">
+      <div className="space-y-3">
         {/* Header Text */}
-        <div className="text-center mb-6">
+        <div className="text-center">
           <h1 className="text-gray-900 font-semibold mb-2 text-xl">
             What's your email?
           </h1>
@@ -595,7 +595,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
           {/* Escape hatch for different email */}
           {showDifferentEmailOption && (
-            <div className="text-center mb-4">
+            <div className="text-center">
               <button
                 onClick={handleUseDifferentEmail}
                 className="text-gray-500 hover:text-gray-700 text-sm transition-colors"
@@ -609,7 +609,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       </div>
 
       {/* Secure Authentication Footer */}
-      <div className="flex items-center justify-center gap-2 mb-3">
+      <div className="flex items-center justify-center gap-2 mt-6">
         <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
           <path d="M18,8A6,6 0 0,0 12,2A6,6 0 0,0 6,8H4C2.89,8 2,8.89 2,10V20A2,2 0 0,0 4,22H20A2,2 0 0,0 22,20V10C22,8.89 21.1,8 20,8H18M12,4A4,4 0 0,1 16,8H8A4,4 0 0,1 12,4Z" />
         </svg>
@@ -617,7 +617,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       </div>
 
       {/* Terms Footer */}
-      <p className="text-gray-500 text-center text-[10px] leading-tight px-2">
+      <p className="text-gray-500 text-center text-[10px] leading-tight px-2 mt-3">
         By proceeding, you confirm that you've read and agree to our{" "}
         <span className="text-red-500">Terms of Service</span> and{" "}
         <span className="text-red-500">Privacy Policy</span>
