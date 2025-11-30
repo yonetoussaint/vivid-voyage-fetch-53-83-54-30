@@ -495,7 +495,7 @@ const renderDomainSuggestions = () => {
   if (!showDomainSuggestions) return null
 
   return (
-    <div className="w-full overflow-x-auto scrollbar-hide py-2">
+    <div className="w-full overflow-x-auto scrollbar-hide">
       <div className="flex gap-1.5 min-w-max">
         {DOMAIN_SUGGESTIONS.map((suggestion) => (
           <button
