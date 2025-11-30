@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useRef, useEffect, useCallback } from "react"
-import { ArrowLeft, HelpCircle, Mail, Loader2, UserPlus, Lock, Key } from "lucide-react"
+import { ArrowLeft, HelpCircle, Mail, Loader2, UserPlus, Lock, Key, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
 
 // Inline type definitions
@@ -33,6 +33,31 @@ const extractDomain = (email: string): string => {
   return domain.includes('.') && domain.length > 3 ? domain : '';
 };
 
+// Function to check if domain should show favicon
+const shouldShowFavicon = (email: string): boolean => {
+  const domain = extractDomain(email);
+  if (!domain) return false;
+  
+  // Only show favicon for these major providers
+  const supportedDomains = [
+    'gmail.com',
+    'googlemail.com',
+    'outlook.com',
+    'hotmail.com',
+    'live.com',
+    'yahoo.com',
+    'ymail.com',
+    'aol.com',
+    'icloud.com',
+    'protonmail.com',
+    'proton.me',
+    'zoho.com',
+    'yandex.com'
+  ];
+
+  return supportedDomains.includes(domain);
+};
+
 // Function to get favicon URL
 const getFaviconUrl = (email: string): string | null => {
   const domain = extractDomain(email);
@@ -55,8 +80,7 @@ const getFaviconUrl = (email: string): string | null => {
     'yandex.com': 'https://yastatic.net/s3/home-static/_/f6/f6fa8e8f8ee6d2e5cceb8afacbcbc6d6.png',
   };
 
-  // Return override if available, otherwise use favicon API
-  return faviconOverrides[domain] || `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+  return faviconOverrides[domain] || null;
 };
 
 const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
@@ -81,6 +105,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   const [isActionInProgress, setIsActionInProgress] = useState(false)
   const [fieldError, setFieldError] = useState<string>("")
   const [faviconUrl, setFaviconUrl] = useState<string | null>(null)
+  const [showFavicon, setShowFavicon] = useState(false)
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout>()
   const emailInputRef = useRef<HTMLInputElement>(null)
@@ -97,9 +122,17 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   // Update favicon when email changes
   useEffect(() => {
     if (email && hasValidEmailFormat(email)) {
-      const favicon = getFaviconUrl(email);
-      setFaviconUrl(favicon);
+      const shouldShow = shouldShowFavicon(email);
+      setShowFavicon(shouldShow);
+      
+      if (shouldShow) {
+        const favicon = getFaviconUrl(email);
+        setFaviconUrl(favicon);
+      } else {
+        setFaviconUrl(null);
+      }
     } else {
+      setShowFavicon(false);
       setFaviconUrl(null);
     }
   }, [email, hasValidEmailFormat])
@@ -319,25 +352,13 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
     if (emailCheckState === "not-exists") {
       return (
-        <div className="w-5 h-5">
-          <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M13 16.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0m-2.517-7.665c.112-.223.268-.424.488-.57C11.186 8.12 11.506 8 12 8c.384 0 .766.118 1.034.319a.95.95 0 0 1 .403.806c0 .48-.218.81-.62 1.186a9 9 0 0 1-.409.354l-.294.249c-.246.213-.524.474-.738.795l-.126.19V13.5a.75.75 0 0 0 1.5 0v-1.12c.09-.1.203-.208.347-.333.063-.055.14-.119.222-.187.166-.14.358-.3.52-.452.536-.5 1.098-1.2 1.098-2.283a2.45 2.45 0 0 0-1.003-2.006C13.37 6.695 12.658 6.5 12 6.5c-.756 0-1.373.191-1.861.517a2.94 2.94 0 0 0-.997 1.148.75.75 0 0 0 1.341.67" />
-            <path
-              fillRule="evenodd"
-              d="M9.864 1.2a3.61 3.61 0 0 1 4.272 0l1.375 1.01c.274.2.593.333.929.384l1.686.259a3.61 3.61 0 0 1 3.021 3.02l.259 1.687c.051.336.183.655.384.929l1.01 1.375a3.61 3.61 0 0 1 0 4.272l-1.01 1.375a2.1 2.1 0 0 0-.384.929l-1.686.259a3.61 3.61 0 0 1-3.02 3.021l-1.687.259a2.1 2.1 0 0 0-.929.384z"
-            />
-          </svg>
-        </div>
+        <AlertCircle className="w-5 h-5 text-blue-500" />
       )
     }
 
     if (emailCheckState === "error") {
       return (
-        <div className="w-5 h-5">
-          <svg className="text-orange-500" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
-          </svg>
-        </div>
+        <AlertCircle className="w-5 h-5 text-orange-500" />
       )
     }
 
@@ -349,13 +370,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
     return (
       <div className="flex items-start gap-2 mt-2">
-        <svg className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-          <path
-            fillRule="evenodd"
-            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-            clipRule="evenodd"
-          />
-        </svg>
+        <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
         <p className="text-red-600 text-sm">{fieldError}</p>
       </div>
     )
@@ -485,7 +500,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
             <div className="relative">
               {/* Email icon or favicon */}
               <div className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 z-10">
-                {faviconUrl ? (
+                {showFavicon && faviconUrl ? (
                   <img 
                     src={faviconUrl} 
                     alt="Email provider favicon" 
