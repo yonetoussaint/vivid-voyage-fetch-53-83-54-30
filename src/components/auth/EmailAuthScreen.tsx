@@ -24,38 +24,35 @@ interface EmailAuthScreenProps {
 // Inline email constants
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+// Trusted email domains
+const TRUSTED_DOMAINS = [
+  'gmail.com',
+  'googlemail.com', 
+  'outlook.com',
+  'hotmail.com',
+  'live.com',
+  'yahoo.com',
+  'ymail.com',
+  'aol.com',
+  'icloud.com',
+  'protonmail.com',
+  'proton.me',
+  'zoho.com'
+]
+
 // Function to extract domain from email
 const extractDomain = (email: string): string => {
   if (!email.includes('@')) return '';
   const parts = email.split('@');
   if (parts.length !== 2) return '';
-  const domain = parts[1].trim();
+  const domain = parts[1].trim().toLowerCase();
   return domain.includes('.') && domain.length > 3 ? domain : '';
 };
 
-// Function to check if domain should show favicon
-const shouldShowFavicon = (email: string): boolean => {
+// Function to check if domain is trusted
+const isTrustedDomain = (email: string): boolean => {
   const domain = extractDomain(email);
-  if (!domain) return false;
-
-  // Only show favicon for these major providers
-  const supportedDomains = [
-    'gmail.com',
-    'googlemail.com',
-    'outlook.com',
-    'hotmail.com',
-    'live.com',
-    'yahoo.com',
-    'ymail.com',
-    'aol.com',
-    'icloud.com',
-    'protonmail.com',
-    'proton.me',
-    'zoho.com',
-    'yandex.com'
-  ];
-
-  return supportedDomains.includes(domain);
+  return TRUSTED_DOMAINS.includes(domain);
 };
 
 // Function to get favicon URL
@@ -76,8 +73,7 @@ const getFaviconUrl = (email: string): string | null => {
     'icloud.com': 'https://www.icloud.com/favicon.ico',
     'protonmail.com': 'https://protonmail.com/favicon.ico',
     'proton.me': 'https://proton.me/favicon.ico',
-    'zoho.com': 'https://www.zoho.com/favicon.ico',
-    'yandex.com': 'https://yastatic.net/s3/home-static/_/f6/f6fa8e8f8ee6d2e5cceb8afacbcbc6d6.png',
+    'zoho.com': 'https://www.zoho.com/favicon.ico'
   };
 
   return faviconOverrides[domain] || null;
@@ -97,6 +93,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 }) => {
   const [email, setEmail] = useState(initialEmail)
   const [isEmailValid, setIsEmailValid] = useState(false)
+  const [isTrustedEmail, setIsTrustedEmail] = useState(false)
   const [emailCheckState, setEmailCheckState] = useState<EmailCheckState>("unchecked")
   const [lastCheckedEmail, setLastCheckedEmail] = useState("")
   const [isPasswordLoading, setIsPasswordLoading] = useState(false)
@@ -104,8 +101,9 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   const [isCreateAccountLoading, setIsCreateAccountLoading] = useState(false)
   const [isActionInProgress, setIsActionInProgress] = useState(false)
   const [fieldError, setFieldError] = useState<string>("")
+  const [statusMessage, setStatusMessage] = useState<string>("")
+  const [statusType, setStatusType] = useState<"info" | "error" | "success">("info")
   const [faviconUrl, setFaviconUrl] = useState<string | null>(null)
-  const [showFavicon, setShowFavicon] = useState(false)
   const [showDifferentEmailOption, setShowDifferentEmailOption] = useState(false)
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout>()
@@ -117,23 +115,15 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   }, [])
 
   const validateEmail = useCallback((emailAddress: string): boolean => {
-    return hasValidEmailFormat(emailAddress)
+    return hasValidEmailFormat(emailAddress) && isTrustedDomain(emailAddress)
   }, [hasValidEmailFormat])
 
   // Update favicon when email changes
   useEffect(() => {
     if (email && hasValidEmailFormat(email)) {
-      const shouldShow = shouldShowFavicon(email);
-      setShowFavicon(shouldShow);
-
-      if (shouldShow) {
-        const favicon = getFaviconUrl(email);
-        setFaviconUrl(favicon);
-      } else {
-        setFaviconUrl(null);
-      }
+      const favicon = getFaviconUrl(email);
+      setFaviconUrl(favicon);
     } else {
-      setShowFavicon(false);
       setFaviconUrl(null);
     }
   }, [email, hasValidEmailFormat])
@@ -196,23 +186,36 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     }
   }
 
-  // Update field error based on current state
+  // Update validation and status messages
   useEffect(() => {
     if (email.length === 0) {
       setFieldError("")
+      setStatusMessage("")
       setShowDifferentEmailOption(false)
-    } else if (!isEmailValid) {
+      return
+    }
+
+    const hasValidFormat = hasValidEmailFormat(email)
+    const trusted = isTrustedDomain(email)
+    
+    setIsEmailValid(hasValidFormat && trusted)
+    setIsTrustedEmail(trusted)
+
+    if (!hasValidFormat) {
       setFieldError("Please enter a valid email address")
-      setShowDifferentEmailOption(false)
-    } else if (emailCheckState === "error") {
-      setFieldError("Unable to verify your account. Please try again or use verification code.")
-      setShowDifferentEmailOption(true)
+      setStatusMessage("")
+    } else if (!trusted) {
+      setFieldError("")
+      setStatusMessage("We currently support Gmail, Outlook, Yahoo, iCloud, ProtonMail, and Zoho emails.")
+      setStatusType("error")
     } else {
       setFieldError("")
-      // Show "different email" option when we have a definitive result
-      setShowDifferentEmailOption(emailCheckState === "not-exists")
+      setStatusMessage("")
     }
-  }, [isEmailValid, emailCheckState, email])
+
+    // Show "different email" option when we have a definitive result
+    setShowDifferentEmailOption(emailCheckState === "not-exists" || emailCheckState === "error")
+  }, [email, hasValidEmailFormat, emailCheckState])
 
   // Debounced email check with faster response
   const debouncedEmailCheck = useCallback(
@@ -221,29 +224,42 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
         clearTimeout(debounceTimeoutRef.current)
       }
 
+      // Only check if email is valid and trusted
+      if (!hasValidEmailFormat(emailToCheck) || !isTrustedDomain(emailToCheck)) {
+        setEmailCheckState("unchecked")
+        return
+      }
+
       debounceTimeoutRef.current = setTimeout(async () => {
-        if (validateEmail(emailToCheck) && emailToCheck !== lastCheckedEmail) {
+        if (emailToCheck !== lastCheckedEmail) {
           setEmailCheckState("checking")
           try {
             const exists = await checkEmailExists(emailToCheck)
             setEmailCheckState(exists ? "exists" : "not-exists")
             setLastCheckedEmail(emailToCheck)
+            
+            // Set status message for new accounts
+            if (!exists) {
+              setStatusMessage("No account found with this email. You can create a new account to continue.")
+              setStatusType("info")
+            } else {
+              setStatusMessage("")
+            }
           } catch (error) {
             setEmailCheckState("error")
             setLastCheckedEmail(emailToCheck)
+            setStatusMessage("We're having trouble verifying your email. You can try another method.")
+            setStatusType("error")
           }
         }
-      }, 300) // Reduced from 800ms to 300ms for faster response
+      }, 300)
     },
-    [checkEmailExists, lastCheckedEmail, validateEmail],
+    [checkEmailExists, lastCheckedEmail, hasValidEmailFormat],
   )
 
   // Main validation effect for email
   useEffect(() => {
-    const hasValidFormat = hasValidEmailFormat(email)
-    setIsEmailValid(hasValidFormat)
-
-    if (!hasValidFormat) {
+    if (!hasValidEmailFormat(email) || !isTrustedDomain(email)) {
       setEmailCheckState("unchecked")
       setLastCheckedEmail("")
       setShowDifferentEmailOption(false)
@@ -256,6 +272,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   useEffect(() => {
     if (initialEmail) {
       setIsEmailValid(validateEmail(initialEmail))
+      setIsTrustedEmail(isTrustedDomain(initialEmail))
     }
   }, [initialEmail, validateEmail])
 
@@ -273,6 +290,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     // Reset different email option when user starts typing again
     if (value !== email) {
       setShowDifferentEmailOption(false)
+      setStatusMessage("")
     }
   }
 
@@ -280,6 +298,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     setEmail("")
     setEmailCheckState("unchecked")
     setLastCheckedEmail("")
+    setStatusMessage("")
     setShowDifferentEmailOption(false)
     if (emailInputRef.current) {
       emailInputRef.current.focus()
@@ -396,42 +415,51 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   }
 
   const renderStatusMessage = () => {
-    if (emailCheckState === "not-exists") {
-      return (
-        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex-1">
-            <p className="text-blue-700 text-sm">
-              No account found with this email. You can create a new account to continue.
-            </p>
-          </div>
-        </div>
-      )
-    }
+    if (!statusMessage) return null
 
-    if (emailCheckState === "error") {
-      return (
-        <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
-          <div className="flex-1">
-            <p className="text-orange-700 text-sm">
-              We're having trouble verifying your email. You can try another method or use a different email.
-            </p>
-          </div>
-        </div>
-      )
-    }
+    const bgColor = statusType === "error" ? "bg-orange-50 border-orange-200" : "bg-blue-50 border-blue-200"
+    const textColor = statusType === "error" ? "text-orange-700" : "text-blue-700"
 
-    return null
+    return (
+      <div className={`p-3 border rounded-lg mt-2 ${bgColor}`}>
+        <div className="flex items-start gap-2">
+          {statusType === "error" ? (
+            <AlertCircle className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
+          ) : (
+            <svg className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+          )}
+          <p className={`text-sm ${textColor}`}>{statusMessage}</p>
+        </div>
+      </div>
+    )
   }
 
   const renderActionButtons = () => {
-    // Always disabled while checking or if input is invalid
+    // Disable buttons if email is invalid, not trusted, or checking
     const shouldDisableButtons = !isEmailValid || emailCheckState === "checking" || isActionInProgress
+
+    // If email is valid format but not trusted, show disabled state with message
+    if (hasValidEmailFormat(email) && !isTrustedEmail) {
+      return (
+        <div className="space-y-3 mb-4">
+          <button
+            disabled={true}
+            className="w-full flex items-center justify-center gap-3 py-4 px-4 bg-gray-200 text-gray-400 rounded-lg font-medium cursor-not-allowed"
+            type="button"
+          >
+            <Lock className="w-5 h-5" />
+            <span>Email Domain Not Supported</span>
+          </button>
+        </div>
+      )
+    }
 
     // Account exists: Show "Continue with Password" as primary, "Use OTP" as secondary
     if (emailCheckState === "exists") {
       return (
         <div className="space-y-3 mb-4">
-          {/* Primary Button - Continue with Password */}
           <button
             disabled={shouldDisableButtons}
             onClick={handleContinueWithPassword}
@@ -442,7 +470,6 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
             <span>{isPasswordLoading ? "Loading..." : "Continue with Password"}</span>
           </button>
 
-          {/* Secondary Link - Use OTP instead */}
           <button
             onClick={handleContinueWithCode}
             disabled={isCodeLoading || isActionInProgress}
@@ -459,7 +486,6 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     if (emailCheckState === "not-exists") {
       return (
         <div className="space-y-3 mb-4">
-          {/* Primary Button - Create Account */}
           <button
             disabled={shouldDisableButtons}
             onClick={handleCreateAccountClick}
@@ -477,7 +503,6 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     if (emailCheckState === "error") {
       return (
         <div className="space-y-3 mb-4">
-          {/* Primary Button - Send OTP */}
           <button
             disabled={shouldDisableButtons}
             onClick={handleContinueWithCode}
@@ -522,22 +547,18 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
         {/* Input Section */}
         <div className="space-y-3">
-          {/* Inline Status Message */}
-          {renderStatusMessage()}
-
           {/* Input Field */}
           <div className="relative">
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2"></label>
             <div className="relative">
               {/* Email icon or favicon */}
               <div className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 z-10">
-                {showFavicon && faviconUrl ? (
+                {faviconUrl ? (
                   <img 
                     src={faviconUrl} 
                     alt="Email provider favicon" 
                     className="w-5 h-5 rounded-sm"
                     onError={(e) => {
-                      // Fallback to mail icon if favicon fails to load
                       e.currentTarget.style.display = 'none';
                     }}
                   />
@@ -566,6 +587,9 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
             {/* Field-level error message - directly below the input */}
             {renderFieldError()}
+
+            {/* Status message - below the input field */}
+            {renderStatusMessage()}
           </div>
 
           {/* Single primary action button based on state */}
