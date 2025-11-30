@@ -47,7 +47,9 @@ const DOMAIN_SUGGESTIONS = [
   { domain: 'yahoo.com', label: 'Yahoo' },
   { domain: 'icloud.com', label: 'iCloud' },
   { domain: 'protonmail.com', label: 'ProtonMail' },
-  { domain: 'zoho.com', label: 'Zoho' }
+  { domain: 'zoho.com', label: 'Zoho' },
+  { domain: 'hotmail.com', label: 'Hotmail' },
+  { domain: 'aol.com', label: 'AOL' }
 ]
 
 // Function to extract domain from email
@@ -226,8 +228,9 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     setIsEmailValid(hasValidFormat && trusted)
     setIsTrustedEmail(trusted)
 
+    // REMOVED: Don't show "Please enter a valid email address" message
     if (!hasValidFormat) {
-      setFieldError("Please enter a valid email address")
+      setFieldError("") // No longer show this message
       setStatusMessage("")
       setHasShownUntrustedDomain(false)
     } else if (!trusted) {
@@ -492,14 +495,13 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     if (!showDomainSuggestions) return null
 
     return (
-      <div className="p-3 border border-gray-200 rounded-lg bg-white">
-        <p className="text-gray-600 text-sm mb-2">Suggestions:</p>
-        <div className="flex flex-wrap gap-2">
+      <div className="w-full overflow-x-auto">
+        <div className="flex gap-2 py-2 min-w-max">
           {DOMAIN_SUGGESTIONS.map((suggestion) => (
             <button
               key={suggestion.domain}
               onClick={() => handleDomainSuggestionClick(suggestion.domain)}
-              className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              className="flex-shrink-0 px-4 py-3 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 whitespace-nowrap"
               type="button"
             >
               @{suggestion.domain}
