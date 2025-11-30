@@ -150,7 +150,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
                                 emailCheckState !== "checking" &&
                                 emailCheckState !== "exists" &&
                                 emailCheckState !== "not-exists"
-    
+
     setShowDomainSuggestions(shouldShowSuggestions)
   }, [email, statusMessage, emailCheckState])
 
@@ -224,7 +224,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
     const hasValidFormat = hasValidEmailFormat(email)
     const trusted = isTrustedDomain(email)
-    
+
     setIsEmailValid(hasValidFormat && trusted)
     setIsTrustedEmail(trusted)
 
@@ -271,7 +271,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
             const exists = await checkEmailExists(emailToCheck)
             setEmailCheckState(exists ? "exists" : "not-exists")
             setLastCheckedEmail(emailToCheck)
-            
+
             // Set status message for new accounts
             if (!exists) {
               setStatusMessage("No account found with this email. You can create a new account to continue.")
@@ -321,7 +321,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
   const handleEmailChange = (value: string) => {
     setEmail(value)
-    
+
     // Only reset the untrusted domain flag if the user is starting fresh
     if (value.length === 0) {
       setHasShownUntrustedDomain(false)
@@ -334,11 +334,11 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   }
 
   const handleDomainSuggestionClick = (domain: string) => {
-  const localPart = email.split('@')[0] || email
-  const fullEmail = `${localPart}@${domain}`
-  setEmail(fullEmail)
-  setShowDomainSuggestions(false)
-}
+    const localPart = email.split('@')[0] || email
+    const fullEmail = `${localPart}@${domain}`
+    setEmail(fullEmail)
+    setShowDomainSuggestions(false)
+  }
 
   const handleUseDifferentEmail = () => {
     setEmail("")
@@ -481,26 +481,32 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     )
   }
 
-const renderDomainSuggestions = () => {
-  if (!showDomainSuggestions) return null
+  const renderDomainSuggestions = () => {
+    if (!showDomainSuggestions) return null
 
-  return (
-    <div className="w-full overflow-x-auto scrollbar-hide">
-      <div className="flex gap-1.5 min-w-max">
-        {DOMAIN_SUGGESTIONS.map((suggestion) => (
-          <button
-            key={suggestion.domain}
-            onClick={() => handleDomainSuggestionClick(suggestion.domain)}
-            className="flex-shrink-0 px-3 py-1.5 text-xs border border-gray-300 rounded-md hover:bg-gray-50 hover:border-gray-400 transition-colors focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 whitespace-nowrap"
-            type="button"
-          >
-            @{suggestion.domain}
-          </button>
-        ))}
+    return (
+      <div 
+        className="w-full overflow-x-auto scrollbar-hide no-drag touch-pan-x"
+        onMouseDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+      >
+        <div className="flex gap-1.5 min-w-max px-1 py-1">
+          {DOMAIN_SUGGESTIONS.map((suggestion) => (
+            <button
+              key={suggestion.domain}
+              onClick={() => handleDomainSuggestionClick(suggestion.domain)}
+              className="flex-shrink-0 px-3 py-1.5 text-xs border border-gray-300 rounded-md hover:bg-gray-50 hover:border-gray-400 transition-colors focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 whitespace-nowrap no-drag select-none"
+              type="button"
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+            >
+              @{suggestion.domain}
+            </button>
+          ))}
+        </div>
       </div>
-    </div>
-  )
-}
+    )
+  }
 
   const renderActionButtons = () => {
     // Disable buttons if email is invalid, not trusted, or checking
@@ -598,100 +604,119 @@ const renderDomainSuggestions = () => {
   }
 
   return (
-    <div className="px-4 pb-4">
-      {/* Main Content */}
-      <div className="space-y-3">
-        {/* Header Text */}
-        <div className="text-center mb-6">
-          <h1 className="text-gray-900 font-semibold mb-2 text-xl">
-            What's your email?
-          </h1>
-          <p className="text-gray-600 text-sm">
-            We'll check if you already have an account.
-          </p>
-        </div>
-
-        {/* Input Section */}
+    <>
+      <style>{`
+        .no-drag {
+          cursor: default !important;
+          pointer-events: auto !important;
+        }
+        .no-drag * {
+          pointer-events: auto !important;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
+      
+      <div className="px-4 pb-4">
+        {/* Main Content */}
         <div className="space-y-3">
-          {/* Input Field */}
-          <div className="relative">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2"></label>
-            <div className="relative">
-              {/* Email icon or favicon */}
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 z-10">
-                {faviconUrl ? (
-                  <img 
-                    src={faviconUrl} 
-                    alt="Email provider favicon" 
-                    className="w-5 h-5 rounded-sm"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                ) : (
-                  <Mail className="w-full h-full text-gray-400" />
-                )}
-              </div>
-
-              {/* Status icon on the right */}
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 z-10">{getRightSideIcon()}</div>
-
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => handleEmailChange(e.target.value)}
-                placeholder="Enter your email address"
-                autoComplete="email"
-                ref={emailInputRef}
-                disabled={isLoading}
-                className={`relative w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors bg-transparent disabled:opacity-50 ${
-                  fieldError ? "border-red-500" : "border-gray-300"
-                }`}
-              />
-            </div>
-
-            {/* Field-level error message - directly below the input */}
-            {renderFieldError()}
+          {/* Header Text */}
+          <div className="text-center mb-6">
+            <h1 className="text-gray-900 font-semibold mb-2 text-xl">
+              What's your email?
+            </h1>
+            <p className="text-gray-600 text-sm">
+              We'll check if you already have an account.
+            </p>
           </div>
 
-          {/* Domain suggestions OR status message - they are mutually exclusive */}
-          {renderDomainSuggestions()}
-          {renderStatusMessage()}
+          {/* Input Section */}
+          <div className="space-y-3">
+            {/* Input Field */}
+            <div className="relative">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2"></label>
+              <div className="relative">
+                {/* Email icon or favicon */}
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 z-10">
+                  {faviconUrl ? (
+                    <img 
+                      src={faviconUrl} 
+                      alt="Email provider favicon" 
+                      className="w-5 h-5 rounded-sm"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <Mail className="w-full h-full text-gray-400" />
+                  )}
+                </div>
 
-          {/* Single primary action button based on state */}
-          {renderActionButtons()}
+                {/* Status icon on the right */}
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 z-10">{getRightSideIcon()}</div>
 
-          {/* Escape hatch for different email */}
-          {showDifferentEmailOption && (
-            <div className="text-center">
-              <button
-                onClick={handleUseDifferentEmail}
-                className="text-gray-500 hover:text-gray-700 text-sm transition-colors"
-                type="button"
-              >
-                Use a different email address
-              </button>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => handleEmailChange(e.target.value)}
+                  placeholder="Enter your email address"
+                  autoComplete="email"
+                  ref={emailInputRef}
+                  disabled={isLoading}
+                  className={`relative w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors bg-transparent disabled:opacity-50 ${
+                    fieldError ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+              </div>
+
+              {/* Field-level error message - directly below the input */}
+              {renderFieldError()}
             </div>
-          )}
+
+            {/* Domain suggestions OR status message - they are mutually exclusive */}
+            {renderDomainSuggestions()}
+            {renderStatusMessage()}
+
+            {/* Single primary action button based on state */}
+            {renderActionButtons()}
+
+            {/* Escape hatch for different email */}
+            {showDifferentEmailOption && (
+              <div className="text-center">
+                <button
+                  onClick={handleUseDifferentEmail}
+                  className="text-gray-500 hover:text-gray-700 text-sm transition-colors"
+                  type="button"
+                >
+                  Use a different email address
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Secure Authentication Footer */}
-      <div className="flex items-center justify-center gap-2 mt-6">
-        <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M18,8A6,6 0 0,0 12,2A6,6 0 0,0 6,8H4C2.89,8 2,8.89 2,10V20A2,2 0 0,0 4,22H20A2,2 0 0,0 22,20V10C22,8.89 21.1,8 20,8H18M12,4A4,4 0 0,1 16,8H8A4,4 0 0,1 12,4Z" />
-        </svg>
-        <span className="text-gray-500 text-xs">Secure Authentication</span>
-      </div>
+        {/* Secure Authentication Footer */}
+        <div className="flex items-center justify-center gap-2 mt-6">
+          <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M18,8A6,6 0 0,0 12,2A6,6 0 0,0 6,8H4C2.89,8 2,8.89 2,10V20A2,2 0 0,0 4,22H20A2,2 0 0,0 22,20V10C22,8.89 21.1,8 20,8H18M12,4A4,4 0 0,1 16,8H8A4,4 0 0,1 12,4Z" />
+          </svg>
+          <span className="text-gray-500 text-xs">Secure Authentication</span>
+        </div>
 
-      {/* Terms Footer */}
-      <p className="text-gray-500 text-center text-[10px] leading-tight px-2 mt-3">
-        By proceeding, you confirm that you've read and agree to our{" "}
-        <span className="text-red-500">Terms of Service</span> and{" "}
-        <span className="text-red-500">Privacy Policy</span>
-      </p>
-    </div>
+        {/* Terms Footer */}
+        <p className="text-gray-500 text-center text-[10px] leading-tight px-2 mt-3">
+          By proceeding, you confirm that you've read and agree to our{" "}
+          <span className="text-red-500">Terms of Service</span> and{" "}
+          <span className="text-red-500">Privacy Policy</span>
+        </p>
+      </div>
+    </>
   )
 }
 
