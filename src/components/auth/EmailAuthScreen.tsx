@@ -486,15 +486,52 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
   return (
     <div 
-      className="w-full overflow-x-auto scrollbar-hide no-drag"
-      style={{ touchAction: 'pan-x' }}
+      className="w-full overflow-x-auto scrollbar-hide"
+      style={{ 
+        touchAction: 'pan-x',
+        WebkitOverflowScrolling: 'touch'
+      }}
+      onMouseDown={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Mark that we're starting a scroll operation
+        const element = e.currentTarget;
+        element.setAttribute('data-scrolling', 'true');
+      }}
+      onTouchStart={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Mark that we're starting a scroll operation
+        const element = e.currentTarget;
+        element.setAttribute('data-scrolling', 'true');
+      }}
+      onTouchMove={(e) => {
+        e.stopPropagation();
+        // Allow the native scroll to happen
+      }}
+      onWheel={(e) => {
+        e.stopPropagation();
+      }}
+      onClick={(e) => e.stopPropagation()}
     >
       <div className="flex gap-1.5 min-w-max px-1 py-1">
         {DOMAIN_SUGGESTIONS.map((suggestion) => (
           <button
             key={suggestion.domain}
-            onClick={() => handleDomainSuggestionClick(suggestion.domain)}
-            className="flex-shrink-0 px-3 py-1.5 text-xs border border-gray-300 rounded-md hover:bg-gray-50 hover:border-gray-400 transition-colors focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 whitespace-nowrap no-drag"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleDomainSuggestionClick(suggestion.domain);
+            }}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            onTouchStart={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            className="flex-shrink-0 px-3 py-1.5 text-xs border border-gray-300 rounded-md hover:bg-gray-50 hover:border-gray-400 transition-colors focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 whitespace-nowrap select-none"
             type="button"
           >
             @{suggestion.domain}
