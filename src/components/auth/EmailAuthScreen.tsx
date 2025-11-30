@@ -491,12 +491,12 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     )
   }
 
-  const renderDomainSuggestions = () => {
+const renderDomainSuggestions = () => {
   if (!showDomainSuggestions) return null
 
   return (
-    <div className="w-full overflow-x-auto scrollbar-hide">
-      <div className="flex gap-1.5 py-1 min-w-max">
+    <div className="w-full overflow-x-auto scrollbar-hide py-2">
+      <div className="flex gap-1.5 min-w-max">
         {DOMAIN_SUGGESTIONS.map((suggestion) => (
           <button
             key={suggestion.domain}
