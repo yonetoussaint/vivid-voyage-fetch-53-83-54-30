@@ -338,16 +338,6 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   const fullEmail = `${localPart}@${domain}`
   setEmail(fullEmail)
   setShowDomainSuggestions(false)
-
-  // REMOVED: The auto-focus code that was here
-  // if (emailInputRef.current) {
-  //   emailInputRef.current.focus()
-  //   setTimeout(() => {
-  //     if (emailInputRef.current) {
-  //       emailInputRef.current.setSelectionRange(fullEmail.length, fullEmail.length)
-  //     }
-  //   }, 0)
-  // }
 }
 
   const handleUseDifferentEmail = () => {
