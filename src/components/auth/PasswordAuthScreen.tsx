@@ -124,8 +124,8 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
           </p>
         </div>
 
-        {/* Email Display - Updated to match password input spacing */}
-        <div className="p-3 bg-gray-50 rounded-lg mb-3">
+        {/* Email Display - Added border to match password input */}
+        <div className="p-3 bg-gray-50 border border-gray-300 rounded-lg mb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-5 h-5 flex items-center justify-center">
