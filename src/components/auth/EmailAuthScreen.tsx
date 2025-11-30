@@ -195,9 +195,12 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     setIsActionInProgress(true)
     setIsPasswordLoading(true)
     try {
-      await new Promise((resolve) => setTimeout(resolve, 400))
-      onContinueWithPassword(email) // FIXED: Only pass email (no second argument)
+      // Directly call the handler without delay to ensure immediate state update
+      onContinueWithPassword(email)
       console.log('✅ EmailAuthScreen: onContinueWithPassword called with:', email);
+    } catch (error) {
+      console.error('❌ Error in handleContinueWithPassword:', error)
+      toast.error("Failed to continue with password")
     } finally {
       setIsPasswordLoading(false)
       setIsActionInProgress(false)
