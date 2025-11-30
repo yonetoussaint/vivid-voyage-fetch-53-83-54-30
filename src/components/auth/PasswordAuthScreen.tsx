@@ -160,7 +160,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
             </p>
           </div>
 
-          {/* Email Display - This will now show the email passed from EmailAuthScreen */}
+          {/* Email Display - This will now properly show the email */}
           <div className={`p-4 bg-gray-50 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -169,7 +169,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
                 </div>
                 <div className="flex flex-col">
                   <span className={`text-gray-700 font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>
-                    {email || 'No email provided'}
+                    {email}
                   </span>
                 </div>
               </div>
