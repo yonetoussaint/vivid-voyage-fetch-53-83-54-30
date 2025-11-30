@@ -105,6 +105,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   const [statusType, setStatusType] = useState<"info" | "error" | "success">("info")
   const [faviconUrl, setFaviconUrl] = useState<string | null>(null)
   const [showDifferentEmailOption, setShowDifferentEmailOption] = useState(false)
+  const [hasShownUntrustedDomain, setHasShownUntrustedDomain] = useState(false)
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout>()
   const emailInputRef = useRef<HTMLInputElement>(null)
@@ -191,6 +192,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     if (email.length === 0) {
       setFieldError("")
       setStatusMessage("")
+      setHasShownUntrustedDomain(false)
       setShowDifferentEmailOption(false)
       return
     }
@@ -204,18 +206,24 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     if (!hasValidFormat) {
       setFieldError("Please enter a valid email address")
       setStatusMessage("")
+      setHasShownUntrustedDomain(false)
     } else if (!trusted) {
       setFieldError("")
-      setStatusMessage("We currently support Gmail, Outlook, Yahoo, iCloud, ProtonMail, and Zoho emails.")
-      setStatusType("error")
+      // Only set the status message if we haven't shown it yet for this untrusted domain
+      if (!hasShownUntrustedDomain) {
+        setStatusMessage("We currently support Gmail, Outlook, Yahoo, iCloud, ProtonMail, and Zoho emails.")
+        setStatusType("error")
+        setHasShownUntrustedDomain(true)
+      }
     } else {
       setFieldError("")
       setStatusMessage("")
+      setHasShownUntrustedDomain(false)
     }
 
     // Show "different email" option when we have a definitive result
     setShowDifferentEmailOption(emailCheckState === "not-exists" || emailCheckState === "error")
-  }, [email, hasValidEmailFormat, emailCheckState])
+  }, [email, hasValidEmailFormat, emailCheckState, hasShownUntrustedDomain])
 
   // Debounced email check with faster response
   const debouncedEmailCheck = useCallback(
@@ -287,10 +295,15 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
   const handleEmailChange = (value: string) => {
     setEmail(value)
+    
+    // Only reset the untrusted domain flag if the user is starting fresh
+    if (value.length === 0) {
+      setHasShownUntrustedDomain(false)
+      setStatusMessage("")
+    }
     // Reset different email option when user starts typing again
     if (value !== email) {
       setShowDifferentEmailOption(false)
-      setStatusMessage("")
     }
   }
 
@@ -299,6 +312,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     setEmailCheckState("unchecked")
     setLastCheckedEmail("")
     setStatusMessage("")
+    setHasShownUntrustedDomain(false)
     setShowDifferentEmailOption(false)
     if (emailInputRef.current) {
       emailInputRef.current.focus()
