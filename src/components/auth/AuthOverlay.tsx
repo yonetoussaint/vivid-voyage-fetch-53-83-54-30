@@ -43,6 +43,7 @@ const AuthOverlay: React.FC = () => {
     getFaviconUrl,
     handleClose,
     handleBackToMain,
+    handleContinueWithPassword, // ✅ Use the correct handler from AuthContext
     handleContinueWithCode,
     handleCreateAccount,
     handleSignUpClick,
@@ -134,29 +135,7 @@ const AuthOverlay: React.FC = () => {
     setCurrentScreen('email');
   };
 
-  // FIXED: Updated handlers to properly set the email and navigate immediately
-  const handleContinueWithPasswordWithMethod = (identifier: string, method: 'email' | 'phone') => {
-    console.log('🔄 Continue with password called:', { identifier, method });
-
-    if (method === 'email') {
-      setUserEmail(identifier); // This should update the userEmail state
-      setUserPhone('');
-      console.log('✅ Email set to:', identifier);
-    } else {
-      setUserPhone(identifier);
-      setUserEmail('');
-    }
-    setAuthMethod(method);
-    
-    // Navigate immediately without delay
-    setCurrentScreen('password');
-
-    // Debug: Check if state was updated
-    setTimeout(() => {
-      console.log('📧 After state update - userEmail:', userEmail);
-    }, 0);
-  };
-
+  // ✅ FIXED: Use the handler directly from AuthContext
   const handleContinueWithCodeWithMethod = (identifier: string, method: 'email' | 'phone') => {
     console.log('🔄 Continue with code called:', { identifier, method });
 
@@ -168,16 +147,16 @@ const AuthOverlay: React.FC = () => {
       setUserEmail('');
     }
     setAuthMethod(method);
-    setCurrentScreen('verification');
+    handleContinueWithCode(identifier); // ✅ Use the correct handler
   };
 
-  // Email-specific handler for backward compatibility
+  // ✅ FIXED: Email-specific handler using the correct function from AuthContext
   const handleCreateAccountWithEmail = (email: string) => {
     console.log('🔄 Create account with email:', email);
     setUserEmail(email);
     setUserPhone('');
     setAuthMethod('email');
-    handleCreateAccount(email);
+    handleCreateAccount(email); // ✅ Use the correct handler
   };
 
   // FAQ handler
@@ -406,7 +385,7 @@ const AuthOverlay: React.FC = () => {
               <EmailAuthScreen
                 onBack={handleBackToMain}
                 selectedLanguage={selectedLanguage}
-                onContinueWithPassword={handleContinueWithPasswordWithMethod}
+                onContinueWithPassword={handleContinueWithPassword} // ✅ Use the correct handler directly
                 onContinueWithCode={handleContinueWithCodeWithMethod}
                 onCreateAccount={handleCreateAccountWithEmail}
                 onSignUpClick={handleSignUpClick}
@@ -436,7 +415,7 @@ const AuthOverlay: React.FC = () => {
           return (
             <React.Suspense fallback={<PasswordAuthScreenSkeleton />}>
               <PasswordAuthScreen
-                email={userEmail} // Pass the email directly
+                email={userEmail}
                 onBack={handleBackFromPassword}
                 onSignInSuccess={handleSignInSuccess}
                 onForgotPasswordClick={handleForgotPasswordClick}
