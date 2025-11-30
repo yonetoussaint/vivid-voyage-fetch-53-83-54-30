@@ -24,6 +24,41 @@ interface EmailAuthScreenProps {
 // Inline email constants
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+// Function to extract domain from email
+const extractDomain = (email: string): string => {
+  if (!email.includes('@')) return '';
+  const parts = email.split('@');
+  if (parts.length !== 2) return '';
+  const domain = parts[1].trim();
+  return domain.includes('.') && domain.length > 3 ? domain : '';
+};
+
+// Function to get favicon URL
+const getFaviconUrl = (email: string): string | null => {
+  const domain = extractDomain(email);
+  if (!domain) return null;
+  
+  // Common email provider favicons
+  const faviconOverrides: Record<string, string> = {
+    'gmail.com': 'https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico',
+    'googlemail.com': 'https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico',
+    'outlook.com': 'https://outlook.live.com/favicon.ico',
+    'hotmail.com': 'https://outlook.live.com/favicon.ico',
+    'live.com': 'https://outlook.live.com/favicon.ico',
+    'yahoo.com': 'https://s.yimg.com/rz/l/favicon.ico',
+    'ymail.com': 'https://s.yimg.com/rz/l/favicon.ico',
+    'aol.com': 'https://www.aol.com/favicon.ico',
+    'icloud.com': 'https://www.icloud.com/favicon.ico',
+    'protonmail.com': 'https://protonmail.com/favicon.ico',
+    'proton.me': 'https://proton.me/favicon.ico',
+    'zoho.com': 'https://www.zoho.com/favicon.ico',
+    'yandex.com': 'https://yastatic.net/s3/home-static/_/f6/f6fa8e8f8ee6d2e5cceb8afacbcbc6d6.png',
+  };
+
+  // Return override if available, otherwise use favicon API
+  return faviconOverrides[domain] || `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+};
+
 const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   onBack,
   selectedLanguage,
@@ -45,6 +80,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   const [isCreateAccountLoading, setIsCreateAccountLoading] = useState(false)
   const [isActionInProgress, setIsActionInProgress] = useState(false)
   const [fieldError, setFieldError] = useState<string>("")
+  const [faviconUrl, setFaviconUrl] = useState<string | null>(null)
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout>()
   const emailInputRef = useRef<HTMLInputElement>(null)
@@ -57,6 +93,16 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   const validateEmail = useCallback((emailAddress: string): boolean => {
     return hasValidEmailFormat(emailAddress)
   }, [hasValidEmailFormat])
+
+  // Update favicon when email changes
+  useEffect(() => {
+    if (email && hasValidEmailFormat(email)) {
+      const favicon = getFaviconUrl(email);
+      setFaviconUrl(favicon);
+    } else {
+      setFaviconUrl(null);
+    }
+  }, [email, hasValidEmailFormat])
 
   // API call to check if email exists
   const checkEmailExists = useCallback(async (emailToCheck: string): Promise<boolean> => {
@@ -250,35 +296,13 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   const getRightSideIcon = () => {
     if (isLoading) {
       return (
-        <div className="w-5 h-5">
-          <svg
-            className="animate-spin text-gray-500"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-          </svg>
-        </div>
+        <Loader2 className="w-5 h-5 animate-spin text-gray-500" />
       )
     }
 
     if (emailCheckState === "checking") {
       return (
-        <div className="w-5 h-5">
-          <svg
-            className="animate-spin text-blue-500"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-          </svg>
-        </div>
+        <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
       )
     }
 
@@ -437,101 +461,86 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   }
 
   return (
-    <div className={isCompact ? "px-4 pb-4" : "min-h-screen bg-white flex flex-col px-4"}>
-      {/* Header */}
-      {showHeader && !isCompact && (
-        <div className="pt-4 pb-4 flex items-center justify-between">
-          <button
-            onClick={onBack}
-            className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-full transition-colors active:scale-95"
-            disabled={isLoading}
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-700" />
-          </button>
-
-          <h2 className="text-lg font-semibold text-gray-900">Continue with Email</h2>
-
-          <button
-            className="flex items-center justify-center w-10 h-10 hover:bg-gray-100 rounded-full transition-colors active:scale-95"
-            onClick={() => alert("Need help? Contact support@mimaht.com")}
-            disabled={isLoading}
-          >
-            <HelpCircle className="w-5 h-5 text-gray-700" />
-          </button>
-        </div>
-      )}
-
+    <div className="px-4 pb-4">
       {/* Main Content */}
-      <div className={isCompact ? "" : "flex-1 flex flex-col justify-center w-full p-0"}>
-        <div className={isCompact ? "space-y-3 mb-4" : "space-y-3 mb-6"}>
-          {/* Header Text */}
-          <div className="text-center mb-6">
-            <h1 className={`text-gray-900 font-semibold mb-2 ${isCompact ? "text-xl" : "text-2xl"}`}>
-              What's your email?
-            </h1>
-            <p className={`text-gray-600 ${isCompact ? "text-sm" : "text-base"}`}>
-              We'll check if you already have an account.
-            </p>
-          </div>
+      <div className="space-y-3 mb-4">
+        {/* Header Text */}
+        <div className="text-center mb-6">
+          <h1 className="text-gray-900 font-semibold mb-2 text-xl">
+            What's your email?
+          </h1>
+          <p className="text-gray-600 text-sm">
+            We'll check if you already have an account.
+          </p>
+        </div>
 
-          {/* Input Section */}
-          <div className={isCompact ? "space-y-3" : "space-y-4"}>
-            {/* Inline Status Message */}
-            {renderStatusMessage()}
+        {/* Input Section */}
+        <div className="space-y-3">
+          {/* Inline Status Message */}
+          {renderStatusMessage()}
 
-            {/* Input Field */}
+          {/* Input Field */}
+          <div className="relative">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2"></label>
             <div className="relative">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2"></label>
-              <div className="relative">
-                {/* Email icon */}
-                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 z-10">
+              {/* Email icon or favicon */}
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 z-10">
+                {faviconUrl ? (
+                  <img 
+                    src={faviconUrl} 
+                    alt="Email provider favicon" 
+                    className="w-5 h-5 rounded-sm"
+                    onError={(e) => {
+                      // Fallback to mail icon if favicon fails to load
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                ) : (
                   <Mail className="w-full h-full text-gray-400" />
-                </div>
-
-                {/* Status icon on the right */}
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 z-10">{getRightSideIcon()}</div>
-
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => handleEmailChange(e.target.value)}
-                  placeholder="Enter your email address"
-                  autoComplete="email"
-                  ref={emailInputRef}
-                  disabled={isLoading}
-                  className={`relative w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors bg-transparent disabled:opacity-50 ${
-                    fieldError ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
+                )}
               </div>
 
-              {/* Field-level error message - directly below the input */}
-              {renderFieldError()}
+              {/* Status icon on the right */}
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 z-10">{getRightSideIcon()}</div>
+
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => handleEmailChange(e.target.value)}
+                placeholder="Enter your email address"
+                autoComplete="email"
+                ref={emailInputRef}
+                disabled={isLoading}
+                className={`relative w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors bg-transparent disabled:opacity-50 ${
+                  fieldError ? "border-red-500" : "border-gray-300"
+                }`}
+              />
             </div>
 
-            {/* Single primary action button based on state */}
-            {renderActionButtons()}
+            {/* Field-level error message - directly below the input */}
+            {renderFieldError()}
           </div>
-        </div>
 
-        {/* Secure Authentication Footer */}
-        <div className={`flex items-center justify-center gap-2 ${isCompact ? "mb-3" : "mb-4"}`}>
-          <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M18,8A6,6 0 0,0 12,2A6,6 0 0,0 6,8H4C2.89,8 2,8.89 2,10V20A2,2 0 0,0 4,22H20A2,2 0 0,0 22,20V10C22,8.89 21.1,8 20,8H18M12,4A4,4 0 0,1 16,8H8A4,4 0 0,1 12,4Z" />
-          </svg>
-          <span className={`text-gray-500 ${isCompact ? "text-xs" : "text-sm"}`}>Secure Authentication</span>
+          {/* Single primary action button based on state */}
+          {renderActionButtons()}
         </div>
-
-        {/* Terms Footer */}
-        <p
-          className={`text-gray-500 text-center ${isCompact ? "text-[10px] leading-tight px-2" : "text-xs leading-relaxed"}`}
-        >
-          By proceeding, you confirm that you've read and agree to our{" "}
-          <span className="text-red-500">Terms of Service</span> and{" "}
-          <span className="text-red-500">Privacy Policy</span>
-        </p>
       </div>
+
+      {/* Secure Authentication Footer */}
+      <div className="flex items-center justify-center gap-2 mb-3">
+        <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M18,8A6,6 0 0,0 12,2A6,6 0 0,0 6,8H4C2.89,8 2,8.89 2,10V20A2,2 0 0,0 4,22H20A2,2 0 0,0 22,20V10C22,8.89 21.1,8 20,8H18M12,4A4,4 0 0,1 16,8H8A4,4 0 0,1 12,4Z" />
+        </svg>
+        <span className="text-gray-500 text-xs">Secure Authentication</span>
+      </div>
+
+      {/* Terms Footer */}
+      <p className="text-gray-500 text-center text-[10px] leading-tight px-2">
+        By proceeding, you confirm that you've read and agree to our{" "}
+        <span className="text-red-500">Terms of Service</span> and{" "}
+        <span className="text-red-500">Privacy Policy</span>
+      </p>
     </div>
   )
 }
