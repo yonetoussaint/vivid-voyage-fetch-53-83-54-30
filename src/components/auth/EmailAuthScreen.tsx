@@ -482,31 +482,25 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   }
 
   const renderDomainSuggestions = () => {
-    if (!showDomainSuggestions) return null
+  if (!showDomainSuggestions) return null
 
-    return (
-      <div 
-        className="w-full overflow-x-auto scrollbar-hide no-drag touch-pan-x"
-        onMouseDown={(e) => e.stopPropagation()}
-        onTouchStart={(e) => e.stopPropagation()}
-      >
-        <div className="flex gap-1.5 min-w-max px-1 py-1">
-          {DOMAIN_SUGGESTIONS.map((suggestion) => (
-            <button
-              key={suggestion.domain}
-              onClick={() => handleDomainSuggestionClick(suggestion.domain)}
-              className="flex-shrink-0 px-3 py-1.5 text-xs border border-gray-300 rounded-md hover:bg-gray-50 hover:border-gray-400 transition-colors focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 whitespace-nowrap no-drag select-none"
-              type="button"
-              onMouseDown={(e) => e.stopPropagation()}
-              onTouchStart={(e) => e.stopPropagation()}
-            >
-              @{suggestion.domain}
-            </button>
-          ))}
-        </div>
+  return (
+    <div className="w-full overflow-x-auto scrollbar-hide no-drag">
+      <div className="flex gap-1.5 min-w-max px-1 py-1">
+        {DOMAIN_SUGGESTIONS.map((suggestion) => (
+          <button
+            key={suggestion.domain}
+            onClick={() => handleDomainSuggestionClick(suggestion.domain)}
+            className="flex-shrink-0 px-3 py-1.5 text-xs border border-gray-300 rounded-md hover:bg-gray-50 hover:border-gray-400 transition-colors focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 whitespace-nowrap no-drag"
+            type="button"
+          >
+            @{suggestion.domain}
+          </button>
+        ))}
       </div>
-    )
-  }
+    </div>
+  )
+}
 
   const renderActionButtons = () => {
     // Disable buttons if email is invalid, not trusted, or checking
