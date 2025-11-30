@@ -40,6 +40,16 @@ const TRUSTED_DOMAINS = [
   'zoho.com'
 ]
 
+// Domain suggestions data
+const DOMAIN_SUGGESTIONS = [
+  { domain: 'gmail.com', label: 'Gmail' },
+  { domain: 'outlook.com', label: 'Outlook' },
+  { domain: 'yahoo.com', label: 'Yahoo' },
+  { domain: 'icloud.com', label: 'iCloud' },
+  { domain: 'protonmail.com', label: 'ProtonMail' },
+  { domain: 'zoho.com', label: 'Zoho' }
+]
+
 // Function to extract domain from email
 const extractDomain = (email: string): string => {
   if (!email.includes('@')) return '';
@@ -106,6 +116,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   const [faviconUrl, setFaviconUrl] = useState<string | null>(null)
   const [showDifferentEmailOption, setShowDifferentEmailOption] = useState(false)
   const [hasShownUntrustedDomain, setHasShownUntrustedDomain] = useState(false)
+  const [showDomainSuggestions, setShowDomainSuggestions] = useState(false)
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout>()
   const emailInputRef = useRef<HTMLInputElement>(null)
@@ -128,6 +139,18 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       setFaviconUrl(null);
     }
   }, [email, hasValidEmailFormat])
+
+  // Show domain suggestions when user is typing local part (before @)
+  useEffect(() => {
+    const shouldShowSuggestions = email.length > 0 && 
+                                !email.includes('@') && 
+                                !statusMessage && 
+                                emailCheckState !== "checking" &&
+                                emailCheckState !== "exists" &&
+                                emailCheckState !== "not-exists"
+    
+    setShowDomainSuggestions(shouldShowSuggestions)
+  }, [email, statusMessage, emailCheckState])
 
   // API call to check if email exists
   const checkEmailExists = useCallback(async (emailToCheck: string): Promise<boolean> => {
@@ -307,6 +330,23 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     }
   }
 
+  const handleDomainSuggestionClick = (domain: string) => {
+    const localPart = email.split('@')[0] || email
+    const fullEmail = `${localPart}@${domain}`
+    setEmail(fullEmail)
+    setShowDomainSuggestions(false)
+    
+    // Focus back to input and move cursor to end
+    if (emailInputRef.current) {
+      emailInputRef.current.focus()
+      setTimeout(() => {
+        if (emailInputRef.current) {
+          emailInputRef.current.setSelectionRange(fullEmail.length, fullEmail.length)
+        }
+      }, 0)
+    }
+  }
+
   const handleUseDifferentEmail = () => {
     setEmail("")
     setEmailCheckState("unchecked")
@@ -444,6 +484,28 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     return (
       <div className={`p-3 border rounded-lg ${bgColor}`}>
         <p className={`text-sm ${textColor}`}>{statusMessage}</p>
+      </div>
+    )
+  }
+
+  const renderDomainSuggestions = () => {
+    if (!showDomainSuggestions) return null
+
+    return (
+      <div className="p-3 border border-gray-200 rounded-lg bg-white">
+        <p className="text-gray-600 text-sm mb-2">Suggestions:</p>
+        <div className="flex flex-wrap gap-2">
+          {DOMAIN_SUGGESTIONS.map((suggestion) => (
+            <button
+              key={suggestion.domain}
+              onClick={() => handleDomainSuggestionClick(suggestion.domain)}
+              className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+              type="button"
+            >
+              @{suggestion.domain}
+            </button>
+          ))}
+        </div>
       </div>
     )
   }
@@ -601,7 +663,8 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
             {renderFieldError()}
           </div>
 
-          {/* Status message - separate element for proper spacing */}
+          {/* Domain suggestions OR status message - they are mutually exclusive */}
+          {renderDomainSuggestions()}
           {renderStatusMessage()}
 
           {/* Single primary action button based on state */}
