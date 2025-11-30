@@ -134,10 +134,10 @@ const AuthOverlay: React.FC = () => {
     setCurrentScreen('email');
   };
 
-  // FIXED: Updated handlers to properly set the email
+  // FIXED: Updated handlers to properly set the email and navigate immediately
   const handleContinueWithPasswordWithMethod = (identifier: string, method: 'email' | 'phone') => {
     console.log('🔄 Continue with password called:', { identifier, method });
-    
+
     if (method === 'email') {
       setUserEmail(identifier); // This should update the userEmail state
       setUserPhone('');
@@ -147,8 +147,10 @@ const AuthOverlay: React.FC = () => {
       setUserEmail('');
     }
     setAuthMethod(method);
-    setCurrentScreen('password');
     
+    // Navigate immediately without delay
+    setCurrentScreen('password');
+
     // Debug: Check if state was updated
     setTimeout(() => {
       console.log('📧 After state update - userEmail:', userEmail);
@@ -157,7 +159,7 @@ const AuthOverlay: React.FC = () => {
 
   const handleContinueWithCodeWithMethod = (identifier: string, method: 'email' | 'phone') => {
     console.log('🔄 Continue with code called:', { identifier, method });
-    
+
     if (method === 'email') {
       setUserEmail(identifier);
       setUserPhone('');
@@ -408,7 +410,6 @@ const AuthOverlay: React.FC = () => {
                 onContinueWithCode={handleContinueWithCodeWithMethod}
                 onCreateAccount={handleCreateAccountWithEmail}
                 onSignUpClick={handleSignUpClick}
-                authMethod={authMethod}
                 initialEmail={userEmail}
                 showHeader={false}
                 {...compactProps}
