@@ -492,25 +492,25 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   }
 
   const renderDomainSuggestions = () => {
-    if (!showDomainSuggestions) return null
+  if (!showDomainSuggestions) return null
 
-    return (
-      <div className="w-full overflow-x-auto">
-        <div className="flex gap-2 py-2 min-w-max">
-          {DOMAIN_SUGGESTIONS.map((suggestion) => (
-            <button
-              key={suggestion.domain}
-              onClick={() => handleDomainSuggestionClick(suggestion.domain)}
-              className="flex-shrink-0 px-4 py-3 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 whitespace-nowrap"
-              type="button"
-            >
-              @{suggestion.domain}
-            </button>
-          ))}
-        </div>
+  return (
+    <div className="w-full overflow-x-auto scrollbar-hide">
+      <div className="flex gap-1.5 py-1 min-w-max">
+        {DOMAIN_SUGGESTIONS.map((suggestion) => (
+          <button
+            key={suggestion.domain}
+            onClick={() => handleDomainSuggestionClick(suggestion.domain)}
+            className="flex-shrink-0 px-3 py-1.5 text-xs border border-gray-300 rounded-md hover:bg-gray-50 hover:border-gray-400 transition-colors focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 whitespace-nowrap"
+            type="button"
+          >
+            @{suggestion.domain}
+          </button>
+        ))}
       </div>
-    )
-  }
+    </div>
+  )
+}
 
   const renderActionButtons = () => {
     // Disable buttons if email is invalid, not trusted, or checking
