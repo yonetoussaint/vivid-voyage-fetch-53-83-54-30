@@ -37,7 +37,7 @@ const extractDomain = (email: string): string => {
 const shouldShowFavicon = (email: string): boolean => {
   const domain = extractDomain(email);
   if (!domain) return false;
-  
+
   // Only show favicon for these major providers
   const supportedDomains = [
     'gmail.com',
@@ -62,7 +62,7 @@ const shouldShowFavicon = (email: string): boolean => {
 const getFaviconUrl = (email: string): string | null => {
   const domain = extractDomain(email);
   if (!domain) return null;
-  
+
   // Common email provider favicons
   const faviconOverrides: Record<string, string> = {
     'gmail.com': 'https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico',
@@ -106,6 +106,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   const [fieldError, setFieldError] = useState<string>("")
   const [faviconUrl, setFaviconUrl] = useState<string | null>(null)
   const [showFavicon, setShowFavicon] = useState(false)
+  const [showDifferentEmailOption, setShowDifferentEmailOption] = useState(false)
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout>()
   const emailInputRef = useRef<HTMLInputElement>(null)
@@ -124,7 +125,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     if (email && hasValidEmailFormat(email)) {
       const shouldShow = shouldShowFavicon(email);
       setShowFavicon(shouldShow);
-      
+
       if (shouldShow) {
         const favicon = getFaviconUrl(email);
         setFaviconUrl(favicon);
@@ -199,16 +200,21 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   useEffect(() => {
     if (email.length === 0) {
       setFieldError("")
+      setShowDifferentEmailOption(false)
     } else if (!isEmailValid) {
       setFieldError("Please enter a valid email address")
+      setShowDifferentEmailOption(false)
     } else if (emailCheckState === "error") {
       setFieldError("Unable to verify your account. Please try again or use verification code.")
+      setShowDifferentEmailOption(true)
     } else {
       setFieldError("")
+      // Show "different email" option when we have a definitive result
+      setShowDifferentEmailOption(emailCheckState === "not-exists")
     }
   }, [isEmailValid, emailCheckState, email])
 
-  // Debounced email check
+  // Debounced email check with faster response
   const debouncedEmailCheck = useCallback(
     (emailToCheck: string) => {
       if (debounceTimeoutRef.current) {
@@ -227,7 +233,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
             setLastCheckedEmail(emailToCheck)
           }
         }
-      }, 800)
+      }, 300) // Reduced from 800ms to 300ms for faster response
     },
     [checkEmailExists, lastCheckedEmail, validateEmail],
   )
@@ -240,6 +246,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     if (!hasValidFormat) {
       setEmailCheckState("unchecked")
       setLastCheckedEmail("")
+      setShowDifferentEmailOption(false)
     } else {
       debouncedEmailCheck(email)
     }
@@ -263,9 +270,22 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
   const handleEmailChange = (value: string) => {
     setEmail(value)
+    // Reset different email option when user starts typing again
+    if (value !== email) {
+      setShowDifferentEmailOption(false)
+    }
   }
 
-  // FIXED: Corrected handleContinueWithPassword function
+  const handleUseDifferentEmail = () => {
+    setEmail("")
+    setEmailCheckState("unchecked")
+    setLastCheckedEmail("")
+    setShowDifferentEmailOption(false)
+    if (emailInputRef.current) {
+      emailInputRef.current.focus()
+    }
+  }
+
   const handleContinueWithPassword = async () => {
     if (!isEmailValid || isPasswordLoading || isActionInProgress || emailCheckState !== "exists") return
 
@@ -274,7 +294,6 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     setIsActionInProgress(true)
     setIsPasswordLoading(true)
     try {
-      // Directly call the handler without delay to ensure immediate state update
       onContinueWithPassword(email)
       console.log('✅ EmailAuthScreen: onContinueWithPassword called with:', email);
     } catch (error) {
@@ -352,7 +371,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
     if (emailCheckState === "not-exists") {
       return (
-        <AlertCircle className="w-5 h-5 text-blue-500" />
+        <UserPlus className="w-5 h-5 text-blue-500" />
       )
     }
 
@@ -379,10 +398,22 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   const renderStatusMessage = () => {
     if (emailCheckState === "not-exists") {
       return (
-        <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
+        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex-1">
-            <p className="text-purple-700 text-xs">
-              This email isn't registered. Click "Create Account" to continue.
+            <p className="text-blue-700 text-sm">
+              No account found with this email. You can create a new account to continue.
+            </p>
+          </div>
+        </div>
+      )
+    }
+
+    if (emailCheckState === "error") {
+      return (
+        <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+          <div className="flex-1">
+            <p className="text-orange-700 text-sm">
+              We're having trouble verifying your email. You can try another method or use a different email.
             </p>
           </div>
         </div>
@@ -399,7 +430,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     // Account exists: Show "Continue with Password" as primary, "Use OTP" as secondary
     if (emailCheckState === "exists") {
       return (
-        <div className="space-y-3 mb-8">
+        <div className="space-y-3 mb-4">
           {/* Primary Button - Continue with Password */}
           <button
             disabled={shouldDisableButtons}
@@ -427,7 +458,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     // Account doesn't exist: Show "Create Account"
     if (emailCheckState === "not-exists") {
       return (
-        <div className="space-y-3 mb-8">
+        <div className="space-y-3 mb-4">
           {/* Primary Button - Create Account */}
           <button
             disabled={shouldDisableButtons}
@@ -445,7 +476,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     // Error state: Show "Send OTP" as fallback
     if (emailCheckState === "error") {
       return (
-        <div className="space-y-3 mb-8">
+        <div className="space-y-3 mb-4">
           {/* Primary Button - Send OTP */}
           <button
             disabled={shouldDisableButtons}
@@ -462,7 +493,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
     // Default state (unchecked or checking): Show disabled primary button
     return (
-      <div className="space-y-3 mb-8">
+      <div className="space-y-3 mb-4">
         <button
           disabled={true}
           className="w-full flex items-center justify-center gap-3 py-4 px-4 bg-gray-200 text-gray-400 rounded-lg font-medium cursor-not-allowed"
@@ -539,6 +570,19 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
           {/* Single primary action button based on state */}
           {renderActionButtons()}
+
+          {/* Escape hatch for different email */}
+          {showDifferentEmailOption && (
+            <div className="text-center mb-4">
+              <button
+                onClick={handleUseDifferentEmail}
+                className="text-gray-500 hover:text-gray-700 text-sm transition-colors"
+                type="button"
+              >
+                Use a different email address
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
