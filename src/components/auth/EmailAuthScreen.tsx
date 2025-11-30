@@ -186,24 +186,23 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     setEmail(value)
   }
 
- 
+  // FIXED: Corrected handleContinueWithPassword function
+  const handleContinueWithPassword = async () => {
+    if (!isEmailValid || isPasswordLoading || isActionInProgress || emailCheckState !== "exists") return
 
-const handleContinueWithPassword = async () => {
-  if (!isCurrentInputValid || isPasswordLoading || isActionInProgress || currentCheckState !== "exists") return
+    console.log('📧 EmailAuthScreen: Continue with password clicked, email:', email);
 
-  console.log('📧 EmailAuthScreen: Continue with password clicked, email:', email);
-  
-  setIsActionInProgress(true)
-  setIsPasswordLoading(true)
-  try {
-    await new Promise((resolve) => setTimeout(resolve, 400))
-    onContinueWithPassword(getCurrentInput(), authMethod) // This should call the handler in AuthOverlay
-    console.log('✅ EmailAuthScreen: onContinueWithPassword called with:', getCurrentInput());
-  } finally {
-    setIsPasswordLoading(false)
-    setIsActionInProgress(false)
+    setIsActionInProgress(true)
+    setIsPasswordLoading(true)
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 400))
+      onContinueWithPassword(email) // FIXED: Only pass email (no second argument)
+      console.log('✅ EmailAuthScreen: onContinueWithPassword called with:', email);
+    } finally {
+      setIsPasswordLoading(false)
+      setIsActionInProgress(false)
+    }
   }
-}
 
   const handleContinueWithCode = async () => {
     if (!isEmailValid || isCodeLoading || isActionInProgress) return
