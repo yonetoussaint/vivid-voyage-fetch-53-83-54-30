@@ -26,7 +26,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [isPasswordValid, setIsPasswordValid] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState('');
 
   const passwordInputRef = useRef<HTMLInputElement>(null);
 
@@ -251,7 +251,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
             {/* Forgot Password */}
             <div className="text-center">
               <button
-                className={`text-red-500 hover:text-red-600 font-medium disabled:opacity-50 ${isCompact ? 'text-sm' : 'text-base'}`}
+                className="text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50 transition-colors"
                 type="button"
                 onClick={onForgotPasswordClick}
                 disabled={isLoading}
