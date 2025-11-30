@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Lock, Check, HelpCircle, Eye, EyeOff, Mail, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,6 +29,11 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
   const [error, setError] = useState<string>('');
 
   const passwordInputRef = useRef<HTMLInputElement>(null);
+
+  // Debug: Log the email when component mounts or email changes
+  useEffect(() => {
+    console.log('🔐 PasswordAuthScreen received email:', email);
+  }, [email]);
 
   // Login function using Supabase
   const login = async (email: string, password: string) => {
@@ -155,7 +160,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
             </p>
           </div>
 
-          {/* Email Display */}
+          {/* Email Display - This will now show the email passed from EmailAuthScreen */}
           <div className={`p-4 bg-gray-50 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -164,7 +169,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
                 </div>
                 <div className="flex flex-col">
                   <span className={`text-gray-700 font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>
-                    {email}
+                    {email || 'No email provided'}
                   </span>
                 </div>
               </div>
