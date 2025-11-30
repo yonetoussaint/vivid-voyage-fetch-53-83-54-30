@@ -30,12 +30,19 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
 
   const passwordInputRef = useRef<HTMLInputElement>(null);
 
-  // Debug: Log the email when component mounts or email changes
+  // Color palette following AliExpress hierarchy
+  const colors = {
+    primary: '#FF4747',     // Brand CTA Red - strongest
+    link: '#FF7060',        // Link Red - lighter
+    error: '#D93025',       // Error Red - darker
+    softBg: '#FFE8E6',      // Soft background for errors
+    subtle: '#FF8A7D',      // Very subtle for legal text
+  };
+
   useEffect(() => {
     console.log('🔐 PasswordAuthScreen received email:', email);
   }, [email]);
 
-  // Login function using Supabase
   const login = async (email: string, password: string) => {
     try {
       console.log('Attempting to login with:', { email });
@@ -160,7 +167,7 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
             </p>
           </div>
 
-          {/* Email Display - This will now properly show the email */}
+          {/* Email Display */}
           <div className={`p-4 bg-gray-50 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -176,7 +183,8 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
               <button
                 onClick={onBack}
                 disabled={isLoading}
-                className={`text-red-500 hover:text-red-600 font-medium ${isCompact ? 'text-xs' : 'text-sm'} disabled:opacity-50`}
+                className={`font-medium ${isCompact ? 'text-xs' : 'text-sm'} disabled:opacity-50`}
+                style={{ color: colors.link }}
                 type="button"
               >
                 Change
@@ -186,8 +194,19 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
 
           {/* Error Message */}
           {error && (
-            <div className={`p-4 border border-red-200 bg-red-50 text-red-700 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
-              <p className={isCompact ? 'text-xs' : 'text-sm'}>{error}</p>
+            <div 
+              className={`p-4 border rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}
+              style={{ 
+                borderColor: colors.error,
+                backgroundColor: colors.softBg 
+              }}
+            >
+              <p 
+                className={isCompact ? 'text-xs' : 'text-sm'}
+                style={{ color: colors.error }}
+              >
+                {error}
+              </p>
             </div>
           )}
 
@@ -209,9 +228,12 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
                 disabled={isLoading}
                 className={`relative w-full pl-10 ${
                   isPasswordValid && !error ? 'pr-16' : 'pr-10'
-                } py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-colors bg-white disabled:bg-gray-50 disabled:cursor-not-allowed ${
+                } py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent outline-none transition-colors bg-white disabled:bg-gray-50 disabled:cursor-not-allowed ${
                   error ? 'border-red-300' : 'border-gray-300'
                 } ${isCompact ? 'shadow-sm' : ''}`}
+                style={{
+                  focusRingColor: colors.primary
+                }}
               />
               <button
                 type="button"
@@ -227,15 +249,19 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
               )}
             </div>
 
-            {/* Sign In Button */}
+            {/* Sign In Button - PRIMARY CTA (Strongest Red) */}
             <button
               disabled={!isPasswordValid || isLoading}
               onClick={handleSignIn}
-              className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg transition-colors ${
+              className={`w-full flex items-center justify-center gap-3 py-3 px-4 border rounded-lg transition-colors ${
                 isPasswordValid && !isLoading
-                  ? 'bg-red-500 text-white hover:bg-red-600 border-red-500'
-                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  ? 'text-white hover:shadow-md active:scale-[0.98]'
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-300'
               } ${isCompact ? 'shadow-sm' : ''}`}
+              style={{
+                backgroundColor: isPasswordValid && !isLoading ? colors.primary : undefined,
+                borderColor: isPasswordValid && !isLoading ? colors.primary : undefined,
+              }}
               type="button"
             >
               {isLoading ? (
@@ -248,10 +274,11 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
               </span>
             </button>
 
-            {/* Forgot Password */}
+            {/* Forgot Password - LINK RED (Lighter) */}
             <div className="text-center">
               <button
-                className="text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50 transition-colors"
+                className={`font-medium disabled:opacity-50 ${isCompact ? 'text-sm' : 'text-base'}`}
+                style={{ color: colors.link }}
                 type="button"
                 onClick={onForgotPasswordClick}
                 disabled={isLoading}
@@ -272,12 +299,13 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
           </span>
         </div>
 
-        {/* Terms Footer */}
-        <p className={`text-gray-500 text-center ${isCompact ? 'text-[10px] leading-tight px-2' : 'text-xs leading-relaxed'}`}>
+        {/* Terms Footer - SUBTLE RED (Lightest) */}
+        <p className={`text-center ${isCompact ? 'text-[10px] leading-tight px-2' : 'text-xs leading-relaxed'}`}
+           style={{ color: colors.subtle }}>
           By proceeding, you confirm that you've read and agree to our{' '}
-          <span className="text-red-500">Terms of Service</span>{' '}
+          <span style={{ color: colors.link }}>Terms of Service</span>{' '}
           and{' '}
-          <span className="text-red-500">Privacy Policy</span>
+          <span style={{ color: colors.link }}>Privacy Policy</span>
         </p>
       </div>
     </div>
