@@ -19,7 +19,7 @@ interface SlideUpPanelProps {
   maxHeight?: number;
   dynamicHeight?: boolean;
   showDragHandle?: boolean;
-  helpButtonText?: string; // New prop for help button text
+  helpButtonText?: string;
 }
 
 export default function SlideUpPanel({
@@ -39,7 +39,7 @@ export default function SlideUpPanel({
   maxHeight = 0.9,
   dynamicHeight = false,
   showDragHandle = true,
-  helpButtonText // New prop
+  helpButtonText
 }: SlideUpPanelProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -109,10 +109,15 @@ export default function SlideUpPanel({
     }
   }, [isOpen, preventBodyScroll]);
 
-  // Drag handlers inspired by React Native BottomSheet
+  // UPDATED: Drag handlers with no-drag support
   const handleDragStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    // Prevent drag if user is interacting with interactive elements
+    // Check if the target or its parents have the 'no-drag' class
     const target = e.target as HTMLElement;
+    if (target.closest('.no-drag')) {
+      return; // Skip drag if element has no-drag class
+    }
+
+    // Prevent drag if user is interacting with interactive elements
     if (target.closest('button') || target.closest('a') || target.closest('input') || target.closest('select')) {
       return;
     }
@@ -125,6 +130,12 @@ export default function SlideUpPanel({
 
   const handleDragMove = useCallback((e: MouseEvent | TouchEvent) => {
     if (!isDragging) return;
+
+    // UPDATED: Check if we're over a no-drag element during drag
+    const target = e.target as HTMLElement;
+    if (target.closest('.no-drag')) {
+      return;
+    }
 
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
     const deltaY = clientY - startY;
