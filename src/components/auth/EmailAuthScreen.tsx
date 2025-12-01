@@ -123,7 +123,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   const [showDifferentEmailOption, setShowDifferentEmailOption] = useState(false)
   const [hasShownUntrustedDomain, setHasShownUntrustedDomain] = useState(false)
   const [showDomainSuggestions, setShowDomainSuggestions] = useState(false)
-  const [filteredDomainSuggestions, setFilteredDomainSuggestions] = useState(DOMAIN_SUGGESTions)
+  const [filteredDomainSuggestions, setFilteredDomainSuggestions] = useState(DOMAIN_SUGGESTIONS) // FIXED: Changed from DOMAIN_SUGGESTions to DOMAIN_SUGGESTIONS
   const [isUserTyping, setIsUserTyping] = useState(false)
   const [lastUserAction, setLastUserAction] = useState<'typing' | 'autofill' | 'paste' | 'click' | 'none'>('none')
 
