@@ -124,9 +124,13 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   const [hasShownUntrustedDomain, setHasShownUntrustedDomain] = useState(false)
   const [showDomainSuggestions, setShowDomainSuggestions] = useState(false)
   const [filteredDomainSuggestions, setFilteredDomainSuggestions] = useState(DOMAIN_SUGGESTIONS)
+  const [isUserTyping, setIsUserTyping] = useState(false)
+  const [lastUserAction, setLastUserAction] = useState<'typing' | 'autofill' | 'click' | 'none'>('none')
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout>()
   const emailInputRef = useRef<HTMLInputElement>(null)
+  const typingTimeoutRef = useRef<NodeJS.Timeout>()
+  const isInitialMount = useRef(true)
 
   // Email validation
   const hasValidEmailFormat = useCallback((emailAddress: string): boolean => {
@@ -169,17 +173,32 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     }
   }, [email]);
 
-  // Show domain suggestions when user is typing
+  // Detect autofill and prevent suggestions from showing
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    // If email was set programmatically (autofill) and user isn't actively typing, hide suggestions
+    if (email && !isUserTyping && lastUserAction !== 'typing') {
+      setShowDomainSuggestions(false);
+    }
+  }, [email, isUserTyping, lastUserAction]);
+
+  // Show domain suggestions only when user is actively typing
   useEffect(() => {
     const shouldShowSuggestions = email.length > 0 && 
                                 !statusMessage && 
                                 emailCheckState !== "checking" &&
                                 emailCheckState !== "exists" &&
                                 emailCheckState !== "not-exists" &&
-                                filteredDomainSuggestions.length > 0
+                                filteredDomainSuggestions.length > 0 &&
+                                isUserTyping &&
+                                lastUserAction === 'typing'
 
     setShowDomainSuggestions(shouldShowSuggestions)
-  }, [email, statusMessage, emailCheckState, filteredDomainSuggestions])
+  }, [email, statusMessage, emailCheckState, filteredDomainSuggestions, isUserTyping, lastUserAction])
 
   // API call to check if email exists
   const checkEmailExists = useCallback(async (emailToCheck: string): Promise<boolean> => {
@@ -334,6 +353,8 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     if (initialEmail) {
       setIsEmailValid(validateEmail(initialEmail))
       setIsTrustedEmail(isTrustedDomain(initialEmail))
+      // Mark as autofill for initial email
+      setLastUserAction('autofill')
     }
   }, [initialEmail, validateEmail])
 
@@ -343,11 +364,26 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current)
       }
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
     }
   }, [])
 
   const handleEmailChange = (value: string) => {
     setEmail(value)
+    setLastUserAction('typing')
+    setIsUserTyping(true)
+
+    // Clear any existing typing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current)
+    }
+
+    // Set timeout to mark user as no longer typing after a delay
+    typingTimeoutRef.current = setTimeout(() => {
+      setIsUserTyping(false)
+    }, 500) // 500ms after last keystroke
 
     // Only reset the untrusted domain flag if the user is starting fresh
     if (value.length === 0) {
@@ -375,6 +411,8 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     
     setEmail(fullEmail);
     setShowDomainSuggestions(false);
+    setLastUserAction('click');
+    setIsUserTyping(false);
     
     // Focus back to input and move cursor to end
     if (emailInputRef.current) {
@@ -394,8 +432,20 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     setStatusMessage("")
     setHasShownUntrustedDomain(false)
     setShowDifferentEmailOption(false)
+    setLastUserAction('typing')
+    setIsUserTyping(true)
     if (emailInputRef.current) {
       emailInputRef.current.focus()
+    }
+  }
+
+  // Handle autofill detection
+  const handleInput = (e: React.FormEvent<HTMLInputElement>) => {
+    // If the input event happens without a corresponding change event, it's likely autofill
+    const input = e.currentTarget;
+    if (input.value !== email) {
+      setLastUserAction('autofill');
+      setIsUserTyping(false);
     }
   }
 
@@ -746,6 +796,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
                   type="email"
                   value={email}
                   onChange={(e) => handleEmailChange(e.target.value)}
+                  onInput={handleInput}
                   placeholder="Enter your email address"
                   autoComplete="email"
                   ref={emailInputRef}
