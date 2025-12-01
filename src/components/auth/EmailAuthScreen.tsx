@@ -43,13 +43,17 @@ const TRUSTED_DOMAINS = [
 // Domain suggestions data
 const DOMAIN_SUGGESTIONS = [
   { domain: 'gmail.com', label: 'Gmail' },
+  { domain: 'googlemail.com', label: 'Google Mail' },
   { domain: 'outlook.com', label: 'Outlook' },
+  { domain: 'hotmail.com', label: 'Hotmail' },
+  { domain: 'live.com', label: 'Live' },
   { domain: 'yahoo.com', label: 'Yahoo' },
+  { domain: 'ymail.com', label: 'YMail' },
+  { domain: 'aol.com', label: 'AOL' },
   { domain: 'icloud.com', label: 'iCloud' },
   { domain: 'protonmail.com', label: 'ProtonMail' },
-  { domain: 'zoho.com', label: 'Zoho' },
-  { domain: 'hotmail.com', label: 'Hotmail' },
-  { domain: 'aol.com', label: 'AOL' }
+  { domain: 'proton.me', label: 'Proton' },
+  { domain: 'zoho.com', label: 'Zoho' }
 ]
 
 // Function to extract domain from email
@@ -119,6 +123,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   const [showDifferentEmailOption, setShowDifferentEmailOption] = useState(false)
   const [hasShownUntrustedDomain, setHasShownUntrustedDomain] = useState(false)
   const [showDomainSuggestions, setShowDomainSuggestions] = useState(false)
+  const [filteredDomainSuggestions, setFilteredDomainSuggestions] = useState(DOMAIN_SUGGESTIONS)
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout>()
   const emailInputRef = useRef<HTMLInputElement>(null)
@@ -142,17 +147,39 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     }
   }, [email, hasValidEmailFormat])
 
-  // Show domain suggestions when user is typing local part (before @)
+  // Filter domain suggestions based on user input
+  useEffect(() => {
+    if (email.includes('@')) {
+      const atIndex = email.indexOf('@');
+      const domainPart = email.slice(atIndex + 1).toLowerCase();
+      
+      if (domainPart.length > 0) {
+        // Filter domains that start with what the user has typed
+        const filtered = DOMAIN_SUGGESTIONS.filter(suggestion => 
+          suggestion.domain.toLowerCase().startsWith(domainPart)
+        );
+        setFilteredDomainSuggestions(filtered);
+      } else {
+        // If user just typed '@', show all suggestions
+        setFilteredDomainSuggestions(DOMAIN_SUGGESTIONS);
+      }
+    } else {
+      // If no '@' yet, show all suggestions
+      setFilteredDomainSuggestions(DOMAIN_SUGGESTIONS);
+    }
+  }, [email]);
+
+  // Show domain suggestions when user is typing
   useEffect(() => {
     const shouldShowSuggestions = email.length > 0 && 
-                                !email.includes('@') && 
                                 !statusMessage && 
                                 emailCheckState !== "checking" &&
                                 emailCheckState !== "exists" &&
-                                emailCheckState !== "not-exists"
+                                emailCheckState !== "not-exists" &&
+                                filteredDomainSuggestions.length > 0
 
     setShowDomainSuggestions(shouldShowSuggestions)
-  }, [email, statusMessage, emailCheckState])
+  }, [email, statusMessage, emailCheckState, filteredDomainSuggestions])
 
   // API call to check if email exists
   const checkEmailExists = useCallback(async (emailToCheck: string): Promise<boolean> => {
@@ -334,10 +361,30 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   }
 
   const handleDomainSuggestionClick = (domain: string) => {
-    const localPart = email.split('@')[0] || email
-    const fullEmail = `${localPart}@${domain}`
-    setEmail(fullEmail)
-    setShowDomainSuggestions(false)
+    let fullEmail = email;
+    
+    if (email.includes('@')) {
+      // Replace everything after '@' with the selected domain
+      const atIndex = email.indexOf('@');
+      const localPart = email.substring(0, atIndex);
+      fullEmail = `${localPart}@${domain}`;
+    } else {
+      // If no '@', just append the domain
+      fullEmail = `${email}@${domain}`;
+    }
+    
+    setEmail(fullEmail);
+    setShowDomainSuggestions(false);
+    
+    // Focus back to input and move cursor to end
+    if (emailInputRef.current) {
+      emailInputRef.current.focus();
+      setTimeout(() => {
+        if (emailInputRef.current) {
+          emailInputRef.current.setSelectionRange(fullEmail.length, fullEmail.length);
+        }
+      }, 0);
+    }
   }
 
   const handleUseDifferentEmail = () => {
@@ -482,65 +529,65 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   }
 
   const renderDomainSuggestions = () => {
-  if (!showDomainSuggestions) return null
+    if (!showDomainSuggestions) return null
 
-  return (
-    <div 
-      className="w-full overflow-x-auto scrollbar-hide"
-      style={{ 
-        touchAction: 'pan-x',
-        WebkitOverflowScrolling: 'touch'
-      }}
-      onMouseDown={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        // Mark that we're starting a scroll operation
-        const element = e.currentTarget;
-        element.setAttribute('data-scrolling', 'true');
-      }}
-      onTouchStart={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        // Mark that we're starting a scroll operation
-        const element = e.currentTarget;
-        element.setAttribute('data-scrolling', 'true');
-      }}
-      onTouchMove={(e) => {
-        e.stopPropagation();
-        // Allow the native scroll to happen
-      }}
-      onWheel={(e) => {
-        e.stopPropagation();
-      }}
-      onClick={(e) => e.stopPropagation()}
-    >
-      <div className="flex gap-1.5 min-w-max px-1 py-1">
-        {DOMAIN_SUGGESTIONS.map((suggestion) => (
-          <button
-            key={suggestion.domain}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleDomainSuggestionClick(suggestion.domain);
-            }}
-            onMouseDown={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-            onTouchStart={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-            className="flex-shrink-0 px-3 py-1.5 text-xs border border-gray-300 rounded-md hover:bg-gray-50 hover:border-gray-400 transition-colors focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 whitespace-nowrap select-none"
-            type="button"
-          >
-            @{suggestion.domain}
-          </button>
-        ))}
+    return (
+      <div 
+        className="w-full overflow-x-auto scrollbar-hide"
+        style={{ 
+          touchAction: 'pan-x',
+          WebkitOverflowScrolling: 'touch'
+        }}
+        onMouseDown={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          // Mark that we're starting a scroll operation
+          const element = e.currentTarget;
+          element.setAttribute('data-scrolling', 'true');
+        }}
+        onTouchStart={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          // Mark that we're starting a scroll operation
+          const element = e.currentTarget;
+          element.setAttribute('data-scrolling', 'true');
+        }}
+        onTouchMove={(e) => {
+          e.stopPropagation();
+          // Allow the native scroll to happen
+        }}
+        onWheel={(e) => {
+          e.stopPropagation();
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex gap-1.5 min-w-max px-1 py-1">
+          {filteredDomainSuggestions.map((suggestion) => (
+            <button
+              key={suggestion.domain}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleDomainSuggestionClick(suggestion.domain);
+              }}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onTouchStart={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              className="flex-shrink-0 px-3 py-1.5 text-xs border border-gray-300 rounded-md hover:bg-gray-50 hover:border-gray-400 transition-colors focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 whitespace-nowrap select-none"
+              type="button"
+            >
+              @{suggestion.domain}
+            </button>
+          ))}
+        </div>
       </div>
-    </div>
-  )
-}
+    )
+  }
 
   const renderActionButtons = () => {
     // Disable buttons if email is invalid, not trusted, or checking
