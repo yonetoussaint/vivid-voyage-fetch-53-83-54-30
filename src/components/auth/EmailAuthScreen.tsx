@@ -123,15 +123,18 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   const [showDifferentEmailOption, setShowDifferentEmailOption] = useState(false)
   const [hasShownUntrustedDomain, setHasShownUntrustedDomain] = useState(false)
   const [showDomainSuggestions, setShowDomainSuggestions] = useState(false)
-  const [filteredDomainSuggestions, setFilteredDomainSuggestions] = useState(DOMAIN_SUGGESTIONS) // FIXED: Changed from DOMAIN_SUGGESTions to DOMAIN_SUGGESTIONS
+  const [filteredDomainSuggestions, setFilteredDomainSuggestions] = useState(DOMAIN_SUGGESTIONS)
   const [isUserTyping, setIsUserTyping] = useState(false)
   const [lastUserAction, setLastUserAction] = useState<'typing' | 'autofill' | 'paste' | 'click' | 'none'>('none')
+  const [shouldShowSuggestions, setShouldShowSuggestions] = useState(false)
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout>()
   const emailInputRef = useRef<HTMLInputElement>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout>()
+  const suggestionTimeoutRef = useRef<NodeJS.Timeout>()
   const isInitialMount = useRef(true)
   const pasteDetectedRef = useRef(false)
+  const lastEmailValueRef = useRef(initialEmail)
 
   // Email validation
   const hasValidEmailFormat = useCallback((emailAddress: string): boolean => {
@@ -152,66 +155,82 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     }
   }, [email, hasValidEmailFormat])
 
-  // Filter domain suggestions based on user input
+  // Filter domain suggestions based on user input - SIMPLIFIED
   useEffect(() => {
+    // Don't filter suggestions if user is typing after '@' (they're typing domain)
     if (email.includes('@')) {
-      const atIndex = email.indexOf('@');
-      const domainPart = email.slice(atIndex + 1).toLowerCase();
-      
-      if (domainPart.length > 0) {
-        // Filter domains that start with what the user has typed
-        const filtered = DOMAIN_SUGGESTIONS.filter(suggestion => 
-          suggestion.domain.toLowerCase().startsWith(domainPart)
-        );
-        setFilteredDomainSuggestions(filtered);
-      } else {
-        // If user just typed '@', show all suggestions
-        setFilteredDomainSuggestions(DOMAIN_SUGGESTIONS);
-      }
-    } else {
-      // If no '@' yet, show all suggestions
-      setFilteredDomainSuggestions(DOMAIN_SUGGESTIONS);
+      setFilteredDomainSuggestions([]); // Hide suggestions when typing domain
+      return;
     }
+
+    // If no '@', show all suggestions for local part typing
+    setFilteredDomainSuggestions(DOMAIN_SUGGESTIONS);
   }, [email]);
 
-  // CRITICAL FIX: Prevent suggestions for paste/autofill
+  // Clean up all timeouts
   useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      if (suggestionTimeoutRef.current) {
+        clearTimeout(suggestionTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Main logic for showing/hiding suggestions - SIMPLIFIED
+  useEffect(() => {
+    // Clear any existing timeout
+    if (suggestionTimeoutRef.current) {
+      clearTimeout(suggestionTimeoutRef.current);
+    }
+
+    // If it's autofill or paste, never show suggestions
+    if (lastUserAction === 'autofill' || lastUserAction === 'paste') {
+      setShowDomainSuggestions(false);
+      setShouldShowSuggestions(false);
       return;
     }
 
-    // If this is a paste or autofill action, immediately hide suggestions
-    if ((lastUserAction === 'paste' || lastUserAction === 'autofill') && showDomainSuggestions) {
+    // If user is clicking on a suggestion, hide suggestions
+    if (lastUserAction === 'click') {
       setShowDomainSuggestions(false);
-    }
-  }, [email, lastUserAction, showDomainSuggestions]);
-
-  // Show domain suggestions ONLY when user is manually typing before '@'
-  useEffect(() => {
-    // Don't show suggestions if this is a paste/autofill action
-    if (lastUserAction === 'paste' || lastUserAction === 'autofill') {
-      setShowDomainSuggestions(false);
+      setShouldShowSuggestions(false);
       return;
     }
 
-    // Only show suggestions when:
-    // - User is actively typing
-    // - Email doesn't contain '@' (user is still typing local part)
-    // - No status messages
-    // - Not in checking state
-    // - There are suggestions to show
-    const shouldShowSuggestions = isUserTyping && 
-                                email.length > 0 && 
-                                !email.includes('@') &&
-                                !statusMessage && 
-                                emailCheckState !== "checking" &&
-                                emailCheckState !== "exists" &&
-                                emailCheckState !== "not-exists" &&
-                                filteredDomainSuggestions.length > 0
+    // Conditions for showing suggestions:
+    // 1. User is typing (not autofill/paste)
+    // 2. Email doesn't contain '@' (still typing local part)
+    // 3. Email has content
+    // 4. Not in a checking/valid state
+    // 5. No status messages showing
+    const canShowSuggestions = isUserTyping && 
+                              lastUserAction === 'typing' &&
+                              email.length > 0 && 
+                              !email.includes('@') &&
+                              !statusMessage && 
+                              emailCheckState !== "checking" &&
+                              emailCheckState !== "exists" &&
+                              emailCheckState !== "not-exists" &&
+                              emailCheckState !== "error";
 
-    setShowDomainSuggestions(shouldShowSuggestions)
-  }, [email, statusMessage, emailCheckState, filteredDomainSuggestions, isUserTyping, lastUserAction])
+    if (canShowSuggestions) {
+      // Show suggestions immediately when typing local part
+      setShouldShowSuggestions(true);
+      setShowDomainSuggestions(true);
+    } else {
+      // Hide suggestions with a small delay to prevent flicker
+      suggestionTimeoutRef.current = setTimeout(() => {
+        setShouldShowSuggestions(false);
+        setShowDomainSuggestions(false);
+      }, 100);
+    }
+  }, [email, statusMessage, emailCheckState, isUserTyping, lastUserAction]);
 
   // API call to check if email exists
   const checkEmailExists = useCallback(async (emailToCheck: string): Promise<boolean> => {
@@ -371,57 +390,52 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     }
   }, [initialEmail, validateEmail])
 
-  // Cleanup effect
-  useEffect(() => {
-    return () => {
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current)
-      }
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current)
-      }
-    }
-  }, [])
-
   const handleEmailChange = (value: string) => {
-    setEmail(value)
+    const previousEmail = lastEmailValueRef.current;
+    lastEmailValueRef.current = value;
+    setEmail(value);
 
-    // If paste was detected, maintain paste state, otherwise it's typing
-    if (!pasteDetectedRef.current) {
-      setLastUserAction('typing')
-      setIsUserTyping(true)
+    // Detect if this is likely typing (not paste/autofill)
+    const isTyping = value.length === previousEmail.length + 1 || 
+                    value.length === previousEmail.length - 1;
+    
+    if (isTyping && !pasteDetectedRef.current) {
+      setLastUserAction('typing');
+      setIsUserTyping(true);
     }
 
     // Clear any existing typing timeout
     if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current)
+      clearTimeout(typingTimeoutRef.current);
     }
 
     // Set timeout to mark user as no longer typing after a delay
     typingTimeoutRef.current = setTimeout(() => {
-      setIsUserTyping(false)
-      pasteDetectedRef.current = false // Reset paste detection
-    }, 300) // Reduced to 300ms for faster response
+      setIsUserTyping(false);
+      pasteDetectedRef.current = false; // Reset paste detection
+    }, 500); // 500ms after last keystroke
 
     // Only reset the untrusted domain flag if the user is starting fresh
     if (value.length === 0) {
-      setHasShownUntrustedDomain(false)
-      setStatusMessage("")
+      setHasShownUntrustedDomain(false);
+      setStatusMessage("");
     }
+    
     // Reset different email option when user starts typing again
-    if (value !== email) {
-      setShowDifferentEmailOption(false)
+    if (value !== previousEmail) {
+      setShowDifferentEmailOption(false);
     }
   }
 
   // Handle paste events specifically
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    pasteDetectedRef.current = true
-    setLastUserAction('paste')
-    setIsUserTyping(false)
+    pasteDetectedRef.current = true;
+    setLastUserAction('paste');
+    setIsUserTyping(false);
     
     // Immediately hide suggestions when paste occurs
-    setShowDomainSuggestions(false)
+    setShowDomainSuggestions(false);
+    setShouldShowSuggestions(false);
   }
 
   const handleDomainSuggestionClick = (domain: string) => {
@@ -439,6 +453,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
     
     setEmail(fullEmail);
     setShowDomainSuggestions(false);
+    setShouldShowSuggestions(false);
     setLastUserAction('click');
     setIsUserTyping(false);
     
@@ -455,11 +470,14 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
   const handleUseDifferentEmail = () => {
     setEmail("")
+    lastEmailValueRef.current = "";
     setEmailCheckState("unchecked")
     setLastCheckedEmail("")
     setStatusMessage("")
     setHasShownUntrustedDomain(false)
     setShowDifferentEmailOption(false)
+    setShowDomainSuggestions(false)
+    setShouldShowSuggestions(false)
     setLastUserAction('typing')
     setIsUserTyping(true)
     if (emailInputRef.current) {
@@ -469,11 +487,14 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
 
   // Handle autofill detection
   const handleInput = (e: React.FormEvent<HTMLInputElement>) => {
-    // If the input event happens without a corresponding change event, it's likely autofill
     const input = e.currentTarget;
-    if (input.value !== email && !pasteDetectedRef.current) {
+    // If value changed significantly without typing, it's likely autofill
+    const diff = Math.abs(input.value.length - lastEmailValueRef.current.length);
+    if (diff > 3 && !pasteDetectedRef.current) {
       setLastUserAction('autofill');
       setIsUserTyping(false);
+      setShowDomainSuggestions(false);
+      setShouldShowSuggestions(false);
     }
   }
 
@@ -607,7 +628,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
   }
 
   const renderDomainSuggestions = () => {
-    if (!showDomainSuggestions) return null
+    if (!showDomainSuggestions || !shouldShowSuggestions) return null
 
     return (
       <div 
