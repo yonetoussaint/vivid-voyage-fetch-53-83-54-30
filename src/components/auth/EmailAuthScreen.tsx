@@ -655,7 +655,7 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
           display: none;
         }
       `}</style>
-      
+
       <div className="px-4 pb-4">
         {/* Main Content */}
         <div className="space-y-3">
@@ -734,21 +734,6 @@ const EmailAuthScreen: React.FC<EmailAuthScreenProps> = ({
             )}
           </div>
         </div>
-
-        {/* Secure Authentication Footer */}
-        <div className="flex items-center justify-center gap-2 mt-6">
-          <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M18,8A6,6 0 0,0 12,2A6,6 0 0,0 6,8H4C2.89,8 2,8.89 2,10V20A2,2 0 0,0 4,22H20A2,2 0 0,0 22,20V10C22,8.89 21.1,8 20,8H18M12,4A4,4 0 0,1 16,8H8A4,4 0 0,1 12,4Z" />
-          </svg>
-          <span className="text-gray-500 text-xs">Secure Authentication</span>
-        </div>
-
-        {/* Terms Footer */}
-        <p className="text-gray-500 text-center text-[10px] leading-tight px-2 mt-3">
-          By proceeding, you confirm that you've read and agree to our{" "}
-          <span className="text-red-500">Terms of Service</span> and{" "}
-          <span className="text-red-500">Privacy Policy</span>
-        </p>
       </div>
     </>
   )
