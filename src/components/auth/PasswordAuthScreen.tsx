@@ -278,15 +278,11 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
               )}
             </div>
 
-            {/* Sign In Button */}
+            {/* Sign In Button - UPDATED TO MATCH EmailAuthScreen */}
             <button
               disabled={!isPasswordValid || isLoading}
               onClick={handleSignIn}
-              className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg transition-colors ${
-                isPasswordValid && !isLoading
-                  ? 'bg-red-500 text-white hover:bg-red-600 border-red-500'
-                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              } ${isCompact ? 'shadow-sm' : ''}`}
+              className="w-full flex items-center justify-center gap-3 py-4 px-4 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transform active:scale-95 transition-all disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
               type="button"
             >
               {isLoading ? (
@@ -294,8 +290,8 @@ const PasswordAuthScreen: React.FC<PasswordAuthScreenProps> = ({
               ) : (
                 <Lock className="w-5 h-5" />
               )}
-              <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>
-                {isLoading ? 'Signing In...' : 'Sign In'}
+              <span>
+                {isLoading ? 'Loading...' : 'Continue with Password'}
               </span>
             </button>
 
