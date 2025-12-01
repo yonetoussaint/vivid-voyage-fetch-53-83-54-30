@@ -202,25 +202,22 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
             </div>
           </div>
 
-          {/* Send Verification Code Button */}
+          {/* Send Verification Code Button - UPDATED TO MATCH EmailAuthScreen */}
           <button
             onClick={handleSendResetCode}
             disabled={!canSendReset}
-            className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg transition-colors ${
-              canSendReset
-                ? 'bg-red-500 text-white hover:bg-red-600 border-red-500'
-                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-            } ${isCompact ? 'shadow-sm' : ''}`}
+            className={`w-full flex items-center justify-center gap-3 py-4 px-4 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transform active:scale-95 transition-all disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed ${isCompact ? '' : ''}`}
+            type="button"
           >
             {resetState === 'sending' ? (
               <>
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-                <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Sending code...</span>
+                <span>Loading...</span>
               </>
             ) : resetState === 'sent' ? (
-              <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Reset code sent</span>
+              <span>Reset code sent</span>
             ) : (
-              <span className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Send password reset code</span>
+              <span>Send password reset code</span>
             )}
           </button>
 
