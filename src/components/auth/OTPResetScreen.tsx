@@ -554,38 +554,30 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
               </div>
             </div>
 
-            {/* Verify Button */}
+            {/* Verify Button - UPDATED TO MATCH EmailAuthScreen */}
             <button
               disabled={otp.some((digit) => !digit) || isVerifying || isResending}
               onClick={() => handleVerifyOTP()}
-              className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg transition-colors ${
-                !otp.some((digit) => !digit) && !isVerifying && !isResending
-                  ? "bg-red-500 text-white hover:bg-red-600 border-red-500"
-                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
-              } ${isCompact ? "shadow-sm" : ""}`}
+              className="w-full flex items-center justify-center gap-3 py-4 px-4 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transform active:scale-95 transition-all disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
               type="button"
             >
               {isVerifying ? <Loader2 className="w-5 h-5 animate-spin" /> : <Key className="w-5 h-5" />}
-              <span className={`font-medium ${isCompact ? "text-sm" : "text-base"}`}>
+              <span>
                 {isVerifying ? "Verifying..." : "Verify & Reset Password"}
               </span>
             </button>
 
-            {/* Resend Code Button - Centered below Verify */}
+            {/* Resend Code Button - Centered below Verify - UPDATED TO MATCH EmailAuthScreen */}
             <div className="flex justify-center">
               {resendCooldown === 0 ? (
                 <button
                   onClick={handleResendCode}
                   disabled={isResending || isVerifying}
-                  className={`w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-300 rounded-lg transition-colors ${
-                    !isResending && !isVerifying
-                      ? "bg-white text-red-500 hover:bg-gray-50 border-gray-300 hover:border-red-300"
-                      : "bg-gray-100 text-gray-400 cursor-not-allowed border-gray-300"
-                  } ${isCompact ? "shadow-sm" : ""}`}
+                  className="w-full flex items-center justify-center gap-3 py-4 px-4 bg-white text-red-500 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transform active:scale-95 transition-all disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
                   type="button"
                 >
                   {isResending ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
-                  <span className={`font-medium ${isCompact ? "text-sm" : "text-base"}`}>
+                  <span>
                     {isResending ? "Sending..." : "Resend reset code"}
                   </span>
                 </button>
@@ -601,9 +593,9 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
         </div>
 
         {/* REMOVED: Secure Authentication Footer */}
-        
+
         {/* REMOVED: Terms Footer */}
-        
+
       </div>
     </div>
   )
