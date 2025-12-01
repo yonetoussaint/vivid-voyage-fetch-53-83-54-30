@@ -92,10 +92,8 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
       if (result.success) {
         console.log('Password reset OTP sent successfully');
         toast.success('Password reset code sent to your email');
-        setResetState('sent');
-        setTimeout(() => {
-          onResetSuccess(email);
-        }, 2000);
+        // Immediately redirect without showing status message or delay
+        onResetSuccess(email);
       } else {
         console.error('Failed to send password reset OTP:', result.error);
         setErrorMessage(result.error || 'Failed to send password reset code. Please try again.');
@@ -110,7 +108,7 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
     }
   };
 
-  const canSendReset = isEmailValid(email) && !isLoading && resetState !== 'sent';
+  const canSendReset = isEmailValid(email) && !isLoading;
   const { url: faviconUrl, show: showFavicon } = updateFavicon(email);
 
   const handleFaviconError = () => {
@@ -160,22 +158,10 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
             </p>
           </div>
 
-          {/* Status Messages */}
+          {/* Only show error messages, not success messages */}
           {resetState === 'error' && errorMessage && (
             <div className={`p-4 border border-red-200 bg-red-50 text-red-700 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
               <p className={isCompact ? 'text-xs' : 'text-sm'}>{errorMessage}</p>
-            </div>
-          )}
-
-          {resetState === 'sent' && (
-            <div className={`p-4 border border-green-200 bg-green-50 text-green-700 rounded-lg ${isCompact ? 'mb-3' : 'mb-4'}`}>
-              <div className="flex items-center gap-2 mb-2">
-                <Mail className="w-5 h-5" />
-                <p className={`font-medium ${isCompact ? 'text-sm' : 'text-base'}`}>Password reset code sent!</p>
-              </div>
-              <p className={isCompact ? 'text-xs' : 'text-sm'}>
-                Check your email for a 6-digit password reset code. If it doesn't appear within a few minutes, check your spam folder.
-              </p>
             </div>
           )}
 
@@ -202,20 +188,18 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
             </div>
           </div>
 
-          {/* Send Verification Code Button - UPDATED TO MATCH EmailAuthScreen */}
+          {/* Send Verification Code Button - UPDATED */}
           <button
             onClick={handleSendResetCode}
             disabled={!canSendReset}
             className={`w-full flex items-center justify-center gap-3 py-4 px-4 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transform active:scale-95 transition-all disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed ${isCompact ? '' : ''}`}
             type="button"
           >
-            {resetState === 'sending' ? (
+            {isLoading ? (
               <>
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
                 <span>Loading...</span>
               </>
-            ) : resetState === 'sent' ? (
-              <span>Reset code sent</span>
             ) : (
               <span>Send password reset code</span>
             )}
@@ -238,9 +222,9 @@ const ResetPasswordScreen: React.FC<ResetPasswordScreenProps> = ({
         </div>
 
         {/* REMOVED: Secure Authentication Footer */}
-        
+
         {/* REMOVED: Terms Footer */}
-        
+
       </div>
     </div>
   );
