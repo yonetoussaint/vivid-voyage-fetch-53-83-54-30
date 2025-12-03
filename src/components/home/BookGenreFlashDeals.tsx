@@ -461,7 +461,7 @@ export default function BookGenreFlashDeals({
           totalProducts: summaryStats.totalProducts,
           activeProducts: summaryStats.inStock,
           categories: summaryStats.categories,
-          averagePrice: summaryStats.totalProducts > 0 ? `$${(summaryStats.totalValue / summaryStats.totalProducts).toFixed(2)}` : '$0.00',
+          averagePrice: summaryStats.totalProducts > 0 ? `G ${(summaryStats.totalValue / summaryStats.totalProducts).toFixed(2)}` : 'G 0.00',
           metrics: [
             { value: summaryStats.outOfStock.toString(), label: 'Out of Stock', color: 'text-red-600' },
             { value: summaryStats.categories.toString(), label: 'Categories', color: 'text-purple-600' },
@@ -579,7 +579,7 @@ export default function BookGenreFlashDeals({
                         {product.discount_price && product.discount_price < product.price && (
                           <div className="absolute top-2 left-2 z-10">
                             <div className="bg-red-500 text-white text-xs px-2 py-1 font-medium rounded-md">
-                              <span className="line-through">${Number(product.price).toFixed(2)}</span>
+                              <span className="line-through">G {Number(product.price).toFixed(2)}</span>
                             </div>
                           </div>
                         )}
@@ -619,12 +619,13 @@ export default function BookGenreFlashDeals({
                         {product.name}
                       </h4>
 
-                      {/* PriceInfo component - without original price since it's now in the badge */}
-                      <PriceInfo 
-                        price={product.discount_price || product.price}
-                        size="sm"
-                        showOnlyBadge={false}
-                      />
+                      {/* Simple price display without currency switcher */}
+                      <div className="flex items-center gap-2 leading-none">
+                        <span className="font-bold text-orange-500 text-base">
+                          G {(product.discount_price || product.price).toFixed(2)}
+                        </span>
+                        <span className="text-gray-500 text-xs">/ unit</span>
+                      </div>
 
                       {/* Product info section */}
                       {customProductInfo ? customProductInfo(product) : 
@@ -633,7 +634,6 @@ export default function BookGenreFlashDeals({
                           <div className="text-xs text-gray-500">
                             {product.stock} in stock
                           </div>
-                          {/* REMOVED: The green "Save $X.XX" element */}
                         </div>
                       )}
                     </div>
