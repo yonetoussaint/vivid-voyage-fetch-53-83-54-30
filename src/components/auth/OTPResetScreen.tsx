@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
-import { ArrowLeft, Key, HelpCircle, Mail, Loader2, Edit } from "lucide-react"
+import { ArrowLeft, Key, HelpCircle, Mail, Loader2, RotateCcw } from "lucide-react"
 const FAVICON_OVERRIDES: Record<string, string> = {
   "gmail.com": "https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico",
   "outlook.com": "https://outlook.live.com/favicon.ico",
@@ -440,7 +440,7 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
                 aria-label="Change email"
                 title="Change email"
               >
-                <Edit className="w-4 h-4" />
+                <RotateCcw className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -520,12 +520,12 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
                 ))}
               </div>
 
-              {/* Helper text */}
-              <div className={`mt-3 space-y-1 ${isCompact ? "text-xs" : "text-sm"} text-gray-500`}>
+              {/* Helper text - REMOVED */}
+              {/* <div className={`mt-3 space-y-1 ${isCompact ? "text-xs" : "text-sm"} text-gray-500`}>
                 <div className="flex items-center justify-center">
                   <p>Check your spam folder if you don't see the email</p>
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* Verify Button */}
