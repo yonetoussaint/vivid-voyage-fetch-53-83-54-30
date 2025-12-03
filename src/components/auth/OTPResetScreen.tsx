@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
-import { ArrowLeft, Key, HelpCircle, Mail, Loader2, RotateCcw } from "lucide-react"
+import { ArrowLeft, HelpCircle, Mail, RotateCcw } from "lucide-react"
 const FAVICON_OVERRIDES: Record<string, string> = {
   "gmail.com": "https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico",
   "outlook.com": "https://outlook.live.com/favicon.ico",
@@ -445,32 +445,20 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
             </div>
           </div>
 
-          {/* Error Message */}
+          {/* Error Message - REMOVED ICON */}
           {error && (
             <div className={`p-3 border rounded-lg transition-all duration-300 ${isCompact ? "mb-3" : "mb-4"} ${
               error.includes("Opening") || error.includes("Please check") 
                 ? "border-blue-200 bg-blue-50 text-blue-700" 
                 : "border-red-200 bg-red-50 text-red-700"
             }`}>
-              <div className="flex items-start gap-2">
-                <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fillRule="evenodd"
-                    d={error.includes("Opening") || error.includes("Please check") 
-                      ? "M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                      : "M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                    }
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <div>
-                  <p className={`font-medium ${isCompact ? "text-xs" : "text-sm"}`}>{error}</p>
-                  {error.includes("expired") && (
-                    <p className={`mt-1 text-red-600 ${isCompact ? "text-xs" : "text-sm"}`}>
-                      Click "Resend reset code" below to get a new code.
-                    </p>
-                  )}
-                </div>
+              <div>
+                <p className={`font-medium ${isCompact ? "text-xs" : "text-sm"}`}>{error}</p>
+                {error.includes("expired") && (
+                  <p className={`mt-1 text-red-600 ${isCompact ? "text-xs" : "text-sm"}`}>
+                    Click "Resend reset code" below to get a new code.
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -519,41 +507,28 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
                   </div>
                 ))}
               </div>
-
-              {/* Helper text - REMOVED */}
-              {/* <div className={`mt-3 space-y-1 ${isCompact ? "text-xs" : "text-sm"} text-gray-500`}>
-                <div className="flex items-center justify-center">
-                  <p>Check your spam folder if you don't see the email</p>
-                </div>
-              </div> */}
             </div>
 
-            {/* Verify Button */}
+            {/* Verify Button - REMOVED ICON */}
             <button
               disabled={otp.some((digit) => !digit) || isVerifying || isResending}
               onClick={() => handleVerifyOTP()}
-              className="w-full flex items-center justify-center gap-3 py-4 px-4 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transform active:scale-95 transition-all disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
+              className="w-full py-4 px-4 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transform active:scale-95 transition-all disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
               type="button"
             >
-              {isVerifying ? <Loader2 className="w-5 h-5 animate-spin" /> : <Key className="w-5 h-5" />}
-              <span>
-                {isVerifying ? "Verifying..." : "Verify & Reset Password"}
-              </span>
+              {isVerifying ? "Verifying..." : "Verify & Reset Password"}
             </button>
 
-            {/* Resend Code Button */}
+            {/* Resend Code Button - REMOVED ICON */}
             <div className="flex justify-center">
               {resendCooldown === 0 ? (
                 <button
                   onClick={handleResendCode}
                   disabled={isResending || isVerifying}
-                  className="w-full flex items-center justify-center gap-3 py-4 px-4 bg-white text-red-500 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transform active:scale-95 transition-all disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
+                  className="w-full py-4 px-4 bg-white text-red-500 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transform active:scale-95 transition-all disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
                   type="button"
                 >
-                  {isResending ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
-                  <span>
-                    {isResending ? "Sending..." : "Resend reset code"}
-                  </span>
+                  {isResending ? "Sending..." : "Resend reset code"}
                 </button>
               ) : (
                 <div className="w-full flex justify-center py-3">
