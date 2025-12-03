@@ -478,47 +478,18 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
           {/* Code Input */}
           <div className={isCompact ? "space-y-3" : "space-y-4"}>
             <div>
-              {/* Paste Code and Timer - Same Horizontal Line */}
-              <div className="flex items-center justify-between mb-3">
-                {/* Paste Code Button - Left */}
-                <button
-                  onClick={handlePasteFromClipboard}
-                  disabled={isVerifying || isResending}
-                  className={`flex items-center gap-1.5 text-red-500 hover:text-red-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${isCompact ? "text-xs" : "text-sm"}`}
-                  type="button"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                    />
-                  </svg>
-                  Paste Code
-                </button>
-
-                {/* Timer Display - Right */}
-                {otpExpiry > 0 ? (
-                  <div className="flex items-center gap-1.5">
-                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    <span
-                      className={`font-medium ${otpExpiry < 60 ? "text-red-500" : "text-gray-600"} ${isCompact ? "text-xs" : "text-sm"}`}
-                    >
-                      Expires in {formatTime(otpExpiry)}
-                    </span>
-                  </div>
-                ) : (
-                  <span className={`text-red-500 font-medium ${isCompact ? "text-xs" : "text-sm"}`}>Code Expired</span>
-                )}
-              </div>
+              {/* Clean minimal version */}
+<div className="flex items-center gap-3 text-sm text-gray-500 mb-4">
+  <button
+    onClick={handlePasteFromClipboard}
+    className="text-red-500 hover:text-red-600"
+    type="button"
+  >
+    Paste code
+  </button>
+  <span className="text-gray-300">|</span>
+  <span>Expires in {formatTime(otpExpiry)}</span>
+</div>
 
               <div className={`flex gap-2 justify-between ${shakeError ? "shake" : ""}`}>
                 {otp.map((digit, index) => (
