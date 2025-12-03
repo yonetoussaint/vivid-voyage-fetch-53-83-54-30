@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
-import { ArrowLeft, Key, HelpCircle, Mail, Loader2 } from "lucide-react"
+import { ArrowLeft, Key, HelpCircle, Mail, Loader2, Edit } from "lucide-react"
 const FAVICON_OVERRIDES: Record<string, string> = {
   "gmail.com": "https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico",
   "outlook.com": "https://outlook.live.com/favicon.ico",
@@ -413,35 +413,37 @@ const OTPResetScreen: React.FC<OTPResetScreenProps> = ({
 
           {/* Email Display */}
           <div className={`p-4 bg-gray-50 rounded-lg ${isCompact ? "mb-3" : "mb-4"}`}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-6 h-6">
-                  {faviconUrl ? (
-                    <img
-                      src={faviconUrl || "/placeholder.svg"}
-                      alt="Email provider"
-                      className="w-full h-full object-contain"
-                      onError={(e) => {
-                        e.currentTarget.onerror = null
-                        e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236B7280'%3E%3Cpath d='M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z'/%3E%3C/svg%3E"
-                      }}
-                    />
-                  ) : (
-                    <Mail className="w-full h-full text-gray-400" />
-                  )}
-                </div>
-                <span className={`text-gray-700 font-medium ${isCompact ? "text-sm" : "text-base"}`}>{email}</span>
-              </div>
-              <button
-                onClick={onBack}
-                className={`text-red-500 hover:text-red-600 font-medium ${isCompact ? "text-xs" : "text-sm"}`}
-                type="button"
-                disabled={isVerifying || isResending}
-              >
-                Change
-              </button>
-            </div>
-          </div>
+  <div className="flex items-center justify-between">
+    <div className="flex items-center gap-3">
+      <div className="w-6 h-6">
+        {faviconUrl ? (
+          <img
+            src={faviconUrl || "/placeholder.svg"}
+            alt="Email provider"
+            className="w-full h-full object-contain"
+            onError={(e) => {
+              e.currentTarget.onerror = null
+              e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236B7280'%3E%3Cpath d='M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z'/%3E%3C/svg%3E"
+            }}
+          />
+        ) : (
+          <Mail className="w-full h-full text-gray-400" />
+        )}
+      </div>
+      <span className={`text-gray-700 font-medium ${isCompact ? "text-sm" : "text-base"}`}>{email}</span>
+    </div>
+    <button
+      onClick={onBack}
+      className="flex items-center justify-center w-8 h-8 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      type="button"
+      disabled={isVerifying || isResending}
+      aria-label="Change email"
+      title="Change email"
+    >
+      <Edit className="w-4 h-4" />
+    </button>
+  </div>
+</div>
 
           {/* Error Message */}
           {error && (
