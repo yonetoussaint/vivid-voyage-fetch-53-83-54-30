@@ -32,6 +32,7 @@ interface PriceInfoProps {
   size?: 'sm' | 'md' | 'lg';
   showOnlyBadge?: boolean;
   className?: string;
+  showOriginalPrice?: boolean;
 }
 
 export default function PriceInfo({ 
@@ -39,7 +40,8 @@ export default function PriceInfo({
   originalPrice, 
   size = 'md',
   showOnlyBadge = false,
-  className = ''
+  className = '',
+  showOriginalPrice = true
 }: PriceInfoProps) {
   const [currentCurrency, setCurrentCurrency] = useState('HTG'); // Default to Gourdes
 
@@ -86,6 +88,11 @@ export default function PriceInfo({
     }
   };
 
+  // Calculate discount percentage
+  const discountPercentage = originalPrice && originalPrice > price
+    ? Math.round(((originalPrice - price) / originalPrice) * 100)
+    : 0;
+
   // CurrencySwitcher Component
   const CurrencySwitcher = () => {
     return (
@@ -123,6 +130,20 @@ export default function PriceInfo({
         {/* Currency Switcher */}
         <CurrencySwitcher />
       </div>
+
+      {/* Barred original price display */}
+      {showOriginalPrice && originalPrice && originalPrice > price && (
+        <div className="mt-1 flex items-center gap-2">
+          <span className="text-gray-400 line-through text-sm">
+            {formatPrice(originalPrice)}
+          </span>
+          {discountPercentage > 0 && (
+            <span className="text-green-600 font-medium text-xs bg-green-50 px-1.5 py-0.5 rounded">
+              Save {formatPrice(originalPrice - price)}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }
