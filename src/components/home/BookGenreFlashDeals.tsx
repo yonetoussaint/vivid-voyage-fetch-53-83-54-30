@@ -575,15 +575,6 @@ export default function BookGenreFlashDeals({
                           </div>
                         )}
 
-                        {/* Barred price badge - replaces discount badge */}
-                        {product.discount_price && product.discount_price < product.price && (
-                          <div className="absolute top-2 left-2 z-10">
-                            <div className="bg-red-500 text-white text-xs px-2 py-1 font-medium rounded-md">
-                              <span className="line-through">G {Number(product.price).toFixed(2)}</span>
-                            </div>
-                          </div>
-                        )}
-
                         {/* Expiry Timer - Full width band at bottom */}
                         {hasExpiryTimer && (
                           <div className="absolute bottom-0 left-0 right-0 bg-red-50/90 text-red-700 text-xs flex items-center justify-center py-1.5 gap-1 z-10 border-t border-red-200">
@@ -619,18 +610,19 @@ export default function BookGenreFlashDeals({
                         {product.name}
                       </h4>
 
-                      {/* Simple price display without currency switcher */}
-                      <div className="flex items-center gap-2 leading-none">
-                        <span className="font-bold text-orange-500 text-base">
-                          G {(product.discount_price || product.price).toFixed(2)}
-                        </span>
-                        <span className="text-gray-500 text-xs">/ unit</span>
-                      </div>
+                      {/* PriceInfo component with original price display */}
+                      <PriceInfo 
+                        price={product.discount_price || product.price}
+                        originalPrice={product.discount_price ? product.price : undefined}
+                        size="sm"
+                        showOnlyBadge={false}
+                        className="mt-1"
+                      />
 
                       {/* Product info section */}
                       {customProductInfo ? customProductInfo(product) : 
                        showMarketingMetrics ? renderMarketingProductInfo(product) : (
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between mt-1">
                           <div className="text-xs text-gray-500">
                             {product.stock} in stock
                           </div>
