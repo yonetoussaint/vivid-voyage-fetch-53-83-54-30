@@ -610,14 +610,28 @@ export default function BookGenreFlashDeals({
                         {product.name}
                       </h4>
 
-                      {/* PriceInfo component with original price display */}
-                      <PriceInfo 
-                        price={product.discount_price || product.price}
-                        originalPrice={product.discount_price ? product.price : undefined}
-                        size="sm"
-                        showOnlyBadge={false}
-                        className="mt-1"
-                      />
+                      {/* Custom price display without currency switcher */}
+                      <div className="space-y-1">
+                        {/* Current price */}
+                        <div className="flex items-center gap-2 leading-none">
+                          <span className="font-bold text-orange-500 text-base">
+                            G {(product.discount_price || product.price).toFixed(2)}
+                          </span>
+                          <span className="text-gray-500 text-xs">/ unit</span>
+                        </div>
+
+                        {/* Barred original price if discounted */}
+                        {product.discount_price && product.discount_price < product.price && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-400 line-through text-sm">
+                              G {product.price.toFixed(2)}
+                            </span>
+                            <span className="text-green-600 font-medium text-xs bg-green-50 px-1.5 py-0.5 rounded">
+                              Save G {(product.price - product.discount_price).toFixed(2)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
 
                       {/* Product info section */}
                       {customProductInfo ? customProductInfo(product) : 
