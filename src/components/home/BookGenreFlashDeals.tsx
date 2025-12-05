@@ -367,7 +367,7 @@ export default function BookGenreFlashDeals({
       return {
         ...product,
         discountPercentage,
-        image: product.product_images?.[0]?.src || "https://placehold.co/300x375?text=No+Image"
+        image: product.product_images?.[0]?.src || "https://placehold.co/300x300?text=No+Image"
       };
     });
 
@@ -464,7 +464,7 @@ export default function BookGenreFlashDeals({
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
             {[1, 2, 3, 4, 5, 6].map((_, index) => (
               <div key={index} className="bg-white overflow-hidden">
-                <div className="aspect-[4/5] bg-gray-100 animate-pulse"></div>
+                <div className="aspect-[3/4] bg-gray-100 animate-pulse rounded-md"></div>
                 <div className="p-3 space-y-2">
                   <div className="h-4 w-3/4 bg-gray-100 animate-pulse"></div>
                   <div className="h-3 w-1/2 bg-gray-100 animate-pulse"></div>
@@ -489,22 +489,27 @@ export default function BookGenreFlashDeals({
                       onClick={() => trackProductView(product.id)}
                       className="block"
                     >
-                      {/* AliExpress-style thumbnail container - 4:5 aspect ratio */}
-                      <div className="relative overflow-hidden bg-gray-50">
+                      {/* AliExpress-style thumbnail container - Fixed height container, image fills naturally */}
+                      <div className="relative h-[280px] overflow-hidden bg-gray-50 rounded-md">
                         <img
                           src={product.image}
                           alt={product.name}
-                          className="w-full aspect-[4/5] object-cover"
+                          className="w-full h-full object-contain"
                           loading="lazy"
+                          style={{
+                            maxHeight: '100%',
+                            width: 'auto',
+                            margin: '0 auto'
+                          }}
                           onError={(e) => {
-                            e.currentTarget.src = "https://placehold.co/300x375?text=No+Image";
+                            e.currentTarget.src = "https://placehold.co/300x300?text=No+Image";
                           }}
                         />
 
                         {/* Top Selling Badge - Top Left */}
                         {product.is_top_selling && (
                           <div className="absolute top-2 left-2 z-20">
-                            <Badge className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 font-semibold flex items-center gap-0.5">
+                            <Badge className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 font-semibold flex items-center gap-0.5 rounded">
                               <TrendingUp className="w-2.5 h-2.5" />
                               Top Selling
                             </Badge>
@@ -516,7 +521,7 @@ export default function BookGenreFlashDeals({
                           <div className="absolute top-2 left-2 z-20">
                             <Badge
                               variant="secondary"
-                              className={`${getStatusColor(product.status)} text-xs`}
+                              className={`${getStatusColor(product.status)} text-xs rounded`}
                             >
                               {product.status}
                             </Badge>
