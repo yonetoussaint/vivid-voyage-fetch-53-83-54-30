@@ -595,19 +595,28 @@ export default function BookGenreFlashDeals({
                         </h4>
                       </div>
 
-                      {/* Custom price display - Only show if price > 0 */}
-                      {product.price && product.price > 0 && (
+                      {/* Custom price display - Only show if price exists and > 0 */}
+                      {product.price !== undefined && product.price !== null && product.price > 0 && (
                         <div className="leading-none">
-                          {/* Current price */}
+                          {/* Current price - Use discount if valid, otherwise regular price */}
                           <div className="flex items-center gap-2 leading-none">
                             <span className="font-bold text-orange-500 text-base">
-                              G {(product.discount_price && product.discount_price > 0 ? product.discount_price : product.price).toFixed(2)}
+                              G {(
+                                product.discount_price !== undefined && 
+                                product.discount_price !== null && 
+                                product.discount_price > 0 ? 
+                                product.discount_price : 
+                                product.price
+                              ).toFixed(2)}
                             </span>
                             <span className="text-gray-500 text-xs">/ unit</span>
                           </div>
 
-                          {/* Barred original price if discounted - Now on separate line when needed */}
-                          {product.discount_price && product.discount_price > 0 && product.discount_price < product.price && (
+                          {/* Barred original price if discounted and valid */}
+                          {product.discount_price !== undefined && 
+                           product.discount_price !== null && 
+                           product.discount_price > 0 && 
+                           product.discount_price < product.price && (
                             <div className="flex flex-col gap-0.5 mt-0.5">
                               <span className="text-gray-400 line-through text-sm">
                                 G {product.price.toFixed(2)}
@@ -621,31 +630,33 @@ export default function BookGenreFlashDeals({
                       )}
 
                       {/* Shipping Info - Only show if actually has shipping info */}
-                      {(product.free_shipping === true || (product.shipping_cost && product.shipping_cost > 0)) && (
+                      {/* FIXED: Only show if free_shipping is true OR shipping_cost exists and > 0 */}
+                      {(product.free_shipping === true || (product.shipping_cost !== undefined && product.shipping_cost !== null && product.shipping_cost > 0)) ? (
                         <div className="flex items-center gap-1 mt-1">
-                          {/* Show free shipping if true */}
-                          {product.free_shipping === true && (
+                          {/* Show free shipping if explicitly true */}
+                          {product.free_shipping === true ? (
                             <div className="flex items-center gap-1 text-green-600 text-[11px] font-medium">
                               <Truck className="w-3 h-3" />
                               <span>Free shipping</span>
                             </div>
-                          )}
+                          ) : null}
                           
-                          {/* Show shipping cost if it's not free shipping and shipping_cost > 0 */}
-                          {product.free_shipping !== true && product.shipping_cost && product.shipping_cost > 0 && (
+                          {/* Show shipping cost if shipping_cost > 0 */}
+                          {product.shipping_cost !== undefined && product.shipping_cost !== null && product.shipping_cost > 0 ? (
                             <div className="flex items-center gap-1 text-gray-600 text-[11px]">
                               <Truck className="w-3 h-3" />
                               <span>Shipping: G {product.shipping_cost.toFixed(2)}</span>
                             </div>
-                          )}
+                          ) : null}
                         </div>
-                      )}
+                      ) : null}
 
-                      {/* Rating & Orders - Only show container if at least one has value */}
-                      {(product.rating && product.rating > 0) || (product.total_orders && product.total_orders > 0) ? (
+                      {/* Rating & Orders - Only show container if at least one has valid value */}
+                      {(product.rating !== undefined && product.rating !== null && product.rating > 0) || 
+                       (product.total_orders !== undefined && product.total_orders !== null && product.total_orders > 0) ? (
                         <div className="flex items-center gap-2 mt-1">
                           {/* Rating - show if rating exists and > 0 */}
-                          {product.rating && product.rating > 0 && (
+                          {product.rating !== undefined && product.rating !== null && product.rating > 0 && (
                             <div className="flex items-center gap-0.5">
                               <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                               <span className="text-[11px] font-medium text-gray-700">
@@ -655,7 +666,7 @@ export default function BookGenreFlashDeals({
                           )}
                           
                           {/* Total orders - only show if > 0 */}
-                          {product.total_orders && product.total_orders > 0 && (
+                          {product.total_orders !== undefined && product.total_orders !== null && product.total_orders > 0 && (
                             <span className="text-[11px] text-gray-500">
                               {product.total_orders >= 1000 
                                 ? `${(product.total_orders / 1000).toFixed(1)}k` 
@@ -668,7 +679,7 @@ export default function BookGenreFlashDeals({
                       {/* Product info section - Only show stock info if inventory exists and > 0 */}
                       {customProductInfo ? customProductInfo(product) : 
                        showMarketingMetrics ? renderMarketingProductInfo(product) : (
-                        product.inventory !== undefined && product.inventory > 0 && (
+                        product.inventory !== undefined && product.inventory !== null && product.inventory > 0 && (
                           <div className="mt-1">
                             <div className="text-xs text-gray-500">
                               {product.inventory} in stock
