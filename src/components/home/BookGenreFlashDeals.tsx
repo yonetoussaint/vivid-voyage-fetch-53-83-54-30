@@ -367,7 +367,6 @@ export default function BookGenreFlashDeals({
       return {
         ...product,
         discountPercentage,
-        stock: product.inventory ?? 0,
         image: product.product_images?.[0]?.src || "https://placehold.co/300x300?text=No+Image"
       };
     });
@@ -621,23 +620,27 @@ export default function BookGenreFlashDeals({
 
                       {/* Shipping Info - Always show if available */}
                       <div className="flex items-center gap-1 mt-1">
-                        {product.free_shipping ? (
+                        {/* Show free shipping if true */}
+                        {product.free_shipping === true && (
                           <div className="flex items-center gap-1 text-green-600 text-[11px] font-medium">
                             <Truck className="w-3 h-3" />
                             <span>Free shipping</span>
                           </div>
-                        ) : product.shipping_cost ? (
+                        )}
+                        
+                        {/* Show shipping cost if it's not free shipping and shipping_cost > 0 */}
+                        {product.free_shipping !== true && product.shipping_cost && product.shipping_cost > 0 && (
                           <div className="flex items-center gap-1 text-gray-600 text-[11px]">
                             <Truck className="w-3 h-3" />
                             <span>Shipping: G {product.shipping_cost.toFixed(2)}</span>
                           </div>
-                        ) : null}
+                        )}
                       </div>
 
                       {/* Rating & Orders - Always show if available */}
                       <div className="flex items-center gap-2 mt-1">
-                        {/* Rating - show if rating exists */}
-                        {product.rating && (
+                        {/* Rating - show if rating exists and > 0 */}
+                        {product.rating && product.rating > 0 && (
                           <div className="flex items-center gap-0.5">
                             <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                             <span className="text-[11px] font-medium text-gray-700">
@@ -646,8 +649,8 @@ export default function BookGenreFlashDeals({
                           </div>
                         )}
                         
-                        {/* Total orders - only show if >= 1 */}
-                        {product.total_orders && product.total_orders >= 1 && (
+                        {/* Total orders - only show if > 0 */}
+                        {product.total_orders && product.total_orders > 0 && (
                           <span className="text-[11px] text-gray-500">
                             {product.total_orders >= 1000 
                               ? `${(product.total_orders / 1000).toFixed(1)}k` 
@@ -656,13 +659,13 @@ export default function BookGenreFlashDeals({
                         )}
                       </div>
 
-                      {/* Product info section - Only show stock info if stock > 0 */}
+                      {/* Product info section - Only show stock info if inventory exists and > 0 */}
                       {customProductInfo ? customProductInfo(product) : 
                        showMarketingMetrics ? renderMarketingProductInfo(product) : (
-                        product.stock > 0 && (
+                        product.inventory !== undefined && product.inventory > 0 && (
                           <div className="mt-1">
                             <div className="text-xs text-gray-500">
-                              {product.stock} in stock
+                              {product.inventory} in stock
                             </div>
                           </div>
                         )
