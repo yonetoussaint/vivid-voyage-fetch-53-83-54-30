@@ -516,51 +516,54 @@ export default function BookGenreFlashDeals({
           <div className="grid grid-cols-2 gap-2">
             {[1, 2, 3, 4, 5, 6].map((_, index) => (
               <div key={index} className="bg-white overflow-hidden">
-                <div className="aspect-square bg-gray-100 animate-pulse"></div>
+                <div className="aspect-square bg-gray-100 animate-pulse rounded-2xl"></div>
                 <div className="p-3 space-y-2">
-                  <div className="h-4 w-3/4 bg-gray-100 animate-pulse"></div>
-                  <div className="h-3 w-1/2 bg-gray-100 animate-pulse"></div>
-                  <div className="h-3 w-1/3 bg-gray-100 animate-pulse"></div>
+                  <div className="h-4 w-3/4 bg-gray-100 animate-pulse rounded-full"></div>
+                  <div className="h-3 w-1/2 bg-gray-100 animate-pulse rounded-full"></div>
+                  <div className="h-3 w-1/3 bg-gray-100 animate-pulse rounded-full"></div>
                 </div>
               </div>
             ))}
           </div>
         ) : processedProducts.length > 0 ? (
           <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               {processedProducts.slice(0, displayCount).map((product) => {
                 const productExpiryTime = expiryTimes[product.id];
                 const hasExpiryTimer = showExpiryTimer && productExpiryTime && 
                   (productExpiryTime.days > 0 || productExpiryTime.hours > 0 || productExpiryTime.minutes > 0 || productExpiryTime.seconds > 0);
 
                 return (
-                  <div key={product.id} className="bg-white border border-gray-200 overflow-hidden">
+                  <div key={product.id} className="bg-white overflow-hidden hover:shadow-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.99] rounded-xl">
                     <Link
                       to={`/product/${product.id}`}
                       onClick={() => trackProductView(product.id)}
                       className="block"
                     >
-                      <div className="relative aspect-square overflow-hidden bg-gray-50">
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                          style={{
-                            objectFit: 'cover',
-                            aspectRatio: '1/1'
-                          }}
-                          onError={(e) => {
-                            e.currentTarget.src = "https://placehold.co/300x300?text=No+Image";
-                          }}
-                        />
+                      <div className="relative aspect-square overflow-hidden">
+                        {/* Image container with curvy borders */}
+                        <div className="w-full h-full rounded-2xl overflow-hidden">
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                            style={{
+                              objectFit: 'cover',
+                              aspectRatio: '1/1'
+                            }}
+                            onError={(e) => {
+                              e.currentTarget.src = "https://placehold.co/300x300?text=No+Image";
+                            }}
+                          />
+                        </div>
 
                         {/* Status Badge - Top Left */}
                         {showStatusBadge && product.status && (
                           <div className="absolute top-2 left-2 z-20">
                             <Badge
                               variant="secondary"
-                              className={`${getStatusColor(product.status)} text-xs`}
+                              className={`${getStatusColor(product.status)} text-xs rounded-lg px-2 py-0.5`}
                             >
                               {product.status}
                             </Badge>
@@ -569,7 +572,7 @@ export default function BookGenreFlashDeals({
 
                         {/* Views with Eye Icon - Top Right */}
                         {showMarketingMetrics && product.views !== undefined && (
-                          <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/80 text-white text-xs px-2 py-1 rounded-md">
+                          <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/80 text-white text-xs px-2 py-1 rounded-lg">
                             <Eye className="w-3 h-3" />
                             <span className="font-medium">{formatNumber(product.views)}</span>
                           </div>
@@ -577,7 +580,7 @@ export default function BookGenreFlashDeals({
 
                         {/* Expiry Timer - Full width band at bottom */}
                         {hasExpiryTimer && (
-                          <div className="absolute bottom-0 left-0 right-0 bg-red-50/90 text-red-700 text-xs flex items-center justify-center py-1.5 gap-1 z-10 border-t border-red-200">
+                          <div className="absolute bottom-0 left-0 right-0 bg-red-600/95 text-white text-xs flex items-center justify-center py-2 gap-1 z-10 rounded-b-2xl">
                             <Timer className="w-3 h-3" />
                             <span className="font-medium">Ends in</span>
                             <span className="font-mono font-bold">
@@ -590,9 +593,9 @@ export default function BookGenreFlashDeals({
 
                         {/* Timer for flash deals */}
                         {!hasExpiryTimer && (timeLeft.days > 0 || timeLeft.hours > 0 || timeLeft.minutes > 0 || timeLeft.seconds > 0) ? (
-                          <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs flex items-center justify-center py-2 gap-1 z-10">
+                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-r from-orange-600 to-red-600 text-white text-xs flex items-center justify-center py-2.5 gap-1 z-10 rounded-b-2xl">
                             <Timer className="w-3 h-3" />
-                            <span className="font-mono">
+                            <span className="font-mono font-bold">
                               {[timeLeft.days, timeLeft.hours, timeLeft.minutes].map((unit, i) => (
                                 <span key={i}>
                                   {unit.toString().padStart(2, "0")}
@@ -605,19 +608,18 @@ export default function BookGenreFlashDeals({
                       </div>
                     </Link>
 
-                    <div className="p-1 space-y-2">
-                      <h4 className="text-xs font-medium line-clamp-2 text-gray-900 leading-tight">
+                    <div className="p-3 space-y-2">
+                      <h4 className="text-sm font-medium line-clamp-2 text-gray-900 leading-tight min-h-[2.8rem]">
                         {product.name}
                       </h4>
 
                       {/* Custom price display without currency switcher */}
                       <div className="space-y-1">
                         {/* Current price */}
-                        <div className="flex items-center gap-2 leading-none">
-                          <span className="font-bold text-orange-500 text-base">
+                        <div className="flex items-center gap-1 leading-none">
+                          <span className="font-bold text-red-600 text-lg">
                             G {(product.discount_price || product.price).toFixed(2)}
                           </span>
-                          <span className="text-gray-500 text-xs">/ unit</span>
                         </div>
 
                         {/* Barred original price if discounted */}
@@ -626,19 +628,30 @@ export default function BookGenreFlashDeals({
                             <span className="text-gray-400 line-through text-sm">
                               G {product.price.toFixed(2)}
                             </span>
-                            <span className="text-green-600 font-medium text-xs bg-green-50 px-1.5 py-0.5 rounded">
-                              Save G {(product.price - product.discount_price).toFixed(2)}
+                            <span className="text-white font-medium text-xs bg-red-500 px-2 py-0.5 rounded-full">
+                              -{Math.round(((product.price - product.discount_price) / product.price) * 100)}%
                             </span>
                           </div>
                         )}
                       </div>
 
+                      {/* Shipping/Shipping fee info - AliExpress style */}
+                      <div className="flex items-center text-xs text-gray-600">
+                        <span className="text-green-600 font-medium">Free Shipping</span>
+                        <span className="mx-1">•</span>
+                        <span>10+ sold</span>
+                      </div>
+
                       {/* Product info section */}
                       {customProductInfo ? customProductInfo(product) : 
                        showMarketingMetrics ? renderMarketingProductInfo(product) : (
-                        <div className="flex items-center justify-between mt-1">
-                          <div className="text-xs text-gray-500">
+                        <div className="flex items-center justify-between mt-2">
+                          <div className="text-xs text-gray-500 flex items-center gap-1">
+                            <Package className="w-3 h-3" />
                             {product.stock} in stock
+                          </div>
+                          <div className="text-xs text-blue-600 font-medium">
+                            Details →
                           </div>
                         </div>
                       )}
@@ -650,7 +663,7 @@ export default function BookGenreFlashDeals({
 
             {/* Show "Load More" indicator if there are more products */}
             {displayCount < processedProducts.length && (
-              <div className="text-center py-4">
+              <div className="text-center py-6">
                 <div className="text-sm text-gray-500">
                   Scroll down to load more products...
                 </div>
@@ -668,7 +681,7 @@ export default function BookGenreFlashDeals({
       {/* Floating Add Product Button */}
       <button
         onClick={handleAddProduct}
-        className="fixed bottom-20 right-4 z-50 bg-white text-gray-900 rounded-full p-3 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 active:scale-95 border border-gray-200 backdrop-blur-sm"
+        className="fixed bottom-20 right-4 z-50 bg-white text-red-600 rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 border border-gray-200 backdrop-blur-sm"
         aria-label="Add Product"
       >
         <Plus className="w-6 h-6" />
