@@ -461,7 +461,7 @@ export default function BookGenreFlashDeals({
       {/* Products Grid */}
       <div className="px-1.5 pt-4">
         {isLoading && !externalProducts ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
             {[1, 2, 3, 4, 5, 6].map((_, index) => (
               <div key={index} className="bg-white overflow-hidden">
                 <div className="aspect-square bg-gray-100 animate-pulse rounded-lg"></div>
@@ -475,21 +475,21 @@ export default function BookGenreFlashDeals({
           </div>
         ) : processedProducts.length > 0 ? (
           <div className="space-y-4">
-            {/* FLEXIBLE GRID LIKE ALIEXPRESS/TEMU */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1.5">
+            {/* MASONRY LAYOUT - Cards flow naturally like AliExpress/Temu */}
+            <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-1.5 space-y-1.5">
               {processedProducts.slice(0, displayCount).map((product) => {
                 const productExpiryTime = expiryTimes[product.id];
                 const hasExpiryTimer = showExpiryTimer && productExpiryTime && 
                   (productExpiryTime.days > 0 || productExpiryTime.hours > 0 || productExpiryTime.minutes > 0 || productExpiryTime.seconds > 0);
 
                 return (
-                  <div key={product.id} className="bg-white overflow-hidden flex flex-col">
+                  <div key={product.id} className="break-inside-avoid mb-1.5 bg-white overflow-hidden rounded-lg border border-gray-100">
                     <Link
                       to={`/product/${product.id}`}
                       onClick={() => trackProductView(product.id)}
-                      className="block flex-grow"
+                      className="block"
                     >
-                      <div className="relative aspect-square overflow-hidden bg-gray-50 rounded-lg">
+                      <div className="relative aspect-square overflow-hidden bg-gray-50">
                         <img
                           src={product.image}
                           alt={product.name}
@@ -564,11 +564,11 @@ export default function BookGenreFlashDeals({
                       </div>
                     </Link>
 
-                    <div className="p-1.5 flex-grow flex flex-col">
+                    <div className="p-1.5">
                       {/* Product name with inline Choice badge */}
                       <div className="flex flex-wrap items-center gap-1 mb-1">
                         {/* Product name with inline Choice badge */}
-                        <h4 className="text-xs font-medium line-clamp-2 text-gray-900 leading-tight flex-grow">
+                        <h4 className="text-xs font-medium line-clamp-2 text-gray-900 leading-tight">
                           {product.is_choice && (
                             <span className="inline-flex items-center mr-1.5 align-middle">
                               {/* Choice badge - inline as a word */}
