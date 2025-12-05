@@ -623,36 +623,34 @@ export default function BookGenreFlashDeals({
                     </Link>
 
                     <div className="p-2">
-                      {/* Product name and Choice badge in one line - now properly aligned */}
-                      <div className="flex items-center gap-1.5 mb-1 min-h-[20px]">
-                        {/* Choice badge (only if product.is_choice) */}
-                        {product.is_choice && (
-                          <div className="relative shrink-0">
-                            <div className="relative inline-block">
-                              {/* Gold gradient background with glass effect - adjusted to match text height */}
-                              <div className="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 
-                                            relative px-1.5 py-[2px] rounded-[3px] border border-amber-400/50 
-                                            shadow-[0_1px_2px_rgba(0,0,0,0.2),inset_0_1px_1px_rgba(255,255,255,0.4)] 
-                                            overflow-hidden h-[16px] flex items-center">
-                                {/* Shiny glass effect overlay */}
-                                <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/50 to-transparent"></div>
-                                
-                                {/* Subtle inner shadow for depth */}
-                                <div className="absolute inset-0 rounded-[3px] border border-white/30"></div>
-                                
-                                {/* Text with slight text shadow for readability */}
-                                <span className="relative text-[9px] font-bold text-white tracking-wide 
-                                                drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)] whitespace-nowrap leading-none">
-                                  Choice
-                                </span>
+                      {/* Product name with inline Choice badge */}
+                      <div className="flex flex-wrap items-center gap-1 mb-1">
+                        {/* Product name with inline Choice badge */}
+                        <h4 className="text-xs font-medium line-clamp-2 text-gray-900 leading-tight">
+                          {product.is_choice && (
+                            <span className="inline-flex items-center mr-1.5 align-middle">
+                              {/* Choice badge - inline as a word */}
+                              <div className="relative inline-flex items-center">
+                                <div className="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 
+                                              relative px-1.5 py-[2px] rounded-[3px] border border-amber-400/50 
+                                              shadow-[0_1px_2px_rgba(0,0,0,0.2),inset_0_1px_1px_rgba(255,255,255,0.4)] 
+                                              overflow-hidden inline-flex items-center h-[16px]">
+                                  {/* Shiny glass effect overlay */}
+                                  <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/50 to-transparent"></div>
+                                  
+                                  {/* Subtle inner shadow for depth */}
+                                  <div className="absolute inset-0 rounded-[3px] border border-white/30"></div>
+                                  
+                                  {/* Text with slight text shadow for readability */}
+                                  <span className="relative text-[9px] font-bold text-white tracking-wide 
+                                                  drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)] whitespace-nowrap leading-none px-0.5">
+                                    Choice
+                                  </span>
+                                </div>
                               </div>
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Product name - adjusted to align with Choice badge */}
-                        <h4 className={`text-xs font-medium line-clamp-2 text-gray-900 leading-tight ${product.is_choice ? 'flex-1' : ''} leading-[1.2]`}>
-                          {product.name}
+                            </span>
+                          )}
+                          <span className="align-middle">{product.name}</span>
                         </h4>
                       </div>
 
@@ -694,8 +692,8 @@ export default function BookGenreFlashDeals({
                         ) : null}
                       </div>
 
-                      {/* Rating & Orders */}
-                      {(product.rating || product.total_orders) && (
+                      {/* Rating & Orders - Only show sold if total_orders >= 1 */}
+                      {(product.rating || (product.total_orders && product.total_orders >= 1)) && (
                         <div className="flex items-center gap-2 mt-1">
                           {product.rating && (
                             <div className="flex items-center gap-0.5">
@@ -705,7 +703,7 @@ export default function BookGenreFlashDeals({
                               </span>
                             </div>
                           )}
-                          {product.total_orders && (
+                          {product.total_orders && product.total_orders >= 1 && (
                             <span className="text-[11px] text-gray-500">
                               {product.total_orders >= 1000 
                                 ? `${(product.total_orders / 1000).toFixed(1)}k` 
