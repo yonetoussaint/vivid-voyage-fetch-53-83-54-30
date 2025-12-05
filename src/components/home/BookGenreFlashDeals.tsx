@@ -7,7 +7,6 @@ import { fetchAllProducts, trackProductView } from "@/integrations/supabase/prod
 import { useAuth } from "@/contexts/auth/AuthContext";
 import { useSellerByUserId } from "@/hooks/useSellerByUserId";
 import { supabase } from "@/integrations/supabase/client";
-import SellerSummaryHeader from "@/components/seller-app/SellerSummaryHeader";
 import ProductFilterBar from "@/components/home/ProductFilterBar";
 import PriceInfo from "@/components/product/PriceInfo";
 import { Badge } from "@/components/ui/badge";
@@ -444,65 +443,8 @@ export default function BookGenreFlashDeals({
     setDisplayCount(8);
   }, [processedProducts.length]);
 
-  // Prepare data for SellerSummaryHeader based on mode
-  const getHeaderProps = () => {
-    if (summaryMode === 'inventory') {
-      return {
-        mode: 'inventory' as const,
-        title: "Inventory Overview",
-        subtitle: "Manage your stock levels and product availability",
-        stats: [
-          { value: summaryStats.totalProducts.toString(), label: 'Total Items', color: 'text-blue-600' },
-          { value: summaryStats.lowStock.toString(), label: 'Low Stock', color: 'text-red-600', status: 'low' as const },
-          { value: `${Math.round((summaryStats.inStock / summaryStats.totalProducts) * 100)}%`, label: 'Availability', color: 'text-green-600' },
-          { value: summaryStats.categories.toString(), label: 'Categories', color: 'text-purple-600' }
-        ],
-        progressPercentage: Math.round((summaryStats.inStock / summaryStats.totalProducts) * 100),
-        progressVariant: 'stock-level' as const,
-        progressStatus: summaryStats.lowStock > 10 ? 'low' as const : 'high' as const
-      };
-    } else if (summaryMode === 'products') {
-      return {
-        mode: 'products' as const,
-        productsSummary: {
-          totalProducts: summaryStats.totalProducts,
-          activeProducts: summaryStats.inStock,
-          categories: summaryStats.categories,
-          averagePrice: summaryStats.totalProducts > 0 ? `G ${(summaryStats.totalValue / summaryStats.totalProducts).toFixed(2)}` : 'G 0.00',
-          metrics: [
-            { value: summaryStats.outOfStock.toString(), label: 'Out of Stock', color: 'text-red-600' },
-            { value: summaryStats.categories.toString(), label: 'Categories', color: 'text-purple-600' },
-            { value: summaryStats.lowStock.toString(), label: 'Low Stock', color: 'text-yellow-600' },
-            { value: summaryStats.onDiscount.toString(), label: 'On Sale', color: 'text-blue-600' }
-          ]
-        }
-      };
-    } else {
-      // reviews mode - use mock data or fetch real reviews
-      return {
-        mode: 'reviews' as const,
-        reviewsSummary: {
-          averageRating: 4.6,
-          totalReviews: 1459914,
-          distribution: [
-            { stars: 5, count: 1100000, percentage: 75 },
-            { stars: 4, count: 200000, percentage: 14 },
-            { stars: 3, count: 80000, percentage: 5 },
-            { stars: 2, count: 40000, percentage: 3 },
-            { stars: 1, count: 39914, percentage: 3 }
-          ]
-        }
-      };
-    }
-  };
-
   return (
     <div className={`w-full bg-white relative ${className}`}>
-      {/* Summary Section - Optional */}
-      {showSummary && (
-        <SellerSummaryHeader {...getHeaderProps()} />
-      )}
-
       {/* Filter Bar Section - Conditionally rendered */}
       {showFilters && (
         <div className="-mx-2">
