@@ -459,7 +459,7 @@ export default function BookGenreFlashDeals({
       )}
 
       {/* Products Grid */}
-      <div className="px-2">
+      <div className="px-1.5 pt-4">
         {isLoading && !externalProducts ? (
           <div className="grid grid-cols-2 gap-2">
             {[1, 2, 3, 4, 5, 6].map((_, index) => (
@@ -474,8 +474,8 @@ export default function BookGenreFlashDeals({
             ))}
           </div>
         ) : processedProducts.length > 0 ? (
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-1.5">
               {processedProducts.slice(0, displayCount).map((product) => {
                 const productExpiryTime = expiryTimes[product.id];
                 const hasExpiryTimer = showExpiryTimer && productExpiryTime && 
@@ -563,7 +563,7 @@ export default function BookGenreFlashDeals({
                       </div>
                     </Link>
 
-                    <div className="p-2">
+                    <div className="p-1.5">
                       {/* Product name with inline Choice badge */}
                       <div className="flex flex-wrap items-center gap-1 mb-1">
                         {/* Product name with inline Choice badge */}
@@ -605,13 +605,13 @@ export default function BookGenreFlashDeals({
                           <span className="text-gray-500 text-xs">/ unit</span>
                         </div>
 
-                        {/* Barred original price if discounted */}
+                        {/* Barred original price if discounted - Now on separate line when needed */}
                         {product.discount_price && product.discount_price < product.price && (
-                          <div className="flex items-center gap-2 mt-0.5">
+                          <div className="flex flex-col gap-0.5 mt-0.5">
                             <span className="text-gray-400 line-through text-sm">
                               G {product.price.toFixed(2)}
                             </span>
-                            <span className="text-green-600 font-medium text-xs bg-green-50 px-1.5 py-0.5 rounded">
+                            <span className="text-green-600 font-medium text-xs bg-green-50 px-1.5 py-0.5 rounded w-fit whitespace-nowrap">
                               Save G {(product.price - product.discount_price).toFixed(2)}
                             </span>
                           </div>
