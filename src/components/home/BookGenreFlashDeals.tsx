@@ -481,11 +481,6 @@ export default function BookGenreFlashDeals({
                 const hasExpiryTimer = showExpiryTimer && productExpiryTime && 
                   (productExpiryTime.days > 0 || productExpiryTime.hours > 0 || productExpiryTime.minutes > 0 || productExpiryTime.seconds > 0);
 
-                // Check if product has a valid price
-                const hasValidPrice = product.price !== undefined && product.price !== null && product.price > 0;
-                const hasValidDiscountPrice = product.discount_price !== undefined && product.discount_price !== null && product.discount_price > 0;
-                const displayPrice = hasValidDiscountPrice ? product.discount_price : (hasValidPrice ? product.price : null);
-
                 return (
                   <div key={product.id} className="bg-white overflow-hidden">
                     <Link
@@ -600,19 +595,19 @@ export default function BookGenreFlashDeals({
                         </h4>
                       </div>
 
-                      {/* Custom price display - Only show if we have a valid price */}
-                      {displayPrice !== null && displayPrice > 0 ? (
+                      {/* Custom price display - Only show if price > 0 */}
+                      {product.price && product.price > 0 && (
                         <div className="leading-none">
                           {/* Current price */}
                           <div className="flex items-center gap-2 leading-none">
                             <span className="font-bold text-orange-500 text-base">
-                              G {displayPrice.toFixed(2)}
+                              G {(product.discount_price && product.discount_price > 0 ? product.discount_price : product.price).toFixed(2)}
                             </span>
                             <span className="text-gray-500 text-xs">/ unit</span>
                           </div>
 
                           {/* Barred original price if discounted - Now on separate line when needed */}
-                          {product.discount_price && product.discount_price < product.price && (
+                          {product.discount_price && product.discount_price > 0 && product.discount_price < product.price && (
                             <div className="flex flex-col gap-0.5 mt-0.5">
                               <span className="text-gray-400 line-through text-sm">
                                 G {product.price.toFixed(2)}
@@ -623,7 +618,7 @@ export default function BookGenreFlashDeals({
                             </div>
                           )}
                         </div>
-                      ) : null}
+                      )}
 
                       {/* Shipping Info - Only show if actually has shipping info */}
                       {(product.free_shipping === true || (product.shipping_cost && product.shipping_cost > 0)) && (
