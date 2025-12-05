@@ -562,17 +562,8 @@ export default function BookGenreFlashDeals({
                           }}
                         />
 
-                        {/* Choice Badge - Top Left */}
-                        {product.is_choice && (
-                          <div className="absolute top-2 left-2 z-20">
-                            <Badge className="bg-orange-500 text-white text-[10px] px-1.5 py-0.5 font-semibold">
-                              Choice
-                            </Badge>
-                          </div>
-                        )}
-
-                        {/* Top Selling Badge - Top Left (if no Choice badge) */}
-                        {!product.is_choice && product.is_top_selling && (
+                        {/* Top Selling Badge - Top Left */}
+                        {product.is_top_selling && (
                           <div className="absolute top-2 left-2 z-20">
                             <Badge className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 font-semibold flex items-center gap-0.5">
                               <TrendingUp className="w-2.5 h-2.5" />
@@ -631,10 +622,39 @@ export default function BookGenreFlashDeals({
                       </div>
                     </Link>
 
-                    <div className="p-1">
-                      <h4 className="text-xs font-medium line-clamp-2 text-gray-900 leading-tight">
-                        {product.name}
-                      </h4>
+                    <div className="p-2">
+                      {/* Product name and Choice badge in one line */}
+                      <div className="flex items-start gap-1.5 mb-1">
+                        {/* Choice badge (only if product.is_choice) */}
+                        {product.is_choice && (
+                          <div className="relative shrink-0 mt-0.5">
+                            <div className="relative inline-block">
+                              {/* Gold gradient background with glass effect */}
+                              <div className="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 
+                                            relative px-2 py-0.5 rounded-[4px] border border-amber-400/50 
+                                            shadow-[0_2px_4px_rgba(0,0,0,0.15),inset_0_1px_2px_rgba(255,255,255,0.4)] 
+                                            overflow-hidden">
+                                {/* Shiny glass effect overlay */}
+                                <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/50 to-transparent"></div>
+                                
+                                {/* Subtle inner shadow for depth */}
+                                <div className="absolute inset-0 rounded-[4px] border border-white/30"></div>
+                                
+                                {/* Text with slight text shadow for readability */}
+                                <span className="relative text-[10px] font-bold text-white tracking-wide 
+                                                drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)] whitespace-nowrap">
+                                  Choice
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Product name */}
+                        <h4 className={`text-xs font-medium line-clamp-2 text-gray-900 leading-tight ${product.is_choice ? 'flex-1' : ''}`}>
+                          {product.name}
+                        </h4>
+                      </div>
 
                       {/* Custom price display without currency switcher */}
                       <div className="leading-none">
