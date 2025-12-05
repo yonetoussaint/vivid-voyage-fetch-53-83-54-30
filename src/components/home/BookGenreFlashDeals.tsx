@@ -655,14 +655,16 @@ export default function BookGenreFlashDeals({
                         </div>
                       )}
 
-                      {/* Product info section */}
+                      {/* Product info section - Only show if stock > 0 */}
                       {customProductInfo ? customProductInfo(product) : 
                        showMarketingMetrics ? renderMarketingProductInfo(product) : (
-                        <div className="flex items-center justify-between mt-1">
-                          <div className="text-xs text-gray-500">
-                            {product.stock} in stock
+                        product.stock > 0 && (
+                          <div className="flex items-center justify-between mt-1">
+                            <div className="text-xs text-gray-500">
+                              {product.stock} in stock
+                            </div>
                           </div>
-                        </div>
+                        )
                       )}
                     </div>
                   </div>
