@@ -511,7 +511,7 @@ export default function BookGenreFlashDeals({
       )}
 
       {/* Products Grid */}
-      <div className="">
+      <div className="px-2">
         {isLoading && !externalProducts ? (
           <div className="grid grid-cols-2 gap-2">
             {[1, 2, 3, 4, 5, 6].map((_, index) => (
