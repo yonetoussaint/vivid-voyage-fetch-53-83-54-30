@@ -108,7 +108,6 @@ export default function BookGenreFlashDeals({
 }: GenreFlashDealsProps) {
   const navigate = useNavigate();
   const [displayCount, setDisplayCount] = useState(8);
-  const [imageRatios, setImageRatios] = useState<Record<string, { width: number; height: number; ratio: number }>>({});
 
   // Define filter categories
   const filterCategories = React.useMemo(() => [
@@ -443,69 +442,6 @@ export default function BookGenreFlashDeals({
     setDisplayCount(8);
   }, [processedProducts.length]);
 
-  // Handle image load to get actual dimensions
-  const handleImageLoad = (productId: string, e: React.SyntheticEvent<HTMLImageElement>) => {
-    const img = e.currentTarget;
-    const width = img.naturalWidth;
-    const height = img.naturalHeight;
-    const ratio = height / width;
-    
-    setImageRatios(prev => ({
-      ...prev,
-      [productId]: { width, height, ratio }
-    }));
-  };
-
-  // Get container style based on image ratio
-  const getImageContainerStyle = (productId: string) => {
-    const ratioInfo = imageRatios[productId];
-    
-    if (!ratioInfo) {
-      // Default until image loads
-      return { 
-        minHeight: '280px',
-        maxHeight: '280px'
-      };
-    }
-
-    const { ratio } = ratioInfo;
-    const MAX_RATIO = 1.25; // 4:5 = 0.8, but we use 1.25 as max for tall images
-    
-    // If image is tall (ratio > 1.25), cap it
-    if (ratio > MAX_RATIO) {
-      return {
-        height: '280px',
-        aspectRatio: '1/1.25' // Cap at 4:5
-      };
-    }
-    
-    // If image is short/square, use its natural ratio
-    return {
-      aspectRatio: `1/${ratio}`, // Natural ratio
-      height: 'auto' // Let it be natural
-    };
-  };
-
-  // Get image class based on ratio
-  const getImageClass = (productId: string) => {
-    const ratioInfo = imageRatios[productId];
-    
-    if (!ratioInfo) {
-      return "w-full h-full object-contain";
-    }
-
-    const { ratio } = ratioInfo;
-    const MAX_RATIO = 1.25;
-    
-    if (ratio > MAX_RATIO) {
-      // For tall images, we need to center the image
-      return "w-full h-full object-contain mx-auto";
-    }
-    
-    // For normal/short images, use default
-    return "w-full h-full object-contain mx-auto";
-  };
-
   return (
     <div className={`w-full bg-white relative ${className}`}>
       {/* Filter Bar Section - Conditionally rendered */}
@@ -528,7 +464,7 @@ export default function BookGenreFlashDeals({
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
             {[1, 2, 3, 4, 5, 6].map((_, index) => (
               <div key={index} className="bg-white overflow-hidden">
-                <div className="aspect-[3/4] bg-gray-100 animate-pulse rounded-md"></div>
+                <div className="aspect-square bg-gray-100 animate-pulse rounded-md"></div>
                 <div className="p-3 space-y-2">
                   <div className="h-4 w-3/4 bg-gray-100 animate-pulse"></div>
                   <div className="h-3 w-1/2 bg-gray-100 animate-pulse"></div>
@@ -553,17 +489,13 @@ export default function BookGenreFlashDeals({
                       onClick={() => trackProductView(product.id)}
                       className="block"
                     >
-                      {/* Dynamic container that adapts to image ratio */}
-                      <div 
-                        className="relative overflow-hidden bg-gray-50 rounded-md flex items-center justify-center"
-                        style={getImageContainerStyle(product.id)}
-                      >
+                      {/* Square container with centered image */}
+                      <div className="relative aspect-square overflow-hidden bg-gray-50 rounded-md flex items-center justify-center">
                         <img
                           src={product.image}
                           alt={product.name}
-                          className={getImageClass(product.id)}
+                          className="max-w-full max-h-full object-contain"
                           loading="lazy"
-                          onLoad={(e) => handleImageLoad(product.id, e)}
                           onError={(e) => {
                             e.currentTarget.src = "https://placehold.co/300x300?text=No+Image";
                           }}
