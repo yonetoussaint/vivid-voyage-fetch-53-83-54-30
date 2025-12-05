@@ -619,7 +619,7 @@ export default function BookGenreFlashDeals({
                         )}
                       </div>
 
-                      {/* Shipping Info */}
+                      {/* Shipping Info - Always show if available */}
                       <div className="flex items-center gap-1 mt-1">
                         {product.free_shipping ? (
                           <div className="flex items-center gap-1 text-green-600 text-[11px] font-medium">
@@ -634,32 +634,33 @@ export default function BookGenreFlashDeals({
                         ) : null}
                       </div>
 
-                      {/* Rating & Orders - Only show sold if total_orders >= 1 */}
-                      {(product.rating || (product.total_orders && product.total_orders >= 1)) && (
-                        <div className="flex items-center gap-2 mt-1">
-                          {product.rating && (
-                            <div className="flex items-center gap-0.5">
-                              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                              <span className="text-[11px] font-medium text-gray-700">
-                                {product.rating.toFixed(1)}
-                              </span>
-                            </div>
-                          )}
-                          {product.total_orders && product.total_orders >= 1 && (
-                            <span className="text-[11px] text-gray-500">
-                              {product.total_orders >= 1000 
-                                ? `${(product.total_orders / 1000).toFixed(1)}k` 
-                                : product.total_orders} sold
+                      {/* Rating & Orders - Always show if available */}
+                      <div className="flex items-center gap-2 mt-1">
+                        {/* Rating - show if rating exists */}
+                        {product.rating && (
+                          <div className="flex items-center gap-0.5">
+                            <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                            <span className="text-[11px] font-medium text-gray-700">
+                              {product.rating.toFixed(1)}
                             </span>
-                          )}
-                        </div>
-                      )}
+                          </div>
+                        )}
+                        
+                        {/* Total orders - only show if >= 1 */}
+                        {product.total_orders && product.total_orders >= 1 && (
+                          <span className="text-[11px] text-gray-500">
+                            {product.total_orders >= 1000 
+                              ? `${(product.total_orders / 1000).toFixed(1)}k` 
+                              : product.total_orders} sold
+                          </span>
+                        )}
+                      </div>
 
-                      {/* Product info section - Only show if stock > 0 */}
+                      {/* Product info section - Only show stock info if stock > 0 */}
                       {customProductInfo ? customProductInfo(product) : 
                        showMarketingMetrics ? renderMarketingProductInfo(product) : (
                         product.stock > 0 && (
-                          <div className="flex items-center justify-between mt-1">
+                          <div className="mt-1">
                             <div className="text-xs text-gray-500">
                               {product.stock} in stock
                             </div>
