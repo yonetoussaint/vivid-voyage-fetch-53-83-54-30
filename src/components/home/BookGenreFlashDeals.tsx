@@ -108,6 +108,7 @@ export default function BookGenreFlashDeals({
 }: GenreFlashDealsProps) {
   const navigate = useNavigate();
   const [displayCount, setDisplayCount] = useState(8);
+  const [imageRatios, setImageRatios] = useState<Record<string, { width: number; height: number; ratio: number }>>({});
 
   // Define filter categories
   const filterCategories = React.useMemo(() => [
@@ -442,6 +443,50 @@ export default function BookGenreFlashDeals({
     setDisplayCount(8);
   }, [processedProducts.length]);
 
+  // Handle image load to get actual dimensions
+  const handleImageLoad = (productId: string, e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    const width = img.naturalWidth;
+    const height = img.naturalHeight;
+    const ratio = height / width;
+    
+    setImageRatios(prev => ({
+      ...prev,
+      [productId]: { width, height, ratio }
+    }));
+  };
+
+  // Get container style based on image ratio
+  const getImageContainerStyle = (productId: string) => {
+    const ratioInfo = imageRatios[productId];
+    
+    if (!ratioInfo) {
+      // Default until image loads
+      return { 
+        minHeight: '280px',
+        maxHeight: '280px'
+      };
+    }
+
+    const { ratio } = ratioInfo;
+    const MAX_RATIO = 1.25; // 4:5 = 0.8, but we use 1.25 as max for tall images
+    
+    // If image is tall (ratio > 1.25), cap it
+    if (ratio > MAX_RATIO) {
+      return {
+        minHeight: '280px',
+        maxHeight: '280px',
+        aspectRatio: '1/1.25' // Cap at 4:5
+      };
+    }
+    
+    // If image is short/square, use its natural ratio
+    return {
+      aspectRatio: `1/${ratio}`, // Natural ratio
+      height: 'auto' // Let it be natural
+    };
+  };
+
   return (
     <div className={`w-full bg-white relative ${className}`}>
       {/* Filter Bar Section - Conditionally rendered */}
@@ -489,18 +534,17 @@ export default function BookGenreFlashDeals({
                       onClick={() => trackProductView(product.id)}
                       className="block"
                     >
-                      {/* AliExpress-style thumbnail container - Fixed height container, image fills naturally */}
-                      <div className="relative h-[280px] overflow-hidden bg-gray-50 rounded-md">
+                      {/* Dynamic container that adapts to image ratio */}
+                      <div 
+                        className="relative overflow-hidden bg-gray-50 rounded-md"
+                        style={getImageContainerStyle(product.id)}
+                      >
                         <img
                           src={product.image}
                           alt={product.name}
                           className="w-full h-full object-contain"
                           loading="lazy"
-                          style={{
-                            maxHeight: '100%',
-                            width: 'auto',
-                            margin: '0 auto'
-                          }}
+                          onLoad={(e) => handleImageLoad(product.id, e)}
                           onError={(e) => {
                             e.currentTarget.src = "https://placehold.co/300x300?text=No+Image";
                           }}
@@ -569,22 +613,15 @@ export default function BookGenreFlashDeals({
                     <div className="p-1.5">
                       {/* Product name with inline Choice badge */}
                       <div className="flex flex-wrap items-center gap-1 mb-1">
-                        {/* Product name with inline Choice badge */}
                         <h4 className="text-xs font-medium line-clamp-2 text-gray-900 leading-tight">
                           {product.is_choice && (
                             <span className="inline-flex items-center mr-1.5 align-middle">
-                              {/* Choice badge - inline as a word */}
                               <div className="relative inline-flex items-center">
                                 <div className="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 
                                               relative px-1.5 py-[2px] rounded border border-amber-400/50 
                                               shadow-sm overflow-hidden inline-flex items-center h-[16px]">
-                                  {/* Shiny glass effect overlay */}
                                   <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/50 to-transparent"></div>
-                                  
-                                  {/* Subtle inner shadow for depth */}
                                   <div className="absolute inset-0 border border-white/30"></div>
-                                  
-                                  {/* Text with slight text shadow for readability */}
                                   <span className="relative text-[9px] font-bold text-white tracking-wide 
                                                   whitespace-nowrap leading-none px-0.5">
                                     Choice
@@ -600,7 +637,6 @@ export default function BookGenreFlashDeals({
                       {/* Custom price display - Only show if price exists and > 0 */}
                       {product.price !== undefined && product.price !== null && product.price > 0 && (
                         <div className="leading-none">
-                          {/* Current price - Use discount if valid, otherwise regular price */}
                           <div className="flex items-center gap-2 leading-none">
                             <span className="font-bold text-orange-500 text-base">
                               G {(
@@ -634,7 +670,6 @@ export default function BookGenreFlashDeals({
                       {/* Shipping Info - Only show if actually has shipping info */}
                       {(product.free_shipping === true || (product.shipping_cost !== undefined && product.shipping_cost !== null && product.shipping_cost > 0)) ? (
                         <div className="flex items-center gap-1 mt-1">
-                          {/* Show free shipping if explicitly true */}
                           {product.free_shipping === true ? (
                             <div className="flex items-center gap-1 text-green-600 text-[11px] font-medium">
                               <Truck className="w-3 h-3" />
@@ -642,7 +677,6 @@ export default function BookGenreFlashDeals({
                             </div>
                           ) : null}
                           
-                          {/* Show shipping cost if shipping_cost > 0 */}
                           {product.shipping_cost !== undefined && product.shipping_cost !== null && product.shipping_cost > 0 ? (
                             <div className="flex items-center gap-1 text-gray-600 text-[11px]">
                               <Truck className="w-3 h-3" />
@@ -656,7 +690,6 @@ export default function BookGenreFlashDeals({
                       {(product.rating !== undefined && product.rating !== null && product.rating > 0) || 
                        (product.total_orders !== undefined && product.total_orders !== null && product.total_orders > 0) ? (
                         <div className="flex items-center gap-2 mt-1">
-                          {/* Rating - show if rating exists and > 0 */}
                           {product.rating !== undefined && product.rating !== null && product.rating > 0 && (
                             <div className="flex items-center gap-0.5">
                               <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
@@ -666,7 +699,6 @@ export default function BookGenreFlashDeals({
                             </div>
                           )}
                           
-                          {/* Total orders - only show if > 0 */}
                           {product.total_orders !== undefined && product.total_orders !== null && product.total_orders > 0 && (
                             <span className="text-[11px] text-gray-500">
                               {product.total_orders >= 1000 
