@@ -605,13 +605,13 @@ export default function BookGenreFlashDeals({
                       </div>
                     </Link>
 
-                    <div className="p-1 space-y-2">
+                    <div className="p-1 space-y-1">
                       <h4 className="text-xs font-medium line-clamp-2 text-gray-900 leading-tight">
                         {product.name}
                       </h4>
 
                       {/* Custom price display without currency switcher */}
-                      <div className="space-y-1">
+                      <div className="space-y-0.5">
                         {/* Current price */}
                         <div className="flex items-center gap-2 leading-none">
                           <span className="font-bold text-orange-500 text-base">
