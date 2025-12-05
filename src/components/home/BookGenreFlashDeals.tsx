@@ -367,7 +367,7 @@ export default function BookGenreFlashDeals({
       return {
         ...product,
         discountPercentage,
-        image: product.product_images?.[0]?.src || "https://placehold.co/300x300?text=No+Image"
+        image: product.product_images?.[0]?.src || "https://placehold.co/300x375?text=No+Image"
       };
     });
 
@@ -464,7 +464,7 @@ export default function BookGenreFlashDeals({
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
             {[1, 2, 3, 4, 5, 6].map((_, index) => (
               <div key={index} className="bg-white overflow-hidden">
-                <div className="aspect-square bg-gray-100 animate-pulse rounded-[10px]"></div>
+                <div className="aspect-[4/5] bg-gray-100 animate-pulse"></div>
                 <div className="p-3 space-y-2">
                   <div className="h-4 w-3/4 bg-gray-100 animate-pulse"></div>
                   <div className="h-3 w-1/2 bg-gray-100 animate-pulse"></div>
@@ -489,25 +489,22 @@ export default function BookGenreFlashDeals({
                       onClick={() => trackProductView(product.id)}
                       className="block"
                     >
-                      <div className="relative aspect-square overflow-hidden bg-gray-50 rounded-[10px]">
+                      {/* AliExpress-style thumbnail container - 4:5 aspect ratio */}
+                      <div className="relative overflow-hidden bg-gray-50">
                         <img
                           src={product.image}
                           alt={product.name}
-                          className="w-full h-full object-cover"
+                          className="w-full aspect-[4/5] object-cover"
                           loading="lazy"
-                          style={{
-                            objectFit: 'cover',
-                            aspectRatio: '1/1'
-                          }}
                           onError={(e) => {
-                            e.currentTarget.src = "https://placehold.co/300x300?text=No+Image";
+                            e.currentTarget.src = "https://placehold.co/300x375?text=No+Image";
                           }}
                         />
 
                         {/* Top Selling Badge - Top Left */}
                         {product.is_top_selling && (
                           <div className="absolute top-2 left-2 z-20">
-                            <Badge className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 font-semibold flex items-center gap-0.5 rounded-md">
+                            <Badge className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 font-semibold flex items-center gap-0.5">
                               <TrendingUp className="w-2.5 h-2.5" />
                               Top Selling
                             </Badge>
@@ -519,7 +516,7 @@ export default function BookGenreFlashDeals({
                           <div className="absolute top-2 left-2 z-20">
                             <Badge
                               variant="secondary"
-                              className={`${getStatusColor(product.status)} text-xs rounded-md`}
+                              className={`${getStatusColor(product.status)} text-xs`}
                             >
                               {product.status}
                             </Badge>
@@ -528,7 +525,7 @@ export default function BookGenreFlashDeals({
 
                         {/* Views with Eye Icon - Top Right */}
                         {showMarketingMetrics && product.views !== undefined && (
-                          <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/80 text-white text-xs px-2 py-1 rounded-md">
+                          <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/80 text-white text-xs px-2 py-1 rounded">
                             <Eye className="w-3 h-3" />
                             <span className="font-medium">{formatNumber(product.views)}</span>
                           </div>
@@ -574,18 +571,17 @@ export default function BookGenreFlashDeals({
                               {/* Choice badge - inline as a word */}
                               <div className="relative inline-flex items-center">
                                 <div className="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 
-                                              relative px-1.5 py-[2px] rounded-[4px] border border-amber-400/50 
-                                              shadow-[0_1px_2px_rgba(0,0,0,0.2),inset_0_1px_1px_rgba(255,255,255,0.4)] 
-                                              overflow-hidden inline-flex items-center h-[16px]">
+                                              relative px-1.5 py-[2px] rounded border border-amber-400/50 
+                                              shadow-sm overflow-hidden inline-flex items-center h-[16px]">
                                   {/* Shiny glass effect overlay */}
                                   <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/50 to-transparent"></div>
                                   
                                   {/* Subtle inner shadow for depth */}
-                                  <div className="absolute inset-0 rounded-[4px] border border-white/30"></div>
+                                  <div className="absolute inset-0 border border-white/30"></div>
                                   
                                   {/* Text with slight text shadow for readability */}
                                   <span className="relative text-[9px] font-bold text-white tracking-wide 
-                                                  drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)] whitespace-nowrap leading-none px-0.5">
+                                                  whitespace-nowrap leading-none px-0.5">
                                     Choice
                                   </span>
                                 </div>
@@ -622,7 +618,7 @@ export default function BookGenreFlashDeals({
                               <span className="text-gray-400 line-through text-sm">
                                 G {product.price.toFixed(2)}
                               </span>
-                              <span className="text-green-600 font-medium text-xs bg-green-50 px-1.5 py-0.5 rounded-md w-fit whitespace-nowrap">
+                              <span className="text-green-600 font-medium text-xs bg-green-50 px-1.5 py-0.5 rounded w-fit whitespace-nowrap">
                                 Save G {(product.price - product.discount_price).toFixed(2)}
                               </span>
                             </div>
