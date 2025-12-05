@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Timer, Plus, ChevronRight, Package, Eye } from "lucide-react";
+import { Timer, Plus, ChevronRight, Package, Eye, Star, TrendingUp, Truck } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllProducts, trackProductView } from "@/integrations/supabase/products";
@@ -33,6 +33,13 @@ interface Product {
   clicks?: number;
   conversions?: number;
   revenue?: number;
+  // New e-commerce fields
+  rating?: number;
+  total_orders?: number;
+  free_shipping?: boolean;
+  shipping_cost?: number;
+  is_choice?: boolean;
+  is_top_selling?: boolean;
 }
 
 interface GenreFlashDealsProps {
@@ -555,6 +562,25 @@ export default function BookGenreFlashDeals({
                           }}
                         />
 
+                        {/* Choice Badge - Top Left */}
+                        {product.is_choice && (
+                          <div className="absolute top-2 left-2 z-20">
+                            <Badge className="bg-orange-500 text-white text-[10px] px-1.5 py-0.5 font-semibold">
+                              Choice
+                            </Badge>
+                          </div>
+                        )}
+
+                        {/* Top Selling Badge - Top Left (if no Choice badge) */}
+                        {!product.is_choice && product.is_top_selling && (
+                          <div className="absolute top-2 left-2 z-20">
+                            <Badge className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 font-semibold flex items-center gap-0.5">
+                              <TrendingUp className="w-2.5 h-2.5" />
+                              Top Selling
+                            </Badge>
+                          </div>
+                        )}
+
                         {/* Status Badge - Top Left */}
                         {showStatusBadge && product.status && (
                           <div className="absolute top-2 left-2 z-20">
@@ -622,7 +648,7 @@ export default function BookGenreFlashDeals({
 
                         {/* Barred original price if discounted */}
                         {product.discount_price && product.discount_price < product.price && (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 mt-0.5">
                             <span className="text-gray-400 line-through text-sm">
                               G {product.price.toFixed(2)}
                             </span>
@@ -632,6 +658,42 @@ export default function BookGenreFlashDeals({
                           </div>
                         )}
                       </div>
+
+                      {/* Shipping Info */}
+                      <div className="flex items-center gap-1 mt-1">
+                        {product.free_shipping ? (
+                          <div className="flex items-center gap-1 text-green-600 text-[11px] font-medium">
+                            <Truck className="w-3 h-3" />
+                            <span>Free shipping</span>
+                          </div>
+                        ) : product.shipping_cost ? (
+                          <div className="flex items-center gap-1 text-gray-600 text-[11px]">
+                            <Truck className="w-3 h-3" />
+                            <span>Shipping: G {product.shipping_cost.toFixed(2)}</span>
+                          </div>
+                        ) : null}
+                      </div>
+
+                      {/* Rating & Orders */}
+                      {(product.rating || product.total_orders) && (
+                        <div className="flex items-center gap-2 mt-1">
+                          {product.rating && (
+                            <div className="flex items-center gap-0.5">
+                              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                              <span className="text-[11px] font-medium text-gray-700">
+                                {product.rating.toFixed(1)}
+                              </span>
+                            </div>
+                          )}
+                          {product.total_orders && (
+                            <span className="text-[11px] text-gray-500">
+                              {product.total_orders >= 1000 
+                                ? `${(product.total_orders / 1000).toFixed(1)}k` 
+                                : product.total_orders} sold
+                            </span>
+                          )}
+                        </div>
+                      )}
 
                       {/* Product info section */}
                       {customProductInfo ? customProductInfo(product) : 
