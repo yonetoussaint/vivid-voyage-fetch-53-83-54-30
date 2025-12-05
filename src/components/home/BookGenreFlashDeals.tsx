@@ -461,7 +461,7 @@ export default function BookGenreFlashDeals({
       {/* Products Grid */}
       <div className="px-1.5 pt-4">
         {isLoading && !externalProducts ? (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
             {[1, 2, 3, 4, 5, 6].map((_, index) => (
               <div key={index} className="bg-white overflow-hidden">
                 <div className="aspect-square bg-gray-100 animate-pulse rounded-lg"></div>
@@ -475,18 +475,19 @@ export default function BookGenreFlashDeals({
           </div>
         ) : processedProducts.length > 0 ? (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-1.5">
+            {/* FLEXIBLE GRID LIKE ALIEXPRESS/TEMU */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1.5">
               {processedProducts.slice(0, displayCount).map((product) => {
                 const productExpiryTime = expiryTimes[product.id];
                 const hasExpiryTimer = showExpiryTimer && productExpiryTime && 
                   (productExpiryTime.days > 0 || productExpiryTime.hours > 0 || productExpiryTime.minutes > 0 || productExpiryTime.seconds > 0);
 
                 return (
-                  <div key={product.id} className="bg-white overflow-hidden">
+                  <div key={product.id} className="bg-white overflow-hidden flex flex-col">
                     <Link
                       to={`/product/${product.id}`}
                       onClick={() => trackProductView(product.id)}
-                      className="block"
+                      className="block flex-grow"
                     >
                       <div className="relative aspect-square overflow-hidden bg-gray-50 rounded-lg">
                         <img
@@ -563,11 +564,11 @@ export default function BookGenreFlashDeals({
                       </div>
                     </Link>
 
-                    <div className="p-1.5">
+                    <div className="p-1.5 flex-grow flex flex-col">
                       {/* Product name with inline Choice badge */}
                       <div className="flex flex-wrap items-center gap-1 mb-1">
                         {/* Product name with inline Choice badge */}
-                        <h4 className="text-xs font-medium line-clamp-2 text-gray-900 leading-tight">
+                        <h4 className="text-xs font-medium line-clamp-2 text-gray-900 leading-tight flex-grow">
                           {product.is_choice && (
                             <span className="inline-flex items-center mr-1.5 align-middle">
                               {/* Choice badge - inline as a word */}
@@ -630,7 +631,6 @@ export default function BookGenreFlashDeals({
                       )}
 
                       {/* Shipping Info - Only show if actually has shipping info */}
-                      {/* FIXED: Only show if free_shipping is true OR shipping_cost exists and > 0 */}
                       {(product.free_shipping === true || (product.shipping_cost !== undefined && product.shipping_cost !== null && product.shipping_cost > 0)) ? (
                         <div className="flex items-center gap-1 mt-1">
                           {/* Show free shipping if explicitly true */}
