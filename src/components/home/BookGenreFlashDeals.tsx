@@ -474,8 +474,7 @@ export default function BookGenreFlashDeals({
     // If image is tall (ratio > 1.25), cap it
     if (ratio > MAX_RATIO) {
       return {
-        minHeight: '280px',
-        maxHeight: '280px',
+        height: '280px',
         aspectRatio: '1/1.25' // Cap at 4:5
       };
     }
@@ -485,6 +484,26 @@ export default function BookGenreFlashDeals({
       aspectRatio: `1/${ratio}`, // Natural ratio
       height: 'auto' // Let it be natural
     };
+  };
+
+  // Get image class based on ratio
+  const getImageClass = (productId: string) => {
+    const ratioInfo = imageRatios[productId];
+    
+    if (!ratioInfo) {
+      return "w-full h-full object-contain";
+    }
+
+    const { ratio } = ratioInfo;
+    const MAX_RATIO = 1.25;
+    
+    if (ratio > MAX_RATIO) {
+      // For tall images, we need to center the image
+      return "w-full h-full object-contain mx-auto";
+    }
+    
+    // For normal/short images, use default
+    return "w-full h-full object-contain mx-auto";
   };
 
   return (
@@ -536,13 +555,13 @@ export default function BookGenreFlashDeals({
                     >
                       {/* Dynamic container that adapts to image ratio */}
                       <div 
-                        className="relative overflow-hidden bg-gray-50 rounded-md"
+                        className="relative overflow-hidden bg-gray-50 rounded-md flex items-center justify-center"
                         style={getImageContainerStyle(product.id)}
                       >
                         <img
                           src={product.image}
                           alt={product.name}
-                          className="w-full h-full object-contain"
+                          className={getImageClass(product.id)}
                           loading="lazy"
                           onLoad={(e) => handleImageLoad(product.id, e)}
                           onError={(e) => {
