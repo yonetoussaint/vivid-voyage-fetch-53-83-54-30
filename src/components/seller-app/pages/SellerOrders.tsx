@@ -19,7 +19,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
 import ProductFilterBar from '@/components/home/ProductFilterBar';
-import SlideUpPanel from '@/components/shared/SlideUpPanel';
 
 const SellerOrders = () => {
   const navigate = useNavigate();
@@ -27,22 +26,14 @@ const SellerOrders = () => {
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
   const [refreshing, setRefreshing] = useState(false);
   const [touchStart, setTouchStart] = useState(0);
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast.success('Tracking number copied to clipboard');
   };
 
-  const openOrderDetails = (order: any) => {
-    setSelectedOrder(order);
-    setIsPanelOpen(true);
-  };
-
-  const closeOrderDetails = () => {
-    setIsPanelOpen(false);
-    setTimeout(() => setSelectedOrder(null), 300); // Clear after animation
+  const navigateToOrderDetails = (orderId: string) => {
+    navigate(`/orders/${orderId}`);
   };
 
   // Define filter categories matching BookGenreFlashDeals structure
@@ -334,174 +325,6 @@ const SellerOrders = () => {
     setDisplayCount(8);
   }, [filteredOrders.length]);
 
-  // Order Detail Panel Content
-  const renderOrderDetails = () => {
-    if (!selectedOrder) return null;
-
-    const StatusIcon = getStatusIcon(selectedOrder.status);
-
-    return (
-      <div className="space-y-6">
-        {/* Order Header */}
-        <div className="flex items-start justify-between">
-          <div>
-            <h3 className="text-xl font-bold text-foreground">{selectedOrder.id}</h3>
-            <p className="text-sm text-muted-foreground">{selectedOrder.date}</p>
-          </div>
-          <Badge 
-            variant="secondary" 
-            className={`${getStatusColor(selectedOrder.status)} px-3 py-1 flex items-center gap-2`}
-          >
-            <StatusIcon className="w-4 h-4" />
-            {selectedOrder.status}
-          </Badge>
-        </div>
-
-        {/* Customer Info */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <div className="flex items-center gap-3 mb-4">
-            <Avatar className="w-12 h-12">
-              <AvatarImage src={selectedOrder.customer.avatar} />
-              <AvatarFallback>
-                {selectedOrder.customer.name.split(' ').map(n => n[0]).join('')}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h4 className="font-medium text-foreground">{selectedOrder.customer.name}</h4>
-              <p className="text-sm text-muted-foreground">{selectedOrder.customer.email}</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <User className="w-4 h-4 text-gray-500" />
-              <span className="text-muted-foreground">Customer</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-gray-500" />
-              <span className="text-muted-foreground">Order Date</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CreditCard className="w-4 h-4 text-gray-500" />
-              <span className="text-muted-foreground">Payment</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Box className="w-4 h-4 text-gray-500" />
-              <span className="text-muted-foreground">Items</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Products List */}
-        <div>
-          <h4 className="font-medium text-foreground mb-3">Products</h4>
-          <div className="space-y-3">
-            {selectedOrder.products.map((product: any, index: number) => (
-              <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <img 
-                  src={product.image} 
-                  alt={product.name}
-                  className="w-14 h-14 object-cover rounded-lg"
-                />
-                <div className="flex-1">
-                  <p className="font-medium text-foreground">{product.name}</p>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Qty: {product.quantity}</span>
-                    <span className="font-medium">${(product.price * product.quantity).toFixed(2)}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Order Summary */}
-        <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Subtotal</span>
-            <span className="font-medium">${selectedOrder.total.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Shipping</span>
-            <span className="font-medium">$0.00</span>
-          </div>
-          <div className="border-t pt-3 flex justify-between">
-            <span className="font-bold text-foreground">Total</span>
-            <span className="text-xl font-bold text-foreground">${selectedOrder.total.toFixed(2)}</span>
-          </div>
-        </div>
-
-        {/* Shipping & Tracking */}
-        <div className="space-y-4">
-          <div>
-            <h4 className="font-medium text-foreground mb-2">Shipping Information</h4>
-            <p className="text-sm text-muted-foreground">{selectedOrder.pickupStation}</p>
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="mt-2"
-              onClick={() => navigate(`/pickup-station/${selectedOrder.pickupStationId}`)}
-            >
-              <MapPin className="w-4 h-4 mr-2" />
-              View Station Details
-            </Button>
-          </div>
-
-          <div>
-            <h4 className="font-medium text-foreground mb-2">Tracking Number</h4>
-            <div className="flex items-center gap-2">
-              <code className="flex-1 bg-gray-100 px-3 py-2 rounded text-sm font-mono">
-                {selectedOrder.trackingNumber}
-              </code>
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={() => copyToClipboard(selectedOrder.trackingNumber)}
-              >
-                <Copy className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="sticky bottom-0 bg-white pt-4 border-t">
-          <div className="grid grid-cols-3 gap-2">
-            <Button 
-              variant="outline"
-              onClick={() => {
-                // Handle contact customer
-                toast.info(`Contacting ${selectedOrder.customer.name}`);
-              }}
-            >
-              <MessageCircle className="w-4 h-4 mr-2" />
-              Contact
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={() => {
-                // Handle download invoice
-                toast.success('Invoice downloaded');
-              }}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Invoice
-            </Button>
-            <Button 
-              onClick={() => {
-                // Handle mark as shipped/complete
-                toast.success(`Order ${selectedOrder.id} updated`);
-                closeOrderDetails();
-              }}
-            >
-              <CheckCircle className="w-4 h-4 mr-2" />
-              Update
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div 
       className="w-full bg-white min-h-screen"
@@ -546,23 +369,24 @@ const SellerOrders = () => {
             <div className="grid grid-cols-1 gap-3">
               {filteredOrders.slice(0, displayCount).map((order) => {
                 const StatusIcon = getStatusIcon(order.status);
+                const orderId = order.id.replace('#', '');
                 
                 return (
                   <Card 
                     key={order.id} 
-                    className="border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                    onClick={() => openOrderDetails(order)}
+                    className="border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer bg-white"
+                    onClick={() => navigateToOrderDetails(orderId)}
                   >
                     <CardContent className="p-4">
                       {/* Order Header - Minimal */}
                       <div className="flex items-start justify-between mb-3">
                         <div>
-                          <h3 className="font-bold text-foreground text-lg">{order.id}</h3>
-                          <p className="text-sm text-muted-foreground">{order.date}</p>
+                          <h3 className="font-bold text-foreground text-base">{order.id}</h3>
+                          <p className="text-xs text-muted-foreground">{order.date}</p>
                         </div>
                         <Badge 
                           variant="secondary" 
-                          className={`${getStatusColor(order.status)} px-2.5 py-1 flex items-center gap-1`}
+                          className={`${getStatusColor(order.status)} px-2.5 py-1 flex items-center gap-1 text-xs font-medium`}
                         >
                           <StatusIcon className="w-3.5 h-3.5" />
                           {order.status}
@@ -571,14 +395,14 @@ const SellerOrders = () => {
 
                       {/* Customer Info - Simple */}
                       <div className="flex items-center gap-3 mb-4">
-                        <Avatar className="w-10 h-10">
+                        <Avatar className="w-9 h-9">
                           <AvatarImage src={order.customer.avatar} />
                           <AvatarFallback>
                             {order.customer.name.split(' ').map(n => n[0]).join('')}
                           </AvatarFallback>
                         </Avatar>
-                        <div>
-                          <p className="font-medium text-foreground">{order.customer.name}</p>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-foreground text-sm truncate">{order.customer.name}</p>
                           <p className="text-xs text-muted-foreground truncate">
                             {order.products.length} {order.products.length === 1 ? 'item' : 'items'}
                           </p>
@@ -586,38 +410,52 @@ const SellerOrders = () => {
                       </div>
 
                       {/* Order Summary - Clean */}
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            <Box className="w-4 h-4 text-gray-500" />
-                            <span className="text-sm text-muted-foreground">Items</span>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5">
+                            <Box className="w-3.5 h-3.5 text-gray-500" />
+                            <span className="text-xs text-muted-foreground">Items</span>
                           </div>
-                          <span className="font-medium">{order.products.length}</span>
+                          <span className="text-sm font-medium text-foreground">{order.products.length}</span>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            <CreditCard className="w-4 h-4 text-gray-500" />
-                            <span className="text-sm text-muted-foreground">Total</span>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5">
+                            <CreditCard className="w-3.5 h-3.5 text-gray-500" />
+                            <span className="text-xs text-muted-foreground">Total</span>
                           </div>
-                          <span className="text-lg font-bold text-foreground">${order.total.toFixed(2)}</span>
+                          <span className="text-base font-bold text-foreground">${order.total.toFixed(2)}</span>
                         </div>
                       </div>
 
-                      {/* Quick Actions */}
+                      {/* Quick Actions & Navigation */}
                       <div className="mt-4 pt-4 border-t flex items-center justify-between">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            copyToClipboard(order.trackingNumber);
-                          }}
-                          className="text-xs"
-                        >
-                          <Copy className="w-3.5 h-3.5 mr-1.5" />
-                          Copy Tracking
-                        </Button>
-                        <ChevronRight className="w-5 h-5 text-gray-400" />
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              copyToClipboard(order.trackingNumber);
+                            }}
+                            className="text-xs h-8 px-2"
+                          >
+                            <Copy className="w-3.5 h-3.5 mr-1.5" />
+                            Copy Tracking
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/pickup-station/${order.pickupStationId}`);
+                            }}
+                            className="text-xs h-8 px-2"
+                          >
+                            <MapPin className="w-3.5 h-3.5 mr-1.5" />
+                            View Station
+                          </Button>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
                       </div>
                     </CardContent>
                   </Card>
@@ -649,18 +487,6 @@ const SellerOrders = () => {
           </div>
         )}
       </div>
-
-      {/* SlideUpPanel for Order Details */}
-      <SlideUpPanel
-        isOpen={isPanelOpen}
-        onClose={closeOrderDetails}
-        title="Order Details"
-        showCloseButton={true}
-        showHelpButton={false}
-        dynamicHeight={true}
-      >
-        {selectedOrder && renderOrderDetails()}
-      </SlideUpPanel>
     </div>
   );
 };
