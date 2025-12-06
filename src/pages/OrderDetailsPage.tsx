@@ -1,5 +1,5 @@
-// OrderDetailsPage.tsx
-import React from 'react';
+// @/components/seller-app/pages/orders/OrderDetailsPage.tsx
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, CheckCircle, Clock, Truck, PackageOpen, XCircle,
@@ -14,43 +14,52 @@ import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const OrderDetailsPage = () => {
-  const { orderId } = useParams();
+  const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
+  const [order, setOrder] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Mock order data - in real app, fetch from API
-  const order = {
-    id: `#${orderId}`,
-    customer: {
-      name: 'Sarah Johnson',
-      email: 'sarah@example.com',
-      phone: '+1 (555) 123-4567',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612e1b4?w=150&h=150&fit=crop&crop=face'
-    },
-    products: [
-      { 
-        name: 'Wireless Earbuds Pro', 
-        quantity: 2, 
-        price: 49.99,
-        image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=100&h=100&fit=crop'
-      }
-    ],
-    total: 149.99,
-    subtotal: 99.98,
-    shipping: 10.00,
-    tax: 5.99,
-    status: 'Completed',
-    date: '2024-01-20',
-    orderPlacedAt: '2024-01-19 14:30',
-    trackingNumber: 'TRK1234567890',
-    carrier: 'FedEx',
-    estimatedDelivery: '2024-01-22',
-    pickupStation: 'Downtown Station #45',
-    pickupStationAddress: '123 Main St, New York, NY 10001',
-    paymentMethod: 'Credit Card ****1234',
-    shippingAddress: '456 Oak Ave, Brooklyn, NY 11201',
-    shippingMethod: 'Standard Delivery',
-    notes: 'Leave package at front door if no one is home.'
-  };
+  useEffect(() => {
+    // Mock data for demonstration
+    const mockOrder = {
+      id: `#${orderId}`,
+      customer: {
+        name: 'Sarah Johnson',
+        email: 'sarah@example.com',
+        phone: '+1 (555) 123-4567',
+        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612e1b4?w=150&h=150&fit=crop&crop=face'
+      },
+      products: [
+        { 
+          name: 'Wireless Earbuds Pro', 
+          quantity: 2, 
+          price: 49.99,
+          image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=100&h=100&fit=crop'
+        }
+      ],
+      total: 149.99,
+      subtotal: 99.98,
+      shipping: 10.00,
+      tax: 5.99,
+      status: 'Completed',
+      date: '2024-01-20',
+      orderPlacedAt: '2024-01-19 14:30',
+      trackingNumber: 'TRK1234567890',
+      carrier: 'FedEx',
+      estimatedDelivery: '2024-01-22',
+      pickupStation: 'Downtown Station #45',
+      pickupStationAddress: '123 Main St, New York, NY 10001',
+      paymentMethod: 'Credit Card ****1234',
+      shippingAddress: '456 Oak Ave, Brooklyn, NY 11201',
+      shippingMethod: 'Standard Delivery',
+      notes: 'Leave package at front door if no one is home.'
+    };
+
+    setTimeout(() => {
+      setOrder(mockOrder);
+      setLoading(false);
+    }, 300);
+  }, [orderId]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -79,6 +88,35 @@ const OrderDetailsPage = () => {
     toast.success('Copied to clipboard');
   };
 
+  if (loading) {
+    return (
+      <div className="w-full bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading order details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!order) {
+    return (
+      <div className="w-full bg-white min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+            <PackageOpen className="w-8 h-8 text-gray-400" />
+          </div>
+          <h2 className="text-lg font-semibold text-foreground mb-2">Order not found</h2>
+          <p className="text-muted-foreground mb-6">The order you're looking for doesn't exist.</p>
+          <Button onClick={() => navigate('/seller-dashboard/orders')}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Orders
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   const StatusIcon = getStatusIcon(order.status);
 
   return (
@@ -89,29 +127,24 @@ const OrderDetailsPage = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/seller-dashboard/orders')}
             className="h-10 w-10"
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <div>
+          <div className="flex-1">
             <h1 className="text-lg font-bold text-foreground">{order.id}</h1>
             <p className="text-xs text-muted-foreground">Order Details</p>
           </div>
+          <Badge className={`${getStatusColor(order.status)} px-3 py-1.5 flex items-center gap-2`}>
+            <StatusIcon className="w-4 h-4" />
+            {order.status}
+          </Badge>
         </div>
       </div>
 
       {/* Content */}
       <div className="p-4 space-y-6">
-        {/* Status Badge */}
-        <div className="flex items-center justify-between">
-          <Badge className={`${getStatusColor(order.status)} px-3 py-1.5 flex items-center gap-2`}>
-            <StatusIcon className="w-4 h-4" />
-            {order.status}
-          </Badge>
-          <span className="text-sm text-muted-foreground">{order.date}</span>
-        </div>
-
         {/* Customer Info */}
         <Card>
           <CardContent className="p-4">
@@ -123,7 +156,7 @@ const OrderDetailsPage = () => {
               </Avatar>
               <div>
                 <h3 className="font-medium text-foreground">{order.customer.name}</h3>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex flex-col gap-1 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Mail className="w-3.5 h-3.5" />
                     {order.customer.email}
@@ -135,12 +168,10 @@ const OrderDetailsPage = () => {
                 </div>
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="flex-1">
-                <MessageCircle className="w-4 h-4 mr-2" />
-                Message
-              </Button>
-            </div>
+            <Button variant="outline" size="sm" className="w-full">
+              <MessageCircle className="w-4 h-4 mr-2" />
+              Send Message
+            </Button>
           </CardContent>
         </Card>
 
@@ -149,7 +180,7 @@ const OrderDetailsPage = () => {
           <CardContent className="p-4">
             <h2 className="font-medium text-foreground mb-4">Order Items</h2>
             <div className="space-y-4">
-              {order.products.map((product, index) => (
+              {order.products.map((product: any, index: number) => (
                 <div key={index} className="flex items-center gap-3">
                   <img 
                     src={product.image} 
@@ -203,7 +234,7 @@ const OrderDetailsPage = () => {
                   <span className="text-sm font-medium">Tracking Information</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 bg-gray-100 px-3 py-2 rounded text-sm">
+                  <code className="flex-1 bg-gray-100 px-3 py-2 rounded text-sm font-mono">
                     {order.trackingNumber}
                   </code>
                   <Button 
@@ -229,9 +260,9 @@ const OrderDetailsPage = () => {
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="mt-2"
-                  onClick={() => navigate('/pickup-station/overview')}
+                  className="mt-2 w-full"
                 >
+                  <MapPin className="w-4 h-4 mr-2" />
                   View Station Details
                 </Button>
               </div>
@@ -249,13 +280,13 @@ const OrderDetailsPage = () => {
 
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-3">
-          <Button variant="outline">
-            <MessageCircle className="w-4 h-4 mr-2" />
-            Contact Customer
-          </Button>
-          <Button>
+          <Button variant="outline" className="h-11">
             <Download className="w-4 h-4 mr-2" />
             Download Invoice
+          </Button>
+          <Button className="h-11" onClick={() => toast.success('Order updated successfully')}>
+            <CheckCircle className="w-4 h-4 mr-2" />
+            Update Order
           </Button>
         </div>
       </div>
