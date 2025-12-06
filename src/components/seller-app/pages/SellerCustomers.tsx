@@ -2,12 +2,11 @@ import React, { useState } from 'react';
 import { 
   MoreHorizontal, Mail, MessageCircle, 
   MapPin, ShoppingBag, Plus,
-  User
+  User, ChevronDown
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
 import ProductFilterBar from '@/components/home/ProductFilterBar';
 
 const SellerCustomers = () => {
@@ -135,27 +134,24 @@ const SellerCustomers = () => {
     return true;
   });
 
-  const stats = [
-    { value: filteredCustomers.length.toString(), label: 'Total', color: 'text-blue-600' },
-    { value: customers.filter(c => c.status === 'Active').length.toString(), label: 'Active', color: 'text-green-600' },
-    { value: customers.filter(c => c.status === 'VIP').length.toString(), label: 'VIP', color: 'text-purple-600' },
-    { value: customers.filter(c => c.totalOrders > 10).length.toString(), label: 'Top Buyers', color: 'text-orange-600' }
-  ];
-
   return (
     <div className="w-full bg-white min-h-screen">
-      {/* Header & Stats */}
+      {/* Minimal Header */}
       <div className="sticky top-0 z-40 bg-white border-b">
-        <SellerSummaryHeader
-          title="Customers"
-          subtitle="Manage customer relationships"
-          stats={stats}
-          actionButton={{
-            label: 'Add',
-            icon: Plus,
-            onClick: () => console.log('Add customer')
-          }}
-        />
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-lg font-semibold text-foreground">Customers</h1>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                {filteredCustomers.length} customers found
+              </p>
+            </div>
+            <Button size="sm" className="h-9 px-3 gap-1.5">
+              <Plus className="w-4 h-4" />
+              <span>Add</span>
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Filter Bar */}
