@@ -15,6 +15,7 @@ import SellerSupport from '@/components/seller-app/pages/SellerSupport';
 import SellerEditProfile from '@/components/seller-app/pages/SellerEditProfile';
 import SellerProductEdit from '@/components/seller-app/pages/SellerProductEdit';
 import SellerOnboarding from '@/components/seller-app/pages/SellerOnboarding'; // Add this import
+import OrderDetailsPage from '@/components/seller-app/pages/OrderDetailsPage'; // Add this import
 
 const SellerDashboard = () => {
   const location = useLocation();
@@ -31,15 +32,16 @@ const SellerDashboard = () => {
         <Route path="/products" element={<SellerProducts />} />
         <Route path="/products/edit/:productId" element={<SellerProductEdit />} />
         <Route path="/orders" element={<SellerOrders />} />
+        <Route path="/orders/:orderId" element={<OrderDetailsPage />} /> {/* Add this route */}
         <Route path="/customers" element={<SellerCustomers />} />
         <Route path="/reels" element={<SellerReels />} />
-        <Route path="/posts" element={<SellerPosts />} /> {/* Add this route */}
+        <Route path="/posts" element={<SellerPosts />} />
         <Route path="/analytics" element={<SellerAnalytics />} />
         <Route path="/finances" element={<SellerFinances />} />
         <Route path="/marketing" element={<SellerMarketing />} />
         <Route path="/settings" element={<SellerSettings />} />
         <Route path="/edit-profile" element={<SellerEditProfile />} />
-        <Route path="/onboarding" element={<SellerOnboarding />} /> {/* Add this route */}
+        <Route path="/onboarding" element={<SellerOnboarding />} />
       </Routes>
     </SellerLayout>
   );
