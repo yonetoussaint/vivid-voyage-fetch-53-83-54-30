@@ -135,12 +135,12 @@ const SellerCustomers = () => {
         onClearAll={handleClearAll}
       />
 
-      {/* Ultra Clean Customers List */}
+      {/* Ultra Clean Customers List - No Add Button */}
       <div className="py-2 px-2 md:px-3 max-w-6xl mx-auto">
         {filteredCustomers.length > 0 ? (
           <div className="space-y-1">
-            {/* List Headers (Desktop) */}
-            <div className="hidden md:grid grid-cols-12 gap-3 px-4 py-2 text-xs text-muted-foreground uppercase tracking-wide">
+            {/* List Headers (Desktop) - Very Minimal */}
+            <div className="hidden md:grid grid-cols-12 gap-3 px-2 py-2 text-xs text-muted-foreground uppercase tracking-wide">
               <div className="col-span-5">Customer</div>
               <div className="col-span-3">Location</div>
               <div className="col-span-2">Orders</div>
@@ -152,7 +152,7 @@ const SellerCustomers = () => {
               {filteredCustomers.map((customer) => (
                 <Card key={customer.id} className="overflow-hidden border border-gray-200 hover:border-gray-300 transition-all duration-150">
                   <CardContent className="p-3">
-                    <div className="flex items-center justify-between gap-4 px-1">
+                    <div className="flex items-center justify-between gap-3">
                       {/* Customer Info */}
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <Avatar className="w-8 h-8 flex-shrink-0">
@@ -180,13 +180,14 @@ const SellerCustomers = () => {
                       {/* Desktop Additional Info */}
                       <div className="hidden md:flex items-center gap-6 flex-1">
                         <div className="min-w-[120px]">
-                          <div className="text-sm text-foreground truncate">
-                            {customer.location}
+                          <div className="flex items-center gap-1.5 text-sm text-foreground">
+                            <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
+                            <span className="truncate">{customer.location}</span>
                           </div>
                         </div>
                         
                         <div className="min-w-[80px]">
-                          <div className="text-sm text-foreground">
+                          <div className="text-sm text-foreground font-medium">
                             {customer.totalOrders} orders
                           </div>
                         </div>
@@ -216,13 +217,16 @@ const SellerCustomers = () => {
 
                     {/* Mobile Additional Info */}
                     <div className="mt-2 pt-2 border-t border-gray-100 md:hidden">
-                      <div className="flex items-center justify-between gap-3 px-1">
-                        <div className="text-sm text-foreground flex-1 truncate">
-                          {customer.location}
-                        </div>
-                        
-                        <div className="text-sm text-foreground">
-                          {customer.totalOrders} orders
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className="flex items-center gap-1.5 text-sm text-foreground flex-1">
+                            <MapPin className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                            <span className="truncate text-xs">{customer.location}</span>
+                          </div>
+                          
+                          <div className="text-sm text-foreground font-medium">
+                            {customer.totalOrders} orders
+                          </div>
                         </div>
                       </div>
                     </div>
