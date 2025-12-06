@@ -180,14 +180,13 @@ const SellerCustomers = () => {
                       {/* Desktop Additional Info */}
                       <div className="hidden md:flex items-center gap-6 flex-1">
                         <div className="min-w-[120px]">
-                          <div className="flex items-center gap-1.5 text-sm text-foreground">
-                            <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
-                            <span className="truncate">{customer.location}</span>
+                          <div className="text-sm text-foreground truncate">
+                            {customer.location}
                           </div>
                         </div>
                         
                         <div className="min-w-[80px]">
-                          <div className="text-sm text-foreground font-medium">
+                          <div className="text-sm text-foreground">
                             {customer.totalOrders} orders
                           </div>
                         </div>
@@ -218,15 +217,12 @@ const SellerCustomers = () => {
                     {/* Mobile Additional Info */}
                     <div className="mt-2 pt-2 border-t border-gray-100 md:hidden">
                       <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3 flex-1">
-                          <div className="flex items-center gap-1.5 text-sm text-foreground flex-1">
-                            <MapPin className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-                            <span className="truncate text-xs">{customer.location}</span>
-                          </div>
-                          
-                          <div className="text-sm text-foreground font-medium">
-                            {customer.totalOrders} orders
-                          </div>
+                        <div className="text-sm text-foreground flex-1 truncate">
+                          {customer.location}
+                        </div>
+                        
+                        <div className="text-sm text-foreground">
+                          {customer.totalOrders} orders
                         </div>
                       </div>
                     </div>
