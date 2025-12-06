@@ -3,7 +3,7 @@ import {
   MoreHorizontal, Truck, Eye, MessageCircle,
   Download, Plus, Package, RefreshCw, Copy, MapPin,
   ChevronRight, DollarSign, Calendar, User, CheckCircle,
-  Clock, Package2, ArrowUpRight, ArrowDownRight
+  Clock, Package2, ArrowUpRight, ArrowDownRight, ShoppingBag
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -16,7 +16,6 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
 import ProductFilterBar from '@/components/home/ProductFilterBar';
 
@@ -25,14 +24,12 @@ const SellerOrders = () => {
   const [displayCount, setDisplayCount] = useState(8);
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
   const [refreshing, setRefreshing] = useState(false);
-  const [touchStart, setTouchStart] = useState(0);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast.success('Tracking number copied to clipboard');
+    toast.success('Tracking number copied');
   };
 
-  // Define filter categories matching BookGenreFlashDeals structure
   const filterCategories = [
     {
       id: 'status',
@@ -56,7 +53,6 @@ const SellerOrders = () => {
     }
   ];
 
-  // Filter handler functions
   const handleFilterSelect = (filterId: string, option: string) => {
     setSelectedFilters(prev => ({
       ...prev,
@@ -86,51 +82,46 @@ const SellerOrders = () => {
       customer: {
         name: 'Sarah Johnson',
         email: 'sarah@example.com',
-        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612e1b4?w=150&h=150&fit=crop&crop=face'
       },
       products: [
         { 
           name: 'Wireless Earbuds Pro', 
           quantity: 2, 
           price: 49.99,
-          image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=100&h=100&fit=crop'
         }
       ],
       total: 149.99,
       status: 'Completed',
-      date: '2024-01-20',
+      date: 'Jan 20',
+      time: '14:30',
       trackingNumber: 'TRK1234567890',
-      pickupStation: 'Downtown Station #45',
-      pickupStationId: 'station-1',
-      paymentMethod: 'Credit Card ****1234'
+      pickupStation: 'Downtown #45',
+      paymentMethod: 'Credit Card'
     },
     {
       id: '#3428',
       customer: {
         name: 'Mike Chen',
         email: 'mike@example.com',
-        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
       },
       products: [
         { 
           name: 'Smart Watch Series 5', 
           quantity: 1, 
           price: 299.99,
-          image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100&h=100&fit=crop'
         },
         { 
           name: 'USB-C Fast Charger', 
           quantity: 1, 
           price: 19.99,
-          image: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=100&h=100&fit=crop'
         }
       ],
       total: 319.98,
       status: 'Processing',
-      date: '2024-01-20',
+      date: 'Jan 20',
+      time: '10:15',
       trackingNumber: 'TRK0987654321',
-      pickupStation: 'West Side Station #12',
-      pickupStationId: 'station-2',
+      pickupStation: 'West Side #12',
       paymentMethod: 'PayPal'
     },
     {
@@ -138,69 +129,63 @@ const SellerOrders = () => {
       customer: {
         name: 'Emma Davis',
         email: 'emma@example.com',
-        avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face'
       },
       products: [
         { 
           name: 'Bluetooth Speaker', 
           quantity: 1, 
           price: 79.99,
-          image: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=100&h=100&fit=crop'
         }
       ],
       total: 79.99,
       status: 'Shipped',
-      date: '2024-01-19',
+      date: 'Jan 19',
+      time: '16:45',
       trackingNumber: 'TRK5647382910',
-      pickupStation: 'East End Station #28',
-      pickupStationId: 'station-3',
-      paymentMethod: 'Credit Card ****5678'
+      pickupStation: 'East End #28',
+      paymentMethod: 'Credit Card'
     },
     {
       id: '#3426',
       customer: {
         name: 'Alex Kim',
         email: 'alex@example.com',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'
       },
       products: [
         { 
           name: 'Phone Case Premium', 
           quantity: 3, 
           price: 24.99,
-          image: 'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=100&h=100&fit=crop'
         }
       ],
       total: 74.97,
       status: 'Pending',
-      date: '2024-01-19',
+      date: 'Jan 19',
+      time: '09:20',
       trackingNumber: 'TRK2938475610',
-      pickupStation: 'South Plaza Station #67',
-      pickupStationId: 'station-4',
-      paymentMethod: 'Credit Card ****9012'
+      pickupStation: 'South Plaza #67',
+      paymentMethod: 'Credit Card'
     },
     {
       id: '#3425',
       customer: {
         name: 'Lisa Wang',
         email: 'lisa@example.com',
-        avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&h=150&fit=crop&crop=face'
       },
       products: [
         { 
           name: 'Wireless Earbuds Pro', 
           quantity: 1, 
           price: 49.99,
-          image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=100&h=100&fit=crop'
         }
       ],
       total: 49.99,
       status: 'Cancelled',
-      date: '2024-01-18',
+      date: 'Jan 18',
+      time: '11:30',
       trackingNumber: 'TRK8765432109',
-      pickupStation: 'North Market Station #91',
-      pickupStationId: 'station-5',
-      paymentMethod: 'Credit Card ****3456'
+      pickupStation: 'North Market #91',
+      paymentMethod: 'Credit Card'
     }
   ];
 
@@ -260,23 +245,6 @@ const SellerOrders = () => {
     { value: '979', label: 'Completed', color: 'text-green-600', icon: CheckCircle }
   ];
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (window.scrollY === 0) {
-      setTouchStart(e.touches[0].clientY);
-    }
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (touchStart > 0) {
-      const touchCurrent = e.touches[0].clientY;
-      const diff = touchCurrent - touchStart;
-      if (diff > 100 && window.scrollY === 0) {
-        handleRefresh();
-        setTouchStart(0);
-      }
-    }
-  };
-
   const handleRefresh = () => {
     setRefreshing(true);
     setTimeout(() => {
@@ -285,7 +253,6 @@ const SellerOrders = () => {
     }, 1000);
   };
 
-  // Infinite scroll logic
   React.useEffect(() => {
     const handleScroll = () => {
       if (displayCount >= filteredOrders.length) return;
@@ -294,7 +261,7 @@ const SellerOrders = () => {
       const windowHeight = window.innerHeight;
       const documentHeight = document.documentElement.scrollHeight;
 
-      if (scrollTop + windowHeight >= documentHeight - 200) {
+      if (scrollTop + windowHeight >= documentHeight - 100) {
         setDisplayCount(prev => Math.min(prev + 8, filteredOrders.length));
       }
     };
@@ -308,17 +275,13 @@ const SellerOrders = () => {
   }, [filteredOrders.length]);
 
   return (
-    <div 
-      className="w-full bg-gray-50 min-h-screen"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-    >
+    <div className="w-full bg-gray-50 min-h-screen">
       {/* Refresh Indicator */}
       {refreshing && (
         <div className="fixed top-0 left-0 right-0 h-1 bg-blue-500 animate-pulse z-50" />
       )}
 
-      {/* Header & Stats Section */}
+      {/* Header & Stats */}
       <div className="sticky top-0 z-40 bg-white border-b">
         <SellerSummaryHeader
           title="Orders"
@@ -326,7 +289,7 @@ const SellerOrders = () => {
           subtitleIcon={Truck}
           stats={orderStats}
           actionButton={{
-            label: 'New Order',
+            label: 'New',
             icon: Plus,
             onClick: () => console.log('New order clicked')
           }}
@@ -344,176 +307,159 @@ const SellerOrders = () => {
         onFilterButtonClick={handleFilterButtonClick}
       />
 
-      {/* Compact Orders List */}
-      <div className="py-4 px-2 md:px-4 max-w-6xl mx-auto">
+      {/* Ultra Compact Orders List */}
+      <div className="py-2 px-2 md:px-3 max-w-6xl mx-auto">
         {filteredOrders.length > 0 ? (
-          <div className="space-y-3">
-            {/* Table Headers (Desktop only) */}
-            <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              <div className="col-span-3">Order & Customer</div>
-              <div className="col-span-2">Products</div>
+          <div className="space-y-1.5">
+            {/* Compact Table Headers (Desktop only) */}
+            <div className="hidden md:grid grid-cols-12 gap-2 px-3 py-1.5 text-[11px] font-medium text-muted-foreground uppercase tracking-wide bg-gray-50 rounded">
+              <div className="col-span-2">Order</div>
+              <div className="col-span-2">Customer</div>
+              <div className="col-span-1">Items</div>
               <div className="col-span-2">Status</div>
               <div className="col-span-2">Tracking</div>
               <div className="col-span-1">Total</div>
               <div className="col-span-2">Actions</div>
             </div>
 
-            {/* Orders List */}
-            <div className="space-y-3">
+            {/* Ultra Compact Orders */}
+            <div className="space-y-1.5">
               {filteredOrders.slice(0, displayCount).map((order) => {
                 const StatusIcon = getStatusIcon(order.status);
                 
                 return (
-                  <Card key={order.id} className="overflow-hidden border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-sm">
-                    <CardContent className="p-0">
-                      <div className="p-4">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                          {/* Order & Customer Info */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-3">
-                              <div className="flex-shrink-0">
-                                <div className="w-10 h-10 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg flex items-center justify-center">
-                                  <Package className="w-5 h-5 text-blue-600" />
-                                </div>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap mb-1">
-                                  <span className="font-bold text-base text-foreground">{order.id}</span>
-                                  <Badge 
-                                    variant="outline" 
-                                    className={`${getStatusColor(order.status)} px-2 py-0.5 text-xs font-medium border`}
-                                  >
-                                    <StatusIcon className="w-3 h-3 mr-1" />
-                                    {order.status}
-                                  </Badge>
-                                </div>
-                                <div className="flex items-center gap-2 text-sm">
-                                  <User className="w-3 h-3 text-muted-foreground" />
-                                  <span className="text-foreground font-medium truncate">{order.customer.name}</span>
-                                  <span className="text-muted-foreground text-xs hidden sm:inline">•</span>
-                                  <span className="text-muted-foreground text-xs hidden sm:inline truncate">{order.customer.email}</span>
-                                </div>
-                              </div>
+                  <Card key={order.id} className="overflow-hidden border border-gray-200 hover:border-gray-300 transition-all duration-150 hover:shadow-xs">
+                    <CardContent className="p-3">
+                      <div className="flex items-center justify-between gap-3">
+                        {/* Left Section: Order Info */}
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          {/* Order ID with icon */}
+                          <div className="flex-shrink-0">
+                            <div className="w-8 h-8 bg-blue-50 rounded flex items-center justify-center">
+                              <ShoppingBag className="w-4 h-4 text-blue-600" />
                             </div>
                           </div>
-
-                          {/* Products Summary */}
-                          <div className="md:w-48">
-                            <div className="text-sm text-foreground font-medium mb-1">Products</div>
-                            <div className="flex items-center gap-2">
-                              <div className="flex -space-x-2">
-                                {order.products.slice(0, 3).map((product, idx) => (
-                                  <img
-                                    key={idx}
-                                    src={product.image}
-                                    alt=""
-                                    className="w-8 h-8 rounded-full border-2 border-white object-cover"
-                                  />
-                                ))}
-                                {order.products.length > 3 && (
-                                  <div className="w-8 h-8 rounded-full bg-gray-100 border-2 border-white flex items-center justify-center text-xs font-medium text-gray-600">
-                                    +{order.products.length - 3}
-                                  </div>
-                                )}
-                              </div>
-                              <div className="text-sm text-muted-foreground">
-                                {order.products.length} item{order.products.length > 1 ? 's' : ''}
-                              </div>
+                          
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                              <span className="font-semibold text-sm text-foreground truncate">{order.id}</span>
+                              <Badge 
+                                variant="outline" 
+                                className={`${getStatusColor(order.status)} px-1.5 py-0 text-[11px] font-medium h-5`}
+                              >
+                                <StatusIcon className="w-2.5 h-2.5 mr-0.5" />
+                                {order.status}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                              <User className="w-3 h-3" />
+                              <span className="truncate">{order.customer.name}</span>
                             </div>
                           </div>
+                        </div>
 
-                          {/* Tracking Info */}
-                          <div className="md:w-40">
-                            <div className="text-sm text-foreground font-medium mb-1">Tracking</div>
-                            <div className="flex items-center gap-2">
-                              <div className="bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200 flex-1">
-                                <p className="text-xs font-mono text-foreground truncate">{order.trackingNumber}</p>
+                        {/* Center Section: Details (Desktop only) */}
+                        <div className="hidden md:flex items-center gap-4 flex-1">
+                          <div className="text-xs text-muted-foreground min-w-[80px]">
+                            <div className="flex items-center gap-1">
+                              <Package className="w-3 h-3" />
+                              {order.products.length} item{order.products.length > 1 ? 's' : ''}
+                            </div>
+                          </div>
+                          
+                          <div className="min-w-[120px]">
+                            <div className="flex items-center gap-1.5">
+                              <div className="bg-gray-50 px-2 py-1 rounded text-xs font-mono text-foreground truncate max-w-[100px]">
+                                {order.trackingNumber}
                               </div>
                               <Button
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => copyToClipboard(order.trackingNumber)}
-                                className="h-8 w-8 flex-shrink-0"
+                                className="h-6 w-6"
                               >
-                                <Copy className="w-4 h-4" />
+                                <Copy className="w-3 h-3" />
                               </Button>
-                            </div>
-                          </div>
-
-                          {/* Total Amount */}
-                          <div className="md:w-32">
-                            <div className="text-sm text-foreground font-medium mb-1">Total</div>
-                            <div className="flex items-center gap-2">
-                              <DollarSign className="w-4 h-4 text-green-600" />
-                              <span className="text-lg font-bold text-foreground">${order.total.toFixed(2)}</span>
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-1 truncate">{order.paymentMethod}</div>
-                          </div>
-
-                          {/* Action Buttons */}
-                          <div className="md:w-40">
-                            <div className="flex items-center gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-9 px-3 flex items-center gap-2 flex-1"
-                                onClick={() => navigate(`/orders/${order.id}`)}
-                              >
-                                <Eye className="w-4 h-4" />
-                                <span className="hidden sm:inline">View</span>
-                              </Button>
-                              
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-9 w-9"
-                                  >
-                                    <MoreHorizontal className="w-5 h-5" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-48">
-                                  <DropdownMenuItem>
-                                    <MessageCircle className="w-4 h-4 mr-2" />
-                                    Contact Customer
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem>
-                                    <Download className="w-4 h-4 mr-2" />
-                                    Download Invoice
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => navigate(`/pickup-station/overview`)}>
-                                    <MapPin className="w-4 h-4 mr-2" />
-                                    View Station
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem className="text-red-600">
-                                    <ArrowUpRight className="w-4 h-4 mr-2" />
-                                    Cancel Order
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              {order.date}
                             </div>
                           </div>
                         </div>
 
-                        {/* Mobile Additional Info */}
-                        <div className="mt-4 pt-4 border-t border-gray-100 md:hidden">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <div className="text-xs text-muted-foreground mb-1">Pickup Station</div>
-                              <div className="text-sm font-medium text-foreground truncate">{order.pickupStation}</div>
+                        {/* Right Section: Total & Actions */}
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          {/* Total */}
+                          <div className="text-right min-w-[70px]">
+                            <div className="flex items-center gap-0.5 justify-end">
+                              <DollarSign className="w-3 h-3 text-green-600" />
+                              <span className="font-bold text-sm text-foreground">${order.total.toFixed(2)}</span>
                             </div>
-                            <div>
-                              <div className="text-xs text-muted-foreground mb-1">Date</div>
-                              <div className="text-sm font-medium text-foreground flex items-center gap-1">
-                                <Calendar className="w-3 h-3" />
-                                {order.date}
+                            <div className="text-[10px] text-muted-foreground mt-0.5">{order.date} {order.time}</div>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => navigate(`/orders/${order.id}`)}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                >
+                                  <MoreHorizontal className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-40 text-xs">
+                                <DropdownMenuItem className="text-xs py-1.5">
+                                  <MessageCircle className="w-3.5 h-3.5 mr-2" />
+                                  Contact
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-xs py-1.5">
+                                  <Download className="w-3.5 h-3.5 mr-2" />
+                                  Invoice
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-xs py-1.5" onClick={() => navigate(`/pickup-station/overview`)}>
+                                  <MapPin className="w-3.5 h-3.5 mr-2" />
+                                  Station
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Mobile Details Row */}
+                      <div className="mt-2 pt-2 border-t border-gray-100 md:hidden">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Package className="w-3 h-3" />
+                              {order.products.length} item{order.products.length > 1 ? 's' : ''}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <div className="bg-gray-50 px-2 py-1 rounded text-xs font-mono text-foreground truncate max-w-[100px]">
+                                {order.trackingNumber}
                               </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => copyToClipboard(order.trackingNumber)}
+                                className="h-6 w-6"
+                              >
+                                <Copy className="w-3 h-3" />
+                              </Button>
                             </div>
+                          </div>
+                          <div className="text-xs text-muted-foreground flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            {order.pickupStation}
                           </div>
                         </div>
                       </div>
@@ -523,30 +469,31 @@ const SellerOrders = () => {
               })}
             </div>
 
-            {/* Loading More Indicator */}
+            {/* Load More */}
             {displayCount < filteredOrders.length && (
-              <div className="text-center py-6">
+              <div className="text-center py-4">
                 <Button
                   variant="ghost"
+                  size="sm"
                   onClick={() => setDisplayCount(prev => Math.min(prev + 8, filteredOrders.length))}
-                  className="text-muted-foreground hover:text-foreground"
+                  className="text-xs text-muted-foreground hover:text-foreground h-8"
                 >
-                  Load More Orders
-                  <ChevronRight className="w-4 h-4 ml-2" />
+                  Load More
+                  <ChevronRight className="w-3 h-3 ml-1" />
                 </Button>
               </div>
             )}
           </div>
         ) : (
-          <div className="text-center py-16 px-4">
-            <div className="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-              <Package className="w-10 h-10 text-gray-400" />
+          <div className="text-center py-12 px-4">
+            <div className="w-16 h-16 mx-auto mb-3 bg-gray-100 rounded-full flex items-center justify-center">
+              <Package className="w-8 h-8 text-gray-400" />
             </div>
-            <div className="text-lg font-semibold text-foreground mb-1">No orders found</div>
-            <div className="text-sm text-muted-foreground mb-6">Try adjusting your filters</div>
-            <Button onClick={handleRefresh} className="h-11 px-6">
-              <RefreshCw className="w-5 h-5 mr-2" />
-              Refresh Orders
+            <div className="text-sm font-semibold text-foreground mb-1">No orders found</div>
+            <div className="text-xs text-muted-foreground mb-4">Try adjusting your filters</div>
+            <Button onClick={handleRefresh} size="sm" className="h-9 px-4 text-sm">
+              <RefreshCw className="w-4 h-4 mr-1.5" />
+              Refresh
             </Button>
           </div>
         )}
