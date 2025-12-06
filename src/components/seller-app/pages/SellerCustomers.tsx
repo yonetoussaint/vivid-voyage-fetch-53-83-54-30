@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   MoreHorizontal, Mail, MessageCircle, 
-  MapPin, ShoppingBag, Eye, Plus,
+  MapPin, ShoppingBag, Plus,
   User
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -173,12 +173,10 @@ const SellerCustomers = () => {
           <div className="space-y-1">
             {/* List Headers (Desktop) */}
             <div className="hidden md:grid grid-cols-12 gap-3 px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide border-b">
-              <div className="col-span-3">Customer</div>
-              <div className="col-span-2">Email</div>
-              <div className="col-span-2">Location</div>
-              <div className="col-span-2">Orders</div>
-              <div className="col-span-2">Status</div>
-              <div className="col-span-1">Actions</div>
+              <div className="col-span-4">Customer</div>
+              <div className="col-span-3">Contact</div>
+              <div className="col-span-2">Details</div>
+              <div className="col-span-3">Actions</div>
             </div>
 
             {/* Customers List */}
@@ -197,11 +195,17 @@ const SellerCustomers = () => {
                         </Avatar>
                         
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-foreground truncate">{customer.name}</p>
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-                            <Mail className="w-3 h-3 flex-shrink-0" />
-                            <span className="truncate">{customer.email}</span>
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <p className="text-sm font-semibold text-foreground truncate">{customer.name}</p>
+                            <span className={`text-xs px-1.5 py-0.5 rounded ${
+                              customer.status === 'VIP' ? 'bg-purple-50 text-purple-700' :
+                              customer.status === 'New' ? 'bg-blue-50 text-blue-700' :
+                              'bg-green-50 text-green-700'
+                            }`}>
+                              {customer.status}
+                            </span>
                           </div>
+                          <p className="text-xs text-muted-foreground truncate">{customer.email}</p>
                         </div>
                       </div>
 
@@ -215,42 +219,31 @@ const SellerCustomers = () => {
                         </div>
                         
                         <div className="min-w-[80px]">
-                          <div className="flex items-center gap-1.5 text-sm text-foreground">
-                            <ShoppingBag className="w-3.5 h-3.5 text-muted-foreground" />
-                            <span className="font-medium">{customer.totalOrders}</span>
-                            <span className="text-xs text-muted-foreground">orders</span>
-                          </div>
-                        </div>
-                        
-                        <div className="min-w-[80px]">
-                          <div className={`text-xs font-medium px-2 py-1 rounded-full ${
-                            customer.status === 'VIP' ? 'bg-purple-50 text-purple-700 border border-purple-200' :
-                            customer.status === 'New' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-                            'bg-green-50 text-green-700 border border-green-200'
-                          }`}>
-                            {customer.status}
+                          <div className="text-sm text-foreground font-medium">
+                            {customer.totalOrders} orders
                           </div>
                         </div>
                       </div>
 
                       {/* Actions */}
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <div className="flex items-center gap-2 flex-shrink-0">
                         <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 px-3 text-xs gap-1.5"
                           onClick={() => console.log('Chat with', customer.name)}
                         >
-                          <MessageCircle className="w-4 h-4" />
+                          <MessageCircle className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Chat</span>
                         </Button>
                         
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => console.log('View profile', customer.id)}
+                          onClick={() => console.log('More options', customer.id)}
                         >
-                          <Eye className="w-4 h-4" />
+                          <MoreHorizontal className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
@@ -264,18 +257,9 @@ const SellerCustomers = () => {
                             <span className="truncate text-xs">{customer.location}</span>
                           </div>
                           
-                          <div className="flex items-center gap-1.5 text-sm text-foreground">
-                            <ShoppingBag className="w-3.5 h-3.5 text-muted-foreground" />
-                            <span className="font-medium">{customer.totalOrders}</span>
+                          <div className="text-sm text-foreground font-medium">
+                            {customer.totalOrders} orders
                           </div>
-                        </div>
-                        
-                        <div className={`text-xs font-medium px-2 py-1 rounded-full ${
-                          customer.status === 'VIP' ? 'bg-purple-50 text-purple-700 border border-purple-200' :
-                          customer.status === 'New' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-                          'bg-green-50 text-green-700 border border-green-200'
-                        }`}>
-                          {customer.status}
                         </div>
                       </div>
                     </div>
