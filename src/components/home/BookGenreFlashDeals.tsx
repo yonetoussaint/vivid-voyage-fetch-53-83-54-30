@@ -461,10 +461,10 @@ export default function BookGenreFlashDeals({
       {/* Products Grid */}
       <div className="px-1.5 pt-4">
         {isLoading && !externalProducts ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {[1, 2, 3, 4, 5, 6].map((_, index) => (
               <div key={index} className="bg-white overflow-hidden">
-                <div className="aspect-square bg-gray-100 animate-pulse rounded-[10px]"></div>
+                <div className="aspect-square bg-gray-100 animate-pulse rounded-lg"></div>
                 <div className="p-3 space-y-2">
                   <div className="h-4 w-3/4 bg-gray-100 animate-pulse"></div>
                   <div className="h-3 w-1/2 bg-gray-100 animate-pulse"></div>
@@ -475,21 +475,20 @@ export default function BookGenreFlashDeals({
           </div>
         ) : processedProducts.length > 0 ? (
           <div className="space-y-4">
-            {/* MASONRY LAYOUT - Cards flow naturally like AliExpress/Temu */}
-            <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-1.5 space-y-1.5">
+            <div className="grid grid-cols-2 gap-1.5">
               {processedProducts.slice(0, displayCount).map((product) => {
                 const productExpiryTime = expiryTimes[product.id];
                 const hasExpiryTimer = showExpiryTimer && productExpiryTime && 
                   (productExpiryTime.days > 0 || productExpiryTime.hours > 0 || productExpiryTime.minutes > 0 || productExpiryTime.seconds > 0);
 
                 return (
-                  <div key={product.id} className="break-inside-avoid mb-1.5 bg-white overflow-hidden">
+                  <div key={product.id} className="bg-white overflow-hidden">
                     <Link
                       to={`/product/${product.id}`}
                       onClick={() => trackProductView(product.id)}
                       className="block"
                     >
-                      <div className="relative aspect-square overflow-hidden bg-gray-50 rounded-[10px]">
+                      <div className="relative aspect-square overflow-hidden bg-gray-50 rounded-lg">
                         <img
                           src={product.image}
                           alt={product.name}
@@ -507,7 +506,7 @@ export default function BookGenreFlashDeals({
                         {/* Top Selling Badge - Top Left */}
                         {product.is_top_selling && (
                           <div className="absolute top-2 left-2 z-20">
-                            <Badge className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 font-semibold flex items-center gap-0.5 rounded-md">
+                            <Badge className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 font-semibold flex items-center gap-0.5">
                               <TrendingUp className="w-2.5 h-2.5" />
                               Top Selling
                             </Badge>
@@ -519,7 +518,7 @@ export default function BookGenreFlashDeals({
                           <div className="absolute top-2 left-2 z-20">
                             <Badge
                               variant="secondary"
-                              className={`${getStatusColor(product.status)} text-xs rounded-md`}
+                              className={`${getStatusColor(product.status)} text-xs`}
                             >
                               {product.status}
                             </Badge>
@@ -536,7 +535,7 @@ export default function BookGenreFlashDeals({
 
                         {/* Expiry Timer - Full width band at bottom */}
                         {hasExpiryTimer && (
-                          <div className="absolute bottom-0 left-0 right-0 bg-red-50/90 text-red-700 text-xs flex items-center justify-center py-1.5 gap-1 z-10">
+                          <div className="absolute bottom-0 left-0 right-0 bg-red-50/90 text-red-700 text-xs flex items-center justify-center py-1.5 gap-1 z-10 border-t border-red-200">
                             <Timer className="w-3 h-3" />
                             <span className="font-medium">Ends in</span>
                             <span className="font-mono font-bold">
@@ -574,14 +573,14 @@ export default function BookGenreFlashDeals({
                               {/* Choice badge - inline as a word */}
                               <div className="relative inline-flex items-center">
                                 <div className="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 
-                                              relative px-1.5 py-[2px] rounded-[4px] border border-amber-400/50 
+                                              relative px-1.5 py-[2px] rounded-[3px] border border-amber-400/50 
                                               shadow-[0_1px_2px_rgba(0,0,0,0.2),inset_0_1px_1px_rgba(255,255,255,0.4)] 
                                               overflow-hidden inline-flex items-center h-[16px]">
                                   {/* Shiny glass effect overlay */}
                                   <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/50 to-transparent"></div>
                                   
                                   {/* Subtle inner shadow for depth */}
-                                  <div className="absolute inset-0 rounded-[4px] border border-white/30"></div>
+                                  <div className="absolute inset-0 rounded-[3px] border border-white/30"></div>
                                   
                                   {/* Text with slight text shadow for readability */}
                                   <span className="relative text-[9px] font-bold text-white tracking-wide 
@@ -622,7 +621,7 @@ export default function BookGenreFlashDeals({
                               <span className="text-gray-400 line-through text-sm">
                                 G {product.price.toFixed(2)}
                               </span>
-                              <span className="text-green-600 font-medium text-xs bg-green-50 px-1.5 py-0.5 rounded-md w-fit whitespace-nowrap">
+                              <span className="text-green-600 font-medium text-xs bg-green-50 px-1.5 py-0.5 rounded w-fit whitespace-nowrap">
                                 Save G {(product.price - product.discount_price).toFixed(2)}
                               </span>
                             </div>
@@ -630,63 +629,9 @@ export default function BookGenreFlashDeals({
                         </div>
                       )}
 
-                      {/* Shipping Info - Only show if actually has shipping info */}
-                      {(product.free_shipping === true || (product.shipping_cost !== undefined && product.shipping_cost !== null && product.shipping_cost > 0)) ? (
-                        <div className="flex items-center gap-1 mt-1">
-                          {/* Show free shipping if explicitly true */}
-                          {product.free_shipping === true ? (
-                            <div className="flex items-center gap-1 text-green-600 text-[11px] font-medium">
-                              <Truck className="w-3 h-3" />
-                              <span>Free shipping</span>
-                            </div>
-                          ) : null}
-                          
-                          {/* Show shipping cost if shipping_cost > 0 */}
-                          {product.shipping_cost !== undefined && product.shipping_cost !== null && product.shipping_cost > 0 ? (
-                            <div className="flex items-center gap-1 text-gray-600 text-[11px]">
-                              <Truck className="w-3 h-3" />
-                              <span>Shipping: G {product.shipping_cost.toFixed(2)}</span>
-                            </div>
-                          ) : null}
-                        </div>
-                      ) : null}
-
-                      {/* Rating & Orders - Only show container if at least one has valid value */}
-                      {(product.rating !== undefined && product.rating !== null && product.rating > 0) || 
-                       (product.total_orders !== undefined && product.total_orders !== null && product.total_orders > 0) ? (
-                        <div className="flex items-center gap-2 mt-1">
-                          {/* Rating - show if rating exists and > 0 */}
-                          {product.rating !== undefined && product.rating !== null && product.rating > 0 && (
-                            <div className="flex items-center gap-0.5">
-                              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                              <span className="text-[11px] font-medium text-gray-700">
-                                {product.rating.toFixed(1)}
-                              </span>
-                            </div>
-                          )}
-                          
-                          {/* Total orders - only show if > 0 */}
-                          {product.total_orders !== undefined && product.total_orders !== null && product.total_orders > 0 && (
-                            <span className="text-[11px] text-gray-500">
-                              {product.total_orders >= 1000 
-                                ? `${(product.total_orders / 1000).toFixed(1)}k` 
-                                : product.total_orders} sold
-                            </span>
-                          )}
-                        </div>
-                      ) : null}
-
-                      {/* Product info section - Only show stock info if inventory exists and > 0 */}
-                      {customProductInfo ? customProductInfo(product) : 
-                       showMarketingMetrics ? renderMarketingProductInfo(product) : (
-                        product.inventory !== undefined && product.inventory !== null && product.inventory > 0 && (
-                          <div className="mt-1">
-                            <div className="text-xs text-gray-500">
-                              {product.inventory} in stock
-                            </div>
-                          </div>
-                        )
-                      )}
+                      {/* REMOVED: Shipping Info */}
+                      {/* REMOVED: Rating & Orders */}
+                      {/* REMOVED: Product info section */}
                     </div>
                   </div>
                 );
