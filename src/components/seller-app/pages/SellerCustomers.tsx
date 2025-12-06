@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { 
-  MoreHorizontal, Mail, MessageCircle, 
-  MapPin, ShoppingBag, Plus,
-  User, ChevronDown
+  MoreHorizontal, MessageCircle, 
+  MapPin, Plus,
+  User
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,8 +20,6 @@ const SellerCustomers = () => {
       avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612e1b4?w=100&h=100&fit=crop&crop=face',
       location: 'New York, NY',
       totalOrders: 12,
-      totalSpent: 1249.99,
-      lastOrder: '2024-01-20',
       status: 'Active'
     },
     {
@@ -31,8 +29,6 @@ const SellerCustomers = () => {
       avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
       location: 'Los Angeles, CA',
       totalOrders: 8,
-      totalSpent: 899.50,
-      lastOrder: '2024-01-18',
       status: 'Active'
     },
     {
@@ -42,8 +38,6 @@ const SellerCustomers = () => {
       avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face',
       location: 'Chicago, IL',
       totalOrders: 15,
-      totalSpent: 2199.75,
-      lastOrder: '2024-01-15',
       status: 'VIP'
     },
     {
@@ -53,8 +47,6 @@ const SellerCustomers = () => {
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
       location: 'Houston, TX',
       totalOrders: 3,
-      totalSpent: 299.97,
-      lastOrder: '2024-01-10',
       status: 'New'
     },
     {
@@ -64,8 +56,6 @@ const SellerCustomers = () => {
       avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&h=100&fit=crop&crop=face',
       location: 'Miami, FL',
       totalOrders: 6,
-      totalSpent: 649.94,
-      lastOrder: '2023-12-20',
       status: 'Active'
     }
   ];
@@ -136,25 +126,7 @@ const SellerCustomers = () => {
 
   return (
     <div className="w-full bg-white min-h-screen">
-      {/* Minimal Header */}
-      <div className="sticky top-0 z-40 bg-white border-b">
-        <div className="px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-lg font-semibold text-foreground">Customers</h1>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                {filteredCustomers.length} customers found
-              </p>
-            </div>
-            <Button size="sm" className="h-9 px-3 gap-1.5">
-              <Plus className="w-4 h-4" />
-              <span>Add</span>
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Filter Bar */}
+      {/* Only Filter Bar at Top */}
       <ProductFilterBar
         filterCategories={filterCategories}
         selectedFilters={selectedFilters}
@@ -165,14 +137,26 @@ const SellerCustomers = () => {
 
       {/* Ultra Clean Customers List */}
       <div className="py-2 px-2 md:px-3 max-w-6xl mx-auto">
+        {/* Add Customer Button */}
+        <div className="mb-3 px-1">
+          <Button 
+            size="sm" 
+            className="h-8 px-3 gap-1.5 text-xs"
+            onClick={() => console.log('Add customer')}
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Add Customer
+          </Button>
+        </div>
+
         {filteredCustomers.length > 0 ? (
           <div className="space-y-1">
-            {/* List Headers (Desktop) */}
-            <div className="hidden md:grid grid-cols-12 gap-3 px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide border-b">
-              <div className="col-span-4">Customer</div>
+            {/* List Headers (Desktop) - Cleaner */}
+            <div className="hidden md:grid grid-cols-12 gap-3 px-2 py-2 text-xs text-muted-foreground uppercase tracking-wide">
+              <div className="col-span-5">Customer</div>
               <div className="col-span-3">Contact</div>
-              <div className="col-span-2">Details</div>
-              <div className="col-span-3">Actions</div>
+              <div className="col-span-2">Orders</div>
+              <div className="col-span-2">Actions</div>
             </div>
 
             {/* Customers List */}
@@ -183,9 +167,9 @@ const SellerCustomers = () => {
                     <div className="flex items-center justify-between gap-3">
                       {/* Customer Info */}
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <Avatar className="w-9 h-9 flex-shrink-0">
+                        <Avatar className="w-8 h-8 flex-shrink-0">
                           <AvatarImage src={customer.avatar} />
-                          <AvatarFallback className="text-xs">
+                          <AvatarFallback className="text-[10px]">
                             {customer.name.split(' ').map(n => n[0]).join('')}
                           </AvatarFallback>
                         </Avatar>
@@ -193,7 +177,7 @@ const SellerCustomers = () => {
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 mb-0.5">
                             <p className="text-sm font-semibold text-foreground truncate">{customer.name}</p>
-                            <span className={`text-xs px-1.5 py-0.5 rounded ${
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded ${
                               customer.status === 'VIP' ? 'bg-purple-50 text-purple-700' :
                               customer.status === 'New' ? 'bg-blue-50 text-blue-700' :
                               'bg-green-50 text-green-700'
@@ -224,22 +208,21 @@ const SellerCustomers = () => {
                       {/* Actions */}
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 px-3 text-xs gap-1.5"
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
                           onClick={() => console.log('Chat with', customer.name)}
                         >
                           <MessageCircle className="w-3.5 h-3.5" />
-                          <span className="hidden sm:inline">Chat</span>
                         </Button>
                         
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8"
+                          className="h-7 w-7"
                           onClick={() => console.log('More options', customer.id)}
                         >
-                          <MoreHorizontal className="w-4 h-4" />
+                          <MoreHorizontal className="w-3.5 h-3.5" />
                         </Button>
                       </div>
                     </div>
