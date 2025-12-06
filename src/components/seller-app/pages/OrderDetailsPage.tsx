@@ -1,4 +1,4 @@
-// OrderDetailsPage.tsx
+// @/components/seller-app/pages/OrderDetailsPage.tsx
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -230,7 +230,7 @@ const OrderDetailsPage = () => {
                   variant="outline" 
                   size="sm"
                   className="mt-2"
-                  onClick={() => navigate('/pickup-station/overview')}
+                  onClick={() => navigate('/seller-dashboard/pickup-station/overview')}
                 >
                   View Station Details
                 </Button>
