@@ -135,24 +135,24 @@ const SellerCustomers = () => {
         onClearAll={handleClearAll}
       />
 
-      {/* Ultra Clean Customers List with Consistent Padding */}
-      <div className="py-2 max-w-6xl mx-auto">
+      {/* Ultra Clean Customers List */}
+      <div className="py-2 px-2 md:px-3 max-w-6xl mx-auto">
         {filteredCustomers.length > 0 ? (
           <div className="space-y-1">
-            {/* List Headers (Desktop) - Aligned with card content */}
-            <div className="hidden md:grid grid-cols-12 gap-3 px-3 py-2 text-xs text-muted-foreground uppercase tracking-wide">
+            {/* List Headers (Desktop) */}
+            <div className="hidden md:grid grid-cols-12 gap-3 px-4 py-2 text-xs text-muted-foreground uppercase tracking-wide">
               <div className="col-span-5">Customer</div>
               <div className="col-span-3">Location</div>
               <div className="col-span-2">Orders</div>
               <div className="col-span-2"></div>
             </div>
 
-            {/* Customers List - Same padding as headers */}
+            {/* Customers List */}
             <div className="space-y-1">
               {filteredCustomers.map((customer) => (
-                <Card key={customer.id} className="overflow-hidden border border-gray-200 hover:border-gray-300 transition-all duration-150 mx-0">
+                <Card key={customer.id} className="overflow-hidden border border-gray-200 hover:border-gray-300 transition-all duration-150">
                   <CardContent className="p-3">
-                    <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center justify-between gap-4 px-1">
                       {/* Customer Info */}
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <Avatar className="w-8 h-8 flex-shrink-0">
@@ -216,7 +216,7 @@ const SellerCustomers = () => {
 
                     {/* Mobile Additional Info */}
                     <div className="mt-2 pt-2 border-t border-gray-100 md:hidden">
-                      <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center justify-between gap-3 px-1">
                         <div className="text-sm text-foreground flex-1 truncate">
                           {customer.location}
                         </div>
@@ -232,7 +232,7 @@ const SellerCustomers = () => {
             </div>
           </div>
         ) : (
-          <div className="text-center py-12 px-3">
+          <div className="text-center py-12 px-4">
             <div className="w-16 h-16 mx-auto mb-3 bg-gray-100 rounded-full flex items-center justify-center">
               <User className="w-8 h-8 text-gray-400" />
             </div>
