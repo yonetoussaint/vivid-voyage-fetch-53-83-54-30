@@ -448,13 +448,15 @@ export default function BookGenreFlashDeals({
       {showFilters && (
         <div className="-mx-2">
           <ProductFilterBar
-            filterCategories={filterCategories}
-            selectedFilters={selectedFilters}
-            onFilterSelect={handleFilterSelect}
-            onFilterClear={handleFilterClear}
-            onClearAll={handleClearAll}
-            onFilterButtonClick={handleFilterButtonClick}
-          />
+          filterCategories={filterCategories}
+          selectedFilters={selectedFilters}
+          onFilterSelect={handleFilterSelect}
+          onFilterClear={handleFilterClear}
+          onClearAll={handleClearAll}
+          onFilterButtonClick={handleFilterButtonClick}
+          variant="cards" // <-- Add this line to use cards variant
+          className="mt-2 mb-4" // Optional: Add some spacing
+        />
         </div>
       )}
 
