@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Timer, Plus, ChevronRight, Package, Eye, Star, TrendingUp, Truck, ChevronDown, X, Tag, DollarSign, Package as PackageIcon } from "lucide-react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllProducts, trackProductView } from "@/integrations/supabase/products";
 import { useAuth } from "@/contexts/auth/AuthContext";
