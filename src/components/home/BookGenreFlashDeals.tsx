@@ -87,6 +87,7 @@ export default function BookGenreFlashDeals({
   excludeTypes = [],
   className = '',
   products: externalProducts,
+filterVariant = 'cards', // Default to cards for BookGenreFlashDeals
   sellerId,
   onAddProduct,
   title = "Products",
