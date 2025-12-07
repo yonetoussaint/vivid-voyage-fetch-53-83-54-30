@@ -37,6 +37,7 @@ import {
   Gamepad2,
   Watch,
   Tag,
+Truck,
   Headphones,
   Camera,
   Laptop,
