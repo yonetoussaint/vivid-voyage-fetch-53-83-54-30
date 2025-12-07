@@ -37,7 +37,7 @@ interface Category {
 const CategoryShortcut = ({ category, onCategorySelect }: { category: Category; onCategorySelect?: (category: string) => void }) => {
   return (
     <div 
-      className="flex flex-col items-center w-14 flex-shrink-0 active:opacity-80 transition-opacity touch-manipulation cursor-pointer"
+      className="flex flex-col items-center w-full flex-shrink-0 active:opacity-80 transition-opacity touch-manipulation cursor-pointer"
       onClick={() => onCategorySelect?.(category.name)}
     >
       <div className="relative mb-1.5">
@@ -327,12 +327,12 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
   return (
     <div className="w-full bg-white overflow-visible">
       <div className="bg-white overflow-visible">
-        {/* Horizontal row with all 5 categories in a single row */}
+        {/* Horizontal row with all 5 categories in a single row - FULL WIDTH */}
         <div 
           ref={rowRef}
-          className="px-2 overflow-visible"
+          className="overflow-visible"
         >
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-5 gap-0">
             {firstRowCategories.map(category => (
               <div 
                 key={category.id}
@@ -344,7 +344,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
           </div>
         </div>
 
-        {/* Seller Promotion Banner */}
+        {/* Seller Promotion Banner - Adjusted to have side margins */}
         <div className="mt-2 mx-2 mb-1 bg-gradient-to-r from-orange-500 to-pink-500 rounded-lg overflow-hidden shadow-sm border border-orange-300">
           <div className="p-2 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -364,7 +364,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
               <ArrowRight className="w-3 h-3" />
             </button>
           </div>
-          
+
           {/* Stats Bar */}
           <div className="bg-black/10 px-2 py-1 flex items-center gap-4">
             <div className="flex items-center gap-1">
