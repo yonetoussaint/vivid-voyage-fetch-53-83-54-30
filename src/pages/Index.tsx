@@ -270,7 +270,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
     );
   };
 
-  // Define all components to render with VendorProductCarousel after each
+  // Define all components to render - simplified array with only available components
   const components = [
     <div key="hero" ref={heroBannerRef}>
       <HeroBanner showNewsTicker={true} />
@@ -306,151 +306,6 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       showMarketingMetrics={false}
       showStatusBadge={false}
     />,
-
-    // MobileOptimizedReels - UNAVAILABLE
-    /* <MobileOptimizedReels 
-      key="reels-1"
-      showCustomButton={true}
-      onCustomButtonClick={yourCustomHandler}
-    />, */
-
-    // Sponsored Deals - UNAVAILABLE
-    /* <FlashDeals 
-      key="sponsored"
-      title="SPONSORED DEALS"
-      icon={Megaphone}
-      showTitleChevron={true}
-      showStackedProfiles={true}
-      stackedProfiles={[
-        { id: 'sponsor1', image: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=150&h=150&fit=crop', alt: 'Brand A' },
-        { id: 'sponsor2', image: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=150&h=150&fit=crop', alt: 'Brand B' },
-        { id: 'sponsor3', image: 'https://images.unsplash.com/photo-1572044162444-ad60f128bdea?w=150&h=150&fit=crop', alt: 'Brand C' },
-        { id: 'sponsor4', image: 'https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?w=150&h=150&fit=crop', alt: 'Brand D' },
-        { id: 'sponsor5', image: 'https://images.unsplash.com/photo-1611930022073-b7a4ba5fcccd?w=150&h=150&fit=crop', alt: 'Brand E' },
-        { id: 'sponsor6', image: 'https://images.unsplash.com/photo-1618044733300-9472054094ee?w=150&h=150&fit=crop', alt: 'Brand F' },
-        { id: 'sponsor7', image: 'https://images.unsplash.com/photo-1635514569146-9a9607ecf303?w=150&h=150&fit=crop', alt: 'Brand G' },
-        { id: 'sponsor8', image: 'https://images.unsplash.com/photo-1599305446868-59e861c82501?w=150&h=150&fit=crop', alt: 'Brand H' },
-        { id: 'sponsor9', image: 'https://images.unsplash.com/photo-1611926653670-1f0bb1a72e1e?w=150&h=150&fit=crop', alt: 'Brand I' },
-        { id: 'sponsor10', image: 'https://images.unsplash.com/photo-1614680376739-414d95ff43df?w=150&h=150&fit=crop', alt: 'Brand J' },
-        { id: 'sponsor11', image: 'https://images.unsplash.com/photo-1635514569110-4b9e1f3e0b75?w=150&h=150&fit=crop', alt: 'Brand K' },
-        { id: 'sponsor12', image: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=150&h=150&fit=crop', alt: 'Brand L' }
-      ]}
-      onProfileClick={(profileId) => console.log('Sponsor clicked:', profileId)}
-      stackedProfilesText="Partners"
-      showSponsorCount={true}
-    />, */
-
-    // Editor's Picks - UNAVAILABLE
-    /* <FlashDeals
-      key="editors"
-      title="Editor's PICKS"
-      showStackedProfiles={true}
-      icon={Pin}
-      showTitleChevron={true}
-      stackedProfiles={[
-        { id: '1', image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face', alt: 'Sarah Johnson' },
-        { id: '2', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face', alt: 'Mike Chen' },
-        { id: '3', image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face', alt: 'Emma Davis' },
-        { id: '4', image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face', alt: 'Alex Turner' },
-        { id: '5', image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face', alt: 'Lisa Wong' }
-      ]}
-      onProfileClick={(profileId) => console.log('Profile clicked:', profileId)}
-      stackedProfilesText="Handpicked by"
-      maxProfiles={3}
-    />, */
-
-    // Super Deals Section - UNAVAILABLE
-    /* products && products.length > 0 ? <SuperDealsSection key="super-1" products={products} /> : null, */
-
-    // Recently Viewed - UNAVAILABLE
-    /* <FlashDeals 
-      key="recent"
-      title="RECENTLY VIEWED"
-      icon={History}
-      showTitleChevron={true}
-      onTitleClick={() => navigate('/products?title=RECENTLY VIEWED')}
-    />, */
-
-    // Top Vendors - UNAVAILABLE
-    /* <TopVendorsCompact 
-      key="vendors"
-      title="Top Vendors Today"
-      icon={Trophy}
-      showTitleChevron={true}
-      showVerifiedSellers={true}
-      verifiedIcon={ShieldCheck}
-    />, */
-
-    // Pickup Stations - UNAVAILABLE
-    /* <TopVendorsCompact 
-      key="pickup"
-      title="TOP PICK UP STATIONS"
-      showProducts={false}
-      viewAllLink="/pickup-stations"
-      isPickupStation={true}
-    />, */
-
-    // New Arrivals - UNAVAILABLE
-    /* <FlashDeals 
-      key="new-arrivals"
-      title="NEW ARRIVALS"
-      icon={Clock}
-      showTitleChevron={true}
-      onTitleClick={() => navigate('/products?title=NEW ARRIVALS')}
-    />, */
-
-    // Second Super Deals - UNAVAILABLE
-    /* products && products.length > 0 ? <SuperDealsSection key="super-2" products={products} /> : null, */
-
-    // Bestsellers - UNAVAILABLE
-    /* <FlashDeals 
-      key="bestsellers"
-      title="BESTSELLERS"
-      icon={Clock}
-      showTitleChevron={true}
-      onTitleClick={() => navigate('/products?title=BESTSELLERS')}
-    />, */
-
-    // Today's Deals - UNAVAILABLE
-    /* <FlashDeals 
-      key="today"
-      title="TODAY'S DEALS"
-      icon={Clock}
-      showTitleChevron={true}
-      onTitleClick={() => navigate('/products?title=TODAY\'S DEALS')}
-    />, */
-
-    // Second Mobile Reels - UNAVAILABLE
-    /* <MobileOptimizedReels key="reels-2" />, */
-
-    // Trending Now - UNAVAILABLE
-    /* <FlashDeals 
-      key="trending"
-      title="TRENDING NOW"
-      icon={Clock}
-      showTitleChevron={true}
-      onTitleClick={() => navigate('/products?title=TRENDING NOW')}
-    />, */
-
-    // Hero Banner Carousel - UNAVAILABLE
-    /* <HeroBanner key="carousel" asCarousel={true} />, */
-
-    // Staff Picks - UNAVAILABLE
-    /* <FlashDeals 
-      key="staff"
-      title="STAFF PICKS"
-      icon={Clock}
-      showTitleChevron={true}
-      onTitleClick={() => navigate('/products?title=STAFF PICKS')}
-    />, */
-
-    // Live Reels - UNAVAILABLE
-    /* <MobileOptimizedReels 
-      key="live"
-      title="LIVE NOW"
-      viewAllLink="/trending"
-      isLive={true}
-    /> */
   ];
 
   return (
@@ -459,9 +314,8 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
         {components.map((component, index) => (
           <React.Fragment key={`section-${index}`}>
             {component}
-            {/* Vendor Carousel after each component - DISABLED for unavailable features */}
-            {/* Only render vendor carousel for the first 3 components (before unavailable features) */}
-            {index < 3 && renderVendorCarousel(index)}
+            {/* Render vendor carousel only for the first 3 components (excluding BookGenreFlashDeals) */}
+            {index < 2 && renderVendorCarousel(index)}
           </React.Fragment>
         ))}
       </div>
