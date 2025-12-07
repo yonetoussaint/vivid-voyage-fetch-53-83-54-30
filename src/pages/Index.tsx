@@ -15,6 +15,7 @@ import MobileOptimizedReels from "@/components/home/MobileOptimizedReels";
 import PopularSearches from "@/components/home/PopularSearches";
 import NewArrivalsSection from "@/components/home/NewArrivalsSection";
 import HeroBanner from "@/components/home/HeroBanner";
+import BookGenreFlashDeals from "@/components/home/BookGenreFlashDeals"; // Import the new component
 import { useHeaderFilter } from "@/contexts/HeaderFilterContext";
 import { useAuth } from "@/contexts/auth/AuthContext";
 
@@ -284,13 +285,37 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       showTitleChevron={true}
     />,
 
-    <MobileOptimizedReels 
+    // Book Genre Flash Deals - ADDED HERE
+    <BookGenreFlashDeals
+      key="book-genre-flash-deals"
+      title="Popular Book Genres"
+      subtitle="Discover books by genre"
+      showFilters={true}
+      showSummary={true}
+      showSectionHeader={true}
+      showCountdown={true}
+      customCountdown="15:00:00:00" // Optional custom countdown
+      icon={BookOpen} // Optional custom icon
+      products={products} // Pass the fetched products
+      className="mt-4" // Additional styling
+      showVerifiedSellers={true}
+      verifiedSellersText="Top Book Sellers"
+      summaryMode="products"
+      showExpiryTimer={true}
+      expiryField="expiry"
+      showMarketingMetrics={false}
+      showStatusBadge={false}
+    />,
+
+    // MobileOptimizedReels - UNAVAILABLE
+    /* <MobileOptimizedReels 
       key="reels-1"
       showCustomButton={true}
       onCustomButtonClick={yourCustomHandler}
-    />,
+    />, */
 
-    <FlashDeals 
+    // Sponsored Deals - UNAVAILABLE
+    /* <FlashDeals 
       key="sponsored"
       title="SPONSORED DEALS"
       icon={Megaphone}
@@ -313,9 +338,10 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       onProfileClick={(profileId) => console.log('Sponsor clicked:', profileId)}
       stackedProfilesText="Partners"
       showSponsorCount={true}
-    />,
+    />, */
 
-    <FlashDeals
+    // Editor's Picks - UNAVAILABLE
+    /* <FlashDeals
       key="editors"
       title="Editor's PICKS"
       showStackedProfiles={true}
@@ -331,87 +357,100 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       onProfileClick={(profileId) => console.log('Profile clicked:', profileId)}
       stackedProfilesText="Handpicked by"
       maxProfiles={3}
-    />,
+    />, */
 
-    products && products.length > 0 ? <SuperDealsSection key="super-1" products={products} /> : null,
+    // Super Deals Section - UNAVAILABLE
+    /* products && products.length > 0 ? <SuperDealsSection key="super-1" products={products} /> : null, */
 
-    <FlashDeals 
+    // Recently Viewed - UNAVAILABLE
+    /* <FlashDeals 
       key="recent"
       title="RECENTLY VIEWED"
       icon={History}
       showTitleChevron={true}
       onTitleClick={() => navigate('/products?title=RECENTLY VIEWED')}
-    />,
+    />, */
 
-    <TopVendorsCompact 
+    // Top Vendors - UNAVAILABLE
+    /* <TopVendorsCompact 
       key="vendors"
       title="Top Vendors Today"
       icon={Trophy}
       showTitleChevron={true}
       showVerifiedSellers={true}
       verifiedIcon={ShieldCheck}
-    />,
+    />, */
 
-    <TopVendorsCompact 
+    // Pickup Stations - UNAVAILABLE
+    /* <TopVendorsCompact 
       key="pickup"
       title="TOP PICK UP STATIONS"
       showProducts={false}
       viewAllLink="/pickup-stations"
       isPickupStation={true}
-    />,
+    />, */
 
-    <FlashDeals 
+    // New Arrivals - UNAVAILABLE
+    /* <FlashDeals 
       key="new-arrivals"
       title="NEW ARRIVALS"
       icon={Clock}
       showTitleChevron={true}
       onTitleClick={() => navigate('/products?title=NEW ARRIVALS')}
-    />,
+    />, */
 
-    products && products.length > 0 ? <SuperDealsSection key="super-2" products={products} /> : null,
+    // Second Super Deals - UNAVAILABLE
+    /* products && products.length > 0 ? <SuperDealsSection key="super-2" products={products} /> : null, */
 
-    <FlashDeals 
+    // Bestsellers - UNAVAILABLE
+    /* <FlashDeals 
       key="bestsellers"
       title="BESTSELLERS"
       icon={Clock}
       showTitleChevron={true}
       onTitleClick={() => navigate('/products?title=BESTSELLERS')}
-    />,
+    />, */
 
-    <FlashDeals 
+    // Today's Deals - UNAVAILABLE
+    /* <FlashDeals 
       key="today"
       title="TODAY'S DEALS"
       icon={Clock}
       showTitleChevron={true}
       onTitleClick={() => navigate('/products?title=TODAY\'S DEALS')}
-    />,
+    />, */
 
-    <MobileOptimizedReels key="reels-2" />,
+    // Second Mobile Reels - UNAVAILABLE
+    /* <MobileOptimizedReels key="reels-2" />, */
 
-    <FlashDeals 
+    // Trending Now - UNAVAILABLE
+    /* <FlashDeals 
       key="trending"
       title="TRENDING NOW"
       icon={Clock}
       showTitleChevron={true}
       onTitleClick={() => navigate('/products?title=TRENDING NOW')}
-    />,
+    />, */
 
-    <HeroBanner key="carousel" asCarousel={true} />,
+    // Hero Banner Carousel - UNAVAILABLE
+    /* <HeroBanner key="carousel" asCarousel={true} />, */
 
-    <FlashDeals 
+    // Staff Picks - UNAVAILABLE
+    /* <FlashDeals 
       key="staff"
       title="STAFF PICKS"
       icon={Clock}
       showTitleChevron={true}
       onTitleClick={() => navigate('/products?title=STAFF PICKS')}
-    />,
+    />, */
 
-    <MobileOptimizedReels 
+    // Live Reels - UNAVAILABLE
+    /* <MobileOptimizedReels 
       key="live"
       title="LIVE NOW"
       viewAllLink="/trending"
       isLive={true}
-    />
+    /> */
   ];
 
   return (
@@ -420,7 +459,9 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
         {components.map((component, index) => (
           <React.Fragment key={`section-${index}`}>
             {component}
-            {index >= 2 && renderVendorCarousel(index)}
+            {/* Vendor Carousel after each component - DISABLED for unavailable features */}
+            {/* Only render vendor carousel for the first 3 components (before unavailable features) */}
+            {index < 3 && renderVendorCarousel(index)}
           </React.Fragment>
         ))}
       </div>
