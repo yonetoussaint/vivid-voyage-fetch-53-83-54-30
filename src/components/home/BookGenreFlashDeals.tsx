@@ -1,782 +1,463 @@
-import { Link, useNavigate } from "react-router-dom";
-import { Timer, Plus, ChevronRight, Package, Eye, Star, TrendingUp, Truck, ChevronDown, X, Tag, DollarSign, Package as PackageIcon } from "lucide-react";
-import React, { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { fetchAllProducts, trackProductView } from "@/integrations/supabase/products";
-import { useAuth } from "@/contexts/auth/AuthContext";
-import { useSellerByUserId } from "@/hooks/useSellerByUserId";
-import { supabase } from "@/integrations/supabase/client";
-import PriceInfo from "@/components/product/PriceInfo";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import React, { useState } from 'react';
+import { Heart, ShoppingCart, MessageCircle, User, Search, Camera, ChevronRight, Star, Zap, Clock, Shield, Truck, Award, Home, Tag, Percent, Sparkles } from 'lucide-react';
 
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  discount_price?: number;
-  product_images?: Array<{ src: string }>;
-  inventory?: number;
-  flash_start_time?: string;
-  seller_id?: string;
-  category?: string;
-  // Additional fields for marketing campaigns
-  status?: string;
-  type?: string;
-  startDate?: string;
-  endDate?: string;
-  expiry?: string;
-  views?: number;
-  clicks?: number;
-  conversions?: number;
-  revenue?: number;
-  // New e-commerce fields
-  rating?: number;
-  total_orders?: number;
-  free_shipping?: boolean;
-  shipping_cost?: number;
-  is_choice?: boolean;
-  is_top_selling?: boolean;
-}
+export default function LazadaClone() {
+  const [refreshing, setRefreshing] = useState(false);
+  const [activeCategory, setActiveCategory] = useState(0);
 
-interface GenreFlashDealsProps {
-  productType?: string;
-  excludeTypes?: string[];
-  className?: string;
-  products?: Product[];
-  sellerId?: string;
-  onAddProduct?: () => void;
-  title?: string;
-  subtitle?: string;
-  showSectionHeader?: boolean;
-  showSummary?: boolean;
-  showFilters?: boolean;
-  icon?: React.ComponentType<any>;
-  customCountdown?: string;
-  showCountdown?: boolean;
-  passCountdownToHeader?: boolean;
-  showVerifiedSellers?: boolean;
-  verifiedSellersText?: string;
-  summaryMode?: 'inventory' | 'reviews' | 'products';
-  // New custom render props
-  customProductRender?: (product: Product) => React.ReactNode;
-  customProductInfo?: (product: Product) => React.ReactNode;
-  // Expiry timer props
-  showExpiryTimer?: boolean;
-  expiryField?: string;
-  // Marketing specific props
-  showMarketingMetrics?: boolean;
-  showStatusBadge?: boolean;
-}
+  const categories = [
+    { name: 'For You', icon: Heart, active: true },
+    { name: 'LazMall', icon: ShoppingCart },
+    { name: 'Message+', icon: MessageCircle },
+    { name: 'Cart', icon: ShoppingCart, badge: 3 },
+    { name: 'Me', icon: User }
+  ];
 
-interface SummaryStats {
-  totalProducts: number;
-  inStock: number;
-  outOfStock: number;
-  onDiscount: number;
-  totalValue: number;
-  lowStock: number;
-  categories: number;
-}
+  const quickCategories = ['hair clip', 'sunglasses', 'anker soundcore', 'freezer', 'airpods 4', 'fashion', 'electronics', 'home'];
 
-// Inline FilterCard component - simplified for cards mode only
-const FilterCard: React.FC<{
-  filter: {
-    id: string;
-    label: string;
-    options: string[];
-  };
-  selectedFilters: Record<string, string>;
-  isFilterDisabled?: (filterId: string) => boolean;
-  isOpen: boolean;
-  onToggle: (filterId: string) => void;
-  onSelect: (filterId: string, option: string) => void;
-  onClear: (filterId: string) => void;
-}> = ({ filter, selectedFilters, isFilterDisabled, isOpen, onToggle, onSelect, onClear }) => {
-  const getFilterIcon = (filterId: string) => {
-    switch (filterId) {
-      case 'category':
-        return <Tag className="w-4 h-4" />;
-      case 'price':
-        return <DollarSign className="w-4 h-4" />;
-      case 'availability':
-        return <PackageIcon className="w-4 h-4" />;
-      case 'discount':
-        return <Tag className="w-4 h-4" />;
-      default:
-        return null;
-    }
-  };
-
-  const hasActiveFilter = (filterId: string) => {
-    const selected = selectedFilters[filterId];
-    return selected && !selected.toLowerCase().startsWith('all');
-  };
-
-  const handleClear = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onClear(filter.id);
+  const handleRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 1000);
   };
 
   return (
-    <div className="relative flex">
-      <button
-        type="button"
-        onClick={() => onToggle(filter.id)}
-        disabled={isFilterDisabled && isFilterDisabled(filter.id)}
-        className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-all whitespace-nowrap rounded-lg border shadow-sm ${
-          isFilterDisabled && isFilterDisabled(filter.id)
-            ? 'text-gray-400 cursor-not-allowed bg-gray-50 border-gray-200'
-            : hasActiveFilter(filter.id)
-            ? 'text-orange-700 bg-orange-50 border-orange-200 shadow-orange-100 hover:shadow-orange-200'
-            : 'text-gray-700 bg-white border-gray-200 hover:border-gray-300 hover:shadow-md'
-        }`}
-      >
-        {getFilterIcon(filter.id)}
-        <span className="truncate max-w-[100px]">
-          {selectedFilters[filter.id] || filter.label}
-        </span>
+    <div className="min-h-screen bg-gray-50 pb-24 max-w-md mx-auto relative font-sans">
+      {/* Enhanced Status Bar */}
+      <div className="bg-gradient-to-r from-pink-600 to-orange-500 px-4 py-2.5 flex justify-between items-center text-white text-xs font-medium shadow-sm">
+        <div className="flex items-center gap-2">
+          <Clock className="w-3 h-3" />
+          <span>7:08 AM</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
+            <Zap className="w-3 h-3" />
+            <span>22.0 K/S</span>
+          </div>
+          <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
+          <span className="font-bold">4G</span>
+          <div className="flex items-center gap-1">
+            <div className="w-10 h-1.5 bg-white/30 rounded-full overflow-hidden">
+              <div className="w-8/12 h-full bg-white rounded-full"></div>
+            </div>
+            <span>86%</span>
+          </div>
+        </div>
+      </div>
 
-        {hasActiveFilter(filter.id) && (
-          <X
-            size={14}
-            className="flex-shrink-0 text-gray-500 hover:text-gray-700 transition-colors ml-1"
-            onClick={handleClear}
-          />
-        )}
-
-        <ChevronDown
-          size={14}
-          className={`transition-transform duration-200 flex-shrink-0 ${
-            isOpen ? 'rotate-180' : ''
-          }`}
-        />
-      </button>
-
-      {isOpen && (
-        <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 shadow-lg rounded-lg z-50 mt-1 min-w-[200px]">
-          <div className="p-2">
-            <div className="grid grid-cols-1 gap-1">
-              {filter.options.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => onSelect(filter.id, option)}
-                  className={`px-3 py-2 text-sm text-left rounded transition-all ${
-                    selectedFilters[filter.id] === option
-                      ? 'bg-orange-50 text-orange-700 font-medium border border-orange-200'
-                      : 'text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-200'
-                  }`}
-                >
-                  {option}
-                </button>
-              ))}
+      {/* Enhanced Search Bar with Gradient */}
+      <div className="bg-gradient-to-r from-pink-500 to-orange-400 p-3 shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="flex-1 relative">
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+              <Search className="w-4 h-4 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search for products, brands, and more..."
+              className="w-full pl-10 pr-12 py-3 rounded-xl bg-white shadow-lg text-sm outline-none ring-2 ring-white/50 focus:ring-pink-300 transition-all"
+            />
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+              <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                HOT
+              </div>
+              <button className="p-1.5 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                <Camera className="w-4 h-4 text-gray-600" />
+              </button>
             </div>
           </div>
+          <button className="bg-white text-pink-600 px-4 py-3 rounded-xl font-bold text-sm shadow-lg hover:bg-gray-50 active:scale-95 transition-all">
+            Search
+          </button>
         </div>
-      )}
-    </div>
-  );
-};
-
-export default function BookGenreFlashDeals({
-  productType = undefined,
-  excludeTypes = [],
-  className = '',
-  products: externalProducts,
-  sellerId,
-  onAddProduct,
-  title = "Products",
-  subtitle = "Manage all your products",
-  showSectionHeader = true,
-  showSummary = true,
-  showFilters = true,
-  icon,
-  customCountdown,
-  showCountdown,
-  showVerifiedSellers = false,
-  verifiedSellersText = "Verified Sellers",
-  summaryMode = 'products',
-  customProductRender,
-  customProductInfo,
-  showExpiryTimer = false,
-  expiryField = 'expiry',
-  showMarketingMetrics = false,
-  showStatusBadge = false
-}: GenreFlashDealsProps) {
-  const navigate = useNavigate();
-  const [displayCount, setDisplayCount] = useState(8);
-  const [openFilter, setOpenFilter] = useState<string | null>(null);
-
-  // Define filter categories
-  const filterCategories = React.useMemo(() => [
-    {
-      id: 'category',
-      label: 'Category',
-      options: ['All Categories', 'Fiction', 'Non-Fiction', 'Science', 'Technology', 'Business']
-    },
-    {
-      id: 'price',
-      label: 'Price Range',
-      options: ['All Prices', 'Under $10', '$10-$25', '$25-$50', 'Over $50']
-    },
-    {
-      id: 'availability',
-      label: 'Availability',
-      options: ['All Stock', 'In Stock', 'Low Stock', 'Out of Stock']
-    },
-    {
-      id: 'discount',
-      label: 'Discount',
-      options: ['All Discounts', 'On Sale', 'No Discount']
-    }
-  ], []);
-
-  // Add filter state with initial "All" options
-  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>(() => ({
-    category: 'All Categories',
-    price: 'All Prices',
-    availability: 'All Stock',
-    discount: 'All Discounts'
-  }));
-
-  // Helper function to check if an option is an "All" option
-  const isAllOption = (option: string) => {
-    return option.toLowerCase().startsWith('all');
-  }
-
-  // Filter handler functions
-  const handleFilterSelect = (filterId: string, option: string) => {
-    setSelectedFilters(prev => ({
-      ...prev,
-      [filterId]: option
-    }));
-    setOpenFilter(null);
-  };
-
-  const handleFilterClear = (filterId: string) => {
-    setSelectedFilters(prev => {
-      const newFilters = { ...prev };
-      delete newFilters[filterId];
-      return newFilters;
-    });
-  };
-
-  const handleClearAll = () => {
-    setSelectedFilters({});
-  };
-
-  const handleFilterToggle = (filterId: string) => {
-    if (openFilter === filterId) {
-      setOpenFilter(null);
-    } else {
-      setOpenFilter(filterId);
-    }
-  };
-
-  // Helper function to get status color (moved from SellerMarketing)
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Active': return 'bg-green-100 text-green-800';
-      case 'Scheduled': return 'bg-blue-100 text-blue-800';
-      case 'Ended': return 'bg-gray-100 text-gray-800';
-      case 'Paused': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  // Add this helper function to format large numbers
-  const formatNumber = (num: number): string => {
-    if (num >= 1000000) {
-      return (num / 1000000).toFixed(1) + 'm';
-    } else if (num >= 1000) {
-      return (num / 1000).toFixed(1) + 'k';
-    }
-    return num.toString();
-  };
-
-  // Default handler for adding new product
-  const handleAddProduct = () => {
-    if (onAddProduct) {
-      // If a custom handler is provided, use it
-      onAddProduct();
-    } else {
-      // Default behavior: navigate to product edit page for new product
-      navigate('/seller-dashboard/products/edit/new');
-    }
-  };
-
-  // Default marketing product info renderer
-  const renderMarketingProductInfo = (product: Product) => (
-    <div className="mt-2 space-y-1">
-      <div className="flex justify-between text-xs text-gray-600">
-        <span>Clicks: {product.clicks || 0}</span>
       </div>
-      {product.clicks && product.clicks > 0 && (
-        <div className="mt-1">
-          <div className="flex justify-between text-xs mb-1">
-            <span>CTR: {((product.clicks / (product.views || 1)) * 100).toFixed(1)}%</span>
-          </div>
-          <Progress
-            value={product.clicks > 0 ? (product.clicks / (product.views || 1)) * 100 : 0}
-            className="h-1.5"
-          />
+
+      {/* Pull to Refresh with Animation */}
+      <div 
+        className={`bg-gradient-to-b from-white to-gray-50 py-8 text-center transition-all duration-300 ${refreshing ? 'opacity-80' : 'opacity-100'}`}
+        onMouseDown={handleRefresh}
+      >
+        <div className={`w-12 h-12 mx-auto mb-3 rounded-full bg-gradient-to-r from-pink-500 to-orange-400 flex items-center justify-center transition-transform ${refreshing ? 'animate-spin' : ''}`}>
+          <Heart className={`w-6 h-6 text-white ${refreshing ? 'animate-pulse' : ''}`} />
         </div>
-      )}
-    </div>
-  );
+        <p className="text-gray-500 text-sm font-medium">
+          {refreshing ? 'Refreshing...' : '↓ Pull down to refresh'}
+        </p>
+      </div>
 
-  // Fetch ALL products only if no external products provided
-  const { data: fetchedProducts = [], isLoading: allProductsLoading } = useQuery({
-    queryKey: ['all-products'],
-    queryFn: () => fetchAllProducts(),
-    refetchInterval: 5 * 60 * 1000,
-    enabled: !externalProducts,
-  });
+      {/* Enhanced Category Pills with Active State */}
+      <div className="bg-white px-4 py-3 shadow-sm">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-bold text-gray-800">Trending Searches</h3>
+          <ChevronRight className="w-4 h-4 text-gray-400" />
+        </div>
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          {quickCategories.map((cat, index) => (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(index)}
+              className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all ${activeCategory === index 
+                ? 'bg-gradient-to-r from-pink-500 to-orange-400 text-white shadow-lg' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
 
-  // Determine which products to use
-  let allProducts = externalProducts || fetchedProducts || [];
-  const isLoading = allProductsLoading && !externalProducts;
+      {/* Brand Banner with Icons */}
+      <div className="bg-gradient-to-r from-gray-900 to-gray-800 text-white mx-4 my-3 rounded-2xl p-4 shadow-xl">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-r from-pink-500 to-orange-400 rounded-full flex items-center justify-center shadow-lg">
+              <Award className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="font-bold text-sm">Global Brand Selection</p>
+              <p className="text-xs text-gray-300 mt-0.5">Official Stores • 100% Authentic</p>
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-gray-400" />
+        </div>
+        <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-700">
+          <div className="flex items-center gap-2">
+            <Truck className="w-4 h-4 text-green-400" />
+            <span className="text-xs">Free Shipping</span>
+          </div>
+          <div className="w-px h-4 bg-gray-700"></div>
+          <div className="flex items-center gap-2">
+            <Clock className="w-4 h-4 text-blue-400" />
+            <span className="text-xs">Fast Delivery</span>
+          </div>
+          <div className="w-px h-4 bg-gray-700"></div>
+          <div className="flex items-center gap-2">
+            <Shield className="w-4 h-4 text-yellow-400" />
+            <span className="text-xs">Warranty</span>
+          </div>
+        </div>
+      </div>
 
-  const [timeLeft, setTimeLeft] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0
-  });
-
-  // Calculate summary statistics
-  const summaryStats: SummaryStats = React.useMemo(() => {
-    const totalProducts = allProducts.length;
-    const inStock = allProducts.filter(product => (product.inventory || 0) > 0).length;
-    const outOfStock = allProducts.filter(product => (product.inventory || 0) === 0).length;
-    const onDiscount = allProducts.filter(product => product.discount_price && product.discount_price < product.price).length;
-    const totalValue = allProducts.reduce((sum, product) => sum + (product.discount_price || product.price), 0);
-    const lowStock = allProducts.filter(product => (product.inventory || 0) > 0 && (product.inventory || 0) <= 10).length;
-
-    // Calculate unique categories count
-    const categories = new Set(allProducts.map(product => product.category).filter(Boolean)).size;
-
-    return {
-      totalProducts,
-      inStock,
-      outOfStock,
-      onDiscount,
-      totalValue,
-      lowStock,
-      categories
-    };
-  }, [allProducts]);
-
-  // Calculate expiry time left for each product
-  const [expiryTimes, setExpiryTimes] = useState<Record<string, { days: number; hours: number; minutes: number; seconds: number }>>({});
-
-  // Calculate time remaining for flash deals
-  useEffect(() => {
-    const calculateTimeLeft = () => {
-      if (!allProducts || allProducts.length === 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-
-      const latestFlashStart = allProducts.reduce((latest, product) => {
-        const startTime = new Date(product.flash_start_time || '').getTime();
-        return startTime > latest ? startTime : latest;
-      }, 0);
-
-      if (latestFlashStart === 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-
-      const endTime = latestFlashStart + (24 * 60 * 60 * 1000);
-      const now = Date.now();
-      const difference = endTime - now;
-
-      if (difference <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
-
-      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-
-      return { days, hours, minutes, seconds };
-    };
-
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
-    }, 1000);
-
-    setTimeLeft(calculateTimeLeft());
-
-    return () => clearInterval(timer);
-  }, [allProducts]);
-
-  // Calculate expiry times for each product
-  useEffect(() => {
-    const calculateExpiryTimes = () => {
-      const newExpiryTimes: Record<string, { days: number; hours: number; minutes: number; seconds: number }> = {};
-
-      allProducts.forEach(product => {
-        const expiryDate = product[expiryField as keyof Product] as string;
-        if (expiryDate) {
-          const endTime = new Date(expiryDate).getTime();
-          const now = Date.now();
-          const difference = endTime - now;
-
-          if (difference > 0) {
-            const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-            newExpiryTimes[product.id] = { days, hours, minutes, seconds };
-          } else {
-            newExpiryTimes[product.id] = { days: 0, hours: 0, minutes: 0, seconds: 0 };
-          }
-        }
-      });
-
-      return newExpiryTimes;
-    };
-
-    const timer = setInterval(() => {
-      setExpiryTimes(calculateExpiryTimes());
-    }, 1000);
-
-    setExpiryTimes(calculateExpiryTimes());
-
-    return () => clearInterval(timer);
-  }, [allProducts, expiryField]);
-
-  // Format countdown for SectionHeader
-  const formattedCountdown = React.useMemo(() => {
-    if (customCountdown) return customCountdown;
-
-    const totalSeconds = timeLeft.days * 86400 + timeLeft.hours * 3600 + timeLeft.minutes * 60 + timeLeft.seconds;
-    if (totalSeconds <= 0) return "00:00:00:00";
-
-    return `${timeLeft.days.toString().padStart(2, "0")}:${timeLeft.hours.toString().padStart(2, "0")}:${timeLeft.minutes.toString().padStart(2, "0")}:${timeLeft.seconds.toString().padStart(2, "0")}`;
-  }, [timeLeft, customCountdown]);
-
-  // Process products with memoization to prevent infinite re-renders
-  const processedProducts = React.useMemo(() => {
-    let products = allProducts.map(product => {
-      const discountPercentage = product.discount_price
-        ? Math.round(((product.price - product.discount_price) / product.price) * 100)
-        : 0;
-
-      return {
-        ...product,
-        discountPercentage,
-        image: product.product_images?.[0]?.src || "https://placehold.co/300x300?text=No+Image"
-      };
-    });
-
-    // Apply filters only if showFilters is true
-    if (showFilters) {
-      if (selectedFilters.category && !isAllOption(selectedFilters.category)) {
-        products = products.filter(p => p.category === selectedFilters.category);
-      }
-
-      if (selectedFilters.price && !isAllOption(selectedFilters.price)) {
-        products = products.filter(p => {
-          const price = p.discount_price || p.price;
-          switch (selectedFilters.price) {
-            case 'Under $10': return price < 10;
-            case '$10-$25': return price >= 10 && price <= 25;
-            case '$25-$50': return price > 25 && price <= 50;
-            case 'Over $50': return price > 50;
-            default: return true;
-          }
-        });
-      }
-
-      if (selectedFilters.availability && !isAllOption(selectedFilters.availability)) {
-        products = products.filter(p => {
-          switch (selectedFilters.availability) {
-            case 'In Stock': return (p.inventory ?? 0) > 0;
-            case 'Out of Stock': return (p.inventory ?? 0) === 0;
-            case 'Low Stock': return (p.inventory ?? 0) > 0 && (p.inventory ?? 0) <= 10;
-            default: return true;
-          }
-        });
-      }
-
-      if (selectedFilters.discount && !isAllOption(selectedFilters.discount)) {
-        products = products.filter(p => {
-          const discountPercentage = p.discount_price
-            ? Math.round(((p.price - p.discount_price) / p.price) * 100)
-            : 0;
-          switch (selectedFilters.discount) {
-            case 'On Sale': return discountPercentage > 0;
-            case 'No Discount': return discountPercentage === 0;
-            default: return true;
-          }
-        });
-      }
-    }
-
-    return products;
-  }, [allProducts, selectedFilters, showFilters]);
-
-  // Infinite scroll logic
-  useEffect(() => {
-    const handleScroll = () => {
-      if (displayCount >= processedProducts.length) return;
-
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      const windowHeight = window.innerHeight;
-      const documentHeight = document.documentElement.scrollHeight;
-
-      if (scrollTop + windowHeight >= documentHeight - 200) {
-        setDisplayCount(prev => Math.min(prev + 8, processedProducts.length));
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [displayCount, processedProducts.length]);
-
-  // Reset display count when products change
-  useEffect(() => {
-    setDisplayCount(8);
-  }, [processedProducts.length]);
-
-  // Close filter when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (openFilter && !(event.target as Element).closest('.filter-card-container')) {
-        setOpenFilter(null);
-      }
-    };
-
-    document.addEventListener('click', handleClickOutside);
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, [openFilter]);
-
-  return (
-    <div className={`w-full bg-white relative ${className}`}>
-      {/* Filter Bar Section - Conditionally rendered */}
-      {showFilters && (
-        <div className="sticky top-0 z-40 bg-white border-b border-gray-100 py-2 px-4">
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-            {filterCategories.map((filter) => (
-              <div key={filter.id} className="filter-card-container flex-shrink-0">
-                <FilterCard
-                  filter={filter}
-                  selectedFilters={selectedFilters}
-                  isOpen={openFilter === filter.id}
-                  onToggle={handleFilterToggle}
-                  onSelect={handleFilterSelect}
-                  onClear={handleFilterClear}
-                />
+      {/* Enhanced Icon Menu Grid */}
+      <div className="bg-white mx-4 rounded-2xl p-4 shadow-lg mb-3">
+        <div className="grid grid-cols-5 gap-4">
+          {[
+            { icon: '💎', label: 'Coins', color: 'from-yellow-400 to-orange-400', badge: 'Earn' },
+            { icon: '👚', label: 'Fashion', color: 'from-pink-400 to-rose-400' },
+            { icon: '🏢', label: 'LazLand', color: 'from-green-400 to-emerald-400' },
+            { icon: '🔥', label: '12.12', color: 'from-red-500 to-pink-500', badge: 'Hot' },
+            { icon: '💄', label: 'Beauty', color: 'from-purple-400 to-pink-400' },
+            { icon: '📱', label: 'Channels', color: 'from-blue-400 to-cyan-400' },
+            { icon: '🛒', label: 'Super', color: 'from-orange-500 to-red-500', badge: 'Sale' },
+            { icon: '✈️', label: 'Overseas', color: 'from-teal-400 to-blue-400' },
+            { icon: '🎮', label: 'Games', color: 'from-indigo-400 to-purple-400' },
+            { icon: '📺', label: 'Live', color: 'from-red-400 to-orange-400' }
+          ].map((item, index) => (
+            <div key={index} className="text-center group cursor-pointer">
+              <div className={`w-12 h-12 mx-auto mb-2 rounded-2xl bg-gradient-to-r ${item.color} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
+                <span className="text-xl">{item.icon}</span>
+                {item.badge && (
+                  <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] px-1.5 py-0.5 rounded-full">
+                    {item.badge}
+                  </div>
+                )}
               </div>
-            ))}
+              <p className="text-xs font-medium text-gray-700 group-hover:text-pink-600 transition-colors">
+                {item.label}
+              </p>
+            </div>
+          ))}
+        </div>
+        
+        <button className="w-full mt-4 bg-gradient-to-r from-pink-50 to-orange-50 rounded-xl p-3 flex items-center justify-between group hover:from-pink-100 hover:to-orange-100 transition-all">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-orange-400 rounded-full flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-white" />
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-bold text-gray-800">Collect Rewards Now!</p>
+              <p className="text-xs text-gray-600">Limited time offers • Daily check-ins</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-sm font-bold text-pink-600">Collect</span>
+            <ChevronRight className="w-4 h-4 text-pink-600" />
+          </div>
+        </button>
+      </div>
+
+      {/* New User Exclusive - Enhanced */}
+      <div className="bg-white mx-4 rounded-2xl p-4 shadow-lg mb-3">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-8 bg-gradient-to-b from-pink-500 to-orange-400 rounded-full"></div>
+            <h2 className="text-lg font-bold text-gray-900">
+              New User <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-orange-400">Exclusive!</span>
+            </h2>
+          </div>
+          <button className="text-sm font-bold text-pink-600 flex items-center gap-1 hover:text-pink-700 transition-colors">
+            View All
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { price: 'RM7.66', discount: '-66%', image: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=200&h=200&fit=crop' },
+            { price: 'RM18.99', discount: '-81%', image: 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=200&h=200&fit=crop' },
+            { 
+              price: 'RM13.00', 
+              subtitle: 'Voucher bundle', 
+              button: true,
+              gradient: 'from-pink-400 to-orange-300'
+            }
+          ].map((item, index) => (
+            <div key={index} className={`rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow ${item.button ? 'bg-gradient-to-br from-pink-50 to-orange-50 border-2 border-dashed border-pink-200' : 'bg-white'}`}>
+              {item.image && (
+                <div className="relative h-32 overflow-hidden">
+                  <img src={item.image} alt="Product" className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
+                  {item.discount && (
+                    <div className="absolute top-2 left-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                      {item.discount}
+                    </div>
+                  )}
+                </div>
+              )}
+              <div className={`p-3 ${item.button ? 'text-center' : ''}`}>
+                {item.button ? (
+                  <>
+                    <div className="text-2xl font-bold bg-gradient-to-r from-pink-500 to-orange-400 bg-clip-text text-transparent">
+                      {item.price}
+                    </div>
+                    <p className="text-xs text-gray-600 mt-1">{item.subtitle}</p>
+                    <button className="mt-3 w-full bg-gradient-to-r from-pink-500 to-orange-400 text-white py-2 rounded-lg font-bold text-sm hover:from-pink-600 hover:to-orange-500 active:scale-95 transition-all">
+                      Claim Now
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-lg font-bold text-gray-900">{item.price}</div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="text-xs text-gray-500 line-through">RM22.50</div>
+                      <div className="text-xs font-bold text-green-600">Save 66%</div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Popular Categories - Enhanced */}
+      <div className="bg-white mx-4 rounded-2xl p-4 shadow-lg mb-3">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-gray-900">Popular for You</h2>
+          <div className="flex items-center gap-1">
+            <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+            <span className="text-sm text-gray-600">Personalized</span>
           </div>
         </div>
-      )}
 
-      {/* Products Grid */}
-      <div className="px-1.5 pt-1.5">
-        {isLoading && !externalProducts ? (
-          <div className="grid grid-cols-2 gap-2">
-            {[1, 2, 3, 4, 5, 6].map((_, index) => (
-              <div key={index} className="bg-white overflow-hidden">
-                <div className="aspect-square bg-gray-100 animate-pulse rounded-lg"></div>
-                <div className="p-3 space-y-2">
-                  <div className="h-4 w-3/4 bg-gray-100 animate-pulse"></div>
-                  <div className="h-3 w-1/2 bg-gray-100 animate-pulse"></div>
-                  <div className="h-3 w-1/3 bg-gray-100 animate-pulse"></div>
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { title: 'Two-Way Radio', discount: '-90%', tag: 'Top discount', searches: null, image: 'https://images.unsplash.com/photo-1563207153-f403bf289096?w=300&h=300&fit=crop' },
+            { title: 'Protein Supplements', discount: '-26%', tag: '3K+ searches', searches: '3K+', image: 'https://images.unsplash.com/photo-1599490659213-e2b9527bd087?w=300&h=300&fit=crop' },
+            { title: "Women's Dresses", discount: '-75%', tag: '153K+ searches', searches: '153K+', image: 'https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=300&h=300&fit=crop' },
+            { title: 'Washing Machine', discount: '-58%', tag: '4K+ searches', searches: '4K+', image: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=300&h=300&fit=crop' }
+          ].map((item, index) => (
+            <div key={index} className="group cursor-pointer">
+              <div className="relative h-40 rounded-xl overflow-hidden mb-2">
+                <img 
+                  src={item.image} 
+                  alt={item.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                <div className="absolute top-2 left-2">
+                  <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                    {item.discount}
+                  </div>
+                </div>
+                <div className="absolute bottom-2 left-2 right-2">
+                  <p className="text-white text-sm font-bold truncate">{item.title}</p>
+                  <div className="flex items-center justify-between mt-1">
+                    <div className="flex items-center gap-1">
+                      <TrendingUp className="w-3 h-3 text-green-300" />
+                      <span className="text-xs text-green-300 font-medium">{item.tag}</span>
+                    </div>
+                    {item.searches && (
+                      <span className="text-xs text-gray-300">{item.searches}</span>
+                    )}
+                  </div>
                 </div>
               </div>
-            ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Enhanced Product Grid with Masonry Layout */}
+      <div className="px-4 mb-24">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Tag className="w-5 h-5 text-pink-500" />
+            <h3 className="text-lg font-bold text-gray-900">Recommended For You</h3>
           </div>
-        ) : processedProducts.length > 0 ? (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-1.5">
-              {processedProducts.slice(0, displayCount).map((product) => {
-                const productExpiryTime = expiryTimes[product.id];
-                const hasExpiryTimer = showExpiryTimer && productExpiryTime && 
-                  (productExpiryTime.days > 0 || productExpiryTime.hours > 0 || productExpiryTime.minutes > 0 || productExpiryTime.seconds > 0);
+          <div className="flex items-center gap-1 text-sm text-gray-600">
+            <Percent className="w-4 h-4" />
+            <span>Best Prices</span>
+          </div>
+        </div>
 
-                return (
-                  <div key={product.id} className="bg-white overflow-hidden">
-                    <Link
-                      to={`/product/${product.id}`}
-                      onClick={() => trackProductView(product.id)}
-                      className="block"
-                    >
-                      <div className="relative aspect-square overflow-hidden bg-gray-50 rounded-lg">
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                          style={{
-                            objectFit: 'cover',
-                            aspectRatio: '1/1'
-                          }}
-                          onError={(e) => {
-                            e.currentTarget.src = "https://placehold.co/300x300?text=No+Image";
-                          }}
-                        />
+        <div className="grid grid-cols-2 gap-3">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={index} className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group cursor-pointer">
+              <div className="relative h-48 overflow-hidden">
+                <img 
+                  src={`https://images.unsplash.com/photo-${150000000 + index}?w=400&h=500&fit=crop&auto=format`}
+                  alt="Product"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute top-2 left-2 flex flex-col gap-1">
+                  <div className="bg-gradient-to-r from-teal-500 to-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded-full">
+                    COINS
+                  </div>
+                  <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-[10px] font-bold px-2 py-1 rounded-full">
+                    FAST & FREE
+                  </div>
+                </div>
+                <button className="absolute top-2 right-2 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-lg hover:bg-white">
+                  <Heart className="w-4 h-4 text-gray-600 hover:text-red-500" />
+                </button>
+              </div>
+              
+              <div className="p-3">
+                <h4 className="text-sm font-medium text-gray-800 line-clamp-2 mb-2">
+                  Premium Wireless Earbuds with Noise Cancellation - 2024 Edition
+                </h4>
+                
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded">
+                    <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                    <span className="text-xs font-bold text-gray-800">4.8</span>
+                    <span className="text-xs text-gray-500">(2.1k)</span>
+                  </div>
+                  <span className="text-xs text-gray-500">•</span>
+                  <span className="text-xs text-gray-500">474 sold</span>
+                </div>
 
-                        {/* Top Selling Badge - Top Left */}
-                        {product.is_top_selling && (
-                          <div className="absolute top-2 left-2 z-20">
-                            <Badge className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 font-semibold flex items-center gap-0.5">
-                              <TrendingUp className="w-2.5 h-2.5" />
-                              Top Selling
-                            </Badge>
-                          </div>
-                        )}
-
-                        {/* Status Badge - Top Left */}
-                        {showStatusBadge && product.status && (
-                          <div className="absolute top-2 left-2 z-20">
-                            <Badge
-                              variant="secondary"
-                              className={`${getStatusColor(product.status)} text-xs`}
-                            >
-                              {product.status}
-                            </Badge>
-                          </div>
-                        )}
-
-                        {/* Views with Eye Icon - Top Right */}
-                        {showMarketingMetrics && product.views !== undefined && (
-                          <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/80 text-white text-xs px-2 py-1 rounded-md">
-                            <Eye className="w-3 h-3" />
-                            <span className="font-medium">{formatNumber(product.views)}</span>
-                          </div>
-                        )}
-
-                        {/* Expiry Timer - Full width band at bottom */}
-                        {hasExpiryTimer && (
-                          <div className="absolute bottom-0 left-0 right-0 bg-red-50/90 text-red-700 text-xs flex items-center justify-center py-1.5 gap-1 z-10 border-t border-red-200">
-                            <Timer className="w-3 h-3" />
-                            <span className="font-medium">Ends in</span>
-                            <span className="font-mono font-bold">
-                              {productExpiryTime.days.toString().padStart(2, "0")}:
-                              {productExpiryTime.hours.toString().padStart(2, "0")}:
-                              {productExpiryTime.minutes.toString().padStart(2, "0")}
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Timer for flash deals */}
-                        {!hasExpiryTimer && (timeLeft.days > 0 || timeLeft.hours > 0 || timeLeft.minutes > 0 || timeLeft.seconds > 0) ? (
-                          <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs flex items-center justify-center py-2 gap-1 z-10">
-                            <Timer className="w-3 h-3" />
-                            <span className="font-mono">
-                              {[timeLeft.days, timeLeft.hours, timeLeft.minutes].map((unit, i) => (
-                                <span key={i}>
-                                  {unit.toString().padStart(2, "0")}
-                                  {i < 2 && <span className="mx-0.5">:</span>}
-                                </span>
-                              ))}
-                            </span>
-                          </div>
-                        ) : null}
-                      </div>
-                    </Link>
-
-                    <div className="p-1.5">
-                      {/* Product name with inline Choice badge */}
-                      <div className="flex flex-wrap items-center gap-1 mb-1">
-                        {/* Product name with inline Choice badge */}
-                        <h4 className="text-xs font-medium line-clamp-2 text-gray-900 leading-tight">
-                          {product.is_choice && (
-                            <span className="inline-flex items-center mr-1.5 align-middle">
-                              {/* Choice badge - inline as a word */}
-                              <div className="relative inline-flex items-center">
-                                <div className="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 
-                                              relative px-1.5 py-[2px] rounded-[3px] border border-amber-400/50 
-                                              shadow-[0_1px_2px_rgba(0,0,0,0.2),inset_0_1px_1px_rgba(255,255,255,0.4)] 
-                                              overflow-hidden inline-flex items-center h-[16px]">
-                                  {/* Shiny glass effect overlay */}
-                                  <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/50 to-transparent"></div>
-
-                                  {/* Subtle inner shadow for depth */}
-                                  <div className="absolute inset-0 rounded-[3px] border border-white/30"></div>
-
-                                  {/* Text with slight text shadow for readability */}
-                                  <span className="relative text-[9px] font-bold text-white tracking-wide 
-                                                  drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)] whitespace-nowrap leading-none px-0.5">
-                                    Choice
-                                  </span>
-                                </div>
-                              </div>
-                            </span>
-                          )}
-                          <span className="align-middle">{product.name}</span>
-                        </h4>
-                      </div>
-
-                      {/* Custom price display - Only show if price exists and > 0 */}
-                      {product.price !== undefined && product.price !== null && product.price > 0 && (
-                        <div className="leading-none">
-                          {/* Current price - Use discount if valid, otherwise regular price */}
-                          <div className="flex items-center gap-2 leading-none">
-                            <span className="font-bold text-orange-500 text-base">
-                              G {(
-                                product.discount_price !== undefined && 
-                                product.discount_price !== null && 
-                                product.discount_price > 0 ? 
-                                product.discount_price : 
-                                product.price
-                              ).toFixed(2)}
-                            </span>
-                            <span className="text-gray-500 text-xs">/ unit</span>
-                          </div>
-
-                          {/* Barred original price if discounted and valid */}
-                          {product.discount_price !== undefined && 
-                           product.discount_price !== null && 
-                           product.discount_price > 0 && 
-                           product.discount_price < product.price && (
-                            <div className="flex flex-col gap-0.5 mt-0.5">
-                              <span className="text-gray-400 line-through text-sm">
-                                G {product.price.toFixed(2)}
-                              </span>
-                              <span className="text-green-600 font-medium text-xs bg-green-50 px-1.5 py-0.5 rounded w-fit whitespace-nowrap">
-                                Save G {(product.price - product.discount_price).toFixed(2)}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* REMOVED: Shipping Info */}
-                      {/* REMOVED: Rating & Orders */}
-                      {/* REMOVED: Product info section */}
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <div className="text-lg font-bold bg-gradient-to-r from-pink-500 to-orange-400 bg-clip-text text-transparent">
+                      RM29.90
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-xs text-gray-500 line-through">RM49.90</span>
+                      <span className="text-xs font-bold text-green-600">Save 40%</span>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                  <button className="bg-gradient-to-r from-pink-500 to-orange-400 text-white px-4 py-2 rounded-lg font-bold text-sm hover:from-pink-600 hover:to-orange-500 active:scale-95 transition-all shadow-md">
+                    Add +
+                  </button>
+                </div>
 
-            {/* Show "Load More" indicator if there are more products */}
-            {displayCount < processedProducts.length && (
-              <div className="text-center py-4">
-                <div className="text-sm text-gray-500">
-                  Scroll down to load more products...
+                <div className="text-xs text-gray-600 mt-2">
+                  <span className="text-green-600 font-bold">Free shipping</span>
+                  <span className="mx-2">•</span>
+                  <span>Delivery by tomorrow</span>
                 </div>
               </div>
-            )}
-          </div>
-        ) : (
-          <div className="text-center py-12 text-gray-500">
-            <div className="text-lg font-medium">No products available</div>
-            <div className="text-sm mt-1">Check back later for new deals</div>
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Floating Add Product Button */}
-      <button
-        onClick={handleAddProduct}
-        className="fixed bottom-20 right-4 z-50 bg-white text-gray-900 rounded-full p-3 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 active:scale-95 border border-gray-200 backdrop-blur-sm"
-        aria-label="Add Product"
-      >
-        <Plus className="w-6 h-6" />
+      {/* Enhanced Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t shadow-2xl">
+        <div className="flex justify-around py-3 px-2">
+          {categories.map((item, index) => (
+            <button
+              key={index}
+              className="flex flex-col items-center relative group"
+            >
+              <div className={`relative p-2 rounded-xl transition-all ${item.active 
+                ? 'bg-gradient-to-r from-pink-500 to-orange-400 text-white' 
+                : 'text-gray-400 hover:text-gray-600'
+              }`}>
+                <item.icon className="w-5 h-5" />
+                {item.badge && (
+                  <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
+                    {item.badge}
+                  </div>
+                )}
+              </div>
+              <span className={`text-xs font-medium mt-1 transition-colors ${item.active 
+                ? 'text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-orange-400 font-bold' 
+                : 'text-gray-500'
+              }`}>
+                {item.name}
+              </span>
+              {item.active && (
+                <div className="w-1.5 h-1.5 bg-gradient-to-r from-pink-500 to-orange-400 rounded-full mt-1"></div>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Enhanced Login Banner */}
+      <div className="fixed bottom-16 left-0 right-0 max-w-md mx-auto">
+        <div className="mx-4 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-2xl p-4 shadow-2xl">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-r from-pink-500 to-orange-400 rounded-xl flex items-center justify-center shadow-lg">
+                <Zap className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="font-bold text-sm">Welcome to Lazada!</p>
+                <p className="text-xs text-gray-300 mt-0.5">Log in for exclusive first-order benefits</p>
+              </div>
+            </div>
+            <button className="bg-gradient-to-r from-pink-500 to-orange-400 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:from-pink-600 hover:to-orange-500 active:scale-95 transition-all shadow-lg">
+              LOGIN
+            </button>
+          </div>
+          <div className="flex items-center justify-center gap-4 mt-4 pt-3 border-t border-gray-700">
+            <div className="text-center">
+              <div className="text-lg font-bold text-yellow-300">RM100</div>
+              <div className="text-[10px] text-gray-400">Welcome Voucher</div>
+            </div>
+            <div className="w-px h-8 bg-gray-700"></div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-green-300">Free</div>
+              <div className="text-[10px] text-gray-400">Shipping</div>
+            </div>
+            <div className="w-px h-8 bg-gray-700"></div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-blue-300">50%</div>
+              <div className="text-[10px] text-gray-400">Off Deals</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Floating Cart Button */}
+      <button className="fixed bottom-24 right-4 w-14 h-14 bg-gradient-to-r from-pink-500 to-orange-400 rounded-full flex items-center justify-center shadow-2xl hover:shadow-3xl hover:scale-110 active:scale-95 transition-all z-50">
+        <ShoppingCart className="w-6 h-6 text-white" />
+        <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+          3
+        </div>
       </button>
     </div>
+  );
+}
+
+// Helper component for trending up icon
+function TrendingUp({ className }) {
+  return (
+    <svg className={className} fill="currentColor" viewBox="0 0 20 20">
+      <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
+    </svg>
   );
 }
