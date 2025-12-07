@@ -9,9 +9,7 @@ import {
   Bell,
   HelpCircle,
   Crown,
-  Zap,
-  TrendingUp,
-  ChevronRight
+  ArrowRight,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -34,67 +32,65 @@ interface Category {
   orderIndex?: number;
 }
 
-// Promo Card Component
-const SellerPromoCard = () => {
-  const navigate = useNavigate();
-  
-  const handleBecomeSeller = () => {
-    navigate('/become-seller');
-  };
-
-  return (
-    <div 
-      className="flex flex-col w-20 h-24 flex-shrink-0 cursor-pointer bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg p-2.5 active:opacity-90 transition-all touch-manipulation shadow-sm"
-      onClick={handleBecomeSeller}
-    >
-      <div className="flex items-center justify-between mb-1.5">
-        <div className="w-7 h-7 bg-white/20 rounded flex items-center justify-center">
-          <Crown className="w-4 h-4 text-white" />
-        </div>
-        <Zap className="w-3 h-3 text-white/80" />
-      </div>
-      
-      <div className="flex-grow">
-        <div className="text-white text-xs font-semibold leading-tight mb-1">
-          Become a Seller
-        </div>
-        <div className="text-white/90 text-[10px] leading-tight">
-          Start earning today
-        </div>
-      </div>
-      
-      <div className="flex items-center justify-between mt-1">
-        <TrendingUp className="w-3 h-3 text-white/70" />
-        <ChevronRight className="w-3 h-3 text-white" />
-      </div>
-    </div>
-  );
-};
-
-// Category shortcut component - reduced size and more square
+// Category shortcut component
 const CategoryShortcut = ({ category, onCategorySelect }: { category: Category; onCategorySelect?: (category: string) => void }) => {
   return (
     <div 
       className="flex flex-col items-center w-14 flex-shrink-0 active:opacity-80 transition-opacity touch-manipulation cursor-pointer"
       onClick={() => onCategorySelect?.(category.name)}
     >
-      <div className="relative mb-1.5">
-        <div className={`w-12 h-12 rounded-lg ${category.bgColor} flex items-center justify-center border border-gray-200`}>
+      <div className="relative mb-1">
+        <div className={`w-12 h-12 rounded-lg ${category.bgColor} flex items-center justify-center`}>
           {React.createElement(category.icon, { 
             className: `w-5 h-5 ${category.iconBg}` 
           })}
         </div>
 
         {category.count !== undefined && category.count > 0 && (
-          <div className="absolute -top-1.5 -right-1.5 min-w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] font-medium px-1 border border-white shadow-sm z-10">
+          <div className="absolute -top-1 -right-1 min-w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-medium px-1 border border-white shadow-sm z-10">
             {category.count > 99 ? '99+' : category.count}
           </div>
         )}
       </div>
 
-      <span className="text-[11px] font-normal text-gray-800 text-center w-full leading-tight px-0.5 truncate">
+      <span className="text-[10px] font-normal text-gray-800 text-center w-full leading-tight px-0.5 truncate">
         {category.name}
       </span>
+    </div>
+  );
+};
+
+// Promo card component for sellers
+const SellerPromoCard = () => {
+  const navigate = useNavigate();
+  
+  return (
+    <div 
+      className="w-40 h-24 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg border border-purple-100 p-3 flex flex-col justify-between active:opacity-90 transition-opacity touch-manipulation cursor-pointer shadow-sm"
+      onClick={() => navigate('/become-seller')}
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-md flex items-center justify-center">
+            <Crown className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900 leading-tight">Become a Seller</h3>
+            <p className="text-xs text-gray-600 mt-0.5">Start earning today</p>
+          </div>
+        </div>
+        <ArrowRight className="w-4 h-4 text-purple-500 flex-shrink-0" />
+      </div>
+      
+      <div className="flex items-center justify-between mt-2">
+        <div className="flex items-center gap-1">
+          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+          <span className="text-xs text-gray-700 font-medium">0% commission</span>
+        </div>
+        <span className="text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-0.5 rounded-full font-medium">
+          Join now
+        </span>
+      </div>
     </div>
   );
 };
@@ -105,15 +101,14 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
   const rowRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [showGridView, setShowGridView] = useState(false);
 
-  // Default categories structure - All items included, no "More" button
+  // Default categories structure
   const defaultCategories: Category[] = [
     { 
       id: 'explore', 
       name: 'Explore', 
       icon: Sparkles,
-      bgColor: 'bg-pink-50', 
+      bgColor: 'bg-pink-100', 
       iconBg: 'text-pink-500',
       labelBg: 'bg-pink-600/90',
       isSpecial: true,
@@ -124,7 +119,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       id: 'trending', 
       name: 'My Store', 
       icon: Store,
-      bgColor: 'bg-purple-50', 
+      bgColor: 'bg-purple-100', 
       iconBg: 'text-purple-500',
       labelBg: 'bg-purple-600/90',
       isSpecial: true,
@@ -135,7 +130,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       id: 'wishlist', 
       name: 'Wishlist', 
       icon: Heart,
-      bgColor: 'bg-teal-50', 
+      bgColor: 'bg-teal-100', 
       iconBg: 'text-teal-500',
       labelBg: 'bg-teal-600/90',
       isSpecial: true,
@@ -146,7 +141,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       id: 'notifications', 
       name: 'Notifications', 
       icon: Bell,
-      bgColor: 'bg-blue-50', 
+      bgColor: 'bg-blue-100', 
       iconBg: 'text-blue-500',
       labelBg: 'bg-blue-600/90',
       isSpecial: true,
@@ -157,7 +152,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       id: 'help', 
       name: 'Help', 
       icon: HelpCircle,
-      bgColor: 'bg-gray-50', 
+      bgColor: 'bg-gray-100', 
       iconBg: 'text-gray-500',
       labelBg: 'bg-gray-600/90',
       isSpecial: true,
@@ -358,28 +353,43 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
     return null;
   }
 
+  // Always show all categories in a single scrollable row
   const displayedCategories = [...categories];
 
   return (
     <div className="w-full bg-white overflow-visible">
       <div className="bg-white overflow-visible">
-        {/* Horizontal row with seller promo card + all categories */}
+        {/* Horizontal scrollable row with promo card + categories */}
         <div 
           ref={rowRef}
-          className="px-2 overflow-visible"
+          className="flex overflow-x-auto overflow-y-hidden pb-3 px-4 gap-4 scrollbar-hide"
+          style={{
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+          }}
         >
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-            {/* Seller Promo Card - First element */}
+          {/* Promo card as first element */}
+          <div className="flex-shrink-0">
             <SellerPromoCard />
-            
-            {/* All categories in a row - including the last element */}
-            {displayedCategories.map(category => (
-              <div key={category.id} className="overflow-visible py-1">
-                <CategoryShortcut category={category} onCategorySelect={handleCategorySelect} />
-              </div>
-            ))}
           </div>
+
+          {/* All categories displayed in the same row */}
+          {displayedCategories.map(category => (
+            <div 
+              key={category.id}
+              className="flex-shrink-0"
+            >
+              <CategoryShortcut category={category} onCategorySelect={handleCategorySelect} />
+            </div>
+          ))}
         </div>
+
+        {/* Hide scrollbar for WebKit browsers */}
+        <style jsx>{`
+          .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
       </div>
     </div>
   );
