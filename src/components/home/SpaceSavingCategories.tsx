@@ -167,17 +167,6 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
   // Default categories structure
   const defaultCategories: Category[] = [
     { 
-      id: 'new-arrivals', 
-      name: 'Shorts', 
-      icon: Zap,
-      bgColor: 'bg-red-100', 
-      iconBg: 'text-red-500',
-      labelBg: 'bg-red-600/90',
-      isSpecial: true,
-      count: 0,
-      orderIndex: 0
-    },
-    { 
       id: 'explore', 
       name: 'Explore', 
       icon: Sparkles,
@@ -186,7 +175,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       labelBg: 'bg-pink-600/90',
       isSpecial: true,
       count: 0,
-      orderIndex: 1
+      orderIndex: 0
     },
     { 
       id: 'trending', 
@@ -197,8 +186,10 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       labelBg: 'bg-purple-600/90',
       isSpecial: true,
       count: 0,
-      orderIndex: 2
+      orderIndex: 1
     },
+    // Commenting out pick up stations - not available yet
+    /*
     { 
       id: 'my-station', 
       name: 'My Station', 
@@ -208,8 +199,9 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       labelBg: 'bg-orange-600/90',
       isSpecial: true,
       count: 0,
-      orderIndex: 3
+      orderIndex: 2
     },
+    */
     { 
       id: 'wishlist', 
       name: 'Wishlist', 
@@ -219,8 +211,10 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       labelBg: 'bg-teal-600/90',
       isSpecial: true,
       count: 0,
-      orderIndex: 4
+      orderIndex: 2
     },
+    // Commenting out cart - not available yet
+    /*
     { 
       id: 'cart', 
       name: 'Cart', 
@@ -230,8 +224,9 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       labelBg: 'bg-yellow-600/90',
       isSpecial: true,
       count: 0,
-      orderIndex: 5
+      orderIndex: 4
     },
+    */
     { 
       id: 'notifications', 
       name: 'Notifications', 
@@ -241,8 +236,10 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       labelBg: 'bg-blue-600/90',
       isSpecial: true,
       count: 0,
-      orderIndex: 6
+      orderIndex: 3
     },
+    // Commenting out addresses - not available yet
+    /*
     { 
       id: 'addresses', 
       name: 'Addresses', 
@@ -252,8 +249,9 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       labelBg: 'bg-indigo-600/90',
       isSpecial: true,
       count: 0,
-      orderIndex: 7
+      orderIndex: 6
     },
+    */
     { 
       id: 'help', 
       name: 'Help', 
@@ -263,7 +261,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       labelBg: 'bg-gray-600/90',
       isSpecial: true,
       count: 0,
-      orderIndex: 8
+      orderIndex: 4
     }
   ];
 
@@ -303,9 +301,10 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       // Fetch all counts in parallel
       const [
         wishlistResult,
-        cartResult,
+        // Commenting out cart and addresses queries - not available yet
+        // cartResult,
         notificationsResult,
-        addressesResult,
+        // addressesResult,
         helpTicketsResult
       ] = await Promise.all([
         supabase
@@ -313,10 +312,13 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
           .select('id', { count: 'exact', head: true })
           .eq('user_id', userId),
 
+        // Commenting out cart - not available yet
+        /*
         supabase
           .from('cart')
           .select('id', { count: 'exact', head: true })
           .eq('user_id', userId),
+        */
 
         supabase
           .from('notifications')
@@ -324,10 +326,13 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
           .eq('user_id', userId)
           .eq('is_read', false),
 
+        // Commenting out addresses - not available yet
+        /*
         supabase
           .from('user_addresses')
           .select('id', { count: 'exact', head: true })
           .eq('user_id', userId),
+        */
 
         supabase
           .from('help_tickets')
@@ -338,9 +343,11 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
 
       return {
         wishlist: wishlistResult.count || 0,
-        cart: cartResult.count || 0,
+        // cart: cartResult.count || 0,
+        cart: 0, // Hardcoded to 0 since cart is not available
         notifications: notificationsResult.count || 0,
-        addresses: addressesResult.count || 0,
+        // addresses: addressesResult.count || 0,
+        addresses: 0, // Hardcoded to 0 since addresses are not available
         help: helpTicketsResult.count || 0
       };
     } catch (error) {
@@ -498,23 +505,42 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
   }, [categories]);
 
   const handleCategorySelect = (categoryName: string) => {
+    // Commenting out Shorts (new arrivals) - not available yet
+    /*
     if (categoryName === 'Shorts') {
       navigate('/reels?video=modal');
-    } else if (categoryName === 'Explore') {
+    } else 
+    */
+    if (categoryName === 'Explore') {
       navigate('/explore');
     } else if (categoryName === 'My Store') {
       navigate('/seller-dashboard');
-    } else if (categoryName === 'My Station') {
+    } 
+    // Commenting out pick up stations - not available yet
+    /*
+    else if (categoryName === 'My Station') {
       navigate('/pickup-station');
-    } else if (categoryName === 'Wishlist') {
+    } 
+    */
+    else if (categoryName === 'Wishlist') {
       navigate('/wishlist');
-    } else if (categoryName === 'Cart') {
+    } 
+    // Commenting out cart - not available yet
+    /*
+    else if (categoryName === 'Cart') {
       navigate('/cart');
-    } else if (categoryName === 'Notifications') {
+    } 
+    */
+    else if (categoryName === 'Notifications') {
       navigate('/notifications');
-    } else if (categoryName === 'Addresses') {
+    } 
+    // Commenting out addresses - not available yet
+    /*
+    else if (categoryName === 'Addresses') {
       navigate('/addresses');
-    } else if (categoryName === 'Help') {
+    } 
+    */
+    else if (categoryName === 'Help') {
       navigate('/help');
     } else if (onCategorySelect) {
       onCategorySelect(categoryName);
