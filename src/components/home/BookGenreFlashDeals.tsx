@@ -47,6 +47,7 @@ interface GenreFlashDealsProps {
   className?: string;
   products?: Product[];
   sellerId?: string;
+filterVariant?: 'default' | 'cards';
   onAddProduct?: () => void;
   title?: string;
   subtitle?: string;
