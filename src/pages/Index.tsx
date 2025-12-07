@@ -1,4 +1,3 @@
-comment out the vendor products carrousel component it's not available yet
 
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
