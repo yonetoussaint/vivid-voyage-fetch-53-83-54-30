@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
@@ -10,16 +8,16 @@ import SimpleFlashDeals from "@/components/home/SimpleFlashDeals";
 import SpaceSavingCategories from "@/components/home/SpaceSavingCategories";
 import Footer from "@/components/Footer";
 import TopBrands from "@/components/home/TopBrands";
-// import VendorProductCarousel from "@/components/home/VendorProductCarousel"; // Commented out - not available yet
 import BenefitsBanner from "@/components/home/BenefitsBanner";
 import TopVendorsCompact from "@/components/home/TopVendorsCompact";
 import MobileOptimizedReels from "@/components/home/MobileOptimizedReels";
 import PopularSearches from "@/components/home/PopularSearches";
 import NewArrivalsSection from "@/components/home/NewArrivalsSection";
 import HeroBanner from "@/components/home/HeroBanner";
-import BookGenreFlashDeals from "@/components/home/BookGenreFlashDeals"; // Import the new component
+import BookGenreFlashDeals from "@/components/home/BookGenreFlashDeals";
 import { useHeaderFilter } from "@/contexts/HeaderFilterContext";
 import { useAuth } from "@/contexts/auth/AuthContext";
+import ProductFilterBar from "@/components/home/ProductFilterBar";
 
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -61,7 +59,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
 
   // State for lazy loading carousel data
-  const [visibleCarousels, setVisibleCarousels] = useState<Set<number>>(new Set([0, 1, 2])); // Load first 3
+  const [visibleCarousels, setVisibleCarousels] = useState<Set<number>>(new Set([0, 1, 2]));
 
   // Header filter context for news ticker functionality
   const {
@@ -82,16 +80,16 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   const heroBannerRef = useRef<HTMLDivElement>(null);
   const newsTickerRef = useRef<HTMLDivElement>(null);
 
-  // Define filter categories
+  // Define filter categories for main page
   const filterCategories = [
     {
       id: 'category',
       label: 'Category',
-      options: ['Electronics', 'Fashion', 'Home & Garden', 'Sports', 'Beauty', 'Automotive', 'Kids']
+      options: ['Electronics', 'Fashion', 'Home & Garden', 'Sports', 'Beauty', 'Automotive', 'Kids', 'Books']
     },
     {
       id: 'price',
-      label: 'Price Range',
+      label: 'Price',
       options: ['Under $25', '$25-$50', '$50-$100', '$100-$200', 'Over $200']
     },
     {
@@ -111,7 +109,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
     }
   ];
 
-  // Filter handler functions
+  // Filter handler functions for main page
   const handleFilterSelect = (filterId: string, option: string) => {
     setSelectedFilters(prev => ({ ...prev, [filterId]: option }));
     console.log('Filter selected:', filterId, option);
@@ -230,12 +228,12 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             const carouselIndex = parseInt(entry.target.getAttribute('data-carousel-index') || '0');
-            setVisibleCarousels(prev => new Set([...prev, carouselIndex, carouselIndex + 1])); // Preload next one
+            setVisibleCarousels(prev => new Set([...prev, carouselIndex, carouselIndex + 1]));
           }
         });
       },
       {
-        rootMargin: '400px', // Start loading 400px before component enters viewport
+        rootMargin: '400px',
         threshold: 0.01
       }
     );
@@ -263,23 +261,28 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       );
     }
 
-    // Commented out VendorProductCarousel since it's not available yet
-    // return (
-    //   <VendorProductCarousel
-    //     key={`vendor-${index}`}
-    //     title="Featured Products"
-    //     products={productSlice}
-    //   />
-    // );
-
     // Return a placeholder or null instead
     return null;
   };
 
-  // Define all components to render - simplified array with only available components
+  // Define all components to render
   const components = [
     <div key="hero" ref={heroBannerRef}>
       <HeroBanner showNewsTicker={true} />
+    </div>,
+
+    // Main page filter bar
+    <div key="main-filter" className="px-2 pt-2 pb-1">
+      <ProductFilterBar
+        filterCategories={filterCategories}
+        selectedFilters={selectedFilters}
+        onFilterSelect={handleFilterSelect}
+        onFilterClear={handleFilterClear}
+        onClearAll={handleClearAll}
+        onFilterButtonClick={handleFilterButtonClick}
+        isFilterDisabled={isFilterDisabled}
+        variant="default"
+      />
     </div>,
 
     <SpaceSavingCategories key="categories" />,
@@ -291,7 +294,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       showTitleChevron={true}
     />,
 
-    // Book Genre Flash Deals - ADDED HERE
+    // Book Genre Flash Deals - using cards variant
     <BookGenreFlashDeals
       key="book-genre-flash-deals"
       title="Popular Book Genres"
@@ -300,10 +303,13 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       showSummary={true}
       showSectionHeader={true}
       showCountdown={true}
-      customCountdown="15:00:00:00" // Optional custom countdown
-      icon={BookOpen} // Optional custom icon
-      products={products} // Pass the fetched products
-      className="mt-4" // Additional styling
+      customCountdown="15:00:00:00"
+      icon={BookOpen}
+      products={products?.filter(p => 
+        p.category?.toLowerCase().includes('book') || 
+        p.name?.toLowerCase().includes('book')
+      )}
+      className="mt-4"
       showVerifiedSellers={true}
       verifiedSellersText="Top Book Sellers"
       summaryMode="products"
@@ -311,7 +317,36 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       expiryField="expiry"
       showMarketingMetrics={false}
       showStatusBadge={false}
+      filterVariant="cards"
     />,
+
+    <TopBrands
+      key="top-brands"
+      title="Top Brands"
+      subtitle="Shop by your favorite brands"
+    />,
+
+    <NewArrivalsSection
+      key="new-arrivals"
+      title="New Arrivals"
+      subtitle="Discover the latest products"
+    />,
+
+    <MobileOptimizedReels
+      key="mobile-reels"
+      title="Trending Now"
+      subtitle="Watch and shop"
+    />,
+
+    <BenefitsBanner
+      key="benefits"
+      benefits={[
+        { icon: ShieldCheck, text: "Buyer Protection" },
+        { icon: Truck, text: "Free Shipping" },
+        { icon: Clock, text: "24/7 Support" },
+        { icon: History, text: "Easy Returns" }
+      ]}
+    />
   ];
 
   return (
@@ -320,7 +355,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
         {components.map((component, index) => (
           <React.Fragment key={`section-${index}`}>
             {component}
-            {/* Render vendor carousel only for the first 3 components (excluding BookGenreFlashDeals) */}
+            {/* Render vendor carousel only for the first 3 components */}
             {index < 2 && renderVendorCarousel(index)}
           </React.Fragment>
         ))}
@@ -330,7 +365,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       <Footer />
     </div>
   );
-}; // <-- CORRECT closing brace position
+};
 
 const ForYou: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState('recommendations');
