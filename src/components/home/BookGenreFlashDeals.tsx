@@ -1,10 +1,14 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Timer, Plus, ChevronRight, Package, Eye, Star, TrendingUp, Truck, BookOpen, Tag } from "lucide-react";
+import { Timer, Plus, ChevronRight, Package, Eye, Star, TrendingUp, Truck } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllProducts, trackProductView } from "@/integrations/supabase/products";
+import { useAuth } from "@/contexts/auth/AuthContext";
+import { useSellerByUserId } from "@/hooks/useSellerByUserId";
+import { supabase } from "@/integrations/supabase/client";
 import ProductFilterBar from "@/components/home/ProductFilterBar";
+import PriceInfo from "@/components/product/PriceInfo";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 
@@ -35,10 +39,6 @@ interface Product {
   shipping_cost?: number;
   is_choice?: boolean;
   is_top_selling?: boolean;
-  genre?: string;
-  author?: string;
-  page_count?: number;
-  publisher?: string;
 }
 
 interface GenreFlashDealsProps {
@@ -69,8 +69,6 @@ interface GenreFlashDealsProps {
   // Marketing specific props
   showMarketingMetrics?: boolean;
   showStatusBadge?: boolean;
-  // Filter variant
-  filterVariant?: 'default' | 'cards';
 }
 
 interface SummaryStats {
@@ -90,64 +88,57 @@ export default function BookGenreFlashDeals({
   products: externalProducts,
   sellerId,
   onAddProduct,
-  title = "Books",
-  subtitle = "Discover books by genre",
+  title = "Products",
+  subtitle = "Manage all your products",
   showSectionHeader = true,
   showSummary = true,
   showFilters = true,
-  icon = BookOpen,
+  icon,
   customCountdown,
   showCountdown,
   showVerifiedSellers = false,
-  verifiedSellersText = "Verified Book Sellers",
+  verifiedSellersText = "Verified Sellers",
   summaryMode = 'products',
   customProductRender,
   customProductInfo,
   showExpiryTimer = false,
   expiryField = 'expiry',
   showMarketingMetrics = false,
-  showStatusBadge = false,
-  filterVariant = 'cards'
+  showStatusBadge = false
 }: GenreFlashDealsProps) {
   const navigate = useNavigate();
   const [displayCount, setDisplayCount] = useState(8);
 
-  // Define book-specific filter categories
+  // Define filter categories
   const filterCategories = React.useMemo(() => [
     {
-      id: 'genre',
-      label: 'Genre',
-      options: ['All Genres', 'Fiction', 'Non-Fiction', 'Science Fiction', 'Fantasy', 'Mystery', 'Romance', 'Biography', 'Self-Help', 'Business', 'Technology']
+      id: 'category',
+      label: 'Category',
+      options: ['All Categories', 'Fiction', 'Non-Fiction', 'Science', 'Technology', 'Business']
     },
     {
       id: 'price',
-      label: 'Price',
-      options: ['All Prices', 'Under $10', '$10-$20', '$20-$30', 'Over $30']
-    },
-    {
-      id: 'format',
-      label: 'Format',
-      options: ['All Formats', 'Paperback', 'Hardcover', 'E-book', 'Audiobook']
-    },
-    {
-      id: 'rating',
-      label: 'Rating',
-      options: ['All Ratings', '4+ Stars', '3+ Stars', 'Bestsellers']
+      label: 'Price Range',
+      options: ['All Prices', 'Under $10', '$10-$25', '$25-$50', 'Over $50']
     },
     {
       id: 'availability',
-      label: 'Stock',
-      options: ['All Stock', 'In Stock', 'Pre-order', 'Limited Stock']
+      label: 'Availability',
+      options: ['All Stock', 'In Stock', 'Low Stock', 'Out of Stock']
+    },
+    {
+      id: 'discount',
+      label: 'Discount',
+      options: ['All Discounts', 'On Sale', 'No Discount']
     }
   ], []);
 
   // Add filter state with initial "All" options
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>(() => ({
-    genre: 'All Genres',
+    category: 'All Categories',
     price: 'All Prices',
-    format: 'All Formats',
-    rating: 'All Ratings',
-    availability: 'All Stock'
+    availability: 'All Stock',
+    discount: 'All Discounts'
   }));
 
   // Helper function to check if an option is an "All" option
@@ -179,7 +170,7 @@ export default function BookGenreFlashDeals({
     console.log('Filter button clicked:', filterId);
   };
 
-  // Helper function to get status color
+  // Helper function to get status color (moved from SellerMarketing)
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Active': return 'bg-green-100 text-green-800';
@@ -203,8 +194,10 @@ export default function BookGenreFlashDeals({
   // Default handler for adding new product
   const handleAddProduct = () => {
     if (onAddProduct) {
+      // If a custom handler is provided, use it
       onAddProduct();
     } else {
+      // Default behavior: navigate to product edit page for new product
       navigate('/seller-dashboard/products/edit/new');
     }
   };
@@ -241,20 +234,12 @@ export default function BookGenreFlashDeals({
   console.log('🔍 BookGenreFlashDeals Debug:');
   console.log('External products provided:', externalProducts?.length || 0);
   console.log('Fetched products count:', fetchedProducts.length);
+  console.log('All products loading:', allProductsLoading);
 
   // Determine which products to use
   let allProducts = externalProducts || fetchedProducts || [];
 
-  // Filter to books if no external products
-  if (!externalProducts) {
-    allProducts = allProducts.filter(product => 
-      product.category?.toLowerCase().includes('book') || 
-      product.name?.toLowerCase().includes('book') ||
-      product.genre
-    );
-  }
-
-  console.log('Total books to display:', allProducts.length);
+  console.log('Total products to display:', allProducts.length);
 
   const isLoading = allProductsLoading && !externalProducts;
 
@@ -379,28 +364,17 @@ export default function BookGenreFlashDeals({
         ? Math.round(((product.price - product.discount_price) / product.price) * 100)
         : 0;
 
-      // Add book-specific fields if they don't exist
-      if (!product.genre) {
-        product.genre = product.category || 'General';
-      }
-      if (!product.author) {
-        product.author = 'Unknown Author';
-      }
-
       return {
         ...product,
         discountPercentage,
-        image: product.product_images?.[0]?.src || "https://placehold.co/300x300?text=Book+Cover"
+        image: product.product_images?.[0]?.src || "https://placehold.co/300x300?text=No+Image"
       };
     });
 
     // Apply filters only if showFilters is true
     if (showFilters) {
-      if (selectedFilters.genre && !isAllOption(selectedFilters.genre)) {
-        products = products.filter(p => 
-          p.genre?.toLowerCase().includes(selectedFilters.genre.toLowerCase().replace(' ', '')) ||
-          p.category?.toLowerCase().includes(selectedFilters.genre.toLowerCase())
-        );
+      if (selectedFilters.category && !isAllOption(selectedFilters.category)) {
+        products = products.filter(p => p.category === selectedFilters.category);
       }
 
       if (selectedFilters.price && !isAllOption(selectedFilters.price)) {
@@ -408,9 +382,9 @@ export default function BookGenreFlashDeals({
           const price = p.discount_price || p.price;
           switch (selectedFilters.price) {
             case 'Under $10': return price < 10;
-            case '$10-$20': return price >= 10 && price <= 20;
-            case '$20-$30': return price > 20 && price <= 30;
-            case 'Over $30': return price > 30;
+            case '$10-$25': return price >= 10 && price <= 25;
+            case '$25-$50': return price > 25 && price <= 50;
+            case 'Over $50': return price > 50;
             default: return true;
           }
         });
@@ -420,27 +394,28 @@ export default function BookGenreFlashDeals({
         products = products.filter(p => {
           switch (selectedFilters.availability) {
             case 'In Stock': return (p.inventory ?? 0) > 0;
-            case 'Pre-order': return p.status?.toLowerCase() === 'pre-order';
-            case 'Limited Stock': return (p.inventory ?? 0) > 0 && (p.inventory ?? 0) <= 5;
+            case 'Out of Stock': return (p.inventory ?? 0) === 0;
+            case 'Low Stock': return (p.inventory ?? 0) > 0 && (p.inventory ?? 0) <= 10;
             default: return true;
           }
         });
       }
 
-      if (selectedFilters.rating && !isAllOption(selectedFilters.rating)) {
+      if (selectedFilters.discount && !isAllOption(selectedFilters.discount)) {
         products = products.filter(p => {
-          const rating = p.rating || 0;
-          switch (selectedFilters.rating) {
-            case '4+ Stars': return rating >= 4;
-            case '3+ Stars': return rating >= 3;
-            case 'Bestsellers': return p.is_top_selling === true;
+          const discountPercentage = p.discount_price
+            ? Math.round(((p.price - p.discount_price) / p.price) * 100)
+            : 0;
+          switch (selectedFilters.discount) {
+            case 'On Sale': return discountPercentage > 0;
+            case 'No Discount': return discountPercentage === 0;
             default: return true;
           }
         });
       }
     }
 
-    console.log('✅ Processed books count:', products.length);
+    console.log('✅ Processed products count:', products.length);
     return products;
   }, [allProducts, selectedFilters, showFilters]);
 
@@ -469,32 +444,9 @@ export default function BookGenreFlashDeals({
 
   return (
     <div className={`w-full bg-white relative ${className}`}>
-      {/* Section Header */}
-      {showSectionHeader && (
-        <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50">
-          <div className="flex items-center gap-3">
-            {icon && <div className="p-2 bg-white rounded-lg shadow-sm">
-              {React.createElement(icon, { className: "w-5 h-5 text-blue-600" })}
-            </div>}
-            <div>
-              <h3 className="font-bold text-gray-900">{title}</h3>
-              <p className="text-sm text-gray-600">{subtitle}</p>
-            </div>
-          </div>
-          {showCountdown && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg shadow-sm">
-              <Timer className="w-4 h-4 text-red-500" />
-              <span className="font-mono text-sm font-bold text-gray-900">
-                {formattedCountdown}
-              </span>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Filter Bar Section - Conditionally rendered */}
       {showFilters && (
-        <div className="px-2 py-3">
+        <div className="-mx-2">
           <ProductFilterBar
             filterCategories={filterCategories}
             selectedFilters={selectedFilters}
@@ -502,32 +454,17 @@ export default function BookGenreFlashDeals({
             onFilterClear={handleFilterClear}
             onClearAll={handleClearAll}
             onFilterButtonClick={handleFilterButtonClick}
-            variant={filterVariant}
           />
         </div>
       )}
 
-      {/* Summary Stats */}
-      {showSummary && summaryMode === 'products' && processedProducts.length > 0 && (
-        <div className="px-4 py-3 bg-gray-50">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">Found {processedProducts.length} books</span>
-            <div className="flex items-center gap-4">
-              <span className="text-green-600">{summaryStats.inStock} in stock</span>
-              <span className="text-orange-600">{summaryStats.onDiscount} on sale</span>
-              <span className="text-blue-600">{summaryStats.categories} genres</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Books Grid */}
-      <div className="px-1.5 pt-1.5 pb-20">
+      {/* Products Grid */}
+      <div className="px-1.5 pt-1.5">
         {isLoading && !externalProducts ? (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             {[1, 2, 3, 4, 5, 6].map((_, index) => (
               <div key={index} className="bg-white overflow-hidden">
-                <div className="aspect-[3/4] bg-gray-100 animate-pulse rounded-lg"></div>
+                <div className="aspect-square bg-gray-100 animate-pulse rounded-lg"></div>
                 <div className="p-3 space-y-2">
                   <div className="h-4 w-3/4 bg-gray-100 animate-pulse"></div>
                   <div className="h-3 w-1/2 bg-gray-100 animate-pulse"></div>
@@ -538,48 +475,61 @@ export default function BookGenreFlashDeals({
           </div>
         ) : processedProducts.length > 0 ? (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-1.5">
               {processedProducts.slice(0, displayCount).map((product) => {
                 const productExpiryTime = expiryTimes[product.id];
                 const hasExpiryTimer = showExpiryTimer && productExpiryTime && 
                   (productExpiryTime.days > 0 || productExpiryTime.hours > 0 || productExpiryTime.minutes > 0 || productExpiryTime.seconds > 0);
 
                 return (
-                  <div key={product.id} className="bg-white overflow-hidden rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300">
+                  <div key={product.id} className="bg-white overflow-hidden">
                     <Link
                       to={`/product/${product.id}`}
                       onClick={() => trackProductView(product.id)}
                       className="block"
                     >
-                      <div className="relative aspect-[3/4] overflow-hidden bg-gradient-to-b from-gray-50 to-gray-100 rounded-xl">
+                      <div className="relative aspect-square overflow-hidden bg-gray-50 rounded-lg">
                         <img
                           src={product.image}
                           alt={product.name}
-                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                          className="w-full h-full object-cover"
                           loading="lazy"
                           style={{
                             objectFit: 'cover',
-                            aspectRatio: '3/4'
+                            aspectRatio: '1/1'
                           }}
                           onError={(e) => {
-                            e.currentTarget.src = "https://placehold.co/300x400?text=Book+Cover";
+                            e.currentTarget.src = "https://placehold.co/300x300?text=No+Image";
                           }}
                         />
 
-                        {/* Book Badge - Top Left */}
-                        <div className="absolute top-2 left-2 z-20">
-                          <Badge className="bg-blue-500 text-white text-[10px] px-1.5 py-0.5 font-semibold">
-                            Book
-                          </Badge>
-                        </div>
-
-                        {/* Top Selling Badge */}
+                        {/* Top Selling Badge - Top Left */}
                         {product.is_top_selling && (
-                          <div className="absolute top-2 right-2 z-20">
+                          <div className="absolute top-2 left-2 z-20">
                             <Badge className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 font-semibold flex items-center gap-0.5">
                               <TrendingUp className="w-2.5 h-2.5" />
-                              Bestseller
+                              Top Selling
                             </Badge>
+                          </div>
+                        )}
+
+                        {/* Status Badge - Top Left */}
+                        {showStatusBadge && product.status && (
+                          <div className="absolute top-2 left-2 z-20">
+                            <Badge
+                              variant="secondary"
+                              className={`${getStatusColor(product.status)} text-xs`}
+                            >
+                              {product.status}
+                            </Badge>
+                          </div>
+                        )}
+
+                        {/* Views with Eye Icon - Top Right */}
+                        {showMarketingMetrics && product.views !== undefined && (
+                          <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/80 text-white text-xs px-2 py-1 rounded-md">
+                            <Eye className="w-3 h-3" />
+                            <span className="font-medium">{formatNumber(product.views)}</span>
                           </div>
                         )}
 
@@ -613,31 +563,45 @@ export default function BookGenreFlashDeals({
                       </div>
                     </Link>
 
-                    <div className="p-3">
-                      {/* Genre tag */}
-                      <div className="mb-2">
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-700 border-blue-200">
-                          {product.genre || 'General'}
-                        </Badge>
+                    <div className="p-1.5">
+                      {/* Product name with inline Choice badge */}
+                      <div className="flex flex-wrap items-center gap-1 mb-1">
+                        {/* Product name with inline Choice badge */}
+                        <h4 className="text-xs font-medium line-clamp-2 text-gray-900 leading-tight">
+                          {product.is_choice && (
+                            <span className="inline-flex items-center mr-1.5 align-middle">
+                              {/* Choice badge - inline as a word */}
+                              <div className="relative inline-flex items-center">
+                                <div className="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 
+                                              relative px-1.5 py-[2px] rounded-[3px] border border-amber-400/50 
+                                              shadow-[0_1px_2px_rgba(0,0,0,0.2),inset_0_1px_1px_rgba(255,255,255,0.4)] 
+                                              overflow-hidden inline-flex items-center h-[16px]">
+                                  {/* Shiny glass effect overlay */}
+                                  <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/50 to-transparent"></div>
+
+                                  {/* Subtle inner shadow for depth */}
+                                  <div className="absolute inset-0 rounded-[3px] border border-white/30"></div>
+
+                                  {/* Text with slight text shadow for readability */}
+                                  <span className="relative text-[9px] font-bold text-white tracking-wide 
+                                                  drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)] whitespace-nowrap leading-none px-0.5">
+                                    Choice
+                                  </span>
+                                </div>
+                              </div>
+                            </span>
+                          )}
+                          <span className="align-middle">{product.name}</span>
+                        </h4>
                       </div>
 
-                      {/* Book title */}
-                      <h4 className="text-sm font-semibold line-clamp-2 text-gray-900 leading-tight mb-1.5">
-                        {product.name}
-                      </h4>
-
-                      {/* Author */}
-                      <p className="text-xs text-gray-600 mb-2 line-clamp-1">
-                        by {product.author || 'Unknown Author'}
-                      </p>
-
-                      {/* Custom price display */}
+                      {/* Custom price display - Only show if price exists and > 0 */}
                       {product.price !== undefined && product.price !== null && product.price > 0 && (
                         <div className="leading-none">
-                          {/* Current price */}
+                          {/* Current price - Use discount if valid, otherwise regular price */}
                           <div className="flex items-center gap-2 leading-none">
                             <span className="font-bold text-orange-500 text-base">
-                              ${(
+                              G {(
                                 product.discount_price !== undefined && 
                                 product.discount_price !== null && 
                                 product.discount_price > 0 ? 
@@ -645,69 +609,60 @@ export default function BookGenreFlashDeals({
                                 product.price
                               ).toFixed(2)}
                             </span>
+                            <span className="text-gray-500 text-xs">/ unit</span>
                           </div>
 
-                          {/* Barred original price if discounted */}
+                          {/* Barred original price if discounted and valid */}
                           {product.discount_price !== undefined && 
                            product.discount_price !== null && 
                            product.discount_price > 0 && 
                            product.discount_price < product.price && (
                             <div className="flex flex-col gap-0.5 mt-0.5">
                               <span className="text-gray-400 line-through text-sm">
-                                ${product.price.toFixed(2)}
+                                G {product.price.toFixed(2)}
                               </span>
                               <span className="text-green-600 font-medium text-xs bg-green-50 px-1.5 py-0.5 rounded w-fit whitespace-nowrap">
-                                Save ${(product.price - product.discount_price).toFixed(2)}
+                                Save G {(product.price - product.discount_price).toFixed(2)}
                               </span>
                             </div>
                           )}
                         </div>
                       )}
 
-                      {/* Rating */}
-                      {product.rating && (
-                        <div className="flex items-center gap-1 mt-2">
-                          <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                          <span className="text-xs text-gray-700">{product.rating.toFixed(1)}</span>
-                          {product.total_orders && (
-                            <span className="text-xs text-gray-500">({product.total_orders})</span>
-                          )}
-                        </div>
-                      )}
+                      {/* REMOVED: Shipping Info */}
+                      {/* REMOVED: Rating & Orders */}
+                      {/* REMOVED: Product info section */}
                     </div>
                   </div>
                 );
               })}
             </div>
 
-            {/* Show "Load More" indicator */}
+            {/* Show "Load More" indicator if there are more products */}
             {displayCount < processedProducts.length && (
-              <div className="text-center py-6">
+              <div className="text-center py-4">
                 <div className="text-sm text-gray-500">
-                  Scroll down to discover more books...
+                  Scroll down to load more products...
                 </div>
               </div>
             )}
           </div>
         ) : (
           <div className="text-center py-12 text-gray-500">
-            <BookOpen className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-            <div className="text-lg font-medium">No books available</div>
-            <div className="text-sm mt-1">Check back later for new book deals</div>
+            <div className="text-lg font-medium">No products available</div>
+            <div className="text-sm mt-1">Check back later for new deals</div>
           </div>
         )}
       </div>
 
-      {/* Floating Add Book Button (for sellers) */}
-      {onAddProduct && (
-        <button
-          onClick={handleAddProduct}
-          className="fixed bottom-20 right-4 z-50 bg-white text-blue-600 rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 border border-blue-200 backdrop-blur-sm"
-          aria-label="Add Book"
-        >
-          <Plus className="w-6 h-6" />
-        </button>
-      )}
+      {/* Floating Add Product Button */}
+      <button
+        onClick={handleAddProduct}
+        className="fixed bottom-20 right-4 z-50 bg-white text-gray-900 rounded-full p-3 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 active:scale-95 border border-gray-200 backdrop-blur-sm"
+        aria-label="Add Product"
+      >
+        <Plus className="w-6 h-6" />
+      </button>
     </div>
   );
 }
