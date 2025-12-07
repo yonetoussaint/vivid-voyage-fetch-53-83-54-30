@@ -8,6 +8,10 @@ import {
   Heart,
   Bell,
   HelpCircle,
+  Crown,
+  Zap,
+  TrendingUp,
+  ChevronRight
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -30,28 +34,65 @@ interface Category {
   orderIndex?: number;
 }
 
-// Category shortcut component
+// Promo Card Component
+const SellerPromoCard = () => {
+  const navigate = useNavigate();
+  
+  const handleBecomeSeller = () => {
+    navigate('/become-seller');
+  };
+
+  return (
+    <div 
+      className="flex flex-col w-20 h-24 flex-shrink-0 cursor-pointer bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg p-2.5 active:opacity-90 transition-all touch-manipulation shadow-sm"
+      onClick={handleBecomeSeller}
+    >
+      <div className="flex items-center justify-between mb-1.5">
+        <div className="w-7 h-7 bg-white/20 rounded flex items-center justify-center">
+          <Crown className="w-4 h-4 text-white" />
+        </div>
+        <Zap className="w-3 h-3 text-white/80" />
+      </div>
+      
+      <div className="flex-grow">
+        <div className="text-white text-xs font-semibold leading-tight mb-1">
+          Become a Seller
+        </div>
+        <div className="text-white/90 text-[10px] leading-tight">
+          Start earning today
+        </div>
+      </div>
+      
+      <div className="flex items-center justify-between mt-1">
+        <TrendingUp className="w-3 h-3 text-white/70" />
+        <ChevronRight className="w-3 h-3 text-white" />
+      </div>
+    </div>
+  );
+};
+
+// Category shortcut component - reduced size and more square
 const CategoryShortcut = ({ category, onCategorySelect }: { category: Category; onCategorySelect?: (category: string) => void }) => {
   return (
     <div 
-      className="flex flex-col items-center w-16 flex-shrink-0 active:opacity-80 transition-opacity touch-manipulation cursor-pointer"
+      className="flex flex-col items-center w-14 flex-shrink-0 active:opacity-80 transition-opacity touch-manipulation cursor-pointer"
       onClick={() => onCategorySelect?.(category.name)}
     >
-      <div className="relative mb-2">
-        <div className={`w-14 h-14 rounded-xl ${category.bgColor} flex items-center justify-center`}>
+      <div className="relative mb-1.5">
+        <div className={`w-12 h-12 rounded-lg ${category.bgColor} flex items-center justify-center border border-gray-200`}>
           {React.createElement(category.icon, { 
-            className: `w-7 h-7 ${category.iconBg}` 
+            className: `w-5 h-5 ${category.iconBg}` 
           })}
         </div>
 
         {category.count !== undefined && category.count > 0 && (
-          <div className="absolute -top-2 -right-2 min-w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-medium px-1 border-2 border-white shadow-sm z-10">
+          <div className="absolute -top-1.5 -right-1.5 min-w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] font-medium px-1 border border-white shadow-sm z-10">
             {category.count > 99 ? '99+' : category.count}
           </div>
         )}
       </div>
 
-      <span className="text-xs font-normal text-gray-800 text-center w-full leading-tight px-1 truncate">
+      <span className="text-[11px] font-normal text-gray-800 text-center w-full leading-tight px-0.5 truncate">
         {category.name}
       </span>
     </div>
@@ -66,13 +107,13 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
   const { user } = useAuth();
   const [showGridView, setShowGridView] = useState(false);
 
-  // Default categories structure
+  // Default categories structure - All items included, no "More" button
   const defaultCategories: Category[] = [
     { 
       id: 'explore', 
       name: 'Explore', 
       icon: Sparkles,
-      bgColor: 'bg-pink-100', 
+      bgColor: 'bg-pink-50', 
       iconBg: 'text-pink-500',
       labelBg: 'bg-pink-600/90',
       isSpecial: true,
@@ -83,7 +124,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       id: 'trending', 
       name: 'My Store', 
       icon: Store,
-      bgColor: 'bg-purple-100', 
+      bgColor: 'bg-purple-50', 
       iconBg: 'text-purple-500',
       labelBg: 'bg-purple-600/90',
       isSpecial: true,
@@ -94,7 +135,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       id: 'wishlist', 
       name: 'Wishlist', 
       icon: Heart,
-      bgColor: 'bg-teal-100', 
+      bgColor: 'bg-teal-50', 
       iconBg: 'text-teal-500',
       labelBg: 'bg-teal-600/90',
       isSpecial: true,
@@ -105,7 +146,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       id: 'notifications', 
       name: 'Notifications', 
       icon: Bell,
-      bgColor: 'bg-blue-100', 
+      bgColor: 'bg-blue-50', 
       iconBg: 'text-blue-500',
       labelBg: 'bg-blue-600/90',
       isSpecial: true,
@@ -116,7 +157,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       id: 'help', 
       name: 'Help', 
       icon: HelpCircle,
-      bgColor: 'bg-gray-100', 
+      bgColor: 'bg-gray-50', 
       iconBg: 'text-gray-500',
       labelBg: 'bg-gray-600/90',
       isSpecial: true,
@@ -318,144 +359,27 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
   }
 
   const displayedCategories = [...categories];
-  const firstRowCategories = showGridView ? displayedCategories.slice(0, 5) : displayedCategories.slice(0, 4);
-  const remainingCategories = showGridView ? displayedCategories.slice(5) : displayedCategories.slice(4);
-  const remainingCount = displayedCategories.slice(4).length;
 
   return (
     <div className="w-full bg-white overflow-visible">
       <div className="bg-white overflow-visible">
-        {/* Horizontal row with first 4 or 5 categories + expand/collapse button - aligned with 5-column grid */}
+        {/* Horizontal row with seller promo card + all categories */}
         <div 
           ref={rowRef}
           className="px-2 overflow-visible"
         >
-          <div className="grid grid-cols-5 gap-4">
-            {firstRowCategories.map(category => (
-              <div 
-                key={category.id}
-                className="flex justify-center overflow-visible py-2"
-              >
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            {/* Seller Promo Card - First element */}
+            <SellerPromoCard />
+            
+            {/* All categories in a row - including the last element */}
+            {displayedCategories.map(category => (
+              <div key={category.id} className="overflow-visible py-1">
                 <CategoryShortcut category={category} onCategorySelect={handleCategorySelect} />
               </div>
             ))}
-
-            {/* Show More button for remaining categories */}
-            {!showGridView && remainingCategories.length > 0 && (
-              <div className="flex justify-center overflow-visible py-2">
-                <div 
-                  className="flex flex-col items-center w-16 flex-shrink-0 active:opacity-80 transition-opacity touch-manipulation cursor-pointer relative"
-                  onClick={() => setShowGridView(true)}
-                >
-                  <div className="relative mb-2 w-14 h-14 bg-gray-100 rounded-xl overflow-hidden">
-                    <div className="grid grid-cols-2 grid-rows-2 w-full h-full gap-px">
-                      {remainingCategories[0] && (
-                        <div className={`${remainingCategories[0].bgColor} flex items-center justify-center opacity-70`}>
-                          {React.createElement(remainingCategories[0].icon, { 
-                            className: `w-4 h-4 ${remainingCategories[0].iconBg}` 
-                          })}
-                        </div>
-                      )}
-                      {remainingCategories[1] && (
-                        <div className={`${remainingCategories[1].bgColor} flex items-center justify-center opacity-70`}>
-                          {React.createElement(remainingCategories[1].icon, { 
-                            className: `w-4 h-4 ${remainingCategories[1].iconBg}` 
-                          })}
-                        </div>
-                      )}
-                      {remainingCategories[2] && (
-                        <div className={`${remainingCategories[2].bgColor} flex items-center justify-center opacity-70`}>
-                          {React.createElement(remainingCategories[2].icon, { 
-                            className: `w-4 h-4 ${remainingCategories[2].iconBg}` 
-                          })}
-                        </div>
-                      )}
-                      {remainingCategories[3] && (
-                        <div className={`${remainingCategories[3].bgColor} flex items-center justify-center opacity-70`}>
-                          {React.createElement(remainingCategories[3].icon, { 
-                            className: `w-4 h-4 ${remainingCategories[3].iconBg}` 
-                          })}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                      <span className="text-lg font-bold text-white drop-shadow-md">
-                        +{remainingCount}
-                      </span>
-                    </div>
-
-                    {remainingCategories[0]?.count !== undefined && remainingCategories[0].count > 0 && (
-                      <div className="absolute -top-2 -right-2 min-w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-medium px-1 border-2 border-white shadow-sm z-10">
-                        {remainingCategories[0].count > 99 ? '99+' : remainingCategories[0].count}
-                      </div>
-                    )}
-                  </div>
-
-                  <span className="text-xs font-normal text-gray-800 text-center w-full leading-tight px-1 truncate">
-                    More
-                  </span>
-                </div>
-              </div>
-            )}
           </div>
         </div>
-
-        {/* Grid view for remaining categories */}
-        {showGridView && (
-          <div className="px-2 pb-4 pt-2 bg-white">
-            <div className="grid grid-cols-5 gap-4">
-              {remainingCategories.map((category) => (
-                <div 
-                  key={category.id}
-                  className="flex flex-col items-center active:opacity-80 transition-opacity touch-manipulation cursor-pointer"
-                  onClick={() => handleCategorySelect(category.name)}
-                >
-                  <div className="relative mb-2">
-                    <div className={`w-14 h-14 rounded-xl ${category.bgColor} flex items-center justify-center`}>
-                      {React.createElement(category.icon, { 
-                        className: `w-7 h-7 ${category.iconBg}` 
-                      })}
-                    </div>
-
-                    {category.count !== undefined && category.count > 0 && (
-                      <div className="absolute -top-2 -right-2 min-w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-medium px-1 border-2 border-white shadow-sm z-10">
-                        {category.count > 99 ? '99+' : category.count}
-                      </div>
-                    )}
-                  </div>
-
-                  <span className="text-xs font-normal text-gray-800 text-center w-full leading-tight px-1 truncate">
-                    {category.name}
-                  </span>
-                </div>
-              ))}
-
-              {/* Hide button */}
-              <div 
-                className="flex flex-col items-center active:opacity-80 transition-opacity touch-manipulation cursor-pointer"
-                onClick={() => setShowGridView(false)}
-              >
-                <div className="relative mb-2">
-                  <div className="w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center">
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      className="w-7 h-7 text-gray-500" 
-                      fill="none" 
-                      viewBox="0 0 24 24" 
-                      stroke="currentColor"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                    </svg>
-                  </div>
-                </div>
-                <span className="text-xs font-normal text-gray-800 text-center w-full leading-tight px-1 truncate">
-                  Hide
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
