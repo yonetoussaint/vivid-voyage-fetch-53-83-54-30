@@ -330,7 +330,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
         {/* Horizontal row with all 5 categories in a single row */}
         <div 
           ref={rowRef}
-          className="px-3 overflow-visible"
+          className="px-2 overflow-visible"
         >
           <div className="grid grid-cols-5 gap-2">
             {firstRowCategories.map(category => (
@@ -345,7 +345,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
         </div>
 
         {/* Seller Promotion Banner */}
-        <div className="mt-2 mx-3 mb-1 bg-gradient-to-r from-orange-500 to-pink-500 rounded-lg overflow-hidden shadow-sm border border-orange-300">
+        <div className="mt-2 mx-2 mb-1 bg-gradient-to-r from-orange-500 to-pink-500 rounded-lg overflow-hidden shadow-sm border border-orange-300">
           <div className="p-2 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
