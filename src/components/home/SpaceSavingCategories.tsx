@@ -8,8 +8,9 @@ import {
   Heart,
   Bell,
   HelpCircle,
-  Crown,
   ArrowRight,
+  TrendingUp,
+  DollarSign
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -39,58 +40,23 @@ const CategoryShortcut = ({ category, onCategorySelect }: { category: Category; 
       className="flex flex-col items-center w-14 flex-shrink-0 active:opacity-80 transition-opacity touch-manipulation cursor-pointer"
       onClick={() => onCategorySelect?.(category.name)}
     >
-      <div className="relative mb-1">
-        <div className={`w-12 h-12 rounded-lg ${category.bgColor} flex items-center justify-center`}>
+      <div className="relative mb-1.5">
+        <div className={`w-12 h-12 rounded-lg ${category.bgColor} flex items-center justify-center border border-gray-200`}>
           {React.createElement(category.icon, { 
             className: `w-5 h-5 ${category.iconBg}` 
           })}
         </div>
 
         {category.count !== undefined && category.count > 0 && (
-          <div className="absolute -top-1 -right-1 min-w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-medium px-1 border border-white shadow-sm z-10">
+          <div className="absolute -top-1.5 -right-1.5 min-w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] font-medium px-0.5 border border-white shadow-sm z-10">
             {category.count > 99 ? '99+' : category.count}
           </div>
         )}
       </div>
 
-      <span className="text-[10px] font-normal text-gray-800 text-center w-full leading-tight px-0.5 truncate">
+      <span className="text-[11px] font-normal text-gray-800 text-center w-full leading-tight px-0.5 truncate">
         {category.name}
       </span>
-    </div>
-  );
-};
-
-// Promo card component for sellers
-const SellerPromoCard = () => {
-  const navigate = useNavigate();
-  
-  return (
-    <div 
-      className="w-40 h-24 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg border border-purple-100 p-3 flex flex-col justify-between active:opacity-90 transition-opacity touch-manipulation cursor-pointer shadow-sm"
-      onClick={() => navigate('/become-seller')}
-    >
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-md flex items-center justify-center">
-            <Crown className="w-4 h-4 text-white" />
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold text-gray-900 leading-tight">Become a Seller</h3>
-            <p className="text-xs text-gray-600 mt-0.5">Start earning today</p>
-          </div>
-        </div>
-        <ArrowRight className="w-4 h-4 text-purple-500 flex-shrink-0" />
-      </div>
-      
-      <div className="flex items-center justify-between mt-2">
-        <div className="flex items-center gap-1">
-          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-          <span className="text-xs text-gray-700 font-medium">0% commission</span>
-        </div>
-        <span className="text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-0.5 rounded-full font-medium">
-          Join now
-        </span>
-      </div>
     </div>
   );
 };
@@ -101,6 +67,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
   const rowRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [showAllCategories, setShowAllCategories] = useState(false);
 
   // Default categories structure
   const defaultCategories: Category[] = [
@@ -139,7 +106,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
     },
     { 
       id: 'notifications', 
-      name: 'Notifications', 
+      name: 'Alerts', 
       icon: Bell,
       bgColor: 'bg-blue-100', 
       iconBg: 'text-blue-500',
@@ -340,7 +307,7 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
       navigate('/seller-dashboard');
     } else if (categoryName === 'Wishlist') {
       navigate('/wishlist');
-    } else if (categoryName === 'Notifications') {
+    } else if (categoryName === 'Alerts') {
       navigate('/notifications');
     } else if (categoryName === 'Help') {
       navigate('/help');
@@ -353,43 +320,97 @@ const SpaceSavingCategories: React.FC<SpaceSavingCategoriesProps> = ({
     return null;
   }
 
-  // Always show all categories in a single scrollable row
-  const displayedCategories = [...categories];
+  const displayedCategories = categories;
+  const firstRowCategories = displayedCategories.slice(0, 5);
+  const remainingCategories = displayedCategories.slice(5);
 
   return (
     <div className="w-full bg-white overflow-visible">
       <div className="bg-white overflow-visible">
-        {/* Horizontal scrollable row with promo card + categories */}
+        {/* Horizontal row with all 5 categories in a single row */}
         <div 
           ref={rowRef}
-          className="flex overflow-x-auto overflow-y-hidden pb-3 px-4 gap-4 scrollbar-hide"
-          style={{
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-          }}
+          className="px-3 overflow-visible"
         >
-          {/* Promo card as first element */}
-          <div className="flex-shrink-0">
-            <SellerPromoCard />
+          <div className="grid grid-cols-5 gap-2">
+            {firstRowCategories.map(category => (
+              <div 
+                key={category.id}
+                className="flex justify-center overflow-visible py-1"
+              >
+                <CategoryShortcut category={category} onCategorySelect={handleCategorySelect} />
+              </div>
+            ))}
           </div>
-
-          {/* All categories displayed in the same row */}
-          {displayedCategories.map(category => (
-            <div 
-              key={category.id}
-              className="flex-shrink-0"
-            >
-              <CategoryShortcut category={category} onCategorySelect={handleCategorySelect} />
-            </div>
-          ))}
         </div>
 
-        {/* Hide scrollbar for WebKit browsers */}
-        <style jsx>{`
-          .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-          }
-        `}</style>
+        {/* Seller Promotion Banner */}
+        <div className="mt-2 mx-3 mb-1 bg-gradient-to-r from-orange-500 to-pink-500 rounded-lg overflow-hidden shadow-sm border border-orange-300">
+          <div className="p-2 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                <DollarSign className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-white">Become a Seller</p>
+                <p className="text-[10px] text-white/90">Start earning in just 5 minutes</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => navigate('/seller-registration')}
+              className="flex items-center gap-1 bg-white text-orange-600 text-xs font-semibold py-1.5 px-3 rounded-lg hover:bg-gray-50 active:scale-95 transition-all"
+            >
+              <span>Join Now</span>
+              <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
+          
+          {/* Stats Bar */}
+          <div className="bg-black/10 px-2 py-1 flex items-center gap-4">
+            <div className="flex items-center gap-1">
+              <TrendingUp className="w-3 h-3 text-white/80" />
+              <span className="text-[10px] text-white/90 font-medium">10K+ Sellers</span>
+            </div>
+            <div className="h-3 w-px bg-white/30"></div>
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 rounded-full bg-green-300"></div>
+              <span className="text-[10px] text-white/90 font-medium">₹50K+ Avg. Monthly</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Show remaining categories if any (though we only have 5) */}
+        {showAllCategories && remainingCategories.length > 0 && (
+          <div className="px-3 pb-3 pt-2 bg-white border-t border-gray-100">
+            <div className="grid grid-cols-5 gap-2">
+              {remainingCategories.map((category) => (
+                <div 
+                  key={category.id}
+                  className="flex flex-col items-center active:opacity-80 transition-opacity touch-manipulation cursor-pointer"
+                  onClick={() => handleCategorySelect(category.name)}
+                >
+                  <div className="relative mb-1.5">
+                    <div className={`w-12 h-12 rounded-lg ${category.bgColor} flex items-center justify-center border border-gray-200`}>
+                      {React.createElement(category.icon, { 
+                        className: `w-5 h-5 ${category.iconBg}` 
+                      })}
+                    </div>
+
+                    {category.count !== undefined && category.count > 0 && (
+                      <div className="absolute -top-1.5 -right-1.5 min-w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] font-medium px-0.5 border border-white shadow-sm z-10">
+                        {category.count > 99 ? '99+' : category.count}
+                      </div>
+                    )}
+                  </div>
+
+                  <span className="text-[11px] font-normal text-gray-800 text-center w-full leading-tight px-0.5 truncate">
+                    {category.name}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
