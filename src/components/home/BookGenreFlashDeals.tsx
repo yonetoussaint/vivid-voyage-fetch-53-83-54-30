@@ -448,7 +448,7 @@ filterVariant = 'cards', // Default to cards for BookGenreFlashDeals
     <div className={`w-full bg-white relative ${className}`}>
       {/* Filter Bar Section - Conditionally rendered */}
       {showFilters && (
-        <div className="-mx-2">
+        <div className="">
            <ProductFilterBar
             filterCategories={filterCategories}
             selectedFilters={selectedFilters}
@@ -457,7 +457,7 @@ filterVariant = 'cards', // Default to cards for BookGenreFlashDeals
             onClearAll={handleClearAll}
             onFilterButtonClick={handleFilterButtonClick}
             variant={filterVariant} // Use the prop
-            className="mt-2 mb-4"
+            className="mt-2 mb-2"
           />
         </div>
       )}
