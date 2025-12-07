@@ -1,3 +1,6 @@
+comment out the vendor products carrousel component it's not available yet
+
+
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
@@ -8,7 +11,7 @@ import SimpleFlashDeals from "@/components/home/SimpleFlashDeals";
 import SpaceSavingCategories from "@/components/home/SpaceSavingCategories";
 import Footer from "@/components/Footer";
 import TopBrands from "@/components/home/TopBrands";
-import VendorProductCarousel from "@/components/home/VendorProductCarousel";
+// import VendorProductCarousel from "@/components/home/VendorProductCarousel"; // Commented out - not available yet
 import BenefitsBanner from "@/components/home/BenefitsBanner";
 import TopVendorsCompact from "@/components/home/TopVendorsCompact";
 import MobileOptimizedReels from "@/components/home/MobileOptimizedReels";
@@ -261,13 +264,17 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       );
     }
 
-    return (
-      <VendorProductCarousel
-        key={`vendor-${index}`}
-        title="Featured Products"
-        products={productSlice}
-      />
-    );
+    // Commented out VendorProductCarousel since it's not available yet
+    // return (
+    //   <VendorProductCarousel
+    //     key={`vendor-${index}`}
+    //     title="Featured Products"
+    //     products={productSlice}
+    //   />
+    // );
+
+    // Return a placeholder or null instead
+    return null;
   };
 
   // Define all components to render - simplified array with only available components
