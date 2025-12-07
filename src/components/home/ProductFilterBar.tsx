@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { ChevronDown, Star, CheckCircle, Image, Calendar, Filter, X } from 'lucide-react';
+import { ChevronDown, Star, CheckCircle, Image, Calendar, Filter, X, Tag, Truck, DollarSign, Package } from 'lucide-react';
 
 interface ProductFilterBarProps {
   filterCategories?: Array<{
@@ -13,6 +13,8 @@ interface ProductFilterBarProps {
   onClearAll?: () => void;
   onFilterButtonClick?: (filterId: string) => void;
   isFilterDisabled?: (filterId: string) => boolean;
+  variant?: 'default' | 'cards'; // New variant prop
+  className?: string;
 }
 
 const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
@@ -22,7 +24,9 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
   onFilterClear = () => {},
   onClearAll = () => {},
   onFilterButtonClick = () => {},
-  isFilterDisabled
+  isFilterDisabled,
+  variant = 'default', // Default to original design
+  className = ''
 }) => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -56,6 +60,16 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
         return <Calendar className="w-4 h-4" />;
       case 'sort':
         return <Filter className="w-4 h-4" />;
+      case 'category':
+        return <Tag className="w-4 h-4" />;
+      case 'price':
+        return <DollarSign className="w-4 h-4" />;
+      case 'shipping':
+        return <Truck className="w-4 h-4" />;
+      case 'availability':
+        return <Package className="w-4 h-4" />;
+      case 'discount':
+        return <Tag className="w-4 h-4" />;
       default:
         return null;
     }
@@ -145,8 +159,95 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
     }
   };
 
-  return (
-    <div className="product-filter-bar w-full bg-white relative">
+  // ========== RENDER CARDS VARIANT ==========
+  const renderCardsVariant = () => (
+    <div className={`product-filter-bar w-full bg-white relative ${className}`}>
+      {/* Cards container */}
+      <div 
+        ref={scrollContainerRef}
+        className="overflow-x-auto scrollbar-hide snap-x snap-mandatory scroll-smooth px-2 py-1"
+        onScroll={handleScroll}
+        style={{ 
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none'
+        }}
+      >
+        <div className="flex gap-2 min-w-max py-1">
+          {filterCategories.map((filter, index) => (
+            <div 
+              key={filter.id} 
+              className="relative flex"
+              data-filter-id={filter.id}
+            >
+              {/* Filter button as card */}
+              <button
+                type="button"
+                onClick={() => handleDropdownToggle(filter.id)}
+                disabled={isFilterDisabled && isFilterDisabled(filter.id)}
+                className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-all whitespace-nowrap rounded-lg border shadow-sm snap-start ${
+                  isFilterDisabled && isFilterDisabled(filter.id)
+                    ? 'text-gray-400 cursor-not-allowed bg-gray-50 border-gray-200'
+                    : hasActiveFilter(filter.id)
+                    ? 'text-orange-700 bg-orange-50 border-orange-200 shadow-orange-100 hover:shadow-orange-200'
+                    : 'text-gray-700 bg-white border-gray-200 hover:border-gray-300 hover:shadow-md'
+                }`}
+              >
+                {getFilterIcon(filter.id)}
+                <span className="truncate max-w-[100px]">
+                  {selectedFilters[filter.id] || filter.label}
+                </span>
+
+                {/* X icon for clearing active filter */}
+                {hasActiveFilter(filter.id) && (
+                  <X
+                    size={14}
+                    className="flex-shrink-0 text-gray-500 hover:text-gray-700 transition-colors ml-1"
+                    onClick={(e) => handleClearFilter(filter.id, e)}
+                  />
+                )}
+
+                <ChevronDown
+                  size={14}
+                  className={`transition-transform duration-200 flex-shrink-0 ${
+                    openDropdown === filter.id ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Options grid below cards */}
+      {openDropdown && (
+        <div className="bg-white border-t border-gray-100 p-4 mt-1 shadow-sm">
+          <div className="grid grid-cols-2 gap-2">
+            {filterCategories
+              .find(f => f.id === openDropdown)
+              ?.options.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => handleOptionSelect(openDropdown, option)}
+                  className={`px-4 py-2.5 text-sm text-left rounded-lg transition-all border ${
+                    selectedFilters[openDropdown] === option
+                      ? 'bg-orange-50 text-orange-700 font-medium border-orange-200 shadow-sm'
+                      : 'text-gray-700 hover:bg-gray-50 border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  {option}
+                </button>
+              ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  // ========== RENDER DEFAULT VARIANT ==========
+  const renderDefaultVariant = () => (
+    <div className={`product-filter-bar w-full bg-white relative ${className}`}>
       {/* Main filter bar */}
       <div className="border-b border-gray-200">
         <div 
@@ -189,7 +290,7 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
                     <span className="truncate">
                       {selectedFilters[filter.id] || filter.label}
                     </span>
-                    
+
                     {/* X icon for clearing active filter */}
                     {hasActiveFilter(filter.id) && (
                       <X
@@ -198,7 +299,7 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
                         onClick={(e) => handleClearFilter(filter.id, e)}
                       />
                     )}
-                    
+
                     <ChevronDown
                       size={14}
                       className={`transition-transform duration-200 flex-shrink-0 ${
@@ -238,6 +339,9 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
       )}
     </div>
   );
+
+  // Return the appropriate variant
+  return variant === 'cards' ? renderCardsVariant() : renderDefaultVariant();
 };
 
 export default ProductFilterBar;
