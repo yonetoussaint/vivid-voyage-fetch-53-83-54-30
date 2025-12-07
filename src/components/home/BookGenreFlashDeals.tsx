@@ -1,13 +1,11 @@
-import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Timer, Plus, ChevronRight, Package, Eye, Star, TrendingUp, Truck } from "lucide-react";
+import { Timer, Plus, ChevronRight, Package, Eye, Star, TrendingUp, Truck, ChevronDown, X, Tag, DollarSign, Package as PackageIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllProducts, trackProductView } from "@/integrations/supabase/products";
 import { useAuth } from "@/contexts/auth/AuthContext";
 import { useSellerByUserId } from "@/hooks/useSellerByUserId";
 import { supabase } from "@/integrations/supabase/client";
-import ProductFilterBar from "@/components/home/ProductFilterBar";
 import PriceInfo from "@/components/product/PriceInfo";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -47,7 +45,6 @@ interface GenreFlashDealsProps {
   className?: string;
   products?: Product[];
   sellerId?: string;
-filterVariant?: 'default' | 'cards';
   onAddProduct?: () => void;
   title?: string;
   subtitle?: string;
@@ -82,12 +79,111 @@ interface SummaryStats {
   categories: number;
 }
 
+// Inline FilterCard component - simplified for cards mode only
+const FilterCard: React.FC<{
+  filter: {
+    id: string;
+    label: string;
+    options: string[];
+  };
+  selectedFilters: Record<string, string>;
+  isFilterDisabled?: (filterId: string) => boolean;
+  isOpen: boolean;
+  onToggle: (filterId: string) => void;
+  onSelect: (filterId: string, option: string) => void;
+  onClear: (filterId: string) => void;
+}> = ({ filter, selectedFilters, isFilterDisabled, isOpen, onToggle, onSelect, onClear }) => {
+  const getFilterIcon = (filterId: string) => {
+    switch (filterId) {
+      case 'category':
+        return <Tag className="w-4 h-4" />;
+      case 'price':
+        return <DollarSign className="w-4 h-4" />;
+      case 'availability':
+        return <PackageIcon className="w-4 h-4" />;
+      case 'discount':
+        return <Tag className="w-4 h-4" />;
+      default:
+        return null;
+    }
+  };
+
+  const hasActiveFilter = (filterId: string) => {
+    const selected = selectedFilters[filterId];
+    return selected && !selected.toLowerCase().startsWith('all');
+  };
+
+  const handleClear = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onClear(filter.id);
+  };
+
+  return (
+    <div className="relative flex">
+      <button
+        type="button"
+        onClick={() => onToggle(filter.id)}
+        disabled={isFilterDisabled && isFilterDisabled(filter.id)}
+        className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-all whitespace-nowrap rounded-lg border shadow-sm ${
+          isFilterDisabled && isFilterDisabled(filter.id)
+            ? 'text-gray-400 cursor-not-allowed bg-gray-50 border-gray-200'
+            : hasActiveFilter(filter.id)
+            ? 'text-orange-700 bg-orange-50 border-orange-200 shadow-orange-100 hover:shadow-orange-200'
+            : 'text-gray-700 bg-white border-gray-200 hover:border-gray-300 hover:shadow-md'
+        }`}
+      >
+        {getFilterIcon(filter.id)}
+        <span className="truncate max-w-[100px]">
+          {selectedFilters[filter.id] || filter.label}
+        </span>
+
+        {hasActiveFilter(filter.id) && (
+          <X
+            size={14}
+            className="flex-shrink-0 text-gray-500 hover:text-gray-700 transition-colors ml-1"
+            onClick={handleClear}
+          />
+        )}
+
+        <ChevronDown
+          size={14}
+          className={`transition-transform duration-200 flex-shrink-0 ${
+            isOpen ? 'rotate-180' : ''
+          }`}
+        />
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 shadow-lg rounded-lg z-50 mt-1 min-w-[200px]">
+          <div className="p-2">
+            <div className="grid grid-cols-1 gap-1">
+              {filter.options.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => onSelect(filter.id, option)}
+                  className={`px-3 py-2 text-sm text-left rounded transition-all ${
+                    selectedFilters[filter.id] === option
+                      ? 'bg-orange-50 text-orange-700 font-medium border border-orange-200'
+                      : 'text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-200'
+                  }`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function BookGenreFlashDeals({
   productType = undefined,
   excludeTypes = [],
   className = '',
   products: externalProducts,
-filterVariant = 'cards', // Default to cards for BookGenreFlashDeals
   sellerId,
   onAddProduct,
   title = "Products",
@@ -110,6 +206,7 @@ filterVariant = 'cards', // Default to cards for BookGenreFlashDeals
 }: GenreFlashDealsProps) {
   const navigate = useNavigate();
   const [displayCount, setDisplayCount] = useState(8);
+  const [openFilter, setOpenFilter] = useState<string | null>(null);
 
   // Define filter categories
   const filterCategories = React.useMemo(() => [
@@ -154,6 +251,7 @@ filterVariant = 'cards', // Default to cards for BookGenreFlashDeals
       ...prev,
       [filterId]: option
     }));
+    setOpenFilter(null);
   };
 
   const handleFilterClear = (filterId: string) => {
@@ -168,8 +266,12 @@ filterVariant = 'cards', // Default to cards for BookGenreFlashDeals
     setSelectedFilters({});
   };
 
-  const handleFilterButtonClick = (filterId: string) => {
-    console.log('Filter button clicked:', filterId);
+  const handleFilterToggle = (filterId: string) => {
+    if (openFilter === filterId) {
+      setOpenFilter(null);
+    } else {
+      setOpenFilter(filterId);
+    }
   };
 
   // Helper function to get status color (moved from SellerMarketing)
@@ -232,17 +334,8 @@ filterVariant = 'cards', // Default to cards for BookGenreFlashDeals
     enabled: !externalProducts,
   });
 
-  // Debug logs to see what's happening
-  console.log('🔍 BookGenreFlashDeals Debug:');
-  console.log('External products provided:', externalProducts?.length || 0);
-  console.log('Fetched products count:', fetchedProducts.length);
-  console.log('All products loading:', allProductsLoading);
-
   // Determine which products to use
   let allProducts = externalProducts || fetchedProducts || [];
-
-  console.log('Total products to display:', allProducts.length);
-
   const isLoading = allProductsLoading && !externalProducts;
 
   const [timeLeft, setTimeLeft] = useState({
@@ -417,7 +510,6 @@ filterVariant = 'cards', // Default to cards for BookGenreFlashDeals
       }
     }
 
-    console.log('✅ Processed products count:', products.length);
     return products;
   }, [allProducts, selectedFilters, showFilters]);
 
@@ -444,21 +536,39 @@ filterVariant = 'cards', // Default to cards for BookGenreFlashDeals
     setDisplayCount(8);
   }, [processedProducts.length]);
 
+  // Close filter when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (openFilter && !(event.target as Element).closest('.filter-card-container')) {
+        setOpenFilter(null);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [openFilter]);
+
   return (
     <div className={`w-full bg-white relative ${className}`}>
       {/* Filter Bar Section - Conditionally rendered */}
       {showFilters && (
-        <div className="">
-           <ProductFilterBar
-            filterCategories={filterCategories}
-            selectedFilters={selectedFilters}
-            onFilterSelect={handleFilterSelect}
-            onFilterClear={handleFilterClear}
-            onClearAll={handleClearAll}
-            onFilterButtonClick={handleFilterButtonClick}
-            variant={filterVariant} // Use the prop
-            className=""
-          />
+        <div className="sticky top-0 z-40 bg-white border-b border-gray-100 py-2 px-4">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+            {filterCategories.map((filter) => (
+              <div key={filter.id} className="filter-card-container flex-shrink-0">
+                <FilterCard
+                  filter={filter}
+                  selectedFilters={selectedFilters}
+                  isOpen={openFilter === filter.id}
+                  onToggle={handleFilterToggle}
+                  onSelect={handleFilterSelect}
+                  onClear={handleFilterClear}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
