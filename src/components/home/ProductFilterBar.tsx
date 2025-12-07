@@ -113,9 +113,9 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
     setOpenDropdown(null);
   };
 
-  // Handle scroll events for snapping
+  // Handle scroll events for snapping (only for default variant)
   const handleScroll = () => {
-    if (!scrollContainerRef.current) return;
+    if (!scrollContainerRef.current || variant === 'cards') return;
 
     const container = scrollContainerRef.current;
     const scrollLeft = container.scrollLeft;
@@ -165,8 +165,7 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
       {/* Cards container */}
       <div 
         ref={scrollContainerRef}
-        className="overflow-x-auto scrollbar-hide snap-x snap-mandatory scroll-smooth px-2 py-1"
-        onScroll={handleScroll}
+        className="overflow-x-auto scrollbar-hide scroll-smooth px-2 py-1"
         style={{ 
           WebkitOverflowScrolling: 'touch',
           scrollbarWidth: 'none',
@@ -185,7 +184,7 @@ const ProductFilterBar: React.FC<ProductFilterBarProps> = ({
                 type="button"
                 onClick={() => handleDropdownToggle(filter.id)}
                 disabled={isFilterDisabled && isFilterDisabled(filter.id)}
-                className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-all whitespace-nowrap rounded-lg border shadow-sm snap-start ${
+                className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-all whitespace-nowrap rounded-lg border shadow-sm ${
                   isFilterDisabled && isFilterDisabled(filter.id)
                     ? 'text-gray-400 cursor-not-allowed bg-gray-50 border-gray-200'
                     : hasActiveFilter(filter.id)
