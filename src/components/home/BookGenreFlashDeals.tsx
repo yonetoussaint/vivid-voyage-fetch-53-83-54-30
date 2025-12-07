@@ -457,7 +457,7 @@ filterVariant = 'cards', // Default to cards for BookGenreFlashDeals
             onClearAll={handleClearAll}
             onFilterButtonClick={handleFilterButtonClick}
             variant={filterVariant} // Use the prop
-            className="mt-2 mb-2"
+            className=""
           />
         </div>
       )}
