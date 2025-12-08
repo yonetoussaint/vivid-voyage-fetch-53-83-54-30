@@ -275,7 +275,7 @@ function MainLayoutContent() {
 
 
         {/* Show AliExpressHeader for category pages */}
-       // In MainLayout.tsx, find the AliExpressHeader component and update it:
+      
 {shouldShowHeader && (
   <AliExpressHeader
     activeTabId={isMessagesListPage ? messagesFilter : isWalletPage ? walletFilter : isExplorePage ? exploreFilter : activeTab}
