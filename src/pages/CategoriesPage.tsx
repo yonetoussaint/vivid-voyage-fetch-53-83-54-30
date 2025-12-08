@@ -6,15 +6,15 @@ import {
   Smartphone, Tv, Monitor, Home, Shirt, Baby, Gamepad2, 
   Car, Book, Dumbbell, Utensils, Sparkles, Heart, Watch,
   Camera, Headphones, Printer, Router, Speaker, Cpu,
-  Keyboard, Mouse, Sofa, Lamp, Refrigerator,
-  WashingMachine, Microwave, Blender, Toaster,
-  Armchair, Bed, Pillow, Droplets, Bath,
-  Shoe, Handbag, Sunglasses, Diamond, Crown,
-  Package, Football, Basketball, Tennis,
+  Keyboard, Mouse, Sofa, Lamp,
+  WashingMachine, Microwave,
+  Armchair, Bed, Droplets,
+  ShoppingBag, Diamond, Crown,
+  Package,
   Bike, Tent, Fish, Wrench, BookOpen, Music, Palette,
   Flower2, TreePine, Sprout, Apple, Pizza, Wine,
-  Coffee, IceCream, Cake, ShoppingBag, Scissors,
-  ChevronRight, Zap, TrendingUp
+  IceCream, Scissors,
+  ChevronRight, Snowflake
 } from "lucide-react";
 
 // Type definitions
@@ -38,6 +38,23 @@ const CameraIcon = Camera;
 const DumbellIcon = Dumbbell;
 const CarIcon = Car;
 const BabyIcon = Baby;
+
+// Simple icon replacements using available icons
+const Tablet = Smartphone;
+const Phone = Smartphone;
+const Laptop = Monitor;
+const Desktop = Monitor;
+const Radio = Speaker;
+const Film = Tv;
+const PenTool = Palette;
+const PawPrint = Package;
+const Ski = Snowflake;
+const Trophy = Crown;
+const Glasses = Watch;
+const Shoe = Package;
+const Handbag = ShoppingBag;
+const Sunglasses = Watch;
+const Football = Package;
 
 const CATEGORIES: Category[] = [
   {
@@ -207,24 +224,6 @@ const CATEGORIES: Category[] = [
     ]
   },
 ];
-
-// Simple icon replacements using available icons
-const Tablet = Smartphone;
-const Phone = Smartphone;
-const Laptop = Monitor;
-const Desktop = Monitor;
-const Radio = Speaker;
-const Film = Tv;
-const PenTool = Palette;
-const PawPrint = Package;
-const Ski = Snowflake;
-const Trophy = Crown;
-const Glasses = Sunglasses;
-
-// Snowflake icon (for ski/snow sports)
-const Snowflake = ({ className }: { className?: string }) => (
-  <div className={className}>❄️</div>
-);
 
 export default function CategoriesPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>(CATEGORIES[0].id);
