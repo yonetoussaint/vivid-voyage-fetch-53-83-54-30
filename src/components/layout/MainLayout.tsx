@@ -5,7 +5,6 @@ import IndexBottomNav from "@/components/layout/IndexBottomNav";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import AliExpressHeader from "@/components/home/AliExpressHeader";
-import { useAuthOverlay } from "@/context/AuthOverlayContext";
 import { Home, Smartphone, Shirt, Baby, Dumbbell, Sparkles, Car, Book, Trophy, Tag, ShieldCheck, Zap, Star, Crown, Award } from "lucide-react";
 import { useScreenOverlay } from "@/context/ScreenOverlayContext";
 import ProductUploadOverlay from "@/components/product/ProductUploadOverlay";
@@ -213,6 +212,7 @@ function MainLayoutContent() {
     '/addresses',
     '/help',
     '/products',
+    '/categories',  // ADDED: Main categories page
     '/categories/electronics',
     '/categories/home-living',
     '/categories/fashion',
@@ -272,80 +272,75 @@ function MainLayoutContent() {
     <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
         <style dangerouslySetInnerHTML={{ __html: headerHeightStyle }} />
 
-
-
         {/* Show AliExpressHeader for category pages */}
-      
-{shouldShowHeader && (
-  <AliExpressHeader
-    activeTabId={isMessagesListPage ? messagesFilter : isWalletPage ? walletFilter : isExplorePage ? exploreFilter : activeTab}
-    showFilterBar={showFilterBar}
-    showCategoryTabs={!isProductsPage && !pathname.startsWith('/categories')} // Hide tabs for categories routes
-    filterCategories={filterCategories}
-    selectedFilters={selectedFilters}
-    onFilterSelect={onFilterSelect}
-    onFilterClear={onFilterClear}
-    onClearAll={onClearAll}
-    onFilterButtonClick={onFilterButtonClick}
-    isFilterDisabled={isFilterDisabled}
-    customTabs={messagesTabs || walletTabs || exploreTabs}
-    onCustomTabChange={isMessagesListPage ? (tabId) => {
-      const tab = messagesTabs?.find(t => t.id === tabId);
-      if (tab?.path) {
-        navigate(tab.path);
-      }
-    } : isWalletPage ? (tabId) => {
-      const tab = walletTabs?.find(t => t.id === tabId);
-      if (tab?.path) {
-        navigate(tab.path);
-      }
-    } : isExplorePage ? (tabId) => {
-      const tab = exploreTabs?.find(t => t.id === tabId);
-      if (tab?.path) {
-        navigate(tab.path);
-      }
-    } : undefined}
-    showSectionHeader={isProductsPage}
-    sectionHeaderTitle={productsTitle}
-    sectionHeaderShowStackedProfiles={searchParams.get('showProfiles') === 'true'}
-    sectionHeaderShowVerifiedSellers={searchParams.get('showVerifiedSellers') === 'true'}
-    sectionHeaderVerifiedSellersText={searchParams.get('verifiedSellersText') || 'Verified Sellers'}
-    sectionHeaderStackedProfiles={searchParams.get('showProfiles') === 'true' ? [
-      {
-        id: '1',
-        image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
-        alt: 'Sarah Johnson'
-      },
-      {
-        id: '2',
-        image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-        alt: 'Mike Chen'
-      },
-      {
-        id: '3',
-        image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-        alt: 'Emma Davis'
-      }
-    ] : []}
-    sectionHeaderStackedProfilesText={searchParams.get('profilesText') || 'Handpicked by'}
-    sectionHeaderShowCountdown={searchParams.get('showCountdown') === 'true'}
-    sectionHeaderCountdown={searchParams.get('countdown') || undefined}
-    sectionHeaderShowSponsorCount={searchParams.get('showSponsorCount') === 'true'}
-    // Pass mapped icon component
-    {...(sectionHeaderIcon && { sectionHeaderIcon })}
-    // FIXED: Only show View All when no other right-side elements are present
-    sectionHeaderViewAllLink={
-      (searchParams.get('showProfiles') !== 'true' &&
-       searchParams.get('showVerifiedSellers') !== 'true' &&
-       searchParams.get('showCountdown') !== 'true')
-        ? "/vendors"
-        : undefined
-    }
-    sectionHeaderViewAllText="View All"
-  />
-)}
-
-
+        {shouldShowHeader && (
+          <AliExpressHeader
+            activeTabId={isMessagesListPage ? messagesFilter : isWalletPage ? walletFilter : isExplorePage ? exploreFilter : activeTab}
+            showFilterBar={showFilterBar}
+            showCategoryTabs={!isProductsPage && !pathname.startsWith('/categories')} // Hide tabs for categories routes
+            filterCategories={filterCategories}
+            selectedFilters={selectedFilters}
+            onFilterSelect={onFilterSelect}
+            onFilterClear={onFilterClear}
+            onClearAll={onClearAll}
+            onFilterButtonClick={onFilterButtonClick}
+            isFilterDisabled={isFilterDisabled}
+            customTabs={messagesTabs || walletTabs || exploreTabs}
+            onCustomTabChange={isMessagesListPage ? (tabId) => {
+              const tab = messagesTabs?.find(t => t.id === tabId);
+              if (tab?.path) {
+                navigate(tab.path);
+              }
+            } : isWalletPage ? (tabId) => {
+              const tab = walletTabs?.find(t => t.id === tabId);
+              if (tab?.path) {
+                navigate(tab.path);
+              }
+            } : isExplorePage ? (tabId) => {
+              const tab = exploreTabs?.find(t => t.id === tabId);
+              if (tab?.path) {
+                navigate(tab.path);
+              }
+            } : undefined}
+            showSectionHeader={isProductsPage}
+            sectionHeaderTitle={productsTitle}
+            sectionHeaderShowStackedProfiles={searchParams.get('showProfiles') === 'true'}
+            sectionHeaderShowVerifiedSellers={searchParams.get('showVerifiedSellers') === 'true'}
+            sectionHeaderVerifiedSellersText={searchParams.get('verifiedSellersText') || 'Verified Sellers'}
+            sectionHeaderStackedProfiles={searchParams.get('showProfiles') === 'true' ? [
+              {
+                id: '1',
+                image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
+                alt: 'Sarah Johnson'
+              },
+              {
+                id: '2',
+                image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+                alt: 'Mike Chen'
+              },
+              {
+                id: '3',
+                image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+                alt: 'Emma Davis'
+              }
+            ] : []}
+            sectionHeaderStackedProfilesText={searchParams.get('profilesText') || 'Handpicked by'}
+            sectionHeaderShowCountdown={searchParams.get('showCountdown') === 'true'}
+            sectionHeaderCountdown={searchParams.get('countdown') || undefined}
+            sectionHeaderShowSponsorCount={searchParams.get('showSponsorCount') === 'true'}
+            // Pass mapped icon component
+            {...(sectionHeaderIcon && { sectionHeaderIcon })}
+            // FIXED: Only show View All when no other right-side elements are present
+            sectionHeaderViewAllLink={
+              (searchParams.get('showProfiles') !== 'true' &&
+               searchParams.get('showVerifiedSellers') !== 'true' &&
+               searchParams.get('showCountdown') !== 'true')
+                ? "/vendors"
+                : undefined
+            }
+            sectionHeaderViewAllText="View All"
+          />
+        )}
 
         <main className="flex-grow relative">
           <Outlet />
@@ -355,50 +350,48 @@ function MainLayoutContent() {
 
         {/* Show IndexBottomNav only on specific paths defined in the component */}
         {/* Don't show IndexBottomNav when reels is opened in modal mode (with video parameter) */}
-
-{// In MainLayout.tsx, update this condition:
-isMobile && (
-  (pathname === '/for-you' ||
-  pathname === '/' ||
-  pathname === '/categories' ||  // Add this line for the main categories page
-  (pathname === '/reels' && !location.search.includes('video=')) ||
-  pathname === '/posts' ||
-  pathname === '/messages' ||
-  pathname === '/more-menu' ||
-  pathname === '/profile' ||
-  pathname.startsWith('/profile/') ||
-  pathname === '/videos' ||
-  pathname === '/notifications' ||
-  pathname === '/bookmarks' ||
-  pathname === '/friends' ||
-  pathname === '/shopping' ||
-  pathname === '/settings' ||
-  pathname === '/wallet' ||
-  pathname === '/explore' ||
-  pathname === '/wishlist' ||
-  pathname === '/cart' ||
-  pathname === '/addresses' ||
-  pathname === '/help' ||
-  pathname === '/my-stations' ||
-  pathname === '/products' ||
-  pathname === '/categories/electronics' ||  // Add specific category pages
-  pathname === '/categories/home-living' ||
-  pathname === '/categories/fashion' ||
-  pathname === '/categories/entertainment' ||
-  pathname === '/categories/kids-hobbies' ||
-  pathname === '/categories/sports-outdoors' ||
-  pathname === '/categories/automotive' ||
-  pathname === '/categories/women' ||
-  pathname === '/categories/men' ||
-  pathname === '/categories/books' ||
-  pathname.startsWith('/pickup-station') ||
-  // Include seller dashboard routes but exclude edit-profile and onboarding
-  (pathname.startsWith('/seller-dashboard') && !pathname.includes('/edit-profile') && !pathname.includes('/onboarding')))
-) && (
-  <div className="z-30">
-    <IndexBottomNav />
-  </div>
-)}
+        {isMobile && (
+          (pathname === '/for-you' ||
+          pathname === '/' ||
+          pathname === '/categories' ||  // Add this line for the main categories page
+          (pathname === '/reels' && !location.search.includes('video=')) ||
+          pathname === '/posts' ||
+          pathname === '/messages' ||
+          pathname === '/more-menu' ||
+          pathname === '/profile' ||
+          pathname.startsWith('/profile/') ||
+          pathname === '/videos' ||
+          pathname === '/notifications' ||
+          pathname === '/bookmarks' ||
+          pathname === '/friends' ||
+          pathname === '/shopping' ||
+          pathname === '/settings' ||
+          pathname === '/wallet' ||
+          pathname === '/explore' ||
+          pathname === '/wishlist' ||
+          pathname === '/cart' ||
+          pathname === '/addresses' ||
+          pathname === '/help' ||
+          pathname === '/my-stations' ||
+          pathname === '/products' ||
+          pathname === '/categories/electronics' ||  // Add specific category pages
+          pathname === '/categories/home-living' ||
+          pathname === '/categories/fashion' ||
+          pathname === '/categories/entertainment' ||
+          pathname === '/categories/kids-hobbies' ||
+          pathname === '/categories/sports-outdoors' ||
+          pathname === '/categories/automotive' ||
+          pathname === '/categories/women' ||
+          pathname === '/categories/men' ||
+          pathname === '/categories/books' ||
+          pathname.startsWith('/pickup-station') ||
+          // Include seller dashboard routes but exclude edit-profile and onboarding
+          (pathname.startsWith('/seller-dashboard') && !pathname.includes('/edit-profile') && !pathname.includes('/onboarding')))
+        ) && (
+          <div className="z-30">
+            <IndexBottomNav />
+          </div>
+        )}
 
         {/* Product Upload Overlay */}
         <ProductUploadOverlay
