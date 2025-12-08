@@ -279,7 +279,7 @@ function MainLayoutContent() {
           <AliExpressHeader
   activeTabId={isMessagesListPage ? messagesFilter : isWalletPage ? walletFilter : isExplorePage ? exploreFilter : activeTab}
   showFilterBar={showFilterBar}
-  showCategoryTabs={!isProductsPage}
+  showCategoryTabs={!isProductsPage && !pathname.startsWith('/categories')} // Add this condition
   filterCategories={filterCategories}
   selectedFilters={selectedFilters}
   onFilterSelect={onFilterSelect}
