@@ -294,7 +294,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       key="book-genre-flash-deals"
       title="Popular Book Genres"
       subtitle="Discover books by genre"
-      showFilters={true}
+      showFilters={false}
       showSummary={true}
       showSectionHeader={true}
       showCountdown={true}
