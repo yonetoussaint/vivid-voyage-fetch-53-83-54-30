@@ -15,6 +15,9 @@ import { useAuth } from "@/contexts/auth/AuthContext";
 import { useTranslation } from 'react-i18next';
 import { HeaderFilterProvider, useHeaderFilter } from "@/contexts/HeaderFilterContext";
 
+// Add this import for useAuthOverlay
+import { useAuthOverlay } from "@/context/AuthOverlayContext";
+
 // Create a wrapper component that uses the hook
 function MainLayoutContent() {
   const isMobile = useIsMobile();
@@ -34,6 +37,7 @@ function MainLayoutContent() {
   const [showProductUpload, setShowProductUpload] = useState(false);
   const [activeTab, setActiveTab] = useState('recommendations');
 
+  // Now useAuthOverlay is defined
   const { openAuthOverlay, isAuthOverlayOpen, setIsAuthOverlayOpen } = useAuthOverlay();
   const { user } = useAuth();
   const { isLocationListScreenOpen, locationListScreenData, setLocationListScreenOpen, isLocationScreenOpen, setLocationScreenOpen } = useScreenOverlay();
@@ -151,9 +155,6 @@ function MainLayoutContent() {
 
   // Check if current page is reels
   const isReelsPage = pathname === '/reels' && !location.search.includes('video=');
-
-  // Define custom tabs for explore page
-
 
   // Calculate header and bottom nav heights for CSS variables
   const headerHeight = shouldApplySpacing ? (isMobile ? '80px' : '120px') : '0px';
