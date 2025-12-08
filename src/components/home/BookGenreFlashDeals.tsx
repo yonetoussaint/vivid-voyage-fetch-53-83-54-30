@@ -1,408 +1,782 @@
-import React from 'react';
-import { Heart, ShoppingCart, MessageCircle, User, Search, Camera, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useRef } from "react"; // Added React import
+import { Link, useNavigate } from "react-router-dom";
+import { Timer, Plus, ChevronRight, Package, Eye, Star, TrendingUp, Truck, ChevronDown, X, Tag, DollarSign, Package as PackageIcon } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { fetchAllProducts, trackProductView } from "@/integrations/supabase/products";
+import { useAuth } from "@/contexts/auth/AuthContext";
+import { useSellerByUserId } from "@/hooks/useSellerByUserId";
+import { supabase } from "@/integrations/supabase/client";
+import PriceInfo from "@/components/product/PriceInfo";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 
-export default function LazadaClone() {
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  discount_price?: number;
+  product_images?: Array<{ src: string }>;
+  inventory?: number;
+  flash_start_time?: string;
+  seller_id?: string;
+  category?: string;
+  // Additional fields for marketing campaigns
+  status?: string;
+  type?: string;
+  startDate?: string;
+  endDate?: string;
+  expiry?: string;
+  views?: number;
+  clicks?: number;
+  conversions?: number;
+  revenue?: number;
+  // New e-commerce fields
+  rating?: number;
+  total_orders?: number;
+  free_shipping?: boolean;
+  shipping_cost?: number;
+  is_choice?: boolean;
+  is_top_selling?: boolean;
+}
+
+interface GenreFlashDealsProps {
+  productType?: string;
+  excludeTypes?: string[];
+  className?: string;
+  products?: Product[];
+  sellerId?: string;
+  onAddProduct?: () => void;
+  title?: string;
+  subtitle?: string;
+  showSectionHeader?: boolean;
+  showSummary?: boolean;
+  showFilters?: boolean;
+  icon?: React.ComponentType<any>;
+  customCountdown?: string;
+  showCountdown?: boolean;
+  passCountdownToHeader?: boolean;
+  showVerifiedSellers?: boolean;
+  verifiedSellersText?: string;
+  summaryMode?: 'inventory' | 'reviews' | 'products';
+  // New custom render props
+  customProductRender?: (product: Product) => React.ReactNode;
+  customProductInfo?: (product: Product) => React.ReactNode;
+  // Expiry timer props
+  showExpiryTimer?: boolean;
+  expiryField?: string;
+  // Marketing specific props
+  showMarketingMetrics?: boolean;
+  showStatusBadge?: boolean;
+}
+
+interface SummaryStats {
+  totalProducts: number;
+  inStock: number;
+  outOfStock: number;
+  onDiscount: number;
+  totalValue: number;
+  lowStock: number;
+  categories: number;
+}
+
+// Inline FilterCard component - simplified for cards mode only
+const FilterCard: React.FC<{
+  filter: {
+    id: string;
+    label: string;
+    options: string[];
+  };
+  selectedFilters: Record<string, string>;
+  isFilterDisabled?: (filterId: string) => boolean;
+  isOpen: boolean;
+  onToggle: (filterId: string) => void;
+  onSelect: (filterId: string, option: string) => void;
+  onClear: (filterId: string) => void;
+}> = ({ filter, selectedFilters, isFilterDisabled, isOpen, onToggle, onSelect, onClear }) => {
+  const getFilterIcon = (filterId: string) => {
+    switch (filterId) {
+      case 'category':
+        return <Tag className="w-4 h-4" />;
+      case 'price':
+        return <DollarSign className="w-4 h-4" />;
+      case 'availability':
+        return <PackageIcon className="w-4 h-4" />;
+      case 'discount':
+        return <Tag className="w-4 h-4" />;
+      default:
+        return null;
+    }
+  };
+
+  const hasActiveFilter = (filterId: string) => {
+    const selected = selectedFilters[filterId];
+    return selected && !selected.toLowerCase().startsWith('all');
+  };
+
+  const handleClear = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onClear(filter.id);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100 pb-20 max-w-md mx-auto relative">
-      {/* Status Bar */}
-      <div className="bg-white px-3 py-1.5 flex justify-between items-center text-[10px] text-gray-600">
-        <span>7:08 AM</span>
-        <div className="flex items-center gap-1.5">
-          <span>22.0 K/S</span>
-          <span>G</span>
-          <span>4G</span>
-          <span>86%</span>
+    <div className="relative flex">
+      <button
+        type="button"
+        onClick={() => onToggle(filter.id)}
+        disabled={isFilterDisabled && isFilterDisabled(filter.id)}
+        className={`flex items-center gap-2 px-3 py-2 text-sm font-medium transition-all whitespace-nowrap rounded-lg border shadow-sm ${
+          isFilterDisabled && isFilterDisabled(filter.id)
+            ? 'text-gray-400 cursor-not-allowed bg-gray-50 border-gray-200'
+            : hasActiveFilter(filter.id)
+            ? 'text-orange-700 bg-orange-50 border-orange-200 shadow-orange-100 hover:shadow-orange-200'
+            : 'text-gray-700 bg-white border-gray-200 hover:border-gray-300 hover:shadow-md'
+        }`}
+      >
+        {getFilterIcon(filter.id)}
+        <span className="truncate max-w-[100px]">
+          {selectedFilters[filter.id] || filter.label}
+        </span>
+
+        {hasActiveFilter(filter.id) && (
+          <X
+            size={14}
+            className="flex-shrink-0 text-gray-500 hover:text-gray-700 transition-colors ml-1"
+            onClick={handleClear}
+          />
+        )}
+
+        <ChevronDown
+          size={14}
+          className={`transition-transform duration-200 flex-shrink-0 ${
+            isOpen ? 'rotate-180' : ''
+          }`}
+        />
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 shadow-lg rounded-lg z-50 mt-1 min-w-[200px]">
+          <div className="p-2">
+            <div className="grid grid-cols-1 gap-1">
+              {filter.options.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => onSelect(filter.id, option)}
+                  className={`px-3 py-2 text-sm text-left rounded transition-all ${
+                    selectedFilters[filter.id] === option
+                      ? 'bg-orange-50 text-orange-700 font-medium border border-orange-200'
+                      : 'text-gray-700 hover:bg-gray-50 border border-transparent hover:border-gray-200'
+                  }`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
+      )}
+    </div>
+  );
+};
+
+export default function BookGenreFlashDeals({
+  productType = undefined,
+  excludeTypes = [],
+  className = '',
+  products: externalProducts,
+  sellerId,
+  onAddProduct,
+  title = "Products",
+  subtitle = "Manage all your products",
+  showSectionHeader = true,
+  showSummary = true,
+  showFilters = true,
+  icon,
+  customCountdown,
+  showCountdown,
+  showVerifiedSellers = false,
+  verifiedSellersText = "Verified Sellers",
+  summaryMode = 'products',
+  customProductRender,
+  customProductInfo,
+  showExpiryTimer = false,
+  expiryField = 'expiry',
+  showMarketingMetrics = false,
+  showStatusBadge = false
+}: GenreFlashDealsProps) {
+  const navigate = useNavigate();
+  const [displayCount, setDisplayCount] = useState(8);
+  const [openFilter, setOpenFilter] = useState<string | null>(null);
+
+  // Define filter categories
+  const filterCategories = React.useMemo(() => [
+    {
+      id: 'category',
+      label: 'Category',
+      options: ['All Categories', 'Fiction', 'Non-Fiction', 'Science', 'Technology', 'Business']
+    },
+    {
+      id: 'price',
+      label: 'Price Range',
+      options: ['All Prices', 'Under $10', '$10-$25', '$25-$50', 'Over $50']
+    },
+    {
+      id: 'availability',
+      label: 'Availability',
+      options: ['All Stock', 'In Stock', 'Low Stock', 'Out of Stock']
+    },
+    {
+      id: 'discount',
+      label: 'Discount',
+      options: ['All Discounts', 'On Sale', 'No Discount']
+    }
+  ], []);
+
+  // Add filter state with initial "All" options
+  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>(() => ({
+    category: 'All Categories',
+    price: 'All Prices',
+    availability: 'All Stock',
+    discount: 'All Discounts'
+  }));
+
+  // Helper function to check if an option is an "All" option
+  const isAllOption = (option: string) => {
+    return option.toLowerCase().startsWith('all');
+  }
+
+  // Filter handler functions
+  const handleFilterSelect = (filterId: string, option: string) => {
+    setSelectedFilters(prev => ({
+      ...prev,
+      [filterId]: option
+    }));
+    setOpenFilter(null);
+  };
+
+  const handleFilterClear = (filterId: string) => {
+    setSelectedFilters(prev => {
+      const newFilters = { ...prev };
+      delete newFilters[filterId];
+      return newFilters;
+    });
+  };
+
+  const handleClearAll = () => {
+    setSelectedFilters({});
+  };
+
+  const handleFilterToggle = (filterId: string) => {
+    if (openFilter === filterId) {
+      setOpenFilter(null);
+    } else {
+      setOpenFilter(filterId);
+    }
+  };
+
+  // Helper function to get status color (moved from SellerMarketing)
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Active': return 'bg-green-100 text-green-800';
+      case 'Scheduled': return 'bg-blue-100 text-blue-800';
+      case 'Ended': return 'bg-gray-100 text-gray-800';
+      case 'Paused': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Add this helper function to format large numbers
+  const formatNumber = (num: number): string => {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'm';
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'k';
+    }
+    return num.toString();
+  };
+
+  // Default handler for adding new product
+  const handleAddProduct = () => {
+    if (onAddProduct) {
+      // If a custom handler is provided, use it
+      onAddProduct();
+    } else {
+      // Default behavior: navigate to product edit page for new product
+      navigate('/seller-dashboard/products/edit/new');
+    }
+  };
+
+  // Default marketing product info renderer
+  const renderMarketingProductInfo = (product: Product) => (
+    <div className="mt-2 space-y-1">
+      <div className="flex justify-between text-xs text-gray-600">
+        <span>Clicks: {product.clicks || 0}</span>
+      </div>
+      {product.clicks && product.clicks > 0 && (
+        <div className="mt-1">
+          <div className="flex justify-between text-xs mb-1">
+            <span>CTR: {((product.clicks / (product.views || 1)) * 100).toFixed(1)}%</span>
+          </div>
+          <Progress
+            value={product.clicks > 0 ? (product.clicks / (product.views || 1)) * 100 : 0}
+            className="h-1.5"
+          />
+        </div>
+      )}
+    </div>
+  );
+
+  // Fetch ALL products only if no external products provided
+  const { data: fetchedProducts = [], isLoading: allProductsLoading } = useQuery({
+    queryKey: ['all-products'],
+    queryFn: () => fetchAllProducts(),
+    refetchInterval: 5 * 60 * 1000,
+    enabled: !externalProducts,
+  });
+
+  // Determine which products to use
+  let allProducts = externalProducts || fetchedProducts || [];
+  const isLoading = allProductsLoading && !externalProducts;
+
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0
+  });
+
+  // Calculate summary statistics
+  const summaryStats: SummaryStats = React.useMemo(() => {
+    const totalProducts = allProducts.length;
+    const inStock = allProducts.filter(product => (product.inventory || 0) > 0).length;
+    const outOfStock = allProducts.filter(product => (product.inventory || 0) === 0).length;
+    const onDiscount = allProducts.filter(product => product.discount_price && product.discount_price < product.price).length;
+    const totalValue = allProducts.reduce((sum, product) => sum + (product.discount_price || product.price), 0);
+    const lowStock = allProducts.filter(product => (product.inventory || 0) > 0 && (product.inventory || 0) <= 10).length;
+
+    // Calculate unique categories count
+    const categories = new Set(allProducts.map(product => product.category).filter(Boolean)).size;
+
+    return {
+      totalProducts,
+      inStock,
+      outOfStock,
+      onDiscount,
+      totalValue,
+      lowStock,
+      categories
+    };
+  }, [allProducts]);
+
+  // Calculate expiry time left for each product
+  const [expiryTimes, setExpiryTimes] = useState<Record<string, { days: number; hours: number; minutes: number; seconds: number }>>({});
+
+  // Calculate time remaining for flash deals
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      if (!allProducts || allProducts.length === 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+
+      const latestFlashStart = allProducts.reduce((latest, product) => {
+        const startTime = new Date(product.flash_start_time || '').getTime();
+        return startTime > latest ? startTime : latest;
+      }, 0);
+
+      if (latestFlashStart === 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+
+      const endTime = latestFlashStart + (24 * 60 * 60 * 1000);
+      const now = Date.now();
+      const difference = endTime - now;
+
+      if (difference <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+
+      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+      return { days, hours, minutes, seconds };
+    };
+
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+
+    setTimeLeft(calculateTimeLeft());
+
+    return () => clearInterval(timer);
+  }, [allProducts]);
+
+  // Calculate expiry times for each product
+  useEffect(() => {
+    const calculateExpiryTimes = () => {
+      const newExpiryTimes: Record<string, { days: number; hours: number; minutes: number; seconds: number }> = {};
+
+      allProducts.forEach(product => {
+        const expiryDate = product[expiryField as keyof Product] as string;
+        if (expiryDate) {
+          const endTime = new Date(expiryDate).getTime();
+          const now = Date.now();
+          const difference = endTime - now;
+
+          if (difference > 0) {
+            const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+            newExpiryTimes[product.id] = { days, hours, minutes, seconds };
+          } else {
+            newExpiryTimes[product.id] = { days: 0, hours: 0, minutes: 0, seconds: 0 };
+          }
+        }
+      });
+
+      return newExpiryTimes;
+    };
+
+    const timer = setInterval(() => {
+      setExpiryTimes(calculateExpiryTimes());
+    }, 1000);
+
+    setExpiryTimes(calculateExpiryTimes());
+
+    return () => clearInterval(timer);
+  }, [allProducts, expiryField]);
+
+  // Format countdown for SectionHeader
+  const formattedCountdown = React.useMemo(() => {
+    if (customCountdown) return customCountdown;
+
+    const totalSeconds = timeLeft.days * 86400 + timeLeft.hours * 3600 + timeLeft.minutes * 60 + timeLeft.seconds;
+    if (totalSeconds <= 0) return "00:00:00:00";
+
+    return `${timeLeft.days.toString().padStart(2, "0")}:${timeLeft.hours.toString().padStart(2, "0")}:${timeLeft.minutes.toString().padStart(2, "0")}:${timeLeft.seconds.toString().padStart(2, "0")}`;
+  }, [timeLeft, customCountdown]);
+
+  // Process products with memoization to prevent infinite re-renders
+  const processedProducts = React.useMemo(() => {
+    let products = allProducts.map(product => {
+      const discountPercentage = product.discount_price
+        ? Math.round(((product.price - product.discount_price) / product.price) * 100)
+        : 0;
+
+      return {
+        ...product,
+        discountPercentage,
+        image: product.product_images?.[0]?.src || "https://placehold.co/300x300?text=No+Image"
+      };
+    });
+
+    // Apply filters only if showFilters is true
+    if (showFilters) {
+      if (selectedFilters.category && !isAllOption(selectedFilters.category)) {
+        products = products.filter(p => p.category === selectedFilters.category);
+      }
+
+      if (selectedFilters.price && !isAllOption(selectedFilters.price)) {
+        products = products.filter(p => {
+          const price = p.discount_price || p.price;
+          switch (selectedFilters.price) {
+            case 'Under $10': return price < 10;
+            case '$10-$25': return price >= 10 && price <= 25;
+            case '$25-$50': return price > 25 && price <= 50;
+            case 'Over $50': return price > 50;
+            default: return true;
+          }
+        });
+      }
+
+      if (selectedFilters.availability && !isAllOption(selectedFilters.availability)) {
+        products = products.filter(p => {
+          switch (selectedFilters.availability) {
+            case 'In Stock': return (p.inventory ?? 0) > 0;
+            case 'Out of Stock': return (p.inventory ?? 0) === 0;
+            case 'Low Stock': return (p.inventory ?? 0) > 0 && (p.inventory ?? 0) <= 10;
+            default: return true;
+          }
+        });
+      }
+
+      if (selectedFilters.discount && !isAllOption(selectedFilters.discount)) {
+        products = products.filter(p => {
+          const discountPercentage = p.discount_price
+            ? Math.round(((p.price - p.discount_price) / p.price) * 100)
+            : 0;
+          switch (selectedFilters.discount) {
+            case 'On Sale': return discountPercentage > 0;
+            case 'No Discount': return discountPercentage === 0;
+            default: return true;
+          }
+        });
+      }
+    }
+
+    return products;
+  }, [allProducts, selectedFilters, showFilters]);
+
+  // Infinite scroll logic
+  useEffect(() => {
+    const handleScroll = () => {
+      if (displayCount >= processedProducts.length) return;
+
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+
+      if (scrollTop + windowHeight >= documentHeight - 200) {
+        setDisplayCount(prev => Math.min(prev + 8, processedProducts.length));
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [displayCount, processedProducts.length]);
+
+  // Reset display count when products change
+  useEffect(() => {
+    setDisplayCount(8);
+  }, [processedProducts.length]);
+
+  // Close filter when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (openFilter && !(event.target as Element).closest('.filter-card-container')) {
+        setOpenFilter(null);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [openFilter]);
+
+  return (
+    <div className={`w-full bg-white relative ${className}`}>
+      {/* Filter Bar Section - Conditionally rendered */}
+      {showFilters && (
+        <div className="sticky top-0 z-40 bg-white border-b border-gray-100 py-2 px-4">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+            {filterCategories.map((filter) => (
+              <div key={filter.id} className="filter-card-container flex-shrink-0">
+                <FilterCard
+                  filter={filter}
+                  selectedFilters={selectedFilters}
+                  isOpen={openFilter === filter.id}
+                  onToggle={handleFilterToggle}
+                  onSelect={handleFilterSelect}
+                  onClear={handleFilterClear}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Products Grid */}
+      <div className="px-1.5 pt-1.5">
+        {isLoading && !externalProducts ? (
+          <div className="grid grid-cols-2 gap-2">
+            {[1, 2, 3, 4, 5, 6].map((_, index) => (
+              <div key={index} className="bg-white overflow-hidden">
+                <div className="aspect-square bg-gray-100 animate-pulse rounded-lg"></div>
+                <div className="p-3 space-y-2">
+                  <div className="h-4 w-3/4 bg-gray-100 animate-pulse"></div>
+                  <div className="h-3 w-1/2 bg-gray-100 animate-pulse"></div>
+                  <div className="h-3 w-1/3 bg-gray-100 animate-pulse"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : processedProducts.length > 0 ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-1.5">
+              {processedProducts.slice(0, displayCount).map((product) => {
+                const productExpiryTime = expiryTimes[product.id];
+                const hasExpiryTimer = showExpiryTimer && productExpiryTime && 
+                  (productExpiryTime.days > 0 || productExpiryTime.hours > 0 || productExpiryTime.minutes > 0 || productExpiryTime.seconds > 0);
+
+                return (
+                  <div key={product.id} className="bg-white overflow-hidden">
+                    <Link
+                      to={`/product/${product.id}`}
+                      onClick={() => trackProductView(product.id)}
+                      className="block"
+                    >
+                      <div className="relative aspect-square overflow-hidden bg-gray-50 rounded-lg">
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          style={{
+                            objectFit: 'cover',
+                            aspectRatio: '1/1'
+                          }}
+                          onError={(e) => {
+                            e.currentTarget.src = "https://placehold.co/300x300?text=No+Image";
+                          }}
+                        />
+
+                        {/* Top Selling Badge - Top Left */}
+                        {product.is_top_selling && (
+                          <div className="absolute top-2 left-2 z-20">
+                            <Badge className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 font-semibold flex items-center gap-0.5">
+                              <TrendingUp className="w-2.5 h-2.5" />
+                              Top Selling
+                            </Badge>
+                          </div>
+                        )}
+
+                        {/* Status Badge - Top Left */}
+                        {showStatusBadge && product.status && (
+                          <div className="absolute top-2 left-2 z-20">
+                            <Badge
+                              variant="secondary"
+                              className={`${getStatusColor(product.status)} text-xs`}
+                            >
+                              {product.status}
+                            </Badge>
+                          </div>
+                        )}
+
+                        {/* Views with Eye Icon - Top Right */}
+                        {showMarketingMetrics && product.views !== undefined && (
+                          <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/80 text-white text-xs px-2 py-1 rounded-md">
+                            <Eye className="w-3 h-3" />
+                            <span className="font-medium">{formatNumber(product.views)}</span>
+                          </div>
+                        )}
+
+                        {/* Expiry Timer - Full width band at bottom */}
+                        {hasExpiryTimer && (
+                          <div className="absolute bottom-0 left-0 right-0 bg-red-50/90 text-red-700 text-xs flex items-center justify-center py-1.5 gap-1 z-10 border-t border-red-200">
+                            <Timer className="w-3 h-3" />
+                            <span className="font-medium">Ends in</span>
+                            <span className="font-mono font-bold">
+                              {productExpiryTime.days.toString().padStart(2, "0")}:
+                              {productExpiryTime.hours.toString().padStart(2, "0")}:
+                              {productExpiryTime.minutes.toString().padStart(2, "0")}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Timer for flash deals */}
+                        {!hasExpiryTimer && (timeLeft.days > 0 || timeLeft.hours > 0 || timeLeft.minutes > 0 || timeLeft.seconds > 0) ? (
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs flex items-center justify-center py-2 gap-1 z-10">
+                            <Timer className="w-3 h-3" />
+                            <span className="font-mono">
+                              {[timeLeft.days, timeLeft.hours, timeLeft.minutes].map((unit, i) => (
+                                <span key={i}>
+                                  {unit.toString().padStart(2, "0")}
+                                  {i < 2 && <span className="mx-0.5">:</span>}
+                                </span>
+                              ))}
+                            </span>
+                          </div>
+                        ) : null}
+                      </div>
+                    </Link>
+
+                    <div className="p-1.5">
+                      {/* Product name with inline Choice badge */}
+                      <div className="flex flex-wrap items-center gap-1 mb-1">
+                        {/* Product name with inline Choice badge */}
+                        <h4 className="text-xs font-medium line-clamp-2 text-gray-900 leading-tight">
+                          {product.is_choice && (
+                            <span className="inline-flex items-center mr-1.5 align-middle">
+                              {/* Choice badge - inline as a word */}
+                              <div className="relative inline-flex items-center">
+                                <div className="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 
+                                              relative px-1.5 py-[2px] rounded-[3px] border border-amber-400/50 
+                                              shadow-[0_1px_2px_rgba(0,0,0,0.2),inset_0_1px_1px_rgba(255,255,255,0.4)] 
+                                              overflow-hidden inline-flex items-center h-[16px]">
+                                  {/* Shiny glass effect overlay */}
+                                  <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/50 to-transparent"></div>
+
+                                  {/* Subtle inner shadow for depth */}
+                                  <div className="absolute inset-0 rounded-[3px] border border-white/30"></div>
+
+                                  {/* Text with slight text shadow for readability */}
+                                  <span className="relative text-[9px] font-bold text-white tracking-wide 
+                                                  drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)] whitespace-nowrap leading-none px-0.5">
+                                    Choice
+                                  </span>
+                                </div>
+                              </div>
+                            </span>
+                          )}
+                          <span className="align-middle">{product.name}</span>
+                        </h4>
+                      </div>
+
+                      {/* Custom price display - Only show if price exists and > 0 */}
+                      {product.price !== undefined && product.price !== null && product.price > 0 && (
+                        <div className="leading-none">
+                          {/* Current price - Use discount if valid, otherwise regular price */}
+                          <div className="flex items-center gap-2 leading-none">
+                            <span className="font-bold text-orange-500 text-base">
+                              G {(
+                                product.discount_price !== undefined && 
+                                product.discount_price !== null && 
+                                product.discount_price > 0 ? 
+                                product.discount_price : 
+                                product.price
+                              ).toFixed(2)}
+                            </span>
+                            <span className="text-gray-500 text-xs">/ unit</span>
+                          </div>
+
+                          {/* Barred original price if discounted and valid */}
+                          {product.discount_price !== undefined && 
+                           product.discount_price !== null && 
+                           product.discount_price > 0 && 
+                           product.discount_price < product.price && (
+                            <div className="flex flex-col gap-0.5 mt-0.5">
+                              <span className="text-gray-400 line-through text-sm">
+                                G {product.price.toFixed(2)}
+                              </span>
+                              <span className="text-green-600 font-medium text-xs bg-green-50 px-1.5 py-0.5 rounded w-fit whitespace-nowrap">
+                                Save G {(product.price - product.discount_price).toFixed(2)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* REMOVED: Shipping Info */}
+                      {/* REMOVED: Rating & Orders */}
+                      {/* REMOVED: Product info section */}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Show "Load More" indicator if there are more products */}
+            {displayCount < processedProducts.length && (
+              <div className="text-center py-4">
+                <div className="text-sm text-gray-500">
+                  Scroll down to load more products...
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-center py-12 text-gray-500">
+            <div className="text-lg font-medium">No products available</div>
+            <div className="text-sm mt-1">Check back later for new deals</div>
+          </div>
+        )}
       </div>
 
-      {/* Search Bar */}
-      <div className="bg-white p-2 border-b-2 border-pink-500">
-        <div className="flex items-center gap-2">
-          <div className="flex-1 flex items-center border-2 border-pink-500 rounded px-2 py-1.5">
-            <span className="bg-pink-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded mr-1.5">HOT</span>
-            <input 
-              type="text" 
-              placeholder="free item rm 0" 
-              className="flex-1 text-xs outline-none"
-              readOnly
-            />
-            <Camera className="w-4 h-4 text-gray-400" />
-          </div>
-          <button className="bg-pink-500 text-white px-3 py-1.5 rounded font-semibold text-xs">
-            Search
-          </button>
-        </div>
-      </div>
-
-      {/* Pull to Refresh Indicator */}
-      <div className="bg-gray-100 py-6 text-center">
-        <Heart className="w-10 h-10 text-pink-400 mx-auto mb-1" />
-        <p className="text-gray-400 text-xs">Release to refresh</p>
-      </div>
-
-      {/* Category Pills */}
-      <div className="bg-white px-2 py-1.5 overflow-x-auto whitespace-nowrap border-b">
-        <div className="flex gap-1.5">
-          {['hair clip', 'sunglasses', 'anker soundcore', 'freezer', 'airpods 4'].map((cat) => (
-            <span key={cat} className="inline-block bg-gray-100 px-3 py-1.5 rounded-full text-xs text-gray-700">
-              {cat}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* Brand Banner */}
-      <div className="bg-gray-900 text-white px-3 py-1.5 flex items-center justify-between text-[10px]">
-        <div className="flex items-center gap-1.5">
-          <div className="w-4 h-4 bg-white rounded-full flex items-center justify-center">
-            <span className="text-gray-900 text-[8px]">✓</span>
-          </div>
-          <span className="font-semibold">Global Brand Selection</span>
-        </div>
-        <span className="text-[9px]">Free Shipping · Fast Delivery</span>
-        <ChevronRight className="w-3 h-3" />
-      </div>
-
-      {/* Icon Menu */}
-      <div className="bg-white px-3 py-3">
-        <div className="flex justify-between mb-3">
-          <div className="flex items-center gap-1.5">
-            <div className="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center">
-              <Heart className="w-5 h-5 text-pink-500" />
-            </div>
-            <div>
-              <p className="font-semibold text-xs">Earn</p>
-              <p className="font-semibold text-xs">Coins</p>
-            </div>
-          </div>
-          
-          <div className="text-center">
-            <div className="w-10 h-10 bg-orange-400 rounded-full flex items-center justify-center mx-auto mb-0.5">
-              <span className="text-white font-bold text-xs">淘</span>
-            </div>
-            <p className="text-[10px] text-gray-600">Fashion</p>
-          </div>
-
-          <div className="text-center">
-            <div className="w-10 h-10 bg-green-400 rounded-full flex items-center justify-center mx-auto mb-0.5">
-              <span className="text-lg">🏢</span>
-            </div>
-            <p className="text-[10px] text-gray-600">LazLand</p>
-          </div>
-
-          <div className="text-center">
-            <div className="w-10 h-10 bg-pink-400 rounded-full flex items-center justify-center mx-auto mb-0.5">
-              <span className="text-white font-bold text-[10px]">12.12</span>
-            </div>
-            <p className="text-[10px] text-gray-600">Countdown</p>
-          </div>
-
-          <div className="text-center">
-            <div className="w-10 h-10 bg-purple-200 rounded-full flex items-center justify-center mx-auto mb-0.5">
-              <span className="text-lg">💄</span>
-            </div>
-            <p className="text-[10px] text-gray-600">LazBeauty</p>
-          </div>
-
-          <div className="text-center">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-0.5">
-              <span className="text-lg">📱</span>
-            </div>
-            <p className="text-[10px] text-gray-600">Channels</p>
-          </div>
-        </div>
-        
-        <div className="flex items-center text-xs">
-          <span className="font-semibold">Collect Now!</span>
-          <ChevronRight className="w-3 h-3 ml-1" />
-        </div>
-      </div>
-
-      {/* New User Exclusive */}
-      <div className="bg-white px-3 py-3 mt-2">
-        <div className="flex justify-between items-center mb-2">
-          <h2 className="text-sm font-bold">
-            <span className="text-pink-500">New</span> User Exclusive!
-          </h2>
-          <span className="text-[10px] text-gray-600">Exclusive Deals &gt;</span>
-        </div>
-
-        <div className="grid grid-cols-3 gap-2">
-          <div className="bg-white rounded-lg shadow">
-            <img src="https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=200&h=200&fit=crop" alt="Product" className="w-full h-24 object-cover rounded-t-lg" />
-            <div className="p-1.5">
-              <p className="text-pink-500 font-bold text-sm">RM7.66</p>
-              <span className="bg-pink-500 text-white text-[10px] px-1.5 py-0.5 rounded">-66%</span>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow">
-            <img src="https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=200&h=200&fit=crop" alt="Camera" className="w-full h-24 object-cover rounded-t-lg" />
-            <div className="p-1.5">
-              <p className="text-pink-500 font-bold text-sm">RM18.99</p>
-              <span className="bg-pink-500 text-white text-[10px] px-1.5 py-0.5 rounded">-81%</span>
-            </div>
-          </div>
-
-          <div className="bg-pink-50 rounded-lg flex flex-col items-center justify-center p-2">
-            <p className="text-pink-500 font-bold text-lg mb-1">RM13.00</p>
-            <p className="text-pink-400 text-[9px] text-center mb-2">New user voucher bundle</p>
-            <button className="bg-pink-500 text-white px-4 py-1 rounded font-semibold text-[10px]">Collect</button>
-          </div>
-        </div>
-      </div>
-
-      {/* Popular Categories */}
-      <div className="bg-white px-3 py-3 mt-2">
-        <h2 className="text-sm font-bold mb-2">Popular Categories for you</h2>
-        
-        <div className="grid grid-cols-4 gap-2">
-          <div className="relative">
-            <span className="absolute top-1 left-1 bg-pink-500 text-white text-[9px] font-bold px-1 py-0.5 rounded z-10">-90%</span>
-            <img src="https://images.unsplash.com/photo-1563207153-f403bf289096?w=150&h=150&fit=crop" alt="Robot" className="w-full h-20 object-cover rounded" />
-            <p className="text-[10px] mt-0.5 font-medium truncate">Two-Way Rad...</p>
-            <p className="text-[9px] text-pink-500 flex items-center gap-0.5">
-              <span>▲</span> Top discount
-            </p>
-          </div>
-
-          <div className="relative">
-            <span className="absolute top-1 left-1 bg-pink-500 text-white text-[9px] font-bold px-1 py-0.5 rounded z-10">-26%</span>
-            <img src="https://images.unsplash.com/photo-1599490659213-e2b9527bd087?w=150&h=150&fit=crop" alt="Protein" className="w-full h-20 object-cover rounded" />
-            <p className="text-[10px] mt-0.5 font-medium truncate">Protein</p>
-            <p className="text-[9px] text-gray-500">3K+ search</p>
-          </div>
-
-          <div className="relative">
-            <span className="absolute top-1 left-1 bg-pink-500 text-white text-[9px] font-bold px-1 py-0.5 rounded z-10">-75%</span>
-            <img src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=150&h=150&fit=crop" alt="Dress" className="w-full h-20 object-cover rounded" />
-            <p className="text-[10px] mt-0.5 font-medium truncate">Women's Dres...</p>
-            <p className="text-[9px] text-gray-500">153K+ search</p>
-          </div>
-
-          <div className="relative">
-            <span className="absolute top-1 left-1 bg-pink-500 text-white text-[9px] font-bold px-1 py-0.5 rounded z-10">-58%</span>
-            <img src="https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?w=150&h=150&fit=crop" alt="Washing Machine" className="w-full h-20 object-cover rounded" />
-            <p className="text-[10px] mt-0.5 font-medium truncate">Washing Mac...</p>
-            <p className="text-[9px] text-gray-500">4K+ search</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Product Grid - Masonry Style */}
-      <div className="bg-white p-2 mt-2 mb-32">
-        <div className="grid grid-cols-2 gap-2">
-          {/* Product 1 */}
-          <div className="border rounded-lg overflow-hidden">
-            <img src="https://images.unsplash.com/photo-1599810730634-23960b6f8b2e?w=200&h=200&fit=crop" alt="Nuts" className="w-full h-32 object-cover" />
-            <div className="p-1.5">
-              <p className="text-[10px] line-clamp-2 mb-1">Daily Nuts Mixed Nuts Bul...</p>
-              <p className="text-pink-500 font-bold text-xs">RM0.10</p>
-              <span className="bg-pink-500 text-white text-[9px] px-1.5 py-0.5 rounded inline-block mt-1">New User Deals</span>
-            </div>
-          </div>
-
-          {/* Product 2 */}
-          <div className="border rounded-lg overflow-hidden">
-            <div className="relative">
-              <span className="absolute top-1 right-1 bg-teal-500 text-white text-[8px] px-1 py-0.5 rounded z-10">COINS</span>
-              <span className="absolute top-1 left-1 bg-teal-400 text-white text-[7px] px-1 py-0.5 rounded z-10">FAST & FREE</span>
-              <img src="https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=200&h=200&fit=crop" alt="Earbuds" className="w-full h-32 object-cover" />
-            </div>
-            <div className="p-1.5">
-              <p className="text-[10px] line-clamp-2 mb-1">G11 TWS Wireless Earbuds...</p>
-              <p className="text-pink-400 text-[9px] mb-0.5">New User Save RM19.90</p>
-              <p className="text-pink-500 font-bold text-xs">RM0.00</p>
-              <p className="text-[9px] text-gray-500">⭐ 4.8 (113) 474 sold</p>
-            </div>
-          </div>
-
-          {/* Product 3 */}
-          <div className="border rounded-lg overflow-hidden">
-            <div className="relative">
-              <span className="absolute top-1 left-1 bg-teal-400 text-white text-[7px] px-1 py-0.5 rounded z-10">FAST & FREE</span>
-              <span className="absolute top-1 right-1 bg-teal-500 text-white text-[8px] px-1 py-0.5 rounded z-10">COINS</span>
-              <img src="https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=200&h=250&fit=crop" alt="Sunglasses" className="w-full h-40 object-cover" />
-            </div>
-            <div className="p-1.5">
-              <p className="text-[10px] line-clamp-2 mb-1">Beneunder | Oval Cat Eye Sunglasses Womens...</p>
-              <p className="text-pink-400 text-[9px] mb-0.5">Voucher saves RM54.70</p>
-              <p className="text-pink-500 font-bold text-xs">RM115.83</p>
-              <p className="text-[9px] text-gray-500">⭐ 4.9 (255) 30k+ sold*</p>
-            </div>
-          </div>
-
-          {/* Product 4 */}
-          <div className="border rounded-lg overflow-hidden">
-            <div className="relative">
-              <span className="absolute top-1 left-1 bg-teal-400 text-white text-[7px] px-1 py-0.5 rounded z-10">FAST & FREE</span>
-              <span className="absolute top-1 right-1 bg-teal-500 text-white text-[8px] px-1 py-0.5 rounded z-10">COINS</span>
-              <img src="https://images.unsplash.com/photo-1578932750294-f5075e85f44a?w=200&h=200&fit=crop" alt="Kids Clothing" className="w-full h-36 object-cover" />
-            </div>
-            <div className="p-1.5">
-              <p className="text-[10px] line-clamp-2 mb-1">MiiOW | Boys Winter Three-layer Cotton Fleece Thi...</p>
-              <p className="text-pink-400 text-[9px] mb-0.5">Voucher saves RM18.00</p>
-              <p className="text-pink-500 font-bold text-xs">RM123.50</p>
-              <p className="text-[9px] text-gray-500">⭐ 4.5 (8) 87 sold*</p>
-            </div>
-          </div>
-
-          {/* Product 5 */}
-          <div className="border rounded-lg overflow-hidden">
-            <div className="relative">
-              <span className="absolute top-1 left-1 bg-teal-400 text-white text-[7px] px-1 py-0.5 rounded z-10">FAST & FREE</span>
-              <span className="absolute top-1 right-1 bg-teal-500 text-white text-[8px] px-1 py-0.5 rounded z-10">COINS</span>
-              <img src="https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=200&h=200&fit=crop" alt="Monitor" className="w-full h-32 object-cover" />
-            </div>
-            <div className="p-1.5">
-              <p className="text-[10px] line-clamp-2 mb-1">[China Plug] RUNING 4K Portable Monitor 15.6"...</p>
-              <p className="text-pink-400 text-[9px] mb-0.5">Voucher saves RM863.04</p>
-              <p className="text-pink-500 font-bold text-xs">RM863.04</p>
-              <p className="text-[9px] text-gray-500">⭐ 4.8 (45) 120+ sold*</p>
-            </div>
-          </div>
-
-          {/* Product 6 */}
-          <div className="border rounded-lg overflow-hidden">
-            <div className="relative">
-              <span className="absolute top-1 left-1 bg-teal-400 text-white text-[7px] px-1 py-0.5 rounded z-10">FAST & FREE</span>
-              <span className="absolute top-1 right-1 bg-teal-500 text-white text-[8px] px-1 py-0.5 rounded z-10">COINS</span>
-              <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&h=250&fit=crop" alt="Headphones" className="w-full h-44 object-cover" />
-            </div>
-            <div className="p-1.5">
-              <p className="text-[10px] line-clamp-2 mb-1">M90 Earphone Bluetooth Earbuds Smart...</p>
-              <p className="text-pink-400 text-[9px] mb-0.5">New User Save RM15.90</p>
-              <p className="text-pink-500 font-bold text-xs">RM29.90</p>
-              <p className="text-[9px] text-gray-500">⭐ 4.6 (892) 2.1k sold</p>
-            </div>
-          </div>
-
-          {/* Product 7 */}
-          <div className="border rounded-lg overflow-hidden">
-            <div className="relative">
-              <span className="absolute top-1 left-1 bg-teal-400 text-white text-[7px] px-1 py-0.5 rounded z-10">FAST & FREE</span>
-              <span className="absolute top-1 right-1 bg-teal-500 text-white text-[8px] px-1 py-0.5 rounded z-10">COINS</span>
-              <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&h=200&fit=crop" alt="Watch" className="w-full h-28 object-cover" />
-            </div>
-            <div className="p-1.5">
-              <p className="text-[10px] line-clamp-2 mb-1">Men Ring Punk Silver Gold Black Polished...</p>
-              <p className="text-pink-400 text-[9px] mb-0.5">New User Save RM3.18</p>
-              <p className="text-pink-500 font-bold text-xs">RM0.00</p>
-              <p className="text-[9px] text-gray-500">⭐ 5.0 (21) 181 sold*</p>
-            </div>
-          </div>
-
-          {/* Product 8 */}
-          <div className="border rounded-lg overflow-hidden">
-            <div className="relative">
-              <span className="absolute top-1 left-1 bg-teal-400 text-white text-[7px] px-1 py-0.5 rounded z-10">FAST & FREE</span>
-              <span className="absolute top-1 right-1 bg-teal-500 text-white text-[8px] px-1 py-0.5 rounded z-10">COINS</span>
-              <img src="https://images.unsplash.com/photo-1572635196243-4dd75fbdbd7f?w=200&h=200&fit=crop" alt="Gaming Chair" className="w-full h-36 object-cover" />
-            </div>
-            <div className="p-1.5">
-              <p className="text-[10px] line-clamp-2 mb-1">🔥READY STOCK⚡ Ergonomic Adjustable Gaming Chair Offi...</p>
-              <p className="text-pink-400 text-[9px] mb-0.5">New User Save RM13.99</p>
-              <p className="text-pink-500 font-bold text-xs">RM46.00</p>
-              <p className="text-[9px] text-gray-500">⭐ 4.7 (84) 258 sold</p>
-            </div>
-          </div>
-
-          {/* Product 9 */}
-          <div className="border rounded-lg overflow-hidden">
-            <div className="relative">
-              <span className="absolute top-1 left-1 bg-teal-400 text-white text-[7px] px-1 py-0.5 rounded z-10">FAST & FREE</span>
-              <span className="absolute top-1 right-1 bg-teal-500 text-white text-[8px] px-1 py-0.5 rounded z-10">COINS</span>
-              <img src="https://images.unsplash.com/photo-1583394838336-acd977736f90?w=200&h=250&fit=crop" alt="Sunglasses" className="w-full h-40 object-cover" />
-            </div>
-            <div className="p-1.5">
-              <p className="text-[10px] line-clamp-2 mb-1">Fashion Sunglasses Korean Square Glasses Brown Retro S...</p>
-              <p className="text-pink-400 text-[9px] mb-0.5">New User Save RM12.50</p>
-              <p className="text-pink-500 font-bold text-xs">RM0.00</p>
-              <p className="text-[9px] text-gray-500">⭐ 4.9 (1438) 6.4k sold</p>
-            </div>
-          </div>
-
-          {/* Product 10 */}
-          <div className="border rounded-lg overflow-hidden">
-            <div className="relative">
-              <span className="absolute top-1 left-1 bg-teal-400 text-white text-[7px] px-1 py-0.5 rounded z-10">FAST & FREE</span>
-              <span className="absolute top-1 right-1 bg-teal-500 text-white text-[8px] px-1 py-0.5 rounded z-10">COINS</span>
-              <img src="https://images.unsplash.com/photo-1585909695284-32d2985ac9c0?w=200&h=200&fit=crop" alt="Camera Lens" className="w-full h-32 object-cover" />
-            </div>
-            <div className="p-1.5">
-              <p className="text-[10px] line-clamp-2 mb-1">VILTROX | 35mm Prime Lens with Large A...</p>
-              <p className="text-pink-400 text-[9px] mb-0.5">Voucher saves RM78.10</p>
-              <p className="text-pink-500 font-bold text-xs">RM485.19</p>
-              <p className="text-[9px] text-gray-500">⭐ 4.6 (12) 91 sold*</p>
-            </div>
-          </div>
-
-          {/* Product 11 */}
-          <div className="border rounded-lg overflow-hidden">
-            <div className="relative">
-              <span className="absolute top-1 left-1 bg-teal-400 text-white text-[7px] px-1 py-0.5 rounded z-10">FAST & FREE</span>
-              <span className="absolute top-1 right-1 bg-teal-500 text-white text-[8px] px-1 py-0.5 rounded z-10">COINS</span>
-              <img src="https://images.unsplash.com/photo-1556911220-bff31c812dba?w=200&h=250&fit=crop" alt="Kitchen Storage" className="w-full h-44 object-cover" />
-            </div>
-            <div className="p-1.5">
-              <p className="text-[10px] line-clamp-2 mb-1">Kitchen Storage Organizer Spice Rack Wall Mount...</p>
-              <p className="text-pink-400 text-[9px] mb-0.5">New User Save RM8.50</p>
-              <p className="text-pink-500 font-bold text-xs">RM25.90</p>
-              <p className="text-[9px] text-gray-500">⭐ 4.8 (332) 1.2k sold</p>
-            </div>
-          </div>
-
-          {/* Product 12 */}
-          <div className="border rounded-lg overflow-hidden">
-            <div className="relative">
-              <span className="absolute top-1 left-1 bg-teal-400 text-white text-[7px] px-1 py-0.5 rounded z-10">FAST & FREE</span>
-              <span className="absolute top-1 right-1 bg-teal-500 text-white text-[8px] px-1 py-0.5 rounded z-10">COINS</span>
-              <img src="https://images.unsplash.com/photo-1556306535-0f09a537f0a3?w=200&h=200&fit=crop" alt="Pajamas" className="w-full h-36 object-cover" />
-            </div>
-            <div className="p-1.5">
-              <p className="text-[10px] line-clamp-2 mb-1">MiiOW | Men Long Sleeve Pajamas Set Winter...</p>
-              <p className="text-pink-400 text-[9px] mb-0.5">Voucher saves RM22.00</p>
-              <p className="text-pink-500 font-bold text-xs">RM89.00</p>
-              <p className="text-[9px] text-gray-500">⭐ 4.7 (156) 523 sold</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t flex justify-around py-2 px-2">
-        <div className="flex flex-col items-center">
-          <Heart className="w-5 h-5 text-pink-500 fill-pink-500" />
-          <span className="text-[10px] text-pink-500 font-semibold mt-0.5">For You</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <ShoppingCart className="w-5 h-5 text-gray-400" />
-          <span className="text-[10px] text-gray-500 mt-0.5">LazMall</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <MessageCircle className="w-5 h-5 text-gray-400" />
-          <span className="text-[10px] text-gray-500 mt-0.5">Message+</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <ShoppingCart className="w-5 h-5 text-gray-400" />
-          <span className="text-[10px] text-gray-500 mt-0.5">Cart</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <User className="w-5 h-5 text-gray-400" />
-          <span className="text-[10px] text-gray-500 mt-0.5">Account</span>
-        </div>
-      </div>
-
-      {/* Login Banner */}
-      <div className="fixed bottom-14 left-0 right-0 max-w-md mx-auto bg-gray-900 text-white px-3 py-2 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-pink-500 rounded flex items-center justify-center">
-            <span className="text-lg">⚡</span>
-          </div>
-          <p className="text-[10px]">Log in for a chance at first-order benefits!</p>
-        </div>
-        <button className="bg-pink-500 text-white px-4 py-1.5 rounded font-bold text-[10px]">LOGIN NOW</button>
-      </div>
+      {/* Floating Add Product Button */}
+      <button
+        onClick={handleAddProduct}
+        className="fixed bottom-20 right-4 z-50 bg-white text-gray-900 rounded-full p-3 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 active:scale-95 border border-gray-200 backdrop-blur-sm"
+        aria-label="Add Product"
+      >
+        <Plus className="w-6 h-6" />
+      </button>
     </div>
   );
 }
