@@ -6,16 +6,16 @@ import {
   Smartphone, Tv, Monitor, Home, Shirt, Baby, Gamepad2, 
   Car, Book, Dumbbell, Utensils, Sparkles, Heart, Watch,
   Camera, Headphones, Printer, Router, Speaker, Cpu,
-  Keyboard, Mouse, GamepadIcon, Sofa, Lamp, Refrigerator,
-  WashingMachine, Microwave, Blender, Toaster, Coffee,
-  Armchair, Bed, Pillow, ShowerHead, Bath, Mirror,
+  Keyboard, Mouse, Sofa, Lamp, Refrigerator,
+  WashingMachine, Microwave, Blender, Toaster,
+  Armchair, Bed, Pillow, Droplets, Bath,
   Dress, Shoe, Handbag, Sunglasses, Diamond, Crown,
-  BabyBottle, Rattle, TeddyBear, Bicycle, Skateboard,
-  Football, Basketball, Tennis, Dumbbell as DumbellIcon,
-  Bike, Camping, Tent, Fishing, Car as CarIcon, Tools,
-  BookOpen, Music, Palette, Camera as CameraIcon,
+  Package, Football, Basketball, Tennis,
+  Bike, Tent, Fish, Wrench, BookOpen, Music, Palette,
   Flower2, TreePine, Sprout, Apple, Pizza, Wine,
-  Coffee as CoffeeIcon, IceCream, Cake, ShoppingBag
+  Coffee, IceCream, Cake, ShoppingBag, Scissors,
+  ChevronRight, Zap, TrendingUp, Baby as BabyIcon,
+  Dumbbell as DumbellIcon, Car as CarIcon
 } from "lucide-react";
 
 // Type definitions
