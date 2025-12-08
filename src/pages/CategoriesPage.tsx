@@ -93,77 +93,75 @@ export default function CategoriesPage() {
 
   return (
     <div className="max-w-screen overflow-hidden pb-16 relative bg-gray-50">
-      {/* Removed AliExpressHeader */}
+      {/* No need for pt-4 since MainLayout already adds padding-top via var(--header-height) */}
+      <div className="max-w-7xl mx-auto px-3">
+        {/* Shop by category heading */}
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-xl font-semibold text-gray-900">Shop by category</h1>
+        </div>
 
-      <div className="pt-4">
-        <div className="max-w-7xl mx-auto px-3">
-          {/* Shop by category heading */}
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-xl font-semibold text-gray-900">Shop by category</h1>
+        <div className="flex">
+          {/* Left sidebar - Vertical category list */}
+          <div className="w-1/3 md:w-1/4 lg:w-1/5 pr-2 md:pr-4">
+            <div className="bg-white rounded-md overflow-hidden">
+              {/* Use dynamic height calculation with CSS custom property */}
+              <ScrollArea className="h-[calc(100vh-var(--header-height)-140px)]">
+                <ul className="py-2">
+                  {/* Featured section */}
+                  <li>
+                    <div className="px-4 py-2 bg-orange-100 text-orange-800 font-semibold">
+                      Featured
+                    </div>
+                  </li>
+
+                  {/* Category list */}
+                  {CATEGORIES.map((category) => (
+                    <li key={category.id}>
+                      <button
+                        onClick={() => setSelectedCategory(category.id)}
+                        className={cn(
+                          "w-full text-left px-4 py-3 text-sm transition-colors border-b border-gray-100",
+                          selectedCategory === category.id 
+                            ? "bg-gray-50 text-gray-900 font-medium" 
+                            : "text-gray-700 hover:bg-gray-50"
+                        )}
+                      >
+                        {category.name}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </ScrollArea>
+            </div>
           </div>
 
-          <div className="flex">
-            {/* Left sidebar - Vertical category list */}
-            <div className="w-1/3 md:w-1/4 lg:w-1/5 pr-2 md:pr-4">
-              <div className="bg-white rounded-md overflow-hidden">
-                <ScrollArea className="h-[calc(100vh-140px)]">
-                  <ul className="py-2">
-                    {/* Featured section */}
-                    <li>
-                      <div className="px-4 py-2 bg-orange-100 text-orange-800 font-semibold">
-                        Featured
+          {/* Right content - Grid of subcategories with circular images */}
+          <div className="w-2/3 md:w-3/4 lg:w-4/5 pl-2 md:pl-4">
+            <div className="bg-white rounded-md p-4">
+              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 lg:gap-6">
+                {subCategories.map((subCategory) => (
+                  <a 
+                    key={subCategory.id}
+                    href={`/${selectedCategory}?subcategory=${subCategory.id}`}
+                    className="flex flex-col items-center"
+                  >
+                    <div className="relative mb-2">
+                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border border-gray-200">
+                        <img 
+                          src={subCategory.imageUrl} 
+                          alt={subCategory.name} 
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                    </li>
-
-                    {/* Category list */}
-                    {CATEGORIES.map((category) => (
-                      <li key={category.id}>
-                        <button
-                          onClick={() => setSelectedCategory(category.id)}
-                          className={cn(
-                            "w-full text-left px-4 py-3 text-sm transition-colors border-b border-gray-100",
-                            selectedCategory === category.id 
-                              ? "bg-gray-50 text-gray-900 font-medium" 
-                              : "text-gray-700 hover:bg-gray-50"
-                          )}
-                        >
-                          {category.name}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </ScrollArea>
-              </div>
-            </div>
-
-            {/* Right content - Grid of subcategories with circular images */}
-            <div className="w-2/3 md:w-3/4 lg:w-4/5 pl-2 md:pl-4">
-              <div className="bg-white rounded-md p-4">
-                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 lg:gap-6">
-                  {subCategories.map((subCategory) => (
-                    <a 
-                      key={subCategory.id}
-                      href={`/${selectedCategory}?subcategory=${subCategory.id}`}
-                      className="flex flex-col items-center"
-                    >
-                      <div className="relative mb-2">
-                        <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border border-gray-200">
-                          <img 
-                            src={subCategory.imageUrl} 
-                            alt={subCategory.name} 
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        {subCategory.isHot && (
-                          <Badge className="absolute -top-1 -right-1 bg-orange-500 hover:bg-orange-500 text-[10px] px-1.5 border-none">
-                            HOT
-                          </Badge>
-                        )}
-                      </div>
-                      <span className="text-xs text-center text-gray-800">{subCategory.name}</span>
-                    </a>
-                  ))}
-                </div>
+                      {subCategory.isHot && (
+                        <Badge className="absolute -top-1 -right-1 bg-orange-500 hover:bg-orange-500 text-[10px] px-1.5 border-none">
+                          HOT
+                        </Badge>
+                      )}
+                    </div>
+                    <span className="text-xs text-center text-gray-800">{subCategory.name}</span>
+                  </a>
+                ))}
               </div>
             </div>
           </div>
