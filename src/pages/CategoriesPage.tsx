@@ -80,19 +80,19 @@ const CATEGORIES: Category[] = [
     ]
   },
   {
-    id: "home-lifestyle",
-    name: "Home & Lifestyle",
-    icon: Home,
-    subCategories: [
-      { id: "furniture", name: "Furniture", icon: Sofa },
-      { id: "lighting", name: "Lighting", icon: Lamp },
-      { id: "home-appliances", name: "Home Appliances", icon: WashingMachine },
-      { id: "kitchen", name: "Kitchen", icon: Microwave },
-      { id: "bedding", name: "Bedding", icon: Bed },
-      { id: "bath", name: "Bath", icon: ShowerHead },
-      { id: "decor", name: "Home Decor", icon: Mirror },
-    ]
-  },
+  id: "home-lifestyle",
+  name: "Home & Lifestyle",
+  icon: Home,
+  subCategories: [
+    { id: "furniture", name: "Furniture", icon: Sofa },
+    { id: "lighting", name: "Lighting", icon: Lamp },
+    { id: "home-appliances", name: "Home Appliances", icon: WashingMachine },
+    { id: "kitchen", name: "Kitchen", icon: Microwave },
+    { id: "bedding", name: "Bedding", icon: Bed },
+    { id: "bath", name: "Bath", icon: Droplets }, // Changed from ShowerHead
+    { id: "decor", name: "Home Decor", icon: Sparkles }, // Changed from Mirror
+  ]
+},
   {
     id: "fashion",
     name: "Fashion & Accessories",
