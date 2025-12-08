@@ -354,9 +354,11 @@ function MainLayoutContent() {
         {/* Show IndexBottomNav only on specific paths defined in the component */}
         {/* Don't show IndexBottomNav when reels is opened in modal mode (with video parameter) */}
 
-{isMobile && (
+{// In MainLayout.tsx, update this condition:
+isMobile && (
   (pathname === '/for-you' ||
   pathname === '/' ||
+  pathname === '/categories' ||  // Add this line for the main categories page
   (pathname === '/reels' && !location.search.includes('video=')) ||
   pathname === '/posts' ||
   pathname === '/messages' ||
@@ -377,7 +379,7 @@ function MainLayoutContent() {
   pathname === '/help' ||
   pathname === '/my-stations' ||
   pathname === '/products' ||
-  pathname === '/categories/electronics' ||
+  pathname === '/categories/electronics' ||  // Add specific category pages
   pathname === '/categories/home-living' ||
   pathname === '/categories/fashion' ||
   pathname === '/categories/entertainment' ||
