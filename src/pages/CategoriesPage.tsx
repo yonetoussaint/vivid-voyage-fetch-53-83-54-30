@@ -9,13 +9,12 @@ import {
   Keyboard, Mouse, Sofa, Lamp, Refrigerator,
   WashingMachine, Microwave, Blender, Toaster,
   Armchair, Bed, Pillow, Droplets, Bath,
-  Dress, Shoe, Handbag, Sunglasses, Diamond, Crown,
+  Shoe, Handbag, Sunglasses, Diamond, Crown,
   Package, Football, Basketball, Tennis,
   Bike, Tent, Fish, Wrench, BookOpen, Music, Palette,
   Flower2, TreePine, Sprout, Apple, Pizza, Wine,
   Coffee, IceCream, Cake, ShoppingBag, Scissors,
-  ChevronRight, Zap, TrendingUp, Baby as BabyIcon,
-  Dumbbell as DumbellIcon, Car as CarIcon
+  ChevronRight, Zap, TrendingUp
 } from "lucide-react";
 
 // Type definitions
@@ -33,10 +32,12 @@ interface Category {
   subCategories: SubCategory[];
 }
 
-// Icon components for categories
-const CategoryIcon = ({ icon: Icon, className }: { icon: React.ComponentType<any>; className?: string }) => (
-  <Icon className={cn("w-5 h-5", className)} />
-);
+// Simple reusable icons (using existing ones as replacements)
+const GamepadIcon = Gamepad2;
+const CameraIcon = Camera;
+const DumbellIcon = Dumbbell;
+const CarIcon = Car;
+const BabyIcon = Baby;
 
 const CATEGORIES: Category[] = [
   {
@@ -80,25 +81,25 @@ const CATEGORIES: Category[] = [
     ]
   },
   {
-  id: "home-lifestyle",
-  name: "Home & Lifestyle",
-  icon: Home,
-  subCategories: [
-    { id: "furniture", name: "Furniture", icon: Sofa },
-    { id: "lighting", name: "Lighting", icon: Lamp },
-    { id: "home-appliances", name: "Home Appliances", icon: WashingMachine },
-    { id: "kitchen", name: "Kitchen", icon: Microwave },
-    { id: "bedding", name: "Bedding", icon: Bed },
-    { id: "bath", name: "Bath", icon: Droplets }, // Changed from ShowerHead
-    { id: "decor", name: "Home Decor", icon: Sparkles }, // Changed from Mirror
-  ]
-},
+    id: "home-lifestyle",
+    name: "Home & Lifestyle",
+    icon: Home,
+    subCategories: [
+      { id: "furniture", name: "Furniture", icon: Sofa },
+      { id: "lighting", name: "Lighting", icon: Lamp },
+      { id: "home-appliances", name: "Home Appliances", icon: WashingMachine },
+      { id: "kitchen", name: "Kitchen", icon: Microwave },
+      { id: "bedding", name: "Bedding", icon: Bed },
+      { id: "bath", name: "Bath", icon: Droplets },
+      { id: "decor", name: "Home Decor", icon: Sparkles },
+    ]
+  },
   {
     id: "fashion",
     name: "Fashion & Accessories",
     icon: Shirt,
     subCategories: [
-      { id: "women-fashion", name: "Women's Fashion", icon: Dress, isHot: true },
+      { id: "women-fashion", name: "Women's Fashion", icon: Shirt, isHot: true },
       { id: "men-fashion", name: "Men's Fashion", icon: Shirt, isHot: true },
       { id: "shoes", name: "Shoes", icon: Shoe },
       { id: "bags", name: "Bags", icon: Handbag },
@@ -113,10 +114,10 @@ const CATEGORIES: Category[] = [
     icon: Baby,
     subCategories: [
       { id: "kids-clothing", name: "Kids Clothing", icon: Baby, isHot: true },
-      { id: "toys", name: "Toys", icon: TeddyBear },
-      { id: "baby-care", name: "Baby Care", icon: BabyBottle },
+      { id: "toys", name: "Toys", icon: Package },
+      { id: "baby-care", name: "Baby Care", icon: BabyIcon },
       { id: "school-supplies", name: "School Supplies", icon: BookOpen },
-      { id: "outdoor-play", name: "Outdoor Play", icon: Bicycle },
+      { id: "outdoor-play", name: "Outdoor Play", icon: Bike },
     ]
   },
   {
@@ -125,10 +126,10 @@ const CATEGORIES: Category[] = [
     icon: Dumbbell,
     subCategories: [
       { id: "fitness", name: "Fitness", icon: DumbellIcon, isHot: true },
-      { id: "outdoor", name: "Outdoor", icon: Camping },
+      { id: "outdoor", name: "Outdoor", icon: Tent },
       { id: "sports-gear", name: "Sports Gear", icon: Football },
       { id: "cycling", name: "Cycling", icon: Bike },
-      { id: "water-sports", name: "Water Sports", icon: Fishing },
+      { id: "water-sports", name: "Water Sports", icon: Fish },
       { id: "winter-sports", name: "Winter Sports", icon: Ski },
     ]
   },
@@ -150,7 +151,7 @@ const CATEGORIES: Category[] = [
     icon: Car,
     subCategories: [
       { id: "car-parts", name: "Car Parts", icon: CarIcon },
-      { id: "tools", name: "Tools", icon: Tools },
+      { id: "tools", name: "Tools", icon: Wrench },
       { id: "car-care", name: "Car Care", icon: Sparkles },
       { id: "interior", name: "Interior", icon: Armchair },
       { id: "electronics", name: "Car Electronics", icon: Radio },
@@ -196,9 +197,9 @@ const CATEGORIES: Category[] = [
   {
     id: "diy-garden",
     name: "DIY & Garden",
-    icon: Tools,
+    icon: Wrench,
     subCategories: [
-      { id: "tools", name: "Tools", icon: Tools },
+      { id: "tools", name: "Tools", icon: Wrench },
       { id: "hardware", name: "Hardware", icon: Wrench },
       { id: "garden", name: "Garden", icon: TreePine },
       { id: "plants", name: "Plants", icon: Sprout },
@@ -207,84 +208,22 @@ const CATEGORIES: Category[] = [
   },
 ];
 
-// Additional icon components
-const Tablet = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-  </svg>
-);
+// Simple icon replacements using available icons
+const Tablet = Smartphone;
+const Phone = Smartphone;
+const Laptop = Monitor;
+const Desktop = Monitor;
+const Radio = Speaker;
+const Film = Tv;
+const PenTool = Palette;
+const PawPrint = Package;
+const Ski = Snowflake;
+const Trophy = Crown;
+const Glasses = Sunglasses;
 
-const Phone = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-  </svg>
-);
-
-const Laptop = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-  </svg>
-);
-
-const Desktop = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-  </svg>
-);
-
-const Radio = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-  </svg>
-);
-
-const Film = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-  </svg>
-);
-
-const PenTool = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-  </svg>
-);
-
-const PawPrint = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-  </svg>
-);
-
-const Scissors = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243zm0-5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z" />
-  </svg>
-);
-
-const Wrench = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-  </svg>
-);
-
-const Ski = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-  </svg>
-);
-
-const Trophy = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-  </svg>
-);
-
-const Glasses = ({ className }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-  </svg>
+// Snowflake icon (for ski/snow sports)
+const Snowflake = ({ className }: { className?: string }) => (
+  <div className={className}>❄️</div>
 );
 
 export default function CategoriesPage() {
