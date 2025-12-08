@@ -93,19 +93,15 @@ export default function CategoriesPage() {
 
   return (
     <div className="max-w-screen overflow-hidden pb-16 relative bg-gray-50">
-      {/* No need for pt-4 since MainLayout already adds padding-top via var(--header-height) */}
       <div className="max-w-7xl mx-auto px-3">
-        {/* Shop by category heading */}
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-semibold text-gray-900">Shop by category</h1>
-        </div>
-
+        {/* Removed the heading "Shop by category" */}
+        
         <div className="flex">
           {/* Left sidebar - Vertical category list */}
           <div className="w-1/3 md:w-1/4 lg:w-1/5 pr-2 md:pr-4">
             <div className="bg-white rounded-md overflow-hidden">
-              {/* Use dynamic height calculation with CSS custom property */}
-              <ScrollArea className="h-[calc(100vh-var(--header-height)-140px)]">
+              {/* Adjusted height calculation - less space needed since no heading */}
+              <ScrollArea className="h-[calc(100vh-var(--header-height)-100px)]">
                 <ul className="py-2">
                   {/* Featured section */}
                   <li>
