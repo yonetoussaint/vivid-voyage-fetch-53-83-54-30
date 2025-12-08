@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import AliExpressHeader from "@/components/home/AliExpressHeader";
 
 // Type definitions
 interface SubCategory {
@@ -94,21 +93,20 @@ export default function CategoriesPage() {
 
   return (
     <div className="max-w-screen overflow-hidden pb-16 relative bg-gray-50">
-      {/* Header with no specific activeTabId */}
-      <AliExpressHeader />
-      
-      <div className="pt-[70px]">
-        <div className="max-w-7xl mx-auto px-3 mt-4">
+      {/* Removed AliExpressHeader */}
+
+      <div className="pt-4">
+        <div className="max-w-7xl mx-auto px-3">
           {/* Shop by category heading */}
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-xl font-semibold text-gray-900">Shop by category</h1>
           </div>
-          
+
           <div className="flex">
             {/* Left sidebar - Vertical category list */}
             <div className="w-1/3 md:w-1/4 lg:w-1/5 pr-2 md:pr-4">
               <div className="bg-white rounded-md overflow-hidden">
-                <ScrollArea className="h-[calc(100vh-190px)]">
+                <ScrollArea className="h-[calc(100vh-140px)]">
                   <ul className="py-2">
                     {/* Featured section */}
                     <li>
@@ -116,7 +114,7 @@ export default function CategoriesPage() {
                         Featured
                       </div>
                     </li>
-                    
+
                     {/* Category list */}
                     {CATEGORIES.map((category) => (
                       <li key={category.id}>
@@ -137,7 +135,7 @@ export default function CategoriesPage() {
                 </ScrollArea>
               </div>
             </div>
-            
+
             {/* Right content - Grid of subcategories with circular images */}
             <div className="w-2/3 md:w-3/4 lg:w-4/5 pl-2 md:pl-4">
               <div className="bg-white rounded-md p-4">
