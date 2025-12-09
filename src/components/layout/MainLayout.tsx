@@ -149,13 +149,38 @@ function MainLayoutContent() {
   const walletFilter = searchParams.get('tab') || 'buyer';
   const exploreFilter = searchParams.get('tab') || 'products';
 
-  // Check if we should apply spacing (messages list only, not conversation detail, wallet, explore, products)
-  const shouldApplySpacing = shouldShowHeader;
+  // Determine if we should show the header
+  const shouldShowHeader = [
+    '/',
+    '/for-you',
+    '/messages',
+    '/wallet',
+    '/explore',
+    '/wishlist',
+    '/cart',
+    '/notifications',
+    '/addresses',
+    '/help',
+    '/products',
+    '/categories',  // Main categories page
+    '/categories/electronics',
+    '/categories/home-living',
+    '/categories/fashion',
+    '/categories/entertainment',
+    '/categories/kids-hobbies',
+    '/categories/sports-outdoors',
+    '/categories/automotive',
+    '/categories/women',
+    '/categories/men',
+    '/categories/books'
+  ].includes(pathname);
 
   // Check if current page is reels
   const isReelsPage = pathname === '/reels' && !location.search.includes('video=');
 
   // Calculate header and bottom nav heights for CSS variables
+  // FIXED: Use shouldShowHeader for spacing (simpler and consistent)
+  const shouldApplySpacing = shouldShowHeader;
   const headerHeight = shouldApplySpacing ? (isMobile ? '80px' : '120px') : '0px';
   const bottomNavHeight = (shouldApplySpacing || isReelsPage) && isMobile && !isMultiStepTransferPage && !isMultiStepTransferSheetPage && !isTransferOldPage ? '48px' : '0px';
 
@@ -201,32 +226,6 @@ function MainLayoutContent() {
       window.history.replaceState({}, "", "/");
     }
   }, [pathname, openAuthOverlay]);
-
-  // Determine if we should show the header
-  const shouldShowHeader = [
-    '/',
-    '/for-you',
-    '/messages',
-    '/wallet',
-    '/explore',
-    '/wishlist',
-    '/cart',
-    '/notifications',
-    '/addresses',
-    '/help',
-    '/products',
-    '/categories',  // ADDED: Main categories page
-    '/categories/electronics',
-    '/categories/home-living',
-    '/categories/fashion',
-    '/categories/entertainment',
-    '/categories/kids-hobbies',
-    '/categories/sports-outdoors',
-    '/categories/automotive',
-    '/categories/women',
-    '/categories/men',
-    '/categories/books'
-  ].includes(pathname);
 
   // Check if current page is electronics (has filter functionality)
   const isElectronicsPage = pathname === '/categories/electronics';
