@@ -36,7 +36,9 @@ function MainLayoutContent() {
   const [showProductUpload, setShowProductUpload] = useState(false);
   const [activeTab, setActiveTab] = useState('recommendations');
   const headerRef = useRef<HTMLDivElement>(null);
+  const bottomNavRef = useRef<HTMLDivElement>(null);
   const [actualHeaderHeight, setActualHeaderHeight] = useState<string>('0px');
+  const [actualBottomNavHeight, setActualBottomNavHeight] = useState<string>('0px');
 
   // Now useAuthOverlay is defined
   const { openAuthOverlay, isAuthOverlayOpen, setIsAuthOverlayOpen } = useAuthOverlay();
@@ -180,6 +182,45 @@ function MainLayoutContent() {
   // Check if current page is reels
   const isReelsPage = pathname === '/reels' && !location.search.includes('video=');
 
+  // Determine if we should show the bottom nav
+  const shouldShowBottomNav = isMobile && (
+    pathname === '/for-you' ||
+    pathname === '/' ||
+    pathname === '/categories' ||
+    (pathname === '/reels' && !location.search.includes('video=')) ||
+    pathname === '/posts' ||
+    pathname === '/messages' ||
+    pathname === '/more-menu' ||
+    pathname === '/profile' ||
+    pathname.startsWith('/profile/') ||
+    pathname === '/videos' ||
+    pathname === '/notifications' ||
+    pathname === '/bookmarks' ||
+    pathname === '/friends' ||
+    pathname === '/shopping' ||
+    pathname === '/settings' ||
+    pathname === '/wallet' ||
+    pathname === '/explore' ||
+    pathname === '/wishlist' ||
+    pathname === '/cart' ||
+    pathname === '/addresses' ||
+    pathname === '/help' ||
+    pathname === '/my-stations' ||
+    pathname === '/products' ||
+    pathname === '/categories/electronics' ||
+    pathname === '/categories/home-living' ||
+    pathname === '/categories/fashion' ||
+    pathname === '/categories/entertainment' ||
+    pathname === '/categories/kids-hobbies' ||
+    pathname === '/categories/sports-outdoors' ||
+    pathname === '/categories/automotive' ||
+    pathname === '/categories/women' ||
+    pathname === '/categories/men' ||
+    pathname === '/categories/books' ||
+    pathname.startsWith('/pickup-station') ||
+    (pathname.startsWith('/seller-dashboard') && !pathname.includes('/edit-profile') && !pathname.includes('/onboarding'))
+  ) && !isMultiStepTransferPage && !isMultiStepTransferSheetPage && !isTransferOldPage;
+
   // Use shouldShowHeader for spacing (simpler and consistent)
   const shouldApplySpacing = shouldShowHeader;
 
@@ -223,10 +264,49 @@ function MainLayoutContent() {
     };
   }, [shouldShowHeader, pathname, activeTab]); // Re-run when route or active tab changes
 
+  // Measure actual bottom nav height dynamically
+  useEffect(() => {
+    const updateBottomNavHeight = () => {
+      if (shouldShowBottomNav && bottomNavRef.current) {
+        // Find the actual bottom nav element within the wrapper
+        const bottomNavElement = bottomNavRef.current.querySelector('nav, [data-bottom-nav]');
+        if (bottomNavElement) {
+          const height = bottomNavElement.getBoundingClientRect().height;
+          setActualBottomNavHeight(`${height}px`);
+          console.log('Dynamic bottom nav height:', height, 'px');
+        }
+      } else {
+        setActualBottomNavHeight('0px');
+      }
+    };
+
+    // Initial measurement after a small delay to ensure DOM is rendered
+    const timer = setTimeout(updateBottomNavHeight, 100);
+
+    // Re-measure on resize
+    window.addEventListener('resize', updateBottomNavHeight);
+
+    // Use MutationObserver to detect bottom nav content changes
+    const observer = new MutationObserver(updateBottomNavHeight);
+    if (bottomNavRef.current) {
+      observer.observe(bottomNavRef.current, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        characterData: true
+      });
+    }
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', updateBottomNavHeight);
+      observer.disconnect();
+    };
+  }, [shouldShowBottomNav, pathname]); // Re-run when route changes
+
   // Calculate header and bottom nav heights for CSS variables
-  // Use actual measured header height for dynamic spacing
   const headerHeight = actualHeaderHeight;
-  const bottomNavHeight = (shouldApplySpacing || isReelsPage) && isMobile && !isMultiStepTransferPage && !isMultiStepTransferSheetPage && !isTransferOldPage ? '48px' : '0px';
+  const bottomNavHeight = actualBottomNavHeight;
 
   // Check if current page is conversation detail
   const isConversationDetailPage = pathname.startsWith('/messages/') && pathname !== '/messages';
@@ -241,8 +321,8 @@ function MainLayoutContent() {
   // Check if current page is categories page (main categories page)
   const isCategoriesPage = pathname === '/categories';
 
-  // CSS with dynamic header height
-  const headerHeightStyle = `
+  // CSS with dynamic header and bottom nav heights
+  const layoutHeightStyle = `
   :root {
     --header-height: ${headerHeight};
     --bottom-nav-height: ${bottomNavHeight};
@@ -253,6 +333,13 @@ function MainLayoutContent() {
     padding-top: var(--header-height);
     padding-bottom: var(--bottom-nav-height);
     min-height: calc(100vh - var(--header-height) - var(--bottom-nav-height));
+    box-sizing: border-box;
+  }
+
+  /* Ensure content doesn't get hidden behind fixed elements */
+  .page-content {
+    position: relative;
+    z-index: 1;
   }
 
   /* Remove padding for conversation detail page */
@@ -321,7 +408,7 @@ function MainLayoutContent() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
-      <style dangerouslySetInnerHTML={{ __html: headerHeightStyle }} />
+      <style dangerouslySetInnerHTML={{ __html: layoutHeightStyle }} />
 
       {/* Show AliExpressHeader for category pages - wrapped for measurement */}
       {shouldShowHeader && (
@@ -396,51 +483,16 @@ function MainLayoutContent() {
       )}
 
       <main className="flex-grow relative">
-        {/* NO special container for categories - just render Outlet like ForYou page */}
-        <Outlet />
+        {/* Add page-content class to ensure proper stacking */}
+        <div className="page-content h-full">
+          <Outlet />
+        </div>
       </main>
 
       {/* Show IndexBottomNav only on specific paths defined in the component */}
       {/* Don't show IndexBottomNav when reels is opened in modal mode (with video parameter) */}
-      {isMobile && (
-        (pathname === '/for-you' ||
-        pathname === '/' ||
-        pathname === '/categories' ||  // Add this line for the main categories page
-        (pathname === '/reels' && !location.search.includes('video=')) ||
-        pathname === '/posts' ||
-        pathname === '/messages' ||
-        pathname === '/more-menu' ||
-        pathname === '/profile' ||
-        pathname.startsWith('/profile/') ||
-        pathname === '/videos' ||
-        pathname === '/notifications' ||
-        pathname === '/bookmarks' ||
-        pathname === '/friends' ||
-        pathname === '/shopping' ||
-        pathname === '/settings' ||
-        pathname === '/wallet' ||
-        pathname === '/explore' ||
-        pathname === '/wishlist' ||
-        pathname === '/cart' ||
-        pathname === '/addresses' ||
-        pathname === '/help' ||
-        pathname === '/my-stations' ||
-        pathname === '/products' ||
-        pathname === '/categories/electronics' ||  // Add specific category pages
-        pathname === '/categories/home-living' ||
-        pathname === '/categories/fashion' ||
-        pathname === '/categories/entertainment' ||
-        pathname === '/categories/kids-hobbies' ||
-        pathname === '/categories/sports-outdoors' ||
-        pathname === '/categories/automotive' ||
-        pathname === '/categories/women' ||
-        pathname === '/categories/men' ||
-        pathname === '/categories/books' ||
-        pathname.startsWith('/pickup-station') ||
-        // Include seller dashboard routes but exclude edit-profile and onboarding
-        (pathname.startsWith('/seller-dashboard') && !pathname.includes('/edit-profile') && !pathname.includes('/onboarding')))
-      ) && (
-        <div className="z-30">
+      {shouldShowBottomNav && (
+        <div ref={bottomNavRef} className="z-30">
           <IndexBottomNav />
         </div>
       )}
