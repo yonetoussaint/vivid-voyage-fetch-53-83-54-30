@@ -293,40 +293,37 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   ];
 
   return (
-    <div className="overflow-hidden relative">
-      {/* ADD EXPLICIT TOP PADDING FOR SAFETY */}
-      <div className="pt-[var(--header-height,80px)]"> {/* Fallback to 80px if var not set */}
-        <div className="space-y-2">
-          {components.map((component, index) => (
-            <React.Fragment key={`section-${index}`}>
-              {component}
-              {index < 2 && renderVendorCarousel(index)}
-            </React.Fragment>
-          ))}
-        </div>
-      </div>
-
-      {/* Hidden Footer - present in DOM for Google Auth but not visible */}
-      <div 
-        className="sr-only" 
-        style={{
-          position: 'absolute',
-          width: '1px',
-          height: '1px',
-          padding: 0,
-          margin: '-1px',
-          overflow: 'hidden',
-          clip: 'rect(0, 0, 0, 0)',
-          whiteSpace: 'nowrap',
-          borderWidth: 0
-        }}
-        aria-hidden="true"
-      >
-        <Footer />
-      </div>
+  <div className="overflow-hidden relative">
+    {/* REMOVE this div with pt-[var(--header-height,80px)] */}
+    <div className="space-y-2"> {/* This should be the direct child */}
+      {components.map((component, index) => (
+        <React.Fragment key={`section-${index}`}>
+          {component}
+          {index < 2 && renderVendorCarousel(index)}
+        </React.Fragment>
+      ))}
     </div>
-  );
-};
+
+    {/* Hidden Footer */}
+    <div 
+      className="sr-only" 
+      style={{
+        position: 'absolute',
+        width: '1px',
+        height: '1px',
+        padding: 0,
+        margin: '-1px',
+        overflow: 'hidden',
+        clip: 'rect(0, 0, 0, 0)',
+        whiteSpace: 'nowrap',
+        borderWidth: 0
+      }}
+      aria-hidden="true"
+    >
+      <Footer />
+    </div>
+  </div>
+);
 
 const ForYou: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState('recommendations');
