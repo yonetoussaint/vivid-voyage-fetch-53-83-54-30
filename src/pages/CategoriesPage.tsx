@@ -108,7 +108,7 @@ export default function CategoriesPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("devices");
 
   return (
-    <div className="bg-gray-50 h-screen flex overflow-hidden">
+    <div className="bg-gray-50 h-screen flex overflow-hidden overscroll-none">
       {/* Left sidebar - Vertical category list */}
       <div className="w-24 bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto overscroll-none">
         <div className="py-2">
