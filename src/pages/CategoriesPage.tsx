@@ -110,7 +110,7 @@ export default function CategoriesPage() {
   const selectedCategoryData = CATEGORIES.find(cat => cat.id === selectedCategory);
 
   return (
-    <div className="flex bg-gray-50 overflow-hidden">
+    <div className="flex bg-gray-50 overflow-hidden h-full">
       {/* Left sidebar - Vertical category list */}
       <div className="w-24 bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto">
         <div className="py-2">
@@ -132,10 +132,10 @@ export default function CategoriesPage() {
         </div>
       </div>
 
-      {/* Main Content Area - Adjusted for header height */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {/* Container that respects header height via CSS variable */}
-        <div className="max-w-full">
+      {/* Main Content Area - Fills remaining space */}
+      <div className="flex-1 overflow-y-auto p-4 h-full">
+        {/* Container with full height */}
+        <div className="max-w-full h-full">
           {/* Section: Mobiles & Tablets */}
           <div className="mb-10">
             <div className="flex items-center justify-between mb-6">
