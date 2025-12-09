@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import IndexBottomNav from "@/components/layout/IndexBottomNav";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
@@ -35,6 +35,8 @@ function MainLayoutContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showProductUpload, setShowProductUpload] = useState(false);
   const [activeTab, setActiveTab] = useState('recommendations');
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [actualHeaderHeight, setActualHeaderHeight] = useState<string>('0px');
 
   // Now useAuthOverlay is defined
   const { openAuthOverlay, isAuthOverlayOpen, setIsAuthOverlayOpen } = useAuthOverlay();
@@ -178,10 +180,52 @@ function MainLayoutContent() {
   // Check if current page is reels
   const isReelsPage = pathname === '/reels' && !location.search.includes('video=');
 
-  // Calculate header and bottom nav heights for CSS variables
-  // FIXED: Use shouldShowHeader for spacing (simpler and consistent)
+  // Use shouldShowHeader for spacing (simpler and consistent)
   const shouldApplySpacing = shouldShowHeader;
-  const headerHeight = shouldApplySpacing ? (isMobile ? '80px' : '120px') : '0px';
+
+  // Measure actual header height dynamically
+  useEffect(() => {
+    const updateHeaderHeight = () => {
+      if (shouldShowHeader && headerRef.current) {
+        // Find the actual header element within the wrapper
+        const headerElement = headerRef.current.querySelector('header, [data-header]');
+        if (headerElement) {
+          const height = headerElement.getBoundingClientRect().height;
+          setActualHeaderHeight(`${height}px`);
+          console.log('Dynamic header height:', height, 'px');
+        }
+      } else {
+        setActualHeaderHeight('0px');
+      }
+    };
+
+    // Initial measurement after a small delay to ensure DOM is rendered
+    const timer = setTimeout(updateHeaderHeight, 100);
+
+    // Re-measure on resize
+    window.addEventListener('resize', updateHeaderHeight);
+
+    // Use MutationObserver to detect header content changes
+    const observer = new MutationObserver(updateHeaderHeight);
+    if (headerRef.current) {
+      observer.observe(headerRef.current, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        characterData: true
+      });
+    }
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', updateHeaderHeight);
+      observer.disconnect();
+    };
+  }, [shouldShowHeader, pathname, activeTab]); // Re-run when route or active tab changes
+
+  // Calculate header and bottom nav heights for CSS variables
+  // Use actual measured header height for dynamic spacing
+  const headerHeight = actualHeaderHeight;
   const bottomNavHeight = (shouldApplySpacing || isReelsPage) && isMobile && !isMultiStepTransferPage && !isMultiStepTransferSheetPage && !isTransferOldPage ? '48px' : '0px';
 
   // Check if current page is conversation detail
@@ -197,7 +241,7 @@ function MainLayoutContent() {
   // Check if current page is categories page (main categories page)
   const isCategoriesPage = pathname === '/categories';
 
-  // SIMPLIFIED CSS - NO SPECIAL CATEGORIES HANDLING
+  // CSS with dynamic header height
   const headerHeightStyle = `
   :root {
     --header-height: ${headerHeight};
@@ -218,6 +262,11 @@ function MainLayoutContent() {
     padding-bottom: 0 !important;
   }
   ` : ''}
+
+  /* Force update of CSS variables */
+  * {
+    transition: none !important;
+  }
 `;
 
   useEffect(() => {
@@ -274,74 +323,76 @@ function MainLayoutContent() {
     <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
       <style dangerouslySetInnerHTML={{ __html: headerHeightStyle }} />
 
-      {/* Show AliExpressHeader for category pages */}
+      {/* Show AliExpressHeader for category pages - wrapped for measurement */}
       {shouldShowHeader && (
-        <AliExpressHeader
-          activeTabId={isMessagesListPage ? messagesFilter : isWalletPage ? walletFilter : isExplorePage ? exploreFilter : activeTab}
-          showFilterBar={showFilterBar}
-          showCategoryTabs={!isProductsPage && !pathname.startsWith('/categories')} // Hide tabs for categories routes
-          filterCategories={filterCategories}
-          selectedFilters={selectedFilters}
-          onFilterSelect={onFilterSelect}
-          onFilterClear={onFilterClear}
-          onClearAll={onClearAll}
-          onFilterButtonClick={onFilterButtonClick}
-          isFilterDisabled={isFilterDisabled}
-          customTabs={messagesTabs || walletTabs || exploreTabs}
-          onCustomTabChange={isMessagesListPage ? (tabId) => {
-            const tab = messagesTabs?.find(t => t.id === tabId);
-            if (tab?.path) {
-              navigate(tab.path);
+        <div ref={headerRef}>
+          <AliExpressHeader
+            activeTabId={isMessagesListPage ? messagesFilter : isWalletPage ? walletFilter : isExplorePage ? exploreFilter : activeTab}
+            showFilterBar={showFilterBar}
+            showCategoryTabs={!isProductsPage && !pathname.startsWith('/categories')} // Hide tabs for categories routes
+            filterCategories={filterCategories}
+            selectedFilters={selectedFilters}
+            onFilterSelect={onFilterSelect}
+            onFilterClear={onFilterClear}
+            onClearAll={onClearAll}
+            onFilterButtonClick={onFilterButtonClick}
+            isFilterDisabled={isFilterDisabled}
+            customTabs={messagesTabs || walletTabs || exploreTabs}
+            onCustomTabChange={isMessagesListPage ? (tabId) => {
+              const tab = messagesTabs?.find(t => t.id === tabId);
+              if (tab?.path) {
+                navigate(tab.path);
+              }
+            } : isWalletPage ? (tabId) => {
+              const tab = walletTabs?.find(t => t.id === tabId);
+              if (tab?.path) {
+                navigate(tab.path);
+              }
+            } : isExplorePage ? (tabId) => {
+              const tab = exploreTabs?.find(t => t.id === tabId);
+              if (tab?.path) {
+                navigate(tab.path);
+              }
+            } : undefined}
+            showSectionHeader={isProductsPage}
+            sectionHeaderTitle={productsTitle}
+            sectionHeaderShowStackedProfiles={searchParams.get('showProfiles') === 'true'}
+            sectionHeaderShowVerifiedSellers={searchParams.get('showVerifiedSellers') === 'true'}
+            sectionHeaderVerifiedSellersText={searchParams.get('verifiedSellersText') || 'Verified Sellers'}
+            sectionHeaderStackedProfiles={searchParams.get('showProfiles') === 'true' ? [
+              {
+                id: '1',
+                image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
+                alt: 'Sarah Johnson'
+              },
+              {
+                id: '2',
+                image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+                alt: 'Mike Chen'
+              },
+              {
+                id: '3',
+                image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+                alt: 'Emma Davis'
+              }
+            ] : []}
+            sectionHeaderStackedProfilesText={searchParams.get('profilesText') || 'Handpicked by'}
+            sectionHeaderShowCountdown={searchParams.get('showCountdown') === 'true'}
+            sectionHeaderCountdown={searchParams.get('countdown') || undefined}
+            sectionHeaderShowSponsorCount={searchParams.get('showSponsorCount') === 'true'}
+            // Pass mapped icon component
+            {...(sectionHeaderIcon && { sectionHeaderIcon })}
+            // FIXED: Only show View All when no other right-side elements are present
+            sectionHeaderViewAllLink={
+              (searchParams.get('showProfiles') !== 'true' &&
+               searchParams.get('showVerifiedSellers') !== 'true' &&
+               searchParams.get('showCountdown') !== 'true')
+                ? "/vendors"
+                : undefined
             }
-          } : isWalletPage ? (tabId) => {
-            const tab = walletTabs?.find(t => t.id === tabId);
-            if (tab?.path) {
-              navigate(tab.path);
-            }
-          } : isExplorePage ? (tabId) => {
-            const tab = exploreTabs?.find(t => t.id === tabId);
-            if (tab?.path) {
-              navigate(tab.path);
-            }
-          } : undefined}
-          showSectionHeader={isProductsPage}
-          sectionHeaderTitle={productsTitle}
-          sectionHeaderShowStackedProfiles={searchParams.get('showProfiles') === 'true'}
-          sectionHeaderShowVerifiedSellers={searchParams.get('showVerifiedSellers') === 'true'}
-          sectionHeaderVerifiedSellersText={searchParams.get('verifiedSellersText') || 'Verified Sellers'}
-          sectionHeaderStackedProfiles={searchParams.get('showProfiles') === 'true' ? [
-            {
-              id: '1',
-              image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
-              alt: 'Sarah Johnson'
-            },
-            {
-              id: '2',
-              image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-              alt: 'Mike Chen'
-            },
-            {
-              id: '3',
-              image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-              alt: 'Emma Davis'
-            }
-          ] : []}
-          sectionHeaderStackedProfilesText={searchParams.get('profilesText') || 'Handpicked by'}
-          sectionHeaderShowCountdown={searchParams.get('showCountdown') === 'true'}
-          sectionHeaderCountdown={searchParams.get('countdown') || undefined}
-          sectionHeaderShowSponsorCount={searchParams.get('showSponsorCount') === 'true'}
-          // Pass mapped icon component
-          {...(sectionHeaderIcon && { sectionHeaderIcon })}
-          // FIXED: Only show View All when no other right-side elements are present
-          sectionHeaderViewAllLink={
-            (searchParams.get('showProfiles') !== 'true' &&
-             searchParams.get('showVerifiedSellers') !== 'true' &&
-             searchParams.get('showCountdown') !== 'true')
-              ? "/vendors"
-              : undefined
-          }
-          sectionHeaderViewAllText="View All"
-        />
+            sectionHeaderViewAllText="View All"
+          />
+        </div>
       )}
 
       <main className="flex-grow relative">
