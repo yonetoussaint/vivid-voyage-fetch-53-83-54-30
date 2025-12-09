@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import Footer from "@/components/layout/Footer";
+import IndexBottomNav from "@/components/layout/IndexBottomNav";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import AliExpressHeader from "@/components/home/AliExpressHeader";
@@ -12,6 +14,8 @@ import AuthOverlay from "@/components/auth/AuthOverlay";
 import { useAuth } from "@/contexts/auth/AuthContext";
 import { useTranslation } from 'react-i18next';
 import { HeaderFilterProvider, useHeaderFilter } from "@/contexts/HeaderFilterContext";
+
+// Add this import for useAuthOverlay
 import { useAuthOverlay } from "@/context/AuthOverlayContext";
 
 // Create a wrapper component that uses the hook
@@ -20,7 +24,17 @@ function MainLayoutContent() {
   const location = useLocation();
   const navigate = useNavigate();
   const pathname = location.pathname;
+  const isProductPage = pathname.includes('/product/');
+  const isRootHomePage = pathname === "/" || pathname === "/for-you";
+  const isForYouPage = pathname === "/" || pathname === "/for-you";
+  const isMultiStepTransferPage = pathname === "/multi-step-transfer";
+  const isMultiStepTransferSheetPage = pathname === "/multi-step-transfer-page";
+  const isTransferOldPage = pathname === "/transfer-old";
   const { toast } = useToast();
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showProductUpload, setShowProductUpload] = useState(false);
   const [activeTab, setActiveTab] = useState('recommendations');
 
   // Now useAuthOverlay is defined
@@ -64,6 +78,43 @@ function MainLayoutContent() {
     }
   }, [location.pathname, categories]);
 
+  const toggleFavorite = () => {
+    setIsFavorite(!isFavorite);
+    toast({
+      title: !isFavorite ? "Added to Wishlist" : "Removed from Wishlist",
+      description: !isFavorite ? "This item has been added to your wishlist" : "This item has been removed from your wishlist",
+    });
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'Check out this product',
+        text: 'I found this amazing product I thought you might like!',
+        url: window.location.href,
+      }).catch(() => {
+        toast({
+          title: "Sharing Failed",
+          description: "There was an error sharing this content.",
+        });
+      });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast({
+        title: "Link Copied",
+        description: "Product link copied to clipboard!",
+      });
+    }
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    toast({
+      title: "Search submitted",
+      description: `Searching for: ${searchQuery}`,
+    });
+  };
+
   // Check if current page is messages, wallet, explore, or products
   const isMessagesPage = pathname === '/messages' || pathname.startsWith('/messages/');
   const isMessagesListPage = pathname === '/messages';
@@ -106,8 +157,8 @@ function MainLayoutContent() {
   const isReelsPage = pathname === '/reels' && !location.search.includes('video=');
 
   // Calculate header and bottom nav heights for CSS variables
-  const headerHeight = shouldShowHeader ? (isMobile ? '80px' : '120px') : '0px';
-  const bottomNavHeight = (shouldApplySpacing || isReelsPage) && isMobile ? '48px' : '0px';
+  const headerHeight = shouldApplySpacing ? (isMobile ? '80px' : '120px') : '0px';
+  const bottomNavHeight = (shouldApplySpacing || isReelsPage) && isMobile && !isMultiStepTransferPage && !isMultiStepTransferSheetPage && !isTransferOldPage ? '48px' : '0px';
 
   // Check if current page is conversation detail
   const isConversationDetailPage = pathname.startsWith('/messages/') && pathname !== '/messages';
@@ -121,6 +172,48 @@ function MainLayoutContent() {
 
   // NEW: Check if current page is categories page (main categories page)
   const isCategoriesPage = pathname === '/categories';
+
+  // In MainLayout.tsx, update the headerHeightStyle to ensure bottom nav height is set correctly
+  const headerHeightStyle = `
+  :root {
+    --header-height: ${headerHeight};
+    --bottom-nav-height: ${bottomNavHeight};
+  }
+
+  /* Ensure main content respects the header and bottom nav */
+  main {
+    padding-top: var(--header-height);
+    padding-bottom: var(--bottom-nav-height);
+    min-height: calc(100vh - var(--header-height) - var(--bottom-nav-height));
+  }
+
+  /* Remove padding for conversation detail page */
+  ${isConversationDetailPage ? `
+  main {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+  ` : ''}
+
+  /* Special styling for categories page - FIXED */
+  ${isCategoriesPage ? `
+  main {
+    padding-top: var(--header-height) !important; /* Changed from 0 to var(--header-height) */
+    padding-bottom: var(--bottom-nav-height) !important;
+  }
+  .categories-page-container {
+    height: calc(100vh - var(--header-height) - var(--bottom-nav-height));
+    overflow: hidden;
+  }
+  ` : ''}
+`;
+
+  useEffect(() => {
+    if (pathname === "/auth") {
+      openAuthOverlay();
+      window.history.replaceState({}, "", "/");
+    }
+  }, [pathname, openAuthOverlay]);
 
   // Determine if we should show the header
   const shouldShowHeader = [
@@ -148,47 +241,8 @@ function MainLayoutContent() {
     '/categories/books'
   ].includes(pathname);
 
-  // CSS variables for header height
-  const headerHeightStyle = `
-  :root {
-    --header-height: ${headerHeight};
-    --bottom-nav-height: ${bottomNavHeight};
-  }
-
-  /* Ensure main content respects the header and bottom nav */
-  main {
-    padding-top: var(--header-height);
-    padding-bottom: var(--bottom-nav-height);
-    min-height: calc(100vh - var(--header-height) - var(--bottom-nav-height));
-  }
-
-  /* Remove padding for conversation detail page */
-  ${isConversationDetailPage ? `
-  main {
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-  }
-  ` : ''}
-
-  /* Special styling for categories page - ADD padding top */
-  ${isCategoriesPage ? `
-  main {
-    padding-top: var(--header-height) !important;
-    padding-bottom: 0 !important;
-  }
-  .categories-page-container {
-    height: 100%;
-    overflow: hidden;
-  }
-  ` : ''}
-`;
-
-  useEffect(() => {
-    if (pathname === "/auth") {
-      openAuthOverlay();
-      window.history.replaceState({}, "", "/");
-    }
-  }, [pathname, openAuthOverlay]);
+  // Check if current page is electronics (has filter functionality)
+  const isElectronicsPage = pathname === '/categories/electronics';
 
   // Redirect to include default filter if missing
   useEffect(() => {
@@ -314,6 +368,59 @@ function MainLayoutContent() {
             <Outlet />
           )}
         </main>
+
+        {/* Footer removed */}
+
+        {/* Show IndexBottomNav only on specific paths defined in the component */}
+        {/* Don't show IndexBottomNav when reels is opened in modal mode (with video parameter) */}
+        {isMobile && (
+          (pathname === '/for-you' ||
+          pathname === '/' ||
+          pathname === '/categories' ||  // Add this line for the main categories page
+          (pathname === '/reels' && !location.search.includes('video=')) ||
+          pathname === '/posts' ||
+          pathname === '/messages' ||
+          pathname === '/more-menu' ||
+          pathname === '/profile' ||
+          pathname.startsWith('/profile/') ||
+          pathname === '/videos' ||
+          pathname === '/notifications' ||
+          pathname === '/bookmarks' ||
+          pathname === '/friends' ||
+          pathname === '/shopping' ||
+          pathname === '/settings' ||
+          pathname === '/wallet' ||
+          pathname === '/explore' ||
+          pathname === '/wishlist' ||
+          pathname === '/cart' ||
+          pathname === '/addresses' ||
+          pathname === '/help' ||
+          pathname === '/my-stations' ||
+          pathname === '/products' ||
+          pathname === '/categories/electronics' ||  // Add specific category pages
+          pathname === '/categories/home-living' ||
+          pathname === '/categories/fashion' ||
+          pathname === '/categories/entertainment' ||
+          pathname === '/categories/kids-hobbies' ||
+          pathname === '/categories/sports-outdoors' ||
+          pathname === '/categories/automotive' ||
+          pathname === '/categories/women' ||
+          pathname === '/categories/men' ||
+          pathname === '/categories/books' ||
+          pathname.startsWith('/pickup-station') ||
+          // Include seller dashboard routes but exclude edit-profile and onboarding
+          (pathname.startsWith('/seller-dashboard') && !pathname.includes('/edit-profile') && !pathname.includes('/onboarding')))
+        ) && (
+          <div className="z-30">
+            <IndexBottomNav />
+          </div>
+        )}
+
+        {/* Product Upload Overlay */}
+        <ProductUploadOverlay
+          isOpen={showProductUpload}
+          onClose={() => setShowProductUpload(false)}
+        />
 
         {/* Location List Screen */}
         {isLocationListScreenOpen && locationListScreenData && (
