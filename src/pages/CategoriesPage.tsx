@@ -109,11 +109,11 @@ export default function CategoriesPage() {
 
   return (
     <>
-      {/* Main Content Area - Exactly like ForYou page */}
-      <div className="bg-gray-50 min-h-full">
-        <div className="flex">
+      {/* Main Content Area - Full screen height, non-scrollable */}
+      <div className="bg-gray-50 h-screen flex flex-col overflow-hidden">
+        <div className="flex flex-1 min-h-0">
           {/* Left sidebar - Vertical category list */}
-          <div className="w-24 bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto">
+          <div className="w-24 bg-white border-r border-gray-200 flex-shrink-0 h-full overflow-y-auto">
             <div className="py-2">
               {CATEGORIES.map((category) => {
                 const Icon = category.icon;
@@ -133,7 +133,7 @@ export default function CategoriesPage() {
             </div>
           </div>
 
-          {/* Main Content Area */}
+          {/* Main Content Area - Scrollable on its own */}
           <div className="flex-1 overflow-y-auto p-4">
             {/* Container that respects header height via CSS variable */}
             <div className="max-w-full">
