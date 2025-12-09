@@ -106,7 +106,6 @@ const CATEGORIES: Category[] = [
 
 export default function CategoriesPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("devices");
-
   const selectedCategoryData = CATEGORIES.find(cat => cat.id === selectedCategory);
 
   return (
@@ -132,10 +131,9 @@ export default function CategoriesPage() {
         </div>
       </div>
 
-      {/* Main Content Area - Fills remaining space */}
+      {/* Main Content Area - Now respects header height */}
       <div className="flex-1 overflow-y-auto p-4 h-full">
-        {/* Container with full height */}
-        <div className="max-w-full h-full">
+        <div className="max-w-full">
           {/* Section: Mobiles & Tablets */}
           <div className="mb-10">
             <div className="flex items-center justify-between mb-6">
