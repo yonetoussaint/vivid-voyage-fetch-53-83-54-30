@@ -110,8 +110,8 @@ export default function CategoriesPage() {
   return (
     <div className="bg-gray-50 h-screen flex overflow-hidden overscroll-none">
       {/* Left sidebar - Vertical category list */}
-      <div className="w-24 bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto overscroll-none">
-        <div className="py-2">
+      <div className="w-24 bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto overscroll-none touch-none" onWheel={(e) => e.stopPropagation()}>
+        <div className="py-2 min-h-full">
           {CATEGORIES.map((category) => {
             const Icon = category.icon;
             return (
