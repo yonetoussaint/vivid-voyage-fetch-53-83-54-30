@@ -1,544 +1,267 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
-import IndexBottomNav from "@/components/layout/IndexBottomNav";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
-import AliExpressHeader from "@/components/home/AliExpressHeader";
-import { Home, Smartphone, Shirt, Baby, Dumbbell, Sparkles, Car, Book, Trophy, Tag, ShieldCheck, Zap, Star, Crown, Award } from "lucide-react";
-import { useScreenOverlay } from "@/context/ScreenOverlayContext";
-import ProductUploadOverlay from "@/components/product/ProductUploadOverlay";
-import LocationScreen from "@/components/home/header/LocationScreen";
-import LocationListScreen from "@/components/home/header/LocationListScreen";
-import AuthOverlay from "@/components/auth/AuthOverlay";
-import { useAuth } from "@/contexts/auth/AuthContext";
-import { useTranslation } from 'react-i18next';
-import { HeaderFilterProvider, useHeaderFilter } from "@/contexts/HeaderFilterContext";
+import React, { useState } from "react";
+import { ChevronRight, User, Plug, Monitor, Tv, Droplet, Baby, ShoppingCart, Home, Shirt, Users, Watch, Car } from 'lucide-react';
 
-// Add this import for useAuthOverlay
-import { useAuthOverlay } from "@/context/AuthOverlayContext";
-
-// Create a wrapper component that uses the hook
-function MainLayoutContent() {
-  const isMobile = useIsMobile();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const pathname = location.pathname;
-  const isProductPage = pathname.includes('/product/');
-  const isRootHomePage = pathname === "/" || pathname === "/for-you";
-  const isForYouPage = pathname === "/" || pathname === "/for-you";
-  const isMultiStepTransferPage = pathname === "/multi-step-transfer";
-  const isMultiStepTransferSheetPage = pathname === "/multi-step-transfer-page";
-  const isTransferOldPage = pathname === "/transfer-old";
-  const { toast } = useToast();
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showProductUpload, setShowProductUpload] = useState(false);
-  const [activeTab, setActiveTab] = useState('recommendations');
-  const headerRef = useRef<HTMLDivElement>(null);
-  const bottomNavRef = useRef<HTMLDivElement>(null);
-  const [actualHeaderHeight, setActualHeaderHeight] = useState<string>('0px');
-  const [actualBottomNavHeight, setActualBottomNavHeight] = useState<string>('0px');
-
-  // Now useAuthOverlay is defined
-  const { openAuthOverlay, isAuthOverlayOpen, setIsAuthOverlayOpen } = useAuthOverlay();
-  const { user } = useAuth();
-  const { isLocationListScreenOpen, locationListScreenData, setLocationListScreenOpen, isLocationScreenOpen, setLocationScreenOpen } = useScreenOverlay();
-  const { t } = useTranslation();
-  const {
-    showFilterBar,
-    filterCategories,
-    selectedFilters,
-    onFilterSelect,
-    onFilterClear,
-    onClearAll,
-    onFilterButtonClick,
-    isFilterDisabled
-  } = useHeaderFilter();
-
-  // Define categories once at layout level
-  const categories = useMemo(() => [
-    { id: 'recommendations', name: t('forYou', { ns: 'home' }), path: '/for-you' },
-    { id: 'electronics', name: t('electronics', { ns: 'categories' }), path: '/categories/electronics' },
-    { id: 'home', name: t('homeLiving', { ns: 'categories' }), path: '/categories/home-living' },
-    { id: 'fashion', name: t('fashion', { ns: 'categories' }), path: '/categories/fashion' },
-    { id: 'entertainment', name: t('entertainment', { ns: 'categories' }), path: '/categories/entertainment' },
-    { id: 'kids', name: t('kidsHobbies', { ns: 'categories' }), path: '/categories/kids-hobbies' },
-    { id: 'sports', name: t('sports', { ns: 'categories' }), path: '/categories/sports-outdoors' },
-    { id: 'automotive', name: t('automotive', { ns: 'categories' }), path: '/categories/automotive' },
-    { id: 'women', name: t('women', { ns: 'categories' }), path: '/categories/women' },
-    { id: 'men', name: t('men', { ns: 'categories' }), path: '/categories/men' },
-    { id: 'books', name: t('books', { ns: 'categories' }), path: '/categories/books' },
-  ], [t]);
-
-  // Update active tab based on location
-  useEffect(() => {
-    const currentCategory = categories.find(cat => location.pathname === cat.path);
-    if (currentCategory) {
-      setActiveTab(currentCategory.id);
-    } else if (location.pathname === '/' || location.pathname === '/for-you') {
-      setActiveTab('recommendations');
-    }
-  }, [location.pathname, categories]);
-
-  const toggleFavorite = () => {
-    setIsFavorite(!isFavorite);
-    toast({
-      title: !isFavorite ? "Added to Wishlist" : "Removed from Wishlist",
-      description: !isFavorite ? "This item has been added to your wishlist" : "This item has been removed from your wishlist",
-    });
-  };
-
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: 'Check out this product',
-        text: 'I found this amazing product I thought you might like!',
-        url: window.location.href,
-      }).catch(() => {
-        toast({
-          title: "Sharing Failed",
-          description: "There was an error sharing this content.",
-        });
-      });
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      toast({
-        title: "Link Copied",
-        description: "Product link copied to clipboard!",
-      });
-    }
-  };
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast({
-      title: "Search submitted",
-      description: `Searching for: ${searchQuery}`,
-    });
-  };
-
-  // Check if current page is messages, wallet, explore, or products
-  const isMessagesPage = pathname === '/messages' || pathname.startsWith('/messages/');
-  const isMessagesListPage = pathname === '/messages';
-  const isWalletPage = pathname === '/wallet';
-  const isExplorePage = pathname === '/explore';
-  const isProductsPage = pathname === '/products';
-
-  // Get title from URL params for products page
-  const productsTitle = isProductsPage ? new URLSearchParams(location.search).get('title') || 'Products' : '';
-
-  // Icon mapper to convert string names to components
-  const iconMapper: Record<string, React.ComponentType<{ className?: string }>> = {
-    Trophy,
-    Tag,
-    ShieldCheck,
-    Zap,
-    Star,
-    Crown,
-    Award,
-    Home,
-    Smartphone,
-    Shirt,
-    Baby,
-    Dumbbell,
-    Sparkles,
-    Car,
-    Book
-  };
-
-  // Get filter from URL params for messages, wallet, and explore
-  const searchParams = new URLSearchParams(location.search);
-  const messagesFilter = searchParams.get('filter') || 'all';
-  const walletFilter = searchParams.get('tab') || 'buyer';
-  const exploreFilter = searchParams.get('tab') || 'products';
-
-  // Determine if we should show the header
-  const shouldShowHeader = [
-    '/',
-    '/for-you',
-    '/messages',
-    '/wallet',
-    '/explore',
-    '/wishlist',
-    '/cart',
-    '/notifications',
-    '/addresses',
-    '/help',
-    '/products',
-    '/categories',  // Main categories page
-    '/categories/electronics',
-    '/categories/home-living',
-    '/categories/fashion',
-    '/categories/entertainment',
-    '/categories/kids-hobbies',
-    '/categories/sports-outdoors',
-    '/categories/automotive',
-    '/categories/women',
-    '/categories/men',
-    '/categories/books'
-  ].includes(pathname);
-
-  // Check if current page is reels
-  const isReelsPage = pathname === '/reels' && !location.search.includes('video=');
-
-  // Determine if we should show the bottom nav
-  const shouldShowBottomNav = isMobile && (
-    pathname === '/for-you' ||
-    pathname === '/' ||
-    pathname === '/categories' ||
-    (pathname === '/reels' && !location.search.includes('video=')) ||
-    pathname === '/posts' ||
-    pathname === '/messages' ||
-    pathname === '/more-menu' ||
-    pathname === '/profile' ||
-    pathname.startsWith('/profile/') ||
-    pathname === '/videos' ||
-    pathname === '/notifications' ||
-    pathname === '/bookmarks' ||
-    pathname === '/friends' ||
-    pathname === '/shopping' ||
-    pathname === '/settings' ||
-    pathname === '/wallet' ||
-    pathname === '/explore' ||
-    pathname === '/wishlist' ||
-    pathname === '/cart' ||
-    pathname === '/addresses' ||
-    pathname === '/help' ||
-    pathname === '/my-stations' ||
-    pathname === '/products' ||
-    pathname === '/categories/electronics' ||
-    pathname === '/categories/home-living' ||
-    pathname === '/categories/fashion' ||
-    pathname === '/categories/entertainment' ||
-    pathname === '/categories/kids-hobbies' ||
-    pathname === '/categories/sports-outdoors' ||
-    pathname === '/categories/automotive' ||
-    pathname === '/categories/women' ||
-    pathname === '/categories/men' ||
-    pathname === '/categories/books' ||
-    pathname.startsWith('/pickup-station') ||
-    (pathname.startsWith('/seller-dashboard') && !pathname.includes('/edit-profile') && !pathname.includes('/onboarding'))
-  ) && !isMultiStepTransferPage && !isMultiStepTransferSheetPage && !isTransferOldPage;
-
-  // Use shouldShowHeader for spacing (simpler and consistent)
-  const shouldApplySpacing = shouldShowHeader;
-
-  // Measure actual header height dynamically
-  useEffect(() => {
-    const updateHeaderHeight = () => {
-      if (shouldShowHeader && headerRef.current) {
-        // Find the actual header element within the wrapper
-        const headerElement = headerRef.current.querySelector('header, [data-header]');
-        if (headerElement) {
-          const height = headerElement.getBoundingClientRect().height;
-          setActualHeaderHeight(`${height}px`);
-          console.log('Dynamic header height:', height, 'px');
-        }
-      } else {
-        setActualHeaderHeight('0px');
-      }
-    };
-
-    // Initial measurement after a small delay to ensure DOM is rendered
-    const timer = setTimeout(updateHeaderHeight, 100);
-
-    // Re-measure on resize
-    window.addEventListener('resize', updateHeaderHeight);
-
-    // Use MutationObserver to detect header content changes
-    const observer = new MutationObserver(updateHeaderHeight);
-    if (headerRef.current) {
-      observer.observe(headerRef.current, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        characterData: true
-      });
-    }
-
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('resize', updateHeaderHeight);
-      observer.disconnect();
-    };
-  }, [shouldShowHeader, pathname, activeTab]); // Re-run when route or active tab changes
-
-  // Measure actual bottom nav height dynamically
-  useEffect(() => {
-    const updateBottomNavHeight = () => {
-      if (shouldShowBottomNav && bottomNavRef.current) {
-        // Find the actual bottom nav element within the wrapper
-        const bottomNavElement = bottomNavRef.current.querySelector('nav, [data-bottom-nav]');
-        if (bottomNavElement) {
-          const height = bottomNavElement.getBoundingClientRect().height;
-          setActualBottomNavHeight(`${height}px`);
-          console.log('Dynamic bottom nav height:', height, 'px');
-        }
-      } else {
-        setActualBottomNavHeight('0px');
-      }
-    };
-
-    // Initial measurement after a small delay to ensure DOM is rendered
-    const timer = setTimeout(updateBottomNavHeight, 100);
-
-    // Re-measure on resize
-    window.addEventListener('resize', updateBottomNavHeight);
-
-    // Use MutationObserver to detect bottom nav content changes
-    const observer = new MutationObserver(updateBottomNavHeight);
-    if (bottomNavRef.current) {
-      observer.observe(bottomNavRef.current, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        characterData: true
-      });
-    }
-
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('resize', updateBottomNavHeight);
-      observer.disconnect();
-    };
-  }, [shouldShowBottomNav, pathname]); // Re-run when route changes
-
-  // Calculate header and bottom nav heights for CSS variables
-  const headerHeight = actualHeaderHeight;
-  const bottomNavHeight = actualBottomNavHeight;
-
-  // Check if current page is conversation detail
-  const isConversationDetailPage = pathname.startsWith('/messages/') && pathname !== '/messages';
-
-  // Get icon from URL and map to component
-  const iconName = searchParams.get('icon');
-  const sectionHeaderIcon = iconName ? iconMapper[iconName] : undefined;
-
-  // Check if current page is seller onboarding (should not show bottom nav)
-  const isSellerOnboardingPage = pathname.includes('/seller-dashboard/onboarding');
-
-  // Check if current page is categories page (main categories page)
-  const isCategoriesPage = pathname === '/categories';
-
-  // CSS with dynamic header and bottom nav heights
-  const layoutHeightStyle = `
-  :root {
-    --header-height: ${headerHeight};
-    --bottom-nav-height: ${bottomNavHeight};
-  }
-
-  /* Ensure main content respects the header and bottom nav */
-  main {
-    padding-top: var(--header-height);
-    padding-bottom: var(--bottom-nav-height);
-    min-height: calc(100vh - var(--header-height) - var(--bottom-nav-height));
-    box-sizing: border-box;
-  }
-
-  /* Ensure content doesn't get hidden behind fixed elements */
-  .page-content {
-    position: relative;
-    z-index: 1;
-  }
-
-  /* Remove padding for conversation detail page */
-  ${isConversationDetailPage ? `
-  main {
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-  }
-  ` : ''}
-
-  /* Force update of CSS variables */
-  * {
-    transition: none !important;
-  }
-`;
-
-  useEffect(() => {
-    if (pathname === "/auth") {
-      openAuthOverlay();
-      window.history.replaceState({}, "", "/");
-    }
-  }, [pathname, openAuthOverlay]);
-
-  // Check if current page is electronics (has filter functionality)
-  const isElectronicsPage = pathname === '/categories/electronics';
-
-  // Redirect to include default filter if missing
-  useEffect(() => {
-    if (isMessagesPage && pathname === '/messages' && !searchParams.get('filter')) {
-      navigate('/messages?filter=all', { replace: true });
-    }
-    if (isWalletPage && !searchParams.get('tab')) {
-      navigate('/wallet?tab=buyer', { replace: true });
-    }
-    if (isExplorePage && !searchParams.get('tab')) {
-      navigate('/explore?tab=products', { replace: true });
-    }
-  }, [isMessagesPage, isWalletPage, isExplorePage, searchParams, navigate, pathname]);
-
-  // Define custom tabs for messages page
-  const messagesTabs = isMessagesListPage ? [
-    { id: 'all', name: 'All', path: '/messages?filter=all' },
-    { id: 'unread', name: 'Unread', path: '/messages?filter=unread' },
-    { id: 'blocked', name: 'Blocked', path: '/messages?filter=blocked' },
-    { id: 'archived', name: 'Archived', path: '/messages?filter=archived' }
-  ] : undefined;
-
-  // Define custom tabs for wallet page
-  const walletTabs = isWalletPage ? [
-    { id: 'buyer', name: 'Buyer', path: '/wallet?tab=buyer' },
-    { id: 'seller', name: 'Seller', path: '/wallet?tab=seller' },
-    { id: 'transactions', name: 'Transactions', path: '/wallet?tab=transactions' },
-    { id: 'payouts', name: 'Payouts', path: '/wallet?tab=payouts' },
-    { id: 'payment-methods', name: 'Payment Methods', path: '/wallet?tab=payment-methods' },
-    { id: 'rewards', name: 'Rewards', path: '/wallet?tab=rewards' },
-  ] : undefined;
-
-  // Define custom tabs for explore page
-  const exploreTabs = isExplorePage ? [
-    { id: 'products', name: 'Products', path: '/explore?tab=products' },
-    { id: 'reels', name: 'Reels', path: '/explore?tab=reels' },
-    { id: 'posts', name: 'Posts', path: '/explore?tab=posts' },
-    { id: 'sellers', name: 'Sellers', path: '/explore?tab=sellers' },
-    { id: 'stations', name: 'Stations', path: '/explore?tab=stations' },
-  ] : undefined;
-
-  return (
-    <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
-      <style dangerouslySetInnerHTML={{ __html: layoutHeightStyle }} />
-
-      {/* Show AliExpressHeader for category pages - wrapped for measurement */}
-      {shouldShowHeader && (
-        <div ref={headerRef}>
-          <AliExpressHeader
-            activeTabId={isMessagesListPage ? messagesFilter : isWalletPage ? walletFilter : isExplorePage ? exploreFilter : activeTab}
-            showFilterBar={showFilterBar}
-            showCategoryTabs={!isProductsPage && !pathname.startsWith('/categories')} // Hide tabs for categories routes
-            filterCategories={filterCategories}
-            selectedFilters={selectedFilters}
-            onFilterSelect={onFilterSelect}
-            onFilterClear={onFilterClear}
-            onClearAll={onClearAll}
-            onFilterButtonClick={onFilterButtonClick}
-            isFilterDisabled={isFilterDisabled}
-            customTabs={messagesTabs || walletTabs || exploreTabs}
-            onCustomTabChange={isMessagesListPage ? (tabId) => {
-              const tab = messagesTabs?.find(t => t.id === tabId);
-              if (tab?.path) {
-                navigate(tab.path);
-              }
-            } : isWalletPage ? (tabId) => {
-              const tab = walletTabs?.find(t => t.id === tabId);
-              if (tab?.path) {
-                navigate(tab.path);
-              }
-            } : isExplorePage ? (tabId) => {
-              const tab = exploreTabs?.find(t => t.id === tabId);
-              if (tab?.path) {
-                navigate(tab.path);
-              }
-            } : undefined}
-            showSectionHeader={isProductsPage}
-            sectionHeaderTitle={productsTitle}
-            sectionHeaderShowStackedProfiles={searchParams.get('showProfiles') === 'true'}
-            sectionHeaderShowVerifiedSellers={searchParams.get('showVerifiedSellers') === 'true'}
-            sectionHeaderVerifiedSellersText={searchParams.get('verifiedSellersText') || 'Verified Sellers'}
-            sectionHeaderStackedProfiles={searchParams.get('showProfiles') === 'true' ? [
-              {
-                id: '1',
-                image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
-                alt: 'Sarah Johnson'
-              },
-              {
-                id: '2',
-                image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-                alt: 'Mike Chen'
-              },
-              {
-                id: '3',
-                image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-                alt: 'Emma Davis'
-              }
-            ] : []}
-            sectionHeaderStackedProfilesText={searchParams.get('profilesText') || 'Handpicked by'}
-            sectionHeaderShowCountdown={searchParams.get('showCountdown') === 'true'}
-            sectionHeaderCountdown={searchParams.get('countdown') || undefined}
-            sectionHeaderShowSponsorCount={searchParams.get('showSponsorCount') === 'true'}
-            // Pass mapped icon component
-            {...(sectionHeaderIcon && { sectionHeaderIcon })}
-            // FIXED: Only show View All when no other right-side elements are present
-            sectionHeaderViewAllLink={
-              (searchParams.get('showProfiles') !== 'true' &&
-               searchParams.get('showVerifiedSellers') !== 'true' &&
-               searchParams.get('showCountdown') !== 'true')
-                ? "/vendors"
-                : undefined
-            }
-            sectionHeaderViewAllText="View All"
-          />
-        </div>
-      )}
-
-      <main className="flex-grow relative">
-        {/* Add page-content class to ensure proper stacking */}
-        <div className="page-content h-full">
-          <Outlet />
-        </div>
-      </main>
-
-      {/* Show IndexBottomNav only on specific paths defined in the component */}
-      {/* Don't show IndexBottomNav when reels is opened in modal mode (with video parameter) */}
-      {shouldShowBottomNav && (
-        <div ref={bottomNavRef} className="z-30">
-          <IndexBottomNav />
-        </div>
-      )}
-
-      {/* Product Upload Overlay */}
-      <ProductUploadOverlay
-        isOpen={showProductUpload}
-        onClose={() => setShowProductUpload(false)}
-      />
-
-      {/* Location List Screen */}
-      {isLocationListScreenOpen && locationListScreenData && (
-        <LocationListScreen
-          title={locationListScreenData.title}
-          items={locationListScreenData.items}
-          onSelect={(item) => {
-            locationListScreenData.onSelect(item);
-            setLocationListScreenOpen(false);
-          }}
-          onClose={() => setLocationListScreenOpen(false)}
-          searchPlaceholder={locationListScreenData.searchPlaceholder}
-        />
-      )}
-
-      {/* Location Screen */}
-      {isLocationScreenOpen && (
-        <LocationScreen
-          onClose={() => setLocationScreenOpen(false)}
-          showHeader={true}
-        />
-      )}
-
-      {/* Auth Overlay */}
-      <AuthOverlay
-        isOpen={isAuthOverlayOpen}
-        onClose={() => setIsAuthOverlayOpen(false)}
-      />
-    </div>
-  );
+// Type definitions
+interface SubCategory {
+  id: string;
+  name: string;
+  imageUrl: string;
 }
 
-// Main export that wraps with provider
-export default function MainLayout() {
+interface Category {
+  id: string;
+  name: string;
+  icon: any;
+  subCategories: SubCategory[];
+}
+
+const CATEGORIES: Category[] = [
+  {
+    id: "just",
+    name: "Just for You",
+    icon: User,
+    subCategories: []
+  },
+  {
+    id: "accessories",
+    name: "Electronic Accessories",
+    icon: Plug,
+    subCategories: []
+  },
+  {
+    id: "devices",
+    name: "Electronic Devices",
+    icon: Monitor,
+    subCategories: [
+      { id: "mobiles", name: "Mobiles", imageUrl: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "tablets", name: "Tablets", imageUrl: "https://images.unsplash.com/photo-1561154464-82e9adf32764?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "landline", name: "Landline Phones", imageUrl: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "traditional", name: "Traditional Laptops", imageUrl: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "2in1", name: "2-in-1s", imageUrl: "https://images.unsplash.com/photo-1587614382346-4ec70e388b28?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "allinone", name: "All-In-One", imageUrl: "https://images.unsplash.com/photo-1593640495253-23196b27a87f?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "gaming", name: "Gaming Desktops", imageUrl: "https://images.unsplash.com/photo-1587202372634-32705e3bf49c?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "diy", name: "DIY", imageUrl: "https://images.unsplash.com/photo-1555617981-dac3880eac6e?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "fitness", name: "Fitness Trackers & Accessories", imageUrl: "https://images.unsplash.com/photo-1575311373937-040b8e1fd5b6?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "smart", name: "Smart Trackers", imageUrl: "https://images.unsplash.com/photo-1544117519-31a4b719223d?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "console", name: "Console", imageUrl: "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "games", name: "Console Games", imageUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "accessories", name: "Console Gaming Accessories", imageUrl: "https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?q=80&w=200&h=200&auto=format&fit=crop" },
+    ]
+  },
+  {
+    id: "tv",
+    name: "TV & Home Appliances",
+    icon: Tv,
+    subCategories: []
+  },
+  {
+    id: "beauty",
+    name: "Health & Beauty",
+    icon: Droplet,
+    subCategories: []
+  },
+  {
+    id: "babies",
+    name: "Babies & Toys",
+    icon: Baby,
+    subCategories: []
+  },
+  {
+    id: "groceries",
+    name: "Groceries & Pets",
+    icon: ShoppingCart,
+    subCategories: []
+  },
+  {
+    id: "home",
+    name: "Home & Lifestyle",
+    icon: Home,
+    subCategories: []
+  },
+  {
+    id: "women",
+    name: "Women's Fashion & Accessories",
+    icon: Shirt,
+    subCategories: []
+  },
+  {
+    id: "men",
+    name: "Men's Fashion & Accessories",
+    icon: Users,
+    subCategories: []
+  },
+  {
+    id: "kids",
+    name: "Kid's Fashion & Accessories",
+    icon: Watch,
+    subCategories: []
+  },
+  {
+    id: "sports",
+    name: "Sports & Lifestyle",
+    icon: Car,
+    subCategories: []
+  },
+];
+
+export default function CategoriesPage() {
+  const [selectedCategory, setSelectedCategory] = useState<string>("devices");
+
   return (
-    <HeaderFilterProvider>
-      <MainLayoutContent />
-    </HeaderFilterProvider>
+    <div className="bg-gray-50 h-screen flex overflow-hidden">
+      {/* Left sidebar - Vertical category list */}
+      <div className="w-24 bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto overscroll-none">
+        <div className="py-2">
+          {CATEGORIES.map((category) => {
+            const Icon = category.icon;
+            return (
+              <button
+                key={category.id}
+                onClick={() => setSelectedCategory(category.id)}
+                className={`w-full px-1.5 py-2 flex flex-col items-center text-center cursor-pointer transition-colors ${
+                  selectedCategory === category.id ? 'bg-gray-100' : 'hover:bg-gray-50'
+                }`}
+              >
+                <Icon className="w-5 h-5 mb-1 text-gray-700" />
+                <span className="text-[8px] text-gray-800 leading-tight">{category.name}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Main Content Area - Scrollable on its own */}
+      <div className="flex-1 overflow-y-auto overscroll-none">
+        <div className="p-4">
+          {/* Section: Mobiles & Tablets */}
+          <div className="mb-10">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-gray-900">Mobiles & Tablets</h2>
+              <ChevronRight className="w-6 h-6 text-gray-400" />
+            </div>
+            <div className="grid grid-cols-3 gap-6">
+              <div className="flex flex-col items-center">
+                <div className="w-full aspect-square bg-white rounded mb-3 overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=300&h=300&auto=format&fit=crop" alt="Mobiles" className="w-full h-full object-cover" />
+                </div>
+                <span className="text-sm text-gray-900">Mobiles</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="w-full aspect-square bg-white rounded-lg mb-3 overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1561154464-82e9adf32764?q=80&w=300&h=300&auto=format&fit=crop" alt="Tablets" className="w-full h-full object-cover" />
+                </div>
+                <span className="text-sm text-gray-900">Tablets</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="w-full aspect-square bg-white rounded-lg mb-3 overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1557672172-298e090bd0f1?q=80&w=300&h=300&auto=format&fit=crop" alt="Landline Phones" className="w-full h-full object-cover" />
+                </div>
+                <span className="text-sm text-gray-900">Landline Phones</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Section: Laptops */}
+          <div className="mb-10">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-gray-900">Laptops</h2>
+              <ChevronRight className="w-6 h-6 text-gray-400" />
+            </div>
+            <div className="grid grid-cols-3 gap-6">
+              <div className="flex flex-col items-center">
+                <div className="w-full aspect-square bg-white rounded-lg mb-3 overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=300&h=300&auto=format&fit=crop" alt="Traditional Laptops" className="w-full h-full object-cover" />
+                </div>
+                <span className="text-sm text-gray-900">Traditional Laptops</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="w-full aspect-square bg-white rounded-lg mb-3 overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1587614382346-4ec70e388b28?q=80&w=300&h=300&auto=format&fit=crop" alt="2-in-1s" className="w-full h-full object-cover" />
+                </div>
+                <span className="text-sm text-gray-900">2-in-1s</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Section: Desktop Computers */}
+          <div className="mb-10">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-gray-900">Desktop Computers</h2>
+              <ChevronRight className="w-6 h-6 text-gray-400" />
+            </div>
+            <div className="grid grid-cols-3 gap-6">
+              <div className="flex flex-col items-center">
+                <div className="w-full aspect-square bg-white rounded-lg mb-3 overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1593640495253-23196b27a87f?q=80&w=300&h=300&auto=format&fit=crop" alt="All-In-One" className="w-full h-full object-cover" />
+                </div>
+                <span className="text-sm text-gray-900">All-In-One</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="w-full aspect-square bg-white rounded-lg mb-3 overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1587202372634-32705e3bf49c?q=80&w=300&h=300&auto=format&fit=crop" alt="Gaming Desktops" className="w-full h-full object-cover" />
+                </div>
+                <span className="text-sm text-gray-900">Gaming Desktops</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="w-full aspect-square bg-white rounded-lg mb-3 overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1555617981-dac3880eac6e?q=80&w=300&h=300&auto=format&fit=crop" alt="DIY" className="w-full h-full object-cover" />
+                </div>
+                <span className="text-sm text-gray-900">DIY</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Section: Smartwatches & Accessories */}
+          <div className="mb-10">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-gray-900">Smartwatches & Accessories</h2>
+              <ChevronRight className="w-6 h-6 text-gray-400" />
+            </div>
+            <div className="grid grid-cols-3 gap-6">
+              <div className="flex flex-col items-center">
+                <div className="w-full aspect-square bg-white rounded-lg mb-3 overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1575311373937-040b8e1fd5b6?q=80&w=300&h=300&auto=format&fit=crop" alt="Fitness Trackers" className="w-full h-full object-cover" />
+                </div>
+                <span className="text-sm text-gray-900">Fitness Trackers & Accessories</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="w-full aspect-square bg-white rounded-lg mb-3 overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1544117519-31a4b719223d?q=80&w=300&h=300&auto=format&fit=crop" alt="Smart Trackers" className="w-full h-full object-cover" />
+                </div>
+                <span className="text-sm text-gray-900">Smart Trackers</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Section: Console Gaming */}
+          <div className="mb-10">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-gray-900">Console Gaming</h2>
+              <ChevronRight className="w-6 h-6 text-gray-400" />
+            </div>
+            <div className="grid grid-cols-3 gap-6">
+              <div className="flex flex-col items-center">
+                <div className="w-full aspect-square bg-white rounded-lg mb-3 overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?q=80&w=300&h=300&auto=format&fit=crop" alt="Console" className="w-full h-full object-cover" />
+                </div>
+                <span className="text-sm text-gray-900">Console</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="w-full aspect-square bg-white rounded-lg mb-3 overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=300&h=300&auto=format&fit=crop" alt="Console Games" className="w-full h-full object-cover" />
+                </div>
+                <span className="text-sm text-gray-900">Console Games</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="w-full aspect-square bg-white rounded-lg mb-3 overflow-hidden">
+                  <img src="https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?q=80&w=300&h=300&auto=format&fit=crop" alt="Gaming Accessories" className="w-full h-full object-cover" />
+                </div>
+                <span className="text-sm text-gray-900">Console Gaming Accessories</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
