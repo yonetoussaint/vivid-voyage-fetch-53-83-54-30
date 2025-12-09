@@ -157,7 +157,7 @@ function MainLayoutContent() {
   const isReelsPage = pathname === '/reels' && !location.search.includes('video=');
 
   // Calculate header and bottom nav heights for CSS variables
-  const headerHeight = shouldApplySpacing ? (isMobile ? '80px' : '120px') : '0px';
+  const headerHeight = shouldShowHeader ? (isMobile ? '80px' : '120px') : '0px';
   const bottomNavHeight = (shouldApplySpacing || isReelsPage) && isMobile && !isMultiStepTransferPage && !isMultiStepTransferSheetPage && !isTransferOldPage ? '48px' : '0px';
 
   // Check if current page is conversation detail
@@ -195,14 +195,14 @@ function MainLayoutContent() {
   }
   ` : ''}
 
-  /* Special styling for categories page */
+  /* Special styling for categories page - ADD padding top */
   ${isCategoriesPage ? `
   main {
-    padding-top: 0 !important;
+    padding-top: var(--header-height) !important;
     padding-bottom: 0 !important;
   }
   .categories-page-container {
-    height: calc(100vh - var(--header-height) - var(--bottom-nav-height));
+    height: 100%;
     overflow: hidden;
   }
   ` : ''}
