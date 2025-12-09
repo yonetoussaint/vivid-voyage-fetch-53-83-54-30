@@ -170,6 +170,9 @@ function MainLayoutContent() {
   // Check if current page is seller onboarding (should not show bottom nav)
   const isSellerOnboardingPage = pathname.includes('/seller-dashboard/onboarding');
 
+  // NEW: Check if current page is categories page (main categories page)
+  const isCategoriesPage = pathname === '/categories';
+
   // In MainLayout.tsx, update the headerHeightStyle to ensure bottom nav height is set correctly
   const headerHeightStyle = `
   :root {
@@ -189,6 +192,18 @@ function MainLayoutContent() {
   main {
     padding-top: 0 !important;
     padding-bottom: 0 !important;
+  }
+  ` : ''}
+
+  /* Special styling for categories page */
+  ${isCategoriesPage ? `
+  main {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+  .categories-page-container {
+    height: calc(100vh - var(--header-height) - var(--bottom-nav-height));
+    overflow: hidden;
   }
   ` : ''}
 `;
@@ -344,7 +359,14 @@ function MainLayoutContent() {
         )}
 
         <main className="flex-grow relative">
-          <Outlet />
+          {/* Wrap outlet with categories container when on categories page */}
+          {isCategoriesPage ? (
+            <div className="categories-page-container">
+              <Outlet />
+            </div>
+          ) : (
+            <Outlet />
+          )}
         </main>
 
         {/* Footer removed */}
