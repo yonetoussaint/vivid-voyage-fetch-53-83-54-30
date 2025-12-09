@@ -150,7 +150,7 @@ function MainLayoutContent() {
   const exploreFilter = searchParams.get('tab') || 'products';
 
   // Check if we should apply spacing (messages list only, not conversation detail, wallet, explore, products)
-  const shouldApplySpacing = isMessagesListPage || isExplorePage || isWalletPage || isProductsPage;
+  const shouldApplySpacing = shouldShowHeader;
 
   // Check if current page is reels
   const isReelsPage = pathname === '/reels' && !location.search.includes('video=');
