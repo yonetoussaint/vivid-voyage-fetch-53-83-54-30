@@ -8,14 +8,13 @@ import SimpleFlashDeals from "@/components/home/SimpleFlashDeals";
 import SpaceSavingCategories from "@/components/home/SpaceSavingCategories";
 import Footer from "@/components/Footer";
 import TopBrands from "@/components/home/TopBrands";
-// import VendorProductCarousel from "@/components/home/VendorProductCarousel"; // Commented out - not available yet
 import BenefitsBanner from "@/components/home/BenefitsBanner";
 import TopVendorsCompact from "@/components/home/TopVendorsCompact";
 import MobileOptimizedReels from "@/components/home/MobileOptimizedReels";
 import PopularSearches from "@/components/home/PopularSearches";
 import NewArrivalsSection from "@/components/home/NewArrivalsSection";
 import HeroBanner from "@/components/home/HeroBanner";
-import BookGenreFlashDeals from "@/components/home/BookGenreFlashDeals"; // Import the new component
+import BookGenreFlashDeals from "@/components/home/BookGenreFlashDeals";
 import { useHeaderFilter } from "@/contexts/HeaderFilterContext";
 import { useAuth } from "@/contexts/auth/AuthContext";
 
@@ -59,7 +58,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
 
   // State for lazy loading carousel data
-  const [visibleCarousels, setVisibleCarousels] = useState<Set<number>>(new Set([0, 1, 2])); // Load first 3
+  const [visibleCarousels, setVisibleCarousels] = useState<Set<number>>(new Set([0, 1, 2]));
 
   // Header filter context for news ticker functionality
   const {
@@ -169,19 +168,16 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
             const shouldShowNews = newsTickerTopRelativeToHeader <= 0;
 
             // Determine scroll direction with threshold to prevent jitter
-            const scrollThreshold = 2; // pixels
+            const scrollThreshold = 2;
             const isScrollingDown = scrollDelta > scrollThreshold;
             const isScrollingUp = scrollDelta < -scrollThreshold;
 
             // Smart switching logic
             if (shouldShowNews && isScrollingDown) {
-              // Scrolling down and news ticker is passing header - show news
               setHeaderMode('news');
             } else if (isScrollingUp) {
-              // Any significant scroll up - immediately show categories
               setHeaderMode('categories');
             } else if (currentScrollY <= headerHeight) {
-              // Near top of page - always show categories
               setHeaderMode('categories');
             }
 
@@ -203,10 +199,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       }
     };
 
-    // Use passive scroll listener for better performance
     window.addEventListener('scroll', handleScroll, { passive: true });
-
-    // Initial check
     handleScroll();
 
     return () => {
@@ -228,17 +221,16 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             const carouselIndex = parseInt(entry.target.getAttribute('data-carousel-index') || '0');
-            setVisibleCarousels(prev => new Set([...prev, carouselIndex, carouselIndex + 1])); // Preload next one
+            setVisibleCarousels(prev => new Set([...prev, carouselIndex, carouselIndex + 1]));
           }
         });
       },
       {
-        rootMargin: '400px', // Start loading 400px before component enters viewport
+        rootMargin: '400px',
         threshold: 0.01
       }
     );
 
-    // Observe all carousel placeholders
     const placeholders = document.querySelectorAll('[data-carousel-placeholder]');
     placeholders.forEach(placeholder => observer.observe(placeholder));
 
@@ -249,7 +241,6 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   const renderVendorCarousel = (index: number) => {
     const productSlice = products?.slice((index * 5) % (products?.length || 20), ((index * 5) + 5) % (products?.length || 20)) || [];
 
-    // Only render if this carousel index is visible or close to viewport
     if (!visibleCarousels.has(index)) {
       return (
         <div 
@@ -261,20 +252,10 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       );
     }
 
-    // Commented out VendorProductCarousel since it's not available yet
-    // return (
-    //   <VendorProductCarousel
-    //     key={`vendor-${index}`}
-    //     title="Featured Products"
-    //     products={productSlice}
-    //   />
-    // );
-
-    // Return a placeholder or null instead
     return null;
   };
 
-  // Define all components to render - simplified array with only available components
+  // Define all components to render
   const components = [
     <div key="hero" ref={heroBannerRef}>
       <HeroBanner showNewsTicker={true} />
@@ -289,7 +270,6 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       showTitleChevron={true}
     />,
 
-    // Book Genre Flash Deals - ADDED HERE
     <BookGenreFlashDeals
       key="book-genre-flash-deals"
       title="Popular Book Genres"
@@ -298,10 +278,10 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       showSummary={true}
       showSectionHeader={true}
       showCountdown={true}
-      customCountdown="15:00:00:00" // Optional custom countdown
-      icon={BookOpen} // Optional custom icon
-      products={products} // Pass the fetched products
-      className="mt-4" // Additional styling
+      customCountdown="15:00:00:00"
+      icon={BookOpen}
+      products={products}
+      className="mt-4"
       showVerifiedSellers={true}
       verifiedSellersText="Top Book Sellers"
       summaryMode="products"
@@ -313,15 +293,17 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   ];
 
   return (
-    <div className="overflow-hidden relative min-h-screen">
-      <div className="space-y-2">
-        {components.map((component, index) => (
-          <React.Fragment key={`section-${index}`}>
-            {component}
-            {/* Render vendor carousel only for the first 3 components (excluding BookGenreFlashDeals) */}
-            {index < 2 && renderVendorCarousel(index)}
-          </React.Fragment>
-        ))}
+    <div className="overflow-hidden relative">
+      {/* ADD EXPLICIT TOP PADDING FOR SAFETY */}
+      <div className="pt-[var(--header-height,80px)]"> {/* Fallback to 80px if var not set */}
+        <div className="space-y-2">
+          {components.map((component, index) => (
+            <React.Fragment key={`section-${index}`}>
+              {component}
+              {index < 2 && renderVendorCarousel(index)}
+            </React.Fragment>
+          ))}
+        </div>
       </div>
 
       {/* Hidden Footer - present in DOM for Google Auth but not visible */}
