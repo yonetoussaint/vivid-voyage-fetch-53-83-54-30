@@ -575,7 +575,7 @@ export default function HeroBanner({
         ref={heroBannerRef}
         data-testid="hero-banner"
         className={`relative overflow-hidden w-full ${asCarousel ? '' : ''}`}
-        style={{ marginTop: asCarousel ? 0 : offset }}
+        
       >
         {asCarousel ? (
           <div>Carousel content...</div>
