@@ -110,7 +110,7 @@ export default function CategoriesPage() {
   return (
     <div className="bg-gray-50 h-screen flex overflow-hidden">
       {/* Left sidebar - Vertical category list */}
-      <div className="w-24 bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto">
+      <div className="w-24 bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto overscroll-none">
         <div className="py-2">
           {CATEGORIES.map((category) => {
             const Icon = category.icon;
@@ -131,7 +131,7 @@ export default function CategoriesPage() {
       </div>
 
       {/* Main Content Area - Scrollable on its own */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto overscroll-none">
         <div className="p-4">
           {/* Section: Mobiles & Tablets */}
           <div className="mb-10">
