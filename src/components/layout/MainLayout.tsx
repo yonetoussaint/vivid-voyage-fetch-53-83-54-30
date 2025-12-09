@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import Footer from "@/components/layout/Footer";
 import IndexBottomNav from "@/components/layout/IndexBottomNav";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -14,8 +13,6 @@ import AuthOverlay from "@/components/auth/AuthOverlay";
 import { useAuth } from "@/contexts/auth/AuthContext";
 import { useTranslation } from 'react-i18next';
 import { HeaderFilterProvider, useHeaderFilter } from "@/contexts/HeaderFilterContext";
-
-// Add this import for useAuthOverlay
 import { useAuthOverlay } from "@/context/AuthOverlayContext";
 
 // Create a wrapper component that uses the hook
@@ -368,8 +365,6 @@ function MainLayoutContent() {
             <Outlet />
           )}
         </main>
-
-        {/* Footer removed */}
 
         {/* Show IndexBottomNav only on specific paths defined in the component */}
         {/* Don't show IndexBottomNav when reels is opened in modal mode (with video parameter) */}
