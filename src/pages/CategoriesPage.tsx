@@ -107,302 +107,415 @@ const CATEGORIES: Category[] = [
 export default function CategoriesPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("devices");
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const mainContentRef = useRef<HTMLDivElement>(null);
+
+  // Set body overflow to hidden to prevent page scrolling
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, []);
+
+  // Simpler scroll handling - just ensure proper overflow containers
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      const target = e.target as HTMLElement;
+      
+      // Check if we're inside a scrollable container
+      const isScrollable = (element: HTMLElement) => {
+        const style = window.getComputedStyle(element);
+        return (
+          style.overflowY === 'auto' ||
+          style.overflowY === 'scroll' ||
+          element.scrollHeight > element.clientHeight
+        );
+      };
+      
+      // Find the scrollable parent
+      let current = target;
+      while (current && current !== document.body) {
+        if (isScrollable(current)) {
+          const atTop = current.scrollTop === 0;
+          const atBottom = current.scrollTop + current.clientHeight >= current.scrollHeight - 1;
+          
+          // Only prevent default if we're at the boundary and scrolling further
+          if ((atTop && e.deltaY < 0) || (atBottom && e.deltaY > 0)) {
+            e.preventDefault();
+          }
+          return;
+        }
+        current = current.parentElement as HTMLElement;
+      }
+    };
+
+    document.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      document.removeEventListener('wheel', handleWheel);
+    };
+  }, []);
 
   const selectedCategoryData = CATEGORIES.find(cat => cat.id === selectedCategory);
 
   return (
-    <div className="bg-gray-50 min-h-screen flex flex-col md:flex-row">
-      {/* Mobile Header */}
-      <div className="md:hidden bg-white border-b">
-        <div className="px-4 py-3">
-          <h1 className="text-lg font-semibold text-gray-900">Categories</h1>
-        </div>
-        {/* Mobile Category Tabs */}
-        <div className="px-4 pb-2 overflow-x-auto">
-          <div className="flex space-x-3 min-w-max">
-            {CATEGORIES.slice(0, 6).map((category) => {
+    <div className="bg-gray-50 h-screen flex overflow-hidden">
+      {/* Left sidebar - Fixed height with independent scrolling */}
+      <div 
+        className="w-24 bg-white flex-shrink-0 h-screen flex flex-col overflow-hidden"
+      >
+        <div 
+          ref={sidebarRef}
+          className="flex-1 overflow-y-auto py-2"
+          style={{ 
+            overscrollBehavior: 'none',
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth: 'none', // Firefox
+            msOverflowStyle: 'none', // IE/Edge
+          }}
+        >
+          <div style={{ minHeight: '0' }}>
+            {CATEGORIES.map((category) => {
               const Icon = category.icon;
               return (
                 <button
                   key={category.id}
                   onClick={() => setSelectedCategory(category.id)}
-                  className={`flex flex-col items-center px-3 py-2 rounded-lg whitespace-nowrap ${
-                    selectedCategory === category.id 
-                      ? 'bg-blue-50 text-blue-600' 
-                      : 'text-gray-600 hover:bg-gray-50'
+                  className={`w-full px-1.5 py-3 flex flex-col items-center text-center cursor-pointer transition-colors relative ${
+                    selectedCategory === category.id ? 'bg-gray-50' : 'hover:bg-gray-50'
                   }`}
                 >
-                  <Icon className="w-5 h-5 mb-1" />
-                  <span className="text-xs">{category.name.split(' ')[0]}</span>
+                  <Icon className="w-5 h-5 mb-1 text-gray-700" />
+                  <span className="text-[8px] text-gray-800 leading-tight">{category.name}</span>
+                  {selectedCategory === category.id && (
+                    <div className="absolute right-0 top-0 bottom-0 w-px bg-gray-50" />
+                  )}
                 </button>
               );
             })}
           </div>
         </div>
+        {/* Hide scrollbar for Chrome/Safari */}
+        <style>{`
+          .overflow-y-auto::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
       </div>
 
-      {/* Desktop Sidebar - Fixed position */}
-      <div className="hidden md:block w-64 bg-white border-r flex-shrink-0 h-screen sticky top-0">
-        <div className="p-4 border-b">
-          <h1 className="text-lg font-semibold text-gray-900">All Categories</h1>
-        </div>
+      {/* Main Content Area - Scrollable independently */}
+      <div className="flex-1 h-screen overflow-hidden flex flex-col">
         <div 
-          ref={sidebarRef}
-          className="overflow-y-auto h-[calc(100vh-73px)]"
+          ref={mainContentRef}
+          className="flex-1 overflow-y-auto" 
           style={{ 
-            overscrollBehavior: 'contain',
-            WebkitOverflowScrolling: 'touch'
+            overscrollBehavior: 'none',
+            WebkitOverflowScrolling: 'touch',
           }}
         >
-          {CATEGORIES.map((category) => {
-            const Icon = category.icon;
-            return (
-              <button
-                key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
-                className={`w-full px-4 py-3 flex items-center cursor-pointer transition-colors relative group ${
-                  selectedCategory === category.id 
-                    ? 'bg-blue-50 border-r-2 border-blue-500' 
-                    : 'hover:bg-gray-50'
-                }`}
-              >
-                <Icon className={`w-5 h-5 mr-3 ${
-                  selectedCategory === category.id ? 'text-blue-600' : 'text-gray-500 group-hover:text-gray-700'
-                }`} />
-                <span className={`text-sm ${
-                  selectedCategory === category.id ? 'text-blue-600 font-medium' : 'text-gray-700'
-                }`}>{category.name}</span>
-                {category.subCategories.length > 0 && (
-                  <ChevronRight className="w-4 h-4 ml-auto text-gray-400" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+          <div className="p-2">
+            {selectedCategoryData?.subCategories.length === 0 ? (
+              <div className="flex items-center justify-center h-64">
+                <p className="text-gray-500">No subcategories available for {selectedCategoryData.name}</p>
+              </div>
+            ) : (
+              <>
+                {/* Section: Mobiles & Tablets */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-base font-semibold text-gray-900">Mobiles & Tablets</h2>
+                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="flex flex-col items-center">
+                      <div className="w-full aspect-square bg-white rounded mb-1.5 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=300&h=300&auto=format&fit=crop" alt="Mobiles" className="w-full h-full object-cover" />
+                      </div>
+                      <span className="text-xs text-gray-900 text-center">Mobiles</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <div className="w-full aspect-square bg-white rounded mb-1.5 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1561154464-82e9adf32764?q=80&w=300&h=300&auto=format&fit=crop" alt="Tablets" className="w-full h-full object-cover" />
+                      </div>
+                      <span className="text-xs text-gray-900 text-center">Tablets</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <div className="w-full aspect-square bg-white rounded mb-1.5 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1557672172-298e090bd0f1?q=80&w=300&h=300&auto=format&fit=crop" alt="Landline Phones" className="w-full h-full object-cover" />
+                      </div>
+                      <span className="text-xs text-gray-900 text-center">Landline Phones</span>
+                    </div>
+                  </div>
+                </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 min-h-screen">
-        {/* Desktop Category Header */}
-        <div className="hidden md:block bg-white border-b p-4">
-          <div className="flex items-center">
-            <h2 className="text-lg font-semibold text-gray-900">
-              {selectedCategoryData?.name || "Categories"}
-            </h2>
-            <span className="ml-2 text-sm text-gray-500">
-              ({selectedCategoryData?.subCategories.length || 0} subcategories)
-            </span>
+                {/* Section: Laptops */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-base font-semibold text-gray-900">Laptops</h2>
+                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="flex flex-col items-center">
+                      <div className="w-full aspect-square bg-white rounded mb-1.5 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=300&h=300&auto=format&fit=crop" alt="Traditional Laptops" className="w-full h-full object-cover" />
+                      </div>
+                      <span className="text-xs text-gray-900 text-center">Traditional Laptops</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <div className="w-full aspect-square bg-white rounded mb-1.5 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1587614382346-4ec70e388b28?q=80&w=300&h=300&auto=format&fit=crop" alt="2-in-1s" className="w-full h-full object-cover" />
+                      </div>
+                      <span className="text-xs text-gray-900 text-center">2-in-1s</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section: Desktop Computers */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-base font-semibold text-gray-900">Desktop Computers</h2>
+                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="flex flex-col items-center">
+                      <div className="w-full aspect-square bg-white rounded mb-1.5 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1593640495253-23196b27a87f?q=80&w=300&h=300&auto=format&fit=crop" alt="All-In-One" className="w-full h-full object-cover" />
+                      </div>
+                      <span className="text-xs text-gray-900 text-center">All-In-One</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <div className="w-full aspect-square bg-white rounded mb-1.5 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1587202372634-32705e3bf49c?q=80&w=300&h=300&auto=format&fit=crop" alt="Gaming Desktops" className="w-full h-full object-cover" />
+                      </div>
+                      <span className="text-xs text-gray-900 text-center">Gaming Desktops</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <div className="w-full aspect-square bg-white rounded mb-1.5 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1555617981-dac3880eac6e?q=80&w=300&h=300&auto=format&fit=crop" alt="DIY" className="w-full h-full object-cover" />
+                      </div>
+                      <span className="text-xs text-gray-900 text-center">DIY</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section: Smartwatches & Accessories */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-base font-semibold text-gray-900">Smartwatches & Accessories</h2>
+                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="flex flex-col items-center">
+                      <div className="w-full aspect-square bg-white rounded mb-1.5 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1575311373937-040b8e1fd5b6?q=80&w=300&h=300&auto=format&fit=crop" alt="Fitness Trackers" className="w-full h-full object-cover" />
+                      </div>
+                      <span className="text-xs text-gray-900 text-center">Fitness Trackers & Accessories</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <div className="w-full aspect-square bg-white rounded mb-1.5 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1544117519-31a4b719223d?q=80&w=300&h=300&auto=format&fit=crop" alt="Smart Trackers" className="w-full h-full object-cover" />
+                      </div>
+                      <span className="text-xs text-gray-900 text-center">Smart Trackers</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section: Console Gaming */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-base font-semibold text-gray-900">Console Gaming</h2>
+                    <ChevronRight className="w-5 h-5 text-gray-400" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="flex flex-col items-center">
+                      <div className="w-full aspect-square bg-white rounded mb-1.5 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?q=80&w=300&h=300&auto=format&fit=crop" alt="Console" className="w-full h-full object-cover" />
+                      </div>
+                      <span className="text-xs text-gray-900 text-center">Console</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <div className="w-full aspect-square bg-white rounded mb-1.5 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=300&h=300&auto=format&fit=crop" alt="Console Games" className="w-full h-full object-cover" />
+                      </div>
+                      <span className="text-xs text-gray-900 text-center">Console Games</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <div className="w-full aspect-square bg-white rounded mb-1.5 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?q=80&w=300&h=300&auto=format&fit=crop" alt="Gaming Accessories" className="w-full h-full object-cover" />
+                      </div>
+                      <span className="text-xs text-gray-900 text-center">Console Gaming Accessories</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Product Suggestions Grid */}
+                <div className="mt-8">
+                  <h2 className="text-base font-semibold text-gray-900 mb-4">You May Also Like</h2>
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* Product 1 */}
+                    <div>
+                      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
+                        <img src="https://images.unsplash.com/photo-1572635196237-14b3f281503f?q=80&w=300&h=300&auto=format&fit=crop" alt="Product" className="w-full h-full object-cover" />
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
+                          <span className="bg-red-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Sale</span>
+                          <span className="bg-orange-100 text-orange-700 px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">SuperDeals</span>
+                          Wireless Bluetooth Headphones Noise Cancel
+                        </p>
+                        <div className="flex items-center gap-1 mb-0.5">
+                          <span className="text-[10px] text-gray-500">234 sold</span>
+                          <span className="text-[10px] text-gray-400">|</span>
+                          <span className="text-[10px] text-gray-700">★ 4.8</span>
+                        </div>
+                        <p className="text-sm font-bold text-gray-900">79523</p>
+                      </div>
+                    </div>
+
+                    {/* Product 2 */}
+                    <div>
+                      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
+                        <img src="https://images.unsplash.com/photo-1583394838336-acd977736f90?q=80&w=300&h=300&auto=format&fit=crop" alt="Product" className="w-full h-full object-cover" />
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
+                          <span className="bg-red-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Sale</span>
+                          Smart Watch Fitness Tracker Heart Rate
+                        </p>
+                        <div className="flex items-center gap-1 mb-0.5">
+                          <span className="text-[10px] text-gray-500">18081 sold</span>
+                          <span className="text-[10px] text-gray-400">|</span>
+                          <span className="text-[10px] text-gray-700">★ 4.7</span>
+                        </div>
+                        <p className="text-sm font-bold text-gray-900">67019</p>
+                        <p className="text-[10px] text-gray-500">Top selling on AliExpress</p>
+                      </div>
+                    </div>
+
+                    {/* Product 3 */}
+                    <div>
+                      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
+                        <img src="https://images.unsplash.com/photo-1585060544812-6b45742d762f?q=80&w=300&h=300&auto=format&fit=crop" alt="Product" className="w-full h-full object-cover" />
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
+                          <span className="bg-red-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Sale</span>
+                          <span className="bg-orange-100 text-orange-700 px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">SuperDeals</span>
+                          Sport Smart Watch Fitness Call
+                        </p>
+                        <div className="flex items-center gap-1 mb-0.5">
+                          <span className="text-[10px] text-gray-500">1361 sold</span>
+                          <span className="text-[10px] text-gray-400">|</span>
+                          <span className="text-[10px] text-gray-700">★ 4.6</span>
+                        </div>
+                        <p className="text-sm font-bold text-gray-900">105730</p>
+                        <p className="text-[10px] text-orange-600">Premium Quality</p>
+                      </div>
+                    </div>
+
+                    {/* Product 4 */}
+                    <div>
+                      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
+                        <img src="https://images.unsplash.com/photo-1625948515291-69613efd103f?q=80&w=300&h=300&auto=format&fit=crop" alt="Product" className="w-full h-full object-cover" />
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
+                          <span className="bg-blue-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Brand+</span>
+                          <span className="bg-red-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Sale</span>
+                          30 36 Inch Curly Highlight Wig Human
+                        </p>
+                        <div className="flex items-center gap-1 mb-0.5">
+                          <span className="text-[10px] text-gray-500">637 sold</span>
+                          <span className="text-[10px] text-gray-400">|</span>
+                          <span className="text-[10px] text-gray-700">★ 4.7</span>
+                        </div>
+                        <p className="text-sm font-bold text-gray-900">741510</p>
+                        <p className="text-[10px] text-gray-500">Top selling on AliExpress</p>
+                      </div>
+                    </div>
+
+                    {/* Product 5 */}
+                    <div>
+                      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
+                        <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=300&h=300&auto=format&fit=crop" alt="Product" className="w-full h-full object-cover" />
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
+                          <span className="bg-red-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Sale</span>
+                          Premium Wireless Speaker Deep Bass
+                        </p>
+                        <div className="flex items-center gap-1 mb-0.5">
+                          <span className="text-[10px] text-gray-500">432 sold</span>
+                          <span className="text-[10px] text-gray-400">|</span>
+                          <span className="text-[10px] text-gray-700">★ 4.8</span>
+                        </div>
+                        <p className="text-sm font-bold text-gray-900">89990</p>
+                      </div>
+                    </div>
+
+                    {/* Product 6 */}
+                    <div>
+                      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
+                        <img src="https://images.unsplash.com/photo-1600003014755-ba31aa59c4b6?q=80&w=300&h=300&auto=format&fit=crop" alt="Product" className="w-full h-full object-cover" />
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
+                          <span className="bg-blue-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Certified Original</span>
+                          HD Webcam 1080P Built-in Microphone
+                        </p>
+                        <div className="flex items-center gap-1 mb-0.5">
+                          <span className="text-[10px] text-gray-500">789 sold</span>
+                          <span className="text-[10px] text-gray-400">|</span>
+                          <span className="text-[10px] text-gray-700">★ 5.0</span>
+                        </div>
+                        <p className="text-sm font-bold text-gray-900">49990</p>
+                        <p className="text-[10px] text-orange-600">Premium Quality</p>
+                      </div>
+                    </div>
+
+                    {/* Product 7 */}
+                    <div>
+                      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
+                        <img src="https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?q=80&w=300&h=300&auto=format&fit=crop" alt="Product" className="w-full h-full object-cover" />
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
+                          <span className="bg-red-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Sale</span>
+                          <span className="bg-orange-100 text-orange-700 px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">250%</span>
+                          Mechanical Gaming Keyboard RGB
+                        </p>
+                        <div className="flex items-center gap-1 mb-0.5">
+                          <span className="text-[10px] text-gray-500">38 sold</span>
+                          <span className="text-[10px] text-gray-400">|</span>
+                          <span className="text-[10px] text-gray-700">★ 4.8</span>
+                        </div>
+                        <p className="text-sm font-bold text-gray-900">767523</p>
+                        <p className="text-[10px] text-orange-600">Premium Quality</p>
+                      </div>
+                    </div>
+
+                    {/* Product 8 */}
+                    <div>
+                      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
+                        <img src="https://images.unsplash.com/photo-1586864387634-97201e228378?q=80&w=300&h=300&auto=format&fit=crop" alt="Product" className="w-full h-full object-cover" />
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
+                          <span className="bg-blue-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Brand+</span>
+                          Ergonomic Wireless Mouse Rechargeable
+                        </p>
+                        <div className="flex items-center gap-1 mb-0.5">
+                          <span className="text-[10px] text-gray-500">923 sold</span>
+                          <span className="text-[10px] text-gray-400">|</span>
+                          <span className="text-[10px] text-gray-700">★ 4.7</span>
+                        </div>
+                        <p className="text-sm font-bold text-gray-900">24990</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
-        </div>
-
-        <div className="p-4 md:p-6">
-          {selectedCategoryData?.subCategories.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                <Monitor className="w-8 h-8 text-gray-400" />
-              </div>
-              <p className="text-gray-600 mb-2">No subcategories available</p>
-              <p className="text-sm text-gray-500">Check back later for updates</p>
-            </div>
-          ) : (
-            <>
-              {/* Categories Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 mb-8">
-                {selectedCategoryData?.subCategories.map((subCategory) => (
-                  <div key={subCategory.id} className="group cursor-pointer">
-                    <div className="aspect-square bg-white rounded-xl overflow-hidden mb-3 shadow-sm group-hover:shadow-md transition-shadow">
-                      <img 
-                        src={subCategory.imageUrl} 
-                        alt={subCategory.name} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                      />
-                    </div>
-                    <div className="text-center">
-                      <h3 className="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
-                        {subCategory.name}
-                      </h3>
-                      <p className="text-xs text-gray-500 mt-1">Browse products</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Featured Products Section */}
-              <div className="bg-white rounded-2xl shadow-sm p-6 mb-8">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900">Featured Products</h2>
-                    <p className="text-sm text-gray-600 mt-1">Popular items in {selectedCategoryData?.name}</p>
-                  </div>
-                  <button className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center">
-                    View all
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {/* Product Card 1 */}
-                  <div className="group cursor-pointer">
-                    <div className="relative overflow-hidden rounded-xl mb-3">
-                      <img 
-                        src="https://images.unsplash.com/photo-1572635196237-14b3f281503f?q=80&w=600&h=600&auto=format&fit=crop" 
-                        alt="Wireless Headphones" 
-                        className="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-200"
-                      />
-                      <div className="absolute top-3 left-3">
-                        <span className="bg-red-500 text-white px-2 py-1 rounded-md text-xs font-medium">Sale</span>
-                      </div>
-                    </div>
-                    <div>
-                      <h3 className="text-sm text-gray-900 font-medium mb-1 line-clamp-2">
-                        Wireless Bluetooth Headphones Noise Cancelling
-                      </h3>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs text-gray-500">234 sold</span>
-                        <span className="text-gray-300">•</span>
-                        <div className="flex items-center">
-                          <span className="text-yellow-400">★</span>
-                          <span className="text-xs text-gray-700 ml-1">4.8</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold text-gray-900">$79.52</span>
-                        <span className="text-xs text-gray-400 line-through">$99.99</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Product Card 2 */}
-                  <div className="group cursor-pointer">
-                    <div className="relative overflow-hidden rounded-xl mb-3">
-                      <img 
-                        src="https://images.unsplash.com/photo-1583394838336-acd977736f90?q=80&w=600&h=600&auto=format&fit=crop" 
-                        alt="Smart Watch" 
-                        className="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-200"
-                      />
-                      <div className="absolute top-3 left-3">
-                        <span className="bg-blue-500 text-white px-2 py-1 rounded-md text-xs font-medium">Top Seller</span>
-                      </div>
-                    </div>
-                    <div>
-                      <h3 className="text-sm text-gray-900 font-medium mb-1 line-clamp-2">
-                        Smart Watch Fitness Tracker Heart Rate Monitor
-                      </h3>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs text-gray-500">18,081 sold</span>
-                        <span className="text-gray-300">•</span>
-                        <div className="flex items-center">
-                          <span className="text-yellow-400">★</span>
-                          <span className="text-xs text-gray-700 ml-1">4.7</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold text-gray-900">$67.01</span>
-                        <span className="text-xs text-green-600 font-medium">-20%</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Product Card 3 */}
-                  <div className="group cursor-pointer">
-                    <div className="relative overflow-hidden rounded-xl mb-3">
-                      <img 
-                        src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=600&h=600&auto=format&fit=crop" 
-                        alt="Wireless Speaker" 
-                        className="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-200"
-                      />
-                      <div className="absolute top-3 left-3">
-                        <span className="bg-purple-500 text-white px-2 py-1 rounded-md text-xs font-medium">Premium</span>
-                      </div>
-                    </div>
-                    <div>
-                      <h3 className="text-sm text-gray-900 font-medium mb-1 line-clamp-2">
-                        Premium Wireless Speaker with Deep Bass
-                      </h3>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs text-gray-500">432 sold</span>
-                        <span className="text-gray-300">•</span>
-                        <div className="flex items-center">
-                          <span className="text-yellow-400">★</span>
-                          <span className="text-xs text-gray-700 ml-1">4.8</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold text-gray-900">$89.99</span>
-                        <span className="text-xs text-green-600 font-medium">Free Shipping</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Product Card 4 */}
-                  <div className="group cursor-pointer">
-                    <div className="relative overflow-hidden rounded-xl mb-3">
-                      <img 
-                        src="https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?q=80&w=600&h=600&auto=format&fit=crop" 
-                        alt="Gaming Keyboard" 
-                        className="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-200"
-                      />
-                      <div className="absolute top-3 left-3">
-                        <span className="bg-orange-500 text-white px-2 py-1 rounded-md text-xs font-medium">Deal</span>
-                      </div>
-                    </div>
-                    <div>
-                      <h3 className="text-sm text-gray-900 font-medium mb-1 line-clamp-2">
-                        Mechanical Gaming Keyboard RGB Backlit
-                      </h3>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs text-gray-500">38 sold</span>
-                        <span className="text-gray-300">•</span>
-                        <div className="flex items-center">
-                          <span className="text-yellow-400">★</span>
-                          <span className="text-xs text-gray-700 ml-1">4.8</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold text-gray-900">$76.75</span>
-                        <span className="text-xs text-gray-400 line-through">$109.99</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Recommended For You */}
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900">Recommended For You</h2>
-                    <p className="text-sm text-gray-600 mt-1">Based on your browsing history</p>
-                  </div>
-                  <button className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center">
-                    See more
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                  {[1, 2, 3, 4, 5, 6].map((item) => (
-                    <div key={item} className="bg-white rounded-xl p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-                      <div className="aspect-square bg-gray-100 rounded-lg mb-2 overflow-hidden">
-                        <img 
-                          src={`https://images.unsplash.com/photo-${150000000 + item}?q=80&w=200&h=200&auto=format&fit=crop`}
-                          alt="Product"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <h3 className="text-xs font-medium text-gray-900 mb-1 line-clamp-2">
-                        Product Title Here {item}
-                      </h3>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-bold text-gray-900">$49.99</span>
-                        <span className="text-xs text-gray-500">★ 4.5</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
         </div>
       </div>
     </div>
