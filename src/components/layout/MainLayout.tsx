@@ -20,12 +20,30 @@ function MainLayoutContent() {
   const location = useLocation();
   const navigate = useNavigate();
   const pathname = location.pathname;
+  
+  // Get search params early
+  const searchParams = new URLSearchParams(location.search);
+  const messagesFilter = searchParams.get('filter') || 'all';
+  const walletFilter = searchParams.get('tab') || 'buyer';
+  const exploreFilter = searchParams.get('tab') || 'products';
+  const isMessagesPage = pathname === '/messages' || pathname.startsWith('/messages/');
+  const isMessagesListPage = pathname === '/messages';
+  const isWalletPage = pathname === '/wallet';
+  const isExplorePage = pathname === '/explore';
+  const isProductsPage = pathname === '/products';
+  const productsTitle = isProductsPage ? new URLSearchParams(location.search).get('title') || 'Products' : '';
+  const iconName = searchParams.get('icon');
+  
+  // Check if current page is conversation detail - DECLARE THIS EARLY
+  const isConversationDetailPage = pathname.startsWith('/messages/') && pathname !== '/messages';
+  
   const isProductPage = pathname.includes('/product/');
   const isRootHomePage = pathname === "/" || pathname === "/for-you";
   const isForYouPage = pathname === "/" || pathname === "/for-you";
   const isMultiStepTransferPage = pathname === "/multi-step-transfer";
   const isMultiStepTransferSheetPage = pathname === "/multi-step-transfer-page";
   const isTransferOldPage = pathname === "/transfer-old";
+  
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [showProductUpload, setShowProductUpload] = useState(false);
@@ -50,6 +68,27 @@ function MainLayoutContent() {
     onFilterButtonClick,
     isFilterDisabled
   } = useHeaderFilter();
+
+  // Icon mapper - DECLARE BEFORE USING
+  const iconMapper: Record<string, React.ComponentType<{ className?: string }>> = {
+    Trophy,
+    Tag,
+    ShieldCheck,
+    Zap,
+    Star,
+    Crown,
+    Award,
+    Home,
+    Smartphone,
+    Shirt,
+    Baby,
+    Dumbbell,
+    Sparkles,
+    Car,
+    Book
+  };
+
+  const sectionHeaderIcon = iconName ? iconMapper[iconName] : undefined;
 
   const categories = useMemo(() => [
     { id: 'recommendations', name: t('forYou', { ns: 'home' }), path: '/for-you' },
@@ -429,45 +468,6 @@ function MainLayoutContent() {
       -webkit-overflow-scrolling: touch;
     }
   `;
-
-  // Check if current page is conversation detail
-  const isConversationDetailPage = pathname.startsWith('/messages/') && pathname !== '/messages';
-
-  // Get search params
-  const searchParams = new URLSearchParams(location.search);
-  const messagesFilter = searchParams.get('filter') || 'all';
-  const walletFilter = searchParams.get('tab') || 'buyer';
-  const exploreFilter = searchParams.get('tab') || 'products';
-
-  // Check page types
-  const isMessagesPage = pathname === '/messages' || pathname.startsWith('/messages/');
-  const isMessagesListPage = pathname === '/messages';
-  const isWalletPage = pathname === '/wallet';
-  const isExplorePage = pathname === '/explore';
-  const isProductsPage = pathname === '/products';
-  const productsTitle = isProductsPage ? new URLSearchParams(location.search).get('title') || 'Products' : '';
-
-  // Icon mapper
-  const iconMapper: Record<string, React.ComponentType<{ className?: string }>> = {
-    Trophy,
-    Tag,
-    ShieldCheck,
-    Zap,
-    Star,
-    Crown,
-    Award,
-    Home,
-    Smartphone,
-    Shirt,
-    Baby,
-    Dumbbell,
-    Sparkles,
-    Car,
-    Book
-  };
-
-  const iconName = searchParams.get('icon');
-  const sectionHeaderIcon = iconName ? iconMapper[iconName] : undefined;
 
   // Update auth redirect effect
   useEffect(() => {
