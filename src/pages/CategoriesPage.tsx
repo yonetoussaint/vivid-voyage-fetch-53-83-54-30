@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { ChevronRight, User, Plug, Monitor, Tv, Droplet, Baby, ShoppingCart, Home, Shirt, Users, Watch, Car } from 'lucide-react';
 
 // Type definitions
@@ -106,6 +106,68 @@ const CATEGORIES: Category[] = [
 
 export default function CategoriesPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("devices");
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const mainContentRef = useRef<HTMLDivElement>(null);
+
+  // Prevent scroll propagation for sidebar
+  useEffect(() => {
+    const sidebar = sidebarRef.current;
+    if (!sidebar) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      const { scrollTop, scrollHeight, clientHeight } = sidebar;
+      const isScrollingDown = e.deltaY > 0;
+      const isScrollingUp = e.deltaY < 0;
+      
+      // At top and trying to scroll up
+      if (isScrollingUp && scrollTop === 0) {
+        e.preventDefault();
+        return;
+      }
+      
+      // At bottom and trying to scroll down
+      if (isScrollingDown && scrollTop + clientHeight >= scrollHeight) {
+        e.preventDefault();
+        return;
+      }
+      
+      // Otherwise, stop propagation to prevent page scroll
+      e.stopPropagation();
+    };
+
+    sidebar.addEventListener('wheel', handleWheel, { passive: false });
+    return () => sidebar.removeEventListener('wheel', handleWheel);
+  }, []);
+
+  // Prevent scroll propagation for main content
+  useEffect(() => {
+    const mainContent = mainContentRef.current;
+    if (!mainContent) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      const { scrollTop, scrollHeight, clientHeight } = mainContent;
+      const isScrollingDown = e.deltaY > 0;
+      const isScrollingUp = e.deltaY < 0;
+      
+      // At top and trying to scroll up
+      if (isScrollingUp && scrollTop === 0) {
+        e.preventDefault();
+        return;
+      }
+      
+      // At bottom and trying to scroll down
+      if (isScrollingDown && scrollTop + clientHeight >= scrollHeight) {
+        e.preventDefault();
+        return;
+      }
+      
+      // Otherwise, stop propagation to prevent page scroll
+      e.stopPropagation();
+    };
+
+    mainContent.addEventListener('wheel', handleWheel, { passive: false });
+    return () => mainContent.removeEventListener('wheel', handleWheel);
+  }, []);
 
   const selectedCategoryData = CATEGORIES.find(cat => cat.id === selectedCategory);
 
@@ -116,6 +178,7 @@ export default function CategoriesPage() {
         className="w-24 bg-white flex-shrink-0 h-screen flex flex-col overflow-hidden"
       >
         <div 
+          ref={sidebarRef}
           className="flex-1 overflow-y-auto py-2"
           style={{ 
             overscrollBehavior: 'contain',
@@ -146,6 +209,7 @@ export default function CategoriesPage() {
       {/* Main Content Area - Scrollable independently */}
       <div className="flex-1 h-screen overflow-hidden flex flex-col">
         <div 
+          ref={mainContentRef}
           className="flex-1 overflow-y-auto" 
           style={{ 
             overscrollBehavior: 'contain',
