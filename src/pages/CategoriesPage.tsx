@@ -109,10 +109,36 @@ export default function CategoriesPage() {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const mainContentRef = useRef<HTMLDivElement>(null);
 
-  // Prevent scroll propagation for sidebar
+  // Prevent scroll propagation for sidebar (both mouse and touch)
   useEffect(() => {
     const sidebar = sidebarRef.current;
     if (!sidebar) return;
+
+    let startY = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      startY = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const { scrollTop, scrollHeight, clientHeight } = sidebar;
+      const currentY = e.touches[0].clientY;
+      const deltaY = startY - currentY;
+      const isScrollingDown = deltaY > 0;
+      const isScrollingUp = deltaY < 0;
+      
+      // At top and trying to scroll up
+      if (isScrollingUp && scrollTop <= 0) {
+        e.preventDefault();
+        return;
+      }
+      
+      // At bottom and trying to scroll down
+      if (isScrollingDown && scrollTop + clientHeight >= scrollHeight - 1) {
+        e.preventDefault();
+        return;
+      }
+    };
 
     const handleWheel = (e: WheelEvent) => {
       const { scrollTop, scrollHeight, clientHeight } = sidebar;
@@ -135,14 +161,47 @@ export default function CategoriesPage() {
       e.stopPropagation();
     };
 
+    sidebar.addEventListener('touchstart', handleTouchStart, { passive: true });
+    sidebar.addEventListener('touchmove', handleTouchMove, { passive: false });
     sidebar.addEventListener('wheel', handleWheel, { passive: false });
-    return () => sidebar.removeEventListener('wheel', handleWheel);
+    
+    return () => {
+      sidebar.removeEventListener('touchstart', handleTouchStart);
+      sidebar.removeEventListener('touchmove', handleTouchMove);
+      sidebar.removeEventListener('wheel', handleWheel);
+    };
   }, []);
 
-  // Prevent scroll propagation for main content
+  // Prevent scroll propagation for main content (both mouse and touch)
   useEffect(() => {
     const mainContent = mainContentRef.current;
     if (!mainContent) return;
+
+    let startY = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      startY = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const { scrollTop, scrollHeight, clientHeight } = mainContent;
+      const currentY = e.touches[0].clientY;
+      const deltaY = startY - currentY;
+      const isScrollingDown = deltaY > 0;
+      const isScrollingUp = deltaY < 0;
+      
+      // At top and trying to scroll up
+      if (isScrollingUp && scrollTop <= 0) {
+        e.preventDefault();
+        return;
+      }
+      
+      // At bottom and trying to scroll down
+      if (isScrollingDown && scrollTop + clientHeight >= scrollHeight - 1) {
+        e.preventDefault();
+        return;
+      }
+    };
 
     const handleWheel = (e: WheelEvent) => {
       const { scrollTop, scrollHeight, clientHeight } = mainContent;
@@ -165,8 +224,15 @@ export default function CategoriesPage() {
       e.stopPropagation();
     };
 
+    mainContent.addEventListener('touchstart', handleTouchStart, { passive: true });
+    mainContent.addEventListener('touchmove', handleTouchMove, { passive: false });
     mainContent.addEventListener('wheel', handleWheel, { passive: false });
-    return () => mainContent.removeEventListener('wheel', handleWheel);
+    
+    return () => {
+      mainContent.removeEventListener('touchstart', handleTouchStart);
+      mainContent.removeEventListener('touchmove', handleTouchMove);
+      mainContent.removeEventListener('wheel', handleWheel);
+    };
   }, []);
 
   const selectedCategoryData = CATEGORIES.find(cat => cat.id === selectedCategory);
