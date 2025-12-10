@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MessageCircle, Loader2, Plus } from 'lucide-react';
-import { PageContainer } from '@/components/layout/PageContainer';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useConversations } from '@/hooks/useConversations';
 import { formatDistanceToNow } from 'date-fns';
@@ -16,9 +15,9 @@ export default function Messages() {
   const [showUserSelection, setShowUserSelection] = useState(false);
   const { user, isLoading } = useAuth();
   const { openAuthOverlay } = useAuthOverlay();
-  
+
   const currentUserId = user?.id || '';
-  
+
   const { conversations, loading } = useConversations(currentUserId, activeTab);
 
   if (isLoading) {
@@ -63,82 +62,70 @@ export default function Messages() {
     }
   };
 
-  const handleConversationClick = (conversationId: string) => {
-    if (conversationId.startsWith('blocked-')) {
-      return;
-    }
-    console.log('Navigating to conversation:', conversationId);
-    navigate(`/messages/${conversationId}`, { replace: false });
-  };
-
   return (
-    <div className="bg-white">
-      <PageContainer maxWidth="lg" padding="none">
+    <div className="bg-white min-h-screen">
+      {/* Conversations List */}
+      <div className="pb-20">
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+          </div>
+        ) : conversations.length === 0 ? (
+          <div className="px-4 py-16 text-center">
+            <MessageCircle className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+            <p className="text-sm text-gray-500">
+              {activeTab === 'all' && 'No messages yet'}
+              {activeTab === 'unread' && 'No unread messages'}
+              {activeTab === 'blocked' && 'No blocked users'}
+              {activeTab === 'archived' && 'No archived conversations'}
+            </p>
+          </div>
+        ) : (
+          conversations.map((conversation) => (
+            <div
+              key={conversation.id}
+              onClick={() => {
+                if (!conversation.id.startsWith('blocked-')) {
+                  navigate(`/messages/${conversation.id}`);
+                }
+              }}
+              className={`w-full px-4 py-4 flex items-center gap-3 transition-colors border-b border-gray-50 ${
+                conversation.id.startsWith('blocked-') 
+                  ? 'cursor-default opacity-60' 
+                  : 'hover:bg-gray-50 active:bg-gray-100 cursor-pointer'
+              }`}
+            >
+              <Avatar className="h-12 w-12 flex-shrink-0">
+                <AvatarImage src={conversation.other_user.avatar_url || ''} />
+                <AvatarFallback className="bg-black text-white text-sm">
+                  {getInitials(conversation.other_user.full_name)}
+                </AvatarFallback>
+              </Avatar>
 
-        {/* Conversations List */}
-        <div className="pb-20">
-          {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-            </div>
-          ) : conversations.length === 0 ? (
-            <div className="px-4 py-16 text-center">
-              <MessageCircle className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-              <p className="text-sm text-gray-500">
-                {activeTab === 'all' && 'No messages yet'}
-                {activeTab === 'unread' && 'No unread messages'}
-                {activeTab === 'blocked' && 'No blocked users'}
-                {activeTab === 'archived' && 'No archived conversations'}
-              </p>
-            </div>
-          ) : (
-            conversations.map((conversation) => (
-              <div
-                key={conversation.id}
-                onClick={() => {
-                  if (!conversation.id.startsWith('blocked-')) {
-                    navigate(`/messages/${conversation.id}`);
-                  }
-                }}
-                className={`w-full px-4 py-4 flex items-center gap-3 transition-colors border-b border-gray-50 ${
-                  conversation.id.startsWith('blocked-') 
-                    ? 'cursor-default opacity-60' 
-                    : 'hover:bg-gray-50 active:bg-gray-100 cursor-pointer'
-                }`}
-              >
-                <Avatar className="h-12 w-12 flex-shrink-0">
-                  <AvatarImage src={conversation.other_user.avatar_url || ''} />
-                  <AvatarFallback className="bg-black text-white text-sm">
-                    {getInitials(conversation.other_user.full_name)}
-                  </AvatarFallback>
-                </Avatar>
-
-                <div className="flex-1 min-w-0 text-left">
-                  <div className="flex items-center justify-between mb-1">
-                    <h3 className={`text-sm ${conversation.unread_count > 0 ? 'font-semibold' : 'font-normal'}`}>
-                      {conversation.other_user.full_name}
-                    </h3>
-                    <span className="text-xs text-gray-500">
-                      {conversation.last_message ? formatTimestamp(conversation.last_message.created_at) : ''}
+              <div className="flex-1 min-w-0 text-left">
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className={`text-sm ${conversation.unread_count > 0 ? 'font-semibold' : 'font-normal'}`}>
+                    {conversation.other_user.full_name}
+                  </h3>
+                  <span className="text-xs text-gray-500">
+                    {conversation.last_message ? formatTimestamp(conversation.last_message.created_at) : ''}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <p className={`text-sm truncate flex-1 ${conversation.unread_count > 0 ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
+                    {conversation.last_message?.content || 'Start a conversation'}
+                  </p>
+                  {conversation.unread_count > 0 && (
+                    <span className="bg-black text-white text-xs px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                      {conversation.unread_count}
                     </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <p className={`text-sm truncate flex-1 ${conversation.unread_count > 0 ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
-                      {conversation.last_message?.content || 'Start a conversation'}
-                    </p>
-                    {conversation.unread_count > 0 && (
-                      <span className="bg-black text-white text-xs px-2 py-0.5 rounded-full min-w-[20px] text-center">
-                        {conversation.unread_count}
-                      </span>
-                    )}
-                  </div>
+                  )}
                 </div>
               </div>
-            ))
-          )}
-        </div>
-
-      </PageContainer>
+            </div>
+          ))
+        )}
+      </div>
 
       {/* Floating Action Button */}
       {user && (
