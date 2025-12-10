@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { ChevronRight, User, Plug, Monitor, Tv, Droplet, Baby, ShoppingCart, Home, Shirt, Users, Watch, Car } from 'lucide-react';
 
 // Type definitions
@@ -106,13 +106,64 @@ const CATEGORIES: Category[] = [
 
 export default function CategoriesPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("devices");
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const selectedCategoryData = CATEGORIES.find(cat => cat.id === selectedCategory);
 
+  // Prevent scroll propagation between containers
+  useEffect(() => {
+    const sidebar = sidebarRef.current;
+    const content = contentRef.current;
+
+    const preventScrollPropagation = (e: WheelEvent) => {
+      // Stop the event from bubbling up to parent containers
+      e.stopPropagation();
+      
+      const target = e.currentTarget as HTMLDivElement;
+      const isAtTop = target.scrollTop <= 0;
+      const isAtBottom = Math.abs(target.scrollTop + target.clientHeight - target.scrollHeight) <= 1;
+      
+      // Only prevent default when at boundaries to maintain native scroll feel
+      if ((e.deltaY < 0 && isAtTop) || (e.deltaY > 0 && isAtBottom)) {
+        e.preventDefault();
+      }
+    };
+
+    const preventTouchScrollPropagation = (e: TouchEvent) => {
+      // For touch devices, prevent the event from bubbling
+      e.stopPropagation();
+    };
+
+    if (sidebar) {
+      sidebar.addEventListener('wheel', preventScrollPropagation, { passive: false });
+      sidebar.addEventListener('touchmove', preventTouchScrollPropagation, { passive: false });
+    }
+
+    if (content) {
+      content.addEventListener('wheel', preventScrollPropagation, { passive: false });
+      content.addEventListener('touchmove', preventTouchScrollPropagation, { passive: false });
+    }
+
+    return () => {
+      if (sidebar) {
+        sidebar.removeEventListener('wheel', preventScrollPropagation);
+        sidebar.removeEventListener('touchmove', preventTouchScrollPropagation);
+      }
+      if (content) {
+        content.removeEventListener('wheel', preventScrollPropagation);
+        content.removeEventListener('touchmove', preventTouchScrollPropagation);
+      }
+    };
+  }, []);
+
   return (
-    <div className="bg-gray-50 h-screen flex overflow-hidden">
+    <div className="bg-gray-50 h-screen flex overflow-hidden select-none">
       {/* Left sidebar - Fixed height with independent scrolling */}
-      <div className="w-24 bg-white flex-shrink-0 h-screen flex flex-col overflow-hidden">
+      <div 
+        ref={sidebarRef}
+        className="w-24 bg-white flex-shrink-0 h-screen flex flex-col overflow-hidden"
+      >
         <div 
           className="flex-1 overflow-y-auto py-2"
           style={{ 
@@ -144,7 +195,10 @@ export default function CategoriesPage() {
       </div>
 
       {/* Main Content Area - Scrollable independently */}
-      <div className="flex-1 h-screen overflow-hidden flex flex-col">
+      <div 
+        ref={contentRef}
+        className="flex-1 h-screen overflow-hidden flex flex-col"
+      >
         <div 
           className="flex-1 overflow-y-auto" 
           style={{ 
@@ -461,18 +515,77 @@ export default function CategoriesPage() {
 
       {/* Global Styles */}
       <style jsx global>{`
-        body {
+        /* Prevent body scroll */
+        html, body {
+          height: 100%;
           overflow: hidden;
+          margin: 0;
+          padding: 0;
           position: fixed;
           width: 100%;
-          height: 100%;
+          touch-action: none;
         }
-        .overflow-y-auto::-webkit-scrollbar {
-          display: none;
+        
+        /* Custom scrollbar styling for independent scrolling */
+        * {
+          box-sizing: border-box;
         }
+        
+        /* Hide default scrollbars but keep functionality */
         .overflow-y-auto {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
+          scrollbar-width: thin;
+          scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+        }
+        
+        .overflow-y-auto::-webkit-scrollbar {
+          width: 4px;
+        }
+        
+        .overflow-y-auto::-webkit-scrollbar-track {
+          background: transparent;
+          margin: 2px 0;
+        }
+        
+        .overflow-y-auto::-webkit-scrollbar-thumb {
+          background-color: rgba(0, 0, 0, 0.2);
+          border-radius: 2px;
+        }
+        
+        .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+          background-color: rgba(0, 0, 0, 0.3);
+        }
+        
+        /* For Firefox */
+        @supports (scrollbar-width: thin) {
+          .overflow-y-auto {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+          }
+        }
+        
+        /* Prevent text selection while scrolling for better UX */
+        .select-none {
+          -webkit-touch-callout: none;
+          -webkit-user-select: none;
+          -khtml-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
+        }
+        
+        .select-none * {
+          -webkit-touch-callout: none;
+          -webkit-user-select: none;
+          -khtml-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
+        }
+        
+        /* Smooth scrolling */
+        .overflow-y-auto {
+          scroll-behavior: smooth;
+          -webkit-overflow-scrolling: touch;
         }
       `}</style>
     </div>
