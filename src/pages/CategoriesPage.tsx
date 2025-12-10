@@ -109,43 +109,155 @@ export default function CategoriesPage() {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const mainContentRef = useRef<HTMLDivElement>(null);
 
-  // Set body overflow to hidden to prevent page scrolling
+  // Prevent body scroll completely for mobile web app
   useEffect(() => {
+    const preventDefault = (e: TouchEvent) => {
+      if (e.touches.length > 1) return;
+      e.preventDefault();
+    };
+
+    // Prevent pull-to-refresh and overscroll glow
     document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    document.body.style.height = '100%';
+
+    // Prevent zoom gestures
+    document.addEventListener('touchmove', preventDefault, { passive: false });
+
     return () => {
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
+      document.removeEventListener('touchmove', preventDefault);
     };
   }, []);
 
-  // Simpler scroll handling - just ensure proper overflow containers
+  // Handle touch events for independent scrolling
+  useEffect(() => {
+    const sidebar = sidebarRef.current;
+    if (!sidebar) return;
+
+    let startY = 0;
+    let scrollTop = 0;
+    let isScrolling = false;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.target && (e.target as HTMLElement).tagName === 'BUTTON') {
+        return; // Don't prevent button clicks
+      }
+      
+      startY = e.touches[0].clientY;
+      scrollTop = sidebar.scrollTop;
+      isScrolling = true;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isScrolling || e.touches.length > 1) return;
+      
+      const currentY = e.touches[0].clientY;
+      const deltaY = startY - currentY;
+      
+      // Only prevent default if we're actually scrolling within the container
+      const isAtTop = scrollTop === 0 && deltaY < 0;
+      const isAtBottom = scrollTop + sidebar.clientHeight >= sidebar.scrollHeight && deltaY > 0;
+      
+      if (!isAtTop && !isAtBottom) {
+        e.preventDefault();
+      }
+      
+      sidebar.scrollTop = scrollTop + deltaY;
+    };
+
+    const handleTouchEnd = () => {
+      isScrolling = false;
+    };
+
+    sidebar.addEventListener('touchstart', handleTouchStart, { passive: true });
+    sidebar.addEventListener('touchmove', handleTouchMove, { passive: false });
+    sidebar.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      sidebar.removeEventListener('touchstart', handleTouchStart);
+      sidebar.removeEventListener('touchmove', handleTouchMove);
+      sidebar.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, []);
+
+  // Handle touch events for main content
+  useEffect(() => {
+    const mainContent = mainContentRef.current;
+    if (!mainContent) return;
+
+    let startY = 0;
+    let scrollTop = 0;
+    let isScrolling = false;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      startY = e.touches[0].clientY;
+      scrollTop = mainContent.scrollTop;
+      isScrolling = true;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isScrolling || e.touches.length > 1) return;
+      
+      const currentY = e.touches[0].clientY;
+      const deltaY = startY - currentY;
+      
+      // Only prevent default if we're actually scrolling within the container
+      const isAtTop = scrollTop === 0 && deltaY < 0;
+      const isAtBottom = scrollTop + mainContent.clientHeight >= mainContent.scrollHeight && deltaY > 0;
+      
+      if (!isAtTop && !isAtBottom) {
+        e.preventDefault();
+      }
+      
+      mainContent.scrollTop = scrollTop + deltaY;
+    };
+
+    const handleTouchEnd = () => {
+      isScrolling = false;
+    };
+
+    mainContent.addEventListener('touchstart', handleTouchStart, { passive: true });
+    mainContent.addEventListener('touchmove', handleTouchMove, { passive: false });
+    mainContent.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      mainContent.removeEventListener('touchstart', handleTouchStart);
+      mainContent.removeEventListener('touchmove', handleTouchMove);
+      mainContent.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, []);
+
+  // Handle wheel events (for desktop/mouse)
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
       const target = e.target as HTMLElement;
       
-      // Check if we're inside a scrollable container
-      const isScrollable = (element: HTMLElement) => {
-        const style = window.getComputedStyle(element);
-        return (
-          style.overflowY === 'auto' ||
-          style.overflowY === 'scroll' ||
-          element.scrollHeight > element.clientHeight
-        );
-      };
-      
-      // Find the scrollable parent
-      let current = target;
-      while (current && current !== document.body) {
-        if (isScrollable(current)) {
-          const atTop = current.scrollTop === 0;
-          const atBottom = current.scrollTop + current.clientHeight >= current.scrollHeight - 1;
-          
-          // Only prevent default if we're at the boundary and scrolling further
-          if ((atTop && e.deltaY < 0) || (atBottom && e.deltaY > 0)) {
-            e.preventDefault();
-          }
-          return;
+      // Check if target is inside sidebar
+      if (sidebarRef.current?.contains(target)) {
+        const sidebar = sidebarRef.current;
+        const { scrollTop, scrollHeight, clientHeight } = sidebar;
+        const isAtTop = scrollTop === 0 && e.deltaY < 0;
+        const isAtBottom = scrollTop + clientHeight >= scrollHeight && e.deltaY > 0;
+        
+        if (!isAtTop && !isAtBottom) {
+          e.stopPropagation();
         }
-        current = current.parentElement as HTMLElement;
+      }
+      // Check if target is inside main content
+      else if (mainContentRef.current?.contains(target)) {
+        const mainContent = mainContentRef.current;
+        const { scrollTop, scrollHeight, clientHeight } = mainContent;
+        const isAtTop = scrollTop === 0 && e.deltaY < 0;
+        const isAtBottom = scrollTop + clientHeight >= scrollHeight && e.deltaY > 0;
+        
+        if (!isAtTop && !isAtBottom) {
+          e.stopPropagation();
+        }
       }
     };
 
@@ -158,7 +270,7 @@ export default function CategoriesPage() {
   const selectedCategoryData = CATEGORIES.find(cat => cat.id === selectedCategory);
 
   return (
-    <div className="bg-gray-50 h-screen flex overflow-hidden">
+    <div className="bg-gray-50 h-screen flex overflow-hidden touch-none">
       {/* Left sidebar - Fixed height with independent scrolling */}
       <div 
         className="w-24 bg-white flex-shrink-0 h-screen flex flex-col overflow-hidden"
@@ -167,10 +279,10 @@ export default function CategoriesPage() {
           ref={sidebarRef}
           className="flex-1 overflow-y-auto py-2"
           style={{ 
-            overscrollBehavior: 'none',
             WebkitOverflowScrolling: 'touch',
-            scrollbarWidth: 'none', // Firefox
-            msOverflowStyle: 'none', // IE/Edge
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            touchAction: 'pan-y',
           }}
         >
           <div style={{ minHeight: '0' }}>
@@ -208,8 +320,8 @@ export default function CategoriesPage() {
           ref={mainContentRef}
           className="flex-1 overflow-y-auto" 
           style={{ 
-            overscrollBehavior: 'none',
             WebkitOverflowScrolling: 'touch',
+            touchAction: 'pan-y',
           }}
         >
           <div className="p-2">
