@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import MessageBubble from '@/components/messages/MessageBubble';
 import { ArrowLeft, Send, MoreVertical, Archive, Ban, Loader2 } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -112,13 +113,7 @@ export default function ConversationDetail() {
       .slice(0, 2) || 'U';
   };
 
-  const formatMessageTime = (timestamp: string) => {
-    try {
-      return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
-    } catch {
-      return '';
-    }
-  };
+  
 
   if (loadingUser) {
     return (
@@ -180,7 +175,7 @@ export default function ConversationDetail() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4" style={{ overflowY: 'auto' }}>
+      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4" style={{ overflowY: 'auto' }}>
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
@@ -200,24 +195,11 @@ export default function ConversationDetail() {
                 key={message.id}
                 className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
               >
-                <div
-                  className={`max-w-[70%] ${
-                    isCurrentUser
-                      ? 'bg-black text-white'
-                      : 'bg-gray-100 text-gray-900'
-                  } rounded-2xl px-4 py-2`}
-                >
-                  <p className="text-sm whitespace-pre-wrap break-words">
-                    {message.content}
-                  </p>
-                  <p
-                    className={`text-xs mt-1 ${
-                      isCurrentUser ? 'text-gray-300' : 'text-gray-500'
-                    }`}
-                  >
-                    {formatMessageTime(message.created_at)}
-                  </p>
-                </div>
+                <MessageBubble
+                  content={message.content}
+                  createdAt={message.created_at}
+                  isCurrentUser={isCurrentUser}
+                />
               </div>
             );
           })
@@ -234,14 +216,14 @@ export default function ConversationDetail() {
             onKeyPress={handleKeyPress}
             placeholder="Type a message..."
             rows={1}
-            className="flex-1 resize-none rounded-full border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent max-h-32"
+            className="flex-1 resize-none rounded-2xl border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent max-h-32"
             style={{ minHeight: '40px' }}
           />
           <Button
             onClick={handleSendMessage}
             disabled={!messageText.trim()}
             size="icon"
-            className="rounded-full h-10 w-10 bg-black hover:bg-gray-800 disabled:bg-gray-300"
+            className="rounded-xl h-10 w-10 bg-black hover:bg-gray-800 disabled:bg-gray-300"
           >
             <Send className="h-4 w-4" />
           </Button>
