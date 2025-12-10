@@ -1,7 +1,21 @@
 import React, { useState } from "react";
-import { ChevronRight, User, Plug, Monitor, Tv, Droplet, Baby, ShoppingCart, Home, Shirt, Users, Watch, Car } from 'lucide-react';
+import {
+  ChevronRight,
+  User,
+  Plug,
+  Monitor,
+  Tv,
+  Droplet,
+  Baby,
+  ShoppingCart,
+  Home,
+  Shirt,
+  Users,
+  Watch,
+  Car,
+} from "lucide-react";
 
-// Type definitions
+// Types
 interface SubCategory {
   id: string;
   name: string;
@@ -11,465 +25,207 @@ interface SubCategory {
 interface Category {
   id: string;
   name: string;
-  icon: any;
+  icon: React.ElementType;
   subCategories: SubCategory[];
 }
 
+// Dynamic grouping config — change this to control how subcategories are grouped
+const SUBCATEGORY_GROUPS = {
+  devices: [
+    { title: "Mobiles & Tablets", items: ["mobiles", "tablets", "landline"] },
+    { title: "Laptops", items: ["traditional", "2in1"] },
+    { title: "Desktop Computers", items: ["allinone", "gaming", "diy"] },
+    { title: "Smartwatches & Trackers", items: ["fitness", "smart"] },
+    { title: "Console Gaming", items: ["console", "games", "console-acc"] },
+  ],
+  // You can add more categories here later
+} as const;
+
+// Full Categories Data
 const CATEGORIES: Category[] = [
-  {
-    id: "just",
-    name: "Just for You",
-    icon: User,
-    subCategories: []
+  { id: "just", name: "Just for You", icon: User, subCategories: [] },
   },
-  {
-    id: "accessories",
-    name: "Electronic Accessories",
-    icon: Plug,
-    subCategories: []
-  },
+  { id: "accessories", name: "Electronic Accessories", icon: Plug, subCategories: [] },
   {
     id: "devices",
     name: "Electronic Devices",
     icon: Monitor,
     subCategories: [
-      { id: "mobiles", name: "Mobiles", imageUrl: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=200&h=200&auto=format&fit=crop" },
-      { id: "tablets", name: "Tablets", imageUrl: "https://images.unsplash.com/photo-1561154464-82e9adf32764?q=80&w=200&h=200&auto=format&fit=crop" },
-      { id: "landline", name: "Landline Phones", imageUrl: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?q=80&w=200&h=200&auto=format&fit=crop" },
-      { id: "traditional", name: "Traditional Laptops", imageUrl: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=200&h=200&auto=format&fit=crop" },
-      { id: "2in1", name: "2-in-1s", imageUrl: "https://images.unsplash.com/photo-1587614382346-4ec70e388b28?q=80&w=200&h=200&auto=format&fit=crop" },
-      { id: "allinone", name: "All-In-One", imageUrl: "https://images.unsplash.com/photo-1593640495253-23196b27a87f?q=80&w=200&h=200&auto=format&fit=crop" },
-      { id: "gaming", name: "Gaming Desktops", imageUrl: "https://images.unsplash.com/photo-1587202372634-32705e3bf49c?q=80&w=200&h=200&auto=format&fit=crop" },
-      { id: "diy", name: "DIY", imageUrl: "https://images.unsplash.com/photo-1555617981-dac3880eac6e?q=80&w=200&h=200&auto=format&fit=crop" },
-      { id: "fitness", name: "Fitness Trackers & Accessories", imageUrl: "https://images.unsplash.com/photo-1575311373937-040b8e1fd5b6?q=80&w=200&h=200&auto=format&fit=crop" },
-      { id: "smart", name: "Smart Trackers", imageUrl: "https://images.unsplash.com/photo-1544117519-31a4b719223d?q=80&w=200&h=200&auto=format&fit=crop" },
-      { id: "console", name: "Console", imageUrl: "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?q=80&w=200&h=200&auto=format&fit=crop" },
-      { id: "games", name: "Console Games", imageUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=200&h=200&auto=format&fit=crop" },
-      { id: "accessories", name: "Console Gaming Accessories", imageUrl: "https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?q=80&w=200&h=200&auto=format&fit=crop" },
-    ]
+      { id: "mobiles", name: "Mobiles", imageUrl: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=600&fit=crop" },
+      { id: "tablets", name: "Tablets", imageUrl: "https://images.unsplash.com/photo-1561154464-82e9adf32764?q=80&w=600&fit=crop" },
+      { id: "landline", name: "Landline Phones", imageUrl: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?q=80&w=600&fit=crop" },
+      { id: "traditional", name: "Traditional Laptops", imageUrl: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=600&fit=crop" },
+      { id: "2in1", name: "2-in-1s", imageUrl: "https://images.unsplash.com/photo-1587614382346-4ec70e388b28?q=80&w=600&fit=crop" },
+      { id: "allinone", name: "All-In-One", imageUrl: "https://images.unsplash.com/photo-1593640495253-23196b27a87f?q=80&w=600&fit=crop" },
+      { id: "gaming", name: "Gaming Desktops", imageUrl: "https://images.unsplash.com/photo-1587202372634-32705e3bf49c?q=80&w=600&fit=crop" },
+      { id: "diy", name: "DIY Desktops", imageUrl: "https://images.unsplash.com/photo-1555617981-dac3880eac6e?q=80&w=600&fit=crop" },
+      { id: "fitness", name: "Fitness Trackers", imageUrl: "https://images.unsplash.com/photo-1575311373937-040b8e1fd5b6?q=80&w=600&fit=crop" },
+      { id: "smart", name: "Smart Trackers", imageUrl: "https://images.unsplash.com/photo-1544117519-31a4b719223d?q=80&w=600&fit=crop" },
+      { id: "console", name: "Gaming Consoles", imageUrl: "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?q=80&w=600&fit=crop" },
+      { id: "games", name: "Console Games", imageUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=600&fit=crop" },
+      { id: "console-acc", name: "Gaming Accessories", imageUrl: "https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?q=80&w=600&fit=crop" },
+    ],
   },
-  {
-    id: "tv",
-    name: "TV & Home Appliances",
-    icon: Tv,
-    subCategories: []
-  },
-  {
-    id: "beauty",
-    name: "Health & Beauty",
-    icon: Droplet,
-    subCategories: []
-  },
-  {
-    id: "babies",
-    name: "Babies & Toys",
-    icon: Baby,
-    subCategories: []
-  },
-  {
-    id: "groceries",
-    name: "Groceries & Pets",
-    icon: ShoppingCart,
-    subCategories: []
-  },
-  {
-    id: "home",
-    name: "Home & Lifestyle",
-    icon: Home,
-    subCategories: []
-  },
-  {
-    id: "women",
-    name: "Women's Fashion & Accessories",
-    icon: Shirt,
-    subCategories: []
-  },
-  {
-    id: "men",
-    name: "Men's Fashion & Accessories",
-    icon: Users,
-    subCategories: []
-  },
-  {
-    id: "kids",
-    name: "Kid's Fashion & Accessories",
-    icon: Watch,
-    subCategories: []
-  },
-  {
-    id: "sports",
-    name: "Sports & Lifestyle",
-    icon: Car,
-    subCategories: []
-  },
+  { id: "tv", name: "TV & Appliances", icon: Tv, subCategories: [] },
+  { id: "beauty", name: "Health & Beauty", icon: Droplet, subCategories: [] },
+  { id: "babies", name: "Babies & Toys", icon: Baby, subCategories: [] },
+  { id: "groceries", name: "Groceries & Pets", icon: ShoppingCart, subCategories: [] },
+  { id: "home", name: "Home & Lifestyle", icon: Home, subCategories: [] },
+  { id: "women", name: "Women's Fashion", icon: Shirt, subCategories: [] },
+  { id: "men", name: "Men's Fashion", icon: Users, subCategories: [] },
+  { id: "kids", name: "Kids Fashion", icon: Watch, subCategories: [] },
+  { id: "sports", name: "Sports & Outdoor", icon: Car, subCategories: [] },
 ];
 
 export default function CategoriesPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("devices");
 
-  const selectedCategoryData = CATEGORIES.find(cat => cat.id === selectedCategory);
+  const selectedCat = CATEGORIES.find((cat) => cat.id === selectedCategory);
+
+  // Get grouped subcategories for current category
+  const getGroupedSubCategories = () => {
+    if (!selectedCat || selectedCat.subCategories.length === 0) return [];
+
+    const groups = SUBCATEGORY_GROUPS[selectedCategory as keyof typeof SUBCATEGORY_GROUPS];
+    if (!groups) return [];
+
+    return groups.map((group) => ({
+      title: group.title,
+      items: group.items
+        .map((id) => selectedCat.subCategories.find((sub) => sub.id === id))
+        .filter(Boolean) as SubCategory[],
+    }));
+  };
+
+  const groupedSubCategories = getGroupedSubCategories();
 
   return (
-    <div className="bg-gray-50 h-screen flex overflow-hidden">
-      {/* Left sidebar - Fixed height with independent scrolling */}
-      <div className="w-24 bg-white flex-shrink-0 h-screen flex flex-col overflow-hidden">
-        <div 
-          className="flex-1 overflow-y-auto py-2"
-          style={{ 
-            WebkitOverflowScrolling: 'touch',
-            overscrollBehavior: 'contain',
-          }}
-        >
-          <div>
+    <>
+      <div className="bg-gray-50 h-screen flex overflow-hidden">
+
+        {/* Sidebar - Independent Scroll */}
+        <div className="w-24 bg-white border-r border-gray-100 flex flex-col">
+          <div className="flex-1 overflow-y-auto overscroll-contain scrollbar-hide py-3">
             {CATEGORIES.map((category) => {
               const Icon = category.icon;
+              const isActive = selectedCategory === category.id;
+
               return (
                 <button
                   key={category.id}
                   onClick={() => setSelectedCategory(category.id)}
-                  className={`w-full px-1.5 py-3 flex flex-col items-center text-center cursor-pointer transition-colors relative ${
-                    selectedCategory === category.id ? 'bg-gray-50' : 'hover:bg-gray-50'
+                  className={`relative w-full py-4 flex flex-col items-center justify-center gap-1 transition-all ${
+                    isActive
+                      ? "text-orange-600 bg-orange-50"
+                      : "text-gray-600 hover:bg-gray-50"
                   }`}
                 >
-                  <Icon className="w-5 h-5 mb-1 text-gray-700" />
-                  <span className="text-[8px] text-gray-800 leading-tight">{category.name}</span>
-                  {selectedCategory === category.id && (
-                    <div className="absolute right-0 top-0 bottom-0 w-px bg-gray-50" />
+                  <Icon className="w-6 h-6" strokeWidth={isActive ? 2.5 : 1.8} />
+                  <span className="text-[9px] font-medium px-1 leading-tight">
+                    {category.name}
+                  </span>
+                  {isActive && (
+                    <div className="absolute right-0 top-0 bottom-0 w-1 bg-orange-500 rounded-l" />
                   )}
                 </button>
               );
             })}
           </div>
         </div>
-        {/* Hide scrollbar */}
-        <style>{`
-          .overflow-y-auto::-webkit-scrollbar {
-            display: none;
-          }
-          body {
-            overflow: hidden;
-            position: fixed;
-            width: 100%;
-            height: 100%;
-          }
-        `}</style>
-      </div>
 
-      {/* Main Content Area - Scrollable independently */}
-      <div className="flex-1 h-screen overflow-hidden flex flex-col">
-        <div 
-          className="flex-1 overflow-y-auto" 
-          style={{ 
-            WebkitOverflowScrolling: 'touch',
-            overscrollBehavior: 'contain',
-          }}
-        >
-          <div className="p-2">
-            {selectedCategoryData?.subCategories.length === 0 ? (
-              <div className="flex items-center justify-center h-64">
-                <p className="text-gray-500">No subcategories available for {selectedCategoryData.name}</p>
-              </div>
-            ) : (
-              <>
-                {/* Section: Mobiles & Tablets */}
-                <div className="mb-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-base font-semibold text-gray-900">Mobiles & Tablets</h2>
-                    <ChevronRight className="w-5 h-5 text-gray-400" />
-                  </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="flex flex-col items-center">
-                      <div className="w-full aspect-square bg-white rounded mb-1.5 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=300&h=300&auto=format&fit=crop" alt="Mobiles" className="w-full h-full object-cover" />
-                      </div>
-                      <span className="text-xs text-gray-900 text-center">Mobiles</span>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <div className="w-full aspect-square bg-white rounded mb-1.5 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1561154464-82e9adf32764?q=80&w=300&h=300&auto=format&fit=crop" alt="Tablets" className="w-full h-full object-cover" />
-                      </div>
-                      <span className="text-xs text-gray-900 text-center">Tablets</span>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <div className="w-full aspect-square bg-white rounded mb-1.5 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1557672172-298e090bd0f1?q=80&w=300&h=300&auto=format&fit=crop" alt="Landline Phones" className="w-full h-full object-cover" />
-                      </div>
-                      <span className="text-xs text-gray-900 text-center">Landline Phones</span>
-                    </div>
-                  </div>
+        {/* Main Content - Independent Scroll */}
+        <div className="flex-1 overflow-hidden flex flex-col bg-gray-50">
+          <div className="flex-1 overflow-y-auto overscroll-contain pb-20">
+            <div className="p-4">
+
+              {/* Empty State */}
+              {selectedCat?.subCategories.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-96 text-gray-400">
+                  <Monitor className="w-20 h-20 mb-4 opacity-20" />
+                  <p className="text-lg">No subcategories yet</p>
                 </div>
+              ) : (
+                <>
+                  {/* Dynamic Subcategory Groups */}
+                  {groupedSubCategories.map((group) => (
+                    <section key={group.title} className="mb-8">
+                      <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-lg font-bold text-gray-900">{group.title}</h2>
+                        <ChevronRight className="w-5 h-5 text-gray-400" />
+                      </div>
+                      <div className="grid grid-cols-3 gap-4">
+                        {group.items.map((item) => (
+                          <div key={item.id} className="text-center group cursor-pointer">
+                            <div className="bg-white rounded-xl overflow-hidden shadow-sm mb-3 aspect-square transition-transform group-hover:scale-105">
+                              <img
+                                src={item.imageUrl}
+                                alt={item.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <p className="text-xs text-gray-700 leading-tight px-1">
+                              {item.name}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  ))}
 
-                {/* Section: Laptops */}
-                <div className="mb-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-base font-semibold text-gray-900">Laptops</h2>
-                    <ChevronRight className="w-5 h-5 text-gray-400" />
-                  </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="flex flex-col items-center">
-                      <div className="w-full aspect-square bg-white rounded mb-1.5 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=300&h=300&auto=format&fit=crop" alt="Traditional Laptops" className="w-full h-full object-cover" />
-                      </div>
-                      <span className="text-xs text-gray-900 text-center">Traditional Laptops</span>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <div className="w-full aspect-square bg-white rounded mb-1.5 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1587614382346-4ec70e388b28?q=80&w=300&h=300&auto=format&fit=crop" alt="2-in-1s" className="w-full h-full object-cover" />
-                      </div>
-                      <span className="text-xs text-gray-900 text-center">2-in-1s</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Section: Desktop Computers */}
-                <div className="mb-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-base font-semibold text-gray-900">Desktop Computers</h2>
-                    <ChevronRight className="w-5 h-5 text-gray-400" />
-                  </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="flex flex-col items-center">
-                      <div className="w-full aspect-square bg-white rounded mb-1.5 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1593640495253-23196b27a87f?q=80&w=300&h=300&auto=format&fit=crop" alt="All-In-One" className="w-full h-full object-cover" />
-                      </div>
-                      <span className="text-xs text-gray-900 text-center">All-In-One</span>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <div className="w-full aspect-square bg-white rounded mb-1.5 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1587202372634-32705e3bf49c?q=80&w=300&h=300&auto=format&fit=crop" alt="Gaming Desktops" className="w-full h-full object-cover" />
-                      </div>
-                      <span className="text-xs text-gray-900 text-center">Gaming Desktops</span>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <div className="w-full aspect-square bg-white rounded mb-1.5 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1555617981-dac3880eac6e?q=80&w=300&h=300&auto=format&fit=crop" alt="DIY" className="w-full h-full object-cover" />
-                      </div>
-                      <span className="text-xs text-gray-900 text-center">DIY</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Section: Smartwatches & Accessories */}
-                <div className="mb-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-base font-semibold text-gray-900">Smartwatches & Accessories</h2>
-                    <ChevronRight className="w-5 h-5 text-gray-400" />
-                  </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="flex flex-col items-center">
-                      <div className="w-full aspect-square bg-white rounded mb-1.5 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1575311373937-040b8e1fd5b6?q=80&w=300&h=300&auto=format&fit=crop" alt="Fitness Trackers" className="w-full h-full object-cover" />
-                      </div>
-                      <span className="text-xs text-gray-900 text-center">Fitness Trackers & Accessories</span>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <div className="w-full aspect-square bg-white rounded mb-1.5 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1544117519-31a4b719223d?q=80&w=300&h=300&auto=format&fit=crop" alt="Smart Trackers" className="w-full h-full object-cover" />
-                      </div>
-                      <span className="text-xs text-gray-900 text-center">Smart Trackers</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Section: Console Gaming */}
-                <div className="mb-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-base font-semibold text-gray-900">Console Gaming</h2>
-                    <ChevronRight className="w-5 h-5 text-gray-400" />
-                  </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="flex flex-col items-center">
-                      <div className="w-full aspect-square bg-white rounded mb-1.5 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?q=80&w=300&h=300&auto=format&fit=crop" alt="Console" className="w-full h-full object-cover" />
-                      </div>
-                      <span className="text-xs text-gray-900 text-center">Console</span>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <div className="w-full aspect-square bg-white rounded mb-1.5 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=300&h=300&auto=format&fit=crop" alt="Console Games" className="w-full h-full object-cover" />
-                      </div>
-                      <span className="text-xs text-gray-900 text-center">Console Games</span>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <div className="w-full aspect-square bg-white rounded mb-1.5 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?q=80&w=300&h=300&auto=format&fit=crop" alt="Gaming Accessories" className="w-full h-full object-cover" />
-                      </div>
-                      <span className="text-xs text-gray-900 text-center">Console Gaming Accessories</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Product Suggestions Grid */}
-                <div className="mt-8">
-                  <h2 className="text-base font-semibold text-gray-900 mb-4">You May Also Like</h2>
-                  <div className="grid grid-cols-2 gap-2">
-                    {/* Product 1 */}
-                    <div>
-                      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
-                        <img src="https://images.unsplash.com/photo-1572635196237-14b3f281503f?q=80&w=300&h=300&auto=format&fit=crop" alt="Product" className="w-full h-full object-cover" />
-                      </div>
-                      <div>
-                        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
-                          <span className="bg-red-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Sale</span>
-                          <span className="bg-orange-100 text-orange-700 px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">SuperDeals</span>
-                          Wireless Bluetooth Headphones Noise Cancel
-                        </p>
-                        <div className="flex items-center gap-1 mb-0.5">
-                          <span className="text-[10px] text-gray-500">234 sold</span>
-                          <span className="text-[10px] text-gray-400">|</span>
-                          <span className="text-[10px] text-gray-700">★ 4.8</span>
+                  {/* You May Also Like - Optional (can be dynamic too) */}
+                  <section className="mt-10">
+                    <h2 className="text-lg font-bold text-gray-900 mb-5">You May Also Like</h2>
+                    <div className="grid grid-cols-2 gap-4">
+                      {[
+                        { title: "Wireless Headphones Pro", price: "89,990", sold: "12.3k", rating: "4.9" },
+                        { title: "Smart Watch Ultra", price: "149,990", sold: "8.7k", rating: "4.8" },
+                        { title: "Gaming Keyboard RGB", price: "76,523", sold: "3.2k", rating: "4.7" },
+                        { title: "4K Webcam Pro", price: "49,990", sold: "5.1k", rating: "5.0" },
+                      ].map((product, i) => (
+                        <div key={i} className="bg-white rounded-xl overflow-hidden shadow-md">
+                          <div className="aspect-square bg-gray-200">
+                            <img
+                              src={`https://images.unsplash.com/photo-1588872657${i}575-6d2b9e78d1f3?q=80&w=600&fit=crop`}
+                              alt={product.title}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="p-3">
+                            <p className="text-xs text-gray-700 line-clamp-2 mb-2">
+                              <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded mr-1">Sale</span>
+                              {product.title}
+                            </p>
+                            <div className="flex items-center text-[10px] text-gray-500 mb-1">
+                              <span>{product.sold} sold</span>
+                              <span className="mx-1">•</span>
+                              <span>★ {product.rating}</span>
+                            </div>
+                            <p className="text-base font-bold">₮{product.price}</p>
+                          </div>
                         </div>
-                        <p className="text-sm font-bold text-gray-900">79523</p>
-                      </div>
+                      ))}
                     </div>
-
-                    {/* Product 2 */}
-                    <div>
-                      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
-                        <img src="https://images.unsplash.com/photo-1583394838336-acd977736f90?q=80&w=300&h=300&auto=format&fit=crop" alt="Product" className="w-full h-full object-cover" />
-                      </div>
-                      <div>
-                        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
-                          <span className="bg-red-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Sale</span>
-                          Smart Watch Fitness Tracker Heart Rate
-                        </p>
-                        <div className="flex items-center gap-1 mb-0.5">
-                          <span className="text-[10px] text-gray-500">18081 sold</span>
-                          <span className="text-[10px] text-gray-400">|</span>
-                          <span className="text-[10px] text-gray-700">★ 4.7</span>
-                        </div>
-                        <p className="text-sm font-bold text-gray-900">67019</p>
-                        <p className="text-[10px] text-gray-500">Top selling on AliExpress</p>
-                      </div>
-                    </div>
-
-                    {/* Product 3 */}
-                    <div>
-                      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
-                        <img src="https://images.unsplash.com/photo-1585060544812-6b45742d762f?q=80&w=300&h=300&auto=format&fit=crop" alt="Product" className="w-full h-full object-cover" />
-                      </div>
-                      <div>
-                        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
-                          <span className="bg-red-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Sale</span>
-                          <span className="bg-orange-100 text-orange-700 px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">SuperDeals</span>
-                          Sport Smart Watch Fitness Call
-                        </p>
-                        <div className="flex items-center gap-1 mb-0.5">
-                          <span className="text-[10px] text-gray-500">1361 sold</span>
-                          <span className="text-[10px] text-gray-400">|</span>
-                          <span className="text-[10px] text-gray-700">★ 4.6</span>
-                        </div>
-                        <p className="text-sm font-bold text-gray-900">105730</p>
-                        <p className="text-[10px] text-orange-600">Premium Quality</p>
-                      </div>
-                    </div>
-
-                    {/* Product 4 */}
-                    <div>
-                      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
-                        <img src="https://images.unsplash.com/photo-1625948515291-69613efd103f?q=80&w=300&h=300&auto=format&fit=crop" alt="Product" className="w-full h-full object-cover" />
-                      </div>
-                      <div>
-                        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
-                          <span className="bg-blue-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Brand+</span>
-                          <span className="bg-red-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Sale</span>
-                          30 36 Inch Curly Highlight Wig Human
-                        </p>
-                        <div className="flex items-center gap-1 mb-0.5">
-                          <span className="text-[10px] text-gray-500">637 sold</span>
-                          <span className="text-[10px] text-gray-400">|</span>
-                          <span className="text-[10px] text-gray-700">★ 4.7</span>
-                        </div>
-                        <p className="text-sm font-bold text-gray-900">741510</p>
-                        <p className="text-[10px] text-gray-500">Top selling on AliExpress</p>
-                      </div>
-                    </div>
-
-                    {/* Product 5 */}
-                    <div>
-                      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
-                        <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=300&h=300&auto=format&fit=crop" alt="Product" className="w-full h-full object-cover" />
-                      </div>
-                      <div>
-                        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
-                          <span className="bg-red-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Sale</span>
-                          Premium Wireless Speaker Deep Bass
-                        </p>
-                        <div className="flex items-center gap-1 mb-0.5">
-                          <span className="text-[10px] text-gray-500">432 sold</span>
-                          <span className="text-[10px] text-gray-400">|</span>
-                          <span className="text-[10px] text-gray-700">★ 4.8</span>
-                        </div>
-                        <p className="text-sm font-bold text-gray-900">89990</p>
-                      </div>
-                    </div>
-
-                    {/* Product 6 */}
-                    <div>
-                      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
-                        <img src="https://images.unsplash.com/photo-1600003014755-ba31aa59c4b6?q=80&w=300&h=300&auto=format&fit=crop" alt="Product" className="w-full h-full object-cover" />
-                      </div>
-                      <div>
-                        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
-                          <span className="bg-blue-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Certified Original</span>
-                          HD Webcam 1080P Built-in Microphone
-                        </p>
-                        <div className="flex items-center gap-1 mb-0.5">
-                          <span className="text-[10px] text-gray-500">789 sold</span>
-                          <span className="text-[10px] text-gray-400">|</span>
-                          <span className="text-[10px] text-gray-700">★ 5.0</span>
-                        </div>
-                        <p className="text-sm font-bold text-gray-900">49990</p>
-                        <p className="text-[10px] text-orange-600">Premium Quality</p>
-                      </div>
-                    </div>
-
-                    {/* Product 7 */}
-                    <div>
-                      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
-                        <img src="https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?q=80&w=300&h=300&auto=format&fit=crop" alt="Product" className="w-full h-full object-cover" />
-                      </div>
-                      <div>
-                        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
-                          <span className="bg-red-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Sale</span>
-                          <span className="bg-orange-100 text-orange-700 px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">250%</span>
-                          Mechanical Gaming Keyboard RGB
-                        </p>
-                        <div className="flex items-center gap-1 mb-0.5">
-                          <span className="text-[10px] text-gray-500">38 sold</span>
-                          <span className="text-[10px] text-gray-400">|</span>
-                          <span className="text-[10px] text-gray-700">★ 4.8</span>
-                        </div>
-                        <p className="text-sm font-bold text-gray-900">767523</p>
-                        <p className="text-[10px] text-orange-600">Premium Quality</p>
-                      </div>
-                    </div>
-
-                    {/* Product 8 */}
-                    <div>
-                      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
-                        <img src="https://images.unsplash.com/photo-1586864387634-97201e228378?q=80&w=300&h=300&auto=format&fit=crop" alt="Product" className="w-full h-full object-cover" />
-                      </div>
-                      <div>
-                        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
-                          <span className="bg-blue-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Brand+</span>
-                          Ergonomic Wireless Mouse Rechargeable
-                        </p>
-                        <div className="flex items-center gap-1 mb-0.5">
-                          <span className="text-[10px] text-gray-500">923 sold</span>
-                          <span className="text-[10px] text-gray-400">|</span>
-                          <span className="text-[10px] text-gray-700">★ 4.7</span>
-                        </div>
-                        <p className="text-sm font-bold text-gray-900">24990</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
+                  </section>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Global Styles */}
+      <style jsx global>{`
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .overscroll-contain {
+          overscroll-behavior-y: contain;
+        }
+      `}</style>
+    </>
   );
 }
