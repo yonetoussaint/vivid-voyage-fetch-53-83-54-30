@@ -1,6 +1,3 @@
-this ui has chain scrolling issue, i want both areas, sidebar and categories area to scroll independently and avaid chain Scrolling 
-
-
 import React, { useState } from "react";
 import { ChevronRight, User, Plug, Monitor, Tv, Droplet, Baby, ShoppingCart, Home, Shirt, Users, Watch, Car } from 'lucide-react';
 
