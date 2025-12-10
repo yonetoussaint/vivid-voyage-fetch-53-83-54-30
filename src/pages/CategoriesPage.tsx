@@ -111,16 +111,16 @@ export default function CategoriesPage() {
 
   return (
     <div className="bg-gray-50 h-screen flex overflow-hidden">
-      {/* Left sidebar - Vertical category list */}
-      <div className="w-24 bg-white border-r border-gray-200 flex-shrink-0 h-screen">
-        <div className="flex flex-col h-full overflow-y-auto">
+      {/* Left sidebar - Scrollable category list */}
+      <div className="w-24 bg-white flex-shrink-0 h-screen overflow-y-auto overscroll-contain">
+        <div className="py-2">
           {CATEGORIES.map((category) => {
             const Icon = category.icon;
             return (
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
-                className={`flex-1 min-h-[60px] w-full px-1.5 py-2 flex flex-col items-center justify-center text-center cursor-pointer transition-colors relative ${
+                className={`w-full px-1.5 py-3 flex flex-col items-center text-center cursor-pointer transition-colors relative ${
                   selectedCategory === category.id ? 'bg-gray-50' : 'hover:bg-gray-50'
                 }`}
               >
@@ -135,8 +135,8 @@ export default function CategoriesPage() {
         </div>
       </div>
 
-      {/* Main Content Area - Scrollable on its own */}
-      <div className="flex-1 overflow-y-auto overscroll-none">
+      {/* Main Content Area - Scrollable independently */}
+      <div className="flex-1 overflow-y-auto overscroll-contain">
         <div className="p-4">
           {selectedCategoryData?.subCategories.length === 0 ? (
             <div className="flex items-center justify-center h-64">
