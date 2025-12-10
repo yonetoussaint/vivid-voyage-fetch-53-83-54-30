@@ -53,6 +53,7 @@ function MainLayoutContent() {
   const contentRef = useRef<HTMLDivElement>(null);
   const [actualHeaderHeight, setActualHeaderHeight] = useState<number>(0);
   const [actualBottomNavHeight, setActualBottomNavHeight] = useState<number>(0);
+  const [contentHeight, setContentHeight] = useState<number>(0);
 
   const { openAuthOverlay, isAuthOverlayOpen, setIsAuthOverlayOpen } = useAuthOverlay();
   const { user } = useAuth();
@@ -261,103 +262,89 @@ function MainLayoutContent() {
     };
   }, [shouldShowBottomNav, pathname]);
 
-  // Update content area height on mount and when heights change
+  // Update content height calculation
   useEffect(() => {
     const updateContentHeight = () => {
       if (contentRef.current) {
         const windowHeight = window.innerHeight;
         const headerHeight = actualHeaderHeight;
         const bottomNavHeight = actualBottomNavHeight;
-        const contentHeight = windowHeight - headerHeight - bottomNavHeight;
+        const calculatedHeight = windowHeight - headerHeight - bottomNavHeight;
+        setContentHeight(calculatedHeight);
         
-        contentRef.current.style.height = `${contentHeight}px`;
-        contentRef.current.style.maxHeight = `${contentHeight}px`;
-        
-        // Force a reflow to ensure proper rendering
-        contentRef.current.style.display = 'none';
-        contentRef.current.offsetHeight; // Trigger reflow
-        contentRef.current.style.display = 'block';
+        // Apply directly to the element
+        contentRef.current.style.height = `${calculatedHeight}px`;
+        contentRef.current.style.maxHeight = `${calculatedHeight}px`;
+        contentRef.current.style.minHeight = `${calculatedHeight}px`;
       }
     };
 
     updateContentHeight();
-    window.addEventListener('resize', updateContentHeight);
-    window.addEventListener('orientationchange', updateContentHeight);
+    
+    // Use requestAnimationFrame for smooth updates
+    let rafId: number;
+    const handleResize = () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(updateContentHeight);
+    };
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
 
     return () => {
-      window.removeEventListener('resize', updateContentHeight);
-      window.removeEventListener('orientationchange', updateContentHeight);
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+      if (rafId) cancelAnimationFrame(rafId);
     };
   }, [actualHeaderHeight, actualBottomNavHeight]);
 
-  // Native-like touch scrolling behavior
+  // Add smooth scrolling CSS to the content element
   useEffect(() => {
-    const contentElement = contentRef.current;
-    if (!contentElement) return;
-
-    let startY = 0;
-    let startScrollTop = 0;
-    let isScrolling = false;
-
-    const handleTouchStart = (e: TouchEvent) => {
-      const touch = e.touches[0];
-      startY = touch.clientY;
-      startScrollTop = contentElement.scrollTop;
-      isScrolling = true;
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (!isScrolling) return;
+    if (contentRef.current) {
+      const style = document.createElement('style');
+      style.textContent = `
+        .smooth-scroll {
+          -webkit-overflow-scrolling: touch !important;
+          scroll-behavior: smooth !important;
+          overscroll-behavior: contain !important;
+        }
+        
+        .smooth-scroll::-webkit-scrollbar {
+          width: 0 !important;
+          height: 0 !important;
+          display: none !important;
+        }
+        
+        /* Momentum scrolling for iOS */
+        .smooth-scroll {
+          overflow-y: scroll;
+          -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Prevent rubber banding on body */
+        body {
+          overscroll-behavior: none;
+          position: fixed;
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+        }
+      `;
+      document.head.appendChild(style);
       
-      const touch = e.touches[0];
-      const deltaY = touch.clientY - startY;
-      const newScrollTop = startScrollTop - deltaY;
+      // Add smooth-scroll class
+      contentRef.current.classList.add('smooth-scroll');
       
-      // Check boundaries
-      const maxScroll = contentElement.scrollHeight - contentElement.clientHeight;
-      
-      if (newScrollTop <= 0) {
-        // At top - allow slight overscroll for native feel
-        contentElement.scrollTop = Math.max(-30, newScrollTop);
-        e.preventDefault();
-      } else if (newScrollTop >= maxScroll) {
-        // At bottom - allow slight overscroll
-        contentElement.scrollTop = Math.min(maxScroll + 30, newScrollTop);
-        e.preventDefault();
-      } else {
-        contentElement.scrollTop = newScrollTop;
-      }
-    };
-
-    const handleTouchEnd = () => {
-      isScrolling = false;
-      
-      // Snap back if overscrolled
-      if (contentElement.scrollTop < 0) {
-        contentElement.scrollTo({
-          top: 0,
-          behavior: 'smooth'
-        });
-      } else if (contentElement.scrollTop > contentElement.scrollHeight - contentElement.clientHeight) {
-        contentElement.scrollTo({
-          top: contentElement.scrollHeight - contentElement.clientHeight,
-          behavior: 'smooth'
-        });
-      }
-    };
-
-    contentElement.addEventListener('touchstart', handleTouchStart, { passive: false });
-    contentElement.addEventListener('touchmove', handleTouchMove, { passive: false });
-    contentElement.addEventListener('touchend', handleTouchEnd);
-
-    return () => {
-      contentElement.removeEventListener('touchstart', handleTouchStart);
-      contentElement.removeEventListener('touchmove', handleTouchMove);
-      contentElement.removeEventListener('touchend', handleTouchEnd);
-    };
+      return () => {
+        document.head.removeChild(style);
+        if (contentRef.current) {
+          contentRef.current.classList.remove('smooth-scroll');
+        }
+      };
+    }
   }, []);
 
-  // CSS for native-like experience
+  // CSS for native-like experience - SIMPLIFIED
   const layoutHeightStyle = `
     :root {
       --header-height: ${actualHeaderHeight}px;
@@ -367,16 +354,19 @@ function MainLayoutContent() {
       --total-bottom-height: ${actualBottomNavHeight}px;
     }
 
+    /* Reset body for mobile web app */
     html, body {
-      overscroll-behavior: none;
-      -webkit-overflow-scrolling: touch;
-      height: 100%;
+      margin: 0;
+      padding: 0;
       width: 100%;
+      height: 100%;
       position: fixed;
       overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
       touch-action: none;
     }
 
+    /* App container */
     .app-container {
       position: fixed;
       top: 0;
@@ -385,19 +375,27 @@ function MainLayoutContent() {
       bottom: 0;
       overflow: hidden;
       background: white;
+      /* Enable hardware acceleration */
+      transform: translateZ(0);
+      backface-visibility: hidden;
+      perspective: 1000;
+      will-change: transform;
     }
 
+    /* Header - fixed at top */
     .app-header {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
-      z-index: 100;
+      z-index: 1000;
       background: white;
       transform: translateZ(0);
       will-change: transform;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
     }
 
+    /* Content area - absolutely positioned between header and bottom nav */
     .app-content {
       position: absolute;
       top: ${actualHeaderHeight}px;
@@ -409,26 +407,40 @@ function MainLayoutContent() {
       -webkit-overflow-scrolling: touch;
       overscroll-behavior: contain;
       transform: translateZ(0);
-      will-change: transform;
-      scroll-behavior: smooth;
-      /* Hide scrollbar for native feel */
+      will-change: transform, scroll-position;
+      /* Native-like scroll */
       scrollbar-width: none;
       -ms-overflow-style: none;
+      /* Smooth scrolling */
+      scroll-behavior: smooth;
+      /* Prevent momentum scrolling issues */
+      -webkit-overflow-scrolling: touch;
+      /* Hardware acceleration */
+      backface-visibility: hidden;
+      perspective: 1000;
     }
 
+    /* Hide scrollbar but keep functionality */
     .app-content::-webkit-scrollbar {
       display: none;
+      width: 0;
+      height: 0;
     }
 
+    /* Bottom navigation - fixed at bottom */
     .app-bottom-nav {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
-      z-index: 100;
+      z-index: 1000;
       transform: translateZ(0);
       will-change: transform;
       padding-bottom: env(safe-area-inset-bottom, 0px);
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08);
     }
 
     /* Remove padding for conversation detail page */
@@ -439,8 +451,8 @@ function MainLayoutContent() {
       }
     ` : ''}
 
-    /* Prevent text selection for native feel */
-    * {
+    /* Prevent text selection for native feel (except inputs) */
+    *:not(input):not(textarea):not([contenteditable="true"]) {
       -webkit-tap-highlight-color: transparent;
       -webkit-touch-callout: none;
       -webkit-user-select: none;
@@ -448,24 +460,46 @@ function MainLayoutContent() {
     }
 
     /* Allow text selection in input fields */
-    input, textarea {
+    input, textarea, [contenteditable="true"] {
       -webkit-user-select: text;
       user-select: text;
     }
 
-    /* Native-like transitions */
+    /* Native-like page transitions */
     .page-transition {
-      animation: fadeIn 0.25s ease-out;
+      animation: fadeIn 0.2s ease-out;
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Native scroll momentum */
+    /* Momentum scrolling fix for iOS */
+    @supports (-webkit-overflow-scrolling: touch) {
+      .app-content {
+        /* iOS momentum scrolling */
+        -webkit-overflow-scrolling: touch;
+        /* Prevent elastic scroll */
+        overflow-y: scroll;
+      }
+    }
+
+    /* Fix for Android Chrome */
+    @supports (overflow: overlay) {
+      .app-content {
+        overflow-y: overlay;
+      }
+    }
+
+    /* Prevent overscroll glow/bounce */
     .app-content {
-      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
+    }
+
+    /* Fix for mobile safari 100vh issue */
+    .app-content {
+      height: calc(100vh - ${actualHeaderHeight}px - ${actualBottomNavHeight}px);
     }
   `;
 
@@ -590,7 +624,15 @@ function MainLayoutContent() {
       )}
 
       {/* Main Content Area - Native-like scrolling */}
-      <div ref={contentRef} className="app-content page-transition">
+      <div 
+        ref={contentRef} 
+        className="app-content page-transition"
+        style={{
+          height: `${contentHeight}px`,
+          maxHeight: `${contentHeight}px`,
+          minHeight: `${contentHeight}px`,
+        }}
+      >
         <Outlet />
       </div>
 
