@@ -109,20 +109,18 @@ export default function CategoriesPage() {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const mainContentRef = useRef<HTMLDivElement>(null);
 
-  // Prevent body scroll completely for mobile web app
+  // Prevent body scroll completely for native app feel
   useEffect(() => {
     const preventDefault = (e: TouchEvent) => {
-      if (e.touches.length > 1) return;
       e.preventDefault();
     };
 
-    // Prevent pull-to-refresh and overscroll glow
     document.body.style.overflow = 'hidden';
     document.body.style.position = 'fixed';
     document.body.style.width = '100%';
     document.body.style.height = '100%';
-
-    // Prevent zoom gestures
+    
+    // Prevent all touchmove on body
     document.addEventListener('touchmove', preventDefault, { passive: false });
 
     return () => {
@@ -134,7 +132,7 @@ export default function CategoriesPage() {
     };
   }, []);
 
-  // Handle touch events for independent scrolling
+  // Handle sidebar touch events - completely isolated
   useEffect(() => {
     const sidebar = sidebarRef.current;
     if (!sidebar) return;
@@ -144,48 +142,47 @@ export default function CategoriesPage() {
     let isScrolling = false;
 
     const handleTouchStart = (e: TouchEvent) => {
-      if (e.target && (e.target as HTMLElement).tagName === 'BUTTON') {
-        return; // Don't prevent button clicks
+      // Only handle if touch starts on the sidebar container
+      if (e.target && sidebar.contains(e.target as Node)) {
+        startY = e.touches[0].clientY;
+        scrollTop = sidebar.scrollTop;
+        isScrolling = true;
+        e.stopPropagation(); // Don't bubble up
       }
-      
-      startY = e.touches[0].clientY;
-      scrollTop = sidebar.scrollTop;
-      isScrolling = true;
     };
 
     const handleTouchMove = (e: TouchEvent) => {
       if (!isScrolling || e.touches.length > 1) return;
       
+      e.stopPropagation(); // Don't bubble up
+      e.preventDefault(); // Prevent any other scrolling
+      
       const currentY = e.touches[0].clientY;
       const deltaY = startY - currentY;
-      
-      // Only prevent default if we're actually scrolling within the container
-      const isAtTop = scrollTop === 0 && deltaY < 0;
-      const isAtBottom = scrollTop + sidebar.clientHeight >= sidebar.scrollHeight && deltaY > 0;
-      
-      if (!isAtTop && !isAtBottom) {
-        e.preventDefault();
-      }
       
       sidebar.scrollTop = scrollTop + deltaY;
     };
 
-    const handleTouchEnd = () => {
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (isScrolling) {
+        e.stopPropagation(); // Don't bubble up
+      }
       isScrolling = false;
     };
 
-    sidebar.addEventListener('touchstart', handleTouchStart, { passive: true });
-    sidebar.addEventListener('touchmove', handleTouchMove, { passive: false });
-    sidebar.addEventListener('touchend', handleTouchEnd, { passive: true });
+    // Use capture phase to catch events early
+    document.addEventListener('touchstart', handleTouchStart, { passive: true, capture: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
+    document.addEventListener('touchend', handleTouchEnd, { passive: true, capture: true });
 
     return () => {
-      sidebar.removeEventListener('touchstart', handleTouchStart);
-      sidebar.removeEventListener('touchmove', handleTouchMove);
-      sidebar.removeEventListener('touchend', handleTouchEnd);
+      document.removeEventListener('touchstart', handleTouchStart, { capture: true });
+      document.removeEventListener('touchmove', handleTouchMove, { capture: true });
+      document.removeEventListener('touchend', handleTouchEnd, { capture: true });
     };
   }, []);
 
-  // Handle touch events for main content
+  // Handle main content touch events - completely isolated
   useEffect(() => {
     const mainContent = mainContentRef.current;
     if (!mainContent) return;
@@ -195,44 +192,47 @@ export default function CategoriesPage() {
     let isScrolling = false;
 
     const handleTouchStart = (e: TouchEvent) => {
-      startY = e.touches[0].clientY;
-      scrollTop = mainContent.scrollTop;
-      isScrolling = true;
+      // Only handle if touch starts on the main content or its children
+      if (e.target && mainContent.contains(e.target as Node)) {
+        startY = e.touches[0].clientY;
+        scrollTop = mainContent.scrollTop;
+        isScrolling = true;
+        e.stopPropagation(); // Don't bubble up
+      }
     };
 
     const handleTouchMove = (e: TouchEvent) => {
       if (!isScrolling || e.touches.length > 1) return;
       
+      e.stopPropagation(); // Don't bubble up
+      e.preventDefault(); // Prevent any other scrolling
+      
       const currentY = e.touches[0].clientY;
       const deltaY = startY - currentY;
-      
-      // Only prevent default if we're actually scrolling within the container
-      const isAtTop = scrollTop === 0 && deltaY < 0;
-      const isAtBottom = scrollTop + mainContent.clientHeight >= mainContent.scrollHeight && deltaY > 0;
-      
-      if (!isAtTop && !isAtBottom) {
-        e.preventDefault();
-      }
       
       mainContent.scrollTop = scrollTop + deltaY;
     };
 
-    const handleTouchEnd = () => {
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (isScrolling) {
+        e.stopPropagation(); // Don't bubble up
+      }
       isScrolling = false;
     };
 
-    mainContent.addEventListener('touchstart', handleTouchStart, { passive: true });
-    mainContent.addEventListener('touchmove', handleTouchMove, { passive: false });
-    mainContent.addEventListener('touchend', handleTouchEnd, { passive: true });
+    // Use capture phase to catch events early
+    document.addEventListener('touchstart', handleTouchStart, { passive: true, capture: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: false, capture: true });
+    document.addEventListener('touchend', handleTouchEnd, { passive: true, capture: true });
 
     return () => {
-      mainContent.removeEventListener('touchstart', handleTouchStart);
-      mainContent.removeEventListener('touchmove', handleTouchMove);
-      mainContent.removeEventListener('touchend', handleTouchEnd);
+      document.removeEventListener('touchstart', handleTouchStart, { capture: true });
+      document.removeEventListener('touchmove', handleTouchMove, { capture: true });
+      document.removeEventListener('touchend', handleTouchEnd, { capture: true });
     };
   }, []);
 
-  // Handle wheel events (for desktop/mouse)
+  // Handle wheel events for desktop
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
       const target = e.target as HTMLElement;
@@ -240,24 +240,16 @@ export default function CategoriesPage() {
       // Check if target is inside sidebar
       if (sidebarRef.current?.contains(target)) {
         const sidebar = sidebarRef.current;
-        const { scrollTop, scrollHeight, clientHeight } = sidebar;
-        const isAtTop = scrollTop === 0 && e.deltaY < 0;
-        const isAtBottom = scrollTop + clientHeight >= scrollHeight && e.deltaY > 0;
-        
-        if (!isAtTop && !isAtBottom) {
-          e.stopPropagation();
-        }
+        sidebar.scrollTop += e.deltaY;
+        e.stopPropagation();
+        e.preventDefault();
       }
       // Check if target is inside main content
       else if (mainContentRef.current?.contains(target)) {
         const mainContent = mainContentRef.current;
-        const { scrollTop, scrollHeight, clientHeight } = mainContent;
-        const isAtTop = scrollTop === 0 && e.deltaY < 0;
-        const isAtBottom = scrollTop + clientHeight >= scrollHeight && e.deltaY > 0;
-        
-        if (!isAtTop && !isAtBottom) {
-          e.stopPropagation();
-        }
+        mainContent.scrollTop += e.deltaY;
+        e.stopPropagation();
+        e.preventDefault();
       }
     };
 
@@ -270,19 +262,21 @@ export default function CategoriesPage() {
   const selectedCategoryData = CATEGORIES.find(cat => cat.id === selectedCategory);
 
   return (
-    <div className="bg-gray-50 h-screen flex overflow-hidden touch-none">
+    <div className="bg-gray-50 h-screen flex overflow-hidden">
       {/* Left sidebar - Fixed height with independent scrolling */}
       <div 
-        className="w-24 bg-white flex-shrink-0 h-screen flex flex-col overflow-hidden"
+        ref={sidebarRef}
+        className="w-24 bg-white flex-shrink-0 h-screen flex flex-col overflow-hidden touch-none"
+        style={{
+          overscrollBehavior: 'none',
+          WebkitOverflowScrolling: 'touch',
+        }}
       >
         <div 
-          ref={sidebarRef}
           className="flex-1 overflow-y-auto py-2"
           style={{ 
-            WebkitOverflowScrolling: 'touch',
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
-            touchAction: 'pan-y',
           }}
         >
           <div style={{ minHeight: '0' }}>
@@ -315,13 +309,19 @@ export default function CategoriesPage() {
       </div>
 
       {/* Main Content Area - Scrollable independently */}
-      <div className="flex-1 h-screen overflow-hidden flex flex-col">
+      <div 
+        ref={mainContentRef}
+        className="flex-1 h-screen overflow-hidden flex flex-col touch-none"
+        style={{
+          overscrollBehavior: 'none',
+          WebkitOverflowScrolling: 'touch',
+        }}
+      >
         <div 
-          ref={mainContentRef}
           className="flex-1 overflow-y-auto" 
           style={{ 
-            WebkitOverflowScrolling: 'touch',
-            touchAction: 'pan-y',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
           }}
         >
           <div className="p-2">
