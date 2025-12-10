@@ -27,13 +27,12 @@ function MainLayoutContent() {
   const isMultiStepTransferSheetPage = pathname === "/multi-step-transfer-page";
   const isTransferOldPage = pathname === "/transfer-old";
   const { toast } = useToast();
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showProductUpload, setShowProductUpload] = useState(false);
   const [activeTab, setActiveTab] = useState('recommendations');
   const headerRef = useRef<HTMLDivElement>(null);
   const bottomNavRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const [actualHeaderHeight, setActualHeaderHeight] = useState<number>(0);
   const [actualBottomNavHeight, setActualBottomNavHeight] = useState<number>(0);
 
@@ -144,9 +143,6 @@ function MainLayoutContent() {
     (pathname.startsWith('/seller-dashboard') && !pathname.includes('/edit-profile') && !pathname.includes('/onboarding'))
   ) && !isMultiStepTransferPage && !isMultiStepTransferSheetPage && !isTransferOldPage;
 
-  // Use shouldShowHeader for spacing
-  const shouldApplySpacing = shouldShowHeader;
-
   // Measure actual header height dynamically
   useEffect(() => {
     const updateHeaderHeight = () => {
@@ -155,7 +151,6 @@ function MainLayoutContent() {
         if (headerElement) {
           const height = headerElement.getBoundingClientRect().height;
           setActualHeaderHeight(height);
-          // Also update CSS variable
           document.documentElement.style.setProperty('--header-height', `${height}px`);
         }
       } else {
@@ -164,7 +159,7 @@ function MainLayoutContent() {
       }
     };
 
-    const timer = setTimeout(updateHeaderHeight, 100);
+    const timer = setTimeout(updateHeaderHeight, 50);
     window.addEventListener('resize', updateHeaderHeight);
 
     const observer = new MutationObserver(updateHeaderHeight);
@@ -192,16 +187,22 @@ function MainLayoutContent() {
         if (bottomNavElement) {
           const height = bottomNavElement.getBoundingClientRect().height;
           setActualBottomNavHeight(height);
-          // Also update CSS variable
           document.documentElement.style.setProperty('--bottom-nav-height', `${height}px`);
+          
+          // Also update safe area inset for mobile browsers
+          const safeAreaBottom = getComputedStyle(document.documentElement)
+            .getPropertyValue('--safe-area-inset-bottom') || '0px';
+          const totalBottomHeight = height + parseInt(safeAreaBottom);
+          document.documentElement.style.setProperty('--total-bottom-height', `${totalBottomHeight}px`);
         }
       } else {
         setActualBottomNavHeight(0);
         document.documentElement.style.setProperty('--bottom-nav-height', '0px');
+        document.documentElement.style.setProperty('--total-bottom-height', '0px');
       }
     };
 
-    const timer = setTimeout(updateBottomNavHeight, 100);
+    const timer = setTimeout(updateBottomNavHeight, 50);
     window.addEventListener('resize', updateBottomNavHeight);
 
     const observer = new MutationObserver(updateBottomNavHeight);
@@ -221,65 +222,260 @@ function MainLayoutContent() {
     };
   }, [shouldShowBottomNav, pathname]);
 
-  // Calculate header and bottom nav heights for CSS variables
-  const headerHeight = `${actualHeaderHeight}px`;
-  const bottomNavHeight = `${actualBottomNavHeight}px`;
+  // Update content area height on mount and when heights change
+  useEffect(() => {
+    const updateContentHeight = () => {
+      if (contentRef.current) {
+        const windowHeight = window.innerHeight;
+        const headerHeight = actualHeaderHeight;
+        const bottomNavHeight = actualBottomNavHeight;
+        const contentHeight = windowHeight - headerHeight - bottomNavHeight;
+        
+        contentRef.current.style.height = `${contentHeight}px`;
+        contentRef.current.style.maxHeight = `${contentHeight}px`;
+        
+        // Force a reflow to ensure proper rendering
+        contentRef.current.style.display = 'none';
+        contentRef.current.offsetHeight; // Trigger reflow
+        contentRef.current.style.display = 'block';
+      }
+    };
 
-  // Check if current page is conversation detail
-  const isConversationDetailPage = pathname.startsWith('/messages/') && pathname !== '/messages';
+    updateContentHeight();
+    window.addEventListener('resize', updateContentHeight);
+    window.addEventListener('orientationchange', updateContentHeight);
 
-  // CSS with dynamic header and bottom nav heights
+    return () => {
+      window.removeEventListener('resize', updateContentHeight);
+      window.removeEventListener('orientationchange', updateContentHeight);
+    };
+  }, [actualHeaderHeight, actualBottomNavHeight]);
+
+  // Native-like touch scrolling behavior
+  useEffect(() => {
+    const contentElement = contentRef.current;
+    if (!contentElement) return;
+
+    let startY = 0;
+    let startScrollTop = 0;
+    let isScrolling = false;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      startY = touch.clientY;
+      startScrollTop = contentElement.scrollTop;
+      isScrolling = true;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isScrolling) return;
+      
+      const touch = e.touches[0];
+      const deltaY = touch.clientY - startY;
+      const newScrollTop = startScrollTop - deltaY;
+      
+      // Check boundaries
+      const maxScroll = contentElement.scrollHeight - contentElement.clientHeight;
+      
+      if (newScrollTop <= 0) {
+        // At top - allow slight overscroll for native feel
+        contentElement.scrollTop = Math.max(-30, newScrollTop);
+        e.preventDefault();
+      } else if (newScrollTop >= maxScroll) {
+        // At bottom - allow slight overscroll
+        contentElement.scrollTop = Math.min(maxScroll + 30, newScrollTop);
+        e.preventDefault();
+      } else {
+        contentElement.scrollTop = newScrollTop;
+      }
+    };
+
+    const handleTouchEnd = () => {
+      isScrolling = false;
+      
+      // Snap back if overscrolled
+      if (contentElement.scrollTop < 0) {
+        contentElement.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      } else if (contentElement.scrollTop > contentElement.scrollHeight - contentElement.clientHeight) {
+        contentElement.scrollTo({
+          top: contentElement.scrollHeight - contentElement.clientHeight,
+          behavior: 'smooth'
+        });
+      }
+    };
+
+    contentElement.addEventListener('touchstart', handleTouchStart, { passive: false });
+    contentElement.addEventListener('touchmove', handleTouchMove, { passive: false });
+    contentElement.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      contentElement.removeEventListener('touchstart', handleTouchStart);
+      contentElement.removeEventListener('touchmove', handleTouchMove);
+      contentElement.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, []);
+
+  // CSS for native-like experience
   const layoutHeightStyle = `
     :root {
-      --header-height: ${headerHeight};
-      --bottom-nav-height: ${bottomNavHeight};
+      --header-height: ${actualHeaderHeight}px;
+      --bottom-nav-height: ${actualBottomNavHeight}px;
+      --safe-area-inset-top: env(safe-area-inset-top, 0px);
+      --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+      --total-bottom-height: ${actualBottomNavHeight}px;
     }
 
-    /* Apply padding to main content area based on visible elements */
-    .main-content-container {
-      padding-top: var(--header-height);
-      padding-bottom: var(--bottom-nav-height);
-      min-height: calc(100vh - var(--header-height) - var(--bottom-nav-height));
-      width: 100%;
-      box-sizing: border-box;
-      position: relative;
-      z-index: 1;
-    }
-
-    /* Ensure outlet content fills the available space */
-    .outlet-content {
+    html, body {
+      overscroll-behavior: none;
+      -webkit-overflow-scrolling: touch;
       height: 100%;
       width: 100%;
+      position: fixed;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    .app-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      overflow: hidden;
+      background: white;
+    }
+
+    .app-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: white;
+      transform: translateZ(0);
+      will-change: transform;
+    }
+
+    .app-content {
+      position: absolute;
+      top: ${actualHeaderHeight}px;
+      left: 0;
+      right: 0;
+      bottom: ${actualBottomNavHeight}px;
       overflow-y: auto;
       overflow-x: hidden;
       -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      transform: translateZ(0);
+      will-change: transform;
+      scroll-behavior: smooth;
+      /* Hide scrollbar for native feel */
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .app-content::-webkit-scrollbar {
+      display: none;
+    }
+
+    .app-bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      transform: translateZ(0);
+      will-change: transform;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
     }
 
     /* Remove padding for conversation detail page */
     ${isConversationDetailPage ? `
-      .main-content-container {
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
+      .app-content {
+        top: 0 !important;
+        bottom: 0 !important;
       }
     ` : ''}
 
-    /* Force CSS variables update */
+    /* Prevent text selection for native feel */
     * {
-      --header-height: ${headerHeight};
-      --bottom-nav-height: ${bottomNavHeight};
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    /* Allow text selection in input fields */
+    input, textarea {
+      -webkit-user-select: text;
+      user-select: text;
+    }
+
+    /* Native-like transitions */
+    .page-transition {
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Native scroll momentum */
+    .app-content {
+      -webkit-overflow-scrolling: touch;
     }
   `;
 
-  // Update the effect that manages auth redirect
+  // Check if current page is conversation detail
+  const isConversationDetailPage = pathname.startsWith('/messages/') && pathname !== '/messages';
+
+  // Get search params
+  const searchParams = new URLSearchParams(location.search);
+  const messagesFilter = searchParams.get('filter') || 'all';
+  const walletFilter = searchParams.get('tab') || 'buyer';
+  const exploreFilter = searchParams.get('tab') || 'products';
+
+  // Check page types
+  const isMessagesPage = pathname === '/messages' || pathname.startsWith('/messages/');
+  const isMessagesListPage = pathname === '/messages';
+  const isWalletPage = pathname === '/wallet';
+  const isExplorePage = pathname === '/explore';
+  const isProductsPage = pathname === '/products';
+  const productsTitle = isProductsPage ? new URLSearchParams(location.search).get('title') || 'Products' : '';
+
+  // Icon mapper
+  const iconMapper: Record<string, React.ComponentType<{ className?: string }>> = {
+    Trophy,
+    Tag,
+    ShieldCheck,
+    Zap,
+    Star,
+    Crown,
+    Award,
+    Home,
+    Smartphone,
+    Shirt,
+    Baby,
+    Dumbbell,
+    Sparkles,
+    Car,
+    Book
+  };
+
+  const iconName = searchParams.get('icon');
+  const sectionHeaderIcon = iconName ? iconMapper[iconName] : undefined;
+
+  // Update auth redirect effect
   useEffect(() => {
     if (pathname === "/auth") {
       openAuthOverlay();
       window.history.replaceState({}, "", "/");
     }
   }, [pathname, openAuthOverlay]);
-
-  // Check if current page is electronics
-  const isElectronicsPage = pathname === '/categories/electronics';
 
   // Redirect to include default filter if missing
   useEffect(() => {
@@ -294,7 +490,7 @@ function MainLayoutContent() {
     }
   }, [isMessagesPage, isWalletPage, isExplorePage, searchParams, navigate, pathname]);
 
-  // Define custom tabs for messages page
+  // Define custom tabs
   const messagesTabs = isMessagesListPage ? [
     { id: 'all', name: 'All', path: '/messages?filter=all' },
     { id: 'unread', name: 'Unread', path: '/messages?filter=unread' },
@@ -302,7 +498,6 @@ function MainLayoutContent() {
     { id: 'archived', name: 'Archived', path: '/messages?filter=archived' }
   ] : undefined;
 
-  // Define custom tabs for wallet page
   const walletTabs = isWalletPage ? [
     { id: 'buyer', name: 'Buyer', path: '/wallet?tab=buyer' },
     { id: 'seller', name: 'Seller', path: '/wallet?tab=seller' },
@@ -312,7 +507,6 @@ function MainLayoutContent() {
     { id: 'rewards', name: 'Rewards', path: '/wallet?tab=rewards' },
   ] : undefined;
 
-  // Define custom tabs for explore page
   const exploreTabs = isExplorePage ? [
     { id: 'products', name: 'Products', path: '/explore?tab=products' },
     { id: 'reels', name: 'Reels', path: '/explore?tab=reels' },
@@ -322,12 +516,12 @@ function MainLayoutContent() {
   ] : undefined;
 
   return (
-    <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
+    <div className="app-container">
       <style dangerouslySetInnerHTML={{ __html: layoutHeightStyle }} />
 
-      {/* Show AliExpressHeader for category pages - wrapped for measurement */}
+      {/* Header */}
       {shouldShowHeader && (
-        <div ref={headerRef} className="fixed top-0 left-0 right-0 z-40">
+        <div ref={headerRef} className="app-header">
           <AliExpressHeader
             activeTabId={isMessagesListPage ? messagesFilter : isWalletPage ? walletFilter : isExplorePage ? exploreFilter : activeTab}
             showFilterBar={showFilterBar}
@@ -395,16 +589,14 @@ function MainLayoutContent() {
         </div>
       )}
 
-      {/* Main content area with dynamic padding */}
-      <div className="main-content-container flex-grow relative">
-        <div className="outlet-content">
-          <Outlet />
-        </div>
+      {/* Main Content Area - Native-like scrolling */}
+      <div ref={contentRef} className="app-content page-transition">
+        <Outlet />
       </div>
 
-      {/* Show IndexBottomNav only on specific paths defined in the component */}
+      {/* Bottom Navigation */}
       {shouldShowBottomNav && (
-        <div ref={bottomNavRef} className="fixed bottom-0 left-0 right-0 z-50">
+        <div ref={bottomNavRef} className="app-bottom-nav">
           <IndexBottomNav />
         </div>
       )}
