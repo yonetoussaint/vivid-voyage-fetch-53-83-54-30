@@ -282,7 +282,7 @@ export default function CategoriesPage() {
             WebkitOverflowScrolling: 'touch'
           }}
         >
-          <div className="p-4">
+          <div className="p-2">
             {selectedCategoryData?.subCategories.length === 0 ? (
               <div className="flex items-center justify-center h-64">
                 <p className="text-gray-500">No subcategories available for {selectedCategoryData.name}</p>
