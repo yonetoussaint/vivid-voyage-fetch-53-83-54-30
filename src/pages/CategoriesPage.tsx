@@ -111,16 +111,16 @@ export default function CategoriesPage() {
 
   return (
     <div className="bg-gray-50 h-screen flex overflow-hidden">
-      {/* Left sidebar - Fixed height with independent scrolling */}
-      <div className="w-24 bg-white flex-shrink-0 h-screen flex flex-col overflow-hidden">
+      {/* Left sidebar - Independent scrolling wheel */}
+      <div className="w-24 bg-white flex-shrink-0 h-screen flex flex-col">
         <div 
-          className="flex-1 overflow-y-auto py-2"
+          className="flex-1 overflow-y-auto py-2 scroll-wheel"
           style={{ 
             WebkitOverflowScrolling: 'touch',
             overscrollBehaviorY: 'contain',
           }}
         >
-          <div>
+          <div className="min-h-full">
             {CATEGORIES.map((category) => {
               const Icon = category.icon;
               return (
@@ -143,10 +143,10 @@ export default function CategoriesPage() {
         </div>
       </div>
 
-      {/* Main Content Area - Scrollable independently */}
+      {/* Main Content Area - Independent scrolling wheel */}
       <div className="flex-1 h-screen overflow-hidden flex flex-col">
         <div 
-          className="flex-1 overflow-y-auto" 
+          className="flex-1 overflow-y-auto scroll-wheel" 
           style={{ 
             WebkitOverflowScrolling: 'touch',
             overscrollBehaviorY: 'contain',
@@ -288,7 +288,7 @@ export default function CategoriesPage() {
                 </div>
 
                 {/* Product Suggestions Grid */}
-                <div className="mt-8">
+                <div className="mt-8 mb-8">
                   <h2 className="text-base font-semibold text-gray-900 mb-4">You May Also Like</h2>
                   <div className="grid grid-cols-2 gap-2">
                     {/* Product 1 */}
@@ -467,10 +467,15 @@ export default function CategoriesPage() {
           width: 100%;
           height: 100%;
         }
-        .overflow-y-auto::-webkit-scrollbar {
+        .scroll-wheel {
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+          overscroll-behavior: contain;
+        }
+        .scroll-wheel::-webkit-scrollbar {
           display: none;
         }
-        .overflow-y-auto {
+        .scroll-wheel {
           -ms-overflow-style: none;
           scrollbar-width: none;
         }
