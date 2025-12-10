@@ -43,8 +43,7 @@ const SUBCATEGORY_GROUPS = {
 
 // Full Categories Data
 const CATEGORIES: Category[] = [
-  { id: "just", name: "Just for You", icon: User, subCategories: [] },
-  },
+  { id: "just", name: "Just for You", icon: User, subCategories: [] }, // Fixed: Removed extra }
   { id: "accessories", name: "Electronic Accessories", icon: Plug, subCategories: [] },
   {
     id: "devices",
