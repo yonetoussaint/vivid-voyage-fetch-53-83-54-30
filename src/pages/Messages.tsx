@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Edit, Pin, VolumeX, Check, CheckCheck, Camera, Mic, BadgeCheck, Phone, Video, Archive, Trash2, Star, Clock, Users, Loader2, Plus } from 'lucide-react';
+import { Edit, Pin, VolumeX, Check, CheckCheck, Camera, Mic, BadgeCheck, Phone, Video, Archive, Trash2, Star, Clock, Users, Loader2 } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useConversations } from '@/hooks/useConversations';
 import { formatDistanceToNow } from 'date-fns';
@@ -10,7 +10,7 @@ import { useAuthOverlay } from '@/context/AuthOverlayContext';
 
 export default function Messages() {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const activeTab = (searchParams.get('filter') || 'all') as 'all' | 'unread' | 'groups' | 'archived';
   const [showUserSelection, setShowUserSelection] = useState(false);
   const [swipedItem, setSwipedItem] = useState<string | null>(null);
@@ -48,10 +48,6 @@ export default function Messages() {
     hasScheduled: Math.random() > 0.9,
     isArchived: false
   }));
-
-  const handleTabChange = (tab: 'all' | 'unread' | 'groups' | 'archived') => {
-    setSearchParams({ filter: tab });
-  };
 
   const handleSwipe = (id: string, action: 'archive' | 'delete') => {
     console.log(`${action} conversation ${id}`);
@@ -149,44 +145,6 @@ export default function Messages() {
       `}</style>
       
       <div className="max-w-2xl mx-auto">
-        {/* Tabs/Filters */}
-        <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-          <div className="flex">
-            <button
-              onClick={() => handleTabChange('all')}
-              className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                activeTab === 'all' ? 'text-red-600 border-b-2 border-red-600' : 'text-gray-500'
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => handleTabChange('unread')}
-              className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                activeTab === 'unread' ? 'text-red-600 border-b-2 border-red-600' : 'text-gray-500'
-              }`}
-            >
-              Unread
-            </button>
-            <button
-              onClick={() => handleTabChange('groups')}
-              className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                activeTab === 'groups' ? 'text-red-600 border-b-2 border-red-600' : 'text-gray-500'
-              }`}
-            >
-              Groups
-            </button>
-            <button
-              onClick={() => handleTabChange('archived')}
-              className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                activeTab === 'archived' ? 'text-red-600 border-b-2 border-red-600' : 'text-gray-500'
-              }`}
-            >
-              Archived
-            </button>
-          </div>
-        </div>
-
         {/* Conversations list */}
         <div className="bg-white">
           {loading ? (
