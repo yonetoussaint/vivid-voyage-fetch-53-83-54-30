@@ -143,7 +143,7 @@ export default function CategoriesPage() {
   }, []);
 
   return (
-    <div className="bg-gray-50 h-screen flex overflow-hidden select-none">
+    <div className="bg-gray-50 h-screen flex overflow-hidden select-none categories-page-root">
       {/* Left sidebar - Fixed height with independent scrolling */}
       <div 
         ref={sidebarRef}
@@ -270,15 +270,13 @@ export default function CategoriesPage() {
 
       {/* Global Styles */}
       <style jsx global>{`
-        /* Prevent body scroll */
-        html, body {
-          height: 100%;
-          overflow: hidden;
-          margin: 0;
-          padding: 0;
-          position: fixed;
-          width: 100%;
-          touch-action: none;
+        /* Allow touch scrolling within this component */
+        .categories-page-root {
+          touch-action: pan-y !important;
+        }
+        
+        .categories-page-root * {
+          touch-action: auto !important;
         }
         
         /* Custom scrollbar styling for independent scrolling */
