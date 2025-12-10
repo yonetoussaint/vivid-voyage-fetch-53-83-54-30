@@ -28,7 +28,6 @@ interface Category {
   subCategories: SubCategory[];
 }
 
-/* YOUR ORIGINAL CATEGORIES + ALL NOW POPULATED */
 const CATEGORIES: Category[] = [
   { id: "just", name: "Just for You", icon: User, subCategories: [] },
   {
@@ -40,7 +39,6 @@ const CATEGORIES: Category[] = [
       { id: "cases", name: "Phone Cases", imageUrl: "https://images.unsplash.com/photo-1586953208448-b95a79798f07?q=80&w=400&h=400&fit=crop" },
       { id: "screen", name: "Screen Protectors", imageUrl: "https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?q=80&w=400&h=400&fit=crop" },
       { id: "powerbank", name: "Power Banks", imageUrl: "https://images.unsplash.com/photo-1609091839314-d8ad8e02782e?q=80&w=400&h=400&fit=crop" },
-      { id: "earphones", name: "Earphones", imageUrl: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=400&h=400&fit=crop" },
     ],
   },
   {
@@ -63,157 +61,196 @@ const CATEGORIES: Category[] = [
       { id: "console-acc", name: "Console Gaming Accessories", imageUrl: "https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?q=80&w=400&h=400&fit=crop" },
     ],
   },
-  { id: "tv", name: "TV & Home Appliances", icon: Tv, subCategories: [
-    { id: "tv", name: "Televisions", imageUrl: "https://images.unsplash.com/photo-1593359677879-a4bb92f81a1f?q=80&w=400&h=400&fit=crop" },
-    { id: "fridge", name: "Refrigerators", imageUrl: "https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?q=80&w=400&h=400&fit=crop" },
-  ]},
-  { id: "beauty", name: "Health & Beauty", icon: Droplet, subCategories: [
-    { id: "skincare", name: "Skincare", imageUrl: "https://images.unsplash.com/photo-1556228451-38e89c0e4e09?q=80&w=400&h=400&fit=crop" },
-  ]},
-  // Add more as needed...
+  // ... other categories with subcategories (TV, Beauty, etc.) can be added later
 ];
 
 export default function CategoriesPage() {
-  const [selectedCategory, setSelectedCategory] = useState<string>("devices");
+  const [selectedCategory, setSelectedCategory] = useState("devices");
   const selected = CATEGORIES.find(c => c.id === selectedCategory);
 
   return (
-    <>
-      <div className="bg-gray-50 h-screen flex overflow-hidden">
+    <div className="bg-gray-50 h-screen flex overflow-hidden">
 
-        {/* SIDEBAR — ORIGINAL DESIGN + PERFECT SCROLL */}
-        <div className="w-24 bg-white flex-shrink-0 h-full flex flex-col">
-          <div className="flex-1 overflow-y-auto overscroll-contain py-2">
-            {CATEGORIES.map((cat) => {
-              const Icon = cat.icon;
-              const active = selectedCategory === cat.id;
-
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`w-full px-1.5 py-3 flex flex-col items-center text-center transition-colors relative ${
-                    active ? "bg-gray-50" : "hover:bg-gray-50"
-                  }`}
-                >
-                  <Icon className="w-5 h-5 mb-1 text-gray-700" />
-                  <span className="text-[8px] text-gray-800 leading-tight">
-                    {cat.name}
-                  </span>
-                  {active && (
-                    <div className="absolute right-0 top-0 bottom-0 w-px bg-gray-300" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
+      {/* LEFT SIDEBAR — EXACT ORIGINAL DESIGN + PERFECT SCROLL */}
+      <div className="w-24 bg-white flex-shrink-0 h-full flex flex-col overflow-hidden border-r border-gray-100">
+        <div className="flex-1 overflow-y-auto overscroll-contain py-2">
+          {CATEGORIES.map((cat) => {
+            const Icon = cat.icon;
+            const active = selectedCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`w-full px-1.5 py-3 flex flex-col items-center text-center transition-colors relative ${
+                  active ? "bg-gray-50" : "hover:bg-gray-50"
+                }`}
+              >
+                <Icon className="w-5 h-5 mb-1 text-gray-700" />
+                <span className="text-[8px] text-gray-800 leading-tight">{cat.name}</span>
+                {active && <div className="absolute right-0 top-0 bottom-0 w-px bg-gray-300" />}
+              </button>
+            );
+          })}
         </div>
+      </div>
 
-        {/* MAIN CONTENT — ORIGINAL DESIGN + PERFECT SCROLL */}
-        <div className="flex-1 overflow-hidden">
-          <div className="h-full overflow-y-auto overscroll-contain">
-            <div className="p-4 pb-32">
+      {/* MAIN CONTENT — YOUR EXACT ORIGINAL LAYOUT + RECOMMENDATIONS */}
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full overflow-y-auto overscroll-contain">
+          <div className="p-4 pb-32">
 
-              {selected?.subCategories.length === 0 ? (
-                <div className="flex items-center justify-center h-64">
-                  <p className="text-gray-500">No subcategories available for {selected?.name}</p>
+            {/* 5 HARD-CODED SECTIONS — EXACTLY LIKE YOUR ORIGINAL */}
+            {selected?.id === "devices" ? (
+              <>
+                {/* Mobiles & Tablets */}
+                <div className="mb-10">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-semibold text-gray-900">Mobiles & Tablets</h2>
+                    <ChevronRight className="w-6 h-6 text-gray-400" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-6">
+                    {selected.subCategories.slice(0, 3).map(item => (
+                      <div key={item.id} className="flex flex-col items-center">
+                        <div className="w-full aspect-square bg-white rounded mb-3 overflow-hidden">
+                          <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                        </div>
+                        <span className="text-sm text-gray-900">{item.name}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ) : (
-                <>
-                  {/* YOUR ORIGINAL "Electronic Devices" LAYOUT — NOW DYNAMIC */}
-                  {selected.id === "devices" ? (
-                    <>
-                      {/* Mobiles & Tablets */}
-                      <div className="mb-10">
-                        <div className="flex items-center justify-between mb-6">
-                          <h2 className="text-lg font-semibold text-gray-900">Mobiles & Tablets</h2>
-                          <ChevronRight className="w-6 h-6 text-gray-400" />
-                        </div>
-                        <div className="grid grid-cols-3 gap-6">
-                          {selected.subCategories.slice(0, 3).map(item => (
-                            <div key={item.id} className="flex flex-col items-center">
-                              <div className="w-full aspect-square bg-white rounded mb-3 overflow-hidden">
-                                <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
-                              </div>
-                              <span className="text-sm text-gray-900">{item.name}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
 
-                      {/* Laptops */}
-                      <div className="mb-10">
-                        <div className="flex items-center justify-between mb-6">
-                          <h2 className="text-lg font-semibold text-gray-900">Laptops</h2>
-                          <ChevronRight className="w-6 h-6 text-gray-400" />
+                {/* Laptops */}
+                <div className="mb-10">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-semibold text-gray-900">Laptops</h2>
+                    <ChevronRight className="w-6 h-6 text-gray-400" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-6">
+                    {selected.subCategories.slice(3, 5).map(item => (
+                      <div key={item.id} className="flex flex-col items-center">
+                        <div className="w-full aspect-square bg-white rounded-lg mb-3 overflow-hidden">
+                          <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
                         </div>
-                        <div className="grid grid-cols-3 gap-6">
-                          {selected.subCategories.slice(3, 5).map(item => (
-                            <div key={item.id} className="flex flex-col items-center">
-                              <div className="w-full aspect-square bg-white rounded-lg mb-3 overflow-hidden">
-                                <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
-                              </div>
-                              <span className="text-sm text-gray-900">{item.name}</span>
-                            </div>
-                          ))}
-                        </div>
+                        <span className="text-sm text-gray-900">{item.name}</span>
                       </div>
+                    ))}
+                  </div>
+                </div>
 
-                      {/* Desktop Computers + Gaming */}
-                      <div className="mb-10">
-                        <div className="flex items-center justify-between mb-6">
-                          <h2 className="text-lg font-semibold text-gray-900">Desktop & Gaming</h2>
-                          <ChevronRight className="w-6 h-6 text-gray-400" />
+                {/* Desktop Computers */}
+                <div className="mb-10">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-semibold text-gray-900">Desktop Computers</h2>
+                    <ChevronRight className="w-6 h-6 text-gray-400" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-6">
+                    {selected.subCategories.slice(5, 8).map(item => (
+                      <div key={item.id} className="flex flex-col items-center">
+                        <div className="w-full aspect-square bg-white rounded-lg mb-3 overflow-hidden">
+                          <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
                         </div>
-                        <div className="grid grid-cols-3 gap-6">
-                          {selected.subCategories.slice(5).map(item => (
-                            <div key={item.id} className="flex flex-col items-center">
-                              <div className="w-full aspect-square bg-white rounded-lg mb-3 overflow-hidden">
-                                <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
-                              </div>
-                              <span className="text-sm text-gray-900 text-center leading-tight">
-                                {item.name}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
+                        <span className="text-sm text-gray-900">{item.name}</span>
                       </div>
-                    </>
-                  ) : (
-                    /* For all other categories — show all items in one beautiful grid */
-                    <div className="grid grid-cols-3 gap-6">
-                      {selected.subCategories.map(item => (
-                        <div key={item.id} className="flex flex-col items-center">
-                          <div className="w-full aspect-square bg-white rounded-lg mb-3 overflow-hidden shadow-sm">
-                            <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
-                          </div>
-                          <span className="text-sm text-gray-900 text-center leading-tight">
-                            {item.name}
-                          </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Smartwatches & Accessories */}
+                <div className="mb-10">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-semibold text-gray-900">Smartwatches & Accessories</h2>
+                    <ChevronRight className="w-6 h-6 text-gray-400" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-6">
+                    {selected.subCategories.slice(8, 10).map(item => (
+                      <div key={item.id} className="flex flex-col items-center">
+                        <div className="w-full aspect-square bg-white rounded-lg mb-3 overflow-hidden">
+                          <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
                         </div>
-                      ))}
+                        <span className="text-sm text-gray-900">{item.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Console Gaming */}
+                <div className="mb-10">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-semibold text-gray-900">Console Gaming</h2>
+                    <ChevronRight className="w-6 h-6 text-gray-400" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-6">
+                    {selected.subCategories.slice(10).map(item => (
+                      <div key={item.id} className="flex flex-col items-center">
+                        <div className="w-full aspect-square bg-white rounded-lg mb-3 overflow-hidden">
+                          <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                        </div>
+                        <span className="text-sm text-gray-900">{item.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-center h-64">
+                <p className="text-gray-500">No subcategories available for {selected?.name}</p>
+              </div>
+            )}
+
+            {/* YOUR ORIGINAL "You May Also Like" SECTION — RESTORED */}
+            <div className="mt-8">
+              <h2 className="text-base font-semibold text-gray-900 mb-4">You May Also Like</h2>
+              <div className="grid grid-cols-2 gap-2">
+                {/* 8 product cards — exactly like your original */}
+                {[
+                  { title: "Wireless Bluetooth Headphones Noise Cancel", price: "79523", sold: "234", rating: "4.8", sale: true },
+                  { title: "Smart Watch Fitness Tracker Heart Rate", price: "67019", sold: "18k", rating: "4.7", top: true },
+                  { title: "Sport Smart Watch Call", price: "105730", sold: "1.3k", rating: "4.6" },
+                  { title: "Curly Highlight Wig Human", price: "741510", sold: "637", rating: "4.7", sale: true },
+                  { title: "Premium Wireless Speaker Deep Bass", price: "89990", sold: "432", rating: "4.8" },
+                  { title: "HD Webcam 1080P Microphone", price: "49990", sold: "789", rating: "5.0", premium: true },
+                  { title: "Mechanical Gaming Keyboard RGB", price: "767523", sold: "38", rating: "4.8" },
+                  { title: "Ergonomic Wireless Mouse", price: "24990", sold: "923", rating: "4.7" },
+                ].map((p, i) => (
+                  <div key={i} className="bg-white rounded overflow-hidden shadow-sm">
+                    <div className="aspect-square">
+                      <img
+                        src={`https://images.unsplash.com/photo-15${i}00425175${i+1}-6d2b9e78d1f3?q=80&w=600&fit=crop`}
+                        alt="product"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                  )}
-                </>
-              )}
+                    <div className="p-2.5">
+                      <p className="text-[11px] text-gray-700 line-clamp-2 leading-tight mb-1">
+                        {p.sale && <span className="bg-red-500 text-white px-1 py-0.5 rounded text-[10px] mr-1">Sale</span>}
+                        {p.top && <span className="bg-orange-100 text-orange-700 px-1 py-0.5 rounded text-[10px] mr-1">Top</span>}
+                        {p.premium && <span className="bg-blue-500 text-white px-1 py-0.5 rounded text-[10px] mr-1">Premium</span>}
+                        {p.title}
+                      </p>
+                      <div className="flex items-center text-[10px] text-gray-500 mb-1">
+                        <span>{p.sold} sold</span>
+                        <span className="mx-1">•</span>
+                        <span className="text-gray-700">★ {p.rating}</span>
+                      </div>
+                      <p className="text-sm font-bold text-gray-900">₮{p.price}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* THIS IS THE MAGIC — 2025 BEST PRACTICE FOR NESTED SCROLL */}
+      {/* MAGIC SCROLL FIX — 2025 BEST PRACTICE */}
       <style jsx global>{`
-        /* Prevent scroll chaining — this is the only thing you need */
         .overscroll-contain {
           overscroll-behavior-y: contain;
         }
-
-        /* Optional: hide scrollbar but nice */
         .overflow-y-auto {
           -webkit-overflow-scrolling: touch;
         }
-
-        /* Hide scrollbar but keep functionality */
         ::-webkit-scrollbar {
           display: none;
         }
@@ -222,6 +259,6 @@ export default function CategoriesPage() {
           scrollbar-width: none;
         }
       `}</style>
-    </>
+    </div>
   );
 }
