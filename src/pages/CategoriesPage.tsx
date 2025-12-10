@@ -110,14 +110,17 @@ export default function CategoriesPage() {
   const selectedCategoryData = CATEGORIES.find(cat => cat.id === selectedCategory);
 
   return (
-    <div className="bg-gray-50 h-screen flex">
+    <div className="bg-gray-50 h-screen flex overflow-hidden">
       {/* Left sidebar - Fixed height with independent scrolling */}
       <div 
-        className="w-24 bg-white flex-shrink-0 h-screen flex flex-col"
+        className="w-24 bg-white flex-shrink-0 h-screen flex flex-col overflow-hidden"
       >
         <div 
           className="flex-1 overflow-y-auto py-2"
-          style={{ overscrollBehavior: 'contain' }}
+          style={{ 
+            overscrollBehavior: 'contain',
+            WebkitOverflowScrolling: 'touch'
+          }}
         >
           {CATEGORIES.map((category) => {
             const Icon = category.icon;
@@ -141,8 +144,14 @@ export default function CategoriesPage() {
       </div>
 
       {/* Main Content Area - Scrollable independently */}
-      <div className="flex-1 h-screen flex flex-col">
-        <div className="flex-1 overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
+      <div className="flex-1 h-screen overflow-hidden flex flex-col">
+        <div 
+          className="flex-1 overflow-y-auto" 
+          style={{ 
+            overscrollBehavior: 'contain',
+            WebkitOverflowScrolling: 'touch'
+          }}
+        >
           <div className="p-4">
             {selectedCategoryData?.subCategories.length === 0 ? (
               <div className="flex items-center justify-center h-64">
