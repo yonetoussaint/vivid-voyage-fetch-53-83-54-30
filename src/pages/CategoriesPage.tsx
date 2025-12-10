@@ -109,10 +109,18 @@ export default function CategoriesPage() {
 
   const selectedCategoryData = CATEGORIES.find(cat => cat.id === selectedCategory);
 
+  // Prevent scroll propagation
+  const handleSidebarWheel = (e: React.WheelEvent) => {
+    e.stopPropagation();
+  };
+
   return (
     <div className="bg-gray-50 h-screen flex overflow-hidden">
-      {/* Left sidebar - Scrollable category list */}
-      <div className="w-24 bg-white flex-shrink-0 h-screen overflow-y-auto overscroll-contain">
+      {/* Left sidebar - Scrollable category list with independent scroll */}
+      <div 
+        className="w-24 bg-white flex-shrink-0 h-screen overflow-y-auto"
+        onWheel={handleSidebarWheel}
+      >
         <div className="py-2">
           {CATEGORIES.map((category) => {
             const Icon = category.icon;
@@ -136,7 +144,7 @@ export default function CategoriesPage() {
       </div>
 
       {/* Main Content Area - Scrollable independently */}
-      <div className="flex-1 overflow-y-auto overscroll-contain">
+      <div className="flex-1 h-screen overflow-y-auto">
         <div className="p-4">
           {selectedCategoryData?.subCategories.length === 0 ? (
             <div className="flex items-center justify-center h-64">
@@ -187,7 +195,7 @@ export default function CategoriesPage() {
                   </div>
                   <div className="flex flex-col items-center">
                     <div className="w-full aspect-square bg-white rounded-lg mb-3 overflow-hidden">
-                      <img src="https://images.unsplash.com/photo-1587614382346-4ec70e388b28?q=80&w=300&h=300&auto=format&fit=crop" alt="2-in-1s" className="w-full h-full object-cover" />
+                      <img src="https://images.unsplash.com/photo-1587614382346-4ec70e388b28?q=80&w=300&h=300&auto=format&fit=crop" alt="2-in-1s", className="w-full h-full object-cover" />
                     </div>
                     <span className="text-sm text-gray-900">2-in-1s</span>
                   </div>
