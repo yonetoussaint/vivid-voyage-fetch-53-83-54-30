@@ -13,11 +13,8 @@ import AuthOverlay from "@/components/auth/AuthOverlay";
 import { useAuth } from "@/contexts/auth/AuthContext";
 import { useTranslation } from 'react-i18next';
 import { HeaderFilterProvider, useHeaderFilter } from "@/contexts/HeaderFilterContext";
-
-// Add this import for useAuthOverlay
 import { useAuthOverlay } from "@/context/AuthOverlayContext";
 
-// Create a wrapper component that uses the hook
 function MainLayoutContent() {
   const isMobile = useIsMobile();
   const location = useLocation();
@@ -37,10 +34,9 @@ function MainLayoutContent() {
   const [activeTab, setActiveTab] = useState('recommendations');
   const headerRef = useRef<HTMLDivElement>(null);
   const bottomNavRef = useRef<HTMLDivElement>(null);
-  const [actualHeaderHeight, setActualHeaderHeight] = useState<string>('0px');
-  const [actualBottomNavHeight, setActualBottomNavHeight] = useState<string>('0px');
+  const [actualHeaderHeight, setActualHeaderHeight] = useState<number>(0);
+  const [actualBottomNavHeight, setActualBottomNavHeight] = useState<number>(0);
 
-  // Now useAuthOverlay is defined
   const { openAuthOverlay, isAuthOverlayOpen, setIsAuthOverlayOpen } = useAuthOverlay();
   const { user } = useAuth();
   const { isLocationListScreenOpen, locationListScreenData, setLocationListScreenOpen, isLocationScreenOpen, setLocationScreenOpen } = useScreenOverlay();
@@ -56,7 +52,6 @@ function MainLayoutContent() {
     isFilterDisabled
   } = useHeaderFilter();
 
-  // Define categories once at layout level
   const categories = useMemo(() => [
     { id: 'recommendations', name: t('forYou', { ns: 'home' }), path: '/for-you' },
     { id: 'electronics', name: t('electronics', { ns: 'categories' }), path: '/categories/electronics' },
@@ -81,78 +76,6 @@ function MainLayoutContent() {
     }
   }, [location.pathname, categories]);
 
-  const toggleFavorite = () => {
-    setIsFavorite(!isFavorite);
-    toast({
-      title: !isFavorite ? "Added to Wishlist" : "Removed from Wishlist",
-      description: !isFavorite ? "This item has been added to your wishlist" : "This item has been removed from your wishlist",
-    });
-  };
-
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: 'Check out this product',
-        text: 'I found this amazing product I thought you might like!',
-        url: window.location.href,
-      }).catch(() => {
-        toast({
-          title: "Sharing Failed",
-          description: "There was an error sharing this content.",
-        });
-      });
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      toast({
-        title: "Link Copied",
-        description: "Product link copied to clipboard!",
-      });
-    }
-  };
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast({
-      title: "Search submitted",
-      description: `Searching for: ${searchQuery}`,
-    });
-  };
-
-  // Check if current page is messages, wallet, explore, or products
-  const isMessagesPage = pathname === '/messages' || pathname.startsWith('/messages/');
-  const isMessagesListPage = pathname === '/messages';
-  const isWalletPage = pathname === '/wallet';
-  const isExplorePage = pathname === '/explore';
-  const isProductsPage = pathname === '/products';
-
-  // Get title from URL params for products page
-  const productsTitle = isProductsPage ? new URLSearchParams(location.search).get('title') || 'Products' : '';
-
-  // Icon mapper to convert string names to components
-  const iconMapper: Record<string, React.ComponentType<{ className?: string }>> = {
-    Trophy,
-    Tag,
-    ShieldCheck,
-    Zap,
-    Star,
-    Crown,
-    Award,
-    Home,
-    Smartphone,
-    Shirt,
-    Baby,
-    Dumbbell,
-    Sparkles,
-    Car,
-    Book
-  };
-
-  // Get filter from URL params for messages, wallet, and explore
-  const searchParams = new URLSearchParams(location.search);
-  const messagesFilter = searchParams.get('filter') || 'all';
-  const walletFilter = searchParams.get('tab') || 'buyer';
-  const exploreFilter = searchParams.get('tab') || 'products';
-
   // Determine if we should show the header
   const shouldShowHeader = [
     '/',
@@ -166,7 +89,7 @@ function MainLayoutContent() {
     '/addresses',
     '/help',
     '/products',
-    '/categories',  // Main categories page
+    '/categories',
     '/categories/electronics',
     '/categories/home-living',
     '/categories/fashion',
@@ -221,32 +144,29 @@ function MainLayoutContent() {
     (pathname.startsWith('/seller-dashboard') && !pathname.includes('/edit-profile') && !pathname.includes('/onboarding'))
   ) && !isMultiStepTransferPage && !isMultiStepTransferSheetPage && !isTransferOldPage;
 
-  // Use shouldShowHeader for spacing (simpler and consistent)
+  // Use shouldShowHeader for spacing
   const shouldApplySpacing = shouldShowHeader;
 
   // Measure actual header height dynamically
   useEffect(() => {
     const updateHeaderHeight = () => {
       if (shouldShowHeader && headerRef.current) {
-        // Find the actual header element within the wrapper
         const headerElement = headerRef.current.querySelector('header, [data-header]');
         if (headerElement) {
           const height = headerElement.getBoundingClientRect().height;
-          setActualHeaderHeight(`${height}px`);
-          console.log('Dynamic header height:', height, 'px');
+          setActualHeaderHeight(height);
+          // Also update CSS variable
+          document.documentElement.style.setProperty('--header-height', `${height}px`);
         }
       } else {
-        setActualHeaderHeight('0px');
+        setActualHeaderHeight(0);
+        document.documentElement.style.setProperty('--header-height', '0px');
       }
     };
 
-    // Initial measurement after a small delay to ensure DOM is rendered
     const timer = setTimeout(updateHeaderHeight, 100);
-
-    // Re-measure on resize
     window.addEventListener('resize', updateHeaderHeight);
 
-    // Use MutationObserver to detect header content changes
     const observer = new MutationObserver(updateHeaderHeight);
     if (headerRef.current) {
       observer.observe(headerRef.current, {
@@ -262,31 +182,28 @@ function MainLayoutContent() {
       window.removeEventListener('resize', updateHeaderHeight);
       observer.disconnect();
     };
-  }, [shouldShowHeader, pathname, activeTab]); // Re-run when route or active tab changes
+  }, [shouldShowHeader, pathname, activeTab]);
 
   // Measure actual bottom nav height dynamically
   useEffect(() => {
     const updateBottomNavHeight = () => {
       if (shouldShowBottomNav && bottomNavRef.current) {
-        // Find the actual bottom nav element within the wrapper
         const bottomNavElement = bottomNavRef.current.querySelector('nav, [data-bottom-nav]');
         if (bottomNavElement) {
           const height = bottomNavElement.getBoundingClientRect().height;
-          setActualBottomNavHeight(`${height}px`);
-          console.log('Dynamic bottom nav height:', height, 'px');
+          setActualBottomNavHeight(height);
+          // Also update CSS variable
+          document.documentElement.style.setProperty('--bottom-nav-height', `${height}px`);
         }
       } else {
-        setActualBottomNavHeight('0px');
+        setActualBottomNavHeight(0);
+        document.documentElement.style.setProperty('--bottom-nav-height', '0px');
       }
     };
 
-    // Initial measurement after a small delay to ensure DOM is rendered
     const timer = setTimeout(updateBottomNavHeight, 100);
-
-    // Re-measure on resize
     window.addEventListener('resize', updateBottomNavHeight);
 
-    // Use MutationObserver to detect bottom nav content changes
     const observer = new MutationObserver(updateBottomNavHeight);
     if (bottomNavRef.current) {
       observer.observe(bottomNavRef.current, {
@@ -302,60 +219,58 @@ function MainLayoutContent() {
       window.removeEventListener('resize', updateBottomNavHeight);
       observer.disconnect();
     };
-  }, [shouldShowBottomNav, pathname]); // Re-run when route changes
+  }, [shouldShowBottomNav, pathname]);
 
   // Calculate header and bottom nav heights for CSS variables
-  const headerHeight = actualHeaderHeight;
-  const bottomNavHeight = actualBottomNavHeight;
+  const headerHeight = `${actualHeaderHeight}px`;
+  const bottomNavHeight = `${actualBottomNavHeight}px`;
 
   // Check if current page is conversation detail
   const isConversationDetailPage = pathname.startsWith('/messages/') && pathname !== '/messages';
 
-  // Get icon from URL and map to component
-  const iconName = searchParams.get('icon');
-  const sectionHeaderIcon = iconName ? iconMapper[iconName] : undefined;
-
-  // Check if current page is seller onboarding (should not show bottom nav)
-  const isSellerOnboardingPage = pathname.includes('/seller-dashboard/onboarding');
-
-  // Check if current page is categories page (main categories page)
-  const isCategoriesPage = pathname === '/categories';
-
   // CSS with dynamic header and bottom nav heights
   const layoutHeightStyle = `
-  :root {
-    --header-height: ${headerHeight};
-    --bottom-nav-height: ${bottomNavHeight};
-  }
+    :root {
+      --header-height: ${headerHeight};
+      --bottom-nav-height: ${bottomNavHeight};
+    }
 
-  /* Ensure main content respects the header and bottom nav */
-  main {
-    padding-top: var(--header-height);
-    padding-bottom: var(--bottom-nav-height);
-    min-height: calc(100vh - var(--header-height) - var(--bottom-nav-height));
-    box-sizing: border-box;
-  }
+    /* Apply padding to main content area based on visible elements */
+    .main-content-container {
+      padding-top: var(--header-height);
+      padding-bottom: var(--bottom-nav-height);
+      min-height: calc(100vh - var(--header-height) - var(--bottom-nav-height));
+      width: 100%;
+      box-sizing: border-box;
+      position: relative;
+      z-index: 1;
+    }
 
-  /* Ensure content doesn't get hidden behind fixed elements */
-  .page-content {
-    position: relative;
-    z-index: 1;
-  }
+    /* Ensure outlet content fills the available space */
+    .outlet-content {
+      height: 100%;
+      width: 100%;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
 
-  /* Remove padding for conversation detail page */
-  ${isConversationDetailPage ? `
-  main {
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-  }
-  ` : ''}
+    /* Remove padding for conversation detail page */
+    ${isConversationDetailPage ? `
+      .main-content-container {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+      }
+    ` : ''}
 
-  /* Force update of CSS variables */
-  * {
-    transition: none !important;
-  }
-`;
+    /* Force CSS variables update */
+    * {
+      --header-height: ${headerHeight};
+      --bottom-nav-height: ${bottomNavHeight};
+    }
+  `;
 
+  // Update the effect that manages auth redirect
   useEffect(() => {
     if (pathname === "/auth") {
       openAuthOverlay();
@@ -363,7 +278,7 @@ function MainLayoutContent() {
     }
   }, [pathname, openAuthOverlay]);
 
-  // Check if current page is electronics (has filter functionality)
+  // Check if current page is electronics
   const isElectronicsPage = pathname === '/categories/electronics';
 
   // Redirect to include default filter if missing
@@ -381,11 +296,11 @@ function MainLayoutContent() {
 
   // Define custom tabs for messages page
   const messagesTabs = isMessagesListPage ? [
-  { id: 'all', name: 'All', path: '/messages?filter=all' },
-  { id: 'unread', name: 'Unread', path: '/messages?filter=unread' },
-  { id: 'groups', name: 'Groups', path: '/messages?filter=groups' },
-  { id: 'archived', name: 'Archived', path: '/messages?filter=archived' }
-] : undefined;
+    { id: 'all', name: 'All', path: '/messages?filter=all' },
+    { id: 'unread', name: 'Unread', path: '/messages?filter=unread' },
+    { id: 'groups', name: 'Groups', path: '/messages?filter=groups' },
+    { id: 'archived', name: 'Archived', path: '/messages?filter=archived' }
+  ] : undefined;
 
   // Define custom tabs for wallet page
   const walletTabs = isWalletPage ? [
@@ -412,11 +327,11 @@ function MainLayoutContent() {
 
       {/* Show AliExpressHeader for category pages - wrapped for measurement */}
       {shouldShowHeader && (
-        <div ref={headerRef}>
+        <div ref={headerRef} className="fixed top-0 left-0 right-0 z-40">
           <AliExpressHeader
             activeTabId={isMessagesListPage ? messagesFilter : isWalletPage ? walletFilter : isExplorePage ? exploreFilter : activeTab}
             showFilterBar={showFilterBar}
-            showCategoryTabs={!isProductsPage && !pathname.startsWith('/categories')} // Hide tabs for categories routes
+            showCategoryTabs={!isProductsPage && !pathname.startsWith('/categories')}
             filterCategories={filterCategories}
             selectedFilters={selectedFilters}
             onFilterSelect={onFilterSelect}
@@ -467,9 +382,7 @@ function MainLayoutContent() {
             sectionHeaderShowCountdown={searchParams.get('showCountdown') === 'true'}
             sectionHeaderCountdown={searchParams.get('countdown') || undefined}
             sectionHeaderShowSponsorCount={searchParams.get('showSponsorCount') === 'true'}
-            // Pass mapped icon component
             {...(sectionHeaderIcon && { sectionHeaderIcon })}
-            // FIXED: Only show View All when no other right-side elements are present
             sectionHeaderViewAllLink={
               (searchParams.get('showProfiles') !== 'true' &&
                searchParams.get('showVerifiedSellers') !== 'true' &&
@@ -482,17 +395,16 @@ function MainLayoutContent() {
         </div>
       )}
 
-      <main className="flex-grow relative">
-        {/* Add page-content class to ensure proper stacking */}
-        <div className="page-content h-full">
+      {/* Main content area with dynamic padding */}
+      <div className="main-content-container flex-grow relative">
+        <div className="outlet-content">
           <Outlet />
         </div>
-      </main>
+      </div>
 
       {/* Show IndexBottomNav only on specific paths defined in the component */}
-      {/* Don't show IndexBottomNav when reels is opened in modal mode (with video parameter) */}
       {shouldShowBottomNav && (
-        <div ref={bottomNavRef} className="z-30">
+        <div ref={bottomNavRef} className="fixed bottom-0 left-0 right-0 z-50">
           <IndexBottomNav />
         </div>
       )}
