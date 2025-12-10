@@ -381,11 +381,11 @@ function MainLayoutContent() {
 
   // Define custom tabs for messages page
   const messagesTabs = isMessagesListPage ? [
-    { id: 'all', name: 'All', path: '/messages?filter=all' },
-    { id: 'unread', name: 'Unread', path: '/messages?filter=unread' },
-    { id: 'blocked', name: 'Blocked', path: '/messages?filter=blocked' },
-    { id: 'archived', name: 'Archived', path: '/messages?filter=archived' }
-  ] : undefined;
+  { id: 'all', name: 'All', path: '/messages?filter=all' },
+  { id: 'unread', name: 'Unread', path: '/messages?filter=unread' },
+  { id: 'groups', name: 'Groups', path: '/messages?filter=groups' },
+  { id: 'archived', name: 'Archived', path: '/messages?filter=archived' }
+] : undefined;
 
   // Define custom tabs for wallet page
   const walletTabs = isWalletPage ? [
