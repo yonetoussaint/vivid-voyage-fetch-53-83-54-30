@@ -1,544 +1,348 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
-import IndexBottomNav from "@/components/layout/IndexBottomNav";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
-import AliExpressHeader from "@/components/home/AliExpressHeader";
-import { Home, Smartphone, Shirt, Baby, Dumbbell, Sparkles, Car, Book, Trophy, Tag, ShieldCheck, Zap, Star, Crown, Award } from "lucide-react";
-import { useScreenOverlay } from "@/context/ScreenOverlayContext";
-import ProductUploadOverlay from "@/components/product/ProductUploadOverlay";
-import LocationScreen from "@/components/home/header/LocationScreen";
-import LocationListScreen from "@/components/home/header/LocationListScreen";
-import AuthOverlay from "@/components/auth/AuthOverlay";
-import { useAuth } from "@/contexts/auth/AuthContext";
-import { useTranslation } from 'react-i18next';
-import { HeaderFilterProvider, useHeaderFilter } from "@/contexts/HeaderFilterContext";
+import { useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Edit, Pin, VolumeX, Check, CheckCheck, Camera, Mic, BadgeCheck, Phone, Video, Archive, Trash2, Star, Clock, Users, Loader2 } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { useConversations } from '@/hooks/useConversations';
+import { formatDistanceToNow } from 'date-fns';
+import { UserSelectionDialog } from '@/components/messages/UserSelectionDialog';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { useAuthOverlay } from '@/context/AuthOverlayContext';
 
-// Add this import for useAuthOverlay
-import { useAuthOverlay } from "@/context/AuthOverlayContext";
-
-// Create a wrapper component that uses the hook
-function MainLayoutContent() {
-  const isMobile = useIsMobile();
-  const location = useLocation();
+export default function Messages() {
   const navigate = useNavigate();
-  const pathname = location.pathname;
-  const isProductPage = pathname.includes('/product/');
-  const isRootHomePage = pathname === "/" || pathname === "/for-you";
-  const isForYouPage = pathname === "/" || pathname === "/for-you";
-  const isMultiStepTransferPage = pathname === "/multi-step-transfer";
-  const isMultiStepTransferSheetPage = pathname === "/multi-step-transfer-page";
-  const isTransferOldPage = pathname === "/transfer-old";
-  const { toast } = useToast();
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showProductUpload, setShowProductUpload] = useState(false);
-  const [activeTab, setActiveTab] = useState('recommendations');
-  const headerRef = useRef<HTMLDivElement>(null);
-  const bottomNavRef = useRef<HTMLDivElement>(null);
-  const [actualHeaderHeight, setActualHeaderHeight] = useState<string>('0px');
-  const [actualBottomNavHeight, setActualBottomNavHeight] = useState<string>('0px');
+  const [searchParams] = useSearchParams();
+  const activeTab = (searchParams.get('filter') || 'all') as 'all' | 'unread' | 'groups' | 'archived';
+  const [showUserSelection, setShowUserSelection] = useState(false);
+  const [swipedItem, setSwipedItem] = useState<string | null>(null);
+  const { user, isLoading } = useAuth();
+  const { openAuthOverlay } = useAuthOverlay();
 
-  // Now useAuthOverlay is defined
-  const { openAuthOverlay, isAuthOverlayOpen, setIsAuthOverlayOpen } = useAuthOverlay();
-  const { user } = useAuth();
-  const { isLocationListScreenOpen, locationListScreenData, setLocationListScreenOpen, isLocationScreenOpen, setLocationScreenOpen } = useScreenOverlay();
-  const { t } = useTranslation();
-  const {
-    showFilterBar,
-    filterCategories,
-    selectedFilters,
-    onFilterSelect,
-    onFilterClear,
-    onClearAll,
-    onFilterButtonClick,
-    isFilterDisabled
-  } = useHeaderFilter();
+  const currentUserId = user?.id || '';
 
-  // Define categories once at layout level
-  const categories = useMemo(() => [
-    { id: 'recommendations', name: t('forYou', { ns: 'home' }), path: '/for-you' },
-    { id: 'electronics', name: t('electronics', { ns: 'categories' }), path: '/categories/electronics' },
-    { id: 'home', name: t('homeLiving', { ns: 'categories' }), path: '/categories/home-living' },
-    { id: 'fashion', name: t('fashion', { ns: 'categories' }), path: '/categories/fashion' },
-    { id: 'entertainment', name: t('entertainment', { ns: 'categories' }), path: '/categories/entertainment' },
-    { id: 'kids', name: t('kidsHobbies', { ns: 'categories' }), path: '/categories/kids-hobbies' },
-    { id: 'sports', name: t('sports', { ns: 'categories' }), path: '/categories/sports-outdoors' },
-    { id: 'automotive', name: t('automotive', { ns: 'categories' }), path: '/categories/automotive' },
-    { id: 'women', name: t('women', { ns: 'categories' }), path: '/categories/women' },
-    { id: 'men', name: t('men', { ns: 'categories' }), path: '/categories/men' },
-    { id: 'books', name: t('books', { ns: 'categories' }), path: '/categories/books' },
-  ], [t]);
+  const { conversations, loading } = useConversations(currentUserId, activeTab);
 
-  // Update active tab based on location
-  useEffect(() => {
-    const currentCategory = categories.find(cat => location.pathname === cat.path);
-    if (currentCategory) {
-      setActiveTab(currentCategory.id);
-    } else if (location.pathname === '/' || location.pathname === '/for-you') {
-      setActiveTab('recommendations');
-    }
-  }, [location.pathname, categories]);
+  // Map API data to match the UI structure
+  const mappedConversations = conversations.map(conv => ({
+    id: conv.id,
+    name: conv.other_user.full_name,
+    preview: conv.last_message?.content || 'Start a conversation',
+    date: formatDistanceToNow(new Date(conv.last_message?.created_at || conv.updated_at), { addSuffix: false }),
+    time: formatDistanceToNow(new Date(conv.last_message?.created_at || conv.updated_at), { addSuffix: true }),
+    avatar: `bg-${['gray-300', 'orange-300', 'lime-300', 'green-300', 'blue-300', 'red-100'][Math.floor(Math.random() * 6)]}`,
+    unreadCount: conv.unread_count || 0,
+    isOnline: Math.random() > 0.5,
+    isPinned: Math.random() > 0.7,
+    isMuted: Math.random() > 0.8,
+    isRead: conv.unread_count === 0,
+    messageType: 'text',
+    deliveryStatus: conv.last_message?.sent_by === currentUserId ? (Math.random() > 0.5 ? 'read' : 'delivered') : null,
+    sentByYou: conv.last_message?.sent_by === currentUserId,
+    isTyping: false,
+    isVerified: Math.random() > 0.7,
+    isGroup: false,
+    hasStory: Math.random() > 0.5,
+    lastSeen: Math.random() > 0.5 ? 'online' : `${Math.floor(Math.random() * 60)}m ago`,
+    reactions: Math.random() > 0.8 ? '❤️' : null,
+    hasDraft: false,
+    isStarred: Math.random() > 0.8,
+    hasScheduled: Math.random() > 0.9,
+    isArchived: false
+  }));
 
-  const toggleFavorite = () => {
-    setIsFavorite(!isFavorite);
-    toast({
-      title: !isFavorite ? "Added to Wishlist" : "Removed from Wishlist",
-      description: !isFavorite ? "This item has been added to your wishlist" : "This item has been removed from your wishlist",
-    });
+  const handleSwipe = (id: string, action: 'archive' | 'delete') => {
+    console.log(`${action} conversation ${id}`);
+    setSwipedItem(null);
+    // TODO: Implement archive/delete functionality
   };
 
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: 'Check out this product',
-        text: 'I found this amazing product I thought you might like!',
-        url: window.location.href,
-      }).catch(() => {
-        toast({
-          title: "Sharing Failed",
-          description: "There was an error sharing this content.",
-        });
-      });
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      toast({
-        title: "Link Copied",
-        description: "Product link copied to clipboard!",
-      });
+  const getMessageIcon = (type: string) => {
+    switch(type) {
+      case 'image':
+        return <Camera size={14} className="text-gray-500" />;
+      case 'voice':
+        return <Mic size={14} className="text-gray-500" />;
+      default:
+        return null;
     }
   };
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast({
-      title: "Search submitted",
-      description: `Searching for: ${searchQuery}`,
-    });
+  const getDeliveryIcon = (status: string) => {
+    switch(status) {
+      case 'sent':
+        return <Check size={14} className="text-gray-400" />;
+      case 'delivered':
+        return <CheckCheck size={14} className="text-gray-400" />;
+      case 'read':
+        return <CheckCheck size={14} className="text-blue-500" />;
+      default:
+        return null;
+    }
   };
 
-  // Check if current page is messages, wallet, explore, or products
-  const isMessagesPage = pathname === '/messages' || pathname.startsWith('/messages/');
-  const isMessagesListPage = pathname === '/messages';
-  const isWalletPage = pathname === '/wallet';
-  const isExplorePage = pathname === '/explore';
-  const isProductsPage = pathname === '/products';
-
-  // Get title from URL params for products page
-  const productsTitle = isProductsPage ? new URLSearchParams(location.search).get('title') || 'Products' : '';
-
-  // Icon mapper to convert string names to components
-  const iconMapper: Record<string, React.ComponentType<{ className?: string }>> = {
-    Trophy,
-    Tag,
-    ShieldCheck,
-    Zap,
-    Star,
-    Crown,
-    Award,
-    Home,
-    Smartphone,
-    Shirt,
-    Baby,
-    Dumbbell,
-    Sparkles,
-    Car,
-    Book
+  const filterConversations = () => {
+    switch(activeTab) {
+      case 'unread':
+        return mappedConversations.filter(c => c.unreadCount > 0 || !c.isRead);
+      case 'groups':
+        return mappedConversations.filter(c => c.isGroup);
+      case 'archived':
+        return mappedConversations.filter(c => c.isArchived);
+      default:
+        return mappedConversations.filter(c => !c.isArchived);
+    }
   };
 
-  // Get filter from URL params for messages, wallet, and explore
-  const searchParams = new URLSearchParams(location.search);
-  const messagesFilter = searchParams.get('filter') || 'all';
-  const walletFilter = searchParams.get('tab') || 'buyer';
-  const exploreFilter = searchParams.get('tab') || 'products';
-
-  // Determine if we should show the header
-  const shouldShowHeader = [
-    '/',
-    '/for-you',
-    '/messages',
-    '/wallet',
-    '/explore',
-    '/wishlist',
-    '/cart',
-    '/notifications',
-    '/addresses',
-    '/help',
-    '/products',
-    '/categories',  // Main categories page
-    '/categories/electronics',
-    '/categories/home-living',
-    '/categories/fashion',
-    '/categories/entertainment',
-    '/categories/kids-hobbies',
-    '/categories/sports-outdoors',
-    '/categories/automotive',
-    '/categories/women',
-    '/categories/men',
-    '/categories/books'
-  ].includes(pathname);
-
-  // Check if current page is reels
-  const isReelsPage = pathname === '/reels' && !location.search.includes('video=');
-
-  // Determine if we should show the bottom nav
-  const shouldShowBottomNav = isMobile && (
-    pathname === '/for-you' ||
-    pathname === '/' ||
-    pathname === '/categories' ||
-    (pathname === '/reels' && !location.search.includes('video=')) ||
-    pathname === '/posts' ||
-    pathname === '/messages' ||
-    pathname === '/more-menu' ||
-    pathname === '/profile' ||
-    pathname.startsWith('/profile/') ||
-    pathname === '/videos' ||
-    pathname === '/notifications' ||
-    pathname === '/bookmarks' ||
-    pathname === '/friends' ||
-    pathname === '/shopping' ||
-    pathname === '/settings' ||
-    pathname === '/wallet' ||
-    pathname === '/explore' ||
-    pathname === '/wishlist' ||
-    pathname === '/cart' ||
-    pathname === '/addresses' ||
-    pathname === '/help' ||
-    pathname === '/my-stations' ||
-    pathname === '/products' ||
-    pathname === '/categories/electronics' ||
-    pathname === '/categories/home-living' ||
-    pathname === '/categories/fashion' ||
-    pathname === '/categories/entertainment' ||
-    pathname === '/categories/kids-hobbies' ||
-    pathname === '/categories/sports-outdoors' ||
-    pathname === '/categories/automotive' ||
-    pathname === '/categories/women' ||
-    pathname === '/categories/men' ||
-    pathname === '/categories/books' ||
-    pathname.startsWith('/pickup-station') ||
-    (pathname.startsWith('/seller-dashboard') && !pathname.includes('/edit-profile') && !pathname.includes('/onboarding'))
-  ) && !isMultiStepTransferPage && !isMultiStepTransferSheetPage && !isTransferOldPage;
-
-  // Use shouldShowHeader for spacing (simpler and consistent)
-  const shouldApplySpacing = shouldShowHeader;
-
-  // Measure actual header height dynamically
-  useEffect(() => {
-    const updateHeaderHeight = () => {
-      if (shouldShowHeader && headerRef.current) {
-        // Find the actual header element within the wrapper
-        const headerElement = headerRef.current.querySelector('header, [data-header]');
-        if (headerElement) {
-          const height = headerElement.getBoundingClientRect().height;
-          setActualHeaderHeight(`${height}px`);
-          console.log('Dynamic header height:', height, 'px');
-        }
-      } else {
-        setActualHeaderHeight('0px');
-      }
-    };
-
-    // Initial measurement after a small delay to ensure DOM is rendered
-    const timer = setTimeout(updateHeaderHeight, 100);
-
-    // Re-measure on resize
-    window.addEventListener('resize', updateHeaderHeight);
-
-    // Use MutationObserver to detect header content changes
-    const observer = new MutationObserver(updateHeaderHeight);
-    if (headerRef.current) {
-      observer.observe(headerRef.current, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        characterData: true
-      });
-    }
-
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('resize', updateHeaderHeight);
-      observer.disconnect();
-    };
-  }, [shouldShowHeader, pathname, activeTab]); // Re-run when route or active tab changes
-
-  // Measure actual bottom nav height dynamically
-  useEffect(() => {
-    const updateBottomNavHeight = () => {
-      if (shouldShowBottomNav && bottomNavRef.current) {
-        // Find the actual bottom nav element within the wrapper
-        const bottomNavElement = bottomNavRef.current.querySelector('nav, [data-bottom-nav]');
-        if (bottomNavElement) {
-          const height = bottomNavElement.getBoundingClientRect().height;
-          setActualBottomNavHeight(`${height}px`);
-          console.log('Dynamic bottom nav height:', height, 'px');
-        }
-      } else {
-        setActualBottomNavHeight('0px');
-      }
-    };
-
-    // Initial measurement after a small delay to ensure DOM is rendered
-    const timer = setTimeout(updateBottomNavHeight, 100);
-
-    // Re-measure on resize
-    window.addEventListener('resize', updateBottomNavHeight);
-
-    // Use MutationObserver to detect bottom nav content changes
-    const observer = new MutationObserver(updateBottomNavHeight);
-    if (bottomNavRef.current) {
-      observer.observe(bottomNavRef.current, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        characterData: true
-      });
-    }
-
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('resize', updateBottomNavHeight);
-      observer.disconnect();
-    };
-  }, [shouldShowBottomNav, pathname]); // Re-run when route changes
-
-  // Calculate header and bottom nav heights for CSS variables
-  const headerHeight = actualHeaderHeight;
-  const bottomNavHeight = actualBottomNavHeight;
-
-  // Check if current page is conversation detail
-  const isConversationDetailPage = pathname.startsWith('/messages/') && pathname !== '/messages';
-
-  // Get icon from URL and map to component
-  const iconName = searchParams.get('icon');
-  const sectionHeaderIcon = iconName ? iconMapper[iconName] : undefined;
-
-  // Check if current page is seller onboarding (should not show bottom nav)
-  const isSellerOnboardingPage = pathname.includes('/seller-dashboard/onboarding');
-
-  // Check if current page is categories page (main categories page)
-  const isCategoriesPage = pathname === '/categories';
-
-  // CSS with dynamic header and bottom nav heights
-  const layoutHeightStyle = `
-  :root {
-    --header-height: ${headerHeight};
-    --bottom-nav-height: ${bottomNavHeight};
+  if (isLoading) {
+    return (
+      <div className="bg-gray-50 min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      </div>
+    );
   }
 
-  /* Ensure main content respects the header and bottom nav */
-  main {
-    padding-top: var(--header-height);
-    padding-bottom: var(--bottom-nav-height);
-    min-height: calc(100vh - var(--header-height) - var(--bottom-nav-height));
-    box-sizing: border-box;
+  if (!user) {
+    return (
+      <div className="bg-gray-50 min-h-screen flex items-center justify-center">
+        <div className="text-center px-4">
+          <div className="w-16 h-16 mx-auto bg-gradient-to-br from-red-600 to-red-500 rounded-full flex items-center justify-center mb-4">
+            <Edit className="h-8 w-8 text-white" />
+          </div>
+          <p className="text-gray-500 mb-4">Please log in to view your messages</p>
+          <button
+            onClick={() => openAuthOverlay()}
+            className="px-6 py-2 bg-gradient-to-br from-red-600 to-red-500 text-white rounded-lg hover:from-red-700 hover:to-red-600 transition-all"
+          >
+            Log In
+          </button>
+        </div>
+      </div>
+    );
   }
-
-  /* Ensure content doesn't get hidden behind fixed elements */
-  .page-content {
-    position: relative;
-    z-index: 1;
-  }
-
-  /* Remove padding for conversation detail page */
-  ${isConversationDetailPage ? `
-  main {
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-  }
-  ` : ''}
-
-  /* Force update of CSS variables */
-  * {
-    transition: none !important;
-  }
-`;
-
-  useEffect(() => {
-    if (pathname === "/auth") {
-      openAuthOverlay();
-      window.history.replaceState({}, "", "/");
-    }
-  }, [pathname, openAuthOverlay]);
-
-  // Check if current page is electronics (has filter functionality)
-  const isElectronicsPage = pathname === '/categories/electronics';
-
-  // Redirect to include default filter if missing
-  useEffect(() => {
-    if (isMessagesPage && pathname === '/messages' && !searchParams.get('filter')) {
-      navigate('/messages?filter=all', { replace: true });
-    }
-    if (isWalletPage && !searchParams.get('tab')) {
-      navigate('/wallet?tab=buyer', { replace: true });
-    }
-    if (isExplorePage && !searchParams.get('tab')) {
-      navigate('/explore?tab=products', { replace: true });
-    }
-  }, [isMessagesPage, isWalletPage, isExplorePage, searchParams, navigate, pathname]);
-
-  // Define custom tabs for messages page
-  const messagesTabs = isMessagesListPage ? [
-  { id: 'all', name: 'All', path: '/messages?filter=all' },
-  { id: 'unread', name: 'Unread', path: '/messages?filter=unread' },
-  { id: 'groups', name: 'Groups', path: '/messages?filter=groups' },
-  { id: 'archived', name: 'Archived', path: '/messages?filter=archived' }
-] : undefined;
-
-  // Define custom tabs for wallet page
-  const walletTabs = isWalletPage ? [
-    { id: 'buyer', name: 'Buyer', path: '/wallet?tab=buyer' },
-    { id: 'seller', name: 'Seller', path: '/wallet?tab=seller' },
-    { id: 'transactions', name: 'Transactions', path: '/wallet?tab=transactions' },
-    { id: 'payouts', name: 'Payouts', path: '/wallet?tab=payouts' },
-    { id: 'payment-methods', name: 'Payment Methods', path: '/wallet?tab=payment-methods' },
-    { id: 'rewards', name: 'Rewards', path: '/wallet?tab=rewards' },
-  ] : undefined;
-
-  // Define custom tabs for explore page
-  const exploreTabs = isExplorePage ? [
-    { id: 'products', name: 'Products', path: '/explore?tab=products' },
-    { id: 'reels', name: 'Reels', path: '/explore?tab=reels' },
-    { id: 'posts', name: 'Posts', path: '/explore?tab=posts' },
-    { id: 'sellers', name: 'Sellers', path: '/explore?tab=sellers' },
-    { id: 'stations', name: 'Stations', path: '/explore?tab=stations' },
-  ] : undefined;
 
   return (
-    <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
-      <style dangerouslySetInnerHTML={{ __html: layoutHeightStyle }} />
+    <div className="bg-gray-50 min-h-screen text-gray-900 font-sans">
+      <style>{`
+        @keyframes typing {
+          0%, 60%, 100% {
+            opacity: 0.3;
+          }
+          30% {
+            opacity: 1;
+          }
+        }
+        .dot-1 {
+          animation: typing 1.4s infinite;
+          animation-delay: 0s;
+        }
+        .dot-2 {
+          animation: typing 1.4s infinite;
+          animation-delay: 0.2s;
+        }
+        .dot-3 {
+          animation: typing 1.4s infinite;
+          animation-delay: 0.4s;
+        }
+      `}</style>
+      
+      <div className="max-w-2xl mx-auto">
+        {/* Conversations list */}
+        <div className="bg-white">
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+            </div>
+          ) : filterConversations().length === 0 ? (
+            <div className="px-4 py-16 text-center">
+              <div className="w-16 h-16 mx-auto bg-gradient-to-br from-red-600 to-red-500 rounded-full flex items-center justify-center mb-4">
+                <Edit className="h-8 w-8 text-white" />
+              </div>
+              <p className="text-gray-500">
+                {activeTab === 'all' && 'No messages yet'}
+                {activeTab === 'unread' && 'No unread messages'}
+                {activeTab === 'groups' && 'No group conversations'}
+                {activeTab === 'archived' && 'No archived conversations'}
+              </p>
+            </div>
+          ) : (
+            filterConversations().map((conv) => (
+              <div
+                key={conv.id}
+                className={`relative overflow-hidden ${
+                  conv.isPinned ? 'bg-gray-50' : ''
+                }`}
+              >
+                {/* Swipe action buttons */}
+                {swipedItem === conv.id && (
+                  <div className="absolute right-0 top-0 bottom-0 flex items-center">
+                    <button
+                      onClick={() => handleSwipe(conv.id, 'archive')}
+                      className="px-6 h-full bg-yellow-500 text-white flex items-center justify-center"
+                    >
+                      <Archive size={20} />
+                    </button>
+                    <button
+                      onClick={() => handleSwipe(conv.id, 'delete')}
+                      className="px-6 h-full bg-red-600 text-white flex items-center justify-center"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                  </div>
+                )}
 
-      {/* Show AliExpressHeader for category pages - wrapped for measurement */}
-      {shouldShowHeader && (
-        <div ref={headerRef}>
-          <AliExpressHeader
-            activeTabId={isMessagesListPage ? messagesFilter : isWalletPage ? walletFilter : isExplorePage ? exploreFilter : activeTab}
-            showFilterBar={showFilterBar}
-            showCategoryTabs={!isProductsPage && !pathname.startsWith('/categories')} // Hide tabs for categories routes
-            filterCategories={filterCategories}
-            selectedFilters={selectedFilters}
-            onFilterSelect={onFilterSelect}
-            onFilterClear={onFilterClear}
-            onClearAll={onClearAll}
-            onFilterButtonClick={onFilterButtonClick}
-            isFilterDisabled={isFilterDisabled}
-            customTabs={messagesTabs || walletTabs || exploreTabs}
-            onCustomTabChange={isMessagesListPage ? (tabId) => {
-              const tab = messagesTabs?.find(t => t.id === tabId);
-              if (tab?.path) {
-                navigate(tab.path);
-              }
-            } : isWalletPage ? (tabId) => {
-              const tab = walletTabs?.find(t => t.id === tabId);
-              if (tab?.path) {
-                navigate(tab.path);
-              }
-            } : isExplorePage ? (tabId) => {
-              const tab = exploreTabs?.find(t => t.id === tabId);
-              if (tab?.path) {
-                navigate(tab.path);
-              }
-            } : undefined}
-            showSectionHeader={isProductsPage}
-            sectionHeaderTitle={productsTitle}
-            sectionHeaderShowStackedProfiles={searchParams.get('showProfiles') === 'true'}
-            sectionHeaderShowVerifiedSellers={searchParams.get('showVerifiedSellers') === 'true'}
-            sectionHeaderVerifiedSellersText={searchParams.get('verifiedSellersText') || 'Verified Sellers'}
-            sectionHeaderStackedProfiles={searchParams.get('showProfiles') === 'true' ? [
-              {
-                id: '1',
-                image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
-                alt: 'Sarah Johnson'
-              },
-              {
-                id: '2',
-                image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-                alt: 'Mike Chen'
-              },
-              {
-                id: '3',
-                image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-                alt: 'Emma Davis'
-              }
-            ] : []}
-            sectionHeaderStackedProfilesText={searchParams.get('profilesText') || 'Handpicked by'}
-            sectionHeaderShowCountdown={searchParams.get('showCountdown') === 'true'}
-            sectionHeaderCountdown={searchParams.get('countdown') || undefined}
-            sectionHeaderShowSponsorCount={searchParams.get('showSponsorCount') === 'true'}
-            // Pass mapped icon component
-            {...(sectionHeaderIcon && { sectionHeaderIcon })}
-            // FIXED: Only show View All when no other right-side elements are present
-            sectionHeaderViewAllLink={
-              (searchParams.get('showProfiles') !== 'true' &&
-               searchParams.get('showVerifiedSellers') !== 'true' &&
-               searchParams.get('showCountdown') !== 'true')
-                ? "/vendors"
-                : undefined
-            }
-            sectionHeaderViewAllText="View All"
-          />
+                <div
+                  className="flex items-center px-3 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                  onTouchStart={(e) => {
+                    const startX = e.touches[0].clientX;
+                    const handleTouchMove = (e: TouchEvent) => {
+                      const currentX = e.touches[0].clientX;
+                      if (startX - currentX > 50) {
+                        setSwipedItem(conv.id);
+                      }
+                    };
+                    document.addEventListener('touchmove', handleTouchMove);
+                    document.addEventListener('touchend', () => {
+                      document.removeEventListener('touchmove', handleTouchMove);
+                    }, { once: true });
+                  }}
+                  onClick={() => {
+                    setSwipedItem(null);
+                    if (!conv.id.startsWith('blocked-')) {
+                      navigate(`/messages/${conv.id}`);
+                    }
+                  }}
+                >
+                  {/* Avatar with story ring and online status */}
+                  <div className="relative flex-shrink-0 mr-3">
+                    {conv.hasStory && (
+                      <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-pink-500 p-0.5 -m-0.5">
+                        <div className="w-full h-full bg-white rounded-full p-0.5"></div>
+                      </div>
+                    )}
+                    <div className={`w-12 h-12 rounded-full ${conv.avatar} relative z-10 flex items-center justify-center`}>
+                      {conv.isGroup ? (
+                        <Users size={20} className="text-white" />
+                      ) : (
+                        <Avatar className="w-full h-full">
+                          <AvatarImage src="" />
+                          <AvatarFallback className="bg-black text-white">
+                            {conv.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                    </div>
+                    {conv.isOnline && !conv.isGroup && (
+                      <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full z-20"></div>
+                    )}
+                  </div>
+                  
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                        <h3 className={`text-base truncate ${conv.isRead ? 'font-normal text-gray-900' : 'font-bold text-gray-900'}`}>
+                          {conv.name}
+                        </h3>
+                        {conv.isVerified && <BadgeCheck size={16} className="text-blue-500 fill-current flex-shrink-0" />}
+                        {conv.isStarred && <Star size={14} className="text-yellow-500 fill-yellow-500 flex-shrink-0" />}
+                        {conv.isPinned && <Pin size={14} className="text-gray-400 fill-gray-400 flex-shrink-0" />}
+                        {conv.isMuted && <VolumeX size={14} className="text-gray-400 flex-shrink-0" />}
+                        {conv.hasScheduled && <Clock size={14} className="text-blue-500 flex-shrink-0" />}
+                      </div>
+                      <span className={`text-xs ml-2 flex-shrink-0 ${conv.isRead ? 'text-gray-400' : 'text-red-500 font-semibold'}`}>
+                        {conv.time}
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1 min-w-0 flex-1">
+                        {conv.isTyping ? (
+                          <div className="flex items-center gap-1">
+                            <span className="text-green-500 text-sm">typing</span>
+                            <div className="flex gap-0.5 ml-1">
+                              <div className="w-1.5 h-1.5 bg-green-500 rounded-full dot-1"></div>
+                              <div className="w-1.5 h-1.5 bg-green-500 rounded-full dot-2"></div>
+                              <div className="w-1.5 h-1.5 bg-green-500 rounded-full dot-3"></div>
+                            </div>
+                          </div>
+                        ) : conv.hasDraft ? (
+                          <p className="text-sm truncate">
+                            <span className="text-red-500 font-semibold">Draft: </span>
+                            <span className="text-gray-500">{conv.preview}</span>
+                          </p>
+                        ) : (
+                          <>
+                            {conv.sentByYou && getDeliveryIcon(conv.deliveryStatus)}
+                            {getMessageIcon(conv.messageType)}
+                            <p className={`text-sm truncate ${conv.isRead ? 'text-gray-500' : 'text-gray-900 font-semibold'}`}>
+                              {conv.sentByYou && 'You: '}{conv.preview}
+                            </p>
+                            {conv.reactions && (
+                              <span className="text-sm ml-1 flex-shrink-0">{conv.reactions}</span>
+                            )}
+                          </>
+                        )}
+                      </div>
+                      
+                      {/* Last seen for individual chats */}
+                      {!conv.isGroup && conv.lastSeen && !conv.isOnline && (
+                        <span className="text-xs text-gray-400 ml-2 flex-shrink-0">{conv.lastSeen}</span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Right side icons */}
+                  <div className="flex flex-col items-end gap-2 ml-3 flex-shrink-0">
+                    {conv.unreadCount > 0 && (
+                      <div className="min-w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold px-1.5">
+                        {conv.unreadCount}
+                      </div>
+                    )}
+                    <div className="flex gap-1">
+                      <button 
+                        className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // TODO: Implement call functionality
+                          console.log('Call', conv.id);
+                        }}
+                      >
+                        <Phone size={16} className="text-gray-600" />
+                      </button>
+                      <button 
+                        className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // TODO: Implement video call functionality
+                          console.log('Video call', conv.id);
+                        }}
+                      >
+                        <Video size={16} className="text-gray-600" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
-      )}
+      </div>
 
-      <main className="flex-grow relative">
-        {/* Add page-content class to ensure proper stacking */}
-        <div className="page-content h-full">
-          <Outlet />
-        </div>
-      </main>
+      {/* Floating action button */}
+      <button
+        className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-br from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 z-50"
+        onClick={() => setShowUserSelection(true)}
+        aria-label="New message"
+        type="button"
+      >
+        <Edit size={24} />
+      </button>
 
-      {/* Show IndexBottomNav only on specific paths defined in the component */}
-      {/* Don't show IndexBottomNav when reels is opened in modal mode (with video parameter) */}
-      {shouldShowBottomNav && (
-        <div ref={bottomNavRef} className="z-30">
-          <IndexBottomNav />
-        </div>
-      )}
-
-      {/* Product Upload Overlay */}
-      <ProductUploadOverlay
-        isOpen={showProductUpload}
-        onClose={() => setShowProductUpload(false)}
-      />
-
-      {/* Location List Screen */}
-      {isLocationListScreenOpen && locationListScreenData && (
-        <LocationListScreen
-          title={locationListScreenData.title}
-          items={locationListScreenData.items}
-          onSelect={(item) => {
-            locationListScreenData.onSelect(item);
-            setLocationListScreenOpen(false);
-          }}
-          onClose={() => setLocationListScreenOpen(false)}
-          searchPlaceholder={locationListScreenData.searchPlaceholder}
-        />
-      )}
-
-      {/* Location Screen */}
-      {isLocationScreenOpen && (
-        <LocationScreen
-          onClose={() => setLocationScreenOpen(false)}
-          showHeader={true}
-        />
-      )}
-
-      {/* Auth Overlay */}
-      <AuthOverlay
-        isOpen={isAuthOverlayOpen}
-        onClose={() => setIsAuthOverlayOpen(false)}
+      {/* User Selection Dialog */}
+      <UserSelectionDialog
+        open={showUserSelection}
+        onOpenChange={setShowUserSelection}
+        currentUserId={currentUserId}
       />
     </div>
-  );
-}
-
-// Main export that wraps with provider
-export default function MainLayout() {
-  return (
-    <HeaderFilterProvider>
-      <MainLayoutContent />
-    </HeaderFilterProvider>
   );
 }
