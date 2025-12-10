@@ -110,17 +110,17 @@ export default function CategoriesPage() {
   const selectedCategoryData = CATEGORIES.find(cat => cat.id === selectedCategory);
 
   return (
-    <div className="bg-gray-50 h-screen flex overflow-hidden overscroll-none">
+    <div className="bg-gray-50 h-screen flex overflow-hidden">
       {/* Left sidebar - Vertical category list */}
-      <div className="w-24 bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto overscroll-none touch-none" onWheel={(e) => e.stopPropagation()}>
-        <div className="py-2 min-h-full">
+      <div className="w-24 bg-white border-r border-gray-200 flex-shrink-0 h-screen">
+        <div className="flex flex-col h-full overflow-y-auto">
           {CATEGORIES.map((category) => {
             const Icon = category.icon;
             return (
-                              <button
+              <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
-                className={`w-full px-1.5 py-2 flex flex-col items-center text-center cursor-pointer transition-colors relative ${
+                className={`flex-1 min-h-[60px] w-full px-1.5 py-2 flex flex-col items-center justify-center text-center cursor-pointer transition-colors relative ${
                   selectedCategory === category.id ? 'bg-gray-50' : 'hover:bg-gray-50'
                 }`}
               >
