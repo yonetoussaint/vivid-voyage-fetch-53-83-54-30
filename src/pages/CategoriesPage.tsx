@@ -416,6 +416,173 @@ export default function CategoriesPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Product Suggestions Grid */}
+                <div className="mt-8">
+                  <h2 className="text-base font-semibold text-gray-900 mb-4">You May Also Like</h2>
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* Product 1 */}
+                    <div>
+                      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
+                        <img src="https://images.unsplash.com/photo-1572635196237-14b3f281503f?q=80&w=300&h=300&auto=format&fit=crop" alt="Product" className="w-full h-full object-cover" />
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
+                          <span className="bg-red-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Sale</span>
+                          <span className="bg-orange-100 text-orange-700 px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">SuperDeals</span>
+                          Wireless Bluetooth Headphones Noise Cancel
+                        </p>
+                        <div className="flex items-center gap-1 mb-0.5">
+                          <span className="text-[10px] text-gray-500">234 sold</span>
+                          <span className="text-[10px] text-gray-400">|</span>
+                          <span className="text-[10px] text-gray-700">★ 4.8</span>
+                        </div>
+                        <p className="text-sm font-bold text-gray-900">79523</p>
+                      </div>
+                    </div>
+
+                    {/* Product 2 */}
+                    <div>
+                      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
+                        <img src="https://images.unsplash.com/photo-1583394838336-acd977736f90?q=80&w=300&h=300&auto=format&fit=crop" alt="Product" className="w-full h-full object-cover" />
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
+                          <span className="bg-red-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Sale</span>
+                          Smart Watch Fitness Tracker Heart Rate
+                        </p>
+                        <div className="flex items-center gap-1 mb-0.5">
+                          <span className="text-[10px] text-gray-500">18081 sold</span>
+                          <span className="text-[10px] text-gray-400">|</span>
+                          <span className="text-[10px] text-gray-700">★ 4.7</span>
+                        </div>
+                        <p className="text-sm font-bold text-gray-900">67019</p>
+                        <p className="text-[10px] text-gray-500">Top selling on AliExpress</p>
+                      </div>
+                    </div>
+
+                    {/* Product 3 */}
+                    <div>
+                      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
+                        <img src="https://images.unsplash.com/photo-1585060544812-6b45742d762f?q=80&w=300&h=300&auto=format&fit=crop" alt="Product" className="w-full h-full object-cover" />
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
+                          <span className="bg-red-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Sale</span>
+                          <span className="bg-orange-100 text-orange-700 px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">SuperDeals</span>
+                          Sport Smart Watch Fitness Call
+                        </p>
+                        <div className="flex items-center gap-1 mb-0.5">
+                          <span className="text-[10px] text-gray-500">1361 sold</span>
+                          <span className="text-[10px] text-gray-400">|</span>
+                          <span className="text-[10px] text-gray-700">★ 4.6</span>
+                        </div>
+                        <p className="text-sm font-bold text-gray-900">105730</p>
+                        <p className="text-[10px] text-orange-600">Premium Quality</p>
+                      </div>
+                    </div>
+
+                    {/* Product 4 */}
+                    <div>
+                      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
+                        <img src="https://images.unsplash.com/photo-1625948515291-69613efd103f?q=80&w=300&h=300&auto=format&fit=crop" alt="Product" className="w-full h-full object-cover" />
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
+                          <span className="bg-blue-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Brand+</span>
+                          <span className="bg-red-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Sale</span>
+                          30 36 Inch Curly Highlight Wig Human
+                        </p>
+                        <div className="flex items-center gap-1 mb-0.5">
+                          <span className="text-[10px] text-gray-500">637 sold</span>
+                          <span className="text-[10px] text-gray-400">|</span>
+                          <span className="text-[10px] text-gray-700">★ 4.7</span>
+                        </div>
+                        <p className="text-sm font-bold text-gray-900">741510</p>
+                        <p className="text-[10px] text-gray-500">Top selling on AliExpress</p>
+                      </div>
+                    </div>
+
+                    {/* Product 5 */}
+                    <div>
+                      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
+                        <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=300&h=300&auto=format&fit=crop" alt="Product" className="w-full h-full object-cover" />
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
+                          <span className="bg-red-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Sale</span>
+                          Premium Wireless Speaker Deep Bass
+                        </p>
+                        <div className="flex items-center gap-1 mb-0.5">
+                          <span className="text-[10px] text-gray-500">432 sold</span>
+                          <span className="text-[10px] text-gray-400">|</span>
+                          <span className="text-[10px] text-gray-700">★ 4.8</span>
+                        </div>
+                        <p className="text-sm font-bold text-gray-900">89990</p>
+                      </div>
+                    </div>
+
+                    {/* Product 6 */}
+                    <div>
+                      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
+                        <img src="https://images.unsplash.com/photo-1600003014755-ba31aa59c4b6?q=80&w=300&h=300&auto=format&fit=crop" alt="Product" className="w-full h-full object-cover" />
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
+                          <span className="bg-blue-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Certified Original</span>
+                          HD Webcam 1080P Built-in Microphone
+                        </p>
+                        <div className="flex items-center gap-1 mb-0.5">
+                          <span className="text-[10px] text-gray-500">789 sold</span>
+                          <span className="text-[10px] text-gray-400">|</span>
+                          <span className="text-[10px] text-gray-700">★ 5.0</span>
+                        </div>
+                        <p className="text-sm font-bold text-gray-900">49990</p>
+                        <p className="text-[10px] text-orange-600">Premium Quality</p>
+                      </div>
+                    </div>
+
+                    {/* Product 7 */}
+                    <div>
+                      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
+                        <img src="https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?q=80&w=300&h=300&auto=format&fit=crop" alt="Product" className="w-full h-full object-cover" />
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
+                          <span className="bg-red-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Sale</span>
+                          <span className="bg-orange-100 text-orange-700 px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">250%</span>
+                          Mechanical Gaming Keyboard RGB
+                        </p>
+                        <div className="flex items-center gap-1 mb-0.5">
+                          <span className="text-[10px] text-gray-500">38 sold</span>
+                          <span className="text-[10px] text-gray-400">|</span>
+                          <span className="text-[10px] text-gray-700">★ 4.8</span>
+                        </div>
+                        <p className="text-sm font-bold text-gray-900">767523</p>
+                        <p className="text-[10px] text-orange-600">Premium Quality</p>
+                      </div>
+                    </div>
+
+                    {/* Product 8 */}
+                    <div>
+                      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
+                        <img src="https://images.unsplash.com/photo-1586864387634-97201e228378?q=80&w=300&h=300&auto=format&fit=crop" alt="Product" className="w-full h-full object-cover" />
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
+                          <span className="bg-blue-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Brand+</span>
+                          Ergonomic Wireless Mouse Rechargeable
+                        </p>
+                        <div className="flex items-center gap-1 mb-0.5">
+                          <span className="text-[10px] text-gray-500">923 sold</span>
+                          <span className="text-[10px] text-gray-400">|</span>
+                          <span className="text-[10px] text-gray-700">★ 4.7</span>
+                        </div>
+                        <p className="text-sm font-bold text-gray-900">24990</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </>
             )}
           </div>
