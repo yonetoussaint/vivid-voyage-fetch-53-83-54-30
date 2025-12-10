@@ -109,27 +109,14 @@ export default function CategoriesPage() {
 
   const selectedCategoryData = CATEGORIES.find(cat => cat.id === selectedCategory);
 
-  // Prevent scroll propagation from sidebar to main container
-  const handleSidebarWheel = (e: React.WheelEvent) => {
-    const sidebar = e.currentTarget as HTMLDivElement;
-    const isAtTop = sidebar.scrollTop === 0;
-    const isAtBottom = sidebar.scrollHeight - sidebar.scrollTop === sidebar.clientHeight;
-    
-    // If we can scroll in the sidebar, prevent the event from bubbling
-    if (!(isAtTop && e.deltaY < 0) && !(isAtBottom && e.deltaY > 0)) {
-      e.stopPropagation();
-    }
-  };
-
   return (
-    <div className="bg-gray-50 h-screen flex overflow-hidden">
+    <div className="bg-gray-50 h-screen flex">
       {/* Left sidebar - Fixed height with independent scrolling */}
       <div 
-        className="w-24 bg-white flex-shrink-0 h-screen flex flex-col overflow-hidden"
+        className="w-24 bg-white flex-shrink-0 h-screen flex flex-col"
       >
         <div 
           className="flex-1 overflow-y-auto py-2"
-          onWheel={handleSidebarWheel}
           style={{ overscrollBehavior: 'contain' }}
         >
           {CATEGORIES.map((category) => {
@@ -154,8 +141,8 @@ export default function CategoriesPage() {
       </div>
 
       {/* Main Content Area - Scrollable independently */}
-      <div className="flex-1 h-screen overflow-hidden flex flex-col">
-        <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 h-screen flex flex-col">
+        <div className="flex-1 overflow-y-auto" style={{ overscrollBehavior: 'contain' }}>
           <div className="p-4">
             {selectedCategoryData?.subCategories.length === 0 ? (
               <div className="flex items-center justify-center h-64">
