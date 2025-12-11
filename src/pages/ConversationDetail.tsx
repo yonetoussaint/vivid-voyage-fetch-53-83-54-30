@@ -1,120 +1,111 @@
-import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, MoreVertical, Archive, Ban, Loader2, Phone, Video, Search, X, Camera, Image as ImageIcon, Mic, ThumbsUp, Plus, Smile, MapPin, DollarSign, Package, Star, Shield, CheckCircle, CreditCard, Truck, Calendar, PhoneCall, MicOff, Volume2, Reply, TrendingDown, Zap, Lock, ArrowDown, Moon, Sun, Pin, PinOff, Copy, Forward, Trash2, Edit3, Clock, Check, CheckCheck, AlertTriangle, Eye, Play, Pause, ChevronDown, ChevronUp, ChevronRight, Heart, Share2, Flag, Bell, BellOff, BadgeCheck, ShieldCheck, Download, LayoutGrid, List, Receipt } from 'lucide-react';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { useMessages } from '@/hooks/useMessages';
-import { supabase } from '@/integrations/supabase/client';
-import { cn } from '@/lib/utils';
-import { useAuth } from '@/contexts/auth/AuthContext';
+"use client"
+
+import { useState, useRef, useEffect } from "react"
+import { cn } from "@/lib/utils"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  Phone,
+  Camera,
+  ImageIcon,
+  Mic,
+  ThumbsUp,
+  Plus,
+  Smile,
+  Send,
+  MapPin,
+  DollarSign,
+  Package,
+  Star,
+  Shield,
+  CheckCircle,
+  X,
+  CreditCard,
+  Truck,
+  Calendar,
+  PhoneCall,
+  MicOff,
+  Volume2,
+  Reply,
+  TrendingDown,
+  Zap,
+  Lock,
+  ArrowDown,
+  Search,
+  MoreVertical,
+  ArrowLeft,
+  Video,
+  Moon,
+  Sun,
+  Pin,
+  PinOff,
+  Copy,
+  Forward,
+  Trash2,
+  Edit3,
+  Clock,
+  Check,
+  CheckCheck,
+  AlertTriangle,
+  Eye,
+  ImageIcon as ImageIcon2,
+  Play,
+  Pause,
+  ChevronDown,
+  ChevronUp,
+  ChevronRight,
+  Heart,
+  Share2,
+  Flag,
+  Bell,
+  BellOff,
+  BadgeCheck,
+  ShieldCheck,
+  Download,
+  LayoutGrid,
+  List,
+  Receipt,
+} from "lucide-react"
 
-type MessageType = {
-  id: number;
-  sender: "buyer" | "seller";
-  text: string;
-  time: string;
-  timestamp: Date;
-  hasImages?: boolean;
-  images?: string[];
-  type?: "text" | "offer" | "location" | "voice" | "system";
-  status?: "sent" | "delivered" | "read";
-  reactions?: { emoji: string; count: number; users: string[] }[];
-  replyTo?: number;
-  isPinned?: boolean;
-  isEdited?: boolean;
-  voiceDuration?: number;
-  isStarred?: boolean;
-  isDeleted?: boolean;
-  translatedText?: string;
-}
-
-type SafetyItem = {
-  id: string;
-  label: string;
-  checked: boolean;
-  important?: boolean;
+type Message = {
+  id: number
+  sender: "buyer" | "seller"
+  text: string
+  time: string
+  timestamp: Date
+  hasImages?: boolean
+  images?: string[]
+  type?: "text" | "offer" | "location" | "voice" | "system"
+  status?: "sent" | "delivered" | "read"
+  reactions?: { emoji: string; count: number; users: string[] }[]
+  replyTo?: number
+  isPinned?: boolean
+  isEdited?: boolean
+  voiceDuration?: number
+  isStarred?: boolean
+  isDeleted?: boolean
+  translatedText?: string
+  linkPreview?: { title: string; description: string; image: string; url: string }
 }
 
 type NegotiationEntry = {
-  id: number;
-  type: "offer" | "counter" | "accept" | "reject";
-  amount: number;
-  from: "buyer" | "seller";
-  time: string;
-  message?: string;
+  id: number
+  type: "offer" | "counter" | "accept" | "reject"
+  amount: number
+  from: "buyer" | "seller"
+  time: string
+  message?: string
 }
 
-export default function ConversationDetail() {
-  const { conversationId } = useParams<{ conversationId: string }>();
-  const navigate = useNavigate();
-  const [messageText, setMessageText] = useState('');
-  const [otherUser, setOtherUser] = useState<any>(null);
-  const [loadingUser, setLoadingUser] = useState(true);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const chatContainerRef = useRef<HTMLDivElement>(null);
-  const { user, isLoading } = useAuth();
-  const currentUserId = user?.id || '';
+type SafetyItem = {
+  id: string
+  label: string
+  checked: boolean
+  important?: boolean
+}
 
-  // UI state from the provided UI
-  const [darkMode, setDarkMode] = useState(false);
-  const [showQuickActions, setShowQuickActions] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showProductPanel, setShowProductPanel] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResultIndex, setSearchResultIndex] = useState(0);
-  const [showSafetyChecklist, setShowSafetyChecklist] = useState(false);
-  const [showNegotiationHistory, setShowNegotiationHistory] = useState(false);
-  const [showMediaGallery, setShowMediaGallery] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [showEmojiPickerForMessage, setShowEmojiPickerForMessage] = useState<number | null>(null);
-  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
-  const [showSellerProfile, setShowSellerProfile] = useState(false);
-  const [showReportModal, setShowReportModal] = useState(false);
-  const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [showLocationPicker, setShowLocationPicker] = useState(false);
-  const [showOfferModal, setShowOfferModal] = useState(false);
-  const [showInsuranceModal, setShowInsuranceModal] = useState(false);
-  const [showReceiptModal, setShowReceiptModal] = useState(false);
-  const [showCompletionCelebration, setShowCompletionCelebration] = useState(false);
-  const [showRatingPrompt, setShowRatingPrompt] = useState(false);
-  const [pinnedMessagesExpanded, setPinnedMessagesExpanded] = useState(false);
-  const [messageActionsId, setMessageActionsId] = useState<number | null>(null);
-  const [replyingTo, setReplyingTo] = useState<MessageType | null>(null);
-  const [editingMessage, setEditingMessage] = useState<MessageType | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingDuration, setRecordingDuration] = useState(0);
-  const [playingVoiceId, setPlayingVoiceId] = useState<number | null>(null);
-  const [activeCall, setActiveCall] = useState<null | "ringing" | "audio" | "video">(null);
-  const [callDuration, setCallDuration] = useState(0);
-  const [isAudioMuted, setIsAudioMuted] = useState(false);
-  const [isVideoOff, setIsVideoOff] = useState(false);
-  const [isSpeakerOn, setIsSpeakerOn] = useState(false);
-  const [isTyping, setIsTyping] = useState(true);
-  const [sellerOnline, setSellerOnline] = useState(true);
-  const [lastSeen, setLastSeen] = useState("Online");
-  const [selectedPayment, setSelectedPayment] = useState("cash");
-  const [offerAmount, setOfferAmount] = useState('');
-  const [offerMessage, setOfferMessage] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
-  const [selectedTime, setSelectedTime] = useState('');
-  const [selectedLocation, setSelectedLocation] = useState('');
-  const [rating, setRating] = useState(0);
-  const [reviewText, setReviewText] = useState('');
-  const [notificationsMuted, setNotificationsMuted] = useState(false);
-  const [showTranslation, setShowTranslation] = useState(false);
-  const [viewingImage, setViewingImage] = useState<string | null>(null);
-  const [mediaGalleryView, setMediaGalleryView] = useState<"grid" | "list">("grid");
-  
-  // Messages state
-  const [messages, setMessages] = useState<MessageType[]>([
+export default function BuyerSellerChat() {
+  // Core state
+  const [message, setMessage] = useState("")
+  const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
       sender: "seller",
@@ -122,7 +113,7 @@ export default function ConversationDetail() {
       time: "10:32 AM",
       timestamp: new Date(Date.now() - 3600000 * 2),
       status: "read",
-      reactions: [{ emoji: "👋", count: 1, users: ["You"] }],
+      reactions: [{ emoji: "�", count: 1, users: ["You"] }],
     },
     {
       id: 2,
@@ -197,9 +188,69 @@ export default function ConversationDetail() {
       time: "10:40 AM",
       timestamp: new Date(Date.now() - 3600000),
       status: "delivered",
-      reactions: [{ emoji: "🤝", count: 2, users: ["You", "John Seller"] }],
+      reactions: [{ emoji: "��", count: 2, users: ["You", "John Seller"] }],
     },
-  ]);
+  ])
+
+  // UI state
+  const [darkMode, setDarkMode] = useState(false)
+  const [showQuickActions, setShowQuickActions] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [showProductPanel, setShowProductPanel] = useState(false)
+  const [showSearch, setShowSearch] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [searchResultIndex, setSearchResultIndex] = useState(0)
+  const [showSafetyChecklist, setShowSafetyChecklist] = useState(false)
+  const [showNegotiationHistory, setShowNegotiationHistory] = useState(false)
+  const [showMediaGallery, setShowMediaGallery] = useState(false)
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [showEmojiPickerForMessage, setShowEmojiPickerForMessage] = useState<number | null>(null)
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false)
+  const [showSellerProfile, setShowSellerProfile] = useState(false)
+  const [showReportModal, setShowReportModal] = useState(false)
+  const [showScheduleModal, setShowScheduleModal] = useState(false)
+  const [showLocationPicker, setShowLocationPicker] = useState(false)
+  const [showOfferModal, setShowOfferModal] = useState(false)
+  const [showInsuranceModal, setShowInsuranceModal] = useState(false)
+  const [showReceiptModal, setShowReceiptModal] = useState(false)
+  const [showCompletionCelebration, setShowCompletionCelebration] = useState(false)
+  const [showRatingPrompt, setShowRatingPrompt] = useState(false)
+  const [pinnedMessagesExpanded, setPinnedMessagesExpanded] = useState(false)
+  const [messageActionsId, setMessageActionsId] = useState<number | null>(null)
+
+  // Reply state
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null)
+  const [editingMessage, setEditingMessage] = useState<Message | null>(null)
+
+  // Recording state
+  const [isRecording, setIsRecording] = useState(false)
+  const [recordingDuration, setRecordingDuration] = useState(0)
+  const [playingVoiceId, setPlayingVoiceId] = useState<number | null>(null)
+
+  // Call state
+  const [activeCall, setActiveCall] = useState<null | "ringing" | "audio" | "video">(null)
+  const [callDuration, setCallDuration] = useState(0)
+  const [isAudioMuted, setIsAudioMuted] = useState(false)
+  const [isVideoOff, setIsVideoOff] = useState(false)
+  const [isSpeakerOn, setIsSpeakerOn] = useState(false)
+
+  // Typing indicator
+  const [isTyping, setIsTyping] = useState(true)
+  const [sellerOnline, setSellerOnline] = useState(true)
+  const [lastSeen, setLastSeen] = useState("Online")
+
+  // Payment
+  const [selectedPayment, setSelectedPayment] = useState("cash")
+
+  // Offer
+  const [offerAmount, setOfferAmount] = useState("")
+  const [offerMessage, setOfferMessage] = useState("")
+
+  // Schedule
+  const [selectedDate, setSelectedDate] = useState("")
+  const [selectedTime, setSelectedTime] = useState("")
+  const [selectedLocation, setSelectedLocation] = useState("")
 
   // Safety checklist
   const [safetyItems, setSafetyItems] = useState<SafetyItem[]>([
@@ -211,42 +262,152 @@ export default function ConversationDetail() {
     { id: "receipt", label: "Get a receipt or proof", checked: false },
     { id: "phone", label: "Keep phone charged", checked: true },
     { id: "transport", label: "Arrange safe transport home", checked: false },
-  ]);
+  ])
 
   // Negotiation history
   const [negotiationHistory] = useState<NegotiationEntry[]>([
     { id: 1, type: "offer", amount: 850, from: "buyer", time: "10:38 AM", message: "Initial offer" },
     { id: 2, type: "counter", amount: 880, from: "seller", time: "10:39 AM", message: "Counter with bonus case" },
     { id: 3, type: "accept", amount: 880, from: "buyer", time: "10:40 AM", message: "Deal accepted!" },
-  ]);
+  ])
 
-  // Progress steps
-  const [currentStep, setCurrentStep] = useState(2);
+  // Progress
+  const [currentStep, setCurrentStep] = useState(2)
   const progressSteps = [
     { id: 1, label: "Inquiry", completed: true },
     { id: 2, label: "Negotiation", completed: true },
     { id: 3, label: "Agreement", completed: false, active: true },
     { id: 4, label: "Meeting", completed: false },
     { id: 5, label: "Complete", completed: false },
-  ];
+  ]
 
-  const { loading, isConnected, sendMessage, blockUser, archiveConversation } = useMessages(
-    conversationId || null,
-    currentUserId
-  );
+  // Rating
+  const [rating, setRating] = useState(0)
+  const [reviewText, setReviewText] = useState("")
+
+  // Notifications
+  const [notificationsMuted, setNotificationsMuted] = useState(false)
+
+  // Translation
+  const [showTranslation, setShowTranslation] = useState(false)
+
+  // Image viewer
+  const [viewingImage, setViewingImage] = useState<string | null>(null)
+  const [mediaGalleryView, setMediaGalleryView] = useState<"grid" | "list">("grid")
+
+  const chatContainerRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   // Derived data
-  const pinnedMessages = messages.filter((m) => m.isPinned);
-  const starredMessages = messages.filter((m) => m.isStarred);
-  const allMedia = messages.filter((m) => m.hasImages).flatMap((m) => m.images || []);
+  const pinnedMessages = messages.filter((m) => m.isPinned)
+  const starredMessages = messages.filter((m) => m.isStarred)
+  const allMedia = messages.filter((m) => m.hasImages).flatMap((m) => m.images || [])
   const searchResults = searchQuery
     ? messages.filter((m) => m.text.toLowerCase().includes(searchQuery.toLowerCase()))
-    : [];
-  const filteredMessages = searchQuery ? searchResults : messages;
+    : []
+  const filteredMessages = searchQuery ? searchResults : messages
 
   // Emojis for reactions
-  const reactionEmojis = ["👍", "❤️", "😂", "😮", "😢", "🙏", "🔥", "🤝"];
-  const allEmojis = ["😀", "😃", "😄", "😁", "😅", "😂", "🤣", "😊", "😇", "🙂", "😉", "😌", "😍", "🥰", "😘", "😗", "😙", "😚", "😋", "😛", "😜", "🤪", "😝", "🤑", "🤗", "🤭", "🤫", "🤔", "🤐", "🤨", "😐", "😑", "😶", "😏", "😒", "🙄", "😬", "😮", "🥱", "😴", "🤤", "😪", "😵", "🤯", "🤠", "🥳", "🥸", "😎", "🤓", "🧐", "😕", "😟", "🙁", "😮", "😯", "😲", "😳", "🥺", "😦", "😧", "👍", "👎", "👌", "🤌", "🤏", "✌️", "🤞", "🤟", "🤘", "🤙", "👈", "👉", "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎", "💔", "❤️‍🔥", "💕", "🔥", "✨", "💫", "⭐", "🌟", "💥", "💢", "💦", "💨", "🎉", "🎊", "🎁"];
+  const reactionEmojis = ["�", "�わ��", "�", "��", "��", "��", "��", "��"]
+  const allEmojis = [
+    "�",
+    "�",
+    "�",
+    "�",
+    "�",
+    "�",
+    "�ぃ",
+    "�",
+    "�",
+    "�",
+    "�",
+    "�",
+    "�",
+    "�グ",
+    "�",
+    "�",
+    "�",
+    "�",
+    "�",
+    "�",
+    "�",
+    "�お",
+    "�",
+    "��",
+    "��",
+    "�き",
+    "�か",
+    "��",
+    "��",
+    "�え",
+    "�",
+    "�",
+    "��",
+    "��",
+    "�",
+    "�",
+    "��",
+    "��",
+    "�ケ",
+    "��",
+    "�い",
+    "��",
+    "��",
+    "�く",
+    "��",
+    "�コ",
+    "�ジ",
+    "��",
+    "��",
+    "��",
+    "�",
+    "�",
+    "�",
+    "��",
+    "��",
+    "��",
+    "��",
+    "�ズ",
+    "��",
+    "��",
+    "�",
+    "��",
+    "�",
+    "��",
+    "���",
+    "�鏝�",
+    "��",
+    "��",
+    "��",
+    "��",
+    "�",
+    "�",
+    "�わ��",
+    "�А",
+    "�",
+    "�",
+    "�",
+    "�",
+    "��",
+    "��",
+    "���",
+    "�",
+    "�わ�����",
+    "�",
+    "��",
+    "��",
+    "��",
+    "皚",
+    "�",
+    "��",
+    "��",
+    "��",
+    "��",
+    "��",
+    "��",
+    "��",
+  ]
 
   // Quick replies
   const quickReplies = [
@@ -256,7 +417,7 @@ export default function ConversationDetail() {
     "Can you send more photos?",
     "Is the price negotiable?",
     "Where are you located?",
-  ];
+  ]
 
   // Quick actions
   const quickActions = [
@@ -268,7 +429,7 @@ export default function ConversationDetail() {
     { icon: Truck, label: "Shipping", color: "text-cyan-600" },
     { icon: Shield, label: "Insurance", color: "text-amber-600", action: () => setShowInsuranceModal(true) },
     { icon: Receipt, label: "Receipt", color: "text-slate-600", action: () => setShowReceiptModal(true) },
-  ];
+  ]
 
   // Payment methods
   const paymentMethods = [
@@ -277,7 +438,7 @@ export default function ConversationDetail() {
     { id: "moncash", name: "Moncash", desc: "Mobile money transfer", initial: "M", color: "blue" },
     { id: "natcash", name: "Natcash", desc: "Mobile money transfer", initial: "N", color: "orange" },
     { id: "card", name: "Card Payment", desc: "Credit or debit card", icon: CreditCard, color: "purple" },
-  ];
+  ]
 
   // Safe locations
   const safeLocations = [
@@ -285,133 +446,61 @@ export default function ConversationDetail() {
     { id: "2", name: "Starbucks Downtown", address: "456 Main St", rating: 4.8, verified: true },
     { id: "3", name: "Mall Food Court", address: "789 Shopping Blvd", rating: 4.5, verified: true },
     { id: "4", name: "Public Library", address: "321 Book Lane", rating: 4.7, verified: true },
-  ];
+  ]
 
   // Effects
   useEffect(() => {
-    if (conversationId) {
-      fetchOtherUser();
-    }
-  }, [conversationId]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  useEffect(() => {
     if (activeCall === "audio" || activeCall === "video") {
-      const interval = setInterval(() => setCallDuration((d) => d + 1), 1000);
-      return () => clearInterval(interval);
+      const interval = setInterval(() => setCallDuration((d) => d + 1), 1000)
+      return () => clearInterval(interval)
     }
-    setCallDuration(0);
-  }, [activeCall]);
+    setCallDuration(0)
+  }, [activeCall])
 
   useEffect(() => {
     if (isRecording) {
-      const interval = setInterval(() => setRecordingDuration((d) => d + 1), 1000);
-      return () => clearInterval(interval);
-    }
-    setRecordingDuration(0);
-  }, [isRecording]);
-
-  // Simulate typing indicator
-  useEffect(() => {
-    const timeout = setTimeout(() => setIsTyping(false), 3000);
-    return () => clearTimeout(timeout);
-  }, []);
-
-  const scrollToBottom = () => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTo({
-        top: chatContainerRef.current.scrollHeight,
-        behavior: 'smooth'
-      });
-    }
-  };
-
-  const fetchOtherUser = async () => {
-    try {
-      setLoadingUser(true);
-      const { data: participants } = await supabase
-        .from('conversation_participants')
-        .select('user_id, profiles!conversation_participants_user_id_fkey(id, full_name, avatar_url)')
-        .eq('conversation_id', conversationId)
-        .neq('user_id', currentUserId);
-
-      if (participants && participants.length > 0) {
-        setOtherUser(participants[0].profiles);
+      recordingIntervalRef.current = setInterval(() => setRecordingDuration((d) => d + 1), 1000)
+      return () => {
+        if (recordingIntervalRef.current) clearInterval(recordingIntervalRef.current)
       }
-    } catch (error) {
-      console.error('Error fetching other user:', error);
-    } finally {
-      setLoadingUser(false);
     }
-  };
+    setRecordingDuration(0)
+  }, [isRecording])
 
-  const handleSendMessage = async () => {
-    if (!messageText.trim()) return;
+  useEffect(() => {
+    // Simulate typing indicator
+    const timeout = setTimeout(() => setIsTyping(false), 3000)
+    return () => clearTimeout(timeout)
+  }, [])
 
-    const success = await sendMessage(messageText);
-    if (success) {
-      setMessageText('');
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
-  const handleBlockUser = async () => {
-    if (!otherUser) return;
-
-    const success = await blockUser(otherUser.id);
-    if (success) {
-      navigate('/messages');
-    }
-  };
-
-  const handleArchive = async () => {
-    const success = await archiveConversation();
-    if (success) {
-      navigate('/messages');
-    }
-  };
-
-  const getInitials = (name: string) => {
-    return name
-      ?.split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2) || 'U';
-  };
-
+  // Handlers
   const handleScroll = () => {
     if (chatContainerRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
-      setShowScrollToBottom(scrollHeight - scrollTop - clientHeight > 100);
+      const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current
+      setShowScrollToBottom(scrollHeight - scrollTop - clientHeight > 100)
     }
-  };
+  }
+
+  const scrollToBottom = () => {
+    chatContainerRef.current?.scrollTo({ top: chatContainerRef.current.scrollHeight, behavior: "smooth" })
+  }
 
   const scrollToMessage = (messageId: number) => {
-    const element = document.getElementById(`message-${messageId}`);
+    const element = document.getElementById(`message-${messageId}`)
     if (element) {
-      element.scrollIntoView({ behavior: "smooth", block: "center" });
-      element.classList.add("bg-yellow-100", "dark:bg-yellow-900/30");
-      setTimeout(() => element.classList.remove("bg-yellow-100", "dark:bg-yellow-900/30"), 2000);
+      element.scrollIntoView({ behavior: "smooth", block: "center" })
+      element.classList.add("bg-yellow-100", "dark:bg-yellow-900/30")
+      setTimeout(() => element.classList.remove("bg-yellow-100", "dark:bg-yellow-900/30"), 2000)
     }
-  };
+  }
 
   const handleSend = () => {
-    if (!messageText.trim() && !isRecording) return;
+    if (!message.trim() && !isRecording) return
 
-    const newMessage: MessageType = {
+    const newMessage: Message = {
       id: messages.length + 1,
       sender: "buyer",
-      text: editingMessage ? messageText : messageText,
+      text: editingMessage ? message : message,
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       timestamp: new Date(),
       status: "sent",
@@ -419,34 +508,34 @@ export default function ConversationDetail() {
       isEdited: !!editingMessage,
       type: isRecording ? "voice" : "text",
       voiceDuration: isRecording ? recordingDuration : undefined,
-    };
-
-    if (editingMessage) {
-      setMessages((prev) => prev.map((m) => (m.id === editingMessage.id ? { ...m, text: messageText, isEdited: true } : m)));
-      setEditingMessage(null);
-    } else {
-      setMessages([...messages, newMessage]);
     }
 
-    setMessageText('');
-    setReplyingTo(null);
-    setIsRecording(false);
-    setTimeout(scrollToBottom, 100);
+    if (editingMessage) {
+      setMessages((prev) => prev.map((m) => (m.id === editingMessage.id ? { ...m, text: message, isEdited: true } : m)))
+      setEditingMessage(null)
+    } else {
+      setMessages([...messages, newMessage])
+    }
+
+    setMessage("")
+    setReplyingTo(null)
+    setIsRecording(false)
+    setTimeout(scrollToBottom, 100)
 
     // Simulate message status updates
     setTimeout(() => {
-      setMessages((prev) => prev.map((m) => (m.id === newMessage.id ? { ...m, status: "delivered" } : m)));
-    }, 1000);
+      setMessages((prev) => prev.map((m) => (m.id === newMessage.id ? { ...m, status: "delivered" } : m)))
+    }, 1000)
     setTimeout(() => {
-      setMessages((prev) => prev.map((m) => (m.id === newMessage.id ? { ...m, status: "read" } : m)));
-    }, 2500);
-  };
+      setMessages((prev) => prev.map((m) => (m.id === newMessage.id ? { ...m, status: "read" } : m)))
+    }, 2500)
+  }
 
   const addReaction = (messageId: number, emoji: string) => {
     setMessages((prev) =>
       prev.map((m) => {
         if (m.id === messageId) {
-          const existingReaction = m.reactions?.find((r) => r.emoji === emoji);
+          const existingReaction = m.reactions?.find((r) => r.emoji === emoji)
           if (existingReaction) {
             if (existingReaction.users.includes("You")) {
               return {
@@ -456,52 +545,53 @@ export default function ConversationDetail() {
                   .map((r) =>
                     r.emoji === emoji ? { ...r, count: r.count - 1, users: r.users.filter((u) => u !== "You") } : r,
                   ),
-              };
+              }
             }
             return {
               ...m,
               reactions: m.reactions?.map((r) =>
                 r.emoji === emoji ? { ...r, count: r.count + 1, users: [...r.users, "You"] } : r,
               ),
-            };
+            }
           }
-          return { ...m, reactions: [...(m.reactions || []), { emoji, count: 1, users: ["You"] }] };
+          return { ...m, reactions: [...(m.reactions || []), { emoji, count: 1, users: ["You"] }] }
         }
-        return m;
+        return m
       }),
-    );
-    setShowEmojiPickerForMessage(null);
-  };
+    )
+    setShowEmojiPickerForMessage(null)
+  }
 
   const togglePin = (messageId: number) => {
-    setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, isPinned: !m.isPinned } : m)));
-    setMessageActionsId(null);
-  };
+    setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, isPinned: !m.isPinned } : m)))
+    setMessageActionsId(null)
+  }
 
   const toggleStar = (messageId: number) => {
-    setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, isStarred: !m.isStarred } : m)));
-    setMessageActionsId(null);
-  };
+    setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, isStarred: !m.isStarred } : m)))
+    setMessageActionsId(null)
+  }
 
   const deleteMessage = (messageId: number) => {
     setMessages((prev) =>
       prev.map((m) => (m.id === messageId ? { ...m, isDeleted: true, text: "This message was deleted" } : m)),
-    );
-    setMessageActionsId(null);
-  };
+    )
+    setMessageActionsId(null)
+  }
 
   const copyMessage = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setMessageActionsId(null);
-  };
+    navigator.clipboard.writeText(text)
+    setMessageActionsId(null)
+  }
 
   const handleQuickReply = (reply: string) => {
-    setMessageText(reply);
-  };
+    setMessage(reply)
+    inputRef.current?.focus()
+  }
 
   const sendOffer = () => {
-    if (!offerAmount) return;
-    const newMessage: MessageType = {
+    if (!offerAmount) return
+    const newMessage: Message = {
       id: messages.length + 1,
       sender: "buyer",
       text: `I'd like to offer $${offerAmount}${offerMessage ? ` - ${offerMessage}` : ""}`,
@@ -509,23 +599,23 @@ export default function ConversationDetail() {
       timestamp: new Date(),
       status: "sent",
       type: "offer",
-    };
-    setMessages([...messages, newMessage]);
-    setOfferAmount('');
-    setOfferMessage('');
-    setShowOfferModal(false);
-    setTimeout(scrollToBottom, 100);
-  };
+    }
+    setMessages([...messages, newMessage])
+    setOfferAmount("")
+    setOfferMessage("")
+    setShowOfferModal(false)
+    setTimeout(scrollToBottom, 100)
+  }
 
   const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, "0")}`
+  }
 
   const highlightText = (text: string, query: string) => {
-    if (!query) return text;
-    const parts = text.split(new RegExp(`(${query})`, "gi"));
+    if (!query) return text
+    const parts = text.split(new RegExp(`(${query})`, "gi"))
     return parts.map((part, i) =>
       part.toLowerCase() === query.toLowerCase() ? (
         <mark key={i} className="bg-yellow-300 dark:bg-yellow-600 px-0.5 rounded">
@@ -534,46 +624,40 @@ export default function ConversationDetail() {
       ) : (
         part
       ),
-    );
-  };
+    )
+  }
 
   const getStatusIcon = (status?: string) => {
     switch (status) {
       case "sent":
-        return <Check className="w-3 h-3 text-muted-foreground" />;
+        return <Check className="w-3 h-3 text-muted-foreground" />
       case "delivered":
-        return <CheckCheck className="w-3 h-3 text-muted-foreground" />;
+        return <CheckCheck className="w-3 h-3 text-muted-foreground" />
       case "read":
-        return <CheckCheck className="w-3 h-3 text-blue-500" />;
+        return <CheckCheck className="w-3 h-3 text-blue-500" />
       default:
-        return <Clock className="w-3 h-3 text-muted-foreground" />;
+        return <Clock className="w-3 h-3 text-muted-foreground" />
     }
-  };
-
-  if (isLoading || !user || loadingUser) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-      </div>
-    );
   }
 
   return (
-    <div className={cn("w-full h-screen flex flex-col overflow-hidden relative transition-colors duration-300", darkMode ? "dark" : "")}>
-      <div className="flex-1 flex flex-col bg-background text-foreground">
+    <div
+      className={cn(
+        "w-full h-screen flex flex-col overflow-hidden relative transition-colors duration-300",
+        darkMode ? "dark" : "",
+      )}
+    >
+      <div className="flex-1 flex flex-col min-h-0 bg-background text-foreground">
         {/* Header */}
         <div className="px-3 py-2 flex items-center gap-2 shrink-0 bg-card border-b border-border shadow-sm">
-          <button
-            onClick={() => navigate('/messages')}
-            className="p-1.5 hover:bg-muted rounded-full transition-colors"
-          >
+          <button className="p-1.5 hover:bg-muted rounded-full transition-colors">
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
 
           <button onClick={() => setShowSellerProfile(true)} className="flex items-center gap-2.5 flex-1 min-w-0">
             <div className="relative">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0">
-                <span className="text-white font-bold text-sm">{getInitials(otherUser?.full_name || 'User')}</span>
+                <span className="text-white font-bold text-sm">JS</span>
               </div>
               {sellerOnline && (
                 <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-card" />
@@ -581,7 +665,7 @@ export default function ConversationDetail() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="text-foreground font-semibold text-sm truncate">{otherUser?.full_name || 'User'}</span>
+                <span className="text-foreground font-semibold text-sm truncate">John Seller</span>
                 <div className="group relative">
                   <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-500 cursor-help" />
                   <div className="absolute left-0 top-6 w-48 bg-popover border border-border rounded-lg p-2 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
@@ -597,12 +681,12 @@ export default function ConversationDetail() {
                 {sellerOnline ? (
                   <>
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    {isConnected ? "Live" : "Online now"}
+                    Online now
                   </>
                 ) : (
                   <>Last seen {lastSeen}</>
                 )}
-                <span className="mx-1">•</span>
+                <span className="mx-1">��</span>
                 <Clock className="w-3 h-3" />
                 <span>Usually responds in ~1hr</span>
               </p>
@@ -636,8 +720,8 @@ export default function ConversationDetail() {
                   <div className="absolute right-0 top-10 w-56 bg-popover border border-border rounded-xl shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-200">
                     <button
                       onClick={() => {
-                        setShowSearch(true);
-                        setShowMenu(false);
+                        setShowSearch(true)
+                        setShowMenu(false)
                       }}
                       className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
                     >
@@ -646,12 +730,12 @@ export default function ConversationDetail() {
                     </button>
                     <button
                       onClick={() => {
-                        setShowMediaGallery(true);
-                        setShowMenu(false);
+                        setShowMediaGallery(true)
+                        setShowMenu(false)
                       }}
                       className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
                     >
-                      <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                      <ImageIcon2 className="w-4 h-4 text-muted-foreground" />
                       <span className="text-sm text-foreground">Shared media</span>
                       <span className="ml-auto text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
                         {allMedia.length}
@@ -659,8 +743,8 @@ export default function ConversationDetail() {
                     </button>
                     <button
                       onClick={() => {
-                        setShowNegotiationHistory(true);
-                        setShowMenu(false);
+                        setShowNegotiationHistory(true)
+                        setShowMenu(false)
                       }}
                       className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
                     >
@@ -669,8 +753,8 @@ export default function ConversationDetail() {
                     </button>
                     <button
                       onClick={() => {
-                        setShowSafetyChecklist(true);
-                        setShowMenu(false);
+                        setShowSafetyChecklist(true)
+                        setShowMenu(false)
                       }}
                       className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
                     >
@@ -680,8 +764,8 @@ export default function ConversationDetail() {
                     <div className="h-px bg-border my-1" />
                     <button
                       onClick={() => {
-                        setNotificationsMuted(!notificationsMuted);
-                        setShowMenu(false);
+                        setNotificationsMuted(!notificationsMuted)
+                        setShowMenu(false)
                       }}
                       className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
                     >
@@ -696,8 +780,8 @@ export default function ConversationDetail() {
                     </button>
                     <button
                       onClick={() => {
-                        setDarkMode(!darkMode);
-                        setShowMenu(false);
+                        setDarkMode(!darkMode)
+                        setShowMenu(false)
                       }}
                       className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
                     >
@@ -711,8 +795,8 @@ export default function ConversationDetail() {
                     <div className="h-px bg-border my-1" />
                     <button
                       onClick={() => {
-                        setShowReportModal(true);
-                        setShowMenu(false);
+                        setShowReportModal(true)
+                        setShowMenu(false)
                       }}
                       className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors text-red-600"
                     >
@@ -747,7 +831,7 @@ export default function ConversationDetail() {
               <div>
                 <p className="text-white text-sm font-semibold flex items-center gap-2">
                   {activeCall === "ringing"
-                    ? `Calling ${otherUser?.full_name || 'User'}`
+                    ? "Calling John Seller"
                     : `${activeCall === "video" ? "Video" : "Voice"} call`}
                   {activeCall === "ringing" && (
                     <span className="flex gap-0.5">
@@ -824,14 +908,14 @@ export default function ConversationDetail() {
                 placeholder="Search messages..."
                 value={searchQuery}
                 onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setSearchResultIndex(0);
+                  setSearchQuery(e.target.value)
+                  setSearchResultIndex(0)
                 }}
                 className="flex-1 bg-transparent outline-none text-sm text-foreground placeholder:text-muted-foreground"
                 autoFocus
               />
               {searchQuery && (
-                <button onClick={() => setSearchQuery('')}>
+                <button onClick={() => setSearchQuery("")}>
                   <X className="w-4 h-4 text-muted-foreground" />
                 </button>
               )}
@@ -843,9 +927,9 @@ export default function ConversationDetail() {
                 </span>
                 <button
                   onClick={() => {
-                    const newIndex = searchResultIndex > 0 ? searchResultIndex - 1 : searchResults.length - 1;
-                    setSearchResultIndex(newIndex);
-                    scrollToMessage(searchResults[newIndex].id);
+                    const newIndex = searchResultIndex > 0 ? searchResultIndex - 1 : searchResults.length - 1
+                    setSearchResultIndex(newIndex)
+                    scrollToMessage(searchResults[newIndex].id)
                   }}
                   className="p-1 hover:bg-muted rounded"
                 >
@@ -853,9 +937,9 @@ export default function ConversationDetail() {
                 </button>
                 <button
                   onClick={() => {
-                    const newIndex = searchResultIndex < searchResults.length - 1 ? searchResultIndex + 1 : 0;
-                    setSearchResultIndex(newIndex);
-                    scrollToMessage(searchResults[newIndex].id);
+                    const newIndex = searchResultIndex < searchResults.length - 1 ? searchResultIndex + 1 : 0
+                    setSearchResultIndex(newIndex)
+                    scrollToMessage(searchResults[newIndex].id)
                   }}
                   className="p-1 hover:bg-muted rounded"
                 >
@@ -865,8 +949,8 @@ export default function ConversationDetail() {
             )}
             <button
               onClick={() => {
-                setShowSearch(false);
-                setSearchQuery('');
+                setShowSearch(false)
+                setSearchQuery("")
               }}
             >
               <X className="w-5 h-5 text-muted-foreground" />
@@ -900,7 +984,7 @@ export default function ConversationDetail() {
                     onClick={() => scrollToMessage(msg.id)}
                     className="w-full text-left px-2 py-1.5 bg-white dark:bg-card rounded-lg text-xs text-foreground truncate hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
                   >
-                    <span className="text-muted-foreground">{msg.sender === "seller" ? `${otherUser?.full_name || 'User'}: ` : "You: "}</span>
+                    <span className="text-muted-foreground">{msg.sender === "seller" ? "John: " : "You: "}</span>
                     {msg.text}
                   </button>
                 ))}
@@ -912,7 +996,7 @@ export default function ConversationDetail() {
         {/* Product Card */}
         <button
           onClick={() => setShowProductPanel(true)}
-          className="mx-3 mt-3 bg-card border border-border rounded-xl p-2.5 flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow shrink-0"
+          className="mx-3 mt-3 bg-card border border-border rounded-xl p-2.5 flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow"
         >
           <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center shrink-0 relative overflow-hidden">
             <Package className="w-7 h-7 text-muted-foreground" />
@@ -932,7 +1016,7 @@ export default function ConversationDetail() {
                 <Eye className="w-3 h-3" />
                 127 views
               </span>
-              <span>•</span>
+              <span>��</span>
               <span className="flex items-center gap-0.5">
                 <Heart className="w-3 h-3" />
                 23 saves
@@ -943,7 +1027,7 @@ export default function ConversationDetail() {
         </button>
 
         {/* Progress Steps */}
-        <div className="mx-3 mt-2 mb-1 shrink-0">
+        <div className="mx-3 mt-2 mb-1">
           <div className="flex items-center justify-between">
             {progressSteps.map((step, index) => (
               <div key={step.id} className="flex items-center">
@@ -977,17 +1061,8 @@ export default function ConversationDetail() {
           </div>
         </div>
 
-        {/* FIXED: Chat Content - Now properly scrollable */}
-        <div 
-          ref={chatContainerRef} 
-          onScroll={handleScroll} 
-          className="flex-1 overflow-y-auto px-3 py-3 scroll-smooth"
-          style={{ 
-            overflowY: 'auto',
-            WebkitOverflowScrolling: 'touch',
-            scrollBehavior: 'smooth'
-          }}
-        >
+        {/* Chat Content */}
+        <div ref={chatContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-3 py-3 scroll-smooth">
           <div className="text-center text-muted-foreground text-xs mb-3 uppercase tracking-wide">Today</div>
 
           {/* Encryption Notice */}
@@ -1121,7 +1196,7 @@ export default function ConversationDetail() {
             <div className="bg-card border border-border rounded-xl p-3 mb-3 animate-in fade-in slide-in-from-top duration-200">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <ImageIcon className="w-5 h-5 text-purple-600" />
+                  <ImageIcon2 className="w-5 h-5 text-purple-600" />
                   <span className="text-sm font-semibold text-foreground">Shared Media</span>
                   <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
                     {allMedia.length}
@@ -1177,8 +1252,8 @@ export default function ConversationDetail() {
 
           {/* Messages */}
           {filteredMessages.map((msg) => {
-            const isBuyer = msg.sender === "buyer";
-            const replyMessage = msg.replyTo ? messages.find((m) => m.id === msg.replyTo) : null;
+            const isBuyer = msg.sender === "buyer"
+            const replyMessage = msg.replyTo ? messages.find((m) => m.id === msg.replyTo) : null
 
             return (
               <div
@@ -1191,7 +1266,7 @@ export default function ConversationDetail() {
               >
                 {!isBuyer && (
                   <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0 text-[10px] font-bold text-white mr-1.5 mt-auto">
-                    {getInitials(otherUser?.full_name || 'User')}
+                    JS
                   </div>
                 )}
 
@@ -1206,7 +1281,7 @@ export default function ConversationDetail() {
                       )}
                     >
                       <span className="text-muted-foreground">
-                        {replyMessage.sender === "buyer" ? "You" : otherUser?.full_name || 'User'}:{" "}
+                        {replyMessage.sender === "buyer" ? "You" : "John"}:{" "}
                       </span>
                       {replyMessage.text}
                     </button>
@@ -1379,14 +1454,18 @@ export default function ConversationDetail() {
                           <Copy className="w-4 h-4" />
                           Copy
                         </button>
+                        <button className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted text-sm">
+                          <Forward className="w-4 h-4" />
+                          Forward
+                        </button>
                         {isBuyer && (
                           <>
                             <div className="h-px bg-border my-1" />
                             <button
                               onClick={() => {
-                                setEditingMessage(msg);
-                                setMessageText(msg.text);
-                                setMessageActionsId(null);
+                                setEditingMessage(msg)
+                                setMessage(msg.text)
+                                setMessageActionsId(null)
                               }}
                               className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted text-sm"
                             >
@@ -1438,14 +1517,126 @@ export default function ConversationDetail() {
                   </div>
                 )}
               </div>
-            );
+            )
           })}
+
+          {/* Special Cards */}
+          {/* Warranty Card */}
+          <div className="bg-card border border-border rounded-xl p-3 mb-2 max-w-[85%] shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <Shield className="w-4 h-4 text-blue-600" />
+              </div>
+              <div>
+                <span className="text-foreground text-sm font-medium">Warranty Information</span>
+                <p className="text-xs text-muted-foreground">Apple Limited Warranty</p>
+              </div>
+            </div>
+            <div className="bg-muted rounded-lg p-2 flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">Valid until</span>
+              <span className="text-sm font-medium text-foreground">June 15, 2025</span>
+            </div>
+            <div className="flex items-center gap-1 mt-2">
+              <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+              <span className="text-xs text-emerald-600">6 months remaining - Transferable</span>
+            </div>
+          </div>
+
+          {/* Counter Offer Card */}
+          <div className="bg-card border-2 border-amber-400 rounded-xl p-3 mb-2 max-w-[90%] shadow-sm">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                  <DollarSign className="w-4 h-4 text-amber-600" />
+                </div>
+                <span className="text-foreground text-sm font-semibold">Counter Offer</span>
+              </div>
+              <span className="text-xs text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 rounded-full font-medium">
+                Pending
+              </span>
+            </div>
+            <div className="flex items-baseline gap-2 mb-2">
+              <p className="text-foreground font-bold text-2xl">$880</p>
+              <span className="text-muted-foreground text-sm line-through">$899</span>
+              <span className="text-xs text-emerald-600">Save $19</span>
+            </div>
+            <p className="text-muted-foreground text-xs mb-3">Includes all original accessories and premium case</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowCompletionCelebration(true)}
+                className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1"
+              >
+                <Check className="w-4 h-4" />
+                Accept
+              </button>
+              <button
+                onClick={() => setShowOfferModal(true)}
+                className="flex-1 bg-secondary text-secondary-foreground py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors"
+              >
+                Counter
+              </button>
+              <button className="bg-secondary text-secondary-foreground px-3 rounded-lg hover:bg-secondary/80 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Meeting Proposal Card */}
+          <div className="bg-card border border-border rounded-xl p-3 mb-2 max-w-[90%] shadow-sm">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <MapPin className="w-4 h-4 text-blue-600" />
+              </div>
+              <span className="text-foreground text-sm font-semibold">Meeting Proposal</span>
+            </div>
+            {[
+              {
+                icon: MapPin,
+                title: "Starbucks Downtown",
+                desc: "123 Main St - Verified safe location",
+                color: "text-blue-600",
+              },
+              { icon: Calendar, title: "Tomorrow, Dec 11", desc: "3:00 PM - 4:00 PM", color: "text-orange-600" },
+              {
+                icon: Truck,
+                title: "In-person exchange",
+                desc: "Inspect item before payment",
+                color: "text-purple-600",
+              },
+            ].map(({ icon: Icon, title, desc, color }) => (
+              <div key={title} className="flex items-start gap-2 mb-2">
+                <Icon className={cn("w-4 h-4 mt-0.5", color)} />
+                <div>
+                  <p className="text-foreground text-sm font-medium">{title}</p>
+                  <p className="text-muted-foreground text-xs">{desc}</p>
+                </div>
+              </div>
+            ))}
+            <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-2 mb-3">
+              <p className="text-blue-700 dark:text-blue-400 text-xs flex items-center gap-1">
+                <Zap className="w-3 h-3" />
+                Always meet in safe, public places during daylight
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-1">
+                <Calendar className="w-4 h-4" />
+                Confirm
+              </button>
+              <button
+                onClick={() => setShowScheduleModal(true)}
+                className="flex-1 bg-secondary text-secondary-foreground py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors"
+              >
+                Reschedule
+              </button>
+            </div>
+          </div>
 
           {/* Typing indicator */}
           {isTyping && (
             <div className="flex items-start gap-2 mb-2">
               <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0 text-[10px] font-bold text-white">
-                {getInitials(otherUser?.full_name || 'User')}
+                JS
               </div>
               <div className="bg-card border border-border rounded-2xl rounded-bl-sm px-3 py-2 shadow-sm">
                 <div className="flex gap-1">
@@ -1460,9 +1651,6 @@ export default function ConversationDetail() {
               </div>
             </div>
           )}
-
-          {/* Scroll anchor */}
-          <div ref={messagesEndRef} />
         </div>
 
         {/* Scroll to Bottom */}
@@ -1477,19 +1665,19 @@ export default function ConversationDetail() {
 
         {/* Reply/Edit Preview */}
         {(replyingTo || editingMessage) && (
-          <div className="px-3 py-2 bg-muted border-t border-border flex items-center gap-2 shrink-0">
+          <div className="px-3 py-2 bg-muted border-t border-border flex items-center gap-2">
             {replyingTo ? <Reply className="w-4 h-4 text-blue-500" /> : <Edit3 className="w-4 h-4 text-amber-500" />}
             <div className="flex-1 min-w-0">
               <p className="text-xs text-muted-foreground">
-                {replyingTo ? `Replying to ${replyingTo.sender === "buyer" ? "yourself" : otherUser?.full_name || 'User'}` : "Editing message"}
+                {replyingTo ? `Replying to ${replyingTo.sender === "buyer" ? "yourself" : "John"}` : "Editing message"}
               </p>
               <p className="text-sm text-foreground truncate">{replyingTo?.text || editingMessage?.text}</p>
             </div>
             <button
               onClick={() => {
-                setReplyingTo(null);
-                setEditingMessage(null);
-                setMessageText('');
+                setReplyingTo(null)
+                setEditingMessage(null)
+                setMessage("")
               }}
             >
               <X className="w-4 h-4 text-muted-foreground" />
@@ -1498,7 +1686,7 @@ export default function ConversationDetail() {
         )}
 
         {/* Quick Replies */}
-        <div className="px-3 py-1.5 border-t border-border bg-card overflow-x-auto scrollbar-hide shrink-0">
+        <div className="px-3 py-1.5 border-t border-border bg-card overflow-x-auto scrollbar-hide">
           <div className="flex gap-1.5">
             {quickReplies.map((reply) => (
               <button
@@ -1514,7 +1702,7 @@ export default function ConversationDetail() {
 
         {/* Quick Actions */}
         {showQuickActions && (
-          <div className="px-3 py-2 bg-card border-t border-border shadow-lg animate-in slide-in-from-bottom-2 duration-200 shrink-0">
+          <div className="px-3 py-2 bg-card border-t border-border shadow-lg animate-in slide-in-from-bottom-2 duration-200">
             <div className="grid grid-cols-4 gap-2">
               {quickActions.map(({ icon: Icon, label, color, action }) => (
                 <button
@@ -1532,7 +1720,7 @@ export default function ConversationDetail() {
 
         {/* Voice Recording */}
         {isRecording && (
-          <div className="px-3 py-3 bg-red-50 dark:bg-red-950/30 border-t border-red-200 dark:border-red-800 flex items-center gap-3 animate-in slide-in-from-bottom duration-200 shrink-0">
+          <div className="px-3 py-3 bg-red-50 dark:bg-red-950/30 border-t border-red-200 dark:border-red-800 flex items-center gap-3 animate-in slide-in-from-bottom duration-200">
             <button onClick={() => setIsRecording(false)} className="p-2 bg-red-100 dark:bg-red-900/50 rounded-full">
               <Trash2 className="w-5 h-5 text-red-600" />
             </button>
@@ -1577,10 +1765,11 @@ export default function ConversationDetail() {
             </button>
             <div className="flex-1 bg-muted rounded-full px-3 py-2 flex items-center min-w-0">
               <input
+                ref={inputRef}
                 type="text"
                 placeholder="Type a message..."
-                value={messageText}
-                onChange={(e) => setMessageText(e.target.value)}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
                 className="bg-transparent flex-1 outline-none text-foreground text-sm min-w-0 placeholder:text-muted-foreground"
               />
@@ -1589,7 +1778,7 @@ export default function ConversationDetail() {
               </button>
             </div>
             <button onClick={handleSend} className="p-2 shrink-0">
-              {messageText || editingMessage ? (
+              {message || editingMessage ? (
                 <Send className="w-6 h-6 text-blue-600 fill-blue-600" />
               ) : (
                 <ThumbsUp className="w-6 h-6 text-blue-600" />
@@ -1608,8 +1797,8 @@ export default function ConversationDetail() {
                   <button
                     key={emoji}
                     onClick={() => {
-                      setMessageText((prev) => prev + emoji);
-                      setShowEmojiPicker(false);
+                      setMessage((prev) => prev + emoji)
+                      setShowEmojiPicker(false)
                     }}
                     className="w-9 h-9 flex items-center justify-center hover:bg-muted rounded-lg text-xl transition-transform hover:scale-110"
                   >
@@ -1621,7 +1810,8 @@ export default function ConversationDetail() {
           </>
         )}
 
-        {/* MODALS (same as before) */}
+        {/* MODALS */}
+
         {/* Payment Modal */}
         {showPaymentModal && (
           <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
@@ -1739,6 +1929,362 @@ export default function ConversationDetail() {
           </div>
         )}
 
+        {/* Schedule Modal */}
+        {showScheduleModal && (
+          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
+            <div className="bg-card w-full rounded-t-3xl p-4 max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-foreground">Schedule Meeting</h3>
+                <button onClick={() => setShowScheduleModal(false)}>
+                  <X className="w-6 h-6 text-muted-foreground" />
+                </button>
+              </div>
+
+              <div className="mb-4">
+                <label className="text-sm text-muted-foreground mb-2 block">Select date</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {["Today", "Tomorrow", "Dec 13"].map((date) => (
+                    <button
+                      key={date}
+                      onClick={() => setSelectedDate(date)}
+                      className={cn(
+                        "py-2 rounded-lg text-sm font-medium transition-colors",
+                        selectedDate === date ? "bg-blue-600 text-white" : "bg-muted text-foreground hover:bg-muted/80",
+                      )}
+                    >
+                      {date}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="text-sm text-muted-foreground mb-2 block">Select time</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {["10:00 AM", "12:00 PM", "2:00 PM", "4:00 PM", "5:00 PM", "6:00 PM"].map((time) => (
+                    <button
+                      key={time}
+                      onClick={() => setSelectedTime(time)}
+                      className={cn(
+                        "py-2 rounded-lg text-xs font-medium transition-colors",
+                        selectedTime === time ? "bg-blue-600 text-white" : "bg-muted text-foreground hover:bg-muted/80",
+                      )}
+                    >
+                      {time}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="text-sm text-muted-foreground mb-2 block flex items-center gap-1">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  Safe meeting locations
+                </label>
+                <div className="space-y-2">
+                  {safeLocations.map((loc) => (
+                    <button
+                      key={loc.id}
+                      onClick={() => setSelectedLocation(loc.id)}
+                      className={cn(
+                        "w-full p-3 rounded-xl text-left transition-all flex items-start gap-3",
+                        selectedLocation === loc.id
+                          ? "bg-blue-50 dark:bg-blue-950/30 border-2 border-blue-500"
+                          : "bg-muted border-2 border-transparent hover:border-muted-foreground",
+                      )}
+                    >
+                      <MapPin className="w-5 h-5 text-blue-600 mt-0.5" />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-foreground">{loc.name}</span>
+                          {loc.verified && <BadgeCheck className="w-4 h-4 text-blue-500" />}
+                        </div>
+                        <p className="text-xs text-muted-foreground">{loc.address}</p>
+                      </div>
+                      <div className="flex items-center gap-0.5 text-xs text-muted-foreground">
+                        <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                        {loc.rating}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowScheduleModal(false)}
+                disabled={!selectedDate || !selectedTime || !selectedLocation}
+                className="w-full bg-blue-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+              >
+                Propose Meeting
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Product Details Panel */}
+        {showProductPanel && (
+          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
+            <div className="bg-card w-full rounded-t-3xl p-4 max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-foreground">Product Details</h3>
+                <button onClick={() => setShowProductPanel(false)}>
+                  <X className="w-6 h-6 text-muted-foreground" />
+                </button>
+              </div>
+
+              <div className="bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 rounded-xl h-48 flex items-center justify-center mb-4 relative overflow-hidden">
+                <Package className="w-16 h-16 text-muted-foreground" />
+                <div className="absolute top-2 right-2 bg-emerald-600 text-white text-xs px-2 py-1 rounded-full">
+                  98% Battery
+                </div>
+              </div>
+
+              <h2 className="text-xl font-bold text-foreground mb-1">iPhone 15 Pro Max - 256GB</h2>
+              <p className="text-muted-foreground text-sm mb-3">Natural Titanium �� Unlocked �� Like New</p>
+
+              <div className="flex items-center gap-3 mb-4">
+                <p className="text-emerald-600 font-bold text-2xl">$899</p>
+                <span className="text-base text-muted-foreground line-through">$1,099</span>
+                <span className="text-sm bg-red-100 dark:bg-red-900/30 text-red-600 px-2 py-0.5 rounded-full">
+                  Save $200
+                </span>
+              </div>
+
+              {/* Price Analysis */}
+              <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-3 mb-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <TrendingDown className="w-4 h-4 text-blue-600" />
+                  <span className="text-sm font-medium text-blue-700 dark:text-blue-400">Price Analysis</span>
+                </div>
+                <p className="text-xs text-blue-600">18% below market average. Great deal!</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="flex-1 h-1.5 bg-blue-200 dark:bg-blue-800 rounded-full">
+                    <div className="w-[82%] h-full bg-emerald-500 rounded-full" />
+                  </div>
+                  <span className="text-xs text-muted-foreground">Better than 82% of listings</span>
+                </div>
+              </div>
+
+              {/* Condition */}
+              <div className="mb-4">
+                <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-600" />
+                  Condition Checklist
+                </h4>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { label: "Screen", status: "Perfect", ok: true },
+                    { label: "Battery", status: "98%", ok: true },
+                    { label: "Camera", status: "Working", ok: true },
+                    { label: "Face ID", status: "Working", ok: true },
+                    { label: "Speakers", status: "Working", ok: true },
+                    { label: "Body", status: "No scratches", ok: true },
+                  ].map(({ label, status, ok }) => (
+                    <div key={label} className="flex items-center justify-between bg-muted rounded-lg px-3 py-2">
+                      <span className="text-xs text-muted-foreground">{label}</span>
+                      <span className={cn("text-xs font-medium", ok ? "text-emerald-600" : "text-red-600")}>
+                        {status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Seller */}
+              <div className="bg-muted rounded-xl p-4 mb-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
+                    <span className="text-white font-bold">JS</span>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-1">
+                      <span className="font-semibold text-foreground">John Seller</span>
+                      <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-500" />
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                      <span>4.9 (127 reviews)</span>
+                      <span>��</span>
+                      <span>Joined 2022</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  {[
+                    { value: "156", label: "Sales" },
+                    { value: "98%", label: "Response" },
+                    { value: "<1h", label: "Reply time" },
+                  ].map(({ value, label }) => (
+                    <div key={label} className="bg-card rounded-lg p-2">
+                      <p className="text-lg font-bold text-foreground">{value}</p>
+                      <p className="text-xs text-muted-foreground">{label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowProductPanel(false)
+                    setShowPaymentModal(true)
+                  }}
+                  className="flex-1 bg-blue-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <CreditCard className="w-5 h-5" />
+                  Buy Now
+                </button>
+                <button
+                  onClick={() => {
+                    setShowProductPanel(false)
+                    setShowOfferModal(true)
+                  }}
+                  className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors flex items-center justify-center gap-2"
+                >
+                  <DollarSign className="w-5 h-5" />
+                  Make Offer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Seller Profile */}
+        {showSellerProfile && (
+          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
+            <div className="bg-card w-full rounded-t-3xl p-4 max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-foreground">Seller Profile</h3>
+                <button onClick={() => setShowSellerProfile(false)}>
+                  <X className="w-6 h-6 text-muted-foreground" />
+                </button>
+              </div>
+
+              <div className="flex flex-col items-center mb-4">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center mb-3">
+                  <span className="text-white font-bold text-2xl">JS</span>
+                </div>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-xl font-bold text-foreground">John Seller</span>
+                  <BadgeCheck className="w-5 h-5 text-blue-500 fill-blue-500" />
+                </div>
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                  <span className="font-medium">4.9</span>
+                  <span className="text-sm">(127 reviews)</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-4 gap-2 mb-4">
+                {[
+                  { value: "156", label: "Sales" },
+                  { value: "98%", label: "Response" },
+                  { value: "<1h", label: "Reply" },
+                  { value: "2y", label: "Member" },
+                ].map(({ value, label }) => (
+                  <div key={label} className="bg-muted rounded-lg p-2 text-center">
+                    <p className="text-lg font-bold text-foreground">{value}</p>
+                    <p className="text-[10px] text-muted-foreground">{label}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-2 mb-4">
+                {[
+                  { icon: ShieldCheck, label: "ID Verified", color: "text-emerald-600" },
+                  { icon: Phone, label: "Phone Verified", color: "text-emerald-600" },
+                  { icon: MapPin, label: "Downtown Area", color: "text-blue-600" },
+                  { icon: Clock, label: "Usually responds within 1 hour", color: "text-muted-foreground" },
+                ].map(({ icon: Icon, label, color }) => (
+                  <div key={label} className="flex items-center gap-3 p-2 bg-muted rounded-lg">
+                    <Icon className={cn("w-4 h-4", color)} />
+                    <span className="text-sm text-foreground">{label}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex gap-2">
+                <button className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors">
+                  View Listings
+                </button>
+                <button
+                  onClick={() => {
+                    setShowSellerProfile(false)
+                    setShowReportModal(true)
+                  }}
+                  className="px-4 bg-secondary text-secondary-foreground py-2.5 rounded-xl hover:bg-secondary/80 transition-colors"
+                >
+                  <Flag className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Report Modal */}
+        {showReportModal && (
+          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
+            <div className="bg-card w-full rounded-t-3xl p-4 animate-in slide-in-from-bottom duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-foreground">Report Issue</h3>
+                <button onClick={() => setShowReportModal(false)}>
+                  <X className="w-6 h-6 text-muted-foreground" />
+                </button>
+              </div>
+              <div className="space-y-2 mb-4">
+                {["Suspicious behavior", "Spam or scam", "Offensive content", "Fake listing", "Other"].map((reason) => (
+                  <button
+                    key={reason}
+                    className="w-full p-3 bg-muted hover:bg-muted/80 rounded-xl text-left text-foreground transition-colors"
+                  >
+                    {reason}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setShowReportModal(false)}
+                className="w-full bg-red-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-red-700 transition-colors"
+              >
+                Submit Report
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Completion Celebration */}
+        {showCompletionCelebration && (
+          <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50 animate-in fade-in duration-200">
+            <div className="bg-card rounded-3xl p-6 mx-4 text-center animate-in zoom-in-95 duration-300">
+              <div className="w-20 h-20 mx-auto mb-4 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center">
+                <CheckCircle className="w-12 h-12 text-emerald-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Deal Accepted!</h2>
+              <p className="text-muted-foreground mb-4">You and John have agreed on $880</p>
+              <div className="bg-muted rounded-xl p-4 mb-4">
+                <p className="text-sm text-muted-foreground mb-1">Next step</p>
+                <p className="text-foreground font-medium">Schedule your meeting to complete the transaction</p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowCompletionCelebration(false)
+                    setShowScheduleModal(true)
+                  }}
+                  className="flex-1 bg-blue-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
+                >
+                  Schedule Meeting
+                </button>
+                <button
+                  onClick={() => setShowCompletionCelebration(false)}
+                  className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors"
+                >
+                  Later
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Image Viewer */}
         {viewingImage && (
           <div className="absolute inset-0 bg-black z-50 flex flex-col animate-in fade-in duration-200">
@@ -1764,7 +2310,141 @@ export default function ConversationDetail() {
             </div>
           </div>
         )}
+
+        {/* Rating Prompt */}
+        {showRatingPrompt && (
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50 animate-in fade-in duration-200">
+            <div className="bg-card rounded-3xl p-6 mx-4 max-w-sm animate-in zoom-in-95 duration-300">
+              <div className="text-center mb-4">
+                <div className="w-16 h-16 mx-auto mb-3 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold text-xl">JS</span>
+                </div>
+                <h2 className="text-xl font-bold text-foreground mb-1">Rate your experience</h2>
+                <p className="text-muted-foreground text-sm">How was your transaction with John?</p>
+              </div>
+              <div className="flex justify-center gap-2 mb-4">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button key={star} onClick={() => setRating(star)}>
+                    <Star
+                      className={cn(
+                        "w-8 h-8 transition-colors",
+                        star <= rating ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground",
+                      )}
+                    />
+                  </button>
+                ))}
+              </div>
+              <textarea
+                placeholder="Share your experience (optional)"
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+                className="w-full bg-muted rounded-xl px-4 py-3 outline-none text-foreground resize-none h-24 mb-4"
+              />
+              <button
+                onClick={() => setShowRatingPrompt(false)}
+                className="w-full bg-blue-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
+              >
+                Submit Review
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Insurance Modal */}
+        {showInsuranceModal && (
+          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
+            <div className="bg-card w-full rounded-t-3xl p-4 animate-in slide-in-from-bottom duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-foreground">Purchase Protection</h3>
+                <button onClick={() => setShowInsuranceModal(false)}>
+                  <X className="w-6 h-6 text-muted-foreground" />
+                </button>
+              </div>
+              <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl p-4 mb-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <Shield className="w-8 h-8 text-blue-600" />
+                  <div>
+                    <p className="font-semibold text-foreground">Buyer Protection</p>
+                    <p className="text-sm text-muted-foreground">Coverage for $880 purchase</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {[
+                    "Full refund if item not as described",
+                    "Protection against fraud",
+                    "24/7 support team",
+                    "Dispute resolution",
+                  ].map((item) => (
+                    <div key={item} className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-emerald-600" />
+                      <span className="text-sm text-foreground">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-muted rounded-xl mb-4">
+                <span className="text-foreground font-medium">Protection fee</span>
+                <span className="text-xl font-bold text-foreground">$12.99</span>
+              </div>
+              <button
+                onClick={() => setShowInsuranceModal(false)}
+                className="w-full bg-blue-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
+              >
+                Add Protection
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Receipt Modal */}
+        {showReceiptModal && (
+          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
+            <div className="bg-card w-full rounded-t-3xl p-4 animate-in slide-in-from-bottom duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-foreground">Transaction Receipt</h3>
+                <button onClick={() => setShowReceiptModal(false)}>
+                  <X className="w-6 h-6 text-muted-foreground" />
+                </button>
+              </div>
+              <div className="bg-muted rounded-xl p-4 mb-4">
+                <div className="border-b border-border pb-3 mb-3">
+                  <p className="text-xs text-muted-foreground">Transaction ID</p>
+                  <p className="font-mono text-foreground">#TXN-2024-12112345</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Item</span>
+                    <span className="text-foreground">iPhone 15 Pro Max</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Price</span>
+                    <span className="text-foreground">$880.00</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Protection</span>
+                    <span className="text-foreground">$12.99</span>
+                  </div>
+                  <div className="h-px bg-border my-2" />
+                  <div className="flex justify-between font-bold">
+                    <span className="text-foreground">Total</span>
+                    <span className="text-foreground">$892.99</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors flex items-center justify-center gap-2">
+                  <Download className="w-4 h-4" />
+                  Download
+                </button>
+                <button className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors flex items-center justify-center gap-2">
+                  <Share2 className="w-4 h-4" />
+                  Share
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
-  );
+  )
 }
