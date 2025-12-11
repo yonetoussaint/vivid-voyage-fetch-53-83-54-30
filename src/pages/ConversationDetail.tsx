@@ -1,140 +1,53 @@
-// src/pages/ConversationDetail.tsx
-import React, { useEffect, useRef, useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import MessageBubble from '@/components/messages/MessageBubble';
-import {
-  ArrowLeft,
-  Send,
-  MoreVertical,
-  Archive,
-  Ban,
-  Loader2,
-  Phone,
-  Video,
-  Camera,
-  Image as ImageIcon,
-  Mic,
-  Plus,
-  CheckCircle,
-  Shield,
-  Package,
-  DollarSign,
-  MapPin,
-  Calendar,
-  Truck,
-  Star,
-  X,
-  MicOff,
-  VideoOff,
-  PhoneCall,
-  Maximize2,
-  Minimize2,
-} from 'lucide-react';
+import { ArrowLeft, Send, MoreVertical, Archive, Ban, Loader2, Phone, Video, Search, X, Camera, Image as ImageIcon, Mic, ThumbsUp, Plus, Smile, MapPin, DollarSign, Package, Star, Shield, CheckCircle, CreditCard, Truck, Calendar, PhoneCall, MicOff, Volume2, Reply, TrendingDown, Zap, Lock, ArrowDown, Moon, Sun, Pin, PinOff, Copy, Forward, Trash2, Edit3, Clock, Check, CheckCheck, AlertTriangle, Eye, Play, Pause, ChevronDown, ChevronUp, ChevronRight, Heart, Share2, Flag, Bell, BellOff, BadgeCheck, ShieldCheck, Download, LayoutGrid, List, Receipt } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useMessages } from '@/hooks/useMessages';
 import { supabase } from '@/integrations/supabase/client';
-import { formatDistanceToNow } from 'date-fns';
+import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
-// PiP video call component (compact, same as demo)
-function PiPVideoCall({ onClose, isMinimized, onToggleMinimize, otherUser }: any) {
-  const [isAudioMuted, setIsAudioMuted] = useState(false);
-  const [isVideoMuted, setIsVideoMuted] = useState(false);
-  const [position, setPosition] = useState<'top-right' | 'bottom-right' | 'bottom-left' | 'top-left'>('top-right');
+type MessageType = {
+  id: number;
+  sender: "buyer" | "seller";
+  text: string;
+  time: string;
+  timestamp: Date;
+  hasImages?: boolean;
+  images?: string[];
+  type?: "text" | "offer" | "location" | "voice" | "system";
+  status?: "sent" | "delivered" | "read";
+  reactions?: { emoji: string; count: number; users: string[] }[];
+  replyTo?: number;
+  isPinned?: boolean;
+  isEdited?: boolean;
+  voiceDuration?: number;
+  isStarred?: boolean;
+  isDeleted?: boolean;
+  translatedText?: string;
+}
 
-  const positions: Record<string, string> = {
-    'top-left': 'top-20 left-4',
-    'top-right': 'top-20 right-4',
-    'bottom-left': 'bottom-20 left-4',
-    'bottom-right': 'bottom-20 right-4',
-  };
+type SafetyItem = {
+  id: string;
+  label: string;
+  checked: boolean;
+  important?: boolean;
+}
 
-  const cyclePosition = () => {
-    const order: any = ['top-right', 'bottom-right', 'bottom-left', 'top-left'];
-    const i = order.indexOf(position);
-    setPosition(order[(i + 1) % order.length]);
-  };
-
-  if (isMinimized) {
-    return (
-      <div className={`fixed ${positions[position]} w-24 h-24 bg-gray-900 rounded-full overflow-hidden border-2 border-blue-500 shadow-2xl z-40 group cursor-move`}>
-        <div className="relative h-full">
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
-            <span className="text-white text-xl font-bold">JS</span>
-          </div>
-          <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 p-2">
-            <button onClick={() => setIsAudioMuted(!isAudioMuted)} className={`w-7 h-7 rounded-full flex items-center justify-center ${isAudioMuted ? 'bg-red-500' : 'bg-white/30'}`}>
-              {isAudioMuted ? <MicOff className="w-3 h-3 text-white" /> : <Mic className="w-3 h-3 text-white" />}
-            </button>
-            <div className="flex gap-1">
-              <button onClick={onToggleMinimize} className="w-6 h-6 rounded-full bg-white/30 flex items-center justify-center"><Maximize2 className="w-3 h-3 text-white" /></button>
-              <button onClick={onClose} className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center"><X className="w-3 h-3 text-white" /></button>
-            </div>
-          </div>
-          <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 bg-green-500 px-2 py-0.5 rounded-full">
-            <p className="text-white text-xs font-medium">0:45</p>
-          </div>
-          <div className="absolute top-1 left-1 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900 animate-pulse"></div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className={`fixed ${positions[position]} w-56 h-72 bg-gray-900 rounded-2xl overflow-hidden border-2 border-blue-500 shadow-2xl z-40`}>
-      <div className="p-2 flex items-center justify-between bg-black/40 backdrop-blur-sm">
-        <div className="flex items-center gap-1.5">
-          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white font-bold text-xs">JS</div>
-          <div>
-            <p className="text-white font-semibold text-xs">{otherUser?.full_name || 'Seller'}</p>
-            <div className="flex items-center gap-1">
-              <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-              <p className="text-gray-300 text-xs">0:45</p>
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-1">
-          <button onClick={cyclePosition} className="text-white hover:bg-white/10 p-1 rounded" title="Change position">
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
-          </button>
-          <button onClick={onToggleMinimize} className="text-white hover:bg-white/10 p-1 rounded"><Minimize2 className="w-3 h-3" /></button>
-          <button onClick={onClose} className="text-white hover:bg-white/10 p-1 rounded"><X className="w-3 h-3" /></button>
-        </div>
-      </div>
-
-      <div className="relative h-44 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white text-xl font-bold mx-auto">JS</div>
-          <p className="text-white text-xs font-medium mt-1">John</p>
-        </div>
-
-        <div className="absolute bottom-1.5 right-1.5 w-12 h-16 bg-gray-800 rounded-md overflow-hidden border border-white/20">
-          <div className="w-full h-full bg-gradient-to-br from-blue-800 to-blue-900 flex items-center justify-center"><p className="text-white text-xs">You</p></div>
-        </div>
-
-        <div className="absolute top-1.5 right-1.5 bg-green-500/30 backdrop-blur-sm px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-          <div className="flex gap-0.5"><div className="w-0.5 h-1.5 bg-green-500 rounded"></div><div className="w-0.5 h-2 bg-green-500 rounded"></div><div className="w-0.5 h-2.5 bg-green-500 rounded"></div></div>
-        </div>
-      </div>
-
-      <div className="p-2 bg-black/50 backdrop-blur-sm">
-        <div className="flex items-center justify-center gap-2">
-          <button onClick={() => setIsAudioMuted(!isAudioMuted)} className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${isAudioMuted ? 'bg-red-500' : 'bg-white/20'}`}>
-            {isAudioMuted ? <MicOff className="w-4 h-4 text-white" /> : <Mic className="w-4 h-4 text-white" />}
-          </button>
-
-          <button onClick={onClose} className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center shadow-lg hover:bg-red-600">
-            <PhoneCall className="w-4 h-4 text-white transform rotate-135" />
-          </button>
-
-          <button onClick={() => setIsVideoMuted(!isVideoMuted)} className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${isVideoMuted ? 'bg-red-500' : 'bg-white/20'}`}>
-            {isVideoMuted ? <VideoOff className="w-4 h-4 text-white" /> : <Video className="w-4 h-4 text-white" />}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+type NegotiationEntry = {
+  id: number;
+  type: "offer" | "counter" | "accept" | "reject";
+  amount: number;
+  from: "buyer" | "seller";
+  time: string;
+  message?: string;
 }
 
 export default function ConversationDetail() {
@@ -143,35 +56,275 @@ export default function ConversationDetail() {
   const [messageText, setMessageText] = useState('');
   const [otherUser, setOtherUser] = useState<any>(null);
   const [loadingUser, setLoadingUser] = useState(true);
-  const [showQuickActions, setShowQuickActions] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showVideoCall, setShowVideoCall] = useState(false);
-  const [isCallMinimized, setIsCallMinimized] = useState(false);
-
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const { user, isLoading } = useAuth();
   const currentUserId = user?.id || '';
 
-  const { messages, loading, isConnected, sendMessage, blockUser, archiveConversation } = useMessages(
+  // UI state from the provided UI
+  const [darkMode, setDarkMode] = useState(false);
+  const [showQuickActions, setShowQuickActions] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showProductPanel, setShowProductPanel] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResultIndex, setSearchResultIndex] = useState(0);
+  const [showSafetyChecklist, setShowSafetyChecklist] = useState(false);
+  const [showNegotiationHistory, setShowNegotiationHistory] = useState(false);
+  const [showMediaGallery, setShowMediaGallery] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showEmojiPickerForMessage, setShowEmojiPickerForMessage] = useState<number | null>(null);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const [showSellerProfile, setShowSellerProfile] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [showOfferModal, setShowOfferModal] = useState(false);
+  const [showInsuranceModal, setShowInsuranceModal] = useState(false);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [showCompletionCelebration, setShowCompletionCelebration] = useState(false);
+  const [showRatingPrompt, setShowRatingPrompt] = useState(false);
+  const [pinnedMessagesExpanded, setPinnedMessagesExpanded] = useState(false);
+  const [messageActionsId, setMessageActionsId] = useState<number | null>(null);
+  const [replyingTo, setReplyingTo] = useState<MessageType | null>(null);
+  const [editingMessage, setEditingMessage] = useState<MessageType | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const [playingVoiceId, setPlayingVoiceId] = useState<number | null>(null);
+  const [activeCall, setActiveCall] = useState<null | "ringing" | "audio" | "video">(null);
+  const [callDuration, setCallDuration] = useState(0);
+  const [isAudioMuted, setIsAudioMuted] = useState(false);
+  const [isVideoOff, setIsVideoOff] = useState(false);
+  const [isSpeakerOn, setIsSpeakerOn] = useState(false);
+  const [isTyping, setIsTyping] = useState(true);
+  const [sellerOnline, setSellerOnline] = useState(true);
+  const [lastSeen, setLastSeen] = useState("Online");
+  const [selectedPayment, setSelectedPayment] = useState("cash");
+  const [offerAmount, setOfferAmount] = useState('');
+  const [offerMessage, setOfferMessage] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedTime, setSelectedTime] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState('');
+  const [rating, setRating] = useState(0);
+  const [reviewText, setReviewText] = useState('');
+  const [notificationsMuted, setNotificationsMuted] = useState(false);
+  const [showTranslation, setShowTranslation] = useState(false);
+  const [viewingImage, setViewingImage] = useState<string | null>(null);
+  const [mediaGalleryView, setMediaGalleryView] = useState<"grid" | "list">("grid");
+  
+  // Messages state
+  const [messages, setMessages] = useState<MessageType[]>([
+    {
+      id: 1,
+      sender: "seller",
+      text: "Hey! Thanks for your interest in the iPhone 15 Pro Max. It's in excellent condition!",
+      time: "10:32 AM",
+      timestamp: new Date(Date.now() - 3600000 * 2),
+      status: "read",
+      reactions: [{ emoji: "👋", count: 1, users: ["You"] }],
+    },
+    {
+      id: 2,
+      sender: "seller",
+      text: "Here are some photos of the device:",
+      time: "10:33 AM",
+      timestamp: new Date(Date.now() - 3600000 * 1.9),
+      hasImages: true,
+      images: [
+        "/placeholder.svg?height=200&width=200",
+        "/placeholder.svg?height=200&width=200",
+        "/placeholder.svg?height=200&width=200",
+      ],
+      status: "read",
+    },
+    {
+      id: 3,
+      sender: "buyer",
+      text: "Looks amazing! Does it come with original box and accessories?",
+      time: "10:34 AM",
+      timestamp: new Date(Date.now() - 3600000 * 1.8),
+      status: "read",
+    },
+    {
+      id: 4,
+      sender: "seller",
+      text: "Yes! Original box, charger, cable, and even the unused stickers. Everything included.",
+      time: "10:35 AM",
+      timestamp: new Date(Date.now() - 3600000 * 1.7),
+      status: "read",
+      isPinned: true,
+    },
+    {
+      id: 5,
+      sender: "buyer",
+      text: "Perfect! Any scratches or damages?",
+      time: "10:36 AM",
+      timestamp: new Date(Date.now() - 3600000 * 1.6),
+      status: "read",
+    },
+    {
+      id: 6,
+      sender: "seller",
+      text: "No scratches! Always used with case and screen protector. Battery health is 98%. Face ID and all features work perfectly.",
+      time: "10:37 AM",
+      timestamp: new Date(Date.now() - 3600000 * 1.5),
+      status: "read",
+      isPinned: true,
+    },
+    {
+      id: 7,
+      sender: "buyer",
+      text: "Would you consider $850?",
+      time: "10:38 AM",
+      timestamp: new Date(Date.now() - 3600000 * 1.4),
+      type: "offer",
+      status: "read",
+    },
+    {
+      id: 8,
+      sender: "seller",
+      text: "I can do $880 - that's my best price. Includes all original accessories and I'll throw in a premium case.",
+      time: "10:39 AM",
+      timestamp: new Date(Date.now() - 3600000 * 1.3),
+      type: "offer",
+      status: "read",
+    },
+    {
+      id: 9,
+      sender: "buyer",
+      text: "Deal! When can we meet?",
+      time: "10:40 AM",
+      timestamp: new Date(Date.now() - 3600000),
+      status: "delivered",
+      reactions: [{ emoji: "🤝", count: 2, users: ["You", "John Seller"] }],
+    },
+  ]);
+
+  // Safety checklist
+  const [safetyItems, setSafetyItems] = useState<SafetyItem[]>([
+    { id: "public", label: "Meet in a public place", checked: true, important: true },
+    { id: "daylight", label: "Meet during daylight hours", checked: true, important: true },
+    { id: "friend", label: "Bring a friend or tell someone", checked: false },
+    { id: "cash", label: "Bring exact cash amount", checked: false },
+    { id: "inspect", label: "Inspect item before paying", checked: false, important: true },
+    { id: "receipt", label: "Get a receipt or proof", checked: false },
+    { id: "phone", label: "Keep phone charged", checked: true },
+    { id: "transport", label: "Arrange safe transport home", checked: false },
+  ]);
+
+  // Negotiation history
+  const [negotiationHistory] = useState<NegotiationEntry[]>([
+    { id: 1, type: "offer", amount: 850, from: "buyer", time: "10:38 AM", message: "Initial offer" },
+    { id: 2, type: "counter", amount: 880, from: "seller", time: "10:39 AM", message: "Counter with bonus case" },
+    { id: 3, type: "accept", amount: 880, from: "buyer", time: "10:40 AM", message: "Deal accepted!" },
+  ]);
+
+  // Progress steps
+  const [currentStep, setCurrentStep] = useState(2);
+  const progressSteps = [
+    { id: 1, label: "Inquiry", completed: true },
+    { id: 2, label: "Negotiation", completed: true },
+    { id: 3, label: "Agreement", completed: false, active: true },
+    { id: 4, label: "Meeting", completed: false },
+    { id: 5, label: "Complete", completed: false },
+  ];
+
+  const { loading, isConnected, sendMessage, blockUser, archiveConversation } = useMessages(
     conversationId || null,
     currentUserId
   );
 
+  // Derived data
+  const pinnedMessages = messages.filter((m) => m.isPinned);
+  const starredMessages = messages.filter((m) => m.isStarred);
+  const allMedia = messages.filter((m) => m.hasImages).flatMap((m) => m.images || []);
+  const searchResults = searchQuery
+    ? messages.filter((m) => m.text.toLowerCase().includes(searchQuery.toLowerCase()))
+    : [];
+  const filteredMessages = searchQuery ? searchResults : messages;
+
+  // Emojis for reactions
+  const reactionEmojis = ["👍", "❤️", "😂", "😮", "😢", "🙏", "🔥", "🤝"];
+  const allEmojis = ["😀", "😃", "😄", "😁", "😅", "😂", "🤣", "😊", "😇", "🙂", "😉", "😌", "😍", "🥰", "😘", "😗", "😙", "😚", "😋", "😛", "😜", "🤪", "😝", "🤑", "🤗", "🤭", "🤫", "🤔", "🤐", "🤨", "😐", "😑", "😶", "😏", "😒", "🙄", "😬", "😮", "🥱", "😴", "🤤", "😪", "😵", "🤯", "🤠", "🥳", "🥸", "😎", "🤓", "🧐", "😕", "😟", "🙁", "😮", "😯", "😲", "😳", "🥺", "😦", "😧", "👍", "👎", "👌", "🤌", "🤏", "✌️", "🤞", "🤟", "🤘", "🤙", "👈", "👉", "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎", "💔", "❤️‍🔥", "💕", "🔥", "✨", "💫", "⭐", "🌟", "💥", "💢", "💦", "💨", "🎉", "🎊", "🎁"];
+
+  // Quick replies
+  const quickReplies = [
+    "Is this still available?",
+    "What's your best price?",
+    "Can we meet today?",
+    "Can you send more photos?",
+    "Is the price negotiable?",
+    "Where are you located?",
+  ];
+
+  // Quick actions
+  const quickActions = [
+    { icon: DollarSign, label: "Offer", color: "text-emerald-600", action: () => setShowOfferModal(true) },
+    { icon: MapPin, label: "Location", color: "text-blue-600", action: () => setShowLocationPicker(true) },
+    { icon: Calendar, label: "Schedule", color: "text-orange-600", action: () => setShowScheduleModal(true) },
+    { icon: ImageIcon, label: "Photos", color: "text-purple-600" },
+    { icon: CreditCard, label: "Payment", color: "text-pink-600", action: () => setShowPaymentModal(true) },
+    { icon: Truck, label: "Shipping", color: "text-cyan-600" },
+    { icon: Shield, label: "Insurance", color: "text-amber-600", action: () => setShowInsuranceModal(true) },
+    { icon: Receipt, label: "Receipt", color: "text-slate-600", action: () => setShowReceiptModal(true) },
+  ];
+
+  // Payment methods
+  const paymentMethods = [
+    { id: "cash", name: "Cash on Delivery", desc: "Pay when you receive the item", icon: DollarSign, color: "emerald" },
+    { id: "escrow", name: "Secure Escrow", desc: "Payment held until confirmed", icon: Shield, color: "blue" },
+    { id: "moncash", name: "Moncash", desc: "Mobile money transfer", initial: "M", color: "blue" },
+    { id: "natcash", name: "Natcash", desc: "Mobile money transfer", initial: "N", color: "orange" },
+    { id: "card", name: "Card Payment", desc: "Credit or debit card", icon: CreditCard, color: "purple" },
+  ];
+
+  // Safe locations
+  const safeLocations = [
+    { id: "1", name: "Police Station Lobby", address: "123 Safety Ave", rating: 5, verified: true },
+    { id: "2", name: "Starbucks Downtown", address: "456 Main St", rating: 4.8, verified: true },
+    { id: "3", name: "Mall Food Court", address: "789 Shopping Blvd", rating: 4.5, verified: true },
+    { id: "4", name: "Public Library", address: "321 Book Lane", rating: 4.7, verified: true },
+  ];
+
+  // Effects
   useEffect(() => {
-    if (conversationId) fetchOtherUser();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (conversationId) {
+      fetchOtherUser();
+    }
   }, [conversationId]);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    if (activeCall === "audio" || activeCall === "video") {
+      const interval = setInterval(() => setCallDuration((d) => d + 1), 1000);
+      return () => clearInterval(interval);
+    }
+    setCallDuration(0);
+  }, [activeCall]);
+
+  useEffect(() => {
+    if (isRecording) {
+      const interval = setInterval(() => setRecordingDuration((d) => d + 1), 1000);
+      return () => clearInterval(interval);
+    }
+    setRecordingDuration(0);
+  }, [isRecording]);
+
+  // Simulate typing indicator
+  useEffect(() => {
+    const timeout = setTimeout(() => setIsTyping(false), 3000);
+    return () => clearTimeout(timeout);
+  }, []);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  async function fetchOtherUser() {
+  const fetchOtherUser = async () => {
     try {
       setLoadingUser(true);
       const { data: participants } = await supabase
@@ -183,20 +336,23 @@ export default function ConversationDetail() {
       if (participants && participants.length > 0) {
         setOtherUser(participants[0].profiles);
       }
-    } catch (err) {
-      console.error('fetchOtherUser err', err);
+    } catch (error) {
+      console.error('Error fetching other user:', error);
     } finally {
       setLoadingUser(false);
     }
-  }
+  };
 
   const handleSendMessage = async () => {
     if (!messageText.trim()) return;
-    const success = await sendMessage(messageText.trim());
-    if (success) setMessageText('');
+
+    const success = await sendMessage(messageText);
+    if (success) {
+      setMessageText('');
+    }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -205,344 +361,1671 @@ export default function ConversationDetail() {
 
   const handleBlockUser = async () => {
     if (!otherUser) return;
+
     const success = await blockUser(otherUser.id);
-    if (success) navigate('/messages');
+    if (success) {
+      navigate('/messages');
+    }
   };
 
   const handleArchive = async () => {
     const success = await archiveConversation();
-    if (success) navigate('/messages');
+    if (success) {
+      navigate('/messages');
+    }
   };
 
-  const getInitials = (name?: string) =>
-    (name || 'U')
-      .split(' ')
+  const getInitials = (name: string) => {
+    return name
+      ?.split(' ')
       .map(n => n[0])
       .join('')
       .toUpperCase()
-      .slice(0, 2);
-
-  if (isLoading || !user) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-      </div>
-    );
-  }
-
-  if (loadingUser) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-      </div>
-    );
-  }
-
-  // Example quick actions & payment methods (you can wire them to real actions)
-  const quickActions = [
-    { icon: DollarSign, label: 'Offer' },
-    { icon: MapPin, label: 'Location' },
-    { icon: Calendar, label: 'Schedule' },
-    { icon: ImageIcon, label: 'Photos' },
-    { icon: DollarSign, label: 'Payment' },
-    { icon: Truck, label: 'Shipping' },
-    { icon: Star, label: 'Review' },
-    { icon: Package, label: 'Warranty' },
-  ];
-
-  const product = {
-    title: 'iPhone 15 Pro Max - 256GB',
-    price: '$899',
-    oldPrice: '$1,099',
-    inStock: true,
-    listedAgo: '2 days ago',
+      .slice(0, 2) || 'U';
   };
 
+  const handleScroll = () => {
+    if (chatContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
+      setShowScrollToBottom(scrollHeight - scrollTop - clientHeight > 100);
+    }
+  };
+
+  const scrollToMessage = (messageId: number) => {
+    const element = document.getElementById(`message-${messageId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      element.classList.add("bg-yellow-100", "dark:bg-yellow-900/30");
+      setTimeout(() => element.classList.remove("bg-yellow-100", "dark:bg-yellow-900/30"), 2000);
+    }
+  };
+
+  const handleSend = () => {
+    if (!messageText.trim() && !isRecording) return;
+
+    const newMessage: MessageType = {
+      id: messages.length + 1,
+      sender: "buyer",
+      text: editingMessage ? messageText : messageText,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      timestamp: new Date(),
+      status: "sent",
+      replyTo: replyingTo?.id,
+      isEdited: !!editingMessage,
+      type: isRecording ? "voice" : "text",
+      voiceDuration: isRecording ? recordingDuration : undefined,
+    };
+
+    if (editingMessage) {
+      setMessages((prev) => prev.map((m) => (m.id === editingMessage.id ? { ...m, text: messageText, isEdited: true } : m)));
+      setEditingMessage(null);
+    } else {
+      setMessages([...messages, newMessage]);
+    }
+
+    setMessageText('');
+    setReplyingTo(null);
+    setIsRecording(false);
+    setTimeout(scrollToBottom, 100);
+
+    // Simulate message status updates
+    setTimeout(() => {
+      setMessages((prev) => prev.map((m) => (m.id === newMessage.id ? { ...m, status: "delivered" } : m)));
+    }, 1000);
+    setTimeout(() => {
+      setMessages((prev) => prev.map((m) => (m.id === newMessage.id ? { ...m, status: "read" } : m)));
+    }, 2500);
+  };
+
+  const addReaction = (messageId: number, emoji: string) => {
+    setMessages((prev) =>
+      prev.map((m) => {
+        if (m.id === messageId) {
+          const existingReaction = m.reactions?.find((r) => r.emoji === emoji);
+          if (existingReaction) {
+            if (existingReaction.users.includes("You")) {
+              return {
+                ...m,
+                reactions: m.reactions
+                  ?.filter((r) => r.emoji !== emoji || r.count > 1)
+                  .map((r) =>
+                    r.emoji === emoji ? { ...r, count: r.count - 1, users: r.users.filter((u) => u !== "You") } : r,
+                  ),
+              };
+            }
+            return {
+              ...m,
+              reactions: m.reactions?.map((r) =>
+                r.emoji === emoji ? { ...r, count: r.count + 1, users: [...r.users, "You"] } : r,
+              ),
+            };
+          }
+          return { ...m, reactions: [...(m.reactions || []), { emoji, count: 1, users: ["You"] }] };
+        }
+        return m;
+      }),
+    );
+    setShowEmojiPickerForMessage(null);
+  };
+
+  const togglePin = (messageId: number) => {
+    setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, isPinned: !m.isPinned } : m)));
+    setMessageActionsId(null);
+  };
+
+  const toggleStar = (messageId: number) => {
+    setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, isStarred: !m.isStarred } : m)));
+    setMessageActionsId(null);
+  };
+
+  const deleteMessage = (messageId: number) => {
+    setMessages((prev) =>
+      prev.map((m) => (m.id === messageId ? { ...m, isDeleted: true, text: "This message was deleted" } : m)),
+    );
+    setMessageActionsId(null);
+  };
+
+  const copyMessage = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setMessageActionsId(null);
+  };
+
+  const handleQuickReply = (reply: string) => {
+    setMessageText(reply);
+  };
+
+  const sendOffer = () => {
+    if (!offerAmount) return;
+    const newMessage: MessageType = {
+      id: messages.length + 1,
+      sender: "buyer",
+      text: `I'd like to offer $${offerAmount}${offerMessage ? ` - ${offerMessage}` : ""}`,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      timestamp: new Date(),
+      status: "sent",
+      type: "offer",
+    };
+    setMessages([...messages, newMessage]);
+    setOfferAmount('');
+    setOfferMessage('');
+    setShowOfferModal(false);
+    setTimeout(scrollToBottom, 100);
+  };
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const highlightText = (text: string, query: string) => {
+    if (!query) return text;
+    const parts = text.split(new RegExp(`(${query})`, "gi"));
+    return parts.map((part, i) =>
+      part.toLowerCase() === query.toLowerCase() ? (
+        <mark key={i} className="bg-yellow-300 dark:bg-yellow-600 px-0.5 rounded">
+          {part}
+        </mark>
+      ) : (
+        part
+      ),
+    );
+  };
+
+  const getStatusIcon = (status?: string) => {
+    switch (status) {
+      case "sent":
+        return <Check className="w-3 h-3 text-muted-foreground" />;
+      case "delivered":
+        return <CheckCheck className="w-3 h-3 text-muted-foreground" />;
+      case "read":
+        return <CheckCheck className="w-3 h-3 text-blue-500" />;
+      default:
+        return <Clock className="w-3 h-3 text-muted-foreground" />;
+    }
+  };
+
+  if (isLoading || !user || loadingUser) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
   return (
-    <div className="h-screen bg-gray-50 text-gray-900 flex flex-col overflow-hidden relative">
-      {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2.5 shrink-0 bg-white border-b border-gray-200 shadow-sm">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <button onClick={() => navigate('/messages')}>
-            <ArrowLeft className="w-6 h-6 text-blue-600 shrink-0" />
+    <div className={cn("w-full h-screen flex flex-col overflow-hidden relative transition-colors duration-300", darkMode ? "dark" : "")}>
+      <div className="flex-1 flex flex-col bg-background text-foreground">
+        {/* Header */}
+        <div className="px-3 py-2 flex items-center gap-2 shrink-0 bg-card border-b border-border shadow-sm">
+          <button
+            onClick={() => navigate('/messages')}
+            className="p-1.5 hover:bg-muted rounded-full transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
 
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-red-500 shrink-0 flex items-center justify-center relative">
-            {otherUser?.avatar_url ? (
-              <img src={otherUser.avatar_url} alt="avatar" className="w-full h-full object-cover rounded-full" />
-            ) : (
-              <span className="text-white font-bold text-sm">{getInitials(otherUser?.full_name)}</span>
-            )}
-            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-          </div>
-
-          <div className="min-w-0 flex-1">
-            <div className="font-semibold text-base truncate flex items-center gap-1">
-              {otherUser?.full_name || 'User'}
-              <CheckCircle className="w-4 h-4 text-blue-600" />
+          <button onClick={() => setShowSellerProfile(true)} className="flex items-center gap-2.5 flex-1 min-w-0">
+            <div className="relative">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0">
+                <span className="text-white font-bold text-sm">{getInitials(otherUser?.full_name || 'User')}</span>
+              </div>
+              {sellerOnline && (
+                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-card" />
+              )}
             </div>
-            <div className="text-gray-500 text-xs flex items-center gap-1">
-              <Star className="w-3 h-3 text-yellow-500" />
-              <span>{otherUser?.rating ? `${otherUser.rating} •` : '4.9 •'} Active now</span>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="text-foreground font-semibold text-sm truncate">{otherUser?.full_name || 'User'}</span>
+                <div className="group relative">
+                  <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-500 cursor-help" />
+                  <div className="absolute left-0 top-6 w-48 bg-popover border border-border rounded-lg p-2 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                    <div className="flex items-center gap-2 mb-1">
+                      <ShieldCheck className="w-4 h-4 text-blue-500" />
+                      <span className="text-xs font-medium text-foreground">Verified Seller</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">ID verified, 127 successful sales, 4.9 rating</p>
+                  </div>
+                </div>
+              </div>
+              <p className="text-muted-foreground text-xs flex items-center gap-1">
+                {sellerOnline ? (
+                  <>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    {isConnected ? "Live" : "Online now"}
+                  </>
+                ) : (
+                  <>Last seen {lastSeen}</>
+                )}
+                <span className="mx-1">•</span>
+                <Clock className="w-3 h-3" />
+                <span>Usually responds in ~1hr</span>
+              </p>
+            </div>
+          </button>
+
+          <div className="flex items-center gap-0.5">
+            <button
+              onClick={() => setActiveCall("audio")}
+              className="p-2 hover:bg-muted rounded-full transition-colors"
+            >
+              <Phone className="w-5 h-5 text-foreground" />
+            </button>
+            <button
+              onClick={() => setActiveCall("video")}
+              className="p-2 hover:bg-muted rounded-full transition-colors"
+            >
+              <Video className="w-5 h-5 text-foreground" />
+            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowMenu(!showMenu)}
+                className="p-2 hover:bg-muted rounded-full transition-colors"
+              >
+                <MoreVertical className="w-5 h-5 text-foreground" />
+              </button>
+
+              {showMenu && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
+                  <div className="absolute right-0 top-10 w-56 bg-popover border border-border rounded-xl shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <button
+                      onClick={() => {
+                        setShowSearch(true);
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
+                    >
+                      <Search className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm text-foreground">Search in chat</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowMediaGallery(true);
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
+                    >
+                      <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm text-foreground">Shared media</span>
+                      <span className="ml-auto text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                        {allMedia.length}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowNegotiationHistory(true);
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
+                    >
+                      <TrendingDown className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm text-foreground">Negotiation history</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowSafetyChecklist(true);
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
+                    >
+                      <Shield className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm text-foreground">Safety checklist</span>
+                    </button>
+                    <div className="h-px bg-border my-1" />
+                    <button
+                      onClick={() => {
+                        setNotificationsMuted(!notificationsMuted);
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
+                    >
+                      {notificationsMuted ? (
+                        <BellOff className="w-4 h-4 text-muted-foreground" />
+                      ) : (
+                        <Bell className="w-4 h-4 text-muted-foreground" />
+                      )}
+                      <span className="text-sm text-foreground">
+                        {notificationsMuted ? "Unmute" : "Mute"} notifications
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setDarkMode(!darkMode);
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
+                    >
+                      {darkMode ? (
+                        <Sun className="w-4 h-4 text-muted-foreground" />
+                      ) : (
+                        <Moon className="w-4 h-4 text-muted-foreground" />
+                      )}
+                      <span className="text-sm text-foreground">{darkMode ? "Light" : "Dark"} mode</span>
+                    </button>
+                    <div className="h-px bg-border my-1" />
+                    <button
+                      onClick={() => {
+                        setShowReportModal(true);
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors text-red-600"
+                    >
+                      <Flag className="w-4 h-4" />
+                      <span className="text-sm">Report seller</span>
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-4 shrink-0">
-          <Phone className="w-5 h-5 text-blue-600 cursor-pointer" onClick={() => setShowVideoCall(true)} />
-          <Video className="w-5 h-5 text-blue-600 cursor-pointer" onClick={() => setShowVideoCall(true)} />
-          <div className="relative">
-            <MoreVertical className="w-5 h-5 text-blue-600 cursor-pointer" onClick={() => setShowMenu(!showMenu)} />
-            {showMenu && (
-              <div className="absolute right-0 top-8 bg-white rounded-lg shadow-xl py-2 w-48 z-50 border border-gray-200">
-                {[
-                  { icon: Shield, label: 'View Seller Profile' },
-                  { icon: Star, label: 'View Reviews' },
-                  { icon: Shield, label: 'Report User', danger: true },
-                  { icon: Ban, label: 'Block User', danger: true },
-                ].map((item: any, i: number) => (
-                  <button key={i} onClick={() => { if (item.label === 'Block User') handleBlockUser(); }} className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2 ${item.danger ? 'text-red-600' : ''}`}>
-                    <item.icon className="w-4 h-4" />
-                    {item.label}
+
+        {/* Call Banner */}
+        {(activeCall === "ringing" || activeCall === "audio" || activeCall === "video") && (
+          <div
+            className={cn(
+              "px-4 py-2.5 shrink-0 flex items-center justify-between",
+              activeCall === "ringing"
+                ? "bg-gradient-to-r from-yellow-500 to-orange-500"
+                : "bg-gradient-to-r from-emerald-500 to-teal-600",
+            )}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                {activeCall === "video" ? (
+                  <Video className="w-4 h-4 text-white" />
+                ) : (
+                  <Phone className="w-4 h-4 text-white" />
+                )}
+              </div>
+              <div>
+                <p className="text-white text-sm font-semibold flex items-center gap-2">
+                  {activeCall === "ringing"
+                    ? `Calling ${otherUser?.full_name || 'User'}`
+                    : `${activeCall === "video" ? "Video" : "Voice"} call`}
+                  {activeCall === "ringing" && (
+                    <span className="flex gap-0.5">
+                      {[0, 0.2, 0.4].map((delay, i) => (
+                        <span
+                          key={i}
+                          className="w-1 h-1 bg-white rounded-full animate-pulse"
+                          style={{ animationDelay: `${delay}s` }}
+                        />
+                      ))}
+                    </span>
+                  )}
+                </p>
+                <p className="text-white/90 text-xs">
+                  {activeCall === "ringing" ? "Waiting for answer..." : formatDuration(callDuration)}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {activeCall !== "ringing" && (
+                <>
+                  <button
+                    onClick={() => setIsAudioMuted(!isAudioMuted)}
+                    className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center transition-colors",
+                      isAudioMuted ? "bg-red-500" : "bg-white/20",
+                    )}
+                  >
+                    {isAudioMuted ? <MicOff className="w-4 h-4 text-white" /> : <Mic className="w-4 h-4 text-white" />}
+                  </button>
+                  {activeCall === "video" && (
+                    <button
+                      onClick={() => setIsVideoOff(!isVideoOff)}
+                      className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center transition-colors",
+                        isVideoOff ? "bg-red-500" : "bg-white/20",
+                      )}
+                    >
+                      {isVideoOff ? (
+                        <Video className="w-4 h-4 text-white line-through" />
+                      ) : (
+                        <Video className="w-4 h-4 text-white" />
+                      )}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setIsSpeakerOn(!isSpeakerOn)}
+                    className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center transition-colors",
+                      isSpeakerOn ? "bg-white/40" : "bg-white/20",
+                    )}
+                  >
+                    <Volume2 className="w-4 h-4 text-white" />
+                  </button>
+                </>
+              )}
+              <button
+                onClick={() => setActiveCall(null)}
+                className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center hover:bg-red-600 transition-colors"
+              >
+                <PhoneCall className="w-4 h-4 text-white rotate-[135deg]" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Search Panel */}
+        {showSearch && (
+          <div className="px-3 py-2 bg-card border-b border-border flex items-center gap-2 animate-in slide-in-from-top duration-200">
+            <div className="flex-1 bg-muted rounded-full px-3 py-1.5 flex items-center gap-2">
+              <Search className="w-4 h-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search messages..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setSearchResultIndex(0);
+                }}
+                className="flex-1 bg-transparent outline-none text-sm text-foreground placeholder:text-muted-foreground"
+                autoFocus
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery('')}>
+                  <X className="w-4 h-4 text-muted-foreground" />
+                </button>
+              )}
+            </div>
+            {searchResults.length > 0 && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <span>
+                  {searchResultIndex + 1}/{searchResults.length}
+                </span>
+                <button
+                  onClick={() => {
+                    const newIndex = searchResultIndex > 0 ? searchResultIndex - 1 : searchResults.length - 1;
+                    setSearchResultIndex(newIndex);
+                    scrollToMessage(searchResults[newIndex].id);
+                  }}
+                  className="p-1 hover:bg-muted rounded"
+                >
+                  <ChevronUp className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => {
+                    const newIndex = searchResultIndex < searchResults.length - 1 ? searchResultIndex + 1 : 0;
+                    setSearchResultIndex(newIndex);
+                    scrollToMessage(searchResults[newIndex].id);
+                  }}
+                  className="p-1 hover:bg-muted rounded"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+            <button
+              onClick={() => {
+                setShowSearch(false);
+                setSearchQuery('');
+              }}
+            >
+              <X className="w-5 h-5 text-muted-foreground" />
+            </button>
+          </div>
+        )}
+
+        {/* Pinned Messages */}
+        {pinnedMessages.length > 0 && !showSearch && (
+          <div className="bg-amber-50 dark:bg-amber-950/20 border-b border-amber-200 dark:border-amber-800">
+            <button
+              onClick={() => setPinnedMessagesExpanded(!pinnedMessagesExpanded)}
+              className="w-full px-3 py-2 flex items-center gap-2"
+            >
+              <Pin className="w-4 h-4 text-amber-600" />
+              <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
+                {pinnedMessages.length} pinned message{pinnedMessages.length > 1 ? "s" : ""}
+              </span>
+              <ChevronDown
+                className={cn(
+                  "w-4 h-4 text-amber-600 ml-auto transition-transform",
+                  pinnedMessagesExpanded && "rotate-180",
+                )}
+              />
+            </button>
+            {pinnedMessagesExpanded && (
+              <div className="px-3 pb-2 space-y-1">
+                {pinnedMessages.map((msg) => (
+                  <button
+                    key={msg.id}
+                    onClick={() => scrollToMessage(msg.id)}
+                    className="w-full text-left px-2 py-1.5 bg-white dark:bg-card rounded-lg text-xs text-foreground truncate hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+                  >
+                    <span className="text-muted-foreground">{msg.sender === "seller" ? `${otherUser?.full_name || 'User'}: ` : "You: "}</span>
+                    {msg.text}
                   </button>
                 ))}
               </div>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Product Card */}
-      <div className="mx-4 mt-3 bg-white rounded-xl p-3 shrink-0 border border-gray-200 shadow-sm">
-        <div className="flex gap-3">
-          <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center shrink-0">
-            <Package className="w-8 h-8 text-gray-400" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-sm mb-1">{product.title}</h3>
-            <div className="flex items-center gap-2 mb-1">
-              <p className="text-green-600 font-bold text-lg">{product.price}</p>
-              <span className="text-xs text-gray-400 line-through">{product.oldPrice}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">In Stock</span>
-              <span className="text-xs text-gray-500">Listed 2 days ago</span>
-            </div>
-          </div>
-        </div>
-        <div className="mt-3 flex gap-2">
-          <button className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1 hover:bg-blue-700">
-            <CheckCircle className="w-4 h-4" />
-            Buy Now
-          </button>
-          <button className="flex-1 bg-gray-200 text-gray-900 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1 hover:bg-gray-300" onClick={() => setShowPaymentModal(true)}>
-            <DollarSign className="w-4 h-4" />
-            Make Offer
-          </button>
-        </div>
-      </div>
-
-      {/* Chat content */}
-      <div className="flex-1 overflow-y-auto px-4 py-4">
-        <div className="text-center text-gray-500 text-xs mb-4 uppercase">Today</div>
-
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <div className="h-px flex-1 bg-gray-200"></div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 rounded-full">
-            <Shield className="w-3.5 h-3.5 text-gray-600" />
-            <p className="text-xs text-gray-600">Messages are encrypted</p>
-          </div>
-          <div className="h-px flex-1 bg-gray-200"></div>
-        </div>
-
-        {loading ? (
-          <div className="flex items-center justify-center h-48">
-            <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-          </div>
-        ) : messages.length === 0 ? (
-          <div className="flex items-center justify-center h-48 text-center">
-            <div>
-              <p className="text-gray-500 mb-2">No messages yet</p>
-              <p className="text-sm text-gray-400">Start the conversation!</p>
-            </div>
-          </div>
-        ) : (
-          messages.map((m: any) => {
-            const isCurrentUser = m.sender_id === currentUserId;
-            return (
-              <div key={m.id} className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'} mb-3`}>
-                <MessageBubble message={m} isCurrentUser={isCurrentUser} />
-              </div>
-            );
-          })
         )}
 
-        {/* Typing indicator bubble */}
-        <div className="flex items-start gap-2 mb-3">
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0 text-xs font-bold text-white">JS</div>
-          <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-sm px-4 py-2.5 shadow-sm">
-            <div className="flex gap-1">
-              {[0, 0.1, 0.2].map((delay, i) => (
-                <span key={i} className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: `${delay}s` }} />
-              ))}
+        {/* Product Card */}
+        <button
+          onClick={() => setShowProductPanel(true)}
+          className="mx-3 mt-3 bg-card border border-border rounded-xl p-2.5 flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow"
+        >
+          <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center shrink-0 relative overflow-hidden">
+            <Package className="w-7 h-7 text-muted-foreground" />
+            <div className="absolute top-0.5 right-0.5 w-2 h-2 bg-emerald-500 rounded-full" />
+          </div>
+          <div className="flex-1 min-w-0 text-left">
+            <p className="text-foreground font-semibold text-sm truncate">iPhone 15 Pro Max - 256GB</p>
+            <div className="flex items-center gap-2 mt-0.5">
+              <p className="text-emerald-600 font-bold text-base">$899</p>
+              <span className="text-xs text-muted-foreground line-through">$1,099</span>
+              <span className="text-xs bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded-full font-medium">
+                18% off
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+              <span className="flex items-center gap-0.5">
+                <Eye className="w-3 h-3" />
+                127 views
+              </span>
+              <span>•</span>
+              <span className="flex items-center gap-0.5">
+                <Heart className="w-3 h-3" />
+                23 saves
+              </span>
             </div>
           </div>
-        </div>
+          <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
+        </button>
 
-        {/* Info Cards (examples) */}
-        <div className="max-w-[90%]">
-          <div className="bg-white border border-gray-200 rounded-xl p-4 mb-3 shadow-sm">
-            <div className="flex items-center gap-2 mb-3">
-              <Shield className="w-5 h-5 text-blue-600" />
-              <span className="text-gray-900 text-sm font-semibold">Warranty Information</span>
-            </div>
-            <p className="text-gray-700 text-xs mb-0.5">Apple Limited Warranty</p>
-            <p className="text-gray-500 text-xs">Valid until June 15, 2025 • 6 months remaining</p>
-          </div>
-
-          <div className="bg-white border-2 border-yellow-400 rounded-xl p-4 mb-3 shadow-sm">
-            <div className="flex items-center gap-2 mb-3">
-              <DollarSign className="w-5 h-5 text-yellow-700" />
-              <span className="text-gray-900 text-sm font-semibold">Counter Offer</span>
-            </div>
-            <div className="flex items-baseline gap-2 mb-2">
-              <p className="text-gray-900 font-bold text-2xl">$880</p>
-              <span className="text-gray-600 text-sm">Final price</span>
-            </div>
-            <p className="text-gray-600 text-xs">Includes all original accessories and 6 months warranty</p>
-            <div className="flex gap-2 mt-3">
-              <button className="flex-1 py-2.5 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700">Accept Offer</button>
-              <button className="flex-1 py-2.5 rounded-lg text-sm font-medium bg-gray-200 text-gray-900 hover:bg-gray-300">Counter</button>
-            </div>
-          </div>
-
-          <div className="bg-white border border-gray-200 rounded-xl p-4 mb-3 shadow-sm">
-            <div className="flex items-center gap-2 mb-3">
-              <MapPin className="w-5 h-5 text-blue-600" />
-              <span className="text-gray-900 text-sm font-semibold">Meeting Proposal</span>
-            </div>
-            <div className="space-y-3 mb-3">
-              {[{ icon: MapPin, title: 'Starbucks Downtown', desc: '123 Main St, Safe public location' }, { icon: Calendar, title: 'Tomorrow, Dec 11', desc: '3:00 PM - 4:00 PM' }, { icon: Truck, title: 'Hand Delivery', desc: 'Meet in person for exchange' }].map((item: any, i: number) => (
-                <div key={i} className="flex items-start gap-2">
-                  <item.icon className="w-4 h-4 text-gray-500 mt-0.5" />
-                  <div>
-                    <p className="text-gray-900 text-sm">{item.title}</p>
-                    <p className="text-gray-600 text-xs">{item.desc}</p>
+        {/* Progress Steps */}
+        <div className="mx-3 mt-2 mb-1">
+          <div className="flex items-center justify-between">
+            {progressSteps.map((step, index) => (
+              <div key={step.id} className="flex items-center">
+                <div className="flex flex-col items-center">
+                  <div
+                    className={cn(
+                      "w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium transition-all",
+                      step.completed
+                        ? "bg-emerald-500 text-white"
+                        : step.active
+                          ? "bg-blue-500 text-white ring-4 ring-blue-500/20"
+                          : "bg-muted text-muted-foreground",
+                    )}
+                  >
+                    {step.completed ? <Check className="w-3.5 h-3.5" /> : step.id}
                   </div>
+                  <span
+                    className={cn(
+                      "text-[10px] mt-1",
+                      step.active ? "text-blue-600 font-medium" : "text-muted-foreground",
+                    )}
+                  >
+                    {step.label}
+                  </span>
                 </div>
-              ))}
-            </div>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-2">
-              <p className="text-blue-700 text-xs">💡 Tip: Always meet in safe, public places during daylight hours</p>
-            </div>
+                {index < progressSteps.length - 1 && (
+                  <div className={cn("w-8 h-0.5 mx-1 -mt-4", step.completed ? "bg-emerald-500" : "bg-muted")} />
+                )}
+              </div>
+            ))}
           </div>
         </div>
 
-        <div ref={messagesEndRef} />
-      </div>
+        {/* Chat Content */}
+        <div ref={chatContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-3 py-3 scroll-smooth">
+          <div className="text-center text-muted-foreground text-xs mb-3 uppercase tracking-wide">Today</div>
 
-      {/* Quick Actions */}
-      {showQuickActions && (
-        <div className="px-4 py-3 bg-white border-t border-gray-200 shrink-0 shadow-lg">
-          <div className="grid grid-cols-4 gap-2">
-            {quickActions.map((action, i) => (
-              <button key={i} className="flex flex-col items-center gap-1 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
-                <action.icon className="w-5 h-5 text-blue-600" />
-                <span className="text-xs text-gray-700">{action.label}</span>
+          {/* Encryption Notice */}
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <div className="h-px flex-1 bg-border" />
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-muted rounded-full">
+              <Lock className="w-3 h-3 text-muted-foreground" />
+              <p className="text-[10px] text-muted-foreground">End-to-end encrypted</p>
+            </div>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          {/* Safety Checklist Inline */}
+          {showSafetyChecklist && (
+            <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-3 mb-3 animate-in fade-in slide-in-from-top duration-200">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-blue-600" />
+                  <span className="text-sm font-semibold text-blue-700 dark:text-blue-400">Safety Checklist</span>
+                </div>
+                <button onClick={() => setShowSafetyChecklist(false)}>
+                  <X className="w-4 h-4 text-blue-600" />
+                </button>
+              </div>
+              <p className="text-xs text-blue-600 dark:text-blue-400 mb-3">Complete before meeting</p>
+              <div className="space-y-2">
+                {safetyItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() =>
+                      setSafetyItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, checked: !i.checked } : i)))
+                    }
+                    className={cn(
+                      "w-full flex items-center gap-2 p-2 rounded-lg transition-colors text-left",
+                      item.checked ? "bg-emerald-100 dark:bg-emerald-900/30" : "bg-white dark:bg-card",
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
+                        item.checked ? "bg-emerald-500 border-emerald-500" : "border-muted-foreground",
+                      )}
+                    >
+                      {item.checked && <Check className="w-3 h-3 text-white" />}
+                    </div>
+                    <span
+                      className={cn(
+                        "text-sm flex-1",
+                        item.checked ? "text-emerald-700 dark:text-emerald-400" : "text-foreground",
+                      )}
+                    >
+                      {item.label}
+                    </span>
+                    {item.important && !item.checked && <AlertTriangle className="w-4 h-4 text-amber-500" />}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-3 pt-2 border-t border-blue-200 dark:border-blue-800 flex items-center justify-between">
+                <span className="text-xs text-blue-600">
+                  {safetyItems.filter((i) => i.checked).length}/{safetyItems.length} completed
+                </span>
+                <div className="h-1.5 flex-1 mx-3 bg-blue-200 dark:bg-blue-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-emerald-500 rounded-full transition-all"
+                    style={{ width: `${(safetyItems.filter((i) => i.checked).length / safetyItems.length) * 100}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Negotiation Timeline */}
+          {showNegotiationHistory && (
+            <div className="bg-card border border-border rounded-xl p-3 mb-3 animate-in fade-in slide-in-from-top duration-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <TrendingDown className="w-5 h-5 text-emerald-600" />
+                  <span className="text-sm font-semibold text-foreground">Price Negotiation</span>
+                </div>
+                <button onClick={() => setShowNegotiationHistory(false)}>
+                  <X className="w-4 h-4 text-muted-foreground" />
+                </button>
+              </div>
+              <div className="space-y-3">
+                {negotiationHistory.map((entry, index) => (
+                  <div key={entry.id} className="flex items-start gap-3">
+                    <div className="flex flex-col items-center">
+                      <div
+                        className={cn(
+                          "w-8 h-8 rounded-full flex items-center justify-center",
+                          entry.type === "accept"
+                            ? "bg-emerald-100 dark:bg-emerald-900/30"
+                            : entry.type === "reject"
+                              ? "bg-red-100 dark:bg-red-900/30"
+                              : "bg-blue-100 dark:bg-blue-900/30",
+                        )}
+                      >
+                        {entry.type === "accept" ? (
+                          <Check className="w-4 h-4 text-emerald-600" />
+                        ) : entry.type === "reject" ? (
+                          <X className="w-4 h-4 text-red-600" />
+                        ) : (
+                          <DollarSign className="w-4 h-4 text-blue-600" />
+                        )}
+                      </div>
+                      {index < negotiationHistory.length - 1 && <div className="w-0.5 h-6 bg-border mt-1" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-foreground capitalize">
+                          {entry.from === "buyer" ? "You" : "Seller"} -{" "}
+                          {entry.type === "counter" ? "Counter offer" : entry.type}
+                        </span>
+                        <span className="text-xs text-muted-foreground">{entry.time}</span>
+                      </div>
+                      <p className="text-lg font-bold text-foreground">${entry.amount}</p>
+                      {entry.message && <p className="text-xs text-muted-foreground">{entry.message}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Total savings</span>
+                <span className="text-sm font-bold text-emerald-600">$219 (20% off)</span>
+              </div>
+            </div>
+          )}
+
+          {/* Media Gallery Inline */}
+          {showMediaGallery && (
+            <div className="bg-card border border-border rounded-xl p-3 mb-3 animate-in fade-in slide-in-from-top duration-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <ImageIcon className="w-5 h-5 text-purple-600" />
+                  <span className="text-sm font-semibold text-foreground">Shared Media</span>
+                  <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                    {allMedia.length}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setMediaGalleryView("grid")}
+                    className={cn("p-1.5 rounded", mediaGalleryView === "grid" ? "bg-muted" : "hover:bg-muted")}
+                  >
+                    <LayoutGrid className="w-4 h-4 text-foreground" />
+                  </button>
+                  <button
+                    onClick={() => setMediaGalleryView("list")}
+                    className={cn("p-1.5 rounded", mediaGalleryView === "list" ? "bg-muted" : "hover:bg-muted")}
+                  >
+                    <List className="w-4 h-4 text-foreground" />
+                  </button>
+                  <button onClick={() => setShowMediaGallery(false)} className="ml-1">
+                    <X className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                </div>
+              </div>
+              <div className={cn(mediaGalleryView === "grid" ? "grid grid-cols-3 gap-1.5" : "space-y-2")}>
+                {allMedia.map((img, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setViewingImage(img)}
+                    className={cn(
+                      "overflow-hidden rounded-lg bg-muted",
+                      mediaGalleryView === "grid" ? "aspect-square" : "flex items-center gap-3 p-2",
+                    )}
+                  >
+                    <img
+                      src={img || "/placeholder.svg"}
+                      alt=""
+                      className={cn(
+                        "object-cover",
+                        mediaGalleryView === "grid" ? "w-full h-full" : "w-12 h-12 rounded",
+                      )}
+                    />
+                    {mediaGalleryView === "list" && (
+                      <div className="flex-1 text-left">
+                        <p className="text-sm text-foreground">Image {i + 1}</p>
+                        <p className="text-xs text-muted-foreground">From seller</p>
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Messages */}
+          {filteredMessages.map((msg) => {
+            const isBuyer = msg.sender === "buyer";
+            const replyMessage = msg.replyTo ? messages.find((m) => m.id === msg.replyTo) : null;
+
+            return (
+              <div
+                key={msg.id}
+                id={`message-${msg.id}`}
+                className={cn(
+                  "flex mb-2 transition-colors duration-500 rounded-lg",
+                  isBuyer ? "justify-end" : "justify-start",
+                )}
+              >
+                {!isBuyer && (
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0 text-[10px] font-bold text-white mr-1.5 mt-auto">
+                    {getInitials(otherUser?.full_name || 'User')}
+                  </div>
+                )}
+
+                <div className={cn("max-w-[80%] relative group", isBuyer ? "items-end" : "items-start")}>
+                  {/* Reply preview */}
+                  {replyMessage && (
+                    <button
+                      onClick={() => scrollToMessage(replyMessage.id)}
+                      className={cn(
+                        "w-full mb-1 px-2 py-1 rounded-lg text-xs text-left truncate border-l-2",
+                        isBuyer ? "bg-blue-400/20 border-blue-300" : "bg-muted border-muted-foreground",
+                      )}
+                    >
+                      <span className="text-muted-foreground">
+                        {replyMessage.sender === "buyer" ? "You" : otherUser?.full_name || 'User'}:{" "}
+                      </span>
+                      {replyMessage.text}
+                    </button>
+                  )}
+
+                  {/* Message bubble */}
+                  <div
+                    className={cn(
+                      "rounded-2xl px-3 py-2 shadow-sm relative",
+                      isBuyer
+                        ? "bg-blue-500 text-white rounded-br-sm"
+                        : "bg-card border border-border text-foreground rounded-bl-sm",
+                      msg.isPinned && "ring-2 ring-amber-400",
+                      msg.isDeleted && "opacity-60 italic",
+                    )}
+                  >
+                    {msg.isPinned && <Pin className="w-3 h-3 text-amber-500 absolute -top-1 -right-1" />}
+
+                    {/* Voice message */}
+                    {msg.type === "voice" ? (
+                      <div className="flex items-center gap-2 min-w-[150px]">
+                        <button
+                          onClick={() => setPlayingVoiceId(playingVoiceId === msg.id ? null : msg.id)}
+                          className={cn(
+                            "w-8 h-8 rounded-full flex items-center justify-center",
+                            isBuyer ? "bg-white/20" : "bg-muted",
+                          )}
+                        >
+                          {playingVoiceId === msg.id ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                        </button>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-0.5">
+                            {[...Array(20)].map((_, i) => (
+                              <div
+                                key={i}
+                                className={cn("w-0.5 rounded-full", isBuyer ? "bg-white/60" : "bg-muted-foreground/60")}
+                                style={{ height: `${Math.random() * 16 + 4}px` }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <span className={cn("text-xs", isBuyer ? "text-white/70" : "text-muted-foreground")}>
+                          {formatDuration(msg.voiceDuration || 0)}
+                        </span>
+                      </div>
+                    ) : msg.type === "offer" ? (
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={cn(
+                            "w-8 h-8 rounded-full flex items-center justify-center",
+                            isBuyer ? "bg-white/20" : "bg-emerald-100 dark:bg-emerald-900/30",
+                          )}
+                        >
+                          <DollarSign className={cn("w-4 h-4", isBuyer ? "text-white" : "text-emerald-600")} />
+                        </div>
+                        <div>
+                          <p className={cn("text-xs", isBuyer ? "text-white/70" : "text-muted-foreground")}>
+                            Price offer
+                          </p>
+                          <p className="font-semibold">{msg.text}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-sm whitespace-pre-wrap break-words">
+                          {highlightText(msg.text, searchQuery)}
+                        </p>
+                        {msg.isEdited && (
+                          <span className={cn("text-[10px] ml-1", isBuyer ? "text-white/60" : "text-muted-foreground")}>
+                            (edited)
+                          </span>
+                        )}
+                      </>
+                    )}
+
+                    {/* Images */}
+                    {msg.hasImages && msg.images && (
+                      <div className={cn("mt-2 grid gap-1", msg.images.length > 1 ? "grid-cols-2" : "grid-cols-1")}>
+                        {msg.images.map((img, i) => (
+                          <button
+                            key={i}
+                            onClick={() => setViewingImage(img)}
+                            className="rounded-lg overflow-hidden bg-muted"
+                          >
+                            <img src={img || "/placeholder.svg"} alt="" className="w-full h-24 object-cover" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Time and status */}
+                    <div className={cn("flex items-center gap-1 mt-1", isBuyer ? "justify-end" : "justify-start")}>
+                      <span className={cn("text-[10px]", isBuyer ? "text-white/60" : "text-muted-foreground")}>
+                        {msg.time}
+                      </span>
+                      {isBuyer && getStatusIcon(msg.status)}
+                    </div>
+                  </div>
+
+                  {/* Reactions */}
+                  {msg.reactions && msg.reactions.length > 0 && (
+                    <div className={cn("flex gap-0.5 mt-0.5", isBuyer ? "justify-end" : "justify-start")}>
+                      {msg.reactions.map((reaction, i) => (
+                        <button
+                          key={i}
+                          onClick={() => addReaction(msg.id, reaction.emoji)}
+                          className={cn(
+                            "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs",
+                            reaction.users.includes("You")
+                              ? "bg-blue-100 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700"
+                              : "bg-muted border border-border",
+                          )}
+                        >
+                          <span>{reaction.emoji}</span>
+                          {reaction.count > 1 && <span className="text-muted-foreground">{reaction.count}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Message actions */}
+                  <div
+                    className={cn(
+                      "absolute top-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 bg-card border border-border rounded-lg shadow-lg p-0.5",
+                      isBuyer ? "left-0 -translate-x-full mr-1" : "right-0 translate-x-full ml-1",
+                    )}
+                  >
+                    <button onClick={() => setShowEmojiPickerForMessage(msg.id)} className="p-1 hover:bg-muted rounded">
+                      <Smile className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                    <button onClick={() => setReplyingTo(msg)} className="p-1 hover:bg-muted rounded">
+                      <Reply className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                    <button
+                      onClick={() => setMessageActionsId(messageActionsId === msg.id ? null : msg.id)}
+                      className="p-1 hover:bg-muted rounded"
+                    >
+                      <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                  </div>
+
+                  {/* Extended actions dropdown */}
+                  {messageActionsId === msg.id && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setMessageActionsId(null)} />
+                      <div
+                        className={cn(
+                          "absolute top-8 z-50 w-40 bg-popover border border-border rounded-lg shadow-xl py-1 animate-in fade-in zoom-in-95 duration-100",
+                          isBuyer ? "right-0" : "left-8",
+                        )}
+                      >
+                        <button
+                          onClick={() => togglePin(msg.id)}
+                          className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted text-sm"
+                        >
+                          {msg.isPinned ? <PinOff className="w-4 h-4" /> : <Pin className="w-4 h-4" />}
+                          {msg.isPinned ? "Unpin" : "Pin"}
+                        </button>
+                        <button
+                          onClick={() => toggleStar(msg.id)}
+                          className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted text-sm"
+                        >
+                          <Star className={cn("w-4 h-4", msg.isStarred && "fill-yellow-500 text-yellow-500")} />
+                          {msg.isStarred ? "Unstar" : "Star"}
+                        </button>
+                        <button
+                          onClick={() => copyMessage(msg.text)}
+                          className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted text-sm"
+                        >
+                          <Copy className="w-4 h-4" />
+                          Copy
+                        </button>
+                        {isBuyer && (
+                          <>
+                            <div className="h-px bg-border my-1" />
+                            <button
+                              onClick={() => {
+                                setEditingMessage(msg);
+                                setMessageText(msg.text);
+                                setMessageActionsId(null);
+                              }}
+                              className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted text-sm"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => deleteMessage(msg.id)}
+                              className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted text-sm text-red-600"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              Delete
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </>
+                  )}
+
+                  {/* Emoji picker for reactions */}
+                  {showEmojiPickerForMessage === msg.id && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowEmojiPickerForMessage(null)} />
+                      <div
+                        className={cn(
+                          "absolute top-8 z-50 bg-popover border border-border rounded-xl shadow-xl p-2 animate-in fade-in zoom-in-95 duration-100",
+                          isBuyer ? "right-0" : "left-8",
+                        )}
+                      >
+                        <div className="flex gap-1">
+                          {reactionEmojis.map((emoji) => (
+                            <button
+                              key={emoji}
+                              onClick={() => addReaction(msg.id, emoji)}
+                              className="w-8 h-8 flex items-center justify-center hover:bg-muted rounded-lg text-lg transition-transform hover:scale-125"
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {isBuyer && (
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shrink-0 text-[10px] font-bold text-white ml-1.5 mt-auto">
+                    ME
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Typing indicator */}
+          {isTyping && (
+            <div className="flex items-start gap-2 mb-2">
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0 text-[10px] font-bold text-white">
+                {getInitials(otherUser?.full_name || 'User')}
+              </div>
+              <div className="bg-card border border-border rounded-2xl rounded-bl-sm px-3 py-2 shadow-sm">
+                <div className="flex gap-1">
+                  {[0, 0.15, 0.3].map((delay, i) => (
+                    <span
+                      key={i}
+                      className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
+                      style={{ animationDelay: `${delay}s` }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Scroll anchor */}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Scroll to Bottom */}
+        {showScrollToBottom && (
+          <button
+            onClick={scrollToBottom}
+            className="absolute bottom-36 right-4 w-10 h-10 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center hover:scale-105 transition-transform z-10"
+          >
+            <ArrowDown className="w-5 h-5" />
+          </button>
+        )}
+
+        {/* Reply/Edit Preview */}
+        {(replyingTo || editingMessage) && (
+          <div className="px-3 py-2 bg-muted border-t border-border flex items-center gap-2">
+            {replyingTo ? <Reply className="w-4 h-4 text-blue-500" /> : <Edit3 className="w-4 h-4 text-amber-500" />}
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-muted-foreground">
+                {replyingTo ? `Replying to ${replyingTo.sender === "buyer" ? "yourself" : otherUser?.full_name || 'User'}` : "Editing message"}
+              </p>
+              <p className="text-sm text-foreground truncate">{replyingTo?.text || editingMessage?.text}</p>
+            </div>
+            <button
+              onClick={() => {
+                setReplyingTo(null);
+                setEditingMessage(null);
+                setMessageText('');
+              }}
+            >
+              <X className="w-4 h-4 text-muted-foreground" />
+            </button>
+          </div>
+        )}
+
+        {/* Quick Replies */}
+        <div className="px-3 py-1.5 border-t border-border bg-card overflow-x-auto scrollbar-hide">
+          <div className="flex gap-1.5">
+            {quickReplies.map((reply) => (
+              <button
+                key={reply}
+                onClick={() => handleQuickReply(reply)}
+                className="px-3 py-1.5 bg-muted hover:bg-muted/80 rounded-full text-xs text-foreground whitespace-nowrap transition-colors"
+              >
+                {reply}
               </button>
             ))}
           </div>
         </div>
-      )}
 
-      {/* Input Bar */}
-      <div className="px-2 py-2 flex items-center gap-1 shrink-0 bg-white border-t border-gray-200">
-        <button className="p-2 shrink-0" onClick={() => setShowQuickActions(!showQuickActions)}>
-          <Plus className={`w-6 h-6 transition-transform ${showQuickActions ? 'rotate-45 text-gray-500' : 'text-blue-600'}`} />
-        </button>
-        <button className="p-2 shrink-0"><Camera className="w-6 h-6 text-blue-600" /></button>
-        <button className="p-2 shrink-0"><ImageIcon className="w-6 h-6 text-blue-600" /></button>
-        <button className="p-2 shrink-0"><Mic className="w-6 h-6 text-blue-600" /></button>
-
-        <div className="flex-1 bg-gray-100 rounded-full px-4 py-2 flex items-center min-w-0">
-          <textarea
-            placeholder="Type a message..."
-            value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
-            onKeyDown={handleKeyPress}
-            rows={1}
-            className="bg-transparent flex-1 outline-none text-gray-900 text-sm resize-none min-h-[30px] max-h-32"
-          />
-          <button className="ml-2 mr-0">
-            <span className="text-gray-500 text-xs">Aa</span>
-          </button>
-        </div>
-
-        <button onClick={handleSendMessage} className="p-2 shrink-0">
-          {messageText ? <Send className="w-6 h-6 text-blue-600" /> : <CheckCircle className="w-6 h-6 text-blue-600" />}
-        </button>
-      </div>
-
-      {/* Payment Modal */}
-      {showPaymentModal && (
-        <div className="absolute inset-0 bg-black/50 flex items-end z-50">
-          <div className="bg-white w-full rounded-t-3xl p-6 max-h-[80vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-gray-900">Choose Payment Method</h3>
-              <button onClick={() => setShowPaymentModal(false)}><X className="w-6 h-6 text-gray-600" /></button>
+        {/* Quick Actions */}
+        {showQuickActions && (
+          <div className="px-3 py-2 bg-card border-t border-border shadow-lg animate-in slide-in-from-bottom-2 duration-200">
+            <div className="grid grid-cols-4 gap-2">
+              {quickActions.map(({ icon: Icon, label, color, action }) => (
+                <button
+                  key={label}
+                  onClick={action}
+                  className="flex flex-col items-center gap-1 py-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors"
+                >
+                  <Icon className={cn("w-5 h-5", color)} />
+                  <span className="text-xs text-foreground">{label}</span>
+                </button>
+              ))}
             </div>
-            <div className="space-y-3">
-              <div className="bg-white border-2 rounded-xl p-4 shadow-sm border-green-600">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-6 h-6 bg-green-600 rounded flex items-center justify-center text-xs font-bold text-white">$</div>
-                    <div>
-                      <p className="font-semibold text-gray-900">Cash on Delivery</p>
-                      <p className="text-xs text-gray-600">Pay when you receive the item</p>
-                    </div>
-                  </div>
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                </div>
-              </div>
-
-              <div className="bg-white border rounded-xl p-4 shadow-sm hover:border-blue-600">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center text-xs font-bold text-white">M</div>
-                    <div>
-                      <p className="font-semibold text-gray-900">Moncash</p>
-                      <p className="text-xs text-gray-600">Mobile money transfer</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white border rounded-xl p-4 shadow-sm hover:border-blue-600">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-6 h-6 bg-orange-500 rounded flex items-center justify-center text-xs font-bold text-white">N</div>
-                    <div>
-                      <p className="font-semibold text-gray-900">Natcash</p>
-                      <p className="text-xs text-gray-600">Mobile money transfer</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <button className="w-full bg-green-600 text-white py-3 rounded-xl text-sm font-medium mt-6 hover:bg-green-700">Continue with Cash on Delivery</button>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* PiP Video Call */}
-      {showVideoCall && (
-        <PiPVideoCall
-          onClose={() => setShowVideoCall(false)}
-          isMinimized={isCallMinimized}
-          onToggleMinimize={() => setIsCallMinimized(!isCallMinimized)}
-          otherUser={otherUser}
-        />
-      )}
+        {/* Voice Recording */}
+        {isRecording && (
+          <div className="px-3 py-3 bg-red-50 dark:bg-red-950/30 border-t border-red-200 dark:border-red-800 flex items-center gap-3 animate-in slide-in-from-bottom duration-200">
+            <button onClick={() => setIsRecording(false)} className="p-2 bg-red-100 dark:bg-red-900/50 rounded-full">
+              <Trash2 className="w-5 h-5 text-red-600" />
+            </button>
+            <div className="flex-1 flex items-center gap-2">
+              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+              <span className="text-sm text-red-600 font-medium">{formatDuration(recordingDuration)}</span>
+              <div className="flex-1 flex items-center gap-0.5">
+                {[...Array(30)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-1 bg-red-400 rounded-full animate-pulse"
+                    style={{ height: `${Math.random() * 20 + 4}px`, animationDelay: `${i * 0.05}s` }}
+                  />
+                ))}
+              </div>
+            </div>
+            <button onClick={handleSend} className="p-2 bg-red-500 rounded-full">
+              <Send className="w-5 h-5 text-white" />
+            </button>
+          </div>
+        )}
+
+        {/* Input Bar */}
+        {!isRecording && (
+          <div className="px-2 py-2 flex items-center gap-1 shrink-0 bg-card border-t border-border">
+            <button onClick={() => setShowQuickActions(!showQuickActions)} className="p-2 shrink-0">
+              <Plus
+                className={cn(
+                  "w-6 h-6 transition-transform",
+                  showQuickActions ? "rotate-45 text-muted-foreground" : "text-blue-600",
+                )}
+              />
+            </button>
+            <button className="p-2 shrink-0">
+              <Camera className="w-6 h-6 text-blue-600" />
+            </button>
+            <button className="p-2 shrink-0">
+              <ImageIcon className="w-6 h-6 text-blue-600" />
+            </button>
+            <button className="p-2 shrink-0" onMouseDown={() => setIsRecording(true)}>
+              <Mic className="w-6 h-6 text-blue-600" />
+            </button>
+            <div className="flex-1 bg-muted rounded-full px-3 py-2 flex items-center min-w-0">
+              <input
+                type="text"
+                placeholder="Type a message..."
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+                className="bg-transparent flex-1 outline-none text-foreground text-sm min-w-0 placeholder:text-muted-foreground"
+              />
+              <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="shrink-0 ml-1">
+                <Smile className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
+              </button>
+            </div>
+            <button onClick={handleSend} className="p-2 shrink-0">
+              {messageText || editingMessage ? (
+                <Send className="w-6 h-6 text-blue-600 fill-blue-600" />
+              ) : (
+                <ThumbsUp className="w-6 h-6 text-blue-600" />
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* Emoji Picker */}
+        {showEmojiPicker && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setShowEmojiPicker(false)} />
+            <div className="absolute bottom-16 left-2 right-2 bg-popover border border-border rounded-xl shadow-xl p-3 z-50 animate-in slide-in-from-bottom duration-200 max-h-64 overflow-y-auto">
+              <div className="grid grid-cols-8 gap-1">
+                {allEmojis.map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => {
+                      setMessageText((prev) => prev + emoji);
+                      setShowEmojiPicker(false);
+                    }}
+                    className="w-9 h-9 flex items-center justify-center hover:bg-muted rounded-lg text-xl transition-transform hover:scale-110"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* MODALS */}
+
+        {/* Payment Modal */}
+        {showPaymentModal && (
+          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
+            <div className="bg-card w-full rounded-t-3xl p-4 max-h-[80vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-foreground">Payment Method</h3>
+                <button onClick={() => setShowPaymentModal(false)}>
+                  <X className="w-6 h-6 text-muted-foreground" />
+                </button>
+              </div>
+              <div className="space-y-2">
+                {paymentMethods.map(({ id, name, desc, icon: Icon, initial, color }) => (
+                  <button
+                    key={id}
+                    onClick={() => setSelectedPayment(id)}
+                    className={cn(
+                      "w-full bg-card border-2 rounded-xl p-3 transition-all text-left",
+                      selectedPayment === id
+                        ? "border-emerald-600 ring-2 ring-emerald-600/20"
+                        : "border-border hover:border-muted-foreground",
+                    )}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {Icon ? (
+                          <div
+                            className={cn(
+                              "w-10 h-10 rounded-full flex items-center justify-center",
+                              `bg-${color}-100 dark:bg-${color}-900/30`,
+                            )}
+                          >
+                            <Icon className={cn("w-5 h-5", `text-${color}-600`)} />
+                          </div>
+                        ) : (
+                          <div
+                            className={cn(
+                              "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white",
+                              color === "blue" ? "bg-blue-600" : "bg-orange-600",
+                            )}
+                          >
+                            {initial}
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-semibold text-foreground">{name}</p>
+                          <p className="text-xs text-muted-foreground">{desc}</p>
+                        </div>
+                      </div>
+                      {selectedPayment === id && <CheckCircle className="w-5 h-5 text-emerald-600 fill-emerald-600" />}
+                    </div>
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className="w-full bg-emerald-600 text-white py-3 rounded-xl text-sm font-medium mt-4 hover:bg-emerald-700 transition-colors"
+              >
+                Continue with {paymentMethods.find((p) => p.id === selectedPayment)?.name}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Offer Modal */}
+        {showOfferModal && (
+          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
+            <div className="bg-card w-full rounded-t-3xl p-4 animate-in slide-in-from-bottom duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-foreground">Make an Offer</h3>
+                <button onClick={() => setShowOfferModal(false)}>
+                  <X className="w-6 h-6 text-muted-foreground" />
+                </button>
+              </div>
+              <div className="mb-4">
+                <label className="text-sm text-muted-foreground mb-1 block">Your offer</label>
+                <div className="flex items-center gap-2 bg-muted rounded-xl px-4 py-3">
+                  <DollarSign className="w-5 h-5 text-muted-foreground" />
+                  <input
+                    type="number"
+                    placeholder="Enter amount"
+                    value={offerAmount}
+                    onChange={(e) => setOfferAmount(e.target.value)}
+                    className="flex-1 bg-transparent outline-none text-2xl font-bold text-foreground"
+                  />
+                </div>
+                <div className="flex gap-2 mt-2">
+                  {[800, 850, 875].map((amt) => (
+                    <button
+                      key={amt}
+                      onClick={() => setOfferAmount(amt.toString())}
+                      className="px-3 py-1 bg-muted hover:bg-muted/80 rounded-full text-sm text-foreground"
+                    >
+                      ${amt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="mb-4">
+                <label className="text-sm text-muted-foreground mb-1 block">Message (optional)</label>
+                <textarea
+                  placeholder="Add a note to your offer..."
+                  value={offerMessage}
+                  onChange={(e) => setOfferMessage(e.target.value)}
+                  className="w-full bg-muted rounded-xl px-4 py-3 outline-none text-foreground resize-none h-20"
+                />
+              </div>
+              <button
+                onClick={sendOffer}
+                disabled={!offerAmount}
+                className="w-full bg-emerald-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Send Offer
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Schedule Modal */}
+        {showScheduleModal && (
+          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
+            <div className="bg-card w-full rounded-t-3xl p-4 max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-foreground">Schedule Meeting</h3>
+                <button onClick={() => setShowScheduleModal(false)}>
+                  <X className="w-6 h-6 text-muted-foreground" />
+                </button>
+              </div>
+
+              <div className="mb-4">
+                <label className="text-sm text-muted-foreground mb-2 block">Select date</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {["Today", "Tomorrow", "Dec 13"].map((date) => (
+                    <button
+                      key={date}
+                      onClick={() => setSelectedDate(date)}
+                      className={cn(
+                        "py-2 rounded-lg text-sm font-medium transition-colors",
+                        selectedDate === date ? "bg-blue-600 text-white" : "bg-muted text-foreground hover:bg-muted/80",
+                      )}
+                    >
+                      {date}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="text-sm text-muted-foreground mb-2 block">Select time</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {["10:00 AM", "12:00 PM", "2:00 PM", "4:00 PM", "5:00 PM", "6:00 PM"].map((time) => (
+                    <button
+                      key={time}
+                      onClick={() => setSelectedTime(time)}
+                      className={cn(
+                        "py-2 rounded-lg text-xs font-medium transition-colors",
+                        selectedTime === time ? "bg-blue-600 text-white" : "bg-muted text-foreground hover:bg-muted/80",
+                      )}
+                    >
+                      {time}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="text-sm text-muted-foreground mb-2 block flex items-center gap-1">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  Safe meeting locations
+                </label>
+                <div className="space-y-2">
+                  {safeLocations.map((loc) => (
+                    <button
+                      key={loc.id}
+                      onClick={() => setSelectedLocation(loc.id)}
+                      className={cn(
+                        "w-full p-3 rounded-xl text-left transition-all flex items-start gap-3",
+                        selectedLocation === loc.id
+                          ? "bg-blue-50 dark:bg-blue-950/30 border-2 border-blue-500"
+                          : "bg-muted border-2 border-transparent hover:border-muted-foreground",
+                      )}
+                    >
+                      <MapPin className="w-5 h-5 text-blue-600 mt-0.5" />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-foreground">{loc.name}</span>
+                          {loc.verified && <BadgeCheck className="w-4 h-4 text-blue-500" />}
+                        </div>
+                        <p className="text-xs text-muted-foreground">{loc.address}</p>
+                      </div>
+                      <div className="flex items-center gap-0.5 text-xs text-muted-foreground">
+                        <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                        {loc.rating}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowScheduleModal(false)}
+                disabled={!selectedDate || !selectedTime || !selectedLocation}
+                className="w-full bg-blue-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+              >
+                Propose Meeting
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Product Details Panel */}
+        {showProductPanel && (
+          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
+            <div className="bg-card w-full rounded-t-3xl p-4 max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-foreground">Product Details</h3>
+                <button onClick={() => setShowProductPanel(false)}>
+                  <X className="w-6 h-6 text-muted-foreground" />
+                </button>
+              </div>
+
+              <div className="bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 rounded-xl h-48 flex items-center justify-center mb-4 relative overflow-hidden">
+                <Package className="w-16 h-16 text-muted-foreground" />
+                <div className="absolute top-2 right-2 bg-emerald-600 text-white text-xs px-2 py-1 rounded-full">
+                  98% Battery
+                </div>
+              </div>
+
+              <h2 className="text-xl font-bold text-foreground mb-1">iPhone 15 Pro Max - 256GB</h2>
+              <p className="text-muted-foreground text-sm mb-3">Natural Titanium • Unlocked • Like New</p>
+
+              <div className="flex items-center gap-3 mb-4">
+                <p className="text-emerald-600 font-bold text-2xl">$899</p>
+                <span className="text-base text-muted-foreground line-through">$1,099</span>
+                <span className="text-sm bg-red-100 dark:bg-red-900/30 text-red-600 px-2 py-0.5 rounded-full">
+                  Save $200
+                </span>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowProductPanel(false);
+                    setShowPaymentModal(true);
+                  }}
+                  className="flex-1 bg-blue-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <CreditCard className="w-5 h-5" />
+                  Buy Now
+                </button>
+                <button
+                  onClick={() => {
+                    setShowProductPanel(false);
+                    setShowOfferModal(true);
+                  }}
+                  className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors flex items-center justify-center gap-2"
+                >
+                  <DollarSign className="w-5 h-5" />
+                  Make Offer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Seller Profile */}
+        {showSellerProfile && (
+          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
+            <div className="bg-card w-full rounded-t-3xl p-4 max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-foreground">Seller Profile</h3>
+                <button onClick={() => setShowSellerProfile(false)}>
+                  <X className="w-6 h-6 text-muted-foreground" />
+                </button>
+              </div>
+
+              <div className="flex flex-col items-center mb-4">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center mb-3">
+                  <span className="text-white font-bold text-2xl">{getInitials(otherUser?.full_name || 'User')}</span>
+                </div>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-xl font-bold text-foreground">{otherUser?.full_name || 'User'}</span>
+                  <BadgeCheck className="w-5 h-5 text-blue-500 fill-blue-500" />
+                </div>
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                  <span className="font-medium">4.9</span>
+                  <span className="text-sm">(127 reviews)</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-4 gap-2 mb-4">
+                {[
+                  { value: "156", label: "Sales" },
+                  { value: "98%", label: "Response" },
+                  { value: "<1h", label: "Reply" },
+                  { value: "2y", label: "Member" },
+                ].map(({ value, label }) => (
+                  <div key={label} className="bg-muted rounded-lg p-2 text-center">
+                    <p className="text-lg font-bold text-foreground">{value}</p>
+                    <p className="text-[10px] text-muted-foreground">{label}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex gap-2">
+                <button className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors">
+                  View Listings
+                </button>
+                <button
+                  onClick={() => {
+                    setShowSellerProfile(false);
+                    setShowReportModal(true);
+                  }}
+                  className="px-4 bg-secondary text-secondary-foreground py-2.5 rounded-xl hover:bg-secondary/80 transition-colors"
+                >
+                  <Flag className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Report Modal */}
+        {showReportModal && (
+          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
+            <div className="bg-card w-full rounded-t-3xl p-4 animate-in slide-in-from-bottom duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-foreground">Report Issue</h3>
+                <button onClick={() => setShowReportModal(false)}>
+                  <X className="w-6 h-6 text-muted-foreground" />
+                </button>
+              </div>
+              <div className="space-y-2 mb-4">
+                {["Suspicious behavior", "Spam or scam", "Offensive content", "Fake listing", "Other"].map((reason) => (
+                  <button
+                    key={reason}
+                    className="w-full p-3 bg-muted hover:bg-muted/80 rounded-xl text-left text-foreground transition-colors"
+                  >
+                    {reason}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setShowReportModal(false)}
+                className="w-full bg-red-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-red-700 transition-colors"
+              >
+                Submit Report
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Image Viewer */}
+        {viewingImage && (
+          <div className="absolute inset-0 bg-black z-50 flex flex-col animate-in fade-in duration-200">
+            <div className="flex items-center justify-between p-4">
+              <button onClick={() => setViewingImage(null)}>
+                <X className="w-6 h-6 text-white" />
+              </button>
+              <div className="flex gap-2">
+                <button className="p-2 bg-white/10 rounded-full">
+                  <Share2 className="w-5 h-5 text-white" />
+                </button>
+                <button className="p-2 bg-white/10 rounded-full">
+                  <Download className="w-5 h-5 text-white" />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 flex items-center justify-center p-4">
+              <img
+                src={viewingImage || "/placeholder.svg"}
+                alt=""
+                className="max-w-full max-h-full object-contain rounded-lg"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Rating Prompt */}
+        {showRatingPrompt && (
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50 animate-in fade-in duration-200">
+            <div className="bg-card rounded-3xl p-6 mx-4 max-w-sm animate-in zoom-in-95 duration-300">
+              <div className="text-center mb-4">
+                <div className="w-16 h-16 mx-auto mb-3 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold text-xl">{getInitials(otherUser?.full_name || 'User')}</span>
+                </div>
+                <h2 className="text-xl font-bold text-foreground mb-1">Rate your experience</h2>
+                <p className="text-muted-foreground text-sm">How was your transaction with {otherUser?.full_name || 'User'}?</p>
+              </div>
+              <div className="flex justify-center gap-2 mb-4">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button key={star} onClick={() => setRating(star)}>
+                    <Star
+                      className={cn(
+                        "w-8 h-8 transition-colors",
+                        star <= rating ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground",
+                      )}
+                    />
+                  </button>
+                ))}
+              </div>
+              <textarea
+                placeholder="Share your experience (optional)"
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+                className="w-full bg-muted rounded-xl px-4 py-3 outline-none text-foreground resize-none h-24 mb-4"
+              />
+              <button
+                onClick={() => setShowRatingPrompt(false)}
+                className="w-full bg-blue-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
+              >
+                Submit Review
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
