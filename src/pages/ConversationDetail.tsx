@@ -993,38 +993,40 @@ export default function BuyerSellerChat() {
           </div>
         )}
 
-        {/* Product Card */}
-        <button
-          onClick={() => setShowProductPanel(true)}
-          className="mx-3 mt-3 bg-card border border-border rounded-xl p-2.5 flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow"
-        >
-          <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center shrink-0 relative overflow-hidden">
-            <Package className="w-7 h-7 text-muted-foreground" />
-            <div className="absolute top-0.5 right-0.5 w-2 h-2 bg-emerald-500 rounded-full" />
-          </div>
-          <div className="flex-1 min-w-0 text-left">
-            <p className="text-foreground font-semibold text-sm truncate">iPhone 15 Pro Max - 256GB</p>
-            <div className="flex items-center gap-2 mt-0.5">
-              <p className="text-emerald-600 font-bold text-base">$899</p>
-              <span className="text-xs text-muted-foreground line-through">$1,099</span>
-              <span className="text-xs bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded-full font-medium">
-                18% off
-              </span>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-              <span className="flex items-center gap-0.5">
-                <Eye className="w-3 h-3" />
-                127 views
-              </span>
-              <span>•</span>
-              <span className="flex items-center gap-0.5">
-                <Heart className="w-3 h-3" />
-                23 saves
-              </span>
-            </div>
-          </div>
-          <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
-        </button>
+        {/* Product Card - Flat version */}
+<div className="bg-card/50 border-b border-border">
+  <button
+    onClick={() => setShowProductPanel(true)}
+    className="w-full px-3 py-2.5 flex items-center gap-3 hover:bg-muted/50 transition-colors"
+  >
+    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center shrink-0 relative overflow-hidden">
+      <Package className="w-6 h-6 text-muted-foreground" />
+      <div className="absolute top-0.5 right-0.5 w-2 h-2 bg-emerald-500 rounded-full" />
+    </div>
+    <div className="flex-1 min-w-0 text-left">
+      <p className="text-foreground font-semibold text-sm truncate">iPhone 15 Pro Max - 256GB</p>
+      <div className="flex items-center gap-2 mt-0.5">
+        <p className="text-emerald-600 font-bold text-base">$899</p>
+        <span className="text-xs text-muted-foreground line-through">$1,099</span>
+        <span className="text-xs bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded-full font-medium">
+          18% off
+        </span>
+      </div>
+      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+        <span className="flex items-center gap-0.5">
+          <Eye className="w-3 h-3" />
+          127 views
+        </span>
+        <span>•</span>
+        <span className="flex items-center gap-0.5">
+          <Heart className="w-3 h-3" />
+          23 saves
+        </span>
+      </div>
+    </div>
+    <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
+  </button>
+</div>
 
         {/* Progress Steps */}
         <div className="mx-3 mt-2 mb-1">
