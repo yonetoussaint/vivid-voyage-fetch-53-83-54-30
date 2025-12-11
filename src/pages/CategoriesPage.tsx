@@ -553,9 +553,12 @@ const CategoriesPage: React.FC<CategoriesPageProps> = ({
         <div className="flex items-center gap-1 mb-0.5">
           <span className="text-[10px] text-gray-500">{product.soldCount} sold</span>
           <span className="text-[10px] text-gray-400">|</span>
-          <span className="text-[10px] text-gray-700">ˇú {product.rating}</span>
+          <div className="flex items-center">
+            <span className="text-[10px] text-gray-700 mr-0.5">★</span>
+            <span className="text-[10px] text-gray-700">{product.rating}</span>
+          </div>
         </div>
-        <p className="text-sm font-bold text-gray-900">{product.price}</p>
+        <p className="text-sm font-bold text-gray-900">₱{parseInt(product.price).toLocaleString('en-US')}</p>
         {product.note && (
           <p className="text-[10px] text-gray-500">{product.note}</p>
         )}
@@ -571,7 +574,7 @@ const CategoriesPage: React.FC<CategoriesPageProps> = ({
       {/* Left sidebar - Shadow removed */}
       <div className="w-24 bg-white flex flex-col">
         <div className="flex-1 overflow-y-auto overscroll-contain scrollbar-hide py-4">
-          <div className="min-h-full pb-8"> {/* Added padding bottom for sidebar */}
+          <div className="min-h-full pb-16"> {/* Increased from pb-8 to pb-16 */}
             {categories.map((category) => {
               const Icon = category.icon;
               const isActive = selectedCategory === category.id;
