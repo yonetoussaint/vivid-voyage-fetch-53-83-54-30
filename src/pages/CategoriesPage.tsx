@@ -571,11 +571,11 @@ const CategoriesPage: React.FC<CategoriesPageProps> = ({
       {/* Left sidebar - Shadow removed */}
       <div className="w-24 bg-white flex flex-col">
         <div className="flex-1 overflow-y-auto overscroll-contain scrollbar-hide py-4">
-          <div className="min-h-full">
+          <div className="min-h-full pb-8"> {/* Added padding bottom for sidebar */}
             {categories.map((category) => {
               const Icon = category.icon;
               const isActive = selectedCategory === category.id;
-              
+
               return (
                 <button
                   key={category.id}
@@ -612,7 +612,7 @@ const CategoriesPage: React.FC<CategoriesPageProps> = ({
             overscrollBehaviorY: 'contain',
           }}
         >
-          <div className="p-2">
+          <div className="p-2 pb-20"> {/* Added pb-20 (80px) for scroll room */}
             {selectedCategoryData?.subCategories.length === 0 ? (
               <div className="flex items-center justify-center h-64">
                 <p className="text-gray-500">No subcategories available for {selectedCategoryData.name}</p>
@@ -629,6 +629,9 @@ const CategoriesPage: React.FC<CategoriesPageProps> = ({
                     {products.map(renderProductCard)}
                   </div>
                 </div>
+
+                {/* Extra padding div at the bottom for scroll space */}
+                <div className="h-32"></div>
               </>
             )}
           </div>
@@ -654,6 +657,7 @@ const GlobalStyles: React.FC = () => (
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior: contain;
+      padding-bottom: 20px; /* Added padding to scroll container itself */
     }
     .scroll-wheel::-webkit-scrollbar {
       display: none;
