@@ -355,11 +355,13 @@ const CategoriesPage: React.FC<CategoriesPageProps> = ({
                   key={category.id}
                   onClick={() => setSelectedCategory(category.id)}
                   className={`relative w-full py-4 flex flex-col items-center gap-1 transition-all ${
-                    isActive ? "text-orange-600" : "text-gray-600 hover:bg-gray-50"
+                    isActive ? "text-orange-600 bg-gray-50" : "text-gray-600 hover:bg-gray-50"
                   }`}
                 >
                   <Icon className="w-5 h-5 mb-1" strokeWidth={isActive ? 2.5 : 1.8} />
-                  <span className="text-[8px] font-medium px-1 leading-tight text-center text-gray-800">
+                  <span className={`text-[8px] font-medium px-1 leading-tight text-center ${
+                    isActive ? "text-gray-800" : "text-gray-800"
+                  }`}>
                     {category.name.split(" ")[0]}
                     {category.name.includes(" ") && (
                       <>
