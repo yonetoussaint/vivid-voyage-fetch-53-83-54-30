@@ -641,166 +641,160 @@ export default function BuyerSellerChat() {
     >
       <div className="flex-1 flex flex-col min-h-0 bg-background text-foreground">
         {/* Header */}
-        <div className="px-3 py-2 flex items-center gap-2 shrink-0 bg-card border-b border-border shadow-sm">
-          <button className="p-1.5 hover:bg-muted rounded-full transition-colors">
-            <ArrowLeft className="w-5 h-5 text-foreground" />
-          </button>
+<div className="px-3 py-2 flex items-center gap-2 shrink-0 bg-card border-b border-border shadow-sm">
+  <button className="p-1.5 hover:bg-muted rounded-full transition-colors">
+    <ArrowLeft className="w-5 h-5 text-foreground" />
+  </button>
 
-          <button onClick={() => setShowSellerProfile(true)} className="flex items-center gap-2.5 flex-1 min-w-0">
-            <div className="relative">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0">
-                <span className="text-white font-bold text-sm">JS</span>
-              </div>
-              {sellerOnline && (
-                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-card" />
-              )}
+  <button onClick={() => setShowSellerProfile(true)} className="flex items-center gap-2.5 flex-1 min-w-0">
+    <div className="relative">
+      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0">
+        <span className="text-white font-bold text-sm">JS</span>
+      </div>
+      {sellerOnline && (
+        <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-card" />
+      )}
+    </div>
+    <div className="flex-1 min-w-0">
+      <div className="flex items-center gap-1.5">
+        <span className="text-foreground font-semibold text-sm truncate">John Seller</span>
+        <div className="group relative">
+          <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-500 cursor-help" />
+          <div className="absolute left-0 top-6 w-48 bg-popover border border-border rounded-lg p-2 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+            <div className="flex items-center gap-2 mb-1">
+              <ShieldCheck className="w-4 h-4 text-blue-500" />
+              <span className="text-xs font-medium text-foreground">Verified Seller</span>
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-foreground font-semibold text-sm truncate">John Seller</span>
-                <div className="group relative">
-                  <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-500 cursor-help" />
-                  <div className="absolute left-0 top-6 w-48 bg-popover border border-border rounded-lg p-2 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                    <div className="flex items-center gap-2 mb-1">
-                      <ShieldCheck className="w-4 h-4 text-blue-500" />
-                      <span className="text-xs font-medium text-foreground">Verified Seller</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">ID verified, 127 successful sales, 4.9 rating</p>
-                  </div>
-                </div>
-              </div>
-              <p className="text-muted-foreground text-xs flex items-center gap-1">
-                {sellerOnline ? (
-                  <>
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    Online now
-                  </>
-                ) : (
-                  <>Last seen {lastSeen}</>
-                )}
-                <span className="mx-1">•</span>
-                <Clock className="w-3 h-3" />
-                <span>Usually responds in ~1hr</span>
-              </p>
-            </div>
-          </button>
-
-          <div className="flex items-center gap-0.5">
-            <button
-              onClick={() => setActiveCall("audio")}
-              className="p-2 hover:bg-muted rounded-full transition-colors"
-            >
-              <Phone className="w-5 h-5 text-foreground" />
-            </button>
-            <button
-              onClick={() => setActiveCall("video")}
-              className="p-2 hover:bg-muted rounded-full transition-colors"
-            >
-              <Video className="w-5 h-5 text-foreground" />
-            </button>
-            <div className="relative">
-              <button
-                onClick={() => setShowMenu(!showMenu)}
-                className="p-2 hover:bg-muted rounded-full transition-colors"
-              >
-                <MoreVertical className="w-5 h-5 text-foreground" />
-              </button>
-
-              {showMenu && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-                  <div className="absolute right-0 top-10 w-56 bg-popover border border-border rounded-xl shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <button
-                      onClick={() => {
-                        setShowSearch(true)
-                        setShowMenu(false)
-                      }}
-                      className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
-                    >
-                      <Search className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm text-foreground">Search in chat</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowMediaGallery(true)
-                        setShowMenu(false)
-                      }}
-                      className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
-                    >
-                      <ImageIcon2 className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm text-foreground">Shared media</span>
-                      <span className="ml-auto text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
-                        {allMedia.length}
-                      </span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowNegotiationHistory(true)
-                        setShowMenu(false)
-                      }}
-                      className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
-                    >
-                      <TrendingDown className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm text-foreground">Negotiation history</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowSafetyChecklist(true)
-                        setShowMenu(false)
-                      }}
-                      className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
-                    >
-                      <Shield className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm text-foreground">Safety checklist</span>
-                    </button>
-                    <div className="h-px bg-border my-1" />
-                    <button
-                      onClick={() => {
-                        setNotificationsMuted(!notificationsMuted)
-                        setShowMenu(false)
-                      }}
-                      className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
-                    >
-                      {notificationsMuted ? (
-                        <BellOff className="w-4 h-4 text-muted-foreground" />
-                      ) : (
-                        <Bell className="w-4 h-4 text-muted-foreground" />
-                      )}
-                      <span className="text-sm text-foreground">
-                        {notificationsMuted ? "Unmute" : "Mute"} notifications
-                      </span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setDarkMode(!darkMode)
-                        setShowMenu(false)
-                      }}
-                      className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
-                    >
-                      {darkMode ? (
-                        <Sun className="w-4 h-4 text-muted-foreground" />
-                      ) : (
-                        <Moon className="w-4 h-4 text-muted-foreground" />
-                      )}
-                      <span className="text-sm text-foreground">{darkMode ? "Light" : "Dark"} mode</span>
-                    </button>
-                    <div className="h-px bg-border my-1" />
-                    <button
-                      onClick={() => {
-                        setShowReportModal(true)
-                        setShowMenu(false)
-                      }}
-                      className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors text-red-600"
-                    >
-                      <Flag className="w-4 h-4" />
-                      <span className="text-sm">Report seller</span>
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
+            <p className="text-xs text-muted-foreground">ID verified, 127 successful sales, 4.9 rating</p>
           </div>
         </div>
+      </div>
+      <p className="text-muted-foreground text-xs flex items-center gap-1">
+        <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+        <span>4.5</span>
+        <span className="mx-1">•</span>
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+        <span>Online Now</span>
+      </p>
+    </div>
+  </button>
+
+  <div className="flex items-center gap-0.5">
+    <button
+      onClick={() => setActiveCall("audio")}
+      className="p-2 hover:bg-muted rounded-full transition-colors"
+    >
+      <Phone className="w-5 h-5 text-foreground" />
+    </button>
+    <button
+      onClick={() => setActiveCall("video")}
+      className="p-2 hover:bg-muted rounded-full transition-colors"
+    >
+      <Video className="w-5 h-5 text-foreground" />
+    </button>
+    <div className="relative">
+      <button
+        onClick={() => setShowMenu(!showMenu)}
+        className="p-2 hover:bg-muted rounded-full transition-colors"
+      >
+        <MoreVertical className="w-5 h-5 text-foreground" />
+      </button>
+
+      {showMenu && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
+          <div className="absolute right-0 top-10 w-56 bg-popover border border-border rounded-xl shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-200">
+            <button
+              onClick={() => {
+                setShowSearch(true)
+                setShowMenu(false)
+              }}
+              className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
+            >
+              <Search className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm text-foreground">Search in chat</span>
+            </button>
+            <button
+              onClick={() => {
+                setShowMediaGallery(true)
+                setShowMenu(false)
+              }}
+              className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
+            >
+              <ImageIcon2 className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm text-foreground">Shared media</span>
+              <span className="ml-auto text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                {allMedia.length}
+              </span>
+            </button>
+            <button
+              onClick={() => {
+                setShowNegotiationHistory(true)
+                setShowMenu(false)
+              }}
+              className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
+            >
+              <TrendingDown className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm text-foreground">Negotiation history</span>
+            </button>
+            <button
+              onClick={() => {
+                setShowSafetyChecklist(true)
+                setShowMenu(false)
+              }}
+              className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
+            >
+              <Shield className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm text-foreground">Safety checklist</span>
+            </button>
+            <div className="h-px bg-border my-1" />
+            <button
+              onClick={() => {
+                setNotificationsMuted(!notificationsMuted)
+                setShowMenu(false)
+              }}
+              className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
+            >
+              {notificationsMuted ? (
+                <BellOff className="w-4 h-4 text-muted-foreground" />
+              ) : (
+                <Bell className="w-4 h-4 text-muted-foreground" />
+              )}
+              <span className="text-sm text-foreground">
+                {notificationsMuted ? "Unmute" : "Mute"} notifications
+              </span>
+            </button>
+            <button
+              onClick={() => {
+                setDarkMode(!darkMode)
+                setShowMenu(false)
+              }}
+              className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
+            >
+              {darkMode ? (
+                <Sun className="w-4 h-4 text-muted-foreground" />
+              ) : (
+                <Moon className="w-4 h-4 text-muted-foreground" />
+              )}
+              <span className="text-sm text-foreground">{darkMode ? "Light" : "Dark"} mode</span>
+            </button>
+            <div className="h-px bg-border my-1" />
+            <button
+              onClick={() => {
+                setShowReportModal(true)
+                setShowMenu(false)
+              }}
+              className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors text-red-600"
+            >
+              <Flag className="w-4 h-4" />
+              <span className="text-sm">Report seller</span>
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  </div>
+</div>
 
         {/* Call Banner */}
         {(activeCall === "ringing" || activeCall === "audio" || activeCall === "video") && (
