@@ -63,6 +63,7 @@ import {
   LayoutGrid,
   List,
   Receipt,
+  PhoneOff,
 } from "lucide-react"
 
 type Message = {
@@ -228,8 +229,9 @@ export default function BuyerSellerChat() {
   const [recordingDuration, setRecordingDuration] = useState(0)
   const [playingVoiceId, setPlayingVoiceId] = useState<number | null>(null)
 
-  // Call state
-  const [activeCall, setActiveCall] = useState<null | "ringing" | "audio" | "video">(null)
+  // Call state - UPDATED
+  const [activeCall, setActiveCall] = useState<null | "audio" | "video">(null)
+  const [callState, setCallState] = useState<"idle" | "ringing" | "active">("idle")
   const [callDuration, setCallDuration] = useState(0)
   const [isAudioMuted, setIsAudioMuted] = useState(false)
   const [isVideoOff, setIsVideoOff] = useState(false)
@@ -238,7 +240,6 @@ export default function BuyerSellerChat() {
   // Typing indicator
   const [isTyping, setIsTyping] = useState(true)
   const [sellerOnline, setSellerOnline] = useState(true)
-  const [lastSeen, setLastSeen] = useState("Online")
 
   // Payment
   const [selectedPayment, setSelectedPayment] = useState("cash")
@@ -271,8 +272,6 @@ export default function BuyerSellerChat() {
     { id: 3, type: "accept", amount: 880, from: "buyer", time: "10:40 AM", message: "Deal accepted!" },
   ])
 
-  
-
   // Rating
   const [rating, setRating] = useState(0)
   const [reviewText, setReviewText] = useState("")
@@ -303,102 +302,7 @@ export default function BuyerSellerChat() {
   // Emojis for reactions
   const reactionEmojis = ["👍", "❤️", "😂", "😮", "😢", "🙏", "🔥", "🤝"]
   const allEmojis = [
-    "😀",
-    "😃",
-    "😄",
-    "😁",
-    "😅",
-    "😂",
-    "🤣",
-    "😊",
-    "😇",
-    "🙂",
-    "😉",
-    "😌",
-    "😍",
-    "🥰",
-    "😘",
-    "😗",
-    "😙",
-    "😚",
-    "😋",
-    "😛",
-    "😜",
-    "🤪",
-    "😝",
-    "🤑",
-    "🤗",
-    "🤭",
-    "🤫",
-    "🤔",
-    "🤐",
-    "🤨",
-    "😐",
-    "😑",
-    "😶",
-    "😏",
-    "😒",
-    "🙄",
-    "😬",
-    "😮",
-    "🥱",
-    "😴",
-    "🤤",
-    "😪",
-    "😵",
-    "🤯",
-    "🤠",
-    "🥳",
-    "🥸",
-    "😎",
-    "🤓",
-    "🧐",
-    "😕",
-    "😟",
-    "🙁",
-    "😮",
-    "😯",
-    "😲",
-    "😳",
-    "🥺",
-    "😦",
-    "😧",
-    "👍",
-    "👎",
-    "👌",
-    "🤌",
-    "🤏",
-    "✌️",
-    "🤞",
-    "🤟",
-    "🤘",
-    "🤙",
-    "👈",
-    "👉",
-    "❤️",
-    "🧡",
-    "💛",
-    "💚",
-    "💙",
-    "💜",
-    "🖤",
-    "🤍",
-    "🤎",
-    "💔",
-    "❤️‍🔥",
-    "💕",
-    "🔥",
-    "✨",
-    "💫",
-    "⭐",
-    "🌟",
-    "💥",
-    "💢",
-    "💦",
-    "💨",
-    "🎉",
-    "🎊",
-    "🎁",
+    "😀", "😃", "😄", "😁", "😅", "😂", "🤣", "😊", "😇", "🙂", "😉", "😌", "😍", "🥰", "😘", "😗", "😙", "😚", "😋", "😛", "😜", "🤪", "😝", "🤑", "🤗", "🤭", "🤫", "🤔", "🤐", "🤨", "😐", "😑", "😶", "😏", "😒", "🙄", "😬", "😮", "🥱", "😴", "🤤", "😪", "😵", "🤯", "🤠", "🥳", "🥸", "😎", "🤓", "🧐", "😕", "😟", "🙁", "😮", "😯", "😲", "😳", "🥺", "😦", "😧", "👍", "👎", "👌", "🤌", "🤏", "✌️", "🤞", "🤟", "🤘", "🤙", "👈", "👉", "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎", "💔", "❤️‍🔥", "💕", "🔥", "✨", "💫", "⭐", "🌟", "💥", "💢", "💦", "💨", "🎉", "🎊", "🎁",
   ]
 
   // Quick replies
@@ -442,12 +346,11 @@ export default function BuyerSellerChat() {
 
   // Effects
   useEffect(() => {
-    if (activeCall === "audio" || activeCall === "video") {
+    if (callState === "active") {
       const interval = setInterval(() => setCallDuration((d) => d + 1), 1000)
       return () => clearInterval(interval)
     }
-    setCallDuration(0)
-  }, [activeCall])
+  }, [callState])
 
   useEffect(() => {
     if (isRecording) {
@@ -602,7 +505,7 @@ export default function BuyerSellerChat() {
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, "0")}`
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
   }
 
   const highlightText = (text: string, query: string) => {
@@ -632,6 +535,22 @@ export default function BuyerSellerChat() {
     }
   }
 
+  // Call handlers
+  const handleCallStart = (type: "audio" | "video") => {
+    setActiveCall(type)
+    setCallState("ringing")
+    // Simulate call connecting after 2 seconds
+    setTimeout(() => {
+      setCallState("active")
+    }, 2000)
+  }
+
+  const handleCallEnd = () => {
+    setCallState("idle")
+    setActiveCall(null)
+    setCallDuration(0)
+  }
+
   return (
     <div
       className={cn(
@@ -640,381 +559,222 @@ export default function BuyerSellerChat() {
       )}
     >
       <div className="flex-1 flex flex-col min-h-0 bg-background text-foreground">
-        {/* Header */}
-<div className="px-3 py-2 flex items-center gap-2 shrink-0 bg-card border-b border-border shadow-sm">
-  <button className="p-1.5 hover:bg-muted rounded-full transition-colors">
-    <ArrowLeft className="w-5 h-5 text-foreground" />
-  </button>
+        {/* Header - UPDATED */}
+        <div className="px-2 py-2 flex items-center gap-2 shrink-0 bg-card border-b border-border shadow-sm">
+          <button className="p-1.5 hover:bg-muted rounded-full transition-colors">
+            <ArrowLeft className="w-5 h-5 text-foreground" />
+          </button>
 
-  <button onClick={() => setShowSellerProfile(true)} className="flex items-center gap-2.5 flex-1 min-w-0">
-    <div className="relative">
-      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0">
-        <span className="text-white font-bold text-sm">JS</span>
-      </div>
-      {sellerOnline && (
-        <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-card" />
-      )}
-    </div>
-    <div className="flex-1 min-w-0">
-      <div className="flex items-center gap-1.5">
-        <span className="text-foreground font-semibold text-sm truncate">John Seller</span>
-        <div className="group relative">
-          <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-500 cursor-help" />
-          <div className="absolute left-0 top-6 w-48 bg-popover border border-border rounded-lg p-2 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-            <div className="flex items-center gap-2 mb-1">
-              <ShieldCheck className="w-4 h-4 text-blue-500" />
-              <span className="text-xs font-medium text-foreground">Verified Seller</span>
-            </div>
-            <p className="text-xs text-muted-foreground">ID verified, 127 successful sales, 4.9 rating</p>
-          </div>
-        </div>
-      </div>
-      <p className="text-muted-foreground text-xs flex items-center gap-1">
-        <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-        <span>4.5</span>
-        <span className="mx-1">•</span>
-        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-        <span>Online Now</span>
-      </p>
-    </div>
-  </button>
-
-  <div className="flex items-center gap-0.5">
-    <button
-      onClick={() => setActiveCall("audio")}
-      className="p-2 hover:bg-muted rounded-full transition-colors"
-    >
-      <Phone className="w-5 h-5 text-foreground" />
-    </button>
-    <button
-      onClick={() => setActiveCall("video")}
-      className="p-2 hover:bg-muted rounded-full transition-colors"
-    >
-      <Video className="w-5 h-5 text-foreground" />
-    </button>
-    <div className="relative">
-      <button
-        onClick={() => setShowMenu(!showMenu)}
-        className="p-2 hover:bg-muted rounded-full transition-colors"
-      >
-        <MoreVertical className="w-5 h-5 text-foreground" />
-      </button>
-
-      {showMenu && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-          <div className="absolute right-0 top-10 w-56 bg-popover border border-border rounded-xl shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-200">
-            <button
-              onClick={() => {
-                setShowSearch(true)
-                setShowMenu(false)
-              }}
-              className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
-            >
-              <Search className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm text-foreground">Search in chat</span>
-            </button>
-            <button
-              onClick={() => {
-                setShowMediaGallery(true)
-                setShowMenu(false)
-              }}
-              className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
-            >
-              <ImageIcon2 className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm text-foreground">Shared media</span>
-              <span className="ml-auto text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
-                {allMedia.length}
-              </span>
-            </button>
-            <button
-              onClick={() => {
-                setShowNegotiationHistory(true)
-                setShowMenu(false)
-              }}
-              className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
-            >
-              <TrendingDown className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm text-foreground">Negotiation history</span>
-            </button>
-            <button
-              onClick={() => {
-                setShowSafetyChecklist(true)
-                setShowMenu(false)
-              }}
-              className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
-            >
-              <Shield className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm text-foreground">Safety checklist</span>
-            </button>
-            <div className="h-px bg-border my-1" />
-            <button
-              onClick={() => {
-                setNotificationsMuted(!notificationsMuted)
-                setShowMenu(false)
-              }}
-              className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
-            >
-              {notificationsMuted ? (
-                <BellOff className="w-4 h-4 text-muted-foreground" />
-              ) : (
-                <Bell className="w-4 h-4 text-muted-foreground" />
-              )}
-              <span className="text-sm text-foreground">
-                {notificationsMuted ? "Unmute" : "Mute"} notifications
-              </span>
-            </button>
-            <button
-              onClick={() => {
-                setDarkMode(!darkMode)
-                setShowMenu(false)
-              }}
-              className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
-            >
-              {darkMode ? (
-                <Sun className="w-4 h-4 text-muted-foreground" />
-              ) : (
-                <Moon className="w-4 h-4 text-muted-foreground" />
-              )}
-              <span className="text-sm text-foreground">{darkMode ? "Light" : "Dark"} mode</span>
-            </button>
-            <div className="h-px bg-border my-1" />
-            <button
-              onClick={() => {
-                setShowReportModal(true)
-                setShowMenu(false)
-              }}
-              className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors text-red-600"
-            >
-              <Flag className="w-4 h-4" />
-              <span className="text-sm">Report seller</span>
-            </button>
-          </div>
-        </>
-      )}
-    </div>
-  </div>
-</div>
-
-        {/* Call Banner */}
-        {(activeCall === "ringing" || activeCall === "audio" || activeCall === "video") && (
-          <div
-            className={cn(
-              "px-4 py-2.5 shrink-0 flex items-center justify-between",
-              activeCall === "ringing"
-                ? "bg-gradient-to-r from-yellow-500 to-orange-500"
-                : "bg-gradient-to-r from-emerald-500 to-teal-600",
-            )}
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                {activeCall === "video" ? (
-                  <Video className="w-4 h-4 text-white" />
-                ) : (
-                  <Phone className="w-4 h-4 text-white" />
-                )}
+          <button onClick={() => setShowSellerProfile(true)} className="flex items-center gap-2.5 flex-1 min-w-0">
+            <div className="relative">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0">
+                <span className="text-white font-bold text-sm">JS</span>
               </div>
-              <div>
-                <p className="text-white text-sm font-semibold flex items-center gap-2">
-                  {activeCall === "ringing"
-                    ? "Calling John Seller"
-                    : `${activeCall === "video" ? "Video" : "Voice"} call`}
-                  {activeCall === "ringing" && (
-                    <span className="flex gap-0.5">
-                      {[0, 0.2, 0.4].map((delay, i) => (
-                        <span
-                          key={i}
-                          className="w-1 h-1 bg-white rounded-full animate-pulse"
-                          style={{ animationDelay: `${delay}s` }}
-                        />
-                      ))}
-                    </span>
-                  )}
-                </p>
-                <p className="text-white/90 text-xs">
-                  {activeCall === "ringing" ? "Waiting for answer..." : formatDuration(callDuration)}
-                </p>
-              </div>
+              {sellerOnline && (
+                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-card" />
+              )}
             </div>
-            <div className="flex items-center gap-2">
-              {activeCall !== "ringing" && (
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="text-foreground font-semibold text-sm truncate">John Seller</span>
+                <div className="group relative">
+                  <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-500 cursor-help" />
+                  <div className="absolute left-0 top-6 w-48 bg-popover border border-border rounded-lg p-2 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                    <div className="flex items-center gap-2 mb-1">
+                      <ShieldCheck className="w-4 h-4 text-blue-500" />
+                      <span className="text-xs font-medium text-foreground">Verified Seller</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">ID verified, 127 successful sales, 4.9 rating</p>
+                  </div>
+                </div>
+              </div>
+              <p className="text-muted-foreground text-xs flex items-center gap-1">
+                <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                <span>4.5</span>
+                <span className="mx-1">•</span>
+                <span>Online</span>
+              </p>
+            </div>
+          </button>
+
+          <div className="flex items-center gap-0.5">
+            <div className="relative group">
+              {callState === "idle" ? (
+                // Initial state - simple call button
+                <button 
+                  onClick={() => handleCallStart("audio")}
+                  className="px-3 py-2 flex items-center gap-2 hover:bg-muted rounded-full transition-colors"
+                >
+                  <Phone className="w-4 h-4 text-foreground" />
+                  <span className="text-sm text-foreground font-medium">Call</span>
+                </button>
+              ) : callState === "ringing" ? (
+                // Ringing state with hang up button
+                <div className="flex items-center gap-1">
+                  <div className="px-3 py-2 bg-blue-500/10 rounded-full">
+                    <span className="text-sm text-blue-500 font-medium">Ringing...</span>
+                  </div>
+                  <button
+                    onClick={handleCallEnd}
+                    className="p-2 hover:bg-red-500/10 rounded-full transition-colors"
+                  >
+                    <PhoneOff className="w-5 h-5 text-red-500" />
+                  </button>
+                </div>
+              ) : (
+                // Active call state with duration and end button
+                <div className="flex items-center gap-1">
+                  <div className="px-3 py-2 bg-green-500/10 rounded-full">
+                    <span className="text-sm text-green-500 font-medium">{formatDuration(callDuration)}</span>
+                  </div>
+                  <button
+                    onClick={handleCallEnd}
+                    className="p-2 hover:bg-red-500/10 rounded-full transition-colors"
+                  >
+                    <PhoneOff className="w-5 h-5 text-red-500" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="relative">
+              <button
+                onClick={() => setShowMenu(!showMenu)}
+                className="p-2 hover:bg-muted rounded-full transition-colors"
+              >
+                <MoreVertical className="w-5 h-5 text-foreground" />
+              </button>
+
+              {showMenu && (
                 <>
-                  <button
-                    onClick={() => setIsAudioMuted(!isAudioMuted)}
-                    className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center transition-colors",
-                      isAudioMuted ? "bg-red-500" : "bg-white/20",
-                    )}
-                  >
-                    {isAudioMuted ? <MicOff className="w-4 h-4 text-white" /> : <Mic className="w-4 h-4 text-white" />}
-                  </button>
-                  {activeCall === "video" && (
+                  <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
+                  <div className="absolute right-0 top-10 w-56 bg-popover border border-border rounded-xl shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-200">
                     <button
-                      onClick={() => setIsVideoOff(!isVideoOff)}
-                      className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center transition-colors",
-                        isVideoOff ? "bg-red-500" : "bg-white/20",
-                      )}
+                      onClick={() => {
+                        setShowSearch(true)
+                        setShowMenu(false)
+                      }}
+                      className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
                     >
-                      {isVideoOff ? (
-                        <Video className="w-4 h-4 text-white line-through" />
-                      ) : (
-                        <Video className="w-4 h-4 text-white" />
-                      )}
+                      <Search className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm text-foreground">Search in chat</span>
                     </button>
-                  )}
-                  <button
-                    onClick={() => setIsSpeakerOn(!isSpeakerOn)}
-                    className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center transition-colors",
-                      isSpeakerOn ? "bg-white/40" : "bg-white/20",
-                    )}
-                  >
-                    <Volume2 className="w-4 h-4 text-white" />
-                  </button>
+                    <button
+                      onClick={() => {
+                        setShowMediaGallery(true)
+                        setShowMenu(false)
+                      }}
+                      className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
+                    >
+                      <ImageIcon2 className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm text-foreground">Shared media</span>
+                      <span className="ml-auto text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                        {allMedia.length}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowNegotiationHistory(true)
+                        setShowMenu(false)
+                      }}
+                      className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
+                    >
+                      <TrendingDown className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm text-foreground">Negotiation history</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowSafetyChecklist(true)
+                        setShowMenu(false)
+                      }}
+                      className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
+                    >
+                      <Shield className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm text-foreground">Safety checklist</span>
+                    </button>
+                    <div className="h-px bg-border my-1" />
+                    <button
+                      onClick={() => {
+                        setNotificationsMuted(!notificationsMuted)
+                        setShowMenu(false)
+                      }}
+                      className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
+                    >
+                      {notificationsMuted ? (
+                        <BellOff className="w-4 h-4 text-muted-foreground" />
+                      ) : (
+                        <Bell className="w-4 h-4 text-muted-foreground" />
+                      )}
+                      <span className="text-sm text-foreground">
+                        {notificationsMuted ? "Unmute" : "Mute"} notifications
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setDarkMode(!darkMode)
+                        setShowMenu(false)
+                      }}
+                      className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
+                    >
+                      {darkMode ? (
+                        <Sun className="w-4 h-4 text-muted-foreground" />
+                      ) : (
+                        <Moon className="w-4 h-4 text-muted-foreground" />
+                      )}
+                      <span className="text-sm text-foreground">{darkMode ? "Light" : "Dark"} mode</span>
+                    </button>
+                    <div className="h-px bg-border my-1" />
+                    <button
+                      onClick={() => {
+                        setShowReportModal(true)
+                        setShowMenu(false)
+                      }}
+                      className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors text-red-600"
+                    >
+                      <Flag className="w-4 h-4" />
+                      <span className="text-sm">Report seller</span>
+                    </button>
+                  </div>
                 </>
               )}
-              <button
-                onClick={() => setActiveCall(null)}
-                className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center hover:bg-red-600 transition-colors"
-              >
-                <PhoneCall className="w-4 h-4 text-white rotate-[135deg]" />
-              </button>
             </div>
           </div>
-        )}
-
-        {/* Search Panel */}
-        {showSearch && (
-          <div className="px-3 py-2 bg-card border-b border-border flex items-center gap-2 animate-in slide-in-from-top duration-200">
-            <div className="flex-1 bg-muted rounded-full px-3 py-1.5 flex items-center gap-2">
-              <Search className="w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search messages..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value)
-                  setSearchResultIndex(0)
-                }}
-                className="flex-1 bg-transparent outline-none text-sm text-foreground placeholder:text-muted-foreground"
-                autoFocus
-              />
-              {searchQuery && (
-                <button onClick={() => setSearchQuery("")}>
-                  <X className="w-4 h-4 text-muted-foreground" />
-                </button>
-              )}
-            </div>
-            {searchResults.length > 0 && (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <span>
-                  {searchResultIndex + 1}/{searchResults.length}
-                </span>
-                <button
-                  onClick={() => {
-                    const newIndex = searchResultIndex > 0 ? searchResultIndex - 1 : searchResults.length - 1
-                    setSearchResultIndex(newIndex)
-                    scrollToMessage(searchResults[newIndex].id)
-                  }}
-                  className="p-1 hover:bg-muted rounded"
-                >
-                  <ChevronUp className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => {
-                    const newIndex = searchResultIndex < searchResults.length - 1 ? searchResultIndex + 1 : 0
-                    setSearchResultIndex(newIndex)
-                    scrollToMessage(searchResults[newIndex].id)
-                  }}
-                  className="p-1 hover:bg-muted rounded"
-                >
-                  <ChevronDown className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-            <button
-              onClick={() => {
-                setShowSearch(false)
-                setSearchQuery("")
-              }}
-            >
-              <X className="w-5 h-5 text-muted-foreground" />
-            </button>
-          </div>
-        )}
-
-        {/* Pinned Messages */}
-        {pinnedMessages.length > 0 && !showSearch && (
-          <div className="bg-amber-50 dark:bg-amber-950/20 border-b border-amber-200 dark:border-amber-800">
-            <button
-              onClick={() => setPinnedMessagesExpanded(!pinnedMessagesExpanded)}
-              className="w-full px-3 py-2 flex items-center gap-2"
-            >
-              <Pin className="w-4 h-4 text-amber-600" />
-              <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
-                {pinnedMessages.length} pinned message{pinnedMessages.length > 1 ? "s" : ""}
-              </span>
-              <ChevronDown
-                className={cn(
-                  "w-4 h-4 text-amber-600 ml-auto transition-transform",
-                  pinnedMessagesExpanded && "rotate-180",
-                )}
-              />
-            </button>
-            {pinnedMessagesExpanded && (
-              <div className="px-3 pb-2 space-y-1">
-                {pinnedMessages.map((msg) => (
-                  <button
-                    key={msg.id}
-                    onClick={() => scrollToMessage(msg.id)}
-                    className="w-full text-left px-2 py-1.5 bg-white dark:bg-card rounded-lg text-xs text-foreground truncate hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
-                  >
-                    <span className="text-muted-foreground">{msg.sender === "seller" ? "John: " : "You: "}</span>
-                    {msg.text}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+        </div>
 
         {/* Product Card - Flat version */}
-<div className="bg-card/50 border-b border-border">
-  <button
-    onClick={() => setShowProductPanel(true)}
-    className="w-full px-3 py-2.5 flex items-center gap-3 hover:bg-muted/50 transition-colors"
-  >
-    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center shrink-0 relative overflow-hidden">
-      <Package className="w-6 h-6 text-muted-foreground" />
-      <div className="absolute top-0.5 right-0.5 w-2 h-2 bg-emerald-500 rounded-full" />
-    </div>
-    <div className="flex-1 min-w-0 text-left">
-      <p className="text-foreground font-semibold text-sm truncate">iPhone 15 Pro Max - 256GB</p>
-      <div className="flex items-center gap-2 mt-0.5">
-        <p className="text-emerald-600 font-bold text-base">$899</p>
-        <span className="text-xs text-muted-foreground line-through">$1,099</span>
-        <span className="text-xs bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded-full font-medium">
-          18% off
-        </span>
-      </div>
-      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-        <span className="flex items-center gap-0.5">
-          <Eye className="w-3 h-3" />
-          127 views
-        </span>
-        <span>•</span>
-        <span className="flex items-center gap-0.5">
-          <Heart className="w-3 h-3" />
-          23 saves
-        </span>
-      </div>
-    </div>
-    <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
-  </button>
-</div>
-
-       
+        <div className="bg-card/50 border-b border-border">
+          <button
+            onClick={() => setShowProductPanel(true)}
+            className="w-full px-3 py-2.5 flex items-center gap-3 hover:bg-muted/50 transition-colors"
+          >
+            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center shrink-0 relative overflow-hidden">
+              <Package className="w-6 h-6 text-muted-foreground" />
+              <div className="absolute top-0.5 right-0.5 w-2 h-2 bg-emerald-500 rounded-full" />
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-foreground font-semibold text-sm truncate">iPhone 15 Pro Max - 256GB</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <p className="text-emerald-600 font-bold text-base">$899</p>
+                <span className="text-xs text-muted-foreground line-through">$1,099</span>
+                <span className="text-xs bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded-full font-medium">
+                  18% off
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                <span className="flex items-center gap-0.5">
+                  <Eye className="w-3 h-3" />
+                  127 views
+                </span>
+                <span>•</span>
+                <span className="flex items-center gap-0.5">
+                  <Heart className="w-3 h-3" />
+                  23 saves
+                </span>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
+          </button>
+        </div>
 
         {/* Chat Content */}
         <div ref={chatContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-3 py-3 scroll-smooth">
@@ -1296,7 +1056,7 @@ export default function BuyerSellerChat() {
                           <p className={cn("text-xs", isBuyer ? "text-white/70" : "text-muted-foreground")}>
                             Price offer
                           </p>
-                          <p className="font-semibold">{msg.text}</p>
+                          <p className="text-sm">{msg.text}</p>
                         </div>
                       </div>
                     ) : (
