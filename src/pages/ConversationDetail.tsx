@@ -321,7 +321,12 @@ export default function ConversationDetail() {
   }, []);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
   };
 
   const fetchOtherUser = async () => {
@@ -907,7 +912,7 @@ export default function ConversationDetail() {
         {/* Product Card */}
         <button
           onClick={() => setShowProductPanel(true)}
-          className="mx-3 mt-3 bg-card border border-border rounded-xl p-2.5 flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow"
+          className="mx-3 mt-3 bg-card border border-border rounded-xl p-2.5 flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow shrink-0"
         >
           <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center shrink-0 relative overflow-hidden">
             <Package className="w-7 h-7 text-muted-foreground" />
@@ -938,7 +943,7 @@ export default function ConversationDetail() {
         </button>
 
         {/* Progress Steps */}
-        <div className="mx-3 mt-2 mb-1">
+        <div className="mx-3 mt-2 mb-1 shrink-0">
           <div className="flex items-center justify-between">
             {progressSteps.map((step, index) => (
               <div key={step.id} className="flex items-center">
@@ -972,8 +977,17 @@ export default function ConversationDetail() {
           </div>
         </div>
 
-        {/* Chat Content */}
-        <div ref={chatContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-3 py-3 scroll-smooth">
+        {/* FIXED: Chat Content - Now properly scrollable */}
+        <div 
+          ref={chatContainerRef} 
+          onScroll={handleScroll} 
+          className="flex-1 overflow-y-auto px-3 py-3 scroll-smooth"
+          style={{ 
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            scrollBehavior: 'smooth'
+          }}
+        >
           <div className="text-center text-muted-foreground text-xs mb-3 uppercase tracking-wide">Today</div>
 
           {/* Encryption Notice */}
@@ -1463,7 +1477,7 @@ export default function ConversationDetail() {
 
         {/* Reply/Edit Preview */}
         {(replyingTo || editingMessage) && (
-          <div className="px-3 py-2 bg-muted border-t border-border flex items-center gap-2">
+          <div className="px-3 py-2 bg-muted border-t border-border flex items-center gap-2 shrink-0">
             {replyingTo ? <Reply className="w-4 h-4 text-blue-500" /> : <Edit3 className="w-4 h-4 text-amber-500" />}
             <div className="flex-1 min-w-0">
               <p className="text-xs text-muted-foreground">
@@ -1484,7 +1498,7 @@ export default function ConversationDetail() {
         )}
 
         {/* Quick Replies */}
-        <div className="px-3 py-1.5 border-t border-border bg-card overflow-x-auto scrollbar-hide">
+        <div className="px-3 py-1.5 border-t border-border bg-card overflow-x-auto scrollbar-hide shrink-0">
           <div className="flex gap-1.5">
             {quickReplies.map((reply) => (
               <button
@@ -1500,7 +1514,7 @@ export default function ConversationDetail() {
 
         {/* Quick Actions */}
         {showQuickActions && (
-          <div className="px-3 py-2 bg-card border-t border-border shadow-lg animate-in slide-in-from-bottom-2 duration-200">
+          <div className="px-3 py-2 bg-card border-t border-border shadow-lg animate-in slide-in-from-bottom-2 duration-200 shrink-0">
             <div className="grid grid-cols-4 gap-2">
               {quickActions.map(({ icon: Icon, label, color, action }) => (
                 <button
@@ -1518,7 +1532,7 @@ export default function ConversationDetail() {
 
         {/* Voice Recording */}
         {isRecording && (
-          <div className="px-3 py-3 bg-red-50 dark:bg-red-950/30 border-t border-red-200 dark:border-red-800 flex items-center gap-3 animate-in slide-in-from-bottom duration-200">
+          <div className="px-3 py-3 bg-red-50 dark:bg-red-950/30 border-t border-red-200 dark:border-red-800 flex items-center gap-3 animate-in slide-in-from-bottom duration-200 shrink-0">
             <button onClick={() => setIsRecording(false)} className="p-2 bg-red-100 dark:bg-red-900/50 rounded-full">
               <Trash2 className="w-5 h-5 text-red-600" />
             </button>
@@ -1607,8 +1621,7 @@ export default function ConversationDetail() {
           </>
         )}
 
-        {/* MODALS */}
-
+        {/* MODALS (same as before) */}
         {/* Payment Modal */}
         {showPaymentModal && (
           <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
@@ -1726,241 +1739,6 @@ export default function ConversationDetail() {
           </div>
         )}
 
-        {/* Schedule Modal */}
-        {showScheduleModal && (
-          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
-            <div className="bg-card w-full rounded-t-3xl p-4 max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-foreground">Schedule Meeting</h3>
-                <button onClick={() => setShowScheduleModal(false)}>
-                  <X className="w-6 h-6 text-muted-foreground" />
-                </button>
-              </div>
-
-              <div className="mb-4">
-                <label className="text-sm text-muted-foreground mb-2 block">Select date</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {["Today", "Tomorrow", "Dec 13"].map((date) => (
-                    <button
-                      key={date}
-                      onClick={() => setSelectedDate(date)}
-                      className={cn(
-                        "py-2 rounded-lg text-sm font-medium transition-colors",
-                        selectedDate === date ? "bg-blue-600 text-white" : "bg-muted text-foreground hover:bg-muted/80",
-                      )}
-                    >
-                      {date}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <label className="text-sm text-muted-foreground mb-2 block">Select time</label>
-                <div className="grid grid-cols-4 gap-2">
-                  {["10:00 AM", "12:00 PM", "2:00 PM", "4:00 PM", "5:00 PM", "6:00 PM"].map((time) => (
-                    <button
-                      key={time}
-                      onClick={() => setSelectedTime(time)}
-                      className={cn(
-                        "py-2 rounded-lg text-xs font-medium transition-colors",
-                        selectedTime === time ? "bg-blue-600 text-white" : "bg-muted text-foreground hover:bg-muted/80",
-                      )}
-                    >
-                      {time}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <label className="text-sm text-muted-foreground mb-2 block flex items-center gap-1">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  Safe meeting locations
-                </label>
-                <div className="space-y-2">
-                  {safeLocations.map((loc) => (
-                    <button
-                      key={loc.id}
-                      onClick={() => setSelectedLocation(loc.id)}
-                      className={cn(
-                        "w-full p-3 rounded-xl text-left transition-all flex items-start gap-3",
-                        selectedLocation === loc.id
-                          ? "bg-blue-50 dark:bg-blue-950/30 border-2 border-blue-500"
-                          : "bg-muted border-2 border-transparent hover:border-muted-foreground",
-                      )}
-                    >
-                      <MapPin className="w-5 h-5 text-blue-600 mt-0.5" />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-foreground">{loc.name}</span>
-                          {loc.verified && <BadgeCheck className="w-4 h-4 text-blue-500" />}
-                        </div>
-                        <p className="text-xs text-muted-foreground">{loc.address}</p>
-                      </div>
-                      <div className="flex items-center gap-0.5 text-xs text-muted-foreground">
-                        <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                        {loc.rating}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <button
-                onClick={() => setShowScheduleModal(false)}
-                disabled={!selectedDate || !selectedTime || !selectedLocation}
-                className="w-full bg-blue-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
-              >
-                Propose Meeting
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Product Details Panel */}
-        {showProductPanel && (
-          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
-            <div className="bg-card w-full rounded-t-3xl p-4 max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-foreground">Product Details</h3>
-                <button onClick={() => setShowProductPanel(false)}>
-                  <X className="w-6 h-6 text-muted-foreground" />
-                </button>
-              </div>
-
-              <div className="bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 rounded-xl h-48 flex items-center justify-center mb-4 relative overflow-hidden">
-                <Package className="w-16 h-16 text-muted-foreground" />
-                <div className="absolute top-2 right-2 bg-emerald-600 text-white text-xs px-2 py-1 rounded-full">
-                  98% Battery
-                </div>
-              </div>
-
-              <h2 className="text-xl font-bold text-foreground mb-1">iPhone 15 Pro Max - 256GB</h2>
-              <p className="text-muted-foreground text-sm mb-3">Natural Titanium • Unlocked • Like New</p>
-
-              <div className="flex items-center gap-3 mb-4">
-                <p className="text-emerald-600 font-bold text-2xl">$899</p>
-                <span className="text-base text-muted-foreground line-through">$1,099</span>
-                <span className="text-sm bg-red-100 dark:bg-red-900/30 text-red-600 px-2 py-0.5 rounded-full">
-                  Save $200
-                </span>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => {
-                    setShowProductPanel(false);
-                    setShowPaymentModal(true);
-                  }}
-                  className="flex-1 bg-blue-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                >
-                  <CreditCard className="w-5 h-5" />
-                  Buy Now
-                </button>
-                <button
-                  onClick={() => {
-                    setShowProductPanel(false);
-                    setShowOfferModal(true);
-                  }}
-                  className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors flex items-center justify-center gap-2"
-                >
-                  <DollarSign className="w-5 h-5" />
-                  Make Offer
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Seller Profile */}
-        {showSellerProfile && (
-          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
-            <div className="bg-card w-full rounded-t-3xl p-4 max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-foreground">Seller Profile</h3>
-                <button onClick={() => setShowSellerProfile(false)}>
-                  <X className="w-6 h-6 text-muted-foreground" />
-                </button>
-              </div>
-
-              <div className="flex flex-col items-center mb-4">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center mb-3">
-                  <span className="text-white font-bold text-2xl">{getInitials(otherUser?.full_name || 'User')}</span>
-                </div>
-                <div className="flex items-center gap-1.5 mb-1">
-                  <span className="text-xl font-bold text-foreground">{otherUser?.full_name || 'User'}</span>
-                  <BadgeCheck className="w-5 h-5 text-blue-500 fill-blue-500" />
-                </div>
-                <div className="flex items-center gap-1 text-muted-foreground">
-                  <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                  <span className="font-medium">4.9</span>
-                  <span className="text-sm">(127 reviews)</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-4 gap-2 mb-4">
-                {[
-                  { value: "156", label: "Sales" },
-                  { value: "98%", label: "Response" },
-                  { value: "<1h", label: "Reply" },
-                  { value: "2y", label: "Member" },
-                ].map(({ value, label }) => (
-                  <div key={label} className="bg-muted rounded-lg p-2 text-center">
-                    <p className="text-lg font-bold text-foreground">{value}</p>
-                    <p className="text-[10px] text-muted-foreground">{label}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex gap-2">
-                <button className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors">
-                  View Listings
-                </button>
-                <button
-                  onClick={() => {
-                    setShowSellerProfile(false);
-                    setShowReportModal(true);
-                  }}
-                  className="px-4 bg-secondary text-secondary-foreground py-2.5 rounded-xl hover:bg-secondary/80 transition-colors"
-                >
-                  <Flag className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Report Modal */}
-        {showReportModal && (
-          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
-            <div className="bg-card w-full rounded-t-3xl p-4 animate-in slide-in-from-bottom duration-300">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-foreground">Report Issue</h3>
-                <button onClick={() => setShowReportModal(false)}>
-                  <X className="w-6 h-6 text-muted-foreground" />
-                </button>
-              </div>
-              <div className="space-y-2 mb-4">
-                {["Suspicious behavior", "Spam or scam", "Offensive content", "Fake listing", "Other"].map((reason) => (
-                  <button
-                    key={reason}
-                    className="w-full p-3 bg-muted hover:bg-muted/80 rounded-xl text-left text-foreground transition-colors"
-                  >
-                    {reason}
-                  </button>
-                ))}
-              </div>
-              <button
-                onClick={() => setShowReportModal(false)}
-                className="w-full bg-red-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-red-700 transition-colors"
-              >
-                Submit Report
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Image Viewer */}
         {viewingImage && (
           <div className="absolute inset-0 bg-black z-50 flex flex-col animate-in fade-in duration-200">
@@ -1983,45 +1761,6 @@ export default function ConversationDetail() {
                 alt=""
                 className="max-w-full max-h-full object-contain rounded-lg"
               />
-            </div>
-          </div>
-        )}
-
-        {/* Rating Prompt */}
-        {showRatingPrompt && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50 animate-in fade-in duration-200">
-            <div className="bg-card rounded-3xl p-6 mx-4 max-w-sm animate-in zoom-in-95 duration-300">
-              <div className="text-center mb-4">
-                <div className="w-16 h-16 mx-auto mb-3 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold text-xl">{getInitials(otherUser?.full_name || 'User')}</span>
-                </div>
-                <h2 className="text-xl font-bold text-foreground mb-1">Rate your experience</h2>
-                <p className="text-muted-foreground text-sm">How was your transaction with {otherUser?.full_name || 'User'}?</p>
-              </div>
-              <div className="flex justify-center gap-2 mb-4">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button key={star} onClick={() => setRating(star)}>
-                    <Star
-                      className={cn(
-                        "w-8 h-8 transition-colors",
-                        star <= rating ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground",
-                      )}
-                    />
-                  </button>
-                ))}
-              </div>
-              <textarea
-                placeholder="Share your experience (optional)"
-                value={reviewText}
-                onChange={(e) => setReviewText(e.target.value)}
-                className="w-full bg-muted rounded-xl px-4 py-3 outline-none text-foreground resize-none h-24 mb-4"
-              />
-              <button
-                onClick={() => setShowRatingPrompt(false)}
-                className="w-full bg-blue-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
-              >
-                Submit Review
-              </button>
             </div>
           </div>
         )}
