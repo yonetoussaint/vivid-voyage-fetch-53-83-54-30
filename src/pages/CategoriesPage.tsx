@@ -103,20 +103,54 @@ const DEFAULT_CATEGORIES: Category[] = [
     ]
   },
   {
-    id: "beauty",
-    name: "Health & Beauty",
-    icon: Droplet,
-    subCategories: [
-      { id: "skincare", name: "Skincare", imageUrl: "https://images.unsplash.com/photo-1570197788418-6e9e0c3c3c3c?q=80&w=200&h=200&auto=format&fit=crop" },
-      { id: "makeup", name: "Makeup", imageUrl: "https://images.unsplash.com/photo-1591370874773-7068003e5c4c?q=80&w=200&h=200&auto=format&fit=crop" },
-      { id: "haircare", name: "Hair Care", imageUrl: "https://images.unsplash.com/photo-1596462515236-8a06c3e6c9e9?q=80&w=200&h=200&auto=format&fit=crop" },
-      { id: "fragrance", name: "Perfumes", imageUrl: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=200&h=200&auto=format&fit=crop" },
-      { id: "tools", name: "Beauty Tools", imageUrl: "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?q=80&w=200&h=200&auto=format&fit=crop" },
-      { id: "bath", name: "Bath & Body", imageUrl: "https://images.unsplash.com/photo-1556228578-9c360e1d8d34?q=80&w=200&h=200&auto=format&fit=crop" },
-      { id: "oral", name: "Oral Care", imageUrl: "https://images.unsplash.com/photo-162179148c5-6b6c4c7f7a1b?q=80&w=200&h=200&auto=format&fit=crop" },
-      { id: "mens", name: "Men's Grooming", imageUrl: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=200&h=200&auto=format&fit=crop" }
-    ]
-  },
+  id: "beauty",
+  name: "Health & Beauty",
+  icon: Droplet,
+  subCategories: [
+    { id: "skincare", name: "Skincare", imageUrl: "https://images.unsplash.com/photo-1570197788418-6e9e0c3c3c3c?q=80&w=200&h=200&auto=format&fit=crop" },
+    { id: "makeup", name: "Makeup", imageUrl: "https://images.unsplash.com/photo-1591370874773-7068003e5c4c?q=80&w=200&h=200&auto=format&fit=crop" },
+    { id: "haircare", name: "Hair Care", imageUrl: "https://images.unsplash.com/photo-1596462515236-8a06c3e6c9e9?q=80&w=200&h=200&auto=format&fit=crop" },
+    { id: "fragrance", name: "Perfumes", imageUrl: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=200&h=200&auto=format&fit=crop" },
+    { id: "tools", name: "Beauty Tools", imageUrl: "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?q=80&w=200&h=200&auto=format&fit=crop" },
+    { id: "bath", name: "Bath & Body", imageUrl: "https://images.unsplash.com/photo-1556228578-9c360e1d8d34?q=80&w=200&h=200&auto=format&fit=crop" },
+    { id: "oral", name: "Oral Care", imageUrl: "https://images.unsplash.com/photo-162179148c5-6b6c4c7f7a1b?q=80&w=200&h=200&auto=format&fit=crop" },
+    { id: "mens", name: "Men's Grooming", imageUrl: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=200&h=200&auto=format&fit=crop" },
+    { id: "suncare", name: "Sun Care", imageUrl: "https://images.unsplash.com/photo-1550259977-b5e6c4a6c6c6?q=80&w=200&h=200&auto=format&fit=crop" },
+    { id: "nails", name: "Nail Care", imageUrl: "https://images.unsplash.com/photo-1604654894610-df6e7c5d7d3a?q=80&w=200&h=200&auto=format&fit=crop" },
+    { id: "wellness", name: "Wellness & Supplements", imageUrl: "https://images.unsplash.com/photo-1594736797933-d0c6e4d6e8a9?q=80&w=200&h=200&auto=format&fit=crop" },
+    { id: "personal-care", name: "Personal Care", imageUrl: "https://images.unsplash.com/photo-1583947581924-860bda6a26df?q=80&w=200&h=200&auto=format&fit=crop" },
+    { id: "organic", name: "Natural & Organic", imageUrl: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?q=80&w=200&h=200&auto=format&fit=crop" },
+    { id: "fragrance-sets", name: "Fragrance Sets", imageUrl: "https://images.unsplash.com/photo-1591085686350-798c0f9faa7f?q=80&w=200&h=200&auto=format&fit=crop" },
+    { id: "travel-kits", name: "Travel Kits", imageUrl: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?q=80&w=200&h=200&auto=format&fit=crop" },
+    { id: "luxury", name: "Luxury Beauty", imageUrl: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=200&h=200&auto=format&fit=crop" }
+  ],
+  popularBrands: [
+    "L'Oréal", "Estée Lauder", "Nivea", "Maybelline", "MAC", "Clinique", 
+    "Neutrogena", "Garnier", "Dove", "Pantene", "Olay", "Revlon"
+  ],
+  trendingProducts: [
+    {
+      name: "Hyaluronic Acid Serum",
+      category: "skincare",
+      trending: true
+    },
+    {
+      name: "LED Face Mask",
+      category: "tools",
+      trending: true
+    },
+    {
+      name: "Sunscreen Stick",
+      category: "suncare",
+      trending: true
+    }
+  ],
+  seasonal: {
+    summer: ["suncare", "after-sun", "waterproof-makeup"],
+    winter: ["moisturizers", "lip-care", "hand-creams"],
+    holiday: ["gift-sets", "luxury", "fragrance-sets"]
+  }
+},
   {
     id: "babies",
     name: "Babies & Toys",
