@@ -25,7 +25,6 @@ import {
   MicOff,
   Volume2,
   Reply,
-  TrendingDown,
   Zap,
   Lock,
   ArrowDown,
@@ -33,8 +32,6 @@ import {
   MoreVertical,
   ArrowLeft,
   Video,
-  Moon,
-  Sun,
   Pin,
   PinOff,
   Copy,
@@ -85,22 +82,6 @@ type Message = {
   isDeleted?: boolean
   translatedText?: string
   linkPreview?: { title: string; description: string; image: string; url: string }
-}
-
-type NegotiationEntry = {
-  id: number
-  type: "offer" | "counter" | "accept" | "reject"
-  amount: number
-  from: "buyer" | "seller"
-  time: string
-  message?: string
-}
-
-type SafetyItem = {
-  id: string
-  label: string
-  checked: boolean
-  important?: boolean
 }
 
 export default function BuyerSellerChat() {
@@ -194,7 +175,6 @@ export default function BuyerSellerChat() {
   ])
 
   // UI state
-  const [darkMode, setDarkMode] = useState(false)
   const [showQuickActions, setShowQuickActions] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
@@ -202,8 +182,6 @@ export default function BuyerSellerChat() {
   const [showSearch, setShowSearch] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResultIndex, setSearchResultIndex] = useState(0)
-  const [showSafetyChecklist, setShowSafetyChecklist] = useState(false)
-  const [showNegotiationHistory, setShowNegotiationHistory] = useState(false)
   const [showMediaGallery, setShowMediaGallery] = useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [showEmojiPickerForMessage, setShowEmojiPickerForMessage] = useState<number | null>(null)
@@ -229,7 +207,7 @@ export default function BuyerSellerChat() {
   const [recordingDuration, setRecordingDuration] = useState(0)
   const [playingVoiceId, setPlayingVoiceId] = useState<number | null>(null)
 
-  // Call state - UPDATED
+  // Call state
   const [activeCall, setActiveCall] = useState<null | "audio" | "video">(null)
   const [callState, setCallState] = useState<"idle" | "ringing" | "active">("idle")
   const [callDuration, setCallDuration] = useState(0)
@@ -252,25 +230,6 @@ export default function BuyerSellerChat() {
   const [selectedDate, setSelectedDate] = useState("")
   const [selectedTime, setSelectedTime] = useState("")
   const [selectedLocation, setSelectedLocation] = useState("")
-
-  // Safety checklist
-  const [safetyItems, setSafetyItems] = useState<SafetyItem[]>([
-    { id: "public", label: "Meet in a public place", checked: true, important: true },
-    { id: "daylight", label: "Meet during daylight hours", checked: true, important: true },
-    { id: "friend", label: "Bring a friend or tell someone", checked: false },
-    { id: "cash", label: "Bring exact cash amount", checked: false },
-    { id: "inspect", label: "Inspect item before paying", checked: false, important: true },
-    { id: "receipt", label: "Get a receipt or proof", checked: false },
-    { id: "phone", label: "Keep phone charged", checked: true },
-    { id: "transport", label: "Arrange safe transport home", checked: false },
-  ])
-
-  // Negotiation history
-  const [negotiationHistory] = useState<NegotiationEntry[]>([
-    { id: 1, type: "offer", amount: 850, from: "buyer", time: "10:38 AM", message: "Initial offer" },
-    { id: 2, type: "counter", amount: 880, from: "seller", time: "10:39 AM", message: "Counter with bonus case" },
-    { id: 3, type: "accept", amount: 880, from: "buyer", time: "10:40 AM", message: "Deal accepted!" },
-  ])
 
   // Rating
   const [rating, setRating] = useState(0)
@@ -384,8 +343,8 @@ export default function BuyerSellerChat() {
     const element = document.getElementById(`message-${messageId}`)
     if (element) {
       element.scrollIntoView({ behavior: "smooth", block: "center" })
-      element.classList.add("bg-yellow-100", "dark:bg-yellow-900/30")
-      setTimeout(() => element.classList.remove("bg-yellow-100", "dark:bg-yellow-900/30"), 2000)
+      element.classList.add("bg-yellow-100")
+      setTimeout(() => element.classList.remove("bg-yellow-100"), 2000)
     }
   }
 
@@ -513,7 +472,7 @@ export default function BuyerSellerChat() {
     const parts = text.split(new RegExp(`(${query})`, "gi"))
     return parts.map((part, i) =>
       part.toLowerCase() === query.toLowerCase() ? (
-        <mark key={i} className="bg-yellow-300 dark:bg-yellow-600 px-0.5 rounded">
+        <mark key={i} className="bg-yellow-300 px-0.5 rounded">
           {part}
         </mark>
       ) : (
@@ -552,14 +511,9 @@ export default function BuyerSellerChat() {
   }
 
   return (
-    <div
-      className={cn(
-        "w-full h-screen flex flex-col overflow-hidden relative transition-colors duration-300",
-        darkMode ? "dark" : "",
-      )}
-    >
+    <div className="w-full h-screen flex flex-col overflow-hidden relative transition-colors duration-300">
       <div className="flex-1 flex flex-col min-h-0 bg-background text-foreground">
-        {/* Header - UPDATED */}
+        {/* Header */}
         <div className="px-2 py-2 flex items-center gap-2 shrink-0 bg-card border-b border-border shadow-sm">
           <button className="p-1.5 hover:bg-muted rounded-full transition-colors">
             <ArrowLeft className="w-5 h-5 text-foreground" />
@@ -672,26 +626,6 @@ export default function BuyerSellerChat() {
                         {allMedia.length}
                       </span>
                     </button>
-                    <button
-                      onClick={() => {
-                        setShowNegotiationHistory(true)
-                        setShowMenu(false)
-                      }}
-                      className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
-                    >
-                      <TrendingDown className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm text-foreground">Negotiation history</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowSafetyChecklist(true)
-                        setShowMenu(false)
-                      }}
-                      className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
-                    >
-                      <Shield className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm text-foreground">Safety checklist</span>
-                    </button>
                     <div className="h-px bg-border my-1" />
                     <button
                       onClick={() => {
@@ -708,20 +642,6 @@ export default function BuyerSellerChat() {
                       <span className="text-sm text-foreground">
                         {notificationsMuted ? "Unmute" : "Mute"} notifications
                       </span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setDarkMode(!darkMode)
-                        setShowMenu(false)
-                      }}
-                      className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
-                    >
-                      {darkMode ? (
-                        <Sun className="w-4 h-4 text-muted-foreground" />
-                      ) : (
-                        <Moon className="w-4 h-4 text-muted-foreground" />
-                      )}
-                      <span className="text-sm text-foreground">{darkMode ? "Light" : "Dark"} mode</span>
                     </button>
                     <div className="h-px bg-border my-1" />
                     <button
@@ -747,7 +667,7 @@ export default function BuyerSellerChat() {
             onClick={() => setShowProductPanel(true)}
             className="w-full px-3 py-2.5 flex items-center gap-3 hover:bg-muted/50 transition-colors"
           >
-            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center shrink-0 relative overflow-hidden">
+            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shrink-0 relative overflow-hidden">
               <Package className="w-6 h-6 text-muted-foreground" />
               <div className="absolute top-0.5 right-0.5 w-2 h-2 bg-emerald-500 rounded-full" />
             </div>
@@ -756,7 +676,7 @@ export default function BuyerSellerChat() {
               <div className="flex items-center gap-2 mt-0.5">
                 <p className="text-emerald-600 font-bold text-base">$899</p>
                 <span className="text-xs text-muted-foreground line-through">$1,099</span>
-                <span className="text-xs bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded-full font-medium">
+                <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full font-medium">
                   18% off
                 </span>
               </div>
@@ -789,122 +709,6 @@ export default function BuyerSellerChat() {
             </div>
             <div className="h-px flex-1 bg-border" />
           </div>
-
-          {/* Safety Checklist Inline */}
-          {showSafetyChecklist && (
-            <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-3 mb-3 animate-in fade-in slide-in-from-top duration-200">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-blue-600" />
-                  <span className="text-sm font-semibold text-blue-700 dark:text-blue-400">Safety Checklist</span>
-                </div>
-                <button onClick={() => setShowSafetyChecklist(false)}>
-                  <X className="w-4 h-4 text-blue-600" />
-                </button>
-              </div>
-              <p className="text-xs text-blue-600 dark:text-blue-400 mb-3">Complete before meeting</p>
-              <div className="space-y-2">
-                {safetyItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() =>
-                      setSafetyItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, checked: !i.checked } : i)))
-                    }
-                    className={cn(
-                      "w-full flex items-center gap-2 p-2 rounded-lg transition-colors text-left",
-                      item.checked ? "bg-emerald-100 dark:bg-emerald-900/30" : "bg-white dark:bg-card",
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
-                        item.checked ? "bg-emerald-500 border-emerald-500" : "border-muted-foreground",
-                      )}
-                    >
-                      {item.checked && <Check className="w-3 h-3 text-white" />}
-                    </div>
-                    <span
-                      className={cn(
-                        "text-sm flex-1",
-                        item.checked ? "text-emerald-700 dark:text-emerald-400" : "text-foreground",
-                      )}
-                    >
-                      {item.label}
-                    </span>
-                    {item.important && !item.checked && <AlertTriangle className="w-4 h-4 text-amber-500" />}
-                  </button>
-                ))}
-              </div>
-              <div className="mt-3 pt-2 border-t border-blue-200 dark:border-blue-800 flex items-center justify-between">
-                <span className="text-xs text-blue-600">
-                  {safetyItems.filter((i) => i.checked).length}/{safetyItems.length} completed
-                </span>
-                <div className="h-1.5 flex-1 mx-3 bg-blue-200 dark:bg-blue-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-emerald-500 rounded-full transition-all"
-                    style={{ width: `${(safetyItems.filter((i) => i.checked).length / safetyItems.length) * 100}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Negotiation Timeline */}
-          {showNegotiationHistory && (
-            <div className="bg-card border border-border rounded-xl p-3 mb-3 animate-in fade-in slide-in-from-top duration-200">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <TrendingDown className="w-5 h-5 text-emerald-600" />
-                  <span className="text-sm font-semibold text-foreground">Price Negotiation</span>
-                </div>
-                <button onClick={() => setShowNegotiationHistory(false)}>
-                  <X className="w-4 h-4 text-muted-foreground" />
-                </button>
-              </div>
-              <div className="space-y-3">
-                {negotiationHistory.map((entry, index) => (
-                  <div key={entry.id} className="flex items-start gap-3">
-                    <div className="flex flex-col items-center">
-                      <div
-                        className={cn(
-                          "w-8 h-8 rounded-full flex items-center justify-center",
-                          entry.type === "accept"
-                            ? "bg-emerald-100 dark:bg-emerald-900/30"
-                            : entry.type === "reject"
-                              ? "bg-red-100 dark:bg-red-900/30"
-                              : "bg-blue-100 dark:bg-blue-900/30",
-                        )}
-                      >
-                        {entry.type === "accept" ? (
-                          <Check className="w-4 h-4 text-emerald-600" />
-                        ) : entry.type === "reject" ? (
-                          <X className="w-4 h-4 text-red-600" />
-                        ) : (
-                          <DollarSign className="w-4 h-4 text-blue-600" />
-                        )}
-                      </div>
-                      {index < negotiationHistory.length - 1 && <div className="w-0.5 h-6 bg-border mt-1" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-foreground capitalize">
-                          {entry.from === "buyer" ? "You" : "Seller"} -{" "}
-                          {entry.type === "counter" ? "Counter offer" : entry.type}
-                        </span>
-                        <span className="text-xs text-muted-foreground">{entry.time}</span>
-                      </div>
-                      <p className="text-lg font-bold text-foreground">${entry.amount}</p>
-                      {entry.message && <p className="text-xs text-muted-foreground">{entry.message}</p>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">Total savings</span>
-                <span className="text-sm font-bold text-emerald-600">$219 (20% off)</span>
-              </div>
-            </div>
-          )}
 
           {/* Media Gallery Inline */}
           {showMediaGallery && (
@@ -1047,7 +851,7 @@ export default function BuyerSellerChat() {
                         <div
                           className={cn(
                             "w-8 h-8 rounded-full flex items-center justify-center",
-                            isBuyer ? "bg-white/20" : "bg-emerald-100 dark:bg-emerald-900/30",
+                            isBuyer ? "bg-white/20" : "bg-emerald-100",
                           )}
                         >
                           <DollarSign className={cn("w-4 h-4", isBuyer ? "text-white" : "text-emerald-600")} />
@@ -1106,7 +910,7 @@ export default function BuyerSellerChat() {
                           className={cn(
                             "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs",
                             reaction.users.includes("You")
-                              ? "bg-blue-100 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700"
+                              ? "bg-blue-100 border border-blue-300"
                               : "bg-muted border border-border",
                           )}
                         >
@@ -1239,7 +1043,7 @@ export default function BuyerSellerChat() {
           {/* Warranty Card */}
           <div className="bg-card border border-border rounded-xl p-3 mb-2 max-w-[85%] shadow-sm">
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
                 <Shield className="w-4 h-4 text-blue-600" />
               </div>
               <div>
@@ -1261,12 +1065,12 @@ export default function BuyerSellerChat() {
           <div className="bg-card border-2 border-amber-400 rounded-xl p-3 mb-2 max-w-[90%] shadow-sm">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
                   <DollarSign className="w-4 h-4 text-amber-600" />
                 </div>
                 <span className="text-foreground text-sm font-semibold">Counter Offer</span>
               </div>
-              <span className="text-xs text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 rounded-full font-medium">
+              <span className="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full font-medium">
                 Pending
               </span>
             </div>
@@ -1299,7 +1103,7 @@ export default function BuyerSellerChat() {
           {/* Meeting Proposal Card */}
           <div className="bg-card border border-border rounded-xl p-3 mb-2 max-w-[90%] shadow-sm">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
                 <MapPin className="w-4 h-4 text-blue-600" />
               </div>
               <span className="text-foreground text-sm font-semibold">Meeting Proposal</span>
@@ -1327,8 +1131,8 @@ export default function BuyerSellerChat() {
                 </div>
               </div>
             ))}
-            <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-2 mb-3">
-              <p className="text-blue-700 dark:text-blue-400 text-xs flex items-center gap-1">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 mb-3">
+              <p className="text-blue-700 text-xs flex items-center gap-1">
                 <Zap className="w-3 h-3" />
                 Always meet in safe, public places during daylight
               </p>
@@ -1435,8 +1239,8 @@ export default function BuyerSellerChat() {
 
         {/* Voice Recording */}
         {isRecording && (
-          <div className="px-3 py-3 bg-red-50 dark:bg-red-950/30 border-t border-red-200 dark:border-red-800 flex items-center gap-3 animate-in slide-in-from-bottom duration-200">
-            <button onClick={() => setIsRecording(false)} className="p-2 bg-red-100 dark:bg-red-900/50 rounded-full">
+          <div className="px-3 py-3 bg-red-50 border-t border-red-200 flex items-center gap-3 animate-in slide-in-from-bottom duration-200">
+            <button onClick={() => setIsRecording(false)} className="p-2 bg-red-100 rounded-full">
               <Trash2 className="w-5 h-5 text-red-600" />
             </button>
             <div className="flex-1 flex items-center gap-2">
@@ -1555,7 +1359,7 @@ export default function BuyerSellerChat() {
                           <div
                             className={cn(
                               "w-10 h-10 rounded-full flex items-center justify-center",
-                              `bg-${color}-100 dark:bg-${color}-900/30`,
+                              `bg-${color}-100`,
                             )}
                           >
                             <Icon className={cn("w-5 h-5", `text-${color}-600`)} />
@@ -1704,7 +1508,7 @@ export default function BuyerSellerChat() {
                       className={cn(
                         "w-full p-3 rounded-xl text-left transition-all flex items-start gap-3",
                         selectedLocation === loc.id
-                          ? "bg-blue-50 dark:bg-blue-950/30 border-2 border-blue-500"
+                          ? "bg-blue-50 border-2 border-blue-500"
                           : "bg-muted border-2 border-transparent hover:border-muted-foreground",
                       )}
                     >
@@ -1747,7 +1551,7 @@ export default function BuyerSellerChat() {
                 </button>
               </div>
 
-              <div className="bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 rounded-xl h-48 flex items-center justify-center mb-4 relative overflow-hidden">
+              <div className="bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl h-48 flex items-center justify-center mb-4 relative overflow-hidden">
                 <Package className="w-16 h-16 text-muted-foreground" />
                 <div className="absolute top-2 right-2 bg-emerald-600 text-white text-xs px-2 py-1 rounded-full">
                   98% Battery
@@ -1760,20 +1564,20 @@ export default function BuyerSellerChat() {
               <div className="flex items-center gap-3 mb-4">
                 <p className="text-emerald-600 font-bold text-2xl">$899</p>
                 <span className="text-base text-muted-foreground line-through">$1,099</span>
-                <span className="text-sm bg-red-100 dark:bg-red-900/30 text-red-600 px-2 py-0.5 rounded-full">
+                <span className="text-sm bg-red-100 text-red-600 px-2 py-0.5 rounded-full">
                   Save $200
                 </span>
               </div>
 
               {/* Price Analysis */}
-              <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-3 mb-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4">
                 <div className="flex items-center gap-2 mb-1">
                   <TrendingDown className="w-4 h-4 text-blue-600" />
-                  <span className="text-sm font-medium text-blue-700 dark:text-blue-400">Price Analysis</span>
+                  <span className="text-sm font-medium text-blue-700">Price Analysis</span>
                 </div>
                 <p className="text-xs text-blue-600">18% below market average. Great deal!</p>
                 <div className="flex items-center gap-2 mt-2">
-                  <div className="flex-1 h-1.5 bg-blue-200 dark:bg-blue-800 rounded-full">
+                  <div className="flex-1 h-1.5 bg-blue-200 rounded-full">
                     <div className="w-[82%] h-full bg-emerald-500 rounded-full" />
                   </div>
                   <span className="text-xs text-muted-foreground">Better than 82% of listings</span>
@@ -1970,7 +1774,7 @@ export default function BuyerSellerChat() {
         {showCompletionCelebration && (
           <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50 animate-in fade-in duration-200">
             <div className="bg-card rounded-3xl p-6 mx-4 text-center animate-in zoom-in-95 duration-300">
-              <div className="w-20 h-20 mx-auto mb-4 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center">
+              <div className="w-20 h-20 mx-auto mb-4 bg-emerald-100 rounded-full flex items-center justify-center">
                 <CheckCircle className="w-12 h-12 text-emerald-600" />
               </div>
               <h2 className="text-2xl font-bold text-foreground mb-2">Deal Accepted!</h2>
@@ -2075,7 +1879,7 @@ export default function BuyerSellerChat() {
                   <X className="w-6 h-6 text-muted-foreground" />
                 </button>
               </div>
-              <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl p-4 mb-4">
+              <div className="bg-blue-50 rounded-xl p-4 mb-4">
                 <div className="flex items-center gap-3 mb-3">
                   <Shield className="w-8 h-8 text-blue-600" />
                   <div>
