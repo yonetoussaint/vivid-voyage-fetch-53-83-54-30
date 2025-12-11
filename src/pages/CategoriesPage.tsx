@@ -38,19 +38,34 @@ interface CategoriesPageProps {
   products: Product[];
 }
 
-// Default Categories Data
+// Default Categories Data with all tabs populated
 const DEFAULT_CATEGORIES: Category[] = [
   {
     id: "just",
     name: "Just for You",
     icon: User,
-    subCategories: []
+    subCategories: [
+      { id: "recommended", name: "Recommended for You", imageUrl: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "trending", name: "Trending Now", imageUrl: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "personal", name: "Personal Picks", imageUrl: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "recent", name: "Recently Viewed", imageUrl: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "saved", name: "Saved Items", imageUrl: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=200&h=200&auto=format&fit=crop" }
+    ]
   },
   {
     id: "accessories",
     name: "Electronic Accessories",
     icon: Plug,
-    subCategories: []
+    subCategories: [
+      { id: "chargers", name: "Chargers & Cables", imageUrl: "https://images.unsplash.com/photo-1587831990711-23ca6441447b?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "cases", name: "Phone Cases", imageUrl: "https://images.unsplash.com/photo-1586953208448-b95a79798f07?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "headphones", name: "Headphones", imageUrl: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "powerbanks", name: "Power Banks", imageUrl: "https://images.unsplash.com/photo-1609091839314-d8ad8e02782e?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "smartwatch", name: "Smartwatch Bands", imageUrl: "https://images.unsplash.com/photo-1546868871-7041f2a55e12?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "speakers", name: "Bluetooth Speakers", imageUrl: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "cables", name: "Cables & Adapters", imageUrl: "https://images.unsplash.com/photo-1587831990711-23ca6441447b?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "screen", name: "Screen Protectors", imageUrl: "https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?q=80&w=200&h=200&auto=format&fit=crop" }
+    ]
   },
   {
     id: "devices",
@@ -76,55 +91,136 @@ const DEFAULT_CATEGORIES: Category[] = [
     id: "tv",
     name: "TV & Home Appliances",
     icon: Tv,
-    subCategories: []
+    subCategories: [
+      { id: "televisions", name: "Televisions", imageUrl: "https://images.unsplash.com/photo-1593359677879-a4bb92f81a1f?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "refrigerators", name: "Refrigerators", imageUrl: "https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "ac", name: "Air Conditioners", imageUrl: "https://images.unsplash.com/photo-1560347879-9d2e3e7d21be?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "washing", name: "Washing Machines", imageUrl: "https://images.unsplash.com/photo-1626806819289-1d87f82a3b2c?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "microwave", name: "Microwave Ovens", imageUrl: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "fans", name: "Fans & Coolers", imageUrl: "https://images.unsplash.com/photo-1589336155885-1c34c1c314f8?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "heaters", name: "Water Heaters", imageUrl: "https://images.unsplash.com/photo-1611312449408-fcece27cdbb7?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "vacuum", name: "Vacuum Cleaners", imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?q=80&w=200&h=200&auto=format&fit=crop" }
+    ]
   },
   {
     id: "beauty",
     name: "Health & Beauty",
     icon: Droplet,
-    subCategories: []
+    subCategories: [
+      { id: "skincare", name: "Skincare", imageUrl: "https://images.unsplash.com/photo-1570197788418-6e9e0c3c3c3c?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "makeup", name: "Makeup", imageUrl: "https://images.unsplash.com/photo-1591370874773-7068003e5c4c?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "haircare", name: "Hair Care", imageUrl: "https://images.unsplash.com/photo-1596462515236-8a06c3e6c9e9?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "fragrance", name: "Perfumes", imageUrl: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "tools", name: "Beauty Tools", imageUrl: "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "bath", name: "Bath & Body", imageUrl: "https://images.unsplash.com/photo-1556228578-9c360e1d8d34?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "oral", name: "Oral Care", imageUrl: "https://images.unsplash.com/photo-162179148c5-6b6c4c7f7a1b?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "mens", name: "Men's Grooming", imageUrl: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=200&h=200&auto=format&fit=crop" }
+    ]
   },
   {
     id: "babies",
     name: "Babies & Toys",
     icon: Baby,
-    subCategories: []
+    subCategories: [
+      { id: "diapers", name: "Diapers & Wipes", imageUrl: "https://images.unsplash.com/photo-1586281380344-450c3e1d5c2c?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "feeding", name: "Feeding", imageUrl: "https://images.unsplash.com/photo-1586105251261-72a756497a11?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "toys", name: "Toys & Games", imageUrl: "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "clothing", name: "Baby Clothing", imageUrl: "https://images.unsplash.com/photo-1586105251261-72a756497a11?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "strollers", name: "Strollers & Carriers", imageUrl: "https://images.unsplash.com/photo-1506123306783-3c8e56a5dd04?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "nursery", name: "Nursery Furniture", imageUrl: "https://images.unsplash.com/photo-1564078516393-cf04bd966897?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "safety", name: "Baby Safety", imageUrl: "https://images.unsplash.com/photo-1586281380344-450c3e1d5c2c?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "bathing", name: "Bathing & Changing", imageUrl: "https://images.unsplash.com/photo-1586105251261-72a756497a11?q=80&w=200&h=200&auto=format&fit=crop" }
+    ]
   },
   {
     id: "groceries",
     name: "Groceries & Pets",
     icon: ShoppingCart,
-    subCategories: []
+    subCategories: [
+      { id: "snacks", name: "Snacks & Drinks", imageUrl: "https://images.unsplash.com/photo-1542834289-4359b3f1e7e8?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "rice-oil", name: "Rice & Oil", imageUrl: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "pet-food", name: "Pet Food", imageUrl: "https://images.unsplash.com/photo-1548767797-d8c6e7e7d8d8?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "dairy", name: "Dairy & Eggs", imageUrl: "https://images.unsplash.com/photo-1550583724-b2692b85b150?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "fruits", name: "Fruits & Vegetables", imageUrl: "https://images.unsplash.com/photo-1579113800032-c38bd7635818?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "beverages", name: "Beverages", imageUrl: "https://images.unsplash.com/photo-1600271886742-f049cd5b8a7b?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "pet-supplies", name: "Pet Supplies", imageUrl: "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "frozen", name: "Frozen Foods", imageUrl: "https://images.unsplash.com/photo-1565958011703-44f9829ba187?q=80&w=200&h=200&auto=format&fit=crop" }
+    ]
   },
   {
     id: "home",
     name: "Home & Lifestyle",
     icon: Home,
-    subCategories: []
+    subCategories: [
+      { id: "furniture", name: "Furniture", imageUrl: "https://images.unsplash.com/photo-1555041469-c5f4d8f8d8d8?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "bedding", name: "Bedding & Bath", imageUrl: "https://images.unsplash.com/photo-1586023492125-27b1c045efd9?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "decor", name: "Home Decor", imageUrl: "https://images.unsplash.com/photo-1618220048045-10a6a6d9d9d9?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "kitchen", name: "Kitchen & Dining", imageUrl: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "lighting", name: "Lighting", imageUrl: "https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "storage", name: "Storage & Organization", imageUrl: "https://images.unsplash.com/photo-1586023492125-27b1c045efd9?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "garden", name: "Garden & Outdoor", imageUrl: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "cleaning", name: "Cleaning Supplies", imageUrl: "https://images.unsplash.com/photo-1585412727339-54e4bae3bbf9?q=80&w=200&h=200&auto=format&fit=crop" }
+    ]
   },
   {
     id: "women",
     name: "Women's Fashion & Accessories",
     icon: Shirt,
-    subCategories: []
+    subCategories: [
+      { id: "dresses", name: "Dresses", imageUrl: "https://images.unsplash.com/photo-1595776619627-1d9d9d9d9d9d?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "tops", name: "Tops & Blouses", imageUrl: "https://images.unsplash.com/photo-1583744946564-b52ac1c389c8?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "shoes-women", name: "Women's Shoes", imageUrl: "https://images.unsplash.com/photo-1562183241-b937e1a1822b?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "bags", name: "Bags & Purses", imageUrl: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "jewelry", name: "Jewelry", imageUrl: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "activewear", name: "Activewear", imageUrl: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "lingerie", name: "Lingerie & Sleepwear", imageUrl: "https://images.unsplash.com/photo-1523380677598-64d85b8d6d8b?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "accessories", name: "Accessories", imageUrl: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?q=80&w=200&h=200&auto=format&fit=crop" }
+    ]
   },
   {
     id: "men",
     name: "Men's Fashion & Accessories",
     icon: Users,
-    subCategories: []
+    subCategories: [
+      { id: "shirts-men", name: "Shirts", imageUrl: "https://images.unsplash.com/photo-1596755096483-2d9d9d9d9d9d?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "tshirts", name: "T-Shirts", imageUrl: "https://images.unsplash.com/photo-1521577352947-9d9d9d9d9d9d?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "shoes-men", name: "Men's Shoes", imageUrl: "https://images.unsplash.com/photo-1549298916-b41d9d9d9d9d?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "pants", name: "Pants & Jeans", imageUrl: "https://images.unsplash.com/photo-1542272604-787c3835535d?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "suits", name: "Suits & Blazers", imageUrl: "https://images.unsplash.com/photo-1594938298603-0b8c7b7c7c7c?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "watches", name: "Watches", imageUrl: "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "underwear", name: "Underwear & Socks", imageUrl: "https://images.unsplash.com/photo-1586363104862-3a5e2ab60d99?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "accessories-men", name: "Accessories", imageUrl: "https://images.unsplash.com/photo-1586363104862-3a5e2ab60d99?q=80&w=200&h=200&auto=format&fit=crop" }
+    ]
   },
   {
     id: "kids",
     name: "Kid's Fashion & Accessories",
     icon: Watch,
-    subCategories: []
+    subCategories: [
+      { id: "boys", name: "Boys Clothing", imageUrl: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "girls", name: "Girls Clothing", imageUrl: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "shoes-kids", name: "Kids Shoes", imageUrl: "https://images.unsplash.com/photo-1542293241-b937e1a1822b?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "school", name: "School Uniforms", imageUrl: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "accessories-kids", name: "Kids Accessories", imageUrl: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "baby-clothes", name: "Baby Clothes", imageUrl: "https://images.unsplash.com/photo-1586105251261-72a756497a11?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "outerwear", name: "Outerwear", imageUrl: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "swimwear", name: "Swimwear", imageUrl: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=200&h=200&auto=format&fit=crop" }
+    ]
   },
   {
     id: "sports",
     name: "Sports & Lifestyle",
     icon: Car,
-    subCategories: []
+    subCategories: [
+      { id: "fitness", name: "Fitness & Gym", imageUrl: "https://images.unsplash.com/photo-1517838277536-9d9d9d9d9d9d?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "cycling", name: "Cycling", imageUrl: "https://images.unsplash.com/photo-1558618046-9d9d9d9d9d9d?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "sports-shoes", name: "Sports Shoes", imageUrl: "https://images.unsplash.com/photo-1542293241-b937e1a1822b?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "camping", name: "Camping & Hiking", imageUrl: "https://images.unsplash.com/photo-1504851149312-7a075b496cc7?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "team-sports", name: "Team Sports", imageUrl: "https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "water-sports", name: "Water Sports", imageUrl: "https://images.unsplash.com/photo-1530549387789-4c1017266635?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "yoga", name: "Yoga & Pilates", imageUrl: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=200&h=200&auto=format&fit=crop" },
+      { id: "outdoor", name: "Outdoor Gear", imageUrl: "https://images.unsplash.com/photo-1504851149312-7a075b496cc7?q=80&w=200&h=200&auto=format&fit=crop" }
+    ]
   },
 ];
 
@@ -220,46 +316,142 @@ const DEFAULT_PRODUCTS: Product[] = [
   }
 ];
 
-// Default Category Groups
+// Default Category Groups for all categories
 const DEFAULT_CATEGORY_GROUPS: Record<string, CategoryGroup[]> = {
+  just: [
+    { 
+      title: "Personal Recommendations", 
+      items: DEFAULT_CATEGORIES.find(c => c.id === "just")?.subCategories.slice(0, 4) || []
+    },
+    { 
+      title: "Your Activity", 
+      items: DEFAULT_CATEGORIES.find(c => c.id === "just")?.subCategories.slice(4) || []
+    }
+  ],
+  accessories: [
+    { 
+      title: "Mobile Accessories", 
+      items: DEFAULT_CATEGORIES.find(c => c.id === "accessories")?.subCategories.slice(0, 4) || []
+    },
+    { 
+      title: "Audio & Wearables", 
+      items: DEFAULT_CATEGORIES.find(c => c.id === "accessories")?.subCategories.slice(4) || []
+    }
+  ],
   devices: [
     { 
       title: "Mobiles & Tablets", 
-      items: [
-        { id: "mobiles", name: "Mobiles", imageUrl: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=200&h=200&auto=format&fit=crop" },
-        { id: "tablets", name: "Tablets", imageUrl: "https://images.unsplash.com/photo-1561154464-82e9adf32764?q=80&w=200&h=200&auto=format&fit=crop" },
-        { id: "landline", name: "Landline Phones", imageUrl: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?q=80&w=200&h=200&auto=format&fit=crop" }
-      ]
+      items: DEFAULT_CATEGORIES.find(c => c.id === "devices")?.subCategories.slice(0, 3) || []
     },
     { 
       title: "Laptops", 
-      items: [
-        { id: "traditional", name: "Traditional Laptops", imageUrl: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=200&h=200&auto=format&fit=crop" },
-        { id: "2in1", name: "2-in-1s", imageUrl: "https://images.unsplash.com/photo-1587614382346-4ec70e388b28?q=80&w=200&h=200&auto=format&fit=crop" }
-      ]
+      items: DEFAULT_CATEGORIES.find(c => c.id === "devices")?.subCategories.slice(3, 5) || []
     },
     { 
       title: "Desktop Computers", 
-      items: [
-        { id: "allinone", name: "All-In-One", imageUrl: "https://images.unsplash.com/photo-1593640495253-23196b27a87f?q=80&w=200&h=200&auto=format&fit=crop" },
-        { id: "gaming", name: "Gaming Desktops", imageUrl: "https://images.unsplash.com/photo-1587202372634-32705e3bf49c?q=80&w=200&h=200&auto=format&fit=crop" },
-        { id: "diy", name: "DIY", imageUrl: "https://images.unsplash.com/photo-1555617981-dac3880eac6e?q=80&w=200&h=200&auto=format&fit=crop" }
-      ]
+      items: DEFAULT_CATEGORIES.find(c => c.id === "devices")?.subCategories.slice(5, 8) || []
     },
     { 
-      title: "Smartwatches & Accessories", 
-      items: [
-        { id: "fitness", name: "Fitness Trackers & Accessories", imageUrl: "https://images.unsplash.com/photo-1575311373937-040b8e1fd5b6?q=80&w=200&h=200&auto=format&fit=crop" },
-        { id: "smart", name: "Smart Trackers", imageUrl: "https://images.unsplash.com/photo-1544117519-31a4b719223d?q=80&w=200&h=200&auto=format&fit=crop" }
-      ]
+      title: "Wearables", 
+      items: DEFAULT_CATEGORIES.find(c => c.id === "devices")?.subCategories.slice(8, 10) || []
     },
     { 
-      title: "Console Gaming", 
-      items: [
-        { id: "console", name: "Console", imageUrl: "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?q=80&w=200&h=200&auto=format&fit=crop" },
-        { id: "games", name: "Console Games", imageUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=200&h=200&auto=format&fit=crop" },
-        { id: "accessories", name: "Console Gaming Accessories", imageUrl: "https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?q=80&w=200&h=200&auto=format&fit=crop" }
-      ]
+      title: "Gaming", 
+      items: DEFAULT_CATEGORIES.find(c => c.id === "devices")?.subCategories.slice(10) || []
+    }
+  ],
+  tv: [
+    { 
+      title: "Home Entertainment", 
+      items: DEFAULT_CATEGORIES.find(c => c.id === "tv")?.subCategories.slice(0, 1) || []
+    },
+    { 
+      title: "Major Appliances", 
+      items: DEFAULT_CATEGORIES.find(c => c.id === "tv")?.subCategories.slice(1, 5) || []
+    },
+    { 
+      title: "Home Comfort", 
+      items: DEFAULT_CATEGORIES.find(c => c.id === "tv")?.subCategories.slice(5) || []
+    }
+  ],
+  beauty: [
+    { 
+      title: "Skincare & Makeup", 
+      items: DEFAULT_CATEGORIES.find(c => c.id === "beauty")?.subCategories.slice(0, 4) || []
+    },
+    { 
+      title: "Personal Care", 
+      items: DEFAULT_CATEGORIES.find(c => c.id === "beauty")?.subCategories.slice(4) || []
+    }
+  ],
+  babies: [
+    { 
+      title: "Baby Essentials", 
+      items: DEFAULT_CATEGORIES.find(c => c.id === "babies")?.subCategories.slice(0, 4) || []
+    },
+    { 
+      title: "Nursery & Safety", 
+      items: DEFAULT_CATEGORIES.find(c => c.id === "babies")?.subCategories.slice(4) || []
+    }
+  ],
+  groceries: [
+    { 
+      title: "Food & Beverages", 
+      items: DEFAULT_CATEGORIES.find(c => c.id === "groceries")?.subCategories.slice(0, 6) || []
+    },
+    { 
+      title: "Pets", 
+      items: DEFAULT_CATEGORIES.find(c => c.id === "groceries")?.subCategories.slice(6) || []
+    }
+  ],
+  home: [
+    { 
+      title: "Furniture & Decor", 
+      items: DEFAULT_CATEGORIES.find(c => c.id === "home")?.subCategories.slice(0, 4) || []
+    },
+    { 
+      title: "Home Essentials", 
+      items: DEFAULT_CATEGORIES.find(c => c.id === "home")?.subCategories.slice(4) || []
+    }
+  ],
+  women: [
+    { 
+      title: "Clothing", 
+      items: DEFAULT_CATEGORIES.find(c => c.id === "women")?.subCategories.slice(0, 3) || []
+    },
+    { 
+      title: "Accessories", 
+      items: DEFAULT_CATEGORIES.find(c => c.id === "women")?.subCategories.slice(3) || []
+    }
+  ],
+  men: [
+    { 
+      title: "Clothing", 
+      items: DEFAULT_CATEGORIES.find(c => c.id === "men")?.subCategories.slice(0, 4) || []
+    },
+    { 
+      title: "Accessories", 
+      items: DEFAULT_CATEGORIES.find(c => c.id === "men")?.subCategories.slice(4) || []
+    }
+  ],
+  kids: [
+    { 
+      title: "Clothing", 
+      items: DEFAULT_CATEGORIES.find(c => c.id === "kids")?.subCategories.slice(0, 4) || []
+    },
+    { 
+      title: "Accessories", 
+      items: DEFAULT_CATEGORIES.find(c => c.id === "kids")?.subCategories.slice(4) || []
+    }
+  ],
+  sports: [
+    { 
+      title: "Fitness & Sports", 
+      items: DEFAULT_CATEGORIES.find(c => c.id === "sports")?.subCategories.slice(0, 4) || []
+    },
+    { 
+      title: "Outdoor Activities", 
+      items: DEFAULT_CATEGORIES.find(c => c.id === "sports")?.subCategories.slice(4) || []
     }
   ]
 };
@@ -342,8 +534,8 @@ const CategoriesPage: React.FC<CategoriesPageProps> = ({
 
   return (
     <div className="bg-gray-50 h-screen flex overflow-hidden">
-      {/* Left sidebar */}
-      <div className="w-24 bg-white shadow-lg flex flex-col">
+      {/* Left sidebar - Shadow removed */}
+      <div className="w-24 bg-white flex flex-col">
         <div className="flex-1 overflow-y-auto overscroll-contain scrollbar-hide py-4">
           <div className="min-h-full">
             {categories.map((category) => {
