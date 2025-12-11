@@ -271,15 +271,7 @@ export default function BuyerSellerChat() {
     { id: 3, type: "accept", amount: 880, from: "buyer", time: "10:40 AM", message: "Deal accepted!" },
   ])
 
-  // Progress
-  const [currentStep, setCurrentStep] = useState(2)
-  const progressSteps = [
-    { id: 1, label: "Inquiry", completed: true },
-    { id: 2, label: "Negotiation", completed: true },
-    { id: 3, label: "Agreement", completed: false, active: true },
-    { id: 4, label: "Meeting", completed: false },
-    { id: 5, label: "Complete", completed: false },
-  ]
+  
 
   // Rating
   const [rating, setRating] = useState(0)
@@ -1028,40 +1020,7 @@ export default function BuyerSellerChat() {
   </button>
 </div>
 
-        {/* Progress Steps */}
-        <div className="mx-3 mt-2 mb-1">
-          <div className="flex items-center justify-between">
-            {progressSteps.map((step, index) => (
-              <div key={step.id} className="flex items-center">
-                <div className="flex flex-col items-center">
-                  <div
-                    className={cn(
-                      "w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium transition-all",
-                      step.completed
-                        ? "bg-emerald-500 text-white"
-                        : step.active
-                          ? "bg-blue-500 text-white ring-4 ring-blue-500/20"
-                          : "bg-muted text-muted-foreground",
-                    )}
-                  >
-                    {step.completed ? <Check className="w-3.5 h-3.5" /> : step.id}
-                  </div>
-                  <span
-                    className={cn(
-                      "text-[10px] mt-1",
-                      step.active ? "text-blue-600 font-medium" : "text-muted-foreground",
-                    )}
-                  >
-                    {step.label}
-                  </span>
-                </div>
-                {index < progressSteps.length - 1 && (
-                  <div className={cn("w-8 h-0.5 mx-1 -mt-4", step.completed ? "bg-emerald-500" : "bg-muted")} />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+       
 
         {/* Chat Content */}
         <div ref={chatContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-3 py-3 scroll-smooth">
