@@ -111,32 +111,27 @@ export default function CategoriesPage() {
 
   return (
     <div className="bg-gray-50 h-screen flex overflow-hidden">
-      {/* Left sidebar - Fixed to match first code's scrolling */}
-      <div className="w-24 bg-white shadow-lg flex flex-col">
-        <div className="flex-1 overflow-y-auto overscroll-contain scrollbar-hide py-4">
+      {/* Left sidebar - Original UI with fixed scrolling */}
+      <div className="w-24 bg-white flex-shrink-0 h-screen flex flex-col">
+        <div 
+          className="flex-1 overflow-y-auto py-2 overscroll-contain scrollbar-hide"
+        >
           <div className="min-h-full">
             {CATEGORIES.map((category) => {
               const Icon = category.icon;
-              const active = selectedCategory === category.id;
               return (
                 <button
                   key={category.id}
                   onClick={() => setSelectedCategory(category.id)}
-                  className={`relative w-full py-4 flex flex-col items-center gap-1 transition-all ${
-                    active ? "text-orange-600 bg-orange-50" : "text-gray-600 hover:bg-gray-50"
+                  className={`w-full px-1.5 py-3 flex flex-col items-center text-center cursor-pointer transition-colors relative ${
+                    selectedCategory === category.id ? 'bg-gray-50' : 'hover:bg-gray-50'
                   }`}
                 >
-                  <Icon className="w-5 h-5 mb-1 text-gray-700" strokeWidth={active ? 2.5 : 1.8} />
-                  <span className="text-[8px] font-medium px-1 leading-tight text-center text-gray-800">
-                    {category.name.split(" ")[0]}
-                    {category.name.includes(" ") && (
-                      <>
-                        <br />
-                        {category.name.split(" ").slice(1).join(" ")}
-                      </>
-                    )}
-                  </span>
-                  {active && <div className="absolute right-0 inset-y-0 w-1 bg-orange-500" />}
+                  <Icon className="w-5 h-5 mb-1 text-gray-700" />
+                  <span className="text-[8px] text-gray-800 leading-tight">{category.name}</span>
+                  {selectedCategory === category.id && (
+                    <div className="absolute right-0 top-0 bottom-0 w-px bg-gray-50" />
+                  )}
                 </button>
               );
             })}
