@@ -532,6 +532,70 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
   return null
 }
 
+  // Buyer's step cards
+  if (isBuyer) {
+    const isCompleted = statusText === "Completed" || statusText === "Refunded"
+    const isCurrent = order.status === "payment_pending" && id === "payment" || 
+                     order.status === "delivery_pending" && id === "delivery" ||
+                     order.status === "accepted" && id === "accepted"
+    
+    return (
+      <div className="relative">
+        {/* Step Indicator for progress bar */}
+        {currentStep > 0 && (
+          <div className="absolute -left-8 top-4">
+            <div className={cn(
+              "w-5 h-5 rounded-full flex items-center justify-center border-2 transition-all duration-300",
+              isCompleted 
+                ? "bg-emerald-500 border-emerald-500" 
+                : "bg-white border-gray-300"
+            )}>
+              {isCompleted && <Check className="w-3 h-3 text-white" />}
+            </div>
+          </div>
+        )}
+        
+        {/* Card */}
+        <div className={`bg-card border ${borderColor} rounded-xl p-4 shadow-sm`}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Icon className={`w-5 h-5 ${iconColor}`} />
+              <span className="text-foreground text-sm font-semibold">{title}</span>
+            </div>
+            <span className="text-xs font-medium text-foreground">
+              ${order.total}
+            </span>
+          </div>
+          
+          {getStepContent()}
+          
+          {/* Status bar at bottom */}
+          <div className="mt-3 pt-3 border-t border-border">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className={cn(
+                  "w-2 h-2 rounded-full",
+                  isCompleted ? "bg-emerald-500" : "bg-amber-500"
+                )} />
+                <span className="text-xs text-muted-foreground">{statusText}</span>
+              </div>
+              {completedDate && (
+                <span className="text-xs text-muted-foreground">
+                  {completedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
+            </div>
+          </div>
+          
+          {getActionButtons()}
+        </div>
+      </div>
+    )
+  }
+
+  return null
+}
+
 // Main Component
 export default function BuyerSellerChat() {
   // State management
