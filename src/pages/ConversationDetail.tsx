@@ -31,7 +31,6 @@ import {
   ImageIcon as ImageIcon2,
   Play,
   Pause,
-  ChevronRight,
   Heart,
   Share2,
   Flag,
@@ -158,7 +157,6 @@ export default function BuyerSellerChat() {
   const [showQuickActions, setShowQuickActions] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
-  const [showProductPanel, setShowProductPanel] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResultIndex, setSearchResultIndex] = useState(0)
@@ -226,15 +224,6 @@ export default function BuyerSellerChat() {
     ? messages.filter((m) => m.text.toLowerCase().includes(searchQuery.toLowerCase()))
     : []
   const filteredMessages = searchQuery ? searchResults : messages
-
-  // Quick replies
-  const quickReplies = [
-    "Is this still available?",
-    "What's your best price?",
-    "Can you send more photos?",
-    "Is the price negotiable?",
-    "Where are you located?",
-  ]
 
   // Quick actions
   const quickActions = [
@@ -414,11 +403,6 @@ export default function BuyerSellerChat() {
   const copyMessage = (text: string) => {
     navigator.clipboard.writeText(text)
     setMessageActionsId(null)
-  }
-
-  const handleQuickReply = (reply: string) => {
-    setMessage(reply)
-    inputRef.current?.focus()
   }
 
   const sendOffer = () => {
@@ -637,41 +621,6 @@ export default function BuyerSellerChat() {
               )}
             </div>
           </div>
-        </div>
-
-        {/* Product Card - Flat version */}
-        <div className="bg-card/50 border-b border-border">
-          <button
-            onClick={() => setShowProductPanel(true)}
-            className="w-full px-3 py-2.5 flex items-center gap-3 hover:bg-muted/50 transition-colors"
-          >
-            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shrink-0 relative overflow-hidden">
-              <Package className="w-6 h-6 text-muted-foreground" />
-              <div className="absolute top-0.5 right-0.5 w-2 h-2 bg-emerald-500 rounded-full" />
-            </div>
-            <div className="flex-1 min-w-0 text-left">
-              <p className="text-foreground font-semibold text-sm truncate">iPhone 15 Pro Max - 256GB</p>
-              <div className="flex items-center gap-2 mt-0.5">
-                <p className="text-emerald-600 font-bold text-base">$899</p>
-                <span className="text-xs text-muted-foreground line-through">$1,099</span>
-                <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full font-medium">
-                  18% off
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                <span className="flex items-center gap-0.5">
-                  <Eye className="w-3 h-3" />
-                  127 views
-                </span>
-                <span>•</span>
-                <span className="flex items-center gap-0.5">
-                  <Heart className="w-3 h-3" />
-                  23 saves
-                </span>
-              </div>
-            </div>
-            <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
-          </button>
         </div>
 
         {/* Chat Content */}
@@ -1072,7 +1021,7 @@ export default function BuyerSellerChat() {
         {showScrollToBottom && (
           <button
             onClick={scrollToBottom}
-            className="absolute bottom-36 right-4 w-10 h-10 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center hover:scale-105 transition-transform z-10"
+            className="absolute bottom-32 right-4 w-10 h-10 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center hover:scale-105 transition-transform z-10"
           >
             <MoreVertical className="w-5 h-5" />
           </button>
@@ -1100,19 +1049,24 @@ export default function BuyerSellerChat() {
           </div>
         )}
 
-        {/* Quick Replies */}
-        <div className="px-3 py-1.5 border-t border-border bg-card overflow-x-auto scrollbar-hide">
-          <div className="flex gap-1.5">
-            {quickReplies.map((reply) => (
-              <button
-                key={reply}
-                onClick={() => handleQuickReply(reply)}
-                className="px-3 py-1.5 bg-muted hover:bg-muted/80 rounded-full text-xs text-foreground whitespace-nowrap transition-colors"
-              >
-                {reply}
-              </button>
-            ))}
+        {/* Product Card - Minimal version at bottom */}
+        <div className="px-3 py-2 border-t border-border bg-card flex items-center gap-2">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shrink-0">
+            <Package className="w-5 h-5 text-muted-foreground" />
           </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-foreground font-medium text-sm truncate">iPhone 15 Pro Max</p>
+            <div className="flex items-center gap-2">
+              <p className="text-emerald-600 font-bold text-sm">$899</p>
+              <span className="text-xs text-muted-foreground line-through">$1,099</span>
+            </div>
+          </div>
+          <button 
+            onClick={() => setShowOfferModal(true)}
+            className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 transition-colors"
+          >
+            Offer
+          </button>
         </div>
 
         {/* Quick Actions */}
@@ -1346,119 +1300,6 @@ export default function BuyerSellerChat() {
               >
                 Send Offer
               </button>
-            </div>
-          </div>
-        )}
-
-        {/* Product Details Panel */}
-        {showProductPanel && (
-          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
-            <div className="bg-card w-full rounded-t-3xl p-4 max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-foreground">Product Details</h3>
-                <button onClick={() => setShowProductPanel(false)}>
-                  <X className="w-6 h-6 text-muted-foreground" />
-                </button>
-              </div>
-
-              <div className="bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl h-48 flex items-center justify-center mb-4 relative overflow-hidden">
-                <Package className="w-16 h-16 text-muted-foreground" />
-                <div className="absolute top-2 right-2 bg-emerald-600 text-white text-xs px-2 py-1 rounded-full">
-                  98% Battery
-                </div>
-              </div>
-
-              <h2 className="text-xl font-bold text-foreground mb-1">iPhone 15 Pro Max - 256GB</h2>
-              <p className="text-muted-foreground text-sm mb-3">Natural Titanium • Unlocked • Like New</p>
-
-              <div className="flex items-center gap-3 mb-4">
-                <p className="text-emerald-600 font-bold text-2xl">$899</p>
-                <span className="text-base text-muted-foreground line-through">$1,099</span>
-                <span className="text-sm bg-red-100 text-red-600 px-2 py-0.5 rounded-full">
-                  Save $200
-                </span>
-              </div>
-
-              {/* Condition */}
-              <div className="mb-4">
-                <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
-                  <Check className="w-4 h-4 text-emerald-600" />
-                  Condition Checklist
-                </h4>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { label: "Screen", status: "Perfect", ok: true },
-                    { label: "Battery", status: "98%", ok: true },
-                    { label: "Camera", status: "Working", ok: true },
-                    { label: "Face ID", status: "Working", ok: true },
-                    { label: "Speakers", status: "Working", ok: true },
-                    { label: "Body", status: "No scratches", ok: true },
-                  ].map(({ label, status, ok }) => (
-                    <div key={label} className="flex items-center justify-between bg-muted rounded-lg px-3 py-2">
-                      <span className="text-xs text-muted-foreground">{label}</span>
-                      <span className={cn("text-xs font-medium", ok ? "text-emerald-600" : "text-red-600")}>
-                        {status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Seller */}
-              <div className="bg-muted rounded-xl p-4 mb-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
-                    <span className="text-white font-bold">JS</span>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-1">
-                      <span className="font-semibold text-foreground">John Seller</span>
-                      <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-500" />
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                      <span>4.9 (127 reviews)</span>
-                      <span>•</span>
-                      <span>Joined 2022</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  {[
-                    { value: "156", label: "Sales" },
-                    { value: "98%", label: "Response" },
-                    { value: "<1h", label: "Reply time" },
-                  ].map(({ value, label }) => (
-                    <div key={label} className="bg-card rounded-lg p-2">
-                      <p className="text-lg font-bold text-foreground">{value}</p>
-                      <p className="text-xs text-muted-foreground">{label}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => {
-                    setShowProductPanel(false)
-                    setShowPaymentModal(true)
-                  }}
-                  className="flex-1 bg-blue-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                >
-                  <CreditCard className="w-5 h-5" />
-                  Buy Now
-                </button>
-                <button
-                  onClick={() => {
-                    setShowProductPanel(false)
-                    setShowOfferModal(true)
-                  }}
-                  className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors flex items-center justify-center gap-2"
-                >
-                  <DollarSign className="w-5 h-5" />
-                  Make Offer
-                </button>
-              </div>
             </div>
           </div>
         )}
