@@ -53,209 +53,105 @@ type ReceiptData = {
 const stepConfigs = [
   {
     id: "offer",
-    title: "Seller's Offer",
+    title: "Offer",
     icon: DollarSign,
-    color: "emerald",
+    iconColor: "text-emerald-600",
     show: () => true,
-    renderStatus: (order: Order) => {
+    isSeller: true,
+    getStatusText: (order: Order) => {
       switch (order.status) {
-        case "accepted": return "Offer accepted"
-        case "payment_pending": return "Payment pending"
-        case "delivery_pending": return "Awaiting delivery"
-        case "completed": return "Order completed"
-        case "refunded": return "Order refunded"
-        default: return null
+        case "accepted": return "Accepted"
+        case "payment_pending": return "Payment Pending"
+        case "delivery_pending": return "Awaiting Delivery"
+        case "completed": return "Completed"
+        case "refunded": return "Refunded"
+        default: return "Pending"
+      }
+    },
+    getStatusIcon: (order: Order) => {
+      switch (order.status) {
+        case "accepted": return Check
+        case "payment_pending": return Clock
+        case "delivery_pending": return Truck
+        case "completed": return Check
+        case "refunded": return X
+        default: return DollarSign
       }
     }
   },
   {
     id: "accepted",
-    title: "Step 1: Offer Accepted",
+    title: "Offer Approval",
     icon: Check,
-    color: "emerald",
+    iconColor: "text-emerald-600",
     show: (order: Order) => ["accepted", "payment_pending", "delivery_pending", "completed", "refunded"].includes(order.status),
-    stepNumber: 1,
-    isBuyer: true
+    isBuyer: true,
+    borderColor: "border-emerald-200",
+    getStatusText: (order: Order) => order.status === "accepted" ? "Pending" : "Completed",
+    completionDate: (order: Order) => order.status === "accepted" ? order.timestamp : null
   },
   {
     id: "payment",
-    title: "Step 2: Payment",
+    title: "Payment",
     icon: Wallet,
-    color: "amber",
+    iconColor: "text-amber-600",
     show: (order: Order) => ["payment_pending", "delivery_pending", "completed", "refunded"].includes(order.status),
-    stepNumber: 2,
-    isBuyer: true
+    isBuyer: true,
+    borderColor: "border-amber-200",
+    getStatusText: (order: Order) => {
+      if (order.status === "payment_pending") return "Pending"
+      if (order.status === "refunded") return "Refunded"
+      return "Completed"
+    },
+    completionDate: (order: Order) => ["delivery_pending", "completed"].includes(order.status) ? order.timestamp : null
   },
   {
     id: "delivery",
-    title: "Step 3: Delivery",
+    title: "Delivery",
     icon: Truck,
-    color: "blue",
+    iconColor: "text-blue-600",
     show: (order: Order) => ["delivery_pending", "completed", "refunded"].includes(order.status),
-    stepNumber: 3,
-    isBuyer: true
+    isBuyer: true,
+    borderColor: "border-blue-200",
+    getStatusText: (order: Order) => {
+      if (order.status === "delivery_pending") return "Pending"
+      if (order.status === "completed") return "Completed"
+      return "Cancelled"
+    },
+    completionDate: (order: Order) => order.status === "completed" ? order.timestamp : null
   },
   {
     id: "completed",
-    title: "Order Completed",
+    title: "Completed",
     icon: Check,
-    color: "emerald",
+    iconColor: "text-emerald-600",
     show: (order: Order) => order.status === "completed" && order.receipt,
-    stepNumber: 4,
-    isBuyer: true
+    isBuyer: true,
+    borderColor: "border-emerald-200",
+    getStatusText: () => "Completed",
+    completionDate: (order: Order) => order.receipt ? new Date(`${order.receipt.date} ${order.receipt.time}`) : null
   },
   {
     id: "refunded",
-    title: "Order Refunded",
+    title: "Refunded",
     icon: X,
-    color: "slate",
+    iconColor: "text-slate-600",
     show: (order: Order) => order.status === "refunded",
-    stepNumber: 0,
-    isBuyer: true
+    isBuyer: true,
+    borderColor: "border-slate-200",
+    getStatusText: () => "Refunded",
+    completionDate: (order: Order) => order.timestamp
   }
 ]
 
 // Helper Components
-const MessageBubble = ({ msg, isBuyer, searchQuery, scrollToMessage, getStatusIcon, formatDuration, highlightText }: any) => {
-  const replyMessage = msg.replyTo ? messages.find((m: Message) => m.id === msg.replyTo) : null
-  
-  return (
-    <div className={cn("max-w-[80%] relative group", isBuyer ? "items-end" : "items-start")}>
-      {replyMessage && (
-        <button
-          onClick={() => scrollToMessage(replyMessage.id)}
-          className={cn(
-            "w-full mb-1 px-2 py-1 rounded-lg text-xs text-left truncate border-l-2",
-            isBuyer ? "bg-blue-400/20 border-blue-300" : "bg-muted border-muted-foreground",
-          )}
-        >
-          <span className="text-muted-foreground">
-            {replyMessage.sender === "buyer" ? "You" : "John"}:{" "}
-          </span>
-          {replyMessage.text}
-        </button>
-      )}
-
-      <div className={cn(
-        "rounded-2xl px-3 py-2 shadow-sm relative",
-        isBuyer
-          ? "bg-blue-500 text-white rounded-br-sm"
-          : "bg-card border border-border text-foreground rounded-bl-sm",
-        msg.isDeleted && "opacity-60 italic",
-      )}>
-        {msg.voiceDuration ? (
-          <VoiceMessage msg={msg} isBuyer={isBuyer} formatDuration={formatDuration} />
-        ) : (
-          <>
-            <p className="text-sm whitespace-pre-wrap break-words">
-              {highlightText(msg.text, searchQuery)}
-            </p>
-            {msg.isEdited && (
-              <span className={cn("text-[10px] ml-1", isBuyer ? "text-white/60" : "text-muted-foreground")}>
-                (edited)
-              </span>
-            )}
-          </>
-        )}
-
-        {msg.hasImages && msg.images && (
-          <div className={cn("mt-2 grid gap-1", msg.images.length > 1 ? "grid-cols-2" : "grid-cols-1")}>
-            {msg.images.map((img: string, i: number) => (
-              <button
-                key={i}
-                onClick={() => setViewingImage(img)}
-                className="rounded-lg overflow-hidden bg-muted"
-              >
-                <img src={img || "/placeholder.svg"} alt="" className="w-full h-24 object-cover" />
-              </button>
-            ))}
-          </div>
-        )}
-
-        <div className={cn("flex items-center gap-1 mt-1", isBuyer ? "justify-end" : "justify-start")}>
-          <span className={cn("text-[10px]", isBuyer ? "text-white/60" : "text-muted-foreground")}>
-            {msg.time}
-          </span>
-          {isBuyer && getStatusIcon(msg.status)}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-const VoiceMessage = ({ msg, isBuyer, formatDuration }: any) => {
-  const [playingVoiceId, setPlayingVoiceId] = useState<number | null>(null)
-  
-  return (
-    <div className="flex items-center gap-2 min-w-[150px]">
-      <button
-        onClick={() => setPlayingVoiceId(playingVoiceId === msg.id ? null : msg.id)}
-        className={cn(
-          "w-8 h-8 rounded-full flex items-center justify-center",
-          isBuyer ? "bg-white/20" : "bg-muted",
-        )}
-      >
-        {playingVoiceId === msg.id ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-      </button>
-      <div className="flex-1">
-        <div className="flex items-center gap-0.5">
-          {[...Array(20)].map((_, i) => (
-            <div
-              key={i}
-              className={cn("w-0.5 rounded-full", isBuyer ? "bg-white/60" : "bg-muted-foreground/60")}
-              style={{ height: `${Math.random() * 16 + 4}px` }}
-            />
-          ))}
-        </div>
-      </div>
-      <span className={cn("text-xs", isBuyer ? "text-white/70" : "text-muted-foreground")}>
-        {formatDuration(msg.voiceDuration || 0)}
-      </span>
-    </div>
-  )
-}
-
 const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
-  const { id, title, icon: Icon, color, stepNumber, isBuyer } = config
-  const statusText = config.renderStatus?.(order)
+  const { id, title, icon: Icon, iconColor, borderColor, isSeller, isBuyer, getStatusText, getStatusIcon, completionDate } = config
   
-  const colorClasses = {
-    emerald: {
-      bg: "bg-emerald-50",
-      border: "border-emerald-200",
-      text: "text-emerald-800",
-      badge: "bg-emerald-100 text-emerald-700",
-      button: "bg-emerald-600 hover:bg-emerald-700",
-      icon: "text-emerald-600"
-    },
-    amber: {
-      bg: "bg-amber-50",
-      border: "border-amber-200",
-      text: "text-amber-800",
-      badge: "bg-amber-100 text-amber-700",
-      button: "bg-amber-600 hover:bg-amber-700",
-      icon: "text-amber-600"
-    },
-    blue: {
-      bg: "bg-blue-50",
-      border: "border-blue-200",
-      text: "text-blue-800",
-      badge: "bg-blue-100 text-blue-700",
-      button: "bg-blue-600 hover:bg-blue-700",
-      icon: "text-blue-600"
-    },
-    slate: {
-      bg: "bg-slate-50",
-      border: "border-slate-200",
-      text: "text-slate-800",
-      badge: "bg-slate-100 text-slate-700",
-      button: "bg-slate-600 hover:bg-slate-700",
-      icon: "text-slate-600"
-    }
-  }
-
-  const colors = colorClasses[color as keyof typeof colorClasses]
-
+  const statusText = getStatusText(order)
+  const StatusIcon = getStatusIcon ? getStatusIcon(order) : null
+  const completedDate = completionDate ? completionDate(order) : null
+  
   const getActionButtons = () => {
     switch (id) {
       case "offer":
@@ -395,10 +291,6 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
       case "accepted":
         return (
           <div className="space-y-2 mb-3">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-emerald-700">Item + Delivery</span>
-              <span className="text-emerald-800 font-medium">${order.total}</span>
-            </div>
             <div className="flex items-center gap-2 text-xs text-emerald-600">
               <Shield className="w-3 h-3" />
               <span>Funds will be held securely until delivery</span>
@@ -409,16 +301,7 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
       case "payment":
         return (
           <div className="space-y-2 mb-3">
-            <div className="flex items-center justify-between text-xs">
-              <span className={colors.text}>Status</span>
-              <span className={cn(
-                "font-medium",
-                order.status === "payment_pending" ? "text-amber-600" : "text-emerald-600"
-              )}>
-                {order.status === "payment_pending" ? "Pending" : "Paid"}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 text-xs" style={{ color: colors.icon }}>
+            <div className="flex items-center gap-2 text-xs text-amber-600">
               <Wallet className="w-3 h-3" />
               <span>
                 {order.status === "payment_pending" 
@@ -432,27 +315,12 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
       case "delivery":
         return (
           <div className="space-y-2 mb-3">
-            <div className="flex items-center justify-between text-xs">
-              <span className={colors.text}>Status</span>
-              <span className={cn(
-                "font-medium",
-                order.status === "delivery_pending" ? "text-amber-600" : "text-emerald-600"
-              )}>
-                {order.status === "delivery_pending" 
-                  ? "Awaiting Delivery" 
-                  : order.status === "completed" 
-                    ? "Delivered" 
-                    : "Cancelled"}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 text-xs" style={{ color: colors.icon }}>
+            <div className="flex items-center gap-2 text-xs text-blue-600">
               <Shield className="w-3 h-3" />
               <span>
                 {order.status === "delivery_pending" 
                   ? "Funds secured. Auto-refund in 24h if not delivered" 
-                  : order.status === "completed" 
-                    ? "Product received. Payment released to seller" 
-                    : "Order cancelled. Refund processed"}
+                  : "Product received. Payment released to seller"}
               </span>
             </div>
           </div>
@@ -461,10 +329,6 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
       case "completed":
         return (
           <div className="space-y-2 mb-3">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-emerald-700">Status</span>
-              <span className="text-emerald-600 font-medium">Delivered & Paid</span>
-            </div>
             <div className="flex items-center gap-2 text-xs text-emerald-600">
               <Check className="w-3 h-3" />
               <span>Product received. Payment released to seller.</span>
@@ -475,10 +339,6 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
       case "refunded":
         return (
           <div className="space-y-2 mb-3">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-700">Status</span>
-              <span className="text-emerald-600 font-medium">Refunded to wallet</span>
-            </div>
             <div className="flex items-center gap-2 text-xs text-slate-600">
               <Wallet className="w-3 h-3" />
               <span>${order.total} refunded to your wallet</span>
@@ -488,7 +348,8 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
     }
   }
 
-  if (id === "offer") {
+  // Seller's offer card
+  if (isSeller) {
     return (
       <div className="flex justify-start mb-4">
         <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0 text-[10px] font-bold text-white mr-1.5 mt-auto">
@@ -498,7 +359,7 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
           <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Icon className="w-5 h-5 text-emerald-600" />
+                <Icon className={`w-5 h-5 ${iconColor}`} />
                 <span className="text-foreground text-sm font-semibold">{title}</span>
               </div>
               <div className="flex items-center gap-1">
@@ -511,14 +372,20 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
             
             {getStepContent()}
             
-            {statusText && (
-              <div className={`${colors.bg} border ${colors.border} rounded-lg p-2 mb-2`}>
-                <div className="flex items-center gap-2 text-xs" style={{ color: colors.icon }}>
-                  <Icon className="w-3 h-3" />
-                  <span>{statusText} • {order.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            {/* Status bar at bottom */}
+            <div className="mt-3 pt-3 border-t border-border">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {StatusIcon && <StatusIcon className="w-3 h-3 text-muted-foreground" />}
+                  <span className="text-xs text-muted-foreground">{statusText}</span>
                 </div>
+                {completedDate && (
+                  <span className="text-xs text-muted-foreground">
+                    {completedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                )}
               </div>
-            )}
+            </div>
             
             {getActionButtons()}
           </div>
@@ -527,44 +394,60 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
     )
   }
 
-  // Progress step cards (buyer side)
-  if (isBuyer && stepNumber) {
-    const isCompleted = currentStep >= stepNumber
-    const isCurrent = order.status === "payment_pending" && stepNumber === 2 || 
-                     order.status === "delivery_pending" && stepNumber === 3
+  // Buyer's step cards
+  if (isBuyer) {
+    const isCompleted = statusText === "Completed" || statusText === "Refunded"
+    const isCurrent = order.status === "payment_pending" && id === "payment" || 
+                     order.status === "delivery_pending" && id === "delivery" ||
+                     order.status === "accepted" && id === "accepted"
     
     return (
       <div className="relative">
-        {/* Step Indicator */}
-        <div className="absolute -left-8 top-4">
-          <div className={cn(
-            "w-5 h-5 rounded-full flex items-center justify-center border-2 transition-all duration-300",
-            isCompleted 
-              ? "bg-emerald-500 border-emerald-500" 
-              : "bg-white border-gray-300"
-          )}>
-            {isCompleted && <Check className="w-3 h-3 text-white" />}
+        {/* Step Indicator for progress bar */}
+        {currentStep > 0 && (
+          <div className="absolute -left-8 top-4">
+            <div className={cn(
+              "w-5 h-5 rounded-full flex items-center justify-center border-2 transition-all duration-300",
+              isCompleted 
+                ? "bg-emerald-500 border-emerald-500" 
+                : "bg-white border-gray-300"
+            )}>
+              {isCompleted && <Check className="w-3 h-3 text-white" />}
+            </div>
           </div>
-        </div>
+        )}
         
         {/* Card */}
-        <div className={`${colors.bg} border ${colors.border} rounded-xl p-4 shadow-sm`}>
+        <div className={`bg-card border ${borderColor} rounded-xl p-4 shadow-sm`}>
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <span className={`${colors.text} text-sm font-semibold`}>{title}</span>
+              <Icon className={`w-5 h-5 ${iconColor}`} />
+              <span className="text-foreground text-sm font-semibold">{title}</span>
             </div>
-            <span className={`text-xs ${colors.badge} px-2 py-0.5 rounded-full font-medium`}>
+            <span className="text-xs font-medium text-foreground">
               ${order.total}
             </span>
           </div>
           
           {getStepContent()}
           
-          {!isCurrent && isCompleted && stepNumber < 4 && (
-            <div className="text-center py-1">
-              <span className="text-xs text-emerald-600 font-medium">✓ Completed</span>
+          {/* Status bar at bottom */}
+          <div className="mt-3 pt-3 border-t border-border">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className={cn(
+                  "w-2 h-2 rounded-full",
+                  isCompleted ? "bg-emerald-500" : "bg-amber-500"
+                )} />
+                <span className="text-xs text-muted-foreground">{statusText}</span>
+              </div>
+              {completedDate && (
+                <span className="text-xs text-muted-foreground">
+                  {completedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
             </div>
-          )}
+          </div>
           
           {getActionButtons()}
         </div>
@@ -720,7 +603,7 @@ export default function BuyerSellerChat() {
 
   // Filter steps to show
   const visibleSteps = stepConfigs.filter(config => config.show(currentOrder))
-  const hasProgressSteps = visibleSteps.filter(step => step.isBuyer && step.stepNumber).length > 0
+  const hasProgressSteps = visibleSteps.filter(step => step.isBuyer).length > 0
 
   // Effects
   useEffect(() => {
@@ -991,21 +874,101 @@ export default function BuyerSellerChat() {
     <div className="w-full h-screen flex flex-col overflow-hidden relative transition-colors duration-300">
       <div className="flex-1 flex flex-col min-h-0 bg-background text-foreground">
         {/* Header */}
-        <Header 
-          sellerOnline={sellerOnline}
-          callState={callState}
-          callDuration={callDuration}
-          formatDuration={formatDuration}
-          handleCallStart={handleCallStart}
-          handleCallEnd={handleCallEnd}
-          showMenu={showMenu}
-          setShowMenu={setShowMenu}
-          allMedia={allMedia}
-          notificationsMuted={notificationsMuted}
-          setNotificationsMuted={setNotificationsMuted}
-          setShowMediaGallery={setShowMediaGallery}
-          setShowReportModal={setShowReportModal}
-        />
+        <div className="px-2 py-2 flex items-center gap-2 shrink-0 bg-card border-b border-border shadow-sm">
+          <button className="p-1.5 hover:bg-muted rounded-full transition-colors">
+            <ArrowLeft className="w-5 h-5 text-foreground" />
+          </button>
+
+          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+            <div className="relative">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0">
+                <span className="text-white font-bold text-sm">JS</span>
+              </div>
+              {sellerOnline && (
+                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-card" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="text-foreground font-semibold text-sm truncate">John Seller</span>
+                <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-500" />
+              </div>
+              <p className="text-muted-foreground text-xs flex items-center gap-1">
+                <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                <span>4.5</span>
+                <span className="mx-1">•</span>
+                <span>Online</span>
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-0.5">
+            <div className="relative group">
+              {callState === "idle" ? (
+                <button 
+                  onClick={() => handleCallStart("audio")}
+                  className="px-3 py-2 flex items-center gap-2 hover:bg-muted rounded-full transition-colors"
+                >
+                  <Phone className="w-4 h-4 text-foreground" />
+                  <span className="text-sm text-foreground font-medium">Call</span>
+                </button>
+              ) : callState === "ringing" ? (
+                <div className="flex items-center gap-1">
+                  <div className="px-3 py-2 bg-blue-500/10 rounded-full">
+                    <span className="text-sm text-blue-500 font-medium">Ringing...</span>
+                  </div>
+                  <button onClick={handleCallEnd} className="p-2 hover:bg-red-500/10 rounded-full transition-colors">
+                    <PhoneOff className="w-5 h-5 text-red-500" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1">
+                  <div className="px-3 py-2 bg-green-500/10 rounded-full">
+                    <span className="text-sm text-green-500 font-medium">{formatDuration(callDuration)}</span>
+                  </div>
+                  <button onClick={handleCallEnd} className="p-2 hover:bg-red-500/10 rounded-full transition-colors">
+                    <PhoneOff className="w-5 h-5 text-red-500" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="relative">
+              <button onClick={() => setShowMenu(!showMenu)} className="p-2 hover:bg-muted rounded-full transition-colors">
+                <MoreVertical className="w-5 h-5 text-foreground" />
+              </button>
+
+              {showMenu && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
+                  <div className="absolute right-0 top-10 w-56 bg-popover border border-border rounded-xl shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <button onClick={() => setShowMenu(false)} className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors">
+                      <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm text-foreground">Search in chat</span>
+                    </button>
+                    <button onClick={() => { setShowMediaGallery(true); setShowMenu(false); }} className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors">
+                      <ImageIcon2 className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm text-foreground">Shared media</span>
+                      <span className="ml-auto text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                        {allMedia.length}
+                      </span>
+                    </button>
+                    <div className="h-px bg-border my-1" />
+                    <button onClick={() => { setNotificationsMuted(!notificationsMuted); setShowMenu(false); }} className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors">
+                      {notificationsMuted ? <BellOff className="w-4 h-4 text-muted-foreground" /> : <Bell className="w-4 h-4 text-muted-foreground" />}
+                      <span className="text-sm text-foreground">{notificationsMuted ? "Unmute" : "Mute"} notifications</span>
+                    </button>
+                    <div className="h-px bg-border my-1" />
+                    <button onClick={() => { setShowReportModal(true); setShowMenu(false); }} className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors text-red-600">
+                      <Flag className="w-4 h-4" />
+                      <span className="text-sm">Report seller</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* Chat Content */}
         <div ref={chatContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-3 py-3 scroll-smooth">
@@ -1013,36 +976,147 @@ export default function BuyerSellerChat() {
 
           {/* Media Gallery */}
           {showMediaGallery && (
-            <MediaGallery 
-              allMedia={allMedia}
-              mediaGalleryView={mediaGalleryView}
-              setMediaGalleryView={setMediaGalleryView}
-              setShowMediaGallery={setShowMediaGallery}
-              setViewingImage={setViewingImage}
-            />
+            <div className="bg-card border border-border rounded-xl p-3 mb-3 animate-in fade-in slide-in-from-top duration-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <ImageIcon2 className="w-5 h-5 text-purple-600" />
+                  <span className="text-sm font-semibold text-foreground">Shared Media</span>
+                  <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                    {allMedia.length}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button onClick={() => setMediaGalleryView("grid")} className={cn("p-1.5 rounded", mediaGalleryView === "grid" ? "bg-muted" : "hover:bg-muted")}>
+                    <LayoutGrid className="w-4 h-4 text-foreground" />
+                  </button>
+                  <button onClick={() => setMediaGalleryView("list")} className={cn("p-1.5 rounded", mediaGalleryView === "list" ? "bg-muted" : "hover:bg-muted")}>
+                    <List className="w-4 h-4 text-foreground" />
+                  </button>
+                  <button onClick={() => setShowMediaGallery(false)} className="ml-1">
+                    <X className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                </div>
+              </div>
+              <div className={cn(mediaGalleryView === "grid" ? "grid grid-cols-3 gap-1.5" : "space-y-2")}>
+                {allMedia.map((img: string, i: number) => (
+                  <button key={i} onClick={() => setViewingImage(img)} className={cn("overflow-hidden rounded-lg bg-muted", mediaGalleryView === "grid" ? "aspect-square" : "flex items-center gap-3 p-2")}>
+                    <img src={img || "/placeholder.svg"} alt="" className={cn("object-cover", mediaGalleryView === "grid" ? "w-full h-full" : "w-12 h-12 rounded")} />
+                    {mediaGalleryView === "list" && (
+                      <div className="flex-1 text-left">
+                        <p className="text-sm text-foreground">Image {i + 1}</p>
+                        <p className="text-xs text-muted-foreground">From seller</p>
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
 
           {/* Messages */}
-          {filteredMessages.map((msg) => (
-            <MessageItem
-              key={msg.id}
-              msg={msg}
-              messages={messages}
-              searchQuery={searchQuery}
-              scrollToMessage={scrollToMessage}
-              getStatusIcon={getStatusIcon}
-              formatDuration={formatDuration}
-              highlightText={highlightText}
-              setReplyingTo={setReplyingTo}
-              messageActionsId={messageActionsId}
-              setMessageActionsId={setMessageActionsId}
-              setEditingMessage={setEditingMessage}
-              setMessage={setMessage}
-              copyMessage={copyMessage}
-              deleteMessage={deleteMessage}
-              setViewingImage={setViewingImage}
-            />
-          ))}
+          {filteredMessages.map((msg) => {
+            const isBuyer = msg.sender === "buyer"
+            const replyMessage = msg.replyTo ? messages.find((m: Message) => m.id === msg.replyTo) : null
+
+            return (
+              <div key={msg.id} id={`message-${msg.id}`} className={cn("flex mb-2 transition-colors duration-500 rounded-lg", isBuyer ? "justify-end" : "justify-start")}>
+                {!isBuyer && (
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0 text-[10px] font-bold text-white mr-1.5 mt-auto">
+                    JS
+                  </div>
+                )}
+
+                <div className={cn("max-w-[80%] relative group", isBuyer ? "items-end" : "items-start")}>
+                  {replyMessage && (
+                    <button onClick={() => scrollToMessage(replyMessage.id)} className={cn("w-full mb-1 px-2 py-1 rounded-lg text-xs text-left truncate border-l-2", isBuyer ? "bg-blue-400/20 border-blue-300" : "bg-muted border-muted-foreground")}>
+                      <span className="text-muted-foreground">{replyMessage.sender === "buyer" ? "You" : "John"}: </span>
+                      {replyMessage.text}
+                    </button>
+                  )}
+
+                  <div className={cn("rounded-2xl px-3 py-2 shadow-sm relative", isBuyer ? "bg-blue-500 text-white rounded-br-sm" : "bg-card border border-border text-foreground rounded-bl-sm", msg.isDeleted && "opacity-60 italic")}>
+                    {msg.voiceDuration ? (
+                      <div className="flex items-center gap-2 min-w-[150px]">
+                        <button onClick={() => setMessageActionsId(msg.id)} className={cn("w-8 h-8 rounded-full flex items-center justify-center", isBuyer ? "bg-white/20" : "bg-muted")}>
+                          <Play className="w-4 h-4" />
+                        </button>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-0.5">
+                            {[...Array(20)].map((_, i) => (
+                              <div key={i} className={cn("w-0.5 rounded-full", isBuyer ? "bg-white/60" : "bg-muted-foreground/60")} style={{ height: `${Math.random() * 16 + 4}px` }} />
+                            ))}
+                          </div>
+                        </div>
+                        <span className={cn("text-xs", isBuyer ? "text-white/70" : "text-muted-foreground")}>
+                          {formatDuration(msg.voiceDuration || 0)}
+                        </span>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-sm whitespace-pre-wrap break-words">{highlightText(msg.text, searchQuery)}</p>
+                        {msg.isEdited && <span className={cn("text-[10px] ml-1", isBuyer ? "text-white/60" : "text-muted-foreground")}>(edited)</span>}
+                      </>
+                    )}
+
+                    {msg.hasImages && msg.images && (
+                      <div className={cn("mt-2 grid gap-1", msg.images.length > 1 ? "grid-cols-2" : "grid-cols-1")}>
+                        {msg.images.map((img: string, i: number) => (
+                          <button key={i} onClick={() => setViewingImage(img)} className="rounded-lg overflow-hidden bg-muted">
+                            <img src={img || "/placeholder.svg"} alt="" className="w-full h-24 object-cover" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className={cn("flex items-center gap-1 mt-1", isBuyer ? "justify-end" : "justify-start")}>
+                      <span className={cn("text-[10px]", isBuyer ? "text-white/60" : "text-muted-foreground")}>{msg.time}</span>
+                      {isBuyer && getStatusIcon(msg.status)}
+                    </div>
+                  </div>
+
+                  <div className={cn("absolute top-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 bg-card border border-border rounded-lg shadow-lg p-0.5", isBuyer ? "left-0 -translate-x-full mr-1" : "right-0 translate-x-full ml-1")}>
+                    <button onClick={() => setReplyingTo(msg)} className="p-1 hover:bg-muted rounded">
+                      <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                    <button onClick={() => setMessageActionsId(messageActionsId === msg.id ? null : msg.id)} className="p-1 hover:bg-muted rounded">
+                      <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                  </div>
+
+                  {messageActionsId === msg.id && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setMessageActionsId(null)} />
+                      <div className={cn("absolute top-8 z-50 w-40 bg-popover border border-border rounded-lg shadow-xl py-1 animate-in fade-in zoom-in-95 duration-100", isBuyer ? "right-0" : "left-8")}>
+                        <button onClick={() => { copyMessage(msg.text); setMessageActionsId(null); }} className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted text-sm">
+                          <Copy className="w-4 h-4" /> Copy
+                        </button>
+                        <button className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted text-sm">
+                          <Forward className="w-4 h-4" /> Forward
+                        </button>
+                        {isBuyer && (
+                          <>
+                            <div className="h-px bg-border my-1" />
+                            <button onClick={() => { setEditingMessage(msg); setMessage(msg.text); setMessageActionsId(null); }} className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted text-sm">
+                              <Edit3 className="w-4 h-4" /> Edit
+                            </button>
+                            <button onClick={() => { deleteMessage(msg.id); setMessageActionsId(null); }} className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted text-sm text-red-600">
+                              <Trash2 className="w-4 h-4" /> Delete
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {isBuyer && (
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shrink-0 text-[10px] font-bold text-white ml-1.5 mt-auto">
+                    ME
+                  </div>
+                )}
+              </div>
+            )
+          })}
 
           {/* Order Steps */}
           <div className="space-y-2 mb-3">
@@ -1073,8 +1147,11 @@ export default function BuyerSellerChat() {
                     {/* Progress Step Cards */}
                     <div className="space-y-6">
                       {visibleSteps
-                        .filter(step => step.isBuyer && step.stepNumber)
-                        .sort((a, b) => (a.stepNumber || 0) - (b.stepNumber || 0))
+                        .filter(step => step.isBuyer)
+                        .sort((a, b) => {
+                          const order = ["accepted", "payment", "delivery", "completed", "refunded"]
+                          return order.indexOf(a.id) - order.indexOf(b.id)
+                        })
                         .map(config => (
                           <OrderStepCard
                             key={config.id}
@@ -1092,585 +1169,234 @@ export default function BuyerSellerChat() {
           </div>
 
           {/* Typing indicator */}
-          {isTyping && <TypingIndicator />}
+          {isTyping && (
+            <div className="flex items-start gap-2 mb-2">
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0 text-[10px] font-bold text-white">
+                JS
+              </div>
+              <div className="bg-card border border-border rounded-2xl rounded-bl-sm px-3 py-2 shadow-sm">
+                <div className="flex gap-1">
+                  {[0, 0.15, 0.3].map((delay, i) => (
+                    <span key={i} className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: `${delay}s` }} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* UI Components */}
-        {showScrollToBottom && <ScrollToBottomButton scrollToBottom={scrollToBottom} />}
-        <ReplyEditPreview 
-          replyingTo={replyingTo} 
-          editingMessage={editingMessage}
-          setReplyingTo={setReplyingTo}
-          setEditingMessage={setEditingMessage}
-          setMessage={setMessage}
-        />
-        <ProductCard 
-          walletBalance={walletBalance}
-          setShowWalletBalance={setShowWalletBalance}
-        />
-        {showQuickActions && <QuickActions actions={quickActions} />}
-        {isRecording && (
-          <VoiceRecording 
-            recordingDuration={recordingDuration}
-            setIsRecording={setIsRecording}
-            handleSend={handleSend}
-            formatDuration={formatDuration}
-          />
-        )}
-        <InputBar
-          showQuickActions={showQuickActions}
-          setShowQuickActions={setShowQuickActions}
-          isRecording={isRecording}
-          setIsRecording={setIsRecording}
-          message={message}
-          setMessage={setMessage}
-          handleSend={handleSend}
-          editingMessage={editingMessage}
-          inputRef={inputRef}
-        />
-
-        {/* Modals */}
-        {showWalletBalance && (
-          <WalletModal 
-            walletBalance={walletBalance}
-            setShowWalletBalance={setShowWalletBalance}
-          />
-        )}
-        {showPinModal && (
-          <PinModal
-            currentOrder={currentOrder}
-            pin={pin}
-            setPin={setPin}
-            setShowPinModal={setShowPinModal}
-            processPayment={processPayment}
-            handlePinInput={handlePinInput}
-            handlePinKeyDown={handlePinKeyDown}
-            pinInputRefs={pinInputRefs}
-          />
-        )}
-        {showReceipt && currentOrder?.receipt && (
-          <ReceiptModal
-            receipt={currentOrder.receipt}
-            setShowReceipt={setShowReceipt}
-          />
-        )}
-        {showReportModal && (
-          <ReportModal setShowReportModal={setShowReportModal} />
-        )}
-        {viewingImage && (
-          <ImageViewer 
-            viewingImage={viewingImage}
-            setViewingImage={setViewingImage}
-          />
-        )}
-      </div>
-    </div>
-  )
-}
-
-// Helper Components (extracted for brevity, but would be in separate files in real app)
-
-const Header = ({ sellerOnline, callState, callDuration, formatDuration, handleCallStart, handleCallEnd, showMenu, setShowMenu, allMedia, notificationsMuted, setNotificationsMuted, setShowMediaGallery, setShowReportModal }: any) => (
-  <div className="px-2 py-2 flex items-center gap-2 shrink-0 bg-card border-b border-border shadow-sm">
-    <button className="p-1.5 hover:bg-muted rounded-full transition-colors">
-      <ArrowLeft className="w-5 h-5 text-foreground" />
-    </button>
-
-    <div className="flex items-center gap-2.5 flex-1 min-w-0">
-      <div className="relative">
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0">
-          <span className="text-white font-bold text-sm">JS</span>
-        </div>
-        {sellerOnline && (
-          <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-card" />
-        )}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
-          <span className="text-foreground font-semibold text-sm truncate">John Seller</span>
-          <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-500" />
-        </div>
-        <p className="text-muted-foreground text-xs flex items-center gap-1">
-          <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-          <span>4.5</span>
-          <span className="mx-1">•</span>
-          <span>Online</span>
-        </p>
-      </div>
-    </div>
-
-    <div className="flex items-center gap-0.5">
-      <CallControls 
-        callState={callState}
-        callDuration={callDuration}
-        formatDuration={formatDuration}
-        handleCallStart={handleCallStart}
-        handleCallEnd={handleCallEnd}
-      />
-      <MenuDropdown 
-        showMenu={showMenu}
-        setShowMenu={setShowMenu}
-        allMedia={allMedia}
-        notificationsMuted={notificationsMuted}
-        setNotificationsMuted={setNotificationsMuted}
-        setShowMediaGallery={setShowMediaGallery}
-        setShowReportModal={setShowReportModal}
-      />
-    </div>
-  </div>
-)
-
-const CallControls = ({ callState, callDuration, formatDuration, handleCallStart, handleCallEnd }: any) => (
-  <div className="relative group">
-    {callState === "idle" ? (
-      <button 
-        onClick={() => handleCallStart("audio")}
-        className="px-3 py-2 flex items-center gap-2 hover:bg-muted rounded-full transition-colors"
-      >
-        <Phone className="w-4 h-4 text-foreground" />
-        <span className="text-sm text-foreground font-medium">Call</span>
-      </button>
-    ) : callState === "ringing" ? (
-      <div className="flex items-center gap-1">
-        <div className="px-3 py-2 bg-blue-500/10 rounded-full">
-          <span className="text-sm text-blue-500 font-medium">Ringing...</span>
-        </div>
-        <button onClick={handleCallEnd} className="p-2 hover:bg-red-500/10 rounded-full transition-colors">
-          <PhoneOff className="w-5 h-5 text-red-500" />
-        </button>
-      </div>
-    ) : (
-      <div className="flex items-center gap-1">
-        <div className="px-3 py-2 bg-green-500/10 rounded-full">
-          <span className="text-sm text-green-500 font-medium">{formatDuration(callDuration)}</span>
-        </div>
-        <button onClick={handleCallEnd} className="p-2 hover:bg-red-500/10 rounded-full transition-colors">
-          <PhoneOff className="w-5 h-5 text-red-500" />
-        </button>
-      </div>
-    )}
-  </div>
-)
-
-const MenuDropdown = ({ showMenu, setShowMenu, allMedia, notificationsMuted, setNotificationsMuted, setShowMediaGallery, setShowReportModal }: any) => (
-  <div className="relative">
-    <button onClick={() => setShowMenu(!showMenu)} className="p-2 hover:bg-muted rounded-full transition-colors">
-      <MoreVertical className="w-5 h-5 text-foreground" />
-    </button>
-
-    {showMenu && (
-      <>
-        <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-        <div className="absolute right-0 top-10 w-56 bg-popover border border-border rounded-xl shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-200">
-          <button onClick={() => setShowMenu(false)} className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors">
-            <MoreVertical className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm text-foreground">Search in chat</span>
+        {showScrollToBottom && (
+          <button onClick={scrollToBottom} className="absolute bottom-32 right-4 w-10 h-10 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center hover:scale-105 transition-transform z-10">
+            <MoreVertical className="w-5 h-5" />
           </button>
-          <button onClick={() => { setShowMediaGallery(true); setShowMenu(false); }} className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors">
-            <ImageIcon2 className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm text-foreground">Shared media</span>
-            <span className="ml-auto text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
-              {allMedia.length}
-            </span>
-          </button>
-          <div className="h-px bg-border my-1" />
-          <button onClick={() => { setNotificationsMuted(!notificationsMuted); setShowMenu(false); }} className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors">
-            {notificationsMuted ? <BellOff className="w-4 h-4 text-muted-foreground" /> : <Bell className="w-4 h-4 text-muted-foreground" />}
-            <span className="text-sm text-foreground">{notificationsMuted ? "Unmute" : "Mute"} notifications</span>
-          </button>
-          <div className="h-px bg-border my-1" />
-          <button onClick={() => { setShowReportModal(true); setShowMenu(false); }} className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors text-red-600">
-            <Flag className="w-4 h-4" />
-            <span className="text-sm">Report seller</span>
-          </button>
-        </div>
-      </>
-    )}
-  </div>
-)
-
-const MediaGallery = ({ allMedia, mediaGalleryView, setMediaGalleryView, setShowMediaGallery, setViewingImage }: any) => (
-  <div className="bg-card border border-border rounded-xl p-3 mb-3 animate-in fade-in slide-in-from-top duration-200">
-    <div className="flex items-center justify-between mb-3">
-      <div className="flex items-center gap-2">
-        <ImageIcon2 className="w-5 h-5 text-purple-600" />
-        <span className="text-sm font-semibold text-foreground">Shared Media</span>
-        <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
-          {allMedia.length}
-        </span>
-      </div>
-      <div className="flex items-center gap-1">
-        <button onClick={() => setMediaGalleryView("grid")} className={cn("p-1.5 rounded", mediaGalleryView === "grid" ? "bg-muted" : "hover:bg-muted")}>
-          <LayoutGrid className="w-4 h-4 text-foreground" />
-        </button>
-        <button onClick={() => setMediaGalleryView("list")} className={cn("p-1.5 rounded", mediaGalleryView === "list" ? "bg-muted" : "hover:bg-muted")}>
-          <List className="w-4 h-4 text-foreground" />
-        </button>
-        <button onClick={() => setShowMediaGallery(false)} className="ml-1">
-          <X className="w-4 h-4 text-muted-foreground" />
-        </button>
-      </div>
-    </div>
-    <div className={cn(mediaGalleryView === "grid" ? "grid grid-cols-3 gap-1.5" : "space-y-2")}>
-      {allMedia.map((img: string, i: number) => (
-        <button key={i} onClick={() => setViewingImage(img)} className={cn("overflow-hidden rounded-lg bg-muted", mediaGalleryView === "grid" ? "aspect-square" : "flex items-center gap-3 p-2")}>
-          <img src={img || "/placeholder.svg"} alt="" className={cn("object-cover", mediaGalleryView === "grid" ? "w-full h-full" : "w-12 h-12 rounded")} />
-          {mediaGalleryView === "list" && (
-            <div className="flex-1 text-left">
-              <p className="text-sm text-foreground">Image {i + 1}</p>
-              <p className="text-xs text-muted-foreground">From seller</p>
+        )}
+        
+        {(replyingTo || editingMessage) && (
+          <div className="px-3 py-2 bg-muted border-t border-border flex items-center gap-2">
+            {replyingTo ? <MoreVertical className="w-4 h-4 text-blue-500" /> : <Edit3 className="w-4 h-4 text-amber-500" />}
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-muted-foreground">
+                {replyingTo ? `Replying to ${replyingTo.sender === "buyer" ? "yourself" : "John"}` : "Editing message"}
+              </p>
+              <p className="text-sm text-foreground truncate">{replyingTo?.text || editingMessage?.text}</p>
             </div>
-          )}
-        </button>
-      ))}
-    </div>
-  </div>
-)
-
-const MessageItem = ({ msg, messages, searchQuery, scrollToMessage, getStatusIcon, formatDuration, highlightText, setReplyingTo, messageActionsId, setMessageActionsId, setEditingMessage, setMessage, copyMessage, deleteMessage, setViewingImage }: any) => {
-  const isBuyer = msg.sender === "buyer"
-  const replyMessage = msg.replyTo ? messages.find((m: Message) => m.id === msg.replyTo) : null
-
-  return (
-    <div id={`message-${msg.id}`} className={cn("flex mb-2 transition-colors duration-500 rounded-lg", isBuyer ? "justify-end" : "justify-start")}>
-      {!isBuyer && (
-        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0 text-[10px] font-bold text-white mr-1.5 mt-auto">
-          JS
-        </div>
-      )}
-
-      <div className={cn("max-w-[80%] relative group", isBuyer ? "items-end" : "items-start")}>
-        {replyMessage && (
-          <button onClick={() => scrollToMessage(replyMessage.id)} className={cn("w-full mb-1 px-2 py-1 rounded-lg text-xs text-left truncate border-l-2", isBuyer ? "bg-blue-400/20 border-blue-300" : "bg-muted border-muted-foreground")}>
-            <span className="text-muted-foreground">{replyMessage.sender === "buyer" ? "You" : "John"}: </span>
-            {replyMessage.text}
-          </button>
+            <button onClick={() => { setReplyingTo(null); setEditingMessage(null); setMessage(""); }}>
+              <X className="w-4 h-4 text-muted-foreground" />
+            </button>
+          </div>
         )}
 
-        <div className={cn("rounded-2xl px-3 py-2 shadow-sm relative", isBuyer ? "bg-blue-500 text-white rounded-br-sm" : "bg-card border border-border text-foreground rounded-bl-sm", msg.isDeleted && "opacity-60 italic")}>
-          {msg.voiceDuration ? (
-            <VoiceMessage msg={msg} isBuyer={isBuyer} formatDuration={formatDuration} />
-          ) : (
-            <>
-              <p className="text-sm whitespace-pre-wrap break-words">{highlightText(msg.text, searchQuery)}</p>
-              {msg.isEdited && <span className={cn("text-[10px] ml-1", isBuyer ? "text-white/60" : "text-muted-foreground")}>(edited)</span>}
-            </>
-          )}
+        <div className="px-3 py-2 border-t border-border bg-card flex items-center gap-2">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shrink-0">
+            <Package className="w-5 h-5 text-muted-foreground" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-foreground font-medium text-sm truncate">iPhone 15 Pro Max</p>
+            <div className="flex items-center gap-2">
+              <p className="text-emerald-600 font-bold text-sm">$899</p>
+              <span className="text-xs text-muted-foreground line-through">$1,099</span>
+            </div>
+          </div>
+          <button onClick={() => setShowWalletBalance(true)} className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1">
+            <Wallet className="w-3 h-3" />${walletBalance.toFixed(0)}
+          </button>
+        </div>
 
-          {msg.hasImages && msg.images && (
-            <div className={cn("mt-2 grid gap-1", msg.images.length > 1 ? "grid-cols-2" : "grid-cols-1")}>
-              {msg.images.map((img: string, i: number) => (
-                <button key={i} onClick={() => setViewingImage(img)} className="rounded-lg overflow-hidden bg-muted">
-                  <img src={img || "/placeholder.svg"} alt="" className="w-full h-24 object-cover" />
+        {showQuickActions && (
+          <div className="px-3 py-2 bg-card border-t border-border shadow-lg animate-in slide-in-from-bottom-2 duration-200">
+            <div className="grid grid-cols-4 gap-2">
+              {quickActions.map(({ icon: Icon, label, action }: any) => (
+                <button key={label} onClick={action} className="flex flex-col items-center gap-1 py-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
+                  <Icon className="w-5 h-5 text-blue-600" />
+                  <span className="text-xs text-foreground">{label}</span>
                 </button>
               ))}
             </div>
-          )}
-
-          <div className={cn("flex items-center gap-1 mt-1", isBuyer ? "justify-end" : "justify-start")}>
-            <span className={cn("text-[10px]", isBuyer ? "text-white/60" : "text-muted-foreground")}>{msg.time}</span>
-            {isBuyer && getStatusIcon(msg.status)}
           </div>
-        </div>
+        )}
 
-        <MessageActions 
-          isBuyer={isBuyer}
-          msg={msg}
-          setReplyingTo={setReplyingTo}
-          messageActionsId={messageActionsId}
-          setMessageActionsId={setMessageActionsId}
-          setEditingMessage={setEditingMessage}
-          setMessage={setMessage}
-          copyMessage={copyMessage}
-          deleteMessage={deleteMessage}
-        />
+        {isRecording && (
+          <div className="px-3 py-3 bg-red-50 border-t border-red-200 flex items-center gap-3 animate-in slide-in-from-bottom duration-200">
+            <button onClick={() => setIsRecording(false)} className="p-2 bg-red-100 rounded-full">
+              <Trash2 className="w-5 h-5 text-red-600" />
+            </button>
+            <div className="flex-1 flex items-center gap-2">
+              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+              <span className="text-sm text-red-600 font-medium">{formatDuration(recordingDuration)}</span>
+              <div className="flex-1 flex items-center gap-0.5">
+                {[...Array(30)].map((_, i) => (
+                  <div key={i} className="w-1 bg-red-400 rounded-full animate-pulse" style={{ height: `${Math.random() * 20 + 4}px`, animationDelay: `${i * 0.05}s` }} />
+                ))}
+              </div>
+            </div>
+            <button onClick={handleSend} className="p-2 bg-red-500 rounded-full">
+              <Send className="w-5 h-5 text-white" />
+            </button>
+          </div>
+        )}
+
+        {/* Input Bar */}
+        {!isRecording && (
+          <div className="px-2 py-2 flex items-center gap-1 shrink-0 bg-card border-t border-border">
+            <button onClick={() => setShowQuickActions(!showQuickActions)} className="p-2 shrink-0">
+              <Plus className={cn("w-6 h-6 transition-transform", showQuickActions ? "rotate-45 text-muted-foreground" : "text-blue-600")} />
+            </button>
+            <button className="p-2 shrink-0"><Camera className="w-6 h-6 text-blue-600" /></button>
+            <button className="p-2 shrink-0"><ImageIcon className="w-6 h-6 text-blue-600" /></button>
+            <button className="p-2 shrink-0" onMouseDown={() => setIsRecording(true)}><Mic className="w-6 h-6 text-blue-600" /></button>
+            <div className="flex-1 bg-muted rounded-full px-3 py-2 flex items-center min-w-0">
+              <input ref={inputRef} type="text" placeholder="Type a message..." value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()} className="bg-transparent flex-1 outline-none text-foreground text-sm min-w-0 placeholder:text-muted-foreground" />
+            </div>
+            <button onClick={handleSend} className="p-2 shrink-0">
+              {message || editingMessage ? <Send className="w-6 h-6 text-blue-600 fill-blue-600" /> : <ThumbsUp className="w-6 h-6 text-blue-600" />}
+            </button>
+          </div>
+        )}
+
+        {/* Modals */}
+        {showWalletBalance && (
+          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
+            <div className="bg-card w-full rounded-t-3xl p-4 animate-in slide-in-from-bottom duration-300">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-bold text-foreground">Wallet Balance</h3>
+                <button onClick={() => setShowWalletBalance(false)}><X className="w-6 h-6 text-muted-foreground" /></button>
+              </div>
+              <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-5 mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <Wallet className="w-8 h-8 text-white" />
+                  <span className="text-white/80 text-sm">Available Balance</span>
+                </div>
+                <p className="text-4xl font-bold text-white">${walletBalance.toFixed(2)}</p>
+                <p className="text-white/70 text-xs mt-2">Secure wallet for marketplace transactions</p>
+              </div>
+              <button onClick={() => setShowWalletBalance(false)} className="w-full bg-blue-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors">Close</button>
+            </div>
+          </div>
+        )}
+
+        {showPinModal && (
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50 animate-in fade-in duration-200">
+            <div className="bg-card rounded-3xl p-6 mx-4 max-w-sm animate-in zoom-in-95 duration-300">
+              <div className="text-center mb-6">
+                <Lock className="w-12 h-12 text-blue-600 mx-auto mb-3" />
+                <h2 className="text-xl font-bold text-foreground mb-1">
+                  {currentOrder.status === "payment_pending" ? "Confirm Payment" : "Complete Delivery"}
+                </h2>
+                <p className="text-muted-foreground text-sm">
+                  {currentOrder.status === "payment_pending" 
+                    ? `Enter your 4-digit PIN to pay $${currentOrder.total}`
+                    : `Enter PIN to release $${currentOrder.total} to seller`
+                  }
+                </p>
+              </div>
+              <div className="flex justify-center gap-3 mb-6">
+                {[0, 1, 2, 3].map((index) => (
+                  <input key={index} ref={(el) => { pinInputRefs.current[index] = el }} type="password" maxLength={1} value={pin[index]} onChange={(e) => handlePinInput(index, e.target.value)} onKeyDown={(e) => handlePinKeyDown(index, e)} className="w-14 h-14 text-center text-2xl font-bold bg-muted border-2 border-border rounded-xl outline-none focus:border-blue-500 transition-colors" />
+                ))}
+              </div>
+              <div className="flex gap-3">
+                <button onClick={() => { setPin(["", "", "", ""]); setShowPinModal(false); }} className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors">Cancel</button>
+                <button onClick={() => pin.every(digit => digit !== "") ? processPayment() : alert("Please enter your 4-digit PIN")} className="flex-1 bg-blue-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors">
+                  {currentOrder.status === "payment_pending" ? "Confirm" : "Release Funds"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showReceipt && currentOrder?.receipt && (
+          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
+            <div className="bg-card w-full rounded-t-3xl p-4 animate-in slide-in-from-bottom duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-foreground">Transaction Receipt</h3>
+                <button onClick={() => setShowReceipt(false)}><X className="w-6 h-6 text-muted-foreground" /></button>
+              </div>
+              <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-5 mb-4">
+                <div className="flex items-center justify-between mb-4">
+                  <Receipt className="w-8 h-8 text-white" />
+                  <span className="text-white/80 text-sm">Payment Confirmed</span>
+                </div>
+                <p className="text-3xl font-bold text-white">${currentOrder.receipt.total}</p>
+                <p className="text-white/70 text-sm mt-1">{currentOrder.receipt.date} • {currentOrder.receipt.time}</p>
+              </div>
+              <div className="space-y-3 mb-6">
+                {Object.entries({ "Receipt ID": currentOrder.receipt.id, "Product": currentOrder.receipt.product, "Item Price": `$${currentOrder.receipt.amount}`, "Delivery Fee": `$${currentOrder.receipt.deliveryFee}`, "Seller": currentOrder.receipt.seller }).map(([label, value]) => (
+                  <div key={label} className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">{label}</span>
+                    <span className="text-sm text-foreground">{value}</span>
+                  </div>
+                ))}
+                <div className="h-px bg-border my-2" />
+                <div className="flex items-center justify-between font-bold">
+                  <span className="text-foreground">Total Paid</span>
+                  <span className="text-foreground">${currentOrder.receipt.total}</span>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors flex items-center justify-center gap-2">
+                  <Download className="w-4 h-4" /> Download
+                </button>
+                <button className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors flex items-center justify-center gap-2">
+                  <Share2 className="w-4 h-4" /> Share
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showReportModal && (
+          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
+            <div className="bg-card w-full rounded-t-3xl p-4 animate-in slide-in-from-bottom duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-foreground">Report Issue</h3>
+                <button onClick={() => setShowReportModal(false)}><X className="w-6 h-6 text-muted-foreground" /></button>
+              </div>
+              <div className="space-y-2 mb-4">
+                {["Suspicious behavior", "Spam or scam", "Offensive content", "Fake listing", "Other"].map((reason) => (
+                  <button key={reason} className="w-full p-3 bg-muted hover:bg-muted/80 rounded-xl text-left text-foreground transition-colors">{reason}</button>
+                ))}
+              </div>
+              <button onClick={() => setShowReportModal(false)} className="w-full bg-red-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-red-700 transition-colors">Submit Report</button>
+            </div>
+          </div>
+        )}
+
+        {viewingImage && (
+          <div className="absolute inset-0 bg-black z-50 flex flex-col animate-in fade-in duration-200">
+            <div className="flex items-center justify-between p-4">
+              <button onClick={() => setViewingImage(null)}><X className="w-6 h-6 text-white" /></button>
+              <div className="flex gap-2">
+                <button className="p-2 bg-white/10 rounded-full"><Share2 className="w-5 h-5 text-white" /></button>
+                <button className="p-2 bg-white/10 rounded-full"><Download className="w-5 h-5 text-white" /></button>
+              </div>
+            </div>
+            <div className="flex-1 flex items-center justify-center p-4">
+              <img src={viewingImage || "/placeholder.svg"} alt="" className="max-w-full max-h-full object-contain rounded-lg" />
+            </div>
+          </div>
+        )}
       </div>
-
-      {isBuyer && (
-        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shrink-0 text-[10px] font-bold text-white ml-1.5 mt-auto">
-          ME
-        </div>
-      )}
     </div>
   )
 }
-
-const MessageActions = ({ isBuyer, msg, setReplyingTo, messageActionsId, setMessageActionsId, setEditingMessage, setMessage, copyMessage, deleteMessage }: any) => (
-  <>
-    <div className={cn("absolute top-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 bg-card border border-border rounded-lg shadow-lg p-0.5", isBuyer ? "left-0 -translate-x-full mr-1" : "right-0 translate-x-full ml-1")}>
-      <button onClick={() => setReplyingTo(msg)} className="p-1 hover:bg-muted rounded">
-        <MoreVertical className="w-4 h-4 text-muted-foreground" />
-      </button>
-      <button onClick={() => setMessageActionsId(messageActionsId === msg.id ? null : msg.id)} className="p-1 hover:bg-muted rounded">
-        <MoreVertical className="w-4 h-4 text-muted-foreground" />
-      </button>
-    </div>
-
-    {messageActionsId === msg.id && (
-      <MessageActionsDropdown 
-        isBuyer={isBuyer}
-        msg={msg}
-        setMessageActionsId={setMessageActionsId}
-        setEditingMessage={setEditingMessage}
-        setMessage={setMessage}
-        copyMessage={copyMessage}
-        deleteMessage={deleteMessage}
-      />
-    )}
-  </>
-)
-
-const MessageActionsDropdown = ({ isBuyer, msg, setMessageActionsId, setEditingMessage, setMessage, copyMessage, deleteMessage }: any) => (
-  <>
-    <div className="fixed inset-0 z-40" onClick={() => setMessageActionsId(null)} />
-    <div className={cn("absolute top-8 z-50 w-40 bg-popover border border-border rounded-lg shadow-xl py-1 animate-in fade-in zoom-in-95 duration-100", isBuyer ? "right-0" : "left-8")}>
-      <button onClick={() => { copyMessage(msg.text); setMessageActionsId(null); }} className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted text-sm">
-        <Copy className="w-4 h-4" /> Copy
-      </button>
-      <button className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted text-sm">
-        <Forward className="w-4 h-4" /> Forward
-      </button>
-      {isBuyer && (
-        <>
-          <div className="h-px bg-border my-1" />
-          <button onClick={() => { setEditingMessage(msg); setMessage(msg.text); setMessageActionsId(null); }} className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted text-sm">
-            <Edit3 className="w-4 h-4" /> Edit
-          </button>
-          <button onClick={() => { deleteMessage(msg.id); setMessageActionsId(null); }} className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted text-sm text-red-600">
-            <Trash2 className="w-4 h-4" /> Delete
-          </button>
-        </>
-      )}
-    </div>
-  </>
-)
-
-const TypingIndicator = () => (
-  <div className="flex items-start gap-2 mb-2">
-    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0 text-[10px] font-bold text-white">
-      JS
-    </div>
-    <div className="bg-card border border-border rounded-2xl rounded-bl-sm px-3 py-2 shadow-sm">
-      <div className="flex gap-1">
-        {[0, 0.15, 0.3].map((delay, i) => (
-          <span key={i} className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: `${delay}s` }} />
-        ))}
-      </div>
-    </div>
-  </div>
-)
-
-const ScrollToBottomButton = ({ scrollToBottom }: any) => (
-  <button onClick={scrollToBottom} className="absolute bottom-32 right-4 w-10 h-10 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center hover:scale-105 transition-transform z-10">
-    <MoreVertical className="w-5 h-5" />
-  </button>
-)
-
-const ReplyEditPreview = ({ replyingTo, editingMessage, setReplyingTo, setEditingMessage, setMessage }: any) => {
-  if (!replyingTo && !editingMessage) return null
-  
-  return (
-    <div className="px-3 py-2 bg-muted border-t border-border flex items-center gap-2">
-      {replyingTo ? <MoreVertical className="w-4 h-4 text-blue-500" /> : <Edit3 className="w-4 h-4 text-amber-500" />}
-      <div className="flex-1 min-w-0">
-        <p className="text-xs text-muted-foreground">
-          {replyingTo ? `Replying to ${replyingTo.sender === "buyer" ? "yourself" : "John"}` : "Editing message"}
-        </p>
-        <p className="text-sm text-foreground truncate">{replyingTo?.text || editingMessage?.text}</p>
-      </div>
-      <button onClick={() => { setReplyingTo(null); setEditingMessage(null); setMessage(""); }}>
-        <X className="w-4 h-4 text-muted-foreground" />
-      </button>
-    </div>
-  )
-}
-
-const ProductCard = ({ walletBalance, setShowWalletBalance }: any) => (
-  <div className="px-3 py-2 border-t border-border bg-card flex items-center gap-2">
-    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shrink-0">
-      <Package className="w-5 h-5 text-muted-foreground" />
-    </div>
-    <div className="flex-1 min-w-0">
-      <p className="text-foreground font-medium text-sm truncate">iPhone 15 Pro Max</p>
-      <div className="flex items-center gap-2">
-        <p className="text-emerald-600 font-bold text-sm">$899</p>
-        <span className="text-xs text-muted-foreground line-through">$1,099</span>
-      </div>
-    </div>
-    <button onClick={() => setShowWalletBalance(true)} className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1">
-      <Wallet className="w-3 h-3" />${walletBalance.toFixed(0)}
-    </button>
-  </div>
-)
-
-const QuickActions = ({ actions }: any) => (
-  <div className="px-3 py-2 bg-card border-t border-border shadow-lg animate-in slide-in-from-bottom-2 duration-200">
-    <div className="grid grid-cols-4 gap-2">
-      {actions.map(({ icon: Icon, label, action }: any) => (
-        <button key={label} onClick={action} className="flex flex-col items-center gap-1 py-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
-          <Icon className="w-5 h-5 text-blue-600" />
-          <span className="text-xs text-foreground">{label}</span>
-        </button>
-      ))}
-    </div>
-  </div>
-)
-
-const VoiceRecording = ({ recordingDuration, setIsRecording, handleSend, formatDuration }: any) => (
-  <div className="px-3 py-3 bg-red-50 border-t border-red-200 flex items-center gap-3 animate-in slide-in-from-bottom duration-200">
-    <button onClick={() => setIsRecording(false)} className="p-2 bg-red-100 rounded-full">
-      <Trash2 className="w-5 h-5 text-red-600" />
-    </button>
-    <div className="flex-1 flex items-center gap-2">
-      <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-      <span className="text-sm text-red-600 font-medium">{formatDuration(recordingDuration)}</span>
-      <div className="flex-1 flex items-center gap-0.5">
-        {[...Array(30)].map((_, i) => (
-          <div key={i} className="w-1 bg-red-400 rounded-full animate-pulse" style={{ height: `${Math.random() * 20 + 4}px`, animationDelay: `${i * 0.05}s` }} />
-        ))}
-      </div>
-    </div>
-    <button onClick={handleSend} className="p-2 bg-red-500 rounded-full">
-      <Send className="w-5 h-5 text-white" />
-    </button>
-  </div>
-)
-
-const InputBar = ({ showQuickActions, setShowQuickActions, isRecording, setIsRecording, message, setMessage, handleSend, editingMessage, inputRef }: any) => (
-  <div className="px-2 py-2 flex items-center gap-1 shrink-0 bg-card border-t border-border">
-    <button onClick={() => setShowQuickActions(!showQuickActions)} className="p-2 shrink-0">
-      <Plus className={cn("w-6 h-6 transition-transform", showQuickActions ? "rotate-45 text-muted-foreground" : "text-blue-600")} />
-    </button>
-    <button className="p-2 shrink-0"><Camera className="w-6 h-6 text-blue-600" /></button>
-    <button className="p-2 shrink-0"><ImageIcon className="w-6 h-6 text-blue-600" /></button>
-    <button className="p-2 shrink-0" onMouseDown={() => setIsRecording(true)}><Mic className="w-6 h-6 text-blue-600" /></button>
-    <div className="flex-1 bg-muted rounded-full px-3 py-2 flex items-center min-w-0">
-      <input ref={inputRef} type="text" placeholder="Type a message..." value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()} className="bg-transparent flex-1 outline-none text-foreground text-sm min-w-0 placeholder:text-muted-foreground" />
-    </div>
-    <button onClick={handleSend} className="p-2 shrink-0">
-      {message || editingMessage ? <Send className="w-6 h-6 text-blue-600 fill-blue-600" /> : <ThumbsUp className="w-6 h-6 text-blue-600" />}
-    </button>
-  </div>
-)
-
-const WalletModal = ({ walletBalance, setShowWalletBalance }: any) => (
-  <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
-    <div className="bg-card w-full rounded-t-3xl p-4 animate-in slide-in-from-bottom duration-300">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-bold text-foreground">Wallet Balance</h3>
-        <button onClick={() => setShowWalletBalance(false)}><X className="w-6 h-6 text-muted-foreground" /></button>
-      </div>
-      <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-5 mb-4">
-        <div className="flex items-center justify-between mb-2">
-          <Wallet className="w-8 h-8 text-white" />
-          <span className="text-white/80 text-sm">Available Balance</span>
-        </div>
-        <p className="text-4xl font-bold text-white">${walletBalance.toFixed(2)}</p>
-        <p className="text-white/70 text-xs mt-2">Secure wallet for marketplace transactions</p>
-      </div>
-      <button onClick={() => setShowWalletBalance(false)} className="w-full bg-blue-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors">Close</button>
-    </div>
-  </div>
-)
-
-const PinModal = ({ currentOrder, pin, setPin, setShowPinModal, processPayment, handlePinInput, handlePinKeyDown, pinInputRefs }: any) => (
-  <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50 animate-in fade-in duration-200">
-    <div className="bg-card rounded-3xl p-6 mx-4 max-w-sm animate-in zoom-in-95 duration-300">
-      <div className="text-center mb-6">
-        <Lock className="w-12 h-12 text-blue-600 mx-auto mb-3" />
-        <h2 className="text-xl font-bold text-foreground mb-1">
-          {currentOrder.status === "payment_pending" ? "Confirm Payment" : "Complete Delivery"}
-        </h2>
-        <p className="text-muted-foreground text-sm">
-          {currentOrder.status === "payment_pending" 
-            ? `Enter your 4-digit PIN to pay $${currentOrder.total}`
-            : `Enter PIN to release $${currentOrder.total} to seller`
-          }
-        </p>
-      </div>
-      <div className="flex justify-center gap-3 mb-6">
-        {[0, 1, 2, 3].map((index) => (
-          <input key={index} ref={(el) => { pinInputRefs.current[index] = el }} type="password" maxLength={1} value={pin[index]} onChange={(e) => handlePinInput(index, e.target.value)} onKeyDown={(e) => handlePinKeyDown(index, e)} className="w-14 h-14 text-center text-2xl font-bold bg-muted border-2 border-border rounded-xl outline-none focus:border-blue-500 transition-colors" />
-        ))}
-      </div>
-      <div className="flex gap-3">
-        <button onClick={() => { setPin(["", "", "", ""]); setShowPinModal(false); }} className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors">Cancel</button>
-        <button onClick={() => pin.every(digit => digit !== "") ? processPayment() : alert("Please enter your 4-digit PIN")} className="flex-1 bg-blue-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors">
-          {currentOrder.status === "payment_pending" ? "Confirm" : "Release Funds"}
-        </button>
-      </div>
-    </div>
-  </div>
-)
-
-const ReceiptModal = ({ receipt, setShowReceipt }: any) => (
-  <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
-    <div className="bg-card w-full rounded-t-3xl p-4 animate-in slide-in-from-bottom duration-300">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold text-foreground">Transaction Receipt</h3>
-        <button onClick={() => setShowReceipt(false)}><X className="w-6 h-6 text-muted-foreground" /></button>
-      </div>
-      <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-5 mb-4">
-        <div className="flex items-center justify-between mb-4">
-          <Receipt className="w-8 h-8 text-white" />
-          <span className="text-white/80 text-sm">Payment Confirmed</span>
-        </div>
-        <p className="text-3xl font-bold text-white">${receipt.total}</p>
-        <p className="text-white/70 text-sm mt-1">{receipt.date} • {receipt.time}</p>
-      </div>
-      <div className="space-y-3 mb-6">
-        {Object.entries({ "Receipt ID": receipt.id, "Product": receipt.product, "Item Price": `$${receipt.amount}`, "Delivery Fee": `$${receipt.deliveryFee}`, "Seller": receipt.seller }).map(([label, value]) => (
-          <div key={label} className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">{label}</span>
-            <span className="text-sm text-foreground">{value}</span>
-          </div>
-        ))}
-        <div className="h-px bg-border my-2" />
-        <div className="flex items-center justify-between font-bold">
-          <span className="text-foreground">Total Paid</span>
-          <span className="text-foreground">${receipt.total}</span>
-        </div>
-      </div>
-      <div className="flex gap-3">
-        <button className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors flex items-center justify-center gap-2">
-          <Download className="w-4 h-4" /> Download
-        </button>
-        <button className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors flex items-center justify-center gap-2">
-          <Share2 className="w-4 h-4" /> Share
-        </button>
-      </div>
-    </div>
-  </div>
-)
-
-const ReportModal = ({ setShowReportModal }: any) => (
-  <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
-    <div className="bg-card w-full rounded-t-3xl p-4 animate-in slide-in-from-bottom duration-300">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold text-foreground">Report Issue</h3>
-        <button onClick={() => setShowReportModal(false)}><X className="w-6 h-6 text-muted-foreground" /></button>
-      </div>
-      <div className="space-y-2 mb-4">
-        {["Suspicious behavior", "Spam or scam", "Offensive content", "Fake listing", "Other"].map((reason) => (
-          <button key={reason} className="w-full p-3 bg-muted hover:bg-muted/80 rounded-xl text-left text-foreground transition-colors">{reason}</button>
-        ))}
-      </div>
-      <button onClick={() => setShowReportModal(false)} className="w-full bg-red-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-red-700 transition-colors">Submit Report</button>
-    </div>
-  </div>
-)
-
-const ImageViewer = ({ viewingImage, setViewingImage }: any) => (
-  <div className="absolute inset-0 bg-black z-50 flex flex-col animate-in fade-in duration-200">
-    <div className="flex items-center justify-between p-4">
-      <button onClick={() => setViewingImage(null)}><X className="w-6 h-6 text-white" /></button>
-      <div className="flex gap-2">
-        <button className="p-2 bg-white/10 rounded-full"><Share2 className="w-5 h-5 text-white" /></button>
-        <button className="p-2 bg-white/10 rounded-full"><Download className="w-5 h-5 text-white" /></button>
-      </div>
-    </div>
-    <div className="flex-1 flex items-center justify-center p-4">
-      <img src={viewingImage || "/placeholder.svg"} alt="" className="max-w-full max-h-full object-contain rounded-lg" />
-    </div>
-  </div>
-)
