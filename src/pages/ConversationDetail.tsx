@@ -9,6 +9,7 @@ import {
   ImageIcon as ImageIcon2, Play, Pause, Share2,
   Bell, BellOff, BadgeCheck, Download, LayoutGrid, List,
   Receipt, PhoneOff, Wallet, Lock, Truck, Shield,
+  MicOff, Volume2, Video, VideoOff, Users, MonitorSpeaker
 } from "lucide-react"
 
 // Types
@@ -461,6 +462,103 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
   return null
 }
 
+// Call Control Band Component
+const CallControlBand = ({ 
+  callState, 
+  callDuration, 
+  isMuted, 
+  isVideoOn, 
+  isSpeakerOn, 
+  onToggleMute, 
+  onToggleVideo, 
+  onToggleSpeaker, 
+  onEndCall 
+}) => {
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
+  }
+
+  return (
+    <div className="px-4 py-2 bg-gradient-to-r from-blue-600 via-blue-500 to-blue-600 flex items-center justify-between shadow-lg border-b border-blue-700">
+      {/* Left side - Call info */}
+      <div className="flex items-center gap-3">
+        <div className="relative">
+          <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+            <Phone className="w-4 h-4 text-white" />
+          </div>
+          {callState === "active" && (
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full animate-pulse" />
+          )}
+        </div>
+        
+        <div className="text-white">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">Call with John Seller</span>
+            {callState === "ringing" && (
+              <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full animate-pulse">Ringing...</span>
+            )}
+          </div>
+          <div className="flex items-center gap-1 text-xs text-white/80">
+            <span>{callState === "active" ? formatDuration(callDuration) : "Connecting..."}</span>
+            <span>•</span>
+            <span>Secure connection</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Center - Call controls */}
+      <div className="flex items-center gap-1">
+        <button
+          onClick={onToggleMute}
+          className={`p-2 rounded-full transition-all ${isMuted ? 'bg-red-500' : 'bg-white/20 hover:bg-white/30'}`}
+        >
+          {isMuted ? (
+            <MicOff className="w-4 h-4 text-white" />
+          ) : (
+            <Mic className="w-4 h-4 text-white" />
+          )}
+        </button>
+
+        <button
+          onClick={onToggleVideo}
+          className={`p-2 rounded-full transition-all ${!isVideoOn ? 'bg-red-500' : 'bg-white/20 hover:bg-white/30'}`}
+        >
+          {isVideoOn ? (
+            <Video className="w-4 h-4 text-white" />
+          ) : (
+            <VideoOff className="w-4 h-4 text-white" />
+          )}
+        </button>
+
+        <button
+          onClick={onToggleSpeaker}
+          className={`p-2 rounded-full transition-all ${isSpeakerOn ? 'bg-emerald-500' : 'bg-white/20 hover:bg-white/30'}`}
+        >
+          {isSpeakerOn ? (
+            <MonitorSpeaker className="w-4 h-4 text-white" />
+          ) : (
+            <Volume2 className="w-4 h-4 text-white" />
+          )}
+        </button>
+
+        <button className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-all">
+          <Users className="w-4 h-4 text-white" />
+        </button>
+      </div>
+
+      {/* Right side - End call button */}
+      <button
+        onClick={onEndCall}
+        className="p-2 rounded-full bg-red-500 hover:bg-red-600 transition-colors"
+      >
+        <PhoneOff className="w-4 h-4 text-white" />
+      </button>
+    </div>
+  )
+}
+
 // Main Component
 export default function BuyerSellerChat() {
   // State management
@@ -574,6 +672,11 @@ export default function BuyerSellerChat() {
   })
   const [notificationsMuted, setNotificationsMuted] = useState(false)
   const [viewingImage, setViewingImage] = useState<string | null>(null)
+  
+  // Call control states
+  const [isMuted, setIsMuted] = useState(false)
+  const [isVideoOn, setIsVideoOn] = useState(true)
+  const [isSpeakerOn, setIsSpeakerOn] = useState(true)
 
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -711,6 +814,21 @@ export default function BuyerSellerChat() {
     setCallState("idle")
     setActiveCall(null)
     setCallDuration(0)
+    setIsMuted(false)
+    setIsVideoOn(true)
+    setIsSpeakerOn(true)
+  }
+
+  const toggleMute = () => {
+    setIsMuted(!isMuted)
+  }
+
+  const toggleVideo = () => {
+    setIsVideoOn(!isVideoOn)
+  }
+
+  const toggleSpeaker = () => {
+    setIsSpeakerOn(!isSpeakerOn)
   }
 
   // Order action handlers
@@ -931,6 +1049,21 @@ export default function BuyerSellerChat() {
             </div>
           </div>
         </div>
+
+        {/* Call Control Band - Only shown when call is ringing or active */}
+        {callState !== "idle" && (
+          <CallControlBand
+            callState={callState}
+            callDuration={callDuration}
+            isMuted={isMuted}
+            isVideoOn={isVideoOn}
+            isSpeakerOn={isSpeakerOn}
+            onToggleMute={toggleMute}
+            onToggleVideo={toggleVideo}
+            onToggleSpeaker={toggleSpeaker}
+            onEndCall={handleCallEnd}
+          />
+        )}
 
         {/* Chat Content */}
         <div ref={chatContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-3 py-3 scroll-smooth">
