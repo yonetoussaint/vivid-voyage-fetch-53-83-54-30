@@ -15,7 +15,6 @@ import {
   Package,
   Star,
   X,
-  CreditCard,
   MoreVertical,
   ArrowLeft,
   Pin,
@@ -42,6 +41,8 @@ import {
   List,
   Receipt,
   PhoneOff,
+  Wallet,
+  Lock,
 } from "lucide-react"
 
 type Message = {
@@ -156,7 +157,7 @@ export default function BuyerSellerChat() {
   // UI state
   const [showQuickActions, setShowQuickActions] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
-  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [showWalletBalance, setShowWalletBalance] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResultIndex, setSearchResultIndex] = useState(0)
@@ -167,8 +168,9 @@ export default function BuyerSellerChat() {
   const [showSellerProfile, setShowSellerProfile] = useState(false)
   const [showReportModal, setShowReportModal] = useState(false)
   const [showOfferModal, setShowOfferModal] = useState(false)
-  const [showReceiptModal, setShowReceiptModal] = useState(false)
-  const [showCompletionCelebration, setShowCompletionCelebration] = useState(false)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [showPinModal, setShowPinModal] = useState(false)
+  const [showPaymentPending, setShowPaymentPending] = useState(false)
   const [showRatingPrompt, setShowRatingPrompt] = useState(false)
   const [messageActionsId, setMessageActionsId] = useState<number | null>(null)
 
@@ -190,12 +192,12 @@ export default function BuyerSellerChat() {
   const [isTyping, setIsTyping] = useState(true)
   const [sellerOnline, setSellerOnline] = useState(true)
 
-  // Payment
-  const [selectedPayment, setSelectedPayment] = useState("cash")
-
-  // Offer
+  // Wallet & Payment state
+  const [walletBalance, setWalletBalance] = useState(1250.50)
   const [offerAmount, setOfferAmount] = useState("")
   const [offerMessage, setOfferMessage] = useState("")
+  const [pin, setPin] = useState(["", "", "", ""])
+  const [paymentStatus, setPaymentStatus] = useState<"idle" | "pending" | "completed">("idle")
 
   // Rating
   const [rating, setRating] = useState(0)
@@ -214,6 +216,7 @@ export default function BuyerSellerChat() {
 
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const pinInputRefs = useRef<(HTMLInputElement | null)[]>([])
   const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   // Derived data
@@ -229,17 +232,8 @@ export default function BuyerSellerChat() {
   const quickActions = [
     { icon: DollarSign, label: "Offer", color: "text-emerald-600", action: () => setShowOfferModal(true) },
     { icon: ImageIcon, label: "Photos", color: "text-purple-600" },
-    { icon: CreditCard, label: "Payment", color: "text-pink-600", action: () => setShowPaymentModal(true) },
-    { icon: Receipt, label: "Receipt", color: "text-slate-600", action: () => setShowReceiptModal(true) },
-  ]
-
-  // Payment methods
-  const paymentMethods = [
-    { id: "cash", name: "Cash on Delivery", desc: "Pay when you receive the item", icon: DollarSign, color: "emerald" },
-    { id: "escrow", name: "Secure Escrow", desc: "Payment held until confirmed", icon: CreditCard, color: "blue" },
-    { id: "moncash", name: "Moncash", desc: "Mobile money transfer", initial: "M", color: "blue" },
-    { id: "natcash", name: "Natcash", desc: "Mobile money transfer", initial: "N", color: "orange" },
-    { id: "card", name: "Card Payment", desc: "Credit or debit card", icon: CreditCard, color: "purple" },
+    { icon: Wallet, label: "Wallet", color: "text-blue-600", action: () => setShowWalletBalance(true) },
+    { icon: Receipt, label: "Receipt", color: "text-slate-600" },
   ]
 
   // Fetch emojis from API
@@ -470,6 +464,91 @@ export default function BuyerSellerChat() {
     setCallState("idle")
     setActiveCall(null)
     setCallDuration(0)
+  }
+
+  // Payment handlers
+  const handleMakePayment = () => {
+    if (!offerAmount) return
+    setShowPaymentModal(true)
+  }
+
+  const handleConfirmPayment = () => {
+    setShowPaymentModal(false)
+    setShowPinModal(true)
+  }
+
+  const handlePinInput = (index: number, value: string) => {
+    if (value.length > 1) value = value.slice(0, 1)
+    
+    const newPin = [...pin]
+    newPin[index] = value
+    setPin(newPin)
+
+    // Auto-focus next input
+    if (value && index < 3) {
+      pinInputRefs.current[index + 1]?.focus()
+    }
+
+    // If all digits entered, process payment
+    if (newPin.every(digit => digit !== "") && index === 3) {
+      processPayment()
+    }
+  }
+
+  const handlePinKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !pin[index] && index > 0) {
+      pinInputRefs.current[index - 1]?.focus()
+    }
+  }
+
+  const processPayment = () => {
+    const amount = parseFloat(offerAmount)
+    if (isNaN(amount) || amount > walletBalance) {
+      alert("Insufficient funds")
+      setPin(["", "", "", ""])
+      setShowPinModal(false)
+      return
+    }
+
+    // Simulate payment processing
+    setTimeout(() => {
+      setWalletBalance(prev => prev - amount)
+      setPaymentStatus("pending")
+      setShowPinModal(false)
+      setShowPaymentPending(true)
+      
+      // Add payment message
+      const paymentMessage: Message = {
+        id: messages.length + 1,
+        sender: "buyer",
+        text: `Payment of $${amount} initiated via wallet. Status: Pending`,
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        timestamp: new Date(),
+        status: "sent",
+        type: "system"
+      }
+      setMessages(prev => [...prev, paymentMessage])
+      setTimeout(scrollToBottom, 100)
+    }, 1000)
+  }
+
+  const completePayment = () => {
+    setPaymentStatus("completed")
+    setShowPaymentPending(false)
+    
+    // Add completion message
+    const completionMessage: Message = {
+      id: messages.length + 1,
+      sender: "buyer",
+      text: `Payment of $${offerAmount} completed. Product delivered successfully.`,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      timestamp: new Date(),
+      status: "sent",
+      type: "system"
+    }
+    setMessages(prev => [...prev, completionMessage])
+    setTimeout(scrollToBottom, 100)
+    setTimeout(() => setShowRatingPrompt(true), 2000)
   }
 
   return (
@@ -730,12 +809,9 @@ export default function BuyerSellerChat() {
                       isBuyer
                         ? "bg-blue-500 text-white rounded-br-sm"
                         : "bg-card border border-border text-foreground rounded-bl-sm",
-                      msg.isPinned && "ring-2 ring-amber-400",
                       msg.isDeleted && "opacity-60 italic",
                     )}
                   >
-                    {msg.isPinned && <Pin className="w-3 h-3 text-amber-500 absolute -top-1 -right-1" />}
-
                     {/* Voice message */}
                     {msg.type === "voice" ? (
                       <div className="flex items-center gap-2 min-w-[150px]">
@@ -808,12 +884,15 @@ export default function BuyerSellerChat() {
                       </div>
                     )}
 
-                    {/* Time and status */}
+                    {/* Time, status and pin icon */}
                     <div className={cn("flex items-center gap-1 mt-1", isBuyer ? "justify-end" : "justify-start")}>
                       <span className={cn("text-[10px]", isBuyer ? "text-white/60" : "text-muted-foreground")}>
                         {msg.time}
                       </span>
                       {isBuyer && getStatusIcon(msg.status)}
+                      {msg.isPinned && (
+                        <Pin className="w-3 h-3 text-muted-foreground ml-1" />
+                      )}
                     </div>
                   </div>
 
@@ -956,45 +1035,75 @@ export default function BuyerSellerChat() {
             )
           })}
 
-          {/* Special Cards */}
-          {/* Counter Offer Card */}
-          <div className="bg-card border-2 border-amber-400 rounded-xl p-3 mb-2 max-w-[90%] shadow-sm">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
-                  <DollarSign className="w-4 h-4 text-amber-600" />
+          {/* Payment Offer Card - Minimal */}
+          {!paymentStatus && (
+            <div className="bg-card border border-border rounded-xl p-3 mb-2 max-w-[85%] shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Wallet className="w-5 h-5 text-emerald-600" />
+                  <span className="text-foreground text-sm font-semibold">Secure Payment</span>
                 </div>
-                <span className="text-foreground text-sm font-semibold">Counter Offer</span>
+                <span className="text-xs text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full font-medium">
+                  Ready
+                </span>
               </div>
-              <span className="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full font-medium">
-                Pending
-              </span>
-            </div>
-            <div className="flex items-baseline gap-2 mb-2">
-              <p className="text-foreground font-bold text-2xl">$880</p>
-              <span className="text-muted-foreground text-sm line-through">$899</span>
-              <span className="text-xs text-emerald-600">Save $19</span>
-            </div>
-            <p className="text-muted-foreground text-xs mb-3">Includes all original accessories and premium case</p>
-            <div className="flex gap-2">
+              <div className="flex items-baseline gap-2 mb-3">
+                <p className="text-foreground font-bold text-xl">$880</p>
+                <span className="text-sm text-muted-foreground line-through">$899</span>
+                <span className="text-xs text-emerald-600">Save $19</span>
+              </div>
+              <p className="text-muted-foreground text-xs mb-3">Pay securely via your wallet. Funds held until delivery.</p>
               <button
-                onClick={() => setShowCompletionCelebration(true)}
-                className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1"
+                onClick={handleMakePayment}
+                className="w-full bg-emerald-600 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2"
               >
-                <Check className="w-4 h-4" />
-                Accept
-              </button>
-              <button
-                onClick={() => setShowOfferModal(true)}
-                className="flex-1 bg-secondary text-secondary-foreground py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors"
-              >
-                Counter
-              </button>
-              <button className="bg-secondary text-secondary-foreground px-3 rounded-lg hover:bg-secondary/80 transition-colors">
-                <X className="w-4 h-4" />
+                <Lock className="w-4 h-4" />
+                Pay with Wallet
               </button>
             </div>
-          </div>
+          )}
+
+          {/* Payment Pending Card */}
+          {paymentStatus === "pending" && (
+            <div className="bg-card border-2 border-amber-400 rounded-xl p-3 mb-2 max-w-[85%] shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-amber-600" />
+                  <span className="text-foreground text-sm font-semibold">Payment Pending</span>
+                </div>
+                <span className="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full font-medium">
+                  ${offerAmount}
+                </span>
+              </div>
+              <p className="text-muted-foreground text-xs mb-3">Payment held securely. Complete after delivery.</p>
+              <div className="flex items-center gap-2 text-sm text-amber-600 mb-3">
+                <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+                <span>Awaiting delivery from seller</span>
+              </div>
+              <button
+                onClick={completePayment}
+                className="w-full bg-blue-600 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+              >
+                Confirm Delivery & Complete Payment
+              </button>
+            </div>
+          )}
+
+          {/* Payment Completed Card */}
+          {paymentStatus === "completed" && (
+            <div className="bg-card border-2 border-emerald-400 rounded-xl p-3 mb-2 max-w-[85%] shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Check className="w-5 h-5 text-emerald-600" />
+                  <span className="text-foreground text-sm font-semibold">Payment Completed</span>
+                </div>
+                <span className="text-xs text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full font-medium">
+                  ${offerAmount}
+                </span>
+              </div>
+              <p className="text-muted-foreground text-xs">Transaction completed successfully</p>
+            </div>
+          )}
 
           {/* Typing indicator */}
           {isTyping && (
@@ -1187,64 +1296,29 @@ export default function BuyerSellerChat() {
 
         {/* MODALS */}
 
-        {/* Payment Modal */}
-        {showPaymentModal && (
+        {/* Wallet Balance Modal */}
+        {showWalletBalance && (
           <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
-            <div className="bg-card w-full rounded-t-3xl p-4 max-h-[80vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-foreground">Payment Method</h3>
-                <button onClick={() => setShowPaymentModal(false)}>
+            <div className="bg-card w-full rounded-t-3xl p-4 animate-in slide-in-from-bottom duration-300">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-bold text-foreground">Wallet Balance</h3>
+                <button onClick={() => setShowWalletBalance(false)}>
                   <X className="w-6 h-6 text-muted-foreground" />
                 </button>
               </div>
-              <div className="space-y-2">
-                {paymentMethods.map(({ id, name, desc, icon: Icon, initial, color }) => (
-                  <button
-                    key={id}
-                    onClick={() => setSelectedPayment(id)}
-                    className={cn(
-                      "w-full bg-card border-2 rounded-xl p-3 transition-all text-left",
-                      selectedPayment === id
-                        ? "border-emerald-600 ring-2 ring-emerald-600/20"
-                        : "border-border hover:border-muted-foreground",
-                    )}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        {Icon ? (
-                          <div
-                            className={cn(
-                              "w-10 h-10 rounded-full flex items-center justify-center",
-                              `bg-${color}-100`,
-                            )}
-                          >
-                            <Icon className={cn("w-5 h-5", `text-${color}-600`)} />
-                          </div>
-                        ) : (
-                          <div
-                            className={cn(
-                              "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white",
-                              color === "blue" ? "bg-blue-600" : "bg-orange-600",
-                            )}
-                          >
-                            {initial}
-                          </div>
-                        )}
-                        <div>
-                          <p className="font-semibold text-foreground">{name}</p>
-                          <p className="text-xs text-muted-foreground">{desc}</p>
-                        </div>
-                      </div>
-                      {selectedPayment === id && <Check className="w-5 h-5 text-emerald-600" />}
-                    </div>
-                  </button>
-                ))}
+              <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-5 mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <Wallet className="w-8 h-8 text-white" />
+                  <span className="text-white/80 text-sm">Available Balance</span>
+                </div>
+                <p className="text-4xl font-bold text-white">${walletBalance.toFixed(2)}</p>
+                <p className="text-white/70 text-xs mt-2">Secure wallet for marketplace transactions</p>
               </div>
               <button
-                onClick={() => setShowPaymentModal(false)}
-                className="w-full bg-emerald-600 text-white py-3 rounded-xl text-sm font-medium mt-4 hover:bg-emerald-700 transition-colors"
+                onClick={() => setShowWalletBalance(false)}
+                className="w-full bg-blue-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
               >
-                Continue with {paymentMethods.find((p) => p.id === selectedPayment)?.name}
+                Close
               </button>
             </div>
           </div>
@@ -1261,7 +1335,7 @@ export default function BuyerSellerChat() {
                 </button>
               </div>
               <div className="mb-4">
-                <label className="text-sm text-muted-foreground mb-1 block">Your offer</label>
+                <label className="text-sm text-muted-foreground mb-1 block">Your offer amount</label>
                 <div className="flex items-center gap-2 bg-muted rounded-xl px-4 py-3">
                   <DollarSign className="w-5 h-5 text-muted-foreground" />
                   <input
@@ -1299,6 +1373,123 @@ export default function BuyerSellerChat() {
                 className="w-full bg-emerald-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Send Offer
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Payment Confirmation Modal */}
+        {showPaymentModal && (
+          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
+            <div className="bg-card w-full rounded-t-3xl p-4 animate-in slide-in-from-bottom duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-foreground">Confirm Payment</h3>
+                <button onClick={() => setShowPaymentModal(false)}>
+                  <X className="w-6 h-6 text-muted-foreground" />
+                </button>
+              </div>
+              <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-4 mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <Wallet className="w-8 h-8 text-white" />
+                  <span className="text-white/80 text-sm">Wallet Payment</span>
+                </div>
+                <p className="text-3xl font-bold text-white">${offerAmount}</p>
+                <p className="text-white/70 text-xs mt-1">to John Seller</p>
+              </div>
+              <div className="space-y-3 mb-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Current balance</span>
+                  <span className="text-sm font-medium text-foreground">${walletBalance.toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">After payment</span>
+                  <span className="text-sm font-medium text-foreground">
+                    ${(walletBalance - parseFloat(offerAmount || "0")).toFixed(2)}
+                  </span>
+                </div>
+                <div className="h-px bg-border" />
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-foreground">Product</span>
+                  <span className="text-sm text-foreground">iPhone 15 Pro Max</span>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowPaymentModal(false)}
+                  className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmPayment}
+                  className="flex-1 bg-emerald-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors"
+                >
+                  Confirm Payment
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* PIN Entry Modal */}
+        {showPinModal && (
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50 animate-in fade-in duration-200">
+            <div className="bg-card rounded-3xl p-6 mx-4 max-w-sm animate-in zoom-in-95 duration-300">
+              <div className="text-center mb-6">
+                <Lock className="w-12 h-12 text-blue-600 mx-auto mb-3" />
+                <h2 className="text-xl font-bold text-foreground mb-1">Enter PIN</h2>
+                <p className="text-muted-foreground text-sm">Enter your 4-digit PIN to confirm payment</p>
+              </div>
+              <div className="flex justify-center gap-3 mb-6">
+                {[0, 1, 2, 3].map((index) => (
+                  <input
+                    key={index}
+                    ref={(el) => { pinInputRefs.current[index] = el }}
+                    type="password"
+                    maxLength={1}
+                    value={pin[index]}
+                    onChange={(e) => handlePinInput(index, e.target.value)}
+                    onKeyDown={(e) => handlePinKeyDown(index, e)}
+                    className="w-14 h-14 text-center text-2xl font-bold bg-muted border-2 border-border rounded-xl outline-none focus:border-blue-500 transition-colors"
+                  />
+                ))}
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setPin(["", "", "", ""])
+                    setShowPinModal(false)
+                  }}
+                  className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Payment Pending Modal */}
+        {showPaymentPending && (
+          <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50 animate-in fade-in duration-200">
+            <div className="bg-card rounded-3xl p-6 mx-4 text-center animate-in zoom-in-95 duration-300">
+              <div className="w-20 h-20 mx-auto mb-4 bg-amber-100 rounded-full flex items-center justify-center">
+                <Clock className="w-12 h-12 text-amber-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Payment Pending</h2>
+              <p className="text-muted-foreground mb-4">${offerAmount} held securely in escrow</p>
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+                <p className="text-sm text-amber-700 flex items-center justify-center gap-2">
+                  <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+                  Awaiting product delivery from seller
+                </p>
+                <p className="text-xs text-amber-600 mt-2">Complete payment after verifying the product</p>
+              </div>
+              <button
+                onClick={() => setShowPaymentPending(false)}
+                className="w-full bg-blue-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
+              >
+                Got it
               </button>
             </div>
           </div>
@@ -1405,40 +1596,6 @@ export default function BuyerSellerChat() {
           </div>
         )}
 
-        {/* Completion Celebration */}
-        {showCompletionCelebration && (
-          <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50 animate-in fade-in duration-200">
-            <div className="bg-card rounded-3xl p-6 mx-4 text-center animate-in zoom-in-95 duration-300">
-              <div className="w-20 h-20 mx-auto mb-4 bg-emerald-100 rounded-full flex items-center justify-center">
-                <Check className="w-12 h-12 text-emerald-600" />
-              </div>
-              <h2 className="text-2xl font-bold text-foreground mb-2">Deal Accepted!</h2>
-              <p className="text-muted-foreground mb-4">You and John have agreed on $880</p>
-              <div className="bg-muted rounded-xl p-4 mb-4">
-                <p className="text-sm text-muted-foreground mb-1">Next step</p>
-                <p className="text-foreground font-medium">Arrange payment and pickup</p>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => {
-                    setShowCompletionCelebration(false)
-                    setShowPaymentModal(true)
-                  }}
-                  className="flex-1 bg-blue-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
-                >
-                  Make Payment
-                </button>
-                <button
-                  onClick={() => setShowCompletionCelebration(false)}
-                  className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors"
-                >
-                  Later
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Image Viewer */}
         {viewingImage && (
           <div className="absolute inset-0 bg-black z-50 flex flex-col animate-in fade-in duration-200">
@@ -1500,51 +1657,6 @@ export default function BuyerSellerChat() {
               >
                 Submit Review
               </button>
-            </div>
-          </div>
-        )}
-
-        {/* Receipt Modal */}
-        {showReceiptModal && (
-          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
-            <div className="bg-card w-full rounded-t-3xl p-4 animate-in slide-in-from-bottom duration-300">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-foreground">Transaction Receipt</h3>
-                <button onClick={() => setShowReceiptModal(false)}>
-                  <X className="w-6 h-6 text-muted-foreground" />
-                </button>
-              </div>
-              <div className="bg-muted rounded-xl p-4 mb-4">
-                <div className="border-b border-border pb-3 mb-3">
-                  <p className="text-xs text-muted-foreground">Transaction ID</p>
-                  <p className="font-mono text-foreground">#TXN-2024-12112345</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Item</span>
-                    <span className="text-foreground">iPhone 15 Pro Max</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Price</span>
-                    <span className="text-foreground">$880.00</span>
-                  </div>
-                  <div className="h-px bg-border my-2" />
-                  <div className="flex justify-between font-bold">
-                    <span className="text-foreground">Total</span>
-                    <span className="text-foreground">$880.00</span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <button className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors flex items-center justify-center gap-2">
-                  <Download className="w-4 h-4" />
-                  Download
-                </button>
-                <button className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors flex items-center justify-center gap-2">
-                  <Share2 className="w-4 h-4" />
-                  Share
-                </button>
-              </div>
             </div>
           </div>
         )}
