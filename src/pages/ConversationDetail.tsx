@@ -7,9 +7,9 @@ import {
   DollarSign, Package, Star, X, MoreVertical, ArrowLeft,
   Copy, Forward, Trash2, Edit3, Clock, Check, CheckCheck,
   ImageIcon as ImageIcon2, Play, Pause, Share2,
-  Bell, BellOff, BadgeCheck, Download, LayoutGrid, List,
+  Bell, BellOff, BadgeCheck, Download,
   Receipt, PhoneOff, Wallet, Lock, Truck, Shield,
-  MicOff, Volume2, Video, VideoOff, Users, MonitorSpeaker
+  Video, VideoOff, MicOff
 } from "lucide-react"
 
 // Types
@@ -462,16 +462,14 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
   return null
 }
 
-// Call Control Band Component
+// Simplified Call Control Band Component
 const CallControlBand = ({ 
   callState, 
   callDuration, 
   isMuted, 
-  isVideoOn, 
-  isSpeakerOn, 
+  isVideoOn,
   onToggleMute, 
   onToggleVideo, 
-  onToggleSpeaker, 
   onEndCall 
 }) => {
   const formatDuration = (seconds: number) => {
@@ -481,80 +479,56 @@ const CallControlBand = ({
   }
 
   return (
-    <div className="px-4 py-2 bg-gradient-to-r from-blue-600 via-blue-500 to-blue-600 flex items-center justify-between shadow-lg border-b border-blue-700">
-      {/* Left side - Call info */}
+    <div className="px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 flex items-center justify-between shadow-md border-b border-blue-800">
+      {/* Left side - Call icon and duration */}
       <div className="flex items-center gap-3">
-        <div className="relative">
-          <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-            <Phone className="w-4 h-4 text-white" />
-          </div>
-          {callState === "active" && (
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full animate-pulse" />
-          )}
+        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+          <Phone className="w-4 h-4 text-white" />
         </div>
-        
         <div className="text-white">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">Call with John Seller</span>
-            {callState === "ringing" && (
-              <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full animate-pulse">Ringing...</span>
-            )}
+          <div className="text-sm font-medium">
+            {callState === "ringing" ? "Calling..." : formatDuration(callDuration)}
           </div>
-          <div className="flex items-center gap-1 text-xs text-white/80">
-            <span>{callState === "active" ? formatDuration(callDuration) : "Connecting..."}</span>
-            <span>•</span>
-            <span>Secure connection</span>
+          <div className="text-xs text-white/80">
+            {callState === "ringing" ? "Ringing..." : "Active call"}
           </div>
         </div>
       </div>
 
-      {/* Center - Call controls */}
-      <div className="flex items-center gap-1">
-        <button
-          onClick={onToggleMute}
-          className={`p-2 rounded-full transition-all ${isMuted ? 'bg-red-500' : 'bg-white/20 hover:bg-white/30'}`}
-        >
-          {isMuted ? (
-            <MicOff className="w-4 h-4 text-white" />
-          ) : (
-            <Mic className="w-4 h-4 text-white" />
-          )}
-        </button>
-
+      {/* Right side - Control buttons */}
+      <div className="flex items-center gap-2">
+        {/* Video toggle */}
         <button
           onClick={onToggleVideo}
-          className={`p-2 rounded-full transition-all ${!isVideoOn ? 'bg-red-500' : 'bg-white/20 hover:bg-white/30'}`}
+          className={`p-2 rounded-lg transition-colors ${isVideoOn ? 'bg-white/20 hover:bg-white/30' : 'bg-red-500 hover:bg-red-600'}`}
         >
           {isVideoOn ? (
-            <Video className="w-4 h-4 text-white" />
+            <Video className="w-5 h-5 text-white" />
           ) : (
-            <VideoOff className="w-4 h-4 text-white" />
+            <VideoOff className="w-5 h-5 text-white" />
           )}
         </button>
 
+        {/* Mute toggle */}
         <button
-          onClick={onToggleSpeaker}
-          className={`p-2 rounded-full transition-all ${isSpeakerOn ? 'bg-emerald-500' : 'bg-white/20 hover:bg-white/30'}`}
+          onClick={onToggleMute}
+          className={`p-2 rounded-lg transition-colors ${isMuted ? 'bg-red-500 hover:bg-red-600' : 'bg-white/20 hover:bg-white/30'}`}
         >
-          {isSpeakerOn ? (
-            <MonitorSpeaker className="w-4 h-4 text-white" />
+          {isMuted ? (
+            <MicOff className="w-5 h-5 text-white" />
           ) : (
-            <Volume2 className="w-4 h-4 text-white" />
+            <Mic className="w-5 h-5 text-white" />
           )}
         </button>
 
-        <button className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-all">
-          <Users className="w-4 h-4 text-white" />
+        {/* End call button */}
+        <button
+          onClick={onEndCall}
+          className="p-2 rounded-lg bg-red-500 hover:bg-red-600 transition-colors"
+        >
+          <PhoneOff className="w-5 h-5 text-white" />
         </button>
       </div>
-
-      {/* Right side - End call button */}
-      <button
-        onClick={onEndCall}
-        className="p-2 rounded-full bg-red-500 hover:bg-red-600 transition-colors"
-      >
-        <PhoneOff className="w-4 h-4 text-white" />
-      </button>
     </div>
   )
 }
@@ -676,7 +650,6 @@ export default function BuyerSellerChat() {
   // Call control states
   const [isMuted, setIsMuted] = useState(false)
   const [isVideoOn, setIsVideoOn] = useState(true)
-  const [isSpeakerOn, setIsSpeakerOn] = useState(true)
 
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -816,7 +789,6 @@ export default function BuyerSellerChat() {
     setCallDuration(0)
     setIsMuted(false)
     setIsVideoOn(true)
-    setIsSpeakerOn(true)
   }
 
   const toggleMute = () => {
@@ -825,10 +797,6 @@ export default function BuyerSellerChat() {
 
   const toggleVideo = () => {
     setIsVideoOn(!isVideoOn)
-  }
-
-  const toggleSpeaker = () => {
-    setIsSpeakerOn(!isSpeakerOn)
   }
 
   // Order action handlers
@@ -1050,17 +1018,15 @@ export default function BuyerSellerChat() {
           </div>
         </div>
 
-        {/* Call Control Band - Only shown when call is ringing or active */}
+        {/* Simplified Call Control Band - Only shown when call is ringing or active */}
         {callState !== "idle" && (
           <CallControlBand
             callState={callState}
             callDuration={callDuration}
             isMuted={isMuted}
             isVideoOn={isVideoOn}
-            isSpeakerOn={isSpeakerOn}
             onToggleMute={toggleMute}
             onToggleVideo={toggleVideo}
-            onToggleSpeaker={toggleSpeaker}
             onEndCall={handleCallEnd}
           />
         )}
