@@ -6,7 +6,7 @@ import {
   Phone, Camera, ImageIcon, Mic, ThumbsUp, Plus, Send,
   DollarSign, Package, Star, X, MoreVertical, ArrowLeft,
   Copy, Forward, Trash2, Edit3, Clock, Check, CheckCheck,
-  ImageIcon as ImageIcon2, Play, Pause, Share2, Flag,
+  ImageIcon as ImageIcon2, Play, Pause, Share2,
   Bell, BellOff, BadgeCheck, Download, LayoutGrid, List,
   Receipt, PhoneOff, Wallet, Lock, Truck, Shield,
 } from "lucide-react"
@@ -147,11 +147,11 @@ const stepConfigs = [
 // Helper Components
 const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
   const { id, title, icon: Icon, iconColor, borderColor, isSeller, isBuyer, getStatusText, getStatusIcon, completionDate } = config
-  
+
   const statusText = getStatusText(order)
   const StatusIcon = getStatusIcon ? getStatusIcon(order) : null
   const completedDate = completionDate ? completionDate(order) : null
-  
+
   const getActionButtons = () => {
     switch (id) {
       case "offer":
@@ -172,7 +172,7 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
           )
         }
         break
-        
+
       case "accepted":
         if (order.status === "accepted") {
           return (
@@ -194,7 +194,7 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
           )
         }
         break
-        
+
       case "payment":
         if (order.status === "payment_pending") {
           return (
@@ -216,7 +216,7 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
           )
         }
         break
-        
+
       case "delivery":
         if (order.status === "delivery_pending") {
           return (
@@ -246,7 +246,7 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
           )
         }
         break
-        
+
       case "completed":
         return (
           <button
@@ -257,7 +257,7 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
             View Receipt
           </button>
         )
-        
+
       case "refunded":
         return (
           <button
@@ -295,7 +295,7 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
             </div>
           </div>
         )
-        
+
       case "accepted":
         return (
           <div className="space-y-2 mb-3">
@@ -304,7 +304,7 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
             </div>
           </div>
         )
-        
+
       case "payment":
         return (
           <div className="space-y-2 mb-3">
@@ -317,7 +317,7 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
             </div>
           </div>
         )
-        
+
       case "delivery":
         return (
           <div className="space-y-2 mb-3">
@@ -330,7 +330,7 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
             </div>
           </div>
         )
-        
+
       case "completed":
         return (
           <div className="space-y-2 mb-3">
@@ -339,7 +339,7 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
             </div>
           </div>
         )
-        
+
       case "refunded":
         return (
           <div className="space-y-2 mb-3">
@@ -372,9 +372,9 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
                 </span>
               </div>
             </div>
-            
+
             {getStepContent()}
-            
+
             {/* Status bar at bottom */}
             <div className="mt-3 pt-3 border-t border-border">
               <div className="flex items-center justify-between">
@@ -389,7 +389,7 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
                 )}
               </div>
             </div>
-            
+
             {getActionButtons()}
           </div>
         </div>
@@ -403,7 +403,7 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
     const isCurrent = order.status === "payment_pending" && id === "payment" || 
                      order.status === "delivery_pending" && id === "delivery" ||
                      order.status === "accepted" && id === "accepted"
-    
+
     return (
       <div className="relative">
         {/* Step Indicator for progress bar */}
@@ -419,7 +419,7 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
             </div>
           </div>
         )}
-        
+
         {/* Card */}
         <div className={`bg-card border ${borderColor} rounded-xl p-4 shadow-sm`}>
           <div className="flex items-center justify-between mb-2">
@@ -431,9 +431,9 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
               ${order.total}
             </span>
           </div>
-          
+
           {getStepContent()}
-          
+
           {/* Status bar at bottom */}
           <div className="mt-3 pt-3 border-t border-border">
             <div className="flex items-center justify-between">
@@ -451,7 +451,7 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
               )}
             </div>
           </div>
-          
+
           {getActionButtons()}
         </div>
       </div>
@@ -549,9 +549,7 @@ export default function BuyerSellerChat() {
   const [showQuickActions, setShowQuickActions] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [showWalletBalance, setShowWalletBalance] = useState(false)
-  const [showMediaGallery, setShowMediaGallery] = useState(false)
   const [showScrollToBottom, setShowScrollToBottom] = useState(false)
-  const [showReportModal, setShowReportModal] = useState(false)
   const [showPinModal, setShowPinModal] = useState(false)
   const [showReceipt, setShowReceipt] = useState(false)
   const [messageActionsId, setMessageActionsId] = useState<number | null>(null)
@@ -576,20 +574,11 @@ export default function BuyerSellerChat() {
   })
   const [notificationsMuted, setNotificationsMuted] = useState(false)
   const [viewingImage, setViewingImage] = useState<string | null>(null)
-  const [mediaGalleryView, setMediaGalleryView] = useState<"grid" | "list">("grid")
-  const [searchQuery, setSearchQuery] = useState("")
 
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const pinInputRefs = useRef<(HTMLInputElement | null)[]>([])
   const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null)
-
-  // Derived data
-  const allMedia = messages.filter((m) => m.hasImages).flatMap((m) => m.images || [])
-  const searchResults = searchQuery
-    ? messages.filter((m) => m.text.toLowerCase().includes(searchQuery.toLowerCase()))
-    : []
-  const filteredMessages = searchQuery ? searchResults : messages
 
   // Calculate current step for progress bar
   const getCurrentStep = () => {
@@ -703,20 +692,6 @@ export default function BuyerSellerChat() {
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
   }
 
-  const highlightText = (text: string, query: string) => {
-    if (!query) return text
-    const parts = text.split(new RegExp(`(${query})`, "gi"))
-    return parts.map((part, i) =>
-      part.toLowerCase() === query.toLowerCase() ? (
-        <mark key={i} className="bg-yellow-300 px-0.5 rounded">
-          {part}
-        </mark>
-      ) : (
-        part
-      ),
-    )
-  }
-
   const getStatusIcon = (status?: string) => {
     switch (status) {
       case "sent": return <Check className="w-3 h-3 text-muted-foreground" />
@@ -756,16 +731,16 @@ export default function BuyerSellerChat() {
           status: "sent",
         }])
         break
-        
+
       case "initiatePayment":
         setCurrentOrder(prev => ({ ...prev, status: "payment_pending" }))
         setShowPinModal(true)
         break
-        
+
       case "completeDelivery":
         setShowPinModal(true)
         break
-        
+
       case "cancelOrder":
         setCurrentOrder(prev => ({ ...prev, status: "refunded" }))
         if (["payment_pending", "delivery_pending", "completed"].includes(currentOrder.status)) {
@@ -780,15 +755,15 @@ export default function BuyerSellerChat() {
           status: "sent",
         }])
         break
-        
+
       case "showPinModal":
         setShowPinModal(true)
         break
-        
+
       case "showReceipt":
         setShowReceipt(true)
         break
-        
+
       case "showWalletBalance":
         setShowWalletBalance(true)
         break
@@ -812,7 +787,7 @@ export default function BuyerSellerChat() {
 
   const processPayment = () => {
     const total = currentOrder.total
-    
+
     if (currentOrder.status === "delivery_pending") {
       setTimeout(() => {
         const receipt: ReceiptData = {
@@ -826,11 +801,11 @@ export default function BuyerSellerChat() {
           seller: "John Seller",
           buyer: "You",
         }
-        
+
         setCurrentOrder(prev => ({ ...prev, status: "completed", receipt }))
         setShowPinModal(false)
         setPin(["", "", "", ""])
-        
+
         setMessages(prev => [...prev, {
           id: prev.length + 1,
           sender: "buyer",
@@ -853,7 +828,7 @@ export default function BuyerSellerChat() {
         setCurrentOrder(prev => ({ ...prev, status: "delivery_pending" }))
         setShowPinModal(false)
         setPin(["", "", "", ""])
-        
+
         setMessages(prev => [...prev, {
           id: prev.length + 1,
           sender: "buyer",
@@ -869,7 +844,7 @@ export default function BuyerSellerChat() {
   // Quick actions
   const quickActions = [
     { icon: DollarSign, label: "Wallet", action: () => setShowWalletBalance(true) },
-    { icon: ImageIcon, label: "Photos", action: () => setShowMediaGallery(true) },
+    { icon: ImageIcon, label: "Photos", action: () => {} },
     { icon: Receipt, label: "Receipt", action: () => currentOrder?.receipt && setShowReceipt(true) },
   ]
 
@@ -945,26 +920,10 @@ export default function BuyerSellerChat() {
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
                   <div className="absolute right-0 top-10 w-56 bg-popover border border-border rounded-xl shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <button onClick={() => setShowMenu(false)} className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors">
-                      <MoreVertical className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm text-foreground">Search in chat</span>
-                    </button>
-                    <button onClick={() => { setShowMediaGallery(true); setShowMenu(false); }} className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors">
-                      <ImageIcon2 className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm text-foreground">Shared media</span>
-                      <span className="ml-auto text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
-                        {allMedia.length}
-                      </span>
-                    </button>
                     <div className="h-px bg-border my-1" />
                     <button onClick={() => { setNotificationsMuted(!notificationsMuted); setShowMenu(false); }} className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors">
                       {notificationsMuted ? <BellOff className="w-4 h-4 text-muted-foreground" /> : <Bell className="w-4 h-4 text-muted-foreground" />}
                       <span className="text-sm text-foreground">{notificationsMuted ? "Unmute" : "Mute"} notifications</span>
-                    </button>
-                    <div className="h-px bg-border my-1" />
-                    <button onClick={() => { setShowReportModal(true); setShowMenu(false); }} className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors text-red-600">
-                      <Flag className="w-4 h-4" />
-                      <span className="text-sm">Report seller</span>
                     </button>
                   </div>
                 </>
@@ -977,47 +936,8 @@ export default function BuyerSellerChat() {
         <div ref={chatContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-3 py-3 scroll-smooth">
           <div className="text-center text-muted-foreground text-xs mb-3 uppercase tracking-wide">Today</div>
 
-          {/* Media Gallery */}
-          {showMediaGallery && (
-            <div className="bg-card border border-border rounded-xl p-3 mb-3 animate-in fade-in slide-in-from-top duration-200">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <ImageIcon2 className="w-5 h-5 text-purple-600" />
-                  <span className="text-sm font-semibold text-foreground">Shared Media</span>
-                  <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
-                    {allMedia.length}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <button onClick={() => setMediaGalleryView("grid")} className={cn("p-1.5 rounded", mediaGalleryView === "grid" ? "bg-muted" : "hover:bg-muted")}>
-                    <LayoutGrid className="w-4 h-4 text-foreground" />
-                  </button>
-                  <button onClick={() => setMediaGalleryView("list")} className={cn("p-1.5 rounded", mediaGalleryView === "list" ? "bg-muted" : "hover:bg-muted")}>
-                    <List className="w-4 h-4 text-foreground" />
-                  </button>
-                  <button onClick={() => setShowMediaGallery(false)} className="ml-1">
-                    <X className="w-4 h-4 text-muted-foreground" />
-                  </button>
-                </div>
-              </div>
-              <div className={cn(mediaGalleryView === "grid" ? "grid grid-cols-3 gap-1.5" : "space-y-2")}>
-                {allMedia.map((img: string, i: number) => (
-                  <button key={i} onClick={() => setViewingImage(img)} className={cn("overflow-hidden rounded-lg bg-muted", mediaGalleryView === "grid" ? "aspect-square" : "flex items-center gap-3 p-2")}>
-                    <img src={img || "/placeholder.svg"} alt="" className={cn("object-cover", mediaGalleryView === "grid" ? "w-full h-full" : "w-12 h-12 rounded")} />
-                    {mediaGalleryView === "list" && (
-                      <div className="flex-1 text-left">
-                        <p className="text-sm text-foreground">Image {i + 1}</p>
-                        <p className="text-xs text-muted-foreground">From seller</p>
-                      </div>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Messages */}
-          {filteredMessages.map((msg) => {
+          {messages.map((msg) => {
             const isBuyer = msg.sender === "buyer"
             const replyMessage = msg.replyTo ? messages.find((m: Message) => m.id === msg.replyTo) : null
 
@@ -1056,7 +976,7 @@ export default function BuyerSellerChat() {
                       </div>
                     ) : (
                       <>
-                        <p className="text-sm whitespace-pre-wrap break-words">{highlightText(msg.text, searchQuery)}</p>
+                        <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>
                         {msg.isEdited && <span className={cn("text-[10px] ml-1", isBuyer ? "text-white/60" : "text-muted-foreground")}>(edited)</span>}
                       </>
                     )}
@@ -1146,7 +1066,7 @@ export default function BuyerSellerChat() {
                         getCurrentStep() >= 1 ? "bg-emerald-500" : "bg-gray-200"
                       )} />
                     </div>
-                    
+
                     {/* Progress Step Cards */}
                     <div className="space-y-6">
                       {visibleSteps
@@ -1194,7 +1114,7 @@ export default function BuyerSellerChat() {
             <MoreVertical className="w-5 h-5" />
           </button>
         )}
-        
+
         {(replyingTo || editingMessage) && (
           <div className="px-3 py-2 bg-muted border-t border-border flex items-center gap-2">
             {replyingTo ? <MoreVertical className="w-4 h-4 text-blue-500" /> : <Edit3 className="w-4 h-4 text-amber-500" />}
@@ -1364,23 +1284,6 @@ export default function BuyerSellerChat() {
                   <Share2 className="w-4 h-4" /> Share
                 </button>
               </div>
-            </div>
-          </div>
-        )}
-
-        {showReportModal && (
-          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
-            <div className="bg-card w-full rounded-t-3xl p-4 animate-in slide-in-from-bottom duration-300">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-foreground">Report Issue</h3>
-                <button onClick={() => setShowReportModal(false)}><X className="w-6 h-6 text-muted-foreground" /></button>
-              </div>
-              <div className="space-y-2 mb-4">
-                {["Suspicious behavior", "Spam or scam", "Offensive content", "Fake listing", "Other"].map((reason) => (
-                  <button key={reason} className="w-full p-3 bg-muted hover:bg-muted/80 rounded-xl text-left text-foreground transition-colors">{reason}</button>
-                ))}
-              </div>
-              <button onClick={() => setShowReportModal(false)} className="w-full bg-red-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-red-700 transition-colors">Submit Report</button>
             </div>
           </div>
         )}
