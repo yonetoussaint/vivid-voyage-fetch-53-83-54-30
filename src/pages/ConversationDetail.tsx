@@ -153,116 +153,116 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
   const completedDate = completionDate ? completionDate(order) : null
   
   const getActionButtons = () => {
-    switch (id) {
-      case "offer":
-        if (order.status === "offer") {
-          return (
-            <div className="flex gap-2">
-              <button
-                onClick={() => onAction("acceptOffer")}
-                className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1"
-              >
-                <Check className="w-4 h-4" />
-                Accept Offer
-              </button>
-              <button className="flex-1 bg-secondary text-secondary-foreground py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors">
-                Counter
-              </button>
-            </div>
-          )
-        }
-        break
-        
-      case "accepted":
-        if (order.status === "accepted") {
-          return (
-            <div className="flex gap-2">
-              <button
-                onClick={() => onAction("initiatePayment")}
-                className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1"
-              >
-                <Wallet className="w-4 h-4" />
-                Proceed to Payment
-              </button>
-              <button
-                onClick={() => onAction("cancelOrder")}
-                className="px-4 bg-secondary text-secondary-foreground py-2 rounded-lg hover:bg-secondary/80 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          )
-        }
-        break
-        
-      case "payment":
-        if (order.status === "payment_pending") {
-          return (
-            <div className="flex gap-2">
-              <button
-                onClick={() => onAction("showPinModal")}
-                className="flex-1 bg-amber-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors flex items-center justify-center gap-1"
-              >
-                <Lock className="w-4 h-4" />
-                Enter PIN
-              </button>
-              <button
-                onClick={() => onAction("cancelOrder")}
-                className="px-4 bg-secondary text-secondary-foreground py-2 rounded-lg hover:bg-secondary/80 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          )
-        }
-        break
-        
-      case "delivery":
-        if (order.status === "delivery_pending") {
-          return (
-            <div className="flex gap-2">
-              <button
-                onClick={() => onAction("completeDelivery")}
-                className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-1"
-              >
-                <Check className="w-4 h-4" />
-                Confirm Delivery
-              </button>
-              <button
-                onClick={() => onAction("cancelOrder")}
-                className="flex-1 bg-secondary text-secondary-foreground py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors"
-              >
-                Cancel Order
-              </button>
-            </div>
-          )
-        }
-        break
-        
-      case "completed":
+  switch (id) {
+    case "offer":
+      if (order.status === "offer") {
         return (
-          <button
-            onClick={() => onAction("showReceipt")}
-            className="w-full bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1"
-          >
-            <Receipt className="w-4 h-4" />
-            View Receipt
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => onAction("acceptOffer")}
+              className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1"
+            >
+              <Check className="w-4 h-4" />
+              Accept
+            </button>
+            <button className="flex-1 bg-secondary text-secondary-foreground py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors">
+              Counter
+            </button>
+          </div>
         )
-        
-      case "refunded":
+      }
+      break
+      
+    case "accepted":
+      if (order.status === "accepted") {
         return (
-          <button
-            onClick={() => onAction("showWalletBalance")}
-            className="w-full bg-slate-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors flex items-center justify-center gap-1"
-          >
-            <Wallet className="w-4 h-4" />
-            Check Wallet
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => onAction("initiatePayment")}
+              className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1"
+            >
+              <Wallet className="w-4 h-4" />
+              Continue
+            </button>
+            <button
+              onClick={() => onAction("cancelOrder")}
+              className="px-4 bg-secondary text-secondary-foreground py-2 rounded-lg hover:bg-secondary/80 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         )
-    }
-    return null
+      }
+      break
+      
+    case "payment":
+      if (order.status === "payment_pending") {
+        return (
+          <div className="flex gap-2">
+            <button
+              onClick={() => onAction("showPinModal")}
+              className="flex-1 bg-amber-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors flex items-center justify-center gap-1"
+            >
+              <Lock className="w-4 h-4" />
+              Enter PIN
+            </button>
+            <button
+              onClick={() => onAction("cancelOrder")}
+              className="px-4 bg-secondary text-secondary-foreground py-2 rounded-lg hover:bg-secondary/80 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )
+      }
+      break
+      
+    case "delivery":
+      if (order.status === "delivery_pending") {
+        return (
+          <div className="flex gap-2">
+            <button
+              onClick={() => onAction("completeDelivery")}
+              className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-1"
+            >
+              <Check className="w-4 h-4" />
+              Confirm
+            </button>
+            <button
+              onClick={() => onAction("cancelOrder")}
+              className="flex-1 bg-secondary text-secondary-foreground py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors"
+            >
+              Cancel Order
+            </button>
+          </div>
+        )
+      }
+      break
+      
+    case "completed":
+      return (
+        <button
+          onClick={() => onAction("showReceipt")}
+          className="w-full bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1"
+        >
+          <Receipt className="w-4 h-4" />
+          View Receipt
+        </button>
+      )
+      
+    case "refunded":
+      return (
+        <button
+          onClick={() => onAction("showWalletBalance")}
+          className="w-full bg-slate-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors flex items-center justify-center gap-1"
+        >
+          <Wallet className="w-4 h-4" />
+          Check Wallet
+        </button>
+      )
   }
+  return null
+}
 
   const getStepContent = () => {
     switch (id) {
