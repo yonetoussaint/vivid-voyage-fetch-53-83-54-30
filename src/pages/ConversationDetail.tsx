@@ -9,7 +9,6 @@ import {
   Mic,
   ThumbsUp,
   Plus,
-  Smile,
   Send,
   DollarSign,
   Package,
@@ -17,8 +16,6 @@ import {
   X,
   MoreVertical,
   ArrowLeft,
-  Pin,
-  PinOff,
   Copy,
   Forward,
   Trash2,
@@ -53,15 +50,29 @@ type Message = {
   timestamp: Date
   hasImages?: boolean
   images?: string[]
-  type?: "text" | "offer" | "voice" | "system"
   status?: "sent" | "delivered" | "read"
-  reactions?: { emoji: string; count: number; users: string[] }[]
   replyTo?: number
-  isPinned?: boolean
   isEdited?: boolean
   voiceDuration?: number
-  isStarred?: boolean
   isDeleted?: boolean
+}
+
+type Order = {
+  id: string
+  amount: number
+  status: "pending" | "accepted" | "payment_pending" | "completed"
+  timestamp: Date
+  receipt?: ReceiptData
+}
+
+type ReceiptData = {
+  id: string
+  amount: number
+  date: string
+  time: string
+  product: string
+  seller: string
+  buyer: string
 }
 
 export default function BuyerSellerChat() {
@@ -75,7 +86,6 @@ export default function BuyerSellerChat() {
       time: "10:32 AM",
       timestamp: new Date(Date.now() - 3600000 * 2),
       status: "read",
-      reactions: [{ emoji: "👋", count: 1, users: ["You"] }],
     },
     {
       id: 2,
@@ -106,7 +116,6 @@ export default function BuyerSellerChat() {
       time: "10:35 AM",
       timestamp: new Date(Date.now() - 3600000 * 1.7),
       status: "read",
-      isPinned: true,
     },
     {
       id: 5,
@@ -123,7 +132,6 @@ export default function BuyerSellerChat() {
       time: "10:37 AM",
       timestamp: new Date(Date.now() - 3600000 * 1.5),
       status: "read",
-      isPinned: true,
     },
     {
       id: 7,
@@ -131,7 +139,6 @@ export default function BuyerSellerChat() {
       text: "Would you consider $850?",
       time: "10:38 AM",
       timestamp: new Date(Date.now() - 3600000 * 1.4),
-      type: "offer",
       status: "read",
     },
     {
@@ -140,17 +147,15 @@ export default function BuyerSellerChat() {
       text: "I can do $880 - that's my best price. Includes all original accessories and I'll throw in a premium case.",
       time: "10:39 AM",
       timestamp: new Date(Date.now() - 3600000 * 1.3),
-      type: "offer",
       status: "read",
     },
     {
       id: 9,
       sender: "buyer",
-      text: "Deal! When can we meet?",
+      text: "Deal!",
       time: "10:40 AM",
       timestamp: new Date(Date.now() - 3600000),
       status: "delivered",
-      reactions: [{ emoji: "🤝", count: 2, users: ["You", "John Seller"] }],
     },
   ])
 
@@ -162,16 +167,11 @@ export default function BuyerSellerChat() {
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResultIndex, setSearchResultIndex] = useState(0)
   const [showMediaGallery, setShowMediaGallery] = useState(false)
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
-  const [showEmojiPickerForMessage, setShowEmojiPickerForMessage] = useState<number | null>(null)
   const [showScrollToBottom, setShowScrollToBottom] = useState(false)
   const [showSellerProfile, setShowSellerProfile] = useState(false)
   const [showReportModal, setShowReportModal] = useState(false)
-  const [showOfferModal, setShowOfferModal] = useState(false)
-  const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [showPinModal, setShowPinModal] = useState(false)
-  const [showPaymentPending, setShowPaymentPending] = useState(false)
-  const [showRatingPrompt, setShowRatingPrompt] = useState(false)
+  const [showReceipt, setShowReceipt] = useState(false)
   const [messageActionsId, setMessageActionsId] = useState<number | null>(null)
 
   // Reply state
@@ -194,14 +194,10 @@ export default function BuyerSellerChat() {
 
   // Wallet & Payment state
   const [walletBalance, setWalletBalance] = useState(1250.50)
-  const [offerAmount, setOfferAmount] = useState("")
-  const [offerMessage, setOfferMessage] = useState("")
   const [pin, setPin] = useState(["", "", "", ""])
-  const [paymentStatus, setPaymentStatus] = useState<"idle" | "pending" | "completed">("idle")
-
-  // Rating
-  const [rating, setRating] = useState(0)
-  const [reviewText, setReviewText] = useState("")
+  
+  // Order state
+  const [currentOrder, setCurrentOrder] = useState<Order | null>(null)
 
   // Notifications
   const [notificationsMuted, setNotificationsMuted] = useState(false)
@@ -210,18 +206,12 @@ export default function BuyerSellerChat() {
   const [viewingImage, setViewingImage] = useState<string | null>(null)
   const [mediaGalleryView, setMediaGalleryView] = useState<"grid" | "list">("grid")
 
-  // Emoji state
-  const [reactionEmojis, setReactionEmojis] = useState<string[]>(["👍", "❤️", "😂", "😮", "😢", "🙏", "🔥", "🤝"])
-  const [allEmojis, setAllEmojis] = useState<string[]>([])
-
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const pinInputRefs = useRef<(HTMLInputElement | null)[]>([])
   const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   // Derived data
-  const pinnedMessages = messages.filter((m) => m.isPinned)
-  const starredMessages = messages.filter((m) => m.isStarred)
   const allMedia = messages.filter((m) => m.hasImages).flatMap((m) => m.images || [])
   const searchResults = searchQuery
     ? messages.filter((m) => m.text.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -230,39 +220,10 @@ export default function BuyerSellerChat() {
 
   // Quick actions
   const quickActions = [
-    { icon: DollarSign, label: "Offer", color: "text-emerald-600", action: () => setShowOfferModal(true) },
+    { icon: DollarSign, label: "Wallet", color: "text-blue-600", action: () => setShowWalletBalance(true) },
     { icon: ImageIcon, label: "Photos", color: "text-purple-600" },
-    { icon: Wallet, label: "Wallet", color: "text-blue-600", action: () => setShowWalletBalance(true) },
-    { icon: Receipt, label: "Receipt", color: "text-slate-600" },
+    { icon: Receipt, label: "Receipt", color: "text-slate-600", action: () => currentOrder?.receipt && setShowReceipt(true) },
   ]
-
-  // Fetch emojis from API
-  useEffect(() => {
-    const fetchEmojis = async () => {
-      try {
-        const response = await fetch('https://emojihub.yurace.pro/api/all')
-        const data = await response.json()
-        
-        // Extract emojis from the API response
-        const emojis = data.map((item: any) => item.unicode).filter(Boolean)
-        setAllEmojis(emojis.slice(0, 64)) // Limit to first 64 emojis for performance
-        
-        // Set popular reaction emojis
-        setReactionEmojis(["👍", "❤️", "😂", "😮", "😢", "🙏", "🔥", "🤝"])
-      } catch (error) {
-        console.error('Failed to fetch emojis:', error)
-        // Fallback to default emojis if API fails
-        setAllEmojis([
-          "😀", "😃", "😄", "😁", "😅", "😂", "🤣", "😊", "😇", "🙂", "😉", "😌", "😍", "🥰", "😘", "😗",
-          "😙", "😚", "😋", "😛", "😜", "🤪", "😝", "🤑", "🤗", "🤭", "🤫", "🤔", "🤐", "🤨", "😐", "😑",
-          "😶", "😏", "😒", "🙄", "😬", "😮", "🥱", "😴", "🤤", "😪", "😵", "🤯", "🤠", "🥳", "🥸", "😎",
-          "🤓", "🧐", "😕", "😟", "🙁", "😮", "😯", "😲", "😳", "🥺", "😦", "😧", "👍", "👎", "👌", "🤌"
-        ])
-      }
-    }
-
-    fetchEmojis()
-  }, [])
 
   // Effects
   useEffect(() => {
@@ -321,7 +282,6 @@ export default function BuyerSellerChat() {
       status: "sent",
       replyTo: replyingTo?.id,
       isEdited: !!editingMessage,
-      type: isRecording ? "voice" : "text",
       voiceDuration: isRecording ? recordingDuration : undefined,
     }
 
@@ -346,47 +306,6 @@ export default function BuyerSellerChat() {
     }, 2500)
   }
 
-  const addReaction = (messageId: number, emoji: string) => {
-    setMessages((prev) =>
-      prev.map((m) => {
-        if (m.id === messageId) {
-          const existingReaction = m.reactions?.find((r) => r.emoji === emoji)
-          if (existingReaction) {
-            if (existingReaction.users.includes("You")) {
-              return {
-                ...m,
-                reactions: m.reactions
-                  ?.filter((r) => r.emoji !== emoji || r.count > 1)
-                  .map((r) =>
-                    r.emoji === emoji ? { ...r, count: r.count - 1, users: r.users.filter((u) => u !== "You") } : r,
-                  ),
-              }
-            }
-            return {
-              ...m,
-              reactions: m.reactions?.map((r) =>
-                r.emoji === emoji ? { ...r, count: r.count + 1, users: [...r.users, "You"] } : r,
-              ),
-            }
-          }
-          return { ...m, reactions: [...(m.reactions || []), { emoji, count: 1, users: ["You"] }] }
-        }
-        return m
-      }),
-    )
-    setShowEmojiPickerForMessage(null)
-  }
-
-  const togglePin = (messageId: number) => {
-    setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, isPinned: !m.isPinned } : m)))
-    setMessageActionsId(null)
-  }
-
-  const toggleStar = (messageId: number) => {
-    setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, isStarred: !m.isStarred } : m)))
-    setMessageActionsId(null)
-  }
-
   const deleteMessage = (messageId: number) => {
     setMessages((prev) =>
       prev.map((m) => (m.id === messageId ? { ...m, isDeleted: true, text: "This message was deleted" } : m)),
@@ -397,24 +316,6 @@ export default function BuyerSellerChat() {
   const copyMessage = (text: string) => {
     navigator.clipboard.writeText(text)
     setMessageActionsId(null)
-  }
-
-  const sendOffer = () => {
-    if (!offerAmount) return
-    const newMessage: Message = {
-      id: messages.length + 1,
-      sender: "buyer",
-      text: `I'd like to offer $${offerAmount}${offerMessage ? ` - ${offerMessage}` : ""}`,
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      timestamp: new Date(),
-      status: "sent",
-      type: "offer",
-    }
-    setMessages([...messages, newMessage])
-    setOfferAmount("")
-    setOfferMessage("")
-    setShowOfferModal(false)
-    setTimeout(scrollToBottom, 100)
   }
 
   const formatDuration = (seconds: number) => {
@@ -466,14 +367,33 @@ export default function BuyerSellerChat() {
     setCallDuration(0)
   }
 
-  // Payment handlers
-  const handleMakePayment = () => {
-    if (!offerAmount) return
-    setShowPaymentModal(true)
+  // Order handlers
+  const acceptOffer = () => {
+    const newOrder: Order = {
+      id: `ORD-${Date.now()}`,
+      amount: 880,
+      status: "accepted",
+      timestamp: new Date(),
+    }
+    setCurrentOrder(newOrder)
+    
+    // Add acceptance message
+    const acceptanceMessage: Message = {
+      id: messages.length + 1,
+      sender: "buyer",
+      text: "I accept your offer of $880. Let's proceed with payment.",
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      timestamp: new Date(),
+      status: "sent",
+    }
+    setMessages(prev => [...prev, acceptanceMessage])
+    setTimeout(scrollToBottom, 100)
   }
 
-  const handleConfirmPayment = () => {
-    setShowPaymentModal(false)
+  const initiatePayment = () => {
+    if (!currentOrder) return
+    
+    setCurrentOrder(prev => prev ? { ...prev, status: "payment_pending" } : null)
     setShowPinModal(true)
   }
 
@@ -502,8 +422,10 @@ export default function BuyerSellerChat() {
   }
 
   const processPayment = () => {
-    const amount = parseFloat(offerAmount)
-    if (isNaN(amount) || amount > walletBalance) {
+    if (!currentOrder) return
+    
+    const amount = currentOrder.amount
+    if (amount > walletBalance) {
       alert("Insufficient funds")
       setPin(["", "", "", ""])
       setShowPinModal(false)
@@ -513,42 +435,54 @@ export default function BuyerSellerChat() {
     // Simulate payment processing
     setTimeout(() => {
       setWalletBalance(prev => prev - amount)
-      setPaymentStatus("pending")
+      
+      // Complete order
+      const receipt: ReceiptData = {
+        id: `RCPT-${Date.now()}`,
+        amount,
+        date: new Date().toLocaleDateString(),
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        product: "iPhone 15 Pro Max",
+        seller: "John Seller",
+        buyer: "You",
+      }
+      
+      setCurrentOrder(prev => prev ? { 
+        ...prev, 
+        status: "completed",
+        receipt 
+      } : null)
+      
       setShowPinModal(false)
-      setShowPaymentPending(true)
       
       // Add payment message
       const paymentMessage: Message = {
         id: messages.length + 1,
         sender: "buyer",
-        text: `Payment of $${amount} initiated via wallet. Status: Pending`,
+        text: `Payment of $${amount} completed via wallet. Order #${currentOrder.id}`,
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         timestamp: new Date(),
         status: "sent",
-        type: "system"
       }
       setMessages(prev => [...prev, paymentMessage])
       setTimeout(scrollToBottom, 100)
     }, 1000)
   }
 
-  const completePayment = () => {
-    setPaymentStatus("completed")
-    setShowPaymentPending(false)
+  const cancelOrder = () => {
+    setCurrentOrder(null)
     
-    // Add completion message
-    const completionMessage: Message = {
+    // Add cancellation message
+    const cancellationMessage: Message = {
       id: messages.length + 1,
       sender: "buyer",
-      text: `Payment of $${offerAmount} completed. Product delivered successfully.`,
+      text: "I've decided to cancel the order.",
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       timestamp: new Date(),
       status: "sent",
-      type: "system"
     }
-    setMessages(prev => [...prev, completionMessage])
+    setMessages(prev => [...prev, cancellationMessage])
     setTimeout(scrollToBottom, 100)
-    setTimeout(() => setShowRatingPrompt(true), 2000)
   }
 
   return (
@@ -595,7 +529,6 @@ export default function BuyerSellerChat() {
           <div className="flex items-center gap-0.5">
             <div className="relative group">
               {callState === "idle" ? (
-                // Initial state - simple call button
                 <button 
                   onClick={() => handleCallStart("audio")}
                   className="px-3 py-2 flex items-center gap-2 hover:bg-muted rounded-full transition-colors"
@@ -604,7 +537,6 @@ export default function BuyerSellerChat() {
                   <span className="text-sm text-foreground font-medium">Call</span>
                 </button>
               ) : callState === "ringing" ? (
-                // Ringing state with hang up button
                 <div className="flex items-center gap-1">
                   <div className="px-3 py-2 bg-blue-500/10 rounded-full">
                     <span className="text-sm text-blue-500 font-medium">Ringing...</span>
@@ -617,7 +549,6 @@ export default function BuyerSellerChat() {
                   </button>
                 </div>
               ) : (
-                // Active call state with duration and end button
                 <div className="flex items-center gap-1">
                   <div className="px-3 py-2 bg-green-500/10 rounded-full">
                     <span className="text-sm text-green-500 font-medium">{formatDuration(callDuration)}</span>
@@ -813,7 +744,7 @@ export default function BuyerSellerChat() {
                     )}
                   >
                     {/* Voice message */}
-                    {msg.type === "voice" ? (
+                    {msg.voiceDuration ? (
                       <div className="flex items-center gap-2 min-w-[150px]">
                         <button
                           onClick={() => setPlayingVoiceId(playingVoiceId === msg.id ? null : msg.id)}
@@ -838,23 +769,6 @@ export default function BuyerSellerChat() {
                         <span className={cn("text-xs", isBuyer ? "text-white/70" : "text-muted-foreground")}>
                           {formatDuration(msg.voiceDuration || 0)}
                         </span>
-                      </div>
-                    ) : msg.type === "offer" ? (
-                      <div className="flex items-center gap-2">
-                        <div
-                          className={cn(
-                            "w-8 h-8 rounded-full flex items-center justify-center",
-                            isBuyer ? "bg-white/20" : "bg-emerald-100",
-                          )}
-                        >
-                          <DollarSign className={cn("w-4 h-4", isBuyer ? "text-white" : "text-emerald-600")} />
-                        </div>
-                        <div>
-                          <p className={cn("text-xs", isBuyer ? "text-white/70" : "text-muted-foreground")}>
-                            Price offer
-                          </p>
-                          <p className="text-sm">{msg.text}</p>
-                        </div>
                       </div>
                     ) : (
                       <>
@@ -884,38 +798,14 @@ export default function BuyerSellerChat() {
                       </div>
                     )}
 
-                    {/* Time, status and pin icon */}
+                    {/* Time and status */}
                     <div className={cn("flex items-center gap-1 mt-1", isBuyer ? "justify-end" : "justify-start")}>
                       <span className={cn("text-[10px]", isBuyer ? "text-white/60" : "text-muted-foreground")}>
                         {msg.time}
                       </span>
                       {isBuyer && getStatusIcon(msg.status)}
-                      {msg.isPinned && (
-                        <Pin className="w-3 h-3 text-muted-foreground ml-1" />
-                      )}
                     </div>
                   </div>
-
-                  {/* Reactions */}
-                  {msg.reactions && msg.reactions.length > 0 && (
-                    <div className={cn("flex gap-0.5 mt-0.5", isBuyer ? "justify-end" : "justify-start")}>
-                      {msg.reactions.map((reaction, i) => (
-                        <button
-                          key={i}
-                          onClick={() => addReaction(msg.id, reaction.emoji)}
-                          className={cn(
-                            "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs",
-                            reaction.users.includes("You")
-                              ? "bg-blue-100 border border-blue-300"
-                              : "bg-muted border border-border",
-                          )}
-                        >
-                          <span>{reaction.emoji}</span>
-                          {reaction.count > 1 && <span className="text-muted-foreground">{reaction.count}</span>}
-                        </button>
-                      ))}
-                    </div>
-                  )}
 
                   {/* Message actions */}
                   <div
@@ -924,9 +814,6 @@ export default function BuyerSellerChat() {
                       isBuyer ? "left-0 -translate-x-full mr-1" : "right-0 translate-x-full ml-1",
                     )}
                   >
-                    <button onClick={() => setShowEmojiPickerForMessage(msg.id)} className="p-1 hover:bg-muted rounded">
-                      <Smile className="w-4 h-4 text-muted-foreground" />
-                    </button>
                     <button onClick={() => setReplyingTo(msg)} className="p-1 hover:bg-muted rounded">
                       <MoreVertical className="w-4 h-4 text-muted-foreground" />
                     </button>
@@ -948,20 +835,6 @@ export default function BuyerSellerChat() {
                           isBuyer ? "right-0" : "left-8",
                         )}
                       >
-                        <button
-                          onClick={() => togglePin(msg.id)}
-                          className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted text-sm"
-                        >
-                          {msg.isPinned ? <PinOff className="w-4 h-4" /> : <Pin className="w-4 h-4" />}
-                          {msg.isPinned ? "Unpin" : "Pin"}
-                        </button>
-                        <button
-                          onClick={() => toggleStar(msg.id)}
-                          className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted text-sm"
-                        >
-                          <Star className={cn("w-4 h-4", msg.isStarred && "fill-yellow-500 text-yellow-500")} />
-                          {msg.isStarred ? "Unstar" : "Star"}
-                        </button>
                         <button
                           onClick={() => copyMessage(msg.text)}
                           className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted text-sm"
@@ -999,31 +872,6 @@ export default function BuyerSellerChat() {
                       </div>
                     </>
                   )}
-
-                  {/* Emoji picker for reactions */}
-                  {showEmojiPickerForMessage === msg.id && (
-                    <>
-                      <div className="fixed inset-0 z-40" onClick={() => setShowEmojiPickerForMessage(null)} />
-                      <div
-                        className={cn(
-                          "absolute top-8 z-50 bg-popover border border-border rounded-xl shadow-xl p-2 animate-in fade-in zoom-in-95 duration-100",
-                          isBuyer ? "right-0" : "left-8",
-                        )}
-                      >
-                        <div className="flex gap-1">
-                          {reactionEmojis.map((emoji) => (
-                            <button
-                              key={emoji}
-                              onClick={() => addReaction(msg.id, emoji)}
-                              className="w-8 h-8 flex items-center justify-center hover:bg-muted rounded-lg text-lg transition-transform hover:scale-125"
-                            >
-                              {emoji}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </>
-                  )}
                 </div>
 
                 {isBuyer && (
@@ -1035,73 +883,118 @@ export default function BuyerSellerChat() {
             )
           })}
 
-          {/* Payment Offer Card - Minimal */}
-          {!paymentStatus && (
-            <div className="bg-card border border-border rounded-xl p-3 mb-2 max-w-[85%] shadow-sm">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Wallet className="w-5 h-5 text-emerald-600" />
-                  <span className="text-foreground text-sm font-semibold">Secure Payment</span>
+          {/* Seller's Offer Card */}
+          {!currentOrder && (
+            <div className="flex justify-start mb-2">
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0 text-[10px] font-bold text-white mr-1.5 mt-auto">
+                JS
+              </div>
+              <div className="max-w-[80%]">
+                <div className="bg-card border border-border rounded-xl p-3 shadow-sm">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="w-5 h-5 text-emerald-600" />
+                      <span className="text-foreground text-sm font-semibold">Seller's Offer</span>
+                    </div>
+                    <span className="text-xs text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full font-medium">
+                      $880
+                    </span>
+                  </div>
+                  <p className="text-muted-foreground text-xs mb-3">Includes all original accessories and premium case</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={acceptOffer}
+                      className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Check className="w-4 h-4" />
+                      Accept
+                    </button>
+                    <button className="flex-1 bg-secondary text-secondary-foreground py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors">
+                      Counter
+                    </button>
+                  </div>
                 </div>
-                <span className="text-xs text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full font-medium">
-                  Ready
-                </span>
               </div>
-              <div className="flex items-baseline gap-2 mb-3">
-                <p className="text-foreground font-bold text-xl">$880</p>
-                <span className="text-sm text-muted-foreground line-through">$899</span>
-                <span className="text-xs text-emerald-600">Save $19</span>
-              </div>
-              <p className="text-muted-foreground text-xs mb-3">Pay securely via your wallet. Funds held until delivery.</p>
-              <button
-                onClick={handleMakePayment}
-                className="w-full bg-emerald-600 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2"
-              >
-                <Lock className="w-4 h-4" />
-                Pay with Wallet
-              </button>
             </div>
           )}
 
-          {/* Payment Pending Card */}
-          {paymentStatus === "pending" && (
-            <div className="bg-card border-2 border-amber-400 rounded-xl p-3 mb-2 max-w-[85%] shadow-sm">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-amber-600" />
-                  <span className="text-foreground text-sm font-semibold">Payment Pending</span>
+          {/* Order Status Cards */}
+          {currentOrder && currentOrder.status === "accepted" && (
+            <div className="flex justify-end mb-2">
+              <div className="max-w-[80%]">
+                <div className="bg-blue-500 text-white rounded-xl p-3 shadow-sm">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Wallet className="w-5 h-5 text-white" />
+                      <span className="text-sm font-semibold">Order Accepted</span>
+                    </div>
+                    <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full font-medium">
+                      ${currentOrder.amount}
+                    </span>
+                  </div>
+                  <p className="text-white/80 text-xs mb-3">Ready to proceed with secure payment</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={initiatePayment}
+                      className="flex-1 bg-white text-blue-600 py-2 rounded-lg text-sm font-medium hover:bg-white/90 transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Lock className="w-4 h-4" />
+                      Pay Now
+                    </button>
+                    <button
+                      onClick={cancelOrder}
+                      className="px-4 bg-white/20 text-white py-2 rounded-lg hover:bg-white/30 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-                <span className="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full font-medium">
-                  ${offerAmount}
-                </span>
               </div>
-              <p className="text-muted-foreground text-xs mb-3">Payment held securely. Complete after delivery.</p>
-              <div className="flex items-center gap-2 text-sm text-amber-600 mb-3">
-                <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
-                <span>Awaiting delivery from seller</span>
-              </div>
-              <button
-                onClick={completePayment}
-                className="w-full bg-blue-600 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-              >
-                Confirm Delivery & Complete Payment
-              </button>
             </div>
           )}
 
-          {/* Payment Completed Card */}
-          {paymentStatus === "completed" && (
-            <div className="bg-card border-2 border-emerald-400 rounded-xl p-3 mb-2 max-w-[85%] shadow-sm">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Check className="w-5 h-5 text-emerald-600" />
-                  <span className="text-foreground text-sm font-semibold">Payment Completed</span>
+          {currentOrder && currentOrder.status === "payment_pending" && (
+            <div className="flex justify-end mb-2">
+              <div className="max-w-[80%]">
+                <div className="bg-amber-500 text-white rounded-xl p-3 shadow-sm">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-5 h-5 text-white" />
+                      <span className="text-sm font-semibold">Payment Pending</span>
+                    </div>
+                    <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full font-medium">
+                      ${currentOrder.amount}
+                    </span>
+                  </div>
+                  <p className="text-white/80 text-xs mb-3">Awaiting PIN confirmation to complete payment</p>
                 </div>
-                <span className="text-xs text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full font-medium">
-                  ${offerAmount}
-                </span>
               </div>
-              <p className="text-muted-foreground text-xs">Transaction completed successfully</p>
+            </div>
+          )}
+
+          {currentOrder && currentOrder.status === "completed" && currentOrder.receipt && (
+            <div className="flex justify-end mb-2">
+              <div className="max-w-[80%]">
+                <div className="bg-emerald-500 text-white rounded-xl p-3 shadow-sm">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Check className="w-5 h-5 text-white" />
+                      <span className="text-sm font-semibold">Order Completed</span>
+                    </div>
+                    <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full font-medium">
+                      ${currentOrder.amount}
+                    </span>
+                  </div>
+                  <p className="text-white/80 text-xs mb-3">Payment successful. Receipt available.</p>
+                  <button
+                    onClick={() => setShowReceipt(true)}
+                    className="w-full bg-white text-emerald-600 py-2 rounded-lg text-sm font-medium hover:bg-white/90 transition-colors flex items-center justify-center gap-1"
+                  >
+                    <Receipt className="w-4 h-4" />
+                    View Receipt
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
@@ -1171,10 +1064,11 @@ export default function BuyerSellerChat() {
             </div>
           </div>
           <button 
-            onClick={() => setShowOfferModal(true)}
-            className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 transition-colors"
+            onClick={() => setShowWalletBalance(true)}
+            className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1"
           >
-            Offer
+            <Wallet className="w-3 h-3" />
+            ${walletBalance.toFixed(0)}
           </button>
         </div>
 
@@ -1251,9 +1145,6 @@ export default function BuyerSellerChat() {
                 onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
                 className="bg-transparent flex-1 outline-none text-foreground text-sm min-w-0 placeholder:text-muted-foreground"
               />
-              <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="shrink-0 ml-1">
-                <Smile className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
-              </button>
             </div>
             <button onClick={handleSend} className="p-2 shrink-0">
               {message || editingMessage ? (
@@ -1263,35 +1154,6 @@ export default function BuyerSellerChat() {
               )}
             </button>
           </div>
-        )}
-
-        {/* Emoji Picker */}
-        {showEmojiPicker && (
-          <>
-            <div className="fixed inset-0 z-40" onClick={() => setShowEmojiPicker(false)} />
-            <div className="absolute bottom-16 left-2 right-2 bg-popover border border-border rounded-xl shadow-xl p-3 z-50 animate-in slide-in-from-bottom duration-200 max-h-64 overflow-y-auto">
-              {allEmojis.length > 0 ? (
-                <div className="grid grid-cols-8 gap-1">
-                  {allEmojis.map((emoji) => (
-                    <button
-                      key={emoji}
-                      onClick={() => {
-                        setMessage((prev) => prev + emoji)
-                        setShowEmojiPicker(false)
-                      }}
-                      className="w-9 h-9 flex items-center justify-center hover:bg-muted rounded-lg text-xl transition-transform hover:scale-110"
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-20">
-                  <p className="text-muted-foreground">Loading emojis...</p>
-                </div>
-              )}
-            </div>
-          </>
         )}
 
         {/* MODALS */}
@@ -1324,121 +1186,14 @@ export default function BuyerSellerChat() {
           </div>
         )}
 
-        {/* Offer Modal */}
-        {showOfferModal && (
-          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
-            <div className="bg-card w-full rounded-t-3xl p-4 animate-in slide-in-from-bottom duration-300">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-foreground">Make an Offer</h3>
-                <button onClick={() => setShowOfferModal(false)}>
-                  <X className="w-6 h-6 text-muted-foreground" />
-                </button>
-              </div>
-              <div className="mb-4">
-                <label className="text-sm text-muted-foreground mb-1 block">Your offer amount</label>
-                <div className="flex items-center gap-2 bg-muted rounded-xl px-4 py-3">
-                  <DollarSign className="w-5 h-5 text-muted-foreground" />
-                  <input
-                    type="number"
-                    placeholder="Enter amount"
-                    value={offerAmount}
-                    onChange={(e) => setOfferAmount(e.target.value)}
-                    className="flex-1 bg-transparent outline-none text-2xl font-bold text-foreground"
-                  />
-                </div>
-                <div className="flex gap-2 mt-2">
-                  {[800, 850, 875].map((amt) => (
-                    <button
-                      key={amt}
-                      onClick={() => setOfferAmount(amt.toString())}
-                      className="px-3 py-1 bg-muted hover:bg-muted/80 rounded-full text-sm text-foreground"
-                    >
-                      ${amt}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="mb-4">
-                <label className="text-sm text-muted-foreground mb-1 block">Message (optional)</label>
-                <textarea
-                  placeholder="Add a note to your offer..."
-                  value={offerMessage}
-                  onChange={(e) => setOfferMessage(e.target.value)}
-                  className="w-full bg-muted rounded-xl px-4 py-3 outline-none text-foreground resize-none h-20"
-                />
-              </div>
-              <button
-                onClick={sendOffer}
-                disabled={!offerAmount}
-                className="w-full bg-emerald-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Send Offer
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Payment Confirmation Modal */}
-        {showPaymentModal && (
-          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
-            <div className="bg-card w-full rounded-t-3xl p-4 animate-in slide-in-from-bottom duration-300">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-foreground">Confirm Payment</h3>
-                <button onClick={() => setShowPaymentModal(false)}>
-                  <X className="w-6 h-6 text-muted-foreground" />
-                </button>
-              </div>
-              <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-4 mb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <Wallet className="w-8 h-8 text-white" />
-                  <span className="text-white/80 text-sm">Wallet Payment</span>
-                </div>
-                <p className="text-3xl font-bold text-white">${offerAmount}</p>
-                <p className="text-white/70 text-xs mt-1">to John Seller</p>
-              </div>
-              <div className="space-y-3 mb-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Current balance</span>
-                  <span className="text-sm font-medium text-foreground">${walletBalance.toFixed(2)}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">After payment</span>
-                  <span className="text-sm font-medium text-foreground">
-                    ${(walletBalance - parseFloat(offerAmount || "0")).toFixed(2)}
-                  </span>
-                </div>
-                <div className="h-px bg-border" />
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-foreground">Product</span>
-                  <span className="text-sm text-foreground">iPhone 15 Pro Max</span>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowPaymentModal(false)}
-                  className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleConfirmPayment}
-                  className="flex-1 bg-emerald-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors"
-                >
-                  Confirm Payment
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* PIN Entry Modal */}
         {showPinModal && (
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50 animate-in fade-in duration-200">
             <div className="bg-card rounded-3xl p-6 mx-4 max-w-sm animate-in zoom-in-95 duration-300">
               <div className="text-center mb-6">
                 <Lock className="w-12 h-12 text-blue-600 mx-auto mb-3" />
-                <h2 className="text-xl font-bold text-foreground mb-1">Enter PIN</h2>
-                <p className="text-muted-foreground text-sm">Enter your 4-digit PIN to confirm payment</p>
+                <h2 className="text-xl font-bold text-foreground mb-1">Confirm Payment</h2>
+                <p className="text-muted-foreground text-sm">Enter your 4-digit PIN to pay ${currentOrder?.amount}</p>
               </div>
               <div className="flex justify-center gap-3 mb-6">
                 {[0, 1, 2, 3].map((index) => (
@@ -1469,28 +1224,57 @@ export default function BuyerSellerChat() {
           </div>
         )}
 
-        {/* Payment Pending Modal */}
-        {showPaymentPending && (
-          <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50 animate-in fade-in duration-200">
-            <div className="bg-card rounded-3xl p-6 mx-4 text-center animate-in zoom-in-95 duration-300">
-              <div className="w-20 h-20 mx-auto mb-4 bg-amber-100 rounded-full flex items-center justify-center">
-                <Clock className="w-12 h-12 text-amber-600" />
+        {/* Receipt Modal */}
+        {showReceipt && currentOrder?.receipt && (
+          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
+            <div className="bg-card w-full rounded-t-3xl p-4 animate-in slide-in-from-bottom duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-foreground">Transaction Receipt</h3>
+                <button onClick={() => setShowReceipt(false)}>
+                  <X className="w-6 h-6 text-muted-foreground" />
+                </button>
               </div>
-              <h2 className="text-2xl font-bold text-foreground mb-2">Payment Pending</h2>
-              <p className="text-muted-foreground mb-4">${offerAmount} held securely in escrow</p>
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
-                <p className="text-sm text-amber-700 flex items-center justify-center gap-2">
-                  <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
-                  Awaiting product delivery from seller
-                </p>
-                <p className="text-xs text-amber-600 mt-2">Complete payment after verifying the product</p>
+              <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-5 mb-4">
+                <div className="flex items-center justify-between mb-4">
+                  <Receipt className="w-8 h-8 text-white" />
+                  <span className="text-white/80 text-sm">Payment Confirmed</span>
+                </div>
+                <p className="text-3xl font-bold text-white">${currentOrder.receipt.amount}</p>
+                <p className="text-white/70 text-sm mt-1">{currentOrder.receipt.date} • {currentOrder.receipt.time}</p>
               </div>
-              <button
-                onClick={() => setShowPaymentPending(false)}
-                className="w-full bg-blue-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
-              >
-                Got it
-              </button>
+              <div className="space-y-3 mb-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Receipt ID</span>
+                  <span className="text-sm font-medium text-foreground">{currentOrder.receipt.id}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Product</span>
+                  <span className="text-sm text-foreground">{currentOrder.receipt.product}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Seller</span>
+                  <span className="text-sm text-foreground">{currentOrder.receipt.seller}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Buyer</span>
+                  <span className="text-sm text-foreground">{currentOrder.receipt.buyer}</span>
+                </div>
+                <div className="h-px bg-border my-2" />
+                <div className="flex items-center justify-between font-bold">
+                  <span className="text-foreground">Total Paid</span>
+                  <span className="text-foreground">${currentOrder.receipt.amount}</span>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors flex items-center justify-center gap-2">
+                  <Download className="w-4 h-4" />
+                  Download
+                </button>
+                <button className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors flex items-center justify-center gap-2">
+                  <Share2 className="w-4 h-4" />
+                  Share
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -1618,45 +1402,6 @@ export default function BuyerSellerChat() {
                 alt=""
                 className="max-w-full max-h-full object-contain rounded-lg"
               />
-            </div>
-          </div>
-        )}
-
-        {/* Rating Prompt */}
-        {showRatingPrompt && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50 animate-in fade-in duration-200">
-            <div className="bg-card rounded-3xl p-6 mx-4 max-w-sm animate-in zoom-in-95 duration-300">
-              <div className="text-center mb-4">
-                <div className="w-16 h-16 mx-auto mb-3 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold text-xl">JS</span>
-                </div>
-                <h2 className="text-xl font-bold text-foreground mb-1">Rate your experience</h2>
-                <p className="text-muted-foreground text-sm">How was your transaction with John?</p>
-              </div>
-              <div className="flex justify-center gap-2 mb-4">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button key={star} onClick={() => setRating(star)}>
-                    <Star
-                      className={cn(
-                        "w-8 h-8 transition-colors",
-                        star <= rating ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground",
-                      )}
-                    />
-                  </button>
-                ))}
-              </div>
-              <textarea
-                placeholder="Share your experience (optional)"
-                value={reviewText}
-                onChange={(e) => setReviewText(e.target.value)}
-                className="w-full bg-muted rounded-xl px-4 py-3 outline-none text-foreground resize-none h-24 mb-4"
-              />
-              <button
-                onClick={() => setShowRatingPrompt(false)}
-                className="w-full bg-blue-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
-              >
-                Submit Review
-              </button>
             </div>
           </div>
         )}
