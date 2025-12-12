@@ -291,8 +291,7 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
       case "accepted":
         return (
           <div className="space-y-2 mb-3">
-            <div className="flex items-center gap-2 text-xs text-emerald-600">
-              <Shield className="w-3 h-3" />
+            <div className="text-xs text-emerald-600">
               <span>Funds will be held securely until delivery</span>
             </div>
           </div>
@@ -301,8 +300,7 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
       case "payment":
         return (
           <div className="space-y-2 mb-3">
-            <div className="flex items-center gap-2 text-xs text-amber-600">
-              <Wallet className="w-3 h-3" />
+            <div className="text-xs text-amber-600">
               <span>
                 {order.status === "payment_pending" 
                   ? `Awaiting PIN confirmation` 
@@ -315,8 +313,7 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
       case "delivery":
         return (
           <div className="space-y-2 mb-3">
-            <div className="flex items-center gap-2 text-xs text-blue-600">
-              <Shield className="w-3 h-3" />
+            <div className="text-xs text-blue-600">
               <span>
                 {order.status === "delivery_pending" 
                   ? "Funds secured. Auto-refund in 24h if not delivered" 
@@ -329,8 +326,7 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
       case "completed":
         return (
           <div className="space-y-2 mb-3">
-            <div className="flex items-center gap-2 text-xs text-emerald-600">
-              <Check className="w-3 h-3" />
+            <div className="text-xs text-emerald-600">
               <span>Product received. Payment released to seller.</span>
             </div>
           </div>
@@ -339,8 +335,7 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
       case "refunded":
         return (
           <div className="space-y-2 mb-3">
-            <div className="flex items-center gap-2 text-xs text-slate-600">
-              <Wallet className="w-3 h-3" />
+            <div className="text-xs text-slate-600">
               <span>${order.total} refunded to your wallet</span>
             </div>
           </div>
