@@ -152,117 +152,132 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
   const StatusIcon = getStatusIcon ? getStatusIcon(order) : null
   const completedDate = completionDate ? completionDate(order) : null
   
+  const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
+  const { id, title, icon: Icon, iconColor, borderColor, isSeller, isBuyer, getStatusText, getStatusIcon, completionDate } = config
+  
+  const statusText = getStatusText(order)
+  const StatusIcon = getStatusIcon ? getStatusIcon(order) : null
+  const completedDate = completionDate ? completionDate(order) : null
+  
   const getActionButtons = () => {
-  switch (id) {
-    case "offer":
-      if (order.status === "offer") {
+    switch (id) {
+      case "offer":
+        if (order.status === "offer") {
+          return (
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => onAction("acceptOffer")}
+                className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1"
+              >
+                <Check className="w-4 h-4" />
+                Accept
+              </button>
+              <button className="flex-1 bg-secondary text-secondary-foreground py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors">
+                Counter
+              </button>
+            </div>
+          )
+        }
+        break
+        
+      case "accepted":
+        if (order.status === "accepted") {
+          return (
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => onAction("initiatePayment")}
+                className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1"
+              >
+                <Wallet className="w-4 h-4" />
+                Continue
+              </button>
+              <button
+                onClick={() => onAction("cancelOrder")}
+                className="px-4 bg-secondary text-secondary-foreground py-2 rounded-lg hover:bg-secondary/80 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )
+        }
+        break
+        
+      case "payment":
+        if (order.status === "payment_pending") {
+          return (
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => onAction("showPinModal")}
+                className="flex-1 bg-amber-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors flex items-center justify-center gap-1"
+              >
+                <Lock className="w-4 h-4" />
+                Enter PIN
+              </button>
+              <button
+                onClick={() => onAction("cancelOrder")}
+                className="px-4 bg-secondary text-secondary-foreground py-2 rounded-lg hover:bg-secondary/80 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )
+        }
+        break
+        
+      case "delivery":
+        if (order.status === "delivery_pending") {
+          return (
+            <>
+              <div className="mt-3 mb-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-xs text-amber-700 font-medium">
+                  ⚠️ Important: Only click "Confirm" when you have physically received the product. 
+                  Once confirmed, payment will be released to the seller and cannot be reversed.
+                </p>
+              </div>
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={() => onAction("completeDelivery")}
+                  className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-1"
+                >
+                  <Check className="w-4 h-4" />
+                  Confirm
+                </button>
+                <button
+                  onClick={() => onAction("cancelOrder")}
+                  className="flex-1 bg-secondary text-secondary-foreground py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </>
+          )
+        }
+        break
+        
+      case "completed":
         return (
-          <div className="flex gap-2">
-            <button
-              onClick={() => onAction("acceptOffer")}
-              className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1"
-            >
-              <Check className="w-4 h-4" />
-              Accept
-            </button>
-            <button className="flex-1 bg-secondary text-secondary-foreground py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors">
-              Counter
-            </button>
-          </div>
+          <button
+            onClick={() => onAction("showReceipt")}
+            className="w-full bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1 mt-4"
+          >
+            <Receipt className="w-4 h-4" />
+            View Receipt
+          </button>
         )
-      }
-      break
-      
-    case "accepted":
-      if (order.status === "accepted") {
+        
+      case "refunded":
         return (
-          <div className="flex gap-2">
-            <button
-              onClick={() => onAction("initiatePayment")}
-              className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1"
-            >
-              <Wallet className="w-4 h-4" />
-              Continue
-            </button>
-            <button
-              onClick={() => onAction("cancelOrder")}
-              className="px-4 bg-secondary text-secondary-foreground py-2 rounded-lg hover:bg-secondary/80 transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+          <button
+            onClick={() => onAction("showWalletBalance")}
+            className="w-full bg-slate-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors flex items-center justify-center gap-1 mt-4"
+          >
+            <Wallet className="w-4 h-4" />
+            Check Wallet
+          </button>
         )
-      }
-      break
-      
-    case "payment":
-      if (order.status === "payment_pending") {
-        return (
-          <div className="flex gap-2">
-            <button
-              onClick={() => onAction("showPinModal")}
-              className="flex-1 bg-amber-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors flex items-center justify-center gap-1"
-            >
-              <Lock className="w-4 h-4" />
-              Enter PIN
-            </button>
-            <button
-              onClick={() => onAction("cancelOrder")}
-              className="px-4 bg-secondary text-secondary-foreground py-2 rounded-lg hover:bg-secondary/80 transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        )
-      }
-      break
-      
-    case "delivery":
-      if (order.status === "delivery_pending") {
-        return (
-          <div className="flex gap-2">
-            <button
-              onClick={() => onAction("completeDelivery")}
-              className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-1"
-            >
-              <Check className="w-4 h-4" />
-              Confirm
-            </button>
-            <button
-              onClick={() => onAction("cancelOrder")}
-              className="flex-1 bg-secondary text-secondary-foreground py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors"
-            >
-              Cancel Order
-            </button>
-          </div>
-        )
-      }
-      break
-      
-    case "completed":
-      return (
-        <button
-          onClick={() => onAction("showReceipt")}
-          className="w-full bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1"
-        >
-          <Receipt className="w-4 h-4" />
-          View Receipt
-        </button>
-      )
-      
-    case "refunded":
-      return (
-        <button
-          onClick={() => onAction("showWalletBalance")}
-          className="w-full bg-slate-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors flex items-center justify-center gap-1"
-        >
-          <Wallet className="w-4 h-4" />
-          Check Wallet
-        </button>
-      )
+    }
+    return null
   }
-  return null
-}
 
   const getStepContent = () => {
     switch (id) {
@@ -388,6 +403,70 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
       </div>
     )
   }
+
+  // Buyer's step cards
+  if (isBuyer) {
+    const isCompleted = statusText === "Completed" || statusText === "Refunded"
+    const isCurrent = order.status === "payment_pending" && id === "payment" || 
+                     order.status === "delivery_pending" && id === "delivery" ||
+                     order.status === "accepted" && id === "accepted"
+    
+    return (
+      <div className="relative">
+        {/* Step Indicator for progress bar */}
+        {currentStep > 0 && (
+          <div className="absolute -left-8 top-4">
+            <div className={cn(
+              "w-5 h-5 rounded-full flex items-center justify-center border-2 transition-all duration-300",
+              isCompleted 
+                ? "bg-emerald-500 border-emerald-500" 
+                : "bg-white border-gray-300"
+            )}>
+              {isCompleted && <Check className="w-3 h-3 text-white" />}
+            </div>
+          </div>
+        )}
+        
+        {/* Card */}
+        <div className={`bg-card border ${borderColor} rounded-xl p-4 shadow-sm`}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Icon className={`w-5 h-5 ${iconColor}`} />
+              <span className="text-foreground text-sm font-semibold">{title}</span>
+            </div>
+            <span className="text-xs font-medium text-foreground">
+              ${order.total}
+            </span>
+          </div>
+          
+          {getStepContent()}
+          
+          {/* Status bar at bottom */}
+          <div className="mt-3 pt-3 border-t border-border">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className={cn(
+                  "w-2 h-2 rounded-full",
+                  isCompleted ? "bg-emerald-500" : "bg-amber-500"
+                )} />
+                <span className="text-xs text-muted-foreground">{statusText}</span>
+              </div>
+              {completedDate && (
+                <span className="text-xs text-muted-foreground">
+                  {completedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
+            </div>
+          </div>
+          
+          {getActionButtons()}
+        </div>
+      </div>
+    )
+  }
+
+  return null
+}
 
   // Buyer's step cards
   if (isBuyer) {
