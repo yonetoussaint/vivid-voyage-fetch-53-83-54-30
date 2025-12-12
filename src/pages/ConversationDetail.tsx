@@ -936,10 +936,9 @@ export default function BuyerSellerChat() {
           })}
 
           {/* Order Cards */}
-          
-          {/* Step 1: Seller's Offer Card */}
-          {currentOrder.status === "offer" && (
-            <div className="flex justify-start mb-2">
+          <div className="space-y-2 mb-3">
+            {/* Always show the original offer card */}
+            <div className="flex justify-start">
               <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0 text-[10px] font-bold text-white mr-1.5 mt-auto">
                 JS
               </div>
@@ -978,242 +977,334 @@ export default function BuyerSellerChat() {
                     </div>
                   </div>
                   
-                  <div className="flex gap-2">
+                  {/* Show different buttons based on order status */}
+                  {currentOrder.status === "offer" && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={acceptOffer}
+                        className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1"
+                      >
+                        <Check className="w-4 h-4" />
+                        Accept Offer
+                      </button>
+                      <button className="flex-1 bg-secondary text-secondary-foreground py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors">
+                        Counter
+                      </button>
+                    </div>
+                  )}
+                  {currentOrder.status === "accepted" && (
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2 mb-2">
+                      <div className="flex items-center gap-2 text-xs text-emerald-700">
+                        <Check className="w-3 h-3" />
+                        <span>Offer accepted • {currentOrder.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                    </div>
+                  )}
+                  {currentOrder.status === "payment_pending" && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 mb-2">
+                      <div className="flex items-center gap-2 text-xs text-amber-700">
+                        <Clock className="w-3 h-3" />
+                        <span>Payment pending • Awaiting PIN</span>
+                      </div>
+                    </div>
+                  )}
+                  {currentOrder.status === "delivery_pending" && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 mb-2">
+                      <div className="flex items-center gap-2 text-xs text-blue-700">
+                        <Truck className="w-3 h-3" />
+                        <span>Awaiting delivery • ${currentOrder.total} held securely</span>
+                      </div>
+                    </div>
+                  )}
+                  {currentOrder.status === "completed" && (
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2 mb-2">
+                      <div className="flex items-center gap-2 text-xs text-emerald-700">
+                        <Check className="w-3 h-3" />
+                        <span>Order completed • ${currentOrder.total} paid</span>
+                      </div>
+                    </div>
+                  )}
+                  {currentOrder.status === "refunded" && (
+                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 mb-2">
+                      <div className="flex items-center gap-2 text-xs text-slate-700">
+                        <X className="w-3 h-3" />
+                        <span>Order refunded • ${currentOrder.total} returned</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Step 1: Accepted Card (if accepted or beyond) */}
+            {["accepted", "payment_pending", "delivery_pending", "completed", "refunded"].includes(currentOrder.status) && (
+              <div className="flex justify-end">
+                <div className="max-w-[80%]">
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center">
+                          <Check className="w-3 h-3 text-emerald-600" />
+                        </div>
+                        <span className="text-emerald-800 text-sm font-semibold">Step 1: Offer Accepted</span>
+                      </div>
+                      <span className="text-xs text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full font-medium">
+                        ${currentOrder.total}
+                      </span>
+                    </div>
+                    
+                    <div className="space-y-2 mb-3">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-emerald-700">Item + Delivery</span>
+                        <span className="text-emerald-800 font-medium">${currentOrder.total}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-emerald-600">
+                        <Shield className="w-3 h-3" />
+                        <span>Funds will be held securely until delivery</span>
+                      </div>
+                    </div>
+                    
+                    {/* Only show action buttons if we're still on this step */}
+                    {currentOrder.status === "accepted" && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={initiatePayment}
+                          className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1"
+                        >
+                          <Wallet className="w-4 h-4" />
+                          Proceed to Payment
+                        </button>
+                        <button
+                          onClick={cancelOrder}
+                          className="px-4 bg-secondary text-secondary-foreground py-2 rounded-lg hover:bg-secondary/80 transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                    {/* Show status if we've moved past this step */}
+                    {currentOrder.status !== "accepted" && (
+                      <div className="text-center py-1">
+                        <span className="text-xs text-emerald-600 font-medium">✓ Completed</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Payment Card (if payment_pending or beyond) */}
+            {["payment_pending", "delivery_pending", "completed", "refunded"].includes(currentOrder.status) && (
+              <div className="flex justify-end">
+                <div className="max-w-[80%]">
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 rounded-full bg-amber-100 flex items-center justify-center">
+                          <Clock className="w-3 h-3 text-amber-600" />
+                        </div>
+                        <span className="text-amber-800 text-sm font-semibold">Step 2: Payment</span>
+                      </div>
+                      <span className="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full font-medium">
+                        ${currentOrder.total}
+                      </span>
+                    </div>
+                    
+                    <div className="space-y-2 mb-3">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-amber-700">Status</span>
+                        <span className={cn(
+                          "font-medium",
+                          currentOrder.status === "payment_pending" ? "text-amber-600" : "text-emerald-600"
+                        )}>
+                          {currentOrder.status === "payment_pending" ? "Pending" : "Paid"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-amber-600">
+                        <Wallet className="w-3 h-3" />
+                        <span>
+                          {currentOrder.status === "payment_pending" 
+                            ? `Awaiting PIN confirmation` 
+                            : `$${currentOrder.total} paid from wallet`}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Show action button if payment is pending */}
+                    {currentOrder.status === "payment_pending" && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setShowPinModal(true)}
+                          className="flex-1 bg-amber-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors flex items-center justify-center gap-1"
+                        >
+                          <Lock className="w-4 h-4" />
+                          Enter PIN
+                        </button>
+                        <button
+                          onClick={cancelOrder}
+                          className="px-4 bg-secondary text-secondary-foreground py-2 rounded-lg hover:bg-secondary/80 transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                    {/* Show status if we've moved past this step */}
+                    {currentOrder.status !== "payment_pending" && (
+                      <div className="text-center py-1">
+                        <span className="text-xs text-emerald-600 font-medium">✓ Completed</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Delivery Card (if delivery_pending or beyond) */}
+            {["delivery_pending", "completed", "refunded"].includes(currentOrder.status) && (
+              <div className="flex justify-end">
+                <div className="max-w-[80%]">
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
+                          <Truck className="w-3 h-3 text-blue-600" />
+                        </div>
+                        <span className="text-blue-800 text-sm font-semibold">Step 3: Delivery</span>
+                      </div>
+                      <span className="text-xs text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full font-medium">
+                        ${currentOrder.total}
+                      </span>
+                    </div>
+                    
+                    <div className="space-y-2 mb-3">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-blue-700">Status</span>
+                        <span className={cn(
+                          "font-medium",
+                          currentOrder.status === "delivery_pending" ? "text-amber-600" : "text-emerald-600"
+                        )}>
+                          {currentOrder.status === "delivery_pending" 
+                            ? "Awaiting Delivery" 
+                            : currentOrder.status === "completed" 
+                              ? "Delivered" 
+                              : "Cancelled"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-blue-600">
+                        <Shield className="w-3 h-3" />
+                        <span>
+                          {currentOrder.status === "delivery_pending" 
+                            ? "Funds secured. Auto-refund in 24h if not delivered" 
+                            : currentOrder.status === "completed" 
+                              ? "Product received. Payment released to seller" 
+                              : "Order cancelled. Refund processed"}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Show action buttons if delivery is pending */}
+                    {currentOrder.status === "delivery_pending" && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={completeDelivery}
+                          className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-1"
+                        >
+                          <Check className="w-4 h-4" />
+                          Confirm Delivery
+                        </button>
+                        <button
+                          onClick={cancelOrder}
+                          className="flex-1 bg-secondary text-secondary-foreground py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors"
+                        >
+                          Cancel Order
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Receipt Card (if completed) */}
+            {currentOrder.status === "completed" && currentOrder.receipt && (
+              <div className="flex justify-end">
+                <div className="max-w-[80%]">
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center">
+                          <Check className="w-3 h-3 text-emerald-600" />
+                        </div>
+                        <span className="text-emerald-800 text-sm font-semibold">Order Completed</span>
+                      </div>
+                      <span className="text-xs text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full font-medium">
+                        ${currentOrder.total}
+                      </span>
+                    </div>
+                    
+                    <div className="space-y-2 mb-3">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-emerald-700">Status</span>
+                        <span className="text-emerald-600 font-medium">Delivered & Paid</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-emerald-600">
+                        <Check className="w-3 h-3" />
+                        <span>Product received. Payment released to seller.</span>
+                      </div>
+                    </div>
+                    
                     <button
-                      onClick={acceptOffer}
-                      className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1"
+                      onClick={() => setShowReceipt(true)}
+                      className="w-full bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1"
                     >
-                      <Check className="w-4 h-4" />
-                      Accept Offer
-                    </button>
-                    <button className="flex-1 bg-secondary text-secondary-foreground py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors">
-                      Counter
+                      <Receipt className="w-4 h-4" />
+                      View Receipt
                     </button>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Step 1: Accepted Offer Card */}
-          {currentOrder.status === "accepted" && (
-            <div className="flex justify-end mb-2">
-              <div className="max-w-[80%]">
-                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 shadow-sm">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center">
-                        <Check className="w-3 h-3 text-emerald-600" />
+            {/* Refund Card (if refunded) */}
+            {currentOrder.status === "refunded" && (
+              <div className="flex justify-end">
+                <div className="max-w-[80%]">
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center">
+                          <X className="w-3 h-3 text-slate-600" />
+                        </div>
+                        <span className="text-slate-800 text-sm font-semibold">Order Refunded</span>
                       </div>
-                      <span className="text-emerald-800 text-sm font-semibold">Step 1: Offer Accepted</span>
+                      <span className="text-xs text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full font-medium">
+                        ${currentOrder.total}
+                      </span>
                     </div>
-                    <span className="text-xs text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full font-medium">
-                      ${currentOrder.total}
-                    </span>
-                  </div>
-                  
-                  <div className="space-y-2 mb-3">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-emerald-700">Item + Delivery</span>
-                      <span className="text-emerald-800 font-medium">${currentOrder.total}</span>
+                    
+                    <div className="space-y-2 mb-3">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-700">Status</span>
+                        <span className="text-emerald-600 font-medium">Refunded to wallet</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-slate-600">
+                        <Wallet className="w-3 h-3" />
+                        <span>${currentOrder.total} refunded to your wallet</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-emerald-600">
-                      <Shield className="w-3 h-3" />
-                      <span>Funds will be held securely until delivery</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-2">
+                    
                     <button
-                      onClick={initiatePayment}
-                      className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1"
+                      onClick={() => setShowWalletBalance(true)}
+                      className="w-full bg-slate-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors flex items-center justify-center gap-1"
                     >
                       <Wallet className="w-4 h-4" />
-                      Proceed to Payment
-                    </button>
-                    <button
-                      onClick={cancelOrder}
-                      className="px-4 bg-secondary text-secondary-foreground py-2 rounded-lg hover:bg-secondary/80 transition-colors"
-                    >
-                      <X className="w-4 h-4" />
+                      Check Wallet
                     </button>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
-
-          {/* Step 2: Payment Pending Card */}
-          {currentOrder.status === "payment_pending" && (
-            <div className="flex justify-end mb-2">
-              <div className="max-w-[80%]">
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 shadow-sm">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 rounded-full bg-amber-100 flex items-center justify-center">
-                        <Clock className="w-3 h-3 text-amber-600" />
-                      </div>
-                      <span className="text-amber-800 text-sm font-semibold">Step 2: Payment Pending</span>
-                    </div>
-                    <span className="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full font-medium">
-                      ${currentOrder.total}
-                    </span>
-                  </div>
-                  
-                  <div className="space-y-2 mb-3">
-                    <div className="flex items-center gap-2 text-xs text-amber-600">
-                      <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
-                      <span>Awaiting PIN confirmation</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-amber-600">
-                      <Wallet className="w-3 h-3" />
-                      <span>${currentOrder.total} will be deducted from wallet</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setShowPinModal(true)}
-                      className="flex-1 bg-amber-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors flex items-center justify-center gap-1"
-                    >
-                      <Lock className="w-4 h-4" />
-                      Enter PIN
-                    </button>
-                    <button
-                      onClick={cancelOrder}
-                      className="px-4 bg-secondary text-secondary-foreground py-2 rounded-lg hover:bg-secondary/80 transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Step 3: Delivery Pending Card */}
-          {currentOrder.status === "delivery_pending" && (
-            <div className="flex justify-end mb-2">
-              <div className="max-w-[80%]">
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 shadow-sm">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
-                        <Truck className="w-3 h-3 text-blue-600" />
-                      </div>
-                      <span className="text-blue-800 text-sm font-semibold">Step 3: Awaiting Delivery</span>
-                    </div>
-                    <span className="text-xs text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full font-medium">
-                      ${currentOrder.total}
-                    </span>
-                  </div>
-                  
-                  <div className="space-y-2 mb-3">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-blue-700">Payment status</span>
-                      <span className="text-emerald-600 font-medium">Paid - Held securely</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-blue-600">
-                      <Shield className="w-3 h-3" />
-                      <span>Funds secured. Auto-refund in 24h if not delivered</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-blue-600">
-                      <Clock className="w-3 h-3" />
-                      <span>Seller has 24 hours to deliver the product</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <button
-                      onClick={completeDelivery}
-                      className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-1"
-                    >
-                      <Check className="w-4 h-4" />
-                      Confirm Delivery
-                    </button>
-                    <button
-                      onClick={cancelOrder}
-                      className="flex-1 bg-secondary text-secondary-foreground py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors"
-                    >
-                      Cancel Order
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Completed Order Card */}
-          {currentOrder.status === "completed" && currentOrder.receipt && (
-            <div className="flex justify-end mb-2">
-              <div className="max-w-[80%]">
-                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 shadow-sm">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center">
-                        <Check className="w-3 h-3 text-emerald-600" />
-                      </div>
-                      <span className="text-emerald-800 text-sm font-semibold">Order Completed</span>
-                    </div>
-                    <span className="text-xs text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full font-medium">
-                      ${currentOrder.total}
-                    </span>
-                  </div>
-                  
-                  <div className="space-y-2 mb-3">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-emerald-700">Status</span>
-                      <span className="text-emerald-600 font-medium">Delivered & Paid</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-emerald-600">
-                      <Check className="w-3 h-3" />
-                      <span>Product received. Payment released to seller.</span>
-                    </div>
-                  </div>
-                  
-                  <button
-                    onClick={() => setShowReceipt(true)}
-                    className="w-full bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1"
-                  >
-                    <Receipt className="w-4 h-4" />
-                    View Receipt
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Refunded Order Card */}
-          {currentOrder.status === "refunded" && (
-            <div className="flex justify-end mb-2">
-              <div className="max-w-[80%]">
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 shadow-sm">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center">
-                        <X className="w-3 h-3 text-slate-600" />
-                      </div>
-                      <span className="text-slate-800 text-sm font-semibold">Order Refunded</span>
-                    </div>
-                    <span className="text-xs text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full font-medium">
-                      ${currentOrder.total}
-                    </span>
-                  </div>
-                  
-                  <div className="space-y-2 mb-3">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-700">Status</span>
-                      <span className="text-emerald-600 font-medium">Refunded to wallet</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-slate-600">
-                      <Wallet className="w-3 h-3" />
-                      <span>${currentOrder.total} refunded to your wallet</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Typing indicator */}
           {isTyping && (
