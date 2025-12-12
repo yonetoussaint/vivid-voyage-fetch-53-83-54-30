@@ -422,11 +422,6 @@ export default function BuyerSellerChat() {
     if (value && index < 3) {
       pinInputRefs.current[index + 1]?.focus()
     }
-
-    // If all digits entered, process payment
-    if (newPin.every(digit => digit !== "") && index === 3) {
-      processPayment()
-    }
   }
 
   const handlePinKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -439,80 +434,89 @@ export default function BuyerSellerChat() {
     if (!currentOrder) return
     
     const total = currentOrder.total
-    if (total > walletBalance) {
-      alert("Insufficient funds")
-      setPin(["", "", "", ""])
-      setShowPinModal(false)
-      return
-    }
-
-    // Simulate payment processing
-    setTimeout(() => {
-      setWalletBalance(prev => prev - total)
-      
-      setCurrentOrder(prev => ({ 
-        ...prev, 
-        status: "delivery_pending",
-        step: 3
-      }))
-      
-      setShowPinModal(false)
-      
-      // Add payment message
-      const paymentMessage: Message = {
-        id: messages.length + 1,
-        sender: "buyer",
-        text: `Payment of $${total} completed via wallet. Funds held securely.`,
-        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        timestamp: new Date(),
-        status: "sent",
+    
+    // If we're confirming delivery (releasing funds to seller)
+    if (currentOrder.status === "delivery_pending") {
+      // Simulate processing
+      setTimeout(() => {
+        // Complete the order
+        const receipt: ReceiptData = {
+          id: `RCPT-${Date.now()}`,
+          amount: currentOrder.amount,
+          deliveryFee: currentOrder.deliveryFee,
+          total: currentOrder.total,
+          date: new Date().toLocaleDateString(),
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          product: "iPhone 15 Pro Max",
+          seller: "John Seller",
+          buyer: "You",
+        }
+        
+        setCurrentOrder(prev => ({ 
+          ...prev, 
+          status: "completed",
+          receipt 
+        }))
+        
+        setShowPinModal(false)
+        setPin(["", "", "", ""])
+        
+        // Add completion message
+        const completionMessage: Message = {
+          id: messages.length + 1,
+          sender: "buyer",
+          text: `Order completed. Payment of $${total} released to seller.`,
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          timestamp: new Date(),
+          status: "sent",
+        }
+        setMessages(prev => [...prev, completionMessage])
+        setTimeout(scrollToBottom, 100)
+      }, 1000)
+    } 
+    // If we're making initial payment
+    else if (currentOrder.status === "payment_pending") {
+      if (total > walletBalance) {
+        alert("Insufficient funds")
+        setPin(["", "", "", ""])
+        setShowPinModal(false)
+        return
       }
-      setMessages(prev => [...prev, paymentMessage])
-      setTimeout(scrollToBottom, 100)
-    }, 1000)
+
+      // Simulate payment processing
+      setTimeout(() => {
+        setWalletBalance(prev => prev - total)
+        
+        setCurrentOrder(prev => ({ 
+          ...prev, 
+          status: "delivery_pending",
+          step: 3
+        }))
+        
+        setShowPinModal(false)
+        setPin(["", "", "", ""])
+        
+        // Add payment message
+        const paymentMessage: Message = {
+          id: messages.length + 1,
+          sender: "buyer",
+          text: `Payment of $${total} completed via wallet. Funds held securely.`,
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          timestamp: new Date(),
+          status: "sent",
+        }
+        setMessages(prev => [...prev, paymentMessage])
+        setTimeout(scrollToBottom, 100)
+      }, 1000)
+    }
   }
 
   const completeDelivery = () => {
     if (!currentOrder) return
     
+    // When confirming delivery, we need to release funds to seller
+    // This should show PIN modal to confirm release of funds
     setShowPinModal(true)
-  }
-
-  const finalizePayment = () => {
-    if (!currentOrder) return
-    
-    // Complete order with receipt
-    const receipt: ReceiptData = {
-      id: `RCPT-${Date.now()}`,
-      amount: currentOrder.amount,
-      deliveryFee: currentOrder.deliveryFee,
-      total: currentOrder.total,
-      date: new Date().toLocaleDateString(),
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      product: "iPhone 15 Pro Max",
-      seller: "John Seller",
-      buyer: "You",
-    }
-    
-    setCurrentOrder(prev => ({ 
-      ...prev, 
-      status: "completed",
-      receipt 
-    }))
-    
-    setShowPinModal(false)
-    
-    // Add completion message
-    const completionMessage: Message = {
-      id: messages.length + 1,
-      sender: "buyer",
-      text: `Order completed. Product received successfully.`,
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      timestamp: new Date(),
-      status: "sent",
-    }
-    setMessages(prev => [...prev, completionMessage])
-    setTimeout(scrollToBottom, 100)
   }
 
   const cancelOrder = () => {
@@ -521,8 +525,10 @@ export default function BuyerSellerChat() {
       status: "refunded"
     }))
     
-    // Refund to wallet
-    setWalletBalance(prev => prev + (currentOrder?.total || 0))
+    // Refund to wallet (only if payment was made)
+    if (["payment_pending", "delivery_pending", "completed"].includes(currentOrder.status)) {
+      setWalletBalance(prev => prev + (currentOrder?.total || 0))
+    }
     
     // Add cancellation message
     const cancellationMessage: Message = {
@@ -1533,6 +1539,19 @@ export default function BuyerSellerChat() {
                   className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors"
                 >
                   Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    // Check if PIN is entered
+                    if (pin.every(digit => digit !== "")) {
+                      processPayment()
+                    } else {
+                      alert("Please enter your 4-digit PIN")
+                    }
+                  }}
+                  className="flex-1 bg-blue-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
+                >
+                  {currentOrder.status === "payment_pending" ? "Confirm" : "Release Funds"}
                 </button>
               </div>
             </div>
