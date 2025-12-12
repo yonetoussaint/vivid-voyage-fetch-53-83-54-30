@@ -11,27 +11,13 @@ import {
   Plus,
   Smile,
   Send,
-  MapPin,
   DollarSign,
   Package,
   Star,
-  Shield,
-  CheckCircle,
   X,
   CreditCard,
-  Truck,
-  Calendar,
-  PhoneCall,
-  MicOff,
-  Volume2,
-  Reply,
-  Zap,
-  Lock,
-  ArrowDown,
-  Search,
   MoreVertical,
   ArrowLeft,
-  Video,
   Pin,
   PinOff,
   Copy,
@@ -41,13 +27,10 @@ import {
   Clock,
   Check,
   CheckCheck,
-  AlertTriangle,
   Eye,
   ImageIcon as ImageIcon2,
   Play,
   Pause,
-  ChevronDown,
-  ChevronUp,
   ChevronRight,
   Heart,
   Share2,
@@ -55,7 +38,6 @@ import {
   Bell,
   BellOff,
   BadgeCheck,
-  ShieldCheck,
   Download,
   LayoutGrid,
   List,
@@ -71,7 +53,7 @@ type Message = {
   timestamp: Date
   hasImages?: boolean
   images?: string[]
-  type?: "text" | "offer" | "location" | "voice" | "system"
+  type?: "text" | "offer" | "voice" | "system"
   status?: "sent" | "delivered" | "read"
   reactions?: { emoji: string; count: number; users: string[] }[]
   replyTo?: number
@@ -80,8 +62,6 @@ type Message = {
   voiceDuration?: number
   isStarred?: boolean
   isDeleted?: boolean
-  translatedText?: string
-  linkPreview?: { title: string; description: string; image: string; url: string }
 }
 
 export default function BuyerSellerChat() {
@@ -188,14 +168,10 @@ export default function BuyerSellerChat() {
   const [showScrollToBottom, setShowScrollToBottom] = useState(false)
   const [showSellerProfile, setShowSellerProfile] = useState(false)
   const [showReportModal, setShowReportModal] = useState(false)
-  const [showScheduleModal, setShowScheduleModal] = useState(false)
-  const [showLocationPicker, setShowLocationPicker] = useState(false)
   const [showOfferModal, setShowOfferModal] = useState(false)
-  const [showInsuranceModal, setShowInsuranceModal] = useState(false)
   const [showReceiptModal, setShowReceiptModal] = useState(false)
   const [showCompletionCelebration, setShowCompletionCelebration] = useState(false)
   const [showRatingPrompt, setShowRatingPrompt] = useState(false)
-  const [pinnedMessagesExpanded, setPinnedMessagesExpanded] = useState(false)
   const [messageActionsId, setMessageActionsId] = useState<number | null>(null)
 
   // Reply state
@@ -211,9 +187,6 @@ export default function BuyerSellerChat() {
   const [activeCall, setActiveCall] = useState<null | "audio" | "video">(null)
   const [callState, setCallState] = useState<"idle" | "ringing" | "active">("idle")
   const [callDuration, setCallDuration] = useState(0)
-  const [isAudioMuted, setIsAudioMuted] = useState(false)
-  const [isVideoOff, setIsVideoOff] = useState(false)
-  const [isSpeakerOn, setIsSpeakerOn] = useState(false)
 
   // Typing indicator
   const [isTyping, setIsTyping] = useState(true)
@@ -226,11 +199,6 @@ export default function BuyerSellerChat() {
   const [offerAmount, setOfferAmount] = useState("")
   const [offerMessage, setOfferMessage] = useState("")
 
-  // Schedule
-  const [selectedDate, setSelectedDate] = useState("")
-  const [selectedTime, setSelectedTime] = useState("")
-  const [selectedLocation, setSelectedLocation] = useState("")
-
   // Rating
   const [rating, setRating] = useState(0)
   const [reviewText, setReviewText] = useState("")
@@ -238,12 +206,13 @@ export default function BuyerSellerChat() {
   // Notifications
   const [notificationsMuted, setNotificationsMuted] = useState(false)
 
-  // Translation
-  const [showTranslation, setShowTranslation] = useState(false)
-
   // Image viewer
   const [viewingImage, setViewingImage] = useState<string | null>(null)
   const [mediaGalleryView, setMediaGalleryView] = useState<"grid" | "list">("grid")
+
+  // Emoji state
+  const [reactionEmojis, setReactionEmojis] = useState<string[]>(["👍", "❤️", "😂", "😮", "😢", "🙏", "🔥", "🤝"])
+  const [allEmojis, setAllEmojis] = useState<string[]>([])
 
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -258,17 +227,10 @@ export default function BuyerSellerChat() {
     : []
   const filteredMessages = searchQuery ? searchResults : messages
 
-  // Emojis for reactions
-  const reactionEmojis = ["👍", "❤️", "😂", "😮", "😢", "🙏", "🔥", "🤝"]
-  const allEmojis = [
-    "😀", "😃", "😄", "😁", "😅", "😂", "🤣", "😊", "😇", "🙂", "😉", "😌", "😍", "🥰", "😘", "😗", "😙", "😚", "😋", "😛", "😜", "🤪", "😝", "🤑", "🤗", "🤭", "🤫", "🤔", "🤐", "🤨", "😐", "😑", "😶", "😏", "😒", "🙄", "😬", "😮", "🥱", "😴", "🤤", "😪", "😵", "🤯", "🤠", "🥳", "🥸", "😎", "🤓", "🧐", "😕", "😟", "🙁", "😮", "😯", "😲", "😳", "🥺", "😦", "😧", "👍", "👎", "👌", "🤌", "🤏", "✌️", "🤞", "🤟", "🤘", "🤙", "👈", "👉", "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎", "💔", "❤️‍🔥", "💕", "🔥", "✨", "💫", "⭐", "🌟", "💥", "💢", "💦", "💨", "🎉", "🎊", "🎁",
-  ]
-
   // Quick replies
   const quickReplies = [
     "Is this still available?",
     "What's your best price?",
-    "Can we meet today?",
     "Can you send more photos?",
     "Is the price negotiable?",
     "Where are you located?",
@@ -277,31 +239,47 @@ export default function BuyerSellerChat() {
   // Quick actions
   const quickActions = [
     { icon: DollarSign, label: "Offer", color: "text-emerald-600", action: () => setShowOfferModal(true) },
-    { icon: MapPin, label: "Location", color: "text-blue-600", action: () => setShowLocationPicker(true) },
-    { icon: Calendar, label: "Schedule", color: "text-orange-600", action: () => setShowScheduleModal(true) },
     { icon: ImageIcon, label: "Photos", color: "text-purple-600" },
     { icon: CreditCard, label: "Payment", color: "text-pink-600", action: () => setShowPaymentModal(true) },
-    { icon: Truck, label: "Shipping", color: "text-cyan-600" },
-    { icon: Shield, label: "Insurance", color: "text-amber-600", action: () => setShowInsuranceModal(true) },
     { icon: Receipt, label: "Receipt", color: "text-slate-600", action: () => setShowReceiptModal(true) },
   ]
 
   // Payment methods
   const paymentMethods = [
     { id: "cash", name: "Cash on Delivery", desc: "Pay when you receive the item", icon: DollarSign, color: "emerald" },
-    { id: "escrow", name: "Secure Escrow", desc: "Payment held until confirmed", icon: Shield, color: "blue" },
+    { id: "escrow", name: "Secure Escrow", desc: "Payment held until confirmed", icon: CreditCard, color: "blue" },
     { id: "moncash", name: "Moncash", desc: "Mobile money transfer", initial: "M", color: "blue" },
     { id: "natcash", name: "Natcash", desc: "Mobile money transfer", initial: "N", color: "orange" },
     { id: "card", name: "Card Payment", desc: "Credit or debit card", icon: CreditCard, color: "purple" },
   ]
 
-  // Safe locations
-  const safeLocations = [
-    { id: "1", name: "Police Station Lobby", address: "123 Safety Ave", rating: 5, verified: true },
-    { id: "2", name: "Starbucks Downtown", address: "456 Main St", rating: 4.8, verified: true },
-    { id: "3", name: "Mall Food Court", address: "789 Shopping Blvd", rating: 4.5, verified: true },
-    { id: "4", name: "Public Library", address: "321 Book Lane", rating: 4.7, verified: true },
-  ]
+  // Fetch emojis from API
+  useEffect(() => {
+    const fetchEmojis = async () => {
+      try {
+        const response = await fetch('https://emojihub.yurace.pro/api/all')
+        const data = await response.json()
+        
+        // Extract emojis from the API response
+        const emojis = data.map((item: any) => item.unicode).filter(Boolean)
+        setAllEmojis(emojis.slice(0, 64)) // Limit to first 64 emojis for performance
+        
+        // Set popular reaction emojis
+        setReactionEmojis(["👍", "❤️", "😂", "😮", "😢", "🙏", "🔥", "🤝"])
+      } catch (error) {
+        console.error('Failed to fetch emojis:', error)
+        // Fallback to default emojis if API fails
+        setAllEmojis([
+          "😀", "😃", "😄", "😁", "😅", "😂", "🤣", "😊", "😇", "🙂", "😉", "😌", "😍", "🥰", "😘", "😗",
+          "😙", "😚", "😋", "😛", "😜", "🤪", "😝", "🤑", "🤗", "🤭", "🤫", "🤔", "🤐", "🤨", "😐", "😑",
+          "😶", "😏", "😒", "🙄", "😬", "😮", "🥱", "😴", "🤤", "😪", "😵", "🤯", "🤠", "🥳", "🥸", "😎",
+          "🤓", "🧐", "😕", "😟", "🙁", "😮", "😯", "😲", "😳", "🥺", "😦", "😧", "👍", "👎", "👌", "🤌"
+        ])
+      }
+    }
+
+    fetchEmojis()
+  }, [])
 
   // Effects
   useEffect(() => {
@@ -535,7 +513,7 @@ export default function BuyerSellerChat() {
                   <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-500 cursor-help" />
                   <div className="absolute left-0 top-6 w-48 bg-popover border border-border rounded-lg p-2 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
                     <div className="flex items-center gap-2 mb-1">
-                      <ShieldCheck className="w-4 h-4 text-blue-500" />
+                      <BadgeCheck className="w-4 h-4 text-blue-500" />
                       <span className="text-xs font-medium text-foreground">Verified Seller</span>
                     </div>
                     <p className="text-xs text-muted-foreground">ID verified, 127 successful sales, 4.9 rating</p>
@@ -610,7 +588,7 @@ export default function BuyerSellerChat() {
                       }}
                       className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors"
                     >
-                      <Search className="w-4 h-4 text-muted-foreground" />
+                      <MoreVertical className="w-4 h-4 text-muted-foreground" />
                       <span className="text-sm text-foreground">Search in chat</span>
                     </button>
                     <button
@@ -699,16 +677,6 @@ export default function BuyerSellerChat() {
         {/* Chat Content */}
         <div ref={chatContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-3 py-3 scroll-smooth">
           <div className="text-center text-muted-foreground text-xs mb-3 uppercase tracking-wide">Today</div>
-
-          {/* Encryption Notice */}
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <div className="h-px flex-1 bg-border" />
-            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-muted rounded-full">
-              <Lock className="w-3 h-3 text-muted-foreground" />
-              <p className="text-[10px] text-muted-foreground">End-to-end encrypted</p>
-            </div>
-            <div className="h-px flex-1 bg-border" />
-          </div>
 
           {/* Media Gallery Inline */}
           {showMediaGallery && (
@@ -932,7 +900,7 @@ export default function BuyerSellerChat() {
                       <Smile className="w-4 h-4 text-muted-foreground" />
                     </button>
                     <button onClick={() => setReplyingTo(msg)} className="p-1 hover:bg-muted rounded">
-                      <Reply className="w-4 h-4 text-muted-foreground" />
+                      <MoreVertical className="w-4 h-4 text-muted-foreground" />
                     </button>
                     <button
                       onClick={() => setMessageActionsId(messageActionsId === msg.id ? null : msg.id)}
@@ -1040,27 +1008,6 @@ export default function BuyerSellerChat() {
           })}
 
           {/* Special Cards */}
-          {/* Warranty Card */}
-          <div className="bg-card border border-border rounded-xl p-3 mb-2 max-w-[85%] shadow-sm">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                <Shield className="w-4 h-4 text-blue-600" />
-              </div>
-              <div>
-                <span className="text-foreground text-sm font-medium">Warranty Information</span>
-                <p className="text-xs text-muted-foreground">Apple Limited Warranty</p>
-              </div>
-            </div>
-            <div className="bg-muted rounded-lg p-2 flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Valid until</span>
-              <span className="text-sm font-medium text-foreground">June 15, 2025</span>
-            </div>
-            <div className="flex items-center gap-1 mt-2">
-              <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
-              <span className="text-xs text-emerald-600">6 months remaining - Transferable</span>
-            </div>
-          </div>
-
           {/* Counter Offer Card */}
           <div className="bg-card border-2 border-amber-400 rounded-xl p-3 mb-2 max-w-[90%] shadow-sm">
             <div className="flex items-center justify-between mb-2">
@@ -1100,57 +1047,6 @@ export default function BuyerSellerChat() {
             </div>
           </div>
 
-          {/* Meeting Proposal Card */}
-          <div className="bg-card border border-border rounded-xl p-3 mb-2 max-w-[90%] shadow-sm">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                <MapPin className="w-4 h-4 text-blue-600" />
-              </div>
-              <span className="text-foreground text-sm font-semibold">Meeting Proposal</span>
-            </div>
-            {[
-              {
-                icon: MapPin,
-                title: "Starbucks Downtown",
-                desc: "123 Main St - Verified safe location",
-                color: "text-blue-600",
-              },
-              { icon: Calendar, title: "Tomorrow, Dec 11", desc: "3:00 PM - 4:00 PM", color: "text-orange-600" },
-              {
-                icon: Truck,
-                title: "In-person exchange",
-                desc: "Inspect item before payment",
-                color: "text-purple-600",
-              },
-            ].map(({ icon: Icon, title, desc, color }) => (
-              <div key={title} className="flex items-start gap-2 mb-2">
-                <Icon className={cn("w-4 h-4 mt-0.5", color)} />
-                <div>
-                  <p className="text-foreground text-sm font-medium">{title}</p>
-                  <p className="text-muted-foreground text-xs">{desc}</p>
-                </div>
-              </div>
-            ))}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 mb-3">
-              <p className="text-blue-700 text-xs flex items-center gap-1">
-                <Zap className="w-3 h-3" />
-                Always meet in safe, public places during daylight
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <button className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-1">
-                <Calendar className="w-4 h-4" />
-                Confirm
-              </button>
-              <button
-                onClick={() => setShowScheduleModal(true)}
-                className="flex-1 bg-secondary text-secondary-foreground py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors"
-              >
-                Reschedule
-              </button>
-            </div>
-          </div>
-
           {/* Typing indicator */}
           {isTyping && (
             <div className="flex items-start gap-2 mb-2">
@@ -1178,14 +1074,14 @@ export default function BuyerSellerChat() {
             onClick={scrollToBottom}
             className="absolute bottom-36 right-4 w-10 h-10 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center hover:scale-105 transition-transform z-10"
           >
-            <ArrowDown className="w-5 h-5" />
+            <MoreVertical className="w-5 h-5" />
           </button>
         )}
 
         {/* Reply/Edit Preview */}
         {(replyingTo || editingMessage) && (
           <div className="px-3 py-2 bg-muted border-t border-border flex items-center gap-2">
-            {replyingTo ? <Reply className="w-4 h-4 text-blue-500" /> : <Edit3 className="w-4 h-4 text-amber-500" />}
+            {replyingTo ? <MoreVertical className="w-4 h-4 text-blue-500" /> : <Edit3 className="w-4 h-4 text-amber-500" />}
             <div className="flex-1 min-w-0">
               <p className="text-xs text-muted-foreground">
                 {replyingTo ? `Replying to ${replyingTo.sender === "buyer" ? "yourself" : "John"}` : "Editing message"}
@@ -1311,20 +1207,26 @@ export default function BuyerSellerChat() {
           <>
             <div className="fixed inset-0 z-40" onClick={() => setShowEmojiPicker(false)} />
             <div className="absolute bottom-16 left-2 right-2 bg-popover border border-border rounded-xl shadow-xl p-3 z-50 animate-in slide-in-from-bottom duration-200 max-h-64 overflow-y-auto">
-              <div className="grid grid-cols-8 gap-1">
-                {allEmojis.map((emoji) => (
-                  <button
-                    key={emoji}
-                    onClick={() => {
-                      setMessage((prev) => prev + emoji)
-                      setShowEmojiPicker(false)
-                    }}
-                    className="w-9 h-9 flex items-center justify-center hover:bg-muted rounded-lg text-xl transition-transform hover:scale-110"
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
+              {allEmojis.length > 0 ? (
+                <div className="grid grid-cols-8 gap-1">
+                  {allEmojis.map((emoji) => (
+                    <button
+                      key={emoji}
+                      onClick={() => {
+                        setMessage((prev) => prev + emoji)
+                        setShowEmojiPicker(false)
+                      }}
+                      className="w-9 h-9 flex items-center justify-center hover:bg-muted rounded-lg text-xl transition-transform hover:scale-110"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-20">
+                  <p className="text-muted-foreground">Loading emojis...</p>
+                </div>
+              )}
             </div>
           </>
         )}
@@ -1379,7 +1281,7 @@ export default function BuyerSellerChat() {
                           <p className="text-xs text-muted-foreground">{desc}</p>
                         </div>
                       </div>
-                      {selectedPayment === id && <CheckCircle className="w-5 h-5 text-emerald-600 fill-emerald-600" />}
+                      {selectedPayment === id && <Check className="w-5 h-5 text-emerald-600" />}
                     </div>
                   </button>
                 ))}
@@ -1448,98 +1350,6 @@ export default function BuyerSellerChat() {
           </div>
         )}
 
-        {/* Schedule Modal */}
-        {showScheduleModal && (
-          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
-            <div className="bg-card w-full rounded-t-3xl p-4 max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-foreground">Schedule Meeting</h3>
-                <button onClick={() => setShowScheduleModal(false)}>
-                  <X className="w-6 h-6 text-muted-foreground" />
-                </button>
-              </div>
-
-              <div className="mb-4">
-                <label className="text-sm text-muted-foreground mb-2 block">Select date</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {["Today", "Tomorrow", "Dec 13"].map((date) => (
-                    <button
-                      key={date}
-                      onClick={() => setSelectedDate(date)}
-                      className={cn(
-                        "py-2 rounded-lg text-sm font-medium transition-colors",
-                        selectedDate === date ? "bg-blue-600 text-white" : "bg-muted text-foreground hover:bg-muted/80",
-                      )}
-                    >
-                      {date}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <label className="text-sm text-muted-foreground mb-2 block">Select time</label>
-                <div className="grid grid-cols-4 gap-2">
-                  {["10:00 AM", "12:00 PM", "2:00 PM", "4:00 PM", "5:00 PM", "6:00 PM"].map((time) => (
-                    <button
-                      key={time}
-                      onClick={() => setSelectedTime(time)}
-                      className={cn(
-                        "py-2 rounded-lg text-xs font-medium transition-colors",
-                        selectedTime === time ? "bg-blue-600 text-white" : "bg-muted text-foreground hover:bg-muted/80",
-                      )}
-                    >
-                      {time}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <label className="text-sm text-muted-foreground mb-2 block flex items-center gap-1">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  Safe meeting locations
-                </label>
-                <div className="space-y-2">
-                  {safeLocations.map((loc) => (
-                    <button
-                      key={loc.id}
-                      onClick={() => setSelectedLocation(loc.id)}
-                      className={cn(
-                        "w-full p-3 rounded-xl text-left transition-all flex items-start gap-3",
-                        selectedLocation === loc.id
-                          ? "bg-blue-50 border-2 border-blue-500"
-                          : "bg-muted border-2 border-transparent hover:border-muted-foreground",
-                      )}
-                    >
-                      <MapPin className="w-5 h-5 text-blue-600 mt-0.5" />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-foreground">{loc.name}</span>
-                          {loc.verified && <BadgeCheck className="w-4 h-4 text-blue-500" />}
-                        </div>
-                        <p className="text-xs text-muted-foreground">{loc.address}</p>
-                      </div>
-                      <div className="flex items-center gap-0.5 text-xs text-muted-foreground">
-                        <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                        {loc.rating}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <button
-                onClick={() => setShowScheduleModal(false)}
-                disabled={!selectedDate || !selectedTime || !selectedLocation}
-                className="w-full bg-blue-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
-              >
-                Propose Meeting
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Product Details Panel */}
         {showProductPanel && (
           <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
@@ -1569,25 +1379,10 @@ export default function BuyerSellerChat() {
                 </span>
               </div>
 
-              {/* Price Analysis */}
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <TrendingDown className="w-4 h-4 text-blue-600" />
-                  <span className="text-sm font-medium text-blue-700">Price Analysis</span>
-                </div>
-                <p className="text-xs text-blue-600">18% below market average. Great deal!</p>
-                <div className="flex items-center gap-2 mt-2">
-                  <div className="flex-1 h-1.5 bg-blue-200 rounded-full">
-                    <div className="w-[82%] h-full bg-emerald-500 rounded-full" />
-                  </div>
-                  <span className="text-xs text-muted-foreground">Better than 82% of listings</span>
-                </div>
-              </div>
-
               {/* Condition */}
               <div className="mb-4">
                 <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-emerald-600" />
+                  <Check className="w-4 h-4 text-emerald-600" />
                   Condition Checklist
                 </h4>
                 <div className="grid grid-cols-2 gap-2">
@@ -1710,9 +1505,8 @@ export default function BuyerSellerChat() {
 
               <div className="space-y-2 mb-4">
                 {[
-                  { icon: ShieldCheck, label: "ID Verified", color: "text-emerald-600" },
+                  { icon: BadgeCheck, label: "ID Verified", color: "text-emerald-600" },
                   { icon: Phone, label: "Phone Verified", color: "text-emerald-600" },
-                  { icon: MapPin, label: "Downtown Area", color: "text-blue-600" },
                   { icon: Clock, label: "Usually responds within 1 hour", color: "text-muted-foreground" },
                 ].map(({ icon: Icon, label, color }) => (
                   <div key={label} className="flex items-center gap-3 p-2 bg-muted rounded-lg">
@@ -1775,23 +1569,23 @@ export default function BuyerSellerChat() {
           <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50 animate-in fade-in duration-200">
             <div className="bg-card rounded-3xl p-6 mx-4 text-center animate-in zoom-in-95 duration-300">
               <div className="w-20 h-20 mx-auto mb-4 bg-emerald-100 rounded-full flex items-center justify-center">
-                <CheckCircle className="w-12 h-12 text-emerald-600" />
+                <Check className="w-12 h-12 text-emerald-600" />
               </div>
               <h2 className="text-2xl font-bold text-foreground mb-2">Deal Accepted!</h2>
               <p className="text-muted-foreground mb-4">You and John have agreed on $880</p>
               <div className="bg-muted rounded-xl p-4 mb-4">
                 <p className="text-sm text-muted-foreground mb-1">Next step</p>
-                <p className="text-foreground font-medium">Schedule your meeting to complete the transaction</p>
+                <p className="text-foreground font-medium">Arrange payment and pickup</p>
               </div>
               <div className="flex gap-3">
                 <button
                   onClick={() => {
                     setShowCompletionCelebration(false)
-                    setShowScheduleModal(true)
+                    setShowPaymentModal(true)
                   }}
                   className="flex-1 bg-blue-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
                 >
-                  Schedule Meeting
+                  Make Payment
                 </button>
                 <button
                   onClick={() => setShowCompletionCelebration(false)}
@@ -1869,52 +1663,6 @@ export default function BuyerSellerChat() {
           </div>
         )}
 
-        {/* Insurance Modal */}
-        {showInsuranceModal && (
-          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
-            <div className="bg-card w-full rounded-t-3xl p-4 animate-in slide-in-from-bottom duration-300">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-foreground">Purchase Protection</h3>
-                <button onClick={() => setShowInsuranceModal(false)}>
-                  <X className="w-6 h-6 text-muted-foreground" />
-                </button>
-              </div>
-              <div className="bg-blue-50 rounded-xl p-4 mb-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <Shield className="w-8 h-8 text-blue-600" />
-                  <div>
-                    <p className="font-semibold text-foreground">Buyer Protection</p>
-                    <p className="text-sm text-muted-foreground">Coverage for $880 purchase</p>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  {[
-                    "Full refund if item not as described",
-                    "Protection against fraud",
-                    "24/7 support team",
-                    "Dispute resolution",
-                  ].map((item) => (
-                    <div key={item} className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-emerald-600" />
-                      <span className="text-sm text-foreground">{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-muted rounded-xl mb-4">
-                <span className="text-foreground font-medium">Protection fee</span>
-                <span className="text-xl font-bold text-foreground">$12.99</span>
-              </div>
-              <button
-                onClick={() => setShowInsuranceModal(false)}
-                className="w-full bg-blue-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
-              >
-                Add Protection
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Receipt Modal */}
         {showReceiptModal && (
           <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
@@ -1939,14 +1687,10 @@ export default function BuyerSellerChat() {
                     <span className="text-muted-foreground">Price</span>
                     <span className="text-foreground">$880.00</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Protection</span>
-                    <span className="text-foreground">$12.99</span>
-                  </div>
                   <div className="h-px bg-border my-2" />
                   <div className="flex justify-between font-bold">
                     <span className="text-foreground">Total</span>
-                    <span className="text-foreground">$892.99</span>
+                    <span className="text-foreground">$880.00</span>
                   </div>
                 </div>
               </div>
