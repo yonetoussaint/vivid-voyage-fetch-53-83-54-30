@@ -40,6 +40,8 @@ import {
   PhoneOff,
   Wallet,
   Lock,
+  Truck,
+  Shield,
 } from "lucide-react"
 
 type Message = {
@@ -60,14 +62,19 @@ type Message = {
 type Order = {
   id: string
   amount: number
-  status: "pending" | "accepted" | "payment_pending" | "completed"
+  deliveryFee: number
+  total: number
+  status: "offer" | "accepted" | "payment_pending" | "delivery_pending" | "completed" | "refunded"
   timestamp: Date
   receipt?: ReceiptData
+  step: 1 | 2 | 3
 }
 
 type ReceiptData = {
   id: string
   amount: number
+  deliveryFee: number
+  total: number
   date: string
   time: string
   product: string
@@ -168,7 +175,6 @@ export default function BuyerSellerChat() {
   const [searchResultIndex, setSearchResultIndex] = useState(0)
   const [showMediaGallery, setShowMediaGallery] = useState(false)
   const [showScrollToBottom, setShowScrollToBottom] = useState(false)
-  const [showSellerProfile, setShowSellerProfile] = useState(false)
   const [showReportModal, setShowReportModal] = useState(false)
   const [showPinModal, setShowPinModal] = useState(false)
   const [showReceipt, setShowReceipt] = useState(false)
@@ -197,7 +203,15 @@ export default function BuyerSellerChat() {
   const [pin, setPin] = useState(["", "", "", ""])
   
   // Order state
-  const [currentOrder, setCurrentOrder] = useState<Order | null>(null)
+  const [currentOrder, setCurrentOrder] = useState<Order>({
+    id: `ORD-${Date.now()}`,
+    amount: 880,
+    deliveryFee: 15,
+    total: 895,
+    status: "offer",
+    timestamp: new Date(),
+    step: 1
+  })
 
   // Notifications
   const [notificationsMuted, setNotificationsMuted] = useState(false)
@@ -369,19 +383,17 @@ export default function BuyerSellerChat() {
 
   // Order handlers
   const acceptOffer = () => {
-    const newOrder: Order = {
-      id: `ORD-${Date.now()}`,
-      amount: 880,
+    setCurrentOrder(prev => ({ 
+      ...prev, 
       status: "accepted",
-      timestamp: new Date(),
-    }
-    setCurrentOrder(newOrder)
+      step: 1
+    }))
     
     // Add acceptance message
     const acceptanceMessage: Message = {
       id: messages.length + 1,
       sender: "buyer",
-      text: "I accept your offer of $880. Let's proceed with payment.",
+      text: "I accept your offer. Let's proceed with payment.",
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       timestamp: new Date(),
       status: "sent",
@@ -391,9 +403,11 @@ export default function BuyerSellerChat() {
   }
 
   const initiatePayment = () => {
-    if (!currentOrder) return
-    
-    setCurrentOrder(prev => prev ? { ...prev, status: "payment_pending" } : null)
+    setCurrentOrder(prev => ({ 
+      ...prev, 
+      status: "payment_pending",
+      step: 2
+    }))
     setShowPinModal(true)
   }
 
@@ -424,8 +438,8 @@ export default function BuyerSellerChat() {
   const processPayment = () => {
     if (!currentOrder) return
     
-    const amount = currentOrder.amount
-    if (amount > walletBalance) {
+    const total = currentOrder.total
+    if (total > walletBalance) {
       alert("Insufficient funds")
       setPin(["", "", "", ""])
       setShowPinModal(false)
@@ -434,24 +448,13 @@ export default function BuyerSellerChat() {
 
     // Simulate payment processing
     setTimeout(() => {
-      setWalletBalance(prev => prev - amount)
+      setWalletBalance(prev => prev - total)
       
-      // Complete order
-      const receipt: ReceiptData = {
-        id: `RCPT-${Date.now()}`,
-        amount,
-        date: new Date().toLocaleDateString(),
-        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        product: "iPhone 15 Pro Max",
-        seller: "John Seller",
-        buyer: "You",
-      }
-      
-      setCurrentOrder(prev => prev ? { 
+      setCurrentOrder(prev => ({ 
         ...prev, 
-        status: "completed",
-        receipt 
-      } : null)
+        status: "delivery_pending",
+        step: 3
+      }))
       
       setShowPinModal(false)
       
@@ -459,7 +462,7 @@ export default function BuyerSellerChat() {
       const paymentMessage: Message = {
         id: messages.length + 1,
         sender: "buyer",
-        text: `Payment of $${amount} completed via wallet. Order #${currentOrder.id}`,
+        text: `Payment of $${total} completed via wallet. Funds held securely.`,
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         timestamp: new Date(),
         status: "sent",
@@ -469,14 +472,63 @@ export default function BuyerSellerChat() {
     }, 1000)
   }
 
+  const completeDelivery = () => {
+    if (!currentOrder) return
+    
+    setShowPinModal(true)
+  }
+
+  const finalizePayment = () => {
+    if (!currentOrder) return
+    
+    // Complete order with receipt
+    const receipt: ReceiptData = {
+      id: `RCPT-${Date.now()}`,
+      amount: currentOrder.amount,
+      deliveryFee: currentOrder.deliveryFee,
+      total: currentOrder.total,
+      date: new Date().toLocaleDateString(),
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      product: "iPhone 15 Pro Max",
+      seller: "John Seller",
+      buyer: "You",
+    }
+    
+    setCurrentOrder(prev => ({ 
+      ...prev, 
+      status: "completed",
+      receipt 
+    }))
+    
+    setShowPinModal(false)
+    
+    // Add completion message
+    const completionMessage: Message = {
+      id: messages.length + 1,
+      sender: "buyer",
+      text: `Order completed. Product received successfully.`,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      timestamp: new Date(),
+      status: "sent",
+    }
+    setMessages(prev => [...prev, completionMessage])
+    setTimeout(scrollToBottom, 100)
+  }
+
   const cancelOrder = () => {
-    setCurrentOrder(null)
+    setCurrentOrder(prev => ({ 
+      ...prev, 
+      status: "refunded"
+    }))
+    
+    // Refund to wallet
+    setWalletBalance(prev => prev + (currentOrder?.total || 0))
     
     // Add cancellation message
     const cancellationMessage: Message = {
       id: messages.length + 1,
       sender: "buyer",
-      text: "I've decided to cancel the order.",
+      text: "Order cancelled. Refund processed to wallet.",
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       timestamp: new Date(),
       status: "sent",
@@ -494,7 +546,7 @@ export default function BuyerSellerChat() {
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
 
-          <button onClick={() => setShowSellerProfile(true)} className="flex items-center gap-2.5 flex-1 min-w-0">
+          <div className="flex items-center gap-2.5 flex-1 min-w-0">
             <div className="relative">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0">
                 <span className="text-white font-bold text-sm">JS</span>
@@ -524,7 +576,7 @@ export default function BuyerSellerChat() {
                 <span>Online</span>
               </p>
             </div>
-          </button>
+          </div>
 
           <div className="flex items-center gap-0.5">
             <div className="relative group">
@@ -883,8 +935,10 @@ export default function BuyerSellerChat() {
             )
           })}
 
-          {/* Seller's Offer Card */}
-          {!currentOrder && (
+          {/* Order Cards */}
+          
+          {/* Step 1: Seller's Offer Card */}
+          {currentOrder.status === "offer" && (
             <div className="flex justify-start mb-2">
               <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0 text-[10px] font-bold text-white mr-1.5 mt-auto">
                 JS
@@ -896,18 +950,41 @@ export default function BuyerSellerChat() {
                       <DollarSign className="w-5 h-5 text-emerald-600" />
                       <span className="text-foreground text-sm font-semibold">Seller's Offer</span>
                     </div>
-                    <span className="text-xs text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full font-medium">
-                      $880
-                    </span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-muted-foreground line-through">$899</span>
+                      <span className="text-xs text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full font-medium">
+                        $880
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-muted-foreground text-xs mb-3">Includes all original accessories and premium case</p>
+                  
+                  {/* Price Breakdown */}
+                  <div className="space-y-1 mb-3">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">Item price</span>
+                      <span className="text-foreground">${currentOrder.amount}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-1">
+                        <Truck className="w-3 h-3 text-muted-foreground" />
+                        <span className="text-muted-foreground">Delivery fee</span>
+                      </div>
+                      <span className="text-foreground">${currentOrder.deliveryFee}</span>
+                    </div>
+                    <div className="h-px bg-border my-1" />
+                    <div className="flex items-center justify-between text-sm font-semibold">
+                      <span className="text-foreground">Total</span>
+                      <span className="text-emerald-600">${currentOrder.total}</span>
+                    </div>
+                  </div>
+                  
                   <div className="flex gap-2">
                     <button
                       onClick={acceptOffer}
                       className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1"
                     >
                       <Check className="w-4 h-4" />
-                      Accept
+                      Accept Offer
                     </button>
                     <button className="flex-1 bg-secondary text-secondary-foreground py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors">
                       Counter
@@ -918,32 +995,45 @@ export default function BuyerSellerChat() {
             </div>
           )}
 
-          {/* Order Status Cards */}
-          {currentOrder && currentOrder.status === "accepted" && (
+          {/* Step 1: Accepted Offer Card */}
+          {currentOrder.status === "accepted" && (
             <div className="flex justify-end mb-2">
               <div className="max-w-[80%]">
-                <div className="bg-blue-500 text-white rounded-xl p-3 shadow-sm">
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 shadow-sm">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <Wallet className="w-5 h-5 text-white" />
-                      <span className="text-sm font-semibold">Order Accepted</span>
+                      <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center">
+                        <Check className="w-3 h-3 text-emerald-600" />
+                      </div>
+                      <span className="text-emerald-800 text-sm font-semibold">Step 1: Offer Accepted</span>
                     </div>
-                    <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full font-medium">
-                      ${currentOrder.amount}
+                    <span className="text-xs text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full font-medium">
+                      ${currentOrder.total}
                     </span>
                   </div>
-                  <p className="text-white/80 text-xs mb-3">Ready to proceed with secure payment</p>
+                  
+                  <div className="space-y-2 mb-3">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-emerald-700">Item + Delivery</span>
+                      <span className="text-emerald-800 font-medium">${currentOrder.total}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-emerald-600">
+                      <Shield className="w-3 h-3" />
+                      <span>Funds will be held securely until delivery</span>
+                    </div>
+                  </div>
+                  
                   <div className="flex gap-2">
                     <button
                       onClick={initiatePayment}
-                      className="flex-1 bg-white text-blue-600 py-2 rounded-lg text-sm font-medium hover:bg-white/90 transition-colors flex items-center justify-center gap-1"
+                      className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1"
                     >
-                      <Lock className="w-4 h-4" />
-                      Pay Now
+                      <Wallet className="w-4 h-4" />
+                      Proceed to Payment
                     </button>
                     <button
                       onClick={cancelOrder}
-                      className="px-4 bg-white/20 text-white py-2 rounded-lg hover:bg-white/30 transition-colors"
+                      className="px-4 bg-secondary text-secondary-foreground py-2 rounded-lg hover:bg-secondary/80 transition-colors"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -953,46 +1043,173 @@ export default function BuyerSellerChat() {
             </div>
           )}
 
-          {currentOrder && currentOrder.status === "payment_pending" && (
+          {/* Step 2: Payment Pending Card */}
+          {currentOrder.status === "payment_pending" && (
             <div className="flex justify-end mb-2">
               <div className="max-w-[80%]">
-                <div className="bg-amber-500 text-white rounded-xl p-3 shadow-sm">
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 shadow-sm">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <Clock className="w-5 h-5 text-white" />
-                      <span className="text-sm font-semibold">Payment Pending</span>
+                      <div className="w-5 h-5 rounded-full bg-amber-100 flex items-center justify-center">
+                        <Clock className="w-3 h-3 text-amber-600" />
+                      </div>
+                      <span className="text-amber-800 text-sm font-semibold">Step 2: Payment Pending</span>
                     </div>
-                    <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full font-medium">
-                      ${currentOrder.amount}
+                    <span className="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full font-medium">
+                      ${currentOrder.total}
                     </span>
                   </div>
-                  <p className="text-white/80 text-xs mb-3">Awaiting PIN confirmation to complete payment</p>
+                  
+                  <div className="space-y-2 mb-3">
+                    <div className="flex items-center gap-2 text-xs text-amber-600">
+                      <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+                      <span>Awaiting PIN confirmation</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-amber-600">
+                      <Wallet className="w-3 h-3" />
+                      <span>${currentOrder.total} will be deducted from wallet</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowPinModal(true)}
+                      className="flex-1 bg-amber-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Lock className="w-4 h-4" />
+                      Enter PIN
+                    </button>
+                    <button
+                      onClick={cancelOrder}
+                      className="px-4 bg-secondary text-secondary-foreground py-2 rounded-lg hover:bg-secondary/80 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           )}
 
-          {currentOrder && currentOrder.status === "completed" && currentOrder.receipt && (
+          {/* Step 3: Delivery Pending Card */}
+          {currentOrder.status === "delivery_pending" && (
             <div className="flex justify-end mb-2">
               <div className="max-w-[80%]">
-                <div className="bg-emerald-500 text-white rounded-xl p-3 shadow-sm">
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 shadow-sm">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <Check className="w-5 h-5 text-white" />
-                      <span className="text-sm font-semibold">Order Completed</span>
+                      <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
+                        <Truck className="w-3 h-3 text-blue-600" />
+                      </div>
+                      <span className="text-blue-800 text-sm font-semibold">Step 3: Awaiting Delivery</span>
                     </div>
-                    <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full font-medium">
-                      ${currentOrder.amount}
+                    <span className="text-xs text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full font-medium">
+                      ${currentOrder.total}
                     </span>
                   </div>
-                  <p className="text-white/80 text-xs mb-3">Payment successful. Receipt available.</p>
+                  
+                  <div className="space-y-2 mb-3">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-blue-700">Payment status</span>
+                      <span className="text-emerald-600 font-medium">Paid - Held securely</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-blue-600">
+                      <Shield className="w-3 h-3" />
+                      <span>Funds secured. Auto-refund in 24h if not delivered</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-blue-600">
+                      <Clock className="w-3 h-3" />
+                      <span>Seller has 24 hours to deliver the product</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <button
+                      onClick={completeDelivery}
+                      className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Check className="w-4 h-4" />
+                      Confirm Delivery
+                    </button>
+                    <button
+                      onClick={cancelOrder}
+                      className="flex-1 bg-secondary text-secondary-foreground py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors"
+                    >
+                      Cancel Order
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Completed Order Card */}
+          {currentOrder.status === "completed" && currentOrder.receipt && (
+            <div className="flex justify-end mb-2">
+              <div className="max-w-[80%]">
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 shadow-sm">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center">
+                        <Check className="w-3 h-3 text-emerald-600" />
+                      </div>
+                      <span className="text-emerald-800 text-sm font-semibold">Order Completed</span>
+                    </div>
+                    <span className="text-xs text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full font-medium">
+                      ${currentOrder.total}
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-2 mb-3">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-emerald-700">Status</span>
+                      <span className="text-emerald-600 font-medium">Delivered & Paid</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-emerald-600">
+                      <Check className="w-3 h-3" />
+                      <span>Product received. Payment released to seller.</span>
+                    </div>
+                  </div>
+                  
                   <button
                     onClick={() => setShowReceipt(true)}
-                    className="w-full bg-white text-emerald-600 py-2 rounded-lg text-sm font-medium hover:bg-white/90 transition-colors flex items-center justify-center gap-1"
+                    className="w-full bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1"
                   >
                     <Receipt className="w-4 h-4" />
                     View Receipt
                   </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Refunded Order Card */}
+          {currentOrder.status === "refunded" && (
+            <div className="flex justify-end mb-2">
+              <div className="max-w-[80%]">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 shadow-sm">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center">
+                        <X className="w-3 h-3 text-slate-600" />
+                      </div>
+                      <span className="text-slate-800 text-sm font-semibold">Order Refunded</span>
+                    </div>
+                    <span className="text-xs text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full font-medium">
+                      ${currentOrder.total}
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-2 mb-3">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-700">Status</span>
+                      <span className="text-emerald-600 font-medium">Refunded to wallet</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-slate-600">
+                      <Wallet className="w-3 h-3" />
+                      <span>${currentOrder.total} refunded to your wallet</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1192,8 +1409,15 @@ export default function BuyerSellerChat() {
             <div className="bg-card rounded-3xl p-6 mx-4 max-w-sm animate-in zoom-in-95 duration-300">
               <div className="text-center mb-6">
                 <Lock className="w-12 h-12 text-blue-600 mx-auto mb-3" />
-                <h2 className="text-xl font-bold text-foreground mb-1">Confirm Payment</h2>
-                <p className="text-muted-foreground text-sm">Enter your 4-digit PIN to pay ${currentOrder?.amount}</p>
+                <h2 className="text-xl font-bold text-foreground mb-1">
+                  {currentOrder.status === "payment_pending" ? "Confirm Payment" : "Complete Delivery"}
+                </h2>
+                <p className="text-muted-foreground text-sm">
+                  {currentOrder.status === "payment_pending" 
+                    ? `Enter your 4-digit PIN to pay $${currentOrder.total}`
+                    : `Enter PIN to release $${currentOrder.total} to seller`
+                  }
+                </p>
               </div>
               <div className="flex justify-center gap-3 mb-6">
                 {[0, 1, 2, 3].map((index) => (
@@ -1239,7 +1463,7 @@ export default function BuyerSellerChat() {
                   <Receipt className="w-8 h-8 text-white" />
                   <span className="text-white/80 text-sm">Payment Confirmed</span>
                 </div>
-                <p className="text-3xl font-bold text-white">${currentOrder.receipt.amount}</p>
+                <p className="text-3xl font-bold text-white">${currentOrder.receipt.total}</p>
                 <p className="text-white/70 text-sm mt-1">{currentOrder.receipt.date} • {currentOrder.receipt.time}</p>
               </div>
               <div className="space-y-3 mb-6">
@@ -1252,17 +1476,21 @@ export default function BuyerSellerChat() {
                   <span className="text-sm text-foreground">{currentOrder.receipt.product}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Seller</span>
-                  <span className="text-sm text-foreground">{currentOrder.receipt.seller}</span>
+                  <span className="text-sm text-muted-foreground">Item Price</span>
+                  <span className="text-sm text-foreground">${currentOrder.receipt.amount}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Buyer</span>
-                  <span className="text-sm text-foreground">{currentOrder.receipt.buyer}</span>
+                  <span className="text-sm text-muted-foreground">Delivery Fee</span>
+                  <span className="text-sm text-foreground">${currentOrder.receipt.deliveryFee}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Seller</span>
+                  <span className="text-sm text-foreground">{currentOrder.receipt.seller}</span>
                 </div>
                 <div className="h-px bg-border my-2" />
                 <div className="flex items-center justify-between font-bold">
                   <span className="text-foreground">Total Paid</span>
-                  <span className="text-foreground">${currentOrder.receipt.amount}</span>
+                  <span className="text-foreground">${currentOrder.receipt.total}</span>
                 </div>
               </div>
               <div className="flex gap-3">
@@ -1273,77 +1501,6 @@ export default function BuyerSellerChat() {
                 <button className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors flex items-center justify-center gap-2">
                   <Share2 className="w-4 h-4" />
                   Share
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Seller Profile */}
-        {showSellerProfile && (
-          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
-            <div className="bg-card w-full rounded-t-3xl p-4 max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-foreground">Seller Profile</h3>
-                <button onClick={() => setShowSellerProfile(false)}>
-                  <X className="w-6 h-6 text-muted-foreground" />
-                </button>
-              </div>
-
-              <div className="flex flex-col items-center mb-4">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center mb-3">
-                  <span className="text-white font-bold text-2xl">JS</span>
-                </div>
-                <div className="flex items-center gap-1.5 mb-1">
-                  <span className="text-xl font-bold text-foreground">John Seller</span>
-                  <BadgeCheck className="w-5 h-5 text-blue-500 fill-blue-500" />
-                </div>
-                <div className="flex items-center gap-1 text-muted-foreground">
-                  <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                  <span className="font-medium">4.9</span>
-                  <span className="text-sm">(127 reviews)</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-4 gap-2 mb-4">
-                {[
-                  { value: "156", label: "Sales" },
-                  { value: "98%", label: "Response" },
-                  { value: "<1h", label: "Reply" },
-                  { value: "2y", label: "Member" },
-                ].map(({ value, label }) => (
-                  <div key={label} className="bg-muted rounded-lg p-2 text-center">
-                    <p className="text-lg font-bold text-foreground">{value}</p>
-                    <p className="text-[10px] text-muted-foreground">{label}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="space-y-2 mb-4">
-                {[
-                  { icon: BadgeCheck, label: "ID Verified", color: "text-emerald-600" },
-                  { icon: Phone, label: "Phone Verified", color: "text-emerald-600" },
-                  { icon: Clock, label: "Usually responds within 1 hour", color: "text-muted-foreground" },
-                ].map(({ icon: Icon, label, color }) => (
-                  <div key={label} className="flex items-center gap-3 p-2 bg-muted rounded-lg">
-                    <Icon className={cn("w-4 h-4", color)} />
-                    <span className="text-sm text-foreground">{label}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex gap-2">
-                <button className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors">
-                  View Listings
-                </button>
-                <button
-                  onClick={() => {
-                    setShowSellerProfile(false)
-                    setShowReportModal(true)
-                  }}
-                  className="px-4 bg-secondary text-secondary-foreground py-2.5 rounded-xl hover:bg-secondary/80 transition-colors"
-                >
-                  <Flag className="w-5 h-5" />
                 </button>
               </div>
             </div>
