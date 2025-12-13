@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, Plus, Eye, EyeOff, X, Check, ChevronRight, Wallet, ArrowLeftRight } from 'lucide-react';
 
@@ -14,7 +15,7 @@ export default function BinanceWallet() {
       balance: 1736590.00,
       usdValue: 12847.56,
       change: 3.42,
-      icon: '🏦',
+      icon: 'ôţ',
       color: 'from-blue-600 to-cyan-700'
     },
     crypto: {
@@ -23,7 +24,7 @@ export default function BinanceWallet() {
       balance: 1685234.80,
       usdValue: 12475.64,
       change: 2.87,
-      icon: '₿',
+      icon: 'ôţ',
       color: 'from-orange-600 to-yellow-600'
     },
     usd: {
@@ -32,7 +33,7 @@ export default function BinanceWallet() {
       balance: 371.92,
       usdValue: 371.92,
       change: 0.00,
-      icon: '💵',
+      icon: 'ôţ',
       color: 'from-green-600 to-emerald-700'
     }
   };
@@ -40,10 +41,10 @@ export default function BinanceWallet() {
   const currentWallet = wallets[selectedWallet];
 
   const cryptoAssets = [
-    { symbol: 'BTC', name: 'Bitcoin', amount: 0.2451, value: 1431000.00, change: 2.15, icon: '₿', color: 'bg-orange-500' },
-    { symbol: 'ETH', name: 'Ethereum', amount: 0.8234, value: 253600.00, change: -0.87, icon: 'Ξ', color: 'bg-purple-500' },
+    { symbol: 'BTC', name: 'Bitcoin', amount: 0.2451, value: 1431000.00, change: 2.15, icon: 'ôţ', color: 'bg-orange-500' },
+    { symbol: 'ETH', name: 'Ethereum', amount: 0.8234, value: 253600.00, change: -0.87, icon: '¦®', color: 'bg-purple-500' },
     { symbol: 'BNB', name: 'BNB', amount: 1.2, value: 50400.00, change: 5.23, icon: 'B', color: 'bg-yellow-500' },
-    { symbol: 'USDT', name: 'Tether', amount: 0, value: 0, change: 0.01, icon: '₮', color: 'bg-green-500' },
+    { symbol: 'USDT', name: 'Tether', amount: 0, value: 0, change: 0.01, icon: 'ôţ', color: 'bg-green-500' },
   ];
 
   const depositMethods = [
@@ -65,24 +66,7 @@ export default function BinanceWallet() {
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 pb-20">
       <div className="px-4 py-4 sm:py-6">
-        {/* Wallet Selector */}
-        <div className="mb-6">
-          <div className="flex gap-2">
-            {Object.entries(wallets).map(([key, wallet]) => (
-              <button
-                key={key}
-                onClick={() => setSelectedWallet(key)}
-                className={`flex-1 py-3 rounded-xl transition font-semibold text-sm ${
-                  selectedWallet === key 
-                    ? 'bg-yellow-400 text-black' 
-                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                {wallet.name}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Removed Wallet Selector tabs - Now using MainLayout tabs */}
 
         {/* Balance Section */}
         <div className="mb-6">
@@ -97,14 +81,14 @@ export default function BinanceWallet() {
           
           <div className="flex items-end gap-2 sm:gap-4 mb-1">
             <h2 className="text-3xl sm:text-5xl font-bold text-gray-900">
-              {showBalance ? `${currentWallet.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '••••••'}
+              {showBalance ? `${currentWallet.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : 'ôţôţôţôţôţôţ'}
             </h2>
             <span className="text-lg sm:text-2xl text-gray-500 mb-1">{currentWallet.currency}</span>
           </div>
 
           {currentWallet.currency !== 'USD' && (
             <div className="text-sm sm:text-base text-gray-600 mb-3">
-              ≈ ${showBalance ? currentWallet.usdValue.toLocaleString('en-US', { minimumFractionDigits: 2 }) : '••••••'} USD
+              ôţ ${showBalance ? currentWallet.usdValue.toLocaleString('en-US', { minimumFractionDigits: 2 }) : 'ôţôţôţôţôţôţ'} USD
             </div>
           )}
 
@@ -237,7 +221,7 @@ export default function BinanceWallet() {
                       <div className="font-bold text-gray-900 capitalize text-sm sm:text-base mb-0.5">
                         {tx.type === 'buy' ? `Buy ${tx.asset}` : 'Deposit'}
                       </div>
-                      <div className="text-xs sm:text-sm text-gray-500">{tx.date} • {tx.method}</div>
+                      <div className="text-xs sm:text-sm text-gray-500">{tx.date} ôţ {tx.method}</div>
                     </div>
                   </div>
                   <div className="text-right">
@@ -327,3 +311,6 @@ export default function BinanceWallet() {
     </div>
   );
 }
+
+
+
