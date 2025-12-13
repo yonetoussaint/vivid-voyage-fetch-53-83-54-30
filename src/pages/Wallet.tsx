@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, Plus, Eye, EyeOff, X, Check, ChevronRight, Wallet, ArrowLeftRight } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, Plus, Eye, EyeOff, X, Check, ChevronRight, Wallet, ArrowLeftRight, Bitcoin, Ethereum, DollarSign, Coins, CreditCard, Banknote } from 'lucide-react';
 
 export default function BinanceWallet() {
   const [showBalance, setShowBalance] = useState(true);
@@ -15,7 +14,7 @@ export default function BinanceWallet() {
       balance: 1736590.00,
       usdValue: 12847.56,
       change: 3.42,
-      icon: 'ôţ',
+      icon: <Coins className="w-6 h-6" />,
       color: 'from-blue-600 to-cyan-700'
     },
     crypto: {
@@ -24,7 +23,7 @@ export default function BinanceWallet() {
       balance: 1685234.80,
       usdValue: 12475.64,
       change: 2.87,
-      icon: 'ôţ',
+      icon: <Bitcoin className="w-6 h-6" />,
       color: 'from-orange-600 to-yellow-600'
     },
     usd: {
@@ -33,7 +32,7 @@ export default function BinanceWallet() {
       balance: 371.92,
       usdValue: 371.92,
       change: 0.00,
-      icon: 'ôţ',
+      icon: <DollarSign className="w-6 h-6" />,
       color: 'from-green-600 to-emerald-700'
     }
   };
@@ -41,20 +40,20 @@ export default function BinanceWallet() {
   const currentWallet = wallets[selectedWallet];
 
   const cryptoAssets = [
-    { symbol: 'BTC', name: 'Bitcoin', amount: 0.2451, value: 1431000.00, change: 2.15, icon: 'ôţ', color: 'bg-orange-500' },
-    { symbol: 'ETH', name: 'Ethereum', amount: 0.8234, value: 253600.00, change: -0.87, icon: '¦®', color: 'bg-purple-500' },
-    { symbol: 'BNB', name: 'BNB', amount: 1.2, value: 50400.00, change: 5.23, icon: 'B', color: 'bg-yellow-500' },
-    { symbol: 'USDT', name: 'Tether', amount: 0, value: 0, change: 0.01, icon: 'ôţ', color: 'bg-green-500' },
+    { symbol: 'BTC', name: 'Bitcoin', amount: 0.2451, value: 1431000.00, change: 2.15, icon: <Bitcoin className="w-6 h-6" />, color: 'bg-orange-500' },
+    { symbol: 'ETH', name: 'Ethereum', amount: 0.8234, value: 253600.00, change: -0.87, icon: <Ethereum className="w-6 h-6" />, color: 'bg-purple-500' },
+    { symbol: 'BNB', name: 'BNB', amount: 1.2, value: 50400.00, change: 5.23, icon: <Coins className="w-6 h-6" />, color: 'bg-yellow-500' },
+    { symbol: 'USDT', name: 'Tether', amount: 0, value: 0, change: 0.01, icon: <DollarSign className="w-6 h-6" />, color: 'bg-green-500' },
   ];
 
   const depositMethods = [
-    { id: 'moncash', name: 'MonCash', currency: 'HTG', color: 'bg-red-500' },
-    { id: 'natcash', name: 'NatCash', currency: 'HTG', color: 'bg-blue-500' },
-    { id: 'sogebank', name: 'SogeBank', currency: 'HTG', color: 'bg-green-500' },
-    { id: 'bnc', name: 'BNC', currency: 'HTG', color: 'bg-purple-500' },
-    { id: 'usd', name: 'Bank Transfer', currency: 'USD', color: 'bg-emerald-500' },
-    { id: 'usdt', name: 'USDT (TRC20)', currency: 'USDT', color: 'bg-teal-500' },
-    { id: 'pesos', name: 'Dominican Pesos', currency: 'DOP', color: 'bg-indigo-500' },
+    { id: 'moncash', name: 'MonCash', currency: 'HTG', color: 'bg-red-500', icon: <CreditCard className="w-6 h-6 text-white" /> },
+    { id: 'natcash', name: 'NatCash', currency: 'HTG', color: 'bg-blue-500', icon: <CreditCard className="w-6 h-6 text-white" /> },
+    { id: 'sogebank', name: 'SogeBank', currency: 'HTG', color: 'bg-green-500', icon: <Banknote className="w-6 h-6 text-white" /> },
+    { id: 'bnc', name: 'BNC', currency: 'HTG', color: 'bg-purple-500', icon: <CreditCard className="w-6 h-6 text-white" /> },
+    { id: 'usd', name: 'Bank Transfer', currency: 'USD', color: 'bg-emerald-500', icon: <Banknote className="w-6 h-6 text-white" /> },
+    { id: 'usdt', name: 'USDT (TRC20)', currency: 'USDT', color: 'bg-teal-500', icon: <Coins className="w-6 h-6 text-white" /> },
+    { id: 'pesos', name: 'Dominican Pesos', currency: 'DOP', color: 'bg-indigo-500', icon: <DollarSign className="w-6 h-6 text-white" /> },
   ];
 
   const transactions = [
@@ -78,17 +77,17 @@ export default function BinanceWallet() {
               {showBalance ? <Eye className="w-4 h-4 text-gray-400" /> : <EyeOff className="w-4 h-4 text-gray-400" />}
             </button>
           </div>
-          
+
           <div className="flex items-end gap-2 sm:gap-4 mb-1">
             <h2 className="text-3xl sm:text-5xl font-bold text-gray-900">
-              {showBalance ? `${currentWallet.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : 'ôţôţôţôţôţôţ'}
+              {showBalance ? `${currentWallet.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '••••••'}
             </h2>
             <span className="text-lg sm:text-2xl text-gray-500 mb-1">{currentWallet.currency}</span>
           </div>
 
           {currentWallet.currency !== 'USD' && (
             <div className="text-sm sm:text-base text-gray-600 mb-3">
-              ôţ ${showBalance ? currentWallet.usdValue.toLocaleString('en-US', { minimumFractionDigits: 2 }) : 'ôţôţôţôţôţôţ'} USD
+              ≈ ${showBalance ? currentWallet.usdValue.toLocaleString('en-US', { minimumFractionDigits: 2 }) : '••••••'} USD
             </div>
           )}
 
@@ -174,7 +173,7 @@ export default function BinanceWallet() {
                 <div key={asset.symbol} className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 hover:bg-gray-50 transition cursor-pointer border border-gray-200 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 sm:gap-4">
-                      <div className={`w-10 h-10 sm:w-12 sm:h-12 ${asset.color} rounded-full flex items-center justify-center text-xl sm:text-2xl font-bold text-white shadow-lg`}>
+                      <div className={`w-10 h-10 sm:w-12 sm:h-12 ${asset.color} rounded-full flex items-center justify-center shadow-lg`}>
                         {asset.icon}
                       </div>
                       <div>
@@ -221,7 +220,7 @@ export default function BinanceWallet() {
                       <div className="font-bold text-gray-900 capitalize text-sm sm:text-base mb-0.5">
                         {tx.type === 'buy' ? `Buy ${tx.asset}` : 'Deposit'}
                       </div>
-                      <div className="text-xs sm:text-sm text-gray-500">{tx.date} ôţ {tx.method}</div>
+                      <div className="text-xs sm:text-sm text-gray-500">{tx.date} • {tx.method}</div>
                     </div>
                   </div>
                   <div className="text-right">
@@ -253,7 +252,7 @@ export default function BinanceWallet() {
                 <X className="w-5 h-5 text-gray-600" />
               </button>
             </div>
-            
+
             <div className="flex-1 overflow-y-auto px-5 py-4 bg-gray-50">
               <div className="space-y-2">
                 {depositMethods.map((method) => (
@@ -267,7 +266,7 @@ export default function BinanceWallet() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 ${method.color} rounded-lg flex items-center justify-center`}>
-                          <div className="w-6 h-6 bg-white/30 rounded"></div>
+                          {method.icon}
                         </div>
                         <div className="text-left">
                           <div className="font-semibold text-gray-900 text-base">{method.name}</div>
@@ -311,6 +310,3 @@ export default function BinanceWallet() {
     </div>
   );
 }
-
-
-
