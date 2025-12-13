@@ -1,426 +1,694 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, Plus, Eye, EyeOff, X, Check, ArrowLeftRight, Bitcoin, DollarSign, Coins, CreditCard, History, BarChart, Gem, Diamond, Circle } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import IndexBottomNav from "@/components/layout/IndexBottomNav";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import AliExpressHeader from "@/components/home/AliExpressHeader";
+import { Home, Smartphone, Shirt, Baby, Dumbbell, Sparkles, Car, Book, Trophy, Tag, ShieldCheck, Zap, Star, Crown, Award, CreditCard, DollarSign, History, BarChart } from "lucide-react";
+import { useScreenOverlay } from "@/context/ScreenOverlayContext";
+import ProductUploadOverlay from "@/components/product/ProductUploadOverlay";
+import LocationScreen from "@/components/home/header/LocationScreen";
+import LocationListScreen from "@/components/home/header/LocationListScreen";
+import AuthOverlay from "@/components/auth/AuthOverlay";
+import { useAuth } from "@/contexts/auth/AuthContext";
+import { useTranslation } from 'react-i18next';
+import { HeaderFilterProvider, useHeaderFilter } from "@/contexts/HeaderFilterContext";
+import { useAuthOverlay } from "@/context/AuthOverlayContext";
 
-export default function BinanceWallet() {
+function MainLayoutContent() {
+  const isMobile = useIsMobile();
   const location = useLocation();
+  const navigate = useNavigate();
+  const pathname = location.pathname;
+
+  // Get search params early
   const searchParams = new URLSearchParams(location.search);
-  const walletTab = searchParams.get('tab') || 'main'; // Get tab from URL
+  const messagesFilter = searchParams.get('filter') || 'all';
+  const walletFilter = searchParams.get('tab') || 'main';
+  const exploreFilter = searchParams.get('tab') || 'products';
+  const isMessagesPage = pathname === '/messages' || pathname.startsWith('/messages/');
+  const isMessagesListPage = pathname === '/messages';
+  const isWalletPage = pathname === '/wallet';
+  const isExplorePage = pathname === '/explore';
+  const isProductsPage = pathname === '/products';
+  const productsTitle = isProductsPage ? new URLSearchParams(location.search).get('title') || 'Products' : '';
+  const iconName = searchParams.get('icon');
 
-  const [showBalance, setShowBalance] = useState(true);
-  const [selectedWallet, setSelectedWallet] = useState(walletTab); // Initialize from URL
-  const [showDepositModal, setShowDepositModal] = useState(false);
-  const [selectedCurrency, setSelectedCurrency] = useState(null);
+  // Check if current page is conversation detail - DECLARE THIS EARLY
+  const isConversationDetailPage = pathname.startsWith('/messages/') && pathname !== '/messages';
 
-  // Update selectedWallet when URL changes
+  const isProductPage = pathname.includes('/product/');
+  const isRootHomePage = pathname === "/" || pathname === "/for-you";
+  const isForYouPage = pathname === "/" || pathname === "/for-you";
+  const isMultiStepTransferPage = pathname === "/multi-step-transfer";
+  const isMultiStepTransferSheetPage = pathname === "/multi-step-transfer-page";
+  const isTransferOldPage = pathname === "/transfer-old";
+
+  const { toast } = useToast();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showProductUpload, setShowProductUpload] = useState(false);
+  const [activeTab, setActiveTab] = useState('recommendations');
+  const headerRef = useRef<HTMLDivElement>(null);
+  const bottomNavRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [actualHeaderHeight, setActualHeaderHeight] = useState<number>(0);
+  const [actualBottomNavHeight, setActualBottomNavHeight] = useState<number>(0);
+  const [contentHeight, setContentHeight] = useState<number>(0);
+
+  const { openAuthOverlay, isAuthOverlayOpen, setIsAuthOverlayOpen } = useAuthOverlay();
+  const { user } = useAuth();
+  const { isLocationListScreenOpen, locationListScreenData, setLocationListScreenOpen, isLocationScreenOpen, setLocationScreenOpen } = useScreenOverlay();
+  const { t } = useTranslation();
+  const {
+    showFilterBar,
+    filterCategories,
+    selectedFilters,
+    onFilterSelect,
+    onFilterClear,
+    onClearAll,
+    onFilterButtonClick,
+    isFilterDisabled
+  } = useHeaderFilter();
+
+  // Icon mapper - DECLARE BEFORE USING
+  const iconMapper: Record<string, React.ComponentType<{ className?: string }>> = {
+    Trophy,
+    Tag,
+    ShieldCheck,
+    Zap,
+    Star,
+    Crown,
+    Award,
+    Home,
+    Smartphone,
+    Shirt,
+    Baby,
+    Dumbbell,
+    Sparkles,
+    Car,
+    Book,
+    CreditCard,
+    DollarSign,
+    History,
+    BarChart
+  };
+
+  const sectionHeaderIcon = iconName ? iconMapper[iconName] : undefined;
+
+  const categories = useMemo(() => [
+    { id: 'recommendations', name: t('forYou', { ns: 'home' }), path: '/for-you' },
+    { id: 'electronics', name: t('electronics', { ns: 'categories' }), path: '/categories/electronics' },
+    { id: 'home', name: t('homeLiving', { ns: 'categories' }), path: '/categories/home-living' },
+    { id: 'fashion', name: t('fashion', { ns: 'categories' }), path: '/categories/fashion' },
+    { id: 'entertainment', name: t('entertainment', { ns: 'categories' }), path: '/categories/entertainment' },
+    { id: 'kids', name: t('kidsHobbies', { ns: 'categories' }), path: '/categories/kids-hobbies' },
+    { id: 'sports', name: t('sports', { ns: 'categories' }), path: '/categories/sports-outdoors' },
+    { id: 'automotive', name: t('automotive', { ns: 'categories' }), path: '/categories/automotive' },
+    { id: 'women', name: t('women', { ns: 'categories' }), path: '/categories/women' },
+    { id: 'men', name: t('men', { ns: 'categories' }), path: '/categories/men' },
+    { id: 'books', name: t('books', { ns: 'categories' }), path: '/categories/books' },
+  ], [t]);
+
+  // Update active tab based on location
   useEffect(() => {
-    setSelectedWallet(walletTab);
-  }, [walletTab]);
-
-  const wallets = {
-    main: {
-      name: 'Main Wallet',
-      currency: 'HTG',
-      balance: 1736590.00,
-      usdValue: 12847.56,
-      change: 3.42,
-      icon: <Coins className="w-6 h-6 text-white" />,
-      color: 'from-blue-600 to-cyan-700'
-    },
-    crypto: {
-      name: 'Crypto Wallet',
-      currency: 'HTG',
-      balance: 1685234.80,
-      usdValue: 12475.64,
-      change: 2.87,
-      icon: <Bitcoin className="w-6 h-6 text-white" />,
-      color: 'from-orange-600 to-yellow-600'
-    },
-    usd: {
-      name: 'USD Wallet',
-      currency: 'USD',
-      balance: 371.92,
-      usdValue: 371.92,
-      change: 0.00,
-      icon: <DollarSign className="w-6 h-6 text-white" />,
-      color: 'from-green-600 to-emerald-700'
+    const currentCategory = categories.find(cat => location.pathname === cat.path);
+    if (currentCategory) {
+      setActiveTab(currentCategory.id);
+    } else if (location.pathname === '/' || location.pathname === '/for-you') {
+      setActiveTab('recommendations');
     }
-  };
+  }, [location.pathname, categories]);
 
-  const currentWallet = wallets[selectedWallet] || wallets.main;
+  // Determine if we should show the header
+  const shouldShowHeader = [
+    '/',
+    '/for-you',
+    '/messages',
+    '/wallet',
+    '/explore',
+    '/wishlist',
+    '/cart',
+    '/notifications',
+    '/addresses',
+    '/help',
+    '/products',
+    '/categories',
+    '/categories/electronics',
+    '/categories/home-living',
+    '/categories/fashion',
+    '/categories/entertainment',
+    '/categories/kids-hobbies',
+    '/categories/sports-outdoors',
+    '/categories/automotive',
+    '/categories/women',
+    '/categories/men',
+    '/categories/books'
+  ].includes(pathname);
 
-  const cryptoAssets = [
-    { symbol: 'BTC', name: 'Bitcoin', amount: 0.2451, value: 1431000.00, change: 2.15, icon: <Bitcoin className="w-6 h-6 text-white" />, color: 'bg-orange-500' },
-    { symbol: 'ETH', name: 'Ethereum', amount: 0.8234, value: 253600.00, change: -0.87, icon: <Gem className="w-6 h-6 text-white" />, color: 'bg-purple-500' },
-    { symbol: 'BNB', name: 'BNB', amount: 1.2, value: 50400.00, change: 5.23, icon: <Diamond className="w-6 h-6 text-white" />, color: 'bg-yellow-500' },
-    { symbol: 'USDT', name: 'Tether', amount: 0, value: 0, change: 0.01, icon: <Circle className="w-6 h-6 text-white" />, color: 'bg-green-500' },
-  ];
+  // Check if current page is reels
+  const isReelsPage = pathname === '/reels' && !location.search.includes('video=');
 
-  const depositMethods = [
-    { id: 'moncash', name: 'MonCash', currency: 'HTG', color: 'bg-red-500', icon: <CreditCard className="w-6 h-6 text-white" /> },
-    { id: 'natcash', name: 'NatCash', currency: 'HTG', color: 'bg-blue-500', icon: <CreditCard className="w-6 h-6 text-white" /> },
-    { id: 'sogebank', name: 'SogeBank', currency: 'HTG', color: 'bg-green-500', icon: <CreditCard className="w-6 h-6 text-white" /> },
-    { id: 'bnc', name: 'BNC', currency: 'HTG', color: 'bg-purple-500', icon: <CreditCard className="w-6 h-6 text-white" /> },
-    { id: 'usd', name: 'Bank Transfer', currency: 'USD', color: 'bg-emerald-500', icon: <CreditCard className="w-6 h-6 text-white" /> },
-    { id: 'usdt', name: 'USDT (TRC20)', currency: 'USDT', color: 'bg-teal-500', icon: <Coins className="w-6 h-6 text-white" /> },
-    { id: 'pesos', name: 'Dominican Pesos', currency: 'DOP', color: 'bg-indigo-500', icon: <DollarSign className="w-6 h-6 text-white" /> },
-  ];
+  // Determine if we should show the bottom nav
+  const shouldShowBottomNav = isMobile && (
+    pathname === '/for-you' ||
+    pathname === '/' ||
+    pathname === '/categories' ||
+    (pathname === '/reels' && !location.search.includes('video=')) ||
+    pathname === '/posts' ||
+    pathname === '/messages' ||
+    pathname === '/more-menu' ||
+    pathname === '/profile' ||
+    pathname.startsWith('/profile/') ||
+    pathname === '/videos' ||
+    pathname === '/notifications' ||
+    pathname === '/bookmarks' ||
+    pathname === '/friends' ||
+    pathname === '/shopping' ||
+    pathname === '/settings' ||
+    pathname === '/wallet' ||
+    pathname === '/explore' ||
+    pathname === '/wishlist' ||
+    pathname === '/cart' ||
+    pathname === '/addresses' ||
+    pathname === '/help' ||
+    pathname === '/my-stations' ||
+    pathname === '/products' ||
+    pathname === '/categories/electronics' ||
+    pathname === '/categories/home-living' ||
+    pathname === '/categories/fashion' ||
+    pathname === '/categories/entertainment' ||
+    pathname === '/categories/kids-hobbies' ||
+    pathname === '/categories/sports-outdoors' ||
+    pathname === '/categories/automotive' ||
+    pathname === '/categories/women' ||
+    pathname === '/categories/men' ||
+    pathname === '/categories/books' ||
+    pathname.startsWith('/pickup-station') ||
+    (pathname.startsWith('/seller-dashboard') && !pathname.includes('/edit-profile') && !pathname.includes('/onboarding'))
+  ) && !isMultiStepTransferPage && !isMultiStepTransferSheetPage && !isTransferOldPage;
 
-  const transactions = [
-    { type: 'buy', asset: 'BTC', amount: 0.0123, fiat: '16,590 HTG', date: 'Dec 13, 14:23', method: 'MonCash' },
-    { type: 'buy', asset: 'ETH', amount: 0.15, fiat: '30,780 HTG', date: 'Dec 13, 10:05', method: 'SogeBank' },
-    { type: 'deposit', asset: 'HTG', amount: 50000, fiat: '50,000 HTG', date: 'Dec 12, 18:30', method: 'NatCash' },
-  ];
+  // Measure actual header height dynamically
+  useEffect(() => {
+    const updateHeaderHeight = () => {
+      if (shouldShowHeader && headerRef.current) {
+        const headerElement = headerRef.current.querySelector('header, [data-header]');
+        if (headerElement) {
+          const height = headerElement.getBoundingClientRect().height;
+          setActualHeaderHeight(height);
+          document.documentElement.style.setProperty('--header-height', `${height}px`);
+        }
+      } else {
+        setActualHeaderHeight(0);
+        document.documentElement.style.setProperty('--header-height', '0px');
+      }
+    };
 
-  const trades = [
-    { id: 1, pair: 'BTC/HTG', type: 'buy', amount: 0.0123, price: '5,840,000', total: '71,832', date: 'Dec 13, 14:23', status: 'completed' },
-    { id: 2, pair: 'ETH/HTG', type: 'sell', amount: 0.15, price: '308,500', total: '46,275', date: 'Dec 12, 10:05', status: 'completed' },
-    { id: 3, pair: 'USDT/HTG', type: 'buy', amount: 100, price: '135.25', total: '13,525', date: 'Dec 11, 16:30', status: 'pending' },
-  ];
+    const timer = setTimeout(updateHeaderHeight, 50);
+    window.addEventListener('resize', updateHeaderHeight);
 
-  const renderMainContent = () => {
-    if (selectedWallet === 'transactions') {
-      return (
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-base sm:text-xl font-bold text-gray-900">Transaction History</h3>
-            <button className="text-xs sm:text-sm text-yellow-500 hover:text-yellow-600 font-medium">View All</button>
-          </div>
-          <div className="space-y-2 sm:space-y-3">
-            {transactions.map((tx, idx) => (
-              <div key={idx} className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 hover:bg-gray-50 transition border border-gray-200 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 sm:gap-4">
-                    <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center ${
-                      tx.type === 'buy' ? 'bg-green-100' : 'bg-blue-100'
-                    }`}>
-                      {tx.type === 'buy' ? 
-                        <Plus className={`w-4 h-4 sm:w-5 sm:h-5 text-green-600`} /> : 
-                        <ArrowDownLeft className={`w-4 h-4 sm:w-5 sm:h-5 text-blue-600`} />
-                      }
-                    </div>
-                    <div>
-                      <div className="font-bold text-gray-900 capitalize text-sm sm:text-base mb-0.5">
-                        {tx.type === 'buy' ? `Buy ${tx.asset}` : 'Deposit'}
-                      </div>
-                      <div className="text-xs sm:text-sm text-gray-500">{tx.date} • {tx.method}</div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className={`font-bold text-sm sm:text-base ${tx.type === 'buy' ? 'text-green-600' : 'text-blue-600'}`}>
-                      {tx.type === 'buy' ? `+${tx.amount}` : `+${tx.amount}`} {tx.asset}
-                    </div>
-                    <div className="text-xs text-gray-500 font-medium">{tx.fiat}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    if (selectedWallet === 'trades') {
-      return (
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-base sm:text-xl font-bold text-gray-900">Trade History</h3>
-            <button className="text-xs sm:text-sm text-yellow-500 hover:text-yellow-600 font-medium">View All</button>
-          </div>
-          <div className="space-y-2 sm:space-y-3">
-            {trades.map((trade) => (
-              <div key={trade.id} className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 hover:bg-gray-50 transition border border-gray-200 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 sm:gap-4">
-                    <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center ${
-                      trade.type === 'buy' ? 'bg-green-100' : 'bg-red-100'
-                    }`}>
-                      {trade.type === 'buy' ? 
-                        <Plus className={`w-4 h-4 sm:w-5 sm:h-5 text-green-600`} /> : 
-                        <ArrowUpRight className={`w-4 h-4 sm:w-5 sm:h-5 text-red-600`} />
-                      }
-                    </div>
-                    <div>
-                      <div className="font-bold text-gray-900 capitalize text-sm sm:text-base mb-0.5">
-                        {trade.type === 'buy' ? 'Buy' : 'Sell'} {trade.pair}
-                      </div>
-                      <div className="text-xs sm:text-sm text-gray-500">{trade.date}</div>
-                      <div className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mt-1 ${
-                        trade.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {trade.status}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className={`font-bold text-sm sm:text-base ${trade.type === 'buy' ? 'text-green-600' : 'text-red-600'}`}>
-                      {trade.amount} {trade.pair.split('/')[0]}
-                    </div>
-                    <div className="text-xs text-gray-600 font-medium">${trade.total} HTG</div>
-                    <div className="text-xs text-gray-500">@{trade.price}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
+    const observer = new MutationObserver(updateHeaderHeight);
+    if (headerRef.current) {
+      observer.observe(headerRef.current, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        characterData: true
+      });
     }
 
-    // Default wallet view for main, crypto, usd
-    return (
-      <>
-        {/* Balance Section */}
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs sm:text-sm text-gray-500">
-              {currentWallet.name} Balance
-            </span>
-            <button onClick={() => setShowBalance(!showBalance)} className="p-1 hover:bg-gray-200 rounded transition">
-              {showBalance ? <Eye className="w-4 h-4 text-gray-400" /> : <EyeOff className="w-4 h-4 text-gray-400" />}
-            </button>
-          </div>
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', updateHeaderHeight);
+      observer.disconnect();
+    };
+  }, [shouldShowHeader, pathname, activeTab]);
 
-          <div className="flex items-end gap-2 sm:gap-4 mb-1">
-            <h2 className="text-3xl sm:text-5xl font-bold text-gray-900">
-              {showBalance ? `${currentWallet.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '••••••'}
-            </h2>
-            <span className="text-lg sm:text-2xl text-gray-500 mb-1">{currentWallet.currency}</span>
-          </div>
+  // Measure actual bottom nav height dynamically
+  useEffect(() => {
+    const updateBottomNavHeight = () => {
+      if (shouldShowBottomNav && bottomNavRef.current) {
+        const bottomNavElement = bottomNavRef.current.querySelector('nav, [data-bottom-nav]');
+        if (bottomNavElement) {
+          const height = bottomNavElement.getBoundingClientRect().height;
+          setActualBottomNavHeight(height);
+          document.documentElement.style.setProperty('--bottom-nav-height', `${height}px`);
 
-          {currentWallet.currency !== 'USD' && (
-            <div className="text-sm sm:text-base text-gray-600 mb-3">
-              ≈ ${showBalance ? currentWallet.usdValue.toLocaleString('en-US', { minimumFractionDigits: 2 }) : '••••••'} USD
-            </div>
-          )}
+          // Also update safe area inset for mobile browsers
+          const safeAreaBottom = getComputedStyle(document.documentElement)
+            .getPropertyValue('--safe-area-inset-bottom') || '0px';
+          const totalBottomHeight = height + parseInt(safeAreaBottom);
+          document.documentElement.style.setProperty('--total-bottom-height', `${totalBottomHeight}px`);
+        }
+      } else {
+        setActualBottomNavHeight(0);
+        document.documentElement.style.setProperty('--bottom-nav-height', '0px');
+        document.documentElement.style.setProperty('--total-bottom-height', '0px');
+      }
+    };
 
-          <div className={`inline-flex items-center gap-1 text-sm sm:text-base font-medium ${currentWallet.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            {currentWallet.change >= 0 ? <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" /> : <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5" />}
-            <span>{currentWallet.change >= 0 ? '+' : ''}{currentWallet.change}%</span>
-            <span className="text-gray-400 ml-1">Today</span>
-          </div>
+    const timer = setTimeout(updateBottomNavHeight, 50);
+    window.addEventListener('resize', updateBottomNavHeight);
 
-          {/* Action Buttons */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-5">
-            <button 
-              onClick={() => setShowDepositModal(true)}
-              className="bg-yellow-400 text-black py-3 sm:py-4 px-2 sm:px-4 rounded-xl font-semibold hover:bg-yellow-500 transition flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 text-xs sm:text-base"
-            >
-              <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span>Deposit</span>
-            </button>
-            <button className="bg-white border border-gray-200 py-3 sm:py-4 px-2 sm:px-4 rounded-xl font-semibold hover:bg-gray-100 transition flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 text-xs sm:text-base">
-              <ArrowUpRight className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span>Withdraw</span>
-            </button>
-            <button className="bg-white border border-gray-200 py-3 sm:py-4 px-2 sm:px-4 rounded-xl font-semibold hover:bg-gray-100 transition flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 text-xs sm:text-base">
-              <ArrowLeftRight className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span>Trade</span>
-            </button>
-          </div>
-        </div>
+    const observer = new MutationObserver(updateBottomNavHeight);
+    if (bottomNavRef.current) {
+      observer.observe(bottomNavRef.current, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        characterData: true
+      });
+    }
 
-        {/* Exchange Rates Section */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-base sm:text-xl font-bold text-gray-900">Exchange Rates</h3>
-            <button className="text-xs sm:text-sm text-yellow-500 hover:text-yellow-600 font-medium">View All</button>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl sm:rounded-2xl p-4 sm:p-5 hover:scale-[1.02] transition cursor-pointer shadow-lg">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-white/90 text-xs sm:text-sm font-medium">USDT/HTG</span>
-                <TrendingUp className="w-4 h-4 text-white/90" />
-              </div>
-              <div className="font-bold text-white text-xl sm:text-2xl mb-1">135.25</div>
-              <div className="text-xs sm:text-sm text-white/90">+2.15% today</div>
-            </div>
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', updateBottomNavHeight);
+      observer.disconnect();
+    };
+  }, [shouldShowBottomNav, pathname]);
 
-            <div className="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl sm:rounded-2xl p-4 sm:p-5 hover:scale-[1.02] transition cursor-pointer shadow-lg">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-white/90 text-xs sm:text-sm font-medium">HTG/USD</span>
-                <TrendingDown className="w-4 h-4 text-white/90" />
-              </div>
-              <div className="font-bold text-white text-xl sm:text-2xl mb-1">0.0074</div>
-              <div className="text-xs sm:text-sm text-white/90">-0.45% today</div>
-            </div>
+  // Update content height calculation
+  useEffect(() => {
+    const updateContentHeight = () => {
+      if (contentRef.current) {
+        const windowHeight = window.innerHeight;
+        const headerHeight = actualHeaderHeight;
+        const bottomNavHeight = actualBottomNavHeight;
+        const calculatedHeight = windowHeight - headerHeight - bottomNavHeight;
+        setContentHeight(calculatedHeight);
 
-            <div className="bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl sm:rounded-2xl p-4 sm:p-5 hover:scale-[1.02] transition cursor-pointer shadow-lg">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-white/90 text-xs sm:text-sm font-medium">BTC/HTG</span>
-                <TrendingUp className="w-4 h-4 text-white/90" />
-              </div>
-              <div className="font-bold text-white text-xl sm:text-2xl mb-1">5.84M</div>
-              <div className="text-xs sm:text-sm text-white/90">+3.28% today</div>
-            </div>
+        // Apply directly to the element
+        contentRef.current.style.height = `${calculatedHeight}px`;
+        contentRef.current.style.maxHeight = `${calculatedHeight}px`;
+        contentRef.current.style.minHeight = `${calculatedHeight}px`;
+      }
+    };
 
-            <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-xl sm:rounded-2xl p-4 sm:p-5 hover:scale-[1.02] transition cursor-pointer shadow-lg">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-white/90 text-xs sm:text-sm font-medium">ETH/HTG</span>
-                <TrendingUp className="w-4 h-4 text-white/90" />
-              </div>
-              <div className="font-bold text-white text-xl sm:text-2xl mb-1">308.5K</div>
-              <div className="text-xs sm:text-sm text-white/90">+1.87% today</div>
-            </div>
-          </div>
-        </div>
+    updateContentHeight();
 
-        {/* Assets List - Only show for Crypto Wallet */}
-        {selectedWallet === 'crypto' && (
-          <div className="mb-6 sm:mb-8">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-base sm:text-xl font-bold text-gray-900">Crypto Assets</h3>
-            </div>
-            <div className="space-y-2 sm:space-y-3">
-              {cryptoAssets.map((asset) => (
-                <div key={asset.symbol} className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 hover:bg-gray-50 transition cursor-pointer border border-gray-200 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 sm:gap-4">
-                      <div className={`w-10 h-10 sm:w-12 sm:h-12 ${asset.color} rounded-full flex items-center justify-center shadow-lg`}>
-                        {asset.icon}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className="font-bold text-gray-900 text-sm sm:text-base">{asset.symbol}</span>
-                          <span className="text-xs sm:text-sm text-gray-500">{asset.name}</span>
-                        </div>
-                        <span className="text-xs sm:text-sm text-gray-600 font-medium">{asset.amount.toFixed(4)}</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-bold text-gray-900 text-sm sm:text-base mb-0.5">{asset.value.toLocaleString('en-US', { minimumFractionDigits: 2 })} HTG</div>
-                      <div className={`text-xs sm:text-sm font-semibold ${asset.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {asset.change >= 0 ? '+' : ''}{asset.change}%
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </>
-    );
-  };
+    // Use requestAnimationFrame for smooth updates
+    let rafId: number;
+    const handleResize = () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(updateContentHeight);
+    };
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [actualHeaderHeight, actualBottomNavHeight]);
+
+  // Add smooth scrolling CSS to the content element
+  useEffect(() => {
+    if (contentRef.current) {
+      const style = document.createElement('style');
+      style.textContent = `
+        .smooth-scroll {
+          -webkit-overflow-scrolling: touch !important;
+          scroll-behavior: smooth !important;
+          overscroll-behavior: contain !important;
+        }
+        
+        .smooth-scroll::-webkit-scrollbar {
+          width: 0 !important;
+          height: 0 !important;
+          display: none !important;
+        }
+        
+        /* Momentum scrolling for iOS */
+        .smooth-scroll {
+          overflow-y: scroll;
+          -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Prevent rubber banding on body */
+        body {
+          overscroll-behavior: none;
+          position: fixed;
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+        }
+      `;
+      document.head.appendChild(style);
+
+      // Add smooth-scroll class
+      contentRef.current.classList.add('smooth-scroll');
+
+      return () => {
+        document.head.removeChild(style);
+        if (contentRef.current) {
+          contentRef.current.classList.remove('smooth-scroll');
+        }
+      };
+    }
+  }, []);
+
+  // CSS for native-like experience - SIMPLIFIED
+  const layoutHeightStyle = `
+    :root {
+      --header-height: ${actualHeaderHeight}px;
+      --bottom-nav-height: ${actualBottomNavHeight}px;
+      --safe-area-inset-top: env(safe-area-inset-top, 0px);
+      --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+      --total-bottom-height: ${actualBottomNavHeight}px;
+    }
+
+    /* Reset body for mobile web app */
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      position: fixed;
+      overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: none;
+    }
+
+    /* App container */
+    .app-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      overflow: hidden;
+      background: white;
+      /* Enable hardware acceleration */
+      transform: translateZ(0);
+      backface-visibility: hidden;
+      perspective: 1000;
+      will-change: transform;
+    }
+
+    /* Header - fixed at top */
+    .app-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: white;
+      transform: translateZ(0);
+      will-change: transform;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Content area - absolutely positioned between header and bottom nav */
+    .app-content {
+      position: absolute;
+      top: ${actualHeaderHeight}px;
+      left: 0;
+      right: 0;
+      bottom: ${actualBottomNavHeight}px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      transform: translateZ(0);
+      will-change: transform, scroll-position;
+      /* Native-like scroll */
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      /* Smooth scrolling */
+      scroll-behavior: smooth;
+      /* Prevent momentum scrolling issues */
+      -webkit-overflow-scrolling: touch;
+      /* Hardware acceleration */
+      backface-visibility: hidden;
+      perspective: 1000;
+    }
+
+    /* Hide scrollbar but keep functionality */
+    .app-content::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+
+    /* Bottom navigation - fixed at bottom */
+    .app-bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      transform: translateZ(0);
+      will-change: transform;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Remove padding for conversation detail page */
+    ${isConversationDetailPage ? `
+      .app-content {
+        top: 0 !important;
+        bottom: 0 !important;
+      }
+    ` : ''}
+
+    /* Prevent text selection for native feel (except inputs) */
+    *:not(input):not(textarea):not([contenteditable="true"]) {
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    /* Allow text selection in input fields */
+    input, textarea, [contenteditable="true"] {
+      -webkit-user-select: text;
+      user-select: text;
+    }
+
+    /* Native-like page transitions */
+    .page-transition {
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Momentum scrolling fix for iOS */
+    @supports (-webkit-overflow-scrolling: touch) {
+      .app-content {
+        /* iOS momentum scrolling */
+        -webkit-overflow-scrolling: touch;
+        /* Prevent elastic scroll */
+        overflow-y: scroll;
+      }
+    }
+
+    /* Fix for Android Chrome */
+    @supports (overflow: overlay) {
+      .app-content {
+        overflow-y: overlay;
+      }
+    }
+
+    /* Prevent overscroll glow/bounce */
+    .app-content {
+      overscroll-behavior-y: contain;
+    }
+
+    /* Fix for mobile safari 100vh issue */
+    .app-content {
+      height: calc(100vh - ${actualHeaderHeight}px - ${actualBottomNavHeight}px);
+    }
+  `;
+
+  // Update auth redirect effect
+  useEffect(() => {
+    if (pathname === "/auth") {
+      openAuthOverlay();
+      window.history.replaceState({}, "", "/");
+    }
+  }, [pathname, openAuthOverlay]);
+
+  // Redirect to include default filter if missing
+  useEffect(() => {
+    if (isMessagesPage && pathname === '/messages' && !searchParams.get('filter')) {
+      navigate('/messages?filter=all', { replace: true });
+    }
+    if (isWalletPage && !searchParams.get('tab')) {
+      navigate('/wallet?tab=main', { replace: true });
+    }
+    if (isExplorePage && !searchParams.get('tab')) {
+      navigate('/explore?tab=products', { replace: true });
+    }
+  }, [isMessagesPage, isWalletPage, isExplorePage, searchParams, navigate, pathname]);
+
+  
+const walletTabs = isWalletPage ? [
+    { id: 'main', name: 'Main Wallet', path: '/wallet?tab=main' },
+    { id: 'crypto', name: 'Crypto Wallet', path: '/wallet?tab=crypto' },
+    { id: 'usd', name: 'USD Wallet', path: '/wallet?tab=usd' },
+    { id: 'transactions', name: 'Transactions', path: '/wallet?tab=transactions' },
+    { id: 'trades', name: 'Trades', path: '/wallet?tab=trades' }
+] : undefined;
+
+  const messagesTabs = isMessagesListPage ? [
+    { id: 'all', name: 'All', path: '/messages?filter=all' },
+    { id: 'unread', name: 'Unread', path: '/messages?filter=unread' },
+    { id: 'groups', name: 'Groups', path: '/messages?filter=groups' },
+    { id: 'archived', name: 'Archived', path: '/messages?filter=archived' }
+  ] : undefined;
+
+  const exploreTabs = isExplorePage ? [
+    { id: 'products', name: 'Products', path: '/explore?tab=products' },
+    { id: 'reels', name: 'Reels', path: '/explore?tab=reels' },
+    { id: 'posts', name: 'Posts', path: '/explore?tab=posts' },
+    { id: 'sellers', name: 'Sellers', path: '/explore?tab=sellers' },
+    { id: 'stations', name: 'Stations', path: '/explore?tab=stations' },
+  ] : undefined;
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 pb-20">
-      <div className="px-4 py-4 sm:py-6">
-        {/* Render content based on selected tab */}
-        {renderMainContent()}
+    <div className="app-container">
+      <style dangerouslySetInnerHTML={{ __html: layoutHeightStyle }} />
 
-        {/* Show Recent Activity only for main wallet tabs */}
-        {(selectedWallet === 'main' || selectedWallet === 'crypto' || selectedWallet === 'usd') && (
-          <div>
-            <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <h3 className="text-base sm:text-xl font-bold text-gray-900">Recent Activity</h3>
-              <button className="text-xs sm:text-sm text-gray-500 hover:text-gray-700 font-medium">View All</button>
-            </div>
-            <div className="space-y-2 sm:space-y-3">
-              {transactions.map((tx, idx) => (
-                <div key={idx} className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 hover:bg-gray-50 transition border border-gray-200 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 sm:gap-4">
-                      <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center ${
-                        tx.type === 'buy' ? 'bg-green-100' : 'bg-blue-100'
-                      }`}>
-                        {tx.type === 'buy' ? 
-                          <Plus className={`w-4 h-4 sm:w-5 sm:h-5 text-green-600`} /> : 
-                          <ArrowDownLeft className={`w-4 h-4 sm:w-5 sm:h-5 text-blue-600`} />
-                        }
-                      </div>
-                      <div>
-                        <div className="font-bold text-gray-900 capitalize text-sm sm:text-base mb-0.5">
-                          {tx.type === 'buy' ? `Buy ${tx.asset}` : 'Deposit'}
-                        </div>
-                        <div className="text-xs sm:text-sm text-gray-500">{tx.date} • {tx.method}</div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className={`font-bold text-sm sm:text-base ${tx.type === 'buy' ? 'text-green-600' : 'text-blue-600'}`}>
-                        {tx.type === 'buy' ? `+${tx.amount}` : `+${tx.amount}`} {tx.asset}
-                      </div>
-                      <div className="text-xs text-gray-500 font-medium">{tx.fiat}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Deposit Modal */}
-      {showDepositModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
-          <div className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-3xl max-h-[85vh] overflow-hidden flex flex-col">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-5 py-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-900">Select Payment Method</h2>
-              <button 
-                onClick={() => {
-                  setShowDepositModal(false);
-                  setSelectedCurrency(null);
-                }} 
-                className="p-1.5 hover:bg-gray-100 rounded-lg transition"
-              >
-                <X className="w-5 h-5 text-gray-600" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-5 py-4 bg-gray-50">
-              <div className="space-y-2">
-                {depositMethods.map((method) => (
-                  <button
-                    key={method.id}
-                    onClick={() => setSelectedCurrency(method.id)}
-                    className={`w-full bg-white rounded-xl p-4 transition border-2 shadow-sm ${
-                      selectedCurrency === method.id ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 ${method.color} rounded-lg flex items-center justify-center`}>
-                          {method.icon}
-                        </div>
-                        <div className="text-left">
-                          <div className="font-semibold text-gray-900 text-base">{method.name}</div>
-                          <div className="text-sm text-gray-500">{method.currency}</div>
-                        </div>
-                      </div>
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                        selectedCurrency === method.id ? 'border-yellow-400 bg-yellow-400' : 'border-gray-300'
-                      }`}>
-                        {selectedCurrency === method.id && (
-                          <Check className="w-3 h-3 text-black" strokeWidth={3} />
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="sticky bottom-0 bg-white border-t border-gray-200 px-5 py-4">
-              <button 
-                disabled={!selectedCurrency}
-                onClick={() => {
-                  if (selectedCurrency) {
-                    setShowDepositModal(false);
-                    setSelectedCurrency(null);
-                  }
-                }}
-                className={`w-full py-3.5 rounded-xl font-semibold text-base transition ${
-                  selectedCurrency 
-                    ? 'bg-yellow-400 text-black hover:bg-yellow-500' 
-                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                }`}
-              >
-                Continue
-              </button>
-            </div>
-          </div>
+      {/* Header */}
+      {shouldShowHeader && (
+        <div ref={headerRef} className="app-header">
+          <AliExpressHeader
+            activeTabId={isMessagesListPage ? messagesFilter : isWalletPage ? walletFilter : isExplorePage ? exploreFilter : activeTab}
+            showFilterBar={showFilterBar}
+            // FIXED: Changed from !isWalletPage to allow tabs on wallet page
+            showCategoryTabs={!isProductsPage && !pathname.startsWith('/categories') || isWalletPage || isMessagesListPage || isExplorePage}
+            filterCategories={filterCategories}
+            selectedFilters={selectedFilters}
+            onFilterSelect={onFilterSelect}
+            onFilterClear={onFilterClear}
+            onClearAll={onClearAll}
+            onFilterButtonClick={onFilterButtonClick}
+            isFilterDisabled={isFilterDisabled}
+            customTabs={messagesTabs || walletTabs || exploreTabs}
+            onCustomTabChange={isMessagesListPage ? (tabId) => {
+              const tab = messagesTabs?.find(t => t.id === tabId);
+              if (tab?.path) {
+                navigate(tab.path);
+              }
+            } : isWalletPage ? (tabId) => {
+              const tab = walletTabs?.find(t => t.id === tabId);
+              if (tab?.path) {
+                navigate(tab.path);
+              }
+            } : isExplorePage ? (tabId) => {
+              const tab = exploreTabs?.find(t => t.id === tabId);
+              if (tab?.path) {
+                navigate(tab.path);
+              }
+            } : undefined}
+            showSectionHeader={isProductsPage}
+            sectionHeaderTitle={productsTitle}
+            sectionHeaderShowStackedProfiles={searchParams.get('showProfiles') === 'true'}
+            sectionHeaderShowVerifiedSellers={searchParams.get('showVerifiedSellers') === 'true'}
+            sectionHeaderVerifiedSellersText={searchParams.get('verifiedSellersText') || 'Verified Sellers'}
+            sectionHeaderStackedProfiles={searchParams.get('showProfiles') === 'true' ? [
+              {
+                id: '1',
+                image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
+                alt: 'Sarah Johnson'
+              },
+              {
+                id: '2',
+                image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+                alt: 'Mike Chen'
+              },
+              {
+                id: '3',
+                image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+                alt: 'Emma Davis'
+              }
+            ] : []}
+            sectionHeaderStackedProfilesText={searchParams.get('profilesText') || 'Handpicked by'}
+            sectionHeaderShowCountdown={searchParams.get('showCountdown') === 'true'}
+            sectionHeaderCountdown={searchParams.get('countdown') || undefined}
+            sectionHeaderShowSponsorCount={searchParams.get('showSponsorCount') === 'true'}
+            {...(sectionHeaderIcon && { sectionHeaderIcon })}
+            sectionHeaderViewAllLink={
+              (searchParams.get('showProfiles') !== 'true' &&
+               searchParams.get('showVerifiedSellers') !== 'true' &&
+               searchParams.get('showCountdown') !== 'true')
+                ? "/vendors"
+                : undefined
+            }
+            sectionHeaderViewAllText="View All"
+          />
         </div>
       )}
+
+      {/* Main Content Area - Native-like scrolling */}
+      <div 
+        ref={contentRef} 
+        className="app-content page-transition"
+        style={{
+          height: `${contentHeight}px`,
+          maxHeight: `${contentHeight}px`,
+          minHeight: `${contentHeight}px`,
+        }}
+      >
+        <Outlet />
+      </div>
+
+      {/* Bottom Navigation */}
+      {shouldShowBottomNav && (
+        <div ref={bottomNavRef} className="app-bottom-nav">
+          <IndexBottomNav />
+        </div>
+      )}
+
+      {/* Product Upload Overlay */}
+      <ProductUploadOverlay
+        isOpen={showProductUpload}
+        onClose={() => setShowProductUpload(false)}
+      />
+
+      {/* Location List Screen */}
+      {isLocationListScreenOpen && locationListScreenData && (
+        <LocationListScreen
+          title={locationListScreenData.title}
+          items={locationListScreenData.items}
+          onSelect={(item) => {
+            locationListScreenData.onSelect(item);
+            setLocationListScreenOpen(false);
+          }}
+          onClose={() => setLocationListScreenOpen(false)}
+          searchPlaceholder={locationListScreenData.searchPlaceholder}
+        />
+      )}
+
+      {/* Location Screen */}
+      {isLocationScreenOpen && (
+        <LocationScreen
+          onClose={() => setLocationScreenOpen(false)}
+          showHeader={true}
+        />
+      )}
+
+      {/* Auth Overlay */}
+      <AuthOverlay
+        isOpen={isAuthOverlayOpen}
+        onClose={() => setIsAuthOverlayOpen(false)}
+      />
     </div>
+  );
+}
+
+// Main export that wraps with provider
+export default function MainLayout() {
+  return (
+    <HeaderFilterProvider>
+      <MainLayoutContent />
+    </HeaderFilterProvider>
   );
 }
