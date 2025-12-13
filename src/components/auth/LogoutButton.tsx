@@ -1,14 +1,12 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
-import { useAuth } from "@/context/RedirectAuthContext";
-
+import { useAuth } from "@/contexts/auth/AuthContext";
 export default function LogoutButton() {
-  const { signOut } = useAuth();
+  const { logout } = useAuth();
 
   const handleLogout = async () => {
-    await signOut();
+    await logout();
   };
 
   return (

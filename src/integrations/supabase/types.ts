@@ -513,6 +513,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_product_images_product"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "product_images_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
@@ -605,23 +612,29 @@ export type Database = {
           discount_price: number | null
           flash_deal: boolean | null
           flash_start_time: string | null
+          free_shipping: boolean | null
           id: string
           inventory: number | null
+          is_choice: boolean | null
+          is_top_selling: boolean | null
           last_activity: string | null
           location: string | null
           model_3d_url: string | null
           name: string
           price: number
           product_type: string | null
+          rating: number | null
           saves: number | null
           seller_id: string | null
           seller_trust_score: number | null
+          shipping_cost: number | null
           short_description: string | null
           sold_count: number
           specifications: Json | null
           status: string | null
           storage_variants: Json | null
           tags: string[] | null
+          total_orders: number | null
           updated_at: string
           variant_names: Json | null
           variant_options: Json | null
@@ -637,23 +650,29 @@ export type Database = {
           discount_price?: number | null
           flash_deal?: boolean | null
           flash_start_time?: string | null
+          free_shipping?: boolean | null
           id?: string
           inventory?: number | null
+          is_choice?: boolean | null
+          is_top_selling?: boolean | null
           last_activity?: string | null
           location?: string | null
           model_3d_url?: string | null
           name: string
           price: number
           product_type?: string | null
+          rating?: number | null
           saves?: number | null
           seller_id?: string | null
           seller_trust_score?: number | null
+          shipping_cost?: number | null
           short_description?: string | null
           sold_count?: number
           specifications?: Json | null
           status?: string | null
           storage_variants?: Json | null
           tags?: string[] | null
+          total_orders?: number | null
           updated_at?: string
           variant_names?: Json | null
           variant_options?: Json | null
@@ -669,23 +688,29 @@ export type Database = {
           discount_price?: number | null
           flash_deal?: boolean | null
           flash_start_time?: string | null
+          free_shipping?: boolean | null
           id?: string
           inventory?: number | null
+          is_choice?: boolean | null
+          is_top_selling?: boolean | null
           last_activity?: string | null
           location?: string | null
           model_3d_url?: string | null
           name?: string
           price?: number
           product_type?: string | null
+          rating?: number | null
           saves?: number | null
           seller_id?: string | null
           seller_trust_score?: number | null
+          shipping_cost?: number | null
           short_description?: string | null
           sold_count?: number
           specifications?: Json | null
           status?: string | null
           storage_variants?: Json | null
           tags?: string[] | null
+          total_orders?: number | null
           updated_at?: string
           variant_names?: Json | null
           variant_options?: Json | null
@@ -812,15 +837,56 @@ export type Database = {
         }
         Relationships: []
       }
+      review_media: {
+        Row: {
+          alt_text: string | null
+          created_at: string | null
+          id: string
+          media_type: string
+          review_id: string
+          thumbnail_url: string | null
+          url: string
+        }
+        Insert: {
+          alt_text?: string | null
+          created_at?: string | null
+          id?: string
+          media_type: string
+          review_id: string
+          thumbnail_url?: string | null
+          url: string
+        }
+        Update: {
+          alt_text?: string | null
+          created_at?: string | null
+          id?: string
+          media_type?: string
+          review_id?: string
+          thumbnail_url?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_media_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           comment: string | null
+          comment_count: number | null
           created_at: string
           helpful_count: number | null
           id: string
+          like_count: number | null
           product_id: string | null
           rating: number
           seller_id: string | null
+          share_count: number | null
           title: string | null
           updated_at: string | null
           user_name: string
@@ -828,12 +894,15 @@ export type Database = {
         }
         Insert: {
           comment?: string | null
+          comment_count?: number | null
           created_at?: string
           helpful_count?: number | null
           id?: string
+          like_count?: number | null
           product_id?: string | null
           rating: number
           seller_id?: string | null
+          share_count?: number | null
           title?: string | null
           updated_at?: string | null
           user_name: string
@@ -841,12 +910,15 @@ export type Database = {
         }
         Update: {
           comment?: string | null
+          comment_count?: number | null
           created_at?: string
           helpful_count?: number | null
           id?: string
+          like_count?: number | null
           product_id?: string | null
           rating?: number
           seller_id?: string | null
+          share_count?: number | null
           title?: string | null
           updated_at?: string | null
           user_name?: string
@@ -865,6 +937,159 @@ export type Database = {
             columns: ["seller_id"]
             isOneToOne: false
             referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reviews_replies: {
+        Row: {
+          comment: string
+          created_at: string | null
+          id: string
+          is_seller: boolean | null
+          like_count: number | null
+          liked: boolean | null
+          parent_reply_id: string | null
+          replying_to: string | null
+          review_id: string
+          updated_at: string | null
+          user_id: string | null
+          user_name: string
+          verified_seller: boolean | null
+        }
+        Insert: {
+          comment: string
+          created_at?: string | null
+          id?: string
+          is_seller?: boolean | null
+          like_count?: number | null
+          liked?: boolean | null
+          parent_reply_id?: string | null
+          replying_to?: string | null
+          review_id: string
+          updated_at?: string | null
+          user_id?: string | null
+          user_name: string
+          verified_seller?: boolean | null
+        }
+        Update: {
+          comment?: string
+          created_at?: string | null
+          id?: string
+          is_seller?: boolean | null
+          like_count?: number | null
+          liked?: boolean | null
+          parent_reply_id?: string | null
+          replying_to?: string | null
+          review_id?: string
+          updated_at?: string | null
+          user_id?: string | null
+          user_name?: string
+          verified_seller?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_replies_parent_reply_id_fkey"
+            columns: ["parent_reply_id"]
+            isOneToOne: false
+            referencedRelation: "reviews_replies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_replies_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_replies_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seller_banners: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_primary: boolean | null
+          name: string
+          seller_id: string | null
+          sort_order: number | null
+          thumbnail: string | null
+          type: string
+          updated_at: string | null
+          value: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          name: string
+          seller_id?: string | null
+          sort_order?: number | null
+          thumbnail?: string | null
+          type: string
+          updated_at?: string | null
+          value: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          name?: string
+          seller_id?: string | null
+          sort_order?: number | null
+          thumbnail?: string | null
+          type?: string
+          updated_at?: string | null
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_banners_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seller_follows: {
+        Row: {
+          created_at: string | null
+          id: string
+          seller_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          seller_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          seller_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seller_follows_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seller_follows_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -924,11 +1149,13 @@ export type Database = {
           company: string | null
           created_at: string
           email: string | null
+          facebook: string | null
           followed_by: Json | null
           followers_count: number
           following_count: number | null
           id: string
           image_url: string | null
+          instagram: string | null
           join_date: string | null
           last_active: string | null
           location: string | null
@@ -941,7 +1168,9 @@ export type Database = {
           response_time: string | null
           reviews_count: number | null
           status: string
+          tiktok: string | null
           total_sales: number
+          twitter: string | null
           updated_at: string
           user_id: string | null
           username: string | null
@@ -955,11 +1184,13 @@ export type Database = {
           company?: string | null
           created_at?: string
           email?: string | null
+          facebook?: string | null
           followed_by?: Json | null
           followers_count?: number
           following_count?: number | null
           id?: string
           image_url?: string | null
+          instagram?: string | null
           join_date?: string | null
           last_active?: string | null
           location?: string | null
@@ -972,7 +1203,9 @@ export type Database = {
           response_time?: string | null
           reviews_count?: number | null
           status?: string
+          tiktok?: string | null
           total_sales?: number
+          twitter?: string | null
           updated_at?: string
           user_id?: string | null
           username?: string | null
@@ -986,11 +1219,13 @@ export type Database = {
           company?: string | null
           created_at?: string
           email?: string | null
+          facebook?: string | null
           followed_by?: Json | null
           followers_count?: number
           following_count?: number | null
           id?: string
           image_url?: string | null
+          instagram?: string | null
           join_date?: string | null
           last_active?: string | null
           location?: string | null
@@ -1003,7 +1238,9 @@ export type Database = {
           response_time?: string | null
           reviews_count?: number | null
           status?: string
+          tiktok?: string | null
           total_sales?: number
+          twitter?: string | null
           updated_at?: string
           user_id?: string | null
           username?: string | null
@@ -1072,6 +1309,39 @@ export type Database = {
           payment_source_card_type?: string | null
           payment_status?: string
           transaction_id?: string
+        }
+        Relationships: []
+      }
+      trusted_seller_logos: {
+        Row: {
+          company_name: string | null
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          logo_url: string
+          updated_at: string | null
+          website_url: string | null
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          logo_url: string
+          updated_at?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string
+          updated_at?: string | null
+          website_url?: string | null
         }
         Relationships: []
       }
@@ -1245,18 +1515,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      auto_select_flash_deals: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      auto_select_flash_deals: { Args: never; Returns: undefined }
       calculate_product_sold_count: {
         Args: { product_id: string }
         Returns: number
       }
-      cleanup_expired_otps: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
+      cleanup_expired_otps: { Args: never; Returns: undefined }
+      decrement_followers: { Args: { seller_id: string }; Returns: undefined }
+      get_all_data_from_tables: {
+        Args: never
+        Returns: {
+          row_data: Json
+          table_name: string
+        }[]
       }
+      increment_followers: { Args: { seller_id: string }; Returns: undefined }
       increment_product_saves: {
         Args: { product_id: string }
         Returns: undefined
@@ -1281,6 +1554,12 @@ export type Database = {
           time_left_x: number
           winner: string | null
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "game_rooms"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       update_product: {
         Args: {
@@ -1300,29 +1579,41 @@ export type Database = {
           discount_price: number | null
           flash_deal: boolean | null
           flash_start_time: string | null
+          free_shipping: boolean | null
           id: string
           inventory: number | null
+          is_choice: boolean | null
+          is_top_selling: boolean | null
           last_activity: string | null
           location: string | null
           model_3d_url: string | null
           name: string
           price: number
           product_type: string | null
+          rating: number | null
           saves: number | null
           seller_id: string | null
           seller_trust_score: number | null
+          shipping_cost: number | null
           short_description: string | null
           sold_count: number
           specifications: Json | null
           status: string | null
           storage_variants: Json | null
           tags: string[] | null
+          total_orders: number | null
           updated_at: string
           variant_names: Json | null
           variant_options: Json | null
           variant_templates: Json | null
           views: number | null
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "products"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
     }
     Enums: {
