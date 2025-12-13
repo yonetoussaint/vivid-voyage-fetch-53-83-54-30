@@ -696,6 +696,23 @@ export default function BuyerSellerChat() {
     return () => clearTimeout(timeout)
   }, [])
 
+  // Handle mobile viewport height
+  useEffect(() => {
+    const setVH = () => {
+      const vh = window.innerHeight * 0.01
+      document.documentElement.style.setProperty('--vh', `${vh}px`)
+    }
+    
+    setVH()
+    window.addEventListener('resize', setVH)
+    window.addEventListener('orientationchange', setVH)
+    
+    return () => {
+      window.removeEventListener('resize', setVH)
+      window.removeEventListener('orientationchange', setVH)
+    }
+  }, [])
+
   // Handlers
   const handleScroll = () => {
     if (chatContainerRef.current) {
@@ -935,10 +952,10 @@ export default function BuyerSellerChat() {
   ]
 
   return (
-    <div className="w-full h-screen flex flex-col overflow-hidden relative transition-colors duration-300">
+    <div className="w-full h-[100dvh] h-[calc(var(--vh,1vh)*100)] flex flex-col overflow-hidden relative transition-colors duration-300 bg-background">
       <div className="flex-1 flex flex-col min-h-0 bg-background text-foreground">
-        {/* Header */}
-        <div className="px-2 py-2 flex items-center gap-2 shrink-0 bg-card border-b border-border shadow-sm">
+        {/* Header - Fixed height */}
+        <div className="px-2 py-2 flex items-center gap-2 shrink-0 bg-card border-b border-border shadow-sm h-14">
           <button className="p-1.5 hover:bg-muted rounded-full transition-colors">
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
@@ -1031,8 +1048,16 @@ export default function BuyerSellerChat() {
           />
         )}
 
-        {/* Chat Content */}
-        <div ref={chatContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-3 py-3 scroll-smooth">
+        {/* Chat Content - Scrollable area */}
+        <div 
+          ref={chatContainerRef} 
+          onScroll={handleScroll} 
+          className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 scroll-smooth"
+          style={{ 
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehavior: 'contain'
+          }}
+        >
           <div className="text-center text-muted-foreground text-xs mb-3 uppercase tracking-wide">Today</div>
 
           {/* Messages */}
@@ -1214,91 +1239,95 @@ export default function BuyerSellerChat() {
           </button>
         )}
 
-        {(replyingTo || editingMessage) && (
-          <div className="px-3 py-2 bg-muted border-t border-border flex items-center gap-2">
-            {replyingTo ? <MoreVertical className="w-4 h-4 text-blue-500" /> : <Edit3 className="w-4 h-4 text-amber-500" />}
+        {/* Fixed bottom sections */}
+        <div className="shrink-0">
+          {(replyingTo || editingMessage) && (
+            <div className="px-3 py-2 bg-muted border-t border-border flex items-center gap-2">
+              {replyingTo ? <MoreVertical className="w-4 h-4 text-blue-500" /> : <Edit3 className="w-4 h-4 text-amber-500" />}
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-muted-foreground">
+                  {replyingTo ? `Replying to ${replyingTo.sender === "buyer" ? "yourself" : "John"}` : "Editing message"}
+                </p>
+                <p className="text-sm text-foreground truncate">{replyingTo?.text || editingMessage?.text}</p>
+              </div>
+              <button onClick={() => { setReplyingTo(null); setEditingMessage(null); setMessage(""); }}>
+                <X className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
+          )}
+
+          {/* Product info - Fixed height */}
+          <div className="px-3 py-2 border-t border-border bg-card flex items-center gap-2 h-16">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shrink-0">
+              <Package className="w-5 h-5 text-muted-foreground" />
+            </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-muted-foreground">
-                {replyingTo ? `Replying to ${replyingTo.sender === "buyer" ? "yourself" : "John"}` : "Editing message"}
-              </p>
-              <p className="text-sm text-foreground truncate">{replyingTo?.text || editingMessage?.text}</p>
+              <p className="text-foreground font-medium text-sm truncate">iPhone 15 Pro Max</p>
+              <div className="flex items-center gap-2">
+                <p className="text-emerald-600 font-bold text-sm">$899</p>
+                <span className="text-xs text-muted-foreground line-through">$1,099</span>
+              </div>
             </div>
-            <button onClick={() => { setReplyingTo(null); setEditingMessage(null); setMessage(""); }}>
-              <X className="w-4 h-4 text-muted-foreground" />
+            <button onClick={() => setShowWalletBalance(true)} className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1">
+              <Wallet className="w-3 h-3" />${walletBalance.toFixed(0)}
             </button>
           </div>
-        )}
 
-        <div className="px-3 py-2 border-t border-border bg-card flex items-center gap-2">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shrink-0">
-            <Package className="w-5 h-5 text-muted-foreground" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-foreground font-medium text-sm truncate">iPhone 15 Pro Max</p>
-            <div className="flex items-center gap-2">
-              <p className="text-emerald-600 font-bold text-sm">$899</p>
-              <span className="text-xs text-muted-foreground line-through">$1,099</span>
-            </div>
-          </div>
-          <button onClick={() => setShowWalletBalance(true)} className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1">
-            <Wallet className="w-3 h-3" />${walletBalance.toFixed(0)}
-          </button>
-        </div>
-
-        {showQuickActions && (
-          <div className="px-3 py-2 bg-card border-t border-border shadow-lg animate-in slide-in-from-bottom-2 duration-200">
-            <div className="grid grid-cols-4 gap-2">
-              {quickActions.map(({ icon: Icon, label, action }: any) => (
-                <button key={label} onClick={action} className="flex flex-col items-center gap-1 py-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
-                  <Icon className="w-5 h-5 text-blue-600" />
-                  <span className="text-xs text-foreground">{label}</span>
+          {showQuickActions && (
+            <div className="px-3 py-2 bg-card border-t border-border shadow-lg animate-in slide-in-from-bottom-2 duration-200">
+              <div className="grid grid-cols-4 gap-2">
+                {quickActions.map(({ icon: Icon, label, action }: any) => (
+                  <button key={label} onClick={action} className="flex flex-col items-center gap-1 py-2 bg-muted rounded-lg hover:bg-muted/80 transition-colors">
+                    <Icon className="w-5 h-5 text-blue-600" />
+                    <span className="text-xs text-foreground">{label}</span>
                 </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {isRecording && (
-          <div className="px-3 py-3 bg-red-50 border-t border-red-200 flex items-center gap-3 animate-in slide-in-from-bottom duration-200">
-            <button onClick={() => setIsRecording(false)} className="p-2 bg-red-100 rounded-full">
-              <Trash2 className="w-5 h-5 text-red-600" />
-            </button>
-            <div className="flex-1 flex items-center gap-2">
-              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-              <span className="text-sm text-red-600 font-medium">{formatDuration(recordingDuration)}</span>
-              <div className="flex-1 flex items-center gap-0.5">
-                {[...Array(30)].map((_, i) => (
-                  <div key={i} className="w-1 bg-red-400 rounded-full animate-pulse" style={{ height: `${Math.random() * 20 + 4}px`, animationDelay: `${i * 0.05}s` }} />
                 ))}
               </div>
             </div>
-            <button onClick={handleSend} className="p-2 bg-red-500 rounded-full">
-              <Send className="w-5 h-5 text-white" />
-            </button>
-          </div>
-        )}
+          )}
 
-        {/* Input Bar */}
-        {!isRecording && (
-          <div className="px-2 py-2 flex items-center gap-1 shrink-0 bg-card border-t border-border">
-            <button onClick={() => setShowQuickActions(!showQuickActions)} className="p-2 shrink-0">
-              <Plus className={cn("w-6 h-6 transition-transform", showQuickActions ? "rotate-45 text-muted-foreground" : "text-blue-600")} />
-            </button>
-            <button className="p-2 shrink-0"><Camera className="w-6 h-6 text-blue-600" /></button>
-            <button className="p-2 shrink-0"><ImageIcon className="w-6 h-6 text-blue-600" /></button>
-            <button className="p-2 shrink-0" onMouseDown={() => setIsRecording(true)}><Mic className="w-6 h-6 text-blue-600" /></button>
-            <div className="flex-1 bg-muted rounded-full px-3 py-2 flex items-center min-w-0">
-              <input ref={inputRef} type="text" placeholder="Type a message..." value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()} className="bg-transparent flex-1 outline-none text-foreground text-sm min-w-0 placeholder:text-muted-foreground" />
+          {isRecording && (
+            <div className="px-3 py-3 bg-red-50 border-t border-red-200 flex items-center gap-3 animate-in slide-in-from-bottom duration-200">
+              <button onClick={() => setIsRecording(false)} className="p-2 bg-red-100 rounded-full">
+                <Trash2 className="w-5 h-5 text-red-600" />
+              </button>
+              <div className="flex-1 flex items-center gap-2">
+                <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                <span className="text-sm text-red-600 font-medium">{formatDuration(recordingDuration)}</span>
+                <div className="flex-1 flex items-center gap-0.5">
+                  {[...Array(30)].map((_, i) => (
+                    <div key={i} className="w-1 bg-red-400 rounded-full animate-pulse" style={{ height: `${Math.random() * 20 + 4}px`, animationDelay: `${i * 0.05}s` }} />
+                  ))}
+                </div>
+              </div>
+              <button onClick={handleSend} className="p-2 bg-red-500 rounded-full">
+                <Send className="w-5 h-5 text-white" />
+              </button>
             </div>
-            <button onClick={handleSend} className="p-2 shrink-0">
-              {message || editingMessage ? <Send className="w-6 h-6 text-blue-600 fill-blue-600" /> : <ThumbsUp className="w-6 h-6 text-blue-600" />}
-            </button>
-          </div>
-        )}
+          )}
 
-        {/* Modals */}
+          {/* Input Bar - Fixed height */}
+          {!isRecording && (
+            <div className="px-2 py-2 flex items-center gap-1 shrink-0 bg-card border-t border-border h-16">
+              <button onClick={() => setShowQuickActions(!showQuickActions)} className="p-2 shrink-0">
+                <Plus className={cn("w-6 h-6 transition-transform", showQuickActions ? "rotate-45 text-muted-foreground" : "text-blue-600")} />
+              </button>
+              <button className="p-2 shrink-0"><Camera className="w-6 h-6 text-blue-600" /></button>
+              <button className="p-2 shrink-0"><ImageIcon className="w-6 h-6 text-blue-600" /></button>
+              <button className="p-2 shrink-0" onMouseDown={() => setIsRecording(true)}><Mic className="w-6 h-6 text-blue-600" /></button>
+              <div className="flex-1 bg-muted rounded-full px-3 py-2 flex items-center min-w-0">
+                <input ref={inputRef} type="text" placeholder="Type a message..." value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()} className="bg-transparent flex-1 outline-none text-foreground text-sm min-w-0 placeholder:text-muted-foreground" />
+              </div>
+              <button onClick={handleSend} className="p-2 shrink-0">
+                {message || editingMessage ? <Send className="w-6 h-6 text-blue-600 fill-blue-600" /> : <ThumbsUp className="w-6 h-6 text-blue-600" />}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Modals - Fixed overlay */}
         {showWalletBalance && (
-          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
+          <div className="fixed inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
             <div className="bg-card w-full rounded-t-3xl p-4 animate-in slide-in-from-bottom duration-300">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-bold text-foreground">Wallet Balance</h3>
@@ -1318,8 +1347,8 @@ export default function BuyerSellerChat() {
         )}
 
         {showPinModal && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50 animate-in fade-in duration-200">
-            <div className="bg-card rounded-3xl p-6 mx-4 max-w-sm animate-in zoom-in-95 duration-300">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-in fade-in duration-200 p-4">
+            <div className="bg-card rounded-3xl p-6 w-full max-w-sm animate-in zoom-in-95 duration-300">
               <div className="text-center mb-6">
                 <Lock className="w-12 h-12 text-blue-600 mx-auto mb-3" />
                 <h2 className="text-xl font-bold text-foreground mb-1">
@@ -1348,7 +1377,7 @@ export default function BuyerSellerChat() {
         )}
 
         {showReceipt && currentOrder?.receipt && (
-          <div className="absolute inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
+          <div className="fixed inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
             <div className="bg-card w-full rounded-t-3xl p-4 animate-in slide-in-from-bottom duration-300">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-foreground">Transaction Receipt</h3>
@@ -1388,7 +1417,7 @@ export default function BuyerSellerChat() {
         )}
 
         {viewingImage && (
-          <div className="absolute inset-0 bg-black z-50 flex flex-col animate-in fade-in duration-200">
+          <div className="fixed inset-0 bg-black z-50 flex flex-col animate-in fade-in duration-200">
             <div className="flex items-center justify-between p-4">
               <button onClick={() => setViewingImage(null)}><X className="w-6 h-6 text-white" /></button>
               <div className="flex gap-2">
