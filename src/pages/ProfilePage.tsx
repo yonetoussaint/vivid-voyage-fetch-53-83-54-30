@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, ChevronRight, ShoppingBag, Heart, MessageCircle, MapPin, Headphones, FileText, Gift, DollarSign, Award, Bell, Settings, Star, Clock, Package, Truck, Shield, Search, Users, HelpCircle, Share2, TrendingUp, Zap, Crown, Target, Calendar, Send, Copy, ExternalLink, Edit } from 'lucide-react';
+import { User, ChevronRight, ShoppingBag, Heart, MessageCircle, MapPin, Headphones, FileText, Gift, DollarSign, Award, Bell, Settings, Star, Clock, Package, Truck, Shield, Search, Users, HelpCircle, Share2, TrendingUp, Zap, Crown, Target, Calendar, Send, Copy, ExternalLink } from 'lucide-react';
 
 function MenuItem({ icon, title, badge }) {
   return (
@@ -42,12 +42,7 @@ export default function AliExpressBuyerProfile() {
               </div>
               <div className="text-sm text-slate-500">ID: 8762****231</div>
             </div>
-            <div>
-              <button className="px-4 py-2 bg-orange-500 text-white rounded-lg flex items-center space-x-2 hover:bg-orange-600 transition-colors">
-                <Edit className="w-4 h-4" />
-                <span className="text-sm font-medium">Edit</span>
-              </button>
-            </div>
+            {/* Edit button has been removed from here */}
           </div>
         </div>
         
