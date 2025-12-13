@@ -1204,6 +1204,7 @@ interface ProvidersProps {
   children: React.ReactNode;
 }
 
+// In Providers.tsx, change the Providers function to:
 export function Providers({ children }: ProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
@@ -1211,19 +1212,17 @@ export function Providers({ children }: ProvidersProps) {
         <TooltipProvider>
           <CurrencyProviderComponent>
             <RouteCacheProviderComponent>
-              <Router>
-                <RedirectAuthProviderComponent>
-                  <AuthProviderComponent>
-                    <AuthOverlayProviderComponent>
-                      <ScreenOverlayProviderComponent>
-                        <HeaderFilterProvider>
-                          {children}
-                        </HeaderFilterProvider>
-                      </ScreenOverlayProviderComponent>
-                    </AuthOverlayProviderComponent>
-                  </AuthProviderComponent>
-                </RedirectAuthProviderComponent>
-              </Router>
+              <RedirectAuthProviderComponent>
+                <AuthProviderComponent>
+                  <AuthOverlayProviderComponent>
+                    <ScreenOverlayProviderComponent>
+                      <HeaderFilterProvider>
+                        {children}
+                      </HeaderFilterProvider>
+                    </ScreenOverlayProviderComponent>
+                  </AuthOverlayProviderComponent>
+                </AuthProviderComponent>
+              </RedirectAuthProviderComponent>
             </RouteCacheProviderComponent>
           </CurrencyProviderComponent>
         </TooltipProvider>
