@@ -1,21 +1,26 @@
-// App.tsx
 import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Providers } from "./components/Providers";
-import { AppRoutes } from "./components/AppRoutes";
 import { Toasters } from "./components/Toasters";
+import AliExpressBuyerProfile from "./pages/AliExpressBuyerProfile";
+import CouponsPage from "./pages/CouponsPage";
 import "./App.css";
 
 function App() {
   return (
     <Providers>
-      <div className="App min-h-screen h-full bg-background text-foreground flex flex-col">
-        <AppRoutes />
-        <Toasters />
-      </div>
+      <Router>
+        <div className="App min-h-screen h-full bg-background text-foreground flex flex-col">
+          <Routes>
+            <Route path="/" element={<AliExpressBuyerProfile />} />
+            <Route path="/coupons" element={<CouponsPage />} />
+            {/* Add other routes here as needed */}
+          </Routes>
+          <Toasters />
+        </div>
+      </Router>
     </Providers>
   );
 }
 
 export default App;
-
-
