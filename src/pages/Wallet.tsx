@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, Plus, Eye, EyeOff, X, Check, ChevronRight, Wallet, ArrowLeftRight, Bitcoin, Ethereum, DollarSign, Coins, CreditCard, Banknote } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, Plus, Eye, EyeOff, X, Check, ArrowLeftRight, Bitcoin, DollarSign, Coins, CreditCard, History, BarChart, Gem, Diamond, Circle } from 'lucide-react';
 
 export default function BinanceWallet() {
   const [showBalance, setShowBalance] = useState(true);
@@ -14,7 +14,7 @@ export default function BinanceWallet() {
       balance: 1736590.00,
       usdValue: 12847.56,
       change: 3.42,
-      icon: <Coins className="w-6 h-6" />,
+      icon: <Coins className="w-6 h-6 text-white" />,
       color: 'from-blue-600 to-cyan-700'
     },
     crypto: {
@@ -23,7 +23,7 @@ export default function BinanceWallet() {
       balance: 1685234.80,
       usdValue: 12475.64,
       change: 2.87,
-      icon: <Bitcoin className="w-6 h-6" />,
+      icon: <Bitcoin className="w-6 h-6 text-white" />,
       color: 'from-orange-600 to-yellow-600'
     },
     usd: {
@@ -32,7 +32,7 @@ export default function BinanceWallet() {
       balance: 371.92,
       usdValue: 371.92,
       change: 0.00,
-      icon: <DollarSign className="w-6 h-6" />,
+      icon: <DollarSign className="w-6 h-6 text-white" />,
       color: 'from-green-600 to-emerald-700'
     }
   };
@@ -40,18 +40,18 @@ export default function BinanceWallet() {
   const currentWallet = wallets[selectedWallet];
 
   const cryptoAssets = [
-    { symbol: 'BTC', name: 'Bitcoin', amount: 0.2451, value: 1431000.00, change: 2.15, icon: <Bitcoin className="w-6 h-6" />, color: 'bg-orange-500' },
-    { symbol: 'ETH', name: 'Ethereum', amount: 0.8234, value: 253600.00, change: -0.87, icon: <Ethereum className="w-6 h-6" />, color: 'bg-purple-500' },
-    { symbol: 'BNB', name: 'BNB', amount: 1.2, value: 50400.00, change: 5.23, icon: <Coins className="w-6 h-6" />, color: 'bg-yellow-500' },
-    { symbol: 'USDT', name: 'Tether', amount: 0, value: 0, change: 0.01, icon: <DollarSign className="w-6 h-6" />, color: 'bg-green-500' },
+    { symbol: 'BTC', name: 'Bitcoin', amount: 0.2451, value: 1431000.00, change: 2.15, icon: <Bitcoin className="w-6 h-6 text-white" />, color: 'bg-orange-500' },
+    { symbol: 'ETH', name: 'Ethereum', amount: 0.8234, value: 253600.00, change: -0.87, icon: <Gem className="w-6 h-6 text-white" />, color: 'bg-purple-500' },
+    { symbol: 'BNB', name: 'BNB', amount: 1.2, value: 50400.00, change: 5.23, icon: <Diamond className="w-6 h-6 text-white" />, color: 'bg-yellow-500' },
+    { symbol: 'USDT', name: 'Tether', amount: 0, value: 0, change: 0.01, icon: <Circle className="w-6 h-6 text-white" />, color: 'bg-green-500' },
   ];
 
   const depositMethods = [
     { id: 'moncash', name: 'MonCash', currency: 'HTG', color: 'bg-red-500', icon: <CreditCard className="w-6 h-6 text-white" /> },
     { id: 'natcash', name: 'NatCash', currency: 'HTG', color: 'bg-blue-500', icon: <CreditCard className="w-6 h-6 text-white" /> },
-    { id: 'sogebank', name: 'SogeBank', currency: 'HTG', color: 'bg-green-500', icon: <Banknote className="w-6 h-6 text-white" /> },
+    { id: 'sogebank', name: 'SogeBank', currency: 'HTG', color: 'bg-green-500', icon: <CreditCard className="w-6 h-6 text-white" /> },
     { id: 'bnc', name: 'BNC', currency: 'HTG', color: 'bg-purple-500', icon: <CreditCard className="w-6 h-6 text-white" /> },
-    { id: 'usd', name: 'Bank Transfer', currency: 'USD', color: 'bg-emerald-500', icon: <Banknote className="w-6 h-6 text-white" /> },
+    { id: 'usd', name: 'Bank Transfer', currency: 'USD', color: 'bg-emerald-500', icon: <CreditCard className="w-6 h-6 text-white" /> },
     { id: 'usdt', name: 'USDT (TRC20)', currency: 'USDT', color: 'bg-teal-500', icon: <Coins className="w-6 h-6 text-white" /> },
     { id: 'pesos', name: 'Dominican Pesos', currency: 'DOP', color: 'bg-indigo-500', icon: <DollarSign className="w-6 h-6 text-white" /> },
   ];
