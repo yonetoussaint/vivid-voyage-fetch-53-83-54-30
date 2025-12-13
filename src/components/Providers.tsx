@@ -1,5 +1,6 @@
 // components/Providers.tsx
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { BrowserRouter as Router, useNavigate } from "react-router-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
