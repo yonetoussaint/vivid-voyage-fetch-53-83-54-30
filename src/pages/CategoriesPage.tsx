@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ChevronRight, User, Plug, Monitor, Tv, Droplet, Baby, ShoppingCart, Home, Shirt, Users, Watch, Car } from 'lucide-react';
 
 // Type definitions
@@ -124,33 +124,7 @@ const DEFAULT_CATEGORIES: Category[] = [
     { id: "travel-kits", name: "Travel Kits", imageUrl: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?q=80&w=200&h=200&auto=format&fit=crop" },
     { id: "luxury", name: "Luxury Beauty", imageUrl: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=200&h=200&auto=format&fit=crop" }
   ],
-  popularBrands: [
-    "L'Oréal", "Estée Lauder", "Nivea", "Maybelline", "MAC", "Clinique", 
-    "Neutrogena", "Garnier", "Dove", "Pantene", "Olay", "Revlon"
-  ],
-  trendingProducts: [
-    {
-      name: "Hyaluronic Acid Serum",
-      category: "skincare",
-      trending: true
-    },
-    {
-      name: "LED Face Mask",
-      category: "tools",
-      trending: true
-    },
-    {
-      name: "Sunscreen Stick",
-      category: "suncare",
-      trending: true
-    }
-  ],
-  seasonal: {
-    summer: ["suncare", "after-sun", "waterproof-makeup"],
-    winter: ["moisturizers", "lip-care", "hand-creams"],
-    holiday: ["gift-sets", "luxury", "fragrance-sets"]
-  }
-},
+  },
   {
     id: "babies",
     name: "Babies & Toys",
@@ -499,6 +473,23 @@ const CategoriesPage: React.FC<CategoriesPageProps> = ({
   const selectedCategoryData = categories.find(cat => cat.id === selectedCategory);
   const categoryGroups = DEFAULT_CATEGORY_GROUPS[selectedCategory] || [];
 
+  // Handle mobile viewport height
+  useEffect(() => {
+    const setVH = () => {
+      const vh = window.innerHeight * 0.01
+      document.documentElement.style.setProperty('--vh', `${vh}px`)
+    }
+    
+    setVH()
+    window.addEventListener('resize', setVH)
+    window.addEventListener('orientationchange', setVH)
+    
+    return () => {
+      window.removeEventListener('resize', setVH)
+      window.removeEventListener('orientationchange', setVH)
+    }
+  }, [])
+
   // Helper function to render tag elements
   const renderTag = (tag: string) => {
     if (tag === "Sale") {
@@ -570,11 +561,11 @@ const CategoriesPage: React.FC<CategoriesPageProps> = ({
   );
 
   return (
-    <div className="bg-gray-50 h-screen flex overflow-hidden">
-      {/* Left sidebar - Shadow removed */}
+    <div className="bg-gray-50 h-[100dvh] h-[calc(var(--vh,1vh)*100)] flex overflow-hidden">
+      {/* Left sidebar - Fixed width and scrolling */}
       <div className="w-24 bg-white flex flex-col">
         <div className="flex-1 overflow-y-auto overscroll-contain scrollbar-hide py-4">
-          <div className="min-h-full pb-16"> {/* Increased from pb-8 to pb-16 */}
+          <div className="min-h-full">
             {categories.map((category) => {
               const Icon = category.icon;
               const isActive = selectedCategory === category.id;
@@ -607,37 +598,35 @@ const CategoriesPage: React.FC<CategoriesPageProps> = ({
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 h-screen overflow-hidden flex flex-col">
+      <div className="flex-1 h-full overflow-hidden flex flex-col">
         <div 
-          className="flex-1 overflow-y-auto scroll-wheel" 
+          className="flex-1 overflow-y-auto overflow-x-hidden p-2"
           style={{ 
             WebkitOverflowScrolling: 'touch',
-            overscrollBehaviorY: 'contain',
+            overscrollBehavior: 'contain',
           }}
         >
-          <div className="p-2 pb-20"> {/* Added pb-20 (80px) for scroll room */}
-            {selectedCategoryData?.subCategories.length === 0 ? (
-              <div className="flex items-center justify-center h-64">
-                <p className="text-gray-500">No subcategories available for {selectedCategoryData.name}</p>
-              </div>
-            ) : (
-              <>
-                {/* Render all category groups */}
-                {categoryGroups.map(renderSubCategorySection)}
+          {selectedCategoryData?.subCategories.length === 0 ? (
+            <div className="flex items-center justify-center h-64">
+              <p className="text-gray-500">No subcategories available for {selectedCategoryData.name}</p>
+            </div>
+          ) : (
+            <>
+              {/* Render all category groups */}
+              {categoryGroups.map(renderSubCategorySection)}
 
-                {/* Product Suggestions Grid */}
-                <div className="mt-8 mb-8">
-                  <h2 className="text-base font-semibold text-gray-900 mb-4">You May Also Like</h2>
-                  <div className="grid grid-cols-2 gap-2">
-                    {products.map(renderProductCard)}
-                  </div>
+              {/* Product Suggestions Grid */}
+              <div className="mt-8 mb-8">
+                <h2 className="text-base font-semibold text-gray-900 mb-4">You May Also Like</h2>
+                <div className="grid grid-cols-2 gap-2">
+                  {products.map(renderProductCard)}
                 </div>
+              </div>
 
-                {/* Extra padding div at the bottom for scroll space */}
-                <div className="h-32"></div>
-              </>
-            )}
-          </div>
+              {/* Extra padding div at the bottom for scroll space */}
+              <div className="h-20"></div>
+            </>
+          )}
         </div>
       </div>
 
@@ -650,40 +639,65 @@ const CategoriesPage: React.FC<CategoriesPageProps> = ({
 // Separate GlobalStyles component for better organization
 const GlobalStyles: React.FC = () => (
   <style jsx global>{`
+    :root {
+      --vh: 1vh;
+    }
+    
     body {
+      margin: 0;
+      padding: 0;
       overflow: hidden;
       position: fixed;
       width: 100%;
       height: 100%;
+      -webkit-tap-highlight-color: transparent;
     }
+    
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
     .scroll-wheel {
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior: contain;
-      padding-bottom: 20px; /* Added padding to scroll container itself */
     }
+    
     .scroll-wheel::-webkit-scrollbar {
       display: none;
     }
+    
     .scroll-wheel {
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
+    
     .scrollbar-hide {
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
+    
     .scrollbar-hide::-webkit-scrollbar {
       display: none;
     }
+    
     .overscroll-contain {
       overscroll-behavior-y: contain;
     }
+    
     .line-clamp-2 {
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
+    }
+    
+    /* Improve touch scrolling on iOS */
+    @supports (-webkit-touch-callout: none) {
+      .overscroll-contain {
+        overscroll-behavior-y: none;
+      }
     }
   `}</style>
 );
