@@ -12,7 +12,7 @@ function App() {
       <Router>
         <div className="App min-h-screen h-full bg-background text-foreground flex flex-col">
           <Routes>
-            <Route path="/" element={<AliExpressBuyerProfile />} />
+            <Route path="/" element={<ProfilePage />} />
             <Route path="/coupons" element={<CouponsPage />} />
             {/* Add other routes here as needed */}
           </Routes>
