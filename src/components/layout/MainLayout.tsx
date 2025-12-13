@@ -528,14 +528,14 @@ function MainLayoutContent() {
     }
   }, [isMessagesPage, isWalletPage, isExplorePage, searchParams, navigate, pathname]);
 
-  // Define custom tabs for wallet page
-  const walletTabs = isWalletPage ? [
-    { id: 'main', name: 'Main Wallet', icon: 'CreditCard', path: '/wallet?tab=main' },
-    { id: 'crypto', name: 'Crypto Wallet', icon: 'DollarSign', path: '/wallet?tab=crypto' },
-    { id: 'usd', name: 'USD Wallet', icon: 'CreditCard', path: '/wallet?tab=usd' },
-    { id: 'transactions', name: 'Transactions', icon: 'History', path: '/wallet?tab=transactions' },
-    { id: 'trades', name: 'Trades', icon: 'BarChart', path: '/wallet?tab=trades' }
-  ] : undefined;
+  
+const walletTabs = isWalletPage ? [
+    { id: 'main', name: 'Main Wallet', path: '/wallet?tab=main' },
+    { id: 'crypto', name: 'Crypto Wallet', path: '/wallet?tab=crypto' },
+    { id: 'usd', name: 'USD Wallet', path: '/wallet?tab=usd' },
+    { id: 'transactions', name: 'Transactions', path: '/wallet?tab=transactions' },
+    { id: 'trades', name: 'Trades', path: '/wallet?tab=trades' }
+] : undefined;
 
   const messagesTabs = isMessagesListPage ? [
     { id: 'all', name: 'All', path: '/messages?filter=all' },
