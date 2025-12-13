@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Edit, Pin, VolumeX, Check, CheckCheck, Camera, Mic, BadgeCheck, Phone, Video, Archive, Trash2, Star, Clock, Users, Loader2 } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -20,6 +20,23 @@ export default function Messages() {
   const currentUserId = user?.id || '';
 
   const { conversations, loading } = useConversations(currentUserId, activeTab);
+
+  // Handle mobile viewport height
+  useEffect(() => {
+    const setVH = () => {
+      const vh = window.innerHeight * 0.01
+      document.documentElement.style.setProperty('--vh', `${vh}px`)
+    }
+    
+    setVH()
+    window.addEventListener('resize', setVH)
+    window.addEventListener('orientationchange', setVH)
+    
+    return () => {
+      window.removeEventListener('resize', setVH)
+      window.removeEventListener('orientationchange', setVH)
+    }
+  }, [])
 
   // Map API data to match the UI structure
   const mappedConversations = conversations.map(conv => ({
@@ -94,7 +111,7 @@ export default function Messages() {
 
   if (isLoading) {
     return (
-      <div className="bg-gray-50 min-h-screen flex items-center justify-center">
+      <div className="bg-gray-50 h-[100dvh] h-[calc(var(--vh,1vh)*100)] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
       </div>
     );
@@ -102,7 +119,7 @@ export default function Messages() {
 
   if (!user) {
     return (
-      <div className="bg-gray-50 min-h-screen flex items-center justify-center">
+      <div className="bg-gray-50 h-[100dvh] h-[calc(var(--vh,1vh)*100)] flex items-center justify-center p-4">
         <div className="text-center px-4">
           <div className="w-16 h-16 mx-auto bg-gradient-to-br from-red-600 to-red-500 rounded-full flex items-center justify-center mb-4">
             <Edit className="h-8 w-8 text-white" />
@@ -120,8 +137,12 @@ export default function Messages() {
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen text-gray-900 font-sans">
+    <div className="bg-gray-50 h-[100dvh] h-[calc(var(--vh,1vh)*100)] text-gray-900 font-sans overflow-hidden">
       <style>{`
+        :root {
+          --vh: 1vh;
+        }
+        
         @keyframes typing {
           0%, 60%, 100% {
             opacity: 0.3;
@@ -142,11 +163,28 @@ export default function Messages() {
           animation: typing 1.4s infinite;
           animation-delay: 0.4s;
         }
+        
+        body {
+          overflow: hidden;
+          position: fixed;
+          width: 100%;
+          height: 100%;
+        }
+        
+        * {
+          -webkit-tap-highlight-color: transparent;
+        }
       `}</style>
-      
-      <div className="max-w-2xl mx-auto">
-        {/* Conversations list */}
-        <div className="bg-white">
+
+      <div className="h-full max-w-2xl mx-auto flex flex-col">
+        {/* Conversations list - Scrollable area */}
+        <div 
+          className="flex-1 overflow-y-auto overflow-x-hidden bg-white"
+          style={{ 
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehavior: 'contain',
+          }}
+        >
           {loading ? (
             <div className="flex items-center justify-center py-16">
               <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
@@ -234,7 +272,7 @@ export default function Messages() {
                       <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full z-20"></div>
                     )}
                   </div>
-                  
+
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
@@ -252,7 +290,7 @@ export default function Messages() {
                         {conv.time}
                       </span>
                     </div>
-                    
+
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1 min-w-0 flex-1">
                         {conv.isTyping ? (
@@ -282,14 +320,14 @@ export default function Messages() {
                           </>
                         )}
                       </div>
-                      
+
                       {/* Last seen for individual chats */}
                       {!conv.isGroup && conv.lastSeen && !conv.isOnline && (
                         <span className="text-xs text-gray-400 ml-2 flex-shrink-0">{conv.lastSeen}</span>
                       )}
                     </div>
                   </div>
-                  
+
                   {/* Right side icons */}
                   <div className="flex flex-col items-end gap-2 ml-3 flex-shrink-0">
                     {conv.unreadCount > 0 && (
@@ -325,17 +363,17 @@ export default function Messages() {
             ))
           )}
         </div>
-      </div>
 
-      {/* Floating action button */}
-      <button
-        className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-br from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 z-50"
-        onClick={() => setShowUserSelection(true)}
-        aria-label="New message"
-        type="button"
-      >
-        <Edit size={24} />
-      </button>
+        {/* Floating action button */}
+        <button
+          className="fixed bottom-6 right-4 md:right-6 w-14 h-14 bg-gradient-to-br from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 z-50"
+          onClick={() => setShowUserSelection(true)}
+          aria-label="New message"
+          type="button"
+        >
+          <Edit size={24} />
+        </button>
+      </div>
 
       {/* User Selection Dialog */}
       <UserSelectionDialog
