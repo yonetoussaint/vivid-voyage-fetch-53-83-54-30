@@ -16,7 +16,7 @@ import NewArrivalsSection from "@/components/home/NewArrivalsSection";
 import HeroBanner from "@/components/home/HeroBanner";
 import BookGenreFlashDeals from "@/components/home/BookGenreFlashDeals";
 import { useHeaderFilter } from "@/contexts/HeaderFilterContext";
-import { useAuth } from "@/contexts/auth/AuthContext";
+import { useAuth } from "@/components/Providers";
 
 import { motion, AnimatePresence } from "framer-motion";
 import {

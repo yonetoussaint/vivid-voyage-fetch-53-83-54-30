@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchFlashDeals, trackProductView } from "@/integrations/supabase/products";
 import SectionHeader from "./SectionHeader";
 import ProductSemiPanel from "./ProductSemiPanel";
-import { useScreenOverlay } from "@/context/ScreenOverlayContext";
+import { useScreenOverlay } from "@/components/Providers";
 
 interface FlashDealsProps {
   productType?: string;
