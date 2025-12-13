@@ -1262,17 +1262,16 @@ export function Providers({ children }: ProvidersProps) {
         <TooltipProvider>
           <CurrencyProviderComponent>
             <RouteCacheProviderComponent>
-              <RedirectAuthProviderComponent>
-                <AuthProviderComponent>
-                  <AuthOverlayProviderComponent>
-                    <ScreenOverlayProviderComponent>
-                      <HeaderFilterProvider>
-                        {children}
-                      </HeaderFilterProvider>
-                    </ScreenOverlayProviderComponent>
-                  </AuthOverlayProviderComponent>
-                </AuthProviderComponent>
-              </RedirectAuthProviderComponent>
+              {/* AuthProvider MUST wrap everything that uses useAuth */}
+              <AuthProviderComponent>
+                <AuthOverlayProviderComponent>
+                  <ScreenOverlayProviderComponent>
+                    <HeaderFilterProvider>
+                      {children}
+                    </HeaderFilterProvider>
+                  </ScreenOverlayProviderComponent>
+                </AuthOverlayProviderComponent>
+              </AuthProviderComponent>
             </RouteCacheProviderComponent>
           </CurrencyProviderComponent>
         </TooltipProvider>
