@@ -4,7 +4,7 @@ import IndexBottomNav from "@/components/layout/IndexBottomNav";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import AliExpressHeader from "@/components/home/AliExpressHeader";
-import { Home, Smartphone, Shirt, Baby, Dumbbell, Sparkles, Car, Book, Trophy, Tag, ShieldCheck, Zap, Star, Crown, Award } from "lucide-react";
+import { Home, Smartphone, Shirt, Baby, Dumbbell, Sparkles, Car, Book, Trophy, Tag, ShieldCheck, Zap, Star, Crown, Award, CreditCard, DollarSign, History, BarChart } from "lucide-react";
 import { useScreenOverlay } from "@/context/ScreenOverlayContext";
 import ProductUploadOverlay from "@/components/product/ProductUploadOverlay";
 import LocationScreen from "@/components/home/header/LocationScreen";
@@ -20,11 +20,11 @@ function MainLayoutContent() {
   const location = useLocation();
   const navigate = useNavigate();
   const pathname = location.pathname;
-  
+
   // Get search params early
   const searchParams = new URLSearchParams(location.search);
   const messagesFilter = searchParams.get('filter') || 'all';
-  const walletFilter = searchParams.get('tab') || 'buyer';
+  const walletFilter = searchParams.get('tab') || 'main';
   const exploreFilter = searchParams.get('tab') || 'products';
   const isMessagesPage = pathname === '/messages' || pathname.startsWith('/messages/');
   const isMessagesListPage = pathname === '/messages';
@@ -33,17 +33,17 @@ function MainLayoutContent() {
   const isProductsPage = pathname === '/products';
   const productsTitle = isProductsPage ? new URLSearchParams(location.search).get('title') || 'Products' : '';
   const iconName = searchParams.get('icon');
-  
+
   // Check if current page is conversation detail - DECLARE THIS EARLY
   const isConversationDetailPage = pathname.startsWith('/messages/') && pathname !== '/messages';
-  
+
   const isProductPage = pathname.includes('/product/');
   const isRootHomePage = pathname === "/" || pathname === "/for-you";
   const isForYouPage = pathname === "/" || pathname === "/for-you";
   const isMultiStepTransferPage = pathname === "/multi-step-transfer";
   const isMultiStepTransferSheetPage = pathname === "/multi-step-transfer-page";
   const isTransferOldPage = pathname === "/transfer-old";
-  
+
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [showProductUpload, setShowProductUpload] = useState(false);
@@ -86,7 +86,11 @@ function MainLayoutContent() {
     Dumbbell,
     Sparkles,
     Car,
-    Book
+    Book,
+    CreditCard,
+    DollarSign,
+    History,
+    BarChart
   };
 
   const sectionHeaderIcon = iconName ? iconMapper[iconName] : undefined;
@@ -228,7 +232,7 @@ function MainLayoutContent() {
           const height = bottomNavElement.getBoundingClientRect().height;
           setActualBottomNavHeight(height);
           document.documentElement.style.setProperty('--bottom-nav-height', `${height}px`);
-          
+
           // Also update safe area inset for mobile browsers
           const safeAreaBottom = getComputedStyle(document.documentElement)
             .getPropertyValue('--safe-area-inset-bottom') || '0px';
@@ -271,7 +275,7 @@ function MainLayoutContent() {
         const bottomNavHeight = actualBottomNavHeight;
         const calculatedHeight = windowHeight - headerHeight - bottomNavHeight;
         setContentHeight(calculatedHeight);
-        
+
         // Apply directly to the element
         contentRef.current.style.height = `${calculatedHeight}px`;
         contentRef.current.style.maxHeight = `${calculatedHeight}px`;
@@ -280,7 +284,7 @@ function MainLayoutContent() {
     };
 
     updateContentHeight();
-    
+
     // Use requestAnimationFrame for smooth updates
     let rafId: number;
     const handleResize = () => {
@@ -331,10 +335,10 @@ function MainLayoutContent() {
         }
       `;
       document.head.appendChild(style);
-      
+
       // Add smooth-scroll class
       contentRef.current.classList.add('smooth-scroll');
-      
+
       return () => {
         document.head.removeChild(style);
         if (contentRef.current) {
@@ -517,28 +521,27 @@ function MainLayoutContent() {
       navigate('/messages?filter=all', { replace: true });
     }
     if (isWalletPage && !searchParams.get('tab')) {
-      navigate('/wallet?tab=buyer', { replace: true });
+      navigate('/wallet?tab=main', { replace: true });
     }
     if (isExplorePage && !searchParams.get('tab')) {
       navigate('/explore?tab=products', { replace: true });
     }
   }, [isMessagesPage, isWalletPage, isExplorePage, searchParams, navigate, pathname]);
 
-  // Define custom tabs
+  // Define custom tabs for wallet page
+  const walletTabs = isWalletPage ? [
+    { id: 'main', name: 'Main Wallet', icon: 'CreditCard', path: '/wallet?tab=main' },
+    { id: 'crypto', name: 'Crypto Wallet', icon: 'DollarSign', path: '/wallet?tab=crypto' },
+    { id: 'usd', name: 'USD Wallet', icon: 'CreditCard', path: '/wallet?tab=usd' },
+    { id: 'transactions', name: 'Transactions', icon: 'History', path: '/wallet?tab=transactions' },
+    { id: 'trades', name: 'Trades', icon: 'BarChart', path: '/wallet?tab=trades' }
+  ] : undefined;
+
   const messagesTabs = isMessagesListPage ? [
     { id: 'all', name: 'All', path: '/messages?filter=all' },
     { id: 'unread', name: 'Unread', path: '/messages?filter=unread' },
     { id: 'groups', name: 'Groups', path: '/messages?filter=groups' },
     { id: 'archived', name: 'Archived', path: '/messages?filter=archived' }
-  ] : undefined;
-
-  const walletTabs = isWalletPage ? [
-    { id: 'buyer', name: 'Buyer', path: '/wallet?tab=buyer' },
-    { id: 'seller', name: 'Seller', path: '/wallet?tab=seller' },
-    { id: 'transactions', name: 'Transactions', path: '/wallet?tab=transactions' },
-    { id: 'payouts', name: 'Payouts', path: '/wallet?tab=payouts' },
-    { id: 'payment-methods', name: 'Payment Methods', path: '/wallet?tab=payment-methods' },
-    { id: 'rewards', name: 'Rewards', path: '/wallet?tab=rewards' },
   ] : undefined;
 
   const exploreTabs = isExplorePage ? [
@@ -559,7 +562,7 @@ function MainLayoutContent() {
           <AliExpressHeader
             activeTabId={isMessagesListPage ? messagesFilter : isWalletPage ? walletFilter : isExplorePage ? exploreFilter : activeTab}
             showFilterBar={showFilterBar}
-            showCategoryTabs={!isProductsPage && !pathname.startsWith('/categories')}
+            showCategoryTabs={!isProductsPage && !pathname.startsWith('/categories') && !isWalletPage}
             filterCategories={filterCategories}
             selectedFilters={selectedFilters}
             onFilterSelect={onFilterSelect}
