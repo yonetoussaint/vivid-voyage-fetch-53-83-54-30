@@ -1155,5 +1155,16 @@ function App() {
 
 export default App;
 
+
+
 // Export the currency constants for external use
 export { currencies, currencyToCountry };
+
+// At the end of App.tsx, add these exports:
+export {
+  AuthContext,
+  ScreenOverlayContext,
+  AuthOverlayContext,
+  CurrencyContext,
+  RouteCacheContext,
+};
