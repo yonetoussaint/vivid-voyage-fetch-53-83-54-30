@@ -1,9 +1,13 @@
 import React from 'react';
 import { User, ChevronRight, ShoppingBag, Heart, MessageCircle, MapPin, Headphones, FileText, Gift, DollarSign, Award, Bell, Settings, Star, Clock, Package, Truck, Shield, Search, Users, HelpCircle, Share2, TrendingUp, Zap, Crown, Target, Calendar, Send, Copy, ExternalLink } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-function MenuItem({ icon, title, badge }) {
+function MenuItem({ icon, title, badge, onClick }) {
   return (
-    <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 last:border-b-0">
+    <div 
+      onClick={onClick}
+      className="flex items-center justify-between px-5 py-4 border-b border-slate-100 last:border-b-0 cursor-pointer hover:bg-slate-50 active:bg-slate-100"
+    >
       <div className="flex items-center space-x-3">
         {icon}
         <span className="text-slate-800">{title}</span>
@@ -21,6 +25,12 @@ function MenuItem({ icon, title, badge }) {
 }
 
 export default function AliExpressBuyerProfile() {
+  const navigate = useNavigate();
+
+  const handleCouponsClick = () => {
+    navigate('/coupons');
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       {/* Profile Section */}
@@ -192,7 +202,12 @@ export default function AliExpressBuyerProfile() {
         <MenuItem icon={<MessageCircle className="w-5 h-5 text-slate-600" />} title="Messages" badge="3" />
         <MenuItem icon={<MapPin className="w-5 h-5 text-slate-600" />} title="Address" />
         <MenuItem icon={<Headphones className="w-5 h-5 text-slate-600" />} title="Support" />
-        <MenuItem icon={<Gift className="w-5 h-5 text-slate-600" />} title="Coupons" badge="5" />
+        <MenuItem 
+          icon={<Gift className="w-5 h-5 text-slate-600" />} 
+          title="Coupons" 
+          badge="5"
+          onClick={handleCouponsClick}
+        />
         <MenuItem icon={<DollarSign className="w-5 h-5 text-slate-600" />} title="Wallet" />
         <MenuItem icon={<Award className="w-5 h-5 text-slate-600" />} title="Points" />
         <MenuItem icon={<Shield className="w-5 h-5 text-slate-600" />} title="Protection" />
