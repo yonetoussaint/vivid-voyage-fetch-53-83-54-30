@@ -20,7 +20,7 @@ interface AuthUser {
 
 type ScreenType = 'main' | 'email' | 'verification' | 'password' | 'success' | 'account-creation' | 'reset-password' | 'otp-reset' | 'new-password';
 
-interface AuthContextType {
+export interface AuthContextType {
   // Core auth state
   user: AuthUser | null;
   isAuthenticated: boolean;
