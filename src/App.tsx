@@ -2,7 +2,7 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Providers } from "./components/Providers";
 import { Toasters } from "./components/Toasters";
-import AliExpressBuyerProfile from "./pages/AliExpressBuyerProfile";
+import ProfilePage from "./pages/ProfilePage";
 import CouponsPage from "./pages/CouponsPage";
 import "./App.css";
 
