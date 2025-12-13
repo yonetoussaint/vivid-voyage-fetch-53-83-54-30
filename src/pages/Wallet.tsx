@@ -1,429 +1,329 @@
-import { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { 
-  ArrowUpRight, 
-  ArrowDownLeft, 
-  Plus,
-  Eye,
-  EyeOff,
-  CreditCard,
-  Send,
-  Download,
-  TrendingUp,
-  Clock,
-  Settings,
-  Shield,
-  ChevronRight,
-  DollarSign,
-  Repeat,
-  Target,
-  BarChart3,
-  Lock,
-  ShoppingCart,
-  Store,
-  Wallet as WalletIcon,
-  TrendingDown,
-  Receipt,
-  FileText
-} from 'lucide-react';
-import { PageContainer } from '@/components/layout/PageContainer';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { useSellerByUserId } from '@/hooks/useSellerByUserId';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React, { useState } from 'react';
+import { ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, Plus, Eye, EyeOff, X, Check, ChevronRight, Wallet, ArrowLeftRight } from 'lucide-react';
 
-interface Transaction {
-  id: string;
-  type: 'purchase' | 'deposit' | 'withdrawal' | 'payment_received' | 'payout';
-  amount: number;
-  description: string;
-  timestamp: string;
-  status: 'completed' | 'pending' | 'failed';
-  relatedTo?: string;
-}
-
-interface QuickAction {
-  id: string;
-  icon: any;
-  label: string;
-  action: string;
-  color: string;
-  description: string;
-}
-
-export default function Wallet() {
-  const { user } = useAuth();
-  const { data: sellerData } = useSellerByUserId(user?.id || '');
-  const isSeller = !!sellerData;
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  // Get tab from URL params
-  const searchParams = new URLSearchParams(location.search);
-  const urlTab = searchParams.get('tab') as 'buyer' | 'seller' | null;
-
-  const [buyerBalance] = useState(1247.50);
-  const [sellerBalance] = useState(3124.75);
+export default function BinanceWallet() {
   const [showBalance, setShowBalance] = useState(true);
-  const [activeTab, setActiveTab] = useState<'buyer' | 'seller'>(urlTab || (isSeller ? 'seller' : 'buyer'));
-  const [filterType, setFilterType] = useState<'all' | 'purchase' | 'deposit' | 'withdrawal' | 'payment_received' | 'payout'>('all');
+  const [selectedWallet, setSelectedWallet] = useState('main');
+  const [showDepositModal, setShowDepositModal] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState(null);
 
-  // Update activeTab when URL changes
-  useEffect(() => {
-    if (urlTab && (urlTab === 'buyer' || urlTab === 'seller')) {
-      setActiveTab(urlTab);
-    }
-  }, [urlTab]);
-
-  // Sync activeTab with URL tab changes
-  useEffect(() => {
-    if (urlTab && (urlTab === 'buyer' || urlTab === 'seller') && urlTab !== activeTab) {
-      setActiveTab(urlTab);
-    }
-  }, [urlTab, activeTab]);
-
-  // Buyer Quick Actions
-  const buyerActions: QuickAction[] = [
-    { id: '1', icon: Plus, label: 'Add Money', action: 'add', color: 'bg-blue-600', description: 'Top up your wallet' },
-    { id: '2', icon: ShoppingCart, label: 'Shop', action: 'shop', color: 'bg-green-600', description: 'Browse products' },
-    { id: '3', icon: Receipt, label: 'Purchases', action: 'purchases', color: 'bg-purple-600', description: 'Order history' },
-    { id: '4', icon: Repeat, label: 'Auto-top up', action: 'auto', color: 'bg-orange-600', description: 'Set automatic refills' },
-  ];
-
-  // Seller Quick Actions
-  const sellerActions: QuickAction[] = [
-    { id: '1', icon: Download, label: 'Withdraw', action: 'withdraw', color: 'bg-green-600', description: 'Transfer to bank' },
-    { id: '2', icon: BarChart3, label: 'Sales', action: 'sales', color: 'bg-blue-600', description: 'View analytics' },
-    { id: '3', icon: FileText, label: 'Invoices', action: 'invoices', color: 'bg-purple-600', description: 'Generate receipts' },
-    { id: '4', icon: Target, label: 'Payouts', action: 'payouts', color: 'bg-orange-600', description: 'Scheduled transfers' },
-  ];
-
-  // Sample transactions
-  const buyerTransactions: Transaction[] = [
-    {
-      id: '1',
-      type: 'purchase',
-      amount: -45.99,
-      description: 'Nike Air Jordan - Order #3429',
-      timestamp: 'Today, 2:30 PM',
-      status: 'completed',
-      relatedTo: 'Electronics Store'
+  const wallets = {
+    main: {
+      name: 'Main Wallet',
+      currency: 'HTG',
+      balance: 1736590.00,
+      usdValue: 12847.56,
+      change: 3.42,
+      icon: '🏦',
+      color: 'from-blue-600 to-cyan-700'
     },
-    {
-      id: '2',
-      type: 'deposit',
-      amount: 500.00,
-      description: 'Wallet top-up via Credit Card',
-      timestamp: 'Today, 10:15 AM',
-      status: 'completed'
+    crypto: {
+      name: 'Crypto Wallet',
+      currency: 'HTG',
+      balance: 1685234.80,
+      usdValue: 12475.64,
+      change: 2.87,
+      icon: '₿',
+      color: 'from-orange-600 to-yellow-600'
     },
-    {
-      id: '3',
-      type: 'purchase',
-      amount: -124.99,
-      description: 'Smart Watch Series 5 - Order #3428',
-      timestamp: 'Yesterday, 5:20 PM',
-      status: 'completed',
-      relatedTo: 'Tech World'
-    },
-  ];
-
-  const sellerTransactions: Transaction[] = [
-    {
-      id: '1',
-      type: 'payment_received',
-      amount: 149.99,
-      description: 'Sale: Wireless Earbuds Pro',
-      timestamp: 'Today, 3:15 PM',
-      status: 'completed',
-      relatedTo: 'Order #3429'
-    },
-    {
-      id: '2',
-      type: 'payment_received',
-      amount: 299.99,
-      description: 'Sale: Smart Watch Series 5',
-      timestamp: 'Today, 11:30 AM',
-      status: 'pending',
-      relatedTo: 'Order #3428'
-    },
-    {
-      id: '3',
-      type: 'payout',
-      amount: -1000.00,
-      description: 'Bank transfer to account ****1234',
-      timestamp: 'Yesterday, 9:00 AM',
-      status: 'completed'
-    },
-  ];
-
-  const currentBalance = activeTab === 'buyer' ? buyerBalance : sellerBalance;
-  const currentTransactions = activeTab === 'buyer' ? buyerTransactions : sellerTransactions;
-  const currentActions = activeTab === 'buyer' ? buyerActions : sellerActions;
-
-  const getTransactionIcon = (type: string) => {
-    switch (type) {
-      case 'deposit':
-        return <ArrowDownLeft className="h-4 w-4" />;
-      case 'purchase':
-        return <ShoppingCart className="h-4 w-4" />;
-      case 'withdrawal':
-      case 'payout':
-        return <ArrowUpRight className="h-4 w-4" />;
-      case 'payment_received':
-        return <Store className="h-4 w-4" />;
-      default:
-        return <CreditCard className="h-4 w-4" />;
+    usd: {
+      name: 'USD Wallet',
+      currency: 'USD',
+      balance: 371.92,
+      usdValue: 371.92,
+      change: 0.00,
+      icon: '💵',
+      color: 'from-green-600 to-emerald-700'
     }
   };
 
-  const getTransactionColor = (type: string) => {
-    switch (type) {
-      case 'deposit':
-      case 'payment_received':
-        return 'bg-green-50 text-green-600';
-      case 'purchase':
-      case 'withdrawal':
-      case 'payout':
-        return 'bg-red-50 text-red-600';
-      default:
-        return 'bg-blue-50 text-blue-600';
-    }
-  };
+  const currentWallet = wallets[selectedWallet];
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'text-green-600';
-      case 'pending':
-        return 'text-yellow-600';
-      case 'failed':
-        return 'text-red-600';
-      default:
-        return 'text-gray-600';
-    }
-  };
+  const cryptoAssets = [
+    { symbol: 'BTC', name: 'Bitcoin', amount: 0.2451, value: 1431000.00, change: 2.15, icon: '₿', color: 'bg-orange-500' },
+    { symbol: 'ETH', name: 'Ethereum', amount: 0.8234, value: 253600.00, change: -0.87, icon: 'Ξ', color: 'bg-purple-500' },
+    { symbol: 'BNB', name: 'BNB', amount: 1.2, value: 50400.00, change: 5.23, icon: 'B', color: 'bg-yellow-500' },
+    { symbol: 'USDT', name: 'Tether', amount: 0, value: 0, change: 0.01, icon: '₮', color: 'bg-green-500' },
+  ];
 
-  const filteredTransactions = filterType === 'all' 
-    ? currentTransactions 
-    : currentTransactions.filter(t => t.type === filterType);
+  const depositMethods = [
+    { id: 'moncash', name: 'MonCash', currency: 'HTG', color: 'bg-red-500' },
+    { id: 'natcash', name: 'NatCash', currency: 'HTG', color: 'bg-blue-500' },
+    { id: 'sogebank', name: 'SogeBank', currency: 'HTG', color: 'bg-green-500' },
+    { id: 'bnc', name: 'BNC', currency: 'HTG', color: 'bg-purple-500' },
+    { id: 'usd', name: 'Bank Transfer', currency: 'USD', color: 'bg-emerald-500' },
+    { id: 'usdt', name: 'USDT (TRC20)', currency: 'USDT', color: 'bg-teal-500' },
+    { id: 'pesos', name: 'Dominican Pesos', currency: 'DOP', color: 'bg-indigo-500' },
+  ];
+
+  const transactions = [
+    { type: 'buy', asset: 'BTC', amount: 0.0123, fiat: '16,590 HTG', date: 'Dec 13, 14:23', method: 'MonCash' },
+    { type: 'buy', asset: 'ETH', amount: 0.15, fiat: '30,780 HTG', date: 'Dec 13, 10:05', method: 'SogeBank' },
+    { type: 'deposit', asset: 'HTG', amount: 50000, fiat: '50,000 HTG', date: 'Dec 12, 18:30', method: 'NatCash' },
+  ];
 
   return (
-    <div className=" bg-gray-50">
-      <PageContainer maxWidth="lg" padding="none">
-        <div className="space-y-4 pb-20">
-
-          {/* Balance Card */}
-          <div className="px-4">
-            <Card className="border-0 shadow-sm bg-gradient-to-br from-gray-900 to-gray-800 text-white">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-2">
-                    <Shield className="h-4 w-4 text-green-400" />
-                    <span className="text-xs text-gray-300">
-                      {activeTab === 'buyer' ? 'Shopping Balance' : 'Available Earnings'}
-                    </span>
-                  </div>
-                  <button 
-                    onClick={() => setShowBalance(!showBalance)}
-                    className="p-2 rounded-full hover:bg-white/10 transition-colors"
-                  >
-                    {showBalance ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                  </button>
-                </div>
-
-                <div className="mb-8">
-                  <p className="text-sm text-gray-400 mb-1">
-                    {activeTab === 'buyer' ? 'Available to spend' : 'Ready to withdraw'}
-                  </p>
-                  <div className="text-4xl font-light">
-                    {showBalance ? `$${currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '••••••'}
-                  </div>
-                </div>
-
-                {/* Quick Actions */}
-                <div className="grid grid-cols-4 gap-3">
-                  {currentActions.map((action) => (
-                    <button
-                      key={action.id}
-                      className="flex flex-col items-center gap-2"
-                      title={action.description}
-                    >
-                      <div className={`w-12 h-12 ${action.color} rounded-2xl flex items-center justify-center`}>
-                        <action.icon className="h-5 w-5 text-white" />
-                      </div>
-                      <span className="text-xs text-gray-300">{action.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </Card>
+    <div className="min-h-screen bg-gray-50 text-gray-900 pb-20">
+      <div className="px-4 py-4 sm:py-6">
+        {/* Wallet Selector */}
+        <div className="mb-6">
+          <div className="flex gap-2">
+            {Object.entries(wallets).map(([key, wallet]) => (
+              <button
+                key={key}
+                onClick={() => setSelectedWallet(key)}
+                className={`flex-1 py-3 rounded-xl transition font-semibold text-sm ${
+                  selectedWallet === key 
+                    ? 'bg-yellow-400 text-black' 
+                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                {wallet.name}
+              </button>
+            ))}
           </div>
-
-          {/* Stats */}
-          <div className="px-4">
-            <div className="bg-white rounded-2xl p-4 border border-gray-100">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center">
-                    {activeTab === 'buyer' ? (
-                      <ShoppingCart className="h-5 w-5 text-blue-600" />
-                    ) : (
-                      <TrendingUp className="h-5 w-5 text-blue-600" />
-                    )}
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">
-                      {activeTab === 'buyer' ? 'Total Spent This Month' : 'Total Sales This Month'}
-                    </p>
-                    <p className="text-sm font-semibold">
-                      {activeTab === 'buyer' ? '$1,245.50' : '$4,589.99'}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-gray-500">vs Last Month</p>
-                  <p className={`text-sm font-semibold ${activeTab === 'buyer' ? 'text-green-600' : 'text-green-600'}`}>
-                    {activeTab === 'buyer' ? '-15%' : '+28%'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Transactions */}
-          <div className="px-4">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold">Recent Activity</h2>
-              <button className="text-xs text-gray-500 hover:text-gray-700">View All</button>
-            </div>
-
-            {/* Transaction Filters */}
-            <div className="flex gap-2 mb-3 overflow-x-auto pb-2 scrollbar-hide">
-              {['all', ...(activeTab === 'buyer' ? ['deposit', 'purchase'] : ['payment_received', 'payout'])].map((type) => (
-                <button
-                  key={type}
-                  onClick={() => setFilterType(type as any)}
-                  className={`px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                    filterType === type
-                      ? 'bg-black text-white'
-                      : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  {type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}
-                </button>
-              ))}
-            </div>
-
-            <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-100">
-              {filteredTransactions.map((transaction) => (
-                <button 
-                  key={transaction.id} 
-                  className="w-full p-4 hover:bg-gray-50 transition-colors text-left"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      getTransactionColor(transaction.type)
-                    }`}>
-                      {getTransactionIcon(transaction.type)}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm">{transaction.description}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <p className="text-xs text-gray-500">{transaction.timestamp}</p>
-                        <span className={`text-xs font-medium ${getStatusColor(transaction.status)}`}>
-                          • {transaction.status}
-                        </span>
-                      </div>
-                      {transaction.relatedTo && (
-                        <p className="text-xs text-gray-400 mt-0.5">{transaction.relatedTo}</p>
-                      )}
-                    </div>
-
-                    <div className="text-right flex-shrink-0">
-                      <div className={`font-semibold text-sm ${
-                        transaction.amount >= 0 ? 'text-green-600' : 'text-gray-900'
-                      }`}>
-                        {transaction.amount >= 0 ? '+' : ''}${Math.abs(transaction.amount).toFixed(2)}
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Additional Features */}
-          <div className="px-4">
-            <h2 className="text-sm font-semibold mb-3">
-              {activeTab === 'buyer' ? 'Shopping Tools' : 'Seller Tools'}
-            </h2>
-            <div className="grid grid-cols-2 gap-3">
-              {activeTab === 'buyer' ? (
-                <>
-                  <button className="bg-white p-4 rounded-2xl border border-gray-100 hover:border-gray-200 transition-colors flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-purple-50 rounded-full flex items-center justify-center">
-                        <Target className="h-5 w-5 text-purple-600" />
-                      </div>
-                      <div className="text-left">
-                        <p className="text-sm font-medium">Budget</p>
-                        <p className="text-xs text-gray-500">Set limits</p>
-                      </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-gray-400" />
-                  </button>
-
-                  <button className="bg-white p-4 rounded-2xl border border-gray-100 hover:border-gray-200 transition-colors flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center">
-                        <Repeat className="h-5 w-5 text-green-600" />
-                      </div>
-                      <div className="text-left">
-                        <p className="text-sm font-medium">Auto-refill</p>
-                        <p className="text-xs text-gray-500">Enable</p>
-                      </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-gray-400" />
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button className="bg-white p-4 rounded-2xl border border-gray-100 hover:border-gray-200 transition-colors flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center">
-                        <BarChart3 className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <div className="text-left">
-                        <p className="text-sm font-medium">Analytics</p>
-                        <p className="text-xs text-gray-500">View reports</p>
-                      </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-gray-400" />
-                  </button>
-
-                  <button className="bg-white p-4 rounded-2xl border border-gray-100 hover:border-gray-200 transition-colors flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-orange-50 rounded-full flex items-center justify-center">
-                        <Clock className="h-5 w-5 text-orange-600" />
-                      </div>
-                      <div className="text-left">
-                        <p className="text-sm font-medium">Payouts</p>
-                        <p className="text-xs text-gray-500">Schedule</p>
-                      </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-gray-400" />
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-
         </div>
-      </PageContainer>
+
+        {/* Balance Section */}
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xs sm:text-sm text-gray-500">
+              {currentWallet.name} Balance
+            </span>
+            <button onClick={() => setShowBalance(!showBalance)} className="p-1 hover:bg-gray-200 rounded transition">
+              {showBalance ? <Eye className="w-4 h-4 text-gray-400" /> : <EyeOff className="w-4 h-4 text-gray-400" />}
+            </button>
+          </div>
+          
+          <div className="flex items-end gap-2 sm:gap-4 mb-1">
+            <h2 className="text-3xl sm:text-5xl font-bold text-gray-900">
+              {showBalance ? `${currentWallet.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '••••••'}
+            </h2>
+            <span className="text-lg sm:text-2xl text-gray-500 mb-1">{currentWallet.currency}</span>
+          </div>
+
+          {currentWallet.currency !== 'USD' && (
+            <div className="text-sm sm:text-base text-gray-600 mb-3">
+              ≈ ${showBalance ? currentWallet.usdValue.toLocaleString('en-US', { minimumFractionDigits: 2 }) : '••••••'} USD
+            </div>
+          )}
+
+          <div className={`inline-flex items-center gap-1 text-sm sm:text-base font-medium ${currentWallet.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {currentWallet.change >= 0 ? <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" /> : <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5" />}
+            <span>{currentWallet.change >= 0 ? '+' : ''}{currentWallet.change}%</span>
+            <span className="text-gray-400 ml-1">Today</span>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-5">
+            <button 
+              onClick={() => setShowDepositModal(true)}
+              className="bg-yellow-400 text-black py-3 sm:py-4 px-2 sm:px-4 rounded-xl font-semibold hover:bg-yellow-500 transition flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 text-xs sm:text-base"
+            >
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span>Deposit</span>
+            </button>
+            <button className="bg-white border border-gray-200 py-3 sm:py-4 px-2 sm:px-4 rounded-xl font-semibold hover:bg-gray-100 transition flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 text-xs sm:text-base">
+              <ArrowUpRight className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span>Withdraw</span>
+            </button>
+            <button className="bg-white border border-gray-200 py-3 sm:py-4 px-2 sm:px-4 rounded-xl font-semibold hover:bg-gray-100 transition flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 text-xs sm:text-base">
+              <ArrowLeftRight className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span>Trade</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Exchange Rates Section */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-base sm:text-xl font-bold text-gray-900">Exchange Rates</h3>
+            <button className="text-xs sm:text-sm text-yellow-500 hover:text-yellow-600 font-medium">View All</button>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl sm:rounded-2xl p-4 sm:p-5 hover:scale-[1.02] transition cursor-pointer shadow-lg">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-white/90 text-xs sm:text-sm font-medium">USDT/HTG</span>
+                <TrendingUp className="w-4 h-4 text-white/90" />
+              </div>
+              <div className="font-bold text-white text-xl sm:text-2xl mb-1">135.25</div>
+              <div className="text-xs sm:text-sm text-white/90">+2.15% today</div>
+            </div>
+
+            <div className="bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl sm:rounded-2xl p-4 sm:p-5 hover:scale-[1.02] transition cursor-pointer shadow-lg">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-white/90 text-xs sm:text-sm font-medium">HTG/USD</span>
+                <TrendingDown className="w-4 h-4 text-white/90" />
+              </div>
+              <div className="font-bold text-white text-xl sm:text-2xl mb-1">0.0074</div>
+              <div className="text-xs sm:text-sm text-white/90">-0.45% today</div>
+            </div>
+
+            <div className="bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl sm:rounded-2xl p-4 sm:p-5 hover:scale-[1.02] transition cursor-pointer shadow-lg">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-white/90 text-xs sm:text-sm font-medium">BTC/HTG</span>
+                <TrendingUp className="w-4 h-4 text-white/90" />
+              </div>
+              <div className="font-bold text-white text-xl sm:text-2xl mb-1">5.84M</div>
+              <div className="text-xs sm:text-sm text-white/90">+3.28% today</div>
+            </div>
+
+            <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-xl sm:rounded-2xl p-4 sm:p-5 hover:scale-[1.02] transition cursor-pointer shadow-lg">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-white/90 text-xs sm:text-sm font-medium">ETH/HTG</span>
+                <TrendingUp className="w-4 h-4 text-white/90" />
+              </div>
+              <div className="font-bold text-white text-xl sm:text-2xl mb-1">308.5K</div>
+              <div className="text-xs sm:text-sm text-white/90">+1.87% today</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Assets List - Only show for Crypto Wallet */}
+        {selectedWallet === 'crypto' && (
+          <div className="mb-6 sm:mb-8">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-base sm:text-xl font-bold text-gray-900">Crypto Assets</h3>
+            </div>
+            <div className="space-y-2 sm:space-y-3">
+              {cryptoAssets.map((asset) => (
+                <div key={asset.symbol} className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 hover:bg-gray-50 transition cursor-pointer border border-gray-200 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 sm:gap-4">
+                      <div className={`w-10 h-10 sm:w-12 sm:h-12 ${asset.color} rounded-full flex items-center justify-center text-xl sm:text-2xl font-bold text-white shadow-lg`}>
+                        {asset.icon}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="font-bold text-gray-900 text-sm sm:text-base">{asset.symbol}</span>
+                          <span className="text-xs sm:text-sm text-gray-500">{asset.name}</span>
+                        </div>
+                        <span className="text-xs sm:text-sm text-gray-600 font-medium">{asset.amount.toFixed(4)}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-bold text-gray-900 text-sm sm:text-base mb-0.5">{asset.value.toLocaleString('en-US', { minimumFractionDigits: 2 })} HTG</div>
+                      <div className={`text-xs sm:text-sm font-semibold ${asset.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {asset.change >= 0 ? '+' : ''}{asset.change}%
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Recent Transactions */}
+        <div>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h3 className="text-base sm:text-xl font-bold text-gray-900">Recent Activity</h3>
+            <button className="text-xs sm:text-sm text-gray-500 hover:text-gray-700 font-medium">View All</button>
+          </div>
+          <div className="space-y-2 sm:space-y-3">
+            {transactions.map((tx, idx) => (
+              <div key={idx} className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 hover:bg-gray-50 transition border border-gray-200 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 sm:gap-4">
+                    <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center ${
+                      tx.type === 'buy' ? 'bg-green-100' : 'bg-blue-100'
+                    }`}>
+                      {tx.type === 'buy' ? 
+                        <Plus className={`w-4 h-4 sm:w-5 sm:h-5 text-green-600`} /> : 
+                        <ArrowDownLeft className={`w-4 h-4 sm:w-5 sm:h-5 text-blue-600`} />
+                      }
+                    </div>
+                    <div>
+                      <div className="font-bold text-gray-900 capitalize text-sm sm:text-base mb-0.5">
+                        {tx.type === 'buy' ? `Buy ${tx.asset}` : 'Deposit'}
+                      </div>
+                      <div className="text-xs sm:text-sm text-gray-500">{tx.date} • {tx.method}</div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`font-bold text-sm sm:text-base ${tx.type === 'buy' ? 'text-green-600' : 'text-blue-600'}`}>
+                      {tx.type === 'buy' ? `+${tx.amount}` : `+${tx.amount}`} {tx.asset}
+                    </div>
+                    <div className="text-xs text-gray-500 font-medium">{tx.fiat}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Deposit Modal */}
+      {showDepositModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
+          <div className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-3xl max-h-[85vh] overflow-hidden flex flex-col">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-5 py-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-gray-900">Select Payment Method</h2>
+              <button 
+                onClick={() => {
+                  setShowDepositModal(false);
+                  setSelectedCurrency(null);
+                }} 
+                className="p-1.5 hover:bg-gray-100 rounded-lg transition"
+              >
+                <X className="w-5 h-5 text-gray-600" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto px-5 py-4 bg-gray-50">
+              <div className="space-y-2">
+                {depositMethods.map((method) => (
+                  <button
+                    key={method.id}
+                    onClick={() => setSelectedCurrency(method.id)}
+                    className={`w-full bg-white rounded-xl p-4 transition border-2 shadow-sm ${
+                      selectedCurrency === method.id ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 ${method.color} rounded-lg flex items-center justify-center`}>
+                          <div className="w-6 h-6 bg-white/30 rounded"></div>
+                        </div>
+                        <div className="text-left">
+                          <div className="font-semibold text-gray-900 text-base">{method.name}</div>
+                          <div className="text-sm text-gray-500">{method.currency}</div>
+                        </div>
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                        selectedCurrency === method.id ? 'border-yellow-400 bg-yellow-400' : 'border-gray-300'
+                      }`}>
+                        {selectedCurrency === method.id && (
+                          <Check className="w-3 h-3 text-black" strokeWidth={3} />
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 px-5 py-4">
+              <button 
+                disabled={!selectedCurrency}
+                onClick={() => {
+                  if (selectedCurrency) {
+                    setShowDepositModal(false);
+                    setSelectedCurrency(null);
+                  }
+                }}
+                className={`w-full py-3.5 rounded-xl font-semibold text-base transition ${
+                  selectedCurrency 
+                    ? 'bg-yellow-400 text-black hover:bg-yellow-500' 
+                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
