@@ -1,11 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, Plus, Eye, EyeOff, X, Check, ArrowLeftRight, Bitcoin, DollarSign, Coins, CreditCard, History, BarChart, Gem, Diamond, Circle } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 
 export default function BinanceWallet() {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const walletTab = searchParams.get('tab') || 'main'; // Get tab from URL
+
   const [showBalance, setShowBalance] = useState(true);
-  const [selectedWallet, setSelectedWallet] = useState('main');
+  const [selectedWallet, setSelectedWallet] = useState(walletTab); // Initialize from URL
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState(null);
+
+  // Update selectedWallet when URL changes
+  useEffect(() => {
+    setSelectedWallet(walletTab);
+  }, [walletTab]);
 
   const wallets = {
     main: {
@@ -37,7 +47,7 @@ export default function BinanceWallet() {
     }
   };
 
-  const currentWallet = wallets[selectedWallet];
+  const currentWallet = wallets[selectedWallet] || wallets.main;
 
   const cryptoAssets = [
     { symbol: 'BTC', name: 'Bitcoin', amount: 0.2451, value: 1431000.00, change: 2.15, icon: <Bitcoin className="w-6 h-6 text-white" />, color: 'bg-orange-500' },
@@ -62,11 +72,104 @@ export default function BinanceWallet() {
     { type: 'deposit', asset: 'HTG', amount: 50000, fiat: '50,000 HTG', date: 'Dec 12, 18:30', method: 'NatCash' },
   ];
 
-  return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 pb-20">
-      <div className="px-4 py-4 sm:py-6">
-        {/* Removed Wallet Selector tabs - Now using MainLayout tabs */}
+  const trades = [
+    { id: 1, pair: 'BTC/HTG', type: 'buy', amount: 0.0123, price: '5,840,000', total: '71,832', date: 'Dec 13, 14:23', status: 'completed' },
+    { id: 2, pair: 'ETH/HTG', type: 'sell', amount: 0.15, price: '308,500', total: '46,275', date: 'Dec 12, 10:05', status: 'completed' },
+    { id: 3, pair: 'USDT/HTG', type: 'buy', amount: 100, price: '135.25', total: '13,525', date: 'Dec 11, 16:30', status: 'pending' },
+  ];
 
+  const renderMainContent = () => {
+    if (selectedWallet === 'transactions') {
+      return (
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-base sm:text-xl font-bold text-gray-900">Transaction History</h3>
+            <button className="text-xs sm:text-sm text-yellow-500 hover:text-yellow-600 font-medium">View All</button>
+          </div>
+          <div className="space-y-2 sm:space-y-3">
+            {transactions.map((tx, idx) => (
+              <div key={idx} className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 hover:bg-gray-50 transition border border-gray-200 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 sm:gap-4">
+                    <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center ${
+                      tx.type === 'buy' ? 'bg-green-100' : 'bg-blue-100'
+                    }`}>
+                      {tx.type === 'buy' ? 
+                        <Plus className={`w-4 h-4 sm:w-5 sm:h-5 text-green-600`} /> : 
+                        <ArrowDownLeft className={`w-4 h-4 sm:w-5 sm:h-5 text-blue-600`} />
+                      }
+                    </div>
+                    <div>
+                      <div className="font-bold text-gray-900 capitalize text-sm sm:text-base mb-0.5">
+                        {tx.type === 'buy' ? `Buy ${tx.asset}` : 'Deposit'}
+                      </div>
+                      <div className="text-xs sm:text-sm text-gray-500">{tx.date} • {tx.method}</div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`font-bold text-sm sm:text-base ${tx.type === 'buy' ? 'text-green-600' : 'text-blue-600'}`}>
+                      {tx.type === 'buy' ? `+${tx.amount}` : `+${tx.amount}`} {tx.asset}
+                    </div>
+                    <div className="text-xs text-gray-500 font-medium">{tx.fiat}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (selectedWallet === 'trades') {
+      return (
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-base sm:text-xl font-bold text-gray-900">Trade History</h3>
+            <button className="text-xs sm:text-sm text-yellow-500 hover:text-yellow-600 font-medium">View All</button>
+          </div>
+          <div className="space-y-2 sm:space-y-3">
+            {trades.map((trade) => (
+              <div key={trade.id} className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 hover:bg-gray-50 transition border border-gray-200 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 sm:gap-4">
+                    <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center ${
+                      trade.type === 'buy' ? 'bg-green-100' : 'bg-red-100'
+                    }`}>
+                      {trade.type === 'buy' ? 
+                        <Plus className={`w-4 h-4 sm:w-5 sm:h-5 text-green-600`} /> : 
+                        <ArrowUpRight className={`w-4 h-4 sm:w-5 sm:h-5 text-red-600`} />
+                      }
+                    </div>
+                    <div>
+                      <div className="font-bold text-gray-900 capitalize text-sm sm:text-base mb-0.5">
+                        {trade.type === 'buy' ? 'Buy' : 'Sell'} {trade.pair}
+                      </div>
+                      <div className="text-xs sm:text-sm text-gray-500">{trade.date}</div>
+                      <div className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mt-1 ${
+                        trade.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {trade.status}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`font-bold text-sm sm:text-base ${trade.type === 'buy' ? 'text-green-600' : 'text-red-600'}`}>
+                      {trade.amount} {trade.pair.split('/')[0]}
+                    </div>
+                    <div className="text-xs text-gray-600 font-medium">${trade.total} HTG</div>
+                    <div className="text-xs text-gray-500">@{trade.price}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Default wallet view for main, crypto, usd
+    return (
+      <>
         {/* Balance Section */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-2">
@@ -196,44 +299,55 @@ export default function BinanceWallet() {
             </div>
           </div>
         )}
+      </>
+    );
+  };
 
-        {/* Recent Transactions */}
-        <div>
-          <div className="flex items-center justify-between mb-3 sm:mb-4">
-            <h3 className="text-base sm:text-xl font-bold text-gray-900">Recent Activity</h3>
-            <button className="text-xs sm:text-sm text-gray-500 hover:text-gray-700 font-medium">View All</button>
-          </div>
-          <div className="space-y-2 sm:space-y-3">
-            {transactions.map((tx, idx) => (
-              <div key={idx} className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 hover:bg-gray-50 transition border border-gray-200 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 sm:gap-4">
-                    <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center ${
-                      tx.type === 'buy' ? 'bg-green-100' : 'bg-blue-100'
-                    }`}>
-                      {tx.type === 'buy' ? 
-                        <Plus className={`w-4 h-4 sm:w-5 sm:h-5 text-green-600`} /> : 
-                        <ArrowDownLeft className={`w-4 h-4 sm:w-5 sm:h-5 text-blue-600`} />
-                      }
-                    </div>
-                    <div>
-                      <div className="font-bold text-gray-900 capitalize text-sm sm:text-base mb-0.5">
-                        {tx.type === 'buy' ? `Buy ${tx.asset}` : 'Deposit'}
+  return (
+    <div className="min-h-screen bg-gray-50 text-gray-900 pb-20">
+      <div className="px-4 py-4 sm:py-6">
+        {/* Render content based on selected tab */}
+        {renderMainContent()}
+
+        {/* Show Recent Activity only for main wallet tabs */}
+        {(selectedWallet === 'main' || selectedWallet === 'crypto' || selectedWallet === 'usd') && (
+          <div>
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <h3 className="text-base sm:text-xl font-bold text-gray-900">Recent Activity</h3>
+              <button className="text-xs sm:text-sm text-gray-500 hover:text-gray-700 font-medium">View All</button>
+            </div>
+            <div className="space-y-2 sm:space-y-3">
+              {transactions.map((tx, idx) => (
+                <div key={idx} className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 hover:bg-gray-50 transition border border-gray-200 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 sm:gap-4">
+                      <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center ${
+                        tx.type === 'buy' ? 'bg-green-100' : 'bg-blue-100'
+                      }`}>
+                        {tx.type === 'buy' ? 
+                          <Plus className={`w-4 h-4 sm:w-5 sm:h-5 text-green-600`} /> : 
+                          <ArrowDownLeft className={`w-4 h-4 sm:w-5 sm:h-5 text-blue-600`} />
+                        }
                       </div>
-                      <div className="text-xs sm:text-sm text-gray-500">{tx.date} • {tx.method}</div>
+                      <div>
+                        <div className="font-bold text-gray-900 capitalize text-sm sm:text-base mb-0.5">
+                          {tx.type === 'buy' ? `Buy ${tx.asset}` : 'Deposit'}
+                        </div>
+                        <div className="text-xs sm:text-sm text-gray-500">{tx.date} • {tx.method}</div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <div className={`font-bold text-sm sm:text-base ${tx.type === 'buy' ? 'text-green-600' : 'text-blue-600'}`}>
-                      {tx.type === 'buy' ? `+${tx.amount}` : `+${tx.amount}`} {tx.asset}
+                    <div className="text-right">
+                      <div className={`font-bold text-sm sm:text-base ${tx.type === 'buy' ? 'text-green-600' : 'text-blue-600'}`}>
+                        {tx.type === 'buy' ? `+${tx.amount}` : `+${tx.amount}`} {tx.asset}
+                      </div>
+                      <div className="text-xs text-gray-500 font-medium">{tx.fiat}</div>
                     </div>
-                    <div className="text-xs text-gray-500 font-medium">{tx.fiat}</div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Deposit Modal */}
