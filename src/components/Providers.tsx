@@ -1,6 +1,5 @@
 // components/Providers.tsx
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import { BrowserRouter as Router, useNavigate } from "react-router-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -116,7 +115,7 @@ const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({ childr
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [followedSellers, setFollowedSellers] = useState<string[]>([]);
-
+  
   // Auth overlay state
   const [isAuthOverlayOpen, setIsAuthOverlayOpen] = useState(false);
   const [currentScreen, setCurrentScreen] = useState<ScreenType>('main');
@@ -133,6 +132,10 @@ const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({ childr
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+
+  // Prevent race conditions
+  const [isCheckingAuth, setIsCheckingAuth] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // OTP sign-in function
   const handleOTPSignIn = async (userData: any) => {
@@ -294,6 +297,22 @@ const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({ childr
     };
   }, []);
 
+  // Function to clear auth storage
+  const clearAuthStorage = async () => {
+    try {
+      // Clear all auth-related localStorage items
+      localStorage.removeItem('supabase.auth.token');
+      localStorage.removeItem('sb-auth-token');
+      localStorage.removeItem('otp_auth');
+      localStorage.removeItem('otp_user');
+      localStorage.removeItem('auth_method');
+      
+      console.log('Auth storage cleared successfully');
+    } catch (error) {
+      console.error('Error clearing auth storage:', error);
+    }
+  };
+
   // Load followed sellers when user logs in
   const loadFollowedSellers = async (userId: string) => {
     try {
@@ -361,11 +380,20 @@ const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const checkAuthStatus = async () => {
+    if (isCheckingAuth) return; // Prevent concurrent calls
+    
+    setIsCheckingAuth(true);
     try {
       const { data: { session }, error } = await supabase.auth.getSession();
 
       if (error) {
         console.error('Error getting session:', error);
+        
+        // If it's a refresh token error, clear storage
+        if (error.message?.includes('Invalid Refresh Token')) {
+          await clearAuthStorage();
+        }
+        
         const otpAuth = localStorage.getItem('otp_auth');
         const otpUser = localStorage.getItem('otp_user');
 
@@ -404,23 +432,36 @@ const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({ childr
           setFollowedSellers([]);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error checking auth status:', error);
       setUser(null);
       setIsAuthenticated(false);
       setFollowedSellers([]);
     } finally {
       setIsLoading(false);
+      setIsCheckingAuth(false);
     }
   };
 
   useEffect(() => {
-    checkAuthStatus();
+    let isMounted = true;
+    
+    const initializeAuth = async () => {
+      if (!isMounted) return;
+      await checkAuthStatus();
+    };
+    
+    initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!isMounted) return;
+        
         console.log('Auth state changed:', event);
-
+        
+        // Add a small delay to prevent rapid state changes
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         if (session?.user) {
           const userData = mapSupabaseUser(session.user);
           setUser(userData);
@@ -434,13 +475,25 @@ const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({ childr
           setIsAuthenticated(false);
           setFollowedSellers([]);
         }
-
+        
         setIsLoading(false);
       }
     );
 
+    // Listen for storage events to detect auth changes
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key?.includes('supabase') || event.key?.includes('auth')) {
+        console.log('Auth storage changed, checking auth status...');
+        setTimeout(() => checkAuthStatus(), 1000);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
 
@@ -537,9 +590,7 @@ const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       console.log('Logging out user');
 
-      localStorage.removeItem('otp_auth');
-      localStorage.removeItem('otp_user');
-      localStorage.removeItem('auth_method');
+      await clearAuthStorage();
 
       const { error } = await supabase.auth.signOut();
 
@@ -1204,7 +1255,6 @@ interface ProvidersProps {
   children: React.ReactNode;
 }
 
-// In Providers.tsx, change the Providers function to:
 export function Providers({ children }: ProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
