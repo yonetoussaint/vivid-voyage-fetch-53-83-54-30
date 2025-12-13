@@ -8,8 +8,8 @@ import "./App.css";
 
 function App() {
   return (
-    <Providers>
-      <Router>
+    <Router>
+      <Providers>
         <div className="App min-h-screen h-full bg-background text-foreground flex flex-col">
           <Routes>
             <Route path="/" element={<ProfilePage />} />
@@ -18,8 +18,8 @@ function App() {
           </Routes>
           <Toasters />
         </div>
-      </Router>
-    </Providers>
+      </Providers>
+    </Router>
   );
 }
 
