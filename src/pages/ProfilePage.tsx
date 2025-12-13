@@ -47,7 +47,7 @@ export default function AliExpressBuyerProfile() {
         </div>
         
         {/* Profile Stats */}
-        <div className="grid grid-cols-3 border-t border-slate-100">
+        <div className="grid grid-cols-4 border-t border-slate-100">
           <div className="py-4 text-center border-r border-slate-100">
             <div className="text-xl font-bold text-slate-800">248</div>
             <div className="text-xs text-slate-500 mt-1">Orders</div>
@@ -56,9 +56,13 @@ export default function AliExpressBuyerProfile() {
             <div className="text-xl font-bold text-slate-800">$24.5K</div>
             <div className="text-xs text-slate-500 mt-1">Total Spent</div>
           </div>
-          <div className="py-4 text-center">
+          <div className="py-4 text-center border-r border-slate-100">
             <div className="text-xl font-bold text-teal-600">4.8</div>
             <div className="text-xs text-slate-500 mt-1">Rating</div>
+          </div>
+          <div className="py-4 text-center">
+            <div className="text-xl font-bold text-purple-600">98%</div>
+            <div className="text-xs text-slate-500 mt-1">Success Rate</div>
           </div>
         </div>
       </div>
