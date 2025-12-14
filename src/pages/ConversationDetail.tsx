@@ -497,10 +497,16 @@ const CallControlBand = ({
 
       {/* Right side - Control buttons */}
       <div className="flex items-center gap-2">
-        {/* Video toggle */}
+        {/* Video toggle - Disabled during ringing */}
         <button
-          onClick={onToggleVideo}
-          className={`p-2 rounded-lg transition-colors ${isVideoOn ? 'bg-white/20 hover:bg-white/30' : 'bg-red-500 hover:bg-red-600'}`}
+          onClick={callState === "active" ? onToggleVideo : undefined}
+          disabled={callState !== "active"}
+          className={cn(
+            "p-2 rounded-lg transition-colors",
+            callState === "active" 
+              ? (isVideoOn ? 'bg-white/20 hover:bg-white/30' : 'bg-red-500 hover:bg-red-600')
+              : 'bg-white/10 opacity-50 cursor-not-allowed'
+          )}
         >
           {isVideoOn ? (
             <Video className="w-5 h-5 text-white" />
@@ -509,10 +515,16 @@ const CallControlBand = ({
           )}
         </button>
 
-        {/* Mute toggle */}
+        {/* Mute toggle - Disabled during ringing */}
         <button
-          onClick={onToggleMute}
-          className={`p-2 rounded-lg transition-colors ${isMuted ? 'bg-red-500 hover:bg-red-600' : 'bg-white/20 hover:bg-white/30'}`}
+          onClick={callState === "active" ? onToggleMute : undefined}
+          disabled={callState !== "active"}
+          className={cn(
+            "p-2 rounded-lg transition-colors",
+            callState === "active"
+              ? (isMuted ? 'bg-red-500 hover:bg-red-600' : 'bg-white/20 hover:bg-white/30')
+              : 'bg-white/10 opacity-50 cursor-not-allowed'
+          )}
         >
           {isMuted ? (
             <MicOff className="w-5 h-5 text-white" />
@@ -521,7 +533,7 @@ const CallControlBand = ({
           )}
         </button>
 
-        {/* End call button */}
+        {/* End call button - Always enabled */}
         <button
           onClick={onEndCall}
           className="p-2 rounded-lg bg-red-500 hover:bg-red-600 transition-colors"
@@ -646,7 +658,7 @@ export default function BuyerSellerChat() {
   })
   const [notificationsMuted, setNotificationsMuted] = useState(false)
   const [viewingImage, setViewingImage] = useState<string | null>(null)
-  
+
   // Call control states
   const [isMuted, setIsMuted] = useState(false)
   const [isVideoOn, setIsVideoOn] = useState(true)
@@ -702,11 +714,11 @@ export default function BuyerSellerChat() {
       const vh = window.innerHeight * 0.01
       document.documentElement.style.setProperty('--vh', `${vh}px`)
     }
-    
+
     setVH()
     window.addEventListener('resize', setVH)
     window.addEventListener('orientationchange', setVH)
-    
+
     return () => {
       window.removeEventListener('resize', setVH)
       window.removeEventListener('orientationchange', setVH)
@@ -983,36 +995,30 @@ export default function BuyerSellerChat() {
             </div>
           </div>
 
-          <div className="flex items-center gap-0.5">
-            <div className="relative group">
-              {callState === "idle" ? (
-                <button 
-                  onClick={() => handleCallStart("audio")}
-                  className="px-3 py-2 flex items-center gap-2 hover:bg-muted rounded-full transition-colors"
-                >
-                  <Phone className="w-4 h-4 text-foreground" />
-                  <span className="text-sm text-foreground font-medium">Call</span>
-                </button>
-              ) : callState === "ringing" ? (
-                <div className="flex items-center gap-1">
-                  <div className="px-3 py-2 bg-blue-500/10 rounded-full">
-                    <span className="text-sm text-blue-500 font-medium">Ringing...</span>
-                  </div>
-                  <button onClick={handleCallEnd} className="p-2 hover:bg-red-500/10 rounded-full transition-colors">
-                    <PhoneOff className="w-5 h-5 text-red-500" />
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-1">
-                  <div className="px-3 py-2 bg-green-500/10 rounded-full">
-                    <span className="text-sm text-green-500 font-medium">{formatDuration(callDuration)}</span>
-                  </div>
-                  <button onClick={handleCallEnd} className="p-2 hover:bg-red-500/10 rounded-full transition-colors">
-                    <PhoneOff className="w-5 h-5 text-red-500" />
-                  </button>
-                </div>
+          <div className="flex items-center gap-1">
+            {/* Video call button */}
+            <button 
+              onClick={() => callState === "idle" && handleCallStart("video")}
+              disabled={callState !== "idle"}
+              className={cn(
+                "p-2 hover:bg-muted rounded-full transition-colors",
+                callState !== "idle" && "opacity-50 cursor-not-allowed"
               )}
-            </div>
+            >
+              <Video className="w-5 h-5 text-foreground" />
+            </button>
+            
+            {/* Audio call button */}
+            <button 
+              onClick={() => callState === "idle" && handleCallStart("audio")}
+              disabled={callState !== "idle"}
+              className={cn(
+                "p-2 hover:bg-muted rounded-full transition-colors",
+                callState !== "idle" && "opacity-50 cursor-not-allowed"
+              )}
+            >
+              <Phone className="w-5 h-5 text-foreground" />
+            </button>
 
             <div className="relative">
               <button onClick={() => setShowMenu(!showMenu)} className="p-2 hover:bg-muted rounded-full transition-colors">
