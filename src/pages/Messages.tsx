@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Edit, Pin, VolumeX, Check, CheckCheck, Camera, Mic, BadgeCheck, Phone, Video, Archive, Trash2, Star, Clock, Users, Loader2 } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useConversations } from '@/hooks/useConversations';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, isValid, parseISO } from 'date-fns';
 import { UserSelectionDialog } from '@/components/messages/UserSelectionDialog';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useAuthOverlay } from '@/context/AuthOverlayContext';
@@ -27,44 +27,94 @@ export default function Messages() {
       const vh = window.innerHeight * 0.01
       document.documentElement.style.setProperty('--vh', `${vh}px`)
     }
-    
+
     setVH()
     window.addEventListener('resize', setVH)
     window.addEventListener('orientationchange', setVH)
-    
+
     return () => {
       window.removeEventListener('resize', setVH)
       window.removeEventListener('orientationchange', setVH)
     }
   }, [])
 
+  // Helper function to safely parse dates
+  const getValidDate = (dateInput: string | number | Date | null | undefined): Date => {
+    if (!dateInput) return new Date();
+    
+    // Try parsing as ISO string
+    if (typeof dateInput === 'string') {
+      const parsed = parseISO(dateInput);
+      if (isValid(parsed)) return parsed;
+      
+      // Try regular Date constructor for other string formats
+      const date = new Date(dateInput);
+      if (isValid(date)) return date;
+    }
+    
+    // If it's a Unix timestamp in seconds
+    if (typeof dateInput === 'number' && dateInput < 10000000000) {
+      const date = new Date(dateInput * 1000);
+      if (isValid(date)) return date;
+    }
+    
+    // If it's a Unix timestamp in milliseconds
+    if (typeof dateInput === 'number' && dateInput >= 10000000000) {
+      const date = new Date(dateInput);
+      if (isValid(date)) return date;
+    }
+    
+    // If it's already a Date object
+    if (dateInput instanceof Date && isValid(dateInput)) {
+      return dateInput;
+    }
+    
+    // Fallback to current date
+    return new Date();
+  };
+
+  // Format date safely
+  const formatDateSafely = (dateInput: string | number | Date | null | undefined, addSuffix: boolean = false): string => {
+    try {
+      const validDate = getValidDate(dateInput);
+      return formatDistanceToNow(validDate, { addSuffix });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return addSuffix ? 'just now' : 'recently';
+    }
+  };
+
   // Map API data to match the UI structure
-  const mappedConversations = conversations.map(conv => ({
-    id: conv.id,
-    name: conv.other_user.full_name,
-    preview: conv.last_message?.content || 'Start a conversation',
-    date: formatDistanceToNow(new Date(conv.last_message?.created_at || conv.updated_at), { addSuffix: false }),
-    time: formatDistanceToNow(new Date(conv.last_message?.created_at || conv.updated_at), { addSuffix: true }),
-    avatar: `bg-${['gray-300', 'orange-300', 'lime-300', 'green-300', 'blue-300', 'red-100'][Math.floor(Math.random() * 6)]}`,
-    unreadCount: conv.unread_count || 0,
-    isOnline: Math.random() > 0.5,
-    isPinned: Math.random() > 0.7,
-    isMuted: Math.random() > 0.8,
-    isRead: conv.unread_count === 0,
-    messageType: 'text',
-    deliveryStatus: conv.last_message?.sent_by === currentUserId ? (Math.random() > 0.5 ? 'read' : 'delivered') : null,
-    sentByYou: conv.last_message?.sent_by === currentUserId,
-    isTyping: false,
-    isVerified: Math.random() > 0.7,
-    isGroup: false,
-    hasStory: Math.random() > 0.5,
-    lastSeen: Math.random() > 0.5 ? 'online' : `${Math.floor(Math.random() * 60)}m ago`,
-    reactions: Math.random() > 0.8 ? '❤️' : null,
-    hasDraft: false,
-    isStarred: Math.random() > 0.8,
-    hasScheduled: Math.random() > 0.9,
-    isArchived: false
-  }));
+  const mappedConversations = conversations.map(conv => {
+    const lastMessageDate = conv.last_message?.created_at || conv.updated_at;
+    
+    return {
+      id: conv.id,
+      name: conv.other_user?.full_name || 'Unknown User',
+      preview: conv.last_message?.content || 'Start a conversation',
+      date: formatDateSafely(lastMessageDate, false),
+      time: formatDateSafely(lastMessageDate, true),
+      avatar: `bg-${['gray-300', 'orange-300', 'lime-300', 'green-300', 'blue-300', 'red-100'][Math.floor(Math.random() * 6)]}`,
+      unreadCount: conv.unread_count || 0,
+      isOnline: Math.random() > 0.5,
+      isPinned: Math.random() > 0.7,
+      isMuted: Math.random() > 0.8,
+      isRead: conv.unread_count === 0,
+      messageType: 'text',
+      deliveryStatus: conv.last_message?.sent_by === currentUserId ? (Math.random() > 0.5 ? 'read' : 'delivered') : null,
+      sentByYou: conv.last_message?.sent_by === currentUserId,
+      isTyping: false,
+      isVerified: Math.random() > 0.7,
+      isGroup: false,
+      hasStory: Math.random() > 0.5,
+      lastSeen: Math.random() > 0.5 ? 'online' : `${Math.floor(Math.random() * 60)}m ago`,
+      reactions: Math.random() > 0.8 ? '❤️' : null,
+      hasDraft: false,
+      isStarred: Math.random() > 0.8,
+      hasScheduled: Math.random() > 0.9,
+      isArchived: false
+    };
+  });
 
   const handleSwipe = (id: string, action: 'archive' | 'delete') => {
     console.log(`${action} conversation ${id}`);
