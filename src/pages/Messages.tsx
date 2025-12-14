@@ -30,19 +30,6 @@ type User = {
   phone?: string
 }
 
-type Product = {
-  id: string
-  name: string
-  price: number
-  discount_price?: number
-  description?: string
-  images?: string[]
-  seller_id?: string
-  status: string
-  created_at: string
-  seller?: User
-}
-
 type Message = {
   id: string
   conversation_id: string
@@ -67,17 +54,17 @@ type Conversation = {
   last_message_at: string
   is_archived: boolean
   other_user?: User
-  product?: Product
+  product?: any
   unread_count?: number
   last_message?: Message
 }
 
 // User Selection Dialog Component
-function UserSelectionDialog({ open, onOpenChange, currentUserId, onUserSelect }: {
+function UserSelectionDialog({ open, onOpenChange, currentUserId, onConversationSelect }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   currentUserId: string
-  onUserSelect: (user: User) => void
+  onConversationSelect: (conversation: Conversation) => void
 }) {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
@@ -116,8 +103,8 @@ function UserSelectionDialog({ open, onOpenChange, currentUserId, onUserSelect }
 
   const handleUserSelect = async (selectedUser: User) => {
     try {
-      // Check if conversation already exists
-      const { data: existingConv, error: convError } = await supabase
+      // Check if conversation already exists between these two users
+      const { data: existingConvs, error: convError } = await supabase
         .from('conversations')
         .select(`
           *,
@@ -125,13 +112,27 @@ function UserSelectionDialog({ open, onOpenChange, currentUserId, onUserSelect }
             user_id
           )
         `)
-        .contains('conversation_participants.user_id', [currentUserId, selectedUser.id])
 
       if (convError) throw convError
 
-      if (existingConv && existingConv.length > 0) {
-        // Use existing conversation
-        onUserSelect(selectedUser)
+      // Filter conversations where both users are participants
+      const existingConv = existingConvs?.find(conv => {
+        const participantIds = conv.conversation_participants?.map((p: any) => p.user_id) || []
+        return participantIds.includes(currentUserId) && participantIds.includes(selectedUser.id)
+      })
+
+      if (existingConv) {
+        // Create conversation object from existing conversation
+        const conversation: Conversation = {
+          id: existingConv.id,
+          created_at: existingConv.created_at,
+          updated_at: existingConv.updated_at,
+          last_message_at: existingConv.last_message_at,
+          is_archived: existingConv.is_archived,
+          other_user: selectedUser,
+          unread_count: 0
+        }
+        onConversationSelect(conversation)
       } else {
         // Create new conversation
         const { data: newConversation, error: createError } = await supabase
@@ -150,7 +151,18 @@ function UserSelectionDialog({ open, onOpenChange, currentUserId, onUserSelect }
           { conversation_id: newConversation.id, user_id: selectedUser.id, joined_at: new Date().toISOString() }
         ])
 
-        onUserSelect(selectedUser)
+        // Create conversation object for new conversation
+        const conversation: Conversation = {
+          id: newConversation.id,
+          created_at: newConversation.created_at,
+          updated_at: newConversation.updated_at,
+          last_message_at: newConversation.last_message_at,
+          is_archived: newConversation.is_archived,
+          other_user: selectedUser,
+          unread_count: 0
+        }
+        
+        onConversationSelect(conversation)
       }
 
       onOpenChange(false)
@@ -163,7 +175,7 @@ function UserSelectionDialog({ open, onOpenChange, currentUserId, onUserSelect }
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden animate-in fade-in-zoom-in-95 duration-200">
+      <div className="bg-white rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between mb-4">
@@ -515,30 +527,6 @@ function ChatInterface({ conversation, currentUser, onBack }: {
     setMessageActionsId(null)
   }
 
-  const getMessageIcon = (type: string) => {
-    switch(type) {
-      case 'image':
-        return <Camera size={14} className="text-gray-500" />;
-      case 'voice':
-        return <Mic size={14} className="text-gray-500" />;
-      default:
-        return null;
-    }
-  }
-
-  const getDeliveryIcon = (status: string) => {
-    switch(status) {
-      case 'sent':
-        return <Check size={14} className="text-gray-400" />;
-      case 'delivered':
-        return <CheckCheck size={14} className="text-gray-400" />;
-      case 'read':
-        return <CheckCheck size={14} className="text-blue-500" />;
-      default:
-        return null;
-    }
-  }
-
   return (
     <div className="w-full h-[100dvh] h-[calc(var(--vh,1vh)*100)] flex flex-col overflow-hidden bg-white">
       {/* Header */}
@@ -596,31 +584,6 @@ function ChatInterface({ conversation, currentUser, onBack }: {
         </div>
       </div>
 
-      {/* Call Control Band */}
-      {callState !== "idle" && (
-        <div className="shrink-0 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 flex items-center justify-between shadow-md border-b border-blue-800">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-              <Phone className="w-4 h-4 text-white" />
-            </div>
-            <div className="text-white">
-              <div className="text-sm font-medium">
-                {callState === "ringing" ? "Calling..." : formatDuration(callDuration)}
-              </div>
-              <div className="text-xs text-white/80">
-                {callState === "ringing" ? "Ringing..." : "Active call"}
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={handleCallEnd}
-            className="p-2 rounded-lg bg-red-500 hover:bg-red-600 transition-colors"
-          >
-            <PhoneOff className="w-5 h-5 text-white" />
-          </button>
-        </div>
-      )}
-
       {/* Messages Area */}
       <div 
         ref={chatContainerRef}
@@ -637,93 +600,54 @@ function ChatInterface({ conversation, currentUser, onBack }: {
         ) : (
           <>
             <div className="text-center text-gray-400 text-xs mb-4 uppercase tracking-wide">
-              Today
+              {messages.length === 0 ? "Start of conversation" : "Today"}
             </div>
 
-            {messages.map((msg) => {
-              const isCurrentUser = msg.sender_id === currentUser.id
+            {messages.length === 0 ? (
+              <div className="text-center py-8">
+                <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500">Send your first message</p>
+              </div>
+            ) : (
+              messages.map((msg) => {
+                const isCurrentUser = msg.sender_id === currentUser.id
 
-              return (
-                <div key={msg.id} className={cn("flex mb-3", isCurrentUser ? "justify-end" : "justify-start")}>
-                  {!isCurrentUser && (
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-[10px] font-bold text-white mr-2 mt-auto">
-                      {getUserInitials(msg.sender)}
-                    </div>
-                  )}
+                return (
+                  <div key={msg.id} className={cn("flex mb-3", isCurrentUser ? "justify-end" : "justify-start")}>
+                    {!isCurrentUser && (
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-[10px] font-bold text-white mr-2 mt-auto">
+                        {getUserInitials(msg.sender)}
+                      </div>
+                    )}
 
-                  <div className={cn("max-w-[75%] relative group", isCurrentUser ? "items-end" : "items-start")}>
-                    <div className={cn(
-                      "rounded-2xl px-4 py-2.5 shadow-sm relative",
-                      isCurrentUser 
-                        ? "bg-blue-500 text-white rounded-br-sm" 
-                        : "bg-gray-100 text-gray-900 rounded-bl-sm"
-                    )}>
-                      <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
-                      <div className={cn("flex items-center gap-2 mt-1.5", isCurrentUser ? "justify-end" : "justify-start")}>
-                        <span className={cn("text-[11px]", isCurrentUser ? "text-white/70" : "text-gray-500")}>
-                          {formatTime(msg.created_at)}
-                        </span>
-                        {isCurrentUser && (
-                          <CheckCheck className="w-3.5 h-3.5 text-white/70" />
-                        )}
+                    <div className={cn("max-w-[75%] relative group", isCurrentUser ? "items-end" : "items-start")}>
+                      <div className={cn(
+                        "rounded-2xl px-4 py-2.5 shadow-sm relative",
+                        isCurrentUser 
+                          ? "bg-blue-500 text-white rounded-br-sm" 
+                          : "bg-gray-100 text-gray-900 rounded-bl-sm"
+                      )}>
+                        <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
+                        <div className={cn("flex items-center gap-2 mt-1.5", isCurrentUser ? "justify-end" : "justify-start")}>
+                          <span className={cn("text-[11px]", isCurrentUser ? "text-white/70" : "text-gray-500")}>
+                            {formatTime(msg.created_at)}
+                          </span>
+                          {isCurrentUser && (
+                            <CheckCheck className="w-3.5 h-3.5 text-white/70" />
+                          )}
+                        </div>
                       </div>
                     </div>
 
-                    {/* Message actions */}
-                    <div className={cn(
-                      "absolute top-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 bg-white border border-gray-200 rounded-lg shadow-lg p-1",
-                      isCurrentUser ? "left-0 -translate-x-full mr-2" : "right-0 translate-x-full ml-2"
-                    )}>
-                      <button onClick={() => setReplyingTo(msg)} className="p-1.5 hover:bg-gray-100 rounded">
-                        <MoreVertical className="w-4 h-4 text-gray-600" />
-                      </button>
-                      <button onClick={() => setMessageActionsId(messageActionsId === msg.id ? null : msg.id)} className="p-1.5 hover:bg-gray-100 rounded">
-                        <MoreVertical className="w-4 h-4 text-gray-600" />
-                      </button>
-                    </div>
-
-                    {/* Message actions menu */}
-                    {messageActionsId === msg.id && (
-                      <>
-                        <div className="fixed inset-0 z-40" onClick={() => setMessageActionsId(null)} />
-                        <div className={cn(
-                          "absolute top-10 z-50 w-40 bg-white border border-gray-200 rounded-lg shadow-xl py-1.5 animate-in fade-in zoom-in-95 duration-100",
-                          isCurrentUser ? "right-0" : "left-10"
-                        )}>
-                          <button onClick={() => { copyMessage(msg.content); setMessageActionsId(null); }} className="w-full px-4 py-2 flex items-center gap-3 hover:bg-gray-100 text-sm text-gray-700">
-                            <Copy className="w-4 h-4 text-gray-500" /> 
-                            <span>Copy</span>
-                          </button>
-                          <button className="w-full px-4 py-2 flex items-center gap-3 hover:bg-gray-100 text-sm text-gray-700">
-                            <Forward className="w-4 h-4 text-gray-500" /> 
-                            <span>Forward</span>
-                          </button>
-                          {isCurrentUser && (
-                            <>
-                              <div className="h-px bg-gray-200 my-1" />
-                              <button onClick={() => { setEditingMessage(msg); setNewMessage(msg.content); setMessageActionsId(null); }} className="w-full px-4 py-2 flex items-center gap-3 hover:bg-gray-100 text-sm text-gray-700">
-                                <Edit3 className="w-4 h-4 text-gray-500" /> 
-                                <span>Edit</span>
-                              </button>
-                              <button onClick={() => { deleteMessage(msg.id); setMessageActionsId(null); }} className="w-full px-4 py-2 flex items-center gap-3 hover:bg-gray-100 text-sm text-red-600">
-                                <Trash2 className="w-4 h-4" /> 
-                                <span>Delete</span>
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </>
+                    {isCurrentUser && (
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-[10px] font-bold text-white ml-2 mt-auto">
+                        {getUserInitials(currentUser)}
+                      </div>
                     )}
                   </div>
-
-                  {isCurrentUser && (
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-[10px] font-bold text-white ml-2 mt-auto">
-                      {getUserInitials(currentUser)}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+                )
+              })
+            )}
           </>
         )}
       </div>
@@ -927,96 +851,26 @@ export default function Messages() {
     loadConversations()
   }, [user, isAuthenticated])
 
-  // Real-time subscription
-  useEffect(() => {
-    if (!user) return
-
-    const channel = supabase
-      .channel('conversation-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'messages'
-        },
-        () => {
-          loadConversations()
-        }
-      )
-      .subscribe()
-
-    const loadConversations = async () => {
-      try {
-        const { data: participantData } = await supabase
-          .from('conversation_participants')
-          .select('conversation_id')
-          .eq('user_id', user.id)
-
-        const conversationIds = participantData?.map(p => p.conversation_id) || []
-
-        if (conversationIds.length === 0) return
-
-        const { data: convData } = await supabase
-          .from('conversations')
-          .select(`
-            *,
-            conversation_participants!inner(
-              user_id,
-              profiles!conversation_participants_user_id_fkey(
-                id,
-                full_name,
-                username,
-                avatar_url,
-                email,
-                last_active
-              )
-            ),
-            messages!messages_conversation_id_fkey(
-              id,
-              content,
-              sender_id,
-              created_at,
-              is_read
-            )
-          `)
-          .in('id', conversationIds)
-          .order('last_message_at', { ascending: false })
-
-        const processedConversations = (convData || []).map(conv => {
-          const participants = conv.conversation_participants || []
-          const otherUser = participants.find(p => p.user_id !== user.id)?.profiles
-          
-          const messages = conv.messages || []
-          const latestMessage = messages.length > 0 
-            ? messages.reduce((latest, current) => 
-                new Date(current.created_at) > new Date(latest.created_at) ? current : latest
-              )
-            : undefined
-
-          return {
-            id: conv.id,
-            created_at: conv.created_at,
-            updated_at: conv.updated_at,
-            last_message_at: conv.last_message_at,
-            is_archived: conv.is_archived,
-            other_user: otherUser,
-            product: null,
-            unread_count: messages.filter(m => !m.is_read && m.sender_id !== user.id).length,
-            last_message: latestMessage
-          }
-        })
-
-        setConversations(processedConversations)
-      } catch (error) {
-        console.error('Error refreshing conversations:', error)
+  // Handle conversation selection from UserSelectionDialog
+  const handleConversationSelect = (conversation: Conversation) => {
+    setSelectedConversation(conversation)
+    setActiveChat(conversation.id)
+    
+    // Add the new conversation to the list if it doesn't exist
+    setConversations(prev => {
+      const exists = prev.some(c => c.id === conversation.id)
+      if (!exists) {
+        return [conversation, ...prev]
       }
-    }
+      return prev
+    })
+  }
 
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [user])
+  // Handle conversation click from list
+  const handleConversationClick = (conv: Conversation) => {
+    setSelectedConversation(conv)
+    setActiveChat(conv.id)
+  }
 
   // Handle mobile viewport height
   useEffect(() => {
@@ -1063,45 +917,6 @@ export default function Messages() {
         return !conv.is_archived
     }
   })
-
-  // Handle user selection from dialog
-  const handleUserSelect = (selectedUser: User) => {
-    // Find or create conversation with selected user
-    const existingConv = conversations.find(conv => 
-      conv.other_user?.id === selectedUser.id
-    )
-
-    if (existingConv) {
-      setSelectedConversation(existingConv)
-      setActiveChat(existingConv.id)
-    } else {
-      // Create a new conversation object
-      const newConversation: Conversation = {
-        id: `temp-${Date.now()}`,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        last_message_at: new Date().toISOString(),
-        is_archived: false,
-        other_user: selectedUser,
-        unread_count: 0
-      }
-      setSelectedConversation(newConversation)
-      setActiveChat(newConversation.id)
-    }
-  }
-
-  // Handle conversation click
-  const handleConversationClick = (conv: Conversation) => {
-    setSelectedConversation(conv)
-    setActiveChat(conv.id)
-  }
-
-  // Handle swipe actions
-  const handleSwipe = (id: string, action: 'archive' | 'delete') => {
-    console.log(`${action} conversation ${id}`)
-    setSwipedItem(null)
-    // TODO: Implement archive/delete functionality
-  }
 
   if (authLoading) {
     return (
@@ -1217,39 +1032,8 @@ export default function Messages() {
                       isPinned ? 'bg-amber-50' : ''
                     }`}
                   >
-                    {/* Swipe actions */}
-                    {swipedItem === conv.id && (
-                      <div className="absolute right-0 top-0 bottom-0 flex items-center">
-                        <button
-                          onClick={() => handleSwipe(conv.id, 'archive')}
-                          className="px-6 h-full bg-amber-500 text-white flex items-center justify-center"
-                        >
-                          <Archive size={20} />
-                        </button>
-                        <button
-                          onClick={() => handleSwipe(conv.id, 'delete')}
-                          className="px-6 h-full bg-red-600 text-white flex items-center justify-center"
-                        >
-                          <Trash2 size={20} />
-                        </button>
-                      </div>
-                    )}
-
                     <div
                       className="flex items-center px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
-                      onTouchStart={(e) => {
-                        const startX = e.touches[0].clientX;
-                        const handleTouchMove = (e: TouchEvent) => {
-                          const currentX = e.touches[0].clientX;
-                          if (startX - currentX > 50) {
-                            setSwipedItem(conv.id);
-                          }
-                        };
-                        document.addEventListener('touchmove', handleTouchMove);
-                        document.addEventListener('touchend', () => {
-                          document.removeEventListener('touchmove', handleTouchMove);
-                        }, { once: true });
-                      }}
                       onClick={() => handleConversationClick(conv)}
                     >
                       {/* Avatar */}
@@ -1330,7 +1114,7 @@ export default function Messages() {
         open={showUserSelection}
         onOpenChange={setShowUserSelection}
         currentUserId={user.id}
-        onUserSelect={handleUserSelect}
+        onConversationSelect={handleConversationSelect}
       />
     </>
   )
