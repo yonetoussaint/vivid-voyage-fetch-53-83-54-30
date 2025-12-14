@@ -2,14 +2,45 @@
 
 import { useState, useRef, useEffect } from "react"
 import { cn } from "@/lib/utils"
-import {
-  Phone, Camera, ImageIcon, Mic, ThumbsUp, Plus, Send,
-  DollarSign, Package, Star, X, MoreVertical, ArrowLeft,
-  Copy, Forward, Trash2, Edit3, Clock, Check, CheckCheck,
-  ImageIcon as ImageIcon2, Play, Pause, Share2,
-  Bell, BellOff, BadgeCheck, Download,
-  Receipt, PhoneOff, Wallet, Lock, Truck, Shield,
-  Video, VideoOff, MicOff
+
+// Icons - Import all directly
+import { 
+  Phone, 
+  Camera, 
+  Image as ImageIcon, 
+  Mic, 
+  ThumbsUp, 
+  Plus, 
+  Send,
+  DollarSign, 
+  Package, 
+  Star, 
+  X, 
+  MoreVertical, 
+  ArrowLeft,
+  Copy, 
+  Forward, 
+  Trash2, 
+  Edit3, 
+  Clock, 
+  Check, 
+  CheckCheck,
+  Play, 
+  Pause, 
+  Share2,
+  Bell, 
+  BellOff, 
+  BadgeCheck, 
+  Download,
+  Receipt, 
+  PhoneOff, 
+  Wallet, 
+  Lock, 
+  Truck, 
+  Shield,
+  Video, 
+  VideoOff, 
+  MicOff
 } from "lucide-react"
 
 // Types
@@ -566,9 +597,9 @@ export default function BuyerSellerChat() {
       timestamp: new Date(Date.now() - 3600000 * 1.9),
       hasImages: true,
       images: [
-        "/placeholder.svg?height=200&width=200",
-        "/placeholder.svg?height=200&width=200",
-        "/placeholder.svg?height=200&width=200",
+        "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1694868706082-52a05f84b6bb?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1695048133023-0c26c5d2be0d?w=400&h=400&fit=crop",
       ],
       status: "read",
     },
@@ -1115,7 +1146,7 @@ export default function BuyerSellerChat() {
                       <div className={cn("mt-2 grid gap-1", msg.images.length > 1 ? "grid-cols-2" : "grid-cols-1")}>
                         {msg.images.map((img: string, i: number) => (
                           <button key={i} onClick={() => setViewingImage(img)} className="rounded-lg overflow-hidden bg-muted">
-                            <img src={img || "/placeholder.svg"} alt="" className="w-full h-24 object-cover" />
+                            <img src={img} alt="" className="w-full h-24 object-cover" />
                           </button>
                         ))}
                       </div>
@@ -1432,7 +1463,7 @@ export default function BuyerSellerChat() {
               </div>
             </div>
             <div className="flex-1 flex items-center justify-center p-4">
-              <img src={viewingImage || "/placeholder.svg"} alt="" className="max-w-full max-h-full object-contain rounded-lg" />
+              <img src={viewingImage} alt="" className="max-w-full max-h-full object-contain rounded-lg" />
             </div>
           </div>
         )}
