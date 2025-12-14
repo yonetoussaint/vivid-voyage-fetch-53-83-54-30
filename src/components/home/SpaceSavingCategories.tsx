@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useAuth } from '@/components/Providers';
+import { useAuth } from "@/contexts/auth/AuthContext";
 import { useQuery } from '@tanstack/react-query';
 
 interface SpaceSavingCategoriesProps {
