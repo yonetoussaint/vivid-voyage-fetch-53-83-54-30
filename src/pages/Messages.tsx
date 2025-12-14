@@ -41,34 +41,34 @@ export default function Messages() {
   // Helper function to safely parse dates
   const getValidDate = (dateInput: string | number | Date | null | undefined): Date => {
     if (!dateInput) return new Date();
-    
+
     // Try parsing as ISO string
     if (typeof dateInput === 'string') {
       const parsed = parseISO(dateInput);
       if (isValid(parsed)) return parsed;
-      
+
       // Try regular Date constructor for other string formats
       const date = new Date(dateInput);
       if (isValid(date)) return date;
     }
-    
+
     // If it's a Unix timestamp in seconds
     if (typeof dateInput === 'number' && dateInput < 10000000000) {
       const date = new Date(dateInput * 1000);
       if (isValid(date)) return date;
     }
-    
+
     // If it's a Unix timestamp in milliseconds
     if (typeof dateInput === 'number' && dateInput >= 10000000000) {
       const date = new Date(dateInput);
       if (isValid(date)) return date;
     }
-    
+
     // If it's already a Date object
     if (dateInput instanceof Date && isValid(dateInput)) {
       return dateInput;
     }
-    
+
     // Fallback to current date
     return new Date();
   };
@@ -87,7 +87,7 @@ export default function Messages() {
   // Map API data to match the UI structure
   const mappedConversations = conversations.map(conv => {
     const lastMessageDate = conv.last_message?.created_at || conv.updated_at;
-    
+
     return {
       id: conv.id,
       name: conv.other_user?.full_name || 'Unknown User',
