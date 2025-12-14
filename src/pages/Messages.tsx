@@ -4,30 +4,29 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { cn } from "@/lib/utils"
 import { useAuth } from '@/contexts/auth/AuthContext'
 import { supabase } from "@/integrations/supabase/client"
-import { 
+import { useRouter } from "next/navigation"
+import { formatDistanceToNow, isValid, parseISO } from "date-fns"
+import {
   Phone, Camera, Image as ImageIcon, Mic, ThumbsUp, Plus, Send,
-  DollarSign, Package, Star, X, MoreVertical, ArrowLeft,
+  DollarSign, Package, Star, X, MoreVertical, ArrowLeft, ChevronLeft,
   Copy, Forward, Trash2, Edit3, Clock, Check, CheckCheck,
   Play, Pause, Share2, Bell, BellOff, BadgeCheck, Download,
   Receipt, PhoneOff, Wallet, Lock, Truck, Shield,
   Video, VideoOff, MicOff, Loader2, AlertCircle, MessageSquare,
-  ChevronLeft, Archive, Users, Edit, Pin, VolumeX, Search,
-  Heart, Smile, Frown, AlertTriangle
+  Edit, Pin, VolumeX, Users, Archive
 } from "lucide-react"
+import { UserSelectionDialog } from '@/components/messages/UserSelectionDialog'
 
 // Types
 type User = {
   id: string
-  username?: string
   full_name?: string
+  username?: string
   profile_picture?: string
   avatar_url?: string
   rating?: number
   email?: string
   last_active?: string
-  is_online?: boolean
-  isVerified?: boolean
-  phone?: string
 }
 
 type Message = {
@@ -38,13 +37,6 @@ type Message = {
   created_at: string
   is_read: boolean
   sender?: User
-  reply_to?: string
-  reply_to_message?: Message
-  images?: string[]
-  status?: "sent" | "delivered" | "read"
-  is_edited?: boolean
-  voice_duration?: number
-  is_deleted?: boolean
 }
 
 type Conversation = {
@@ -54,243 +46,570 @@ type Conversation = {
   last_message_at: string
   is_archived: boolean
   other_user?: User
-  product?: any
   unread_count?: number
   last_message?: Message
 }
 
-// User Selection Dialog Component
-function UserSelectionDialog({ open, onOpenChange, currentUserId, onConversationSelect }: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  currentUserId: string
-  onConversationSelect: (conversation: Conversation) => void
-}) {
-  const [users, setUsers] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
+type Order = {
+  id: string
+  amount: number
+  deliveryFee: number
+  total: number
+  status: "offer" | "accepted" | "payment_pending" | "delivery_pending" | "completed" | "refunded"
+  timestamp: Date
+  receipt?: ReceiptData
+}
 
-  useEffect(() => {
-    if (!open) return
+type ReceiptData = {
+  id: string
+  amount: number
+  deliveryFee: number
+  total: number
+  date: string
+  time: string
+  product: string
+  seller: string
+  buyer: string
+}
 
-    const loadUsers = async () => {
-      setLoading(true)
-      try {
-        // Get all users except current user
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .neq('id', currentUserId)
-          .order('full_name', { ascending: true })
-
-        if (error) throw error
-        setUsers(data || [])
-      } catch (error) {
-        console.error('Error loading users:', error)
-      } finally {
-        setLoading(false)
+// Step Card Configurations
+const stepConfigs = [
+  {
+    id: "offer",
+    title: "Offer",
+    icon: DollarSign,
+    iconColor: "text-emerald-600",
+    show: () => true,
+    isSeller: true,
+    getStatusText: (order: Order) => {
+      switch (order.status) {
+        case "accepted": return "Accepted"
+        case "payment_pending": return "Payment Pending"
+        case "delivery_pending": return "Awaiting Delivery"
+        case "completed": return "Completed"
+        case "refunded": return "Refunded"
+        default: return "Pending"
+      }
+    },
+    getStatusIcon: (order: Order) => {
+      switch (order.status) {
+        case "accepted": return Check
+        case "payment_pending": return Clock
+        case "delivery_pending": return Truck
+        case "completed": return Check
+        case "refunded": return X
+        default: return DollarSign
       }
     }
+  },
+  {
+    id: "accepted",
+    title: "Offer Approval",
+    icon: Check,
+    iconColor: "text-emerald-600",
+    show: (order: Order) => ["accepted", "payment_pending", "delivery_pending", "completed", "refunded"].includes(order.status),
+    isBuyer: true,
+    borderColor: "border-emerald-200",
+    getStatusText: (order: Order) => order.status === "accepted" ? "Pending" : "Completed",
+    completionDate: (order: Order) => order.status === "accepted" ? order.timestamp : null
+  },
+  {
+    id: "payment",
+    title: "Payment",
+    icon: Wallet,
+    iconColor: "text-amber-600",
+    show: (order: Order) => ["payment_pending", "delivery_pending", "completed", "refunded"].includes(order.status),
+    isBuyer: true,
+    borderColor: "border-amber-200",
+    getStatusText: (order: Order) => {
+      if (order.status === "payment_pending") return "Pending"
+      if (order.status === "refunded") return "Refunded"
+      return "Completed"
+    },
+    completionDate: (order: Order) => ["delivery_pending", "completed"].includes(order.status) ? order.timestamp : null
+  },
+  {
+    id: "delivery",
+    title: "Delivery",
+    icon: Truck,
+    iconColor: "text-blue-600",
+    show: (order: Order) => ["delivery_pending", "completed", "refunded"].includes(order.status),
+    isBuyer: true,
+    borderColor: "border-blue-200",
+    getStatusText: (order: Order) => {
+      if (order.status === "delivery_pending") return "Pending"
+      if (order.status === "completed") return "Completed"
+      return "Cancelled"
+    },
+    completionDate: (order: Order) => order.status === "completed" ? order.timestamp : null
+  },
+  {
+    id: "completed",
+    title: "Completed",
+    icon: Check,
+    iconColor: "text-emerald-600",
+    show: (order: Order) => order.status === "completed" && order.receipt,
+    isBuyer: true,
+    borderColor: "border-emerald-200",
+    getStatusText: () => "Completed",
+    completionDate: (order: Order) => order.receipt ? new Date(`${order.receipt.date} ${order.receipt.time}`) : null
+  },
+  {
+    id: "refunded",
+    title: "Refunded",
+    icon: X,
+    iconColor: "text-slate-600",
+    show: (order: Order) => order.status === "refunded",
+    isBuyer: true,
+    borderColor: "border-slate-200",
+    getStatusText: () => "Refunded",
+    completionDate: (order: Order) => order.timestamp
+  }
+]
 
-    loadUsers()
-  }, [open, currentUserId])
+// Helper Components
+const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
+  const { id, title, icon: Icon, iconColor, borderColor, isSeller, isBuyer, getStatusText, getStatusIcon, completionDate } = config
 
-  const filteredUsers = users.filter(user => 
-    user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.email?.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const statusText = getStatusText(order)
+  const StatusIcon = getStatusIcon ? getStatusIcon(order) : null
+  const completedDate = completionDate ? completionDate(order) : null
 
-  const handleUserSelect = async (selectedUser: User) => {
-    try {
-      // Check if conversation already exists between these two users
-      const { data: existingConvs, error: convError } = await supabase
-        .from('conversations')
-        .select(`
-          *,
-          conversation_participants!inner(
-            user_id
+  const getActionButtons = () => {
+    switch (id) {
+      case "offer":
+        if (order.status === "offer") {
+          return (
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => onAction("acceptOffer")}
+                className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1"
+              >
+                <Check className="w-4 h-4" />
+                Accept
+              </button>
+              <button className="flex-1 bg-secondary text-secondary-foreground py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors">
+                Counter
+              </button>
+            </div>
           )
-        `)
-
-      if (convError) throw convError
-
-      // Filter conversations where both users are participants
-      const existingConv = existingConvs?.find(conv => {
-        const participantIds = conv.conversation_participants?.map((p: any) => p.user_id) || []
-        return participantIds.includes(currentUserId) && participantIds.includes(selectedUser.id)
-      })
-
-      if (existingConv) {
-        // Create conversation object from existing conversation
-        const conversation: Conversation = {
-          id: existingConv.id,
-          created_at: existingConv.created_at,
-          updated_at: existingConv.updated_at,
-          last_message_at: existingConv.last_message_at,
-          is_archived: existingConv.is_archived,
-          other_user: selectedUser,
-          unread_count: 0
         }
-        onConversationSelect(conversation)
-      } else {
-        // Create new conversation
-        const { data: newConversation, error: createError } = await supabase
-          .from('conversations')
-          .insert({
-            last_message_at: new Date().toISOString(),
-          })
-          .select()
-          .single()
+        break
 
-        if (createError) throw createError
-
-        // Add both users as participants
-        await supabase.from('conversation_participants').insert([
-          { conversation_id: newConversation.id, user_id: currentUserId, joined_at: new Date().toISOString() },
-          { conversation_id: newConversation.id, user_id: selectedUser.id, joined_at: new Date().toISOString() }
-        ])
-
-        // Create conversation object for new conversation
-        const conversation: Conversation = {
-          id: newConversation.id,
-          created_at: newConversation.created_at,
-          updated_at: newConversation.updated_at,
-          last_message_at: newConversation.last_message_at,
-          is_archived: newConversation.is_archived,
-          other_user: selectedUser,
-          unread_count: 0
+      case "accepted":
+        if (order.status === "accepted") {
+          return (
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => onAction("initiatePayment")}
+                className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1"
+              >
+                <Wallet className="w-4 h-4" />
+                Continue
+              </button>
+              <button
+                onClick={() => onAction("cancelOrder")}
+                className="px-4 bg-secondary text-secondary-foreground py-2 rounded-lg hover:bg-secondary/80 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )
         }
-        
-        onConversationSelect(conversation)
-      }
+        break
 
-      onOpenChange(false)
-    } catch (error) {
-      console.error('Error creating conversation:', error)
+      case "payment":
+        if (order.status === "payment_pending") {
+          return (
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => onAction("showPinModal")}
+                className="flex-1 bg-amber-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors flex items-center justify-center gap-1"
+              >
+                <Lock className="w-4 h-4" />
+                Enter PIN
+              </button>
+              <button
+                onClick={() => onAction("cancelOrder")}
+                className="px-4 bg-secondary text-secondary-foreground py-2 rounded-lg hover:bg-secondary/80 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )
+        }
+        break
+
+      case "delivery":
+        if (order.status === "delivery_pending") {
+          return (
+            <>
+              <div className="mt-3 mb-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-xs text-amber-700 font-medium">
+                  ⚠️ Important: Only click "Confirm" when you have physically received the product. 
+                  Once confirmed, payment will be released to the seller and cannot be reversed.
+                </p>
+              </div>
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={() => onAction("completeDelivery")}
+                  className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-1"
+                >
+                  <Check className="w-4 h-4" />
+                  Confirm
+                </button>
+                <button
+                  onClick={() => onAction("cancelOrder")}
+                  className="flex-1 bg-secondary text-secondary-foreground py-2 rounded-lg text-sm font-medium hover:bg-secondary/80 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </>
+          )
+        }
+        break
+
+      case "completed":
+        return (
+          <button
+            onClick={() => onAction("showReceipt")}
+            className="w-full bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1 mt-4"
+          >
+            <Receipt className="w-4 h-4" />
+            View Receipt
+          </button>
+        )
+
+      case "refunded":
+        return (
+          <button
+            onClick={() => onAction("showWalletBalance")}
+            className="w-full bg-slate-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors flex items-center justify-center gap-1 mt-4"
+          >
+            <Wallet className="w-4 h-4" />
+            Check Wallet
+          </button>
+        )
+    }
+    return null
+  }
+
+  const getStepContent = () => {
+    switch (id) {
+      case "offer":
+        return (
+          <div className="space-y-1 mb-3">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Item price</span>
+              <span className="text-foreground">${order.amount}</span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-1">
+                <Truck className="w-3 h-3 text-muted-foreground" />
+                <span className="text-muted-foreground">Delivery fee</span>
+              </div>
+              <span className="text-foreground">${order.deliveryFee}</span>
+            </div>
+            <div className="h-px bg-border my-1" />
+            <div className="flex items-center justify-between text-sm font-semibold">
+              <span className="text-foreground">Total</span>
+              <span className="text-emerald-600">${order.total}</span>
+            </div>
+          </div>
+        )
+
+      case "accepted":
+        return (
+          <div className="space-y-2 mb-3">
+            <div className="text-xs text-emerald-600">
+              <span>Funds will be held securely until delivery</span>
+            </div>
+          </div>
+        )
+
+      case "payment":
+        return (
+          <div className="space-y-2 mb-3">
+            <div className="text-xs text-amber-600">
+              <span>
+                {order.status === "payment_pending" 
+                  ? `Awaiting PIN confirmation` 
+                  : `$${order.total} paid from wallet`}
+              </span>
+            </div>
+          </div>
+        )
+
+      case "delivery":
+        return (
+          <div className="space-y-2 mb-3">
+            <div className="text-xs text-blue-600">
+              <span>
+                {order.status === "delivery_pending" 
+                  ? "Funds secured. Auto-refund in 24h if not delivered" 
+                  : "Product received. Payment released to seller"}
+              </span>
+            </div>
+          </div>
+        )
+
+      case "completed":
+        return (
+          <div className="space-y-2 mb-3">
+            <div className="text-xs text-emerald-600">
+              <span>Product received. Payment released to seller.</span>
+            </div>
+          </div>
+        )
+
+      case "refunded":
+        return (
+          <div className="space-y-2 mb-3">
+            <div className="text-xs text-slate-600">
+              <span>${order.total} refunded to your wallet</span>
+            </div>
+          </div>
+        )
     }
   }
 
-  if (!open) return null
+  // Seller's offer card
+  if (isSeller) {
+    return (
+      <div className="flex justify-start mb-4">
+        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0 text-[10px] font-bold text-white mr-1.5 mt-auto">
+          JS
+        </div>
+        <div className="max-w-[80%] w-full">
+          <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Icon className={`w-5 h-5 ${iconColor}`} />
+                <span className="text-foreground text-sm font-semibold">{title}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-muted-foreground line-through">$899</span>
+                <span className="text-xs text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full font-medium">
+                  $880
+                </span>
+              </div>
+            </div>
+
+            {getStepContent()}
+
+            {/* Status bar at bottom */}
+            <div className="mt-3 pt-3 border-t border-border">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {StatusIcon && <StatusIcon className="w-3 h-3 text-muted-foreground" />}
+                  <span className="text-xs text-muted-foreground">{statusText}</span>
+                </div>
+                {completedDate && (
+                  <span className="text-xs text-muted-foreground">
+                    {completedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {getActionButtons()}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Buyer's step cards
+  if (isBuyer) {
+    const isCompleted = statusText === "Completed" || statusText === "Refunded"
+    const isCurrent = order.status === "payment_pending" && id === "payment" || 
+                     order.status === "delivery_pending" && id === "delivery" ||
+                     order.status === "accepted" && id === "accepted"
+
+    return (
+      <div className="relative">
+        {/* Step Indicator for progress bar */}
+        {currentStep > 0 && (
+          <div className="absolute -left-8 top-4">
+            <div className={cn(
+              "w-5 h-5 rounded-full flex items-center justify-center border-2 transition-all duration-300",
+              isCompleted 
+                ? "bg-emerald-500 border-emerald-500" 
+                : "bg-white border-gray-300"
+            )}>
+              {isCompleted && <Check className="w-3 h-3 text-white" />}
+            </div>
+          </div>
+        )}
+
+        {/* Card */}
+        <div className={`bg-card border ${borderColor} rounded-xl p-4 shadow-sm`}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Icon className={`w-5 h-5 ${iconColor}`} />
+              <span className="text-foreground text-sm font-semibold">{title}</span>
+            </div>
+            <span className="text-xs font-medium text-foreground">
+              ${order.total}
+            </span>
+          </div>
+
+          {getStepContent()}
+
+          {/* Status bar at bottom */}
+          <div className="mt-3 pt-3 border-t border-border">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className={cn(
+                  "w-2 h-2 rounded-full",
+                  isCompleted ? "bg-emerald-500" : "bg-amber-500"
+                )} />
+                <span className="text-xs text-muted-foreground">{statusText}</span>
+              </div>
+              {completedDate && (
+                <span className="text-xs text-muted-foreground">
+                  {completedDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {getActionButtons()}
+        </div>
+      </div>
+    )
+  }
+
+  return null
+}
+
+// Simplified Call Control Band Component
+const CallControlBand = ({ 
+  callState, 
+  callDuration, 
+  isMuted, 
+  isVideoOn,
+  onToggleMute, 
+  onToggleVideo, 
+  onEndCall 
+}) => {
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
+  }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-gray-900">New Message</h2>
-            <button
-              onClick={() => onOpenChange(false)}
-              className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-            >
-              <X className="w-5 h-5 text-gray-500" />
-            </button>
+    <div className="px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 flex items-center justify-between shadow-md border-b border-blue-800">
+      {/* Left side - Call icon and duration */}
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+          <Phone className="w-4 h-4 text-white" />
+        </div>
+        <div className="text-white">
+          <div className="text-sm font-medium">
+            {callState === "ringing" ? "Calling..." : formatDuration(callDuration)}
           </div>
-          
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search by name or email"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-gray-100 rounded-lg text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500"
-              autoFocus
-            />
+          <div className="text-xs text-white/80">
+            {callState === "ringing" ? "Ringing..." : "Active call"}
           </div>
         </div>
+      </div>
 
-        {/* Users List */}
-        <div className="flex-1 overflow-y-auto">
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-            </div>
-          ) : filteredUsers.length === 0 ? (
-            <div className="py-8 text-center">
-              <AlertCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">
-                {searchQuery ? 'No users found' : 'No users available'}
-              </p>
-            </div>
-          ) : (
-            filteredUsers.map((user) => (
-              <button
-                key={user.id}
-                onClick={() => handleUserSelect(user)}
-                className="w-full px-6 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
-              >
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
-                  {user.full_name?.charAt(0) || user.username?.charAt(0) || user.email?.charAt(0) || '?'}
-                </div>
-                <div className="flex-1 text-left min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-medium text-gray-900 truncate">
-                      {user.full_name || user.username || user.email?.split('@')[0] || 'Unknown User'}
-                    </h3>
-                    {user.isVerified && (
-                      <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-500 flex-shrink-0" />
-                    )}
-                  </div>
-                  {user.email && (
-                    <p className="text-sm text-gray-500 truncate">{user.email}</p>
-                  )}
-                </div>
-              </button>
-            ))
+      {/* Right side - Control buttons */}
+      <div className="flex items-center gap-2">
+        {/* Video toggle - Disabled during ringing */}
+        <button
+          onClick={callState === "active" ? onToggleVideo : undefined}
+          disabled={callState !== "active"}
+          className={cn(
+            "p-2 rounded-lg transition-colors",
+            callState === "active" 
+              ? (isVideoOn ? 'bg-white/20 hover:bg-white/30' : 'bg-red-500 hover:bg-red-600')
+              : 'bg-white/10 opacity-50 cursor-not-allowed'
           )}
-        </div>
+        >
+          {isVideoOn ? (
+            <Video className="w-5 h-5 text-white" />
+          ) : (
+            <VideoOff className="w-5 h-5 text-white" />
+          )}
+        </button>
 
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200">
-          <button
-            onClick={() => onOpenChange(false)}
-            className="w-full py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-          >
-            Cancel
-          </button>
-        </div>
+        {/* Mute toggle - Disabled during ringing */}
+        <button
+          onClick={callState === "active" ? onToggleMute : undefined}
+          disabled={callState !== "active"}
+          className={cn(
+            "p-2 rounded-lg transition-colors",
+            callState === "active"
+              ? (isMuted ? 'bg-red-500 hover:bg-red-600' : 'bg-white/20 hover:bg-white/30')
+              : 'bg-white/10 opacity-50 cursor-not-allowed'
+          )}
+        >
+          {isMuted ? (
+            <MicOff className="w-5 h-5 text-white" />
+          ) : (
+            <Mic className="w-5 h-5 text-white" />
+          )}
+        </button>
+
+        {/* End call button - Always enabled */}
+        <button
+          onClick={onEndCall}
+          className="p-2 rounded-lg bg-red-500 hover:bg-red-600 transition-colors"
+        >
+          <PhoneOff className="w-5 h-5 text-white" />
+        </button>
       </div>
     </div>
   )
 }
 
 // Chat Interface Component
-function ChatInterface({ conversation, currentUser, onBack }: { 
-  conversation: Conversation, 
-  currentUser: any, 
-  onBack: () => void 
-}) {
-  const [messages, setMessages] = useState<Message[]>([])
-  const [newMessage, setNewMessage] = useState("")
+const ChatInterface = ({ conversation, currentUser, onBack }) => {
+  const [messages, setMessages] = useState([])
+  const [message, setMessage] = useState("")
   const [loading, setLoading] = useState(true)
   const [isTyping, setIsTyping] = useState(false)
   const [sellerOnline, setSellerOnline] = useState(false)
   const [showWalletBalance, setShowWalletBalance] = useState(false)
   const [showReceipt, setShowReceipt] = useState(false)
-  const [messageActionsId, setMessageActionsId] = useState<string | null>(null)
-  const [replyingTo, setReplyingTo] = useState<Message | null>(null)
-  const [editingMessage, setEditingMessage] = useState<Message | null>(null)
+  const [messageActionsId, setMessageActionsId] = useState(null)
+  const [replyingTo, setReplyingTo] = useState(null)
+  const [editingMessage, setEditingMessage] = useState(null)
   const [isRecording, setIsRecording] = useState(false)
   const [recordingDuration, setRecordingDuration] = useState(0)
-  const [activeCall, setActiveCall] = useState<null | "audio" | "video">(null)
-  const [callState, setCallState] = useState<"idle" | "ringing" | "active">("idle")
+  const [activeCall, setActiveCall] = useState(null)
+  const [callState, setCallState] = useState("idle")
   const [callDuration, setCallDuration] = useState(0)
   const [walletBalance, setWalletBalance] = useState(1250.50)
   const [pin, setPin] = useState(["", "", "", ""])
-  const [viewingImage, setViewingImage] = useState<string | null>(null)
+  const [viewingImage, setViewingImage] = useState(null)
+  const [currentOrder, setCurrentOrder] = useState({
+    id: `ORD-${Date.now()}`,
+    amount: 880,
+    deliveryFee: 15,
+    total: 895,
+    status: "offer",
+    timestamp: new Date(),
+  })
+  const [notificationsMuted, setNotificationsMuted] = useState(false)
+  const [showQuickActions, setShowQuickActions] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false)
+  const [showPinModal, setShowPinModal] = useState(false)
 
-  const chatContainerRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const chatContainerRef = useRef(null)
+  const inputRef = useRef(null)
+  const pinInputRefs = useRef([])
+  const recordingIntervalRef = useRef(null)
 
   const otherUser = conversation.other_user
 
-  // Load messages
   useEffect(() => {
-    if (!conversation.id || !currentUser) return
+    if (!conversation?.id || !currentUser) return
 
     const loadMessages = async () => {
       setLoading(true)
@@ -311,7 +630,18 @@ function ChatInterface({ conversation, currentUser, onBack }: {
 
         if (messagesError) throw messagesError
 
-        setMessages(messagesData || [])
+        // Transform to match the chat interface format
+        const transformedMessages = (messagesData || []).map(msg => ({
+          id: msg.id,
+          sender: msg.sender_id === currentUser.id ? "buyer" : "seller",
+          text: msg.content,
+          time: new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          timestamp: new Date(msg.created_at),
+          status: msg.is_read ? "read" : "delivered",
+          is_read: msg.is_read
+        }))
+
+        setMessages(transformedMessages)
         
         // Mark messages as read
         const unreadMessages = messagesData?.filter(
@@ -339,11 +669,11 @@ function ChatInterface({ conversation, currentUser, onBack }: {
     }
 
     loadMessages()
-  }, [conversation.id, currentUser])
+  }, [conversation?.id, currentUser])
 
   // Real-time message subscription
   useEffect(() => {
-    if (!conversation.id) return
+    if (!conversation?.id) return
 
     const channel = supabase
       .channel(`messages:${conversation.id}`)
@@ -356,7 +686,6 @@ function ChatInterface({ conversation, currentUser, onBack }: {
           filter: `conversation_id=eq.${conversation.id}`
         },
         async (payload) => {
-          // Fetch the new message with sender data
           const { data: newMessage, error } = await supabase
             .from('messages')
             .select(`
@@ -372,9 +701,18 @@ function ChatInterface({ conversation, currentUser, onBack }: {
             .single()
 
           if (!error && newMessage) {
-            setMessages(prev => [...prev, newMessage])
+            const transformedMessage = {
+              id: newMessage.id,
+              sender: newMessage.sender_id === currentUser.id ? "buyer" : "seller",
+              text: newMessage.content,
+              time: new Date(newMessage.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+              timestamp: new Date(newMessage.created_at),
+              status: newMessage.is_read ? "read" : "delivered",
+              is_read: newMessage.is_read
+            }
             
-            // Mark as read if it's from other user
+            setMessages(prev => [...prev, transformedMessage])
+            
             if (newMessage.sender_id !== currentUser.id) {
               await supabase
                 .from('messages')
@@ -395,55 +733,18 @@ function ChatInterface({ conversation, currentUser, onBack }: {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [conversation.id, currentUser])
-
-  // Check if other user is online
-  useEffect(() => {
-    if (!otherUser?.last_active) return
-
-    const checkOnlineStatus = () => {
-      const lastActive = new Date(otherUser.last_active || '')
-      const now = new Date()
-      const diffInMinutes = (now.getTime() - lastActive.getTime()) / (1000 * 60)
-      setSellerOnline(diffInMinutes < 5) // Online if active in last 5 minutes
-    }
-
-    checkOnlineStatus()
-    const interval = setInterval(checkOnlineStatus, 60000) // Check every minute
-    return () => clearInterval(interval)
-  }, [otherUser])
-
-  // Call duration timer
-  useEffect(() => {
-    if (callState === "active") {
-      const interval = setInterval(() => setCallDuration(d => d + 1), 1000)
-      return () => clearInterval(interval)
-    }
-  }, [callState])
-
-  // Recording timer
-  useEffect(() => {
-    if (isRecording) {
-      recordingIntervalRef.current = setInterval(() => setRecordingDuration(d => d + 1), 1000)
-      return () => {
-        if (recordingIntervalRef.current) clearInterval(recordingIntervalRef.current)
-      }
-    }
-    setRecordingDuration(0)
-  }, [isRecording])
+  }, [conversation?.id, currentUser])
 
   const handleSend = async () => {
-    if (!newMessage.trim() && !isRecording) return
-    if (!conversation.id || !currentUser) return
-
-    const messageContent = editingMessage ? newMessage : newMessage
+    if (!message.trim() && !isRecording) return
+    if (!conversation?.id || !currentUser) return
 
     const { data: sentMessage, error: sendError } = await supabase
       .from('messages')
       .insert({
         conversation_id: conversation.id,
         sender_id: currentUser.id,
-        content: messageContent,
+        content: editingMessage ? message : message,
         is_read: false,
         reply_to: replyingTo?.id,
         created_at: new Date().toISOString()
@@ -462,307 +763,276 @@ function ChatInterface({ conversation, currentUser, onBack }: {
       .update({ last_message_at: new Date().toISOString() })
       .eq('id', conversation.id)
 
-    setNewMessage("")
+    setMessage("")
     setReplyingTo(null)
     setEditingMessage(null)
     setIsRecording(false)
   }
 
-  const formatDuration = (seconds: number) => {
+  const formatDuration = (seconds) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
   }
 
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-  }
-
-  const getUserInitials = (user: User | null | undefined) => {
-    if (!user) return "??"
-    if (user.full_name) {
-      return user.full_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case "sent": return <Check className="w-3 h-3 text-muted-foreground" />
+      case "delivered": return <CheckCheck className="w-3 h-3 text-muted-foreground" />
+      case "read": return <CheckCheck className="w-3 h-3 text-blue-500" />
+      default: return <Clock className="w-3 h-3 text-muted-foreground" />
     }
-    if (user.username) {
-      return user.username.substring(0, 2).toUpperCase()
+  }
+
+  const visibleSteps = stepConfigs.filter(config => config.show(currentOrder))
+  const hasProgressSteps = visibleSteps.filter(step => step.isBuyer).length > 0
+
+  const getCurrentStep = () => {
+    switch (currentOrder.status) {
+      case "offer": return 0
+      case "accepted": return 1
+      case "payment_pending": return 2
+      case "delivery_pending": return 3
+      case "completed": return 4
+      case "refunded": return 0
+      default: return 0
     }
-    return "??"
   }
 
-  const getUserDisplayName = (user: User | null | undefined) => {
-    if (!user) return "Unknown User"
-    return user.full_name || user.username || user.email?.split('@')[0] || "User"
-  }
-
-  const handleCallStart = (type: "audio" | "video") => {
-    setActiveCall(type)
-    setCallState("ringing")
-    setTimeout(() => setCallState("active"), 2000)
-  }
-
-  const handleCallEnd = () => {
-    setCallState("idle")
-    setActiveCall(null)
-    setCallDuration(0)
-  }
-
-  const deleteMessage = async (messageId: string) => {
-    const { error } = await supabase
-      .from('messages')
-      .delete()
-      .eq('id', messageId)
-
-    if (error) {
-      console.error('Error deleting message:', error)
-      return
-    }
-
-    setMessages(prev => prev.filter(m => m.id !== messageId))
-    setMessageActionsId(null)
-  }
-
-  const copyMessage = (text: string) => {
-    navigator.clipboard.writeText(text)
-    setMessageActionsId(null)
-  }
+  // Quick actions
+  const quickActions = [
+    { icon: DollarSign, label: "Wallet", action: () => setShowWalletBalance(true) },
+    { icon: ImageIcon, label: "Photos", action: () => {} },
+    { icon: Receipt, label: "Receipt", action: () => currentOrder?.receipt && setShowReceipt(true) },
+  ]
 
   return (
-    <div className="w-full h-[100dvh] h-[calc(var(--vh,1vh)*100)] flex flex-col overflow-hidden bg-white">
-      {/* Header */}
-      <div className="shrink-0 px-4 py-3 flex items-center gap-2 bg-white border-b border-gray-200 h-16">
-        <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-          <ChevronLeft className="w-5 h-5 text-gray-600" />
-        </button>
+    <div className="w-full h-[100dvh] h-[calc(var(--vh,1vh)*100)] flex flex-col overflow-hidden relative transition-colors duration-300 bg-background">
+      <div className="flex-1 flex flex-col min-h-0 bg-background text-foreground">
+        {/* Header - Fixed height */}
+        <div className="px-2 py-2 flex items-center gap-2 shrink-0 bg-card border-b border-border shadow-sm h-14">
+          <button onClick={onBack} className="p-1.5 hover:bg-muted rounded-full transition-colors">
+            <ChevronLeft className="w-5 h-5 text-foreground" />
+          </button>
 
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="relative">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white font-semibold">
-              {getUserInitials(otherUser)}
-            </div>
-            {sellerOnline && (
-              <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white" />
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="text-gray-900 font-semibold text-sm truncate">
-                {getUserDisplayName(otherUser)}
-              </span>
-              {Math.random() > 0.5 && (
-                <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-500" />
+          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+            <div className="relative">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0">
+                <span className="text-white font-bold text-sm">
+                  {otherUser?.full_name?.charAt(0) || otherUser?.username?.charAt(0) || '?'}
+                </span>
+              </div>
+              {sellerOnline && (
+                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-card" />
               )}
             </div>
-            <p className="text-gray-500 text-xs flex items-center gap-1">
-              <span>{sellerOnline ? "Online" : "Offline"}</span>
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1">
-          <button 
-            onClick={() => handleCallStart("video")}
-            disabled={callState !== "idle"}
-            className={cn(
-              "p-2 hover:bg-gray-100 rounded-full transition-colors",
-              callState !== "idle" && "opacity-50 cursor-not-allowed"
-            )}
-          >
-            <Video className="w-5 h-5 text-gray-600" />
-          </button>
-          
-          <button 
-            onClick={() => handleCallStart("audio")}
-            disabled={callState !== "idle"}
-            className={cn(
-              "p-2 hover:bg-gray-100 rounded-full transition-colors",
-              callState !== "idle" && "opacity-50 cursor-not-allowed"
-            )}
-          >
-            <Phone className="w-5 h-5 text-gray-600" />
-          </button>
-        </div>
-      </div>
-
-      {/* Messages Area */}
-      <div 
-        ref={chatContainerRef}
-        className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-3 scroll-smooth"
-        style={{ 
-          WebkitOverflowScrolling: 'touch',
-          overscrollBehavior: 'contain'
-        }}
-      >
-        {loading ? (
-          <div className="flex items-center justify-center h-full">
-            <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-          </div>
-        ) : (
-          <>
-            <div className="text-center text-gray-400 text-xs mb-4 uppercase tracking-wide">
-              {messages.length === 0 ? "Start of conversation" : "Today"}
-            </div>
-
-            {messages.length === 0 ? (
-              <div className="text-center py-8">
-                <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500">Send your first message</p>
-              </div>
-            ) : (
-              messages.map((msg) => {
-                const isCurrentUser = msg.sender_id === currentUser.id
-
-                return (
-                  <div key={msg.id} className={cn("flex mb-3", isCurrentUser ? "justify-end" : "justify-start")}>
-                    {!isCurrentUser && (
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-[10px] font-bold text-white mr-2 mt-auto">
-                        {getUserInitials(msg.sender)}
-                      </div>
-                    )}
-
-                    <div className={cn("max-w-[75%] relative group", isCurrentUser ? "items-end" : "items-start")}>
-                      <div className={cn(
-                        "rounded-2xl px-4 py-2.5 shadow-sm relative",
-                        isCurrentUser 
-                          ? "bg-blue-500 text-white rounded-br-sm" 
-                          : "bg-gray-100 text-gray-900 rounded-bl-sm"
-                      )}>
-                        <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
-                        <div className={cn("flex items-center gap-2 mt-1.5", isCurrentUser ? "justify-end" : "justify-start")}>
-                          <span className={cn("text-[11px]", isCurrentUser ? "text-white/70" : "text-gray-500")}>
-                            {formatTime(msg.created_at)}
-                          </span>
-                          {isCurrentUser && (
-                            <CheckCheck className="w-3.5 h-3.5 text-white/70" />
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {isCurrentUser && (
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-[10px] font-bold text-white ml-2 mt-auto">
-                        {getUserInitials(currentUser)}
-                      </div>
-                    )}
-                  </div>
-                )
-              })
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Message Input */}
-      <div className="shrink-0 px-4 py-3 border-t border-gray-200 bg-white">
-        {replyingTo && (
-          <div className="px-3 py-2 bg-gray-100 rounded-lg mb-3 flex items-center gap-2">
-            <MoreVertical className="w-4 h-4 text-blue-500" />
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-gray-500">
-                Replying to {replyingTo.sender_id === currentUser.id ? "yourself" : getUserDisplayName(replyingTo.sender)}
+              <div className="flex items-center gap-1.5">
+                <span className="text-foreground font-semibold text-sm truncate">
+                  {otherUser?.full_name || otherUser?.username || 'Unknown User'}
+                </span>
+                <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-500" />
+              </div>
+              <p className="text-muted-foreground text-xs flex items-center gap-1">
+                <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                <span>4.5</span>
+                <span className="mx-1">•</span>
+                <span>{sellerOnline ? "Online" : "Offline"}</span>
               </p>
-              <p className="text-sm text-gray-900 truncate">{replyingTo.content}</p>
             </div>
-            <button onClick={() => setReplyingTo(null)} className="p-1 hover:bg-gray-200 rounded-full">
-              <X className="w-4 h-4 text-gray-500" />
-            </button>
           </div>
-        )}
 
-        {editingMessage && (
-          <div className="px-3 py-2 bg-amber-50 rounded-lg mb-3 flex items-center gap-2">
-            <Edit3 className="w-4 h-4 text-amber-500" />
-            <div className="flex-1 min-w-0">
-              <p className="text-xs text-amber-700">Editing message</p>
-              <p className="text-sm text-amber-900 truncate">{editingMessage.content}</p>
-            </div>
-            <button onClick={() => { setEditingMessage(null); setNewMessage(""); }} className="p-1 hover:bg-amber-100 rounded-full">
-              <X className="w-4 h-4 text-amber-500" />
-            </button>
-          </div>
-        )}
-
-        {isRecording ? (
-          <div className="px-3 py-3 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3">
-            <button onClick={() => setIsRecording(false)} className="p-2 bg-red-100 rounded-full">
-              <Trash2 className="w-5 h-5 text-red-600" />
-            </button>
-            <div className="flex-1 flex items-center gap-2">
-              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-              <span className="text-sm text-red-600 font-medium">{formatDuration(recordingDuration)}</span>
-              <div className="flex-1 flex items-center gap-0.5">
-                {[...Array(30)].map((_, i) => (
-                  <div key={i} className="w-1 bg-red-400 rounded-full animate-pulse" style={{ height: `${Math.random() * 20 + 4}px`, animationDelay: `${i * 0.05}s` }} />
-                ))}
-              </div>
-            </div>
-            <button onClick={handleSend} className="p-2 bg-red-500 rounded-full">
-              <Send className="w-5 h-5 text-white" />
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <button className="p-2.5 hover:bg-gray-100 rounded-full transition-colors">
-              <Plus className="w-5 h-5 text-gray-600" />
-            </button>
-            <button className="p-2.5 hover:bg-gray-100 rounded-full transition-colors">
-              <Camera className="w-5 h-5 text-gray-600" />
-            </button>
-            <button className="p-2.5 hover:bg-gray-100 rounded-full transition-colors">
-              <ImageIcon className="w-5 h-5 text-gray-600" />
-            </button>
-            <button className="p-2.5 hover:bg-gray-100 rounded-full transition-colors" onMouseDown={() => setIsRecording(true)}>
-              <Mic className="w-5 h-5 text-gray-600" />
-            </button>
-            
-            <div className="flex-1 bg-gray-100 rounded-full px-4 py-2.5 flex items-center min-w-0">
-              <input 
-                ref={inputRef}
-                type="text"
-                placeholder="Type a message..."
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-                className="bg-transparent flex-1 outline-none text-gray-900 text-sm min-w-0 placeholder:text-gray-500"
-              />
-              <button onClick={() => setNewMessage(prev => prev + "👍")} className="p-1 hover:bg-gray-200 rounded-full">
-                <Smile className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
-            
+          <div className="flex items-center gap-1">
+            {/* Video call button */}
             <button 
-              onClick={handleSend} 
-              disabled={!newMessage.trim() && !editingMessage}
+              onClick={() => callState === "idle" && setActiveCall("video") && setCallState("ringing")}
+              disabled={callState !== "idle"}
               className={cn(
-                "p-2.5 rounded-full transition-colors",
-                newMessage.trim() || editingMessage
-                  ? "bg-blue-500 hover:bg-blue-600"
-                  : "bg-gray-100 hover:bg-gray-200"
+                "p-2 hover:bg-muted rounded-full transition-colors",
+                callState !== "idle" && "opacity-50 cursor-not-allowed"
               )}
             >
-              {newMessage.trim() || editingMessage ? (
-                <Send className="w-5 h-5 text-white" />
-              ) : (
-                <ThumbsUp className="w-5 h-5 text-gray-600" />
-              )}
+              <Video className="w-5 h-5 text-foreground" />
             </button>
+            
+            {/* Audio call button */}
+            <button 
+              onClick={() => callState === "idle" && setActiveCall("audio") && setCallState("ringing")}
+              disabled={callState !== "idle"}
+              className={cn(
+                "p-2 hover:bg-muted rounded-full transition-colors",
+                callState !== "idle" && "opacity-50 cursor-not-allowed"
+              )}
+            >
+              <Phone className="w-5 h-5 text-foreground" />
+            </button>
+
+            <div className="relative">
+              <button onClick={() => setShowMenu(!showMenu)} className="p-2 hover:bg-muted rounded-full transition-colors">
+                <MoreVertical className="w-5 h-5 text-foreground" />
+              </button>
+
+              {showMenu && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
+                  <div className="absolute right-0 top-10 w-56 bg-popover border border-border rounded-xl shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="h-px bg-border my-1" />
+                    <button onClick={() => { setNotificationsMuted(!notificationsMuted); setShowMenu(false); }} className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors">
+                      {notificationsMuted ? <BellOff className="w-4 h-4 text-muted-foreground" /> : <Bell className="w-4 h-4 text-muted-foreground" />}
+                      <span className="text-sm text-foreground">{notificationsMuted ? "Unmute" : "Mute"} notifications</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-        )}
+        </div>
+
+        {/* Chat Content - Scrollable area */}
+        <div 
+          ref={chatContainerRef} 
+          className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 scroll-smooth"
+        >
+          <div className="text-center text-muted-foreground text-xs mb-3 uppercase tracking-wide">Today</div>
+
+          {/* Messages */}
+          {messages.map((msg) => {
+            const isBuyer = msg.sender === "buyer"
+
+            return (
+              <div key={msg.id} className={cn("flex mb-2 transition-colors duration-500 rounded-lg", isBuyer ? "justify-end" : "justify-start")}>
+                {!isBuyer && (
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0 text-[10px] font-bold text-white mr-1.5 mt-auto">
+                    {otherUser?.full_name?.charAt(0) || otherUser?.username?.charAt(0) || '?'}
+                  </div>
+                )}
+
+                <div className={cn("max-w-[80%] relative group", isBuyer ? "items-end" : "items-start")}>
+                  <div className={cn("rounded-2xl px-3 py-2 shadow-sm relative", isBuyer ? "bg-blue-500 text-white rounded-br-sm" : "bg-card border border-border text-foreground rounded-bl-sm")}>
+                    <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>
+                    <div className={cn("flex items-center gap-1 mt-1", isBuyer ? "justify-end" : "justify-start")}>
+                      <span className={cn("text-[10px]", isBuyer ? "text-white/60" : "text-muted-foreground")}>{msg.time}</span>
+                      {isBuyer && getStatusIcon(msg.status)}
+                    </div>
+                  </div>
+                </div>
+
+                {isBuyer && (
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shrink-0 text-[10px] font-bold text-white ml-1.5 mt-auto">
+                    ME
+                  </div>
+                )}
+              </div>
+            )
+          })}
+
+          {/* Order Steps */}
+          <div className="space-y-2 mb-3">
+            {/* Seller's Offer Card */}
+            {visibleSteps.filter(step => step.id === "offer").map(config => (
+              <OrderStepCard
+                key={config.id}
+                config={config}
+                order={currentOrder}
+                currentStep={getCurrentStep()}
+                onAction={(action) => {
+                  // Handle order actions
+                  console.log('Order action:', action)
+                }}
+              />
+            ))}
+
+            {/* Progress Steps */}
+            {hasProgressSteps && (
+              <div className="flex justify-end">
+                <div className="max-w-[80%] w-full">
+                  <div className="relative pl-8 mb-4">
+                    {/* Vertical Progress Line */}
+                    <div className="absolute left-3 top-0 bottom-0 w-0.5 flex flex-col items-center">
+                      <div className={cn(
+                        "w-0.5 flex-1 transition-all duration-300",
+                        getCurrentStep() >= 1 ? "bg-emerald-500" : "bg-gray-200"
+                      )} />
+                    </div>
+
+                    {/* Progress Step Cards */}
+                    <div className="space-y-6">
+                      {visibleSteps
+                        .filter(step => step.isBuyer)
+                        .sort((a, b) => {
+                          const order = ["accepted", "payment", "delivery", "completed", "refunded"]
+                          return order.indexOf(a.id) - order.indexOf(b.id)
+                        })
+                        .map(config => (
+                          <OrderStepCard
+                            key={config.id}
+                            config={config}
+                            order={currentOrder}
+                            currentStep={getCurrentStep()}
+                            onAction={(action) => {
+                              // Handle order actions
+                              console.log('Order action:', action)
+                            }}
+                          />
+                        ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Message Input */}
+        <div className="shrink-0">
+          {isRecording ? (
+            <div className="px-3 py-3 bg-red-50 border-t border-red-200 flex items-center gap-3">
+              <button onClick={() => setIsRecording(false)} className="p-2 bg-red-100 rounded-full">
+                <Trash2 className="w-5 h-5 text-red-600" />
+              </button>
+              <div className="flex-1 flex items-center gap-2">
+                <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                <span className="text-sm text-red-600 font-medium">{formatDuration(recordingDuration)}</span>
+                <div className="flex-1 flex items-center gap-0.5">
+                  {[...Array(30)].map((_, i) => (
+                    <div key={i} className="w-1 bg-red-400 rounded-full animate-pulse" style={{ height: `${Math.random() * 20 + 4}px`, animationDelay: `${i * 0.05}s` }} />
+                  ))}
+                </div>
+              </div>
+              <button onClick={handleSend} className="p-2 bg-red-500 rounded-full">
+                <Send className="w-5 h-5 text-white" />
+              </button>
+            </div>
+          ) : (
+            <div className="px-2 py-2 flex items-center gap-1 shrink-0 bg-card border-t border-border h-16">
+              <button onClick={() => setShowQuickActions(!showQuickActions)} className="p-2 shrink-0">
+                <Plus className={cn("w-6 h-6 transition-transform", showQuickActions ? "rotate-45 text-muted-foreground" : "text-blue-600")} />
+              </button>
+              <button className="p-2 shrink-0"><Camera className="w-6 h-6 text-blue-600" /></button>
+              <button className="p-2 shrink-0"><ImageIcon className="w-6 h-6 text-blue-600" /></button>
+              <button className="p-2 shrink-0" onMouseDown={() => setIsRecording(true)}><Mic className="w-6 h-6 text-blue-600" /></button>
+              <div className="flex-1 bg-muted rounded-full px-3 py-2 flex items-center min-w-0">
+                <input ref={inputRef} type="text" placeholder="Type a message..." value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()} className="bg-transparent flex-1 outline-none text-foreground text-sm min-w-0 placeholder:text-muted-foreground" />
+              </div>
+              <button onClick={handleSend} className="p-2 shrink-0">
+                {message || editingMessage ? <Send className="w-6 h-6 text-blue-600 fill-blue-600" /> : <ThumbsUp className="w-6 h-6 text-blue-600" />}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
 }
 
-// Main Messages Component
+// Main Component
 export default function Messages() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth()
-  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [conversations, setConversations] = useState([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'groups' | 'archived'>('all')
-  const [activeChat, setActiveChat] = useState<string | null>(null)
-  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
+  const [activeTab, setActiveTab] = useState('all')
+  const [activeChat, setActiveChat] = useState(null)
   const [showUserSelection, setShowUserSelection] = useState(false)
-  const [swipedItem, setSwipedItem] = useState<string | null>(null)
 
   // Load conversations
   useEffect(() => {
@@ -786,7 +1056,7 @@ export default function Messages() {
           return
         }
 
-        // Get conversations with details
+        // Get conversations with latest message and other user info
         const { data: convData, error: convError } = await supabase
           .from('conversations')
           .select(`
@@ -816,7 +1086,7 @@ export default function Messages() {
         if (convError) throw convError
 
         // Process conversations
-        const processedConversations = (convData || []).map(conv => {
+        const processedConversations = convData.map(conv => {
           const participants = conv.conversation_participants || []
           const otherUser = participants.find(p => p.user_id !== user.id)?.profiles
           
@@ -834,7 +1104,6 @@ export default function Messages() {
             last_message_at: conv.last_message_at,
             is_archived: conv.is_archived,
             other_user: otherUser,
-            product: null,
             unread_count: messages.filter(m => !m.is_read && m.sender_id !== user.id).length,
             last_message: latestMessage
           }
@@ -850,27 +1119,6 @@ export default function Messages() {
 
     loadConversations()
   }, [user, isAuthenticated])
-
-  // Handle conversation selection from UserSelectionDialog
-  const handleConversationSelect = (conversation: Conversation) => {
-    setSelectedConversation(conversation)
-    setActiveChat(conversation.id)
-    
-    // Add the new conversation to the list if it doesn't exist
-    setConversations(prev => {
-      const exists = prev.some(c => c.id === conversation.id)
-      if (!exists) {
-        return [conversation, ...prev]
-      }
-      return prev
-    })
-  }
-
-  // Handle conversation click from list
-  const handleConversationClick = (conv: Conversation) => {
-    setSelectedConversation(conv)
-    setActiveChat(conv.id)
-  }
 
   // Handle mobile viewport height
   useEffect(() => {
@@ -890,17 +1138,12 @@ export default function Messages() {
   }, [])
 
   // Format date
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
-    
-    if (diffInHours < 24) {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    } else if (diffInHours < 48) {
-      return 'Yesterday'
-    } else {
-      return date.toLocaleDateString([], { month: 'short', day: 'numeric' })
+  const formatDateSafely = (dateInput, addSuffix = false) => {
+    try {
+      const validDate = new Date(dateInput)
+      return formatDistanceToNow(validDate, { addSuffix })
+    } catch (error) {
+      return addSuffix ? 'just now' : 'recently'
     }
   }
 
@@ -931,7 +1174,7 @@ export default function Messages() {
       <div className="bg-gray-50 h-[100dvh] h-[calc(var(--vh,1vh)*100)] flex items-center justify-center p-4">
         <div className="text-center px-4">
           <div className="w-16 h-16 mx-auto bg-gradient-to-br from-red-600 to-red-500 rounded-full flex items-center justify-center mb-4">
-            <MessageSquare className="h-8 w-8 text-white" />
+            <Edit className="h-8 w-8 text-white" />
           </div>
           <p className="text-gray-500 mb-4">Please log in to view your messages</p>
         </div>
@@ -940,39 +1183,43 @@ export default function Messages() {
   }
 
   // If a chat is active, show the chat interface
-  if (activeChat && selectedConversation) {
+  if (activeChat) {
+    const activeConversation = conversations.find(c => c.id === activeChat)
+    if (!activeConversation) {
+      setActiveChat(null)
+      return null
+    }
+
     return (
       <ChatInterface 
-        conversation={selectedConversation}
+        conversation={activeConversation}
         currentUser={user}
-        onBack={() => {
-          setActiveChat(null)
-          setSelectedConversation(null)
-        }}
+        onBack={() => setActiveChat(null)}
       />
     )
   }
 
-  // Otherwise, show the conversations list
+  // Show conversations list
   return (
-    <>
-      <div className="bg-gray-50 h-[100dvh] h-[calc(var(--vh,1vh)*100)] text-gray-900 font-sans overflow-hidden">
-        <div className="h-full max-w-2xl mx-auto flex flex-col">
+    <div className="bg-gray-50 h-[100dvh] h-[calc(var(--vh,1vh)*100)] text-gray-900 font-sans overflow-hidden">
+      <div className="h-full max-w-2xl mx-auto flex flex-col">
+        {/* Conversations list */}
+        <div className="flex-1 overflow-y-auto bg-white">
           {/* Header */}
-          <div className="shrink-0 px-4 py-4 bg-white border-b border-gray-200">
-            <div className="flex items-center justify-between mb-4">
+          <div className="px-4 py-3 bg-white border-b border-gray-200">
+            <div className="flex items-center justify-between">
               <h1 className="text-xl font-bold text-gray-900">Messages</h1>
               <button 
                 onClick={() => setShowUserSelection(true)}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
               >
-                <Edit className="w-5 h-5 text-gray-600" />
+                <Edit3 className="w-5 h-5 text-gray-600" />
               </button>
             </div>
             
             {/* Tabs */}
-            <div className="flex space-x-1">
-              {(['all', 'unread', 'groups', 'archived'] as const).map((tab) => (
+            <div className="flex mt-4 space-x-1">
+              {['all', 'unread', 'groups', 'archived'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -994,109 +1241,79 @@ export default function Messages() {
             </div>
           </div>
 
-          {/* Conversations list */}
-          <div className="flex-1 overflow-y-auto bg-white">
-            {loading ? (
-              <div className="flex items-center justify-center py-16">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+          {/* Conversations */}
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+            </div>
+          ) : filteredConversations.length === 0 ? (
+            <div className="px-4 py-16 text-center">
+              <div className="w-16 h-16 mx-auto bg-gradient-to-br from-red-600 to-red-500 rounded-full flex items-center justify-center mb-4">
+                <MessageSquare className="h-8 w-8 text-white" />
               </div>
-            ) : filteredConversations.length === 0 ? (
-              <div className="px-4 py-16 text-center">
-                <div className="w-16 h-16 mx-auto bg-gradient-to-br from-red-600 to-red-500 rounded-full flex items-center justify-center mb-4">
-                  <MessageSquare className="h-8 w-8 text-white" />
-                </div>
-                <p className="text-gray-500">
-                  {activeTab === 'all' && 'No messages yet'}
-                  {activeTab === 'unread' && 'No unread messages'}
-                  {activeTab === 'groups' && 'No group conversations'}
-                  {activeTab === 'archived' && 'No archived conversations'}
-                </p>
-                <button
-                  onClick={() => setShowUserSelection(true)}
-                  className="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                >
-                  Start New Conversation
-                </button>
-              </div>
-            ) : (
-              filteredConversations.map((conv) => {
-                const isPinned = Math.random() > 0.7
-                const isMuted = Math.random() > 0.8
-                const hasStory = Math.random() > 0.5
-                const isVerified = Math.random() > 0.7
-
-                return (
-                  <div
-                    key={conv.id}
-                    className={`relative overflow-hidden ${
-                      isPinned ? 'bg-amber-50' : ''
-                    }`}
-                  >
-                    <div
-                      className="flex items-center px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() => handleConversationClick(conv)}
-                    >
-                      {/* Avatar */}
-                      <div className="relative flex-shrink-0 mr-3">
-                        {hasStory && (
-                          <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-pink-500 p-0.5 -m-0.5">
-                            <div className="w-full h-full bg-white rounded-full p-0.5"></div>
-                          </div>
-                        )}
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-red-500 relative z-10 flex items-center justify-center text-white font-bold">
-                          {conv.other_user?.full_name?.charAt(0) || conv.other_user?.username?.charAt(0) || '?'}
-                        </div>
-                        {conv.other_user?.last_active && 
-                          new Date().getTime() - new Date(conv.other_user.last_active).getTime() < 300000 && (
-                          <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full z-20"></div>
-                        )}
-                      </div>
-
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                            <h3 className={cn(
-                              "text-base truncate",
-                              (conv.unread_count || 0) > 0 ? "font-bold text-gray-900" : "font-normal text-gray-900"
-                            )}>
-                              {conv.other_user?.full_name || conv.other_user?.username || 'Unknown User'}
-                            </h3>
-                            {isVerified && <BadgeCheck size={16} className="text-blue-500 fill-current flex-shrink-0" />}
-                            {isPinned && <Pin size={14} className="text-gray-400 fill-gray-400 flex-shrink-0" />}
-                            {isMuted && <VolumeX size={14} className="text-gray-400 flex-shrink-0" />}
-                          </div>
-                          <span className={cn(
-                            "text-xs ml-2 flex-shrink-0",
-                            (conv.unread_count || 0) > 0 ? "text-red-500 font-semibold" : "text-gray-400"
-                          )}>
-                            {formatDate(conv.last_message_at)}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1 min-w-0 flex-1">
-                            <p className={cn(
-                              "text-sm truncate",
-                              (conv.unread_count || 0) > 0 ? "font-semibold text-gray-900" : "text-gray-500"
-                            )}>
-                              {conv.last_message?.content || 'Start a conversation'}
-                            </p>
-                          </div>
-
-                          {(conv.unread_count || 0) > 0 && (
-                            <div className="min-w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold px-1.5 ml-2">
-                              {conv.unread_count}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+              <p className="text-gray-500">
+                {activeTab === 'all' && 'No messages yet'}
+                {activeTab === 'unread' && 'No unread messages'}
+                {activeTab === 'groups' && 'No group conversations'}
+                {activeTab === 'archived' && 'No archived conversations'}
+              </p>
+              <button
+                onClick={() => setShowUserSelection(true)}
+                className="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Start New Conversation
+              </button>
+            </div>
+          ) : (
+            filteredConversations.map((conv) => (
+              <div
+                key={conv.id}
+                className="flex items-center px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                onClick={() => setActiveChat(conv.id)}
+              >
+                {/* Avatar */}
+                <div className="relative flex-shrink-0 mr-3">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white font-semibold">
+                    {conv.other_user?.full_name?.charAt(0) || conv.other_user?.username?.charAt(0) || '?'}
                   </div>
-                )
-              })
-            )}
-          </div>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-1.5">
+                      <h3 className={cn(
+                        "text-base truncate",
+                        (conv.unread_count || 0) > 0 ? "font-bold text-gray-900" : "font-normal text-gray-900"
+                      )}>
+                        {conv.other_user?.full_name || conv.other_user?.username || 'Unknown User'}
+                      </h3>
+                    </div>
+                    <span className={cn(
+                      "text-xs ml-2 flex-shrink-0",
+                      (conv.unread_count || 0) > 0 ? "text-red-500 font-semibold" : "text-gray-400"
+                    )}>
+                      {formatDateSafely(conv.last_message_at, true)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <p className={cn(
+                      "text-sm truncate",
+                      (conv.unread_count || 0) > 0 ? "font-semibold text-gray-900" : "text-gray-500"
+                    )}>
+                      {conv.last_message?.content || 'Start a conversation'}
+                    </p>
+                    {(conv.unread_count || 0) > 0 && (
+                      <div className="min-w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold px-1.5 ml-2">
+                        {conv.unread_count}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         {/* Floating action button */}
@@ -1105,7 +1322,7 @@ export default function Messages() {
           onClick={() => setShowUserSelection(true)}
           aria-label="New message"
         >
-          <Edit className="h-6 w-6" />
+          <Edit size={24} />
         </button>
       </div>
 
@@ -1114,8 +1331,7 @@ export default function Messages() {
         open={showUserSelection}
         onOpenChange={setShowUserSelection}
         currentUserId={user.id}
-        onConversationSelect={handleConversationSelect}
       />
-    </>
+    </div>
   )
 }
