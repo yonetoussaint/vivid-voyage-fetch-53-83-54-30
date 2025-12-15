@@ -3,7 +3,7 @@ import React from "react";
 import { Route } from "react-router-dom";
 import CachedRoute from "../components/CachedRoute";
 import Wallet from "../pages/Wallet";
-import { Messages, ChatPage } from './Messages';
+import { Messages, ChatPage } from '../pages/Messages';
 import ConversationDetail from "../pages/ConversationDetail";
 import ProfilePage from "../pages/ProfilePage";
 import MoreMenu from "../pages/MoreMenu";
