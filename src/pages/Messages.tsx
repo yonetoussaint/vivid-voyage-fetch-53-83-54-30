@@ -5,8 +5,8 @@ import {
   Archive, Trash2, Star, Clock, Users, Loader2, Search, X, ImageIcon as ImageIcon2,
   PhoneOff, VideoOff, MicOff, DollarSign, Package, ThumbsUp, Plus, Send, Play,
   Lock, Truck, Wallet, Receipt, Download, Share2, MoreVertical, ArrowLeft,
-  Copy, Forward, Edit3, Bell, BellOff, Play as PlayIcon, Pause, Shield,
-  Truck as TruckIcon, Wallet as WalletIcon, Receipt as ReceiptIcon, Shield as ShieldIcon
+  Copy, Forward, Edit3, Bell, BellOff, MessageCircle, Truck as TruckIcon, 
+  Wallet as WalletIcon, Receipt as ReceiptIcon, Shield, MessageCircle as MessageCircleIcon
 } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
@@ -18,7 +18,193 @@ import { supabase } from '@/integrations/supabase/client';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { cn } from '@/lib/utils';
 
-// Interfaces for useConversations hook
+// ==================== DATABASE SETUP INSTRUCTIONS ====================
+/*
+Run these SQL commands in your Supabase SQL Editor:
+
+1. Create necessary tables if they don't exist:
+
+-- Conversations table
+CREATE TABLE IF NOT EXISTS conversations (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+  last_message_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+  is_archived BOOLEAN DEFAULT false,
+  is_group BOOLEAN DEFAULT false
+);
+
+-- Conversation participants table
+CREATE TABLE IF NOT EXISTS conversation_participants (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  conversation_id UUID REFERENCES conversations(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  last_read_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+  UNIQUE(conversation_id, user_id)
+);
+
+-- Messages table
+CREATE TABLE IF NOT EXISTS messages (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  conversation_id UUID REFERENCES conversations(id) ON DELETE CASCADE,
+  sender_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  is_read BOOLEAN DEFAULT false,
+  message_type TEXT DEFAULT 'text',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- Orders table for marketplace features
+CREATE TABLE IF NOT EXISTS orders (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  conversation_id UUID REFERENCES conversations(id) ON DELETE CASCADE,
+  buyer_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  seller_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  product_name TEXT NOT NULL,
+  product_description TEXT,
+  original_price DECIMAL(10,2),
+  offer_price DECIMAL(10,2),
+  delivery_fee DECIMAL(10,2) DEFAULT 0,
+  total_amount DECIMAL(10,2),
+  status TEXT DEFAULT 'offer' CHECK (status IN ('offer', 'accepted', 'payment_pending', 'delivery_pending', 'completed', 'refunded', 'cancelled')),
+  receipt_data JSONB,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- Blocked users table
+CREATE TABLE IF NOT EXISTS blocked_users (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  blocker_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  blocked_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+  UNIQUE(blocker_id, blocked_id)
+);
+
+-- User wallets table
+CREATE TABLE IF NOT EXISTS user_wallets (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
+  balance DECIMAL(10,2) DEFAULT 0.00,
+  pin_hash TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- Transaction history table
+CREATE TABLE IF NOT EXISTS transactions (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  order_id UUID REFERENCES orders(id) ON DELETE SET NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  transaction_type TEXT NOT NULL CHECK (transaction_type IN ('payment', 'refund', 'deposit', 'withdrawal')),
+  status TEXT DEFAULT 'completed' CHECK (status IN ('pending', 'completed', 'failed')),
+  description TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+2. Enable Row Level Security (RLS):
+
+-- Enable RLS on all tables
+ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE conversation_participants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE blocked_users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_wallets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
+
+3. Create RLS policies:
+
+-- Conversations: Users can only see conversations they're part of
+CREATE POLICY "Users can view their conversations" ON conversations
+FOR SELECT USING (EXISTS (
+  SELECT 1 FROM conversation_participants 
+  WHERE conversation_id = conversations.id 
+  AND user_id = auth.uid()
+));
+
+-- Conversation participants: Users can only see their own participation
+CREATE POLICY "Users can view their conversation participation" ON conversation_participants
+FOR SELECT USING (user_id = auth.uid());
+
+-- Messages: Users can only see messages from conversations they're part of
+CREATE POLICY "Users can view messages from their conversations" ON messages
+FOR SELECT USING (EXISTS (
+  SELECT 1 FROM conversation_participants 
+  WHERE conversation_id = messages.conversation_id 
+  AND user_id = auth.uid()
+));
+
+-- Orders: Users can only see orders they're involved in
+CREATE POLICY "Users can view their orders" ON orders
+FOR SELECT USING (buyer_id = auth.uid() OR seller_id = auth.uid());
+
+-- Blocked users: Users can only see their own blocked list
+CREATE POLICY "Users can view their blocked users" ON blocked_users
+FOR SELECT USING (blocker_id = auth.uid());
+
+-- User wallets: Users can only see their own wallet
+CREATE POLICY "Users can view their own wallet" ON user_wallets
+FOR SELECT USING (user_id = auth.uid());
+
+-- Transactions: Users can only see their own transactions
+CREATE POLICY "Users can view their transactions" ON transactions
+FOR SELECT USING (user_id = auth.uid());
+
+4. Create indexes for better performance:
+
+CREATE INDEX idx_conversation_participants_user_id ON conversation_participants(user_id);
+CREATE INDEX idx_conversation_participants_conversation_id ON conversation_participants(conversation_id);
+CREATE INDEX idx_messages_conversation_id ON messages(conversation_id);
+CREATE INDEX idx_messages_created_at ON messages(created_at DESC);
+CREATE INDEX idx_orders_conversation_id ON orders(conversation_id);
+CREATE INDEX idx_orders_buyer_id ON orders(buyer_id);
+CREATE INDEX idx_orders_seller_id ON orders(seller_id);
+CREATE INDEX idx_orders_status ON orders(status);
+CREATE INDEX idx_blocked_users_blocker_id ON blocked_users(blocker_id);
+
+5. Create functions for common operations:
+
+-- Function to create a new conversation
+CREATE OR REPLACE FUNCTION create_conversation(user1_id UUID, user2_id UUID)
+RETURNS UUID AS $$
+DECLARE
+  new_conversation_id UUID;
+BEGIN
+  INSERT INTO conversations (last_message_at) 
+  VALUES (NOW()) 
+  RETURNING id INTO new_conversation_id;
+  
+  INSERT INTO conversation_participants (conversation_id, user_id) 
+  VALUES (new_conversation_id, user1_id);
+  
+  INSERT INTO conversation_participants (conversation_id, user_id) 
+  VALUES (new_conversation_id, user2_id);
+  
+  RETURN new_conversation_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to mark messages as read
+CREATE OR REPLACE FUNCTION mark_conversation_as_read(p_conversation_id UUID, p_user_id UUID)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE conversation_participants 
+  SET last_read_at = NOW() 
+  WHERE conversation_id = p_conversation_id 
+  AND user_id = p_user_id;
+  
+  UPDATE messages 
+  SET is_read = true 
+  WHERE conversation_id = p_conversation_id 
+  AND sender_id != p_user_id;
+END;
+$$ LANGUAGE plpgsql;
+*/
+
+// ==================== INTERFACES AND TYPES ====================
+
 interface ConversationWithDetails {
   id: string;
   last_message_at: string;
@@ -37,7 +223,6 @@ interface ConversationWithDetails {
   unread_count: number;
 }
 
-// Chat Message Types
 type ChatMessage = {
   id: number | string;
   sender: "buyer" | "seller" | string;
@@ -78,7 +263,21 @@ type ReceiptData = {
   buyer: string;
 }
 
-// Step Card Configurations
+interface User {
+  id: string;
+  full_name: string;
+  email: string;
+  avatar_url: string | null;
+}
+
+interface UserSelectionDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  currentUserId: string;
+}
+
+// ==================== STEP CONFIGURATIONS ====================
+
 const stepConfigs = [
   {
     id: "offer",
@@ -173,7 +372,8 @@ const stepConfigs = [
   }
 ]
 
-// Helper Components
+// ==================== HELPER COMPONENTS ====================
+
 const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
   const { id, title, icon: Icon, iconColor, borderColor, isSeller, isBuyer, getStatusText, getStatusIcon, completionDate } = config
 
@@ -385,7 +585,7 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
     return (
       <div className="flex justify-start mb-4">
         <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0 text-[10px] font-bold text-white mr-1.5 mt-auto">
-          JS
+          {order.receipt?.seller?.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) || 'JS'}
         </div>
         <div className="max-w-[80%] w-full">
           <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
@@ -397,7 +597,7 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
               <div className="flex items-center gap-1">
                 <span className="text-xs text-muted-foreground line-through">$899</span>
                 <span className="text-xs text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full font-medium">
-                  $880
+                  ${order.amount}
                 </span>
               </div>
             </div>
@@ -490,7 +690,6 @@ const OrderStepCard = ({ config, order, currentStep, onAction }: any) => {
   return null
 }
 
-// Simplified Call Control Band Component
 const CallControlBand = ({ 
   callState, 
   callDuration, 
@@ -573,7 +772,8 @@ const CallControlBand = ({
   )
 }
 
-// useConversations hook moved inline
+// ==================== HOOKS ====================
+
 function useConversations(userId: string, filter: 'all' | 'unread' | 'blocked' | 'archived' = 'all') {
   const [conversations, setConversations] = useState<ConversationWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
@@ -806,19 +1006,7 @@ function useConversations(userId: string, filter: 'all' | 'unread' | 'blocked' |
   };
 }
 
-// User Selection Dialog Component
-interface User {
-  id: string;
-  full_name: string;
-  email: string;
-  avatar_url: string | null;
-}
-
-interface UserSelectionDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  currentUserId: string;
-}
+// ==================== COMPONENTS ====================
 
 function UserSelectionDialog({ open, onOpenChange, currentUserId }: UserSelectionDialogProps) {
   const [users, setUsers] = useState<User[]>([]);
@@ -911,9 +1099,8 @@ function UserSelectionDialog({ open, onOpenChange, currentUserId }: UserSelectio
           .single();
 
         if (sharedConversation && !sharedError) {
-          // Conversation exists, navigate to it
+          // Conversation exists
           console.log('Existing conversation found:', sharedConversation.conversation_id);
-          // We'll handle this differently since we're using state navigation
           onOpenChange(false);
           return;
         }
@@ -960,12 +1147,9 @@ function UserSelectionDialog({ open, onOpenChange, currentUserId }: UserSelectio
       }
 
       console.log('Participants added successfully');
-
-      // We'll handle navigation via state
       onOpenChange(false);
     } catch (error) {
       console.error('Error in handleUserSelect:', error);
-      // You could add a toast notification here to inform the user
     }
   };
 
@@ -1029,7 +1213,6 @@ function UserSelectionDialog({ open, onOpenChange, currentUserId }: UserSelectio
   );
 }
 
-// Chat Interface Component
 function ChatInterface({ 
   conversationId, 
   otherUser,
@@ -1040,8 +1223,47 @@ function ChatInterface({
   onBack: () => void;
 }) {
   const [message, setMessage] = useState("")
-  const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [loading, setLoading] = useState(true)
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      id: 1,
+      sender: "seller",
+      text: "Hey! Thanks for your interest in the iPhone 15 Pro Max. It's in excellent condition!",
+      time: "10:32 AM",
+      timestamp: new Date(Date.now() - 3600000 * 2),
+      status: "read",
+    },
+    {
+      id: 2,
+      sender: "seller",
+      text: "Here are some photos of the device:",
+      time: "10:33 AM",
+      timestamp: new Date(Date.now() - 3600000 * 1.9),
+      hasImages: true,
+      images: [
+        "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1695048133025-52fd6dda2b62?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1695048133149-b39c00004c1a?w=400&h=400&fit=crop",
+      ],
+      status: "read",
+    },
+    {
+      id: 3,
+      sender: "buyer",
+      text: "Looks amazing! Does it come with original box and accessories?",
+      time: "10:34 AM",
+      timestamp: new Date(Date.now() - 3600000 * 1.8),
+      status: "read",
+    },
+    {
+      id: 4,
+      sender: "seller",
+      text: "Yes! Original box, charger, cable, and even the unused stickers. Everything included.",
+      time: "10:35 AM",
+      timestamp: new Date(Date.now() - 3600000 * 1.7),
+      status: "read",
+    }
+  ])
+  const [loading, setLoading] = useState(false)
   const [showQuickActions, setShowQuickActions] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [showWalletBalance, setShowWalletBalance] = useState(false)
@@ -1063,6 +1285,16 @@ function ChatInterface({
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null)
   const [notificationsMuted, setNotificationsMuted] = useState(false)
   const [viewingImage, setViewingImage] = useState<string | null>(null)
+
+  // Product info state
+  const [productInfo, setProductInfo] = useState({
+    name: "iPhone 15 Pro Max",
+    originalPrice: 1099,
+    offerPrice: 899,
+    finalPrice: 880,
+    deliveryFee: 15,
+    total: 895
+  });
 
   // Call control states
   const [isMuted, setIsMuted] = useState(false)
@@ -1091,6 +1323,32 @@ function ChatInterface({
   // Filter steps to show
   const visibleSteps = currentOrder ? stepConfigs.filter(config => config.show(currentOrder)) : []
   const hasProgressSteps = visibleSteps.filter(step => step.isBuyer).length > 0
+
+  // Create offer function
+  const createOffer = () => {
+    const newOrder: Order = {
+      id: `ORD-${Date.now()}`,
+      amount: productInfo.finalPrice,
+      deliveryFee: productInfo.deliveryFee,
+      total: productInfo.total,
+      status: "offer",
+      timestamp: new Date(),
+    };
+    setCurrentOrder(newOrder);
+    
+    // Add offer message to chat
+    const offerMessage: ChatMessage = {
+      id: messages.length + 1,
+      sender: "buyer",
+      text: `I'd like to offer $${productInfo.finalPrice} for the ${productInfo.name} (including $${productInfo.deliveryFee} delivery). Total: $${productInfo.total}`,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      timestamp: new Date(),
+      status: "sent",
+    };
+    
+    setMessages(prev => [...prev, offerMessage]);
+    setTimeout(scrollToBottom, 100);
+  };
 
   // Fetch messages
   useEffect(() => {
@@ -1199,17 +1457,19 @@ function ChatInterface({
       } else {
         setMessages(prev => [...prev, newMessage])
         
-        // Send to Supabase
-        const { error } = await supabase
-          .from('messages')
-          .insert({
-            conversation_id: conversationId,
-            content: message,
-            sender_id: user?.id,
-            is_read: false
-          });
+        // Send to Supabase if not test chat
+        if (!conversationId.startsWith('test-')) {
+          const { error } = await supabase
+            .from('messages')
+            .insert({
+              conversation_id: conversationId,
+              content: message,
+              sender_id: user?.id,
+              is_read: false
+            });
 
-        if (error) throw error;
+          if (error) throw error;
+        }
       }
 
       setMessage("")
@@ -1766,21 +2026,51 @@ function ChatInterface({
           )}
 
           {/* Product info - Fixed height */}
-          <div className="px-3 py-2 border-t border-border bg-card flex items-center gap-2 h-16">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shrink-0">
-              <Package className="w-5 h-5 text-muted-foreground" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-foreground font-medium text-sm truncate">Product</p>
-              <div className="flex items-center gap-2">
-                <p className="text-emerald-600 font-bold text-sm">$899</p>
-                <span className="text-xs text-muted-foreground line-through">$1,099</span>
+          {!currentOrder ? (
+            <div className="px-3 py-2 border-t border-border bg-card flex items-center gap-2 h-16">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shrink-0">
+                <Package className="w-5 h-5 text-muted-foreground" />
               </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-foreground font-medium text-sm truncate">{productInfo.name}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-emerald-600 font-bold text-sm">${productInfo.offerPrice}</p>
+                  <span className="text-xs text-muted-foreground line-through">${productInfo.originalPrice}</span>
+                </div>
+              </div>
+              <button 
+                onClick={createOffer}
+                className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-1"
+              >
+                <DollarSign className="w-3 h-3" />Make Offer
+              </button>
+              <button 
+                onClick={() => setShowWalletBalance(true)}
+                className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1"
+              >
+                <Wallet className="w-3 h-3" />${walletBalance.toFixed(0)}
+              </button>
             </div>
-            <button onClick={() => setShowWalletBalance(true)} className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1">
-              <Wallet className="w-3 h-3" />${walletBalance.toFixed(0)}
-            </button>
-          </div>
+          ) : (
+            <div className="px-3 py-2 border-t border-border bg-card flex items-center gap-2 h-16">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shrink-0">
+                <Package className="w-5 h-5 text-muted-foreground" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-foreground font-medium text-sm truncate">Product</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-emerald-600 font-bold text-sm">${currentOrder.amount}</p>
+                  <span className="text-xs text-muted-foreground">Order Active</span>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowWalletBalance(true)}
+                className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1"
+              >
+                <Wallet className="w-3 h-3" />${walletBalance.toFixed(0)}
+              </button>
+            </div>
+          )}
 
           {showQuickActions && (
             <div className="px-3 py-2 bg-card border-t border-border shadow-lg animate-in slide-in-from-bottom-2 duration-200">
@@ -1944,7 +2234,23 @@ function ChatInterface({
   )
 }
 
-// Main Messages Component
+// ==================== TEST CHAT BUTTON ====================
+
+function TestChatButton({ onStartTest }: { onStartTest: () => void }) {
+  return (
+    <button
+      onClick={onStartTest}
+      className="fixed bottom-20 right-4 md:right-6 w-14 h-14 bg-gradient-to-br from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 z-50"
+      aria-label="Test chat"
+      type="button"
+    >
+      <MessageCircle size={24} />
+    </button>
+  );
+}
+
+// ==================== MAIN MESSAGES COMPONENT ====================
+
 export default function Messages() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -2073,6 +2379,19 @@ export default function Messages() {
     setSelectedConversation(null);
   };
 
+  // Handle test chat start
+  const handleStartTestChat = () => {
+    setSelectedConversation({
+      id: 'test-chat-123',
+      otherUser: {
+        id: 'test-user-456',
+        full_name: 'John Seller',
+        email: 'john@example.com',
+        avatar_url: null
+      }
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="bg-gray-50 h-[100dvh] h-[calc(var(--vh,1vh)*100)] flex items-center justify-center">
@@ -2114,6 +2433,44 @@ export default function Messages() {
   // Otherwise, show the messages list
   return (
     <div className="bg-gray-50 h-[100dvh] h-[calc(var(--vh,1vh)*100)] text-gray-900 font-sans overflow-hidden">
+      <style>{`
+        :root {
+          --vh: 1vh;
+        }
+        
+        @keyframes typing {
+          0%, 60%, 100% {
+            opacity: 0.3;
+          }
+          30% {
+            opacity: 1;
+          }
+        }
+        .dot-1 {
+          animation: typing 1.4s infinite;
+          animation-delay: 0s;
+        }
+        .dot-2 {
+          animation: typing 1.4s infinite;
+          animation-delay: 0.2s;
+        }
+        .dot-3 {
+          animation: typing 1.4s infinite;
+          animation-delay: 0.4s;
+        }
+        
+        body {
+          overflow: hidden;
+          position: fixed;
+          width: 100%;
+          height: 100%;
+        }
+        
+        * {
+          -webkit-tap-highlight-color: transparent;
+        }
+      `}</style>
+
       <div className="h-full max-w-2xl mx-auto flex flex-col">
         {/* Conversations list - Scrollable area */}
         <div 
@@ -2306,6 +2663,9 @@ export default function Messages() {
         >
           <Edit size={24} />
         </button>
+
+        {/* Test chat button */}
+        <TestChatButton onStartTest={handleStartTestChat} />
       </div>
 
       {/* User Selection Dialog */}
