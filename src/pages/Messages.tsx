@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useParams } from 'react-router-dom'; // Added useParams here
 import { 
   Edit, Pin, VolumeX, Check, CheckCheck, Camera, Mic, BadgeCheck, Phone, Video, 
   Archive, Trash2, Star, Clock, Users, Loader2, Search, X, ImageIcon as ImageIcon2,
