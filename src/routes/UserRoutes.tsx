@@ -5,7 +5,7 @@ import CachedRoute from "../components/CachedRoute";
 import Wallet from "../pages/Wallet";
 import Messages from '../pages/Messages'; // Remove {} - it's a default export
 import { ChatPage } from '../pages/Messages'; // Keep {} for named export
-import ConversationDetail from "../pages/ConversationDetail";
+// Remove: import ConversationDetail from "../pages/ConversationDetail";
 import ProfilePage from "../pages/ProfilePage";
 import MoreMenu from "../pages/MoreMenu";
 import Explore from '../pages/Explore';
@@ -26,24 +26,30 @@ export function UserRoutes() {
           <Wallet />
         </CachedRoute>
       } />
+      
+      {/* Messages list */}
       <Route path="messages" element={
         <CachedRoute>
           <Messages />
         </CachedRoute>
       } />
+      
+      {/* Chat detail page - Use ChatPage from Messages.tsx */}
       <Route path="messages/:conversationId" element={
         <CachedRoute>
-          <ConversationDetail />
+          <ChatPage />
         </CachedRoute>
       } />
+      
+      {/* Remove the duplicate route below */}
+      {/* <Route path="/messages/:conversationId" element={<ChatPage />} /> */}
+      
       <Route path="profile/*" element={
         <CachedRoute>
           <ProfilePage />
         </CachedRoute>
       } />
-
-<Route path="/messages/:conversationId" element={<ChatPage />} />
-
+      
       <Route path="more" element={
         <CachedRoute>
           <MoreMenu />
@@ -102,4 +108,3 @@ export function UserRoutes() {
     </>
   );
 }
-
