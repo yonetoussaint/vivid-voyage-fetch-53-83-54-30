@@ -54,7 +54,7 @@ export default function AliExpressBuyerProfile() {
             </div>
           </div>
         </div>
-        
+
         {/* Compact Profile Stats */}
         <div className="grid grid-cols-4 border-t border-slate-100 px-2 py-2">
           <div className="text-center">
@@ -73,29 +73,6 @@ export default function AliExpressBuyerProfile() {
             <div className="text-lg font-bold text-purple-600">18</div>
             <div className="text-xs text-slate-500 mt-0.5">Coupons</div>
           </div>
-        </div>
-      </div>
-
-      {/* Spin the Wheel Daily Rewards */}
-      <div className="bg-gradient-to-br from-purple-500 via-pink-500 to-red-500 px-5 py-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-40 h-40 bg-white opacity-10 rounded-full -mr-20 -mt-10"></div>
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-white opacity-10 rounded-full -ml-16 -mb-10"></div>
-        <div className="relative z-10 flex items-center justify-between">
-          <div className="flex-1">
-            <div className="flex items-center space-x-2 mb-2">
-              <Zap className="w-5 h-5 text-yellow-300" />
-              <span className="text-white font-semibold">Daily Lucky Spin</span>
-            </div>
-            <p className="text-white text-sm opacity-90 mb-3">Spin to win coins, coupons & more!</p>
-            <div className="flex items-center space-x-2">
-              <div className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
-                <span className="text-white text-xs font-semibold">2 spins left today</span>
-              </div>
-            </div>
-          </div>
-          <button className="bg-white text-purple-600 px-6 py-3 rounded-full font-bold shadow-lg">
-            SPIN
-          </button>
         </div>
       </div>
 
@@ -167,30 +144,6 @@ export default function AliExpressBuyerProfile() {
         <MenuItem icon={<HelpCircle className="w-5 h-5 text-slate-600" />} title="My Q&A Activity" />
         <MenuItem icon={<TrendingUp className="w-5 h-5 text-slate-600" />} title="Recommended for You" />
         <MenuItem icon={<Search className="w-5 h-5 text-slate-600" />} title="Recent Searches" />
-      </div>
-
-      {/* Membership Card */}
-      <div className="bg-gradient-to-br from-amber-400 via-orange-400 to-orange-500 px-5 py-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
-        <div className="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-10 rounded-full -ml-12 -mb-12"></div>
-        <div className="relative z-10">
-          <div className="flex items-center justify-between mb-4">
-            <div className="text-white">
-              <div className="text-sm opacity-90 mb-1">Membership Level</div>
-              <div className="text-2xl font-bold">Gold Member</div>
-            </div>
-            <Award className="w-12 h-12 text-white opacity-90" />
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="text-white">
-              <div className="text-3xl font-bold">2,845</div>
-              <div className="text-sm opacity-90">Points Balance</div>
-            </div>
-            <button className="bg-white text-orange-600 px-5 py-2 rounded-full font-semibold text-sm">
-              Upgrade
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* My Services Group */}
