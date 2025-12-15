@@ -1,13 +1,492 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Edit, Pin, VolumeX, Check, CheckCheck, Camera, Mic, BadgeCheck, Phone, Video, Archive, Trash2, Star, Clock, Users, Loader2 } from 'lucide-react';
+import { Edit, Pin, VolumeX, Check, CheckCheck, Camera, Mic, BadgeCheck, Phone, Video, Archive, Trash2, Star, Clock, Users, Loader2, Search } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { useConversations } from '@/hooks/useConversations';
 import { formatDistanceToNow } from 'date-fns';
-import { UserSelectionDialog } from '@/components/messages/UserSelectionDialog';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useAuthOverlay } from '@/context/AuthOverlayContext';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { supabase } from '@/integrations/supabase/client';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 
+// Interfaces for useConversations hook
+export interface ConversationWithDetails {
+  id: string;
+  last_message_at: string;
+  is_archived: boolean;
+  other_user: {
+    id: string;
+    full_name: string;
+    email: string;
+    avatar_url: string | null;
+  };
+  last_message: {
+    content: string;
+    created_at: string;
+    sender_id: string;
+  } | null;
+  unread_count: number;
+}
+
+// useConversations hook moved inline
+function useConversations(userId: string, filter: 'all' | 'unread' | 'blocked' | 'archived' = 'all') {
+  const [conversations, setConversations] = useState<ConversationWithDetails[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const channelRef = useRef<RealtimeChannel | null>(null);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const fetchConversations = useCallback(async (isInitial: boolean = false) => {
+    try {
+      if (isInitial) {
+        setLoading(true);
+      }
+
+      if (filter === 'blocked') {
+        const { data: blockedUsers } = await supabase
+          .from('blocked_users')
+          .select('blocked_id, profiles!blocked_users_blocked_id_fkey(id, full_name, email, avatar_url)')
+          .eq('blocker_id', userId);
+
+        const blockedConversations: ConversationWithDetails[] = (blockedUsers || []).map((blocked: any) => ({
+          id: `blocked-${blocked.blocked_id}`,
+          last_message_at: new Date().toISOString(),
+          is_archived: false,
+          other_user: {
+            id: blocked.profiles.id,
+            full_name: blocked.profiles.full_name || 'Unknown',
+            email: blocked.profiles.email || '',
+            avatar_url: blocked.profiles.avatar_url,
+          },
+          last_message: {
+            content: 'User blocked',
+            created_at: new Date().toISOString(),
+            sender_id: userId,
+          },
+          unread_count: 0,
+        }));
+
+        setConversations(blockedConversations);
+        if (isInitial) {
+          setLoading(false);
+        }
+        return;
+      }
+
+      const { data: participantData } = await supabase
+        .from('conversation_participants')
+        .select('conversation_id, last_read_at, conversations!inner(*)')
+        .eq('user_id', userId);
+
+      if (!participantData) {
+        setConversations([]);
+        setLoading(false);
+        return;
+      }
+
+      const conversationIds = participantData.map((p: any) => p.conversation_id);
+
+      if (conversationIds.length === 0) {
+        setConversations([]);
+        if (isInitial) {
+          setLoading(false);
+        }
+        return;
+      }
+
+      const { data: otherParticipants } = await supabase
+        .from('conversation_participants')
+        .select('conversation_id, user_id, profiles!inner(id, full_name, email, avatar_url)')
+        .in('conversation_id', conversationIds)
+        .neq('user_id', userId);
+
+      const { data: lastMessages } = await supabase
+        .from('messages')
+        .select('conversation_id, content, created_at, sender_id, is_read')
+        .in('conversation_id', conversationIds)
+        .order('created_at', { ascending: false });
+
+      const conversationsMap = new Map();
+
+      participantData.forEach((participant: any) => {
+        const conversation = participant.conversations;
+        const otherParticipant = otherParticipants?.find(
+          (op: any) => op.conversation_id === conversation.id
+        );
+
+        const conversationMessages = lastMessages?.filter(
+          (msg: any) => msg.conversation_id === conversation.id
+        ) || [];
+
+        const lastMessage = conversationMessages[0] || null;
+        const unreadCount = conversationMessages.filter(
+          (msg: any) => !msg.is_read && msg.sender_id !== userId
+        ).length;
+
+        if (filter === 'archived' && !conversation.is_archived) return;
+        if (filter === 'all' && conversation.is_archived) return;
+        if (filter === 'unread' && unreadCount === 0) return;
+
+        if (otherParticipant) {
+          conversationsMap.set(conversation.id, {
+            id: conversation.id,
+            last_message_at: conversation.last_message_at,
+            is_archived: conversation.is_archived,
+            other_user: {
+              id: otherParticipant.profiles.id,
+              full_name: otherParticipant.profiles.full_name || 'Unknown',
+              email: otherParticipant.profiles.email || '',
+              avatar_url: otherParticipant.profiles.avatar_url,
+            },
+            last_message: lastMessage ? {
+              content: lastMessage.content,
+              created_at: lastMessage.created_at,
+              sender_id: lastMessage.sender_id,
+            } : null,
+            unread_count: unreadCount,
+          });
+        }
+      });
+
+      const conversationsList = Array.from(conversationsMap.values()).sort(
+        (a, b) => new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime()
+      );
+
+      setConversations(conversationsList);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching conversations:', err);
+      setError(err as Error);
+    } finally {
+      if (isInitial) {
+        setLoading(false);
+      }
+    }
+  }, [userId, filter]);
+
+  const setupRealtimeSubscription = useCallback(() => {
+    if (!userId) return;
+
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
+    console.log('Setting up conversations real-time subscription for user:', userId);
+
+    const channel = supabase
+      .channel(`conversations-${userId}-${Date.now()}`)
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'messages' 
+      }, (payload) => {
+        console.log('Message change detected in conversations:', payload);
+        fetchConversations(false);
+      })
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'conversations' 
+      }, (payload) => {
+        console.log('Conversation change detected:', payload);
+        fetchConversations(false);
+      })
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'conversation_participants',
+        filter: `user_id=eq.${userId}`
+      }, (payload) => {
+        console.log('Participant change detected for user:', payload);
+        fetchConversations(false);
+      })
+      .subscribe((status) => {
+        console.log('Conversations subscription status:', status);
+
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Successfully subscribed to conversation updates');
+          setIsConnected(true);
+          setError(null);
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Error subscribing to conversations channel');
+          setIsConnected(false);
+
+          if (retryTimeoutRef.current) {
+            clearTimeout(retryTimeoutRef.current);
+          }
+          retryTimeoutRef.current = setTimeout(() => {
+            console.log('Retrying conversations subscription...');
+            setupRealtimeSubscription();
+          }, 3000);
+        } else if (status === 'TIMED_OUT') {
+          console.error('⏱️ Conversations subscription timed out');
+          setIsConnected(false);
+        } else if (status === 'CLOSED') {
+          console.log('🔌 Conversations subscription closed');
+          setIsConnected(false);
+        }
+      });
+
+    channelRef.current = channel;
+  }, [userId, fetchConversations]);
+
+  useEffect(() => {
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+
+    fetchConversations(true);
+    setupRealtimeSubscription();
+
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
+    };
+  }, [userId, filter, fetchConversations, setupRealtimeSubscription]);
+
+  return { 
+    conversations, 
+    loading, 
+    error, 
+    isConnected,
+    refetch: () => fetchConversations(true) 
+  };
+}
+
+// User Selection Dialog Component
+interface User {
+  id: string;
+  full_name: string;
+  email: string;
+  avatar_url: string | null;
+}
+
+interface UserSelectionDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  currentUserId: string;
+}
+
+function UserSelectionDialog({ open, onOpenChange, currentUserId }: UserSelectionDialogProps) {
+  const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (open) {
+      fetchUsers();
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredUsers(users);
+    } else {
+      const query = searchQuery.toLowerCase();
+      setFilteredUsers(
+        users.filter(
+          (user) =>
+            (user.full_name || '').toLowerCase().includes(query) ||
+            (user.email || '').toLowerCase().includes(query)
+        )
+      );
+    }
+  }, [searchQuery, users]);
+
+  const fetchUsers = async () => {
+    if (!currentUserId) {
+      console.error('No current user ID available');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, avatar_url')
+        .neq('id', currentUserId)
+        .order('full_name', { ascending: true });
+
+      if (error) throw error;
+
+      setUsers(data || []);
+      setFilteredUsers(data || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getInitials = (name: string) => {
+    if (!name) return 'NA';
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const handleUserSelect = async (selectedUserId: string) => {
+    try {
+      // Get all conversations where current user is a participant
+      const { data: myConversations, error: fetchError } = await supabase
+        .from('conversation_participants')
+        .select('conversation_id')
+        .eq('user_id', currentUserId);
+
+      if (fetchError) {
+        console.error('Error fetching conversations:', fetchError);
+        throw fetchError;
+      }
+
+      // Check if any of my conversations includes the selected user
+      if (myConversations && myConversations.length > 0) {
+        const conversationIds = myConversations.map(c => c.conversation_id);
+
+        // Find if selected user is in any of these conversations
+        const { data: sharedConversation, error: sharedError } = await supabase
+          .from('conversation_participants')
+          .select('conversation_id')
+          .eq('user_id', selectedUserId)
+          .in('conversation_id', conversationIds)
+          .limit(1)
+          .single();
+
+        if (sharedConversation && !sharedError) {
+          // Conversation exists, navigate to it
+          console.log('Existing conversation found:', sharedConversation.conversation_id);
+          navigate(`/messages/${sharedConversation.conversation_id}`);
+          onOpenChange(false);
+          return;
+        }
+      }
+
+      // No existing conversation found, create a new one
+      console.log('Creating new conversation...');
+
+      const { data: newConversation, error: conversationError } = await supabase
+        .from('conversations')
+        .insert({
+          last_message_at: new Date().toISOString(),
+          is_archived: false,
+        })
+        .select()
+        .single();
+
+      if (conversationError) {
+        console.error('Error creating conversation:', conversationError);
+        throw conversationError;
+      }
+
+      console.log('New conversation created:', newConversation.id);
+
+      // Add both participants to the conversation
+      const { error: participantsError } = await supabase
+        .from('conversation_participants')
+        .insert([
+          {
+            conversation_id: newConversation.id,
+            user_id: currentUserId,
+            last_read_at: new Date().toISOString(),
+          },
+          {
+            conversation_id: newConversation.id,
+            user_id: selectedUserId,
+            last_read_at: new Date().toISOString(),
+          },
+        ]);
+
+      if (participantsError) {
+        console.error('Error adding participants:', participantsError);
+        throw participantsError;
+      }
+
+      console.log('Participants added successfully');
+
+      // Navigate to the new conversation
+      navigate(`/messages/${newConversation.id}`);
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error in handleUserSelect:', error);
+      // You could add a toast notification here to inform the user
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md max-h-[80vh] flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6 pb-4">
+          <DialogTitle>New Message</DialogTitle>
+        </DialogHeader>
+
+        <div className="px-6 pb-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Search users..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+            </div>
+          ) : filteredUsers.length === 0 ? (
+            <div className="px-6 py-16 text-center">
+              <p className="text-sm text-gray-500">
+                {searchQuery ? 'No users found' : 'No users available'}
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {filteredUsers.map((user) => (
+                <button
+                  key={user.id}
+                  onClick={() => handleUserSelect(user.id)}
+                  className="w-full px-6 py-3 flex items-center gap-3 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                >
+                  <Avatar className="h-12 w-12 flex-shrink-0">
+                    <AvatarImage src={user.avatar_url || ''} />
+                    <AvatarFallback className="bg-black text-white text-sm">
+                      {getInitials(user.full_name)}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  <div className="flex-1 min-w-0 text-left">
+                    <h3 className="text-sm font-medium truncate">{user.full_name || 'No name'}</h3>
+                    <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Main Messages Component
 export default function Messages() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -19,7 +498,11 @@ export default function Messages() {
 
   const currentUserId = user?.id || '';
 
-  const { conversations, loading } = useConversations(currentUserId, activeTab);
+  // Note: Using 'blocked' filter type from hook but mapping to 'groups' for UI display
+  const { conversations, loading } = useConversations(
+    currentUserId, 
+    activeTab === 'groups' ? 'blocked' : activeTab === 'archived' ? 'archived' : activeTab === 'unread' ? 'unread' : 'all'
+  );
 
   // Handle mobile viewport height
   useEffect(() => {
@@ -43,8 +526,8 @@ export default function Messages() {
     id: conv.id,
     name: conv.other_user.full_name,
     preview: conv.last_message?.content || 'Start a conversation',
-    date: formatDistanceToNow(new Date(conv.last_message?.created_at || conv.updated_at), { addSuffix: false }),
-    time: formatDistanceToNow(new Date(conv.last_message?.created_at || conv.updated_at), { addSuffix: true }),
+    date: formatDistanceToNow(new Date(conv.last_message?.created_at || conv.last_message_at), { addSuffix: false }),
+    time: formatDistanceToNow(new Date(conv.last_message?.created_at || conv.last_message_at), { addSuffix: true }),
     avatar: `bg-${['gray-300', 'orange-300', 'lime-300', 'green-300', 'blue-300', 'red-100'][Math.floor(Math.random() * 6)]}`,
     unreadCount: conv.unread_count || 0,
     isOnline: Math.random() > 0.5,
@@ -52,18 +535,18 @@ export default function Messages() {
     isMuted: Math.random() > 0.8,
     isRead: conv.unread_count === 0,
     messageType: 'text',
-    deliveryStatus: conv.last_message?.sent_by === currentUserId ? (Math.random() > 0.5 ? 'read' : 'delivered') : null,
-    sentByYou: conv.last_message?.sent_by === currentUserId,
+    deliveryStatus: conv.last_message?.sender_id === currentUserId ? (Math.random() > 0.5 ? 'read' : 'delivered') : null,
+    sentByYou: conv.last_message?.sender_id === currentUserId,
     isTyping: false,
     isVerified: Math.random() > 0.7,
-    isGroup: false,
+    isGroup: conv.id.startsWith('blocked-'), // Show blocked users as "groups" in UI
     hasStory: Math.random() > 0.5,
     lastSeen: Math.random() > 0.5 ? 'online' : `${Math.floor(Math.random() * 60)}m ago`,
     reactions: Math.random() > 0.8 ? '❤️' : null,
     hasDraft: false,
     isStarred: Math.random() > 0.8,
     hasScheduled: Math.random() > 0.9,
-    isArchived: false
+    isArchived: conv.is_archived
   }));
 
   const handleSwipe = (id: string, action: 'archive' | 'delete') => {
@@ -197,7 +680,7 @@ export default function Messages() {
               <p className="text-gray-500">
                 {activeTab === 'all' && 'No messages yet'}
                 {activeTab === 'unread' && 'No unread messages'}
-                {activeTab === 'groups' && 'No group conversations'}
+                {activeTab === 'groups' && 'No blocked users'}
                 {activeTab === 'archived' && 'No archived conversations'}
               </p>
             </div>
