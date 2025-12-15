@@ -999,8 +999,6 @@ function UserSelectionDialog({ open, onOpenChange, currentUserId }: UserSelectio
   );
 }
 
-// ==================== CHAT INTERFACE COMPONENT ====================
-
 export function ChatInterface({ 
   conversationId, 
   otherUser,
@@ -1033,6 +1031,8 @@ export function ChatInterface({
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null)
   const [notificationsMuted, setNotificationsMuted] = useState(false)
   const [viewingImage, setViewingImage] = useState<string | null>(null)
+  const [showOrderPinPanel, setShowOrderPinPanel] = useState(false)
+  const [orderAction, setOrderAction] = useState<"accept" | "payment" | "delivery" | null>(null)
 
   // Product info state
   const [productInfo, setProductInfo] = useState({
@@ -1047,6 +1047,7 @@ export function ChatInterface({
   // Call control states
   const [isMuted, setIsMuted] = useState(false)
   const [isVideoOn, setIsVideoOn] = useState(true)
+  const [isCallActive, setIsCallActive] = useState(false)
 
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -1058,6 +1059,11 @@ export function ChatInterface({
   useEffect(() => {
     console.log('ChatInterface mounted:', { conversationId, user, otherUser });
   }, [conversationId, user?.id]);
+
+  // Track call active state
+  useEffect(() => {
+    setIsCallActive(callState !== "idle")
+  }, [callState])
 
   // Fetch messages
   useEffect(() => {
@@ -1231,24 +1237,6 @@ export function ChatInterface({
       supabase.removeChannel(channel);
     };
   }, [conversationId, user?.id]);
-
-  // Calculate current step for progress bar
-  const getCurrentStep = () => {
-    if (!currentOrder) return 0;
-    switch (currentOrder.status) {
-      case "offer": return 0
-      case "accepted": return 1
-      case "payment_pending": return 2
-      case "delivery_pending": return 3
-      case "completed": return 4
-      case "refunded": return 0
-      default: return 0
-    }
-  }
-
-  // Filter steps to show
-  const visibleSteps = currentOrder ? stepConfigs.filter(config => config.show(currentOrder)) : []
-  const hasProgressSteps = visibleSteps.filter(step => step.isBuyer).length > 0
 
   // Create offer function
   const createOffer = () => {
@@ -1466,29 +1454,18 @@ export function ChatInterface({
 
     switch (action) {
       case "acceptOffer":
-        const updatedOrder = { 
-          ...currentOrder, 
-          status: "accepted",
-          timestamp: new Date()
-        };
-        setCurrentOrder(updatedOrder);
-        setMessages(prev => [...prev, {
-          id: Date.now().toString(),
-          sender: "buyer",
-          text: "I accept your offer. Let's proceed with payment.",
-          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          timestamp: new Date(),
-          status: "sent",
-        }])
+        setOrderAction("accept")
+        setShowOrderPinPanel(true)
         break
 
       case "initiatePayment":
-        setCurrentOrder(prev => ({ ...prev!, status: "payment_pending" }))
-        setShowPinModal(true)
+        setOrderAction("payment")
+        setShowOrderPinPanel(true)
         break
 
       case "completeDelivery":
-        setShowPinModal(true)
+        setOrderAction("delivery")
+        setShowOrderPinPanel(true)
         break
 
       case "cancelOrder":
@@ -1504,10 +1481,6 @@ export function ChatInterface({
           timestamp: new Date(),
           status: "sent",
         }])
-        break
-
-      case "showPinModal":
-        setShowPinModal(true)
         break
 
       case "showReceipt":
@@ -1535,61 +1508,243 @@ export function ChatInterface({
     }
   }
 
-  const processPayment = () => {
-    if (!currentOrder) return;
-    const total = currentOrder.total
-
-    if (currentOrder.status === "delivery_pending") {
-      setTimeout(() => {
-        const receipt: ReceiptData = {
-          id: `RCPT-${Date.now()}`,
-          amount: currentOrder.amount,
-          deliveryFee: currentOrder.deliveryFee,
-          total: currentOrder.total,
-          date: new Date().toLocaleDateString(),
-          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          product: "iPhone 15 Pro Max",
-          seller: otherUser.full_name,
-          buyer: user?.full_name || "You",
-        }
-
-        setCurrentOrder(prev => ({ ...prev!, status: "completed", receipt }))
-        setShowPinModal(false)
-        setPin(["", "", "", ""])
-
-        setMessages(prev => [...prev, {
-          id: Date.now().toString(),
-          sender: "buyer",
-          text: `Order completed. Payment of $${total} released to seller.`,
-          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          timestamp: new Date(),
-          status: "sent",
-        }])
-      }, 1000)
-    } else if (currentOrder.status === "payment_pending") {
-      if (total > walletBalance) {
-        alert("Insufficient funds")
-        setPin(["", "", "", ""])
-        setShowPinModal(false)
-        return
+  const confirmOrderAction = () => {
+    if (!currentOrder || !orderAction) return;
+    
+    if (pin.every(digit => digit !== "")) {
+      setShowOrderPinPanel(false)
+      setPin(["", "", "", ""])
+      
+      switch (orderAction) {
+        case "accept":
+          // Accept offer
+          const updatedOrder = { 
+            ...currentOrder, 
+            status: "accepted",
+            timestamp: new Date()
+          };
+          setCurrentOrder(updatedOrder);
+          setMessages(prev => [...prev, {
+            id: Date.now().toString(),
+            sender: "buyer",
+            text: "I accept your offer. Let's proceed with payment.",
+            time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            timestamp: new Date(),
+            status: "sent",
+          }])
+          break
+          
+        case "payment":
+          // Process payment
+          const total = currentOrder.total
+          if (total > walletBalance) {
+            alert("Insufficient funds")
+            return
+          }
+          setWalletBalance(prev => prev - total)
+          setCurrentOrder(prev => ({ ...prev!, status: "delivery_pending" }))
+          setMessages(prev => [...prev, {
+            id: Date.now().toString(),
+            sender: "buyer",
+            text: `Payment of $${total} completed via wallet. Funds held securely.`,
+            time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            timestamp: new Date(),
+            status: "sent",
+          }])
+          break
+          
+        case "delivery":
+          // Complete delivery
+          const receipt: ReceiptData = {
+            id: `RCPT-${Date.now()}`,
+            amount: currentOrder.amount,
+            deliveryFee: currentOrder.deliveryFee,
+            total: currentOrder.total,
+            date: new Date().toLocaleDateString(),
+            time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            product: "iPhone 15 Pro Max",
+            seller: otherUser.full_name,
+            buyer: user?.full_name || "You",
+          }
+          setCurrentOrder(prev => ({ ...prev!, status: "completed", receipt }))
+          setMessages(prev => [...prev, {
+            id: Date.now().toString(),
+            sender: "buyer",
+            text: `Order completed. Payment of $${currentOrder.total} released to seller.`,
+            time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            timestamp: new Date(),
+            status: "sent",
+          }])
+          break
       }
-
-      setTimeout(() => {
-        setWalletBalance(prev => prev - total)
-        setCurrentOrder(prev => ({ ...prev!, status: "delivery_pending" }))
-        setShowPinModal(false)
-        setPin(["", "", "", ""])
-
-        setMessages(prev => [...prev, {
-          id: Date.now().toString(),
-          sender: "buyer",
-          text: `Payment of $${total} completed via wallet. Funds held securely.`,
-          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          timestamp: new Date(),
-          status: "sent",
-        }])
-      }, 1000)
+      
+      setOrderAction(null)
+    } else {
+      alert("Please enter your 4-digit PIN")
     }
+  }
+
+  // Single Order Card Component
+  const OrderCard = () => {
+    if (!currentOrder) return null;
+
+    const getStatusText = () => {
+      switch (currentOrder.status) {
+        case "offer": return "Pending"
+        case "accepted": return "Accepted"
+        case "payment_pending": return "Payment Pending"
+        case "delivery_pending": return "Awaiting Delivery"
+        case "completed": return "Completed"
+        case "refunded": return "Refunded"
+        default: return "Pending"
+      }
+    }
+
+    const getStatusColor = () => {
+      switch (currentOrder.status) {
+        case "offer": return "bg-amber-100 text-amber-800"
+        case "accepted": return "bg-emerald-100 text-emerald-800"
+        case "payment_pending": return "bg-amber-100 text-amber-800"
+        case "delivery_pending": return "bg-blue-100 text-blue-800"
+        case "completed": return "bg-emerald-100 text-emerald-800"
+        case "refunded": return "bg-slate-100 text-slate-800"
+        default: return "bg-amber-100 text-amber-800"
+      }
+    }
+
+    const getActionButton = () => {
+      switch (currentOrder.status) {
+        case "offer":
+          return (
+            <button
+              onClick={() => handleOrderAction("acceptOffer")}
+              className="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-1"
+            >
+              <Check className="w-4 h-4" />
+              Accept Offer
+            </button>
+          )
+        
+        case "accepted":
+          return (
+            <button
+              onClick={() => handleOrderAction("initiatePayment")}
+              className="px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 transition-colors flex items-center gap-1"
+            >
+              <Wallet className="w-4 h-4" />
+              Continue to Payment
+            </button>
+          )
+        
+        case "payment_pending":
+          return (
+            <button
+              onClick={() => handleOrderAction("initiatePayment")}
+              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1"
+            >
+              <Lock className="w-4 h-4" />
+              Enter PIN to Pay
+            </button>
+          )
+        
+        case "delivery_pending":
+          return (
+            <button
+              onClick={() => handleOrderAction("completeDelivery")}
+              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1"
+            >
+              <Check className="w-4 h-4" />
+              Confirm Delivery
+            </button>
+          )
+        
+        case "completed":
+          return (
+            <button
+              onClick={() => handleOrderAction("showReceipt")}
+              className="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-1"
+            >
+              <Receipt className="w-4 h-4" />
+              View Receipt
+            </button>
+          )
+        
+        case "refunded":
+          return (
+            <button
+              onClick={() => handleOrderAction("showWalletBalance")}
+              className="px-4 py-2 bg-slate-600 text-white text-sm font-medium rounded-lg hover:bg-slate-700 transition-colors flex items-center gap-1"
+            >
+              <Wallet className="w-4 h-4" />
+              Check Wallet
+            </button>
+          )
+        
+        default:
+          return null
+      }
+    }
+
+    return (
+      <div className="flex justify-start mb-4">
+        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0 text-[10px] font-bold text-white mr-1.5 mt-auto">
+          {otherUser.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+        </div>
+        <div className="max-w-[80%] w-full">
+          <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Package className="w-5 h-5 text-blue-600" />
+                <span className="text-foreground text-sm font-semibold">Order</span>
+              </div>
+              <span className={`text-xs font-medium px-2 py-1 rounded-full ${getStatusColor()}`}>
+                {getStatusText()}
+              </span>
+            </div>
+
+            <div className="space-y-2 mb-4">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Product</span>
+                <span className="text-foreground font-medium">{productInfo.name}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Price</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground line-through">${productInfo.originalPrice}</span>
+                  <span className="text-emerald-600 font-bold">${currentOrder.amount}</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <Truck className="w-4 h-4" />
+                  <span>Delivery</span>
+                </div>
+                <span className="text-foreground">${currentOrder.deliveryFee}</span>
+              </div>
+              <div className="h-px bg-border my-1" />
+              <div className="flex items-center justify-between text-sm font-semibold">
+                <span className="text-foreground">Total</span>
+                <span className="text-emerald-600">${currentOrder.total}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              {getActionButton()}
+              
+              {currentOrder.status !== "completed" && currentOrder.status !== "refunded" && (
+                <button
+                  onClick={() => handleOrderAction("cancelOrder")}
+                  className="px-3 py-2 bg-secondary text-secondary-foreground text-sm font-medium rounded-lg hover:bg-secondary/80 transition-colors flex items-center gap-1"
+                >
+                  <X className="w-4 h-4" />
+                  Cancel
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   // Quick actions
@@ -1598,6 +1753,116 @@ export function ChatInterface({
     { icon: ImageIcon2, label: "Photos", action: () => {} },
     { icon: Receipt, label: "Receipt", action: () => currentOrder?.receipt && setShowReceipt(true) },
   ]
+
+  // Function to render product display
+  const renderProductDisplay = () => {
+    const currentProductInfo = currentOrder ? {
+      name: "iPhone 15 Pro Max",
+      price: currentOrder.amount,
+      status: currentOrder.status,
+      deliveryFee: currentOrder.deliveryFee,
+      total: currentOrder.total
+    } : {
+      name: "iPhone 15 Pro Max",
+      price: productInfo.offerPrice,
+      status: "available",
+      deliveryFee: productInfo.deliveryFee,
+      total: productInfo.total,
+      originalPrice: productInfo.originalPrice
+    };
+
+    if (isCallActive) {
+      // Show circular floating thumbnail at bottom left
+      return (
+        <div className="fixed bottom-24 left-4 z-40 animate-in slide-in-from-left duration-300">
+          <div className="relative group">
+            {/* Floating thumbnail */}
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center shadow-lg border-2 border-white/80 backdrop-blur-sm">
+              <Package className="w-6 h-6 text-blue-600" />
+            </div>
+            
+            {/* Tooltip on hover */}
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black/90 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+              <div className="font-medium truncate">{currentProductInfo.name}</div>
+              <div className="text-emerald-400 font-bold">${currentProductInfo.price}</div>
+              {currentOrder && (
+                <div className="text-blue-300 text-[10px] mt-0.5">
+                  {currentProductInfo.status.replace('_', ' ')}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Show full product card band below header (when no call is active)
+    if (!currentOrder) {
+      return (
+        <div className="px-4 py-3 border-b border-border bg-gradient-to-r from-blue-50/95 to-indigo-50/95 shadow-sm backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shrink-0 border border-slate-200">
+              <Package className="w-5 h-5 text-blue-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between">
+                <p className="text-foreground font-medium text-sm truncate">{currentProductInfo.name}</p>
+                <div className="flex items-center gap-2 ml-2">
+                  <span className="text-xs text-muted-foreground line-through">${currentProductInfo.originalPrice}</span>
+                  <span className="text-emerald-600 font-bold text-sm">${currentProductInfo.price}</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between mt-1">
+                <p className="text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Truck className="w-3 h-3" />
+                    ${currentProductInfo.deliveryFee} delivery
+                  </span>
+                </p>
+                <p className="text-xs font-medium text-foreground">Total: ${currentProductInfo.total}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={createOffer}
+                className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-1 shadow-sm"
+              >
+                <DollarSign className="w-3 h-3" />Make Offer
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // When there's an active order, show simplified order status band
+    return (
+      <div className="px-4 py-3 border-b border-border bg-gradient-to-r from-emerald-50/95 to-green-50/95 shadow-sm backdrop-blur-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-100 to-green-200 flex items-center justify-center shrink-0 border border-emerald-200">
+            <Package className="w-5 h-5 text-emerald-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between">
+              <p className="text-foreground font-medium text-sm truncate">Active Order</p>
+              <span className="text-emerald-600 font-bold text-sm">${currentProductInfo.total}</span>
+            </div>
+            <div className="flex items-center justify-between mt-1">
+              <p className="text-xs text-muted-foreground">
+                Status: <span className="font-medium text-emerald-700 capitalize">{currentProductInfo.status.replace('_', ' ')}</span>
+              </p>
+              <button 
+                onClick={() => setShowWalletBalance(true)}
+                className="px-2 py-1 bg-blue-100 text-blue-600 text-xs font-medium rounded hover:bg-blue-200 transition-colors flex items-center gap-1"
+              >
+                <Wallet className="w-3 h-3" />${walletBalance.toFixed(0)}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="w-full h-[100dvh] h-[calc(var(--vh,1vh)*100)] flex flex-col overflow-hidden relative transition-colors duration-300 bg-background">
@@ -1703,17 +1968,24 @@ export function ChatInterface({
           </div>
         </div>
 
+        {/* Product Display Band - Below header when no call */}
+        {!isCallActive && renderProductDisplay()}
+
         {/* Simplified Call Control Band - Only shown when call is ringing or active */}
-        {callState !== "idle" && (
-          <CallControlBand
-            callState={callState}
-            callDuration={callDuration}
-            isMuted={isMuted}
-            isVideoOn={isVideoOn}
-            onToggleMute={toggleMute}
-            onToggleVideo={toggleVideo}
-            onEndCall={handleCallEnd}
-          />
+        {isCallActive && (
+          <>
+            <CallControlBand
+              callState={callState}
+              callDuration={callDuration}
+              isMuted={isMuted}
+              isVideoOn={isVideoOn}
+              onToggleMute={toggleMute}
+              onToggleVideo={toggleVideo}
+              onEndCall={handleCallEnd}
+            />
+            {/* Floating product thumbnail during call */}
+            {renderProductDisplay()}
+          </>
         )}
 
         {/* Chat Content - Scrollable area */}
@@ -1851,57 +2123,8 @@ export function ChatInterface({
                 )
               })}
 
-              {/* Order Steps */}
-              {currentOrder && (
-                <div className="space-y-2 mb-3">
-                  {/* Seller's Offer Card */}
-                  {visibleSteps.filter(step => step.id === "offer").map(config => (
-                    <OrderStepCard
-                      key={config.id}
-                      config={config}
-                      order={currentOrder}
-                      currentStep={getCurrentStep()}
-                      onAction={handleOrderAction}
-                    />
-                  ))}
-
-                  {/* Progress Steps */}
-                  {hasProgressSteps && (
-                    <div className="flex justify-end">
-                      <div className="max-w-[80%] w-full">
-                        <div className="relative pl-8 mb-4">
-                          {/* Vertical Progress Line */}
-                          <div className="absolute left-3 top-0 bottom-0 w-0.5 flex flex-col items-center">
-                            <div className={cn(
-                              "w-0.5 flex-1 transition-all duration-300",
-                              getCurrentStep() >= 1 ? "bg-emerald-500" : "bg-gray-200"
-                            )} />
-                          </div>
-
-                          {/* Progress Step Cards */}
-                          <div className="space-y-6">
-                            {visibleSteps
-                              .filter(step => step.isBuyer)
-                              .sort((a, b) => {
-                                const order = ["accepted", "payment", "delivery", "completed", "refunded"]
-                                return order.indexOf(a.id) - order.indexOf(b.id)
-                              })
-                              .map(config => (
-                                <OrderStepCard
-                                  key={config.id}
-                                  config={config}
-                                  order={currentOrder}
-                                  currentStep={getCurrentStep()}
-                                  onAction={handleOrderAction}
-                                />
-                              ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
+              {/* Single Order Card */}
+              {currentOrder && <OrderCard />}
 
               {/* Typing indicator */}
               {isTyping && (
@@ -1942,53 +2165,6 @@ export function ChatInterface({
               </div>
               <button onClick={() => { setReplyingTo(null); setEditingMessage(null); setMessage(""); }}>
                 <X className="w-4 h-4 text-muted-foreground" />
-              </button>
-            </div>
-          )}
-
-          {/* Product info - Fixed height */}
-          {!currentOrder ? (
-            <div className="px-3 py-2 border-t border-border bg-card flex items-center gap-2 h-16">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shrink-0">
-                <Package className="w-5 h-5 text-muted-foreground" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-foreground font-medium text-sm truncate">{productInfo.name}</p>
-                <div className="flex items-center gap-2">
-                  <p className="text-emerald-600 font-bold text-sm">${productInfo.offerPrice}</p>
-                  <span className="text-xs text-muted-foreground line-through">${productInfo.originalPrice}</span>
-                </div>
-              </div>
-              <button 
-                onClick={createOffer}
-                className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-1"
-              >
-                <DollarSign className="w-3 h-3" />Make Offer
-              </button>
-              <button 
-                onClick={() => setShowWalletBalance(true)}
-                className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1"
-              >
-                <Wallet className="w-3 h-3" />${walletBalance.toFixed(0)}
-              </button>
-            </div>
-          ) : (
-            <div className="px-3 py-2 border-t border-border bg-card flex items-center gap-2 h-16">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shrink-0">
-                <Package className="w-5 h-5 text-muted-foreground" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-foreground font-medium text-sm truncate">Product</p>
-                <div className="flex items-center gap-2">
-                  <p className="text-emerald-600 font-bold text-sm">${currentOrder.amount}</p>
-                  <span className="text-xs text-muted-foreground">Order Active</span>
-                </div>
-              </div>
-              <button 
-                onClick={() => setShowWalletBalance(true)}
-                className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1"
-              >
-                <Wallet className="w-3 h-3" />${walletBalance.toFixed(0)}
               </button>
             </div>
           )}
@@ -2045,6 +2221,133 @@ export function ChatInterface({
           )}
         </div>
 
+        {/* Order PIN Panel */}
+        {showOrderPinPanel && currentOrder && (
+          <div className="fixed inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
+            <div className="bg-card w-full rounded-t-3xl p-6 animate-in slide-in-from-bottom duration-300 max-h-[80vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
+                    <Lock className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-foreground">
+                      {orderAction === "accept" && "Accept Offer"}
+                      {orderAction === "payment" && "Confirm Payment"}
+                      {orderAction === "delivery" && "Complete Delivery"}
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Enter your 4-digit PIN to confirm
+                    </p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => {
+                    setShowOrderPinPanel(false);
+                    setPin(["", "", "", ""]);
+                    setOrderAction(null);
+                  }}
+                  className="p-2 hover:bg-muted rounded-full"
+                >
+                  <X className="w-5 h-5 text-muted-foreground" />
+                </button>
+              </div>
+
+              {/* Order Summary */}
+              <div className="bg-muted rounded-xl p-4 mb-6">
+                <h3 className="text-sm font-semibold text-foreground mb-3">Order Summary</h3>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Product</span>
+                    <span className="text-foreground font-medium">{productInfo.name}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Item Price</span>
+                    <span className="text-emerald-600 font-bold">${currentOrder.amount}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Delivery Fee</span>
+                    <span className="text-foreground">${currentOrder.deliveryFee}</span>
+                  </div>
+                  <div className="h-px bg-border my-2" />
+                  <div className="flex items-center justify-between text-base font-bold">
+                    <span className="text-foreground">Total Amount</span>
+                    <span className="text-emerald-600">${currentOrder.total}</span>
+                  </div>
+                  
+                  {orderAction === "payment" && (
+                    <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <p className="text-xs text-amber-700">
+                        <span className="font-semibold">Note:</span> ${currentOrder.total} will be held securely in escrow until delivery is confirmed.
+                      </p>
+                    </div>
+                  )}
+                  
+                  {orderAction === "delivery" && (
+                    <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-xs text-blue-700 font-semibold">
+                        ⚠️ Important: Only confirm delivery when you have physically received the product. Once confirmed, payment will be released to the seller and cannot be reversed.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* PIN Input */}
+              <div className="mb-8">
+                <p className="text-sm text-muted-foreground mb-4 text-center">
+                  Enter your 4-digit security PIN
+                </p>
+                <div className="flex justify-center gap-3">
+                  {[0, 1, 2, 3].map((index) => (
+                    <input
+                      key={index}
+                      ref={(el) => { pinInputRefs.current[index] = el }}
+                      type="password"
+                      maxLength={1}
+                      value={pin[index]}
+                      onChange={(e) => handlePinInput(index, e.target.value)}
+                      onKeyDown={(e) => handlePinKeyDown(index, e)}
+                      className="w-16 h-16 text-center text-2xl font-bold bg-background border-2 border-input rounded-xl outline-none focus:border-blue-500 transition-colors"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowOrderPinPanel(false);
+                    setPin(["", "", "", ""]);
+                    setOrderAction(null);
+                  }}
+                  className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmOrderAction}
+                  disabled={!pin.every(digit => digit !== "")}
+                  className={cn(
+                    "flex-1 py-3 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2",
+                    pin.every(digit => digit !== "")
+                      ? "bg-blue-600 text-white hover:bg-blue-700"
+                      : "bg-muted text-muted-foreground cursor-not-allowed"
+                  )}
+                >
+                  <Lock className="w-4 h-4" />
+                  {orderAction === "accept" && "Accept Offer"}
+                  {orderAction === "payment" && "Confirm Payment"}
+                  {orderAction === "delivery" && "Release Funds"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Modals */}
         {showWalletBalance && (
           <div className="fixed inset-0 bg-black/50 flex items-end z-50 animate-in fade-in duration-200">
@@ -2062,36 +2365,6 @@ export function ChatInterface({
                 <p className="text-white/70 text-xs mt-2">Secure wallet for marketplace transactions</p>
               </div>
               <button onClick={() => setShowWalletBalance(false)} className="w-full bg-blue-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors">Close</button>
-            </div>
-          </div>
-        )}
-
-        {showPinModal && currentOrder && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-in fade-in duration-200 p-4">
-            <div className="bg-card rounded-3xl p-6 w-full max-w-sm animate-in zoom-in-95 duration-300">
-              <div className="text-center mb-6">
-                <Lock className="w-12 h-12 text-blue-600 mx-auto mb-3" />
-                <h2 className="text-xl font-bold text-foreground mb-1">
-                  {currentOrder.status === "payment_pending" ? "Confirm Payment" : "Complete Delivery"}
-                </h2>
-                <p className="text-muted-foreground text-sm">
-                  {currentOrder.status === "payment_pending" 
-                    ? `Enter your 4-digit PIN to pay $${currentOrder.total}`
-                    : `Enter PIN to release $${currentOrder.total} to seller`
-                  }
-                </p>
-              </div>
-              <div className="flex justify-center gap-3 mb-6">
-                {[0, 1, 2, 3].map((index) => (
-                  <input key={index} ref={(el) => { pinInputRefs.current[index] = el }} type="password" maxLength={1} value={pin[index]} onChange={(e) => handlePinInput(index, e.target.value)} onKeyDown={(e) => handlePinKeyDown(index, e)} className="w-14 h-14 text-center text-2xl font-bold bg-muted border-2 border-border rounded-xl outline-none focus:border-blue-500 transition-colors" />
-                ))}
-              </div>
-              <div className="flex gap-3">
-                <button onClick={() => { setPin(["", "", "", ""]); setShowPinModal(false); }} className="flex-1 bg-secondary text-secondary-foreground py-3 rounded-xl text-sm font-medium hover:bg-secondary/80 transition-colors">Cancel</button>
-                <button onClick={() => pin.every(digit => digit !== "") ? processPayment() : alert("Please enter your 4-digit PIN")} className="flex-1 bg-blue-600 text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors">
-                  {currentOrder.status === "payment_pending" ? "Confirm" : "Release Funds"}
-                </button>
-              </div>
             </div>
           </div>
         )}
