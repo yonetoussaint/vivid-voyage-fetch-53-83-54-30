@@ -2722,6 +2722,3 @@ export function ChatPage() {
     />
   );
 }
-
-// At the very bottom of Messages.tsx
-export default Messages; // This should be there
