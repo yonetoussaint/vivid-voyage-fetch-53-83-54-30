@@ -2,47 +2,15 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllProducts } from "@/integrations/supabase/products";
-import SuperDealsSection from "@/components/home/SuperDealsSection";
 import FlashDeals from "@/components/home/FlashDeals";
-import SimpleFlashDeals from "@/components/home/SimpleFlashDeals";
-import SpaceSavingCategories from "@/components/home/SpaceSavingCategories";
 import Footer from "@/components/Footer";
-import TopBrands from "@/components/home/TopBrands";
-import BenefitsBanner from "@/components/home/BenefitsBanner";
-import TopVendorsCompact from "@/components/home/TopVendorsCompact";
-import MobileOptimizedReels from "@/components/home/MobileOptimizedReels";
-import PopularSearches from "@/components/home/PopularSearches";
-import NewArrivalsSection from "@/components/home/NewArrivalsSection";
 import HeroBanner from "@/components/home/HeroBanner";
-import BookGenreFlashDeals from "@/components/home/BookGenreFlashDeals";
 import { useHeaderFilter } from "@/contexts/HeaderFilterContext";
 import { useAuth } from "@/components/Providers";
 
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Smartphone,
-  ShoppingBag,
-  Shirt,
-  Baby,
-  Home,
-  Megaphone,
-  Dumbbell,
-  Sparkles,
-  Car,
-  Trophy,
-  Play,
-  Pin,
-  BookOpen,
-  Gamepad2,
-  Watch,
-  Tag,
-  Headphones,
-  Camera,
-  Laptop,
-  Coffee,
-  Clock,
-  History,
-  ShieldCheck
+  Tag
 } from "lucide-react";
 import { useLocation } from 'react-router-dom';
 
@@ -261,34 +229,11 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       <HeroBanner showNewsTicker={true} />
     </div>,
 
-    <SpaceSavingCategories key="categories" />,
-
     <FlashDeals
       key="flash-1"
       showCountdown={true}
       icon={Tag}
       showTitleChevron={true}
-    />,
-
-    <BookGenreFlashDeals
-      key="book-genre-flash-deals"
-      title="Popular Book Genres"
-      subtitle="Discover books by genre"
-      showFilters={false}
-      showSummary={true}
-      showSectionHeader={true}
-      showCountdown={true}
-      customCountdown="15:00:00:00"
-      icon={BookOpen}
-      products={products}
-      className="mt-4"
-      showVerifiedSellers={true}
-      verifiedSellersText="Top Book Sellers"
-      summaryMode="products"
-      showExpiryTimer={true}
-      expiryField="expiry"
-      showMarketingMetrics={false}
-      showStatusBadge={false}
     />,
   ];
 
@@ -299,29 +244,12 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
         {components.map((component, index) => (
           <React.Fragment key={`section-${index}`}>
             {component}
-            {index < 2 && renderVendorCarousel(index)}
           </React.Fragment>
         ))}
       </div>
 
-      {/* Hidden Footer - present in DOM for Google Auth but not visible */}
-      <div 
-        className="sr-only" 
-        style={{
-          position: 'absolute',
-          width: '1px',
-          height: '1px',
-          padding: 0,
-          margin: '-1px',
-          overflow: 'hidden',
-          clip: 'rect(0, 0, 0, 0)',
-          whiteSpace: 'nowrap',
-          borderWidth: 0
-        }}
-        aria-hidden="true"
-      >
-        <Footer />
-      </div>
+      {/* Footer */}
+      <Footer />
     </div>
   );
 };
