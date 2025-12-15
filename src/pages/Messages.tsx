@@ -2565,33 +2565,13 @@ export default function Messages() {
                     </div>
                   </div>
 
-                  {/* Right side icons */}
+                  {/* Right side icons - Only unread count badge remains (call/video buttons removed) */}
                   <div className="flex flex-col items-end gap-2 ml-3 flex-shrink-0">
                     {conv.unreadCount > 0 && (
                       <div className="min-w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold px-1.5">
                         {conv.unreadCount}
                       </div>
                     )}
-                    <div className="flex gap-1">
-                      <button 
-                        className="p-1 hover:bg-gray-200 rounded-full transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          console.log('Call', conv.id);
-                        }}
-                      >
-                        <Phone size={16} className="text-gray-600" />
-                      </button>
-                      <button 
-                        className="p-1 hover:bg-gray-200 rounded-full transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          console.log('Video call', conv.id);
-                        }}
-                      >
-                        <Video size={16} className="text-gray-600" />
-                      </button>
-                    </div>
                   </div>
                 </div>
               </div>
