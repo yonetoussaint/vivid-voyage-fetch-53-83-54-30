@@ -2227,7 +2227,6 @@ export default function Messages() {
   const [searchParams] = useSearchParams();
   const activeTab = (searchParams.get('filter') || 'all') as 'all' | 'unread' | 'groups' | 'archived';
   const [showUserSelection, setShowUserSelection] = useState(false);
-  const [swipedItem, setSwipedItem] = useState<string | null>(null);
   const { user, isLoading } = useAuth();
   const { openAuthOverlay } = useAuthOverlay();
 
@@ -2259,40 +2258,48 @@ export default function Messages() {
     }
   }, [])
 
-  // Map API data to match the UI structure
-  const mappedConversations = conversations.map(conv => ({
-    id: conv.id,
-    name: conv.other_user.full_name,
-    preview: conv.last_message?.content || 'Start a conversation',
-    date: formatDistanceToNow(new Date(conv.last_message?.created_at || conv.last_message_at), { addSuffix: false }),
-    time: formatDistanceToNow(new Date(conv.last_message?.created_at || conv.last_message_at), { addSuffix: true }),
-    avatar: conv.other_user.avatar_url || '',
-    unreadCount: conv.unread_count || 0,
-    isOnline: Math.random() > 0.5,
-    isPinned: Math.random() > 0.7,
-    isMuted: Math.random() > 0.8,
-    isRead: conv.unread_count === 0,
-    messageType: 'text',
-    deliveryStatus: conv.last_message?.sender_id === currentUserId ? (conv.last_message?.is_read ? 'read' : 'delivered') : null,
-    sentByYou: conv.last_message?.sender_id === currentUserId,
-    isTyping: false,
-    isVerified: Math.random() > 0.7,
-    isGroup: conv.id.startsWith('blocked-'), // Show blocked users as "groups" in UI
-    hasStory: Math.random() > 0.5,
-    lastSeen: Math.random() > 0.5 ? 'online' : `${Math.floor(Math.random() * 60)}m ago`,
-    reactions: Math.random() > 0.8 ? '❤️' : null,
-    hasDraft: false,
-    isStarred: Math.random() > 0.8,
-    hasScheduled: Math.random() > 0.9,
-    isArchived: conv.is_archived,
-    otherUser: conv.other_user
-  }));
-
-  const handleSwipe = (id: string, action: 'archive' | 'delete') => {
-    console.log(`${action} conversation ${id}`);
-    setSwipedItem(null);
-    // TODO: Implement archive/delete functionality
+  // Function to format last online time
+  const formatLastOnlineTime = (lastMessageAt: string) => {
+    const now = new Date();
+    const messageDate = new Date(lastMessageAt);
+    const diffInHours = (now.getTime() - messageDate.getTime()) / (1000 * 60 * 60);
+    
+    if (diffInHours < 24) {
+      // Less than 24 hours ago, show relative time
+      return formatDistanceToNow(messageDate, { addSuffix: true });
+    } else {
+      // More than 24 hours ago, show full date
+      return messageDate.toLocaleDateString('en-US', { 
+        month: 'long', 
+        day: 'numeric', 
+        year: 'numeric' 
+      });
+    }
   };
+
+  // Map API data to match the UI structure
+  const mappedConversations = conversations.map(conv => {
+    // Calculate last online time based on last message
+    const lastMessageTime = conv.last_message?.created_at || conv.last_message_at;
+    const lastOnlineTime = formatLastOnlineTime(lastMessageTime);
+    
+    return {
+      id: conv.id,
+      name: conv.other_user.full_name,
+      preview: conv.last_message?.content || 'Start a conversation',
+      lastOnline: lastOnlineTime,
+      avatar: conv.other_user.avatar_url || '',
+      unreadCount: conv.unread_count || 0,
+      isOnline: Math.random() > 0.5,
+      isRead: conv.unread_count === 0,
+      messageType: 'text',
+      deliveryStatus: conv.last_message?.sender_id === currentUserId ? (conv.last_message?.is_read ? 'read' : 'delivered') : null,
+      sentByYou: conv.last_message?.sender_id === currentUserId,
+      isTyping: false,
+      isVerified: Math.random() > 0.7,
+      otherUser: conv.other_user
+    };
+  });
 
   const getMessageIcon = (type: string) => {
     switch(type) {
@@ -2323,25 +2330,19 @@ export default function Messages() {
       case 'unread':
         return mappedConversations.filter(c => c.unreadCount > 0 || !c.isRead);
       case 'groups':
-        return mappedConversations.filter(c => c.isGroup);
+        return mappedConversations.filter(c => c.id.startsWith('blocked-'));
       case 'archived':
-        return mappedConversations.filter(c => c.isArchived);
+        return mappedConversations.filter(c => false); // Archived functionality removed
       default:
-        return mappedConversations.filter(c => !c.isArchived);
+        return mappedConversations;
     }
   };
 
   // Handle conversation click - navigate to chat page
   const handleConversationClick = (conv: any) => {
-    setSwipedItem(null);
     if (!conv.id.startsWith('blocked-')) {
       navigate(`/messages/${conv.id}`);
     }
-  };
-
-  // Handle test chat start
-  const handleStartTestChat = () => {
-    navigate(`/messages/test-chat-123`);
   };
 
   if (isLoading) {
@@ -2441,56 +2442,16 @@ export default function Messages() {
             filterConversations().map((conv) => (
               <div
                 key={conv.id}
-                className={`relative overflow-hidden ${
-                  conv.isPinned ? 'bg-gray-50' : ''
-                }`}
+                className="relative overflow-hidden"
               >
-                {/* Swipe action buttons */}
-                {swipedItem === conv.id && (
-                  <div className="absolute right-0 top-0 bottom-0 flex items-center">
-                    <button
-                      onClick={() => handleSwipe(conv.id, 'archive')}
-                      className="px-6 h-full bg-yellow-500 text-white flex items-center justify-center"
-                    >
-                      <Archive size={20} />
-                    </button>
-                    <button
-                      onClick={() => handleSwipe(conv.id, 'delete')}
-                      className="px-6 h-full bg-red-600 text-white flex items-center justify-center"
-                    >
-                      <Trash2 size={20} />
-                    </button>
-                  </div>
-                )}
-
                 <div
                   className="flex items-center px-3 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
-                  onTouchStart={(e) => {
-                    const startX = e.touches[0].clientX;
-                    const handleTouchMove = (e: TouchEvent) => {
-                      const currentX = e.touches[0].clientX;
-                      if (startX - currentX > 50) {
-                        setSwipedItem(conv.id);
-                      }
-                    };
-                    document.addEventListener('touchmove', handleTouchMove);
-                    document.addEventListener('touchend', () => {
-                      document.removeEventListener('touchmove', handleTouchMove);
-                    }, { once: true });
-                  }}
                   onClick={() => handleConversationClick(conv)}
                 >
-                  {/* Avatar with story ring and online status */}
+                  {/* Avatar with online status */}
                   <div className="relative flex-shrink-0 mr-3">
-                    {conv.hasStory && (
-                      <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-pink-500 p-0.5 -m-0.5">
-                        <div className="w-full h-full bg-white rounded-full p-0.5"></div>
-                      </div>
-                    )}
                     <div className={`w-12 h-12 rounded-full relative z-10 flex items-center justify-center`}>
-                      {conv.isGroup ? (
-                        <Users size={20} className="text-white" />
-                      ) : conv.avatar ? (
+                      {conv.avatar ? (
                         <Avatar className="w-full h-full">
                           <AvatarImage src={conv.avatar} />
                           <AvatarFallback className="bg-black text-white">
@@ -2505,7 +2466,7 @@ export default function Messages() {
                         </div>
                       )}
                     </div>
-                    {conv.isOnline && !conv.isGroup && (
+                    {conv.isOnline && (
                       <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full z-20"></div>
                     )}
                   </div>
@@ -2518,14 +2479,18 @@ export default function Messages() {
                           {conv.name}
                         </h3>
                         {conv.isVerified && <BadgeCheck size={16} className="text-blue-500 fill-current flex-shrink-0" />}
-                        {conv.isStarred && <Star size={14} className="text-yellow-500 fill-yellow-500 flex-shrink-0" />}
-                        {conv.isPinned && <Pin size={14} className="text-gray-400 fill-gray-400 flex-shrink-0" />}
-                        {conv.isMuted && <VolumeX size={14} className="text-gray-400 flex-shrink-0" />}
-                        {conv.hasScheduled && <Clock size={14} className="text-blue-500 flex-shrink-0" />}
                       </div>
-                      <span className={`text-xs ml-2 flex-shrink-0 ${conv.isRead ? 'text-gray-400' : 'text-red-500 font-semibold'}`}>
-                        {conv.time}
-                      </span>
+                      {/* Last online time with unread count below it */}
+                      <div className="flex flex-col items-end gap-1 ml-3 flex-shrink-0">
+                        <span className={`text-xs ${conv.isRead ? 'text-gray-400' : 'text-red-500 font-semibold'}`}>
+                          {conv.lastOnline}
+                        </span>
+                        {conv.unreadCount > 0 && (
+                          <div className="min-w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold px-1.5">
+                            {conv.unreadCount}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="flex items-center justify-between">
@@ -2539,11 +2504,6 @@ export default function Messages() {
                               <div className="w-1.5 h-1.5 bg-green-500 rounded-full dot-3"></div>
                             </div>
                           </div>
-                        ) : conv.hasDraft ? (
-                          <p className="text-sm truncate">
-                            <span className="text-red-500 font-semibold">Draft: </span>
-                            <span className="text-gray-500">{conv.preview}</span>
-                          </p>
                         ) : (
                           <>
                             {conv.sentByYou && getDeliveryIcon(conv.deliveryStatus)}
@@ -2551,27 +2511,10 @@ export default function Messages() {
                             <p className={`text-sm truncate ${conv.isRead ? 'text-gray-500' : 'text-gray-900 font-semibold'}`}>
                               {conv.sentByYou && 'You: '}{conv.preview}
                             </p>
-                            {conv.reactions && (
-                              <span className="text-sm ml-1 flex-shrink-0">{conv.reactions}</span>
-                            )}
                           </>
                         )}
                       </div>
-
-                      {/* Last seen for individual chats */}
-                      {!conv.isGroup && conv.lastSeen && !conv.isOnline && (
-                        <span className="text-xs text-gray-400 ml-2 flex-shrink-0">{conv.lastSeen}</span>
-                      )}
                     </div>
-                  </div>
-
-                  {/* Right side icons - Only unread count badge remains (call/video buttons removed) */}
-                  <div className="flex flex-col items-end gap-2 ml-3 flex-shrink-0">
-                    {conv.unreadCount > 0 && (
-                      <div className="min-w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold px-1.5">
-                        {conv.unreadCount}
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
@@ -2579,7 +2522,7 @@ export default function Messages() {
           )}
         </div>
 
-        {/* Floating action button */}
+        {/* Floating action button for new message */}
         <button
           className="fixed bottom-6 right-4 md:right-6 w-14 h-14 bg-gradient-to-br from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 z-50"
           onClick={() => setShowUserSelection(true)}
@@ -2588,9 +2531,6 @@ export default function Messages() {
         >
           <Edit size={24} />
         </button>
-
-        {/* Test chat button */}
-        <TestChatButton onStartTest={handleStartTestChat} />
       </div>
 
       {/* User Selection Dialog */}
