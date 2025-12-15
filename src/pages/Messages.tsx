@@ -589,7 +589,7 @@ const CallControlBand = ({
 
 // ==================== HOOKS ====================
 
-function useConversations(userId: string, filter: 'all' | 'unread' | 'blocked' | 'archived' = 'all') {
+function useConversations(userId: string, filter: 'all' | 'unread' | 'archived' = 'all') {
   const [conversations, setConversations] = useState<ConversationWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -601,37 +601,6 @@ function useConversations(userId: string, filter: 'all' | 'unread' | 'blocked' |
     try {
       if (isInitial) {
         setLoading(true);
-      }
-
-      if (filter === 'blocked') {
-        const { data: blockedUsers } = await supabase
-          .from('blocked_users')
-          .select('blocked_id, profiles!blocked_users_blocked_id_fkey(id, full_name, email, avatar_url)')
-          .eq('blocker_id', userId);
-
-        const blockedConversations: ConversationWithDetails[] = (blockedUsers || []).map((blocked: any) => ({
-          id: `blocked-${blocked.blocked_id}`,
-          last_message_at: new Date().toISOString(),
-          is_archived: false,
-          other_user: {
-            id: blocked.profiles.id,
-            full_name: blocked.profiles.full_name || 'Unknown',
-            email: blocked.profiles.email || '',
-            avatar_url: blocked.profiles.avatar_url,
-          },
-          last_message: {
-            content: 'User blocked',
-            created_at: new Date().toISOString(),
-            sender_id: userId,
-          },
-          unread_count: 0,
-        }));
-
-        setConversations(blockedConversations);
-        if (isInitial) {
-          setLoading(false);
-        }
-        return;
       }
 
       const { data: participantData } = await supabase
@@ -1045,7 +1014,6 @@ export function ChatInterface({
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [loading, setLoading] = useState(true)
   const [showQuickActions, setShowQuickActions] = useState(false)
-  const [showMenu, setShowMenu] = useState(false)
   const [showWalletBalance, setShowWalletBalance] = useState(false)
   const [showScrollToBottom, setShowScrollToBottom] = useState(false)
   const [showPinModal, setShowPinModal] = useState(false)
@@ -1729,24 +1697,9 @@ export function ChatInterface({
               <Phone className="w-5 h-5 text-foreground" />
             </button>
 
-            <div className="relative">
-              <button onClick={() => setShowMenu(!showMenu)} className="p-2 hover:bg-muted rounded-full transition-colors">
-                <MoreVertical className="w-5 h-5 text-foreground" />
-              </button>
-
-              {showMenu && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-                  <div className="absolute right-0 top-10 w-56 bg-popover border border-border rounded-xl shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="h-px bg-border my-1" />
-                    <button onClick={() => { setNotificationsMuted(!notificationsMuted); setShowMenu(false); }} className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted transition-colors">
-                      {notificationsMuted ? <BellOff className="w-4 h-4 text-muted-foreground" /> : <Bell className="w-4 h-4 text-muted-foreground" />}
-                      <span className="text-sm text-foreground">{notificationsMuted ? "Unmute" : "Mute"} notifications</span>
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
+            <button onClick={() => setNotificationsMuted(!notificationsMuted)} className="p-2 hover:bg-muted rounded-full transition-colors">
+              {notificationsMuted ? <BellOff className="w-5 h-5 text-foreground" /> : <Bell className="w-5 h-5 text-foreground" />}
+            </button>
           </div>
         </div>
 
@@ -1872,9 +1825,6 @@ export function ChatInterface({
                           <div className={cn("absolute top-8 z-50 w-40 bg-popover border border-border rounded-lg shadow-xl py-1 animate-in fade-in zoom-in-95 duration-100", isBuyer ? "right-0" : "left-8")}>
                             <button onClick={() => { copyMessage(msg.text); setMessageActionsId(null); }} className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted text-sm">
                               <Copy className="w-4 h-4" /> Copy
-                            </button>
-                            <button className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted text-sm">
-                              <Forward className="w-4 h-4" /> Forward
                             </button>
                             {isBuyer && (
                               <>
@@ -2205,27 +2155,12 @@ export function ChatInterface({
   )
 }
 
-// ==================== TEST CHAT BUTTON ====================
-
-function TestChatButton({ onStartTest }: { onStartTest: () => void }) {
-  return (
-    <button
-      onClick={onStartTest}
-      className="fixed bottom-20 right-4 md:right-6 w-14 h-14 bg-gradient-to-br from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 z-50"
-      aria-label="Test chat"
-      type="button"
-    >
-      <MessageCircle size={24} />
-    </button>
-  );
-}
-
 // ==================== MAIN MESSAGES LIST COMPONENT ====================
 
 export default function Messages() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const activeTab = (searchParams.get('filter') || 'all') as 'all' | 'unread' | 'groups' | 'archived';
+  const activeTab = (searchParams.get('filter') || 'all') as 'all' | 'unread' | 'archived';
   const [showUserSelection, setShowUserSelection] = useState(false);
   const { user, isLoading } = useAuth();
   const { openAuthOverlay } = useAuthOverlay();
@@ -2235,10 +2170,9 @@ export default function Messages() {
 
   const currentUserId = user?.id || '';
 
-  // Note: Using 'blocked' filter type from hook but mapping to 'groups' for UI display
   const { conversations, loading } = useConversations(
     currentUserId, 
-    activeTab === 'groups' ? 'blocked' : activeTab === 'archived' ? 'archived' : activeTab === 'unread' ? 'unread' : 'all'
+    activeTab === 'archived' ? 'archived' : activeTab === 'unread' ? 'unread' : 'all'
   );
 
   // Handle mobile viewport height
@@ -2329,8 +2263,6 @@ export default function Messages() {
     switch(activeTab) {
       case 'unread':
         return mappedConversations.filter(c => c.unreadCount > 0 || !c.isRead);
-      case 'groups':
-        return mappedConversations.filter(c => c.id.startsWith('blocked-'));
       case 'archived':
         return mappedConversations.filter(c => false); // Archived functionality removed
       default:
@@ -2340,9 +2272,7 @@ export default function Messages() {
 
   // Handle conversation click - navigate to chat page
   const handleConversationClick = (conv: any) => {
-    if (!conv.id.startsWith('blocked-')) {
-      navigate(`/messages/${conv.id}`);
-    }
+    navigate(`/messages/${conv.id}`);
   };
 
   if (isLoading) {
@@ -2434,7 +2364,6 @@ export default function Messages() {
               <p className="text-gray-500">
                 {activeTab === 'all' && 'No messages yet'}
                 {activeTab === 'unread' && 'No unread messages'}
-                {activeTab === 'groups' && 'No blocked users'}
                 {activeTab === 'archived' && 'No archived conversations'}
               </p>
             </div>
