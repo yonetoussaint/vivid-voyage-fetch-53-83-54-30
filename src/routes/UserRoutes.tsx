@@ -3,7 +3,8 @@ import React from "react";
 import { Route } from "react-router-dom";
 import CachedRoute from "../components/CachedRoute";
 import Wallet from "../pages/Wallet";
-import { Messages, ChatPage } from '../pages/Messages';
+import Messages from '../pages/Messages'; // Remove {} - it's a default export
+import { ChatPage } from '../pages/Messages'; // Keep {} for named export
 import ConversationDetail from "../pages/ConversationDetail";
 import ProfilePage from "../pages/ProfilePage";
 import MoreMenu from "../pages/MoreMenu";
