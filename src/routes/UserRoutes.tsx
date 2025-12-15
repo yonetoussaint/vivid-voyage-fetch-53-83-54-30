@@ -3,7 +3,7 @@ import React from "react";
 import { Route } from "react-router-dom";
 import CachedRoute from "../components/CachedRoute";
 import Wallet from "../pages/Wallet";
-import Messages from "../pages/Messages";
+import { Messages, ChatPage } from './Messages';
 import ConversationDetail from "../pages/ConversationDetail";
 import ProfilePage from "../pages/ProfilePage";
 import MoreMenu from "../pages/MoreMenu";
@@ -40,6 +40,9 @@ export function UserRoutes() {
           <ProfilePage />
         </CachedRoute>
       } />
+
+<Route path="/messages/:conversationId" element={<ChatPage />} />
+
       <Route path="more" element={
         <CachedRoute>
           <MoreMenu />
@@ -98,3 +101,4 @@ export function UserRoutes() {
     </>
   );
 }
+
