@@ -119,11 +119,10 @@ function MainLayoutContent() {
     }
   }, [location.pathname, categories]);
 
-  // Determine if we should show the header
+  // Determine if we should show the header - FIXED: Exclude conversation detail pages
   const shouldShowHeader = [
     '/',
     '/for-you',
-    '/messages',
     '/wallet',
     '/explore',
     '/wishlist',
@@ -143,7 +142,7 @@ function MainLayoutContent() {
     '/categories/women',
     '/categories/men',
     '/categories/books'
-  ].includes(pathname);
+  ].includes(pathname) || isMessagesListPage;  // Only show header on messages list page, not detail pages
 
   // Check if current page is reels
   const isReelsPage = pathname === '/reels' && !location.search.includes('video=');
@@ -528,7 +527,7 @@ function MainLayoutContent() {
     }
   }, [isMessagesPage, isWalletPage, isExplorePage, searchParams, navigate, pathname]);
 
-  
+
 const walletTabs = isWalletPage ? [
     { id: 'main', name: 'Main Wallet', path: '/wallet?tab=main' },
     { id: 'crypto', name: 'Crypto Wallet', path: '/wallet?tab=crypto' },
@@ -556,7 +555,7 @@ const walletTabs = isWalletPage ? [
     <div className="app-container">
       <style dangerouslySetInnerHTML={{ __html: layoutHeightStyle }} />
 
-      {/* Header */}
+      {/* Header - Now hidden on conversation detail pages */}
       {shouldShowHeader && (
         <div ref={headerRef} className="app-header">
           <AliExpressHeader
