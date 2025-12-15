@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowUpRight, ArrowDownLeft, Plus, Eye, EyeOff, X, Check, ArrowLeftRight, CreditCard } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, TrendingUp, TrendingDown, Plus, Eye, EyeOff, X, Check, ArrowLeftRight, CreditCard } from 'lucide-react';
 
 export default function BinanceWallet() {
   const [showBalance, setShowBalance] = useState(true);
@@ -7,6 +7,7 @@ export default function BinanceWallet() {
   const [selectedMethod, setSelectedMethod] = useState(null);
 
   const balance = 1736590.00;
+  const change = 3.42; // Positive percentage change
 
   const depositMethods = [
     { id: 'moncash', name: 'MonCash', color: 'bg-red-500', icon: <CreditCard className="w-6 h-6 text-white" /> },
@@ -41,6 +42,13 @@ export default function BinanceWallet() {
               {showBalance ? `${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '••••••'}
             </h2>
             <span className="text-lg sm:text-2xl text-gray-500 mb-1">HTG</span>
+          </div>
+
+          {/* Percentage Change */}
+          <div className={`inline-flex items-center gap-1 text-sm sm:text-base font-medium ${change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {change >= 0 ? <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" /> : <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5" />}
+            <span>{change >= 0 ? '+' : ''}{change}%</span>
+            <span className="text-gray-400 ml-1">Today</span>
           </div>
 
           {/* Action Buttons */}
