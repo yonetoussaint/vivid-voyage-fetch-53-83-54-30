@@ -76,44 +76,6 @@ export default function AliExpressBuyerProfile() {
         </div>
       </div>
 
-      {/* Order Status Section */}
-      <div className="bg-white px-5 py-6 border-b border-slate-200">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-slate-800">My Orders</h2>
-          <button className="text-sm text-slate-500 flex items-center">
-            View all <ChevronRight className="w-4 h-4 ml-1" />
-          </button>
-        </div>
-        <div className="grid grid-cols-4 gap-4">
-          <div className="flex flex-col items-center">
-            <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center relative mb-2">
-              <Package className="w-6 h-6 text-blue-500" />
-              <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">5</div>
-            </div>
-            <span className="text-xs text-slate-600 text-center">To Ship</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <div className="w-12 h-12 bg-purple-50 rounded-full flex items-center justify-center relative mb-2">
-              <Truck className="w-6 h-6 text-purple-500" />
-              <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">2</div>
-            </div>
-            <span className="text-xs text-slate-600 text-center">To Receive</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center mb-2">
-              <Star className="w-6 h-6 text-green-500" />
-            </div>
-            <span className="text-xs text-slate-600 text-center">To Review</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-2">
-              <FileText className="w-6 h-6 text-slate-500" />
-            </div>
-            <span className="text-xs text-slate-600 text-center">Refund</span>
-          </div>
-        </div>
-      </div>
-
       {/* Share & Earn Referral */}
       <div className="bg-white border-b border-slate-200">
         <div className="px-5 py-4 flex items-center justify-between">
