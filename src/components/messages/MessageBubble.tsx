@@ -1213,7 +1213,7 @@ function UserSelectionDialog({ open, onOpenChange, currentUserId }: UserSelectio
   );
 }
 
-function ChatInterface({ 
+export function ChatInterface({ 
   conversationId, 
   otherUser,
   onBack 
@@ -1223,47 +1223,8 @@ function ChatInterface({
   onBack: () => void;
 }) {
   const [message, setMessage] = useState("")
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 1,
-      sender: "seller",
-      text: "Hey! Thanks for your interest in the iPhone 15 Pro Max. It's in excellent condition!",
-      time: "10:32 AM",
-      timestamp: new Date(Date.now() - 3600000 * 2),
-      status: "read",
-    },
-    {
-      id: 2,
-      sender: "seller",
-      text: "Here are some photos of the device:",
-      time: "10:33 AM",
-      timestamp: new Date(Date.now() - 3600000 * 1.9),
-      hasImages: true,
-      images: [
-        "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400&h=400&fit=crop",
-        "https://images.unsplash.com/photo-1695048133025-52fd6dda2b62?w=400&h=400&fit=crop",
-        "https://images.unsplash.com/photo-1695048133149-b39c00004c1a?w=400&h=400&fit=crop",
-      ],
-      status: "read",
-    },
-    {
-      id: 3,
-      sender: "buyer",
-      text: "Looks amazing! Does it come with original box and accessories?",
-      time: "10:34 AM",
-      timestamp: new Date(Date.now() - 3600000 * 1.8),
-      status: "read",
-    },
-    {
-      id: 4,
-      sender: "seller",
-      text: "Yes! Original box, charger, cable, and even the unused stickers. Everything included.",
-      time: "10:35 AM",
-      timestamp: new Date(Date.now() - 3600000 * 1.7),
-      status: "read",
-    }
-  ])
-  const [loading, setLoading] = useState(false)
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [loading, setLoading] = useState(true)
   const [showQuickActions, setShowQuickActions] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [showWalletBalance, setShowWalletBalance] = useState(false)
@@ -1285,6 +1246,7 @@ function ChatInterface({
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null)
   const [notificationsMuted, setNotificationsMuted] = useState(false)
   const [viewingImage, setViewingImage] = useState<string | null>(null)
+  const [isConnected, setIsConnected] = useState(false)
 
   // Product info state
   const [productInfo, setProductInfo] = useState({
@@ -1305,6 +1267,249 @@ function ChatInterface({
   const pinInputRefs = useRef<(HTMLInputElement | null)[]>([])
   const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const { user } = useAuth()
+
+  // Debug logging
+  useEffect(() => {
+    console.log('ChatInterface mounted with:', {
+      conversationId,
+      otherUser,
+      currentUserId: user?.id,
+      isTestChat: conversationId?.startsWith('test-')
+    });
+  }, [conversationId, user?.id]);
+
+  // Fetch messages from Supabase
+  useEffect(() => {
+    if (conversationId && !conversationId.startsWith('test-')) {
+      console.log('Fetching messages for conversation:', conversationId);
+      fetchMessages();
+    } else if (conversationId?.startsWith('test-')) {
+      console.log('Using test chat mode');
+      setLoading(false);
+      // Set test messages
+      setMessages([
+        {
+          id: 1,
+          sender: "seller",
+          text: "Hey! Thanks for your interest in the iPhone 15 Pro Max. It's in excellent condition!",
+          time: "10:32 AM",
+          timestamp: new Date(Date.now() - 3600000 * 2),
+          status: "read",
+        },
+        {
+          id: 2,
+          sender: "seller",
+          text: "Here are some photos of the device:",
+          time: "10:33 AM",
+          timestamp: new Date(Date.now() - 3600000 * 1.9),
+          hasImages: true,
+          images: [
+            "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400&h=400&fit=crop",
+            "https://images.unsplash.com/photo-1695048133025-52fd6dda2b62?w=400&h=400&fit=crop",
+            "https://images.unsplash.com/photo-1695048133149-b39c00004c1a?w=400&h=400&fit=crop",
+          ],
+          status: "read",
+        },
+        {
+          id: 3,
+          sender: "buyer",
+          text: "Looks amazing! Does it come with original box and accessories?",
+          time: "10:34 AM",
+          timestamp: new Date(Date.now() - 3600000 * 1.8),
+          status: "read",
+        },
+        {
+          id: 4,
+          sender: "seller",
+          text: "Yes! Original box, charger, cable, and even the unused stickers. Everything included.",
+          time: "10:35 AM",
+          timestamp: new Date(Date.now() - 3600000 * 1.7),
+          status: "read",
+        }
+      ]);
+    }
+  }, [conversationId, user?.id]);
+
+  // Set up real-time subscription
+  useEffect(() => {
+    if (!conversationId || conversationId.startsWith('test-') || !user?.id) {
+      return;
+    }
+
+    console.log('Setting up real-time subscription for conversation:', conversationId);
+
+    const channel = supabase
+      .channel(`messages-${conversationId}-${Date.now()}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${conversationId}`
+        },
+        async (payload) => {
+          console.log('Message change detected:', payload);
+          
+          // Handle new messages
+          if (payload.eventType === 'INSERT') {
+            const newMsg = payload.new as any;
+            
+            // Don't add our own messages twice (they're already added locally)
+            if (newMsg.sender_id === user.id) {
+              console.log('Ignoring own message (already added locally)');
+              return;
+            }
+            
+            // Format the new message
+            const formattedMessage: ChatMessage = {
+              id: newMsg.id,
+              sender: newMsg.sender_id === user.id ? "buyer" : "seller",
+              text: newMsg.content,
+              time: new Date(newMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              timestamp: new Date(newMsg.created_at),
+              status: newMsg.is_read ? "read" : "delivered",
+              sender_id: newMsg.sender_id,
+              content: newMsg.content,
+              created_at: newMsg.created_at
+            };
+            
+            console.log('Adding new message from subscription:', formattedMessage);
+            
+            setMessages(prev => {
+              // Check if message already exists
+              if (prev.some(m => m.id === formattedMessage.id)) {
+                console.log('Message already exists, skipping');
+                return prev;
+              }
+              return [...prev, formattedMessage];
+            });
+            
+            setTimeout(scrollToBottom, 100);
+          }
+          
+          // Handle updates (like read status)
+          if (payload.eventType === 'UPDATE') {
+            const updatedMsg = payload.new as any;
+            setMessages(prev => prev.map(msg => 
+              msg.id === updatedMsg.id ? {
+                ...msg,
+                status: updatedMsg.is_read ? "read" : "delivered"
+              } : msg
+            ));
+          }
+        }
+      )
+      .on('system', { event: 'disconnect' }, () => {
+        console.log('Disconnected from real-time');
+        setIsConnected(false);
+      })
+      .on('system', { event: 'connected' }, () => {
+        console.log('Connected to real-time');
+        setIsConnected(true);
+      })
+      .subscribe((status) => {
+        console.log('Real-time subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          setIsConnected(true);
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          setIsConnected(false);
+          console.error('Real-time subscription error, retrying in 3s...');
+          setTimeout(() => {
+            console.log('Retrying real-time subscription...');
+            supabase.removeChannel(channel);
+            // Will be recreated by useEffect
+          }, 3000);
+        }
+      });
+
+    return () => {
+      console.log('Cleaning up real-time subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [conversationId, user?.id]);
+
+  const fetchMessages = async () => {
+    if (!conversationId || !user?.id) {
+      console.error('No conversation ID or user ID');
+      setLoading(false);
+      return;
+    }
+
+    console.log('Starting to fetch messages...');
+    setLoading(true);
+    
+    try {
+      const { data, error, status } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true });
+
+      console.log('Fetch messages response:', { data, error, status });
+
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
+      console.log(`Fetched ${data?.length || 0} messages`);
+
+      const formattedMessages: ChatMessage[] = (data || []).map((msg: any) => {
+        const isBuyer = msg.sender_id === user.id;
+        return {
+          id: msg.id,
+          sender: isBuyer ? "buyer" : "seller",
+          text: msg.content,
+          time: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          timestamp: new Date(msg.created_at),
+          status: msg.is_read ? "read" : "delivered",
+          sender_id: msg.sender_id,
+          content: msg.content,
+          created_at: msg.created_at
+        };
+      });
+
+      console.log('Formatted messages:', formattedMessages);
+      setMessages(formattedMessages);
+      
+      // Mark messages as read if they're from the other user
+      markMessagesAsRead();
+      
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      // Show error to user
+    } finally {
+      setLoading(false);
+      setTimeout(scrollToBottom, 100);
+    }
+  };
+
+  const markMessagesAsRead = async () => {
+    if (!conversationId || !user?.id) return;
+
+    try {
+      // Update local state first for immediate feedback
+      setMessages(prev => prev.map(msg => 
+        msg.sender !== "buyer" ? { ...msg, status: "read" } : msg
+      ));
+
+      // Update in database
+      const { error } = await supabase
+        .rpc('mark_conversation_as_read', {
+          p_conversation_id: conversationId,
+          p_user_id: user.id
+        });
+
+      if (error) {
+        console.error('Error marking messages as read:', error);
+      } else {
+        console.log('Messages marked as read');
+      }
+    } catch (error) {
+      console.error('Error in markMessagesAsRead:', error);
+    }
+  };
 
   // Calculate current step for progress bar
   const getCurrentStep = () => {
@@ -1338,7 +1543,7 @@ function ChatInterface({
     
     // Add offer message to chat
     const offerMessage: ChatMessage = {
-      id: messages.length + 1,
+      id: `temp-${Date.now()}`,
       sender: "buyer",
       text: `I'd like to offer $${productInfo.finalPrice} for the ${productInfo.name} (including $${productInfo.deliveryFee} delivery). Total: $${productInfo.total}`,
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -1348,44 +1553,6 @@ function ChatInterface({
     
     setMessages(prev => [...prev, offerMessage]);
     setTimeout(scrollToBottom, 100);
-  };
-
-  // Fetch messages
-  useEffect(() => {
-    if (conversationId && !conversationId.startsWith('blocked-')) {
-      fetchMessages();
-    }
-  }, [conversationId]);
-
-  const fetchMessages = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('conversation_id', conversationId)
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
-
-      const formattedMessages: ChatMessage[] = (data || []).map((msg: any) => ({
-        id: msg.id,
-        sender: msg.sender_id === user?.id ? "buyer" : "seller",
-        text: msg.content,
-        time: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        timestamp: new Date(msg.created_at),
-        status: msg.is_read ? "read" : "delivered",
-        sender_id: msg.sender_id,
-        content: msg.content,
-        created_at: msg.created_at
-      }));
-
-      setMessages(formattedMessages);
-    } catch (error) {
-      console.error('Error fetching messages:', error);
-    } finally {
-      setLoading(false);
-    }
   };
 
   // Effects
@@ -1437,9 +1604,14 @@ function ChatInterface({
 
   const handleSend = async () => {
     if (!message.trim() && !isRecording) return
+    if (!conversationId || !user?.id) {
+      console.error('Cannot send message: missing conversationId or user');
+      return;
+    }
 
+    const tempId = `temp-${Date.now()}`;
     const newMessage: ChatMessage = {
-      id: messages.length + 1,
+      id: tempId,
       sender: "buyer",
       text: editingMessage ? message : message,
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -1450,25 +1622,57 @@ function ChatInterface({
       voiceDuration: isRecording ? recordingDuration : undefined,
     }
 
+    console.log('Sending message:', newMessage);
+
     try {
+      // Add to local state immediately for instant feedback
       if (editingMessage) {
-        setMessages(prev => prev.map(m => m.id === editingMessage.id ? { ...m, text: message, isEdited: true } : m))
-        setEditingMessage(null)
-      } else {
-        setMessages(prev => [...prev, newMessage])
-        
-        // Send to Supabase if not test chat
-        if (!conversationId.startsWith('test-')) {
+        // For editing, we need to update the existing message in database
+        const messageToUpdate = messages.find(m => m.id === editingMessage.id);
+        if (messageToUpdate && messageToUpdate.sender_id) {
           const { error } = await supabase
             .from('messages')
-            .insert({
-              conversation_id: conversationId,
-              content: message,
-              sender_id: user?.id,
-              is_read: false
-            });
+            .update({ content: message })
+            .eq('id', messageToUpdate.id);
 
           if (error) throw error;
+
+          setMessages(prev => prev.map(m => m.id === editingMessage.id ? { ...m, text: message, isEdited: true } : m));
+          setEditingMessage(null);
+        }
+      } else {
+        // Add new message to local state
+        setMessages(prev => [...prev, newMessage]);
+        
+        // Send to Supabase
+        const { data, error } = await supabase
+          .from('messages')
+          .insert({
+            conversation_id: conversationId,
+            content: message,
+            sender_id: user.id,
+            is_read: false
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Supabase insert error:', error);
+          throw error;
+        }
+
+        console.log('Message inserted successfully:', data);
+
+        // Replace temporary ID with real database ID
+        if (data) {
+          setMessages(prev => prev.map(m => 
+            m.id === tempId ? { 
+              ...m, 
+              id: data.id,
+              sender_id: data.sender_id,
+              created_at: data.created_at
+            } : m
+          ));
         }
       }
 
@@ -1477,19 +1681,40 @@ function ChatInterface({
       setIsRecording(false)
       setTimeout(scrollToBottom, 100)
 
-      // Simulate message status updates
-      setTimeout(() => {
-        setMessages(prev => prev.map(m => m.id === newMessage.id ? { ...m, status: "delivered" } : m))
-      }, 1000)
-      setTimeout(() => {
-        setMessages(prev => prev.map(m => m.id === newMessage.id ? { ...m, status: "read" } : m))
-      }, 2500)
+      // Update conversation's last_message_at
+      await supabase
+        .from('conversations')
+        .update({ last_message_at: new Date().toISOString() })
+        .eq('id', conversationId);
+
+      console.log('Conversation timestamp updated');
+
     } catch (error) {
       console.error('Error sending message:', error);
+      // Remove the temporary message if there was an error
+      if (!editingMessage) {
+        setMessages(prev => prev.filter(m => m.id !== tempId));
+      }
+      alert('Failed to send message. Please try again.');
     }
   }
 
-  const deleteMessage = (messageId: number | string) => {
+  const deleteMessage = async (messageId: number | string) => {
+    if (typeof messageId === 'string' && !messageId.startsWith('temp-')) {
+      try {
+        const { error } = await supabase
+          .from('messages')
+          .delete()
+          .eq('id', messageId);
+
+        if (error) throw error;
+      } catch (error) {
+        console.error('Error deleting message from database:', error);
+        alert('Failed to delete message from server');
+        return;
+      }
+    }
+    
     setMessages(prev => prev.map(m => m.id === messageId ? { ...m, isDeleted: true, text: "This message was deleted" } : m))
     setMessageActionsId(null)
   }
@@ -1549,7 +1774,7 @@ function ChatInterface({
         };
         setCurrentOrder(updatedOrder);
         setMessages(prev => [...prev, {
-          id: prev.length + 1,
+          id: `temp-${Date.now()}`,
           sender: "buyer",
           text: "I accept your offer. Let's proceed with payment.",
           time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -1573,7 +1798,7 @@ function ChatInterface({
           setWalletBalance(prev => prev + currentOrder.total)
         }
         setMessages(prev => [...prev, {
-          id: prev.length + 1,
+          id: `temp-${Date.now()}`,
           sender: "buyer",
           text: "Order cancelled. Refund processed to wallet.",
           time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -1634,7 +1859,7 @@ function ChatInterface({
         setPin(["", "", "", ""])
 
         setMessages(prev => [...prev, {
-          id: prev.length + 1,
+          id: `temp-${Date.now()}`,
           sender: "buyer",
           text: `Order completed. Payment of $${total} released to seller.`,
           time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -1657,7 +1882,7 @@ function ChatInterface({
         setPin(["", "", "", ""])
 
         setMessages(prev => [...prev, {
-          id: prev.length + 1,
+          id: `temp-${Date.now()}`,
           sender: "buyer",
           text: `Payment of $${total} completed via wallet. Funds held securely.`,
           time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
@@ -1674,6 +1899,17 @@ function ChatInterface({
     { icon: ImageIcon2, label: "Photos", action: () => {} },
     { icon: Receipt, label: "Receipt", action: () => currentOrder?.receipt && setShowReceipt(true) },
   ]
+
+  // Get initials for avatar fallback
+  const getInitials = (name: string) => {
+    if (!name) return '?';
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   return (
     <div className="w-full h-[100dvh] h-[calc(var(--vh,1vh)*100)] flex flex-col overflow-hidden relative transition-colors duration-300 bg-background">
@@ -1727,7 +1963,7 @@ function ChatInterface({
               <Avatar className="w-10 h-10">
                 <AvatarImage src={otherUser.avatar_url || ''} />
                 <AvatarFallback className="bg-gradient-to-br from-orange-400 to-red-500 text-white">
-                  {otherUser.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                  {getInitials(otherUser.full_name)}
                 </AvatarFallback>
               </Avatar>
               {sellerOnline && (
@@ -1744,6 +1980,9 @@ function ChatInterface({
                 <span>4.5</span>
                 <span className="mx-1">•</span>
                 <span>Online</span>
+                {!isConnected && (
+                  <span className="text-amber-500 ml-1">(Offline)</span>
+                )}
               </p>
             </div>
           </div>
@@ -1818,12 +2057,29 @@ function ChatInterface({
           }}
         >
           {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+            <div className="flex flex-col items-center justify-center py-16">
+              <Loader2 className="h-8 w-8 animate-spin text-gray-400 mb-4" />
+              <p className="text-sm text-gray-500">Loading messages...</p>
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="text-center py-16">
+              <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 text-sm">
+                {conversationId.startsWith('test-') 
+                  ? "Test chat loaded with sample messages" 
+                  : "No messages yet. Start the conversation!"}
+              </p>
+              {!conversationId.startsWith('test-') && (
+                <p className="text-gray-400 text-xs mt-2">
+                  Conversation ID: {conversationId}
+                </p>
+              )}
             </div>
           ) : (
             <>
-              <div className="text-center text-muted-foreground text-xs mb-3 uppercase tracking-wide">Today</div>
+              <div className="text-center text-muted-foreground text-xs mb-3 uppercase tracking-wide">
+                {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+              </div>
 
               {/* Messages */}
               {messages.map((msg) => {
@@ -1834,7 +2090,7 @@ function ChatInterface({
                   <div key={msg.id} id={`message-${msg.id}`} className={cn("flex mb-2 transition-colors duration-500 rounded-lg", isBuyer ? "justify-end" : "justify-start")}>
                     {!isBuyer && (
                       <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0 text-[10px] font-bold text-white mr-1.5 mt-auto">
-                        {otherUser.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                        {getInitials(otherUser.full_name)}
                       </div>
                     )}
 
@@ -1905,7 +2161,7 @@ function ChatInterface({
                             <button className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted text-sm">
                               <Forward className="w-4 h-4" /> Forward
                             </button>
-                            {isBuyer && (
+                            {isBuyer && !msg.id.toString().startsWith('temp-') && (
                               <>
                                 <div className="h-px bg-border my-1" />
                                 <button onClick={() => { setEditingMessage(msg); setMessage(msg.text); setMessageActionsId(null); }} className="w-full px-3 py-1.5 flex items-center gap-2 hover:bg-muted text-sm">
@@ -1923,7 +2179,7 @@ function ChatInterface({
 
                     {isBuyer && (
                       <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shrink-0 text-[10px] font-bold text-white ml-1.5 mt-auto">
-                        ME
+                        {getInitials(user?.full_name || 'ME')}
                       </div>
                     )}
                   </div>
@@ -1986,7 +2242,7 @@ function ChatInterface({
               {isTyping && (
                 <div className="flex items-start gap-2 mb-2">
                   <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center shrink-0 text-[10px] font-bold text-white">
-                    {otherUser.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                    {getInitials(otherUser.full_name)}
                   </div>
                   <div className="bg-card border border-border rounded-2xl rounded-bl-sm px-3 py-2 shadow-sm">
                     <div className="flex gap-1">
@@ -2115,7 +2371,20 @@ function ChatInterface({
               <button className="p-2 shrink-0"><ImageIcon2 className="w-6 h-6 text-blue-600" /></button>
               <button className="p-2 shrink-0" onMouseDown={() => setIsRecording(true)}><Mic className="w-6 h-6 text-blue-600" /></button>
               <div className="flex-1 bg-muted rounded-full px-3 py-2 flex items-center min-w-0">
-                <input ref={inputRef} type="text" placeholder="Type a message..." value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()} className="bg-transparent flex-1 outline-none text-foreground text-sm min-w-0 placeholder:text-muted-foreground" />
+                <input 
+                  ref={inputRef} 
+                  type="text" 
+                  placeholder="Type a message..." 
+                  value={message} 
+                  onChange={(e) => setMessage(e.target.value)} 
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }} 
+                  className="bg-transparent flex-1 outline-none text-foreground text-sm min-w-0 placeholder:text-muted-foreground" 
+                />
               </div>
               <button onClick={handleSend} className="p-2 shrink-0">
                 {message || editingMessage ? <Send className="w-6 h-6 text-blue-600 fill-blue-600" /> : <ThumbsUp className="w-6 h-6 text-blue-600" />}
