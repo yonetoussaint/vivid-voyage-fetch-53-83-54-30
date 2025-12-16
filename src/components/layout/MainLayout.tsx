@@ -31,6 +31,7 @@ function MainLayoutContent() {
   const isWalletPage = pathname === '/wallet';
   const isExplorePage = pathname === '/explore';
   const isProductsPage = pathname === '/products';
+  const isProfilePage = pathname === '/profile' || pathname.startsWith('/profile/'); // ADDED: Profile page check
   const productsTitle = isProductsPage ? new URLSearchParams(location.search).get('title') || 'Products' : '';
   const iconName = searchParams.get('icon');
 
@@ -141,8 +142,9 @@ function MainLayoutContent() {
     '/categories/automotive',
     '/categories/women',
     '/categories/men',
-    '/categories/books'
-  ].includes(pathname) || isMessagesListPage;  // Only show header on messages list page, not detail pages
+    '/categories/books',
+    '/profile' // ADDED: Include profile route
+  ].includes(pathname) || isMessagesListPage || isProfilePage;  // Only show header on messages list page, not detail pages
 
   // Check if current page is reels
   const isReelsPage = pathname === '/reels' && !location.search.includes('video=');
@@ -561,9 +563,8 @@ const walletTabs = isWalletPage ? [
           <AliExpressHeader
             activeTabId={isMessagesListPage ? messagesFilter : isWalletPage ? walletFilter : isExplorePage ? exploreFilter : activeTab}
             showFilterBar={showFilterBar}
-            // Hide category tabs on messages and wallet pages
-            // Only show explore tabs on explore page, but not category tabs
-            showCategoryTabs={(!isProductsPage && !pathname.startsWith('/categories') && !isMessagesPage && !isWalletPage && !isExplorePage)}
+            // Hide category tabs on messages, wallet, explore, and profile pages
+            showCategoryTabs={(!isProductsPage && !pathname.startsWith('/categories') && !isMessagesPage && !isWalletPage && !isExplorePage && !isProfilePage)}
             filterCategories={filterCategories}
             selectedFilters={selectedFilters}
             onFilterSelect={onFilterSelect}
