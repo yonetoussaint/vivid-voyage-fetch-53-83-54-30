@@ -20,18 +20,57 @@ function TabButton({ active, children, icon, onClick }) {
   );
 }
 
-function ProductCard({ image, title, price, sales }) {
+// Helper function to render tag elements (copied from CategoriesPage)
+const renderTag = (tag: string) => {
+  if (tag === "Sale") {
+    return <span className="bg-red-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">{tag}</span>;
+  }
+  if (tag === "SuperDeals") {
+    return <span className="bg-orange-100 text-orange-700 px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">{tag}</span>;
+  }
+  if (tag === "Brand+") {
+    return <span className="bg-blue-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">{tag}</span>;
+  }
+  if (tag === "Certified Original") {
+    return <span className="bg-blue-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">{tag}</span>;
+  }
+  if (tag === "250%") {
+    return <span className="bg-orange-100 text-orange-700 px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">{tag}</span>;
+  }
+  return null;
+};
+
+// ProductCard component matching CategoriesPage UI
+function ProductCard({ product }) {
   return (
-    <div className="bg-white rounded-xl overflow-hidden border border-slate-200">
-      <div className="aspect-square bg-gradient-to-br from-slate-100 to-slate-200 relative">
-        <div className="absolute top-2 right-2 bg-white/95 backdrop-blur-sm px-2 py-0.5 rounded-full text-xs font-medium text-slate-600 flex items-center space-x-1">
-          <Eye className="w-3 h-3" />
-          <span>{sales}</span>
-        </div>
+    <div key={product.id} className="bg-white rounded overflow-hidden">
+      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
+        <img 
+          src={product.imageUrl} 
+          alt={product.title} 
+          className="w-full h-full object-cover" 
+        />
       </div>
-      <div className="p-2.5">
-        <div className="text-xs text-slate-700 mb-1 line-clamp-2 leading-relaxed">{title}</div>
-        <div className="text-base font-bold text-slate-900">{price}</div>
+      <div className="p-1">
+        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight min-h-[2.2rem]">
+          {product.tags.map(tag => renderTag(tag))}
+          {product.description}
+        </p>
+        <div className="flex items-center gap-1 mb-0.5">
+          <span className="text-[10px] text-gray-500">{product.soldCount} sold</span>
+          <span className="text-[10px] text-gray-400">|</span>
+          <div className="flex items-center">
+            <span className="text-[10px] text-gray-700 mr-0.5">★</span>
+            <span className="text-[10px] text-gray-700">{product.rating}</span>
+          </div>
+        </div>
+        <p className="text-sm font-bold text-gray-900">₱{parseInt(product.price).toLocaleString('en-US')}</p>
+        {product.note && (
+          <p className="text-[10px] text-gray-500">{product.note}</p>
+        )}
+        {product.qualityNote && (
+          <p className="text-[10px] text-orange-600">{product.qualityNote}</p>
+        )}
       </div>
     </div>
   );
@@ -67,14 +106,101 @@ function MenuItem({ icon, title, badge, subtitle, onClick }) {
 export default function TikTokProfile() {
   const [activeTab, setActiveTab] = useState('products');
 
+  // Using the exact same products from CategoriesPage
   const products = [
-    { title: 'Wireless Earbuds Pro Max', price: '$89.99', sales: '2.4K' },
-    { title: 'Smart Watch Series 5', price: '$199.99', sales: '1.8K' },
-    { title: 'Phone Case Premium', price: '$24.99', sales: '5.2K' },
-    { title: 'USB-C Fast Charger', price: '$34.99', sales: '3.1K' },
-    { title: 'Bluetooth Speaker Mini', price: '$45.99', sales: '1.5K' },
-    { title: 'Screen Protector Glass', price: '$12.99', sales: '4.7K' },
+    {
+      id: "1",
+      title: "Wireless Bluetooth Headphones Noise Cancel",
+      price: "79523",
+      soldCount: "234",
+      rating: "4.8",
+      imageUrl: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?q=80&w=300&h=300&auto=format&fit=crop",
+      tags: ["Sale", "SuperDeals"],
+      description: "Wireless Bluetooth Headphones Noise Cancel",
+      note: ""
+    },
+    {
+      id: "2",
+      title: "Smart Watch Fitness Tracker Heart Rate",
+      price: "67019",
+      soldCount: "18081",
+      rating: "4.7",
+      imageUrl: "https://images.unsplash.com/photo-1583394838336-acd977736f90?q=80&w=300&h=300&auto=format&fit=crop",
+      tags: ["Sale"],
+      description: "Smart Watch Fitness Tracker Heart Rate",
+      note: "Top selling on AliExpress"
+    },
+    {
+      id: "3",
+      title: "Sport Smart Watch Fitness Call",
+      price: "105730",
+      soldCount: "1361",
+      rating: "4.6",
+      imageUrl: "https://images.unsplash.com/photo-1585060544812-6b45742d762f?q=80&w=300&h=300&auto=format&fit=crop",
+      tags: ["Sale", "SuperDeals"],
+      description: "Sport Smart Watch Fitness Call",
+      qualityNote: "Premium Quality"
+    },
+    {
+      id: "4",
+      title: "30 36 Inch Curly Highlight Wig Human",
+      price: "741510",
+      soldCount: "637",
+      rating: "4.7",
+      imageUrl: "https://images.unsplash.com/photo-1625948515291-69613efd103f?q=80&w=300&h=300&auto=format&fit=crop",
+      tags: ["Brand+", "Sale"],
+      description: "30 36 Inch Curly Highlight Wig Human",
+      note: "Top selling on AliExpress"
+    },
+    {
+      id: "5",
+      title: "Premium Wireless Speaker Deep Bass",
+      price: "89990",
+      soldCount: "432",
+      rating: "4.8",
+      imageUrl: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=300&h=300&auto=format&fit=crop",
+      tags: ["Sale"],
+      description: "Premium Wireless Speaker Deep Bass",
+      note: ""
+    },
+    {
+      id: "6",
+      title: "HD Webcam 1080P Built-in Microphone",
+      price: "49990",
+      soldCount: "789",
+      rating: "5.0",
+      imageUrl: "https://images.unsplash.com/photo-1600003014755-ba31aa59c4b6?q=80&w=300&h=300&auto=format&fit=crop",
+      tags: ["Certified Original"],
+      description: "HD Webcam 1080P Built-in Microphone",
+      qualityNote: "Premium Quality"
+    },
+    {
+      id: "7",
+      title: "Mechanical Gaming Keyboard RGB",
+      price: "767523",
+      soldCount: "38",
+      rating: "4.8",
+      imageUrl: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?q=80&w=300&h=300&auto=format&fit=crop",
+      tags: ["Sale", "250%"],
+      description: "Mechanical Gaming Keyboard RGB",
+      qualityNote: "Premium Quality"
+    },
+    {
+      id: "8",
+      title: "Ergonomic Wireless Mouse Rechargeable",
+      price: "24990",
+      soldCount: "923",
+      rating: "4.7",
+      imageUrl: "https://images.unsplash.com/photo-1586864387634-97201e228378?q=80&w=300&h=300&auto=format&fit=crop",
+      tags: ["Brand+"],
+      description: "Ergonomic Wireless Mouse Rechargeable",
+      note: ""
+    }
   ];
+
+  // Sample products for saved and liked tabs
+  const savedProducts = products.slice(0, 4);
+  const likedProducts = products.slice(4, 8);
 
   return (
     <div className="min-h-screen bg-slate-50 max-w-2xl mx-auto">
@@ -162,33 +288,32 @@ export default function TikTokProfile() {
 
       {/* Content Sections */}
       {activeTab === 'products' && (
-        <div className="p-3 pb-24">
-          {/* Products Grid */}
-          <div className="grid grid-cols-2 gap-2.5">
-            {products.map((product, index) => (
-              <ProductCard key={index} {...product} />
+        <div className="p-2 pb-24">
+          <div className="grid grid-cols-2 gap-2">
+            {products.map((product) => (
+              <ProductCard key={product.id} product={product} />
             ))}
           </div>
         </div>
       )}
 
       {activeTab === 'saved' && (
-        <div className="p-3 pb-24">
-          {/* Products Grid */}
-          <div className="grid grid-cols-2 gap-2.5">
-            {products.map((product, index) => (
-              <ProductCard key={index} {...product} />
+        <div className="p-2 pb-24">
+          <div className="grid grid-cols-2 gap-2">
+            {savedProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
             ))}
           </div>
         </div>
       )}
 
       {activeTab === 'liked' && (
-        <div className="flex flex-col items-center justify-center py-20">
-          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-3">
-            <Heart className="w-7 h-7 text-slate-400" />
+        <div className="p-2 pb-24">
+          <div className="grid grid-cols-2 gap-2">
+            {likedProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
           </div>
-          <p className="text-slate-500 text-sm">No liked videos yet</p>
         </div>
       )}
 
@@ -198,6 +323,16 @@ export default function TikTokProfile() {
           <Plus className="w-6 h-6 text-white" />
         </button>
       )}
+
+      {/* Global Styles for consistency */}
+      <style jsx global>{`
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+      `}</style>
     </div>
   );
 }
