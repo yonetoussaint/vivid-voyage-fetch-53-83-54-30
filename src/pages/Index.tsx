@@ -248,8 +248,24 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
         ))}
       </div>
 
-      {/* Footer */}
-      <Footer />
+      {/* Hidden Footer - present in DOM for Google Auth but not visible */}
+      <div 
+        className="sr-only" 
+        style={{
+          position: 'absolute',
+          width: '1px',
+          height: '1px',
+          padding: 0,
+          margin: '-1px',
+          overflow: 'hidden',
+          clip: 'rect(0, 0, 0, 0)',
+          whiteSpace: 'nowrap',
+          borderWidth: 0
+        }}
+        aria-hidden="true"
+      >
+        <Footer />
+      </div>
     </div>
   );
 };
