@@ -561,8 +561,8 @@ const walletTabs = isWalletPage ? [
           <AliExpressHeader
             activeTabId={isMessagesListPage ? messagesFilter : isWalletPage ? walletFilter : isExplorePage ? exploreFilter : activeTab}
             showFilterBar={showFilterBar}
-            // FIXED: Changed from !isWalletPage to allow tabs on wallet page
-            showCategoryTabs={!isProductsPage && !pathname.startsWith('/categories') || isWalletPage || isMessagesListPage || isExplorePage}
+            // Hide category tabs on ALL messages pages (list and detail)
+            showCategoryTabs={(!isProductsPage && !pathname.startsWith('/categories') && !isMessagesPage) || isWalletPage || isExplorePage}
             filterCategories={filterCategories}
             selectedFilters={selectedFilters}
             onFilterSelect={onFilterSelect}
