@@ -7,16 +7,255 @@ import Footer from "@/components/Footer";
 import HeroBanner from "@/components/home/HeroBanner";
 import { useHeaderFilter } from "@/contexts/HeaderFilterContext";
 import { useAuth } from "@/components/Providers";
-
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Tag
-} from "lucide-react";
+import { Tag, Star, ShoppingBag, TrendingUp, Zap, Sparkles } from "lucide-react";
 import { useLocation } from 'react-router-dom';
 
 interface ForYouContentProps {
   category: string;
 }
+
+// Mock products for demonstration (you can replace with real data)
+const MOCK_PRODUCTS = Array.from({ length: 100 }, (_, index) => ({
+  id: `product-${index + 1}`,
+  title: `High Quality Product ${index + 1} with Amazing Features`,
+  price: Math.floor(Math.random() * 50000) + 1000,
+  soldCount: Math.floor(Math.random() * 10000) + 100,
+  rating: (Math.random() * 1 + 4).toFixed(1),
+  imageUrl: `https://images.unsplash.com/photo-${1556742049 + index * 10}?q=80&w=300&h=300&auto=format&fit=crop`,
+  tags: index % 3 === 0 ? ["Sale"] : index % 5 === 0 ? ["SuperDeals", "Sale"] : ["Brand+"],
+  description: `Product description ${index + 1} with all features included`,
+  note: index % 4 === 0 ? "Top selling on AliExpress" : "",
+  qualityNote: index % 6 === 0 ? "Premium Quality" : "",
+  delivery: ["Free Shipping", "Fast Delivery", "Local Seller"][index % 3],
+  discount: index % 4 === 0 ? Math.floor(Math.random() * 50) + 10 : 0
+}));
+
+// Infinite Products Grid Component
+const InfiniteProductsGrid: React.FC = () => {
+  const [visibleProducts, setVisibleProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
+  const loaderRef = useRef(null);
+  const productsPerPage = 20;
+
+  // Helper function to render tag elements
+  const renderTag = (tag: string) => {
+    if (tag === "Sale") {
+      return <span className="bg-red-500 text-white px-1.5 py-0.5 rounded text-[10px] font-medium mr-1">Sale</span>;
+    }
+    if (tag === "SuperDeals") {
+      return <span className="bg-orange-500 text-white px-1.5 py-0.5 rounded text-[10px] font-medium mr-1">Super</span>;
+    }
+    if (tag === "Brand+") {
+      return <span className="bg-blue-600 text-white px-1.5 py-0.5 rounded text-[10px] font-medium mr-1">Brand+</span>;
+    }
+    return null;
+  };
+
+  // Load more products
+  const loadMoreProducts = useCallback(() => {
+    if (loading || !hasMore) return;
+
+    setLoading(true);
+    
+    // Simulate API call delay
+    setTimeout(() => {
+      const startIndex = page * productsPerPage;
+      const endIndex = startIndex + productsPerPage;
+      const newProducts = MOCK_PRODUCTS.slice(startIndex, endIndex);
+
+      if (newProducts.length === 0) {
+        setHasMore(false);
+      } else {
+        setVisibleProducts(prev => [...prev, ...newProducts]);
+        setPage(prev => prev + 1);
+      }
+      
+      setLoading(false);
+    }, 1000);
+  }, [page, loading, hasMore]);
+
+  // Initial load
+  useEffect(() => {
+    loadMoreProducts();
+  }, []);
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const target = entries[0];
+        if (target.isIntersecting && hasMore && !loading) {
+          loadMoreProducts();
+        }
+      },
+      {
+        root: null,
+        rootMargin: "200px",
+        threshold: 0.1,
+      }
+    );
+
+    if (loaderRef.current) {
+      observer.observe(loaderRef.current);
+    }
+
+    return () => {
+      if (loaderRef.current) {
+        observer.unobserve(loaderRef.current);
+      }
+    };
+  }, [hasMore, loading, loadMoreProducts]);
+
+  // Product Card Component
+  const ProductCard: React.FC<{ product: any }> = ({ product }) => (
+    <div className="bg-white rounded-lg overflow-hidden border border-gray-100 hover:border-orange-200 hover:shadow-md transition-all duration-200">
+      <div className="relative aspect-square overflow-hidden bg-white">
+        <img 
+          src={product.imageUrl} 
+          alt={product.title}
+          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+        />
+        {product.discount > 0 && (
+          <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+            -{product.discount}%
+          </div>
+        )}
+        <button className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm w-8 h-8 rounded-full flex items-center justify-center hover:bg-white transition-colors">
+          <ShoppingBag className="w-4 h-4 text-gray-700" />
+        </button>
+      </div>
+      
+      <div className="p-2">
+        <div className="mb-1.5">
+          {product.tags.map((tag: string, index: number) => (
+            <span key={index} className="inline-block">
+              {renderTag(tag)}
+            </span>
+          ))}
+        </div>
+        
+        <h3 className="text-xs text-gray-700 mb-2 line-clamp-2 leading-tight min-h-[2.4rem]">
+          {product.title}
+        </h3>
+        
+        <div className="flex items-center gap-1 mb-1">
+          <div className="flex items-center">
+            <span className="text-[10px] text-orange-500 mr-0.5">★</span>
+            <span className="text-[10px] text-gray-700">{product.rating}</span>
+          </div>
+          <span className="text-[10px] text-gray-400">|</span>
+          <span className="text-[10px] text-gray-500">{product.soldCount.toLocaleString()} sold</span>
+          <span className="text-[10px] text-gray-400">|</span>
+          <span className="text-[10px] text-green-600 font-medium">{product.delivery}</span>
+        </div>
+        
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-bold text-gray-900">₱{product.price.toLocaleString('en-US')}</p>
+            {product.discount > 0 && (
+              <p className="text-[10px] text-gray-400 line-through">
+                ₱{Math.round(product.price / (1 - product.discount/100)).toLocaleString()}
+              </p>
+            )}
+          </div>
+          
+          {product.note && (
+            <span className="text-[9px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+              {product.note}
+            </span>
+          )}
+        </div>
+        
+        {product.qualityNote && (
+          <p className="text-[10px] text-orange-600 mt-1 font-medium">
+            {product.qualityNote}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+
+  // Header for the products section
+  const SectionHeader: React.FC = () => (
+    <div className="mb-4">
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+          <TrendingUp className="w-5 h-5 text-orange-500" />
+          Recommended For You
+        </h2>
+        <button className="text-sm text-orange-500 font-medium hover:text-orange-600 transition-colors">
+          View All
+        </button>
+      </div>
+      <p className="text-xs text-gray-500 mb-3">
+        Personalized recommendations based on your interests and browsing history
+      </p>
+    </div>
+  );
+
+  // Loading skeleton
+  const LoadingSkeleton: React.FC = () => (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+      {Array.from({ length: 10 }).map((_, index) => (
+        <div key={index} className="bg-white rounded-lg overflow-hidden border border-gray-100">
+          <div className="aspect-square bg-gray-100 animate-pulse"></div>
+          <div className="p-2 space-y-2">
+            <div className="h-4 bg-gray-100 rounded animate-pulse"></div>
+            <div className="h-3 bg-gray-100 rounded animate-pulse"></div>
+            <div className="h-5 bg-gray-100 rounded animate-pulse"></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="py-4 px-3 md:px-4">
+      <SectionHeader />
+      
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+        {visibleProducts.map((product) => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
+      
+      {/* Loading indicator */}
+      {loading && <LoadingSkeleton />}
+      
+      {/* Load more trigger */}
+      <div 
+        ref={loaderRef}
+        className="flex justify-center items-center py-6"
+      >
+        {hasMore ? (
+          <div className="text-center">
+            <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+            <p className="text-sm text-gray-500">Loading more products...</p>
+          </div>
+        ) : (
+          <div className="text-center py-4">
+            <Sparkles className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+            <p className="text-sm text-gray-400">No more products to load</p>
+            <p className="text-xs text-gray-400 mt-1">You've reached the end of our recommendations</p>
+          </div>
+        )}
+      </div>
+      
+      {/* Back to top button */}
+      {visibleProducts.length > 30 && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="fixed bottom-6 right-6 bg-orange-500 text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center hover:bg-orange-600 transition-colors z-40"
+        >
+          <Zap className="w-5 h-5" />
+        </button>
+      )}
+    </div>
+  );
+};
 
 const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   const navigate = useNavigate();
@@ -235,6 +474,8 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       icon={Tag}
       showTitleChevron={true}
     />,
+    
+    <InfiniteProductsGrid key="infinite-grid" />,
   ];
 
   return (
