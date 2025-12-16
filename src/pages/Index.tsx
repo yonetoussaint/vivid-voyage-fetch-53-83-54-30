@@ -27,9 +27,61 @@ const MOCK_PRODUCTS = Array.from({ length: 100 }, (_, index) => ({
   description: `Product description ${index + 1} with all features included`,
   note: index % 4 === 0 ? "Top selling on AliExpress" : "",
   qualityNote: index % 6 === 0 ? "Premium Quality" : "",
-  delivery: ["Free Shipping", "Fast Delivery", "Local Seller"][index % 3],
-  discount: index % 4 === 0 ? Math.floor(Math.random() * 50) + 10 : 0
 }));
+
+// Helper function to render tag elements (exact copy from profile page)
+const renderTag = (tag: string) => {
+  if (tag === "Sale") {
+    return <span className="bg-red-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">{tag}</span>;
+  }
+  if (tag === "SuperDeals") {
+    return <span className="bg-orange-100 text-orange-700 px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">{tag}</span>;
+  }
+  if (tag === "Brand+") {
+    return <span className="bg-blue-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">{tag}</span>;
+  }
+  if (tag === "Certified Original") {
+    return <span className="bg-blue-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">{tag}</span>;
+  }
+  if (tag === "250%") {
+    return <span className="bg-orange-100 text-orange-700 px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">{tag}</span>;
+  }
+  return null;
+};
+
+// ProductCard component (exact copy from profile page)
+const ProductCard: React.FC<{ product: any }> = ({ product }) => (
+  <div className="bg-white rounded overflow-hidden">
+    <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
+      <img 
+        src={product.imageUrl} 
+        alt={product.title} 
+        className="w-full h-full object-cover" 
+      />
+    </div>
+    <div className="p-1">
+      <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight min-h-[2.2rem]">
+        {product.tags.map((tag: string) => renderTag(tag))}
+        {product.description}
+      </p>
+      <div className="flex items-center gap-1 mb-0.5">
+        <span className="text-[10px] text-gray-500">{product.soldCount.toLocaleString()} sold</span>
+        <span className="text-[10px] text-gray-400">|</span>
+        <div className="flex items-center">
+          <span className="text-[10px] text-gray-700 mr-0.5">★</span>
+          <span className="text-[10px] text-gray-700">{product.rating}</span>
+        </div>
+      </div>
+      <p className="text-sm font-bold text-gray-900">₱{product.price.toLocaleString('en-US')}</p>
+      {product.note && (
+        <p className="text-[10px] text-gray-500">{product.note}</p>
+      )}
+      {product.qualityNote && (
+        <p className="text-[10px] text-orange-600">{product.qualityNote}</p>
+      )}
+    </div>
+  </div>
+);
 
 // Infinite Products Grid Component
 const InfiniteProductsGrid: React.FC = () => {
@@ -39,20 +91,6 @@ const InfiniteProductsGrid: React.FC = () => {
   const [page, setPage] = useState(0);
   const loaderRef = useRef(null);
   const productsPerPage = 20;
-
-  // Helper function to render tag elements
-  const renderTag = (tag: string) => {
-    if (tag === "Sale") {
-      return <span className="bg-red-500 text-white px-1.5 py-0.5 rounded text-[10px] font-medium mr-1">Sale</span>;
-    }
-    if (tag === "SuperDeals") {
-      return <span className="bg-orange-500 text-white px-1.5 py-0.5 rounded text-[10px] font-medium mr-1">Super</span>;
-    }
-    if (tag === "Brand+") {
-      return <span className="bg-blue-600 text-white px-1.5 py-0.5 rounded text-[10px] font-medium mr-1">Brand+</span>;
-    }
-    return null;
-  };
 
   // Load more products
   const loadMoreProducts = useCallback(() => {
@@ -109,103 +147,42 @@ const InfiniteProductsGrid: React.FC = () => {
     };
   }, [hasMore, loading, loadMoreProducts]);
 
-  // Product Card Component
-  const ProductCard: React.FC<{ product: any }> = ({ product }) => (
-    <div className="bg-white rounded-lg overflow-hidden border border-gray-100 hover:border-orange-200 hover:shadow-md transition-all duration-200">
-      <div className="relative aspect-square overflow-hidden bg-white">
-        <img 
-          src={product.imageUrl} 
-          alt={product.title}
-          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-        />
-        {product.discount > 0 && (
-          <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
-            -{product.discount}%
-          </div>
-        )}
-        <button className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm w-8 h-8 rounded-full flex items-center justify-center hover:bg-white transition-colors">
-          <ShoppingBag className="w-4 h-4 text-gray-700" />
-        </button>
-      </div>
-      
-      <div className="p-2">
-        <div className="mb-1.5">
-          {product.tags.map((tag: string, index: number) => (
-            <span key={index} className="inline-block">
-              {renderTag(tag)}
-            </span>
-          ))}
-        </div>
-        
-        <h3 className="text-xs text-gray-700 mb-2 line-clamp-2 leading-tight min-h-[2.4rem]">
-          {product.title}
-        </h3>
-        
-        <div className="flex items-center gap-1 mb-1">
-          <div className="flex items-center">
-            <span className="text-[10px] text-orange-500 mr-0.5">★</span>
-            <span className="text-[10px] text-gray-700">{product.rating}</span>
-          </div>
-          <span className="text-[10px] text-gray-400">|</span>
-          <span className="text-[10px] text-gray-500">{product.soldCount.toLocaleString()} sold</span>
-          <span className="text-[10px] text-gray-400">|</span>
-          <span className="text-[10px] text-green-600 font-medium">{product.delivery}</span>
-        </div>
-        
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-bold text-gray-900">₱{product.price.toLocaleString('en-US')}</p>
-            {product.discount > 0 && (
-              <p className="text-[10px] text-gray-400 line-through">
-                ₱{Math.round(product.price / (1 - product.discount/100)).toLocaleString()}
-              </p>
-            )}
-          </div>
-          
-          {product.note && (
-            <span className="text-[9px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
-              {product.note}
-            </span>
-          )}
-        </div>
-        
-        {product.qualityNote && (
-          <p className="text-[10px] text-orange-600 mt-1 font-medium">
-            {product.qualityNote}
-          </p>
-        )}
-      </div>
-    </div>
-  );
-
   // Header for the products section
   const SectionHeader: React.FC = () => (
-    <div className="mb-4">
+    <div className="mb-4 px-2">
       <div className="flex items-center justify-between mb-2">
-        <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-orange-500" />
+        <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+          <TrendingUp className="w-4 h-4 text-gray-600" />
           Recommended For You
         </h2>
-        <button className="text-sm text-orange-500 font-medium hover:text-orange-600 transition-colors">
+        <button className="text-xs text-blue-600 font-medium hover:text-blue-700 transition-colors flex items-center gap-1">
           View All
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
         </button>
       </div>
-      <p className="text-xs text-gray-500 mb-3">
-        Personalized recommendations based on your interests and browsing history
+      <p className="text-xs text-gray-500">
+        Personalized recommendations based on your interests
       </p>
     </div>
   );
 
-  // Loading skeleton
+  // Loading skeleton matching the exact product card UI
   const LoadingSkeleton: React.FC = () => (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-      {Array.from({ length: 10 }).map((_, index) => (
-        <div key={index} className="bg-white rounded-lg overflow-hidden border border-gray-100">
-          <div className="aspect-square bg-gray-100 animate-pulse"></div>
-          <div className="p-2 space-y-2">
-            <div className="h-4 bg-gray-100 rounded animate-pulse"></div>
+    <div className="grid grid-cols-2 gap-2">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <div key={index} className="bg-white rounded overflow-hidden">
+          <div className="w-full aspect-square bg-gray-100 rounded overflow-hidden mb-1 animate-pulse"></div>
+          <div className="p-1 space-y-1.5">
             <div className="h-3 bg-gray-100 rounded animate-pulse"></div>
-            <div className="h-5 bg-gray-100 rounded animate-pulse"></div>
+            <div className="h-3 bg-gray-100 rounded animate-pulse w-3/4"></div>
+            <div className="flex items-center gap-1">
+              <div className="h-2 bg-gray-100 rounded animate-pulse w-1/3"></div>
+              <div className="h-2 bg-gray-100 rounded animate-pulse w-4"></div>
+              <div className="h-2 bg-gray-100 rounded animate-pulse w-1/4"></div>
+            </div>
+            <div className="h-4 bg-gray-100 rounded animate-pulse w-1/2"></div>
           </div>
         </div>
       ))}
@@ -213,44 +190,48 @@ const InfiniteProductsGrid: React.FC = () => {
   );
 
   return (
-    <div className="py-4 px-3 md:px-4">
+    <div className="py-4">
       <SectionHeader />
       
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-        {visibleProducts.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
+      <div className="px-2">
+        <div className="grid grid-cols-2 gap-2">
+          {visibleProducts.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+        
+        {/* Loading indicator */}
+        {loading && <LoadingSkeleton />}
+        
+        {/* Load more trigger */}
+        <div 
+          ref={loaderRef}
+          className="flex justify-center items-center py-6"
+        >
+          {hasMore ? (
+            <div className="text-center">
+              <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+              <p className="text-xs text-gray-500">Loading more products...</p>
+            </div>
+          ) : (
+            <div className="text-center py-4">
+              <Sparkles className="w-6 h-6 text-gray-300 mx-auto mb-2" />
+              <p className="text-xs text-gray-400">No more products to load</p>
+              <p className="text-[10px] text-gray-400 mt-1">You've reached the end</p>
+            </div>
+          )}
+        </div>
       </div>
       
-      {/* Loading indicator */}
-      {loading && <LoadingSkeleton />}
-      
-      {/* Load more trigger */}
-      <div 
-        ref={loaderRef}
-        className="flex justify-center items-center py-6"
-      >
-        {hasMore ? (
-          <div className="text-center">
-            <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-            <p className="text-sm text-gray-500">Loading more products...</p>
-          </div>
-        ) : (
-          <div className="text-center py-4">
-            <Sparkles className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-            <p className="text-sm text-gray-400">No more products to load</p>
-            <p className="text-xs text-gray-400 mt-1">You've reached the end of our recommendations</p>
-          </div>
-        )}
-      </div>
-      
-      {/* Back to top button */}
-      {visibleProducts.length > 30 && (
+      {/* Back to top button - minimal style */}
+      {visibleProducts.length > 20 && (
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="fixed bottom-6 right-6 bg-orange-500 text-white w-12 h-12 rounded-full shadow-lg flex items-center justify-center hover:bg-orange-600 transition-colors z-40"
+          className="fixed bottom-4 right-4 bg-blue-600 text-white w-10 h-10 rounded-full shadow flex items-center justify-center hover:bg-blue-700 transition-colors z-40"
         >
-          <Zap className="w-5 h-5" />
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+          </svg>
         </button>
       )}
     </div>
@@ -377,7 +358,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
             // Determine scroll direction with threshold to prevent jitter
             const scrollThreshold = 2;
             const isScrollingDown = scrollDelta > scrollThreshold;
-            const isScrollingUp = scrollDelta < -scrollThreshold;
+              const isScrollingUp = scrollDelta < -scrollThreshold;
 
             // Smart switching logic
             if (shouldShowNews && isScrollingDown) {
