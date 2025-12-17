@@ -188,12 +188,13 @@ const FavouriteChannels: React.FC = () => {
 
 // Popular Categories Component
 // Popular Categories Component - UPDATED with SectionHeader
+// Popular Categories Component - UPDATED with proper SectionHeader props
 const PopularCategories: React.FC = () => {
   const navigate = useNavigate();
 
-  const handleMoreClick = () => {
-    navigate('/categories');
-  };
+  // You can choose an appropriate icon - I'll use Tag like FlashDeals or another relevant icon
+  // You might want to import a category-specific icon
+  const CategoryIcon = Tag; // or import { Grid, Layout, Layers } from "lucide-react";
 
   const categories = [
     {
@@ -240,11 +241,16 @@ const PopularCategories: React.FC = () => {
 
   return (
     <div className="bg-white">
-      {/* Use SectionHeader component like FlashDeals */}
+      {/* Use SectionHeader component with proper props */}
       <SectionHeader
         title="Popular Categories for you"
+        icon={CategoryIcon}
         showTitleChevron={true}
-        onTitleClick={handleMoreClick}
+        viewAllLink="/categories" // Link for "View All"
+        viewAllText="More" // Text for the view all button
+        // You can add other props if needed:
+        // showCountdown={false} // Not needed for categories
+        // showStackedProfiles={false} // Not needed
       />
 
       {/* Categories Grid */}
