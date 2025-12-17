@@ -15,113 +15,190 @@ interface ForYouContentProps {
   category: string;
 }
 
-// Mock products for demonstration (you can replace with real data)
-const MOCK_PRODUCTS = Array.from({ length: 100 }, (_, index) => ({
-  id: `product-${index + 1}`,
-  title: `High Quality Product ${index + 1} with Amazing Features`,
-  price: Math.floor(Math.random() * 50000) + 1000,
-  soldCount: Math.floor(Math.random() * 10000) + 100,
-  rating: (Math.random() * 1 + 4).toFixed(1),
-  imageUrl: `https://images.unsplash.com/photo-${1556742049 + index * 10}?q=80&w=300&h=300&auto=format&fit=crop`,
-  tags: index % 3 === 0 ? ["Sale"] : index % 5 === 0 ? ["SuperDeals", "Sale"] : ["Brand+"],
-  description: `Product description ${index + 1} with all features included`,
-  note: index % 4 === 0 ? "Top selling on AliExpress" : "",
-  qualityNote: index % 6 === 0 ? "Premium Quality" : "",
-}));
+// Product interface matching your database structure
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  discount_price?: number;
+  inventory: number;
+  rating?: number;
+  sold_count?: number;
+  product_images?: Array<{ src: string }>;
+  description?: string;
+  category?: string;
+  tags?: string[];
+  flash_start_time?: string;
+  created_at?: string;
+}
 
-// Helper function to render tag elements (exact copy from profile page)
+// Helper function to render tag elements (updated to match your product tags)
 const renderTag = (tag: string) => {
-  if (tag === "Sale") {
-    return <span className="bg-red-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">{tag}</span>;
+  if (tag === "Sale" || tag === "sale") {
+    return <span className="bg-red-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Sale</span>;
   }
-  if (tag === "SuperDeals") {
-    return <span className="bg-orange-100 text-orange-700 px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">{tag}</span>;
+  if (tag === "SuperDeals" || tag === "flash_deal") {
+    return <span className="bg-orange-100 text-orange-700 px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">SuperDeals</span>;
   }
-  if (tag === "Brand+") {
-    return <span className="bg-blue-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">{tag}</span>;
+  if (tag === "Brand+" || tag === "premium") {
+    return <span className="bg-blue-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Brand+</span>;
   }
-  if (tag === "Certified Original") {
-    return <span className="bg-blue-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">{tag}</span>;
+  if (tag === "Certified Original" || tag === "original") {
+    return <span className="bg-blue-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Certified Original</span>;
   }
   if (tag === "250%") {
-    return <span className="bg-orange-100 text-orange-700 px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">{tag}</span>;
+    return <span className="bg-orange-100 text-orange-700 px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">250%</span>;
   }
   return null;
 };
 
-// ProductCard component (exact copy from profile page)
-const ProductCard: React.FC<{ product: any }> = ({ product }) => (
-  <div className="bg-white rounded overflow-hidden">
-    <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
-      <img 
-        src={product.imageUrl} 
-        alt={product.title} 
-        className="w-full h-full object-cover" 
-      />
-    </div>
-    <div className="p-1">
-      <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight min-h-[2.2rem]">
-        {product.tags.map((tag: string) => renderTag(tag))}
-        {product.description}
-      </p>
-      <div className="flex items-center gap-1 mb-0.5">
-        <span className="text-[10px] text-gray-500">{product.soldCount.toLocaleString()} sold</span>
-        <span className="text-[10px] text-gray-400">|</span>
-        <div className="flex items-center">
-          <span className="text-[10px] text-gray-700 mr-0.5">★</span>
-          <span className="text-[10px] text-gray-700">{product.rating}</span>
-        </div>
-      </div>
-      <p className="text-sm font-bold text-gray-900">₱{product.price.toLocaleString('en-US')}</p>
-      {product.note && (
-        <p className="text-[10px] text-gray-500">{product.note}</p>
-      )}
-      {product.qualityNote && (
-        <p className="text-[10px] text-orange-600">{product.qualityNote}</p>
-      )}
-    </div>
-  </div>
-);
+// ProductCard component updated for real data
+const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
+  // Calculate sold count - using inventory or a default
+  const soldCount = product.sold_count || Math.floor(Math.random() * 10000) + 100;
+  
+  // Get rating or generate a realistic one
+  const rating = product.rating || (Math.random() * 1 + 4).toFixed(1);
+  
+  // Get the first product image or use a placeholder
+  const imageUrl = product.product_images?.[0]?.src || `https://placehold.co/300x300?text=Product`;
+  
+  // Generate tags based on product properties
+  const generateTags = () => {
+    const tags = [];
+    if (product.discount_price) tags.push("Sale");
+    if (product.flash_start_time) tags.push("SuperDeals");
+    if (product.category?.toLowerCase().includes("premium")) tags.push("Brand+");
+    if (product.tags && product.tags.length > 0) {
+      tags.push(...product.tags.slice(0, 2));
+    }
+    return tags.length > 0 ? tags : ["Popular"];
+  };
 
-// Infinite Products Grid Component
-const InfiniteProductsGrid: React.FC = () => {
-  const [visibleProducts, setVisibleProducts] = useState<any[]>([]);
+  const tags = generateTags();
+  
+  // Get display price (discount or regular)
+  const displayPrice = product.discount_price || product.price;
+  const hasDiscount = !!product.discount_price && product.discount_price < product.price;
+  
+  // Generate quality note based on price tier
+  const qualityNote = product.price > 10000 ? "Premium Quality" : "";
+  
+  // Generate sales note
+  const salesNote = soldCount > 5000 ? "Top selling on AliExpress" : "";
+
+  return (
+    <div className="bg-white rounded overflow-hidden">
+      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
+        <img 
+          src={imageUrl} 
+          alt={product.name} 
+          className="w-full h-full object-cover" 
+          loading="lazy"
+        />
+      </div>
+      <div className="p-1">
+        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight min-h-[2.2rem]">
+          {tags.map((tag) => renderTag(tag))}
+          {product.description || product.name}
+        </p>
+        <div className="flex items-center gap-1 mb-0.5">
+          <span className="text-[10px] text-gray-500">{soldCount.toLocaleString()} sold</span>
+          <span className="text-[10px] text-gray-400">|</span>
+          <div className="flex items-center">
+            <span className="text-[10px] text-gray-700 mr-0.5">★</span>
+            <span className="text-[10px] text-gray-700">{rating}</span>
+          </div>
+        </div>
+        <p className="text-sm font-bold text-gray-900">
+          ₱{displayPrice.toLocaleString('en-US')}
+          {hasDiscount && (
+            <span className="text-[10px] text-gray-500 line-through ml-1">
+              ₱{product.price.toLocaleString('en-US')}
+            </span>
+          )}
+        </p>
+        {salesNote && (
+          <p className="text-[10px] text-gray-500">{salesNote}</p>
+        )}
+        {qualityNote && (
+          <p className="text-[10px] text-orange-600">{qualityNote}</p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Infinite Products Grid Component using real data
+const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => {
+  const [page, setPage] = useState(0);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(0);
   const loaderRef = useRef(null);
   const productsPerPage = 20;
 
-  // Load more products
-  const loadMoreProducts = useCallback(() => {
+  // Fetch initial products
+  const { data: initialProducts, isLoading: initialLoading } = useQuery({
+    queryKey: ["products", "for-you", category],
+    queryFn: () => fetchAllProducts(undefined, category, 100), // Fetch up to 100 products initially
+    staleTime: 60000,
+  });
+
+  // Set initial products when data loads
+  useEffect(() => {
+    if (initialProducts && initialProducts.length > 0) {
+      setAllProducts(initialProducts);
+      // Check if we have more products to load
+      setHasMore(initialProducts.length >= productsPerPage);
+    }
+  }, [initialProducts]);
+
+  // Load more products function
+  const loadMoreProducts = useCallback(async () => {
     if (loading || !hasMore) return;
 
     setLoading(true);
-    
-    // Simulate API call delay
-    setTimeout(() => {
-      const startIndex = page * productsPerPage;
-      const endIndex = startIndex + productsPerPage;
-      const newProducts = MOCK_PRODUCTS.slice(startIndex, endIndex);
 
-      if (newProducts.length === 0) {
-        setHasMore(false);
-      } else {
-        setVisibleProducts(prev => [...prev, ...newProducts]);
-        setPage(prev => prev + 1);
-      }
+    try {
+      // Calculate the next page
+      const nextPage = page + 1;
       
+      // Fetch more products with pagination
+      // You might need to create a paginated version of fetchAllProducts
+      // For now, we'll simulate pagination from the initial dataset
+      const startIndex = nextPage * productsPerPage;
+      const endIndex = startIndex + productsPerPage;
+      
+      // If we're using the initial dataset
+      if (initialProducts && startIndex < initialProducts.length) {
+        const newProducts = initialProducts.slice(startIndex, endIndex);
+        
+        if (newProducts.length === 0) {
+          setHasMore(false);
+        } else {
+          setAllProducts(prev => [...prev, ...newProducts]);
+          setPage(nextPage);
+        }
+      } else {
+        // If we need to fetch from API with pagination
+        // You would implement API pagination here
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error("Error loading more products:", error);
+    } finally {
       setLoading(false);
-    }, 1000);
-  }, [page, loading, hasMore]);
+    }
+  }, [page, loading, hasMore, initialProducts, productsPerPage]);
 
-  // Initial load
-  useEffect(() => {
-    loadMoreProducts();
-  }, []);
+  // Get visible products based on current page
+  const visibleProducts = allProducts.slice(0, (page + 1) * productsPerPage);
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
+    if (!loaderRef.current || !hasMore) return;
+
     const observer = new IntersectionObserver(
       (entries) => {
         const target = entries[0];
@@ -136,9 +213,7 @@ const InfiniteProductsGrid: React.FC = () => {
       }
     );
 
-    if (loaderRef.current) {
-      observer.observe(loaderRef.current);
-    }
+    observer.observe(loaderRef.current);
 
     return () => {
       if (loaderRef.current) {
@@ -147,7 +222,7 @@ const InfiniteProductsGrid: React.FC = () => {
     };
   }, [hasMore, loading, loadMoreProducts]);
 
-  // Header for the products section
+  // Section Header
   const SectionHeader: React.FC = () => (
     <div className="mb-4 px-2">
       <div className="flex items-center justify-between mb-2">
@@ -168,7 +243,7 @@ const InfiniteProductsGrid: React.FC = () => {
     </div>
   );
 
-  // Loading skeleton matching the exact product card UI
+  // Loading skeleton
   const LoadingSkeleton: React.FC = () => (
     <div className="grid grid-cols-2 gap-2">
       {Array.from({ length: 6 }).map((_, index) => (
@@ -189,20 +264,44 @@ const InfiniteProductsGrid: React.FC = () => {
     </div>
   );
 
+  // Show loading state while fetching initial data
+  if (initialLoading && allProducts.length === 0) {
+    return (
+      <div className="py-4">
+        <SectionHeader />
+        <div className="px-2">
+          <LoadingSkeleton />
+        </div>
+      </div>
+    );
+  }
+
+  // Show empty state if no products
+  if (!initialLoading && allProducts.length === 0) {
+    return (
+      <div className="py-4">
+        <SectionHeader />
+        <div className="text-center py-8 text-gray-500">
+          No products found. Check back soon!
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="py-4">
       <SectionHeader />
-      
+
       <div className="px-2">
         <div className="grid grid-cols-2 gap-2">
           {visibleProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
-        
+
         {/* Loading indicator */}
         {loading && <LoadingSkeleton />}
-        
+
         {/* Load more trigger */}
         <div 
           ref={loaderRef}
@@ -213,17 +312,17 @@ const InfiniteProductsGrid: React.FC = () => {
               <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
               <p className="text-xs text-gray-500">Loading more products...</p>
             </div>
-          ) : (
+          ) : visibleProducts.length > 0 ? (
             <div className="text-center py-4">
               <Sparkles className="w-6 h-6 text-gray-300 mx-auto mb-2" />
               <p className="text-xs text-gray-400">No more products to load</p>
               <p className="text-[10px] text-gray-400 mt-1">You've reached the end</p>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
-      
-      {/* Back to top button - minimal style */}
+
+      {/* Back to top button */}
       {visibleProducts.length > 20 && (
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
@@ -245,27 +344,16 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   // State for filter functionality
   const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
 
-  // State for lazy loading carousel data
-  const [visibleCarousels, setVisibleCarousels] = useState<Set<number>>(new Set([0, 1, 2]));
-
   // Header filter context for news ticker functionality
   const {
     setHeaderMode,
     headerMode
   } = useHeaderFilter();
 
-  const { data: products, isLoading } = useQuery({
-    queryKey: ["products", category],
-    queryFn: fetchAllProducts,
-    staleTime: 60000,
-    refetchOnWindowFocus: true,
-  });
-
   // Scroll detection refs
   const scrollY = useRef(0);
   const ticking = useRef(false);
   const heroBannerRef = useRef<HTMLDivElement>(null);
-  const newsTickerRef = useRef<HTMLDivElement>(null);
 
   // Define filter categories
   const filterCategories = [
@@ -358,7 +446,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
             // Determine scroll direction with threshold to prevent jitter
             const scrollThreshold = 2;
             const isScrollingDown = scrollDelta > scrollThreshold;
-              const isScrollingUp = scrollDelta < -scrollThreshold;
+            const isScrollingUp = scrollDelta < -scrollThreshold;
 
             // Smart switching logic
             if (shouldShowNews && isScrollingDown) {
@@ -368,15 +456,6 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
             } else if (currentScrollY <= headerHeight) {
               setHeaderMode('categories');
             }
-
-            console.log('Scroll detection:', {
-              currentScrollY,
-              scrollDelta,
-              shouldShowNews,
-              headerMode,
-              newsTickerTop: newsTickerRect.top,
-              headerHeight
-            });
           }
 
           scrollY.current = currentScrollY;
@@ -402,47 +481,6 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
     };
   }, [setHeaderMode]);
 
-  // Intersection Observer for lazy loading carousels
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const carouselIndex = parseInt(entry.target.getAttribute('data-carousel-index') || '0');
-            setVisibleCarousels(prev => new Set([...prev, carouselIndex, carouselIndex + 1]));
-          }
-        });
-      },
-      {
-        rootMargin: '400px',
-        threshold: 0.01
-      }
-    );
-
-    const placeholders = document.querySelectorAll('[data-carousel-placeholder]');
-    placeholders.forEach(placeholder => observer.observe(placeholder));
-
-    return () => observer.disconnect();
-  }, []);
-
-  // Helper function to render VendorProductCarousel with real data from database
-  const renderVendorCarousel = (index: number) => {
-    const productSlice = products?.slice((index * 5) % (products?.length || 20), ((index * 5) + 5) % (products?.length || 20)) || [];
-
-    if (!visibleCarousels.has(index)) {
-      return (
-        <div 
-          key={`vendor-placeholder-${index}`}
-          data-carousel-placeholder
-          data-carousel-index={index}
-          className="w-full h-96 bg-gray-50 animate-pulse"
-        />
-      );
-    }
-
-    return null;
-  };
-
   // Define all components to render
   const components = [
     <div key="hero" ref={heroBannerRef}>
@@ -455,13 +493,12 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       icon={Tag}
       showTitleChevron={true}
     />,
-    
-    <InfiniteProductsGrid key="infinite-grid" />,
+
+    <InfiniteProductsGrid key="infinite-grid" category={category} />,
   ];
 
   return (
     <div className="overflow-hidden relative">
-      {/* REMOVED the extra padding div - MainLayout handles spacing */}
       <div className="space-y-2">
         {components.map((component, index) => (
           <React.Fragment key={`section-${index}`}>
@@ -470,7 +507,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
         ))}
       </div>
 
-      {/* Hidden Footer - present in DOM for Google Auth but not visible */}
+      {/* Hidden Footer */}
       <div 
         className="sr-only" 
         style={{
