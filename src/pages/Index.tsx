@@ -232,7 +232,7 @@ const PopularCategories: React.FC = () => {
       id: 6,
       name: 'Laptops',
       discount: '-25%',
-      image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=400&fit=crop&crop=center',
+      image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=400&fit=crop&crop=enter',
       discountBg: 'bg-green-600'
     },
     {
@@ -255,6 +255,10 @@ const PopularCategories: React.FC = () => {
     navigate(`/category/${categoryId}`, { state: { title: categoryName } });
   };
 
+  const handleViewAllClick = () => {
+    navigate('/categories');
+  };
+
   return (
     <div className="bg-white">
       <SectionHeader
@@ -263,6 +267,7 @@ const PopularCategories: React.FC = () => {
         showTitleChevron={true}
         viewAllLink="/categories"
         viewAllText="More"
+        onViewAllClick={handleViewAllClick} // Pass click handler
       />
 
       <div className="flex gap-2 overflow-x-auto pb-4 px-2 scrollbar-hide">
