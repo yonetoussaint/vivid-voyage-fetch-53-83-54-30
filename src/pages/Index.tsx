@@ -232,7 +232,7 @@ const PopularCategories: React.FC = () => {
       id: 6,
       name: 'Laptops',
       discount: '-25%',
-      image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=400&fit=crop&crop=enter',
+      image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=400&fit=crop&crop=center',
       discountBg: 'bg-green-600'
     },
     {
