@@ -283,6 +283,7 @@ const PopularCategories: React.FC = () => {
 };
 
 // Infinite Products Grid Component
+// Infinite Products Grid Component - FIXED to load all products
 const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => {
   const [page, setPage] = useState(0);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -291,20 +292,36 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
   const loaderRef = useRef(null);
   const productsPerPage = 20;
 
-  // Fetch initial products
+  // Fetch ALL products - FIXED: call without parameters
   const { data: initialProducts, isLoading: initialLoading } = useQuery({
     queryKey: ["products", "for-you", category],
-    queryFn: () => fetchAllProducts(undefined, category, 100),
+    queryFn: () => fetchAllProducts(), // Remove the parameters
     staleTime: 60000,
   });
 
-  // Set initial products when data loads
-  useEffect(() => {
-    if (initialProducts && initialProducts.length > 0) {
-      setAllProducts(initialProducts);
-      setHasMore(initialProducts.length >= productsPerPage);
+  // Filter products by category if needed
+  const filteredProducts = useMemo(() => {
+    if (!initialProducts) return [];
+    
+    if (category && category !== 'recommendations') {
+      // Filter products by category
+      return initialProducts.filter(product => 
+        product.category?.toLowerCase() === category.toLowerCase() ||
+        product.tags?.some(tag => tag.toLowerCase() === category.toLowerCase())
+      );
     }
-  }, [initialProducts]);
+    
+    return initialProducts;
+  }, [initialProducts, category]);
+
+  // Set filtered products when data loads
+  useEffect(() => {
+    if (filteredProducts && filteredProducts.length > 0) {
+      setAllProducts(filteredProducts);
+      setHasMore(filteredProducts.length > productsPerPage);
+      setPage(0); // Reset page when category changes
+    }
+  }, [filteredProducts]);
 
   // Load more products function
   const loadMoreProducts = useCallback(async () => {
@@ -317,13 +334,13 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
       const startIndex = nextPage * productsPerPage;
       const endIndex = startIndex + productsPerPage;
 
-      if (initialProducts && startIndex < initialProducts.length) {
-        const newProducts = initialProducts.slice(startIndex, endIndex);
+      if (startIndex < allProducts.length) {
+        const newProducts = allProducts.slice(startIndex, endIndex);
 
         if (newProducts.length === 0) {
           setHasMore(false);
         } else {
-          setAllProducts(prev => [...prev, ...newProducts]);
+          // No need to setAllProducts since we already have all products
           setPage(nextPage);
         }
       } else {
@@ -334,7 +351,7 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
     } finally {
       setLoading(false);
     }
-  }, [page, loading, hasMore, initialProducts, productsPerPage]);
+  }, [page, loading, hasMore, allProducts, productsPerPage]);
 
   // Get visible products based on current page
   const visibleProducts = allProducts.slice(0, (page + 1) * productsPerPage);
