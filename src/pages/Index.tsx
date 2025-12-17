@@ -283,7 +283,7 @@ const PopularCategories: React.FC = () => {
 };
 
 // Infinite Products Grid Component
-// Infinite Products Grid Component - FIXED to load all products
+// Infinite Products Grid Component - FIXED pagination
 const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => {
   const [page, setPage] = useState(0);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -292,10 +292,10 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
   const loaderRef = useRef(null);
   const productsPerPage = 20;
 
-  // Fetch ALL products - FIXED: call without parameters
+  // Fetch ALL products
   const { data: initialProducts, isLoading: initialLoading } = useQuery({
     queryKey: ["products", "for-you", category],
-    queryFn: () => fetchAllProducts(), // Remove the parameters
+    queryFn: () => fetchAllProducts(), // Fetch all products
     staleTime: 60000,
   });
 
@@ -318,10 +318,30 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
   useEffect(() => {
     if (filteredProducts && filteredProducts.length > 0) {
       setAllProducts(filteredProducts);
+      // Check if we have more products than the first page
       setHasMore(filteredProducts.length > productsPerPage);
       setPage(0); // Reset page when category changes
+    } else if (filteredProducts && filteredProducts.length === 0) {
+      setAllProducts([]);
+      setHasMore(false);
     }
   }, [filteredProducts]);
+
+  // Calculate visible products
+  const visibleProducts = useMemo(() => {
+    const startIndex = 0;
+    const endIndex = (page + 1) * productsPerPage;
+    return allProducts.slice(startIndex, endIndex);
+  }, [allProducts, page, productsPerPage]);
+
+  // Check if we have more products to load
+  useEffect(() => {
+    if (allProducts.length > 0) {
+      const totalLoaded = (page + 1) * productsPerPage;
+      const hasMoreProducts = totalLoaded < allProducts.length;
+      setHasMore(hasMoreProducts);
+    }
+  }, [allProducts, page, productsPerPage]);
 
   // Load more products function
   const loadMoreProducts = useCallback(async () => {
@@ -330,20 +350,13 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
     setLoading(true);
 
     try {
+      // Simply increment the page
       const nextPage = page + 1;
-      const startIndex = nextPage * productsPerPage;
-      const endIndex = startIndex + productsPerPage;
-
-      if (startIndex < allProducts.length) {
-        const newProducts = allProducts.slice(startIndex, endIndex);
-
-        if (newProducts.length === 0) {
-          setHasMore(false);
-        } else {
-          // No need to setAllProducts since we already have all products
-          setPage(nextPage);
-        }
-      } else {
+      setPage(nextPage);
+      
+      // Check if we've reached the end
+      const totalLoaded = (nextPage + 1) * productsPerPage;
+      if (totalLoaded >= allProducts.length) {
         setHasMore(false);
       }
     } catch (error) {
@@ -352,9 +365,6 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
       setLoading(false);
     }
   }, [page, loading, hasMore, allProducts, productsPerPage]);
-
-  // Get visible products based on current page
-  const visibleProducts = allProducts.slice(0, (page + 1) * productsPerPage);
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
@@ -416,7 +426,7 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
           ))}
         </div>
 
-        {/* Load more trigger */}
+        {/* Load more trigger - FIXED: Only show if we actually have more products */}
         <div 
           ref={loaderRef}
           className="flex justify-center items-center py-6"
