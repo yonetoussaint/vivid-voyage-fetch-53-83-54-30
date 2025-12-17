@@ -45,6 +45,7 @@ const renderTag = (tag: string) => {
 };
 
 // ProductCard component - FIXED spacing and tags position
+// ProductCard component - FIXED spacing issue
 const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
   const soldCount = product.sold_count || Math.floor(Math.random() * 10000) + 100;
   const rating = product.rating || (Math.random() * 1 + 4).toFixed(1);
@@ -78,10 +79,10 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
         />
       </div>
       <div className="p-0.5">
-        {/* Product name with tags inline - RESTORED original structure */}
-        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight min-h-[2.2rem]">
+        {/* Product name with tags inline - REMOVED min-height */}
+        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
           {tags.map((tag) => renderTag(tag))}
-          {product.name} {/* Changed from description to name */}
+          {product.name}
         </p>
         <div className="flex items-center gap-0.5 mb-0.5">
           <span className="text-[10px] text-gray-500">{soldCount.toLocaleString()} sold</span>
