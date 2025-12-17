@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState,useMemo, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllProducts } from "@/integrations/supabase/products";
