@@ -187,88 +187,115 @@ const FavouriteChannels: React.FC = () => {
 };
 
 // Popular Categories Component
-// Popular Categories Component - UPDATED with SectionHeader
-// Popular Categories Component - UPDATED with proper SectionHeader props
 const PopularCategories: React.FC = () => {
   const navigate = useNavigate();
 
-  // You can choose an appropriate icon - I'll use Tag like FlashDeals or another relevant icon
-  // You might want to import a category-specific icon
-  const CategoryIcon = LayoutPanelLeft; // or import { Grid, Layout, Layers } from "lucide-react";
+  const CategoryIcon = LayoutPanelLeft;
 
   const categories = [
     {
       id: 1,
       name: 'Mobiles',
       discount: 'HOT',
-      image: '📱',
-      bgColor: 'bg-orange-100',
+      image: 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=400&h=400&fit=crop&crop=center',
       discountBg: 'bg-pink-600'
     },
     {
       id: 2,
       name: 'Cribs & Cots',
       discount: '-50%',
-      image: '🛏️',
-      bgColor: 'bg-blue-100',
+      image: 'https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=400&h=400&fit=crop&crop=center',
       discountBg: 'bg-blue-600'
     },
     {
       id: 3,
       name: 'Portable Speakers',
       discount: '-33%',
-      image: '🔊',
-      bgColor: 'bg-gray-100',
+      image: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400&h=400&fit=crop&crop=center',
       discountBg: 'bg-pink-600'
     },
     {
       id: 4,
-      name: 'Electric Insect...',
+      name: 'Electric Insect Killers',
       discount: '-59%',
-      image: '⚡',
-      bgColor: 'bg-gray-50',
+      image: 'https://images.unsplash.com/photo-1564424302846-62b1d09af73c?w=400&h=400&fit=crop&crop=center',
       discountBg: 'bg-pink-600'
     },
     {
       id: 5,
       name: 'Smart Watches',
       discount: '-45%',
-      image: '⌚',
-      bgColor: 'bg-purple-100',
+      image: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&h=400&fit=crop&crop=center',
       discountBg: 'bg-purple-600'
+    },
+    {
+      id: 6,
+      name: 'Laptops',
+      discount: '-25%',
+      image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=400&fit=crop&crop=center',
+      discountBg: 'bg-green-600'
+    },
+    {
+      id: 7,
+      name: 'Headphones',
+      discount: '-40%',
+      image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop&crop=center',
+      discountBg: 'bg-red-600'
+    },
+    {
+      id: 8,
+      name: 'Cameras',
+      discount: '-30%',
+      image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&h=400&fit=crop&crop=center',
+      discountBg: 'bg-indigo-600'
     }
   ];
 
+  const handleCategoryClick = (categoryId: number, categoryName: string) => {
+    // You can implement navigation to category page or products list
+    navigate(`/category/${categoryId}`, { state: { title: categoryName } });
+  };
+
   return (
     <div className="bg-white">
-      {/* Use SectionHeader component with proper props */}
       <SectionHeader
         title="Popular Categories for you"
         icon={CategoryIcon}
         showTitleChevron={true}
-        viewAllLink="/categories" // Link for "View All"
-        viewAllText="More" // Text for the view all button
-        // You can add other props if needed:
-        // showCountdown={false} // Not needed for categories
-        // showStackedProfiles={false} // Not needed
+        viewAllLink="/categories"
+        viewAllText="More"
       />
 
-      {/* Categories Grid */}
       <div className="flex gap-2 overflow-x-auto pb-4 px-2 scrollbar-hide">
         {categories.map((category) => (
           <div
             key={category.id}
+            onClick={() => handleCategoryClick(category.id, category.name)}
             className="flex-shrink-0 w-20 cursor-pointer group"
           >
-            {/* Image Container */}
-            <div className={`relative ${category.bgColor} rounded-lg overflow-hidden mb-2 aspect-square flex items-center justify-center transition-transform group-hover:scale-105`}>
+            {/* Image Container with real image */}
+            <div className="relative rounded-lg overflow-hidden mb-2 aspect-square transition-transform group-hover:scale-105">
               {/* Discount Badge */}
-              <div className={`absolute top-1 left-1 ${category.discountBg} text-white px-1 py-0.5 text-[9px] font-bold rounded`}>
+              <div className={`absolute top-1 left-1 z-10 ${category.discountBg} text-white px-1 py-0.5 text-[9px] font-bold rounded`}>
                 {category.discount}
               </div>
 
-              {/* Product Image Placeholder */}
-              <div className="text-2xl">{category.image}</div>
+              {/* Real Product Image with overlay for better text visibility */}
+              <div className="relative w-full h-full">
+                <img
+                  src={category.image}
+                  alt={category.name}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  onError={(e) => {
+                    // Fallback for broken images
+                    const target = e.target as HTMLImageElement;
+                    target.src = `https://placehold.co/80x80/cccccc/969696?text=${encodeURIComponent(category.name.charAt(0))}`;
+                  }}
+                />
+                {/* Gradient overlay for better text visibility on light images */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent" />
+              </div>
             </div>
 
             {/* Category Info */}
