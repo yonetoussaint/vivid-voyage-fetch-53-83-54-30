@@ -9,7 +9,7 @@ import Footer from "@/components/Footer";
 import HeroBanner from "@/components/home/HeroBanner";
 import { useHeaderFilter } from "@/contexts/HeaderFilterContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { Tag,layoutPanelLeft, Sparkles, ChevronRight, DollarSign, Zap, Video, Crown } from "lucide-react";
+import { Tag,LayoutPanelLeft, Sparkles, ChevronRight, DollarSign, Zap, Video, Crown } from "lucide-react";
 
 interface ForYouContentProps {
   category: string;
@@ -194,7 +194,7 @@ const PopularCategories: React.FC = () => {
 
   // You can choose an appropriate icon - I'll use Tag like FlashDeals or another relevant icon
   // You might want to import a category-specific icon
-  const CategoryIcon = layoutPanelLeft; // or import { Grid, Layout, Layers } from "lucide-react";
+  const CategoryIcon = LayoutPanelLeft; // or import { Grid, Layout, Layers } from "lucide-react";
 
   const categories = [
     {
