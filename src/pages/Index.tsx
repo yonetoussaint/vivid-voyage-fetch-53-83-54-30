@@ -406,11 +406,13 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
     };
   }, [setHeaderMode]);
 
-  // Components array with 2px spacing
+  // Components array with separators after each component
   const components = [
     <div key="hero" ref={heroBannerRef} className="mb-2">
       <HeroBanner showNewsTicker={true} />
     </div>,
+
+    <div key="separator-1" className="w-full bg-gray-100 h-2 mb-2"></div>,
 
     <div key="flash-deals-wrapper" className="mb-2">
       <FlashDeals
@@ -420,9 +422,11 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       />
     </div>,
 
-    <div key="separator" className="w-full bg-gray-100 h-2 mb-2"></div>,
+    <div key="separator-2" className="w-full bg-gray-100 h-2 mb-2"></div>,
 
     <PopularCategories key="popular-categories" />,
+
+    <div key="separator-3" className="w-full bg-gray-100 h-2 mb-2"></div>,
 
     <InfiniteProductsGrid key="infinite-grid" category={category} />,
   ];
