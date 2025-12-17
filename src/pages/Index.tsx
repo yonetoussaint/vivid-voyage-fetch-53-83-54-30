@@ -129,7 +129,7 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
   );
 };
 
-// Infinite Products Grid Component using real data
+// Infinite Products Grid Component using real data - REMOVED HEADER
 const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => {
   const [page, setPage] = useState(0);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -165,8 +165,6 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
       const nextPage = page + 1;
       
       // Fetch more products with pagination
-      // You might need to create a paginated version of fetchAllProducts
-      // For now, we'll simulate pagination from the initial dataset
       const startIndex = nextPage * productsPerPage;
       const endIndex = startIndex + productsPerPage;
       
@@ -182,7 +180,6 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
         }
       } else {
         // If we need to fetch from API with pagination
-        // You would implement API pagination here
         setHasMore(false);
       }
     } catch (error) {
@@ -222,27 +219,6 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
     };
   }, [hasMore, loading, loadMoreProducts]);
 
-  // Section Header
-  const SectionHeader: React.FC = () => (
-    <div className="mb-4 px-2">
-      <div className="flex items-center justify-between mb-2">
-        <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-gray-600" />
-          Recommended For You
-        </h2>
-        <button className="text-xs text-blue-600 font-medium hover:text-blue-700 transition-colors flex items-center gap-1">
-          View All
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-      </div>
-      <p className="text-xs text-gray-500">
-        Personalized recommendations based on your interests
-      </p>
-    </div>
-  );
-
   // Loading skeleton
   const LoadingSkeleton: React.FC = () => (
     <div className="grid grid-cols-2 gap-2">
@@ -268,7 +244,6 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
   if (initialLoading && allProducts.length === 0) {
     return (
       <div className="py-4">
-        <SectionHeader />
         <div className="px-2">
           <LoadingSkeleton />
         </div>
@@ -280,7 +255,6 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
   if (!initialLoading && allProducts.length === 0) {
     return (
       <div className="py-4">
-        <SectionHeader />
         <div className="text-center py-8 text-gray-500">
           No products found. Check back soon!
         </div>
@@ -290,8 +264,7 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
 
   return (
     <div className="py-4">
-      <SectionHeader />
-
+      {/* HEADER REMOVED - Just show products directly */}
       <div className="px-2">
         <div className="grid grid-cols-2 gap-2">
           {visibleProducts.map((product) => (
@@ -481,7 +454,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
     };
   }, [setHeaderMode]);
 
-  // Define all components to render
+  // Define all components to render with gray separator
   const components = [
     <div key="hero" ref={heroBannerRef}>
       <HeroBanner showNewsTicker={true} />
@@ -494,12 +467,15 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       showTitleChevron={true}
     />,
 
+    // Gray separator bar between FlashDeals and product grid
+    <div key="separator" className="w-full bg-gray-100 h-2"></div>,
+
     <InfiniteProductsGrid key="infinite-grid" category={category} />,
   ];
 
   return (
     <div className="overflow-hidden relative">
-      <div className="space-y-2">
+      <div className="space-y-0"> {/* Changed from space-y-2 to space-y-0 for tighter spacing */}
         {components.map((component, index) => (
           <React.Fragment key={`section-${index}`}>
             {component}
