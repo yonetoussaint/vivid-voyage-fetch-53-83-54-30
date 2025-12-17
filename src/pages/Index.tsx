@@ -6,10 +6,8 @@ import FlashDeals from "@/components/home/FlashDeals";
 import Footer from "@/components/Footer";
 import HeroBanner from "@/components/home/HeroBanner";
 import { useHeaderFilter } from "@/contexts/HeaderFilterContext";
-import { useAuth } from "@/components/Providers";
 import { motion, AnimatePresence } from "framer-motion";
-import { Tag, Star, ShoppingBag, TrendingUp, Zap, Sparkles } from "lucide-react";
-import { useLocation } from 'react-router-dom';
+import { Tag, Sparkles } from "lucide-react";
 
 interface ForYouContentProps {
   category: string;
@@ -32,7 +30,7 @@ interface Product {
   created_at?: string;
 }
 
-// Helper function to render tag elements (updated to match your product tags)
+// Helper function to render tag elements
 const renderTag = (tag: string) => {
   if (tag === "Sale" || tag === "sale") {
     return <span className="bg-red-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Sale</span>;
@@ -43,24 +41,13 @@ const renderTag = (tag: string) => {
   if (tag === "Brand+" || tag === "premium") {
     return <span className="bg-blue-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Brand+</span>;
   }
-  if (tag === "Certified Original" || tag === "original") {
-    return <span className="bg-blue-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Certified Original</span>;
-  }
-  if (tag === "250%") {
-    return <span className="bg-orange-100 text-orange-700 px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">250%</span>;
-  }
   return null;
 };
 
-// ProductCard component updated for real data
+// ProductCard component
 const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
-  // Calculate sold count - using inventory or a default
   const soldCount = product.sold_count || Math.floor(Math.random() * 10000) + 100;
-  
-  // Get rating or generate a realistic one
   const rating = product.rating || (Math.random() * 1 + 4).toFixed(1);
-  
-  // Get the first product image or use a placeholder
   const imageUrl = product.product_images?.[0]?.src || `https://placehold.co/300x300?text=Product`;
   
   // Generate tags based on product properties
@@ -76,15 +63,8 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
   };
 
   const tags = generateTags();
-  
-  // Get display price (discount or regular)
   const displayPrice = product.discount_price || product.price;
   const hasDiscount = !!product.discount_price && product.discount_price < product.price;
-  
-  // Generate quality note based on price tier
-  const qualityNote = product.price > 10000 ? "Premium Quality" : "";
-  
-  // Generate sales note
   const salesNote = soldCount > 5000 ? "Top selling on AliExpress" : "";
 
   return (
@@ -121,15 +101,12 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
         {salesNote && (
           <p className="text-[10px] text-gray-500">{salesNote}</p>
         )}
-        {qualityNote && (
-          <p className="text-[10px] text-orange-600">{qualityNote}</p>
-        )}
       </div>
     </div>
   );
 };
 
-// Infinite Products Grid Component using real data
+// Infinite Products Grid Component
 const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => {
   const [page, setPage] = useState(0);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -213,33 +190,14 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
     };
   }, [hasMore, loading, loadMoreProducts]);
 
-  // Loading skeleton
-  const LoadingSkeleton: React.FC = () => (
-    <div className="grid grid-cols-2 gap-2">
-      {Array.from({ length: 6 }).map((_, index) => (
-        <div key={index} className="bg-white rounded overflow-hidden">
-          <div className="w-full aspect-square bg-gray-100 rounded overflow-hidden mb-1 animate-pulse"></div>
-          <div className="p-1 space-y-1.5">
-            <div className="h-3 bg-gray-100 rounded animate-pulse"></div>
-            <div className="h-3 bg-gray-100 rounded animate-pulse w-3/4"></div>
-            <div className="flex items-center gap-1">
-              <div className="h-2 bg-gray-100 rounded animate-pulse w-1/3"></div>
-              <div className="h-2 bg-gray-100 rounded animate-pulse w-4"></div>
-              <div className="h-2 bg-gray-100 rounded animate-pulse w-1/4"></div>
-            </div>
-            <div className="h-4 bg-gray-100 rounded animate-pulse w-1/2"></div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-
   // Show loading state while fetching initial data
   if (initialLoading && allProducts.length === 0) {
     return (
-      <div className="pt-4"> {/* Consistent padding-top */}
+      <div className="pt-4">
         <div className="px-2">
-          <LoadingSkeleton />
+          <div className="text-center py-8 text-gray-500">
+            Loading products...
+          </div>
         </div>
       </div>
     );
@@ -248,7 +206,7 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
   // Show empty state if no products
   if (!initialLoading && allProducts.length === 0) {
     return (
-      <div className="pt-4"> {/* Consistent padding-top */}
+      <div className="pt-4">
         <div className="text-center py-8 text-gray-500">
           No products found. Check back soon!
         </div>
@@ -257,16 +215,13 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
   }
 
   return (
-    <div className="pt-4"> {/* Changed from py-4 to pt-4 for consistent top padding */}
+    <div className="pt-4">
       <div className="px-2">
         <div className="grid grid-cols-2 gap-2">
           {visibleProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
-
-        {/* Loading indicator */}
-        {loading && <LoadingSkeleton />}
 
         {/* Load more trigger */}
         <div 
@@ -293,18 +248,7 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
 
 const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   const navigate = useNavigate();
-  const location = useLocation();
-
-  // State for filter functionality
-  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
-
-  // Header filter context for news ticker functionality
-  const {
-    setHeaderMode,
-    headerMode
-  } = useHeaderFilter();
-
-  // Scroll detection refs
+  const { setHeaderMode, headerMode } = useHeaderFilter();
   const scrollY = useRef(0);
   const ticking = useRef(false);
   const heroBannerRef = useRef<HTMLDivElement>(null);
@@ -364,13 +308,13 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
     };
   }, [setHeaderMode]);
 
-  // Define all components to render with consistent spacing
+  // FIXED: Correct components array syntax
   const components = [
-    <div key="hero" ref={heroBannerRef} className="mb-4"> {/* Added bottom margin */}
+    <div key="hero" ref={heroBannerRef} className="mb-4">
       <HeroBanner showNewsTicker={true} />
     </div>,
 
-    <div key="flash-deals-wrapper" className="mb-4"> {/* Wrapper with consistent bottom margin */}
+    <div key="flash-deals-wrapper" className="mb-4">
       <FlashDeals
         showCountdown={true}
         icon={Tag}
@@ -378,16 +322,14 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       />
     </div>,
 
-    // Gray separator bar between FlashDeals and product grid
-    <div key="separator" className="w-full bg-gray-100 h-2 mb-4"></div>, {/* Added bottom margin */}
+    <div key="separator" className="w-full bg-gray-100 h-2 mb-4"></div>,
 
     <InfiniteProductsGrid key="infinite-grid" category={category} />,
   ];
 
   return (
     <div className="overflow-hidden relative">
-      {/* Main container with consistent vertical padding */}
-      <div className="pb-4"> {/* Added bottom padding to the entire content */}
+      <div className="pb-4">
         {components.map((component, index) => (
           <React.Fragment key={`section-${index}`}>
             {component}
@@ -423,7 +365,6 @@ const ForYou: React.FC = () => {
   // Listen for category changes from header
   useEffect(() => {
     const handleCategoryChange = (event: CustomEvent) => {
-      console.log('Category changed to:', event.detail.category);
       setActiveCategory(event.detail.category);
     };
 
