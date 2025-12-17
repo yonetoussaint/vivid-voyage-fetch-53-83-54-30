@@ -185,6 +185,7 @@ const FavouriteChannels: React.FC = () => {
 };
 
 // Popular Categories Component
+// Popular Categories Component - UPDATED with SectionHeader
 const PopularCategories: React.FC = () => {
   const navigate = useNavigate();
 
@@ -237,19 +238,12 @@ const PopularCategories: React.FC = () => {
 
   return (
     <div className="bg-white">
-      {/* Header */}
-      <div className="flex items-start justify-between px-2 pt-2">
-        <div className="flex-1 mr-2">
-          <h2 className="text-lg font-bold text-gray-900">Popular Categories for you</h2>
-        </div>
-        <button 
-          onClick={handleMoreClick}
-          className="flex items-center text-blue-600 hover:text-blue-700 transition-colors flex-shrink-0 mt-1"
-        >
-          <span className="text-xs font-medium">More</span>
-          <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
-        </button>
-      </div>
+      {/* Use SectionHeader component like FlashDeals */}
+      <SectionHeader
+        title="Popular Categories for you"
+        showTitleChevron={true}
+        onTitleClick={handleMoreClick}
+      />
 
       {/* Categories Grid */}
       <div className="flex gap-2 overflow-x-auto pb-4 px-2 scrollbar-hide">
