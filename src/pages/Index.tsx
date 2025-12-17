@@ -496,7 +496,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       <HeroBanner showNewsTicker={true} />
     </div>,
 
-    <div key="favourite-channels-wrapper" className="px-2 mb-2">
+    <div key="favourite-channels-wrapper" className="mb-2">
       <FavouriteChannels />
     </div>,
 
