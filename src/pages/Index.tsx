@@ -69,7 +69,7 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
 
   return (
     <div className="bg-white rounded overflow-hidden">
-      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-1">
+      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-0.5">
         <img 
           src={imageUrl} 
           alt={product.name} 
@@ -77,12 +77,12 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
           loading="lazy"
         />
       </div>
-      <div className="p-1">
+      <div className="p-0.5">
         <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight min-h-[2.2rem]">
           {tags.map((tag) => renderTag(tag))}
           {product.description || product.name}
         </p>
-        <div className="flex items-center gap-1 mb-0.5">
+        <div className="flex items-center gap-0.5 mb-0.5">
           <span className="text-[10px] text-gray-500">{soldCount.toLocaleString()} sold</span>
           <span className="text-[10px] text-gray-400">|</span>
           <div className="flex items-center">
@@ -93,7 +93,7 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
         <p className="text-sm font-bold text-gray-900">
           ₱{displayPrice.toLocaleString('en-US')}
           {hasDiscount && (
-            <span className="text-[10px] text-gray-500 line-through ml-1">
+            <span className="text-[10px] text-gray-500 line-through ml-0.5">
               ₱{product.price.toLocaleString('en-US')}
             </span>
           )}
@@ -193,7 +193,7 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
   // Show loading state while fetching initial data
   if (initialLoading && allProducts.length === 0) {
     return (
-      <div className="pt-4">
+      <div className="pt-2">
         <div className="px-2">
           <div className="text-center py-8 text-gray-500">
             Loading products...
@@ -206,7 +206,7 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
   // Show empty state if no products
   if (!initialLoading && allProducts.length === 0) {
     return (
-      <div className="pt-4">
+      <div className="pt-2">
         <div className="text-center py-8 text-gray-500">
           No products found. Check back soon!
         </div>
@@ -215,7 +215,7 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
   }
 
   return (
-    <div className="pt-4">
+    <div className="pt-2">
       <div className="px-2">
         <div className="grid grid-cols-2 gap-2">
           {visibleProducts.map((product) => (
@@ -308,13 +308,13 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
     };
   }, [setHeaderMode]);
 
-  // FIXED: Correct components array syntax
+  // Components array with 2px spacing
   const components = [
-    <div key="hero" ref={heroBannerRef} className="mb-4">
+    <div key="hero" ref={heroBannerRef} className="mb-2">
       <HeroBanner showNewsTicker={true} />
     </div>,
 
-    <div key="flash-deals-wrapper" className="mb-4">
+    <div key="flash-deals-wrapper" className="mb-2">
       <FlashDeals
         showCountdown={true}
         icon={Tag}
@@ -322,14 +322,14 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       />
     </div>,
 
-    <div key="separator" className="w-full bg-gray-100 h-2 mb-4"></div>,
+    <div key="separator" className="w-full bg-gray-100 h-2 mb-2"></div>,
 
     <InfiniteProductsGrid key="infinite-grid" category={category} />,
   ];
 
   return (
     <div className="overflow-hidden relative">
-      <div className="pb-4">
+      <div className="pb-2">
         {components.map((component, index) => (
           <React.Fragment key={`section-${index}`}>
             {component}
