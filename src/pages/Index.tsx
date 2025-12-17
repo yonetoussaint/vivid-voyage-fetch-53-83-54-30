@@ -44,12 +44,12 @@ const renderTag = (tag: string) => {
   return null;
 };
 
-// ProductCard component
+// ProductCard component - UPDATED
 const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
   const soldCount = product.sold_count || Math.floor(Math.random() * 10000) + 100;
   const rating = product.rating || (Math.random() * 1 + 4).toFixed(1);
   const imageUrl = product.product_images?.[0]?.src || `https://placehold.co/300x300?text=Product`;
-  
+
   // Generate tags based on product properties
   const generateTags = () => {
     const tags = [];
@@ -78,10 +78,13 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
         />
       </div>
       <div className="p-0.5">
-        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight min-h-[2.2rem]">
+        {/* Product name displayed instead of description - UPDATED */}
+        <div className="mb-0.5">
           {tags.map((tag) => renderTag(tag))}
-          {product.description || product.name}
-        </p>
+          <p className="text-[11px] text-gray-700 line-clamp-2 leading-tight min-h-[2.2rem]">
+            {product.name}
+          </p>
+        </div>
         <div className="flex items-center gap-0.5 mb-0.5">
           <span className="text-[10px] text-gray-500">{soldCount.toLocaleString()} sold</span>
           <span className="text-[10px] text-gray-400">|</span>
@@ -90,11 +93,12 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
             <span className="text-[10px] text-gray-700">{rating}</span>
           </div>
         </div>
+        {/* Currency changed to HTG (G) - UPDATED */}
         <p className="text-sm font-bold text-gray-900">
-          ₱{displayPrice.toLocaleString('en-US')}
+          G{displayPrice.toLocaleString('en-US')}
           {hasDiscount && (
             <span className="text-[10px] text-gray-500 line-through ml-0.5">
-              ₱{product.price.toLocaleString('en-US')}
+              G{product.price.toLocaleString('en-US')}
             </span>
           )}
         </p>
@@ -181,7 +185,7 @@ const FavouriteChannels: React.FC = () => {
   );
 };
 
-// // Popular Categories Component - Updated
+// Popular Categories Component
 const PopularCategories: React.FC = () => {
   const navigate = useNavigate();
 
@@ -234,11 +238,10 @@ const PopularCategories: React.FC = () => {
 
   return (
     <div className="bg-white">
-      {/* Header - Updated */}
+      {/* Header */}
       <div className="flex items-start justify-between px-2 pt-2">
         <div className="flex-1 mr-2">
           <h2 className="text-lg font-bold text-gray-900">Popular Categories for you</h2>
-          {/* Subtitle removed */}
         </div>
         <button 
           onClick={handleMoreClick}
@@ -249,7 +252,7 @@ const PopularCategories: React.FC = () => {
         </button>
       </div>
 
-      {/* Categories Grid - Updated */}
+      {/* Categories Grid */}
       <div className="flex gap-2 overflow-x-auto pb-4 px-2 scrollbar-hide">
         {categories.map((category) => (
           <div
@@ -267,12 +270,11 @@ const PopularCategories: React.FC = () => {
               <div className="text-2xl">{category.image}</div>
             </div>
 
-            {/* Category Info - Updated */}
+            {/* Category Info */}
             <div className="text-center">
               <h3 className="font-semibold text-[11px] text-gray-900 mb-0 truncate leading-tight">
                 {category.name}
               </h3>
-              {/* Searches text removed */}
             </div>
           </div>
         ))}
@@ -315,10 +317,10 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
       const nextPage = page + 1;
       const startIndex = nextPage * productsPerPage;
       const endIndex = startIndex + productsPerPage;
-      
+
       if (initialProducts && startIndex < initialProducts.length) {
         const newProducts = initialProducts.slice(startIndex, endIndex);
-        
+
         if (newProducts.length === 0) {
           setHasMore(false);
         } else {
