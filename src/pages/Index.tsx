@@ -181,10 +181,10 @@ const FavouriteChannels: React.FC = () => {
   );
 };
 
-// Popular Categories Component
+// // Popular Categories Component - Updated
 const PopularCategories: React.FC = () => {
   const navigate = useNavigate();
-  
+
   const handleMoreClick = () => {
     navigate('/categories');
   };
@@ -193,7 +193,6 @@ const PopularCategories: React.FC = () => {
     {
       id: 1,
       name: 'Mobiles',
-      searches: '114K+ search',
       discount: 'HOT',
       image: '📱',
       bgColor: 'bg-orange-100',
@@ -202,7 +201,6 @@ const PopularCategories: React.FC = () => {
     {
       id: 2,
       name: 'Cribs & Cots',
-      searches: '205 search',
       discount: '-50%',
       image: '🛏️',
       bgColor: 'bg-blue-100',
@@ -211,7 +209,6 @@ const PopularCategories: React.FC = () => {
     {
       id: 3,
       name: 'Portable Speakers',
-      searches: '3K+ search',
       discount: '-33%',
       image: '🔊',
       bgColor: 'bg-gray-100',
@@ -220,7 +217,6 @@ const PopularCategories: React.FC = () => {
     {
       id: 4,
       name: 'Electric Insect...',
-      searches: '3K+ search',
       discount: '-59%',
       image: '⚡',
       bgColor: 'bg-gray-50',
@@ -229,7 +225,6 @@ const PopularCategories: React.FC = () => {
     {
       id: 5,
       name: 'Smart Watches',
-      searches: '89K+ search',
       discount: '-45%',
       image: '⌚',
       bgColor: 'bg-purple-100',
@@ -239,11 +234,11 @@ const PopularCategories: React.FC = () => {
 
   return (
     <div className="bg-white">
-      {/* Header */}
+      {/* Header - Updated */}
       <div className="flex items-start justify-between mb-2 px-2 pt-2">
         <div className="flex-1 mr-2">
           <h2 className="text-lg font-bold text-gray-900">Popular Categories for you</h2>
-          <p className="text-[10px] text-gray-500 mt-0.5 leading-snug">Trending items based on your interests</p>
+          {/* Subtitle removed */}
         </div>
         <button 
           onClick={handleMoreClick}
@@ -254,7 +249,7 @@ const PopularCategories: React.FC = () => {
         </button>
       </div>
 
-      {/* Categories Grid */}
+      {/* Categories Grid - Updated */}
       <div className="flex gap-2 overflow-x-auto pb-4 px-2 scrollbar-hide">
         {categories.map((category) => (
           <div
@@ -267,19 +262,17 @@ const PopularCategories: React.FC = () => {
               <div className={`absolute top-1 left-1 ${category.discountBg} text-white px-1 py-0.5 text-[9px] font-bold rounded`}>
                 {category.discount}
               </div>
-              
+
               {/* Product Image Placeholder */}
               <div className="text-2xl">{category.image}</div>
             </div>
 
-            {/* Category Info */}
+            {/* Category Info - Updated */}
             <div className="text-center">
-              <h3 className="font-semibold text-[11px] text-gray-900 mb-0.5 truncate leading-tight">
+              <h3 className="font-semibold text-[11px] text-gray-900 mb-0 truncate leading-tight">
                 {category.name}
               </h3>
-              <p className="text-[9px] text-gray-500">
-                {category.searches}
-              </p>
+              {/* Searches text removed */}
             </div>
           </div>
         ))}
