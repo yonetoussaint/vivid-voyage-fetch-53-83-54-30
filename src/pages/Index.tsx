@@ -1,6 +1,8 @@
 import React, { useState,useMemo, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
+// Add this import with your other imports
+import SectionHeader from "@/components/home/SectionHeader";
 import { fetchAllProducts } from "@/integrations/supabase/products";
 import FlashDeals from "@/components/home/FlashDeals";
 import Footer from "@/components/Footer";
