@@ -129,7 +129,7 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
   );
 };
 
-// Infinite Products Grid Component using real data - REMOVED HEADER
+// Infinite Products Grid Component using real data
 const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => {
   const [page, setPage] = useState(0);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -141,7 +141,7 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
   // Fetch initial products
   const { data: initialProducts, isLoading: initialLoading } = useQuery({
     queryKey: ["products", "for-you", category],
-    queryFn: () => fetchAllProducts(undefined, category, 100), // Fetch up to 100 products initially
+    queryFn: () => fetchAllProducts(undefined, category, 100),
     staleTime: 60000,
   });
 
@@ -149,7 +149,6 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
   useEffect(() => {
     if (initialProducts && initialProducts.length > 0) {
       setAllProducts(initialProducts);
-      // Check if we have more products to load
       setHasMore(initialProducts.length >= productsPerPage);
     }
   }, [initialProducts]);
@@ -161,14 +160,10 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
     setLoading(true);
 
     try {
-      // Calculate the next page
       const nextPage = page + 1;
-      
-      // Fetch more products with pagination
       const startIndex = nextPage * productsPerPage;
       const endIndex = startIndex + productsPerPage;
       
-      // If we're using the initial dataset
       if (initialProducts && startIndex < initialProducts.length) {
         const newProducts = initialProducts.slice(startIndex, endIndex);
         
@@ -179,7 +174,6 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
           setPage(nextPage);
         }
       } else {
-        // If we need to fetch from API with pagination
         setHasMore(false);
       }
     } catch (error) {
@@ -243,7 +237,7 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
   // Show loading state while fetching initial data
   if (initialLoading && allProducts.length === 0) {
     return (
-      <div className="py-4">
+      <div className="pt-4"> {/* Consistent padding-top */}
         <div className="px-2">
           <LoadingSkeleton />
         </div>
@@ -254,7 +248,7 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
   // Show empty state if no products
   if (!initialLoading && allProducts.length === 0) {
     return (
-      <div className="py-4">
+      <div className="pt-4"> {/* Consistent padding-top */}
         <div className="text-center py-8 text-gray-500">
           No products found. Check back soon!
         </div>
@@ -263,8 +257,7 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
   }
 
   return (
-    <div className="py-4">
-      {/* HEADER REMOVED - Just show products directly */}
+    <div className="pt-4"> {/* Changed from py-4 to pt-4 for consistent top padding */}
       <div className="px-2">
         <div className="grid grid-cols-2 gap-2">
           {visibleProducts.map((product) => (
@@ -294,18 +287,6 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
           ) : null}
         </div>
       </div>
-
-      {/* Back to top button */}
-      {visibleProducts.length > 20 && (
-        <button
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="fixed bottom-4 right-4 bg-blue-600 text-white w-10 h-10 rounded-full shadow flex items-center justify-center hover:bg-blue-700 transition-colors z-40"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-          </svg>
-        </button>
-      )}
     </div>
   );
 };
@@ -328,68 +309,6 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   const ticking = useRef(false);
   const heroBannerRef = useRef<HTMLDivElement>(null);
 
-  // Define filter categories
-  const filterCategories = [
-    {
-      id: 'category',
-      label: 'Category',
-      options: ['Electronics', 'Fashion', 'Home & Garden', 'Sports', 'Beauty', 'Automotive', 'Kids']
-    },
-    {
-      id: 'price',
-      label: 'Price Range',
-      options: ['Under $25', '$25-$50', '$50-$100', '$100-$200', 'Over $200']
-    },
-    {
-      id: 'rating',
-      label: 'Rating',
-      options: ['4+ Stars', '3+ Stars', '2+ Stars', 'Any Rating']
-    },
-    {
-      id: 'shipping',
-      label: 'Shipping',
-      options: ['Free Shipping', 'Fast Delivery', 'Local Seller']
-    },
-    {
-      id: 'sort',
-      label: 'Sort By',
-      options: ['Popularity', 'Price: Low to High', 'Price: High to Low', 'Newest', 'Best Rating']
-    }
-  ];
-
-  // Filter handler functions
-  const handleFilterSelect = (filterId: string, option: string) => {
-    setSelectedFilters(prev => ({ ...prev, [filterId]: option }));
-    console.log('Filter selected:', filterId, option);
-  };
-
-  const handleFilterClear = (filterId: string) => {
-    setSelectedFilters(prev => {
-      const newFilters = { ...prev };
-      delete newFilters[filterId];
-      console.log('Filter cleared:', filterId);
-      return newFilters;
-    });
-  };
-
-  const handleClearAll = () => {
-    setSelectedFilters({});
-    console.log('All filters cleared');
-  };
-
-  const handleFilterButtonClick = (filterId: string) => {
-    console.log('Filter button clicked:', filterId);
-  };
-
-  const isFilterDisabled = (filterId: string) => {
-    return false;
-  };
-
-  // Custom handler function
-  const yourCustomHandler = () => {
-    navigate('/reels');
-  };
-
   // Improved scroll detection for header mode switching
   useEffect(() => {
     const handleScroll = () => {
@@ -398,30 +317,21 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
           const currentScrollY = window.scrollY;
           const scrollDelta = currentScrollY - scrollY.current;
 
-          // Get header element
           const header = document.getElementById("ali-header");
           if (!header) return;
 
           const headerHeight = header.getBoundingClientRect().height;
-
-          // Find the news ticker element in the hero banner
           const newsTicker = document.querySelector('.news-ticker');
 
           if (newsTicker) {
             const newsTickerRect = newsTicker.getBoundingClientRect();
-
-            // Calculate when news ticker reaches the bottom of the header
             const newsTickerTopRelativeToHeader = newsTickerRect.top - headerHeight;
-
-            // More precise timing: switch to news when news ticker is about to be covered by header
             const shouldShowNews = newsTickerTopRelativeToHeader <= 0;
 
-            // Determine scroll direction with threshold to prevent jitter
             const scrollThreshold = 2;
             const isScrollingDown = scrollDelta > scrollThreshold;
             const isScrollingUp = scrollDelta < -scrollThreshold;
 
-            // Smart switching logic
             if (shouldShowNews && isScrollingDown) {
               setHeaderMode('news');
             } else if (isScrollingUp) {
@@ -454,28 +364,30 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
     };
   }, [setHeaderMode]);
 
-  // Define all components to render with gray separator
+  // Define all components to render with consistent spacing
   const components = [
-    <div key="hero" ref={heroBannerRef}>
+    <div key="hero" ref={heroBannerRef} className="mb-4"> {/* Added bottom margin */}
       <HeroBanner showNewsTicker={true} />
     </div>,
 
-    <FlashDeals
-      key="flash-1"
-      showCountdown={true}
-      icon={Tag}
-      showTitleChevron={true}
-    />,
+    <div key="flash-deals-wrapper" className="mb-4"> {/* Wrapper with consistent bottom margin */}
+      <FlashDeals
+        showCountdown={true}
+        icon={Tag}
+        showTitleChevron={true}
+      />
+    </div>,
 
     // Gray separator bar between FlashDeals and product grid
-    <div key="separator" className="w-full bg-gray-100 h-2"></div>,
+    <div key="separator" className="w-full bg-gray-100 h-2 mb-4"></div>, {/* Added bottom margin */}
 
     <InfiniteProductsGrid key="infinite-grid" category={category} />,
   ];
 
   return (
     <div className="overflow-hidden relative">
-      <div className="space-y-0"> {/* Changed from space-y-2 to space-y-0 for tighter spacing */}
+      {/* Main container with consistent vertical padding */}
+      <div className="pb-4"> {/* Added bottom padding to the entire content */}
         {components.map((component, index) => (
           <React.Fragment key={`section-${index}`}>
             {component}
