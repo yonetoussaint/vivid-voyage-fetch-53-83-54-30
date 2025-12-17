@@ -235,7 +235,7 @@ const PopularCategories: React.FC = () => {
   return (
     <div className="bg-white">
       {/* Header - Updated */}
-      <div className="flex items-start justify-between mb-2 px-2 pt-2">
+      <div className="flex items-start justify-between px-2 pt-2">
         <div className="flex-1 mr-2">
           <h2 className="text-lg font-bold text-gray-900">Popular Categories for you</h2>
           {/* Subtitle removed */}
