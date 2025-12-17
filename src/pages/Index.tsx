@@ -252,7 +252,6 @@ const PopularCategories: React.FC = () => {
   ];
 
   const handleCategoryClick = (categoryId: number, categoryName: string) => {
-    // You can implement navigation to category page or products list
     navigate(`/category/${categoryId}`, { state: { title: categoryName } });
   };
 
@@ -273,10 +272,10 @@ const PopularCategories: React.FC = () => {
             onClick={() => handleCategoryClick(category.id, category.name)}
             className="flex-shrink-0 w-20 cursor-pointer group"
           >
-            {/* Image Container with real image */}
-            <div className="relative rounded-lg overflow-hidden mb-2 aspect-square transition-transform group-hover:scale-105">
-              {/* Discount Badge */}
-              <div className={`absolute top-1 left-1 z-10 ${category.discountBg} text-white px-1 py-0.5 text-[9px] font-bold rounded`}>
+            {/* Image Container with square borders */}
+            <div className="relative rounded-sm overflow-hidden mb-2 aspect-square transition-transform group-hover:scale-105 border border-gray-100">
+              {/* Discount Badge with square corners */}
+              <div className={`absolute top-1 left-1 z-10 ${category.discountBg} text-white px-1 py-0.5 text-[9px] font-bold rounded-sm`}>
                 {category.discount}
               </div>
 
@@ -288,7 +287,6 @@ const PopularCategories: React.FC = () => {
                   className="w-full h-full object-cover"
                   loading="lazy"
                   onError={(e) => {
-                    // Fallback for broken images
                     const target = e.target as HTMLImageElement;
                     target.src = `https://placehold.co/80x80/cccccc/969696?text=${encodeURIComponent(category.name.charAt(0))}`;
                   }}
