@@ -4,7 +4,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
 import { fetchFlashDeals, trackProductView } from "@/integrations/supabase/products";
 import SectionHeader from "./SectionHeader";
-import ProductSemiPanel from "./ProductSemiPanel";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 import { useScreenOverlay } from "@/context/ScreenOverlayContext";
 
 interface FlashDealsProps {
@@ -87,10 +87,8 @@ export default function FlashDeals({
 }: FlashDealsProps) {
   const isMobile = useIsMobile();
   const scrollRef = useRef(null);
+  const navigate = useNavigate(); // Initialize navigate hook
   const { setHasActiveOverlay } = useScreenOverlay();
-
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
 
   const queryMaxProducts = layoutMode === 'grid' ? undefined : maxProducts;
 
@@ -138,10 +136,6 @@ export default function FlashDeals({
     return () => clearInterval(timer);
   }, [flashProducts]);
 
-  useEffect(() => {
-    setHasActiveOverlay(isPanelOpen);
-  }, [isPanelOpen, setHasActiveOverlay]);
-
   const processedProducts = flashProducts
     .slice(0, layoutMode === 'grid' ? flashProducts.length : maxProducts)
     .map(product => {
@@ -159,13 +153,8 @@ export default function FlashDeals({
 
   const handleProductClick = (productId: string) => {
     trackProductView(productId);
-    setSelectedProductId(productId);
-    setIsPanelOpen(true);
-  };
-
-  const handleCloseSemiPanel = () => {
-    setIsPanelOpen(false);
-    setSelectedProductId(null);
+    // Navigate to product details page instead of opening semi-panel
+    navigate(`/product/${productId}`);
   };
 
   // Show unified skeleton while loading
@@ -192,127 +181,118 @@ export default function FlashDeals({
     : (timeLeft.hours > 0 || timeLeft.minutes > 0 || timeLeft.seconds > 0);
 
   return (
-    <>
-      <div className="w-full bg-white">
-        {/* Only show section header if explicitly enabled AND not in grid mode */}
-        {showSectionHeader && layoutMode !== 'grid' && (
-          <SectionHeader
-            title={title}
-            icon={Icon}
-            showCountdown={shouldShowCountdown}
-            countdown={displayCountdown}
-            viewAllLink="/search?category=flash-deals"
-            viewAllText="View All"
-            showStackedProfiles={showStackedProfiles}
-            stackedProfiles={stackedProfiles}
-            onProfileClick={onProfileClick}
-            stackedProfilesText={stackedProfilesText}
-            maxProfiles={maxProfiles}
-            showTitleChevron={showTitleChevron}
-            onTitleClick={onTitleClick}
-            showSponsorCount={showSponsorCount}
-            countdown={displayCountdown}
-          />
-        )}
+    <div className="w-full bg-white">
+      {/* Only show section header if explicitly enabled AND not in grid mode */}
+      {showSectionHeader && layoutMode !== 'grid' && (
+        <SectionHeader
+          title={title}
+          icon={Icon}
+          showCountdown={shouldShowCountdown}
+          countdown={displayCountdown}
+          viewAllLink="/search?category=flash-deals"
+          viewAllText="View All"
+          showStackedProfiles={showStackedProfiles}
+          stackedProfiles={stackedProfiles}
+          onProfileClick={onProfileClick}
+          stackedProfilesText={stackedProfilesText}
+          maxProfiles={maxProfiles}
+          showTitleChevron={showTitleChevron}
+          onTitleClick={onTitleClick}
+          showSponsorCount={showSponsorCount}
+        />
+      )}
 
-        {/* Rest of the component remains the same */}
-        <div className="relative">
-          {processedProducts.length > 0 ? (
-            layoutMode === 'grid' ? (
-              // Grid layout - no extra padding, starts immediately
-              <div className="grid grid-cols-3 gap-1">
+      {/* Rest of the component remains the same */}
+      <div className="relative">
+        {processedProducts.length > 0 ? (
+          layoutMode === 'grid' ? (
+            // Grid layout - no extra padding, starts immediately
+            <div className="grid grid-cols-3 gap-1">
+              {processedProducts.map((product) => (
+                <div key={product.id} className="flex flex-col">
+                  <div 
+                    onClick={() => handleProductClick(product.id)}
+                    className="cursor-pointer w-full"
+                  >
+                    <div className="relative aspect-square overflow-hidden bg-gray-50">
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="h-full w-full object-cover hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            // Carousel layout - maintains existing padding
+            <div
+              ref={scrollRef}
+              className="overflow-x-auto scroll-smooth scrollbar-hide snap-x snap-mandatory"
+              style={{
+                scrollPaddingLeft: "8px",
+                WebkitOverflowScrolling: "touch",
+                scrollbarWidth: 'none', 
+                msOverflowStyle: 'none',
+                scrollSnapType: 'x mandatory'
+              }}
+            >
+              <div className="flex pl-2">
                 {processedProducts.map((product) => (
-                  <div key={product.id} className="flex flex-col">
+                  <div
+                    key={product.id}
+                    className="w-[calc(100%/3.5)] flex-shrink-0 snap-start mr-[3vw]"
+                    style={{ 
+                      maxWidth: '160px',
+                      scrollSnapAlign: 'start'
+                    }}
+                  >
                     <div 
                       onClick={() => handleProductClick(product.id)}
-                      className="cursor-pointer w-full"
+                      className="cursor-pointer"
                     >
-                      <div className="relative aspect-square overflow-hidden bg-gray-50">
+                      <div className={`relative ${productType === 'books' ? 'aspect-[1.6:1]' : 'aspect-square'} overflow-hidden bg-gray-50 rounded-md mb-1.5`}>
                         <img
                           src={product.image}
                           alt={product.name}
                           className="h-full w-full object-cover hover:scale-105 transition-transform duration-300"
                           loading="lazy"
                         />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              // Carousel layout - maintains existing padding
-              <div
-                ref={scrollRef}
-                className="overflow-x-auto scroll-smooth scrollbar-hide snap-x snap-mandatory"
-                style={{
-                  scrollPaddingLeft: "8px",
-                  WebkitOverflowScrolling: "touch",
-                  scrollbarWidth: 'none', 
-                  msOverflowStyle: 'none',
-                  scrollSnapType: 'x mandatory'
-                }}
-              >
-                <div className="flex pl-2">
-                  {processedProducts.map((product) => (
-                    <div
-                      key={product.id}
-                      className="w-[calc(100%/3.5)] flex-shrink-0 snap-start mr-[3vw]"
-                      style={{ 
-                        maxWidth: '160px',
-                        scrollSnapAlign: 'start'
-                      }}
-                    >
-                      <div 
-                        onClick={() => handleProductClick(product.id)}
-                        className="cursor-pointer"
-                      >
-                        <div className={`relative ${productType === 'books' ? 'aspect-[1.6:1]' : 'aspect-square'} overflow-hidden bg-gray-50 rounded-md mb-1.5`}>
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            className="h-full w-full object-cover hover:scale-105 transition-transform duration-300"
-                            loading="lazy"
-                          />
-                          {productType !== 'books' && (
-                            <div className="absolute top-0 left-0 bg-[#FF4747] text-white text-[10px] px-1.5 py-0.5 rounded-br-md font-medium">
-                              {product.stock} left
-                            </div>
-                          )}
-                        </div>
-                        {showPrice && (
-                          <div>
-                            <div className="flex items-baseline gap-1">
-                              <div className="text-[#FF4747] font-semibold text-sm">
-                                ${Number(product.discount_price || product.price).toFixed(2)}
-                              </div>
-                              {product.discount_price && (
-                                <div className="text-[10px] text-gray-500 line-through">
-                                  ${Number(product.price).toFixed(2)}
-                                </div>
-                              )}
-                            </div>
+                        {productType !== 'books' && (
+                          <div className="absolute top-0 left-0 bg-[#FF4747] text-white text-[10px] px-1.5 py-0.5 rounded-br-md font-medium">
+                            {product.stock} left
                           </div>
                         )}
                       </div>
+                      {showPrice && (
+                        <div>
+                          <div className="flex items-baseline gap-1">
+                            <div className="text-[#FF4747] font-semibold text-sm">
+                              ${Number(product.discount_price || product.price).toFixed(2)}
+                            </div>
+                            {product.discount_price && (
+                              <div className="text-[10px] text-gray-500 line-through">
+                                ${Number(product.price).toFixed(2)}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  ))}
-                  <div className="flex-shrink-0 w-2"></div>
-                </div>
+                  </div>
+                ))}
+                <div className="flex-shrink-0 w-2"></div>
               </div>
-            )
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              No flash deals available
             </div>
-          )}
-        </div>
+          )
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            No flash deals available
+          </div>
+        )}
       </div>
-
-      <ProductSemiPanel
-        productId={selectedProductId}
-        isOpen={isPanelOpen}
-        onClose={handleCloseSemiPanel}
-      />
-    </>
+    </div>
   );
 }
