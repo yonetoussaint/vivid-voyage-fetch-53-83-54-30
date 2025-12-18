@@ -1193,18 +1193,38 @@ const InfiniteContentGrid: React.FC<{ category?: string }> = ({ category }) => {
   );
 };
 
-// In the ForYouContent component (replace the return section starting around line 860)
+// Replace the ForYouContent component (starting around line 860) with this:
+
 const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   const navigate = useNavigate();
   const { setHeaderMode, headerMode } = useHeaderFilter();
   const scrollY = useRef(0);
   const ticking = useRef(false);
   const heroBannerRef = useRef<HTMLDivElement>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchRef = useRef<HTMLInputElement>(null);
 
-  // Add this function to handle search bar click
-  const handleSearchBarClick = useCallback(() => {
-    navigate('/search');
-  }, [navigate]);
+  // Search bar handler
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  const handleSearchFocus = () => {
+    // Optional: Focus effect if needed
+    searchRef.current?.focus();
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    searchRef.current?.focus();
+  };
+
+  const handleImageSearch = () => {
+    navigate('/search/image');
+  };
 
   // Improved scroll detection for header mode switching
   useEffect(() => {
@@ -1292,32 +1312,80 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
 
   return (
     <div className="overflow-hidden relative">
-      {/* Search Bar */}
+      {/* Search Bar - Inline Implementation */}
       <div className="sticky top-0 z-50 bg-white px-4 py-3 border-b border-gray-100 shadow-sm">
-        <div 
-          className="flex items-center bg-gray-50 rounded-full px-4 py-3 cursor-pointer hover:bg-gray-100 transition-colors active:scale-[0.98]"
-          onClick={handleSearchBarClick}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              handleSearchBarClick();
-            }
-          }}
-        >
-          <div className="flex items-center gap-3 w-full">
-            <div className="w-5 h-5 flex items-center justify-center text-gray-400">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <form onSubmit={handleSearchSubmit}>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search products, brands, and categories"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={handleSearchFocus}
+              className="w-full pl-10 pr-10 py-3 bg-gray-50 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm"
+              ref={searchRef}
+            />
+
+            {/* Search Icon */}
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-            <div className="flex-1">
-              <p className="text-sm text-gray-500">Search products, brands, and categories</p>
-            </div>
-            <div className="w-8 h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded flex items-center justify-center">
-              <Camera className="w-3 h-3 text-white" />
-            </div>
+
+            {/* Clear Button */}
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="absolute right-12 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+
+            {/* Camera/Image Search Button */}
+            <button
+              type="button"
+              onClick={handleImageSearch}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500 hover:text-blue-600 p-1"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
           </div>
+        </form>
+
+        {/* Quick Search Tags (Optional) */}
+        <div className="mt-2 flex gap-2 overflow-x-auto scrollbar-hide">
+          <button
+            onClick={() => setSearchQuery('Wireless Earbuds')}
+            className="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs whitespace-nowrap rounded-full hover:bg-gray-200"
+          >
+            Wireless Earbuds
+          </button>
+          <button
+            onClick={() => setSearchQuery('Summer Dresses')}
+            className="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs whitespace-nowrap rounded-full hover:bg-gray-200"
+          >
+            Summer Dresses
+          </button>
+          <button
+            onClick={() => setSearchQuery('Smart Watch')}
+            className="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs whitespace-nowrap rounded-full hover:bg-gray-200"
+          >
+            Smart Watch
+          </button>
+          <button
+            onClick={() => setSearchQuery('Laptop Backpack')}
+            className="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs whitespace-nowrap rounded-full hover:bg-gray-200"
+          >
+            Laptop Backpack
+          </button>
         </div>
       </div>
 
