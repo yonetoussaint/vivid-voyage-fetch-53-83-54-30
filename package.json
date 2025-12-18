@@ -23,7 +23,6 @@
     "@fortawesome/fontawesome-free": "^7.1.0",
     "@hookform/resolvers": "^3.9.0",
     "@hugeicons/react": "^1.6.0",
-    "@hugeicons-pro/core-stroke-rounded": "^1.6.0",
     "@paypal/react-paypal-js": "^8.8.3",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
