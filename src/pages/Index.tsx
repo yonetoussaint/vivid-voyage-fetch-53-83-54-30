@@ -128,7 +128,7 @@ const fetchReels = async (limit: number = 8): Promise<Reel[]> => {
     likes: Math.floor(Math.random() * 10000) + 100,
     comments: Math.floor(Math.random() * 1000) + 10,
     created_at: new Date().toISOString(),
-    is_live: i % 5 === 0, // Every 5th reel is "live"
+    is_live: i % 5 === 0,
     type: 'reel' as const
   }));
   
@@ -320,12 +320,13 @@ const shuffleArray = <T,>(array: T[]): T[] => {
   return shuffled;
 };
 
-// ProductCard component
+// ProductCard component - ORIGINAL STYLE (no wrapper)
 const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
   const soldCount = product.sold_count || Math.floor(Math.random() * 10000) + 100;
   const rating = product.rating || (Math.random() * 1 + 4).toFixed(1);
   const imageUrl = product.product_images?.[0]?.src || `https://placehold.co/300x300?text=Product`;
 
+  // Generate tags based on product properties
   const generateTags = () => {
     const tags = [];
     if (product.discount_price) tags.push("Sale");
@@ -340,10 +341,11 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
   const tags = generateTags();
   const displayPrice = product.discount_price || product.price;
   const hasDiscount = !!product.discount_price && product.discount_price < product.price;
+  const salesNote = soldCount > 5000 ? "Top selling on AliExpress" : "";
 
   return (
-    <div className="bg-white rounded overflow-hidden shadow-sm border border-gray-100">
-      <div className="w-full aspect-square bg-gray-100 rounded overflow-hidden mb-0.5 relative">
+    <div className="bg-white rounded overflow-hidden">
+      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-0.5">
         <img 
           src={imageUrl} 
           alt={product.name} 
@@ -352,6 +354,7 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
         />
       </div>
       <div className="p-0.5">
+        {/* Product name with tags inline */}
         <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
           {tags.map((tag) => renderTag(tag))}
           {product.name}
@@ -364,6 +367,7 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
             <span className="text-[10px] text-gray-700">{rating}</span>
           </div>
         </div>
+        {/* Currency changed to HTG (G) */}
         <p className="text-sm font-bold text-gray-900">
           G{displayPrice.toLocaleString('en-US')}
           {hasDiscount && (
@@ -372,6 +376,9 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
             </span>
           )}
         </p>
+        {salesNote && (
+          <p className="text-[10px] text-gray-500">{salesNote}</p>
+        )}
       </div>
     </div>
   );
