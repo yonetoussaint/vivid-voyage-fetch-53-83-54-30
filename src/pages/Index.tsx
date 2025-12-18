@@ -320,7 +320,7 @@ const shuffleArray = <T,>(array: T[]): T[] => {
   return shuffled;
 };
 
-// ProductCard component - ORIGINAL STYLE (no wrapper)
+// ProductCard component - MASONRY STYLE
 const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
   const soldCount = product.sold_count || Math.floor(Math.random() * 10000) + 100;
   const rating = product.rating || (Math.random() * 1 + 4).toFixed(1);
@@ -341,10 +341,9 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
   const tags = generateTags();
   const displayPrice = product.discount_price || product.price;
   const hasDiscount = !!product.discount_price && product.discount_price < product.price;
-  const salesNote = soldCount > 5000 ? "Top selling on AliExpress" : "";
 
   return (
-    <div className="bg-white rounded overflow-hidden">
+    <div className="bg-white rounded overflow-hidden mb-2">
       <div className="w-full aspect-square bg-white rounded overflow-hidden mb-0.5">
         <img 
           src={imageUrl} 
@@ -376,15 +375,12 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
             </span>
           )}
         </p>
-        {salesNote && (
-          <p className="text-[10px] text-gray-500">{salesNote}</p>
-        )}
       </div>
     </div>
   );
 };
 
-// ReelCard component
+// ReelCard component - MASONRY STYLE
 const ReelCard: React.FC<{ reel: Reel }> = ({ reel }) => {
   const navigate = useNavigate();
   
@@ -400,7 +396,7 @@ const ReelCard: React.FC<{ reel: Reel }> = ({ reel }) => {
 
   return (
     <div 
-      className="bg-black rounded overflow-hidden relative cursor-pointer shadow-sm border border-gray-800"
+      className="bg-black rounded overflow-hidden relative cursor-pointer mb-2"
       onClick={handleClick}
     >
       <div className="w-full aspect-[3/4] bg-gray-800 relative overflow-hidden">
@@ -473,7 +469,7 @@ const StackedImagesIndicator: React.FC<{ count: number }> = ({ count }) => {
   );
 };
 
-// PostCard Component with Stacked Images
+// PostCard Component with Stacked Images - MASONRY STYLE
 const PostCard: React.FC<{ post: Post }> = ({ post }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(post.is_liked || false);
@@ -535,9 +531,9 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg overflow-hidden shadow-sm border border-gray-100">
+    <div className="bg-white rounded overflow-hidden mb-2">
       {/* Post Header */}
-      <div className="p-3 flex items-center justify-between">
+      <div className="p-2 flex items-center justify-between">
         <div 
           className="flex items-center gap-2 cursor-pointer"
           onClick={handleUserClick}
@@ -546,11 +542,11 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
             <img 
               src={post.author.avatar} 
               alt={post.author.username}
-              className="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm"
+              className="w-7 h-7 rounded-full object-cover border-2 border-white shadow-sm"
             />
             {post.author.is_verified && (
               <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full p-0.5">
-                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
               </div>
@@ -565,11 +561,7 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
                 <span className="bg-blue-100 text-blue-700 text-[9px] px-1 py-0.5 rounded">Sponsored</span>
               )}
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-gray-500">
-                {formatNumber(post.author.follower_count)} followers
-              </span>
-              <span className="text-[10px] text-gray-400">•</span>
+            <div className="flex items-center gap-1">
               <span className="text-[10px] text-gray-500">
                 {formatTimeAgo(post.created_at)}
               </span>
@@ -580,14 +572,15 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
           className="text-gray-400 hover:text-gray-600"
           onClick={(e) => e.stopPropagation()}
         >
-          <MoreHorizontal className="w-5 h-5" />
+          <MoreHorizontal className="w-4 h-4" />
         </button>
       </div>
 
       {/* Image Carousel */}
       <div 
-        className="relative aspect-square bg-gray-100 cursor-pointer"
+        className="relative bg-gray-100 cursor-pointer"
         onClick={handleImageClick}
+        style={{ aspectRatio: '1/1' }}
       >
         <img 
           src={post.content.images[currentImageIndex]} 
@@ -600,7 +593,7 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
         
         {/* Image Dots Indicator */}
         {post.content.images.length > 1 && (
-          <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+          <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5">
             {post.content.images.map((_, index) => (
               <div 
                 key={index}
@@ -637,25 +630,25 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
       </div>
 
       {/* Engagement Bar */}
-      <div className="p-3">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-4">
+      <div className="p-2">
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-3">
             <button 
-              className={`flex items-center gap-1 ${isLiked ? 'text-red-500' : 'text-gray-700'}`}
+              className={`flex items-center gap-0.5 ${isLiked ? 'text-red-500' : 'text-gray-700'}`}
               onClick={handleLike}
             >
-              <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
+              <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
               <span className="text-xs font-medium">{formatNumber(likeCount)}</span>
             </button>
-            <button className="flex items-center gap-1 text-gray-700">
-              <MessageCircle className="w-5 h-5" />
+            <button className="flex items-center gap-0.5 text-gray-700">
+              <MessageCircle className="w-4 h-4" />
               <span className="text-xs font-medium">{formatNumber(post.engagement.comments)}</span>
             </button>
             <button 
-              className="flex items-center gap-1 text-gray-700"
+              className="flex items-center gap-0.5 text-gray-700"
               onClick={handleShare}
             >
-              <Send className="w-5 h-5" />
+              <Send className="w-4 h-4" />
               <span className="text-xs font-medium">{formatNumber(post.engagement.shares)}</span>
             </button>
           </div>
@@ -663,29 +656,21 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
             className={`${isSaved ? 'text-yellow-500' : 'text-gray-700'}`}
             onClick={handleSave}
           >
-            <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
+            <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
           </button>
         </div>
 
         {/* Caption */}
-        <div className="mb-2">
+        <div className="mb-1">
           <p className="text-xs text-gray-900 line-clamp-2">
             <span className="font-semibold mr-1">{post.author.username}</span>
             {post.content.caption}
           </p>
-          {post.content.location && (
-            <div className="flex items-center gap-1 text-[10px] text-gray-500 mt-1">
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-              </svg>
-              {post.content.location}
-            </div>
-          )}
         </div>
 
         {/* Hashtags */}
-        <div className="flex flex-wrap gap-1 mb-2">
-          {post.content.hashtags.slice(0, 3).map((hashtag, index) => (
+        <div className="flex flex-wrap gap-1 mb-1">
+          {post.content.hashtags.slice(0, 2).map((hashtag, index) => (
             <span 
               key={index}
               className="text-[10px] text-blue-600 hover:text-blue-800 cursor-pointer"
@@ -694,38 +679,38 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
               #{hashtag}
             </span>
           ))}
-          {post.content.hashtags.length > 3 && (
+          {post.content.hashtags.length > 2 && (
             <span className="text-[10px] text-gray-500">
-              +{post.content.hashtags.length - 3} more
+              +{post.content.hashtags.length - 2} more
             </span>
           )}
         </div>
 
-        {/* Product Tags Preview */}
-        {post.products_tagged.length > 0 && (
-          <div className="bg-gray-50 rounded-lg p-2">
+        {/* Product Tags Preview - Only show on hover or if enabled */}
+        {post.products_tagged.length > 0 && showProductTags && (
+          <div className="bg-gray-50 rounded-lg p-2 mt-1">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs font-semibold text-gray-900">
                 Tagged Products
               </span>
               <button 
                 className="text-xs text-blue-600 hover:text-blue-800"
-                onClick={() => setShowProductTags(!showProductTags)}
+                onClick={() => setShowProductTags(false)}
               >
-                {showProductTags ? 'Hide' : `Show ${post.products_tagged.length}`}
+                Hide
               </button>
             </div>
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-              {post.products_tagged.slice(0, showProductTags ? post.products_tagged.length : 2).map((product) => (
+            <div className="flex gap-1 overflow-x-auto scrollbar-hide">
+              {post.products_tagged.slice(0, 2).map((product) => (
                 <div 
                   key={product.id}
-                  className="flex-shrink-0 bg-white rounded-lg p-2 shadow-sm border border-gray-100 w-28 cursor-pointer"
+                  className="flex-shrink-0 bg-white rounded p-1 shadow-sm border border-gray-100 w-24 cursor-pointer"
                   onClick={(e) => handleProductTagClick(product.id, e)}
                 >
                   <img 
                     src={product.image} 
                     alt={product.name}
-                    className="w-full h-16 object-cover rounded mb-1"
+                    className="w-full h-12 object-cover rounded mb-0.5"
                   />
                   <p className="text-xs font-medium text-gray-900 line-clamp-1 mb-0.5">
                     {product.name}
@@ -739,13 +724,15 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
           </div>
         )}
 
-        {/* View All Comments */}
-        <button 
-          className="text-xs text-gray-500 hover:text-gray-700 w-full text-left mt-2"
-          onClick={handlePostClick}
-        >
-          View all {formatNumber(post.engagement.comments)} comments
-        </button>
+        {/* Show tagged products button */}
+        {post.products_tagged.length > 0 && !showProductTags && (
+          <button 
+            className="text-[10px] text-blue-600 hover:text-blue-800 mt-1"
+            onClick={() => setShowProductTags(true)}
+          >
+            Show {post.products_tagged.length} tagged products
+          </button>
+        )}
       </div>
     </div>
   );
@@ -960,7 +947,36 @@ const PopularCategories: React.FC = () => {
   );
 };
 
-// InfiniteContentGrid Component
+// Masonry Grid Component
+const MasonryGrid: React.FC<{ items: ContentItem[] }> = ({ items }) => {
+  // Group items into columns for masonry layout
+  const columns = useMemo(() => {
+    const colCount = 2; // 2 columns for mobile
+    const cols: ContentItem[][] = Array.from({ length: colCount }, () => []);
+    
+    // Distribute items evenly between columns
+    items.forEach((item, index) => {
+      const colIndex = index % colCount;
+      cols[colIndex].push(item);
+    });
+    
+    return cols;
+  }, [items]);
+
+  return (
+    <div className="grid grid-cols-2 gap-2 px-2">
+      {columns.map((column, colIndex) => (
+        <div key={colIndex} className="flex flex-col gap-2">
+          {column.map((item) => (
+            <ContentCard key={`${item.type}-${item.id}`} item={item} />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// InfiniteContentGrid Component - UPDATED for Masonry
 const InfiniteContentGrid: React.FC<{ category?: string }> = ({ category }) => {
   const [page, setPage] = useState(0);
   const [allContent, setAllContent] = useState<ContentItem[]>([]);
@@ -1095,7 +1111,7 @@ const InfiniteContentGrid: React.FC<{ category?: string }> = ({ category }) => {
         <div className="px-2">
           <div className="grid grid-cols-2 gap-2">
             {Array(4).fill(0).map((_, i) => (
-              <div key={i} className="bg-gray-200 animate-pulse aspect-square rounded"></div>
+              <div key={i} className="bg-gray-200 animate-pulse rounded" style={{ height: '300px' }}></div>
             ))}
           </div>
         </div>
@@ -1116,78 +1132,73 @@ const InfiniteContentGrid: React.FC<{ category?: string }> = ({ category }) => {
 
   return (
     <div className="pt-2">
-      <div className="px-2">
-        {/* Content Statistics Banner */}
-        <div className="mb-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3">
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1 mb-1">
-                <Tag className="w-4 h-4 text-blue-600" />
-                <p className="text-xs font-semibold text-gray-700">Products</p>
-              </div>
-              <p className="text-lg font-bold text-gray-900">
-                {contentStats.products}
-              </p>
+      {/* Content Statistics Banner */}
+      <div className="mb-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3 mx-2">
+        <div className="flex items-center justify-between mb-2">
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <Tag className="w-4 h-4 text-blue-600" />
+              <p className="text-xs font-semibold text-gray-700">Products</p>
             </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1 mb-1">
-                <Play className="w-4 h-4 text-pink-600" />
-                <p className="text-xs font-semibold text-gray-700">Reels</p>
-              </div>
-              <p className="text-lg font-bold text-gray-900">
-                {contentStats.reels}
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1 mb-1">
-                <Image className="w-4 h-4 text-purple-600" />
-                <p className="text-xs font-semibold text-gray-700">Posts</p>
-              </div>
-              <p className="text-lg font-bold text-gray-900">
-                {contentStats.posts}
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1 mb-1">
-                <Sparkles className="w-4 h-4 text-orange-600" />
-                <p className="text-xs font-semibold text-gray-700">Total</p>
-              </div>
-              <p className="text-lg font-bold text-gray-900">
-                {contentStats.total}
-              </p>
-            </div>
+            <p className="text-lg font-bold text-gray-900">
+              {contentStats.products}
+            </p>
           </div>
-          <div className="mt-2 text-center">
-            <span className="text-xs text-gray-500">
-              Mixed feed showing products, reels, and posts
-            </span>
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <Play className="w-4 h-4 text-pink-600" />
+              <p className="text-xs font-semibold text-gray-700">Reels</p>
+            </div>
+            <p className="text-lg font-bold text-gray-900">
+              {contentStats.reels}
+            </p>
+          </div>
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <Image className="w-4 h-4 text-purple-600" />
+              <p className="text-xs font-semibold text-gray-700">Posts</p>
+            </div>
+            <p className="text-lg font-bold text-gray-900">
+              {contentStats.posts}
+            </p>
+          </div>
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <Sparkles className="w-4 h-4 text-orange-600" />
+              <p className="text-xs font-semibold text-gray-700">Total</p>
+            </div>
+            <p className="text-lg font-bold text-gray-900">
+              {contentStats.total}
+            </p>
           </div>
         </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          {visibleContent.map((item) => (
-            <ContentCard key={`${item.type}-${item.id}`} item={item} />
-          ))}
+        <div className="mt-2 text-center">
+          <span className="text-xs text-gray-500">
+            Mixed feed showing products, reels, and posts
+          </span>
         </div>
+      </div>
 
-        {/* Load more trigger */}
-        <div 
-          ref={loaderRef}
-          className="flex justify-center items-center py-6"
-        >
-          {hasMore ? (
-            <div className="text-center">
-              <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-              <p className="text-xs text-gray-500">Loading more content...</p>
-            </div>
-          ) : visibleContent.length > 0 ? (
-            <div className="text-center py-4">
-              <Sparkles className="w-6 h-6 text-gray-300 mx-auto mb-2" />
-              <p className="text-xs text-gray-400">No more content to load</p>
-              <p className="text-[10px] text-gray-400 mt-1">You've reached the end</p>
-            </div>
-          ) : null}
-        </div>
+      {/* Masonry Grid */}
+      <MasonryGrid items={visibleContent} />
+
+      {/* Load more trigger */}
+      <div 
+        ref={loaderRef}
+        className="flex justify-center items-center py-6"
+      >
+        {hasMore ? (
+          <div className="text-center">
+            <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+            <p className="text-xs text-gray-500">Loading more content...</p>
+          </div>
+        ) : visibleContent.length > 0 ? (
+          <div className="text-center py-4">
+            <Sparkles className="w-6 h-6 text-gray-300 mx-auto mb-2" />
+            <p className="text-xs text-gray-400">No more content to load</p>
+            <p className="text-[10px] text-gray-400 mt-1">You've reached the end</p>
+          </div>
+        ) : null}
       </div>
     </div>
   );
