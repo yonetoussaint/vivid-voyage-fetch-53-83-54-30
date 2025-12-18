@@ -1,7 +1,6 @@
-import React, { useState,useMemo, useEffect, useRef, useCallback } from "react";
+import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
-// Add this import with your other imports
 import SectionHeader from "@/components/home/SectionHeader";
 import { fetchAllProducts } from "@/integrations/supabase/products";
 import FlashDeals from "@/components/home/FlashDeals";
@@ -9,7 +8,7 @@ import Footer from "@/components/Footer";
 import HeroBanner from "@/components/home/HeroBanner";
 import { useHeaderFilter } from "@/contexts/HeaderFilterContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { Tag,LayoutPanelLeft, Sparkles, ChevronRight, DollarSign, Zap, Video, Crown } from "lucide-react";
+import { Tag, LayoutPanelLeft, Sparkles, ChevronRight, DollarSign, Zap, Video, Crown, Play, Users } from "lucide-react";
 
 interface ForYouContentProps {
   category: string;
@@ -30,7 +29,26 @@ interface Product {
   tags?: string[];
   flash_start_time?: string;
   created_at?: string;
+  type?: 'product' | 'reel';
 }
+
+// Reel interface
+interface Reel {
+  id: string;
+  title: string;
+  video_url: string;
+  thumbnail_url?: string;
+  views: number;
+  duration: number;
+  likes?: number;
+  comments?: number;
+  created_at?: string;
+  is_live?: boolean;
+  type: 'reel';
+}
+
+// Combined content type
+type ContentItem = Product | Reel;
 
 // Helper function to render tag elements
 const renderTag = (tag: string) => {
@@ -46,8 +64,62 @@ const renderTag = (tag: string) => {
   return null;
 };
 
-// ProductCard component - FIXED spacing and tags position
-// ProductCard component - FIXED spacing issue
+// Helper function to format views
+const formatViews = (views: number) => {
+  if (views >= 1000000) {
+    return `${(views / 1000000).toFixed(1)}M`;
+  } else if (views >= 1000) {
+    return `${(views / 1000).toFixed(0)}K`;
+  }
+  return views.toString();
+};
+
+// Helper function to format duration
+const formatDuration = (seconds: number) => {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+};
+
+// Fetch reels function (you need to implement this based on your backend)
+const fetchReels = async (limit: number = 20): Promise<Reel[]> => {
+  // This is a placeholder - implement based on your backend
+  // Example: return fetch('/api/reels').then(res => res.json());
+  
+  // Mock data for demonstration
+  return Array.from({ length: limit }, (_, i) => ({
+    id: `reel-${i}`,
+    title: `Trending Reel #${i + 1}`,
+    video_url: `https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4`,
+    thumbnail_url: `https://images.unsplash.com/photo-${150000 + i}?w=400&h=600&fit=crop`,
+    views: Math.floor(Math.random() * 1000000) + 10000,
+    duration: Math.floor(Math.random() * 60) + 15,
+    likes: Math.floor(Math.random() * 10000) + 100,
+    comments: Math.floor(Math.random() * 1000) + 10,
+    created_at: new Date().toISOString(),
+    is_live: i % 5 === 0, // Every 5th reel is "live"
+    type: 'reel' as const
+  }));
+};
+
+// Combined fetch function for both products and reels
+const fetchAllContent = async (): Promise<ContentItem[]> => {
+  const [products, reels] = await Promise.all([
+    fetchAllProducts(),
+    fetchReels(10) // Fetch 10 reels initially
+  ]);
+  
+  // Combine and shuffle the content for a mixed feed
+  const allContent: ContentItem[] = [
+    ...products.map(p => ({ ...p, type: 'product' as const })),
+    ...reels.map(r => ({ ...r, type: 'reel' as const }))
+  ];
+  
+  // Shuffle the array for mixed feed
+  return allContent.sort(() => Math.random() - 0.5);
+};
+
+// ProductCard component
 const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
   const soldCount = product.sold_count || Math.floor(Math.random() * 10000) + 100;
   const rating = product.rating || (Math.random() * 1 + 4).toFixed(1);
@@ -81,7 +153,6 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
         />
       </div>
       <div className="p-0.5">
-        {/* Product name with tags inline - REMOVED min-height */}
         <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
           {tags.map((tag) => renderTag(tag))}
           {product.name}
@@ -94,7 +165,6 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
             <span className="text-[10px] text-gray-700">{rating}</span>
           </div>
         </div>
-        {/* Currency changed to HTG (G) */}
         <p className="text-sm font-bold text-gray-900">
           G{displayPrice.toLocaleString('en-US')}
           {hasDiscount && (
@@ -111,7 +181,90 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
   );
 };
 
-// Favourite Channels Component
+// ReelCard component
+const ReelCard: React.FC<{ reel: Reel }> = ({ reel }) => {
+  const navigate = useNavigate();
+  
+  const handleClick = () => {
+    navigate(`/reels?video=${reel.id}`);
+  };
+
+  return (
+    <div 
+      className="bg-black rounded overflow-hidden relative cursor-pointer"
+      onClick={handleClick}
+    >
+      <div className="w-full aspect-[3/4] bg-gray-800 relative overflow-hidden">
+        {/* Video Thumbnail/Preview */}
+        <div className="absolute inset-0">
+          <video 
+            src={reel.video_url}
+            className="w-full h-full object-cover"
+            muted
+            loop
+            playsInline
+            preload="metadata"
+          />
+        </div>
+        
+        {/* Live Badge */}
+        {reel.is_live && (
+          <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded-full z-10">
+            <div className="flex items-center gap-0.5">
+              <div className="w-1 h-3 bg-white animate-pulse" style={{ animationDelay: '0s' }}></div>
+              <div className="w-1 h-3 bg-white animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+              <div className="w-1 h-3 bg-white animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+            </div>
+            <span>LIVE</span>
+          </div>
+        )}
+        
+        {/* Duration Badge (for non-live reels) */}
+        {!reel.is_live && (
+          <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded z-10">
+            {formatDuration(reel.duration)}
+          </div>
+        )}
+        
+        {/* Gradient Overlay at Bottom */}
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 z-10">
+          <div className="flex items-center text-white text-[10px] gap-1">
+            <Play className="w-3 h-3" fill="white" />
+            <span>{formatViews(reel.views)} views</span>
+          </div>
+        </div>
+      </div>
+      
+      {/* Reel Indicator Badge */}
+      <div className="absolute top-2 right-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded z-10">
+        REEL
+      </div>
+      
+      {/* Title/Description Area */}
+      <div className="p-2">
+        <p className="text-[11px] text-white font-medium line-clamp-2 mb-1">
+          {reel.title}
+        </p>
+        {reel.is_live && (
+          <div className="flex items-center gap-1 text-[10px] text-pink-300">
+            <Users className="w-3 h-3" />
+            <span>Live now • {formatViews(reel.views)} watching</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ContentCard component - switches between ProductCard and ReelCard
+const ContentCard: React.FC<{ item: ContentItem }> = ({ item }) => {
+  if (item.type === 'reel') {
+    return <ReelCard reel={item as Reel} />;
+  }
+  return <ProductCard product={item as Product} />;
+};
+
+// Favourite Channels Component (keep as is)
 const FavouriteChannels: React.FC = () => {
   const channels = [
     {
@@ -186,10 +339,9 @@ const FavouriteChannels: React.FC = () => {
   );
 };
 
-// Popular Categories Component
+// Popular Categories Component (keep as is)
 const PopularCategories: React.FC = () => {
   const navigate = useNavigate();
-
   const CategoryIcon = LayoutPanelLeft;
 
   const categories = [
@@ -267,7 +419,7 @@ const PopularCategories: React.FC = () => {
         showTitleChevron={true}
         viewAllLink="/categories"
         viewAllText="More"
-        onViewAllClick={handleViewAllClick} // Pass click handler
+        onViewAllClick={handleViewAllClick}
       />
 
       <div className="flex gap-2 overflow-x-auto pb-4 px-2 scrollbar-hide">
@@ -277,14 +429,10 @@ const PopularCategories: React.FC = () => {
             onClick={() => handleCategoryClick(category.id, category.name)}
             className="flex-shrink-0 w-20 cursor-pointer group"
           >
-            {/* Image Container with square borders */}
             <div className="relative rounded-sm overflow-hidden mb-2 aspect-square transition-transform group-hover:scale-105 border border-gray-100">
-              {/* Discount Badge with square corners */}
               <div className={`absolute top-1 left-1 z-10 ${category.discountBg} text-white px-1 py-0.5 text-[9px] font-bold rounded-sm`}>
                 {category.discount}
               </div>
-
-              {/* Real Product Image with overlay for better text visibility */}
               <div className="relative w-full h-full">
                 <img
                   src={category.image}
@@ -296,12 +444,9 @@ const PopularCategories: React.FC = () => {
                     target.src = `https://placehold.co/80x80/cccccc/969696?text=${encodeURIComponent(category.name.charAt(0))}`;
                   }}
                 />
-                {/* Gradient overlay for better text visibility on light images */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent" />
               </div>
             </div>
-
-            {/* Category Info */}
             <div className="text-center">
               <h3 className="font-semibold text-[11px] text-gray-900 mb-0 truncate leading-tight">
                 {category.name}
@@ -314,89 +459,90 @@ const PopularCategories: React.FC = () => {
   );
 };
 
-// Infinite Products Grid Component
-// Infinite Products Grid Component - FIXED pagination
-const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => {
+// Infinite Content Grid Component - UPDATED to handle both products and reels
+const InfiniteContentGrid: React.FC<{ category?: string }> = ({ category }) => {
   const [page, setPage] = useState(0);
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [allContent, setAllContent] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const loaderRef = useRef(null);
-  const productsPerPage = 20;
+  const contentPerPage = 20;
 
-  // Fetch ALL products
-  const { data: initialProducts, isLoading: initialLoading } = useQuery({
-    queryKey: ["products", "for-you", category],
-    queryFn: () => fetchAllProducts(), // Fetch all products
+  // Fetch ALL content (products + reels)
+  const { data: initialContent, isLoading: initialLoading } = useQuery({
+    queryKey: ["content", "for-you", category],
+    queryFn: fetchAllContent,
     staleTime: 60000,
   });
 
-  // Filter products by category if needed
-  const filteredProducts = useMemo(() => {
-    if (!initialProducts) return [];
-    
-    if (category && category !== 'recommendations') {
-      // Filter products by category
-      return initialProducts.filter(product => 
-        product.category?.toLowerCase() === category.toLowerCase() ||
-        product.tags?.some(tag => tag.toLowerCase() === category.toLowerCase())
-      );
-    }
-    
-    return initialProducts;
-  }, [initialProducts, category]);
+  // Filter content by category if needed
+  const filteredContent = useMemo(() => {
+    if (!initialContent) return [];
 
-  // Set filtered products when data loads
+    if (category && category !== 'recommendations') {
+      // For products, filter by category
+      return initialContent.filter(item => {
+        if (item.type === 'product') {
+          const product = item as Product;
+          return product.category?.toLowerCase() === category.toLowerCase() ||
+                 product.tags?.some(tag => tag.toLowerCase() === category.toLowerCase());
+        }
+        // Reels are always included unless specifically filtered
+        return true;
+      });
+    }
+
+    return initialContent;
+  }, [initialContent, category]);
+
+  // Set filtered content when data loads
   useEffect(() => {
-    if (filteredProducts && filteredProducts.length > 0) {
-      setAllProducts(filteredProducts);
-      // Check if we have more products than the first page
-      setHasMore(filteredProducts.length > productsPerPage);
-      setPage(0); // Reset page when category changes
-    } else if (filteredProducts && filteredProducts.length === 0) {
-      setAllProducts([]);
+    if (filteredContent && filteredContent.length > 0) {
+      setAllContent(filteredContent);
+      setHasMore(filteredContent.length > contentPerPage);
+      setPage(0);
+    } else if (filteredContent && filteredContent.length === 0) {
+      setAllContent([]);
       setHasMore(false);
     }
-  }, [filteredProducts]);
+  }, [filteredContent]);
 
-  // Calculate visible products
-  const visibleProducts = useMemo(() => {
+  // Calculate visible content
+  const visibleContent = useMemo(() => {
     const startIndex = 0;
-    const endIndex = (page + 1) * productsPerPage;
-    return allProducts.slice(startIndex, endIndex);
-  }, [allProducts, page, productsPerPage]);
+    const endIndex = (page + 1) * contentPerPage;
+    return allContent.slice(startIndex, endIndex);
+  }, [allContent, page, contentPerPage]);
 
-  // Check if we have more products to load
+  // Check if we have more content to load
   useEffect(() => {
-    if (allProducts.length > 0) {
-      const totalLoaded = (page + 1) * productsPerPage;
-      const hasMoreProducts = totalLoaded < allProducts.length;
-      setHasMore(hasMoreProducts);
+    if (allContent.length > 0) {
+      const totalLoaded = (page + 1) * contentPerPage;
+      const hasMoreContent = totalLoaded < allContent.length;
+      setHasMore(hasMoreContent);
     }
-  }, [allProducts, page, productsPerPage]);
+  }, [allContent, page, contentPerPage]);
 
-  // Load more products function
-  const loadMoreProducts = useCallback(async () => {
+  // Load more content function
+  const loadMoreContent = useCallback(async () => {
     if (loading || !hasMore) return;
 
     setLoading(true);
 
     try {
-      // Simply increment the page
       const nextPage = page + 1;
       setPage(nextPage);
-      
-      // Check if we've reached the end
-      const totalLoaded = (nextPage + 1) * productsPerPage;
-      if (totalLoaded >= allProducts.length) {
+
+      const totalLoaded = (nextPage + 1) * contentPerPage;
+      if (totalLoaded >= allContent.length) {
         setHasMore(false);
       }
     } catch (error) {
-      console.error("Error loading more products:", error);
+      console.error("Error loading more content:", error);
     } finally {
       setLoading(false);
     }
-  }, [page, loading, hasMore, allProducts, productsPerPage]);
+  }, [page, loading, hasMore, allContent, contentPerPage]);
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
@@ -406,7 +552,7 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
       (entries) => {
         const target = entries[0];
         if (target.isIntersecting && hasMore && !loading) {
-          loadMoreProducts();
+          loadMoreContent();
         }
       },
       {
@@ -423,27 +569,29 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
         observer.unobserve(loaderRef.current);
       }
     };
-  }, [hasMore, loading, loadMoreProducts]);
+  }, [hasMore, loading, loadMoreContent]);
 
   // Show loading state while fetching initial data
-  if (initialLoading && allProducts.length === 0) {
+  if (initialLoading && allContent.length === 0) {
     return (
       <div className="pt-2">
         <div className="px-2">
-          <div className="text-center py-8 text-gray-500">
-            Loading products...
+          <div className="grid grid-cols-2 gap-2">
+            {Array(4).fill(0).map((_, i) => (
+              <div key={i} className="bg-gray-200 animate-pulse aspect-square rounded"></div>
+            ))}
           </div>
         </div>
       </div>
     );
   }
 
-  // Show empty state if no products
-  if (!initialLoading && allProducts.length === 0) {
+  // Show empty state if no content
+  if (!initialLoading && allContent.length === 0) {
     return (
       <div className="pt-2">
         <div className="text-center py-8 text-gray-500">
-          No products found. Check back soon!
+          No content found. Check back soon!
         </div>
       </div>
     );
@@ -452,13 +600,42 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
   return (
     <div className="pt-2">
       <div className="px-2">
+        {/* Statistics Banner */}
+        <div className="mb-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3">
+          <div className="flex items-center justify-between">
+            <div className="text-center">
+              <p className="text-xs text-gray-600">Products</p>
+              <p className="text-lg font-bold text-gray-900">
+                {visibleContent.filter(item => item.type === 'product').length}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-gray-600">Reels</p>
+              <p className="text-lg font-bold text-gray-900">
+                {visibleContent.filter(item => item.type === 'reel').length}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-gray-600">Total</p>
+              <p className="text-lg font-bold text-gray-900">
+                {visibleContent.length}
+              </p>
+            </div>
+          </div>
+          <div className="mt-2 text-center">
+            <span className="text-xs text-gray-500">
+              Mixed feed showing products and trending reels
+            </span>
+          </div>
+        </div>
+
         <div className="grid grid-cols-2 gap-2">
-          {visibleProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
+          {visibleContent.map((item) => (
+            <ContentCard key={`${item.type}-${item.id}`} item={item} />
           ))}
         </div>
 
-        {/* Load more trigger - FIXED: Only show if we actually have more products */}
+        {/* Load more trigger */}
         <div 
           ref={loaderRef}
           className="flex justify-center items-center py-6"
@@ -466,12 +643,12 @@ const InfiniteProductsGrid: React.FC<{ category?: string }> = ({ category }) => 
           {hasMore ? (
             <div className="text-center">
               <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-              <p className="text-xs text-gray-500">Loading more products...</p>
+              <p className="text-xs text-gray-500">Loading more content...</p>
             </div>
-          ) : visibleProducts.length > 0 ? (
+          ) : visibleContent.length > 0 ? (
             <div className="text-center py-4">
               <Sparkles className="w-6 h-6 text-gray-300 mx-auto mb-2" />
-              <p className="text-xs text-gray-400">No more products to load</p>
+              <p className="text-xs text-gray-400">No more content to load</p>
               <p className="text-[10px] text-gray-400 mt-1">You've reached the end</p>
             </div>
           ) : null}
@@ -569,7 +746,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
 
     <div key="separator-3" className="w-full bg-gray-100 h-1 mb-2"></div>,
 
-    <InfiniteProductsGrid key="infinite-grid" category={category} />,
+    <InfiniteContentGrid key="infinite-grid" category={category} />,
   ];
 
   return (
