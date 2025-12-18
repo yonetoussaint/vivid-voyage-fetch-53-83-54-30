@@ -11,13 +11,14 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import ProductUploadOverlay from '@/components/product/ProductUploadOverlay';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Store04Icon } from '@hugeicons-pro/core-stroke-rounded';
 
 import SimpleAuthPage from '@/pages/SimpleAuthPage';
 import SignInBanner from './SignInBanner';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useScreenOverlay } from '@/context/ScreenOverlayContext';
 import { useTranslation } from 'react-i18next';
-import LocalMallIcon from '@mui/icons-material/LocalMall'; // Import MUI mall icon
 
 interface BottomNavTab {
   id: string;
@@ -44,15 +45,15 @@ const HomeIcon = ({ className, width, height }: { className?: string; width?: nu
   );
 };
 
-// Custom MallIcon component using Material UI's LocalMallIcon
+// Custom MallIcon component using Hugeicons Store04Icon
 const MallIcon = ({ className, width, height }: { className?: string; width?: number; height?: number }) => {
   return (
-    <LocalMallIcon 
+    <HugeiconsIcon
+      icon={Store04Icon}
+      size={width || 20}
+      color="currentColor"
+      strokeWidth={1.5}
       className={className}
-      style={{ 
-        width: width || 20, 
-        height: height || 20 
-      }}
     />
   );
 };
