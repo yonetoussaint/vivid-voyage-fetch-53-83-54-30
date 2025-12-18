@@ -1143,7 +1143,7 @@ const InfiniteContentGrid: React.FC<{ category?: string }> = ({ category }) => {
       ) : null}
     </div>
   </div>
-)
+);
 };
 
 const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
