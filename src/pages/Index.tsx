@@ -9,6 +9,7 @@ import HeroBanner from "@/components/home/HeroBanner";
 import { useHeaderFilter } from "@/contexts/HeaderFilterContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tag, LayoutPanelLeft, Sparkles, ChevronRight, DollarSign, Zap, Video, Crown, Play, Users, Image, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Share2, Eye, Camera } from "lucide-react";
+import AliExpressHeader from "@/components/home/AliExpressHeader"; // ADDED: Import AliExpressHeader
 
 interface ForYouContentProps {
   category: string;
@@ -131,7 +132,7 @@ const fetchReels = async (limit: number = 8): Promise<Reel[]> => {
     is_live: i % 5 === 0,
     type: 'reel' as const
   }));
-  
+
   return mockReels;
 };
 
@@ -155,7 +156,7 @@ const fetchPosts = async (limit: number = 15): Promise<Post[]> => {
           'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&h=600&fit=crop',
           'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=800&h=600&fit=crop'
         ],
-        caption: 'Just got these amazing summer outfits! Perfect for the beach 🌊☀️ #summerfashion #beachvibes #ootd',
+        caption: 'Just got these amazing summer outfits! Perfect for the beach ôţôţôţ #summerfashion #beachvibes #ootd',
         location: 'Miami Beach',
         hashtags: ['summerfashion', 'beachvibes', 'ootd', 'fashion', 'style']
       },
@@ -206,7 +207,7 @@ const fetchPosts = async (limit: number = 15): Promise<Post[]> => {
           'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&h=600&fit=crop',
           'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=800&h=600&fit=crop'
         ],
-        caption: 'My new photography setup is complete! 📸 All gear tagged below. #photography #cameragear #tech',
+        caption: 'My new photography setup is complete! ôţ All gear tagged below. #photography #cameragear #tech',
         location: 'Home Studio',
         hashtags: ['photography', 'cameragear', 'tech', 'gadgets']
       },
@@ -282,7 +283,7 @@ const fetchPosts = async (limit: number = 15): Promise<Post[]> => {
       is_saved: true
     }
   ];
-  
+
   return mockPosts.slice(0, limit);
 };
 
@@ -294,14 +295,14 @@ const fetchAllContent = async (): Promise<ContentItem[]> => {
       fetchReels(8),
       fetchPosts(10)
     ]);
-    
+
     // Combine all content
     const allContent: ContentItem[] = [
       ...products.map(p => ({ ...p, type: 'product' as const })),
       ...reels.map(r => ({ ...r, type: 'reel' as const })),
       ...posts.map(p => ({ ...p, type: 'post' as const }))
     ];
-    
+
     // Shuffle for mixed feed
     return shuffleArray(allContent);
   } catch (error) {
@@ -362,7 +363,7 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
           <span className="text-[10px] text-gray-500">{soldCount.toLocaleString()} sold</span>
           <span className="text-[10px] text-gray-400">|</span>
           <div className="flex items-center">
-            <span className="text-[10px] text-gray-700 mr-0.5">★</span>
+            <span className="text-[10px] text-gray-700 mr-0.5">ˇú</span>
             <span className="text-[10px] text-gray-700">{rating}</span>
           </div>
         </div>
@@ -383,7 +384,7 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
 // ReelCard component - MASONRY STYLE
 const ReelCard: React.FC<{ reel: Reel }> = ({ reel }) => {
   const navigate = useNavigate();
-  
+
   const handleClick = () => {
     navigate(`/reels?video=${reel.id}`);
   };
@@ -408,7 +409,7 @@ const ReelCard: React.FC<{ reel: Reel }> = ({ reel }) => {
           playsInline
           preload="metadata"
         />
-        
+
         {reel.is_live && (
           <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded-full z-10">
             <div className="flex items-center gap-0.5">
@@ -419,13 +420,13 @@ const ReelCard: React.FC<{ reel: Reel }> = ({ reel }) => {
             <span>LIVE</span>
           </div>
         )}
-        
+
         {!reel.is_live && (
           <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded z-10">
             {formatDuration(reel.duration)}
           </div>
         )}
-        
+
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 z-10">
           <div className="flex items-center text-white text-[10px] gap-1">
             <Play className="w-3 h-3" fill="white" />
@@ -433,11 +434,11 @@ const ReelCard: React.FC<{ reel: Reel }> = ({ reel }) => {
           </div>
         </div>
       </div>
-      
+
       <div className="absolute top-2 right-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded z-10">
         REEL
       </div>
-      
+
       <div className="p-2">
         <p className="text-[11px] text-white font-medium line-clamp-2 mb-1">
           {reel.title}
@@ -445,7 +446,7 @@ const ReelCard: React.FC<{ reel: Reel }> = ({ reel }) => {
         {reel.is_live && (
           <div className="flex items-center gap-1 text-[10px] text-pink-300">
             <Users className="w-3 h-3" />
-            <span>Live now • {formatNumber(reel.views)} watching</span>
+            <span>Live now ôţ {formatNumber(reel.views)} watching</span>
           </div>
         )}
       </div>
@@ -942,13 +943,13 @@ const MasonryGrid: React.FC<{ items: ContentItem[] }> = ({ items }) => {
   const columns = useMemo(() => {
     const colCount = 2; // 2 columns for mobile
     const cols: ContentItem[][] = Array.from({ length: colCount }, () => []);
-    
+
     // Distribute items evenly between columns
     items.forEach((item, index) => {
       const colIndex = index % colCount;
       cols[colIndex].push(item);
     });
-    
+
     return cols;
   }, [items]);
 
@@ -1193,129 +1194,31 @@ const InfiniteContentGrid: React.FC<{ category?: string }> = ({ category }) => {
   );
 };
 
-// Replace the ForYouContent component (starting around line 860) with this:
-
-// Replace the ForYouContent component with this version:
-
 const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   const navigate = useNavigate();
   const { setHeaderMode, headerMode } = useHeaderFilter();
   const scrollY = useRef(0);
   const ticking = useRef(false);
   const heroBannerRef = useRef<HTMLDivElement>(null);
-  
-  // Search bar state - EXACT same as ReusableSearchBar
-  const [searchQuery, setSearchQuery] = useState('');
-  const searchRef = useRef<HTMLInputElement>(null);
 
-  // Search handlers - EXACT same logic
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setSearchQuery(newValue);
-  };
+  // State for header functionality
+  const [activeTab, setActiveTab] = useState('recommendations');
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-    }
-  };
-
-  const handleClearSearch = () => {
-    setSearchQuery('');
-    if (searchRef.current) {
-      searchRef.current.focus();
-    }
-  };
-
-  const handleFocus = () => {
-    // Optional: Add focus effects if needed
-  };
-
-  const handleImageSearch = () => {
-    navigate('/search/image');
-  };
-
-  // Render right icons EXACTLY as in ReusableSearchBar
-  const renderRightIcons = () => {
-    // Clear button when there's text (regardless of overlay state)
-    if (searchQuery.trim()) {
-      return (
-        <button
-          type="button"
-          onClick={handleClearSearch}
-          className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-        >
-          <X className="h-4 w-4 text-gray-600" />
-        </button>
-      );
-    }
-    // Scan + Mic icons when specified (showScanMic = true)
-    else {
-      return (
-        <>
-          <button
-            type="button"
-            onClick={handleImageSearch}
-            className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            {/* ScanLine icon as SVG */}
-            <svg 
-              className="h-4 w-4 text-gray-600 cursor-pointer hover:text-gray-800" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
-              />
-            </svg>
-          </button>
-          <button
-            type="button"
-            className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            {/* Mic icon as SVG */}
-            <svg 
-              className="h-4 w-4 text-gray-600 cursor-pointer hover:text-gray-800" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-              />
-            </svg>
-          </button>
-        </>
-      );
-    }
-  };
-
-  // Quick search tags
-  const quickSearchTags = [
-    'Wireless Earbuds',
-    'Summer Dresses', 
-    'Smart Watch',
-    'Laptop Backpack',
-    'iPhone Cases',
-    'Yoga Mat',
-    'Water Bottle',
-    'Sneakers'
+  // Categories for the header tabs
+  const categories = [
+    { id: 'recommendations', name: 'For You', path: '/for-you' },
+    { id: 'electronics', name: 'Electronics', path: '/categories/electronics' },
+    { id: 'home', name: 'Home & Living', path: '/categories/home-living' },
+    { id: 'fashion', name: 'Fashion', path: '/categories/fashion' },
+    { id: 'entertainment', name: 'Entertainment', path: '/categories/entertainment' },
+    { id: 'kids', name: 'Kids & Hobbies', path: '/categories/kids-hobbies' },
+    { id: 'sports', name: 'Sports & Outdoors', path: '/categories/sports-outdoors' },
+    { id: 'automotive', name: 'Automotive', path: '/categories/automotive' },
+    { id: 'women', name: 'Women', path: '/categories/women' },
+    { id: 'men', name: 'Men', path: '/categories/men' },
+    { id: 'books', name: 'Books', path: '/categories/books' },
   ];
-
-  const handleQuickSearch = (query: string) => {
-    setSearchQuery(query);
-    setTimeout(() => {
-      navigate(`/search?q=${encodeURIComponent(query)}`);
-    }, 100);
-  };
 
   // Improved scroll detection for header mode switching
   useEffect(() => {
@@ -1403,133 +1306,41 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
 
   return (
     <div className="overflow-hidden relative">
-      {/* Search Bar Section - PIXEL PERFECT ReusableSearchBar */}
-      <div className="sticky top-0 z-50 bg-white px-4 py-3 border-b border-gray-100 shadow-sm">
-        <div className="flex-1 relative max-w-full mx-auto">
-          <form onSubmit={handleSubmit}>
-            <div className="relative">
-              {/* Input field - EXACT same styling */}
-              <input
-                type="text"
-                placeholder="Search for products"
-                value={searchQuery}
-                onChange={handleInputChange}
-                onFocus={handleFocus}
-                className="w-full px-3 py-1 text-sm font-medium border-2 border-gray-800 rounded-full transition-all duration-300 shadow-sm pr-16 pl-3 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                ref={searchRef}
-                style={{
-                  fontSize: '14px',
-                  lineHeight: '1.25',
-                  fontWeight: 500
-                }}
-              />
-
-              {/* Right icons - EXACT same positioning and styling */}
-              <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
-                {renderRightIcons()}
-              </div>
-            </div>
-          </form>
-        </div>
-
-        {/* Quick Search Tags Section */}
-        {!searchQuery.trim() && (
-          <div className="mt-3">
-            <div className="flex items-center justify-between mb-2">
-              <h3 
-                className="text-xs font-semibold text-gray-700"
-                style={{
-                  fontSize: '12px',
-                  fontWeight: 600
-                }}
-              >
-                Quick Search
-              </h3>
-              <button 
-                className="text-xs text-blue-600 hover:text-blue-800 font-medium"
-                style={{
-                  fontSize: '12px',
-                  fontWeight: 500
-                }}
-              >
-                See all
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {quickSearchTags.map((tag, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleQuickSearch(tag)}
-                  className="px-3 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 text-xs rounded-full transition-colors whitespace-nowrap"
-                  style={{
-                    fontSize: '12px',
-                    lineHeight: '1',
-                    padding: '6px 12px',
-                    borderRadius: '9999px'
-                  }}
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Search suggestions when typing */}
-        {searchQuery.trim() && (
-          <div 
-            className="mt-3 p-2 bg-gray-50 rounded-lg border border-gray-200"
-            style={{
-              borderRadius: '8px'
-            }}
-          >
-            <h3 
-              className="text-xs font-semibold text-gray-700 mb-2"
-              style={{
-                fontSize: '12px',
-                fontWeight: 600
-              }}
-            >
-              Search suggestions
-            </h3>
-            <div className="space-y-1">
-              {[
-                `${searchQuery} for men`,
-                `${searchQuery} for women`,
-                `${searchQuery} 2024`,
-                `Best ${searchQuery}`,
-                `${searchQuery} accessories`,
-                `Buy ${searchQuery} online`,
-                `${searchQuery} price`,
-                `${searchQuery} near me`
-              ].slice(0, 5).map((suggestion, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleQuickSearch(suggestion)}
-                  className="w-full text-left px-2 py-1.5 text-xs text-gray-600 hover:bg-gray-100 rounded transition-colors flex items-center"
-                  style={{
-                    fontSize: '12px',
-                    padding: '6px 8px',
-                    borderRadius: '4px'
-                  }}
-                >
-                  <svg 
-                    className="w-3 h-3 mr-2 text-gray-400" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  {suggestion}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+      {/* AliExpressHeader directly in For You page */}
+      <div className="sticky top-0 z-50">
+        <AliExpressHeader
+          activeTabId={activeTab}
+          showFilterBar={false}
+          showCategoryTabs={true}
+          filterCategories={[]}
+          selectedFilters={[]}
+          onFilterSelect={() => {}}
+          onFilterClear={() => {}}
+          onClearAll={() => {}}
+          onFilterButtonClick={() => {}}
+          isFilterDisabled={false}
+          customTabs={undefined}
+          onCustomTabChange={(tabId) => {
+            const tab = categories.find(t => t.id === tabId);
+            if (tab?.path) {
+              navigate(tab.path);
+            }
+          }}
+          showSectionHeader={false}
+          sectionHeaderTitle=""
+          sectionHeaderShowStackedProfiles={false}
+          sectionHeaderShowVerifiedSellers={false}
+          sectionHeaderVerifiedSellersText=""
+          sectionHeaderStackedProfiles={[]}
+          sectionHeaderStackedProfilesText=""
+          sectionHeaderShowCountdown={false}
+          sectionHeaderCountdown={undefined}
+          sectionHeaderShowSponsorCount={false}
+          sectionHeaderViewAllLink={undefined}
+          sectionHeaderViewAllText=""
+        />
       </div>
 
-      {/* Main Content */}
       <div className="pb-2">
         {components.map((component, index) => (
           <React.Fragment key={`section-${index}`}>
