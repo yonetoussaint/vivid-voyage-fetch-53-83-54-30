@@ -1120,77 +1120,30 @@ const InfiniteContentGrid: React.FC<{ category?: string }> = ({ category }) => {
   }
 
   return (
-    <div className="pt-2">
-      {/* Content Statistics Banner */}
-      <div className="mb-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3 mx-2">
-        <div className="flex items-center justify-between mb-2">
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1 mb-1">
-              <Tag className="w-4 h-4 text-blue-600" />
-              <p className="text-xs font-semibold text-gray-700">Products</p>
-            </div>
-            <p className="text-lg font-bold text-gray-900">
-              {contentStats.products}
-            </p>
-          </div>
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1 mb-1">
-              <Play className="w-4 h-4 text-pink-600" />
-              <p className="text-xs font-semibold text-gray-700">Reels</p>
-            </div>
-            <p className="text-lg font-bold text-gray-900">
-              {contentStats.reels}
-            </p>
-          </div>
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1 mb-1">
-              <Image className="w-4 h-4 text-purple-600" />
-              <p className="text-xs font-semibold text-gray-700">Posts</p>
-            </div>
-            <p className="text-lg font-bold text-gray-900">
-              {contentStats.posts}
-            </p>
-          </div>
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1 mb-1">
-              <Sparkles className="w-4 h-4 text-orange-600" />
-              <p className="text-xs font-semibold text-gray-700">Total</p>
-            </div>
-            <p className="text-lg font-bold text-gray-900">
-              {contentStats.total}
-            </p>
-          </div>
-        </div>
-        <div className="mt-2 text-center">
-          <span className="text-xs text-gray-500">
-            Mixed feed showing products, reels, and posts
-          </span>
-        </div>
-      </div>
+  <div className="pt-2">
+    {/* Masonry Grid */}
+    <MasonryGrid items={visibleContent} />
 
-      {/* Masonry Grid */}
-      <MasonryGrid items={visibleContent} />
-
-      {/* Load more trigger */}
-      <div 
-        ref={loaderRef}
-        className="flex justify-center items-center py-6"
-      >
-        {hasMore ? (
-          <div className="text-center">
-            <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-            <p className="text-xs text-gray-500">Loading more content...</p>
-          </div>
-        ) : visibleContent.length > 0 ? (
-          <div className="text-center py-4">
-            <Sparkles className="w-6 h-6 text-gray-300 mx-auto mb-2" />
-            <p className="text-xs text-gray-400">No more content to load</p>
-            <p className="text-[10px] text-gray-400 mt-1">You've reached the end</p>
-          </div>
-        ) : null}
-      </div>
+    {/* Load more trigger */}
+    <div 
+      ref={loaderRef}
+      className="flex justify-center items-center py-6"
+    >
+      {hasMore ? (
+        <div className="text-center">
+          <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+          <p className="text-xs text-gray-500">Loading more content...</p>
+        </div>
+      ) : visibleContent.length > 0 ? (
+        <div className="text-center py-4">
+          <Sparkles className="w-6 h-6 text-gray-300 mx-auto mb-2" />
+          <p className="text-xs text-gray-400">No more content to load</p>
+          <p className="text-[10px] text-gray-400 mt-1">You've reached the end</p>
+        </div>
+      ) : null}
     </div>
-  );
+  </div>
+)
 };
 
 const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
