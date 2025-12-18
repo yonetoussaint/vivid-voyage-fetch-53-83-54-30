@@ -1,3 +1,5 @@
+remove the wallet, replace it by Mall, the mall is a place where people will find prepaid quality products, i mean they should pay in advance, and we will deliver it to their door, contrary to local sellers
+
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -43,6 +45,17 @@ const HomeIcon = ({ className, width, height }: { className?: string; width?: nu
   );
 };
 
+// Custom MallIcon component (using ShoppingBag for now, can be changed)
+const MallIcon = ({ className, width, height }: { className?: string; width?: number; height?: number }) => {
+  return (
+    <ShoppingBag 
+      className={className}
+      width={width || 20}
+      height={height || 20}
+    />
+  );
+};
+
 const getNavItems = (
   isSellerDashboard: boolean, 
   isPickupStation: boolean, 
@@ -53,7 +66,7 @@ const getNavItems = (
   isAddressesPage: boolean,
   isHelpPage: boolean,
   isMessagesPage: boolean,
-  isWalletPage: boolean,
+  isMallPage: boolean, // Changed from isWalletPage
   isReelsPage: boolean,
   isProfilePage: boolean,
   isCategoriesPage: boolean
@@ -93,18 +106,17 @@ const getNavItems = (
   }
 
   // Determine labels and icons for other nav items
-  // REPLACED CATEGORIES WITH REELS
-  let reelsLabel = 'navigation.shorts'; // Updated to use shorts/reels translation key
+  let reelsLabel = 'navigation.shorts';
   let reelsIcon: any = Zap;
   let reelsPath = '/reels';
+
+  let mallLabel = 'navigation.mall'; // New mall label
+  let mallIcon: any = MallIcon; // New mall icon
+  let mallPath = '/mall';
 
   let messagesLabel = 'navigation.messages';
   let messagesIcon: any = MessageCircle;
   let messagesPath = '/messages';
-
-  let walletLabel = 'navigation.wallet';
-  let walletIcon: any = Wallet;
-  let walletPath = '/wallet';
 
   let profileLabel = 'navigation.account';
   let profileIcon: any = User;
@@ -117,16 +129,16 @@ const getNavItems = (
     reelsPath = '/reels';
   }
 
+  if (isMallPage) { // Changed from isWalletPage
+    mallLabel = 'navigation.mall';
+    mallIcon = MallIcon;
+    mallPath = '/mall';
+  }
+
   if (isMessagesPage) {
     messagesLabel = 'navigation.messages';
     messagesIcon = MessageCircle;
     messagesPath = '/messages';
-  }
-
-  if (isWalletPage) {
-    walletLabel = 'navigation.wallet';
-    walletIcon = Wallet;
-    walletPath = '/wallet';
   }
 
   if (isProfilePage) {
@@ -135,7 +147,7 @@ const getNavItems = (
     profilePath = '/profile/orders';
   }
 
-  // Updated to include reels instead of categories
+  // Updated order: Home, Reels, Mall (replaces Wallet), Messages, Profile
   return [
     { 
       id: 'home', 
@@ -144,8 +156,8 @@ const getNavItems = (
       path: homePath
     }, 
     { id: 'reels', nameKey: reelsLabel, icon: reelsIcon, path: reelsPath },
-    { id: 'messages', nameKey: messagesLabel, icon: messagesIcon, path: messagesPath },
-    { id: 'wallet', nameKey: walletLabel, icon: walletIcon, path: walletPath },
+    { id: 'mall', nameKey: mallLabel, icon: mallIcon, path: mallPath }, // Replaces Wallet
+    { id: 'messages', nameKey: messagesLabel, icon: messagesIcon, path: messagesPath }, // Moved to 4th position
     { id: 'profile', nameKey: profileLabel, icon: profileIcon, path: profilePath, isAvatar: true },
   ];
 };
@@ -196,7 +208,7 @@ export default function BottomNav() {
   const isAddressesPage = location.pathname.startsWith('/addresses');
   const isHelpPage = location.pathname.startsWith('/help');
   const isMessagesPage = location.pathname.startsWith('/messages');
-  const isWalletPage = location.pathname.startsWith('/wallet');
+  const isMallPage = location.pathname.startsWith('/mall'); // Changed from isWalletPage
   const isReelsPage = location.pathname.startsWith('/reels');
   const isProfilePage = location.pathname.startsWith('/profile');
   const isCategoriesPage = location.pathname.startsWith('/categories');
@@ -211,7 +223,7 @@ export default function BottomNav() {
     isAddressesPage, 
     isHelpPage, 
     isMessagesPage, 
-    isWalletPage, 
+    isMallPage, // Changed from isWalletPage
     isReelsPage, 
     isProfilePage,
     isCategoriesPage
@@ -231,7 +243,7 @@ export default function BottomNav() {
     const updateNavHeight = () => {
       if (navRef.current) {
         const height = navRef.current.offsetHeight;
-        document.documentElement.style.setProperty('--bottom-nav-height', `${height}px`);
+        document.documentStyle.setProperty('--bottom-nav-height', `${height}px`);
       }
     };
 
@@ -264,7 +276,7 @@ export default function BottomNav() {
   // Update reorderedNavItems when navItems change
   useEffect(() => {
     setReorderedNavItems(navItems);
-  }, [isSellerDashboard, isPickupStation, isExplorePage, isWishlistPage, isCartPage, isNotificationsPage, isAddressesPage, isHelpPage, isMessagesPage, isWalletPage, isReelsPage, isProfilePage, isCategoriesPage]);
+  }, [isSellerDashboard, isPickupStation, isExplorePage, isWishlistPage, isCartPage, isNotificationsPage, isAddressesPage, isHelpPage, isMessagesPage, isMallPage, isReelsPage, isProfilePage, isCategoriesPage]); // Changed isWalletPage to isMallPage
 
   // Load selected more item from localStorage on mount
   useEffect(() => {
@@ -418,9 +430,9 @@ export default function BottomNav() {
                   {/* X button for special pages when active */}
                   {isActive && (
                     (item.id === 'home' && (isSellerDashboard || isPickupStation || isExplorePage || isWishlistPage || isCartPage || isNotificationsPage || isAddressesPage || isHelpPage)) ||
-                    (item.id === 'reels' && isReelsPage) || // Updated to check for reels page
+                    (item.id === 'reels' && isReelsPage) ||
+                    (item.id === 'mall' && isMallPage) || // Changed from wallet to mall
                     (item.id === 'messages' && isMessagesPage) ||
-                    (item.id === 'wallet' && isWalletPage) ||
                     (item.id === 'profile' && isProfilePage)
                   ) && (
                     <span
@@ -429,8 +441,8 @@ export default function BottomNav() {
                         // Navigate to the default page for each button
                         if (item.id === 'home') navigate('/for-you');
                         else if (item.id === 'reels') navigate('/reels');
+                        else if (item.id === 'mall') navigate('/mall'); // Changed from wallet to mall
                         else if (item.id === 'messages') navigate('/messages');
-                        else if (item.id === 'wallet') navigate('/wallet');
                         else if (item.id === 'profile') navigate('/profile/orders');
                         setActiveTab(item.id);
                       }}
@@ -442,8 +454,8 @@ export default function BottomNav() {
                           e.stopPropagation();
                           if (item.id === 'home') navigate('/for-you');
                           else if (item.id === 'reels') navigate('/reels');
+                          else if (item.id === 'mall') navigate('/mall'); // Changed from wallet to mall
                           else if (item.id === 'messages') navigate('/messages');
-                          else if (item.id === 'wallet') navigate('/wallet');
                           else if (item.id === 'profile') navigate('/profile/orders');
                           setActiveTab(item.id);
                         }
