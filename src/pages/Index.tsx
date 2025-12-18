@@ -1204,12 +1204,11 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   const ticking = useRef(false);
   const heroBannerRef = useRef<HTMLDivElement>(null);
   
-  // Search bar state
+  // Search bar state - EXACT same as ReusableSearchBar
   const [searchQuery, setSearchQuery] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
-  // Search handlers
+  // Search handlers - EXACT same logic
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setSearchQuery(newValue);
@@ -1230,19 +1229,76 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   };
 
   const handleFocus = () => {
-    setIsSearchFocused(true);
-  };
-
-  const handleClose = () => {
-    setSearchQuery('');
-    setIsSearchFocused(false);
+    // Optional: Add focus effects if needed
   };
 
   const handleImageSearch = () => {
     navigate('/search/image');
   };
 
-  // Quick search suggestions
+  // Render right icons EXACTLY as in ReusableSearchBar
+  const renderRightIcons = () => {
+    // Clear button when there's text (regardless of overlay state)
+    if (searchQuery.trim()) {
+      return (
+        <button
+          type="button"
+          onClick={handleClearSearch}
+          className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+        >
+          <X className="h-4 w-4 text-gray-600" />
+        </button>
+      );
+    }
+    // Scan + Mic icons when specified (showScanMic = true)
+    else {
+      return (
+        <>
+          <button
+            type="button"
+            onClick={handleImageSearch}
+            className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            {/* ScanLine icon as SVG */}
+            <svg 
+              className="h-4 w-4 text-gray-600 cursor-pointer hover:text-gray-800" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={2} 
+                d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
+              />
+            </svg>
+          </button>
+          <button
+            type="button"
+            className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            {/* Mic icon as SVG */}
+            <svg 
+              className="h-4 w-4 text-gray-600 cursor-pointer hover:text-gray-800" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={2} 
+                d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+              />
+            </svg>
+          </button>
+        </>
+      );
+    }
+  };
+
+  // Quick search tags
   const quickSearchTags = [
     'Wireless Earbuds',
     'Summer Dresses', 
@@ -1347,66 +1403,55 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
 
   return (
     <div className="overflow-hidden relative">
-      {/* Search Bar Section - Using exact ReusableSearchBar UI */}
+      {/* Search Bar Section - PIXEL PERFECT ReusableSearchBar */}
       <div className="sticky top-0 z-50 bg-white px-4 py-3 border-b border-gray-100 shadow-sm">
         <div className="flex-1 relative max-w-full mx-auto">
           <form onSubmit={handleSubmit}>
             <div className="relative">
+              {/* Input field - EXACT same styling */}
               <input
                 type="text"
                 placeholder="Search for products"
                 value={searchQuery}
                 onChange={handleInputChange}
                 onFocus={handleFocus}
-                className="w-full px-3 py-1 text-sm font-medium border-2 border-gray-800 rounded-full transition-all duration-300 shadow-sm pr-16 pl-3 bg-white text-gray-900 placeholder-gray-500"
+                className="w-full px-3 py-1 text-sm font-medium border-2 border-gray-800 rounded-full transition-all duration-300 shadow-sm pr-16 pl-3 bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 ref={searchRef}
+                style={{
+                  fontSize: '14px',
+                  lineHeight: '1.25',
+                  fontWeight: 500
+                }}
               />
 
-              {/* Right icons */}
+              {/* Right icons - EXACT same positioning and styling */}
               <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
-                {/* Clear button when there's text */}
-                {searchQuery.trim() ? (
-                  <button
-                    type="button"
-                    onClick={handleClearSearch}
-                    className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                  >
-                    <X className="h-4 w-4 text-gray-600" />
-                  </button>
-                ) : (
-                  <>
-                    {/* Scan Icon */}
-                    <button
-                      type="button"
-                      onClick={handleImageSearch}
-                      className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                    >
-                      <svg className="h-4 w-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-                      </svg>
-                    </button>
-                    {/* Mic Icon */}
-                    <button
-                      type="button"
-                      className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                    >
-                      <svg className="h-4 w-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                      </svg>
-                    </button>
-                  </>
-                )}
+                {renderRightIcons()}
               </div>
             </div>
           </form>
         </div>
 
-        {/* Quick Search Tags */}
-        {!isSearchFocused && !searchQuery.trim() && (
+        {/* Quick Search Tags Section */}
+        {!searchQuery.trim() && (
           <div className="mt-3">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-xs font-semibold text-gray-700">Quick Search</h3>
-              <button className="text-xs text-blue-600 hover:text-blue-800">
+              <h3 
+                className="text-xs font-semibold text-gray-700"
+                style={{
+                  fontSize: '12px',
+                  fontWeight: 600
+                }}
+              >
+                Quick Search
+              </h3>
+              <button 
+                className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                style={{
+                  fontSize: '12px',
+                  fontWeight: 500
+                }}
+              >
                 See all
               </button>
             </div>
@@ -1416,6 +1461,12 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
                   key={index}
                   onClick={() => handleQuickSearch(tag)}
                   className="px-3 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 text-xs rounded-full transition-colors whitespace-nowrap"
+                  style={{
+                    fontSize: '12px',
+                    lineHeight: '1',
+                    padding: '6px 12px',
+                    borderRadius: '9999px'
+                  }}
                 >
                   {tag}
                 </button>
@@ -1425,22 +1476,51 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
         )}
 
         {/* Search suggestions when typing */}
-        {isSearchFocused && searchQuery.trim() && (
-          <div className="mt-3 p-2 bg-gray-50 rounded-lg">
-            <h3 className="text-xs font-semibold text-gray-700 mb-2">Search suggestions</h3>
+        {searchQuery.trim() && (
+          <div 
+            className="mt-3 p-2 bg-gray-50 rounded-lg border border-gray-200"
+            style={{
+              borderRadius: '8px'
+            }}
+          >
+            <h3 
+              className="text-xs font-semibold text-gray-700 mb-2"
+              style={{
+                fontSize: '12px',
+                fontWeight: 600
+              }}
+            >
+              Search suggestions
+            </h3>
             <div className="space-y-1">
               {[
                 `${searchQuery} for men`,
                 `${searchQuery} for women`,
                 `${searchQuery} 2024`,
                 `Best ${searchQuery}`,
-                `${searchQuery} accessories`
-              ].map((suggestion, index) => (
+                `${searchQuery} accessories`,
+                `Buy ${searchQuery} online`,
+                `${searchQuery} price`,
+                `${searchQuery} near me`
+              ].slice(0, 5).map((suggestion, index) => (
                 <button
                   key={index}
                   onClick={() => handleQuickSearch(suggestion)}
-                  className="w-full text-left px-2 py-1.5 text-xs text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                  className="w-full text-left px-2 py-1.5 text-xs text-gray-600 hover:bg-gray-100 rounded transition-colors flex items-center"
+                  style={{
+                    fontSize: '12px',
+                    padding: '6px 8px',
+                    borderRadius: '4px'
+                  }}
                 >
+                  <svg 
+                    className="w-3 h-3 mr-2 text-gray-400" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
                   {suggestion}
                 </button>
               ))}
@@ -1449,6 +1529,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
         )}
       </div>
 
+      {/* Main Content */}
       <div className="pb-2">
         {components.map((component, index) => (
           <React.Fragment key={`section-${index}`}>
