@@ -1,4 +1,4 @@
-remove the wallet, replace it by Mall, the mall is a place where people will find prepaid quality products, i mean they should pay in advance, and we will deliver it to their door, contrary to local sellers
+
 
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
