@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  Zap, Wallet, LayoutGrid, X,
+  Zap, LayoutGrid, X,
   Settings, Bell, Bookmark, Star, Users, ShoppingBag, User,
   MessageCircle, Film, Calendar, Gift, Camera, PlayCircle, 
   MapPin, Heart, HelpCircle, Store, ShoppingCart, Grid3X3
@@ -11,8 +11,6 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import ProductUploadOverlay from '@/components/product/ProductUploadOverlay';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { HugeiconsIcon } from '@hugeicons/react';
-import { Store04Icon } from '@hugeicons-pro/core-stroke-rounded';
 
 import SimpleAuthPage from '@/pages/SimpleAuthPage';
 import SignInBanner from './SignInBanner';
@@ -45,15 +43,13 @@ const HomeIcon = ({ className, width, height }: { className?: string; width?: nu
   );
 };
 
-// Custom MallIcon component using Hugeicons Store04Icon
+// Custom MallIcon component using lucide-react Store icon
 const MallIcon = ({ className, width, height }: { className?: string; width?: number; height?: number }) => {
   return (
-    <HugeiconsIcon
-      icon={Store04Icon}
-      size={width || 20}
-      color="currentColor"
-      strokeWidth={1.5}
+    <Store 
       className={className}
+      width={width || 20}
+      height={height || 20}
     />
   );
 };
