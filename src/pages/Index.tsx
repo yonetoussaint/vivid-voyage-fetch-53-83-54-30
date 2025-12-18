@@ -1193,12 +1193,18 @@ const InfiniteContentGrid: React.FC<{ category?: string }> = ({ category }) => {
   );
 };
 
+// In the ForYouContent component (replace the return section starting around line 860)
 const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   const navigate = useNavigate();
   const { setHeaderMode, headerMode } = useHeaderFilter();
   const scrollY = useRef(0);
   const ticking = useRef(false);
   const heroBannerRef = useRef<HTMLDivElement>(null);
+
+  // Add this function to handle search bar click
+  const handleSearchBarClick = useCallback(() => {
+    navigate('/search');
+  }, [navigate]);
 
   // Improved scroll detection for header mode switching
   useEffect(() => {
@@ -1286,6 +1292,35 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
 
   return (
     <div className="overflow-hidden relative">
+      {/* Search Bar */}
+      <div className="sticky top-0 z-50 bg-white px-4 py-3 border-b border-gray-100 shadow-sm">
+        <div 
+          className="flex items-center bg-gray-50 rounded-full px-4 py-3 cursor-pointer hover:bg-gray-100 transition-colors active:scale-[0.98]"
+          onClick={handleSearchBarClick}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              handleSearchBarClick();
+            }
+          }}
+        >
+          <div className="flex items-center gap-3 w-full">
+            <div className="w-5 h-5 flex items-center justify-center text-gray-400">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm text-gray-500">Search products, brands, and categories</p>
+            </div>
+            <div className="w-8 h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded flex items-center justify-center">
+              <Camera className="w-3 h-3 text-white" />
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="pb-2">
         {components.map((component, index) => (
           <React.Fragment key={`section-${index}`}>
