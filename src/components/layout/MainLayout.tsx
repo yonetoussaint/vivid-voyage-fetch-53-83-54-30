@@ -15,8 +15,6 @@ import { useTranslation } from 'react-i18next';
 import { HeaderFilterProvider, useHeaderFilter } from "@/contexts/HeaderFilterContext";
 import { useAuthOverlay } from "@/context/AuthOverlayContext";
 
-// Replace the entire MainLayoutContent function with this updated version
-
 function MainLayoutContent() {
   const isMobile = useIsMobile();
   const location = useLocation();
@@ -33,16 +31,16 @@ function MainLayoutContent() {
   const isWalletPage = pathname === '/wallet';
   const isExplorePage = pathname === '/explore';
   const isProductsPage = pathname === '/products';
-  const isProfilePage = pathname === '/profile' || pathname.startsWith('/profile/');
+  const isProfilePage = pathname === '/profile' || pathname.startsWith('/profile/'); // ADDED: Profile page check
   const productsTitle = isProductsPage ? new URLSearchParams(location.search).get('title') || 'Products' : '';
   const iconName = searchParams.get('icon');
 
-  // Check if current page is conversation detail
+  // Check if current page is conversation detail - DECLARE THIS EARLY
   const isConversationDetailPage = pathname.startsWith('/messages/') && pathname !== '/messages';
 
   const isProductPage = pathname.includes('/product/');
   const isRootHomePage = pathname === "/" || pathname === "/for-you";
-  const isForYouPage = pathname === "/" || pathname === "/for-you"; // ADDED: For You page check
+  const isForYouPage = pathname === "/" || pathname === "/for-you";
   const isMultiStepTransferPage = pathname === "/multi-step-transfer";
   const isMultiStepTransferSheetPage = pathname === "/multi-step-transfer-page";
   const isTransferOldPage = pathname === "/transfer-old";
@@ -73,7 +71,7 @@ function MainLayoutContent() {
     isFilterDisabled
   } = useHeaderFilter();
 
-  // Icon mapper
+  // Icon mapper - DECLARE BEFORE USING
   const iconMapper: Record<string, React.ComponentType<{ className?: string }>> = {
     Trophy,
     Tag,
@@ -122,8 +120,10 @@ function MainLayoutContent() {
     }
   }, [location.pathname, categories]);
 
-  // Determine if we should show the header - UPDATED: Hide on For You page
-  const shouldShowHeader = !isForYouPage && [
+  // Determine if we should show the header - FIXED: Exclude conversation detail pages
+  const shouldShowHeader = [
+    '/',
+    '/for-you',
     '/wallet',
     '/explore',
     '/wishlist',
@@ -143,15 +143,16 @@ function MainLayoutContent() {
     '/categories/women',
     '/categories/men',
     '/categories/books',
-    '/profile'
-  ].includes(pathname) || (isMessagesListPage && !isForYouPage) || (isProfilePage && !isForYouPage);
+    '/profile' // ADDED: Include profile route
+  ].includes(pathname) || isMessagesListPage || isProfilePage;  // Only show header on messages list page, not detail pages
 
   // Check if current page is reels
   const isReelsPage = pathname === '/reels' && !location.search.includes('video=');
 
-  // Determine if we should show the bottom nav - UPDATED: Show on For You page
+  // Determine if we should show the bottom nav
   const shouldShowBottomNav = isMobile && (
-    isForYouPage || // ADDED: Show bottom nav on For You page
+    pathname === '/for-you' ||
+    pathname === '/' ||
     pathname === '/categories' ||
     (pathname === '/reels' && !location.search.includes('video=')) ||
     pathname === '/posts' ||
@@ -187,10 +188,10 @@ function MainLayoutContent() {
     (pathname.startsWith('/seller-dashboard') && !pathname.includes('/edit-profile') && !pathname.includes('/onboarding'))
   ) && !isMultiStepTransferPage && !isMultiStepTransferSheetPage && !isTransferOldPage;
 
-  // Measure actual header height dynamically - UPDATED: Handle For You page
+  // Measure actual header height dynamically
   useEffect(() => {
     const updateHeaderHeight = () => {
-      if (shouldShowHeader && !isForYouPage && headerRef.current) {
+      if (shouldShowHeader && headerRef.current) {
         const headerElement = headerRef.current.querySelector('header, [data-header]');
         if (headerElement) {
           const height = headerElement.getBoundingClientRect().height;
@@ -221,7 +222,7 @@ function MainLayoutContent() {
       window.removeEventListener('resize', updateHeaderHeight);
       observer.disconnect();
     };
-  }, [shouldShowHeader, pathname, activeTab, isForYouPage]);
+  }, [shouldShowHeader, pathname, activeTab]);
 
   // Measure actual bottom nav height dynamically
   useEffect(() => {
@@ -266,12 +267,12 @@ function MainLayoutContent() {
     };
   }, [shouldShowBottomNav, pathname]);
 
-  // Update content height calculation - UPDATED for For You page
+  // Update content height calculation
   useEffect(() => {
     const updateContentHeight = () => {
       if (contentRef.current) {
         const windowHeight = window.innerHeight;
-        const headerHeight = isForYouPage ? 0 : actualHeaderHeight; // No header on For You page
+        const headerHeight = actualHeaderHeight;
         const bottomNavHeight = actualBottomNavHeight;
         const calculatedHeight = windowHeight - headerHeight - bottomNavHeight;
         setContentHeight(calculatedHeight);
@@ -300,7 +301,7 @@ function MainLayoutContent() {
       window.removeEventListener('orientationchange', handleResize);
       if (rafId) cancelAnimationFrame(rafId);
     };
-  }, [actualHeaderHeight, actualBottomNavHeight, isForYouPage]);
+  }, [actualHeaderHeight, actualBottomNavHeight]);
 
   // Add smooth scrolling CSS to the content element
   useEffect(() => {
@@ -348,10 +349,10 @@ function MainLayoutContent() {
     }
   }, []);
 
-  // CSS for native-like experience - UPDATED for For You page
+  // CSS for native-like experience - SIMPLIFIED
   const layoutHeightStyle = `
     :root {
-      --header-height: ${isForYouPage ? 0 : actualHeaderHeight}px;
+      --header-height: ${actualHeaderHeight}px;
       --bottom-nav-height: ${actualBottomNavHeight}px;
       --safe-area-inset-top: env(safe-area-inset-top, 0px);
       --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
@@ -386,7 +387,7 @@ function MainLayoutContent() {
       will-change: transform;
     }
 
-    /* Header - fixed at top, hidden on For You page */
+    /* Header - fixed at top */
     .app-header {
       position: fixed;
       top: 0;
@@ -397,13 +398,12 @@ function MainLayoutContent() {
       transform: translateZ(0);
       will-change: transform;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-      display: ${isForYouPage ? 'none' : 'block'};
     }
 
-    /* Content area - absolutely positioned, full screen on For You page */
+    /* Content area - absolutely positioned between header and bottom nav */
     .app-content {
       position: absolute;
-      top: ${isForYouPage ? 0 : actualHeaderHeight}px;
+      top: ${actualHeaderHeight}px;
       left: 0;
       right: 0;
       bottom: ${actualBottomNavHeight}px;
@@ -504,7 +504,7 @@ function MainLayoutContent() {
 
     /* Fix for mobile safari 100vh issue */
     .app-content {
-      height: calc(100vh - ${isForYouPage ? 0 : actualHeaderHeight}px - ${actualBottomNavHeight}px);
+      height: calc(100vh - ${actualHeaderHeight}px - ${actualBottomNavHeight}px);
     }
   `;
 
@@ -529,13 +529,14 @@ function MainLayoutContent() {
     }
   }, [isMessagesPage, isWalletPage, isExplorePage, searchParams, navigate, pathname]);
 
-  const walletTabs = isWalletPage ? [
+
+const walletTabs = isWalletPage ? [
     { id: 'main', name: 'Main Wallet', path: '/wallet?tab=main' },
     { id: 'crypto', name: 'Crypto Wallet', path: '/wallet?tab=crypto' },
     { id: 'usd', name: 'USD Wallet', path: '/wallet?tab=usd' },
     { id: 'transactions', name: 'Transactions', path: '/wallet?tab=transactions' },
     { id: 'trades', name: 'Trades', path: '/wallet?tab=trades' }
-  ] : undefined;
+] : undefined;
 
   const messagesTabs = isMessagesListPage ? [
     { id: 'all', name: 'All', path: '/messages?filter=all' },
@@ -556,14 +557,14 @@ function MainLayoutContent() {
     <div className="app-container">
       <style dangerouslySetInnerHTML={{ __html: layoutHeightStyle }} />
 
-      {/* Header - Hidden on For You page */}
-      {shouldShowHeader && !isForYouPage && (
+      {/* Header - Now hidden on conversation detail pages */}
+      {shouldShowHeader && (
         <div ref={headerRef} className="app-header">
           <AliExpressHeader
             activeTabId={isMessagesListPage ? messagesFilter : isWalletPage ? walletFilter : isExplorePage ? exploreFilter : activeTab}
             showFilterBar={showFilterBar}
             // Hide category tabs on messages, wallet, explore, and profile pages
-            showCategoryTabs={(!isProductsPage && !pathname.startsWith('/categories') && !isMessagesPage && !isWalletPage && !isExplorePage && !isProfilePage) && !isForYouPage}
+            showCategoryTabs={(!isProductsPage && !pathname.startsWith('/categories') && !isMessagesPage && !isWalletPage && !isExplorePage && !isProfilePage)}
             filterCategories={filterCategories}
             selectedFilters={selectedFilters}
             onFilterSelect={onFilterSelect}
@@ -640,7 +641,7 @@ function MainLayoutContent() {
         <Outlet />
       </div>
 
-      {/* Bottom Navigation - Show on For You page */}
+      {/* Bottom Navigation */}
       {shouldShowBottomNav && (
         <div ref={bottomNavRef} className="app-bottom-nav">
           <IndexBottomNav />
