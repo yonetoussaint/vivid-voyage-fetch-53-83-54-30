@@ -8,7 +8,12 @@ import Footer from "@/components/Footer";
 import HeroBanner from "@/components/home/HeroBanner";
 import { useHeaderFilter } from "@/contexts/HeaderFilterContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { Tag, LayoutPanelLeft, Sparkles, ChevronRight, DollarSign, Zap, Video, Crown, Play, Users, Image, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Share2, Eye, Camera } from "lucide-react";
+import { 
+  Tag, LayoutPanelLeft, Sparkles, ChevronRight, DollarSign, 
+  Zap, Video, Crown, Play, Users, Image, Heart, MessageCircle, 
+  Send, Bookmark, MoreHorizontal, Share2, Eye, Camera,
+  Store, Star, User, CheckCircle
+} from "lucide-react";
 
 interface ForYouContentProps {
   category: string;
@@ -85,8 +90,26 @@ interface Post {
   is_saved?: boolean;
 }
 
+// Vendor interface
+interface Vendor {
+  id: string;
+  name: string;
+  type: 'vendor';
+  rating: number;
+  followers: number;
+  verified: boolean;
+  rank: number;
+  discount?: string;
+  image?: string;
+  products: Array<{
+    id: string;
+    image?: string;
+  }>;
+  isPickupStation?: boolean;
+}
+
 // Combined content type
-type ContentItem = Product | Reel | Post;
+type ContentItem = Product | Reel | Post | Vendor;
 
 // Helper function to render tag elements
 const renderTag = (tag: string) => {
@@ -155,7 +178,7 @@ const fetchPosts = async (limit: number = 15): Promise<Post[]> => {
           'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&h=600&fit=crop',
           'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=800&h=600&fit=crop'
         ],
-        caption: 'Just got these amazing summer outfits! Perfect for the beach ��� #summerfashion #beachvibes #ootd',
+        caption: 'Just got these amazing summer outfits! Perfect for the beach #summerfashion #beachvibes #ootd',
         location: 'Miami Beach',
         hashtags: ['summerfashion', 'beachvibes', 'ootd', 'fashion', 'style']
       },
@@ -206,7 +229,7 @@ const fetchPosts = async (limit: number = 15): Promise<Post[]> => {
           'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&h=600&fit=crop',
           'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=800&h=600&fit=crop'
         ],
-        caption: 'My new photography setup is complete! � All gear tagged below. #photography #cameragear #tech',
+        caption: 'My new photography setup is complete! All gear tagged below. #photography #cameragear #tech',
         location: 'Home Studio',
         hashtags: ['photography', 'cameragear', 'tech', 'gadgets']
       },
@@ -286,20 +309,45 @@ const fetchPosts = async (limit: number = 15): Promise<Post[]> => {
   return mockPosts.slice(0, limit);
 };
 
+// Fetch vendors function
+const fetchVendors = async (limit: number = 6): Promise<Vendor[]> => {
+  // Mock data - replace with actual API call
+  const mockVendors: Vendor[] = Array.from({ length: limit }, (_, i) => ({
+    id: `vendor-${i}`,
+    name: `Vendor ${i + 1}`,
+    type: 'vendor' as const,
+    rating: parseFloat((Math.random() * 1 + 4).toFixed(1)),
+    followers: Math.floor(Math.random() * 10000) + 1000,
+    verified: Math.random() > 0.3,
+    rank: i + 1,
+    discount: Math.random() > 0.5 ? `-${Math.floor(Math.random() * 50) + 10}%` : undefined,
+    image: `https://images.unsplash.com/photo-${150000 + i}?w=200&h=200&fit=crop&crop=face`,
+    products: Array.from({ length: 4 }, (_, j) => ({
+      id: `vendor-${i}-product-${j}`,
+      image: `https://images.unsplash.com/photo-${160000 + (i * 10) + j}?w=200&h=200&fit=crop`
+    })),
+    isPickupStation: i % 3 === 0
+  }));
+
+  return mockVendors;
+};
+
 // Combined fetch function for all content
 const fetchAllContent = async (): Promise<ContentItem[]> => {
   try {
-    const [products, reels, posts] = await Promise.all([
+    const [products, reels, posts, vendors] = await Promise.all([
       fetchAllProducts(),
       fetchReels(8),
-      fetchPosts(10)
+      fetchPosts(10),
+      fetchVendors(6)
     ]);
 
     // Combine all content
     const allContent: ContentItem[] = [
       ...products.map(p => ({ ...p, type: 'product' as const })),
       ...reels.map(r => ({ ...r, type: 'reel' as const })),
-      ...posts.map(p => ({ ...p, type: 'post' as const }))
+      ...posts.map(p => ({ ...p, type: 'post' as const })),
+      ...vendors.map(v => ({ ...v, type: 'vendor' as const }))
     ];
 
     // Shuffle for mixed feed
@@ -318,6 +366,160 @@ const shuffleArray = <T,>(array: T[]): T[] => {
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled;
+};
+
+// VendorCard Component using React Icons
+const VendorCard = ({ vendor, onProductClick, onSellerClick, showProducts = true, isPickupStation = false, mode = 'carousel', showBanner = false }) => {
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const displayProducts = vendor.products.slice(0, 4);
+
+  const handleProductClick = (productId: string) => {
+    onProductClick(productId);
+  };
+
+  const handleSellerClick = () => {
+    if (!vendor?.id) return;
+    onSellerClick(vendor.id);
+  };
+
+  const DefaultSellerAvatar = ({ className }: { className?: string }) => (
+    <User className={className} />
+  );
+
+  const VerificationBadge = () => (
+    <CheckCircle className="w-3 h-3 text-blue-500" />
+  );
+
+  return (
+    <div className="w-full">
+      <div className={`bg-white border border-gray-300 overflow-hidden hover:border-gray-400 transition-all duration-300 ${mode === 'grid' ? 'rounded-lg' : 'rounded-2xl'}`}>
+
+        {/* Banner for stations */}
+        {showBanner && (
+          <div className="px-2 pt-2 pb-1">
+            <div className="w-full h-20 rounded-lg overflow-hidden bg-gradient-to-r from-blue-500 to-purple-600">
+              <img
+                src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&h=200&fit=crop"
+                alt="Station banner"
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Products Grid */}
+        {showProducts && !showBanner && (
+          <div className="px-2 pt-2 pb-1 relative">
+            {vendor.discount && (
+              <div className="absolute top-2 right-2 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full z-10">
+                {vendor.discount}
+              </div>
+            )}
+
+            <div className={`grid ${mode === 'grid' ? 'grid-cols-2' : 'grid-cols-4'} gap-1`}>
+              {displayProducts.map((product, index) => (
+                <button
+                  key={product.id}
+                  className="group cursor-pointer relative"
+                  onClick={() => handleProductClick(product.id)}
+                >
+                  <div className="aspect-square rounded border border-gray-100 bg-gray-50 overflow-hidden hover:border-gray-200 transition-colors">
+                    {product.image ? (
+                      <img
+                        src={product.image}
+                        alt=""
+                        className="h-full w-full object-contain hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        <Store size={14} />
+                      </div>
+                    )}
+                  </div>
+                  {mode === 'grid' && index === 3 && (
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded">
+                      <span className="text-white font-bold text-xs">+{vendor.products.length - 3}</span>
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Vendor Info */}
+        <div className={`px-2 ${showProducts ? 'py-1' : 'py-2'}`}>
+          <div className="flex items-center gap-2">
+
+            {/* Vendor Avatar */}
+            <div className="w-8 h-8 flex-shrink-0 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden">
+              {vendor.image && !imageError ? (
+                <img
+                  src={vendor.image}
+                  alt={vendor.name}
+                  className="w-full h-full object-cover rounded-full"
+                  onError={() => setImageError(true)}
+                  loading="lazy"
+                />
+              ) : (
+                <DefaultSellerAvatar className="w-5 h-5" />
+              )}
+            </div>
+
+            {/* Vendor Details */}
+            <div className="flex-1 min-w-0">
+              {/* Name and Verification */}
+              <div className="flex items-center mb-0.5">
+                <h3 className="font-medium text-xs truncate mr-1">{vendor.name}</h3>
+                {vendor.verified && <VerificationBadge />}
+              </div>
+
+              {/* Stats */}
+              <div className="flex items-center justify-between text-xs text-gray-500">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center text-yellow-500">
+                    <Star size={10} className="fill-yellow-500" />
+                    <span className="font-medium ml-0.5 text-gray-600">{vendor.rating}</span>
+                  </div>
+                  <div className="w-px h-3 bg-gray-300"></div>
+                  <div className="flex items-center">
+                    <Users size={10} className="mr-0.5" />
+                    {formatNumber(vendor.followers)}
+                  </div>
+                </div>
+                {mode !== 'grid' && (
+                  <span className="text-[10px] font-bold text-white bg-gray-400 px-1.5 py-0.5 rounded-full">#{vendor.rank}</span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="px-2 pb-2 grid grid-cols-2 gap-2">
+          <button
+            className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white text-xs font-medium py-1.5 px-2 rounded-full transition-colors"
+            onClick={handleSellerClick}
+          >
+            {isPickupStation ? 'Visit' : mode === 'grid' ? 'Visit' : 'Visit Store'}
+          </button>
+          <button
+            className={`flex items-center justify-center text-xs font-medium py-1.5 px-2 rounded-full transition-colors ${
+              isFollowing
+                ? "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                : "bg-blue-100 text-blue-800 hover:bg-blue-200"
+            }`}
+            onClick={() => setIsFollowing(!isFollowing)}
+          >
+            {isFollowing ? "Following" : "Follow"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 // ProductCard component - MASONRY STYLE
@@ -445,7 +647,7 @@ const ReelCard: React.FC<{ reel: Reel }> = ({ reel }) => {
         {reel.is_live && (
           <div className="flex items-center gap-1 text-[10px] text-pink-300">
             <Users className="w-3 h-3" />
-            <span>Live now � {formatNumber(reel.views)} watching</span>
+            <span>Live now • {formatNumber(reel.views)} watching</span>
           </div>
         )}
       </div>
@@ -469,7 +671,6 @@ const StackedImagesIndicator: React.FC<{ count: number }> = ({ count }) => {
   );
 };
 
-// PostCard Component with Stacked Images - MASONRY STYLE
 // PostCard Component with Stacked Images - MASONRY STYLE
 const PostCard: React.FC<{ post: Post }> = ({ post }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -541,9 +742,7 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
             />
             {post.author.is_verified && (
               <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full p-0.5">
-                <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
+                <CheckCircle className="w-2.5 h-2.5" />
               </div>
             )}
           </div>
@@ -727,6 +926,33 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
   );
 };
 
+// VendorCardWrapper component (adapted for masonry grid)
+const VendorCardWrapper: React.FC<{ vendor: Vendor }> = ({ vendor }) => {
+  const navigate = useNavigate();
+  
+  const handleProductClick = (productId: string) => {
+    navigate(`/product/${productId}`);
+  };
+  
+  const handleSellerClick = () => {
+    navigate(`/vendor/${vendor.id}`);
+  };
+
+  return (
+    <div className="mb-2">
+      <VendorCard
+        vendor={vendor}
+        onProductClick={handleProductClick}
+        onSellerClick={handleSellerClick}
+        showProducts={true}
+        isPickupStation={vendor.isPickupStation || false}
+        mode="grid"
+        showBanner={vendor.isPickupStation || false}
+      />
+    </div>
+  );
+};
+
 // ContentCard Factory
 const ContentCard: React.FC<{ item: ContentItem }> = ({ item }) => {
   switch (item.type) {
@@ -736,6 +962,8 @@ const ContentCard: React.FC<{ item: ContentItem }> = ({ item }) => {
       return <ReelCard reel={item} />;
     case 'post':
       return <PostCard post={item} />;
+    case 'vendor':
+      return <VendorCardWrapper vendor={item} />;
     default:
       return null;
   }
@@ -965,7 +1193,7 @@ const MasonryGrid: React.FC<{ items: ContentItem[] }> = ({ items }) => {
   );
 };
 
-// InfiniteContentGrid Component - UPDATED for Masonry
+// InfiniteContentGrid Component
 const InfiniteContentGrid: React.FC<{ category?: string }> = ({ category }) => {
   const [page, setPage] = useState(0);
   const [allContent, setAllContent] = useState<ContentItem[]>([]);
@@ -1024,6 +1252,7 @@ const InfiniteContentGrid: React.FC<{ category?: string }> = ({ category }) => {
       products: 0,
       reels: 0,
       posts: 0,
+      vendors: 0,
       total: visibleContent.length
     };
 
@@ -1031,6 +1260,7 @@ const InfiniteContentGrid: React.FC<{ category?: string }> = ({ category }) => {
       if (item.type === 'product') stats.products++;
       if (item.type === 'reel') stats.reels++;
       if (item.type === 'post') stats.posts++;
+      if (item.type === 'vendor') stats.vendors++;
     });
 
     return stats;
@@ -1120,30 +1350,30 @@ const InfiniteContentGrid: React.FC<{ category?: string }> = ({ category }) => {
   }
 
   return (
-  <div className="pt-2">
-    {/* Masonry Grid */}
-    <MasonryGrid items={visibleContent} />
+    <div className="pt-2">
+      {/* Masonry Grid */}
+      <MasonryGrid items={visibleContent} />
 
-    {/* Load more trigger */}
-    <div 
-      ref={loaderRef}
-      className="flex justify-center items-center py-6"
-    >
-      {hasMore ? (
-        <div className="text-center">
-          <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-          <p className="text-xs text-gray-500">Loading more content...</p>
-        </div>
-      ) : visibleContent.length > 0 ? (
-        <div className="text-center py-4">
-          <Sparkles className="w-6 h-6 text-gray-300 mx-auto mb-2" />
-          <p className="text-xs text-gray-400">No more content to load</p>
-          <p className="text-[10px] text-gray-400 mt-1">You've reached the end</p>
-        </div>
-      ) : null}
+      {/* Load more trigger */}
+      <div 
+        ref={loaderRef}
+        className="flex justify-center items-center py-6"
+      >
+        {hasMore ? (
+          <div className="text-center">
+            <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+            <p className="text-xs text-gray-500">Loading more content...</p>
+          </div>
+        ) : visibleContent.length > 0 ? (
+          <div className="text-center py-4">
+            <Sparkles className="w-6 h-6 text-gray-300 mx-auto mb-2" />
+            <p className="text-xs text-gray-400">No more content to load</p>
+            <p className="text-[10px] text-gray-400 mt-1">You've reached the end</p>
+          </div>
+        ) : null}
+      </div>
     </div>
-  </div>
-);
+  );
 };
 
 const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
