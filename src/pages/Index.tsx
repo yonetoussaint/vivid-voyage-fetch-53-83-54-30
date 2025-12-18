@@ -470,15 +470,15 @@ const StackedImagesIndicator: React.FC<{ count: number }> = ({ count }) => {
 };
 
 // PostCard Component with Stacked Images - MASONRY STYLE
+// PostCard Component with Stacked Images - MASONRY STYLE
 const PostCard: React.FC<{ post: Post }> = ({ post }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(post.is_liked || false);
-  const [isSaved, setIsSaved] = useState(post.is_saved || false);
-  const [likeCount, setLikeCount] = useState(post.engagement.likes);
   const [showProductTags, setShowProductTags] = useState(false);
-  
+  const [likeCount, setLikeCount] = useState(post.engagement.likes);
+
   const navigate = useNavigate();
-  
+
   const handlePostClick = () => {
     navigate(`/post/${post.id}`);
   };
@@ -492,11 +492,6 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
     e.stopPropagation();
     setIsLiked(!isLiked);
     setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
-  };
-
-  const handleSave = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsSaved(!isSaved);
   };
 
   const handleShare = (e: React.MouseEvent) => {
@@ -519,7 +514,7 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) {
       const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
       return `${diffInMinutes}m ago`;
@@ -587,10 +582,10 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
           alt={`Post by ${post.author.username}`}
           className="w-full h-full object-cover"
         />
-        
+
         {/* Stacked Images Indicator */}
         <StackedImagesIndicator count={post.content.images.length} />
-        
+
         {/* Image Dots Indicator */}
         {post.content.images.length > 1 && (
           <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5">
@@ -604,7 +599,7 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
             ))}
           </div>
         )}
-        
+
         {/* Product Tags Overlay */}
         {post.products_tagged.length > 0 && (
           <div className="absolute inset-0">
@@ -652,12 +647,6 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
               <span className="text-xs font-medium">{formatNumber(post.engagement.shares)}</span>
             </button>
           </div>
-          <button 
-            className={`${isSaved ? 'text-yellow-500' : 'text-gray-700'}`}
-            onClick={handleSave}
-          >
-            <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
-          </button>
         </div>
 
         {/* Caption */}
