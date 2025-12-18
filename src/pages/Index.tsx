@@ -9,7 +9,6 @@ import HeroBanner from "@/components/home/HeroBanner";
 import { useHeaderFilter } from "@/contexts/HeaderFilterContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tag, LayoutPanelLeft, Sparkles, ChevronRight, DollarSign, Zap, Video, Crown, Play, Users, Image, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Share2, Eye, Camera } from "lucide-react";
-import AliExpressHeader from "@/components/home/AliExpressHeader"; // ADDED: Import AliExpressHeader
 
 interface ForYouContentProps {
   category: string;
@@ -156,7 +155,7 @@ const fetchPosts = async (limit: number = 15): Promise<Post[]> => {
           'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&h=600&fit=crop',
           'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=800&h=600&fit=crop'
         ],
-        caption: 'Just got these amazing summer outfits! Perfect for the beach ôţôţôţ #summerfashion #beachvibes #ootd',
+        caption: 'Just got these amazing summer outfits! Perfect for the beach ��� #summerfashion #beachvibes #ootd',
         location: 'Miami Beach',
         hashtags: ['summerfashion', 'beachvibes', 'ootd', 'fashion', 'style']
       },
@@ -207,7 +206,7 @@ const fetchPosts = async (limit: number = 15): Promise<Post[]> => {
           'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&h=600&fit=crop',
           'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=800&h=600&fit=crop'
         ],
-        caption: 'My new photography setup is complete! ôţ All gear tagged below. #photography #cameragear #tech',
+        caption: 'My new photography setup is complete! � All gear tagged below. #photography #cameragear #tech',
         location: 'Home Studio',
         hashtags: ['photography', 'cameragear', 'tech', 'gadgets']
       },
@@ -363,7 +362,7 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
           <span className="text-[10px] text-gray-500">{soldCount.toLocaleString()} sold</span>
           <span className="text-[10px] text-gray-400">|</span>
           <div className="flex items-center">
-            <span className="text-[10px] text-gray-700 mr-0.5">ˇú</span>
+            <span className="text-[10px] text-gray-700 mr-0.5">★</span>
             <span className="text-[10px] text-gray-700">{rating}</span>
           </div>
         </div>
@@ -446,7 +445,7 @@ const ReelCard: React.FC<{ reel: Reel }> = ({ reel }) => {
         {reel.is_live && (
           <div className="flex items-center gap-1 text-[10px] text-pink-300">
             <Users className="w-3 h-3" />
-            <span>Live now ôţ {formatNumber(reel.views)} watching</span>
+            <span>Live now � {formatNumber(reel.views)} watching</span>
           </div>
         )}
       </div>
@@ -1201,25 +1200,6 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   const ticking = useRef(false);
   const heroBannerRef = useRef<HTMLDivElement>(null);
 
-  // State for header functionality
-  const [activeTab, setActiveTab] = useState('recommendations');
-  const [searchQuery, setSearchQuery] = useState("");
-
-  // Categories for the header tabs
-  const categories = [
-    { id: 'recommendations', name: 'For You', path: '/for-you' },
-    { id: 'electronics', name: 'Electronics', path: '/categories/electronics' },
-    { id: 'home', name: 'Home & Living', path: '/categories/home-living' },
-    { id: 'fashion', name: 'Fashion', path: '/categories/fashion' },
-    { id: 'entertainment', name: 'Entertainment', path: '/categories/entertainment' },
-    { id: 'kids', name: 'Kids & Hobbies', path: '/categories/kids-hobbies' },
-    { id: 'sports', name: 'Sports & Outdoors', path: '/categories/sports-outdoors' },
-    { id: 'automotive', name: 'Automotive', path: '/categories/automotive' },
-    { id: 'women', name: 'Women', path: '/categories/women' },
-    { id: 'men', name: 'Men', path: '/categories/men' },
-    { id: 'books', name: 'Books', path: '/categories/books' },
-  ];
-
   // Improved scroll detection for header mode switching
   useEffect(() => {
     const handleScroll = () => {
@@ -1306,41 +1286,6 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
 
   return (
     <div className="overflow-hidden relative">
-      {/* AliExpressHeader directly in For You page */}
-      <div className="sticky top-0 z-50">
-        <AliExpressHeader
-          activeTabId={activeTab}
-          showFilterBar={false}
-          showCategoryTabs={true}
-          filterCategories={[]}
-          selectedFilters={[]}
-          onFilterSelect={() => {}}
-          onFilterClear={() => {}}
-          onClearAll={() => {}}
-          onFilterButtonClick={() => {}}
-          isFilterDisabled={false}
-          customTabs={undefined}
-          onCustomTabChange={(tabId) => {
-            const tab = categories.find(t => t.id === tabId);
-            if (tab?.path) {
-              navigate(tab.path);
-            }
-          }}
-          showSectionHeader={false}
-          sectionHeaderTitle=""
-          sectionHeaderShowStackedProfiles={false}
-          sectionHeaderShowVerifiedSellers={false}
-          sectionHeaderVerifiedSellersText=""
-          sectionHeaderStackedProfiles={[]}
-          sectionHeaderStackedProfilesText=""
-          sectionHeaderShowCountdown={false}
-          sectionHeaderCountdown={undefined}
-          sectionHeaderShowSponsorCount={false}
-          sectionHeaderViewAllLink={undefined}
-          sectionHeaderViewAllText=""
-        />
-      </div>
-
       <div className="pb-2">
         {components.map((component, index) => (
           <React.Fragment key={`section-${index}`}>
