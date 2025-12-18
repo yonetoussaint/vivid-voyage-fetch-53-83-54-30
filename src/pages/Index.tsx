@@ -1195,35 +1195,70 @@ const InfiniteContentGrid: React.FC<{ category?: string }> = ({ category }) => {
 
 // Replace the ForYouContent component (starting around line 860) with this:
 
+// Replace the ForYouContent component with this version:
+
 const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   const navigate = useNavigate();
   const { setHeaderMode, headerMode } = useHeaderFilter();
   const scrollY = useRef(0);
   const ticking = useRef(false);
   const heroBannerRef = useRef<HTMLDivElement>(null);
+  
+  // Search bar state
   const [searchQuery, setSearchQuery] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
-  // Search bar handler
-  const handleSearchSubmit = (e: React.FormEvent) => {
+  // Search handlers
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setSearchQuery(newValue);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
-  const handleSearchFocus = () => {
-    // Optional: Focus effect if needed
-    searchRef.current?.focus();
-  };
-
   const handleClearSearch = () => {
     setSearchQuery('');
-    searchRef.current?.focus();
+    if (searchRef.current) {
+      searchRef.current.focus();
+    }
+  };
+
+  const handleFocus = () => {
+    setIsSearchFocused(true);
+  };
+
+  const handleClose = () => {
+    setSearchQuery('');
+    setIsSearchFocused(false);
   };
 
   const handleImageSearch = () => {
     navigate('/search/image');
+  };
+
+  // Quick search suggestions
+  const quickSearchTags = [
+    'Wireless Earbuds',
+    'Summer Dresses', 
+    'Smart Watch',
+    'Laptop Backpack',
+    'iPhone Cases',
+    'Yoga Mat',
+    'Water Bottle',
+    'Sneakers'
+  ];
+
+  const handleQuickSearch = (query: string) => {
+    setSearchQuery(query);
+    setTimeout(() => {
+      navigate(`/search?q=${encodeURIComponent(query)}`);
+    }, 100);
   };
 
   // Improved scroll detection for header mode switching
@@ -1312,81 +1347,106 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
 
   return (
     <div className="overflow-hidden relative">
-      {/* Search Bar - Inline Implementation */}
+      {/* Search Bar Section - Using exact ReusableSearchBar UI */}
       <div className="sticky top-0 z-50 bg-white px-4 py-3 border-b border-gray-100 shadow-sm">
-        <form onSubmit={handleSearchSubmit}>
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search products, brands, and categories"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={handleSearchFocus}
-              className="w-full pl-10 pr-10 py-3 bg-gray-50 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm"
-              ref={searchRef}
-            />
+        <div className="flex-1 relative max-w-full mx-auto">
+          <form onSubmit={handleSubmit}>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search for products"
+                value={searchQuery}
+                onChange={handleInputChange}
+                onFocus={handleFocus}
+                className="w-full px-3 py-1 text-sm font-medium border-2 border-gray-800 rounded-full transition-all duration-300 shadow-sm pr-16 pl-3 bg-white text-gray-900 placeholder-gray-500"
+                ref={searchRef}
+              />
 
-            {/* Search Icon */}
-            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+              {/* Right icons */}
+              <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
+                {/* Clear button when there's text */}
+                {searchQuery.trim() ? (
+                  <button
+                    type="button"
+                    onClick={handleClearSearch}
+                    className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                  >
+                    <X className="h-4 w-4 text-gray-600" />
+                  </button>
+                ) : (
+                  <>
+                    {/* Scan Icon */}
+                    <button
+                      type="button"
+                      onClick={handleImageSearch}
+                      className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                    >
+                      <svg className="h-4 w-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                      </svg>
+                    </button>
+                    {/* Mic Icon */}
+                    <button
+                      type="button"
+                      className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                    >
+                      <svg className="h-4 w-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                      </svg>
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
-
-            {/* Clear Button */}
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={handleClearSearch}
-                className="absolute right-12 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            )}
-
-            {/* Camera/Image Search Button */}
-            <button
-              type="button"
-              onClick={handleImageSearch}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500 hover:text-blue-600 p-1"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </button>
-          </div>
-        </form>
-
-        {/* Quick Search Tags (Optional) */}
-        <div className="mt-2 flex gap-2 overflow-x-auto scrollbar-hide">
-          <button
-            onClick={() => setSearchQuery('Wireless Earbuds')}
-            className="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs whitespace-nowrap rounded-full hover:bg-gray-200"
-          >
-            Wireless Earbuds
-          </button>
-          <button
-            onClick={() => setSearchQuery('Summer Dresses')}
-            className="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs whitespace-nowrap rounded-full hover:bg-gray-200"
-          >
-            Summer Dresses
-          </button>
-          <button
-            onClick={() => setSearchQuery('Smart Watch')}
-            className="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs whitespace-nowrap rounded-full hover:bg-gray-200"
-          >
-            Smart Watch
-          </button>
-          <button
-            onClick={() => setSearchQuery('Laptop Backpack')}
-            className="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs whitespace-nowrap rounded-full hover:bg-gray-200"
-          >
-            Laptop Backpack
-          </button>
+          </form>
         </div>
+
+        {/* Quick Search Tags */}
+        {!isSearchFocused && !searchQuery.trim() && (
+          <div className="mt-3">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-semibold text-gray-700">Quick Search</h3>
+              <button className="text-xs text-blue-600 hover:text-blue-800">
+                See all
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {quickSearchTags.map((tag, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleQuickSearch(tag)}
+                  className="px-3 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 text-xs rounded-full transition-colors whitespace-nowrap"
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Search suggestions when typing */}
+        {isSearchFocused && searchQuery.trim() && (
+          <div className="mt-3 p-2 bg-gray-50 rounded-lg">
+            <h3 className="text-xs font-semibold text-gray-700 mb-2">Search suggestions</h3>
+            <div className="space-y-1">
+              {[
+                `${searchQuery} for men`,
+                `${searchQuery} for women`,
+                `${searchQuery} 2024`,
+                `Best ${searchQuery}`,
+                `${searchQuery} accessories`
+              ].map((suggestion, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleQuickSearch(suggestion)}
+                  className="w-full text-left px-2 py-1.5 text-xs text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="pb-2">
