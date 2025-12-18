@@ -93,9 +93,10 @@ const getNavItems = (
   }
 
   // Determine labels and icons for other nav items
-  let categoriesLabel = 'navigation.categories';
-  let categoriesIcon: any = Grid3X3;
-  let categoriesPath = '/categories';
+  // REPLACED CATEGORIES WITH REELS
+  let reelsLabel = 'navigation.shorts'; // Updated to use shorts/reels translation key
+  let reelsIcon: any = Zap;
+  let reelsPath = '/reels';
 
   let messagesLabel = 'navigation.messages';
   let messagesIcon: any = MessageCircle;
@@ -110,10 +111,10 @@ const getNavItems = (
   let profilePath = '/profile/orders';
 
   // Update if on specific pages
-  if (isCategoriesPage) {
-    categoriesLabel = 'navigation.categories';
-    categoriesIcon = Grid3X3;
-    categoriesPath = '/categories';
+  if (isReelsPage) {
+    reelsLabel = 'navigation.shorts';
+    reelsIcon = Zap;
+    reelsPath = '/reels';
   }
 
   if (isMessagesPage) {
@@ -134,6 +135,7 @@ const getNavItems = (
     profilePath = '/profile/orders';
   }
 
+  // Updated to include reels instead of categories
   return [
     { 
       id: 'home', 
@@ -141,7 +143,7 @@ const getNavItems = (
       icon: homeIcon, 
       path: homePath
     }, 
-    { id: 'categories', nameKey: categoriesLabel, icon: categoriesIcon, path: categoriesPath },
+    { id: 'reels', nameKey: reelsLabel, icon: reelsIcon, path: reelsPath },
     { id: 'messages', nameKey: messagesLabel, icon: messagesIcon, path: messagesPath },
     { id: 'wallet', nameKey: walletLabel, icon: walletIcon, path: walletPath },
     { id: 'profile', nameKey: profileLabel, icon: profileIcon, path: profilePath, isAvatar: true },
@@ -153,8 +155,6 @@ const moreMenuItems = [
   { id: 'account', nameKey: 'navigation.account', icon: User, path: '/profile' },
   { id: 'messages', nameKey: 'navigation.messages', icon: MessageCircle, path: '/messages' },
   { id: 'videos', nameKey: 'navigation.videos', icon: Film, path: '/videos' },
-  // Comment out or remove the reels item from more menu as well
-  // { id: 'reels', nameKey: 'navigation.shorts', icon: Zap, path: '/reels' },
   { id: 'categories', nameKey: 'navigation.categories', icon: Grid3X3, path: '/categories' },
   { id: 'marketplace', nameKey: 'navigation.shopping', icon: ShoppingBag, path: '/shopping' },
   { id: 'events', nameKey: 'navigation.events', icon: Calendar, path: '/events' },
@@ -200,7 +200,7 @@ export default function BottomNav() {
   const isReelsPage = location.pathname.startsWith('/reels');
   const isProfilePage = location.pathname.startsWith('/profile');
   const isCategoriesPage = location.pathname.startsWith('/categories');
-  
+
   const navItems = getNavItems(
     isSellerDashboard, 
     isPickupStation, 
@@ -418,7 +418,7 @@ export default function BottomNav() {
                   {/* X button for special pages when active */}
                   {isActive && (
                     (item.id === 'home' && (isSellerDashboard || isPickupStation || isExplorePage || isWishlistPage || isCartPage || isNotificationsPage || isAddressesPage || isHelpPage)) ||
-                    (item.id === 'categories' && isCategoriesPage) ||
+                    (item.id === 'reels' && isReelsPage) || // Updated to check for reels page
                     (item.id === 'messages' && isMessagesPage) ||
                     (item.id === 'wallet' && isWalletPage) ||
                     (item.id === 'profile' && isProfilePage)
@@ -428,7 +428,7 @@ export default function BottomNav() {
                         e.stopPropagation();
                         // Navigate to the default page for each button
                         if (item.id === 'home') navigate('/for-you');
-                        else if (item.id === 'categories') navigate('/categories');
+                        else if (item.id === 'reels') navigate('/reels');
                         else if (item.id === 'messages') navigate('/messages');
                         else if (item.id === 'wallet') navigate('/wallet');
                         else if (item.id === 'profile') navigate('/profile/orders');
@@ -441,7 +441,7 @@ export default function BottomNav() {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.stopPropagation();
                           if (item.id === 'home') navigate('/for-you');
-                          else if (item.id === 'categories') navigate('/categories');
+                          else if (item.id === 'reels') navigate('/reels');
                           else if (item.id === 'messages') navigate('/messages');
                           else if (item.id === 'wallet') navigate('/wallet');
                           else if (item.id === 'profile') navigate('/profile/orders');
