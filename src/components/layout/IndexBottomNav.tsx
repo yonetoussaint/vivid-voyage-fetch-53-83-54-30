@@ -1,5 +1,3 @@
-
-
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -243,7 +241,7 @@ export default function BottomNav() {
     const updateNavHeight = () => {
       if (navRef.current) {
         const height = navRef.current.offsetHeight;
-        document.documentStyle.setProperty('--bottom-nav-height', `${height}px`);
+        document.documentElement.style.setProperty('--bottom-nav-height', `${height}px`); // FIXED HERE
       }
     };
 
