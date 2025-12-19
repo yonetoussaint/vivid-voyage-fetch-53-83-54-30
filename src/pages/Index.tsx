@@ -370,11 +370,11 @@ const shuffleArray = <T,>(array: T[]): T[] => {
 
 // VendorCard Component using React Icons
 const VendorCard = ({ vendor, onProductClick, onSellerClick, showProducts = true, isPickupStation = false, mode = 'carousel', showBanner = false }) => {
-  const [isFollowing, setIsFollowing] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const displayProducts = vendor.products.slice(0, 4);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const displayProducts = vendor.products.slice(0, 2);
 
-  const handleProductClick = (productId: string) => {
+  const handleProductClick = (productId) => {
     onProductClick(productId);
   };
 
@@ -383,138 +383,92 @@ const VendorCard = ({ vendor, onProductClick, onSellerClick, showProducts = true
     onSellerClick(vendor.id);
   };
 
-  const DefaultSellerAvatar = ({ className }: { className?: string }) => (
-    <User className={className} />
-  );
-
-  const VerificationBadge = () => (
-    <CheckCircle className="w-3 h-3 text-blue-500" />
-  );
-
   return (
     <div className="w-full">
-      <div className={`bg-white border border-gray-300 overflow-hidden hover:border-gray-400 transition-all duration-300 ${mode === 'grid' ? 'rounded-lg' : 'rounded-2xl'}`}>
-
-        {/* Banner for stations */}
-        {showBanner && (
-          <div className="px-2 pt-2 pb-1">
-            <div className="w-full h-20 rounded-lg overflow-hidden bg-gradient-to-r from-blue-500 to-purple-600">
-              <img
-                src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&h=200&fit=crop"
-                alt="Station banner"
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-            </div>
-          </div>
-        )}
-
+      <div className="bg-white rounded-lg hover:shadow-md transition-shadow duration-200 overflow-hidden border border-gray-200">
+        
         {/* Products Grid */}
-        {showProducts && !showBanner && (
-          <div className="px-2 pt-2 pb-1 relative">
-            {vendor.discount && (
-              <div className="absolute top-2 right-2 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full z-10">
-                {vendor.discount}
-              </div>
-            )}
-
-            <div className={`grid ${mode === 'grid' ? 'grid-cols-2' : 'grid-cols-4'} gap-1`}>
-              {displayProducts.map((product, index) => (
-                <button
-                  key={product.id}
-                  className="group cursor-pointer relative"
-                  onClick={() => handleProductClick(product.id)}
-                >
-                  <div className="aspect-square rounded border border-gray-100 bg-gray-50 overflow-hidden hover:border-gray-200 transition-colors">
-                    {product.image ? (
-                      <img
-                        src={product.image}
-                        alt=""
-                        className="h-full w-full object-contain hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        <Store size={14} />
-                      </div>
-                    )}
-                  </div>
-                  {mode === 'grid' && index === 3 && (
-                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded">
-                      <span className="text-white font-bold text-xs">+{vendor.products.length - 3}</span>
+        <button 
+          className="w-full p-1 cursor-pointer"
+          onClick={handleSellerClick}
+        >
+          <div className="grid grid-cols-2 gap-1">
+            {displayProducts.map((product, index) => (
+              <div key={product.id} className="relative">
+                <div className="aspect-square rounded bg-gray-50 overflow-hidden">
+                  {product.image ? (
+                    <img
+                      src={product.image}
+                      alt=""
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-300">
+                      <Store size={16} />
                     </div>
                   )}
-                </button>
-              ))}
-            </div>
+                </div>
+                {index === 1 && vendor.products.length > 2 && (
+                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded">
+                    <span className="text-white font-bold text-xs">+{vendor.products.length - 2}</span>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
-        )}
+        </button>
 
         {/* Vendor Info */}
-        <div className={`px-2 ${showProducts ? 'py-1' : 'py-2'}`}>
-          <div className="flex items-center gap-2">
+        <div className="px-2 pb-2">
+          <div className="flex items-start gap-2 mb-1.5">
+            {/* Avatar */}
+            <button 
+              onClick={handleSellerClick}
+              className="flex-shrink-0"
+            >
+              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
+                {vendor.image && !imageError ? (
+                  <img
+                    src={vendor.image}
+                    alt={vendor.name}
+                    className="w-full h-full object-cover"
+                    onError={() => setImageError(true)}
+                    loading="lazy"
+                  />
+                ) : (
+                  <User className="w-5 h-5 text-gray-400" />
+                )}
+              </div>
+            </button>
 
-            {/* Vendor Avatar */}
-            <div className="w-8 h-8 flex-shrink-0 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden">
-              {vendor.image && !imageError ? (
-                <img
-                  src={vendor.image}
-                  alt={vendor.name}
-                  className="w-full h-full object-cover rounded-full"
-                  onError={() => setImageError(true)}
-                  loading="lazy"
-                />
-              ) : (
-                <DefaultSellerAvatar className="w-5 h-5" />
-              )}
-            </div>
-
-            {/* Vendor Details */}
-            <div className="flex-1 min-w-0">
-              {/* Name and Verification */}
-              <div className="flex items-center mb-0.5">
-                <h3 className="font-medium text-xs truncate mr-1">{vendor.name}</h3>
-                {vendor.verified && <VerificationBadge />}
+            {/* Name and Stats Container */}
+            <div className="flex-1 min-w-0 flex flex-col justify-center h-10">
+              {/* Name with badge */}
+              <div className="flex items-center gap-1 mb-0.5">
+                <h3 className="font-semibold text-xs text-gray-900 truncate">{vendor.name}</h3>
+                {vendor.verified && (
+                  <CheckCircle className="w-3 h-3 text-blue-500 fill-blue-500 flex-shrink-0" />
+                )}
               </div>
 
               {/* Stats */}
-              <div className="flex items-center justify-between text-xs text-gray-500">
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center text-yellow-500">
-                    <Star size={10} className="fill-yellow-500" />
-                    <span className="font-medium ml-0.5 text-gray-600">{vendor.rating}</span>
-                  </div>
-                  <div className="w-px h-3 bg-gray-300"></div>
-                  <div className="flex items-center">
-                    <Users size={10} className="mr-0.5" />
-                    {formatNumber(vendor.followers)}
-                  </div>
-                </div>
-                {mode !== 'grid' && (
-                  <span className="text-[10px] font-bold text-white bg-gray-400 px-1.5 py-0.5 rounded-full">#{vendor.rank}</span>
-                )}
+              <div className="text-[10px] text-gray-500">
+                <span>{formatNumber(vendor.followers)} followers</span>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Action Buttons */}
-        <div className="px-2 pb-2 grid grid-cols-2 gap-2">
+          {/* Follow Button */}
           <button
-            className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white text-xs font-medium py-1.5 px-2 rounded-full transition-colors"
-            onClick={handleSellerClick}
-          >
-            {isPickupStation ? 'Visit' : mode === 'grid' ? 'Visit' : 'Visit Store'}
-          </button>
-          <button
-            className={`flex items-center justify-center text-xs font-medium py-1.5 px-2 rounded-full transition-colors ${
-              isFollowing
-                ? "bg-gray-100 text-gray-800 hover:bg-gray-200"
-                : "bg-blue-100 text-blue-800 hover:bg-blue-200"
-            }`}
             onClick={() => setIsFollowing(!isFollowing)}
+            className={`w-full text-xs font-semibold py-1.5 rounded-md transition-colors ${
+              isFollowing
+                ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
           >
-            {isFollowing ? "Following" : "Follow"}
+            {isFollowing ? 'Following' : 'Follow'}
           </button>
         </div>
       </div>
