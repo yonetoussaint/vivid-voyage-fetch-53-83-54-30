@@ -728,7 +728,7 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
 
   return (
     <div className="bg-white rounded overflow-hidden mb-2">
-      {/* Post Header */}
+      {/* Post Header - Same padding as before */}
       <div className="p-2 flex items-center justify-between">
         <div 
           className="flex items-center gap-2 cursor-pointer"
@@ -770,7 +770,7 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
         </button>
       </div>
 
-      {/* Image Carousel */}
+      {/* Image Carousel - No horizontal padding */}
       <div 
         className="relative bg-gray-100 cursor-pointer"
         onClick={handleImageClick}
@@ -823,41 +823,48 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
         )}
       </div>
 
-      {/* Engagement Bar */}
-      <div className="p-2">
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center gap-3">
+      {/* Engagement Bar - Matching image's exact width (no horizontal padding) */}
+      <div className="py-2">
+        <div className="flex items-center justify-between mb-1 px-3">
+          <div className="flex items-center gap-4">
             <button 
-              className={`flex items-center gap-0.5 ${isLiked ? 'text-red-500' : 'text-gray-700'}`}
+              className={`flex items-center gap-1.5 ${isLiked ? 'text-red-500' : 'text-gray-700'}`}
               onClick={handleLike}
             >
-              <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
+              <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
               <span className="text-xs font-medium">{formatNumber(likeCount)}</span>
             </button>
-            <button className="flex items-center gap-0.5 text-gray-700">
-              <MessageCircle className="w-4 h-4" />
+            <button className="flex items-center gap-1.5 text-gray-700">
+              <MessageCircle className="w-5 h-5" />
               <span className="text-xs font-medium">{formatNumber(post.engagement.comments)}</span>
             </button>
             <button 
-              className="flex items-center gap-0.5 text-gray-700"
+              className="flex items-center gap-1.5 text-gray-700"
               onClick={handleShare}
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-5 h-5" />
               <span className="text-xs font-medium">{formatNumber(post.engagement.shares)}</span>
             </button>
           </div>
+          
+          <button 
+            className="text-gray-700"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Bookmark className="w-5 h-5" />
+          </button>
         </div>
 
-        {/* Caption */}
-        <div className="mb-1">
+        {/* Caption - Same padding as engagement buttons */}
+        <div className="px-3 mb-1">
           <p className="text-xs text-gray-900 line-clamp-2">
             <span className="font-semibold mr-1">{post.author.username}</span>
             {post.content.caption}
           </p>
         </div>
 
-        {/* Hashtags */}
-        <div className="flex flex-wrap gap-1 mb-1">
+        {/* Hashtags - Same padding as engagement buttons */}
+        <div className="px-3 flex flex-wrap gap-1 mb-1">
           {post.content.hashtags.slice(0, 2).map((hashtag, index) => (
             <span 
               key={index}
@@ -874,9 +881,9 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
           )}
         </div>
 
-        {/* Product Tags Preview - Only show on hover or if enabled */}
+        {/* Product Tags Preview - Same padding as engagement buttons */}
         {post.products_tagged.length > 0 && showProductTags && (
-          <div className="bg-gray-50 rounded-lg p-2 mt-1">
+          <div className="mx-3 bg-gray-50 rounded-lg p-2 mt-1">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs font-semibold text-gray-900">
                 Tagged Products
@@ -912,14 +919,16 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
           </div>
         )}
 
-        {/* Show tagged products button */}
+        {/* Show tagged products button - Same padding as engagement buttons */}
         {post.products_tagged.length > 0 && !showProductTags && (
-          <button 
-            className="text-[10px] text-blue-600 hover:text-blue-800 mt-1"
-            onClick={() => setShowProductTags(true)}
-          >
-            Show {post.products_tagged.length} tagged products
-          </button>
+          <div className="px-3">
+            <button 
+              className="text-[10px] text-blue-600 hover:text-blue-800 mt-1"
+              onClick={() => setShowProductTags(true)}
+            >
+              Show {post.products_tagged.length} tagged products
+            </button>
+          </div>
         )}
       </div>
     </div>
