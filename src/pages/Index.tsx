@@ -648,7 +648,6 @@ const StackedImagesIndicator: React.FC<{ count: number }> = ({ count }) => {
 };
 
 // PostCard Component with Stacked Images - MASONRY STYLE
-// PostCard Component with Stacked Images - MASONRY STYLE
 const PostCard: React.FC<{ post: Post }> = ({ post }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(post.is_liked || false);
@@ -1110,126 +1109,6 @@ const FavouriteChannels: React.FC = () => {
   );
 };
 
-// Popular Categories Component
-const PopularCategories: React.FC = () => {
-  const navigate = useNavigate();
-  const CategoryIcon = LayoutPanelLeft;
-
-  const categories = [
-    {
-      id: 1,
-      name: 'Mobiles',
-      discount: 'HOT',
-      image: 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=400&h=400&fit=crop&crop=center',
-      discountBg: 'bg-pink-600'
-    },
-    {
-      id: 2,
-      name: 'Cribs & Cots',
-      discount: '-50%',
-      image: 'https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=400&h=400&fit=crop&crop=center',
-      discountBg: 'bg-blue-600'
-    },
-    {
-      id: 3,
-      name: 'Portable Speakers',
-      discount: '-33%',
-      image: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400&h=400&fit=crop&crop=center',
-      discountBg: 'bg-pink-600'
-    },
-    {
-      id: 4,
-      name: 'Electric Insect Killers',
-      discount: '-59%',
-      image: 'https://images.unsplash.com/photo-1564424302846-62b1d09af73c?w=400&h=400&fit=crop&crop=center',
-      discountBg: 'bg-pink-600'
-    },
-    {
-      id: 5,
-      name: 'Smart Watches',
-      discount: '-45%',
-      image: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&h=400&fit=crop&crop=center',
-      discountBg: 'bg-purple-600'
-    },
-    {
-      id: 6,
-      name: 'Laptops',
-      discount: '-25%',
-      image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&h=400&fit=crop&crop=center',
-      discountBg: 'bg-green-600'
-    },
-    {
-      id: 7,
-      name: 'Headphones',
-      discount: '-40%',
-      image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop&crop=center',
-      discountBg: 'bg-red-600'
-    },
-    {
-      id: 8,
-      name: 'Cameras',
-      discount: '-30%',
-      image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&h=400&fit=crop&crop=center',
-      discountBg: 'bg-indigo-600'
-    }
-  ];
-
-  const handleCategoryClick = (categoryId: number, categoryName: string) => {
-    navigate(`/category/${categoryId}`, { state: { title: categoryName } });
-  };
-
-  const handleViewAllClick = () => {
-    navigate('/categories');
-  };
-
-  return (
-    <div className="bg-white">
-      <SectionHeader
-        title="Popular Categories for you"
-        icon={CategoryIcon}
-        showTitleChevron={true}
-        viewAllLink="/categories"
-        viewAllText="More"
-        onViewAllClick={handleViewAllClick}
-      />
-
-      <div className="flex gap-2 overflow-x-auto pb-4 px-2 scrollbar-hide">
-        {categories.map((category) => (
-          <div
-            key={category.id}
-            onClick={() => handleCategoryClick(category.id, category.name)}
-            className="flex-shrink-0 w-20 cursor-pointer group"
-          >
-            <div className="relative rounded-sm overflow-hidden mb-2 aspect-square transition-transform group-hover:scale-105 border border-gray-100">
-              <div className={`absolute top-1 left-1 z-10 ${category.discountBg} text-white px-1 py-0.5 text-[9px] font-bold rounded-sm`}>
-                {category.discount}
-              </div>
-              <div className="relative w-full h-full">
-                <img
-                  src={category.image}
-                  alt={category.name}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = `https://placehold.co/80x80/cccccc/969696?text=${encodeURIComponent(category.name.charAt(0))}`;
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent" />
-              </div>
-            </div>
-            <div className="text-center">
-              <h3 className="font-semibold text-[11px] text-gray-900 mb-0 truncate leading-tight">
-                {category.name}
-              </h3>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
 // Masonry Grid Component
 const MasonryGrid: React.FC<{ items: ContentItem[] }> = ({ items }) => {
   // Group items into columns for masonry layout
@@ -1525,10 +1404,6 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
     </div>,
 
     <div key="separator-2" className="w-full bg-gray-100 h-1 mb-2"></div>,
-
-    <PopularCategories key="popular-categories" />,
-
-    <div key="separator-3" className="w-full bg-gray-100 h-1 mb-2"></div>,
 
     <InfiniteContentGrid key="infinite-grid" category={category} />,
   ];
