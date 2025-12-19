@@ -1287,9 +1287,9 @@ const MasonryGrid: React.FC<{ items: ContentItem[] }> = ({ items }) => {
   }, [items]);
 
   return (
-   <div className="grid grid-cols-2 gap-px px-2">  {/* Change to gap-px */}
+   <div className="grid grid-cols-2 gap-2 px-2"> {/* Keep existing gap between columns */}
   {columns.map((column, colIndex) => (
-    <div key={colIndex} className="flex flex-col gap-px">  {/* Change to gap-px */}
+    <div key={colIndex} className="flex flex-col gap-px"> {/* Only this changes to 1px */}
       {column.map((item) => (
         <ContentCard key={`${item.type}-${item.id}`} item={item} />
       ))}
