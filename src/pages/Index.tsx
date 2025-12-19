@@ -823,25 +823,25 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
         )}
       </div>
 
-      {/* Engagement Bar - SIMPLIFIED: Just Like, Comment, Share */}
+      {/* Engagement Bar - CENTERED THREE BUTTONS */}
       <div className="py-2">
-        {/* Only the three main buttons */}
-        <div className="flex items-center gap-4 px-2 mb-1">
+        {/* Centered three buttons */}
+        <div className="flex items-center justify-center gap-8 mb-1">
           <button 
-            className={`flex items-center gap-1 ${isLiked ? 'text-red-500' : 'text-gray-700'}`}
+            className={`flex items-center gap-1.5 ${isLiked ? 'text-red-500' : 'text-gray-700'}`}
             onClick={handleLike}
           >
             <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
             <span className="text-xs font-medium">{formatNumber(likeCount)}</span>
           </button>
           
-          <button className="flex items-center gap-1 text-gray-700">
+          <button className="flex items-center gap-1.5 text-gray-700">
             <MessageCircle className="w-5 h-5" />
             <span className="text-xs font-medium">{formatNumber(post.engagement.comments)}</span>
           </button>
           
           <button 
-            className="flex items-center gap-1 text-gray-700"
+            className="flex items-center gap-1.5 text-gray-700"
             onClick={handleShare}
           >
             <Send className="w-5 h-5" />
