@@ -728,7 +728,7 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
 
   return (
     <div className="bg-white rounded overflow-hidden mb-2">
-      {/* Post Header - Fixed padding */}
+      {/* Post Header */}
       <div className="px-2 py-2 flex items-center justify-between">
         <div 
           className="flex items-center gap-2 cursor-pointer"
@@ -770,7 +770,7 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
         </button>
       </div>
 
-      {/* Image Carousel - No horizontal padding */}
+      {/* Image Carousel */}
       <div 
         className="relative bg-gray-100 cursor-pointer"
         onClick={handleImageClick}
@@ -823,41 +823,33 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
         )}
       </div>
 
-      {/* Engagement Bar - FIXED: No overflow issues */}
+      {/* Engagement Bar - SIMPLIFIED: Just Like, Comment, Share */}
       <div className="py-2">
-        <div className="flex items-center justify-between mb-1 w-full">
-          {/* Left-aligned buttons - Start at edge */}
-          <div className="flex items-center gap-3 pl-2">
-            <button 
-              className={`flex items-center gap-1 ${isLiked ? 'text-red-500' : 'text-gray-700'}`}
-              onClick={handleLike}
-            >
-              <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
-              <span className="text-xs font-medium min-w-[20px]">{formatNumber(likeCount)}</span>
-            </button>
-            <button className="flex items-center gap-1 text-gray-700">
-              <MessageCircle className="w-4 h-4" />
-              <span className="text-xs font-medium min-w-[20px]">{formatNumber(post.engagement.comments)}</span>
-            </button>
-            <button 
-              className="flex items-center gap-1 text-gray-700"
-              onClick={handleShare}
-            >
-              <Send className="w-4 h-4" />
-              <span className="text-xs font-medium min-w-[20px]">{formatNumber(post.engagement.shares)}</span>
-            </button>
-          </div>
-          
-          {/* Right-aligned button - End at edge */}
+        {/* Only the three main buttons */}
+        <div className="flex items-center gap-4 px-2 mb-1">
           <button 
-            className="text-gray-700 pr-2"
-            onClick={(e) => e.stopPropagation()}
+            className={`flex items-center gap-1 ${isLiked ? 'text-red-500' : 'text-gray-700'}`}
+            onClick={handleLike}
           >
-            <Bookmark className="w-4 h-4" />
+            <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
+            <span className="text-xs font-medium">{formatNumber(likeCount)}</span>
+          </button>
+          
+          <button className="flex items-center gap-1 text-gray-700">
+            <MessageCircle className="w-5 h-5" />
+            <span className="text-xs font-medium">{formatNumber(post.engagement.comments)}</span>
+          </button>
+          
+          <button 
+            className="flex items-center gap-1 text-gray-700"
+            onClick={handleShare}
+          >
+            <Send className="w-5 h-5" />
+            <span className="text-xs font-medium">{formatNumber(post.engagement.shares)}</span>
           </button>
         </div>
 
-        {/* Caption - Full width with padding */}
+        {/* Caption */}
         <div className="px-2 mb-1">
           <p className="text-xs text-gray-900 line-clamp-2">
             <span className="font-semibold mr-1">{post.author.username}</span>
@@ -865,7 +857,7 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
           </p>
         </div>
 
-        {/* Hashtags - Full width with padding */}
+        {/* Hashtags */}
         <div className="px-2 flex flex-wrap gap-1 mb-1">
           {post.content.hashtags.slice(0, 2).map((hashtag, index) => (
             <span 
