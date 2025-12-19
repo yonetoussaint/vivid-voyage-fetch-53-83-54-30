@@ -369,12 +369,12 @@ const shuffleArray = <T,>(array: T[]): T[] => {
 };
 
 // VendorCard Component using React Icons
-const VendorCard = ({ vendor, onProductClick, onSellerClick, showProducts = true, isPickupStation = false, mode = 'carousel', showBanner = false }) => {
-  const [imageError, setImageError] = useState(false);
+const VendorCard = ({ vendor, onProductClick, onSellerClick }) => {
   const [isFollowing, setIsFollowing] = useState(false);
-  const displayProducts = vendor.products.slice(0, 2);
+  const [imageError, setImageError] = useState(false);
+  const displayProducts = vendor.products.slice(0, 3);
 
-  const handleProductClick = (productId) => {
+  const handleProductClick = (productId: string) => {
     onProductClick(productId);
   };
 
@@ -383,92 +383,98 @@ const VendorCard = ({ vendor, onProductClick, onSellerClick, showProducts = true
     onSellerClick(vendor.id);
   };
 
+  const DefaultSellerAvatar = ({ className }: { className?: string }) => (
+    <User className={className} />
+  );
+
+  const VerificationBadge = () => (
+    <CheckCircle className="w-3 h-3 text-blue-500" />
+  );
+
   return (
     <div className="w-full">
-      <div className="bg-white rounded-lg hover:shadow-md transition-shadow duration-200 overflow-hidden border border-gray-200">
-        
+      <div className="bg-white border border-gray-300 rounded-2xl overflow-hidden hover:border-gray-400 transition-all duration-300">
+
         {/* Products Grid */}
-        <button 
-          className="w-full p-1 cursor-pointer"
-          onClick={handleSellerClick}
-        >
-          <div className="grid grid-cols-2 gap-1">
-            {displayProducts.map((product, index) => (
-              <div key={product.id} className="relative">
-                <div className="aspect-square rounded bg-gray-50 overflow-hidden">
+        <div className="px-2 pt-2 pb-1 relative">
+          {vendor.discount && (
+            <div className="absolute top-2 right-2 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full z-10">
+              {vendor.discount}
+            </div>
+          )}
+
+          <div className="grid grid-cols-3 gap-1">
+            {displayProducts.map((product) => (
+              <button
+                key={product.id}
+                className="group cursor-pointer relative"
+                onClick={() => handleProductClick(product.id)}
+              >
+                <div className="aspect-square rounded border border-gray-100 bg-gray-50 overflow-hidden hover:border-gray-200 transition-colors">
                   {product.image ? (
                     <img
                       src={product.image}
                       alt=""
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-contain hover:scale-105 transition-transform duration-300"
                       loading="lazy"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300">
-                      <Store size={16} />
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      <Store size={14} />
                     </div>
                   )}
                 </div>
-                {index === 1 && vendor.products.length > 2 && (
-                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded">
-                    <span className="text-white font-bold text-xs">+{vendor.products.length - 2}</span>
-                  </div>
-                )}
-              </div>
+              </button>
             ))}
           </div>
-        </button>
+        </div>
 
         {/* Vendor Info */}
-        <div className="px-2 pb-2">
-          <div className="flex items-start gap-2 mb-1.5">
-            {/* Avatar */}
-            <button 
-              onClick={handleSellerClick}
-              className="flex-shrink-0"
-            >
-              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
-                {vendor.image && !imageError ? (
-                  <img
-                    src={vendor.image}
-                    alt={vendor.name}
-                    className="w-full h-full object-cover"
-                    onError={() => setImageError(true)}
-                    loading="lazy"
-                  />
-                ) : (
-                  <User className="w-5 h-5 text-gray-400" />
-                )}
-              </div>
-            </button>
+        <div className="px-2 py-1">
+          <div className="flex items-center gap-2">
 
-            {/* Name and Stats Container */}
-            <div className="flex-1 min-w-0 flex flex-col justify-center h-10">
-              {/* Name with badge */}
-              <div className="flex items-center gap-1 mb-0.5">
-                <h3 className="font-semibold text-xs text-gray-900 truncate">{vendor.name}</h3>
-                {vendor.verified && (
-                  <CheckCircle className="w-3 h-3 text-blue-500 fill-blue-500 flex-shrink-0" />
-                )}
+            {/* Vendor Avatar */}
+            <div className="w-8 h-8 flex-shrink-0 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden">
+              {vendor.image && !imageError ? (
+                <img
+                  src={vendor.image}
+                  alt={vendor.name}
+                  className="w-full h-full object-cover rounded-full"
+                  onError={() => setImageError(true)}
+                  loading="lazy"
+                />
+              ) : (
+                <DefaultSellerAvatar className="w-5 h-5" />
+              )}
+            </div>
+
+            {/* Vendor Details */}
+            <div className="flex-1 min-w-0">
+              {/* Name and Verification */}
+              <div className="flex items-center mb-0.5">
+                <h3 className="font-medium text-xs truncate mr-1">{vendor.name}</h3>
+                {vendor.verified && <VerificationBadge />}
               </div>
 
-              {/* Stats */}
-              <div className="text-[10px] text-gray-500">
-                <span>{formatNumber(vendor.followers)} followers</span>
+              {/* Followers */}
+              <div className="text-xs text-gray-500">
+                {formatNumber(vendor.followers)} followers
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Follow Button */}
+        {/* Action Button */}
+        <div className="px-2 pb-2">
           <button
-            onClick={() => setIsFollowing(!isFollowing)}
-            className={`w-full text-xs font-semibold py-1.5 rounded-md transition-colors ${
+            className={`w-full flex items-center justify-center text-xs font-medium py-1.5 px-2 rounded-full transition-colors ${
               isFollowing
-                ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
+                ? "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                : "bg-blue-100 text-blue-800 hover:bg-blue-200"
             }`}
+            onClick={() => setIsFollowing(!isFollowing)}
           >
-            {isFollowing ? 'Following' : 'Follow'}
+            {isFollowing ? "Following" : "Follow"}
           </button>
         </div>
       </div>
