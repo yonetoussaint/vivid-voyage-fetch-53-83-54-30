@@ -1287,15 +1287,15 @@ const MasonryGrid: React.FC<{ items: ContentItem[] }> = ({ items }) => {
   }, [items]);
 
   return (
-    <div className="grid grid-cols-2 gap-2 px-2">
-      {columns.map((column, colIndex) => (
-        <div key={colIndex} className="flex flex-col gap-2">
-          {column.map((item) => (
-            <ContentCard key={`${item.type}-${item.id}`} item={item} />
-          ))}
-        </div>
+   <div className="grid grid-cols-2 gap-px px-2">  {/* Change to gap-px */}
+  {columns.map((column, colIndex) => (
+    <div key={colIndex} className="flex flex-col gap-px">  {/* Change to gap-px */}
+      {column.map((item) => (
+        <ContentCard key={`${item.type}-${item.id}`} item={item} />
       ))}
     </div>
+  ))}
+</div>
   );
 };
 
