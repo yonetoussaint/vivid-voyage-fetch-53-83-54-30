@@ -560,71 +560,71 @@ const walletTabs = isWalletPage ? [
       {/* Header - Now hidden on conversation detail pages */}
       {shouldShowHeader && (
         <div ref={headerRef} className="app-header">
-          <AliExpressHeader
-            activeTabId={isMessagesListPage ? messagesFilter : isWalletPage ? walletFilter : isExplorePage ? exploreFilter : activeTab}
-            showFilterBar={showFilterBar}
-            // Hide category tabs on messages, wallet, explore, and profile pages
-            showCategoryTabs={(!isProductsPage && !pathname.startsWith('/categories') && !isMessagesPage && !isWalletPage && !isExplorePage && !isProfilePage)}
-            filterCategories={filterCategories}
-            selectedFilters={selectedFilters}
-            onFilterSelect={onFilterSelect}
-            onFilterClear={onFilterClear}
-            onClearAll={onClearAll}
-            onFilterButtonClick={onFilterButtonClick}
-            isFilterDisabled={isFilterDisabled}
-            customTabs={messagesTabs || walletTabs || exploreTabs}
-            onCustomTabChange={isMessagesListPage ? (tabId) => {
-              const tab = messagesTabs?.find(t => t.id === tabId);
-              if (tab?.path) {
-                navigate(tab.path);
-              }
-            } : isWalletPage ? (tabId) => {
-              const tab = walletTabs?.find(t => t.id === tabId);
-              if (tab?.path) {
-                navigate(tab.path);
-              }
-            } : isExplorePage ? (tabId) => {
-              const tab = exploreTabs?.find(t => t.id === tabId);
-              if (tab?.path) {
-                navigate(tab.path);
-              }
-            } : undefined}
-            showSectionHeader={isProductsPage}
-            sectionHeaderTitle={productsTitle}
-            sectionHeaderShowStackedProfiles={searchParams.get('showProfiles') === 'true'}
-            sectionHeaderShowVerifiedSellers={searchParams.get('showVerifiedSellers') === 'true'}
-            sectionHeaderVerifiedSellersText={searchParams.get('verifiedSellersText') || 'Verified Sellers'}
-            sectionHeaderStackedProfiles={searchParams.get('showProfiles') === 'true' ? [
-              {
-                id: '1',
-                image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
-                alt: 'Sarah Johnson'
-              },
-              {
-                id: '2',
-                image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-                alt: 'Mike Chen'
-              },
-              {
-                id: '3',
-                image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-                alt: 'Emma Davis'
-              }
-            ] : []}
-            sectionHeaderStackedProfilesText={searchParams.get('profilesText') || 'Handpicked by'}
-            sectionHeaderShowCountdown={searchParams.get('showCountdown') === 'true'}
-            sectionHeaderCountdown={searchParams.get('countdown') || undefined}
-            sectionHeaderShowSponsorCount={searchParams.get('showSponsorCount') === 'true'}
-            {...(sectionHeaderIcon && { sectionHeaderIcon })}
-            sectionHeaderViewAllLink={
-              (searchParams.get('showProfiles') !== 'true' &&
-               searchParams.get('showVerifiedSellers') !== 'true' &&
-               searchParams.get('showCountdown') !== 'true')
-                ? "/vendors"
-                : undefined
-            }
-            sectionHeaderViewAllText="View All"
-          />
+         <AliExpressHeader
+  activeTabId={isMessagesListPage ? messagesFilter : isWalletPage ? walletFilter : isExplorePage ? exploreFilter : activeTab}
+  showFilterBar={showFilterBar}
+  // Fixed: Show category tabs on home pages AND category pages
+  showCategoryTabs={isRootHomePage || isForYouPage || pathname.startsWith('/categories')}
+  filterCategories={filterCategories}
+  selectedFilters={selectedFilters}
+  onFilterSelect={onFilterSelect}
+  onFilterClear={onFilterClear}
+  onClearAll={onClearAll}
+  onFilterButtonClick={onFilterButtonClick}
+  isFilterDisabled={isFilterDisabled}
+  customTabs={messagesTabs || walletTabs || exploreTabs}
+  onCustomTabChange={isMessagesListPage ? (tabId) => {
+    const tab = messagesTabs?.find(t => t.id === tabId);
+    if (tab?.path) {
+      navigate(tab.path);
+    }
+  } : isWalletPage ? (tabId) => {
+    const tab = walletTabs?.find(t => t.id === tabId);
+    if (tab?.path) {
+      navigate(tab.path);
+    }
+  } : isExplorePage ? (tabId) => {
+    const tab = exploreTabs?.find(t => t.id === tabId);
+    if (tab?.path) {
+      navigate(tab.path);
+    }
+  } : undefined}
+  showSectionHeader={isProductsPage}
+  sectionHeaderTitle={productsTitle}
+  sectionHeaderShowStackedProfiles={searchParams.get('showProfiles') === 'true'}
+  sectionHeaderShowVerifiedSellers={searchParams.get('showVerifiedSellers') === 'true'}
+  sectionHeaderVerifiedSellersText={searchParams.get('verifiedSellersText') || 'Verified Sellers'}
+  sectionHeaderStackedProfiles={searchParams.get('showProfiles') === 'true' ? [
+    {
+      id: '1',
+      image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
+      alt: 'Sarah Johnson'
+    },
+    {
+      id: '2',
+      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+      alt: 'Mike Chen'
+    },
+    {
+      id: '3',
+      image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+      alt: 'Emma Davis'
+    }
+  ] : []}
+  sectionHeaderStackedProfilesText={searchParams.get('profilesText') || 'Handpicked by'}
+  sectionHeaderShowCountdown={searchParams.get('showCountdown') === 'true'}
+  sectionHeaderCountdown={searchParams.get('countdown') || undefined}
+  sectionHeaderShowSponsorCount={searchParams.get('showSponsorCount') === 'true'}
+  {...(sectionHeaderIcon && { sectionHeaderIcon })}
+  sectionHeaderViewAllLink={
+    (searchParams.get('showProfiles') !== 'true' &&
+     searchParams.get('showVerifiedSellers') !== 'true' &&
+     searchParams.get('showCountdown') !== 'true')
+      ? "/vendors"
+      : undefined
+  }
+  sectionHeaderViewAllText="View All"
+/>
         </div>
       )}
 
