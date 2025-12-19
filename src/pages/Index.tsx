@@ -672,10 +672,10 @@ const StackedImagesIndicator: React.FC<{ count: number }> = ({ count }) => {
 };
 
 // PostCard Component with Stacked Images - MASONRY STYLE
+// PostCard Component with Stacked Images - MASONRY STYLE
 const PostCard: React.FC<{ post: Post }> = ({ post }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(post.is_liked || false);
-  const [showProductTags, setShowProductTags] = useState(false);
   const [likeCount, setLikeCount] = useState(post.engagement.likes);
 
   const navigate = useNavigate();
@@ -705,11 +705,6 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
     setCurrentImageIndex((prev) => (prev + 1) % post.content.images.length);
   };
 
-  const handleProductTagClick = (productId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigate(`/product/${productId}`);
-  };
-
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -727,10 +722,10 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
 
   return (
     <div className="bg-white rounded overflow-hidden">
-      {/* Post Header - Minimal padding */}
-      <div className="px-2 py-2 flex items-center justify-between">
+      {/* Post Header - NO side padding */}
+      <div className="py-2 flex items-center justify-between">
         <div 
-          className="flex items-center gap-2 cursor-pointer"
+          className="flex items-center gap-2 cursor-pointer pl-2"
           onClick={handleUserClick}
         >
           <div className="relative">
@@ -762,14 +757,14 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
           </div>
         </div>
         <button 
-          className="text-gray-400 hover:text-gray-600"
+          className="text-gray-400 hover:text-gray-600 pr-2"
           onClick={(e) => e.stopPropagation()}
         >
           <MoreHorizontal className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Image Carousel - No padding */}
+      {/* Image Carousel - NO padding */}
       <div 
         className="relative bg-gray-100 cursor-pointer"
         onClick={handleImageClick}
@@ -798,7 +793,7 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
           </div>
         )}
 
-        {/* Product Tags Overlay */}
+        {/* Product Tags Overlay - Simplified */}
         {post.products_tagged.length > 0 && (
           <div className="absolute inset-0">
             {post.products_tagged.map((product, index) => (
@@ -811,21 +806,17 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
                   transform: 'translate(-50%, -50%)'
                 }}
               >
-                <button
-                  onClick={(e) => handleProductTagClick(product.id, e)}
-                  className="w-3 h-3 bg-white rounded-full ring-2 ring-white shadow-lg hover:scale-110 transition-transform"
-                  title={product.name}
-                />
+                <div className="w-3 h-3 bg-white/90 rounded-full ring-2 ring-white/80 shadow-sm" />
               </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* Engagement & Content Section - MINIMAL PADDING */}
-      <div className="py-2 px-2">
+      {/* Engagement & Content Section - NO side padding */}
+      <div className="py-2">
         {/* Social buttons - flush with edges */}
-        <div className="flex items-center gap-4 mb-1">
+        <div className="flex items-center gap-4 mb-1 pl-2 pr-2">
           <button 
             className={`flex items-center gap-1 ${isLiked ? 'text-red-500' : 'text-gray-700'}`}
             onClick={handleLike}
@@ -848,79 +839,31 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
           </button>
         </div>
 
-        {/* Caption - Minimal margin */}
-        <div className="mb-0.5">
+        {/* Caption - flush with edges */}
+        <div className="mb-0.5 pl-2 pr-2">
           <p className="text-xs text-gray-900 line-clamp-2">
             <span className="font-semibold mr-1">{post.author.username}</span>
             {post.content.caption}
           </p>
         </div>
 
-        {/* Hashtags */}
-        <div className="flex flex-wrap gap-0.5 mb-0.5">
-          {post.content.hashtags.slice(0, 2).map((hashtag, index) => (
-            <span 
-              key={index}
-              className="text-[10px] text-blue-600 hover:text-blue-800 cursor-pointer"
-              onClick={() => navigate(`/hashtag/${hashtag.replace('#', '')}`)}
-            >
-              #{hashtag}
-            </span>
-          ))}
-          {post.content.hashtags.length > 2 && (
-            <span className="text-[10px] text-gray-500">
-              +{post.content.hashtags.length - 2} more
-            </span>
-          )}
-        </div>
-
-        {/* Product Tags Preview */}
-        {post.products_tagged.length > 0 && showProductTags && (
-          <div className="bg-gray-50 rounded p-1 mb-0.5">
-            <div className="flex items-center justify-between mb-0.5">
-              <span className="text-xs font-semibold text-gray-900">
-                Tagged Products
-              </span>
-              <button 
-                className="text-xs text-blue-600 hover:text-blue-800"
-                onClick={() => setShowProductTags(false)}
+        {/* Hashtags - flush with edges */}
+        {post.content.hashtags.length > 0 && (
+          <div className="flex flex-wrap gap-0.5 pl-2 pr-2">
+            {post.content.hashtags.slice(0, 2).map((hashtag, index) => (
+              <span 
+                key={index}
+                className="text-[10px] text-blue-600 hover:text-blue-800 cursor-pointer"
+                onClick={() => navigate(`/hashtag/${hashtag.replace('#', '')}`)}
               >
-                Hide
-              </button>
-            </div>
-            <div className="flex gap-0.5 overflow-x-auto scrollbar-hide">
-              {post.products_tagged.slice(0, 2).map((product) => (
-                <div 
-                  key={product.id}
-                  className="flex-shrink-0 bg-white rounded p-0.5 shadow-sm border border-gray-100 w-20 cursor-pointer"
-                  onClick={(e) => handleProductTagClick(product.id, e)}
-                >
-                  <img 
-                    src={product.image} 
-                    alt={product.name}
-                    className="w-full h-10 object-cover rounded mb-0.5"
-                  />
-                  <p className="text-xs font-medium text-gray-900 line-clamp-1 mb-0.5">
-                    {product.name}
-                  </p>
-                  <p className="text-xs font-bold text-gray-900">
-                    G{product.price.toLocaleString('en-US')}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Show tagged products button */}
-        {post.products_tagged.length > 0 && !showProductTags && (
-          <div>
-            <button 
-              className="text-[10px] text-blue-600 hover:text-blue-800"
-              onClick={() => setShowProductTags(true)}
-            >
-              Show {post.products_tagged.length} tagged products
-            </button>
+                #{hashtag}
+              </span>
+            ))}
+            {post.content.hashtags.length > 2 && (
+              <span className="text-[10px] text-gray-500">
+                +{post.content.hashtags.length - 2} more
+              </span>
+            )}
           </div>
         )}
       </div>
