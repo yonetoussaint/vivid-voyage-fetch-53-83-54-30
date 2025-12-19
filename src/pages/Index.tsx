@@ -551,9 +551,9 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
   const hasDiscount = !!product.discount_price && product.discount_price < product.price;
 
   return (
-    <div className="bg-white rounded overflow-hidden mb-2 flex flex-col">
-      {/* Flexible vertical container with max height but no fixed height */}
-      <div className="w-full max-h-80 bg-white rounded overflow-hidden mb-0.5 relative flex items-center justify-center">
+    <div className="bg-white overflow-hidden mb-2 flex flex-col">
+      {/* Flat image container - removed rounded class */}
+      <div className="w-full max-h-80 bg-white overflow-hidden mb-0.5 relative flex items-center justify-center">
         <img 
           src={displayImageUrl} 
           alt={product.name} 
