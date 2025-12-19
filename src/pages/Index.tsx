@@ -677,8 +677,14 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(post.is_liked || false);
   const [likeCount, setLikeCount] = useState(post.engagement.likes);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [isSwiping, setIsSwiping] = useState(false);
 
   const navigate = useNavigate();
+
+  // Minimum swipe distance
+  const minSwipeDistance = 50;
 
   const handlePostClick = () => {
     navigate(`/post/${post.id}`);
@@ -702,7 +708,95 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
 
   const handleImageClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setCurrentImageIndex((prev) => (prev + 1) % post.content.images.length);
+    // Only navigate if not swiping
+    if (!isSwiping) {
+      setCurrentImageIndex((prev) => (prev + 1) % post.content.images.length);
+    }
+    setIsSwiping(false);
+  };
+
+  // Touch handlers for swipe
+  const onTouchStart = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+    setIsSwiping(false);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    if (touchStart !== null) {
+      setTouchEnd(e.targetTouches[0].clientX);
+      setIsSwiping(true);
+    }
+  };
+
+  const onTouchEnd = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    if (isLeftSwipe) {
+      // Swipe left - next image
+      setCurrentImageIndex((prev) => 
+        prev === post.content.images.length - 1 ? 0 : prev + 1
+      );
+    } else if (isRightSwipe) {
+      // Swipe right - previous image
+      setCurrentImageIndex((prev) => 
+        prev === 0 ? post.content.images.length - 1 : prev - 1
+      );
+    }
+    
+    // Reset touch states
+    setTouchStart(null);
+    setTouchEnd(null);
+    setIsSwiping(false);
+  };
+
+  // Mouse handlers for desktop swipe
+  const onMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setTouchEnd(null);
+    setTouchStart(e.clientX);
+    setIsSwiping(false);
+  };
+
+  const onMouseMove = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (touchStart !== null && e.buttons === 1) {
+      setTouchEnd(e.clientX);
+      setIsSwiping(true);
+    }
+  };
+
+  const onMouseUp = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    if (isLeftSwipe) {
+      // Swipe left - next image
+      setCurrentImageIndex((prev) => 
+        prev === post.content.images.length - 1 ? 0 : prev + 1
+      );
+    } else if (isRightSwipe) {
+      // Swipe right - previous image
+      setCurrentImageIndex((prev) => 
+        prev === 0 ? post.content.images.length - 1 : prev - 1
+      );
+    }
+    
+    // Reset touch states
+    setTouchStart(null);
+    setTouchEnd(null);
+    setIsSwiping(false);
   };
 
   const formatTimeAgo = (dateString: string) => {
@@ -764,38 +858,89 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
         </button>
       </div>
 
-      {/* Image Carousel - COMPLETELY FLUSH */}
+      {/* Image Carousel - SWIPEABLE & COMPLETELY FLUSH */}
       <div 
-        className="relative bg-gray-100 cursor-pointer"
+        className="relative bg-gray-100 cursor-pointer overflow-hidden"
         onClick={handleImageClick}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseUp}
         style={{ aspectRatio: '1/1' }}
       >
-        <img 
-          src={post.content.images[currentImageIndex]} 
-          alt={`Post by ${post.author.username}`}
-          className="w-full h-full object-cover"
-        />
+        {/* Image container with animation */}
+        <div className={`relative w-full h-full transition-transform duration-300 ease-out ${
+          isSwiping ? 'transition-none' : ''
+        }`}>
+          {post.content.images.map((image, index) => (
+            <div
+              key={index}
+              className={`absolute inset-0 w-full h-full transition-opacity duration-300 ${
+                index === currentImageIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
+              }`}
+              style={{
+                transform: `translateX(${
+                  index === currentImageIndex ? '0%' :
+                  index < currentImageIndex ? '-100%' : '100%'
+                })`,
+              }}
+            >
+              <img 
+                src={image} 
+                alt={`Post by ${post.author.username} - ${index + 1}/${post.content.images.length}`}
+                className="w-full h-full object-cover"
+                draggable="false"
+              />
+            </div>
+          ))}
+        </div>
 
-        {/* Stacked Images Indicator */}
-        <StackedImagesIndicator count={post.content.images.length} />
-
-        {/* Image Dots Indicator */}
+        {/* Image Dots Indicator - Bottom center */}
         {post.content.images.length > 1 && (
-          <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5">
+          <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 z-20">
             {post.content.images.map((_, index) => (
               <div 
                 key={index}
-                className={`w-1.5 h-1.5 rounded-full ${
-                  index === currentImageIndex ? 'bg-white' : 'bg-white/50'
+                className={`w-1.5 h-1.5 rounded-full transition-all duration-200 ${
+                  index === currentImageIndex 
+                    ? 'bg-white scale-125' 
+                    : 'bg-white/50'
                 }`}
               />
             ))}
           </div>
         )}
 
+        {/* Swipe direction indicators - Only show when swiping */}
+        {isSwiping && touchStart !== null && touchEnd !== null && (
+          <>
+            <div className={`absolute left-2 top-1/2 transform -translate-y-1/2 z-20 transition-opacity duration-200 ${
+              touchStart - touchEnd < -20 ? 'opacity-100' : 'opacity-30'
+            }`}>
+              <div className="bg-black/40 backdrop-blur-sm rounded-full p-1.5">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </div>
+            </div>
+            <div className={`absolute right-2 top-1/2 transform -translate-y-1/2 z-20 transition-opacity duration-200 ${
+              touchStart - touchEnd > 20 ? 'opacity-100' : 'opacity-30'
+            }`}>
+              <div className="bg-black/40 backdrop-blur-sm rounded-full p-1.5">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
+          </>
+        )}
+
         {/* Product Tags Overlay - Simplified */}
         {post.products_tagged.length > 0 && (
-          <div className="absolute inset-0">
+          <div className="absolute inset-0 z-10">
             {post.products_tagged.map((product, index) => (
               <div
                 key={product.id}
