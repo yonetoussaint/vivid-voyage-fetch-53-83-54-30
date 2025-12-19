@@ -728,10 +728,10 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
 
   return (
     <div className="bg-white rounded overflow-hidden mb-2">
-      {/* Post Header - Same padding as before */}
-      <div className="p-2 flex items-center justify-between">
+      {/* Post Header - No side padding */}
+      <div className="p-0 flex items-center justify-between">
         <div 
-          className="flex items-center gap-2 cursor-pointer"
+          className="flex items-center gap-2 cursor-pointer p-2"
           onClick={handleUserClick}
         >
           <div className="relative">
@@ -763,14 +763,14 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
           </div>
         </div>
         <button 
-          className="text-gray-400 hover:text-gray-600"
+          className="text-gray-400 hover:text-gray-600 p-2"
           onClick={(e) => e.stopPropagation()}
         >
           <MoreHorizontal className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Image Carousel - No horizontal padding */}
+      {/* Image Carousel - No padding */}
       <div 
         className="relative bg-gray-100 cursor-pointer"
         onClick={handleImageClick}
@@ -823,10 +823,11 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
         )}
       </div>
 
-      {/* Engagement Bar - Matching image's exact width (no horizontal padding) */}
+      {/* Engagement Bar - NO SIDE PADDING */}
       <div className="py-2">
-        <div className="flex items-center justify-between mb-1 px-3">
-          <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between mb-1 px-0">
+          {/* Left-aligned buttons - flush left */}
+          <div className="flex items-center gap-4 pl-2">
             <button 
               className={`flex items-center gap-1.5 ${isLiked ? 'text-red-500' : 'text-gray-700'}`}
               onClick={handleLike}
@@ -847,24 +848,25 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
             </button>
           </div>
           
+          {/* Right-aligned button - flush right */}
           <button 
-            className="text-gray-700"
+            className="text-gray-700 pr-2"
             onClick={(e) => e.stopPropagation()}
           >
             <Bookmark className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Caption - Same padding as engagement buttons */}
-        <div className="px-3 mb-1">
+        {/* Caption - No side padding */}
+        <div className="pl-2 pr-2 mb-1">
           <p className="text-xs text-gray-900 line-clamp-2">
             <span className="font-semibold mr-1">{post.author.username}</span>
             {post.content.caption}
           </p>
         </div>
 
-        {/* Hashtags - Same padding as engagement buttons */}
-        <div className="px-3 flex flex-wrap gap-1 mb-1">
+        {/* Hashtags - No side padding */}
+        <div className="pl-2 pr-2 flex flex-wrap gap-1 mb-1">
           {post.content.hashtags.slice(0, 2).map((hashtag, index) => (
             <span 
               key={index}
@@ -881,9 +883,9 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
           )}
         </div>
 
-        {/* Product Tags Preview - Same padding as engagement buttons */}
+        {/* Product Tags Preview - No side padding */}
         {post.products_tagged.length > 0 && showProductTags && (
-          <div className="mx-3 bg-gray-50 rounded-lg p-2 mt-1">
+          <div className="ml-2 mr-2 bg-gray-50 rounded-lg p-2 mt-1">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs font-semibold text-gray-900">
                 Tagged Products
@@ -919,9 +921,9 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
           </div>
         )}
 
-        {/* Show tagged products button - Same padding as engagement buttons */}
+        {/* Show tagged products button - No side padding */}
         {post.products_tagged.length > 0 && !showProductTags && (
-          <div className="px-3">
+          <div className="pl-2 pr-2">
             <button 
               className="text-[10px] text-blue-600 hover:text-blue-800 mt-1"
               onClick={() => setShowProductTags(true)}
