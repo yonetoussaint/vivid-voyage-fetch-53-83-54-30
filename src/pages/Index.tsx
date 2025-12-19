@@ -722,10 +722,10 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
 
   return (
     <div className="bg-white rounded overflow-hidden">
-      {/* Post Header - NO side padding */}
+      {/* Post Header - COMPLETELY FLUSH */}
       <div className="py-2 flex items-center justify-between">
         <div 
-          className="flex items-center gap-2 cursor-pointer pl-2"
+          className="flex items-center gap-2 cursor-pointer"
           onClick={handleUserClick}
         >
           <div className="relative">
@@ -757,14 +757,14 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
           </div>
         </div>
         <button 
-          className="text-gray-400 hover:text-gray-600 pr-2"
+          className="text-gray-400 hover:text-gray-600"
           onClick={(e) => e.stopPropagation()}
         >
           <MoreHorizontal className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Image Carousel - NO padding */}
+      {/* Image Carousel - COMPLETELY FLUSH */}
       <div 
         className="relative bg-gray-100 cursor-pointer"
         onClick={handleImageClick}
@@ -813,10 +813,10 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
         )}
       </div>
 
-      {/* Engagement & Content Section - NO side padding */}
+      {/* Engagement & Content Section - COMPLETELY FLUSH */}
       <div className="py-2">
-        {/* Social buttons - flush with edges */}
-        <div className="flex items-center gap-4 mb-1 pl-2 pr-2">
+        {/* Social buttons - flush to edges */}
+        <div className="flex items-center gap-4 mb-1">
           <button 
             className={`flex items-center gap-1 ${isLiked ? 'text-red-500' : 'text-gray-700'}`}
             onClick={handleLike}
@@ -839,17 +839,17 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
           </button>
         </div>
 
-        {/* Caption - flush with edges */}
-        <div className="mb-0.5 pl-2 pr-2">
+        {/* Caption - flush to edges */}
+        <div className="mb-0.5">
           <p className="text-xs text-gray-900 line-clamp-2">
             <span className="font-semibold mr-1">{post.author.username}</span>
             {post.content.caption}
           </p>
         </div>
 
-        {/* Hashtags - flush with edges */}
+        {/* Hashtags - flush to edges */}
         {post.content.hashtags.length > 0 && (
-          <div className="flex flex-wrap gap-0.5 pl-2 pr-2">
+          <div className="flex flex-wrap gap-0.5">
             {post.content.hashtags.slice(0, 2).map((hashtag, index) => (
               <span 
                 key={index}
