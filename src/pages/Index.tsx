@@ -728,10 +728,10 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
 
   return (
     <div className="bg-white rounded overflow-hidden mb-2">
-      {/* Post Header - No side padding */}
-      <div className="p-0 flex items-center justify-between">
+      {/* Post Header - Fixed padding */}
+      <div className="px-2 py-2 flex items-center justify-between">
         <div 
-          className="flex items-center gap-2 cursor-pointer p-2"
+          className="flex items-center gap-2 cursor-pointer"
           onClick={handleUserClick}
         >
           <div className="relative">
@@ -763,14 +763,14 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
           </div>
         </div>
         <button 
-          className="text-gray-400 hover:text-gray-600 p-2"
+          className="text-gray-400 hover:text-gray-600"
           onClick={(e) => e.stopPropagation()}
         >
           <MoreHorizontal className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Image Carousel - No padding */}
+      {/* Image Carousel - No horizontal padding */}
       <div 
         className="relative bg-gray-100 cursor-pointer"
         onClick={handleImageClick}
@@ -823,50 +823,50 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
         )}
       </div>
 
-      {/* Engagement Bar - NO SIDE PADDING */}
+      {/* Engagement Bar - FIXED: No overflow issues */}
       <div className="py-2">
-        <div className="flex items-center justify-between mb-1 px-0">
-          {/* Left-aligned buttons - flush left */}
-          <div className="flex items-center gap-4 pl-2">
+        <div className="flex items-center justify-between mb-1 w-full">
+          {/* Left-aligned buttons - Start at edge */}
+          <div className="flex items-center gap-3 pl-2">
             <button 
-              className={`flex items-center gap-1.5 ${isLiked ? 'text-red-500' : 'text-gray-700'}`}
+              className={`flex items-center gap-1 ${isLiked ? 'text-red-500' : 'text-gray-700'}`}
               onClick={handleLike}
             >
-              <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
-              <span className="text-xs font-medium">{formatNumber(likeCount)}</span>
+              <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
+              <span className="text-xs font-medium min-w-[20px]">{formatNumber(likeCount)}</span>
             </button>
-            <button className="flex items-center gap-1.5 text-gray-700">
-              <MessageCircle className="w-5 h-5" />
-              <span className="text-xs font-medium">{formatNumber(post.engagement.comments)}</span>
+            <button className="flex items-center gap-1 text-gray-700">
+              <MessageCircle className="w-4 h-4" />
+              <span className="text-xs font-medium min-w-[20px]">{formatNumber(post.engagement.comments)}</span>
             </button>
             <button 
-              className="flex items-center gap-1.5 text-gray-700"
+              className="flex items-center gap-1 text-gray-700"
               onClick={handleShare}
             >
-              <Send className="w-5 h-5" />
-              <span className="text-xs font-medium">{formatNumber(post.engagement.shares)}</span>
+              <Send className="w-4 h-4" />
+              <span className="text-xs font-medium min-w-[20px]">{formatNumber(post.engagement.shares)}</span>
             </button>
           </div>
           
-          {/* Right-aligned button - flush right */}
+          {/* Right-aligned button - End at edge */}
           <button 
             className="text-gray-700 pr-2"
             onClick={(e) => e.stopPropagation()}
           >
-            <Bookmark className="w-5 h-5" />
+            <Bookmark className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Caption - No side padding */}
-        <div className="pl-2 pr-2 mb-1">
+        {/* Caption - Full width with padding */}
+        <div className="px-2 mb-1">
           <p className="text-xs text-gray-900 line-clamp-2">
             <span className="font-semibold mr-1">{post.author.username}</span>
             {post.content.caption}
           </p>
         </div>
 
-        {/* Hashtags - No side padding */}
-        <div className="pl-2 pr-2 flex flex-wrap gap-1 mb-1">
+        {/* Hashtags - Full width with padding */}
+        <div className="px-2 flex flex-wrap gap-1 mb-1">
           {post.content.hashtags.slice(0, 2).map((hashtag, index) => (
             <span 
               key={index}
@@ -883,9 +883,9 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
           )}
         </div>
 
-        {/* Product Tags Preview - No side padding */}
+        {/* Product Tags Preview */}
         {post.products_tagged.length > 0 && showProductTags && (
-          <div className="ml-2 mr-2 bg-gray-50 rounded-lg p-2 mt-1">
+          <div className="mx-2 bg-gray-50 rounded-lg p-2 mt-1">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs font-semibold text-gray-900">
                 Tagged Products
@@ -921,9 +921,9 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
           </div>
         )}
 
-        {/* Show tagged products button - No side padding */}
+        {/* Show tagged products button */}
         {post.products_tagged.length > 0 && !showProductTags && (
-          <div className="pl-2 pr-2">
+          <div className="px-2">
             <button 
               className="text-[10px] text-blue-600 hover:text-blue-800 mt-1"
               onClick={() => setShowProductTags(true)}
