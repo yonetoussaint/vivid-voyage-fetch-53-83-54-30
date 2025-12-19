@@ -815,8 +815,8 @@ const PostCard: React.FC<{ post: Post }> = ({ post }) => {
 
       {/* Engagement & Content Section - COMPLETELY FLUSH */}
       <div className="py-2">
-        {/* Social buttons - flush to edges */}
-        <div className="flex items-center gap-4 mb-1">
+        {/* Social buttons - full width, edge to edge */}
+        <div className="flex items-center justify-between mb-1">
           <button 
             className={`flex items-center gap-1 ${isLiked ? 'text-red-500' : 'text-gray-700'}`}
             onClick={handleLike}
