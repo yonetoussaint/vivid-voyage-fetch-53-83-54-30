@@ -524,9 +524,15 @@ const VendorCard = ({ vendor, onProductClick, onSellerClick, showProducts = true
 
 // ProductCard component - MASONRY STYLE
 const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
+  const [imageError, setImageError] = useState(false);
   const soldCount = product.sold_count || Math.floor(Math.random() * 10000) + 100;
   const rating = product.rating || (Math.random() * 1 + 4).toFixed(1);
-  const imageUrl = product.product_images?.[0]?.src || `https://placehold.co/300x300?text=Product`;
+  const imageUrl = product.product_images?.[0]?.src || `https://placehold.co/300x400?text=Product`;
+  
+  // Use placeholder if image failed to load or no image URL
+  const displayImageUrl = imageError 
+    ? `https://placehold.co/300x400?text=${encodeURIComponent(product.name)}` 
+    : imageUrl;
 
   // Generate tags based on product properties
   const generateTags = () => {
@@ -545,16 +551,26 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
   const hasDiscount = !!product.discount_price && product.discount_price < product.price;
 
   return (
-    <div className="bg-white rounded overflow-hidden mb-2">
-      <div className="w-full aspect-square bg-white rounded overflow-hidden mb-0.5">
+    <div className="bg-white rounded overflow-hidden mb-2 flex flex-col">
+      {/* Flexible vertical container with max height but no fixed height */}
+      <div className="w-full max-h-80 bg-white rounded overflow-hidden mb-0.5 relative flex items-center justify-center">
         <img 
-          src={imageUrl} 
+          src={displayImageUrl} 
           alt={product.name} 
-          className="w-full h-full object-cover" 
+          className="w-full h-auto max-h-full object-contain" 
           loading="lazy"
+          onError={() => setImageError(true)}
         />
+        {/* Fallback placeholder shown while loading or on error */}
+        {(imageError || !product.product_images?.[0]?.src) && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+            <span className="text-gray-400 text-xs text-center px-2">
+              {product.name}
+            </span>
+          </div>
+        )}
       </div>
-      <div className="p-0.5">
+      <div className="p-0.5 flex-grow">
         {/* Product name with tags inline */}
         <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
           {tags.map((tag) => renderTag(tag))}
