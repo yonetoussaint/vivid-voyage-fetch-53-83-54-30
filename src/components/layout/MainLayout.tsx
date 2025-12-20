@@ -152,43 +152,45 @@ const shouldShowHeader = [
   const isReelsPage = pathname === '/reels' && !location.search.includes('video=');
 
   // Determine if we should show the bottom nav
-  const shouldShowBottomNav = isMobile && (
-    pathname === '/for-you' ||
-    pathname === '/' ||
-    pathname === '/categories' ||
-    (pathname === '/reels' && !location.search.includes('video=')) ||
-    pathname === '/posts' ||
-    pathname === '/messages' ||
-    pathname === '/more-menu' ||
-    pathname === '/profile' ||
-    pathname.startsWith('/profile/') ||
-    pathname === '/videos' ||
-    pathname === '/notifications' ||
-    pathname === '/bookmarks' ||
-    pathname === '/friends' ||
-    pathname === '/shopping' ||
-    pathname === '/settings' ||
-    pathname === '/wallet' ||
-    pathname === '/explore' ||
-    pathname === '/wishlist' ||
-    pathname === '/cart' ||
-    pathname === '/addresses' ||
-    pathname === '/help' ||
-    pathname === '/my-stations' ||
-    pathname === '/products' ||
-    pathname === '/categories/electronics' ||
-    pathname === '/categories/home-living' ||
-    pathname === '/categories/fashion' ||
-    pathname === '/categories/entertainment' ||
-    pathname === '/categories/kids-hobbies' ||
-    pathname === '/categories/sports-outdoors' ||
-    pathname === '/categories/automotive' ||
-    pathname === '/categories/women' ||
-    pathname === '/categories/men' ||
-    pathname === '/categories/books' ||
-    pathname.startsWith('/pickup-station') ||
-    (pathname.startsWith('/seller-dashboard') && !pathname.includes('/edit-profile') && !pathname.includes('/onboarding'))
-  ) && !isMultiStepTransferPage && !isMultiStepTransferSheetPage && !isTransferOldPage;
+  // Determine if we should show the bottom nav
+const shouldShowBottomNav = isMobile && (
+  pathname === '/for-you' ||
+  pathname === '/' ||
+  pathname === '/categories' ||
+  (pathname === '/reels' && !location.search.includes('video=')) ||
+  pathname === '/posts' ||
+  pathname === '/messages' ||
+  pathname === '/more-menu' ||
+  pathname === '/profile' ||
+  pathname.startsWith('/profile/') ||
+  pathname === '/videos' ||
+  pathname === '/notifications' ||
+  pathname === '/bookmarks' ||
+  pathname === '/friends' ||
+  pathname === '/shopping' ||
+  pathname === '/settings' ||
+  pathname === '/wallet' ||
+  pathname === '/explore' ||
+  pathname === '/wishlist' ||
+  pathname === '/cart' ||
+  pathname === '/addresses' ||
+  pathname === '/help' ||
+  pathname === '/my-stations' ||
+  pathname === '/products' ||
+  pathname === '/mall' || // ADDED: Include mall route
+  pathname === '/categories/electronics' ||
+  pathname === '/categories/home-living' ||
+  pathname === '/categories/fashion' ||
+  pathname === '/categories/entertainment' ||
+  pathname === '/categories/kids-hobbies' ||
+  pathname === '/categories/sports-outdoors' ||
+  pathname === '/categories/automotive' ||
+  pathname === '/categories/women' ||
+  pathname === '/categories/men' ||
+  pathname === '/categories/books' ||
+  pathname.startsWith('/pickup-station') ||
+  (pathname.startsWith('/seller-dashboard') && !pathname.includes('/edit-profile') && !pathname.includes('/onboarding'))
+) && !isMultiStepTransferPage && !isMultiStepTransferSheetPage && !isTransferOldPage;
 
   // Measure actual header height dynamically
   useEffect(() => {
