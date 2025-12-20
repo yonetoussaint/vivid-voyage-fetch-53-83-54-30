@@ -1,41 +1,22 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
-import { MapPin, X, ScanLine, Mic } from 'lucide-react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { Search, X, ScanLine, Mic, MapPin, Home } from 'lucide-react';
 import CategoryTabs from './header/CategoryTabs';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLanguageSwitcher } from '@/hooks/useLanguageSwitcher';
-import { useHeaderFilter } from "@/contexts/HeaderFilterContext";
+import HomepageDropdown from './header/HomepageDropdown';
 
 interface AliExpressHeaderProps {
   activeTabId?: string;
   showFilterBar?: boolean;
   showCategoryTabs?: boolean;
-  filterCategories?: Array<{
-    id: string;
-    label: string;
-    options: string[];
-  }>;
-  selectedFilters?: Record<string, string>;
-  onFilterSelect?: (filterId: string, option: string) => void;
-  onFilterClear?: (filterId: string) => void;
-  onClearAll?: () => void;
-  onFilterButtonClick?: (filterId: string) => void;
-  isFilterDisabled?: (filterId: string) => boolean;
   customTabs?: Array<{ id: string; name: string; path?: string }>;
   onCustomTabChange?: (tabId: string) => void;
 }
 
 export default function AliExpressHeader({ 
   activeTabId = 'recommendations', 
-  showFilterBar = false,
   showCategoryTabs = true,
-  filterCategories = [],
-  selectedFilters = {},
-  onFilterSelect = () => {},
-  onFilterClear = () => {},
-  onClearAll = () => {},
-  onFilterButtonClick = () => {},
-  isFilterDisabled = () => false,
   customTabs,
   onCustomTabChange,
 }: AliExpressHeaderProps) {
@@ -45,13 +26,9 @@ export default function AliExpressHeader({
   const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [voiceSearchActive, setVoiceSearchActive] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [showSearchBar, setShowSearchBar] = useState(false);
   const [activeTab, setActiveTab] = useState(activeTabId);
-
-  const searchRef = useRef<HTMLInputElement>(null);
-  const showSearchBarRef = useRef(showSearchBar);
+  const [placeholder, setPlaceholder] = useState('Search for products');
 
   const categories = useMemo(() => [
     { id: 'recommendations', name: t('forYou', { ns: 'home' }), path: '/for-you' },
@@ -83,12 +60,7 @@ export default function AliExpressHeader({
 
   const handleClearSearch = () => {
     setSearchQuery('');
-    if (searchRef.current) {
-      searchRef.current.focus();
-    }
   };
-
-  const handleVoiceSearch = () => setVoiceSearchActive(!voiceSearchActive);
 
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
@@ -102,7 +74,7 @@ export default function AliExpressHeader({
     }
   };
 
-  const renderSearchIcons = () => {
+  const renderRightButton = () => {
     if (isSearchFocused && !searchQuery.trim()) {
       return (
         <button
@@ -118,34 +90,24 @@ export default function AliExpressHeader({
         <button
           type="button"
           onClick={handleClearSearch}
-          className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+          className="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full transition-colors hover:bg-gray-200"
         >
-          <X className="h-4 w-4 text-gray-600" />
+          Clear
         </button>
-      );
-    } else if (showSearchBar) {
-      return (
-        <>
-          <ScanLine className="h-4 w-4 text-gray-600 cursor-pointer hover:text-gray-800" />
-          <Mic 
-            className="h-4 w-4 text-gray-600 cursor-pointer hover:text-gray-800" 
-            onClick={handleVoiceSearch}
-          />
-        </>
       );
     } else {
       return (
         <button
           type="button"
-          className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full transition-colors hover:bg-gray-200 min-w-[100px]"
+          className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full transition-colors hover:bg-gray-200"
           onClick={() => navigate('/location')}
         >
-          <MapPin className="h-3 w-3 flex-shrink-0" />
-          <span className="truncate flex-1 text-left">
+          <MapPin className="h-3 w-3" />
+          <span className="truncate max-w-[80px]">
             {currentLocation?.city || currentLocation?.country || 'Select'}
           </span>
           <svg 
-            className="h-3 w-3 text-gray-500 flex-shrink-0" 
+            className="h-3 w-3 text-gray-500" 
             fill="none" 
             viewBox="0 0 24 24" 
             stroke="currentColor"
@@ -163,27 +125,37 @@ export default function AliExpressHeader({
       className="fixed top-0 w-full z-40 bg-white" 
       style={{ margin: 0, padding: 0, boxShadow: 'none' }}
     >
-      {/* Top Bar */}
+      {/* Top Bar - EXACTLY like original */}
       <div 
         className="flex items-center justify-between px-2 transition-all duration-500 ease-in-out bg-white"
         style={{ height: '36px' }}
       >
-        {/* Search Bar */}
-        <div className="flex-1 flex items-center gap-2">
-          <form onSubmit={handleSearchSubmit} className="flex-1 relative">
+        {/* Left: Home/Logo */}
+        <HomepageDropdown homepageType="marketplace" />
+
+        {/* Middle: Search Bar */}
+        <div className="relative flex-1 max-w-lg mx-2">
+          <form onSubmit={handleSearchSubmit} className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
-              ref={searchRef}
               type="text"
-              placeholder="Search for products"
+              placeholder={placeholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-20 py-1.5 text-sm bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
               onFocus={handleSearchFocus}
-              className="w-full px-4 py-2 text-sm bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            {/* Scan and Mic icons inside search bar */}
+            <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+              <ScanLine className="h-4 w-4 text-gray-600 cursor-pointer hover:text-gray-800" />
+              <Mic className="h-4 w-4 text-gray-600 cursor-pointer hover:text-gray-800" />
+            </div>
           </form>
-          <div className="flex items-center gap-2">
-            {renderSearchIcons()}
-          </div>
+        </div>
+
+        {/* Right: Location Button */}
+        <div className="flex items-center">
+          {renderRightButton()}
         </div>
       </div>
 
