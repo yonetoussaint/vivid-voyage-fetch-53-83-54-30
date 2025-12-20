@@ -1,10 +1,9 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { MapPin } from 'lucide-react';
+import { MapPin, Search, ScanLine, Mic, X } from 'lucide-react';
 import CategoryTabs from './header/CategoryTabs';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useLanguageSwitcher } from '@/hooks/useLanguageSwitcher';
-import ReusableSearchBar from '@/components/shared/ReusableSearchBar';
 
 interface AliExpressHeaderProps {
   activeTabId?: string;
@@ -27,6 +26,7 @@ export default function AliExpressHeader({
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState(activeTabId);
   const [placeholder] = useState('Search for products');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const categories = useMemo(() => [
     { id: 'recommendations', name: t('forYou', { ns: 'home' }), path: '/for-you' },
@@ -56,28 +56,62 @@ export default function AliExpressHeader({
     }
   };
 
-  // Custom render function for the right button in ReusableSearchBar
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+  };
+
+  // Render the right side button like the original did
   const renderRightButton = () => {
-    return (
-      <button
-        type="button"
-        className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full transition-colors hover:bg-gray-200"
-        onClick={() => navigate('/location')}
-      >
-        <MapPin className="h-3 w-3" />
-        <span className="truncate max-w-[80px]">
-          {currentLocation?.city || currentLocation?.country || 'Select'}
-        </span>
-        <svg 
-          className="h-3 w-3 text-gray-500" 
-          fill="none" 
-          viewBox="0 0 24 24" 
-          stroke="currentColor"
+    if (isSearchFocused && !searchQuery.trim()) {
+      return (
+        <button
+          type="button"
+          onClick={() => setIsSearchFocused(false)}
+          className="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full transition-colors hover:bg-gray-200"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-    );
+          Close
+        </button>
+      );
+    } else if (searchQuery.trim()) {
+      return (
+        <button
+          type="button"
+          onClick={handleClearSearch}
+          className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+        >
+          <X className="h-4 w-4 text-gray-600" />
+        </button>
+      );
+    } else {
+      // This is the Settings button position - we replace it with Location button
+      return (
+        <button
+          type="button"
+          className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full transition-colors hover:bg-gray-200"
+          onClick={() => navigate('/location')}
+        >
+          <MapPin className="h-3 w-3" />
+          <span className="truncate max-w-[80px]">
+            {currentLocation?.city || currentLocation?.country || 'Select'}
+          </span>
+          <svg 
+            className="h-3 w-3 text-gray-500" 
+            fill="none" 
+            viewBox="0 0 24 24" 
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      );
+    }
   };
 
   return (
@@ -86,30 +120,37 @@ export default function AliExpressHeader({
       className="fixed top-0 w-full z-40 bg-white" 
       style={{ margin: 0, padding: 0, boxShadow: 'none' }}
     >
-      {/* Top Bar - Using ReusableSearchBar like original */}
+      {/* Top Bar - Recreate original structure exactly */}
       <div 
         className="flex items-center justify-between px-2 transition-all duration-500 ease-in-out bg-white"
         style={{ height: '36px' }}
       >
-        <ReusableSearchBar
-          placeholder={placeholder}
-          value={searchQuery}
-          onChange={setSearchQuery}
-          onSubmit={(query) => {
-            if (query.trim()) {
-              navigate(`/search?q=${encodeURIComponent(query.trim())}`);
-            }
-          }}
-          onSearchFocus={() => {/* Handle focus if needed */}}
-          // Custom right button rendering
-          renderRightButton={renderRightButton}
-          // Disable the overlay features
-          isOverlayOpen={false}
-          onCloseOverlay={() => {}}
-          showScanMic={true}
-          showSettingsButton={false}
-          onSettingsClick={() => {}}
-        />
+        {/* Search bar - exactly like original */}
+        <div className="flex-1 flex items-center gap-2">
+          <form onSubmit={handleSearchSubmit} className="flex-1 relative">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder={placeholder}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                className="w-full pl-9 pr-20 py-1.5 text-sm bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              {/* Scan and Mic icons inside search bar */}
+              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+                <ScanLine className="h-4 w-4 text-gray-600 cursor-pointer hover:text-gray-800" />
+                <Mic className="h-4 w-4 text-gray-600 cursor-pointer hover:text-gray-800" />
+              </div>
+            </div>
+          </form>
+          
+          {/* Right side button - Location button replacing Settings */}
+          <div className="flex items-center">
+            {renderRightButton()}
+          </div>
+        </div>
       </div>
 
       {/* Category Tabs */}
