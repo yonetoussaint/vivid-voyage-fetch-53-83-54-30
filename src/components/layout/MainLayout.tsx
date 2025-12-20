@@ -121,30 +121,32 @@ function MainLayoutContent() {
   }, [location.pathname, categories]);
 
   // Determine if we should show the header - FIXED: Exclude conversation detail pages
-  const shouldShowHeader = [
-    '/',
-    '/for-you',
-    '/wallet',
-    '/explore',
-    '/wishlist',
-    '/cart',
-    '/notifications',
-    '/addresses',
-    '/help',
-    '/products',
-    '/categories',
-    '/categories/electronics',
-    '/categories/home-living',
-    '/categories/fashion',
-    '/categories/entertainment',
-    '/categories/kids-hobbies',
-    '/categories/sports-outdoors',
-    '/categories/automotive',
-    '/categories/women',
-    '/categories/men',
-    '/categories/books',
-    '/profile' // ADDED: Include profile route
-  ].includes(pathname) || isMessagesListPage || isProfilePage;  // Only show header on messages list page, not detail pages
+  // Determine if we should show the header - FIXED: Exclude conversation detail pages
+const shouldShowHeader = [
+  '/',
+  '/for-you',
+  '/wallet',
+  '/explore',
+  '/wishlist',
+  '/cart',
+  '/notifications',
+  '/addresses',
+  '/help',
+  '/products',
+  '/mall', // ADDED: Include mall route
+  '/categories',
+  '/categories/electronics',
+  '/categories/home-living',
+  '/categories/fashion',
+  '/categories/entertainment',
+  '/categories/kids-hobbies',
+  '/categories/sports-outdoors',
+  '/categories/automotive',
+  '/categories/women',
+  '/categories/men',
+  '/categories/books',
+  '/profile' // ADDED: Include profile route
+].includes(pathname) || isMessagesListPage || isProfilePage;  // Only show header on messages list page, not detail pages
 
   // Check if current page is reels
   const isReelsPage = pathname === '/reels' && !location.search.includes('video=');
