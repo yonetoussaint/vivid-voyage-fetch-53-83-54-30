@@ -12,7 +12,9 @@ import { AdminSellerRoutes } from "../routes/AdminSellerRoutes";
 import { ProductEditRoutes } from "../routes/ProductEditRoutes";
 import { PaymentRoutes } from "../routes/PaymentRoutes";
 import { MiscRoutes } from "../routes/MiscRoutes";
-import AdminPage from "@/pages/AdminPage"; // Import the admin page
+import AdminPage from "@/pages/AdminPage";
+// Import the MallPage component
+import { MallPage } from "@/pages/MallPage";
 
 export function AppRoutes() {
   return (
@@ -29,7 +31,10 @@ export function AppRoutes() {
         {ProductEditRoutes()}
         {PaymentRoutes()}
         {MiscRoutes()}
-        
+
+        {/* Add Mall Route directly */}
+        <Route path="mall" element={<MallPage />} />
+
         {/* Add Admin Route */}
         <Route path="/admin" element={<AdminPage />} />
       </Route>
