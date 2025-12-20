@@ -12,7 +12,7 @@
   "messages": "Messages",
   "navigation": {
     "home": "Home",
-    "mall": "Mall",  // ADD THIS LINE
+    "mall": "Mall",
     "store": "My Store",
     "explore": "Explore",
     "shorts": "Shorts",
