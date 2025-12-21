@@ -100,7 +100,8 @@ function MainLayoutContent() {
 
   const categories = useMemo(() => [
     { id: 'recommendations', name: t('forYou', { ns: 'home' }), path: '/for-you' },
-    { id: 'mall', name: t('mall', { ns: 'categories' }), path: '/mall' }, // CHANGED: electronics to mall
+    { id: 'mall', name: t('mall', { ns: 'categories' }), path: '/mall' },
+    { id: 'electronics', name: t('electronics', { ns: 'categories' }), path: '/categories/electronics' }, // ADDED: Electronics route
     { id: 'home', name: t('homeLiving', { ns: 'categories' }), path: '/categories/home-living' },
     { id: 'fashion', name: t('fashion', { ns: 'categories' }), path: '/categories/fashion' },
     { id: 'entertainment', name: t('entertainment', { ns: 'categories' }), path: '/categories/entertainment' },
@@ -152,6 +153,7 @@ function MainLayoutContent() {
     '/mall', // ADDED: Include mall route
     '/mall/', // ADDED: Include mall sub-routes
     '/categories',
+    '/categories/electronics', // ADDED: Electronics route
     '/categories/home-living',
     '/categories/fashion',
     '/categories/entertainment',
@@ -194,6 +196,7 @@ function MainLayoutContent() {
     pathname === '/products' ||
     pathname === '/mall' || // ADDED: Include mall route
     pathname.startsWith('/mall/') || // ADDED: Include mall sub-routes
+    pathname === '/categories/electronics' || // ADDED: Electronics route
     pathname === '/categories/home-living' ||
     pathname === '/categories/fashion' ||
     pathname === '/categories/entertainment' ||
