@@ -100,7 +100,6 @@ function MainLayoutContent() {
 
   const categories = useMemo(() => [
     { id: 'recommendations', name: t('forYou', { ns: 'home' }), path: '/for-you' },
-    { id: 'mall', name: t('mall', { ns: 'categories' }), path: '/mall' },
     { id: 'electronics', name: t('electronics', { ns: 'categories' }), path: '/categories/electronics' }, // ADDED: Electronics route
     { id: 'home', name: t('homeLiving', { ns: 'categories' }), path: '/categories/home-living' },
     { id: 'fashion', name: t('fashion', { ns: 'categories' }), path: '/categories/fashion' },
