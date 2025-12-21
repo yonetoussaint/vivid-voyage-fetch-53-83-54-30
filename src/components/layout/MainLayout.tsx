@@ -112,6 +112,21 @@ function MainLayoutContent() {
     { id: 'books', name: t('books', { ns: 'categories' }), path: '/categories/books' },
   ], [t]);
 
+  // Check if current route is a category route
+  const isCategoryRoute = useMemo(() => {
+    return categories.some(cat => 
+      pathname === cat.path || 
+      (cat.path !== '/' && pathname.startsWith(cat.path))
+    );
+  }, [pathname, categories]);
+
+  // Create category tabs for category routes
+  const categoryTabs = isCategoryRoute ? categories.map(cat => ({
+    id: cat.id,
+    name: cat.name,
+    path: cat.path
+  })) : undefined;
+
   // Update active tab based on location
   useEffect(() => {
     const currentCategory = categories.find(cat => location.pathname === cat.path);
@@ -533,7 +548,6 @@ function MainLayoutContent() {
     }
   }, [isMessagesPage, isWalletPage, isExplorePage, searchParams, navigate, pathname]);
 
-
   const walletTabs = isWalletPage ? [
     { id: 'main', name: 'Main Wallet', path: '/wallet?tab=main' },
     { id: 'crypto', name: 'Crypto Wallet', path: '/wallet?tab=crypto' },
@@ -565,10 +579,10 @@ function MainLayoutContent() {
       {shouldShowHeader && (
         <div ref={headerRef} className="app-header">
           <AliExpressHeader
-            activeTabId={isMessagesListPage ? messagesFilter : isWalletPage ? walletFilter : isExplorePage ? exploreFilter : activeTab}
+            activeTabId={isCategoryRoute ? activeTab : (isMessagesListPage ? messagesFilter : isWalletPage ? walletFilter : isExplorePage ? exploreFilter : activeTab)}
             showFilterBar={showFilterBar}
-            // Fixed: Show category tabs on home pages AND category pages
-            showCategoryTabs={isRootHomePage || isForYouPage || pathname.startsWith('/categories') || isMallPage} // ADDED: Include mall page
+            // Show category tabs on home pages AND all category routes
+            showCategoryTabs={isRootHomePage || isForYouPage || isCategoryRoute || isMallPage}
             filterCategories={filterCategories}
             selectedFilters={selectedFilters}
             onFilterSelect={onFilterSelect}
@@ -576,8 +590,13 @@ function MainLayoutContent() {
             onClearAll={onClearAll}
             onFilterButtonClick={onFilterButtonClick}
             isFilterDisabled={isFilterDisabled}
-            customTabs={messagesTabs || walletTabs || exploreTabs}
-            onCustomTabChange={isMessagesListPage ? (tabId) => {
+            customTabs={categoryTabs || messagesTabs || walletTabs || exploreTabs}
+            onCustomTabChange={isCategoryRoute ? (tabId) => {
+              const category = categories.find(cat => cat.id === tabId);
+              if (category) {
+                navigate(category.path);
+              }
+            } : isMessagesListPage ? (tabId) => {
               const tab = messagesTabs?.find(t => t.id === tabId);
               if (tab?.path) {
                 navigate(tab.path);
