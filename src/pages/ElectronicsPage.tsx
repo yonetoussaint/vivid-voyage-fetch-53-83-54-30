@@ -1,3 +1,5 @@
+remove the herobanner and the categories section 
+
 import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
@@ -5,7 +7,6 @@ import SectionHeader from "@/components/home/SectionHeader";
 import { fetchAllProducts } from "@/integrations/supabase/products";
 import FlashDeals from "@/components/home/FlashDeals";
 import Footer from "@/components/Footer";
-import HeroBanner from "@/components/home/HeroBanner";
 import { useHeaderFilter } from "@/contexts/HeaderFilterContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -1326,70 +1327,18 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   const { setHeaderMode, headerMode } = useHeaderFilter();
   const scrollY = useRef(0);
   const ticking = useRef(false);
-  const heroBannerRef = useRef<HTMLDivElement>(null);
 
-  // Improved scroll detection for header mode switching
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!ticking.current) {
-        requestAnimationFrame(() => {
-          const currentScrollY = window.scrollY;
-          const scrollDelta = currentScrollY - scrollY.current;
-
-          const header = document.getElementById("ali-header");
-          if (!header) return;
-
-          const headerHeight = header.getBoundingClientRect().height;
-          const newsTicker = document.querySelector('.news-ticker');
-
-          if (newsTicker) {
-            const newsTickerRect = newsTicker.getBoundingClientRect();
-            const newsTickerTopRelativeToHeader = newsTickerRect.top - headerHeight;
-            const shouldShowNews = newsTickerTopRelativeToHeader <= 0;
-
-            const scrollThreshold = 2;
-            const isScrollingDown = scrollDelta > scrollThreshold;
-            const isScrollingUp = scrollDelta < -scrollThreshold;
-
-            if (shouldShowNews && isScrollingDown) {
-              setHeaderMode('news');
-            } else if (isScrollingUp) {
-              setHeaderMode('categories');
-            } else if (currentScrollY <= headerHeight) {
-              setHeaderMode('categories');
-            }
-          }
-
-          scrollY.current = currentScrollY;
-          ticking.current = false;
-        });
-
-        ticking.current = true;
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [setHeaderMode, headerMode]);
-
-  // Reset to categories when component unmounts
+  // Remove scroll detection logic since we don't need header mode switching anymore
   useEffect(() => {
     return () => {
       setHeaderMode('categories');
     };
   }, [setHeaderMode]);
 
-  // Components array with reduced height separators
+  // Components array with reduced height separators - REMOVED HeroBanner
   const components = [
-    <div key="hero" ref={heroBannerRef} className="mb-2">
-      <HeroBanner showNewsTicker={true} />
-    </div>,
-
-    <div key="favourite-channels-wrapper" className="">
+    // Favorite Channels is now the first component
+    <div key="favourite-channels-wrapper" className="mb-2">
       <FavouriteChannels />
     </div>,
 
@@ -1410,7 +1359,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
 
   return (
     <div className="overflow-hidden relative">
-      <div className="pb-2">
+      <div className="pb-2 pt-2"> {/* Added pt-2 for top padding since HeroBanner is removed */}
         {components.map((component, index) => (
           <React.Fragment key={`section-${index}`}>
             {component}
