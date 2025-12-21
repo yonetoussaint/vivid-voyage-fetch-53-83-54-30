@@ -1440,7 +1440,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   );
 };
 
-const ForYou: React.FC = () => {
+const MallPage: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState('recommendations');
 
   // Listen for category changes from header
@@ -1470,4 +1470,4 @@ const ForYou: React.FC = () => {
   );
 };
 
-export default ForYou;
+export default MallPage;
