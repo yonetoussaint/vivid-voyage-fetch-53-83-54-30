@@ -1,155 +1,208 @@
-import { useState, useMemo } from 'react';
-import { MapPin, Search, X, ScanLine, Mic, ArrowLeft, Share } from 'lucide-react';
-import CategoryTabs from './header/CategoryTabs';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { useLanguageSwitcher } from '@/hooks/useLanguageSwitcher';
+// components/common/ReusableSearchBar.tsx
+import React, { useState, useRef, useEffect } from 'react';
+import { Search, X, ScanLine, Mic, ArrowLeft, Share } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-interface AliExpressHeaderProps {
-  activeTabId?: string;
-  showCategoryTabs?: boolean;
-  customTabs?: Array<{ id: string; name: string; path?: string }>;
-  onCustomTabChange?: (tabId: string) => void;
+interface ReusableSearchBarProps {
+  placeholder?: string;
+  onSearchFocus?: () => void;
+  onSearchClose?: () => void;
+  showCloseButton?: boolean;
+  showScanMic?: boolean;
+  showSettingsButton?: boolean;
+  onSettingsClick?: () => void;
+  className?: string;
+  value?: string;
+  onChange?: (value: string) => void;
+  onSubmit?: (query: string) => void;
+  // Add these new props for close functionality
+  isOverlayOpen?: boolean;
+  onCloseOverlay?: () => void;
+  // New props for transparent state
+  isTransparent?: boolean;
+  onBackClick?: () => void;
+  onShareClick?: () => void;
 }
 
-export default function AliExpressHeader({ 
-  activeTabId = 'recommendations', 
-  showCategoryTabs = true,
-  customTabs,
-  onCustomTabChange,
-}: AliExpressHeaderProps) {
-  const { currentLocation } = useLanguageSwitcher();
-  const { t } = useTranslation();
-  const location = useLocation();
+const ReusableSearchBar: React.FC<ReusableSearchBarProps> = ({
+  placeholder = "Search for products",
+  onSearchFocus,
+  onSearchClose,
+  showCloseButton = false,
+  showScanMic = false,
+  showSettingsButton = false,
+  onSettingsClick,
+  className = "",
+  value = "",
+  onChange,
+  onSubmit,
+  // New props
+  isOverlayOpen = false,
+  onCloseOverlay,
+  // Transparent state props
+  isTransparent = false,
+  onBackClick,
+  onShareClick
+}) => {
+  const [searchQuery, setSearchQuery] = useState(value);
   const navigate = useNavigate();
+  const searchRef = useRef<HTMLInputElement>(null);
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState(activeTabId);
+  // Sync with external value
+  useEffect(() => {
+    setSearchQuery(value);
+  }, [value]);
 
-  const categories = useMemo(() => [
-    { id: 'recommendations', name: t('forYou', { ns: 'home' }), path: '/for-you' },
-    { id: 'electronics', name: t('electronics', { ns: 'categories' }), path: '/categories/electronics' },
-    { id: 'home', name: t('homeLiving', { ns: 'categories' }), path: '/categories/home-living' },
-    { id: 'fashion', name: t('fashion', { ns: 'categories' }), path: '/categories/fashion' },
-    { id: 'entertainment', name: t('entertainment', { ns: 'categories' }), path: '/categories/entertainment' },
-    { id: 'kids', name: t('kidsHobbies', { ns: 'categories' }), path: '/categories/kids-hobbies' },
-    { id: 'sports', name: t('sports', { ns: 'categories' }), path: '/categories/sports-outdoors' },
-    { id: 'automotive', name: t('automotive', { ns: 'categories' }), path: '/categories/automotive' },
-    { id: 'women', name: t('women', { ns: 'categories' }), path: '/categories/women' },
-    { id: 'men', name: t('men', { ns: 'categories' }), path: '/categories/men' },
-    { id: 'books', name: t('books', { ns: 'categories' }), path: '/categories/books' },
-  ], [t]);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setSearchQuery(newValue);
+    onChange?.(newValue);
+  };
 
-  const tabsToShow = customTabs || categories;
-
-  const handleTabChange = (tabId: string) => {
-    setActiveTab(tabId);
-    if (customTabs && onCustomTabChange) {
-      onCustomTabChange(tabId);
-    } else if (!customTabs) {
-      const category = categories.find(cat => cat.id === tabId);
-      if (category && category.path) {
-        navigate(category.path);
-      }
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      onSubmit?.(searchQuery.trim());
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
-  // Custom render function for the right button
-  const renderRightIcons = () => {
-    // When overlay is open and search is empty, show close button
-    if (searchQuery.trim()) {
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    onChange?.('');
+    if (searchRef.current) {
+      searchRef.current.focus();
+    }
+  };
+
+  const handleFocus = () => {
+    onSearchFocus?.();
+  };
+
+  const handleClose = () => {
+    setSearchQuery('');
+    onChange?.('');
+    onSearchClose?.();
+    // Call the overlay close function if provided
+    onCloseOverlay?.();
+  };
+
+  const renderLeftIcons = () => {
+    if (isTransparent) {
       return (
         <button
           type="button"
-          onClick={() => setSearchQuery('')}
+          onClick={onBackClick}
+          className="p-1 hover:bg-white/20 rounded-full transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5 text-white" />
+        </button>
+      );
+    }
+    return null;
+  };
+
+  const renderRightIcons = () => {
+    // Transparent state - show share icon
+    if (isTransparent) {
+      return (
+        <button
+          type="button"
+          onClick={onShareClick}
+          className="p-1 hover:bg-white/20 rounded-full transition-colors"
+        >
+          <Share className="h-5 w-5 text-white" />
+        </button>
+      );
+    }
+
+    // When overlay is open and search is empty, show close button
+    if (isOverlayOpen && !searchQuery.trim()) {
+      return (
+        <button
+          type="button"
+          onClick={handleClose}
+          className="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full transition-colors hover:bg-gray-200"
+        >
+          Close
+        </button>
+      );
+    }
+    // Clear button when there's text (regardless of overlay state)
+    else if (searchQuery.trim()) {
+      return (
+        <button
+          type="button"
+          onClick={handleClearSearch}
           className="p-1 hover:bg-gray-100 rounded-full transition-colors"
         >
           <X className="h-4 w-4 text-gray-600" />
         </button>
       );
     }
-    // Location button
-    return (
-      <button
-        type="button"
-        onClick={() => navigate('/location')}
-        className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full transition-colors hover:bg-gray-200"
-      >
-        <MapPin className="h-3 w-3" />
-        <span className="truncate max-w-[80px]">
-          {currentLocation?.city || currentLocation?.country || 'Select'}
-        </span>
-        <svg 
-          className="h-3 w-3 text-gray-500" 
-          fill="none" 
-          viewBox="0 0 24 24" 
-          stroke="currentColor"
+    // Scan + Mic icons when specified
+    else if (showScanMic) {
+      return (
+        <>
+          <ScanLine className="h-4 w-4 text-gray-600 cursor-pointer hover:text-gray-800" />
+          <Mic className="h-4 w-4 text-gray-600 cursor-pointer hover:text-gray-800" />
+        </>
+      );
+    }
+    // Settings button when specified
+    else if (showSettingsButton) {
+      return (
+        <button
+          type="button"
+          onClick={onSettingsClick}
+          className="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full transition-colors hover:bg-gray-200"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-    );
+          Settings
+        </button>
+      );
+    }
+
+    return null;
   };
 
-  return (
-    <header 
-      id="ali-header" 
-      className="fixed top-0 w-full z-40 bg-white" 
-      style={{ margin: 0, padding: 0, boxShadow: 'none' }}
-    >
-      {/* Top Bar */}
-      <div 
-        className="flex items-center justify-between px-2 transition-all duration-500 ease-in-out bg-white"
-        style={{ height: '36px' }}
-      >
-        {/* Inline ReusableSearchBar with custom right button */}
-        <div className="flex-1 relative max-w-full mx-auto">
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            if (searchQuery.trim()) {
-              navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-            }
-          }}>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search for products"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-20 py-1.5 text-sm bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              
-              {/* Search icon on left */}
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              
-              {/* Scan + Mic icons inside search bar */}
-              <div className="absolute right-12 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
-                <ScanLine className="h-4 w-4 text-gray-600 cursor-pointer hover:text-gray-800" />
-                <Mic className="h-4 w-4 text-gray-600 cursor-pointer hover:text-gray-800" />
-              </div>
-              
-              {/* Location button on far right */}
-              <div className="absolute right-1 top-1/2 transform -translate-y-1/2">
-                {renderRightIcons()}
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
+  // Transparent state styles
+  const transparentStyles = isTransparent
+    ? 'bg-transparent border-white/30 text-white placeholder-white/70'
+    : 'bg-white border-gray-800 text-gray-900 placeholder-gray-500';
 
-      {/* Category Tabs */}
-      {showCategoryTabs && (
-        <div className="relative overflow-hidden">
-          <CategoryTabs 
-            key={tabsToShow.map(tab => tab.id).join('-')}
-            progress={1}
-            activeTab={activeTab}
-            setActiveTab={handleTabChange}
-            categories={tabsToShow}
-            isSearchOverlayActive={false}
+  return (
+    <div className={`flex-1 relative max-w-full mx-auto ${className}`}>
+      <form onSubmit={handleSubmit}>
+        <div className="relative">
+          <input
+            type="text"
+            placeholder={placeholder}
+            value={searchQuery}
+            onChange={handleInputChange}
+            onFocus={handleFocus}
+            className={`w-full px-3 py-1 text-sm font-medium border-2 rounded-full transition-all duration-300 shadow-sm ${
+              isTransparent ? 'pr-12 pl-10' : 'pr-16 pl-3'
+            } ${transparentStyles}`}
+            ref={searchRef}
           />
+
+          {/* Left icons (back button in transparent mode) */}
+          {isTransparent && (
+            <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
+              {renderLeftIcons()}
+            </div>
+          )}
+
+          {/* Right icons */}
+          <div className={`absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center space-x-2 ${
+            isTransparent ? 'pr-1' : ''
+          }`}>
+            {renderRightIcons()}
+          </div>
         </div>
-      )}
-    </header>
+      </form>
+    </div>
   );
-}
+};
+
+export default ReusableSearchBar;
