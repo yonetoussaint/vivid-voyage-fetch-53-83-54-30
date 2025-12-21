@@ -1,5 +1,3 @@
-remove the herobanner and the categories section 
-
 import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
