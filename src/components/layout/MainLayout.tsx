@@ -4,7 +4,7 @@ import IndexBottomNav from "@/components/layout/IndexBottomNav";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import AliExpressHeader from "@/components/home/AliExpressHeader";
-import { Home, Smartphone, Shirt, Baby, Dumbbell, Sparkles, Car, Book, Trophy, Tag, ShieldCheck, Zap, Star, Crown, Award, CreditCard, DollarSign, History, BarChart } from "lucide-react";
+import { Home, Smartphone, Shirt, Baby, Dumbbell, Sparkles, Car, Book, Trophy, Tag, ShieldCheck, Zap, Star, Crown, Award, CreditCard, DollarSign, History, BarChart, ShoppingBag } from "lucide-react"; // Added ShoppingBag icon
 import { useScreenOverlay } from "@/context/ScreenOverlayContext";
 import ProductUploadOverlay from "@/components/product/ProductUploadOverlay";
 import LocationScreen from "@/components/home/header/LocationScreen";
@@ -32,6 +32,7 @@ function MainLayoutContent() {
   const isExplorePage = pathname === '/explore';
   const isProductsPage = pathname === '/products';
   const isProfilePage = pathname === '/profile' || pathname.startsWith('/profile/'); // ADDED: Profile page check
+  const isMallPage = pathname === '/mall' || pathname.startsWith('/mall/'); // ADDED: Mall page check
   const productsTitle = isProductsPage ? new URLSearchParams(location.search).get('title') || 'Products' : '';
   const iconName = searchParams.get('icon');
 
@@ -91,14 +92,15 @@ function MainLayoutContent() {
     CreditCard,
     DollarSign,
     History,
-    BarChart
+    BarChart,
+    ShoppingBag // Added ShoppingBag for Mall
   };
 
   const sectionHeaderIcon = iconName ? iconMapper[iconName] : undefined;
 
   const categories = useMemo(() => [
     { id: 'recommendations', name: t('forYou', { ns: 'home' }), path: '/for-you' },
-    { id: 'electronics', name: t('electronics', { ns: 'categories' }), path: '/categories/electronics' },
+    { id: 'mall', name: t('mall', { ns: 'categories' }), path: '/mall' }, // CHANGED: electronics to mall
     { id: 'home', name: t('homeLiving', { ns: 'categories' }), path: '/categories/home-living' },
     { id: 'fashion', name: t('fashion', { ns: 'categories' }), path: '/categories/fashion' },
     { id: 'entertainment', name: t('entertainment', { ns: 'categories' }), path: '/categories/entertainment' },
@@ -121,76 +123,74 @@ function MainLayoutContent() {
   }, [location.pathname, categories]);
 
   // Determine if we should show the header - FIXED: Exclude conversation detail pages
-  // Determine if we should show the header - FIXED: Exclude conversation detail pages
-const shouldShowHeader = [
-  '/',
-  '/for-you',
-  '/wallet',
-  '/explore',
-  '/wishlist',
-  '/cart',
-  '/notifications',
-  '/addresses',
-  '/help',
-  '/products',
-  '/mall', // ADDED: Include mall route
-  '/categories',
-  '/categories/electronics',
-  '/categories/home-living',
-  '/categories/fashion',
-  '/categories/entertainment',
-  '/categories/kids-hobbies',
-  '/categories/sports-outdoors',
-  '/categories/automotive',
-  '/categories/women',
-  '/categories/men',
-  '/categories/books',
-  '/profile' // ADDED: Include profile route
-].includes(pathname) || isMessagesListPage || isProfilePage;  // Only show header on messages list page, not detail pages
+  const shouldShowHeader = [
+    '/',
+    '/for-you',
+    '/wallet',
+    '/explore',
+    '/wishlist',
+    '/cart',
+    '/notifications',
+    '/addresses',
+    '/help',
+    '/products',
+    '/mall', // ADDED: Include mall route
+    '/mall/', // ADDED: Include mall sub-routes
+    '/categories',
+    '/categories/home-living',
+    '/categories/fashion',
+    '/categories/entertainment',
+    '/categories/kids-hobbies',
+    '/categories/sports-outdoors',
+    '/categories/automotive',
+    '/categories/women',
+    '/categories/men',
+    '/categories/books',
+    '/profile'
+  ].includes(pathname) || isMessagesListPage || isProfilePage || isMallPage;  // Only show header on messages list page, not detail pages
 
   // Check if current page is reels
   const isReelsPage = pathname === '/reels' && !location.search.includes('video=');
 
   // Determine if we should show the bottom nav
-  // Determine if we should show the bottom nav
-const shouldShowBottomNav = isMobile && (
-  pathname === '/for-you' ||
-  pathname === '/' ||
-  pathname === '/categories' ||
-  (pathname === '/reels' && !location.search.includes('video=')) ||
-  pathname === '/posts' ||
-  pathname === '/messages' ||
-  pathname === '/more-menu' ||
-  pathname === '/profile' ||
-  pathname.startsWith('/profile/') ||
-  pathname === '/videos' ||
-  pathname === '/notifications' ||
-  pathname === '/bookmarks' ||
-  pathname === '/friends' ||
-  pathname === '/shopping' ||
-  pathname === '/settings' ||
-  pathname === '/wallet' ||
-  pathname === '/explore' ||
-  pathname === '/wishlist' ||
-  pathname === '/cart' ||
-  pathname === '/addresses' ||
-  pathname === '/help' ||
-  pathname === '/my-stations' ||
-  pathname === '/products' ||
-  pathname === '/mall' || // ADDED: Include mall route
-  pathname === '/categories/electronics' ||
-  pathname === '/categories/home-living' ||
-  pathname === '/categories/fashion' ||
-  pathname === '/categories/entertainment' ||
-  pathname === '/categories/kids-hobbies' ||
-  pathname === '/categories/sports-outdoors' ||
-  pathname === '/categories/automotive' ||
-  pathname === '/categories/women' ||
-  pathname === '/categories/men' ||
-  pathname === '/categories/books' ||
-  pathname.startsWith('/pickup-station') ||
-  (pathname.startsWith('/seller-dashboard') && !pathname.includes('/edit-profile') && !pathname.includes('/onboarding'))
-) && !isMultiStepTransferPage && !isMultiStepTransferSheetPage && !isTransferOldPage;
+  const shouldShowBottomNav = isMobile && (
+    pathname === '/for-you' ||
+    pathname === '/' ||
+    pathname === '/categories' ||
+    (pathname === '/reels' && !location.search.includes('video=')) ||
+    pathname === '/posts' ||
+    pathname === '/messages' ||
+    pathname === '/more-menu' ||
+    pathname === '/profile' ||
+    pathname.startsWith('/profile/') ||
+    pathname === '/videos' ||
+    pathname === '/notifications' ||
+    pathname === '/bookmarks' ||
+    pathname === '/friends' ||
+    pathname === '/shopping' ||
+    pathname === '/settings' ||
+    pathname === '/wallet' ||
+    pathname === '/explore' ||
+    pathname === '/wishlist' ||
+    pathname === '/cart' ||
+    pathname === '/addresses' ||
+    pathname === '/help' ||
+    pathname === '/my-stations' ||
+    pathname === '/products' ||
+    pathname === '/mall' || // ADDED: Include mall route
+    pathname.startsWith('/mall/') || // ADDED: Include mall sub-routes
+    pathname === '/categories/home-living' ||
+    pathname === '/categories/fashion' ||
+    pathname === '/categories/entertainment' ||
+    pathname === '/categories/kids-hobbies' ||
+    pathname === '/categories/sports-outdoors' ||
+    pathname === '/categories/automotive' ||
+    pathname === '/categories/women' ||
+    pathname === '/categories/men' ||
+    pathname === '/categories/books' ||
+    pathname.startsWith('/pickup-station') ||
+    (pathname.startsWith('/seller-dashboard') && !pathname.includes('/edit-profile') && !pathname.includes('/onboarding'))
+  ) && !isMultiStepTransferPage && !isMultiStepTransferSheetPage && !isTransferOldPage;
 
   // Measure actual header height dynamically
   useEffect(() => {
@@ -534,13 +534,13 @@ const shouldShowBottomNav = isMobile && (
   }, [isMessagesPage, isWalletPage, isExplorePage, searchParams, navigate, pathname]);
 
 
-const walletTabs = isWalletPage ? [
+  const walletTabs = isWalletPage ? [
     { id: 'main', name: 'Main Wallet', path: '/wallet?tab=main' },
     { id: 'crypto', name: 'Crypto Wallet', path: '/wallet?tab=crypto' },
     { id: 'usd', name: 'USD Wallet', path: '/wallet?tab=usd' },
     { id: 'transactions', name: 'Transactions', path: '/wallet?tab=transactions' },
     { id: 'trades', name: 'Trades', path: '/wallet?tab=trades' }
-] : undefined;
+  ] : undefined;
 
   const messagesTabs = isMessagesListPage ? [
     { id: 'all', name: 'All', path: '/messages?filter=all' },
@@ -564,71 +564,71 @@ const walletTabs = isWalletPage ? [
       {/* Header - Now hidden on conversation detail pages */}
       {shouldShowHeader && (
         <div ref={headerRef} className="app-header">
-         <AliExpressHeader
-  activeTabId={isMessagesListPage ? messagesFilter : isWalletPage ? walletFilter : isExplorePage ? exploreFilter : activeTab}
-  showFilterBar={showFilterBar}
-  // Fixed: Show category tabs on home pages AND category pages
-  showCategoryTabs={isRootHomePage || isForYouPage || pathname.startsWith('/categories')}
-  filterCategories={filterCategories}
-  selectedFilters={selectedFilters}
-  onFilterSelect={onFilterSelect}
-  onFilterClear={onFilterClear}
-  onClearAll={onClearAll}
-  onFilterButtonClick={onFilterButtonClick}
-  isFilterDisabled={isFilterDisabled}
-  customTabs={messagesTabs || walletTabs || exploreTabs}
-  onCustomTabChange={isMessagesListPage ? (tabId) => {
-    const tab = messagesTabs?.find(t => t.id === tabId);
-    if (tab?.path) {
-      navigate(tab.path);
-    }
-  } : isWalletPage ? (tabId) => {
-    const tab = walletTabs?.find(t => t.id === tabId);
-    if (tab?.path) {
-      navigate(tab.path);
-    }
-  } : isExplorePage ? (tabId) => {
-    const tab = exploreTabs?.find(t => t.id === tabId);
-    if (tab?.path) {
-      navigate(tab.path);
-    }
-  } : undefined}
-  showSectionHeader={isProductsPage}
-  sectionHeaderTitle={productsTitle}
-  sectionHeaderShowStackedProfiles={searchParams.get('showProfiles') === 'true'}
-  sectionHeaderShowVerifiedSellers={searchParams.get('showVerifiedSellers') === 'true'}
-  sectionHeaderVerifiedSellersText={searchParams.get('verifiedSellersText') || 'Verified Sellers'}
-  sectionHeaderStackedProfiles={searchParams.get('showProfiles') === 'true' ? [
-    {
-      id: '1',
-      image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
-      alt: 'Sarah Johnson'
-    },
-    {
-      id: '2',
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-      alt: 'Mike Chen'
-    },
-    {
-      id: '3',
-      image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-      alt: 'Emma Davis'
-    }
-  ] : []}
-  sectionHeaderStackedProfilesText={searchParams.get('profilesText') || 'Handpicked by'}
-  sectionHeaderShowCountdown={searchParams.get('showCountdown') === 'true'}
-  sectionHeaderCountdown={searchParams.get('countdown') || undefined}
-  sectionHeaderShowSponsorCount={searchParams.get('showSponsorCount') === 'true'}
-  {...(sectionHeaderIcon && { sectionHeaderIcon })}
-  sectionHeaderViewAllLink={
-    (searchParams.get('showProfiles') !== 'true' &&
-     searchParams.get('showVerifiedSellers') !== 'true' &&
-     searchParams.get('showCountdown') !== 'true')
-      ? "/vendors"
-      : undefined
-  }
-  sectionHeaderViewAllText="View All"
-/>
+          <AliExpressHeader
+            activeTabId={isMessagesListPage ? messagesFilter : isWalletPage ? walletFilter : isExplorePage ? exploreFilter : activeTab}
+            showFilterBar={showFilterBar}
+            // Fixed: Show category tabs on home pages AND category pages
+            showCategoryTabs={isRootHomePage || isForYouPage || pathname.startsWith('/categories') || isMallPage} // ADDED: Include mall page
+            filterCategories={filterCategories}
+            selectedFilters={selectedFilters}
+            onFilterSelect={onFilterSelect}
+            onFilterClear={onFilterClear}
+            onClearAll={onClearAll}
+            onFilterButtonClick={onFilterButtonClick}
+            isFilterDisabled={isFilterDisabled}
+            customTabs={messagesTabs || walletTabs || exploreTabs}
+            onCustomTabChange={isMessagesListPage ? (tabId) => {
+              const tab = messagesTabs?.find(t => t.id === tabId);
+              if (tab?.path) {
+                navigate(tab.path);
+              }
+            } : isWalletPage ? (tabId) => {
+              const tab = walletTabs?.find(t => t.id === tabId);
+              if (tab?.path) {
+                navigate(tab.path);
+              }
+            } : isExplorePage ? (tabId) => {
+              const tab = exploreTabs?.find(t => t.id === tabId);
+              if (tab?.path) {
+                navigate(tab.path);
+              }
+            } : undefined}
+            showSectionHeader={isProductsPage}
+            sectionHeaderTitle={productsTitle}
+            sectionHeaderShowStackedProfiles={searchParams.get('showProfiles') === 'true'}
+            sectionHeaderShowVerifiedSellers={searchParams.get('showVerifiedSellers') === 'true'}
+            sectionHeaderVerifiedSellersText={searchParams.get('verifiedSellersText') || 'Verified Sellers'}
+            sectionHeaderStackedProfiles={searchParams.get('showProfiles') === 'true' ? [
+              {
+                id: '1',
+                image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
+                alt: 'Sarah Johnson'
+              },
+              {
+                id: '2',
+                image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+                alt: 'Mike Chen'
+              },
+              {
+                id: '3',
+                image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+                alt: 'Emma Davis'
+              }
+            ] : []}
+            sectionHeaderStackedProfilesText={searchParams.get('profilesText') || 'Handpicked by'}
+            sectionHeaderShowCountdown={searchParams.get('showCountdown') === 'true'}
+            sectionHeaderCountdown={searchParams.get('countdown') || undefined}
+            sectionHeaderShowSponsorCount={searchParams.get('showSponsorCount') === 'true'}
+            {...(sectionHeaderIcon && { sectionHeaderIcon })}
+            sectionHeaderViewAllLink={
+              (searchParams.get('showProfiles') !== 'true' &&
+               searchParams.get('showVerifiedSellers') !== 'true' &&
+               searchParams.get('showCountdown') !== 'true')
+                ? "/vendors"
+                : undefined
+            }
+            sectionHeaderViewAllText="View All"
+          />
         </div>
       )}
 
