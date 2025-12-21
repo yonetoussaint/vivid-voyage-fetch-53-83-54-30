@@ -14,7 +14,7 @@ import { PaymentRoutes } from "../routes/PaymentRoutes";
 import { MiscRoutes } from "../routes/MiscRoutes";
 import AdminPage from "@/pages/AdminPage";
 // Import the MallPage component
-import { MallPage } from "@/pages/MallPage";
+import MallPage from "@/pages/MallPage";
 
 export function AppRoutes() {
   return (
