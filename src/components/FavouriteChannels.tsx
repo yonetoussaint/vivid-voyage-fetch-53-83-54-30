@@ -21,11 +21,11 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
 }) => {
   return (
     <div className="bg-white">
-      <div className="flex overflow-x-auto gap-1 px-2 py-2 scrollbar-hide">
+      <div className="grid grid-cols-6 gap-1 px-2">
         {channels.map((channel) => (
           <div 
             key={channel.id} 
-            className="flex flex-col items-center gap-0.5 flex-shrink-0 w-11"
+            className="flex flex-col items-center gap-1"
             onClick={() => onChannelSelect?.(channel.id)}
           >
             <div 
@@ -42,10 +42,7 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
                 <div 
                   className="absolute inset-0 bg-cover bg-center"
                   style={{ backgroundImage: `url(${channel.imageUrl})` }}
-                >
-                  {/* Gradient overlay for better text visibility */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                </div>
+                />
               )}
             </div>
             <span className="text-[8px] font-medium text-gray-800 text-center max-w-[42px] overflow-hidden text-ellipsis leading-tight">
@@ -57,18 +54,5 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
     </div>
   );
 };
-
-// Hide scrollbar utility
-const style = document.createElement('style');
-style.textContent = `
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-`;
-document.head.appendChild(style);
 
 export default FavouriteChannels;
