@@ -10,28 +10,38 @@ export interface ChannelItem {
 }
 
 interface FavouriteChannelsProps {
-  channels: ChannelItem[];
+  channels?: ChannelItem[]; // Make it optional
   activeChannel?: string;
   onChannelSelect?: (channelId: string) => void;
 }
 
 const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({ 
-  channels, 
+  channels = [], // Default to empty array
   activeChannel,
   onChannelSelect 
 }) => {
   const [showAll, setShowAll] = useState(false);
-  const isOverflowing = channels.length > 6;
   
-  const visibleChannels = showAll ? channels : channels.slice(0, 6);
-  const rows = Math.ceil(visibleChannels.length / 6);
+  // Safely check if channels exists and has more than 6 items
+  const isOverflowing = channels?.length > 6;
+  
+  // Safely get visible channels
+  const visibleChannels = showAll ? channels : (channels || []).slice(0, 6);
+  
+  // Calculate rows needed
+  const rows = Math.ceil((visibleChannels?.length || 0) / 6);
+
+  // If no channels, return null or a placeholder
+  if (!channels || channels.length === 0) {
+    return null; // or return a loading/empty state
+  }
 
   return (
     <div className="bg-white">
       {/* Channels Grid */}
       <div 
         className={`grid grid-cols-6 gap-1 px-2 py-2 transition-all duration-300 ${
-          !showAll ? 'max-h-[calc(9rem+8px)] overflow-hidden' : ''
+          !showAll && isOverflowing ? 'max-h-[calc(9rem+8px)] overflow-hidden' : ''
         }`}
         style={{ gridTemplateRows: `repeat(${rows}, auto)` }}
       >
@@ -69,8 +79,8 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
         ))}
       </div>
 
-      {/* Simple Chevron Button */}
-      {isOverflowing && (
+      {/* Simple Chevron Button - Only show if we have channels and more than 6 */}
+      {channels.length > 0 && isOverflowing && (
         <div className="flex justify-center pt-1 pb-2">
           <button
             onClick={() => setShowAll(!showAll)}
