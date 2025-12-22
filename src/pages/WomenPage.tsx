@@ -1,385 +1,211 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useTranslation } from 'react-i18next';
-import { fetchAllProducts } from "@/integrations/supabase/products";
-
-import { PageContainer } from "@/components/layout/PageContainer";
-import { useHeaderFilter } from "@/contexts/HeaderFilterContext";
-import SuperDealsSection from "@/components/home/SuperDealsSection";
-import SecondaryHeroBanner from "@/components/home/SecondaryHeroBanner";
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import FlashDeals from "@/components/home/FlashDeals";
-import SimpleFlashDeals from "@/components/home/SimpleFlashDeals";
-import ProductRecommendations from "@/components/home/ProductRecommendations";
-import SpaceSavingCategories from "@/components/home/SpaceSavingCategories";
-import TopBrands from "@/components/home/TopBrands";
-import VendorProductCarousel from "@/components/home/VendorProductCarousel";
-import BenefitsBanner from "@/components/home/BenefitsBanner";
-import TopVendorsCompact from "@/components/home/TopVendorsCompact";
-import MobileOptimizedReels from "@/components/home/MobileOptimizedReels";
-import Newsletter from "@/components/home/Newsletter";
-import PopularSearches from "@/components/home/PopularSearches";
-import ProductSemiPanel from "@/components/home/ProductSemiPanel";
+import FavouriteChannels, { ChannelItem } from "@/components/FavouriteChannels";
+import InfiniteContentGrid from "@/components/InfiniteContentGrid";
+import FilterTabs, { FilterState } from "@/components/FilterTabs";
 
-import NewArrivals from "@/components/home/NewArrivals";
-import NewArrivalsSection from "@/components/home/NewArrivalsSection";
-import HeroBanner from "@/components/home/HeroBanner";
+interface WomenPageProps {
+  category?: string;
+}
 
-import { 
-  Smartphone, 
-  ShoppingBag, 
-  Shirt, 
-  Baby, 
-  Home, 
-  Dumbbell, 
-  Sparkles, 
-  Car, 
-  BookOpen,
-  Gamepad2,
-  Watch,
-  Headphones,
-  Camera,
-  Laptop,
-  Coffee
-} from "lucide-react";
-
-// Component patterns for endless feed
-const flashDealsCategories = [
-  { title: "ELECTRONICS", icon: Smartphone },
-  { title: "WOMEN'S FASHION", icon: ShoppingBag },
-  { title: "MEN'S FASHION", icon: Shirt },
-  { title: "KIDS & TOYS", icon: Baby },
-  { title: "HOME & GARDEN", icon: Home },
-  { title: "SPORTS & FITNESS", icon: Dumbbell },
-  { title: "BEAUTY & HEALTH", icon: Sparkles },
-  { title: "AUTOMOTIVE", icon: Car },
-  { title: "BOOKS & MEDIA", icon: BookOpen },
-  { title: "GAMING", icon: Gamepad2 },
-  { title: "WATCHES", icon: Watch },
-  { title: "AUDIO", icon: Headphones },
-  { title: "PHOTOGRAPHY", icon: Camera },
-  { title: "COMPUTERS", icon: Laptop },
-  { title: "COFFEE & TEA", icon: Coffee },
-];
-
-const feedComponents = [
-  'FlashDeals',
-  'MobileOptimizedReels',
-  'TopVendorsCompact',
-  'NewArrivalsSection',
-  'SuperDealsSection',
-  'VendorProductCarousel',
-  'SimpleFlashDeals',
-  'PopularSearches',
-  'TopBrands',
-  'BenefitsBanner',
-];
-
-// Filter categories configuration for women's fashion
-const filterCategories = [
-  {
-    id: 'category',
-    label: 'Category',
-    options: ['Dresses', 'Tops', 'Bottoms', 'Outerwear', 'Shoes', 'Accessories', 'Bags', 'Jewelry']
-  },
-  {
-    id: 'size',
-    label: 'Size',
-    options: ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Plus Size']
-  },
-  {
-    id: 'price',
-    label: 'Price',
-    options: ['Under $20', '$20-$50', '$50-$100', '$100-$200', 'Over $200']
-  },
-  {
-    id: 'brand',
-    label: 'Brand',
-    options: ['Zara', 'H&M', 'Forever 21', 'Shein', 'Fashion Nova', 'Nike', 'Adidas']
-  },
-  {
-    id: 'color',
-    label: 'Color',
-    options: ['Black', 'White', 'Pink', 'Blue', 'Red', 'Green', 'Yellow', 'Purple']
-  },
-  {
-    id: 'style',
-    label: 'Style',
-    options: ['Casual', 'Formal', 'Vintage', 'Bohemian', 'Athletic', 'Business']
-  },
-  {
-    id: 'shipping',
-    label: 'Shipping',
-    options: ['Free Shipping', 'Fast Delivery', 'Local Pickup']
-  }
-];
-
-export default function WomenPage() {
-  const [feedItems, setFeedItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [isContentReady, setIsContentReady] = useState(false);
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
-
-  // Filter state
-  const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
-
-  const { t } = useTranslation(['product', 'categories']);
-  const {
-    setShowFilterBar,
-    setFilterCategories,
-    setSelectedFilters: setContextSelectedFilters,
-    setOnFilterSelect,
-    setOnFilterClear,
-    setOnClearAll,
-    setOnFilterButtonClick,
-    setIsFilterDisabled
-  } = useHeaderFilter();
-
-  const heroBannerRef = useRef<HTMLDivElement>(null);
-  const filterBarRef = useRef<HTMLDivElement>(null);
-  const lastScrollY = useRef(0);
-
-  const { data: products, isLoading } = useQuery({
-    queryKey: ["products"],
-    queryFn: fetchAllProducts,
-    staleTime: 60000,
-    refetchOnWindowFocus: true,
+const WomenPage: React.FC<WomenPageProps> = ({ category = 'women' }) => {
+  const [activeCategory, setActiveCategory] = useState(category);
+  const [activeSubcategory, setActiveSubcategory] = useState<string>('all');
+  const [filters, setFilters] = useState<FilterState>({
+    price: {},
+    rating: null,
+    freeShipping: false,
+    onSale: false,
+    freeReturns: false,
+    newArrivals: false,
+    shippedFrom: [],
+    sortBy: 'popular'
   });
 
-  // Generate initial feed
-  const generateFeedItems = useCallback((count: number, startIndex: number = 0) => {
-    const items = [];
-
-    for (let i = 0; i < count; i++) {
-      const index = (startIndex + i) % feedComponents.length;
-      const componentType = feedComponents[index];
-
-      if (componentType === 'SimpleFlashDeals') {
-        const categoryIndex = (startIndex + i) % flashDealsCategories.length;
-        items.push({
-          id: `${componentType}-${startIndex + i}`,
-          type: componentType,
-          category: flashDealsCategories[categoryIndex],
-        });
-      } else {
-        items.push({
-          id: `${componentType}-${startIndex + i}`,
-          type: componentType,
-        });
-      }
+  // Define women's fashion subcategories with free images from Unsplash
+  const womenFashionChannels: ChannelItem[] = [
+    {
+      id: 'all',
+      name: 'All',
+      imageUrl: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=200&h=200&fit=crop&crop=center',
+      bgColor: 'bg-gradient-to-br from-pink-500/20 to-rose-600/20',
+      textColor: 'text-white'
+    },
+    {
+      id: 'dresses',
+      name: 'Dresses',
+      imageUrl: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=200&h=200&fit=crop&crop=center',
+      bgColor: 'bg-gradient-to-br from-purple-500/20 to-purple-700/20',
+      textColor: 'text-white'
+    },
+    {
+      id: 'tops',
+      name: 'Tops',
+      imageUrl: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=200&h=200&fit=crop&crop=center',
+      bgColor: 'bg-gradient-to-br from-red-500/20 to-red-700/20',
+      textColor: 'text-white'
+    },
+    {
+      id: 'bottoms',
+      name: 'Bottoms',
+      imageUrl: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=200&h=200&fit=crop&crop=center',
+      bgColor: 'bg-gradient-to-br from-blue-500/20 to-blue-700/20',
+      textColor: 'text-white'
+    },
+    {
+      id: 'shoes',
+      name: 'Shoes',
+      imageUrl: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=200&h=200&fit=crop&crop=center',
+      bgColor: 'bg-gradient-to-br from-amber-500/20 to-amber-700/20',
+      textColor: 'text-white'
+    },
+    {
+      id: 'handbags',
+      name: 'Handbags',
+      imageUrl: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=200&h=200&fit=crop&crop=center',
+      bgColor: 'bg-gradient-to-br from-brown-500/20 to-brown-700/20',
+      textColor: 'text-white'
+    },
+    {
+      id: 'jewelry',
+      name: 'Jewelry',
+      imageUrl: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=200&h=200&fit=crop&crop=center',
+      bgColor: 'bg-gradient-to-br from-yellow-500/20 to-yellow-700/20',
+      textColor: 'text-white'
+    },
+    {
+      id: 'activewear',
+      name: 'Activewear',
+      imageUrl: 'https://images.unsplash.com/photo-1591369822093-3554c987c4e8?w=200&h=200&fit=crop&crop=center',
+      bgColor: 'bg-gradient-to-br from-green-500/20 to-green-700/20',
+      textColor: 'text-white'
+    },
+    {
+      id: 'lingerie',
+      name: 'Lingerie',
+      imageUrl: 'https://images.unsplash.com/photo-1550345332-09e3ac987658?w=200&h=200&fit=crop&crop=center',
+      bgColor: 'bg-gradient-to-br from-pink-300/20 to-pink-500/20',
+      textColor: 'text-white'
+    },
+    {
+      id: 'outerwear',
+      name: 'Outerwear',
+      imageUrl: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=200&h=200&fit=crop&crop=center',
+      bgColor: 'bg-gradient-to-br from-gray-500/20 to-gray-700/20',
+      textColor: 'text-white'
+    },
+    {
+      id: 'swimwear',
+      name: 'Swimwear',
+      imageUrl: 'https://images.unsplash.com/photo-1576827471283-36a1a251d5c0?w=200&h=200&fit=crop&crop=center',
+      bgColor: 'bg-gradient-to-br from-cyan-500/20 to-cyan-700/20',
+      textColor: 'text-white'
+    },
+    {
+      id: 'beauty',
+      name: 'Beauty',
+      imageUrl: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=200&h=200&fit=crop&crop=center',
+      bgColor: 'bg-gradient-to-br from-fuchsia-500/20 to-fuchsia-700/20',
+      textColor: 'text-white'
+    },
+    {
+      id: 'accessories',
+      name: 'Accessories',
+      imageUrl: 'https://images.unsplash.com/photo-1590649887894-3d70487e81c4?w=200&h=200&fit=crop&crop=center',
+      bgColor: 'bg-gradient-to-br from-violet-500/20 to-violet-700/20',
+      textColor: 'text-white'
+    },
+    {
+      id: 'maternity',
+      name: 'Maternity',
+      imageUrl: 'https://images.unsplash.com/photo-1518674660708-0e2c0473e68e?w=200&h=200&fit=crop&crop=center',
+      bgColor: 'bg-gradient-to-br from-orange-500/20 to-orange-700/20',
+      textColor: 'text-white'
+    },
+    {
+      id: 'plus-size',
+      name: 'Plus Size',
+      imageUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop&crop=center',
+      bgColor: 'bg-gradient-to-br from-rose-500/20 to-rose-700/20',
+      textColor: 'text-white'
     }
+  ];
 
-    return items;
-  }, []);
+  const handleSubcategorySelect = (channelId: string) => {
+    setActiveSubcategory(channelId);
 
-  // Initialize feed immediately - don't wait for products
-  useEffect(() => {
-    setFeedItems(generateFeedItems(10, 0));
-    setTimeout(() => {
-      setIsContentReady(true);
-    }, 800);
-  }, [generateFeedItems]);
-
-  // Setup filter context on mount
-  useEffect(() => {
-    setFilterCategories(filterCategories);
-    setOnFilterSelect(() => handleFilterSelect);
-    setOnFilterClear(() => handleFilterClear);
-    setOnClearAll(() => handleClearAllFilters);
-    setOnFilterButtonClick(() => handleFilterButtonClick);
-    setIsFilterDisabled(() => isFilterDisabled);
-  }, [setFilterCategories, setOnFilterSelect, setOnFilterClear, setOnClearAll, setOnFilterButtonClick, setIsFilterDisabled]);
-
-  // Update context when selectedFilters change
-  useEffect(() => {
-    setContextSelectedFilters(selectedFilters);
-  }, [selectedFilters, setContextSelectedFilters]);
-
-  // Scroll-based detection for precise filter bar replacement
-  useEffect(() => {
-    let ticking = false;
-
-    const handleScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          const currentScrollY = window.scrollY;
-          lastScrollY.current = currentScrollY;
-
-          // Get header element and its height
-          const header = document.getElementById("ali-header");
-          if (!header) return;
-
-          const headerHeight = header.getBoundingClientRect().height;
-
-          // Find the filter bar in the hero banner
-          const filterBar = heroBannerRef.current?.querySelector('.product-filter-bar');
-          if (!filterBar) return;
-
-          // Get the filter bar's position relative to the viewport
-          const filterBarRect = filterBar.getBoundingClientRect();
-
-          // Calculate if filter bar is being covered by header
-          // Show header filter bar when hero filter bar's bottom edge reaches header bottom
-          const shouldShowInHeader = filterBarRect.bottom <= headerHeight;
-
-          // Update context state only if there's a change
-          setShowFilterBar(shouldShowInHeader);
-
-          ticking = false;
-        });
-
-        ticking = true;
-      }
-    };
-
-    // Add scroll listener only after content is ready
-    if (isContentReady) {
-      window.addEventListener('scroll', handleScroll, { passive: true });
-
-      // Initial check
-      handleScroll();
-    }
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [isContentReady]);
-
-  // Filter handlers
-  const handleFilterSelect = useCallback((filterId: string, option: string) => {
-    setSelectedFilters(prev => ({
-      ...prev,
-      [filterId]: option
-    }));
-    console.log('Filter selected:', filterId, option);
-  }, []);
-
-  const handleFilterClear = useCallback((filterId: string) => {
-    setSelectedFilters(prev => {
-      const newFilters = { ...prev };
-      delete newFilters[filterId];
-      return newFilters;
-    });
-    console.log('Filter cleared:', filterId);
-  }, []);
-
-  const handleClearAllFilters = useCallback(() => {
-    setSelectedFilters({});
-    console.log('All filters cleared');
-  }, []);
-
-  const handleFilterButtonClick = useCallback((filterId: string) => {
-    console.log('Filter button clicked:', filterId);
-    // Handle filter button click (e.g., open dropdown)
-  }, []);
-
-  const isFilterDisabled = useCallback((filterId: string) => {
-    // Example logic: disable size filter if no category is selected
-    if (filterId === 'size' && !selectedFilters.category) {
-      return false; // Change to true to actually disable
-    }
-    return false;
-  }, [selectedFilters]);
-
-  // Handle product click to open semi panel
-  const handleProductClick = useCallback((productId: string) => {
-    setSelectedProductId(productId);
-    setIsPanelOpen(true);
-  }, []);
-
-  // Handle panel close
-  const handlePanelClose = useCallback(() => {
-    setIsPanelOpen(false);
-    setSelectedProductId(null);
-  }, []);
-
-  // Render component based on type
-  const renderFeedItem = (item: any) => {
-    const { type, category, id } = item;
-
-    switch (type) {
-      case 'FlashDeals':
-        return <FlashDeals key={id} />;
-      case 'MobileOptimizedReels':
-        return <MobileOptimizedReels key={id} />;
-      case 'TopVendorsCompact':
-        return <TopVendorsCompact key={id} />;
-      case 'NewArrivalsSection':
-        return <NewArrivalsSection key={id} />;
-      case 'SuperDealsSection':
-        return products && products.length > 0 ? (
-          <SuperDealsSection key={id} products={products} onProductClick={handleProductClick} />
-        ) : (
-          <div key={id} className="h-64 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        );
-      case 'VendorProductCarousel':
-        return products && products.length > 0 ? (
-          <VendorProductCarousel 
-            key={id}
-            title={t('trending', { ns: 'product' })} 
-            products={products.slice(0, 10)} 
-            onProductClick={handleProductClick}
-          />
-        ) : (
-          <div key={id} className="h-64 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        );
-      case 'SimpleFlashDeals':
-        return (
-          <SimpleFlashDeals 
-            key={id}
-            title={category.title} 
-            icon={category.icon}
-          />
-        );
-      case 'PopularSearches':
-        return <PopularSearches key={id} />;
-      case 'TopBrands':
-        return <TopBrands key={id} />;
-      case 'BenefitsBanner':
-        return <BenefitsBanner key={id} />;
-      default:
-        return null;
+    // You could add specific filtering for certain subcategories here
+    if (channelId === 'dresses') {
+      setFilters(prev => ({
+        ...prev,
+        sortBy: 'newest'
+      }));
     }
   };
 
-  return (
-    <PageContainer className="overflow-hidden pb-16 relative">
-      {/* Hero Banner with the ProductFilterBar integrated */}
-      <div ref={heroBannerRef}>
-        <HeroBanner 
-          showNewsTicker={false}
-          filterCategories={filterCategories}
-          selectedFilters={selectedFilters}
-          onFilterSelect={handleFilterSelect}
-          onFilterClear={handleFilterClear}
-          onClearAll={handleClearAllFilters}
-          onFilterButtonClick={handleFilterButtonClick}
-          isFilterDisabled={isFilterDisabled}
-        />
-      </div>
+  useEffect(() => {
+    const handleCategoryChange = (event: CustomEvent) => {
+      setActiveCategory(event.detail.category);
+    };
 
-      {/* Endless feed content */}
-      <div className="space-y-2">
-        {feedItems.map(renderFeedItem)}
+    window.addEventListener('categoryChange', handleCategoryChange as EventListener);
+    return () => window.removeEventListener('categoryChange', handleCategoryChange as EventListener);
+  }, []);
 
-        {/* Loading indicator */}
-        {loading && (
-          <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        )}
-      </div>
-
-      {/* Product Semi Panel */}
-      <ProductSemiPanel
-        productId={selectedProductId}
-        isOpen={isPanelOpen}
-        onClose={handlePanelClose}
+  const components = [
+    <div key="favourite-channels-wrapper" className="pt-2">
+      <FavouriteChannels 
+        channels={womenFashionChannels}
+        activeChannel={activeSubcategory}
+        onChannelSelect={handleSubcategorySelect}
       />
-    </PageContainer>
+    </div>,
+
+    <div key="separator-1" className="w-full bg-gray-100 h-1"></div>,
+
+    <div key="flash-deals-wrapper" className="pt-2">
+      <FlashDeals
+        showCountdown={true}
+        showTitleChevron={true}
+      />
+    </div>,
+
+    <div key="separator-2" className="w-full bg-gray-100 h-1"></div>,
+
+    <div key="filter-tabs-wrapper" className="pt-2">
+      <FilterTabs filters={filters} onFilterChange={setFilters} />
+    </div>,
+
+    <div key="infinite-grid-wrapper" className="pt-2">
+      <InfiniteContentGrid 
+        category={activeSubcategory === 'all' ? activeCategory : activeSubcategory} 
+        filters={filters} 
+      />
+    </div>,
+  ];
+
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={activeCategory}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
+      >
+        <div className="overflow-hidden relative">
+          <div className="pb-2">
+            {components.map((component, index) => (
+              <React.Fragment key={`section-${index}`}>
+                {component}
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
+      </motion.div>
+    </AnimatePresence>
   );
-}
+};
+
+export default WomenPage;
