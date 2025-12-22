@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import FlashDeals from "@/components/home/FlashDeals";
+import FlashDeals from "@/components/home/FlashDeals"; // This one is in home
 import FavouriteChannels from "@/components/FavouriteChannels";
 import InfiniteContentGrid from "@/components/InfiniteContentGrid";
+import FilterTabs, { FilterState } from "@/components/FilterTabs";
 
 interface ElectronicsPageProps {
   category?: string;
@@ -10,6 +11,16 @@ interface ElectronicsPageProps {
 
 const ElectronicsPage: React.FC<ElectronicsPageProps> = ({ category = 'electronics' }) => {
   const [activeCategory, setActiveCategory] = useState(category);
+  const [filters, setFilters] = useState<FilterState>({
+    price: {},
+    rating: null,
+    freeShipping: false,
+    onSale: false,
+    freeReturns: false,
+    newArrivals: false,
+    shippedFrom: [],
+    sortBy: 'popular'
+  });
 
   useEffect(() => {
     const handleCategoryChange = (event: CustomEvent) => {
@@ -21,14 +32,14 @@ const ElectronicsPage: React.FC<ElectronicsPageProps> = ({ category = 'electroni
   }, []);
 
   const components = [
-    // Favourite Channels - REMOVED px-4 wrapper
+    // Favourite Channels
     <div key="favourite-channels-wrapper" className="pt-2">
       <FavouriteChannels />
     </div>,
 
     <div key="separator-1" className="w-full bg-gray-100 h-1"></div>,
 
-    // Flash Deals - added like in ForYou page
+    // Flash Deals (from @/components/home)
     <div key="flash-deals-wrapper">
       <FlashDeals
         showCountdown={true}
@@ -38,9 +49,14 @@ const ElectronicsPage: React.FC<ElectronicsPageProps> = ({ category = 'electroni
 
     <div key="separator-2" className="w-full bg-gray-100 h-1"></div>,
 
-    // InfiniteContentGrid
+    // Filter Tabs
+    <div key="filter-tabs-wrapper">
+      <FilterTabs filters={filters} onFilterChange={setFilters} />
+    </div>,
+
+    // InfiniteContentGrid with applied filters
     <div key="infinite-grid-wrapper" className="pt-2">
-      <InfiniteContentGrid category={activeCategory} />
+      <InfiniteContentGrid category={activeCategory} filters={filters} />
     </div>,
   ];
 
