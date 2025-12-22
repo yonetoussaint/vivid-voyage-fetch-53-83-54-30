@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import FavouriteChannels from "@/components/FavouriteChannels";
-import InfiniteContentGrid from "@/components/InfiniteContentGrid";
-import FilterTabs, { FilterState } from "@/components/FilterTabs";
+import FlashDeals from "@/components/home/FlashDeals";
+import FavouriteChannels from "@/components/home/FavouriteChannels";
+import InfiniteContentGrid from "@/components/home/InfiniteContentGrid";
 
 interface ElectronicsPageProps {
   category?: string;
@@ -10,16 +10,6 @@ interface ElectronicsPageProps {
 
 const ElectronicsPage: React.FC<ElectronicsPageProps> = ({ category = 'electronics' }) => {
   const [activeCategory, setActiveCategory] = useState(category);
-  const [filters, setFilters] = useState<FilterState>({
-    price: {},
-    rating: null,
-    freeShipping: false,
-    onSale: false,
-    freeReturns: false,
-    newArrivals: false,
-    shippedFrom: [],
-    sortBy: 'popular'
-  });
 
   useEffect(() => {
     const handleCategoryChange = (event: CustomEvent) => {
@@ -31,21 +21,26 @@ const ElectronicsPage: React.FC<ElectronicsPageProps> = ({ category = 'electroni
   }, []);
 
   const components = [
-    // Favourite Channels
+    // Favourite Channels - REMOVED px-4 wrapper
     <div key="favourite-channels-wrapper" className="pt-2">
-        <FavouriteChannels />
+      <FavouriteChannels />
     </div>,
 
     <div key="separator-1" className="w-full bg-gray-100 h-1"></div>,
 
-    // Filter Tabs
-    <div key="filter-tabs-wrapper">
-      <FilterTabs filters={filters} onFilterChange={setFilters} />
+    // Flash Deals - added like in ForYou page
+    <div key="flash-deals-wrapper">
+      <FlashDeals
+        showCountdown={true}
+        showTitleChevron={true}
+      />
     </div>,
 
-    // InfiniteContentGrid with category filter and applied filters
+    <div key="separator-2" className="w-full bg-gray-100 h-1"></div>,
+
+    // InfiniteContentGrid
     <div key="infinite-grid-wrapper" className="pt-2">
-      <InfiniteContentGrid category={activeCategory} filters={filters} />
+      <InfiniteContentGrid category={activeCategory} />
     </div>,
   ];
 
