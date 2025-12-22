@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import FlashDeals from "@/components/home/FlashDeals"; // This one is in home
+import FlashDeals from "@/components/home/FlashDeals";
 import FavouriteChannels from "@/components/FavouriteChannels";
 import InfiniteContentGrid from "@/components/InfiniteContentGrid";
 import FilterTabs, { FilterState } from "@/components/FilterTabs";
@@ -32,15 +32,15 @@ const ElectronicsPage: React.FC<ElectronicsPageProps> = ({ category = 'electroni
   }, []);
 
   const components = [
-    // Favourite Channels
+    // Favourite Channels - pt-2 for consistent top padding
     <div key="favourite-channels-wrapper" className="pt-2">
       <FavouriteChannels />
     </div>,
 
     <div key="separator-1" className="w-full bg-gray-100 h-1"></div>,
 
-    // Flash Deals (from @/components/home)
-    <div key="flash-deals-wrapper">
+    // Flash Deals - pt-2 for consistent top padding
+    <div key="flash-deals-wrapper" className="pt-2">
       <FlashDeals
         showCountdown={true}
         showTitleChevron={true}
@@ -49,12 +49,12 @@ const ElectronicsPage: React.FC<ElectronicsPageProps> = ({ category = 'electroni
 
     <div key="separator-2" className="w-full bg-gray-100 h-1"></div>,
 
-    // Filter Tabs
-    <div key="filter-tabs-wrapper">
+    // Filter Tabs - pt-2 for consistent top padding
+    <div key="filter-tabs-wrapper" className="pt-2">
       <FilterTabs filters={filters} onFilterChange={setFilters} />
     </div>,
 
-    // InfiniteContentGrid with applied filters
+    // InfiniteContentGrid - pt-2 for consistent top padding
     <div key="infinite-grid-wrapper" className="pt-2">
       <InfiniteContentGrid category={activeCategory} filters={filters} />
     </div>,
