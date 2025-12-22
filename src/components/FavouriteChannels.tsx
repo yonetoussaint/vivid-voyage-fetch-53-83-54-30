@@ -20,17 +20,17 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
   onChannelSelect 
 }) => {
   return (
-    <div className="bg-white pb-2">
-      <div className="flex overflow-x-auto gap-3 px-4 py-2 scrollbar-hide">
+    <div className="bg-white">
+      <div className="flex overflow-x-auto gap-1 px-2 py-2 scrollbar-hide">
         {channels.map((channel) => (
           <div 
             key={channel.id} 
-            className="flex flex-col items-center gap-1.5 flex-shrink-0 w-16"
+            className="flex flex-col items-center gap-0.5 flex-shrink-0 w-11"
             onClick={() => onChannelSelect?.(channel.id)}
           >
             <div 
               className={`
-                w-14 h-14 rounded-full ${channel.bgColor} 
+                w-9 h-9 rounded-full ${channel.bgColor} 
                 flex items-center justify-center shadow-md 
                 cursor-pointer hover:scale-105 transition-transform
                 relative overflow-hidden
@@ -44,15 +44,13 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
                   style={{ backgroundImage: `url(${channel.imageUrl})` }}
                 >
                   {/* Gradient overlay for better text visibility */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
                 </div>
               )}
-              
-              {/* Channel name in the center */}
-              <span className="relative z-10 text-white text-[10px] font-bold text-center px-1">
-                {channel.name}
-              </span>
             </div>
+            <span className="text-[8px] font-medium text-gray-800 text-center max-w-[42px] overflow-hidden text-ellipsis leading-tight">
+              {channel.name}
+            </span>
           </div>
         ))}
       </div>
