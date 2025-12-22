@@ -2009,8 +2009,7 @@ const InfiniteContentGrid: React.FC<{
     );
   }
 
-  // FilterTabs Component - Updated to not show toggle filters at the bottom
-// FilterTabs Component - Updated with reduced height and smaller padding
+  // FilterTabs Component - Updated with no bottom border and increased gap
 const FilterTabs = () => {
   // Function to render active filters at the bottom, excluding toggle filters
   const renderActiveFilters = () => {
@@ -2068,7 +2067,7 @@ const FilterTabs = () => {
     if (activeFilters.length === 0) return null;
     
     return (
-      <div className="px-3 py-2 border-b border-gray-100">
+      <div className="px-3 py-2"> {/* Removed border-bottom */}
         <div className="flex flex-wrap gap-2">
           {activeFilters}
         </div>
@@ -2083,11 +2082,11 @@ const FilterTabs = () => {
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
       
-      {/* Filter tabs container - reduced height and padding */}
-      <div className="border-b border-gray-100">
+      {/* Filter tabs container - REMOVED border bottom */}
+      <div> {/* Removed border-b border-gray-100 */}
         <div className="overflow-x-auto hide-scrollbar">
-          {/* Container with reduced padding */}
-          <div className="flex items-center gap-1 px-3 min-w-max py-1">
+          {/* Container with increased gap (from gap-1 to gap-2) */}
+          <div className="flex items-center gap-2 px-3 min-w-max py-1">
             {/* Sort */}
             <button
               onClick={() => toggleDropdown('sort')}
@@ -2212,9 +2211,9 @@ const FilterTabs = () => {
         </div>
       </div>
 
-      {/* Dropdown panels in normal document flow */}
+      {/* Dropdown panels in normal document flow - REMOVED border bottom */}
       {activeDropdown && (
-        <div className="px-3 pb-3 pt-1 border-b border-gray-100">
+        <div className="px-3 pb-3 pt-1"> {/* Removed border-b border-gray-100 */}
           {activeDropdown === 'sort' && (
             <div className="bg-white border border-gray-200 rounded-md shadow-sm">
               <div className="py-1">
