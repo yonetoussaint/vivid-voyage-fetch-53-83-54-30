@@ -1997,7 +1997,7 @@ const InfiniteContentGrid: React.FC<{
   // Show loading state while fetching initial data
   if (initialLoading && allContent.length === 0) {
     return (
-      <div className="pt-2">
+      <div>
         <div className="px-2">
           <div className="grid grid-cols-2 gap-2">
             {Array(4).fill(0).map((_, i) => (
@@ -2322,7 +2322,7 @@ const FilterTabs = () => {
   // Show empty state if no content
   if (!initialLoading && filteredContent.length === 0) {
     return (
-      <div className="pt-2">
+      <div>
         <FilterTabs />
         <div className="text-center py-8 text-gray-500">
           {hasActiveFilters() ? (
@@ -2346,7 +2346,7 @@ const FilterTabs = () => {
   }
 
   return (
-    <div className="pt-2">
+    <div>
       <FilterTabs />
       
       {/* Results count */}
@@ -2379,9 +2379,7 @@ const FilterTabs = () => {
   );
 };
 
-
-
-// Update the ForYouContent component to remove the separate FilterTabs wrapper
+// ForYouContent Component with consistent padding
 const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   const navigate = useNavigate();
   const { setHeaderMode, headerMode } = useHeaderFilter();
@@ -2395,16 +2393,19 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
     };
   }, [setHeaderMode]);
 
-  // Components array with reduced height separators - REMOVED HeroBanner
+  // Components array with consistent spacing
   const components = [
-    // Favorite Channels is now the first component
-    <div key="favourite-channels-wrapper" className="mb-2 px-4">
-      <FavouriteChannels />
+    // Favourite Channels - add pt-2 to match FlashDeals
+    <div key="favourite-channels-wrapper" className="pt-2">
+      <div className="px-4">
+        <FavouriteChannels />
+      </div>
     </div>,
 
-    <div key="separator-1" className="w-full bg-gray-100 h-1 mb-2"></div>,
+    <div key="separator-1" className="w-full bg-gray-100 h-1"></div>,
 
-    <div key="flash-deals-wrapper" className="mb-2">
+    // Flash Deals already has its own header structure
+    <div key="flash-deals-wrapper">
       <FlashDeals
         showCountdown={true}
         icon={Tag}
@@ -2412,14 +2413,18 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
       />
     </div>,
 
-    <div key="separator-2" className="w-full bg-gray-100 h-1 mb-2"></div>,
+    <div key="separator-2" className="w-full bg-gray-100 h-1"></div>,
 
-    <InfiniteContentGrid key="infinite-grid" category={category} />,
+    // InfiniteContentGrid - add consistent pt-2
+    <div key="infinite-grid-wrapper" className="pt-2">
+      <InfiniteContentGrid category={category} />
+    </div>,
   ];
 
   return (
     <div className="overflow-hidden relative">
-      <div className="pb-2 pt-2">
+      {/* Remove all pt/py from this container - let each component handle its own top padding */}
+      <div className="pb-2">
         {components.map((component, index) => (
           <React.Fragment key={`section-${index}`}>
             {component}
