@@ -1,7 +1,27 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, Play, Users, Image, Heart, MessageCircle, Send, MoreHorizontal, Store, User, CheckCircle } from "lucide-react";
+import { Sparkles, Play, Users, Image, Heart, MessageCircle, Send, MoreHorizontal, Store, User, CheckCircle, ChevronDown } from "lucide-react";
+
+// Import the actual fetchAllProducts function
+import { fetchAllProducts } from "@/integrations/supabase/products";
+
+// Filter interfaces
+interface PriceFilter {
+  min?: number;
+  max?: number;
+}
+
+interface FilterState {
+  price: PriceFilter;
+  rating: number | null;
+  freeShipping: boolean;
+  onSale: boolean;
+  freeReturns: boolean;
+  newArrivals: boolean;
+  shippedFrom: string[];
+  sortBy: 'popular' | 'newest' | 'price_low' | 'price_high' | 'rating';
+}
 
 // Product interface
 interface Product {
@@ -19,6 +39,11 @@ interface Product {
   flash_start_time?: string;
   created_at?: string;
   type?: 'product';
+  shipping?: {
+    free_shipping?: boolean;
+    returns?: boolean;
+    location?: string;
+  };
 }
 
 // Reel interface
@@ -195,98 +220,6 @@ const fetchPosts = async (limit: number = 15): Promise<Post[]> => {
       is_sponsored: false,
       is_liked: false,
       is_saved: false
-    },
-    {
-      id: 'post-2',
-      type: 'post',
-      author: {
-        id: 'user-2',
-        username: 'TechGuruMike',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face',
-        is_verified: true,
-        follower_count: 89200
-      },
-      content: {
-        images: [
-          'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&h=600&fit=crop',
-          'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=800&h=600&fit=crop',
-          'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&h=600&fit=crop',
-          'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=800&h=600&fit=crop'
-        ],
-        caption: 'My new photography setup is complete! All gear tagged below. #photography #cameragear #tech',
-        location: 'Home Studio',
-        hashtags: ['photography', 'cameragear', 'tech', 'gadgets']
-      },
-      engagement: {
-        likes: 5200,
-        comments: 342,
-        shares: 189,
-        saves: 890,
-        views: 45200
-      },
-      products_tagged: [
-        {
-          id: 'prod-3',
-          name: 'DSLR Camera Bundle',
-          price: 899.99,
-          image: 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=300&h=200&fit=crop',
-          x_position: 50,
-          y_position: 50
-        }
-      ],
-      created_at: new Date(Date.now() - 7200000).toISOString(),
-      is_sponsored: true,
-      is_liked: true,
-      is_saved: false
-    },
-    {
-      id: 'post-3',
-      type: 'post',
-      author: {
-        id: 'user-3',
-        username: 'HomeDecorLover',
-        avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face',
-        is_verified: false,
-        follower_count: 5600
-      },
-      content: {
-        images: [
-          'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop',
-          'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=800&h=600&fit=crop'
-        ],
-        caption: 'Living room makeover complete! Loving the minimalist vibe. All items available with discount code HOMEDECOR20',
-        location: 'New York',
-        hashtags: ['homedecor', 'minimalist', 'interiordesign', 'livingroom']
-      },
-      engagement: {
-        likes: 890,
-        comments: 45,
-        shares: 23,
-        saves: 156,
-        views: 7800
-      },
-      products_tagged: [
-        {
-          id: 'prod-4',
-          name: 'Modern Sofa',
-          price: 699.99,
-          image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=300&h=200&fit=crop',
-          x_position: 40,
-          y_position: 60
-        },
-        {
-          id: 'prod-5',
-          name: 'Coffee Table',
-          price: 149.99,
-          image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=300&h=200&fit=crop',
-          x_position: 60,
-          y_position: 40
-        }
-      ],
-      created_at: new Date(Date.now() - 10800000).toISOString(),
-      is_sponsored: false,
-      is_liked: false,
-      is_saved: true
     }
   ];
 
@@ -316,60 +249,34 @@ const fetchVendors = async (limit: number = 6): Promise<Vendor[]> => {
   return mockVendors;
 };
 
-// Fetch products function - TEMPORARY MOCK (replace with actual import)
-const fetchAllProducts = async (): Promise<Product[]> => {
-  // Mock data for testing - replace with actual API call
-  const mockProducts: Product[] = Array.from({ length: 30 }, (_, i) => ({
-    id: `product-${i}`,
-    name: `Awesome Product ${i + 1}`,
-    price: Math.floor(Math.random() * 1000) + 50,
-    discount_price: Math.random() > 0.5 ? Math.floor(Math.random() * 800) + 30 : undefined,
-    inventory: Math.floor(Math.random() * 500),
-    rating: parseFloat((Math.random() * 1 + 4).toFixed(1)),
-    sold_count: Math.floor(Math.random() * 10000) + 100,
-    product_images: [{ 
-      src: `https://images.unsplash.com/photo-${150000 + i}?w=300&h=400&fit=crop` 
-    }],
-    description: `High-quality product ${i + 1} with amazing features`,
-    category: ['electronics', 'fashion', 'home', 'beauty', 'sports'][Math.floor(Math.random() * 5)],
-    tags: ['Sale', 'New', 'Popular', 'Best Seller'].slice(0, Math.floor(Math.random() * 3) + 1),
-    flash_start_time: Math.random() > 0.7 ? new Date().toISOString() : undefined,
-    created_at: new Date().toISOString(),
-    type: 'product'
-  }));
-
-  return mockProducts;
-};
-
 // Combined fetch function for all content
-const fetchAllContent = async (category?: string): Promise<ContentItem[]> => {
+const fetchAllContent = async (): Promise<ContentItem[]> => {
   try {
+    // Use the actual fetchAllProducts instead of mock
     const [products, reels, posts, vendors] = await Promise.all([
-      fetchAllProducts(), // This now returns actual mock products
+      fetchAllProducts(), // This should return actual products
       fetchReels(8),
       fetchPosts(10),
       fetchVendors(6)
     ]);
 
+    // Add shipping information to products for filtering
+    const productsWithShipping = products.map(p => ({
+      ...p,
+      shipping: {
+        free_shipping: Math.random() > 0.5,
+        returns: Math.random() > 0.7,
+        location: Math.random() > 0.5 ? 'United States' : 'International'
+      }
+    }));
+
     // Combine all content
     const allContent: ContentItem[] = [
-      ...products.map(p => ({ ...p, type: 'product' as const })),
+      ...productsWithShipping.map(p => ({ ...p, type: 'product' as const })),
       ...reels.map(r => ({ ...r, type: 'reel' as const })),
       ...posts.map(p => ({ ...p, type: 'post' as const })),
       ...vendors.map(v => ({ ...v, type: 'vendor' as const }))
     ];
-
-    // Filter by category if needed
-    if (category && category !== 'recommendations') {
-      return allContent.filter(item => {
-        if (item.type === 'product') {
-          const product = item as Product;
-          return product.category?.toLowerCase() === category.toLowerCase() ||
-                 product.tags?.some(tag => tag.toLowerCase() === category.toLowerCase());
-        }
-        return true;
-      });
-    }
 
     // Shuffle for mixed feed
     const shuffled = [...allContent];
@@ -382,6 +289,98 @@ const fetchAllContent = async (category?: string): Promise<ContentItem[]> => {
     console.error('Error fetching content:', error);
     return [];
   }
+};
+
+// Helper function to apply filters
+const applyFilters = (items: ContentItem[], filters: FilterState): ContentItem[] => {
+  return items.filter(item => {
+    if (item.type === 'product') {
+      const product = item as Product;
+      
+      // Price filter
+      if (filters.price.min !== undefined && product.price < filters.price.min) return false;
+      if (filters.price.max !== undefined && product.price > filters.price.max) return false;
+      
+      // Rating filter
+      if (filters.rating !== null && (product.rating || 0) < filters.rating) return false;
+      
+      // Free shipping filter
+      if (filters.freeShipping && (!product.shipping?.free_shipping)) return false;
+      
+      // On sale filter
+      if (filters.onSale && !product.discount_price) return false;
+      
+      // Free returns filter
+      if (filters.freeReturns && (!product.shipping?.returns)) return false;
+      
+      // New arrivals filter (within last 7 days)
+      if (filters.newArrivals) {
+        const createdDate = product.created_at ? new Date(product.created_at) : new Date(0);
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        if (createdDate < sevenDaysAgo) return false;
+      }
+      
+      // Shipped from filter
+      if (filters.shippedFrom.length > 0 && product.shipping?.location) {
+        if (!filters.shippedFrom.includes(product.shipping.location)) return false;
+      }
+      
+      return true;
+    }
+    
+    // Keep non-product items (reels, posts, vendors) in the feed
+    return true;
+  });
+};
+
+// Helper function to sort content
+const sortContent = (items: ContentItem[], sortBy: FilterState['sortBy']): ContentItem[] => {
+  const sorted = [...items];
+  
+  switch (sortBy) {
+    case 'newest':
+      sorted.sort((a, b) => {
+        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return dateB - dateA;
+      });
+      break;
+      
+    case 'price_low':
+      sorted.sort((a, b) => {
+        if (a.type === 'product' && b.type === 'product') {
+          return (a as Product).price - (b as Product).price;
+        }
+        // Keep non-product items in place
+        return 0;
+      });
+      break;
+      
+    case 'price_high':
+      sorted.sort((a, b) => {
+        if (a.type === 'product' && b.type === 'product') {
+          return (b as Product).price - (a as Product).price;
+        }
+        // Keep non-product items in place
+        return 0;
+      });
+      break;
+      
+    case 'rating':
+      sorted.sort((a, b) => {
+        const ratingA = (a.type === 'product' ? (a as Product).rating || 0 : 0);
+        const ratingB = (b.type === 'product' ? (b as Product).rating || 0 : 0);
+        return ratingB - ratingA;
+      });
+      break;
+      
+    case 'popular':
+    default:
+      // Keep original shuffled order for popular
+      break;
+  }
+  
+  return sorted;
 };
 
 // ProductCard component
@@ -1024,52 +1023,83 @@ const MasonryGrid: React.FC<{ items: ContentItem[] }> = ({ items }) => {
 // Main InfiniteContentGrid Component
 interface InfiniteContentGridProps {
   category?: string;
+  filters?: FilterState;
 }
 
-const InfiniteContentGrid: React.FC<InfiniteContentGridProps> = ({ category }) => {
+const InfiniteContentGrid: React.FC<InfiniteContentGridProps> = ({ 
+  category, 
+  filters = {
+    price: {},
+    rating: null,
+    freeShipping: false,
+    onSale: false,
+    freeReturns: false,
+    newArrivals: false,
+    shippedFrom: [],
+    sortBy: 'popular'
+  }
+}) => {
   const [page, setPage] = useState(0);
   const [allContent, setAllContent] = useState<ContentItem[]>([]);
+  const [filteredContent, setFilteredContent] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const loaderRef = useRef(null);
   const contentPerPage = 20;
 
+  // Fetch ALL content
   const { data: initialContent, isLoading: initialLoading } = useQuery({
     queryKey: ["content", "for-you", category],
-    queryFn: () => fetchAllContent(category),
+    queryFn: fetchAllContent,
     staleTime: 60000,
   });
 
-  const filteredContent = useMemo(() => {
-    if (!initialContent) return [];
-    return initialContent;
-  }, [initialContent]);
-
+  // Filter and sort content when filters or initialContent change
   useEffect(() => {
-    if (filteredContent && filteredContent.length > 0) {
-      setAllContent(filteredContent);
-      setHasMore(filteredContent.length > contentPerPage);
+    if (initialContent) {
+      // First filter by category
+      let categoryFiltered = initialContent;
+      if (category && category !== 'recommendations') {
+        categoryFiltered = initialContent.filter(item => {
+          if (item.type === 'product') {
+            const product = item as Product;
+            return product.category?.toLowerCase() === category.toLowerCase() ||
+                   product.tags?.some(tag => tag.toLowerCase() === category.toLowerCase());
+          }
+          return true;
+        });
+      }
+      
+      // Then apply all filters
+      const filtered = applyFilters(categoryFiltered, filters);
+      
+      // Finally sort the filtered results
+      const sorted = sortContent(filtered, filters.sortBy);
+      
+      setAllContent(sorted);
+      setFilteredContent(sorted);
+      setHasMore(sorted.length > contentPerPage);
       setPage(0);
-    } else if (filteredContent && filteredContent.length === 0) {
-      setAllContent([]);
-      setHasMore(false);
     }
-  }, [filteredContent]);
+  }, [initialContent, category, filters]);
 
+  // Calculate visible content
   const visibleContent = useMemo(() => {
     const startIndex = 0;
     const endIndex = (page + 1) * contentPerPage;
-    return allContent.slice(startIndex, endIndex);
-  }, [allContent, page, contentPerPage]);
+    return filteredContent.slice(startIndex, endIndex);
+  }, [filteredContent, page, contentPerPage]);
 
+  // Check if we have more content to load
   useEffect(() => {
-    if (allContent.length > 0) {
+    if (filteredContent.length > 0) {
       const totalLoaded = (page + 1) * contentPerPage;
-      const hasMoreContent = totalLoaded < allContent.length;
+      const hasMoreContent = totalLoaded < filteredContent.length;
       setHasMore(hasMoreContent);
     }
-  }, [allContent, page, contentPerPage]);
+  }, [filteredContent, page, contentPerPage]);
 
+  // Load more content function
   const loadMoreContent = useCallback(async () => {
     if (loading || !hasMore) return;
 
@@ -1080,7 +1110,7 @@ const InfiniteContentGrid: React.FC<InfiniteContentGridProps> = ({ category }) =
       setPage(nextPage);
 
       const totalLoaded = (nextPage + 1) * contentPerPage;
-      if (totalLoaded >= allContent.length) {
+      if (totalLoaded >= filteredContent.length) {
         setHasMore(false);
       }
     } catch (error) {
@@ -1088,8 +1118,9 @@ const InfiniteContentGrid: React.FC<InfiniteContentGridProps> = ({ category }) =
     } finally {
       setLoading(false);
     }
-  }, [page, loading, hasMore, allContent, contentPerPage]);
+  }, [page, loading, hasMore, filteredContent, contentPerPage]);
 
+  // Intersection Observer for infinite scroll
   useEffect(() => {
     if (!loaderRef.current || !hasMore) return;
 
@@ -1116,9 +1147,27 @@ const InfiniteContentGrid: React.FC<InfiniteContentGridProps> = ({ category }) =
     };
   }, [hasMore, loading, loadMoreContent]);
 
+  const hasActiveFilters = () => {
+    return (
+      (filters.price.min !== undefined || filters.price.max !== undefined) ||
+      filters.rating !== null ||
+      filters.freeShipping ||
+      filters.onSale ||
+      filters.freeReturns ||
+      filters.newArrivals ||
+      filters.shippedFrom.length > 0
+    );
+  };
+
+  const clearAllFilters = () => {
+    // This function is for internal use only
+    // Actual filter clearing should be done by parent component
+  };
+
+  // Show loading state while fetching initial data
   if (initialLoading && allContent.length === 0) {
     return (
-      <div className="pt-2">
+      <div>
         <div className="px-2">
           <div className="grid grid-cols-2 gap-2">
             {Array(4).fill(0).map((_, i) => (
@@ -1130,20 +1179,36 @@ const InfiniteContentGrid: React.FC<InfiniteContentGridProps> = ({ category }) =
     );
   }
 
-  if (!initialLoading && allContent.length === 0) {
+  // Show empty state if no content
+  if (!initialLoading && filteredContent.length === 0) {
     return (
-      <div className="pt-2">
+      <div>
         <div className="text-center py-8 text-gray-500">
-          No content found. Check back soon!
+          {hasActiveFilters() ? (
+            <>
+              <Sparkles className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-sm font-medium text-gray-700 mb-1">No matching items found</p>
+              <p className="text-xs text-gray-500 mb-4">Try adjusting your filters</p>
+            </>
+          ) : (
+            "No content found. Check back soon!"
+          )}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="pt-2">
+    <div>
+      {/* Results count */}
+      <div className="px-4 py-2 text-sm text-gray-600">
+        Showing {visibleContent.length} of {filteredContent.length} results
+      </div>
+
+      {/* Masonry Grid */}
       <MasonryGrid items={visibleContent} />
 
+      {/* Load more trigger */}
       <div 
         ref={loaderRef}
         className="flex justify-center items-center py-6"
@@ -1166,3 +1231,4 @@ const InfiniteContentGrid: React.FC<InfiniteContentGridProps> = ({ category }) =
 };
 
 export default InfiniteContentGrid;
+export type { FilterState, PriceFilter };
