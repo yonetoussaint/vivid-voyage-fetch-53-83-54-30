@@ -2009,16 +2009,16 @@ const InfiniteContentGrid: React.FC<{
     );
   }
 
-  // FilterTabs Component - Updated to not show active dropdown items at the bottom
+  // FilterTabs Component - Updated to not show toggle filters at the bottom
 const FilterTabs = () => {
-  // Function to render active filters at the bottom, excluding the currently open dropdown
+  // Function to render active filters at the bottom, excluding toggle filters
   const renderActiveFilters = () => {
     // Don't show active filters when a dropdown is open
     if (activeDropdown) return null;
 
     const activeFilters = [];
     
-    // Price filter
+    // Price filter - only show if it's a range selection (not just opened)
     if (filters.price.min !== undefined && filters.price.max !== undefined) {
       activeFilters.push(
         <span key="price" className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-md">
@@ -2033,7 +2033,7 @@ const FilterTabs = () => {
       );
     }
     
-    // Rating filter
+    // Rating filter - only show if a rating is selected
     if (filters.rating !== null) {
       activeFilters.push(
         <span key="rating" className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-md">
@@ -2048,84 +2048,22 @@ const FilterTabs = () => {
       );
     }
     
-    // Free Shipping filter
-    if (filters.freeShipping) {
+    // Shipped From filters - only show locations that are selected
+    filters.shippedFrom.forEach(location => {
       activeFilters.push(
-        <span key="freeShipping" className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-md">
-          Free Shipping
+        <span key={`shipped-${location}`} className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-md">
+          From: {location}
           <button 
-            onClick={() => setFilters({...filters, freeShipping: false})}
+            onClick={() => handleShippingFilter(location)}
             className="text-blue-500 hover:text-blue-700 ml-1"
           >
             ×
           </button>
         </span>
       );
-    }
+    });
     
-    // On Sale filter
-    if (filters.onSale) {
-      activeFilters.push(
-        <span key="onSale" className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-md">
-          On Sale
-          <button 
-            onClick={() => setFilters({...filters, onSale: false})}
-            className="text-blue-500 hover:text-blue-700 ml-1"
-          >
-            ×
-          </button>
-        </span>
-      );
-    }
-    
-    // Free Returns filter
-    if (filters.freeReturns) {
-      activeFilters.push(
-        <span key="freeReturns" className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-md">
-          Free Returns
-          <button 
-            onClick={() => setFilters({...filters, freeReturns: false})}
-            className="text-blue-500 hover:text-blue-700 ml-1"
-          >
-            ×
-          </button>
-        </span>
-      );
-    }
-    
-    // New Arrivals filter
-    if (filters.newArrivals) {
-      activeFilters.push(
-        <span key="newArrivals" className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-md">
-          New Arrivals
-          <button 
-            onClick={() => setFilters({...filters, newArrivals: false})}
-            className="text-blue-500 hover:text-blue-700 ml-1"
-          >
-            ×
-          </button>
-        </span>
-      );
-    }
-    
-    // Shipped From filters - only show if "shipped" dropdown is NOT active
-    if (activeDropdown !== 'shipped') {
-      filters.shippedFrom.forEach(location => {
-        activeFilters.push(
-          <span key={`shipped-${location}`} className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-md">
-            From: {location}
-            <button 
-              onClick={() => handleShippingFilter(location)}
-              className="text-blue-500 hover:text-blue-700 ml-1"
-            >
-              ×
-            </button>
-          </span>
-        );
-      });
-    }
-    
-    // If no active filters (excluding the ones in active dropdown), don't render anything
+    // If no active filters (excluding toggle filters), don't render anything
     if (activeFilters.length === 0) return null;
     
     return (
@@ -2191,7 +2129,7 @@ const FilterTabs = () => {
               <ChevronDown className={`w-3 h-3 transition-transform ${activeDropdown === 'rating' ? 'rotate-180' : ''}`} />
             </button>
 
-            {/* Free Shipping */}
+            {/* Free Shipping - simple toggle, doesn't show at bottom */}
             <button
               onClick={() => toggleCheckboxFilter('freeShipping')}
               className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
@@ -2203,7 +2141,7 @@ const FilterTabs = () => {
               Free Shipping
             </button>
 
-            {/* On Sale */}
+            {/* On Sale - simple toggle, doesn't show at bottom */}
             <button
               onClick={() => toggleCheckboxFilter('onSale')}
               className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
@@ -2215,7 +2153,7 @@ const FilterTabs = () => {
               On Sale
             </button>
 
-            {/* Free Returns */}
+            {/* Free Returns - simple toggle, doesn't show at bottom */}
             <button
               onClick={() => toggleCheckboxFilter('freeReturns')}
               className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
@@ -2227,7 +2165,7 @@ const FilterTabs = () => {
               Free Returns
             </button>
 
-            {/* New Arrivals */}
+            {/* New Arrivals - simple toggle, doesn't show at bottom */}
             <button
               onClick={() => toggleCheckboxFilter('newArrivals')}
               className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
@@ -2239,7 +2177,7 @@ const FilterTabs = () => {
               New Arrivals
             </button>
 
-            {/* Shipped From */}
+            {/* Shipped From - shows selections at bottom when closed */}
             <button
               onClick={() => toggleDropdown('shipped')}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
@@ -2259,7 +2197,7 @@ const FilterTabs = () => {
               <ChevronDown className={`w-3 h-3 transition-transform ${activeDropdown === 'shipped' ? 'rotate-180' : ''}`} />
             </button>
 
-            {/* Clear All */}
+            {/* Clear All - only show if any filters are active */}
             {hasActiveFilters() && (
               <button 
                 onClick={clearAllFilters} 
@@ -2374,7 +2312,7 @@ const FilterTabs = () => {
         </div>
       )}
 
-      {/* Active filters display - rendered conditionally */}
+      {/* Active filters display - only shows multi-select filters */}
       {renderActiveFilters()}
     </div>
   );
