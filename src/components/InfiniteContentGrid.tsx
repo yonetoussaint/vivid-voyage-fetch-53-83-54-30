@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, Tag, LayoutPanelLeft, Sparkles as SparklesIcon, ChevronRight, DollarSign, Zap, Video, Crown, Play, Users, Image, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Share2, Eye, Camera, Store, Star, User, CheckCircle } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Sparkles, Play, Users, Image, Heart, MessageCircle, Send, MoreHorizontal, Store, User, CheckCircle } from "lucide-react";
 
 // Product interface
 interface Product {
@@ -123,14 +122,9 @@ const renderTag = (tag: string) => {
   return null;
 };
 
-// Fetch functions
-const fetchAllProducts = async () => {
-  // Mock implementation - replace with actual import
-  return [];
-};
-
+// Fetch reels function
 const fetchReels = async (limit: number = 8): Promise<Reel[]> => {
-  // Mock data
+  // Mock data - replace with actual API call
   const mockReels: Reel[] = Array.from({ length: limit }, (_, i) => ({
     id: `reel-${i}`,
     title: `Trending Reel #${i + 1}`,
@@ -148,8 +142,9 @@ const fetchReels = async (limit: number = 8): Promise<Reel[]> => {
   return mockReels;
 };
 
+// Fetch posts function
 const fetchPosts = async (limit: number = 15): Promise<Post[]> => {
-  // Mock data
+  // Mock data - replace with actual API call
   const mockPosts: Post[] = [
     {
       id: 'post-1',
@@ -200,14 +195,107 @@ const fetchPosts = async (limit: number = 15): Promise<Post[]> => {
       is_sponsored: false,
       is_liked: false,
       is_saved: false
+    },
+    {
+      id: 'post-2',
+      type: 'post',
+      author: {
+        id: 'user-2',
+        username: 'TechGuruMike',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face',
+        is_verified: true,
+        follower_count: 89200
+      },
+      content: {
+        images: [
+          'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&h=600&fit=crop',
+          'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=800&h=600&fit=crop',
+          'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&h=600&fit=crop',
+          'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=800&h=600&fit=crop'
+        ],
+        caption: 'My new photography setup is complete! All gear tagged below. #photography #cameragear #tech',
+        location: 'Home Studio',
+        hashtags: ['photography', 'cameragear', 'tech', 'gadgets']
+      },
+      engagement: {
+        likes: 5200,
+        comments: 342,
+        shares: 189,
+        saves: 890,
+        views: 45200
+      },
+      products_tagged: [
+        {
+          id: 'prod-3',
+          name: 'DSLR Camera Bundle',
+          price: 899.99,
+          image: 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=300&h=200&fit=crop',
+          x_position: 50,
+          y_position: 50
+        }
+      ],
+      created_at: new Date(Date.now() - 7200000).toISOString(),
+      is_sponsored: true,
+      is_liked: true,
+      is_saved: false
+    },
+    {
+      id: 'post-3',
+      type: 'post',
+      author: {
+        id: 'user-3',
+        username: 'HomeDecorLover',
+        avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face',
+        is_verified: false,
+        follower_count: 5600
+      },
+      content: {
+        images: [
+          'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop',
+          'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=800&h=600&fit=crop'
+        ],
+        caption: 'Living room makeover complete! Loving the minimalist vibe. All items available with discount code HOMEDECOR20',
+        location: 'New York',
+        hashtags: ['homedecor', 'minimalist', 'interiordesign', 'livingroom']
+      },
+      engagement: {
+        likes: 890,
+        comments: 45,
+        shares: 23,
+        saves: 156,
+        views: 7800
+      },
+      products_tagged: [
+        {
+          id: 'prod-4',
+          name: 'Modern Sofa',
+          price: 699.99,
+          image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=300&h=200&fit=crop',
+          x_position: 40,
+          y_position: 60
+        },
+        {
+          id: 'prod-5',
+          name: 'Coffee Table',
+          price: 149.99,
+          image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=300&h=200&fit=crop',
+          x_position: 60,
+          y_position: 40
+        }
+      ],
+      created_at: new Date(Date.now() - 10800000).toISOString(),
+      is_sponsored: false,
+      is_liked: false,
+      is_saved: true
     }
   ];
 
   return mockPosts.slice(0, limit);
 };
 
+// Fetch vendors function
 const fetchVendors = async (limit: number = 6): Promise<Vendor[]> => {
-  // Mock data
+  // Mock data - replace with actual API call
   const mockVendors: Vendor[] = Array.from({ length: limit }, (_, i) => ({
     id: `vendor-${i}`,
     name: `Vendor ${i + 1}`,
@@ -228,15 +316,42 @@ const fetchVendors = async (limit: number = 6): Promise<Vendor[]> => {
   return mockVendors;
 };
 
+// Fetch products function - TEMPORARY MOCK (replace with actual import)
+const fetchAllProducts = async (): Promise<Product[]> => {
+  // Mock data for testing - replace with actual API call
+  const mockProducts: Product[] = Array.from({ length: 30 }, (_, i) => ({
+    id: `product-${i}`,
+    name: `Awesome Product ${i + 1}`,
+    price: Math.floor(Math.random() * 1000) + 50,
+    discount_price: Math.random() > 0.5 ? Math.floor(Math.random() * 800) + 30 : undefined,
+    inventory: Math.floor(Math.random() * 500),
+    rating: parseFloat((Math.random() * 1 + 4).toFixed(1)),
+    sold_count: Math.floor(Math.random() * 10000) + 100,
+    product_images: [{ 
+      src: `https://images.unsplash.com/photo-${150000 + i}?w=300&h=400&fit=crop` 
+    }],
+    description: `High-quality product ${i + 1} with amazing features`,
+    category: ['electronics', 'fashion', 'home', 'beauty', 'sports'][Math.floor(Math.random() * 5)],
+    tags: ['Sale', 'New', 'Popular', 'Best Seller'].slice(0, Math.floor(Math.random() * 3) + 1),
+    flash_start_time: Math.random() > 0.7 ? new Date().toISOString() : undefined,
+    created_at: new Date().toISOString(),
+    type: 'product'
+  }));
+
+  return mockProducts;
+};
+
+// Combined fetch function for all content
 const fetchAllContent = async (category?: string): Promise<ContentItem[]> => {
   try {
     const [products, reels, posts, vendors] = await Promise.all([
-      fetchAllProducts(),
+      fetchAllProducts(), // This now returns actual mock products
       fetchReels(8),
       fetchPosts(10),
       fetchVendors(6)
     ]);
 
+    // Combine all content
     const allContent: ContentItem[] = [
       ...products.map(p => ({ ...p, type: 'product' as const })),
       ...reels.map(r => ({ ...r, type: 'reel' as const })),
@@ -406,22 +521,6 @@ const ReelCard: React.FC<{ reel: Reel }> = ({ reel }) => {
             <span>Live now • {formatNumber(reel.views)} watching</span>
           </div>
         )}
-      </div>
-    </div>
-  );
-};
-
-// Stacked Images Indicator Component
-const StackedImagesIndicator: React.FC<{ count: number }> = ({ count }) => {
-  if (count <= 1) return null;
-
-  return (
-    <div className="absolute top-2 right-2 bg-black/70 text-white rounded-full p-1.5 z-20 flex items-center justify-center shadow-lg">
-      <div className="relative">
-        <Image className="w-3.5 h-3.5" />
-        <div className="absolute -top-1 -right-1 bg-white text-black text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-          {count}
-        </div>
       </div>
     </div>
   );
