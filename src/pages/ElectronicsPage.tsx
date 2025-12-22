@@ -2011,6 +2011,7 @@ const InfiniteContentGrid: React.FC<{
 
   // FilterTabs Component with improved UI from the provided code
   // FilterTabs Component with light gray bg and small rounded borders
+// FilterTabs Component with light gray bg and small rounded corners
 const FilterTabs = () => (
   <div className="w-full bg-white">
     <style>{`
@@ -2025,7 +2026,7 @@ const FilterTabs = () => (
           {/* Sort */}
           <button
             onClick={() => toggleDropdown('sort')}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
               activeDropdown === 'sort' 
                 ? 'bg-white border border-gray-200 shadow-sm text-gray-900' 
                 : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
@@ -2038,7 +2039,7 @@ const FilterTabs = () => (
           {/* Price */}
           <button
             onClick={() => toggleDropdown('price')}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
               filters.price.min || filters.price.max
                 ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
                 : activeDropdown === 'price' 
@@ -2053,7 +2054,7 @@ const FilterTabs = () => (
           {/* Rating */}
           <button
             onClick={() => toggleDropdown('rating')}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
               filters.rating 
                 ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
                 : activeDropdown === 'rating' 
@@ -2068,7 +2069,7 @@ const FilterTabs = () => (
           {/* Free Shipping */}
           <button
             onClick={() => toggleCheckboxFilter('freeShipping')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+            className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
               filters.freeShipping 
                 ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
                 : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
@@ -2080,7 +2081,7 @@ const FilterTabs = () => (
           {/* On Sale */}
           <button
             onClick={() => toggleCheckboxFilter('onSale')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+            className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
               filters.onSale 
                 ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
                 : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
@@ -2092,7 +2093,7 @@ const FilterTabs = () => (
           {/* Free Returns */}
           <button
             onClick={() => toggleCheckboxFilter('freeReturns')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+            className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
               filters.freeReturns 
                 ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
                 : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
@@ -2104,7 +2105,7 @@ const FilterTabs = () => (
           {/* New Arrivals */}
           <button
             onClick={() => toggleCheckboxFilter('newArrivals')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+            className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
               filters.newArrivals 
                 ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
                 : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
@@ -2116,7 +2117,7 @@ const FilterTabs = () => (
           {/* Shipped From */}
           <button
             onClick={() => toggleDropdown('shipped')}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
               filters.shippedFrom.length > 0 
                 ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
                 : activeDropdown === 'shipped' 
@@ -2137,7 +2138,7 @@ const FilterTabs = () => (
           {hasActiveFilters() && (
             <button 
               onClick={clearAllFilters} 
-              className="px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-800 whitespace-nowrap hover:bg-blue-50 rounded-lg transition-all"
+              className="px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-800 whitespace-nowrap hover:bg-blue-50 rounded-md transition-all"
             >
               Clear All
             </button>
@@ -2150,7 +2151,7 @@ const FilterTabs = () => (
     {activeDropdown && (
       <div className="px-3 pb-3 pt-1 border-b border-gray-100">
         {activeDropdown === 'sort' && (
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+          <div className="bg-white border border-gray-200 rounded-md shadow-sm">
             <div className="py-1">
               {['popular', 'newest', 'price_low', 'price_high', 'rating'].map((sort) => (
                 <button
@@ -2172,7 +2173,7 @@ const FilterTabs = () => (
         )}
 
         {activeDropdown === 'price' && (
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+          <div className="bg-white border border-gray-200 rounded-md shadow-sm">
             <div className="py-1">
               <button 
                 onClick={() => handlePriceFilter(undefined, 25)} 
@@ -2211,7 +2212,7 @@ const FilterTabs = () => (
         )}
 
         {activeDropdown === 'rating' && (
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+          <div className="bg-white border border-gray-200 rounded-md shadow-sm">
             <div className="py-1">
               {[5, 4, 3, 2].map((rating) => (
                 <button 
@@ -2229,10 +2230,10 @@ const FilterTabs = () => (
         )}
 
         {activeDropdown === 'shipped' && (
-          <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+          <div className="bg-white border border-gray-200 rounded-md shadow-sm">
             <div className="p-3 space-y-2">
               {['United States', 'International', 'Local Pickup'].map((location) => (
-                <label key={location} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                <label key={location} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded-md">
                   <input 
                     type="checkbox" 
                     checked={filters.shippedFrom.includes(location)}
@@ -2253,7 +2254,7 @@ const FilterTabs = () => (
       <div className="px-3 py-2 border-b border-gray-100">
         <div className="flex flex-wrap gap-2">
           {filters.price.min !== undefined && filters.price.max !== undefined && (
-            <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-lg">
+            <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-md">
               Price: ${filters.price.min} - ${filters.price.max}
               <button 
                 onClick={() => setFilters({...filters, price: {}})}
@@ -2264,7 +2265,7 @@ const FilterTabs = () => (
             </span>
           )}
           {filters.rating !== null && (
-            <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-lg">
+            <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-md">
               Rating: {filters.rating}+ Stars
               <button 
                 onClick={() => setFilters({...filters, rating: null})}
@@ -2275,7 +2276,7 @@ const FilterTabs = () => (
             </span>
           )}
           {filters.freeShipping && (
-            <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-lg">
+            <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-md">
               Free Shipping
               <button 
                 onClick={() => setFilters({...filters, freeShipping: false})}
@@ -2286,7 +2287,7 @@ const FilterTabs = () => (
             </span>
           )}
           {filters.shippedFrom.map(location => (
-            <span key={location} className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-lg">
+            <span key={location} className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-md">
               From: {location}
               <button 
                 onClick={() => handleShippingFilter(location)}
@@ -2297,7 +2298,7 @@ const FilterTabs = () => (
             </span>
           ))}
           {filters.onSale && (
-            <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-lg">
+            <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-md">
               On Sale
               <button 
                 onClick={() => setFilters({...filters, onSale: false})}
@@ -2308,7 +2309,7 @@ const FilterTabs = () => (
             </span>
           )}
           {filters.freeReturns && (
-            <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-lg">
+            <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-md">
               Free Returns
               <button 
                 onClick={() => setFilters({...filters, freeReturns: false})}
@@ -2319,7 +2320,7 @@ const FilterTabs = () => (
             </span>
           )}
           {filters.newArrivals && (
-            <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-lg">
+            <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-md">
               New Arrivals
               <button 
                 onClick={() => setFilters({...filters, newArrivals: false})}
