@@ -1200,11 +1200,7 @@ const InfiniteContentGrid: React.FC<InfiniteContentGridProps> = ({
 
   return (
     <div>
-      {/* Results count */}
-      <div className="px-4 py-2 text-sm text-gray-600">
-        Showing {visibleContent.length} of {filteredContent.length} results
-      </div>
-
+    
       {/* Masonry Grid */}
       <MasonryGrid items={visibleContent} />
 
