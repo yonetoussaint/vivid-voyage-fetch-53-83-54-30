@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import HeroBanner from "@/components/home/HeroBanner";
 import FlashDeals from "@/components/home/FlashDeals";
-import FavouriteChannels from "./components/FavouriteChannels";
-import InfiniteContentGrid from "./components/InfiniteContentGrid";
+import FavouriteChannels from "@/components/FavouriteChannels";
+import InfiniteContentGrid from "@/components/InfiniteContentGrid";
 import Footer from "@/components/Footer";
 
 const ForYou: React.FC = () => {
