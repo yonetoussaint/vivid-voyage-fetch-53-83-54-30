@@ -194,7 +194,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({ filters, onFilterChange }) => {
       
       <div>
         <div className="overflow-x-auto hide-scrollbar">
-          <div className="flex items-center gap-2 px-3 min-w-max py-1">
+          <div className="flex items-center gap-2 px-2 min-w-max py-1">
             {/* Sort */}
             <button
               onClick={() => toggleDropdown('sort')}
