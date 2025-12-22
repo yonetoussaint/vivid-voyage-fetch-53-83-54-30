@@ -2010,7 +2010,7 @@ const InfiniteContentGrid: React.FC<{
   }
 
   // FilterTabs Component - Updated to not show toggle filters at the bottom
-// FilterTabs Component - Updated with edge-to-edge scrolling
+// FilterTabs Component - Updated with reduced height and smaller padding
 const FilterTabs = () => {
   // Function to render active filters at the bottom, excluding toggle filters
   const renderActiveFilters = () => {
@@ -2022,7 +2022,7 @@ const FilterTabs = () => {
     // Price filter - only show if it's a range selection (not just opened)
     if (filters.price.min !== undefined && filters.price.max !== undefined) {
       activeFilters.push(
-        <span key="price" className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-md">
+        <span key="price" className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-md">
           Price: ${filters.price.min} - ${filters.price.max}
           <button 
             onClick={() => setFilters({...filters, price: {}})}
@@ -2037,7 +2037,7 @@ const FilterTabs = () => {
     // Rating filter - only show if a rating is selected
     if (filters.rating !== null) {
       activeFilters.push(
-        <span key="rating" className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-md">
+        <span key="rating" className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-md">
           Rating: {filters.rating}+ Stars
           <button 
             onClick={() => setFilters({...filters, rating: null})}
@@ -2052,7 +2052,7 @@ const FilterTabs = () => {
     // Shipped From filters - only show locations that are selected
     filters.shippedFrom.forEach(location => {
       activeFilters.push(
-        <span key={`shipped-${location}`} className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-md">
+        <span key={`shipped-${location}`} className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-md">
           From: {location}
           <button 
             onClick={() => handleShippingFilter(location)}
@@ -2068,7 +2068,7 @@ const FilterTabs = () => {
     if (activeFilters.length === 0) return null;
     
     return (
-      <div className="px-4 py-2 border-b border-gray-100">
+      <div className="px-3 py-2 border-b border-gray-100">
         <div className="flex flex-wrap gap-2">
           {activeFilters}
         </div>
@@ -2083,15 +2083,15 @@ const FilterTabs = () => {
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
       
-      {/* Filter tabs container - REMOVED gray bg and vertical padding */}
+      {/* Filter tabs container - reduced height and padding */}
       <div className="border-b border-gray-100">
         <div className="overflow-x-auto hide-scrollbar">
-          {/* Container with edge-to-edge padding, no vertical padding */}
-          <div className="flex items-center gap-1.5 px-4 min-w-max">
+          {/* Container with reduced padding */}
+          <div className="flex items-center gap-1 px-3 min-w-max py-1">
             {/* Sort */}
             <button
               onClick={() => toggleDropdown('sort')}
-              className={`flex items-center gap-1 px-3 py-2 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
+              className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
                 activeDropdown === 'sort' 
                   ? 'bg-white border border-gray-200 shadow-sm text-gray-900' 
                   : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
@@ -2104,7 +2104,7 @@ const FilterTabs = () => {
             {/* Price */}
             <button
               onClick={() => toggleDropdown('price')}
-              className={`flex items-center gap-1 px-3 py-2 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
+              className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
                 filters.price.min || filters.price.max
                   ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
                   : activeDropdown === 'price' 
@@ -2119,7 +2119,7 @@ const FilterTabs = () => {
             {/* Rating */}
             <button
               onClick={() => toggleDropdown('rating')}
-              className={`flex items-center gap-1 px-3 py-2 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
+              className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
                 filters.rating 
                   ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
                   : activeDropdown === 'rating' 
@@ -2134,7 +2134,7 @@ const FilterTabs = () => {
             {/* Free Shipping */}
             <button
               onClick={() => toggleCheckboxFilter('freeShipping')}
-              className={`px-3 py-2 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
+              className={`px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
                 filters.freeShipping 
                   ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
                   : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
@@ -2146,7 +2146,7 @@ const FilterTabs = () => {
             {/* On Sale */}
             <button
               onClick={() => toggleCheckboxFilter('onSale')}
-              className={`px-3 py-2 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
+              className={`px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
                 filters.onSale 
                   ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
                   : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
@@ -2158,7 +2158,7 @@ const FilterTabs = () => {
             {/* Free Returns */}
             <button
               onClick={() => toggleCheckboxFilter('freeReturns')}
-              className={`px-3 py-2 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
+              className={`px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
                 filters.freeReturns 
                   ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
                   : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
@@ -2170,7 +2170,7 @@ const FilterTabs = () => {
             {/* New Arrivals */}
             <button
               onClick={() => toggleCheckboxFilter('newArrivals')}
-              className={`px-3 py-2 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
+              className={`px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
                 filters.newArrivals 
                   ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
                   : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
@@ -2182,7 +2182,7 @@ const FilterTabs = () => {
             {/* Shipped From */}
             <button
               onClick={() => toggleDropdown('shipped')}
-              className={`flex items-center gap-1 px-3 py-2 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
+              className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
                 filters.shippedFrom.length > 0 
                   ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
                   : activeDropdown === 'shipped' 
@@ -2192,7 +2192,7 @@ const FilterTabs = () => {
             >
               Shipped From
               {filters.shippedFrom.length > 0 && (
-                <span className="ml-1 text-[10px] bg-blue-600 text-white rounded-full w-3.5 h-3.5 flex items-center justify-center">
+                <span className="ml-1 text-[9px] bg-blue-600 text-white rounded-full w-3 h-3 flex items-center justify-center">
                   {filters.shippedFrom.length}
                 </span>
               )}
@@ -2203,7 +2203,7 @@ const FilterTabs = () => {
             {hasActiveFilters() && (
               <button 
                 onClick={clearAllFilters} 
-                className="px-3 py-2 text-xs font-medium text-blue-600 hover:text-blue-800 whitespace-nowrap hover:bg-blue-50 rounded-md transition-all"
+                className="px-2 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-800 whitespace-nowrap hover:bg-blue-50 rounded-md transition-all"
               >
                 Clear All
               </button>
@@ -2214,7 +2214,7 @@ const FilterTabs = () => {
 
       {/* Dropdown panels in normal document flow */}
       {activeDropdown && (
-        <div className="px-4 pb-3 pt-1 border-b border-gray-100">
+        <div className="px-3 pb-3 pt-1 border-b border-gray-100">
           {activeDropdown === 'sort' && (
             <div className="bg-white border border-gray-200 rounded-md shadow-sm">
               <div className="py-1">
@@ -2222,7 +2222,7 @@ const FilterTabs = () => {
                   <button
                     key={sort}
                     onClick={() => handleSortChange(sort as FilterState['sortBy'])}
-                    className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors ${
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors ${
                       filters.sortBy === sort ? 'text-blue-600 font-medium' : 'text-gray-700'
                     }`}
                   >
@@ -2242,7 +2242,7 @@ const FilterTabs = () => {
               <div className="py-1">
                 <button 
                   onClick={() => handlePriceFilter(undefined, 25)} 
-                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors ${
+                  className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors ${
                     filters.price.max === 25 && filters.price.min === undefined ? 'text-blue-600 font-medium' : 'text-gray-700'
                   }`}
                 >
@@ -2250,7 +2250,7 @@ const FilterTabs = () => {
                 </button>
                 <button 
                   onClick={() => handlePriceFilter(25, 50)} 
-                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors ${
+                  className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors ${
                     filters.price.min === 25 && filters.price.max === 50 ? 'text-blue-600 font-medium' : 'text-gray-700'
                   }`}
                 >
@@ -2258,7 +2258,7 @@ const FilterTabs = () => {
                 </button>
                 <button 
                   onClick={() => handlePriceFilter(50, 100)} 
-                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors ${
+                  className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors ${
                     filters.price.min === 50 && filters.price.max === 100 ? 'text-blue-600 font-medium' : 'text-gray-700'
                   }`}
                 >
@@ -2266,7 +2266,7 @@ const FilterTabs = () => {
                 </button>
                 <button 
                   onClick={() => handlePriceFilter(100, undefined)} 
-                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors ${
+                  className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors ${
                     filters.price.min === 100 && filters.price.max === undefined ? 'text-blue-600 font-medium' : 'text-gray-700'
                   }`}
                 >
@@ -2283,7 +2283,7 @@ const FilterTabs = () => {
                   <button 
                     key={rating} 
                     onClick={() => handleRatingFilter(rating)} 
-                    className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors ${
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors ${
                       filters.rating === rating ? 'text-blue-600 font-medium' : 'text-gray-700'
                     }`}
                   >
@@ -2296,16 +2296,16 @@ const FilterTabs = () => {
 
           {activeDropdown === 'shipped' && (
             <div className="bg-white border border-gray-200 rounded-md shadow-sm">
-              <div className="p-3 space-y-2">
+              <div className="p-2 space-y-1">
                 {['United States', 'International', 'Local Pickup'].map((location) => (
                   <label key={location} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded-md">
                     <input 
                       type="checkbox" 
                       checked={filters.shippedFrom.includes(location)}
                       onChange={() => handleShippingFilter(location)}
-                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                      className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
                     />
-                    <span className="text-sm text-gray-700">{location}</span>
+                    <span className="text-xs text-gray-700">{location}</span>
                   </label>
                 ))}
               </div>
