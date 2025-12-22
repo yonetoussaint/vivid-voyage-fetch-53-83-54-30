@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import FlashDeals from "@/components/home/FlashDeals";
-import FavouriteChannels from "@/components/home/FavouriteChannels";
-import InfiniteContentGrid from "@/components/home/InfiniteContentGrid";
+import FavouriteChannels from "@/components/FavouriteChannels";
+import InfiniteContentGrid from "@/components/InfiniteContentGrid";
 
 interface ElectronicsPageProps {
   category?: string;
