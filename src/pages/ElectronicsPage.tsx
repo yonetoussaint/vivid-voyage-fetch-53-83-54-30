@@ -159,6 +159,25 @@ const formatNumber = (num: number): string => {
   return num.toString();
 };
 
+// Helper function to check if an object is empty
+const isEmptyObject = (obj: any): boolean => {
+  if (!obj || typeof obj !== 'object') return true;
+  return Object.keys(obj).length === 0;
+};
+
+// Helper function to check if filters are active
+const hasActiveFilters = (filters: FilterState): boolean => {
+  return (
+    (filters.price.min !== undefined || filters.price.max !== undefined) ||
+    filters.rating !== null ||
+    filters.freeShipping ||
+    filters.onSale ||
+    filters.freeReturns ||
+    filters.newArrivals ||
+    filters.shippedFrom.length > 0
+  );
+};
+
 // Fetch reels function
 const fetchReels = async (limit: number = 8): Promise<Reel[]> => {
   // Mock data - replace with actual API call
@@ -803,9 +822,7 @@ const FilterTabs: React.FC<{
         </div>
 
         {/* Clear All Filters */}
-        {(filters.price.min !== undefined || filters.price.max !== undefined || 
-          filters.rating !== null || filters.freeShipping || filters.onSale || 
-          filters.freeReturns || filters.newArrivals || filters.shippedFrom.length > 0) && (
+        {hasActiveFilters(filters) && (
           <button
             onClick={() => {
               onFilterChange({
@@ -828,9 +845,7 @@ const FilterTabs: React.FC<{
       </div>
 
       {/* Active filters display */}
-      {(filters.price.min !== undefined || filters.price.max !== undefined || 
-        filters.rating !== null || filters.freeShipping || filters.onSale || 
-        filters.freeReturns || filters.newArrivals || filters.shippedFrom.length > 0) && (
+      {hasActiveFilters(filters) && (
         <div className="px-4 py-2 border-t border-gray-100 bg-gray-50">
           <div className="flex flex-wrap gap-2">
             {filters.price.min !== undefined && filters.price.max !== undefined && (
@@ -1678,15 +1693,14 @@ const applyFilters = (items: ContentItem[], filters: FilterState): ContentItem[]
       
       // New arrivals filter (within last 7 days)
       if (filters.newArrivals) {
-        const createdDate = new Date(product.created_at || 0);
+        const createdDate = product.created_at ? new Date(product.created_at) : new Date(0);
         const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
         if (createdDate < sevenDaysAgo) return false;
       }
       
       // Shipped from filter
-      if (filters.shippedFrom.length > 0) {
-        const location = product.shipping?.location;
-        if (!location || !filters.shippedFrom.includes(location)) return false;
+      if (filters.shippedFrom.length > 0 && product.shipping?.location) {
+        if (!filters.shippedFrom.includes(product.shipping.location)) return false;
       }
       
       return true;
@@ -1704,8 +1718,8 @@ const sortContent = (items: ContentItem[], sortBy: FilterState['sortBy']): Conte
   switch (sortBy) {
     case 'newest':
       sorted.sort((a, b) => {
-        const dateA = new Date(a.created_at || 0).getTime();
-        const dateB = new Date(b.created_at || 0).getTime();
+        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
         return dateB - dateA;
       });
       break;
@@ -1900,11 +1914,7 @@ const InfiniteContentGrid: React.FC<{
     return (
       <div className="pt-2">
         <div className="text-center py-8 text-gray-500">
-          {Object.values(filters).some(filter => 
-            Array.isArray(filter) ? filter.length > 0 : 
-            typeof filter === 'object' ? Object.keys(filter).length > 0 : 
-            filter !== false && filter !== null
-          ) ? (
+          {hasActiveFilters(filters) ? (
             <>
               <Sparkles className="w-12 h-12 text-gray-300 mx-auto mb-3" />
               <p className="text-sm font-medium text-gray-700 mb-1">No matching items found</p>
