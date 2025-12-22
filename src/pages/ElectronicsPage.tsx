@@ -2010,22 +2010,25 @@ const InfiniteContentGrid: React.FC<{
   }
 
   // FilterTabs Component with improved UI from the provided code
-  const FilterTabs = () => (
-    <div className="w-full bg-white border-b border-gray-200">
-      <style>{`
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
-      
+  // FilterTabs Component with light gray bg and small rounded borders
+const FilterTabs = () => (
+  <div className="w-full bg-white">
+    <style>{`
+      .hide-scrollbar::-webkit-scrollbar { display: none; }
+      .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    `}</style>
+    
+    {/* Filter tabs container with light gray background */}
+    <div className="bg-gray-50 px-3 py-2">
       <div className="overflow-x-auto hide-scrollbar">
-        <div className="flex items-center gap-2 px-2 py-3 min-w-max">
+        <div className="flex items-center gap-1.5 py-1 min-w-max">
           {/* Sort */}
           <button
             onClick={() => toggleDropdown('sort')}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-full border text-xs font-medium whitespace-nowrap transition-all ${
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
               activeDropdown === 'sort' 
-                ? 'bg-gray-100 border-gray-300 shadow-sm' 
-                : 'border-gray-200 hover:border-gray-300'
+                ? 'bg-white border border-gray-200 shadow-sm text-gray-900' 
+                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
             }`}
           >
             {getSortLabel()}
@@ -2035,12 +2038,12 @@ const InfiniteContentGrid: React.FC<{
           {/* Price */}
           <button
             onClick={() => toggleDropdown('price')}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-full border text-xs font-medium whitespace-nowrap transition-all ${
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
               filters.price.min || filters.price.max
-                ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm'
+                ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
                 : activeDropdown === 'price' 
-                  ? 'bg-gray-100 border-gray-300 shadow-sm'
-                  : 'border-gray-200 hover:border-gray-300'
+                  ? 'bg-white border border-gray-200 shadow-sm text-gray-900'
+                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
             }`}
           >
             {getPriceLabel()}
@@ -2050,12 +2053,12 @@ const InfiniteContentGrid: React.FC<{
           {/* Rating */}
           <button
             onClick={() => toggleDropdown('rating')}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-full border text-xs font-medium whitespace-nowrap transition-all ${
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
               filters.rating 
-                ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm'
+                ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
                 : activeDropdown === 'rating' 
-                  ? 'bg-gray-100 border-gray-300 shadow-sm'
-                  : 'border-gray-200 hover:border-gray-300'
+                  ? 'bg-white border border-gray-200 shadow-sm text-gray-900'
+                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
             }`}
           >
             {getRatingLabel()}
@@ -2065,10 +2068,10 @@ const InfiniteContentGrid: React.FC<{
           {/* Free Shipping */}
           <button
             onClick={() => toggleCheckboxFilter('freeShipping')}
-            className={`px-3 py-1.5 rounded-full border text-xs font-medium whitespace-nowrap transition-all ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
               filters.freeShipping 
-                ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm'
-                : 'border-gray-200 hover:border-gray-300'
+                ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
+                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
             }`}
           >
             Free Shipping
@@ -2077,10 +2080,10 @@ const InfiniteContentGrid: React.FC<{
           {/* On Sale */}
           <button
             onClick={() => toggleCheckboxFilter('onSale')}
-            className={`px-3 py-1.5 rounded-full border text-xs font-medium whitespace-nowrap transition-all ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
               filters.onSale 
-                ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm'
-                : 'border-gray-200 hover:border-gray-300'
+                ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
+                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
             }`}
           >
             On Sale
@@ -2089,10 +2092,10 @@ const InfiniteContentGrid: React.FC<{
           {/* Free Returns */}
           <button
             onClick={() => toggleCheckboxFilter('freeReturns')}
-            className={`px-3 py-1.5 rounded-full border text-xs font-medium whitespace-nowrap transition-all ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
               filters.freeReturns 
-                ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm'
-                : 'border-gray-200 hover:border-gray-300'
+                ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
+                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
             }`}
           >
             Free Returns
@@ -2101,10 +2104,10 @@ const InfiniteContentGrid: React.FC<{
           {/* New Arrivals */}
           <button
             onClick={() => toggleCheckboxFilter('newArrivals')}
-            className={`px-3 py-1.5 rounded-full border text-xs font-medium whitespace-nowrap transition-all ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
               filters.newArrivals 
-                ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm'
-                : 'border-gray-200 hover:border-gray-300'
+                ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
+                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
             }`}
           >
             New Arrivals
@@ -2113,12 +2116,12 @@ const InfiniteContentGrid: React.FC<{
           {/* Shipped From */}
           <button
             onClick={() => toggleDropdown('shipped')}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-full border text-xs font-medium whitespace-nowrap transition-all ${
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
               filters.shippedFrom.length > 0 
-                ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-sm'
+                ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
                 : activeDropdown === 'shipped' 
-                  ? 'bg-gray-100 border-gray-300 shadow-sm'
-                  : 'border-gray-200 hover:border-gray-300'
+                  ? 'bg-white border border-gray-200 shadow-sm text-gray-900'
+                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
             }`}
           >
             Shipped From
@@ -2134,213 +2137,203 @@ const InfiniteContentGrid: React.FC<{
           {hasActiveFilters() && (
             <button 
               onClick={clearAllFilters} 
-              className="px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-800 whitespace-nowrap hover:bg-blue-50 rounded-full transition-all"
+              className="px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-800 whitespace-nowrap hover:bg-blue-50 rounded-lg transition-all"
             >
               Clear All
             </button>
           )}
         </div>
       </div>
-
-      {/* Dropdown panels in normal document flow */}
-      {activeDropdown && (
-        <div className="px-3 pb-3 border-t border-gray-100 pt-3">
-          {activeDropdown === 'sort' && (
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
-              <div className="py-1">
-                {['popular', 'newest', 'price_low', 'price_high', 'rating'].map((sort) => (
-                  <button
-                    key={sort}
-                    onClick={() => handleSortChange(sort as FilterState['sortBy'])}
-                    className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors ${
-                      filters.sortBy === sort ? 'text-blue-600 font-medium' : 'text-gray-700'
-                    }`}
-                  >
-                    {sort === 'popular' && 'Popular'}
-                    {sort === 'newest' && 'Newest'}
-                    {sort === 'price_low' && 'Price: Low to High'}
-                    {sort === 'price_high' && 'Price: High to Low'}
-                    {sort === 'rating' && 'Top Rated'}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {activeDropdown === 'price' && (
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
-              <div className="py-1">
-                <button 
-                  onClick={() => handlePriceFilter(undefined, 25)} 
-                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors ${
-                    filters.price.max === 25 && filters.price.min === undefined ? 'text-blue-600 font-medium' : 'text-gray-700'
-                  }`}
-                >
-                  Under $25
-                </button>
-                <button 
-                  onClick={() => handlePriceFilter(25, 50)} 
-                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors ${
-                    filters.price.min === 25 && filters.price.max === 50 ? 'text-blue-600 font-medium' : 'text-gray-700'
-                  }`}
-                >
-                  $25 - $50
-                </button>
-                <button 
-                  onClick={() => handlePriceFilter(50, 100)} 
-                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors ${
-                    filters.price.min === 50 && filters.price.max === 100 ? 'text-blue-600 font-medium' : 'text-gray-700'
-                  }`}
-                >
-                  $50 - $100
-                </button>
-                <button 
-                  onClick={() => handlePriceFilter(100, undefined)} 
-                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors ${
-                    filters.price.min === 100 && filters.price.max === undefined ? 'text-blue-600 font-medium' : 'text-gray-700'
-                  }`}
-                >
-                  Over $100
-                </button>
-                <div className="border-t border-gray-200 pt-2 mt-1 px-4">
-                  <button
-                    onClick={() => {
-                      setFilters({...filters, price: {}});
-                      setActiveDropdown(null);
-                    }}
-                    className="w-full text-center px-4 py-2 text-xs text-blue-600 hover:text-blue-800 font-medium"
-                  >
-                    Clear Price Filter
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeDropdown === 'rating' && (
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
-              <div className="py-1">
-                {[5, 4, 3, 2].map((rating) => (
-                  <button 
-                    key={rating} 
-                    onClick={() => handleRatingFilter(rating)} 
-                    className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors ${
-                      filters.rating === rating ? 'text-blue-600 font-medium' : 'text-gray-700'
-                    }`}
-                  >
-                    {'★'.repeat(rating)} & Up
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {activeDropdown === 'shipped' && (
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
-              <div className="p-3 space-y-2">
-                {['United States', 'International', 'Local Pickup'].map((location) => (
-                  <label key={location} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
-                    <input 
-                      type="checkbox" 
-                      checked={filters.shippedFrom.includes(location)}
-                      onChange={() => handleShippingFilter(location)}
-                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-                    />
-                    <span className="text-sm text-gray-700">{location}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Active filters display - separate from dropdown */}
-      {hasActiveFilters() && activeDropdown === null && (
-        <div className="px-3 py-3 border-t border-gray-100">
-          <div className="flex flex-wrap gap-2">
-            {filters.price.min !== undefined && filters.price.max !== undefined && (
-              <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-full">
-                Price: ${filters.price.min} - ${filters.price.max}
-                <button 
-                  onClick={() => setFilters({...filters, price: {}})}
-                  className="text-blue-500 hover:text-blue-700 ml-1"
-                >
-                  ×
-                </button>
-              </span>
-            )}
-            {filters.rating !== null && (
-              <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-full">
-                Rating: {filters.rating}+ Stars
-                <button 
-                  onClick={() => setFilters({...filters, rating: null})}
-                  className="text-blue-500 hover:text-blue-700 ml-1"
-                >
-                  ×
-                </button>
-              </span>
-            )}
-            {filters.freeShipping && (
-              <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-full">
-                Free Shipping
-                <button 
-                  onClick={() => setFilters({...filters, freeShipping: false})}
-                  className="text-blue-500 hover:text-blue-700 ml-1"
-                >
-                  ×
-                </button>
-              </span>
-            )}
-            {filters.shippedFrom.map(location => (
-              <span key={location} className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-full">
-                From: {location}
-                <button 
-                  onClick={() => handleShippingFilter(location)}
-                  className="text-blue-500 hover:text-blue-700 ml-1"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-            {filters.onSale && (
-              <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-full">
-                On Sale
-                <button 
-                  onClick={() => setFilters({...filters, onSale: false})}
-                  className="text-blue-500 hover:text-blue-700 ml-1"
-                >
-                  ×
-                </button>
-              </span>
-            )}
-            {filters.freeReturns && (
-              <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-full">
-                Free Returns
-                <button 
-                  onClick={() => setFilters({...filters, freeReturns: false})}
-                  className="text-blue-500 hover:text-blue-700 ml-1"
-                >
-                  ×
-                </button>
-              </span>
-            )}
-            {filters.newArrivals && (
-              <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-full">
-                New Arrivals
-                <button 
-                  onClick={() => setFilters({...filters, newArrivals: false})}
-                  className="text-blue-500 hover:text-blue-700 ml-1"
-                >
-                  ×
-                </button>
-              </span>
-            )}
-          </div>
-        </div>
-      )}
     </div>
-  );
+
+    {/* Dropdown panels in normal document flow */}
+    {activeDropdown && (
+      <div className="px-3 pb-3 pt-1 border-b border-gray-100">
+        {activeDropdown === 'sort' && (
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+            <div className="py-1">
+              {['popular', 'newest', 'price_low', 'price_high', 'rating'].map((sort) => (
+                <button
+                  key={sort}
+                  onClick={() => handleSortChange(sort as FilterState['sortBy'])}
+                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors ${
+                    filters.sortBy === sort ? 'text-blue-600 font-medium' : 'text-gray-700'
+                  }`}
+                >
+                  {sort === 'popular' && 'Popular'}
+                  {sort === 'newest' && 'Newest'}
+                  {sort === 'price_low' && 'Price: Low to High'}
+                  {sort === 'price_high' && 'Price: High to Low'}
+                  {sort === 'rating' && 'Top Rated'}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeDropdown === 'price' && (
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+            <div className="py-1">
+              <button 
+                onClick={() => handlePriceFilter(undefined, 25)} 
+                className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors ${
+                  filters.price.max === 25 && filters.price.min === undefined ? 'text-blue-600 font-medium' : 'text-gray-700'
+                }`}
+              >
+                Under $25
+              </button>
+              <button 
+                onClick={() => handlePriceFilter(25, 50)} 
+                className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors ${
+                  filters.price.min === 25 && filters.price.max === 50 ? 'text-blue-600 font-medium' : 'text-gray-700'
+                }`}
+              >
+                $25 - $50
+              </button>
+              <button 
+                onClick={() => handlePriceFilter(50, 100)} 
+                className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors ${
+                  filters.price.min === 50 && filters.price.max === 100 ? 'text-blue-600 font-medium' : 'text-gray-700'
+                }`}
+              >
+                $50 - $100
+              </button>
+              <button 
+                onClick={() => handlePriceFilter(100, undefined)} 
+                className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors ${
+                  filters.price.min === 100 && filters.price.max === undefined ? 'text-blue-600 font-medium' : 'text-gray-700'
+                }`}
+              >
+                Over $100
+              </button>
+            </div>
+          </div>
+        )}
+
+        {activeDropdown === 'rating' && (
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+            <div className="py-1">
+              {[5, 4, 3, 2].map((rating) => (
+                <button 
+                  key={rating} 
+                  onClick={() => handleRatingFilter(rating)} 
+                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors ${
+                    filters.rating === rating ? 'text-blue-600 font-medium' : 'text-gray-700'
+                  }`}
+                >
+                  {'★'.repeat(rating)} & Up
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeDropdown === 'shipped' && (
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+            <div className="p-3 space-y-2">
+              {['United States', 'International', 'Local Pickup'].map((location) => (
+                <label key={location} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                  <input 
+                    type="checkbox" 
+                    checked={filters.shippedFrom.includes(location)}
+                    onChange={() => handleShippingFilter(location)}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                  />
+                  <span className="text-sm text-gray-700">{location}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    )}
+
+    {/* Active filters display - separate from dropdown */}
+    {hasActiveFilters() && activeDropdown === null && (
+      <div className="px-3 py-2 border-b border-gray-100">
+        <div className="flex flex-wrap gap-2">
+          {filters.price.min !== undefined && filters.price.max !== undefined && (
+            <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-lg">
+              Price: ${filters.price.min} - ${filters.price.max}
+              <button 
+                onClick={() => setFilters({...filters, price: {}})}
+                className="text-blue-500 hover:text-blue-700 ml-1"
+              >
+                ×
+              </button>
+            </span>
+          )}
+          {filters.rating !== null && (
+            <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-lg">
+              Rating: {filters.rating}+ Stars
+              <button 
+                onClick={() => setFilters({...filters, rating: null})}
+                className="text-blue-500 hover:text-blue-700 ml-1"
+              >
+                ×
+              </button>
+            </span>
+          )}
+          {filters.freeShipping && (
+            <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-lg">
+              Free Shipping
+              <button 
+                onClick={() => setFilters({...filters, freeShipping: false})}
+                className="text-blue-500 hover:text-blue-700 ml-1"
+              >
+                ×
+              </button>
+            </span>
+          )}
+          {filters.shippedFrom.map(location => (
+            <span key={location} className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-lg">
+              From: {location}
+              <button 
+                onClick={() => handleShippingFilter(location)}
+                className="text-blue-500 hover:text-blue-700 ml-1"
+              >
+                ×
+              </button>
+            </span>
+          ))}
+          {filters.onSale && (
+            <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-lg">
+              On Sale
+              <button 
+                onClick={() => setFilters({...filters, onSale: false})}
+                className="text-blue-500 hover:text-blue-700 ml-1"
+              >
+                ×
+              </button>
+            </span>
+          )}
+          {filters.freeReturns && (
+            <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-lg">
+              Free Returns
+              <button 
+                onClick={() => setFilters({...filters, freeReturns: false})}
+                className="text-blue-500 hover:text-blue-700 ml-1"
+              >
+                ×
+              </button>
+            </span>
+          )}
+          {filters.newArrivals && (
+            <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-lg">
+              New Arrivals
+              <button 
+                onClick={() => setFilters({...filters, newArrivals: false})}
+                className="text-blue-500 hover:text-blue-700 ml-1"
+              >
+                ×
+              </button>
+            </span>
+          )}
+        </div>
+      </div>
+    )}
+  </div>
+);
 
   // Show empty state if no content
   if (!initialLoading && filteredContent.length === 0) {
