@@ -1761,8 +1761,7 @@ const sortContent = (items: ContentItem[], sortBy: FilterState['sortBy']): Conte
   return sorted;
 };
 
-// InfiniteContentGrid Component
-// InfiniteContentGrid Component with integrated filters
+// InfiniteContentGrid Component with integrated filters - FIXED VERSION
 const InfiniteContentGrid: React.FC<{ 
   category?: string;
 }> = ({ category }) => {
@@ -1923,26 +1922,6 @@ const InfiniteContentGrid: React.FC<{
     return filteredContent.slice(startIndex, endIndex);
   }, [filteredContent, page, contentPerPage]);
 
-  // Calculate content type statistics
-  const contentStats = useMemo(() => {
-    const stats = {
-      products: 0,
-      reels: 0,
-      posts: 0,
-      vendors: 0,
-      total: visibleContent.length
-    };
-
-    visibleContent.forEach(item => {
-      if (item.type === 'product') stats.products++;
-      if (item.type === 'reel') stats.reels++;
-      if (item.type === 'post') stats.posts++;
-      if (item.type === 'vendor') stats.vendors++;
-    });
-
-    return stats;
-  }, [visibleContent]);
-
   // Check if we have more content to load
   useEffect(() => {
     if (filteredContent.length > 0) {
@@ -2030,386 +2009,543 @@ const InfiniteContentGrid: React.FC<{
     );
   }
 
-  // FilterTabs Component integrated here
+  // FilterTabs Component integrated here - FIXED VERSION
   const FilterTabs = () => (
-    <div className="w-full bg-white border-b border-gray-200 sticky top-0 z-40 mb-2">
-      {/* Sort by dropdown */}
-      <div className="flex items-center gap-4 px-4 py-3 overflow-x-auto border-b border-gray-100">
-        <div className="relative">
-          <button
-            onClick={() => toggleDropdown('sort')}
-            className={`flex items-center gap-2 whitespace-nowrap text-sm font-medium transition-transform ${
-              activeDropdown === 'sort' ? 'text-gray-900' : 'text-gray-700 hover:text-gray-900'
-            }`}
-          >
-            Sort by: {getSortLabel()}
-            <ChevronDown className={`w-4 h-4 transition-transform ${activeDropdown === 'sort' ? 'rotate-180' : ''}`} />
-          </button>
-
-          {activeDropdown === 'sort' && (
-            <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-              <div className="py-2">
-                <button
-                  onClick={() => handleSortChange('popular')}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
-                    filters.sortBy === 'popular' ? 'text-blue-600 font-medium' : 'text-gray-700'
-                  }`}
-                >
-                  Popular
-                </button>
-                <button
-                  onClick={() => handleSortChange('newest')}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
-                    filters.sortBy === 'newest' ? 'text-blue-600 font-medium' : 'text-gray-700'
-                  }`}
-                >
-                  Newest
-                </button>
-                <button
-                  onClick={() => handleSortChange('price_low')}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
-                    filters.sortBy === 'price_low' ? 'text-blue-600 font-medium' : 'text-gray-700'
-                  }`}
-                >
-                  Price: Low to High
-                </button>
-                <button
-                  onClick={() => handleSortChange('price_high')}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
-                    filters.sortBy === 'price_high' ? 'text-blue-600 font-medium' : 'text-gray-700'
-                  }`}
-                >
-                  Price: High to Low
-                </button>
-                <button
-                  onClick={() => handleSortChange('rating')}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
-                    filters.sortBy === 'rating' ? 'text-blue-600 font-medium' : 'text-gray-700'
-                  }`}
-                >
-                  Top Rated
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Filter tabs */}
-      <div className="flex items-center gap-4 px-4 py-3 overflow-x-auto">
-        {/* Filter Button */}
-        <div className="relative">
-          <button
-            onClick={() => toggleDropdown('filter')}
-            className={`flex items-center gap-2 whitespace-nowrap text-sm font-medium transition-transform ${
-              activeDropdown === 'filter' ? 'text-gray-900' : 'text-gray-700 hover:text-gray-900'
-            }`}
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+    <div className="w-full bg-white border-b border-gray-200">
+      {/* Sort by dropdown - now in normal flow */}
+      <div className="border-b border-gray-100">
+        <div className="px-4 py-3">
+          <div className="relative">
+            <button
+              onClick={() => toggleDropdown('sort')}
+              className={`flex items-center gap-2 text-sm font-medium transition-transform ${
+                activeDropdown === 'sort' ? 'text-gray-900' : 'text-gray-700 hover:text-gray-900'
+              }`}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-              />
-            </svg>
-            Filter
-            <ChevronDown className={`w-4 h-4 transition-transform ${activeDropdown === 'filter' ? 'rotate-180' : ''}`} />
-          </button>
+              Sort by: {getSortLabel()}
+              <ChevronDown className={`w-4 h-4 transition-transform ${activeDropdown === 'sort' ? 'rotate-180' : ''}`} />
+            </button>
 
-          {activeDropdown === 'filter' && (
-            <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-              <div className="p-4 space-y-3">
-                <h4 className="text-sm font-medium text-gray-900 mb-2">Additional Filters</h4>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={filters.onSale}
-                    onChange={() => toggleCheckboxFilter('onSale')}
-                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-                  />
-                  <span className="text-sm text-gray-700">On Sale</span>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={filters.freeReturns}
-                    onChange={() => toggleCheckboxFilter('freeReturns')}
-                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-                  />
-                  <span className="text-sm text-gray-700">Free Returns</span>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={filters.newArrivals}
-                    onChange={() => toggleCheckboxFilter('newArrivals')}
-                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-                  />
-                  <span className="text-sm text-gray-700">New Arrivals</span>
-                </label>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Free Shipping */}
-        <button
-          onClick={() => toggleCheckboxFilter('freeShipping')}
-          className={`whitespace-nowrap text-sm font-medium ${
-            filters.freeShipping ? 'text-blue-600 font-medium' : 'text-gray-700 hover:text-gray-900'
-          }`}
-        >
-          Free Shipping
-          {filters.freeShipping && <span className="ml-1 text-blue-500">✓</span>}
-        </button>
-
-        {/* Price */}
-        <div className="relative">
-          <button
-            onClick={() => toggleDropdown('price')}
-            className={`flex items-center gap-2 whitespace-nowrap text-sm font-medium ${
-              activeDropdown === 'price' ? 'text-gray-900' : 'text-gray-700 hover:text-gray-900'
-            }`}
-          >
-            {getPriceLabel()}
-            <ChevronDown className={`w-4 h-4 transition-transform ${activeDropdown === 'price' ? 'rotate-180' : ''}`} />
-          </button>
-
-          {activeDropdown === 'price' && (
-            <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-              <div className="py-2">
-                <button
-                  onClick={() => handlePriceFilter(undefined, 25)}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
-                    filters.price.max === 25 && filters.price.min === undefined ? 'text-blue-600 font-medium' : 'text-gray-700'
-                  }`}
-                >
-                  Under $25
-                </button>
-                <button
-                  onClick={() => handlePriceFilter(25, 50)}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
-                    filters.price.min === 25 && filters.price.max === 50 ? 'text-blue-600 font-medium' : 'text-gray-700'
-                  }`}
-                >
-                  $25 - $50
-                </button>
-                <button
-                  onClick={() => handlePriceFilter(50, 100)}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
-                    filters.price.min === 50 && filters.price.max === 100 ? 'text-blue-600 font-medium' : 'text-gray-700'
-                  }`}
-                >
-                  $50 - $100
-                </button>
-                <button
-                  onClick={() => handlePriceFilter(100, undefined)}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
-                    filters.price.min === 100 && filters.price.max === undefined ? 'text-blue-600 font-medium' : 'text-gray-700'
-                  }`}
-                >
-                  Over $100
-                </button>
-                <div className="border-t border-gray-200 pt-2 mt-2 px-4">
+            {activeDropdown === 'sort' && (
+              <div className="mt-2 bg-white border border-gray-200 rounded-lg shadow-sm">
+                <div className="py-2">
                   <button
-                    onClick={() => {
-                      setFilters({...filters, price: {}});
-                      setActiveDropdown(null);
-                    }}
-                    className="w-full text-center px-4 py-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                    onClick={() => handleSortChange('popular')}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                      filters.sortBy === 'popular' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                    }`}
                   >
-                    Clear Price Filter
+                    Popular
+                  </button>
+                  <button
+                    onClick={() => handleSortChange('newest')}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                      filters.sortBy === 'newest' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    Newest
+                  </button>
+                  <button
+                    onClick={() => handleSortChange('price_low')}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                      filters.sortBy === 'price_low' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    Price: Low to High
+                  </button>
+                  <button
+                    onClick={() => handleSortChange('price_high')}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                      filters.sortBy === 'price_high' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    Price: High to Low
+                  </button>
+                  <button
+                    onClick={() => handleSortChange('rating')}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                      filters.sortBy === 'rating' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    Top Rated
                   </button>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
-
-        {/* Shipped From */}
-        <div className="relative">
-          <button
-            onClick={() => toggleDropdown('shipped')}
-            className={`flex items-center gap-2 whitespace-nowrap text-sm font-medium ${
-              activeDropdown === 'shipped' ? 'text-gray-900' : 'text-gray-700 hover:text-gray-900'
-            }`}
-          >
-            Shipped From
-            {filters.shippedFrom.length > 0 && (
-              <span className="text-xs bg-blue-100 text-blue-600 rounded-full w-5 h-5 flex items-center justify-center">
-                {filters.shippedFrom.length}
-              </span>
             )}
-            <ChevronDown className={`w-4 h-4 transition-transform ${activeDropdown === 'shipped' ? 'rotate-180' : ''}`} />
-          </button>
-
-          {activeDropdown === 'shipped' && (
-            <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-              <div className="p-4 space-y-3">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={filters.shippedFrom.includes('United States')}
-                    onChange={() => handleShippingFilter('United States')}
-                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-                  />
-                  <span className="text-sm text-gray-700">United States</span>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={filters.shippedFrom.includes('International')}
-                    onChange={() => handleShippingFilter('International')}
-                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-                  />
-                  <span className="text-sm text-gray-700">International</span>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={filters.shippedFrom.includes('Local Pickup')}
-                    onChange={() => handleShippingFilter('Local Pickup')}
-                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-                  />
-                  <span className="text-sm text-gray-700">Local Pickup</span>
-                </label>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Rating */}
-        <div className="relative">
-          <button
-            onClick={() => toggleDropdown('rating')}
-            className={`flex items-center gap-2 whitespace-nowrap text-sm font-medium ${
-              activeDropdown === 'rating' ? 'text-gray-900' : 'text-gray-700 hover:text-gray-900'
-            }`}
-          >
-            {getRatingLabel()}
-            <ChevronDown className={`w-4 h-4 transition-transform ${activeDropdown === 'rating' ? 'rotate-180' : ''}`} />
-          </button>
-
-          {activeDropdown === 'rating' && (
-            <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-              <div className="py-2">
-                <button
-                  onClick={() => handleRatingFilter(5)}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
-                    filters.rating === 5 ? 'text-blue-600 font-medium' : 'text-gray-700'
-                  }`}
-                >
-                  <span className="inline-flex items-center">
-                    <span className="text-yellow-400 mr-2">ôţôţôţôţôţ</span>
-                    5 Stars
-                  </span>
-                </button>
-                <button
-                  onClick={() => handleRatingFilter(4)}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
-                    filters.rating === 4 ? 'text-blue-600 font-medium' : 'text-gray-700'
-                  }`}
-                >
-                  <span className="inline-flex items-center">
-                    <span className="text-yellow-400 mr-2">ôţôţôţôţ</span>
-                    4 Stars & Up
-                  </span>
-                </button>
-                <button
-                  onClick={() => handleRatingFilter(3)}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
-                    filters.rating === 3 ? 'text-blue-600 font-medium' : 'text-gray-700'
-                  }`}
-                >
-                  <span className="inline-flex items-center">
-                    <span className="text-yellow-400 mr-2">ôţôţôţ</span>
-                    3 Stars & Up
-                  </span>
-                </button>
-                <button
-                  onClick={() => handleRatingFilter(2)}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
-                    filters.rating === 2 ? 'text-blue-600 font-medium' : 'text-gray-700'
-                  }`}
-                >
-                  <span className="inline-flex items-center">
-                    <span className="text-yellow-400 mr-2">ôţôţ</span>
-                    2 Stars & Up
-                  </span>
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Clear All Filters */}
-        {hasActiveFilters() && (
-          <button
-            onClick={clearAllFilters}
-            className="whitespace-nowrap text-sm font-medium text-blue-600 hover:text-blue-800 ml-auto"
-          >
-            Clear All
-          </button>
-        )}
-      </div>
-
-      {/* Active filters display */}
-      {hasActiveFilters() && (
-        <div className="px-4 py-2 border-t border-gray-100 bg-gray-50">
-          <div className="flex flex-wrap gap-2">
-            {filters.price.min !== undefined && filters.price.max !== undefined && (
-              <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-full">
-                Price: ${filters.price.min} - ${filters.price.max}
-                <button 
-                  onClick={() => setFilters({...filters, price: {}})}
-                  className="text-blue-500 hover:text-blue-700 ml-1"
-                >
-                  ×
-                </button>
-              </span>
-            )}
-            {filters.rating !== null && (
-              <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-full">
-                Rating: {filters.rating}+ Stars
-                <button 
-                  onClick={() => setFilters({...filters, rating: null})}
-                  className="text-blue-500 hover:text-blue-700 ml-1"
-                >
-                  ×
-                </button>
-              </span>
-            )}
-            {filters.freeShipping && (
-              <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-full">
-                Free Shipping
-                <button 
-                  onClick={() => setFilters({...filters, freeShipping: false})}
-                  className="text-blue-500 hover:text-blue-700 ml-1"
-                >
-                  ×
-                </button>
-              </span>
-            )}
-            {filters.shippedFrom.map(location => (
-              <span key={location} className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-full">
-                From: {location}
-                <button 
-                  onClick={() => handleShippingFilter(location)}
-                  className="text-blue-500 hover:text-blue-700 ml-1"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
           </div>
         </div>
-      )}
+      </div>
+
+      {/* Filter tabs - NO horizontal scrolling */}
+      <div className="px-4 py-3">
+        <div className="flex flex-wrap gap-3"> {/* Changed from flex to flex-wrap */}
+          {/* Filter Button */}
+          <div className="relative">
+            <button
+              onClick={() => toggleDropdown('filter')}
+              className={`flex items-center gap-2 text-sm font-medium transition-transform ${
+                activeDropdown === 'filter' ? 'text-gray-900' : 'text-gray-700 hover:text-gray-900'
+              }`}
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                />
+              </svg>
+              Filter
+              <ChevronDown className={`w-4 h-4 transition-transform ${activeDropdown === 'filter' ? 'rotate-180' : ''}`} />
+            </button>
+
+            {activeDropdown === 'filter' && (
+              <div className="absolute top-full left-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-sm z-10">
+                <div className="p-4 space-y-3">
+                  <h4 className="text-sm font-medium text-gray-900 mb-2">Additional Filters</h4>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={filters.onSale}
+                      onChange={() => toggleCheckboxFilter('onSale')}
+                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                    />
+                    <span className="text-sm text-gray-700">On Sale</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={filters.freeReturns}
+                      onChange={() => toggleCheckboxFilter('freeReturns')}
+                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                    />
+                    <span className="text-sm text-gray-700">Free Returns</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={filters.newArrivals}
+                      onChange={() => toggleCheckboxFilter('newArrivals')}
+                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                    />
+                    <span className="text-sm text-gray-700">New Arrivals</span>
+                  </label>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Free Shipping */}
+          <button
+            onClick={() => toggleCheckboxFilter('freeShipping')}
+            className={`text-sm font-medium ${
+              filters.freeShipping ? 'text-blue-600 font-medium' : 'text-gray-700 hover:text-gray-900'
+            }`}
+          >
+            Free Shipping
+            {filters.freeShipping && <span className="ml-1 text-blue-500">✓</span>}
+          </button>
+
+          {/* Price - now in normal flow */}
+          <div className="relative">
+            <button
+              onClick={() => toggleDropdown('price')}
+              className={`flex items-center gap-2 text-sm font-medium ${
+                activeDropdown === 'price' ? 'text-gray-900' : 'text-gray-700 hover:text-gray-900'
+              }`}
+            >
+              {getPriceLabel()}
+              <ChevronDown className={`w-4 h-4 transition-transform ${activeDropdown === 'price' ? 'rotate-180' : ''}`} />
+            </button>
+
+            {activeDropdown === 'price' && (
+              <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-sm z-10">
+                <div className="py-2">
+                  <button
+                    onClick={() => handlePriceFilter(undefined, 25)}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                      filters.price.max === 25 && filters.price.min === undefined ? 'text-blue-600 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    Under $25
+                  </button>
+                  <button
+                    onClick={() => handlePriceFilter(25, 50)}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                      filters.price.min === 25 && filters.price.max === 50 ? 'text-blue-600 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    $25 - $50
+                  </button>
+                  <button
+                    onClick={() => handlePriceFilter(50, 100)}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                      filters.price.min === 50 && filters.price.max === 100 ? 'text-blue-600 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    $50 - $100
+                  </button>
+                  <button
+                    onClick={() => handlePriceFilter(100, undefined)}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                      filters.price.min === 100 && filters.price.max === undefined ? 'text-blue-600 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    Over $100
+                  </button>
+                  <div className="border-t border-gray-200 pt-2 mt-2 px-4">
+                    <button
+                      onClick={() => {
+                        setFilters({...filters, price: {}});
+                        setActiveDropdown(null);
+                      }}
+                      className="w-full text-center px-4 py-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      Clear Price Filter
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Shipped From */}
+          <div className="relative">
+            <button
+              onClick={() => toggleDropdown('shipped')}
+              className={`flex items-center gap-2 text-sm font-medium ${
+                activeDropdown === 'shipped' ? 'text-gray-900' : 'text-gray-700 hover:text-gray-900'
+              }`}
+            >
+              Shipped From
+              {filters.shippedFrom.length > 0 && (
+                <span className="text-xs bg-blue-100 text-blue-600 rounded-full w-5 h-5 flex items-center justify-center">
+                  {filters.shippedFrom.length}
+                </span>
+              )}
+              <ChevronDown className={`w-4 h-4 transition-transform ${activeDropdown === 'shipped' ? 'rotate-180' : ''}`} />
+            </button>
+
+            {activeDropdown === 'shipped' && (
+              <div className="absolute top-full left-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-sm z-10">
+                <div className="p-4 space-y-3">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={filters.shippedFrom.includes('United States')}
+                      onChange={() => handleShippingFilter('United States')}
+                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                    />
+                    <span className="text-sm text-gray-700">United States</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={filters.shippedFrom.includes('International')}
+                      onChange={() => handleShippingFilter('International')}
+                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                    />
+                    <span className="text-sm text-gray-700">International</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={filters.shippedFrom.includes('Local Pickup')}
+                      onChange={() => handleShippingFilter('Local Pickup')}
+                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                    />
+                    <span className="text-sm text-gray-700">Local Pickup</span>
+                  </label>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Rating - now in normal flow */}
+          <div className="relative">
+            <button
+              onClick={() => toggleDropdown('rating')}
+              className={`flex items-center gap-2 text-sm font-medium ${
+                activeDropdown === 'rating' ? 'text-gray-900' : 'text-gray-700 hover:text-gray-900'
+              }`}
+            >
+              {getRatingLabel()}
+              <ChevronDown className={`w-4 h-4 transition-transform ${activeDropdown === 'rating' ? 'rotate-180' : ''}`} />
+            </button>
+
+            {activeDropdown === 'rating' && (
+              <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-sm z-10">
+                <div className="py-2">
+                  <button
+                    onClick={() => handleRatingFilter(5)}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                      filters.rating === 5 ? 'text-blue-600 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    <span className="inline-flex items-center">
+                      <span className="text-yellow-400 mr-2">ôţôţôţôţôţ</span>
+                      5 Stars
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => handleRatingFilter(4)}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                      filters.rating === 4 ? 'text-blue-600 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    <span className="inline-flex items-center">
+                      <span className="text-yellow-400 mr-2">ôţôţôţôţ</span>
+                      4 Stars & Up
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => handleRatingFilter(3)}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                      filters.rating === 3 ? 'text-blue-600 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    <span className="inline-flex items-center">
+                      <span className="text-yellow-400 mr-2">ôţôţôţ</span>
+                      3 Stars & Up
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => handleRatingFilter(2)}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                      filters.rating === 2 ? 'text-blue-600 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    <span className="inline-flex items-center">
+                      <span className="text-yellow-400 mr-2">ôţôţ</span>
+                      2 Stars & Up
+                    </span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Clear All Filters */}
+          {hasActiveFilters() && (
+            <button
+              onClick={clearAllFilters}
+              className="text-sm font-medium text-blue-600 hover:text-blue-800 ml-auto"
+            >
+              Clear All
+            </button>
+          )}
+        </div>
+
+        {/* Dropdown panels in normal document flow - for sort and price options */}
+        {(activeDropdown === 'sort' || activeDropdown === 'price' || activeDropdown === 'rating') && (
+          <div className="mt-4">
+            {activeDropdown === 'sort' && (
+              <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+                <div className="py-2">
+                  <button
+                    onClick={() => handleSortChange('popular')}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                      filters.sortBy === 'popular' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    Popular
+                  </button>
+                  <button
+                    onClick={() => handleSortChange('newest')}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                      filters.sortBy === 'newest' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    Newest
+                  </button>
+                  <button
+                    onClick={() => handleSortChange('price_low')}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                      filters.sortBy === 'price_low' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    Price: Low to High
+                  </button>
+                  <button
+                    onClick={() => handleSortChange('price_high')}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                      filters.sortBy === 'price_high' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    Price: High to Low
+                  </button>
+                  <button
+                    onClick={() => handleSortChange('rating')}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                      filters.sortBy === 'rating' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    Top Rated
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {activeDropdown === 'price' && (
+              <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+                <div className="py-2">
+                  <button
+                    onClick={() => handlePriceFilter(undefined, 25)}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                      filters.price.max === 25 && filters.price.min === undefined ? 'text-blue-600 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    Under $25
+                  </button>
+                  <button
+                    onClick={() => handlePriceFilter(25, 50)}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                      filters.price.min === 25 && filters.price.max === 50 ? 'text-blue-600 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    $25 - $50
+                  </button>
+                  <button
+                    onClick={() => handlePriceFilter(50, 100)}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                      filters.price.min === 50 && filters.price.max === 100 ? 'text-blue-600 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    $50 - $100
+                  </button>
+                  <button
+                    onClick={() => handlePriceFilter(100, undefined)}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                      filters.price.min === 100 && filters.price.max === undefined ? 'text-blue-600 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    Over $100
+                  </button>
+                  <div className="border-t border-gray-200 pt-2 mt-2 px-4">
+                    <button
+                      onClick={() => {
+                        setFilters({...filters, price: {}});
+                        setActiveDropdown(null);
+                      }}
+                      className="w-full text-center px-4 py-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      Clear Price Filter
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeDropdown === 'rating' && (
+              <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+                <div className="py-2">
+                  <button
+                    onClick={() => handleRatingFilter(5)}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                      filters.rating === 5 ? 'text-blue-600 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    <span className="inline-flex items-center">
+                      <span className="text-yellow-400 mr-2">ôţôţôţôţôţ</span>
+                      5 Stars
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => handleRatingFilter(4)}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                      filters.rating === 4 ? 'text-blue-600 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    <span className="inline-flex items-center">
+                      <span className="text-yellow-400 mr-2">ôţôţôţôţ</span>
+                      4 Stars & Up
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => handleRatingFilter(3)}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                      filters.rating === 3 ? 'text-blue-600 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    <span className="inline-flex items-center">
+                      <span className="text-yellow-400 mr-2">ôţôţôţ</span>
+                      3 Stars & Up
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => handleRatingFilter(2)}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                      filters.rating === 2 ? 'text-blue-600 font-medium' : 'text-gray-700'
+                    }`}
+                  >
+                    <span className="inline-flex items-center">
+                      <span className="text-yellow-400 mr-2">ôţôţ</span>
+                      2 Stars & Up
+                    </span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Active filters display */}
+        {hasActiveFilters() && (
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <div className="flex flex-wrap gap-2">
+              {filters.price.min !== undefined && filters.price.max !== undefined && (
+                <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-full">
+                  Price: ${filters.price.min} - ${filters.price.max}
+                  <button 
+                    onClick={() => setFilters({...filters, price: {}})}
+                    className="text-blue-500 hover:text-blue-700 ml-1"
+                  >
+                    ×
+                  </button>
+                </span>
+              )}
+              {filters.rating !== null && (
+                <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-full">
+                  Rating: {filters.rating}+ Stars
+                  <button 
+                    onClick={() => setFilters({...filters, rating: null})}
+                    className="text-blue-500 hover:text-blue-700 ml-1"
+                  >
+                    ×
+                  </button>
+                </span>
+              )}
+              {filters.freeShipping && (
+                <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-full">
+                  Free Shipping
+                  <button 
+                    onClick={() => setFilters({...filters, freeShipping: false})}
+                    className="text-blue-500 hover:text-blue-700 ml-1"
+                  >
+                    ×
+                </button>
+                </span>
+              )}
+              {filters.shippedFrom.map(location => (
+                <span key={location} className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-full">
+                  From: {location}
+                  <button 
+                    onClick={() => handleShippingFilter(location)}
+                    className="text-blue-500 hover:text-blue-700 ml-1"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 
