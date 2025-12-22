@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import FavouriteChannels from "@/components/home/FavouriteChannels";
-import InfiniteContentGrid from "@/components/home/InfiniteContentGrid";
+import FavouriteChannels from "@/components/FavouriteChannels";
+import InfiniteContentGrid from "@/components/InfiniteContentGrid";
 import FilterTabs, { FilterState } from "@/components/FilterTabs";
 
 interface ElectronicsPageProps {
