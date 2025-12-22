@@ -11,11 +11,28 @@ import {
   Tag, LayoutPanelLeft, Sparkles, ChevronRight, DollarSign, 
   Zap, Video, Crown, Play, Users, Image, Heart, MessageCircle, 
   Send, Bookmark, MoreHorizontal, Share2, Eye, Camera,
-  Store, Star, User, CheckCircle
+  Store, Star, User, CheckCircle, ChevronDown
 } from "lucide-react";
 
 interface ForYouContentProps {
   category: string;
+}
+
+// Filter interfaces
+interface PriceFilter {
+  min?: number;
+  max?: number;
+}
+
+interface FilterState {
+  price: PriceFilter;
+  rating: number | null;
+  freeShipping: boolean;
+  onSale: boolean;
+  freeReturns: boolean;
+  newArrivals: boolean;
+  shippedFrom: string[];
+  sortBy: 'popular' | 'newest' | 'price_low' | 'price_high' | 'rating';
 }
 
 // Product interface
@@ -34,6 +51,11 @@ interface Product {
   flash_start_time?: string;
   created_at?: string;
   type?: 'product';
+  shipping?: {
+    free_shipping?: boolean;
+    returns?: boolean;
+    location?: string;
+  };
 }
 
 // Reel interface
@@ -341,9 +363,19 @@ const fetchAllContent = async (): Promise<ContentItem[]> => {
       fetchVendors(6)
     ]);
 
+    // Add shipping information to products for filtering
+    const productsWithShipping = products.map(p => ({
+      ...p,
+      shipping: {
+        free_shipping: Math.random() > 0.5,
+        returns: Math.random() > 0.7,
+        location: Math.random() > 0.5 ? 'United States' : 'International'
+      }
+    }));
+
     // Combine all content
     const allContent: ContentItem[] = [
-      ...products.map(p => ({ ...p, type: 'product' as const })),
+      ...productsWithShipping.map(p => ({ ...p, type: 'product' as const })),
       ...reels.map(r => ({ ...r, type: 'reel' as const })),
       ...posts.map(p => ({ ...p, type: 'post' as const })),
       ...vendors.map(v => ({ ...v, type: 'vendor' as const }))
@@ -365,6 +397,491 @@ const shuffleArray = <T,>(array: T[]): T[] => {
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled;
+};
+
+// FilterTabs Component
+const FilterTabs: React.FC<{
+  filters: FilterState;
+  onFilterChange: (filters: FilterState) => void;
+}> = ({ filters, onFilterChange }) => {
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+
+  const toggleDropdown = (filter: string) => {
+    setActiveDropdown(activeDropdown === filter ? null : filter);
+  };
+
+  const handlePriceFilter = (min?: number, max?: number) => {
+    onFilterChange({
+      ...filters,
+      price: { min, max }
+    });
+    setActiveDropdown(null);
+  };
+
+  const handleRatingFilter = (rating: number) => {
+    onFilterChange({
+      ...filters,
+      rating: filters.rating === rating ? null : rating
+    });
+    setActiveDropdown(null);
+  };
+
+  const handleShippingFilter = (location: string) => {
+    const updatedLocations = filters.shippedFrom.includes(location)
+      ? filters.shippedFrom.filter(l => l !== location)
+      : [...filters.shippedFrom, location];
+    
+    onFilterChange({
+      ...filters,
+      shippedFrom: updatedLocations
+    });
+  };
+
+  const handleSortChange = (sortBy: FilterState['sortBy']) => {
+    onFilterChange({
+      ...filters,
+      sortBy
+    });
+    setActiveDropdown(null);
+  };
+
+  const toggleCheckboxFilter = (filterKey: keyof FilterState) => {
+    onFilterChange({
+      ...filters,
+      [filterKey]: !filters[filterKey]
+    });
+  };
+
+  const getPriceLabel = () => {
+    if (filters.price.min !== undefined && filters.price.max !== undefined) {
+      return `$${filters.price.min} - $${filters.price.max}`;
+    }
+    if (filters.price.min !== undefined) {
+      return `Above $${filters.price.min}`;
+    }
+    if (filters.price.max !== undefined) {
+      return `Under $${filters.price.max}`;
+    }
+    return "Price";
+  };
+
+  const getRatingLabel = () => {
+    if (filters.rating) {
+      return `${'ôţ'.repeat(filters.rating)} & Up`;
+    }
+    return "Rating";
+  };
+
+  const getSortLabel = () => {
+    switch (filters.sortBy) {
+      case 'newest': return 'Newest';
+      case 'price_low': return 'Price: Low to High';
+      case 'price_high': return 'Price: High to Low';
+      case 'rating': return 'Top Rated';
+      default: return 'Popular';
+    }
+  };
+
+  return (
+    <div className="w-full bg-white border-b border-gray-200 sticky top-0 z-40">
+      {/* Sort by dropdown */}
+      <div className="flex items-center gap-4 px-4 py-3 overflow-x-auto border-b border-gray-100">
+        <div className="relative">
+          <button
+            onClick={() => toggleDropdown('sort')}
+            className={`flex items-center gap-2 whitespace-nowrap text-sm font-medium transition-transform ${
+              activeDropdown === 'sort' ? 'text-gray-900' : 'text-gray-700 hover:text-gray-900'
+            }`}
+          >
+            Sort by: {getSortLabel()}
+            <ChevronDown className={`w-4 h-4 transition-transform ${activeDropdown === 'sort' ? 'rotate-180' : ''}`} />
+          </button>
+
+          {activeDropdown === 'sort' && (
+            <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+              <div className="py-2">
+                <button
+                  onClick={() => handleSortChange('popular')}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                    filters.sortBy === 'popular' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                  }`}
+                >
+                  Popular
+                </button>
+                <button
+                  onClick={() => handleSortChange('newest')}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                    filters.sortBy === 'newest' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                  }`}
+                >
+                  Newest
+                </button>
+                <button
+                  onClick={() => handleSortChange('price_low')}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                    filters.sortBy === 'price_low' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                  }`}
+                >
+                  Price: Low to High
+                </button>
+                <button
+                  onClick={() => handleSortChange('price_high')}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                    filters.sortBy === 'price_high' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                  }`}
+                >
+                  Price: High to Low
+                </button>
+                <button
+                  onClick={() => handleSortChange('rating')}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                    filters.sortBy === 'rating' ? 'text-blue-600 font-medium' : 'text-gray-700'
+                  }`}
+                >
+                  Top Rated
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Filter tabs */}
+      <div className="flex items-center gap-4 px-4 py-3 overflow-x-auto">
+        {/* Filter Button */}
+        <div className="relative">
+          <button
+            onClick={() => toggleDropdown('filter')}
+            className={`flex items-center gap-2 whitespace-nowrap text-sm font-medium transition-transform ${
+              activeDropdown === 'filter' ? 'text-gray-900' : 'text-gray-700 hover:text-gray-900'
+            }`}
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+              />
+            </svg>
+            Filter
+            <ChevronDown className={`w-4 h-4 transition-transform ${activeDropdown === 'filter' ? 'rotate-180' : ''}`} />
+          </button>
+
+          {activeDropdown === 'filter' && (
+            <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+              <div className="p-4 space-y-3">
+                <h4 className="text-sm font-medium text-gray-900 mb-2">Additional Filters</h4>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={filters.onSale}
+                    onChange={() => toggleCheckboxFilter('onSale')}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                  />
+                  <span className="text-sm text-gray-700">On Sale</span>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={filters.freeReturns}
+                    onChange={() => toggleCheckboxFilter('freeReturns')}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                  />
+                  <span className="text-sm text-gray-700">Free Returns</span>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={filters.newArrivals}
+                    onChange={() => toggleCheckboxFilter('newArrivals')}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                  />
+                  <span className="text-sm text-gray-700">New Arrivals</span>
+                </label>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Free Shipping */}
+        <button
+          onClick={() => toggleCheckboxFilter('freeShipping')}
+          className={`whitespace-nowrap text-sm font-medium ${
+            filters.freeShipping ? 'text-blue-600 font-medium' : 'text-gray-700 hover:text-gray-900'
+          }`}
+        >
+          Free Shipping
+          {filters.freeShipping && <span className="ml-1 text-blue-500">✓</span>}
+        </button>
+
+        {/* Price */}
+        <div className="relative">
+          <button
+            onClick={() => toggleDropdown('price')}
+            className={`flex items-center gap-2 whitespace-nowrap text-sm font-medium ${
+              activeDropdown === 'price' ? 'text-gray-900' : 'text-gray-700 hover:text-gray-900'
+            }`}
+          >
+            {getPriceLabel()}
+            <ChevronDown className={`w-4 h-4 transition-transform ${activeDropdown === 'price' ? 'rotate-180' : ''}`} />
+          </button>
+
+          {activeDropdown === 'price' && (
+            <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+              <div className="py-2">
+                <button
+                  onClick={() => handlePriceFilter(undefined, 25)}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                    filters.price.max === 25 && filters.price.min === undefined ? 'text-blue-600 font-medium' : 'text-gray-700'
+                  }`}
+                >
+                  Under $25
+                </button>
+                <button
+                  onClick={() => handlePriceFilter(25, 50)}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                    filters.price.min === 25 && filters.price.max === 50 ? 'text-blue-600 font-medium' : 'text-gray-700'
+                  }`}
+                >
+                  $25 - $50
+                </button>
+                <button
+                  onClick={() => handlePriceFilter(50, 100)}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                    filters.price.min === 50 && filters.price.max === 100 ? 'text-blue-600 font-medium' : 'text-gray-700'
+                  }`}
+                >
+                  $50 - $100
+                </button>
+                <button
+                  onClick={() => handlePriceFilter(100, undefined)}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                    filters.price.min === 100 && filters.price.max === undefined ? 'text-blue-600 font-medium' : 'text-gray-700'
+                  }`}
+                >
+                  Over $100
+                </button>
+                <div className="border-t border-gray-200 pt-2 mt-2 px-4">
+                  <button
+                    onClick={() => {
+                      onFilterChange({
+                        ...filters,
+                        price: {}
+                      });
+                      setActiveDropdown(null);
+                    }}
+                    className="w-full text-center px-4 py-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    Clear Price Filter
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Shipped From */}
+        <div className="relative">
+          <button
+            onClick={() => toggleDropdown('shipped')}
+            className={`flex items-center gap-2 whitespace-nowrap text-sm font-medium ${
+              activeDropdown === 'shipped' ? 'text-gray-900' : 'text-gray-700 hover:text-gray-900'
+            }`}
+          >
+            Shipped From
+            {filters.shippedFrom.length > 0 && (
+              <span className="text-xs bg-blue-100 text-blue-600 rounded-full w-5 h-5 flex items-center justify-center">
+                {filters.shippedFrom.length}
+              </span>
+            )}
+            <ChevronDown className={`w-4 h-4 transition-transform ${activeDropdown === 'shipped' ? 'rotate-180' : ''}`} />
+          </button>
+
+          {activeDropdown === 'shipped' && (
+            <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+              <div className="p-4 space-y-3">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={filters.shippedFrom.includes('United States')}
+                    onChange={() => handleShippingFilter('United States')}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                  />
+                  <span className="text-sm text-gray-700">United States</span>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={filters.shippedFrom.includes('International')}
+                    onChange={() => handleShippingFilter('International')}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                  />
+                  <span className="text-sm text-gray-700">International</span>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={filters.shippedFrom.includes('Local Pickup')}
+                    onChange={() => handleShippingFilter('Local Pickup')}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                  />
+                  <span className="text-sm text-gray-700">Local Pickup</span>
+                </label>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Rating */}
+        <div className="relative">
+          <button
+            onClick={() => toggleDropdown('rating')}
+            className={`flex items-center gap-2 whitespace-nowrap text-sm font-medium ${
+              activeDropdown === 'rating' ? 'text-gray-900' : 'text-gray-700 hover:text-gray-900'
+            }`}
+          >
+            {getRatingLabel()}
+            <ChevronDown className={`w-4 h-4 transition-transform ${activeDropdown === 'rating' ? 'rotate-180' : ''}`} />
+          </button>
+
+          {activeDropdown === 'rating' && (
+            <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+              <div className="py-2">
+                <button
+                  onClick={() => handleRatingFilter(5)}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                    filters.rating === 5 ? 'text-blue-600 font-medium' : 'text-gray-700'
+                  }`}
+                >
+                  <span className="inline-flex items-center">
+                    <span className="text-yellow-400 mr-2">ôţôţôţôţôţ</span>
+                    5 Stars
+                  </span>
+                </button>
+                <button
+                  onClick={() => handleRatingFilter(4)}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                    filters.rating === 4 ? 'text-blue-600 font-medium' : 'text-gray-700'
+                  }`}
+                >
+                  <span className="inline-flex items-center">
+                    <span className="text-yellow-400 mr-2">ôţôţôţôţ</span>
+                    4 Stars & Up
+                  </span>
+                </button>
+                <button
+                  onClick={() => handleRatingFilter(3)}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                    filters.rating === 3 ? 'text-blue-600 font-medium' : 'text-gray-700'
+                  }`}
+                >
+                  <span className="inline-flex items-center">
+                    <span className="text-yellow-400 mr-2">ôţôţôţ</span>
+                    3 Stars & Up
+                  </span>
+                </button>
+                <button
+                  onClick={() => handleRatingFilter(2)}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                    filters.rating === 2 ? 'text-blue-600 font-medium' : 'text-gray-700'
+                  }`}
+                >
+                  <span className="inline-flex items-center">
+                    <span className="text-yellow-400 mr-2">ôţôţ</span>
+                    2 Stars & Up
+                  </span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Clear All Filters */}
+        {(filters.price.min !== undefined || filters.price.max !== undefined || 
+          filters.rating !== null || filters.freeShipping || filters.onSale || 
+          filters.freeReturns || filters.newArrivals || filters.shippedFrom.length > 0) && (
+          <button
+            onClick={() => {
+              onFilterChange({
+                price: {},
+                rating: null,
+                freeShipping: false,
+                onSale: false,
+                freeReturns: false,
+                newArrivals: false,
+                shippedFrom: [],
+                sortBy: 'popular'
+              });
+              setActiveDropdown(null);
+            }}
+            className="whitespace-nowrap text-sm font-medium text-blue-600 hover:text-blue-800 ml-auto"
+          >
+            Clear All
+          </button>
+        )}
+      </div>
+
+      {/* Active filters display */}
+      {(filters.price.min !== undefined || filters.price.max !== undefined || 
+        filters.rating !== null || filters.freeShipping || filters.onSale || 
+        filters.freeReturns || filters.newArrivals || filters.shippedFrom.length > 0) && (
+        <div className="px-4 py-2 border-t border-gray-100 bg-gray-50">
+          <div className="flex flex-wrap gap-2">
+            {filters.price.min !== undefined && filters.price.max !== undefined && (
+              <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-full">
+                Price: ${filters.price.min} - ${filters.price.max}
+                <button 
+                  onClick={() => onFilterChange({...filters, price: {}})}
+                  className="text-blue-500 hover:text-blue-700 ml-1"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+            {filters.rating !== null && (
+              <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-full">
+                Rating: {filters.rating}+ Stars
+                <button 
+                  onClick={() => onFilterChange({...filters, rating: null})}
+                  className="text-blue-500 hover:text-blue-700 ml-1"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+            {filters.freeShipping && (
+              <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-full">
+                Free Shipping
+                <button 
+                  onClick={() => onFilterChange({...filters, freeShipping: false})}
+                  className="text-blue-500 hover:text-blue-700 ml-1"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+            {filters.shippedFrom.map(location => (
+              <span key={location} className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-full">
+                From: {location}
+                <button 
+                  onClick={() => handleShippingFilter(location)}
+                  className="text-blue-500 hover:text-blue-700 ml-1"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 // VendorCard Component using React Icons
@@ -539,7 +1056,7 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
           <span className="text-[10px] text-gray-500">{soldCount.toLocaleString()} sold</span>
           <span className="text-[10px] text-gray-400">|</span>
           <div className="flex items-center">
-            <span className="text-[10px] text-gray-700 mr-0.5">★</span>
+            <span className="text-[10px] text-gray-700 mr-0.5">ˇú</span>
             <span className="text-[10px] text-gray-700">{rating}</span>
           </div>
         </div>
@@ -622,7 +1139,7 @@ const ReelCard: React.FC<{ reel: Reel }> = ({ reel }) => {
         {reel.is_live && (
           <div className="flex items-center gap-1 text-[10px] text-pink-300">
             <Users className="w-3 h-3" />
-            <span>Live now • {formatNumber(reel.views)} watching</span>
+            <span>Live now ôţ {formatNumber(reel.views)} watching</span>
           </div>
         )}
       </div>
@@ -1137,10 +1654,107 @@ const MasonryGrid: React.FC<{ items: ContentItem[] }> = ({ items }) => {
   );
 };
 
+// Helper function to apply filters
+const applyFilters = (items: ContentItem[], filters: FilterState): ContentItem[] => {
+  return items.filter(item => {
+    if (item.type === 'product') {
+      const product = item as Product;
+      
+      // Price filter
+      if (filters.price.min !== undefined && product.price < filters.price.min) return false;
+      if (filters.price.max !== undefined && product.price > filters.price.max) return false;
+      
+      // Rating filter
+      if (filters.rating !== null && (product.rating || 0) < filters.rating) return false;
+      
+      // Free shipping filter
+      if (filters.freeShipping && (!product.shipping?.free_shipping)) return false;
+      
+      // On sale filter
+      if (filters.onSale && !product.discount_price) return false;
+      
+      // Free returns filter
+      if (filters.freeReturns && (!product.shipping?.returns)) return false;
+      
+      // New arrivals filter (within last 7 days)
+      if (filters.newArrivals) {
+        const createdDate = new Date(product.created_at || 0);
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        if (createdDate < sevenDaysAgo) return false;
+      }
+      
+      // Shipped from filter
+      if (filters.shippedFrom.length > 0) {
+        const location = product.shipping?.location;
+        if (!location || !filters.shippedFrom.includes(location)) return false;
+      }
+      
+      return true;
+    }
+    
+    // Keep non-product items (reels, posts, vendors) in the feed
+    return true;
+  });
+};
+
+// Helper function to sort content
+const sortContent = (items: ContentItem[], sortBy: FilterState['sortBy']): ContentItem[] => {
+  const sorted = [...items];
+  
+  switch (sortBy) {
+    case 'newest':
+      sorted.sort((a, b) => {
+        const dateA = new Date(a.created_at || 0).getTime();
+        const dateB = new Date(b.created_at || 0).getTime();
+        return dateB - dateA;
+      });
+      break;
+      
+    case 'price_low':
+      sorted.sort((a, b) => {
+        if (a.type === 'product' && b.type === 'product') {
+          return (a as Product).price - (b as Product).price;
+        }
+        // Keep non-product items in place
+        return 0;
+      });
+      break;
+      
+    case 'price_high':
+      sorted.sort((a, b) => {
+        if (a.type === 'product' && b.type === 'product') {
+          return (b as Product).price - (a as Product).price;
+        }
+        // Keep non-product items in place
+        return 0;
+      });
+      break;
+      
+    case 'rating':
+      sorted.sort((a, b) => {
+        const ratingA = (a.type === 'product' ? (a as Product).rating || 0 : 0);
+        const ratingB = (b.type === 'product' ? (b as Product).rating || 0 : 0);
+        return ratingB - ratingA;
+      });
+      break;
+      
+    case 'popular':
+    default:
+      // Keep original shuffled order for popular
+      break;
+  }
+  
+  return sorted;
+};
+
 // InfiniteContentGrid Component
-const InfiniteContentGrid: React.FC<{ category?: string }> = ({ category }) => {
+const InfiniteContentGrid: React.FC<{ 
+  category?: string;
+  filters: FilterState;
+}> = ({ category, filters }) => {
   const [page, setPage] = useState(0);
   const [allContent, setAllContent] = useState<ContentItem[]>([]);
+  const [filteredContent, setFilteredContent] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const loaderRef = useRef(null);
@@ -1153,42 +1767,41 @@ const InfiniteContentGrid: React.FC<{ category?: string }> = ({ category }) => {
     staleTime: 60000,
   });
 
-  // Filter content by category if needed
-  const filteredContent = useMemo(() => {
-    if (!initialContent) return [];
-
-    if (category && category !== 'recommendations') {
-      return initialContent.filter(item => {
-        if (item.type === 'product') {
-          const product = item as Product;
-          return product.category?.toLowerCase() === category.toLowerCase() ||
-                 product.tags?.some(tag => tag.toLowerCase() === category.toLowerCase());
-        }
-        return true;
-      });
-    }
-
-    return initialContent;
-  }, [initialContent, category]);
-
-  // Set filtered content when data loads
+  // Filter and sort content when filters or initialContent change
   useEffect(() => {
-    if (filteredContent && filteredContent.length > 0) {
-      setAllContent(filteredContent);
-      setHasMore(filteredContent.length > contentPerPage);
+    if (initialContent) {
+      // First filter by category
+      let categoryFiltered = initialContent;
+      if (category && category !== 'recommendations') {
+        categoryFiltered = initialContent.filter(item => {
+          if (item.type === 'product') {
+            const product = item as Product;
+            return product.category?.toLowerCase() === category.toLowerCase() ||
+                   product.tags?.some(tag => tag.toLowerCase() === category.toLowerCase());
+          }
+          return true;
+        });
+      }
+      
+      // Then apply all filters
+      const filtered = applyFilters(categoryFiltered, filters);
+      
+      // Finally sort the filtered results
+      const sorted = sortContent(filtered, filters.sortBy);
+      
+      setAllContent(sorted);
+      setFilteredContent(sorted);
+      setHasMore(sorted.length > contentPerPage);
       setPage(0);
-    } else if (filteredContent && filteredContent.length === 0) {
-      setAllContent([]);
-      setHasMore(false);
     }
-  }, [filteredContent]);
+  }, [initialContent, category, filters]);
 
   // Calculate visible content
   const visibleContent = useMemo(() => {
     const startIndex = 0;
     const endIndex = (page + 1) * contentPerPage;
-    return allContent.slice(startIndex, endIndex);
-  }, [allContent, page, contentPerPage]);
+    return filteredContent.slice(startIndex, endIndex);
+  }, [filteredContent, page, contentPerPage]);
 
   // Calculate content type statistics
   const contentStats = useMemo(() => {
@@ -1212,12 +1825,12 @@ const InfiniteContentGrid: React.FC<{ category?: string }> = ({ category }) => {
 
   // Check if we have more content to load
   useEffect(() => {
-    if (allContent.length > 0) {
+    if (filteredContent.length > 0) {
       const totalLoaded = (page + 1) * contentPerPage;
-      const hasMoreContent = totalLoaded < allContent.length;
+      const hasMoreContent = totalLoaded < filteredContent.length;
       setHasMore(hasMoreContent);
     }
-  }, [allContent, page, contentPerPage]);
+  }, [filteredContent, page, contentPerPage]);
 
   // Load more content function
   const loadMoreContent = useCallback(async () => {
@@ -1230,7 +1843,7 @@ const InfiniteContentGrid: React.FC<{ category?: string }> = ({ category }) => {
       setPage(nextPage);
 
       const totalLoaded = (nextPage + 1) * contentPerPage;
-      if (totalLoaded >= allContent.length) {
+      if (totalLoaded >= filteredContent.length) {
         setHasMore(false);
       }
     } catch (error) {
@@ -1238,7 +1851,7 @@ const InfiniteContentGrid: React.FC<{ category?: string }> = ({ category }) => {
     } finally {
       setLoading(false);
     }
-  }, [page, loading, hasMore, allContent, contentPerPage]);
+  }, [page, loading, hasMore, filteredContent, contentPerPage]);
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
@@ -1283,11 +1896,29 @@ const InfiniteContentGrid: React.FC<{ category?: string }> = ({ category }) => {
   }
 
   // Show empty state if no content
-  if (!initialLoading && allContent.length === 0) {
+  if (!initialLoading && filteredContent.length === 0) {
     return (
       <div className="pt-2">
         <div className="text-center py-8 text-gray-500">
-          No content found. Check back soon!
+          {Object.values(filters).some(filter => 
+            Array.isArray(filter) ? filter.length > 0 : 
+            typeof filter === 'object' ? Object.keys(filter).length > 0 : 
+            filter !== false && filter !== null
+          ) ? (
+            <>
+              <Sparkles className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-sm font-medium text-gray-700 mb-1">No matching items found</p>
+              <p className="text-xs text-gray-500 mb-4">Try adjusting your filters</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+              >
+                Clear all filters
+              </button>
+            </>
+          ) : (
+            "No content found. Check back soon!"
+          )}
         </div>
       </div>
     );
@@ -1295,6 +1926,11 @@ const InfiniteContentGrid: React.FC<{ category?: string }> = ({ category }) => {
 
   return (
     <div className="pt-2">
+      {/* Results count */}
+      <div className="px-4 py-2 text-sm text-gray-600">
+        Showing {visibleContent.length} of {filteredContent.length} results
+      </div>
+
       {/* Masonry Grid */}
       <MasonryGrid items={visibleContent} />
 
@@ -1325,6 +1961,18 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
   const { setHeaderMode, headerMode } = useHeaderFilter();
   const scrollY = useRef(0);
   const ticking = useRef(false);
+  
+  // Initialize filter state
+  const [filters, setFilters] = useState<FilterState>({
+    price: {},
+    rating: null,
+    freeShipping: false,
+    onSale: false,
+    freeReturns: false,
+    newArrivals: false,
+    shippedFrom: [],
+    sortBy: 'popular'
+  });
 
   // Remove scroll detection logic since we don't need header mode switching anymore
   useEffect(() => {
@@ -1335,8 +1983,13 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
 
   // Components array with reduced height separators - REMOVED HeroBanner
   const components = [
-    // Favorite Channels is now the first component
-    <div key="favourite-channels-wrapper" className="mb-2">
+    // Filter Tabs
+    <div key="filter-tabs-wrapper" className="sticky top-0 z-50 bg-white">
+      <FilterTabs filters={filters} onFilterChange={setFilters} />
+    </div>,
+
+    // Favorite Channels is now the first component after filters
+    <div key="favourite-channels-wrapper" className="mb-2 px-4">
       <FavouriteChannels />
     </div>,
 
@@ -1352,7 +2005,7 @@ const ForYouContent: React.FC<ForYouContentProps> = ({ category }) => {
 
     <div key="separator-2" className="w-full bg-gray-100 h-1 mb-2"></div>,
 
-    <InfiniteContentGrid key="infinite-grid" category={category} />,
+    <InfiniteContentGrid key="infinite-grid" category={category} filters={filters} />,
   ];
 
   return (
