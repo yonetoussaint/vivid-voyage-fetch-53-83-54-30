@@ -33,9 +33,7 @@ const ElectronicsPage: React.FC<ElectronicsPageProps> = ({ category = 'electroni
   const components = [
     // Favourite Channels
     <div key="favourite-channels-wrapper" className="pt-2">
-      <div className="px-4">
         <FavouriteChannels />
-      </div>
     </div>,
 
     <div key="separator-1" className="w-full bg-gray-100 h-1"></div>,
