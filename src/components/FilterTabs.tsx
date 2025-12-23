@@ -71,15 +71,27 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
     }
 
     // For dropdowns with a selected value
-    if (tab.value && tab.value !== '' && !Array.isArray(tab.value)) {
-      const option = tab.options?.find(o => o.value === tab.value);
-      if (option) {
-        // Special handling for price range to show the range
-        if (tab.id === 'priceRange' && tab.value && typeof tab.value === 'object') {
-          // Show the price range like "$50 - $200"
+    if (tab.value && tab.value !== '' && tab.value !== null) {
+      // Special handling for price range to show the actual range
+      if (tab.id === 'priceRange' && tab.value && typeof tab.value === 'object') {
+        // Check if it has min and max properties
+        if ('min' in tab.value && 'max' in tab.value) {
           return `$${tab.value.min} - $${tab.value.max}`;
         }
-        return option.label; // For other dropdowns, show only the option label
+      }
+      
+      // For other dropdowns (like brand), find and show the option label
+      const option = tab.options?.find(o => {
+        // Handle price range comparison
+        if (tab.id === 'priceRange' && tab.value && o.value) {
+          return o.value?.min === tab.value?.min && o.value?.max === tab.value?.max;
+        }
+        // Handle simple value comparison
+        return o.value === tab.value;
+      });
+      
+      if (option) {
+        return option.label; // Show only the option label (e.g., "Apple", "$50 - $200")
       }
     }
 
@@ -89,6 +101,11 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
   const isTabActive = (tab: FilterTab) => {
     if (tab.type === 'checkbox' || tab.type === 'toggle') {
       return Boolean(tab.value);
+    }
+
+    // For priceRange, check if it's an object with min/max
+    if (tab.id === 'priceRange') {
+      return tab.value && typeof tab.value === 'object' && 'min' in tab.value && 'max' in tab.value;
     }
 
     return tab.value && tab.value !== '' && tab.value !== null;
@@ -102,10 +119,15 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
         <div className="py-1">
           {tab.options.map((option) => (
             <button
-              key={option.value}
+              key={option.label}
               onClick={() => handleDropdownSelect(tab.id, option.value)}
               className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors ${
-                tab.value === option.value ? 'text-blue-600 font-medium' : 'text-gray-700'
+                // Compare values properly for price range
+                (tab.id === 'priceRange' && tab.value && option.value && 
+                 tab.value.min === option.value?.min && tab.value.max === option.value?.max) ||
+                (tab.id !== 'priceRange' && tab.value === option.value)
+                  ? 'text-blue-600 font-medium' 
+                  : 'text-gray-700'
               }`}
             >
               {option.label}
@@ -140,7 +162,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                         : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                     }`}
                   >
-                    <span className="truncate max-w-[90px]">{getTabLabel(tab)}</span>
+                    <span className="truncate max-w-[100px]">{getTabLabel(tab)}</span>
                     {/* Always show chevron for dropdowns */}
                     <ChevronDown className={`w-3 h-3 flex-shrink-0 transition-transform ${
                       activeDropdown === tab.id ? 'rotate-180' : ''
@@ -166,7 +188,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                         : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                     }`}
                   >
-                    <span className="truncate max-w-[90px]">{getTabLabel(tab)}</span>
+                    <span className="truncate max-w-[100px]">{getTabLabel(tab)}</span>
                     {/* Show X icon when checkbox is selected */}
                     {isTabActive(tab) && (
                       <div 
