@@ -70,13 +70,20 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
       return tab.label; // For checkboxes, show full label like "Free Shipping"
     }
 
-    // For dropdowns with a selected value, show only the option label (e.g., "Apple" not "Brand: Apple")
+    // For dropdowns with a selected value
     if (tab.value && tab.value !== '' && !Array.isArray(tab.value)) {
       const option = tab.options?.find(o => o.value === tab.value);
-      return option ? option.label : tab.label; // Only show the option label
+      if (option) {
+        // Special handling for price range to show the range
+        if (tab.id === 'priceRange' && tab.value && typeof tab.value === 'object') {
+          // Show the price range like "$50 - $200"
+          return `$${tab.value.min} - $${tab.value.max}`;
+        }
+        return option.label; // For other dropdowns, show only the option label
+      }
     }
 
-    return tab.label; // Default: show tab label like "Brand"
+    return tab.label; // Default: show tab label like "Brand" or "Price"
   };
 
   const isTabActive = (tab: FilterTab) => {
@@ -133,19 +140,19 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                         : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                     }`}
                   >
-                    <span className="truncate max-w-[80px]">{getTabLabel(tab)}</span>
+                    <span className="truncate max-w-[90px]">{getTabLabel(tab)}</span>
+                    {/* Always show chevron for dropdowns */}
+                    <ChevronDown className={`w-3 h-3 flex-shrink-0 transition-transform ${
+                      activeDropdown === tab.id ? 'rotate-180' : ''
+                    }`} />
                     {/* Show X icon when dropdown has a selected value */}
-                    {isTabActive(tab) ? (
+                    {isTabActive(tab) && (
                       <div 
                         onClick={(e) => handleRemoveSelection(tab.id, e)}
-                        className="ml-1 p-0.5 hover:bg-blue-100 rounded-full transition-colors"
+                        className="ml-0.5 p-0.5 hover:bg-blue-100 rounded-full transition-colors"
                       >
                         <X className="w-3 h-3 text-blue-600" />
                       </div>
-                    ) : (
-                      <ChevronDown className={`w-3 h-3 flex-shrink-0 transition-transform ${
-                        activeDropdown === tab.id ? 'rotate-180' : ''
-                      }`} />
                     )}
                   </button>
                 )}
@@ -159,7 +166,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                         : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                     }`}
                   >
-                    <span className="truncate max-w-[80px]">{getTabLabel(tab)}</span>
+                    <span className="truncate max-w-[90px]">{getTabLabel(tab)}</span>
                     {/* Show X icon when checkbox is selected */}
                     {isTabActive(tab) && (
                       <div 
