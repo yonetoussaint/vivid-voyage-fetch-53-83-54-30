@@ -50,29 +50,33 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
     onTabChange(tabId, !currentValue);
   };
 
-  // New handler for removing non-dropdown selections
+  // Handler for removing selections from any tab
   const handleRemoveSelection = (tabId: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent triggering the checkbox toggle
+    e.stopPropagation(); // Prevent triggering the main button click
+    
+    const tab = tabs.find(t => t.id === tabId);
+    if (!tab) return;
     
     // Reset the value based on tab type
-    if (tabs.find(t => t.id === tabId)?.type === 'checkbox') {
+    if (tab.type === 'checkbox') {
       onTabChange(tabId, false); // Set checkbox to false
     } else {
-      onTabChange(tabId, null); // Set other types to null
+      onTabChange(tabId, null); // Set dropdowns to null
     }
   };
 
   const getTabLabel = (tab: FilterTab) => {
     if (tab.type === 'checkbox' || tab.type === 'toggle') {
-      return tab.label;
+      return tab.label; // For checkboxes, show full label like "Free Shipping"
     }
 
+    // For dropdowns with a selected value, show only the option label (e.g., "Apple" not "Brand: Apple")
     if (tab.value && tab.value !== '' && !Array.isArray(tab.value)) {
       const option = tab.options?.find(o => o.value === tab.value);
-      return option ? `${tab.label}: ${option.label}` : tab.label;
+      return option ? option.label : tab.label; // Only show the option label
     }
 
-    return tab.label;
+    return tab.label; // Default: show tab label like "Brand"
   };
 
   const isTabActive = (tab: FilterTab) => {
@@ -123,16 +127,26 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                     onClick={() => toggleDropdown(tab.id)}
                     className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
                       isTabActive(tab)
-                        ? 'bg-blue-50 text-blue-700' // Removed border and shadow
+                        ? 'bg-blue-50 text-blue-700' // Active state
                         : activeDropdown === tab.id
                         ? 'bg-white border border-gray-200 shadow-sm text-gray-900'
                         : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                     }`}
                   >
-                    <span className="truncate max-w-[100px]">{getTabLabel(tab)}</span>
-                    <ChevronDown className={`w-3 h-3 flex-shrink-0 transition-transform ${
-                      activeDropdown === tab.id ? 'rotate-180' : ''
-                    }`} />
+                    <span className="truncate max-w-[80px]">{getTabLabel(tab)}</span>
+                    {/* Show X icon when dropdown has a selected value */}
+                    {isTabActive(tab) ? (
+                      <div 
+                        onClick={(e) => handleRemoveSelection(tab.id, e)}
+                        className="ml-1 p-0.5 hover:bg-blue-100 rounded-full transition-colors"
+                      >
+                        <X className="w-3 h-3 text-blue-600" />
+                      </div>
+                    ) : (
+                      <ChevronDown className={`w-3 h-3 flex-shrink-0 transition-transform ${
+                        activeDropdown === tab.id ? 'rotate-180' : ''
+                      }`} />
+                    )}
                   </button>
                 )}
 
@@ -141,11 +155,11 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                     onClick={() => handleCheckboxToggle(tab.id, tab.value)}
                     className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
                       isTabActive(tab)
-                        ? 'bg-blue-50 text-blue-700' // Removed border and shadow
+                        ? 'bg-blue-50 text-blue-700' // Active state
                         : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                     }`}
                   >
-                    <span className="truncate max-w-[100px]">{getTabLabel(tab)}</span>
+                    <span className="truncate max-w-[80px]">{getTabLabel(tab)}</span>
                     {/* Show X icon when checkbox is selected */}
                     {isTabActive(tab) && (
                       <div 
