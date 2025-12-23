@@ -221,7 +221,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
               </React.Fragment>
             ))}
 
-            {/* Clear All Button */}
+            {/* Clear All Button - Only show if we have active filters */}
             {activeFilters.length > 0 && (
               <button 
                 onClick={onClearAll} 
@@ -244,27 +244,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
         </div>
       )}
 
-      {/* Active Filters Display */}
-      {activeFilters.length > 0 && !activeDropdown && (
-        <div className="px-3 py-2 border-t border-gray-100">
-          <div className="flex flex-wrap gap-2">
-            {activeFilters.map((filter) => (
-              <span 
-                key={filter.id} 
-                className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-md"
-              >
-                {filter.label}: {filter.displayValue}
-                <button 
-                  onClick={() => onRemoveFilter(filter.id)}
-                  className="text-blue-500 hover:text-blue-700 ml-1"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Removed Active Filters Display section */}
     </div>
   );
 };
