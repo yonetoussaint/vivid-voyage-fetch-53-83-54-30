@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 
 export interface FilterTab {
   id: string;
@@ -48,6 +48,18 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
 
   const handleCheckboxToggle = (tabId: string, currentValue: boolean) => {
     onTabChange(tabId, !currentValue);
+  };
+
+  // New handler for removing non-dropdown selections
+  const handleRemoveSelection = (tabId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the checkbox toggle
+    
+    // Reset the value based on tab type
+    if (tabs.find(t => t.id === tabId)?.type === 'checkbox') {
+      onTabChange(tabId, false); // Set checkbox to false
+    } else {
+      onTabChange(tabId, null); // Set other types to null
+    }
   };
 
   const getTabLabel = (tab: FilterTab) => {
@@ -134,6 +146,15 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                     }`}
                   >
                     <span className="truncate max-w-[100px]">{getTabLabel(tab)}</span>
+                    {/* Show X icon when checkbox is selected */}
+                    {isTabActive(tab) && (
+                      <div 
+                        onClick={(e) => handleRemoveSelection(tab.id, e)}
+                        className="ml-1 p-0.5 hover:bg-blue-100 rounded-full transition-colors"
+                      >
+                        <X className="w-3 h-3 text-blue-600" />
+                      </div>
+                    )}
                   </button>
                 )}
               </React.Fragment>
