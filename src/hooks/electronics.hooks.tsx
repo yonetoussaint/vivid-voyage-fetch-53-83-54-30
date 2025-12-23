@@ -22,17 +22,8 @@ import {
   Tablet,
   Cable,
   Home,
-  // Icons that might not be available - using alternatives
-  Radio, // Alternative for Drone
+  Radio,
   Monitor as Display,
-  // Additional icons as fallbacks
-  Package,
-  Globe,
-  Wifi,
-  Zap,
-  Settings,
-  Server,
-  Database
 } from "lucide-react";
 
 export interface ElectronicsFilters {
@@ -470,6 +461,7 @@ export const useElectronicsFilters = () => {
       });
     }
 
+    // FIX: Add null check for priceRange
     if (filters.priceRange) {
       filtersArray.push({
         id: 'priceRange',
@@ -739,7 +731,7 @@ export const useElectronicsData = () => {
       imageUrl: 'https://images.unsplash.com/photo-1473968512647-3e447244af8f?w=200&h=200&fit=crop&crop=center',
       bgColor: 'bg-gradient-to-br from-rose-500/20 to-rose-600/20',
       textColor: 'text-white',
-      icon: <Radio className="w-6 h-6" /> // Using Radio as alternative for Drone
+      icon: <Radio className="w-6 h-6" />
     },
     {
       id: 'home_automation',
@@ -791,6 +783,9 @@ export const useElectronicsData = () => {
         subcategoryFilters.resolution = ['1080p', '1440p', '4k'];
         subcategoryFilters.screenSize = ['24_27', '32_40'];
         break;
+      default:
+        // No additional filters for other categories
+        break;
     }
     
     return subcategoryFilters;
@@ -802,36 +797,17 @@ export const useElectronicsData = () => {
   };
 };
 
-// Add fallback for Radio if it's also not available
-export const useElectronicsIcons = () => {
-  return {
-    Chip,
-    Smartphone,
-    Laptop,
-    Headphones,
-    Tv,
-    Watch,
-    Camera,
-    Gamepad2,
-    Speaker,
-    Tablet,
-    Cable,
-    Radio, // Fallback for Drone
-    Home,
-    Display,
-    HardDrive,
-    MemoryStick,
-    Battery,
-    Monitor,
-    Cpu,
-    Waves,
-    Shield,
-    Package,
-    Globe,
-    Wifi,
-    Zap,
-    Settings,
-    Server,
-    Database
-  };
+// Safe helper functions to access filter values
+export const getPriceRangeDisplay = (priceRange: { min: number; max: number } | null): string => {
+  if (!priceRange) return 'Any Price';
+  return `$${priceRange.min} - $${priceRange.max}`;
+};
+
+export const isPriceRangeValid = (priceRange: any): boolean => {
+  return priceRange && 
+         typeof priceRange === 'object' && 
+         'min' in priceRange && 
+         'max' in priceRange &&
+         typeof priceRange.min === 'number' &&
+         typeof priceRange.max === 'number';
 };
