@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, ReactNode } from "react";
 import { FilterTab, ActiveFilter } from "@/components/FilterTabs";
 
 export interface MenFilters {
@@ -159,7 +159,7 @@ export const useMenData = () => {
       imageUrl: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?w=200&h=200&fit=crop&crop=center',
       bgColor: 'bg-gradient-to-br from-blue-500/20 to-blue-600/20',
       textColor: 'text-white',
-      icon: <div className="w-6 h-6" />
+      icon: null // Remove JSX element
     },
     {
       id: 't-shirts',
@@ -167,7 +167,7 @@ export const useMenData = () => {
       imageUrl: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=200&h=200&fit=crop&crop=center',
       bgColor: 'bg-gradient-to-br from-gray-500/20 to-gray-600/20',
       textColor: 'text-white',
-      icon: <div className="w-6 h-6" />
+      icon: null // Remove JSX element
     },
     {
       id: 'shirts',
@@ -175,7 +175,7 @@ export const useMenData = () => {
       imageUrl: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=200&h=200&fit=crop&crop=center',
       bgColor: 'bg-gradient-to-br from-white/20 to-gray-100/20',
       textColor: 'text-white',
-      icon: <div className="w-6 h-6" />
+      icon: null // Remove JSX element
     },
     {
       id: 'jeans',
@@ -183,7 +183,7 @@ export const useMenData = () => {
       imageUrl: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=200&h=200&fit=crop&crop=center',
       bgColor: 'bg-gradient-to-br from-indigo-500/20 to-indigo-600/20',
       textColor: 'text-white',
-      icon: <div className="w-6 h-6" />
+      icon: null // Remove JSX element
     },
     {
       id: 'jackets',
@@ -191,7 +191,7 @@ export const useMenData = () => {
       imageUrl: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=200&h=200&fit=crop&crop=center',
       bgColor: 'bg-gradient-to-br from-brown-500/20 to-brown-600/20',
       textColor: 'text-white',
-      icon: <div className="w-6 h-6" />
+      icon: null // Remove JSX element
     },
     {
       id: 'shoes',
@@ -199,7 +199,7 @@ export const useMenData = () => {
       imageUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=200&h=200&fit=crop&crop=center',
       bgColor: 'bg-gradient-to-br from-black/20 to-gray-800/20',
       textColor: 'text-white',
-      icon: <div className="w-6 h-6" />
+      icon: null // Remove JSX element
     },
   ], []);
 
