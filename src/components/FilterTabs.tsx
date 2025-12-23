@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ChevronDown, X, ArrowUp, ArrowDown } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 
 export interface FilterTab {
   id: string;
@@ -86,27 +86,52 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
     return tab.value && tab.value !== '' && tab.value !== null;
   };
 
-  // Render price sort icon based on direction
+  // Render price sort icon using carets (^)
   const renderPriceSortIcon = (value: 'asc' | 'desc' | null) => {
+    // Using inline SVGs for carets
+    const CaretUp = () => (
+      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M18 15L12 9L6 15" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    );
+
+    const CaretDown = () => (
+      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M6 9L12 15L18 9" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    );
+
     if (value === 'asc') {
       return (
-        <div className="flex items-center gap-0.5">
-          <ArrowUp className="w-3 h-3" />
-          <ArrowDown className="w-3 h-3 opacity-50" />
+        <div className="flex flex-col items-center justify-center gap-[1px]">
+          <div className="text-blue-600">
+            <CaretUp />
+          </div>
+          <div className="opacity-30">
+            <CaretDown />
+          </div>
         </div>
       );
     } else if (value === 'desc') {
       return (
-        <div className="flex items-center gap-0.5">
-          <ArrowDown className="w-3 h-3" />
-          <ArrowUp className="w-3 h-3 opacity-50" />
+        <div className="flex flex-col items-center justify-center gap-[1px]">
+          <div className="opacity-30">
+            <CaretUp />
+          </div>
+          <div className="text-blue-600">
+            <CaretDown />
+          </div>
         </div>
       );
     } else {
       return (
-        <div className="flex items-center gap-0.5">
-          <ArrowUp className="w-3 h-3 opacity-50" />
-          <ArrowDown className="w-3 h-3 opacity-50" />
+        <div className="flex flex-col items-center justify-center gap-[1px]">
+          <div className="opacity-30">
+            <CaretUp />
+          </div>
+          <div className="opacity-30">
+            <CaretDown />
+          </div>
         </div>
       );
     }
@@ -185,7 +210,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                     onClick={() => handlePriceSortToggle(tab.id, tab.value)}
                     className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
                       isTabActive(tab)
-                        ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
+                        ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm hover:bg-blue-50'
                         : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                     }`}
                   >
