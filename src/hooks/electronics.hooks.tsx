@@ -1,11 +1,39 @@
 import { useState, useEffect, useMemo } from "react";
-import { 
-  Cpu, Battery, HardDrive, Monitor, Radio, Shield, 
-  MemoryStick, Cpu as Chip, Waves, Smartphone, Laptop, 
-  Headphones, Tv, Watch, Camera, Gamepad2, Speaker, 
-  Tablet, Cable, Drone, Home, Monitor as Display 
-} from "lucide-react";
 import { FilterTab, ActiveFilter } from "@/components/FilterTabs";
+
+// Import available icons from lucide-react
+import { 
+  Cpu, 
+  Battery, 
+  HardDrive, 
+  Monitor, 
+  Shield, 
+  MemoryStick,
+  Cpu as Chip,
+  Waves,
+  Smartphone,
+  Laptop,
+  Headphones,
+  Tv,
+  Watch,
+  Camera,
+  Gamepad2,
+  Speaker,
+  Tablet,
+  Cable,
+  Home,
+  // Icons that might not be available - using alternatives
+  Radio, // Alternative for Drone
+  Monitor as Display,
+  // Additional icons as fallbacks
+  Package,
+  Globe,
+  Wifi,
+  Zap,
+  Settings,
+  Server,
+  Database
+} from "lucide-react";
 
 export interface ElectronicsFilters {
   sortBy: string;
@@ -63,7 +91,6 @@ export const useElectronicsFilters = () => {
     setFilters(prev => {
       const newFilters = { ...prev };
       
-      // Reset the specific filter to its default value
       switch (filterId) {
         case 'sortBy':
           newFilters.sortBy = 'popular';
@@ -120,39 +147,34 @@ export const useElectronicsFilters = () => {
           newFilters.newArrivals = false;
           break;
         default:
-          // Handle custom filters that might be added
-          if (filterId in newFilters) {
-            (newFilters as any)[filterId] = getDefaultValue(filterId);
+          const defaults: Record<string, any> = {
+            sortBy: 'popular',
+            freeShipping: false,
+            onSale: false,
+            freeReturns: false,
+            newArrivals: false,
+            brand: null,
+            condition: 'all',
+            warranty: false,
+            ram: [],
+            storage: [],
+            screenSize: [],
+            resolution: [],
+            batteryLife: [],
+            processor: [],
+            priceRange: null,
+            rating: null,
+            shippedFrom: [],
+            connectivity: [],
+            color: [],
+          };
+          if (filterId in defaults) {
+            (newFilters as any)[filterId] = defaults[filterId];
           }
       }
       
       return newFilters;
     });
-  };
-
-  const getDefaultValue = (filterId: string): any => {
-    const defaults: Record<string, any> = {
-      sortBy: 'popular',
-      freeShipping: false,
-      onSale: false,
-      freeReturns: false,
-      newArrivals: false,
-      brand: null,
-      condition: 'all',
-      warranty: false,
-      ram: [],
-      storage: [],
-      screenSize: [],
-      resolution: [],
-      batteryLife: [],
-      processor: [],
-      priceRange: null,
-      rating: null,
-      shippedFrom: [],
-      connectivity: [],
-      color: [],
-    };
-    return defaults[filterId] ?? null;
   };
 
   const handleClearAll = () => {
@@ -717,7 +739,7 @@ export const useElectronicsData = () => {
       imageUrl: 'https://images.unsplash.com/photo-1473968512647-3e447244af8f?w=200&h=200&fit=crop&crop=center',
       bgColor: 'bg-gradient-to-br from-rose-500/20 to-rose-600/20',
       textColor: 'text-white',
-      icon: <Drone className="w-6 h-6" />
+      icon: <Radio className="w-6 h-6" /> // Using Radio as alternative for Drone
     },
     {
       id: 'home_automation',
@@ -777,5 +799,39 @@ export const useElectronicsData = () => {
   return {
     electronicsChannels,
     getSubcategoryFilters,
+  };
+};
+
+// Add fallback for Radio if it's also not available
+export const useElectronicsIcons = () => {
+  return {
+    Chip,
+    Smartphone,
+    Laptop,
+    Headphones,
+    Tv,
+    Watch,
+    Camera,
+    Gamepad2,
+    Speaker,
+    Tablet,
+    Cable,
+    Radio, // Fallback for Drone
+    Home,
+    Display,
+    HardDrive,
+    MemoryStick,
+    Battery,
+    Monitor,
+    Cpu,
+    Waves,
+    Shield,
+    Package,
+    Globe,
+    Wifi,
+    Zap,
+    Settings,
+    Server,
+    Database
   };
 };
