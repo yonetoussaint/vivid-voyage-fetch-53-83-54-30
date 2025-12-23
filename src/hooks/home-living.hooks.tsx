@@ -1,11 +1,12 @@
 import { useState, useMemo } from "react";
 import { 
-  Home, Sofa, Lamp, ChefHat, Bed, Lightbulb, 
-  Package, Bath, Tree, Ruler, Palette, 
-  Sparkles, PawPrint, Layers, Coffee,
-  Users, ShoppingBag, Wrench, Couch,
-  Droplets, Flower2, Paintbrush, Box,
-  Sofa as SofaIcon
+  Home, Sofa, Lamp, Coffee, Bed, Lightbulb, 
+  Package, Bath, Palette, Sparkles, PawPrint, 
+  Layers, Ruler, Box, 
+  // Alternative icons that should be available
+  Star, Heart, ShoppingCart, Truck, CheckCircle,
+  Filter, DollarSign, Award, Shield, Leaf,
+  Zap, RefreshCw, MapPin, Clock, Users
 } from "lucide-react";
 import { FilterTab, ActiveFilter } from "@/components/FilterTabs";
 
@@ -163,6 +164,7 @@ export const useHomeLivingFilters = () => {
       label: 'Price',
       type: 'dropdown',
       value: filters.priceRange,
+      icon: <DollarSign className="w-3 h-3" />,
       options: [
         { label: 'Any Price', value: null },
         { label: 'Under $50', value: { min: 0, max: 50 } },
@@ -177,6 +179,7 @@ export const useHomeLivingFilters = () => {
       label: 'Brand',
       type: 'dropdown',
       value: filters.brand,
+      icon: <Award className="w-3 h-3" />,
       options: [
         { label: 'All Brands', value: null },
         { label: 'IKEA', value: 'ikea' },
@@ -195,7 +198,7 @@ export const useHomeLivingFilters = () => {
       label: 'Material',
       type: 'multi-select',
       value: filters.material,
-      icon: <SofaIcon className="w-3 h-3" />,
+      icon: <Package className="w-3 h-3" />,
       options: [
         { label: 'Wood', value: 'wood' },
         { label: 'Metal', value: 'metal' },
@@ -251,7 +254,7 @@ export const useHomeLivingFilters = () => {
       label: 'Eco-Friendly',
       type: 'checkbox',
       value: filters.ecoFriendly,
-      icon: <Tree className="w-3 h-3" />,
+      icon: <Leaf className="w-3 h-3" />,
     },
     {
       id: 'assemblyRequired',
@@ -265,37 +268,42 @@ export const useHomeLivingFilters = () => {
       label: 'Warranty',
       type: 'checkbox',
       value: filters.freeReturns,
-      icon: <Sparkles className="w-3 h-3" />,
+      icon: <Shield className="w-3 h-3" />,
     },
     {
       id: 'freeShipping',
       label: 'Free Shipping',
       type: 'checkbox',
       value: filters.freeShipping,
+      icon: <Truck className="w-3 h-3" />,
     },
     {
       id: 'onSale',
       label: 'On Sale',
       type: 'checkbox',
       value: filters.onSale,
+      icon: <Zap className="w-3 h-3" />,
     },
     {
       id: 'freeReturns',
       label: 'Free Returns',
       type: 'checkbox',
       value: filters.freeReturns,
+      icon: <RefreshCw className="w-3 h-3" />,
     },
     {
       id: 'newArrivals',
       label: 'New Arrivals',
       type: 'checkbox',
       value: filters.newArrivals,
+      icon: <Clock className="w-3 h-3" />,
     },
     {
       id: 'shippedFrom',
       label: 'Shipped From',
       type: 'multi-select',
       value: filters.shippedFrom,
+      icon: <MapPin className="w-3 h-3" />,
       options: [
         { label: 'United States', value: 'us' },
         { label: 'China', value: 'china' },
@@ -309,6 +317,7 @@ export const useHomeLivingFilters = () => {
       label: 'Rating',
       type: 'dropdown',
       value: filters.rating,
+      icon: <Star className="w-3 h-3" />,
       options: [
         { label: 'Any Rating', value: null },
         { label: '4★ & Up', value: 4 },
@@ -499,7 +508,7 @@ export const useHomeLivingData = () => {
       imageUrl: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=200&h=200&fit=crop&crop=center',
       bgColor: 'bg-gradient-to-br from-red-500/20 to-red-600/20',
       textColor: 'text-white',
-      icon: <Coffee className="w-6 h-6" /> // Using Coffee as alternative for Kitchen
+      icon: <Coffee className="w-6 h-6" />
     },
     {
       id: 'bedding',
@@ -539,7 +548,7 @@ export const useHomeLivingData = () => {
       imageUrl: 'https://images.unsplash.com/photo-1566140967404-b8b3932483f5?w=200&h=200&fit=crop&crop=center',
       bgColor: 'bg-gradient-to-br from-green-500/20 to-green-700/20',
       textColor: 'text-white',
-      icon: <Tree className="w-6 h-6" />
+      icon: <Leaf className="w-6 h-6" />
     },
     {
       id: 'rugs',
