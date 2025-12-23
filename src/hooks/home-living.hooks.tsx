@@ -1,8 +1,11 @@
 import { useState, useMemo } from "react";
 import { 
-  Home, Sofa, Lamp, Kitchen, Bed, Lightbulb, 
-  Package, Bath, TreePine, Ruler, Palette, 
-  Sparkles, PawPrint, Layers 
+  Home, Sofa, Lamp, ChefHat, Bed, Lightbulb, 
+  Package, Bath, Tree, Ruler, Palette, 
+  Sparkles, PawPrint, Layers, Coffee,
+  Users, ShoppingBag, Wrench, Couch,
+  Droplets, Flower2, Paintbrush, Box,
+  Sofa as SofaIcon
 } from "lucide-react";
 import { FilterTab, ActiveFilter } from "@/components/FilterTabs";
 
@@ -192,7 +195,7 @@ export const useHomeLivingFilters = () => {
       label: 'Material',
       type: 'multi-select',
       value: filters.material,
-      icon: <Sofa className="w-3 h-3" />,
+      icon: <SofaIcon className="w-3 h-3" />,
       options: [
         { label: 'Wood', value: 'wood' },
         { label: 'Metal', value: 'metal' },
@@ -248,7 +251,7 @@ export const useHomeLivingFilters = () => {
       label: 'Eco-Friendly',
       type: 'checkbox',
       value: filters.ecoFriendly,
-      icon: <TreePine className="w-3 h-3" />,
+      icon: <Tree className="w-3 h-3" />,
     },
     {
       id: 'assemblyRequired',
@@ -496,7 +499,7 @@ export const useHomeLivingData = () => {
       imageUrl: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=200&h=200&fit=crop&crop=center',
       bgColor: 'bg-gradient-to-br from-red-500/20 to-red-600/20',
       textColor: 'text-white',
-      icon: <Kitchen className="w-6 h-6" />
+      icon: <Coffee className="w-6 h-6" /> // Using Coffee as alternative for Kitchen
     },
     {
       id: 'bedding',
@@ -536,7 +539,7 @@ export const useHomeLivingData = () => {
       imageUrl: 'https://images.unsplash.com/photo-1566140967404-b8b3932483f5?w=200&h=200&fit=crop&crop=center',
       bgColor: 'bg-gradient-to-br from-green-500/20 to-green-700/20',
       textColor: 'text-white',
-      icon: <TreePine className="w-6 h-6" />
+      icon: <Tree className="w-6 h-6" />
     },
     {
       id: 'rugs',
@@ -584,7 +587,7 @@ export const useHomeLivingData = () => {
       imageUrl: 'https://images.unsplash.com/photo-1558618666-98f1d9c6f8d9?w=200&h=200&fit=crop&crop=center',
       bgColor: 'bg-gradient-to-br from-emerald-500/20 to-emerald-600/20',
       textColor: 'text-white',
-      icon: <Package className="w-6 h-6" />
+      icon: <Box className="w-6 h-6" />
     }
   ], []);
 
