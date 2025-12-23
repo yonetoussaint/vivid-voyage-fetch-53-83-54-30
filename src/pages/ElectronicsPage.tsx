@@ -30,38 +30,6 @@ const ElectronicsPage: React.FC<ElectronicsPageProps> = ({ category = 'electroni
     getSubcategoryFilters,
   } = useElectronicsData();
 
-  // Create safe filters to prevent priceRange errors
-  const safeFilters = useMemo(() => {
-    // Clone filters to avoid mutation
-    const clonedFilters = { ...filters };
-    
-    // Ensure priceRange is valid if it exists
-    if (clonedFilters.priceRange) {
-      // Check if priceRange has min and max properties
-      if (!clonedFilters.priceRange.min || !clonedFilters.priceRange.max) {
-        // If invalid, set to null
-        clonedFilters.priceRange = null;
-      }
-    }
-    
-    return clonedFilters;
-  }, [filters]);
-
-  // Create safe active filters to prevent errors
-  const safeActiveFilters = useMemo(() => {
-    return activeFilters.map(filter => {
-      // Fix for priceRange filter display
-      if (filter.id === 'priceRange' && filter.value) {
-        const priceValue = filter.value as { min: number; max: number };
-        return {
-          ...filter,
-          displayValue: `$${priceValue.min} - $${priceValue.max}`
-        };
-      }
-      return filter;
-    });
-  }, [activeFilters]);
-
   const handleSubcategorySelect = (channelId: string) => {
     setActiveSubcategory(channelId);
 
@@ -106,7 +74,7 @@ const ElectronicsPage: React.FC<ElectronicsPageProps> = ({ category = 'electroni
     <div key="filter-tabs-wrapper" className="pt-2">
       <FilterTabs
         tabs={electronicsTabs}
-        activeFilters={safeActiveFilters}
+        activeFilters={activeFilters}
         onTabChange={handleTabChange}
         onRemoveFilter={handleRemoveFilter}
         onClearAll={handleClearAll}
@@ -116,7 +84,7 @@ const ElectronicsPage: React.FC<ElectronicsPageProps> = ({ category = 'electroni
     <div key="infinite-grid-wrapper" className="pt-2">
       <InfiniteContentGrid 
         category={activeSubcategory === 'all' ? activeCategory : activeSubcategory} 
-        filters={safeFilters} 
+        filters={filters} 
       />
     </div>,
   ];
