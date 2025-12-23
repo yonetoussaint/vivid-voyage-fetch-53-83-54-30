@@ -1,5 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
-import { ChevronDown } from "lucide-react";
+import React, { useRef, useEffect } from "react";
 
 export interface ChannelItem {
   id: string;
@@ -20,19 +19,52 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
   activeChannel,
   onChannelSelect 
 }) => {
-  const [showAll, setShowAll] = useState(false);
-  const [isOverflowing, setIsOverflowing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
 
-  // Check if content overflows (more than 5.5 items on mobile)
+  // Function to scroll to make the selected item visible on the left
+  const scrollToItem = (index: number) => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const itemWidth = container.children[0]?.clientWidth || 0;
+    const gap = 4; // gap-1 = 0.25rem = 4px
+    const scrollPosition = index * (itemWidth + gap);
+    
+    container.scrollTo({
+      left: scrollPosition,
+      behavior: 'smooth'
+    });
+  };
+
+  // Handle channel selection with scroll behavior
+  const handleChannelSelect = (channelId: string, index: number) => {
+    onChannelSelect?.(channelId);
+    scrollToItem(index);
+  };
+
+  // Auto-scroll to active channel on initial render
   useEffect(() => {
-    if (containerRef.current) {
-      const container = containerRef.current;
-      // Check if we have more items than can fit in one view (5.5 items)
-      const hasOverflow = channels.length > 5.5;
-      setIsOverflowing(hasOverflow);
+    if (activeChannel && containerRef.current) {
+      const activeIndex = channels.findIndex(ch => ch.id === activeChannel);
+      if (activeIndex > -1) {
+        // Delay the initial scroll to ensure DOM is ready
+        const timer = setTimeout(() => {
+          scrollToItem(activeIndex);
+        }, 100);
+        return () => clearTimeout(timer);
+      }
     }
-  }, [channels.length]);
+  }, [activeChannel, channels]);
+
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="bg-white relative">
@@ -44,7 +76,8 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
           style={{
             scrollSnapType: 'x mandatory',
             WebkitOverflowScrolling: 'touch',
-            scrollPadding: '0 16px',
+            // Remove scroll padding to allow items to snap to left edge
+            scrollPadding: '0px',
           }}
         >
           {channels.map((channel, index) => (
@@ -52,13 +85,12 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
               key={channel.id} 
               className="flex flex-col items-center gap-1 flex-shrink-0"
               style={{
-                width: 'calc((100vw - 32px) / 5.5)',
-                minWidth: 'calc((100vw - 32px) / 5.5)',
+                width: 'calc((100vw) / 5.5)',
+                minWidth: 'calc((100vw) / 5.5)',
+                // Snap to the left edge of container
                 scrollSnapAlign: 'start'
               }}
-              onClick={() => {
-                onChannelSelect?.(channel.id);
-              }}
+              onClick={() => handleChannelSelect(channel.id, index)}
             >
               <div 
                 className={`
@@ -88,30 +120,6 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
         <div className="absolute top-0 left-0 bottom-0 w-4 bg-gradient-to-r from-white to-transparent pointer-events-none" />
         <div className="absolute top-0 right-0 bottom-0 w-4 bg-gradient-to-l from-white to-transparent pointer-events-none" />
       </div>
-
-      {/* Chevron Indicator - Only show if there are hidden channels in vertical mode */}
-      {isOverflowing && (
-        <div className="absolute bottom-0 left-0 right-0 flex justify-center">
-          <button
-            onClick={() => setShowAll(!showAll)}
-            className={`
-              bg-white border border-gray-200 rounded-full 
-              shadow-md p-1 -mb-2 z-10 
-              hover:bg-gray-50 active:scale-95 
-              transition-all duration-200
-              ${showAll ? 'rotate-180' : ''}
-            `}
-            aria-label={showAll ? "Show less" : "Show more"}
-          >
-            <ChevronDown className="w-4 h-4 text-gray-600" />
-          </button>
-        </div>
-      )}
-
-      {/* Gradient fade overlay when collapsed (for vertical mode) */}
-      {!showAll && isOverflowing && (
-        <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white to-transparent pointer-events-none" />
-      )}
     </div>
   );
 };
