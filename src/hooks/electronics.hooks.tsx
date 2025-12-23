@@ -1,54 +1,22 @@
 import { useState, useEffect, useMemo } from "react";
 import { FilterTab, ActiveFilter } from "@/components/FilterTabs";
-import { ArrowUpDown, Truck, Tag } from "lucide-react"; // Added Truck and Tag icons
 
 export interface ElectronicsFilters {
   sortBy: string;
-  priceSortDirection: 'asc' | 'desc' | null;
   freeShipping: boolean;
   brand: string | null;
-  // Removed all other filters
+  priceRange: { min: number; max: number } | null; // Add priceRange back as dropdown
 }
 
 export const useElectronicsFilters = () => {
   const [filters, setFilters] = useState<ElectronicsFilters>({
     sortBy: 'popular',
-    priceSortDirection: null,
     freeShipping: false,
     brand: null,
+    priceRange: null, // Initialize as null
   });
 
   const handleTabChange = (tabId: string, value: any) => {
-    // Special handling for price sort toggle
-    if (tabId === 'priceSort') {
-      setFilters(prev => {
-        let newSortBy: string;
-        let newPriceSortDirection: 'asc' | 'desc' | null;
-        
-        if (prev.priceSortDirection === 'asc') {
-          // Switch from asc to desc
-          newSortBy = 'price_high';
-          newPriceSortDirection = 'desc';
-        } else if (prev.priceSortDirection === 'desc') {
-          // Switch from desc back to no price sorting
-          newSortBy = 'popular';
-          newPriceSortDirection = null;
-        } else {
-          // Start price sorting with asc
-          newSortBy = 'price_low';
-          newPriceSortDirection = 'asc';
-        }
-        
-        return {
-          ...prev,
-          sortBy: newSortBy,
-          priceSortDirection: newPriceSortDirection,
-        };
-      });
-      return;
-    }
-    
-    // For other tabs
     setFilters(prev => ({
       ...prev,
       [tabId]: value,
@@ -60,18 +28,14 @@ export const useElectronicsFilters = () => {
       const newFilters = { ...prev };
 
       switch (filterId) {
-        case 'priceSort':
-          newFilters.priceSortDirection = null;
-          // If current sort is a price sort, reset to popular
-          if (newFilters.sortBy === 'price_low' || newFilters.sortBy === 'price_high') {
-            newFilters.sortBy = 'popular';
-          }
-          break;
         case 'freeShipping':
           newFilters.freeShipping = false;
           break;
         case 'brand':
           newFilters.brand = null;
+          break;
+        case 'priceRange':
+          newFilters.priceRange = null;
           break;
         default:
           // Handle any other cases
@@ -85,34 +49,42 @@ export const useElectronicsFilters = () => {
   const handleClearAll = () => {
     setFilters({
       sortBy: 'popular',
-      priceSortDirection: null,
       freeShipping: false,
       brand: null,
+      priceRange: null,
     });
   };
 
   const electronicsTabs: FilterTab[] = useMemo(() => {
     return [
       {
-        id: 'priceSort',
+        id: 'priceRange',
         label: 'Price',
-        type: 'toggle' as const,
-        value: filters.priceSortDirection,
-        icon: <ArrowUpDown className="w-3 h-3" />,
+        type: 'dropdown' as const,
+        value: filters.priceRange,
+        // No icon property
+        options: [
+          { label: 'Any Price', value: null },
+          { label: 'Under $50', value: { min: 0, max: 50 } },
+          { label: '$50 - $200', value: { min: 50, max: 200 } },
+          { label: '$200 - $500', value: { min: 200, max: 500 } },
+          { label: '$500 - $1000', value: { min: 500, max: 1000 } },
+          { label: 'Over $1000', value: { min: 1000, max: 10000 } },
+        ],
       },
       {
         id: 'freeShipping',
         label: 'Free Shipping',
         type: 'checkbox' as const,
         value: filters.freeShipping,
-        icon: <Truck className="w-3 h-3" />,
+        // No icon property
       },
       {
         id: 'brand',
         label: 'Brand',
         type: 'dropdown' as const,
         value: filters.brand,
-        icon: <Tag className="w-3 h-3" />,
+        // No icon property
         options: [
           { label: 'All Brands', value: null },
           { label: 'Apple', value: 'apple' },
@@ -136,17 +108,6 @@ export const useElectronicsFilters = () => {
   const activeFilters: ActiveFilter[] = useMemo(() => {
     const filtersArray: ActiveFilter[] = [];
 
-    // Add price sort filter if active
-    if (filters.priceSortDirection) {
-      const displayValue = filters.priceSortDirection === 'asc' ? 'Price: Low to High' : 'Price: High to Low';
-      filtersArray.push({
-        id: 'priceSort',
-        label: 'Price Sort',
-        value: filters.priceSortDirection,
-        displayValue: displayValue,
-      });
-    }
-
     // Add free shipping filter if active
     if (filters.freeShipping) {
       filtersArray.push({
@@ -168,6 +129,16 @@ export const useElectronicsFilters = () => {
       });
     }
 
+    // Add price range filter if active
+    if (filters.priceRange) {
+      filtersArray.push({
+        id: 'priceRange',
+        label: 'Price',
+        value: filters.priceRange,
+        displayValue: `$${filters.priceRange.min} - $${filters.priceRange.max}`,
+      });
+    }
+
     return filtersArray;
   }, [filters, electronicsTabs]);
 
@@ -181,6 +152,8 @@ export const useElectronicsFilters = () => {
     handleClearAll,
   };
 };
+
+// ... rest of the file remains the same (useElectronicsData, etc.)
 
 export const useElectronicsData = () => {
   const electronicsChannels = useMemo(() => [
