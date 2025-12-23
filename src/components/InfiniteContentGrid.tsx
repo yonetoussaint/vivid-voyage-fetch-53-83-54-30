@@ -6,14 +6,12 @@ import { Sparkles, Play, Users, Image, Heart, MessageCircle, Send, MoreHorizonta
 // Import the actual fetchAllProducts function
 import { fetchAllProducts } from "@/integrations/supabase/products";
 
-// Filter interfaces
-interface PriceFilter {
-  min?: number;
-  max?: number;
-}
-
+// Updated Filter interfaces
 interface FilterState {
-  price: PriceFilter;
+  priceRange?: {
+    min: number;
+    max: number;
+  } | null;
   rating: number | null;
   freeShipping: boolean;
   onSale: boolean;
@@ -21,6 +19,8 @@ interface FilterState {
   newArrivals: boolean;
   shippedFrom: string[];
   sortBy: 'popular' | 'newest' | 'price_low' | 'price_high' | 'rating';
+  // Allow for other dynamic filters from electronics
+  [key: string]: any;
 }
 
 // Product interface
@@ -297,9 +297,12 @@ const applyFilters = (items: ContentItem[], filters: FilterState): ContentItem[]
     if (item.type === 'product') {
       const product = item as Product;
       
-      // Price filter
-      if (filters.price.min !== undefined && product.price < filters.price.min) return false;
-      if (filters.price.max !== undefined && product.price > filters.price.max) return false;
+      // Price filter - safe access with optional chaining
+      if (filters.priceRange) {
+        const { min, max } = filters.priceRange;
+        if (min !== undefined && product.price < min) return false;
+        if (max !== undefined && product.price > max) return false;
+      }
       
       // Rating filter
       if (filters.rating !== null && (product.rating || 0) < filters.rating) return false;
@@ -321,7 +324,7 @@ const applyFilters = (items: ContentItem[], filters: FilterState): ContentItem[]
       }
       
       // Shipped from filter
-      if (filters.shippedFrom.length > 0 && product.shipping?.location) {
+      if (filters.shippedFrom && filters.shippedFrom.length > 0 && product.shipping?.location) {
         if (!filters.shippedFrom.includes(product.shipping.location)) return false;
       }
       
@@ -1029,7 +1032,7 @@ interface InfiniteContentGridProps {
 const InfiniteContentGrid: React.FC<InfiniteContentGridProps> = ({ 
   category, 
   filters = {
-    price: {},
+    priceRange: null,
     rating: null,
     freeShipping: false,
     onSale: false,
@@ -1149,19 +1152,14 @@ const InfiniteContentGrid: React.FC<InfiniteContentGridProps> = ({
 
   const hasActiveFilters = () => {
     return (
-      (filters.price.min !== undefined || filters.price.max !== undefined) ||
+      filters.priceRange !== null ||
       filters.rating !== null ||
       filters.freeShipping ||
       filters.onSale ||
       filters.freeReturns ||
       filters.newArrivals ||
-      filters.shippedFrom.length > 0
+      (filters.shippedFrom && filters.shippedFrom.length > 0)
     );
-  };
-
-  const clearAllFilters = () => {
-    // This function is for internal use only
-    // Actual filter clearing should be done by parent component
   };
 
   // Show loading state while fetching initial data
@@ -1200,7 +1198,6 @@ const InfiniteContentGrid: React.FC<InfiniteContentGridProps> = ({
 
   return (
     <div>
-    
       {/* Masonry Grid */}
       <MasonryGrid items={visibleContent} />
 
@@ -1227,4 +1224,4 @@ const InfiniteContentGrid: React.FC<InfiniteContentGridProps> = ({
 };
 
 export default InfiniteContentGrid;
-export type { FilterState, PriceFilter };
+export type { FilterState };
