@@ -173,7 +173,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                         onClick={(e) => handleRemoveSelection(tab.id, e)}
                         className="ml-0.5 p-0.5 hover:bg-red-100 rounded-full transition-colors" // Changed from blue to red
                       >
-                        <X className="w-3 h-3 text-red-600" /> // Changed from blue to red
+                        <X className="w-3 h-3 text-red-600" /> {/* Changed from blue to red */}
                       </div>
                     )}
                   </button>
@@ -195,7 +195,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                         onClick={(e) => handleRemoveSelection(tab.id, e)}
                         className="ml-1 p-0.5 hover:bg-red-100 rounded-full transition-colors" // Changed from blue to red
                       >
-                        <X className="w-3 h-3 text-red-600" /> // Changed from blue to red
+                        <X className="w-3 h-3 text-red-600" /> {/* Changed from blue to red */}
                       </div>
                     )}
                   </button>
