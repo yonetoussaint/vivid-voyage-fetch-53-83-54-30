@@ -178,8 +178,8 @@ const CategoryTabs = ({
   }, [setActiveTab, navigate, isSearchOverlayActive, categories, updateUnderline]);
 
   const handleCategoriesClick = useCallback(() => {
-    navigate('/search', { preventScrollReset: true });
-  }, [navigate]);
+  navigate('/categories', { preventScrollReset: true });
+}, [navigate]);
 
   // Tab styles
   const getTabClassName = useCallback((isActive: boolean) => {
