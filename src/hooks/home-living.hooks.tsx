@@ -2,47 +2,28 @@ import { useState, useMemo } from "react";
 import { 
   Home, Sofa, Lamp, Coffee, Bed, Lightbulb, 
   Package, Bath, Palette, Sparkles, PawPrint, 
-  Layers, Ruler, Box, 
-  // Alternative icons that should be available
-  Star, Heart, ShoppingCart, Truck, CheckCircle,
-  Filter, DollarSign, Award, Shield, Leaf,
-  Zap, RefreshCw, MapPin, Clock, Users
+  Layers, Ruler, Box, Star, Truck, Zap, Clock,
+  Award, DollarSign, Leaf
 } from "lucide-react";
 import { FilterTab, ActiveFilter } from "@/components/FilterTabs";
 
 export interface HomeLivingFilters {
   sortBy: string;
   freeShipping: boolean;
-  onSale: boolean;
-  freeReturns: boolean;
   newArrivals: boolean;
   brand: string | null;
-  material: string[];
-  color: string[];
-  roomType: string[];
   priceRange: { min: number; max: number } | null;
   rating: number | null;
-  shippedFrom: string[];
-  ecoFriendly: boolean;
-  assemblyRequired: boolean;
 }
 
 export const useHomeLivingFilters = () => {
   const [filters, setFilters] = useState<HomeLivingFilters>({
     sortBy: 'popular',
     freeShipping: false,
-    onSale: false,
-    freeReturns: false,
     newArrivals: false,
     brand: null,
-    material: [],
-    color: [],
-    roomType: [],
     priceRange: null,
     rating: null,
-    shippedFrom: [],
-    ecoFriendly: false,
-    assemblyRequired: false,
   });
 
   const handleTabChange = (tabId: string, value: any) => {
@@ -55,7 +36,7 @@ export const useHomeLivingFilters = () => {
   const handleRemoveFilter = (filterId: string) => {
     setFilters(prev => {
       const newFilters = { ...prev };
-      
+
       switch (filterId) {
         case 'sortBy':
           newFilters.sortBy = 'popular';
@@ -66,35 +47,11 @@ export const useHomeLivingFilters = () => {
         case 'brand':
           newFilters.brand = null;
           break;
-        case 'material':
-          newFilters.material = [];
-          break;
-        case 'color':
-          newFilters.color = [];
-          break;
-        case 'roomType':
-          newFilters.roomType = [];
-          break;
         case 'rating':
           newFilters.rating = null;
           break;
-        case 'shippedFrom':
-          newFilters.shippedFrom = [];
-          break;
-        case 'ecoFriendly':
-          newFilters.ecoFriendly = false;
-          break;
-        case 'assemblyRequired':
-          newFilters.assemblyRequired = false;
-          break;
         case 'freeShipping':
           newFilters.freeShipping = false;
-          break;
-        case 'onSale':
-          newFilters.onSale = false;
-          break;
-        case 'freeReturns':
-          newFilters.freeReturns = false;
           break;
         case 'newArrivals':
           newFilters.newArrivals = false;
@@ -103,24 +60,16 @@ export const useHomeLivingFilters = () => {
           const defaults: Record<string, any> = {
             sortBy: 'popular',
             freeShipping: false,
-            onSale: false,
-            freeReturns: false,
             newArrivals: false,
             brand: null,
-            material: [],
-            color: [],
-            roomType: [],
             priceRange: null,
             rating: null,
-            shippedFrom: [],
-            ecoFriendly: false,
-            assemblyRequired: false,
           };
           if (filterId in defaults) {
             (newFilters as any)[filterId] = defaults[filterId];
           }
       }
-      
+
       return newFilters;
     });
   };
@@ -129,18 +78,10 @@ export const useHomeLivingFilters = () => {
     setFilters({
       sortBy: 'popular',
       freeShipping: false,
-      onSale: false,
-      freeReturns: false,
       newArrivals: false,
       brand: null,
-      material: [],
-      color: [],
-      roomType: [],
       priceRange: null,
       rating: null,
-      shippedFrom: [],
-      ecoFriendly: false,
-      assemblyRequired: false,
     });
   };
 
@@ -194,125 +135,6 @@ export const useHomeLivingFilters = () => {
       ],
     },
     {
-      id: 'material',
-      label: 'Material',
-      type: 'multi-select',
-      value: filters.material,
-      icon: <Package className="w-3 h-3" />,
-      options: [
-        { label: 'Wood', value: 'wood' },
-        { label: 'Metal', value: 'metal' },
-        { label: 'Fabric', value: 'fabric' },
-        { label: 'Leather', value: 'leather' },
-        { label: 'Glass', value: 'glass' },
-        { label: 'Rattan', value: 'rattan' },
-        { label: 'Marble', value: 'marble' },
-        { label: 'Ceramic', value: 'ceramic' },
-        { label: 'Plastic', value: 'plastic' },
-        { label: 'Bamboo', value: 'bamboo' },
-      ],
-    },
-    {
-      id: 'color',
-      label: 'Color',
-      type: 'multi-select',
-      value: filters.color,
-      icon: <Palette className="w-3 h-3" />,
-      options: [
-        { label: 'White', value: 'white' },
-        { label: 'Black', value: 'black' },
-        { label: 'Gray', value: 'gray' },
-        { label: 'Beige', value: 'beige' },
-        { label: 'Brown', value: 'brown' },
-        { label: 'Blue', value: 'blue' },
-        { label: 'Green', value: 'green' },
-        { label: 'Red', value: 'red' },
-        { label: 'Yellow', value: 'yellow' },
-        { label: 'Multi-color', value: 'multi' },
-      ],
-    },
-    {
-      id: 'roomType',
-      label: 'Room Type',
-      type: 'multi-select',
-      value: filters.roomType,
-      icon: <Home className="w-3 h-3" />,
-      options: [
-        { label: 'Living Room', value: 'living_room' },
-        { label: 'Bedroom', value: 'bedroom' },
-        { label: 'Kitchen', value: 'kitchen' },
-        { label: 'Bathroom', value: 'bathroom' },
-        { label: 'Dining Room', value: 'dining_room' },
-        { label: 'Office', value: 'office' },
-        { label: 'Outdoor', value: 'outdoor' },
-        { label: 'Kids Room', value: 'kids_room' },
-        { label: 'Entryway', value: 'entryway' },
-      ],
-    },
-    {
-      id: 'ecoFriendly',
-      label: 'Eco-Friendly',
-      type: 'checkbox',
-      value: filters.ecoFriendly,
-      icon: <Leaf className="w-3 h-3" />,
-    },
-    {
-      id: 'assemblyRequired',
-      label: 'Assembly',
-      type: 'checkbox',
-      value: filters.assemblyRequired,
-      icon: <Package className="w-3 h-3" />,
-    },
-    {
-      id: 'warranty',
-      label: 'Warranty',
-      type: 'checkbox',
-      value: filters.freeReturns,
-      icon: <Shield className="w-3 h-3" />,
-    },
-    {
-      id: 'freeShipping',
-      label: 'Free Shipping',
-      type: 'checkbox',
-      value: filters.freeShipping,
-      icon: <Truck className="w-3 h-3" />,
-    },
-    {
-      id: 'onSale',
-      label: 'On Sale',
-      type: 'checkbox',
-      value: filters.onSale,
-      icon: <Zap className="w-3 h-3" />,
-    },
-    {
-      id: 'freeReturns',
-      label: 'Free Returns',
-      type: 'checkbox',
-      value: filters.freeReturns,
-      icon: <RefreshCw className="w-3 h-3" />,
-    },
-    {
-      id: 'newArrivals',
-      label: 'New Arrivals',
-      type: 'checkbox',
-      value: filters.newArrivals,
-      icon: <Clock className="w-3 h-3" />,
-    },
-    {
-      id: 'shippedFrom',
-      label: 'Shipped From',
-      type: 'multi-select',
-      value: filters.shippedFrom,
-      icon: <MapPin className="w-3 h-3" />,
-      options: [
-        { label: 'United States', value: 'us' },
-        { label: 'China', value: 'china' },
-        { label: 'Sweden', value: 'sweden' },
-        { label: 'Italy', value: 'italy' },
-        { label: 'Local Pickup', value: 'local' },
-      ],
-    },
-    {
       id: 'rating',
       label: 'Rating',
       type: 'dropdown',
@@ -324,6 +146,20 @@ export const useHomeLivingFilters = () => {
         { label: '4.5★ & Up', value: 4.5 },
         { label: '5★', value: 5 },
       ],
+    },
+    {
+      id: 'freeShipping',
+      label: 'Free Shipping',
+      type: 'checkbox',
+      value: filters.freeShipping,
+      icon: <Truck className="w-3 h-3" />,
+    },
+    {
+      id: 'newArrivals',
+      label: 'New Arrivals',
+      type: 'checkbox',
+      value: filters.newArrivals,
+      icon: <Clock className="w-3 h-3" />,
     },
   ], [filters]);
 
@@ -368,88 +204,12 @@ export const useHomeLivingFilters = () => {
       });
     }
 
-    if (filters.material.length > 0) {
-      filtersArray.push({
-        id: 'material',
-        label: 'Material',
-        value: filters.material,
-        displayValue: filters.material.join(', '),
-      });
-    }
-
-    if (filters.color.length > 0) {
-      filtersArray.push({
-        id: 'color',
-        label: 'Color',
-        value: filters.color,
-        displayValue: filters.color.join(', '),
-      });
-    }
-
-    if (filters.roomType.length > 0) {
-      filtersArray.push({
-        id: 'roomType',
-        label: 'Room Type',
-        value: filters.roomType,
-        displayValue: filters.roomType.join(', '),
-      });
-    }
-
-    if (filters.shippedFrom.length > 0) {
-      const locationLabels = filters.shippedFrom.map(loc => {
-        const option = homeLivingTabs.find(t => t.id === 'shippedFrom')?.options?.find(o => o.value === loc);
-        return option?.label || loc;
-      });
-      filtersArray.push({
-        id: 'shippedFrom',
-        label: 'Shipped From',
-        value: filters.shippedFrom,
-        displayValue: locationLabels.join(', '),
-      });
-    }
-
-    if (filters.ecoFriendly) {
-      filtersArray.push({
-        id: 'ecoFriendly',
-        label: 'Eco-Friendly',
-        value: true,
-        displayValue: 'Yes',
-      });
-    }
-
-    if (filters.assemblyRequired) {
-      filtersArray.push({
-        id: 'assemblyRequired',
-        label: 'Assembly',
-        value: true,
-        displayValue: 'Required',
-      });
-    }
-
     if (filters.freeShipping) {
       filtersArray.push({
         id: 'freeShipping',
         label: 'Shipping',
         value: true,
         displayValue: 'Free',
-      });
-    }
-
-    if (filters.onSale) {
-      filtersArray.push({
-        id: 'onSale',
-        label: 'Sale',
-        value: true,
-        displayValue: 'On Sale',
-      });
-    }
-
-    if (filters.freeReturns) {
-      filtersArray.push({
-        id: 'freeReturns',
-        label: 'Returns',
-        value: true,
-        displayValue: 'Free Returns',
       });
     }
 
@@ -602,30 +362,25 @@ export const useHomeLivingData = () => {
 
   const getSubcategoryFilters = (channelId: string) => {
     const subcategoryFilters: Partial<HomeLivingFilters> = {};
-    
+
     switch (channelId) {
       case 'furniture':
-        subcategoryFilters.roomType = ['living_room', 'bedroom', 'dining_room'];
-        subcategoryFilters.material = ['wood', 'fabric', 'leather'];
+        subcategoryFilters.brand = 'ikea';
         break;
       case 'kitchen':
-        subcategoryFilters.roomType = ['kitchen'];
-        subcategoryFilters.material = ['metal', 'glass', 'ceramic'];
+        subcategoryFilters.brand = 'west_elm';
         break;
       case 'bedding':
-        subcategoryFilters.roomType = ['bedroom'];
-        subcategoryFilters.material = ['fabric'];
+        subcategoryFilters.brand = 'pottery_barn';
         break;
       case 'garden-outdoor':
-        subcategoryFilters.roomType = ['outdoor'];
-        subcategoryFilters.material = ['rattan', 'metal', 'plastic'];
+        subcategoryFilters.freeShipping = true;
         break;
       case 'eco-friendly':
-        subcategoryFilters.ecoFriendly = true;
-        subcategoryFilters.material = ['bamboo', 'rattan'];
+        subcategoryFilters.freeShipping = true;
         break;
     }
-    
+
     return subcategoryFilters;
   };
 
