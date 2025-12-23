@@ -24,10 +24,12 @@ import {
   Home,
   Radio,
   Monitor as Display,
+  ArrowUpDown, // Add this import for price sort icon
 } from "lucide-react";
 
 export interface ElectronicsFilters {
   sortBy: string;
+  priceSortDirection: 'asc' | 'desc' | null; // Add price sort direction
   freeShipping: boolean;
   onSale: boolean;
   freeReturns: boolean;
@@ -51,6 +53,7 @@ export interface ElectronicsFilters {
 export const useElectronicsFilters = () => {
   const [filters, setFilters] = useState<ElectronicsFilters>({
     sortBy: 'popular',
+    priceSortDirection: null, // Initialize as null
     freeShipping: false,
     onSale: false,
     freeReturns: false,
@@ -72,19 +75,67 @@ export const useElectronicsFilters = () => {
   });
 
   const handleTabChange = (tabId: string, value: any) => {
-    setFilters(prev => ({
-      ...prev,
-      [tabId]: value,
-    }));
+    // Special handling for price sort toggle
+    if (tabId === 'priceSort') {
+      setFilters(prev => {
+        let newSortBy: string;
+        let newPriceSortDirection: 'asc' | 'desc' | null;
+        
+        if (prev.priceSortDirection === 'asc') {
+          // Switch from asc to desc
+          newSortBy = 'price_high';
+          newPriceSortDirection = 'desc';
+        } else if (prev.priceSortDirection === 'desc') {
+          // Switch from desc back to no price sorting
+          newSortBy = 'popular';
+          newPriceSortDirection = null;
+        } else {
+          // Start price sorting with asc
+          newSortBy = 'price_low';
+          newPriceSortDirection = 'asc';
+        }
+        
+        return {
+          ...prev,
+          sortBy: newSortBy,
+          priceSortDirection: newPriceSortDirection,
+          priceRange: null, // Clear price range when using price sort
+        };
+      });
+      return;
+    }
+    
+    // For other tabs, clear price sort direction if setting a different sort
+    if (tabId === 'sortBy') {
+      setFilters(prev => ({
+        ...prev,
+        [tabId]: value,
+        priceSortDirection: null, // Clear price sort direction
+        priceRange: null, // Also clear price range filter
+      }));
+    } else {
+      setFilters(prev => ({
+        ...prev,
+        [tabId]: value,
+      }));
+    }
   };
 
   const handleRemoveFilter = (filterId: string) => {
     setFilters(prev => {
       const newFilters = { ...prev };
-      
+
       switch (filterId) {
         case 'sortBy':
           newFilters.sortBy = 'popular';
+          newFilters.priceSortDirection = null;
+          break;
+        case 'priceSort':
+          newFilters.priceSortDirection = null;
+          // If current sort is a price sort, reset to popular
+          if (newFilters.sortBy === 'price_low' || newFilters.sortBy === 'price_high') {
+            newFilters.sortBy = 'popular';
+          }
           break;
         case 'priceRange':
           newFilters.priceRange = null;
@@ -140,6 +191,7 @@ export const useElectronicsFilters = () => {
         default:
           const defaults: Record<string, any> = {
             sortBy: 'popular',
+            priceSortDirection: null,
             freeShipping: false,
             onSale: false,
             freeReturns: false,
@@ -163,7 +215,7 @@ export const useElectronicsFilters = () => {
             (newFilters as any)[filterId] = defaults[filterId];
           }
       }
-      
+
       return newFilters;
     });
   };
@@ -171,6 +223,7 @@ export const useElectronicsFilters = () => {
   const handleClearAll = () => {
     setFilters({
       sortBy: 'popular',
+      priceSortDirection: null,
       freeShipping: false,
       onSale: false,
       freeReturns: false,
@@ -192,266 +245,278 @@ export const useElectronicsFilters = () => {
     });
   };
 
-  const electronicsTabs: FilterTab[] = useMemo(() => [
-    {
-      id: 'sortBy',
-      label: 'Sort',
-      type: 'dropdown',
-      value: filters.sortBy,
-      options: [
-        { label: 'Popular', value: 'popular' },
-        { label: 'Newest', value: 'newest' },
-        { label: 'Price: Low to High', value: 'price_low' },
-        { label: 'Price: High to Low', value: 'price_high' },
-        { label: 'Top Rated', value: 'rating' },
-        { label: 'Best Sellers', value: 'best_sellers' },
-      ],
-    },
-    {
-      id: 'priceRange',
-      label: 'Price',
-      type: 'dropdown',
-      value: filters.priceRange,
-      options: [
-        { label: 'Any Price', value: null },
-        { label: 'Under $50', value: { min: 0, max: 50 } },
-        { label: '$50 - $200', value: { min: 50, max: 200 } },
-        { label: '$200 - $500', value: { min: 200, max: 500 } },
-        { label: '$500 - $1000', value: { min: 500, max: 1000 } },
-        { label: 'Over $1000', value: { min: 1000, max: 10000 } },
-      ],
-    },
-    {
-      id: 'brand',
-      label: 'Brand',
-      type: 'dropdown',
-      value: filters.brand,
-      options: [
-        { label: 'All Brands', value: null },
-        { label: 'Apple', value: 'apple' },
-        { label: 'Samsung', value: 'samsung' },
-        { label: 'Sony', value: 'sony' },
-        { label: 'LG', value: 'lg' },
-        { label: 'Microsoft', value: 'microsoft' },
-        { label: 'Dell', value: 'dell' },
-        { label: 'HP', value: 'hp' },
-        { label: 'Lenovo', value: 'lenovo' },
-        { label: 'Asus', value: 'asus' },
-        { label: 'Acer', value: 'acer' },
-        { label: 'Google', value: 'google' },
-        { label: 'OnePlus', value: 'oneplus' },
-        { label: 'Xiaomi', value: 'xiaomi' },
-      ],
-    },
-    {
-      id: 'condition',
-      label: 'Condition',
-      type: 'dropdown',
-      value: filters.condition,
-      options: [
-        { label: 'All Conditions', value: 'all' },
-        { label: 'New', value: 'new' },
-        { label: 'Refurbished', value: 'refurbished' },
-        { label: 'Used - Like New', value: 'used_like_new' },
-        { label: 'Used - Good', value: 'used_good' },
-      ],
-    },
-    {
-      id: 'ram',
-      label: 'RAM',
-      type: 'multi-select',
-      value: filters.ram,
-      icon: <MemoryStick className="w-3 h-3" />,
-      options: [
-        { label: '2 GB', value: '2gb' },
-        { label: '4 GB', value: '4gb' },
-        { label: '8 GB', value: '8gb' },
-        { label: '16 GB', value: '16gb' },
-        { label: '32 GB', value: '32gb' },
-        { label: '64 GB+', value: '64gb+' },
-      ],
-    },
-    {
-      id: 'storage',
-      label: 'Storage',
-      type: 'multi-select',
-      value: filters.storage,
-      icon: <HardDrive className="w-3 h-3" />,
-      options: [
-        { label: '64 GB', value: '64gb' },
-        { label: '128 GB', value: '128gb' },
-        { label: '256 GB', value: '256gb' },
-        { label: '512 GB', value: '512gb' },
-        { label: '1 TB', value: '1tb' },
-        { label: '2 TB+', value: '2tb+' },
-      ],
-    },
-    {
-      id: 'screenSize',
-      label: 'Screen Size',
-      type: 'multi-select',
-      value: filters.screenSize,
-      icon: <Monitor className="w-3 h-3" />,
-      options: [
-        { label: 'Under 5"', value: 'under_5' },
-        { label: '5" - 6"', value: '5_6' },
-        { label: '6" - 7"', value: '6_7' },
-        { label: '13" - 15"', value: '13_15' },
-        { label: '15" - 17"', value: '15_17' },
-        { label: '24" - 27"', value: '24_27' },
-        { label: '32" - 40"', value: '32_40' },
-        { label: '40"+', value: '40_plus' },
-      ],
-    },
-    {
-      id: 'processor',
-      label: 'Processor',
-      type: 'multi-select',
-      value: filters.processor,
-      icon: <Cpu className="w-3 h-3" />,
-      options: [
-        { label: 'Intel Core i3', value: 'i3' },
-        { label: 'Intel Core i5', value: 'i5' },
-        { label: 'Intel Core i7', value: 'i7' },
-        { label: 'Intel Core i9', value: 'i9' },
-        { label: 'AMD Ryzen 3', value: 'ryzen3' },
-        { label: 'AMD Ryzen 5', value: 'ryzen5' },
-        { label: 'AMD Ryzen 7', value: 'ryzen7' },
-        { label: 'AMD Ryzen 9', value: 'ryzen9' },
-        { label: 'Apple M1', value: 'm1' },
-        { label: 'Apple M2', value: 'm2' },
-        { label: 'Apple M3', value: 'm3' },
-        { label: 'Snapdragon', value: 'snapdragon' },
-      ],
-    },
-    {
-      id: 'batteryLife',
-      label: 'Battery Life',
-      type: 'multi-select',
-      value: filters.batteryLife,
-      icon: <Battery className="w-3 h-3" />,
-      options: [
-        { label: 'Under 8 hours', value: 'under_8' },
-        { label: '8-12 hours', value: '8_12' },
-        { label: '12-16 hours', value: '12_16' },
-        { label: '16-20 hours', value: '16_20' },
-        { label: '20+ hours', value: '20_plus' },
-      ],
-    },
-    {
-      id: 'resolution',
-      label: 'Resolution',
-      type: 'multi-select',
-      value: filters.resolution,
-      icon: <Monitor className="w-3 h-3" />,
-      options: [
-        { label: 'HD (720p)', value: '720p' },
-        { label: 'Full HD (1080p)', value: '1080p' },
-        { label: '2K (1440p)', value: '1440p' },
-        { label: '4K (2160p)', value: '4k' },
-        { label: '8K', value: '8k' },
-        { label: 'Retina', value: 'retina' },
-      ],
-    },
-    {
-      id: 'connectivity',
-      label: 'Connectivity',
-      type: 'multi-select',
-      value: filters.connectivity,
-      icon: <Waves className="w-3 h-3" />,
-      options: [
-        { label: 'Wi-Fi 6', value: 'wifi6' },
-        { label: 'Wi-Fi 6E', value: 'wifi6e' },
-        { label: 'Bluetooth 5.0+', value: 'bluetooth5' },
-        { label: '5G', value: '5g' },
-        { label: 'USB-C', value: 'usbc' },
-        { label: 'Thunderbolt', value: 'thunderbolt' },
-        { label: 'HDMI 2.1', value: 'hdmi21' },
-        { label: 'Ethernet', value: 'ethernet' },
-      ],
-    },
-    {
-      id: 'color',
-      label: 'Color',
-      type: 'multi-select',
-      value: filters.color,
-      options: [
-        { label: 'Black', value: 'black' },
-        { label: 'White', value: 'white' },
-        { label: 'Silver', value: 'silver' },
-        { label: 'Space Gray', value: 'space_gray' },
-        { label: 'Midnight', value: 'midnight' },
-        { label: 'Blue', value: 'blue' },
-        { label: 'Red', value: 'red' },
-        { label: 'Green', value: 'green' },
-        { label: 'Pink', value: 'pink' },
-        { label: 'Gold', value: 'gold' },
-      ],
-    },
-    {
-      id: 'warranty',
-      label: 'Warranty',
-      type: 'checkbox',
-      value: filters.warranty,
-      icon: <Shield className="w-3 h-3" />,
-    },
-    {
-      id: 'freeShipping',
-      label: 'Free Shipping',
-      type: 'checkbox',
-      value: filters.freeShipping,
-    },
-    {
-      id: 'onSale',
-      label: 'On Sale',
-      type: 'checkbox',
-      value: filters.onSale,
-    },
-    {
-      id: 'freeReturns',
-      label: 'Free Returns',
-      type: 'checkbox',
-      value: filters.freeReturns,
-    },
-    {
-      id: 'newArrivals',
-      label: 'New Arrivals',
-      type: 'checkbox',
-      value: filters.newArrivals,
-    },
-    {
-      id: 'shippedFrom',
-      label: 'Shipped From',
-      type: 'multi-select',
-      value: filters.shippedFrom,
-      options: [
-        { label: 'United States', value: 'us' },
-        { label: 'China', value: 'china' },
-        { label: 'South Korea', value: 'south_korea' },
-        { label: 'Japan', value: 'japan' },
-        { label: 'Taiwan', value: 'taiwan' },
-        { label: 'Germany', value: 'germany' },
-        { label: 'Local Pickup', value: 'local' },
-      ],
-    },
-    {
-      id: 'rating',
-      label: 'Rating',
-      type: 'dropdown',
-      value: filters.rating,
-      options: [
-        { label: 'Any Rating', value: null },
-        { label: '4★ & Up', value: 4 },
-        { label: '4.5★ & Up', value: 4.5 },
-        { label: '5★', value: 5 },
-      ],
-    },
-  ], [filters]);
+  const electronicsTabs: FilterTab[] = useMemo(() => {
+    const tabs = [
+      {
+        id: 'sortBy',
+        label: 'Sort',
+        type: 'dropdown' as const,
+        value: filters.sortBy,
+        options: [
+          { label: 'Popular', value: 'popular' },
+          { label: 'Newest', value: 'newest' },
+          { label: 'Price: Low to High', value: 'price_low' },
+          { label: 'Price: High to Low', value: 'price_high' },
+          { label: 'Top Rated', value: 'rating' },
+          { label: 'Best Sellers', value: 'best_sellers' },
+        ],
+      },
+      {
+        id: 'priceSort',
+        label: 'Price',
+        type: 'toggle' as const, // Change from dropdown to toggle
+        value: filters.priceSortDirection, // This will track the direction
+        icon: <ArrowUpDown className="w-3 h-3" />,
+      },
+      {
+        id: 'priceRange',
+        label: 'Price Range',
+        type: 'dropdown' as const,
+        value: filters.priceRange,
+        options: [
+          { label: 'Any Price', value: null },
+          { label: 'Under $50', value: { min: 0, max: 50 } },
+          { label: '$50 - $200', value: { min: 50, max: 200 } },
+          { label: '$200 - $500', value: { min: 200, max: 500 } },
+          { label: '$500 - $1000', value: { min: 500, max: 1000 } },
+          { label: 'Over $1000', value: { min: 1000, max: 10000 } },
+        ],
+      },
+      {
+        id: 'brand',
+        label: 'Brand',
+        type: 'dropdown' as const,
+        value: filters.brand,
+        options: [
+          { label: 'All Brands', value: null },
+          { label: 'Apple', value: 'apple' },
+          { label: 'Samsung', value: 'samsung' },
+          { label: 'Sony', value: 'sony' },
+          { label: 'LG', value: 'lg' },
+          { label: 'Microsoft', value: 'microsoft' },
+          { label: 'Dell', value: 'dell' },
+          { label: 'HP', value: 'hp' },
+          { label: 'Lenovo', value: 'lenovo' },
+          { label: 'Asus', value: 'asus' },
+          { label: 'Acer', value: 'acer' },
+          { label: 'Google', value: 'google' },
+          { label: 'OnePlus', value: 'oneplus' },
+          { label: 'Xiaomi', value: 'xiaomi' },
+        ],
+      },
+      // ... rest of the tabs remain the same
+      {
+        id: 'condition',
+        label: 'Condition',
+        type: 'dropdown',
+        value: filters.condition,
+        options: [
+          { label: 'All Conditions', value: 'all' },
+          { label: 'New', value: 'new' },
+          { label: 'Refurbished', value: 'refurbished' },
+          { label: 'Used - Like New', value: 'used_like_new' },
+          { label: 'Used - Good', value: 'used_good' },
+        ],
+      },
+      {
+        id: 'ram',
+        label: 'RAM',
+        type: 'multi-select',
+        value: filters.ram,
+        icon: <MemoryStick className="w-3 h-3" />,
+        options: [
+          { label: '2 GB', value: '2gb' },
+          { label: '4 GB', value: '4gb' },
+          { label: '8 GB', value: '8gb' },
+          { label: '16 GB', value: '16gb' },
+          { label: '32 GB', value: '32gb' },
+          { label: '64 GB+', value: '64gb+' },
+        ],
+      },
+      {
+        id: 'storage',
+        label: 'Storage',
+        type: 'multi-select',
+        value: filters.storage,
+        icon: <HardDrive className="w-3 h-3" />,
+        options: [
+          { label: '64 GB', value: '64gb' },
+          { label: '128 GB', value: '128gb' },
+          { label: '256 GB', value: '256gb' },
+          { label: '512 GB', value: '512gb' },
+          { label: '1 TB', value: '1tb' },
+          { label: '2 TB+', value: '2tb+' },
+        ],
+      },
+      {
+        id: 'screenSize',
+        label: 'Screen Size',
+        type: 'multi-select',
+        value: filters.screenSize,
+        icon: <Monitor className="w-3 h-3" />,
+        options: [
+          { label: 'Under 5"', value: 'under_5' },
+          { label: '5" - 6"', value: '5_6' },
+          { label: '6" - 7"', value: '6_7' },
+          { label: '13" - 15"', value: '13_15' },
+          { label: '15" - 17"', value: '15_17' },
+          { label: '24" - 27"', value: '24_27' },
+          { label: '32" - 40"', value: '32_40' },
+          { label: '40"+', value: '40_plus' },
+        ],
+      },
+      {
+        id: 'processor',
+        label: 'Processor',
+        type: 'multi-select',
+        value: filters.processor,
+        icon: <Cpu className="w-3 h-3" />,
+        options: [
+          { label: 'Intel Core i3', value: 'i3' },
+          { label: 'Intel Core i5', value: 'i5' },
+          { label: 'Intel Core i7', value: 'i7' },
+          { label: 'Intel Core i9', value: 'i9' },
+          { label: 'AMD Ryzen 3', value: 'ryzen3' },
+          { label: 'AMD Ryzen 5', value: 'ryzen5' },
+          { label: 'AMD Ryzen 7', value: 'ryzen7' },
+          { label: 'AMD Ryzen 9', value: 'ryzen9' },
+          { label: 'Apple M1', value: 'm1' },
+          { label: 'Apple M2', value: 'm2' },
+          { label: 'Apple M3', value: 'm3' },
+          { label: 'Snapdragon', value: 'snapdragon' },
+        ],
+      },
+      {
+        id: 'batteryLife',
+        label: 'Battery Life',
+        type: 'multi-select',
+        value: filters.batteryLife,
+        icon: <Battery className="w-3 h-3" />,
+        options: [
+          { label: 'Under 8 hours', value: 'under_8' },
+          { label: '8-12 hours', value: '8_12' },
+          { label: '12-16 hours', value: '12_16' },
+          { label: '16-20 hours', value: '16_20' },
+          { label: '20+ hours', value: '20_plus' },
+        ],
+      },
+      {
+        id: 'resolution',
+        label: 'Resolution',
+        type: 'multi-select',
+        value: filters.resolution,
+        icon: <Monitor className="w-3 h-3" />,
+        options: [
+          { label: 'HD (720p)', value: '720p' },
+          { label: 'Full HD (1080p)', value: '1080p' },
+          { label: '2K (1440p)', value: '1440p' },
+          { label: '4K (2160p)', value: '4k' },
+          { label: '8K', value: '8k' },
+          { label: 'Retina', value: 'retina' },
+        ],
+      },
+      {
+        id: 'connectivity',
+        label: 'Connectivity',
+        type: 'multi-select',
+        value: filters.connectivity,
+        icon: <Waves className="w-3 h-3" />,
+        options: [
+          { label: 'Wi-Fi 6', value: 'wifi6' },
+          { label: 'Wi-Fi 6E', value: 'wifi6e' },
+          { label: 'Bluetooth 5.0+', value: 'bluetooth5' },
+          { label: '5G', value: '5g' },
+          { label: 'USB-C', value: 'usbc' },
+          { label: 'Thunderbolt', value: 'thunderbolt' },
+          { label: 'HDMI 2.1', value: 'hdmi21' },
+          { label: 'Ethernet', value: 'ethernet' },
+        ],
+      },
+      {
+        id: 'color',
+        label: 'Color',
+        type: 'multi-select',
+        value: filters.color,
+        options: [
+          { label: 'Black', value: 'black' },
+          { label: 'White', value: 'white' },
+          { label: 'Silver', value: 'silver' },
+          { label: 'Space Gray', value: 'space_gray' },
+          { label: 'Midnight', value: 'midnight' },
+          { label: 'Blue', value: 'blue' },
+          { label: 'Red', value: 'red' },
+          { label: 'Green', value: 'green' },
+          { label: 'Pink', value: 'pink' },
+          { label: 'Gold', value: 'gold' },
+        ],
+      },
+      {
+        id: 'warranty',
+        label: 'Warranty',
+        type: 'checkbox',
+        value: filters.warranty,
+        icon: <Shield className="w-3 h-3" />,
+      },
+      {
+        id: 'freeShipping',
+        label: 'Free Shipping',
+        type: 'checkbox',
+        value: filters.freeShipping,
+      },
+      {
+        id: 'onSale',
+        label: 'On Sale',
+        type: 'checkbox',
+        value: filters.onSale,
+      },
+      {
+        id: 'freeReturns',
+        label: 'Free Returns',
+        type: 'checkbox',
+        value: filters.freeReturns,
+      },
+      {
+        id: 'newArrivals',
+        label: 'New Arrivals',
+        type: 'checkbox',
+        value: filters.newArrivals,
+      },
+      {
+        id: 'shippedFrom',
+        label: 'Shipped From',
+        type: 'multi-select',
+        value: filters.shippedFrom,
+        options: [
+          { label: 'United States', value: 'us' },
+          { label: 'China', value: 'china' },
+          { label: 'South Korea', value: 'south_korea' },
+          { label: 'Japan', value: 'japan' },
+          { label: 'Taiwan', value: 'taiwan' },
+          { label: 'Germany', value: 'germany' },
+          { label: 'Local Pickup', value: 'local' },
+        ],
+      },
+      {
+        id: 'rating',
+        label: 'Rating',
+        type: 'dropdown',
+        value: filters.rating,
+        options: [
+          { label: 'Any Rating', value: null },
+          { label: '4★ & Up', value: 4 },
+          { label: '4.5★ & Up', value: 4.5 },
+          { label: '5★', value: 5 },
+        ],
+      },
+    ];
+    
+    return tabs;
+  }, [filters]);
 
   const activeFilters: ActiveFilter[] = useMemo(() => {
     const filtersArray: ActiveFilter[] = [];
 
-    if (filters.sortBy !== 'popular') {
+    if (filters.sortBy !== 'popular' && !filters.priceSortDirection) {
       const sortOption = electronicsTabs.find(t => t.id === 'sortBy')?.options?.find(o => o.value === filters.sortBy);
       filtersArray.push({
         id: 'sortBy',
@@ -461,11 +526,22 @@ export const useElectronicsFilters = () => {
       });
     }
 
+    // Add price sort filter if active
+    if (filters.priceSortDirection) {
+      const displayValue = filters.priceSortDirection === 'asc' ? 'Price: Low to High' : 'Price: High to Low';
+      filtersArray.push({
+        id: 'priceSort',
+        label: 'Price Sort',
+        value: filters.priceSortDirection,
+        displayValue: displayValue,
+      });
+    }
+
     // FIX: Add null check for priceRange
     if (filters.priceRange) {
       filtersArray.push({
         id: 'priceRange',
-        label: 'Price',
+        label: 'Price Range',
         value: filters.priceRange,
         displayValue: `$${filters.priceRange.min} - $${filters.priceRange.max}`,
       });
@@ -634,6 +710,8 @@ export const useElectronicsFilters = () => {
     handleClearAll,
   };
 };
+
+// Keep the rest of the file unchanged...
 
 export const useElectronicsData = () => {
   const electronicsChannels = useMemo(() => [
