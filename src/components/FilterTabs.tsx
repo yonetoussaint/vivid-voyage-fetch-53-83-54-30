@@ -10,7 +10,7 @@ export interface FilterTab {
     label: string;
     value: any;
   }>;
-  icon?: React.ReactNode;
+  // Removed icon property
 }
 
 export interface ActiveFilter {
@@ -50,16 +50,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
     onTabChange(tabId, !currentValue);
   };
 
-  const handlePriceSortToggle = (tabId: string, currentValue: 'asc' | 'desc' | null) => {
-    onTabChange(tabId, null); // The value will be handled in the hook
-  };
-
   const getTabLabel = (tab: FilterTab) => {
-    // For price tab, always show just "Price" regardless of state
-    if (tab.id === 'priceSort') {
-      return tab.label; // Always return "Price"
-    }
-
     if (tab.type === 'checkbox' || tab.type === 'toggle') {
       return tab.label;
     }
@@ -73,46 +64,11 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
   };
 
   const isTabActive = (tab: FilterTab) => {
-    if (tab.id === 'priceSort') {
-      return tab.value !== null;
-    }
-
     if (tab.type === 'checkbox' || tab.type === 'toggle') {
       return Boolean(tab.value);
     }
 
     return tab.value && tab.value !== '' && tab.value !== null;
-  };
-
-  // Render price sort icon using carets (^) - Compact version
-  const renderPriceSortIcon = (value: 'asc' | 'desc' | null) => {
-    // Using a single SVG with both carets to ensure perfect alignment
-    const DoubleCarets = ({ active }: { active: 'up' | 'down' | null }) => (
-      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        {/* Top caret - always present */}
-        <path 
-          d="M18 13L12 7L6 13" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
-          className={active === 'up' ? 'text-blue-600' : 'text-gray-400'}
-        />
-        {/* Bottom caret - always present */}
-        <path 
-          d="M6 11L12 17L18 11" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
-          className={active === 'down' ? 'text-blue-600' : 'text-gray-400'}
-        />
-      </svg>
-    );
-
-    if (value === 'asc') {
-      return <DoubleCarets active="up" />;
-    } else if (value === 'desc') {
-      return <DoubleCarets active="down" />;
-    } else {
-      return <DoubleCarets active={null} />;
-    }
   };
 
   const renderDropdownContent = (tab: FilterTab) => {
@@ -161,8 +117,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                         : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                     }`}
                   >
-                    {tab.icon}
-                    <span className="truncate max-w-[80px]">{getTabLabel(tab)}</span>
+                    <span className="truncate max-w-[100px]">{getTabLabel(tab)}</span>
                     <ChevronDown className={`w-3 h-3 flex-shrink-0 transition-transform ${
                       activeDropdown === tab.id ? 'rotate-180' : ''
                     }`} />
@@ -178,18 +133,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                         : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                     }`}
                   >
-                    {tab.icon}
-                    <span className="truncate">{getTabLabel(tab)}</span>
-                  </button>
-                )}
-
-                {tab.type === 'toggle' && tab.id === 'priceSort' && (
-                  <button
-                    onClick={() => handlePriceSortToggle(tab.id, tab.value)}
-                    className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all bg-gray-100 hover:bg-gray-200 text-gray-700`}
-                  >
-                    {renderPriceSortIcon(tab.value)}
-                    <span className="truncate ml-0.5">{getTabLabel(tab)}</span>
+                    <span className="truncate max-w-[100px]">{getTabLabel(tab)}</span>
                   </button>
                 )}
               </React.Fragment>
