@@ -1,185 +1,132 @@
 import React, { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 
-interface PriceFilter {
-  min?: number;
-  max?: number;
+export interface FilterTab {
+  id: string;
+  label: string;
+  type: 'dropdown' | 'checkbox' | 'toggle' | 'multi-select';
+  value: any;
+  options?: Array<{
+    label: string;
+    value: any;
+  }>;
+  icon?: React.ReactNode;
 }
 
-interface FilterState {
-  price: PriceFilter;
-  rating: number | null;
-  freeShipping: boolean;
-  onSale: boolean;
-  freeReturns: boolean;
-  newArrivals: boolean;
-  shippedFrom: string[];
-  sortBy: 'popular' | 'newest' | 'price_low' | 'price_high' | 'rating';
+export interface ActiveFilter {
+  id: string;
+  label: string;
+  value: any;
+  displayValue: string;
 }
 
 interface FilterTabsProps {
-  filters: FilterState;
-  onFilterChange: (filters: FilterState) => void;
+  tabs: FilterTab[];
+  activeFilters: ActiveFilter[];
+  onTabChange: (tabId: string, value: any) => void;
+  onRemoveFilter: (filterId: string) => void;
+  onClearAll: () => void;
 }
 
-const FilterTabs: React.FC<FilterTabsProps> = ({ filters, onFilterChange }) => {
+const FilterTabs: React.FC<FilterTabsProps> = ({
+  tabs,
+  activeFilters,
+  onTabChange,
+  onRemoveFilter,
+  onClearAll,
+}) => {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
-  const toggleDropdown = (filter: string) => {
-    setActiveDropdown(activeDropdown === filter ? null : filter);
+  const toggleDropdown = (tabId: string) => {
+    setActiveDropdown(activeDropdown === tabId ? null : tabId);
   };
 
-  const handlePriceFilter = (min?: number, max?: number) => {
-    onFilterChange({
-      ...filters,
-      price: { min, max }
-    });
+  const handleDropdownSelect = (tabId: string, value: any) => {
+    onTabChange(tabId, value);
     setActiveDropdown(null);
   };
 
-  const handleRatingFilter = (rating: number) => {
-    onFilterChange({
-      ...filters,
-      rating: filters.rating === rating ? null : rating
-    });
-    setActiveDropdown(null);
+  const handleCheckboxToggle = (tabId: string, currentValue: boolean) => {
+    onTabChange(tabId, !currentValue);
   };
 
-  const handleShippingFilter = (location: string) => {
-    const updatedLocations = filters.shippedFrom.includes(location)
-      ? filters.shippedFrom.filter(l => l !== location)
-      : [...filters.shippedFrom, location];
+  const handleMultiSelect = (tabId: string, optionValue: any, currentValues: any[]) => {
+    const newValues = currentValues.includes(optionValue)
+      ? currentValues.filter(v => v !== optionValue)
+      : [...currentValues, optionValue];
     
-    onFilterChange({
-      ...filters,
-      shippedFrom: updatedLocations
-    });
+    onTabChange(tabId, newValues);
   };
 
-  const handleSortChange = (sortBy: FilterState['sortBy']) => {
-    onFilterChange({
-      ...filters,
-      sortBy
-    });
-    setActiveDropdown(null);
-  };
-
-  const toggleCheckboxFilter = (filterKey: keyof FilterState) => {
-    onFilterChange({
-      ...filters,
-      [filterKey]: !filters[filterKey]
-    });
-  };
-
-  const getPriceLabel = () => {
-    if (filters.price.min !== undefined && filters.price.max !== undefined) {
-      return `$${filters.price.min} - $${filters.price.max}`;
+  const getTabLabel = (tab: FilterTab) => {
+    if (tab.type === 'checkbox' || tab.type === 'toggle') {
+      return tab.label;
     }
-    if (filters.price.min !== undefined) {
-      return `Above $${filters.price.min}`;
+
+    if (tab.type === 'multi-select' && Array.isArray(tab.value) && tab.value.length > 0) {
+      return `${tab.label} (${tab.value.length})`;
     }
-    if (filters.price.max !== undefined) {
-      return `Under $${filters.price.max}`;
+
+    if (tab.value && typeof tab.value === 'object' && 'label' in tab.value) {
+      return `${tab.label}: ${tab.value.label}`;
     }
-    return "Price";
+
+    if (tab.value && tab.value !== '' && !Array.isArray(tab.value)) {
+      return `${tab.label}: ${tab.value}`;
+    }
+
+    return tab.label;
   };
 
-  const getRatingLabel = () => {
-    if (filters.rating) {
-      return `${'★'.repeat(filters.rating)} & Up`;
+  const isTabActive = (tab: FilterTab) => {
+    if (tab.type === 'checkbox' || tab.type === 'toggle') {
+      return Boolean(tab.value);
     }
-    return "Rating";
+    
+    if (tab.type === 'multi-select') {
+      return Array.isArray(tab.value) && tab.value.length > 0;
+    }
+    
+    return tab.value && tab.value !== '' && tab.value !== null;
   };
 
-  const getSortLabel = () => {
-    switch (filters.sortBy) {
-      case 'newest': return 'Newest';
-      case 'price_low': return 'Price: Low to High';
-      case 'price_high': return 'Price: High to Low';
-      case 'rating': return 'Top Rated';
-      default: return 'Popular';
-    }
-  };
+  const renderDropdownContent = (tab: FilterTab) => {
+    if (!tab.options) return null;
 
-  const hasActiveFilters = () => {
+    if (tab.type === 'multi-select') {
+      return (
+        <div className="bg-white border border-gray-200 rounded-md shadow-sm">
+          <div className="p-2 space-y-1">
+            {tab.options.map((option) => (
+              <label key={option.value} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded-md">
+                <input 
+                  type="checkbox" 
+                  checked={tab.value?.includes(option.value) || false}
+                  onChange={() => handleMultiSelect(tab.id, option.value, tab.value || [])}
+                  className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                />
+                <span className="text-xs text-gray-700">{option.label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
     return (
-      (filters.price.min !== undefined || filters.price.max !== undefined) ||
-      filters.rating !== null ||
-      filters.freeShipping ||
-      filters.onSale ||
-      filters.freeReturns ||
-      filters.newArrivals ||
-      filters.shippedFrom.length > 0
-    );
-  };
-
-  const clearAllFilters = () => {
-    onFilterChange({
-      price: {},
-      rating: null,
-      freeShipping: false,
-      onSale: false,
-      freeReturns: false,
-      newArrivals: false,
-      shippedFrom: [],
-      sortBy: 'popular'
-    });
-    setActiveDropdown(null);
-  };
-
-  const renderActiveFilters = () => {
-    if (activeDropdown) return null;
-
-    const activeFilters = [];
-    
-    if (filters.price.min !== undefined && filters.price.max !== undefined) {
-      activeFilters.push(
-        <span key="price" className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-md">
-          Price: ${filters.price.min} - ${filters.price.max}
-          <button 
-            onClick={() => onFilterChange({...filters, price: {}})}
-            className="text-blue-500 hover:text-blue-700 ml-1"
-          >
-            ×
-          </button>
-        </span>
-      );
-    }
-    
-    if (filters.rating !== null) {
-      activeFilters.push(
-        <span key="rating" className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-md">
-          Rating: {filters.rating}+ Stars
-          <button 
-            onClick={() => onFilterChange({...filters, rating: null})}
-            className="text-blue-500 hover:text-blue-700 ml-1"
-          >
-            ×
-          </button>
-        </span>
-      );
-    }
-    
-    filters.shippedFrom.forEach(location => {
-      activeFilters.push(
-        <span key={`shipped-${location}`} className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-md">
-          From: {location}
-          <button 
-            onClick={() => handleShippingFilter(location)}
-            className="text-blue-500 hover:text-blue-700 ml-1"
-          >
-            ×
-          </button>
-        </span>
-      );
-    });
-    
-    if (activeFilters.length === 0) return null;
-    
-    return (
-      <div className="px-3 py-2">
-        <div className="flex flex-wrap gap-2">
-          {activeFilters}
+      <div className="bg-white border border-gray-200 rounded-md shadow-sm">
+        <div className="py-1">
+          {tab.options.map((option) => (
+            <button
+              key={option.value}
+              onClick={() => handleDropdownSelect(tab.id, option.value)}
+              className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors ${
+                tab.value === option.value ? 'text-blue-600 font-medium' : 'text-gray-700'
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
         </div>
       </div>
     );
@@ -191,127 +138,79 @@ const FilterTabs: React.FC<FilterTabsProps> = ({ filters, onFilterChange }) => {
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
-      
+
+      {/* Filter Tabs Row */}
       <div>
         <div className="overflow-x-auto hide-scrollbar">
           <div className="flex items-center gap-2 px-2 min-w-max py-1">
-            {/* Sort */}
-            <button
-              onClick={() => toggleDropdown('sort')}
-              className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
-                activeDropdown === 'sort' 
-                  ? 'bg-white border border-gray-200 shadow-sm text-gray-900' 
-                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-              }`}
-            >
-              {getSortLabel()}
-              <ChevronDown className={`w-3 h-3 transition-transform ${activeDropdown === 'sort' ? 'rotate-180' : ''}`} />
-            </button>
+            {tabs.map((tab) => (
+              <React.Fragment key={tab.id}>
+                {tab.type === 'dropdown' && (
+                  <button
+                    onClick={() => toggleDropdown(tab.id)}
+                    className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
+                      isTabActive(tab)
+                        ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
+                        : activeDropdown === tab.id
+                        ? 'bg-white border border-gray-200 shadow-sm text-gray-900'
+                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                    }`}
+                  >
+                    {tab.icon}
+                    {getTabLabel(tab)}
+                    <ChevronDown className={`w-3 h-3 transition-transform ${
+                      activeDropdown === tab.id ? 'rotate-180' : ''
+                    }`} />
+                  </button>
+                )}
 
-            {/* Price */}
-            <button
-              onClick={() => toggleDropdown('price')}
-              className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
-                filters.price.min || filters.price.max
-                  ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
-                  : activeDropdown === 'price' 
-                    ? 'bg-white border border-gray-200 shadow-sm text-gray-900'
-                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-              }`}
-            >
-              {getPriceLabel()}
-              <ChevronDown className={`w-3 h-3 transition-transform ${activeDropdown === 'price' ? 'rotate-180' : ''}`} />
-            </button>
+                {(tab.type === 'checkbox' || tab.type === 'toggle') && (
+                  <button
+                    onClick={() => handleCheckboxToggle(tab.id, tab.value)}
+                    className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
+                      isTabActive(tab)
+                        ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
+                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                    }`}
+                  >
+                    {tab.icon}
+                    {getTabLabel(tab)}
+                  </button>
+                )}
 
-            {/* Rating */}
-            <button
-              onClick={() => toggleDropdown('rating')}
-              className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
-                filters.rating 
-                  ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
-                  : activeDropdown === 'rating' 
-                    ? 'bg-white border border-gray-200 shadow-sm text-gray-900'
-                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-              }`}
-            >
-              {getRatingLabel()}
-              <ChevronDown className={`w-3 h-3 transition-transform ${activeDropdown === 'rating' ? 'rotate-180' : ''}`} />
-            </button>
+                {tab.type === 'multi-select' && (
+                  <button
+                    onClick={() => toggleDropdown(tab.id)}
+                    className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
+                      isTabActive(tab)
+                        ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
+                        : activeDropdown === tab.id
+                        ? 'bg-white border border-gray-200 shadow-sm text-gray-900'
+                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                    }`}
+                  >
+                    {tab.icon}
+                    {getTabLabel(tab)}
+                    {isTabActive(tab) && (
+                      <span className="ml-1 text-[9px] bg-blue-600 text-white rounded-full w-3 h-3 flex items-center justify-center">
+                        {Array.isArray(tab.value) ? tab.value.length : 0}
+                      </span>
+                    )}
+                    <ChevronDown className={`w-3 h-3 transition-transform ${
+                      activeDropdown === tab.id ? 'rotate-180' : ''
+                    }`} />
+                  </button>
+                )}
+              </React.Fragment>
+            ))}
 
-            {/* Free Shipping */}
-            <button
-              onClick={() => toggleCheckboxFilter('freeShipping')}
-              className={`px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
-                filters.freeShipping 
-                  ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
-                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-              }`}
-            >
-              Free Shipping
-            </button>
-
-            {/* On Sale */}
-            <button
-              onClick={() => toggleCheckboxFilter('onSale')}
-              className={`px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
-                filters.onSale 
-                  ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
-                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-              }`}
-            >
-              On Sale
-            </button>
-
-            {/* Free Returns */}
-            <button
-              onClick={() => toggleCheckboxFilter('freeReturns')}
-              className={`px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
-                filters.freeReturns 
-                  ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
-                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-              }`}
-            >
-              Free Returns
-            </button>
-
-            {/* New Arrivals */}
-            <button
-              onClick={() => toggleCheckboxFilter('newArrivals')}
-              className={`px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
-                filters.newArrivals 
-                  ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
-                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-              }`}
-            >
-              New Arrivals
-            </button>
-
-            {/* Shipped From */}
-            <button
-              onClick={() => toggleDropdown('shipped')}
-              className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
-                filters.shippedFrom.length > 0 
-                  ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
-                  : activeDropdown === 'shipped' 
-                    ? 'bg-white border border-gray-200 shadow-sm text-gray-900'
-                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-              }`}
-            >
-              Shipped From
-              {filters.shippedFrom.length > 0 && (
-                <span className="ml-1 text-[9px] bg-blue-600 text-white rounded-full w-3 h-3 flex items-center justify-center">
-                  {filters.shippedFrom.length}
-                </span>
-              )}
-              <ChevronDown className={`w-3 h-3 transition-transform ${activeDropdown === 'shipped' ? 'rotate-180' : ''}`} />
-            </button>
-
-            {/* Clear All */}
-            {hasActiveFilters() && (
+            {/* Clear All Button */}
+            {activeFilters.length > 0 && (
               <button 
-                onClick={clearAllFilters} 
-                className="px-2 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-800 whitespace-nowrap hover:bg-blue-50 rounded-md transition-all"
+                onClick={onClearAll} 
+                className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-800 whitespace-nowrap hover:bg-blue-50 rounded-md transition-all"
               >
+                <X className="w-3 h-3" />
                 Clear All
               </button>
             )}
@@ -319,114 +218,38 @@ const FilterTabs: React.FC<FilterTabsProps> = ({ filters, onFilterChange }) => {
         </div>
       </div>
 
-      {/* Dropdown panels */}
+      {/* Dropdown Panels */}
       {activeDropdown && (
         <div className="px-3 pb-3 pt-1">
-          {activeDropdown === 'sort' && (
-            <div className="bg-white border border-gray-200 rounded-md shadow-sm">
-              <div className="py-1">
-                {['popular', 'newest', 'price_low', 'price_high', 'rating'].map((sort) => (
-                  <button
-                    key={sort}
-                    onClick={() => handleSortChange(sort as FilterState['sortBy'])}
-                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors ${
-                      filters.sortBy === sort ? 'text-blue-600 font-medium' : 'text-gray-700'
-                    }`}
-                  >
-                    {sort === 'popular' && 'Popular'}
-                    {sort === 'newest' && 'Newest'}
-                    {sort === 'price_low' && 'Price: Low to High'}
-                    {sort === 'price_high' && 'Price: High to Low'}
-                    {sort === 'rating' && 'Top Rated'}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {activeDropdown === 'price' && (
-            <div className="bg-white border border-gray-200 rounded-md shadow-sm">
-              <div className="py-1">
-                <button 
-                  onClick={() => handlePriceFilter(undefined, 25)} 
-                  className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors ${
-                    filters.price.max === 25 && filters.price.min === undefined ? 'text-blue-600 font-medium' : 'text-gray-700'
-                  }`}
-                >
-                  Under $25
-                </button>
-                <button 
-                  onClick={() => handlePriceFilter(25, 50)} 
-                  className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors ${
-                    filters.price.min === 25 && filters.price.max === 50 ? 'text-blue-600 font-medium' : 'text-gray-700'
-                  }`}
-                >
-                  $25 - $50
-                </button>
-                <button 
-                  onClick={() => handlePriceFilter(50, 100)} 
-                  className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors ${
-                    filters.price.min === 50 && filters.price.max === 100 ? 'text-blue-600 font-medium' : 'text-gray-700'
-                  }`}
-                >
-                  $50 - $100
-                </button>
-                <button 
-                  onClick={() => handlePriceFilter(100, undefined)} 
-                  className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors ${
-                    filters.price.min === 100 && filters.price.max === undefined ? 'text-blue-600 font-medium' : 'text-gray-700'
-                  }`}
-                >
-                  Over $100
-                </button>
-              </div>
-            </div>
-          )}
-
-          {activeDropdown === 'rating' && (
-            <div className="bg-white border border-gray-200 rounded-md shadow-sm">
-              <div className="py-1">
-                {[5, 4, 3, 2].map((rating) => (
-                  <button 
-                    key={rating} 
-                    onClick={() => handleRatingFilter(rating)} 
-                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors ${
-                      filters.rating === rating ? 'text-blue-600 font-medium' : 'text-gray-700'
-                    }`}
-                  >
-                    {'★'.repeat(rating)} & Up
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {activeDropdown === 'shipped' && (
-            <div className="bg-white border border-gray-200 rounded-md shadow-sm">
-              <div className="p-2 space-y-1">
-                {['United States', 'International', 'Local Pickup'].map((location) => (
-                  <label key={location} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded-md">
-                    <input 
-                      type="checkbox" 
-                      checked={filters.shippedFrom.includes(location)}
-                      onChange={() => handleShippingFilter(location)}
-                      className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-                    />
-                    <span className="text-xs text-gray-700">{location}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          )}
+          {tabs.map((tab) => (
+            tab.id === activeDropdown && renderDropdownContent(tab)
+          ))}
         </div>
       )}
 
-      {/* Active filters display */}
-      {renderActiveFilters()}
+      {/* Active Filters Display */}
+      {activeFilters.length > 0 && !activeDropdown && (
+        <div className="px-3 py-2 border-t border-gray-100">
+          <div className="flex flex-wrap gap-2">
+            {activeFilters.map((filter) => (
+              <span 
+                key={filter.id} 
+                className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-md"
+              >
+                {filter.label}: {filter.displayValue}
+                <button 
+                  onClick={() => onRemoveFilter(filter.id)}
+                  className="text-blue-500 hover:text-blue-700 ml-1"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default FilterTabs;
-
-export type { FilterState, PriceFilter };
