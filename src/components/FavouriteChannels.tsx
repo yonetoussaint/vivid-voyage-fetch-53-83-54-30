@@ -24,71 +24,72 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
   const [isOverflowing, setIsOverflowing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Check if content overflows (more than 6 items = 1 row)
+  // Check if content overflows (more than 5.5 items on mobile)
   useEffect(() => {
     if (containerRef.current) {
       const container = containerRef.current;
-      // Check if we have more than 6 items
-      const hasMoreThanOneRow = channels.length > 6;
-      setIsOverflowing(hasMoreThanOneRow);
-      
-      // If showAll is false and we have more than 6 items, only show first 6
-      if (!showAll && hasMoreThanOneRow) {
-        container.style.maxHeight = 'calc(9rem + 8px)'; // 1 row height (9rem for 2 rows + gaps)
-      } else {
-        container.style.maxHeight = 'none';
-      }
+      // Check if we have more items than can fit in one view (5.5 items)
+      const hasOverflow = channels.length > 5.5;
+      setIsOverflowing(hasOverflow);
     }
-  }, [channels.length, showAll]);
-
-  // Calculate number of rows to show
-  const visibleChannels = showAll ? channels : channels.slice(0, 6);
-  const hasHiddenChannels = channels.length > 6 && !showAll;
+  }, [channels.length]);
 
   return (
     <div className="bg-white relative">
-      {/* Channels Grid */}
-      <div 
-        ref={containerRef}
-        className="grid grid-cols-6 gap-1 px-2 py-2 overflow-hidden transition-all duration-300 ease-in-out"
-      >
-        {visibleChannels.map((channel) => (
-          <div 
-            key={channel.id} 
-            className="flex flex-col items-center gap-1"
-            onClick={() => {
-              onChannelSelect?.(channel.id);
-              // If selecting a hidden channel, auto-expand
-              if (!showAll && channels.indexOf(channel) >= 6) {
-                setShowAll(true);
-              }
-            }}
-          >
+      {/* Horizontally scrollable container */}
+      <div className="relative">
+        <div 
+          ref={containerRef}
+          className="flex gap-1 py-2 overflow-x-auto scrollbar-hide"
+          style={{
+            scrollSnapType: 'x mandatory',
+            WebkitOverflowScrolling: 'touch',
+            scrollPadding: '0 16px',
+          }}
+        >
+          {channels.map((channel, index) => (
             <div 
-              className={`
-                w-9 h-9 rounded-full ${channel.bgColor} 
-                flex items-center justify-center shadow-md 
-                cursor-pointer hover:scale-105 transition-transform
-                relative overflow-hidden
-                ${activeChannel === channel.id ? 'ring-2 ring-blue-500 ring-offset-1' : ''}
-              `}
+              key={channel.id} 
+              className="flex flex-col items-center gap-1 flex-shrink-0"
+              style={{
+                width: 'calc((100vw - 32px) / 5.5)',
+                minWidth: 'calc((100vw - 32px) / 5.5)',
+                scrollSnapAlign: 'start'
+              }}
+              onClick={() => {
+                onChannelSelect?.(channel.id);
+              }}
             >
-              {/* Background image for the circle */}
-              {channel.imageUrl && (
-                <div 
-                  className="absolute inset-0 bg-cover bg-center"
-                  style={{ backgroundImage: `url(${channel.imageUrl})` }}
-                />
-              )}
+              <div 
+                className={`
+                  w-9 h-9 rounded-full ${channel.bgColor} 
+                  flex items-center justify-center shadow-md 
+                  cursor-pointer hover:scale-105 transition-transform
+                  relative overflow-hidden
+                  ${activeChannel === channel.id ? 'ring-2 ring-red-500 ring-offset-1' : ''}
+                `}
+              >
+                {/* Background image for the circle */}
+                {channel.imageUrl && (
+                  <div 
+                    className="absolute inset-0 bg-cover bg-center"
+                    style={{ backgroundImage: `url(${channel.imageUrl})` }}
+                  />
+                )}
+              </div>
+              <span className="text-[8px] font-medium text-gray-800 text-center max-w-[42px] overflow-hidden text-ellipsis leading-tight">
+                {channel.name}
+              </span>
             </div>
-            <span className="text-[8px] font-medium text-gray-800 text-center max-w-[42px] overflow-hidden text-ellipsis leading-tight">
-              {channel.name}
-            </span>
-          </div>
-        ))}
+          ))}
+        </div>
+
+        {/* Gradient fade overlay for horizontal scroll edges */}
+        <div className="absolute top-0 left-0 bottom-0 w-4 bg-gradient-to-r from-white to-transparent pointer-events-none" />
+        <div className="absolute top-0 right-0 bottom-0 w-4 bg-gradient-to-l from-white to-transparent pointer-events-none" />
       </div>
 
-      {/* Chevron Indicator - Only show if there are hidden channels */}
+      {/* Chevron Indicator - Only show if there are hidden channels in vertical mode */}
       {isOverflowing && (
         <div className="absolute bottom-0 left-0 right-0 flex justify-center">
           <button
@@ -107,8 +108,8 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
         </div>
       )}
 
-      {/* Gradient fade overlay when collapsed */}
-      {hasHiddenChannels && (
+      {/* Gradient fade overlay when collapsed (for vertical mode) */}
+      {!showAll && isOverflowing && (
         <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white to-transparent pointer-events-none" />
       )}
     </div>
