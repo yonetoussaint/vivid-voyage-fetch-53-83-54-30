@@ -126,7 +126,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                 (tab.id === 'priceRange' && tab.value && option.value && 
                  tab.value.min === option.value?.min && tab.value.max === option.value?.max) ||
                 (tab.id !== 'priceRange' && tab.value === option.value)
-                  ? 'text-blue-600 font-medium' 
+                  ? 'text-red-600 font-medium' // Changed from blue to red
                   : 'text-gray-700'
               }`}
             >
@@ -156,7 +156,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                     onClick={() => toggleDropdown(tab.id)}
                     className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
                       isTabActive(tab)
-                        ? 'bg-blue-50 text-blue-700' // Active state
+                        ? 'bg-red-50 text-red-700' // Changed from blue to red
                         : activeDropdown === tab.id
                         ? 'bg-white border border-gray-200 shadow-sm text-gray-900'
                         : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
@@ -171,9 +171,9 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                     {isTabActive(tab) && (
                       <div 
                         onClick={(e) => handleRemoveSelection(tab.id, e)}
-                        className="ml-0.5 p-0.5 hover:bg-blue-100 rounded-full transition-colors"
+                        className="ml-0.5 p-0.5 hover:bg-red-100 rounded-full transition-colors" // Changed from blue to red
                       >
-                        <X className="w-3 h-3 text-blue-600" />
+                        <X className="w-3 h-3 text-red-600" /> {/* Changed from blue to red */}
                       </div>
                     )}
                   </button>
@@ -184,7 +184,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                     onClick={() => handleCheckboxToggle(tab.id, tab.value)}
                     className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
                       isTabActive(tab)
-                        ? 'bg-blue-50 text-blue-700' // Active state
+                        ? 'bg-red-50 text-red-700' // Changed from blue to red
                         : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                     }`}
                   >
@@ -193,9 +193,9 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                     {isTabActive(tab) && (
                       <div 
                         onClick={(e) => handleRemoveSelection(tab.id, e)}
-                        className="ml-1 p-0.5 hover:bg-blue-100 rounded-full transition-colors"
+                        className="ml-1 p-0.5 hover:bg-red-100 rounded-full transition-colors" // Changed from blue to red
                       >
-                        <X className="w-3 h-3 text-blue-600" />
+                        <X className="w-3 h-3 text-red-600" /> {/* Changed from blue to red */}
                       </div>
                     )}
                   </button>
