@@ -84,54 +84,34 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
     return tab.value && tab.value !== '' && tab.value !== null;
   };
 
-  // Render price sort icon using carets (^)
+  // Render price sort icon using carets (^) - Compact version
   const renderPriceSortIcon = (value: 'asc' | 'desc' | null) => {
-    // Using inline SVGs for carets
-    const CaretUp = () => (
-      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M18 15L12 9L6 15" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-    );
-
-    const CaretDown = () => (
-      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M6 9L12 15L18 9" strokeLinecap="round" strokeLinejoin="round"/>
+    // Using a single SVG with both carets to ensure perfect alignment
+    const DoubleCarets = ({ active }: { active: 'up' | 'down' | null }) => (
+      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        {/* Top caret - always present */}
+        <path 
+          d="M18 13L12 7L6 13" 
+          strokeLinecap="round" 
+          strokeLinejoin="round"
+          className={active === 'up' ? 'text-blue-600' : 'text-gray-400'}
+        />
+        {/* Bottom caret - always present */}
+        <path 
+          d="M6 11L12 17L18 11" 
+          strokeLinecap="round" 
+          strokeLinejoin="round"
+          className={active === 'down' ? 'text-blue-600' : 'text-gray-400'}
+        />
       </svg>
     );
 
     if (value === 'asc') {
-      return (
-        <div className="flex flex-col items-center justify-center gap-[1px]">
-          <div className="text-blue-600">
-            <CaretUp />
-          </div>
-          <div className="text-gray-400">
-            <CaretDown />
-          </div>
-        </div>
-      );
+      return <DoubleCarets active="up" />;
     } else if (value === 'desc') {
-      return (
-        <div className="flex flex-col items-center justify-center gap-[1px]">
-          <div className="text-gray-400">
-            <CaretUp />
-          </div>
-          <div className="text-blue-600">
-            <CaretDown />
-          </div>
-        </div>
-      );
+      return <DoubleCarets active="down" />;
     } else {
-      return (
-        <div className="flex flex-col items-center justify-center gap-[1px]">
-          <div className="text-gray-400">
-            <CaretUp />
-          </div>
-          <div className="text-gray-400">
-            <CaretDown />
-          </div>
-        </div>
-      );
+      return <DoubleCarets active={null} />;
     }
   };
 
@@ -209,7 +189,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                     className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all bg-gray-100 hover:bg-gray-200 text-gray-700`}
                   >
                     {renderPriceSortIcon(tab.value)}
-                    <span className="truncate">{getTabLabel(tab)}</span>
+                    <span className="truncate ml-0.5">{getTabLabel(tab)}</span>
                   </button>
                 )}
               </React.Fragment>
