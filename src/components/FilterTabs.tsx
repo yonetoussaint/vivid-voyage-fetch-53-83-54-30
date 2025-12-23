@@ -50,15 +50,6 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
     onTabChange(tabId, !currentValue);
   };
 
-  const handleMultiSelect = (tabId: string, optionValue: any, currentValues: any[]) => {
-    const newValues = currentValues.includes(optionValue)
-      ? currentValues.filter(v => v !== optionValue)
-      : [...currentValues, optionValue];
-
-    onTabChange(tabId, newValues);
-  };
-
-  // Special handler for price sort toggle
   const handlePriceSortToggle = (tabId: string, currentValue: 'asc' | 'desc' | null) => {
     onTabChange(tabId, null); // The value will be handled in the hook
   };
@@ -75,16 +66,9 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
       return tab.label;
     }
 
-    if (tab.type === 'multi-select' && Array.isArray(tab.value) && tab.value.length > 0) {
-      return `${tab.label} (${tab.value.length})`;
-    }
-
-    if (tab.value && typeof tab.value === 'object' && 'label' in tab.value) {
-      return `${tab.label}: ${tab.value.label}`;
-    }
-
     if (tab.value && tab.value !== '' && !Array.isArray(tab.value)) {
-      return `${tab.label}: ${tab.value}`;
+      const option = tab.options?.find(o => o.value === tab.value);
+      return `${tab.label}: ${option?.label || tab.value}`;
     }
 
     return tab.label;
@@ -92,15 +76,11 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
 
   const isTabActive = (tab: FilterTab) => {
     if (tab.id === 'priceSort') {
-      return tab.value !== null; // Price sort is active when direction is set
+      return tab.value !== null;
     }
 
     if (tab.type === 'checkbox' || tab.type === 'toggle') {
       return Boolean(tab.value);
-    }
-
-    if (tab.type === 'multi-select') {
-      return Array.isArray(tab.value) && tab.value.length > 0;
     }
 
     return tab.value && tab.value !== '' && tab.value !== null;
@@ -134,26 +114,6 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
 
   const renderDropdownContent = (tab: FilterTab) => {
     if (!tab.options) return null;
-
-    if (tab.type === 'multi-select') {
-      return (
-        <div className="bg-white border border-gray-200 rounded-md shadow-sm">
-          <div className="p-2 space-y-1">
-            {tab.options.map((option) => (
-              <label key={option.value} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded-md">
-                <input 
-                  type="checkbox" 
-                  checked={tab.value?.includes(option.value) || false}
-                  onChange={() => handleMultiSelect(tab.id, option.value, tab.value || [])}
-                  className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-                />
-                <span className="text-xs text-gray-700">{option.label}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-      );
-    }
 
     return (
       <div className="bg-white border border-gray-200 rounded-md shadow-sm">
@@ -190,7 +150,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                 {tab.type === 'dropdown' && (
                   <button
                     onClick={() => toggleDropdown(tab.id)}
-                    className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
+                    className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-all ${
                       isTabActive(tab)
                         ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
                         : activeDropdown === tab.id
@@ -199,8 +159,8 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                     }`}
                   >
                     {tab.icon}
-                    {getTabLabel(tab)}
-                    <ChevronDown className={`w-3 h-3 transition-transform ${
+                    <span className="max-w-[80px] truncate">{getTabLabel(tab)}</span>
+                    <ChevronDown className={`w-3 h-3 flex-shrink-0 transition-transform ${
                       activeDropdown === tab.id ? 'rotate-180' : ''
                     }`} />
                   </button>
@@ -209,66 +169,28 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                 {tab.type === 'checkbox' && (
                   <button
                     onClick={() => handleCheckboxToggle(tab.id, tab.value)}
-                    className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
+                    className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-all ${
                       isTabActive(tab)
                         ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
                         : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                     }`}
                   >
                     {tab.icon}
-                    {getTabLabel(tab)}
+                    <span className="max-w-[80px] truncate">{getTabLabel(tab)}</span>
                   </button>
                 )}
 
                 {tab.type === 'toggle' && tab.id === 'priceSort' && (
                   <button
                     onClick={() => handlePriceSortToggle(tab.id, tab.value)}
-                    className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
+                    className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-all ${
                       isTabActive(tab)
                         ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
                         : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                     }`}
                   >
                     {renderPriceSortIcon(tab.value)}
-                    {getTabLabel(tab)}
-                  </button>
-                )}
-
-                {tab.type === 'toggle' && tab.id !== 'priceSort' && (
-                  <button
-                    onClick={() => handleCheckboxToggle(tab.id, tab.value)}
-                    className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
-                      isTabActive(tab)
-                        ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
-                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                    }`}
-                  >
-                    {tab.icon}
-                    {getTabLabel(tab)}
-                  </button>
-                )}
-
-                {tab.type === 'multi-select' && (
-                  <button
-                    onClick={() => toggleDropdown(tab.id)}
-                    className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
-                      isTabActive(tab)
-                        ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
-                        : activeDropdown === tab.id
-                        ? 'bg-white border border-gray-200 shadow-sm text-gray-900'
-                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                    }`}
-                  >
-                    {tab.icon}
-                    {getTabLabel(tab)}
-                    {isTabActive(tab) && (
-                      <span className="ml-1 text-[9px] bg-blue-600 text-white rounded-full w-3 h-3 flex items-center justify-center">
-                        {Array.isArray(tab.value) ? tab.value.length : 0}
-                      </span>
-                    )}
-                    <ChevronDown className={`w-3 h-3 transition-transform ${
-                      activeDropdown === tab.id ? 'rotate-180' : ''
-                    }`} />
+                    <span className="max-w-[80px] truncate">{getTabLabel(tab)}</span>
                   </button>
                 )}
               </React.Fragment>
@@ -278,9 +200,9 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
             {activeFilters.length > 0 && (
               <button 
                 onClick={onClearAll} 
-                className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-800 whitespace-nowrap hover:bg-blue-50 rounded-md transition-all"
+                className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 whitespace-nowrap hover:bg-blue-50 rounded-md transition-all"
               >
-                <X className="w-3 h-3" />
+                <X className="w-4 h-4" />
                 Clear All
               </button>
             )}
