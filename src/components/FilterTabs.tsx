@@ -123,7 +123,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                     onClick={() => toggleDropdown(tab.id)}
                     className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
                       isTabActive(tab)
-                        ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
+                        ? 'bg-blue-50 text-blue-700' // Removed border and shadow
                         : activeDropdown === tab.id
                         ? 'bg-white border border-gray-200 shadow-sm text-gray-900'
                         : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
@@ -141,7 +141,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                     onClick={() => handleCheckboxToggle(tab.id, tab.value)}
                     className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
                       isTabActive(tab)
-                        ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
+                        ? 'bg-blue-50 text-blue-700' // Removed border and shadow
                         : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                     }`}
                   >
