@@ -136,18 +136,15 @@ export default function AliExpressHeader({
   ], []);
 
     const categories = useMemo(() => [
-    { id: 'recommendations', name: t('forYou', { ns: 'home' }), path: '/for-you' },
-    { id: 'electronics', name: t('electronics', { ns: 'categories' }), path: '/categories/electronics' },
-    { id: 'home', name: t('homeLiving', { ns: 'categories' }), path: '/categories/home-living' },
-    { id: 'fashion', name: t('fashion', { ns: 'categories' }), path: '/categories/fashion' },
-    { id: 'entertainment', name: t('entertainment', { ns: 'categories' }), path: '/categories/entertainment' },
-    { id: 'kids', name: t('kidsHobbies', { ns: 'categories' }), path: '/categories/kids-hobbies' },
-    { id: 'sports', name: t('sports', { ns: 'categories' }), path: '/categories/sports-outdoors' },
-    { id: 'automotive', name: t('automotive', { ns: 'categories' }), path: '/categories/automotive' },
-    { id: 'women', name: t('women', { ns: 'categories' }), path: '/categories/women' },
-    { id: 'men', name: t('men', { ns: 'categories' }), path: '/categories/men' },
-    { id: 'books', name: t('books', { ns: 'categories' }), path: '/categories/books' },
-  ], [t]);
+  { id: 'recommendations', name: t('forYou', { ns: 'home' }), path: '/for-you' },
+  { id: 'electronics', name: t('electronics', { ns: 'categories' }), path: '/categories/electronics' },
+  { id: 'home', name: t('homeLiving', { ns: 'categories' }), path: '/categories/home-living' },
+  { id: 'kids', name: t('kidsHobbies', { ns: 'categories' }), path: '/categories/kids-hobbies' },
+  { id: 'automotive', name: t('automotive', { ns: 'categories' }), path: '/categories/automotive' },
+  { id: 'women', name: t('women', { ns: 'categories' }), path: '/categories/women' },
+  { id: 'men', name: t('men', { ns: 'categories' }), path: '/categories/men' },
+  { id: 'books', name: t('books', { ns: 'categories' }), path: '/categories/books' },
+], [t]);
 
   // Determine which tabs to show based on search overlay state or custom tabs
   const tabsToShow = customTabs || (showSearchOverlay ? searchTabs : categories);
