@@ -68,7 +68,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
 
     if (tab.value && tab.value !== '' && !Array.isArray(tab.value)) {
       const option = tab.options?.find(o => o.value === tab.value);
-      return `${tab.label}: ${option?.label || tab.value}`;
+      return option ? `${tab.label}: ${option.label}` : tab.label;
     }
 
     return tab.label;
@@ -150,7 +150,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                 {tab.type === 'dropdown' && (
                   <button
                     onClick={() => toggleDropdown(tab.id)}
-                    className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-all ${
+                    className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
                       isTabActive(tab)
                         ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
                         : activeDropdown === tab.id
@@ -159,7 +159,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                     }`}
                   >
                     {tab.icon}
-                    <span className="max-w-[80px] truncate">{getTabLabel(tab)}</span>
+                    <span className="truncate max-w-[80px]">{getTabLabel(tab)}</span>
                     <ChevronDown className={`w-3 h-3 flex-shrink-0 transition-transform ${
                       activeDropdown === tab.id ? 'rotate-180' : ''
                     }`} />
@@ -169,28 +169,28 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                 {tab.type === 'checkbox' && (
                   <button
                     onClick={() => handleCheckboxToggle(tab.id, tab.value)}
-                    className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-all ${
+                    className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
                       isTabActive(tab)
                         ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
                         : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                     }`}
                   >
                     {tab.icon}
-                    <span className="max-w-[80px] truncate">{getTabLabel(tab)}</span>
+                    <span className="truncate">{getTabLabel(tab)}</span>
                   </button>
                 )}
 
                 {tab.type === 'toggle' && tab.id === 'priceSort' && (
                   <button
                     onClick={() => handlePriceSortToggle(tab.id, tab.value)}
-                    className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-all ${
+                    className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
                       isTabActive(tab)
                         ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
                         : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                     }`}
                   >
                     {renderPriceSortIcon(tab.value)}
-                    <span className="max-w-[80px] truncate">{getTabLabel(tab)}</span>
+                    <span className="truncate max-w-[80px]">{getTabLabel(tab)}</span>
                   </button>
                 )}
               </React.Fragment>
@@ -200,9 +200,9 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
             {activeFilters.length > 0 && (
               <button 
                 onClick={onClearAll} 
-                className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 whitespace-nowrap hover:bg-blue-50 rounded-md transition-all"
+                className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-800 whitespace-nowrap hover:bg-blue-50 rounded-md transition-all"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3 h-3" />
                 Clear All
               </button>
             )}
