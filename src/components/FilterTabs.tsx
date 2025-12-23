@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ChevronDown, X } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 export interface FilterTab {
   id: string;
@@ -55,11 +55,9 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
   };
 
   const getTabLabel = (tab: FilterTab) => {
-    if (tab.type === 'toggle' && tab.id === 'priceSort') {
-      // Special handling for price sort toggle
-      if (tab.value === 'asc') return 'Price: Low to High';
-      if (tab.value === 'desc') return 'Price: High to Low';
-      return tab.label;
+    // For price tab, always show just "Price" regardless of state
+    if (tab.id === 'priceSort') {
+      return tab.label; // Always return "Price"
     }
 
     if (tab.type === 'checkbox' || tab.type === 'toggle') {
@@ -107,7 +105,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
           <div className="text-blue-600">
             <CaretUp />
           </div>
-          <div className="opacity-30">
+          <div className="text-gray-400">
             <CaretDown />
           </div>
         </div>
@@ -115,7 +113,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
     } else if (value === 'desc') {
       return (
         <div className="flex flex-col items-center justify-center gap-[1px]">
-          <div className="opacity-30">
+          <div className="text-gray-400">
             <CaretUp />
           </div>
           <div className="text-blue-600">
@@ -126,10 +124,10 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
     } else {
       return (
         <div className="flex flex-col items-center justify-center gap-[1px]">
-          <div className="opacity-30">
+          <div className="text-gray-400">
             <CaretUp />
           </div>
-          <div className="opacity-30">
+          <div className="text-gray-400">
             <CaretDown />
           </div>
         </div>
@@ -208,29 +206,14 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                 {tab.type === 'toggle' && tab.id === 'priceSort' && (
                   <button
                     onClick={() => handlePriceSortToggle(tab.id, tab.value)}
-                    className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
-                      isTabActive(tab)
-                        ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm hover:bg-blue-50'
-                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                    }`}
+                    className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all bg-gray-100 hover:bg-gray-200 text-gray-700`}
                   >
                     {renderPriceSortIcon(tab.value)}
-                    <span className="truncate max-w-[80px]">{getTabLabel(tab)}</span>
+                    <span className="truncate">{getTabLabel(tab)}</span>
                   </button>
                 )}
               </React.Fragment>
             ))}
-
-            {/* Clear All Button - Only show if we have active filters */}
-            {activeFilters.length > 0 && (
-              <button 
-                onClick={onClearAll} 
-                className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-800 whitespace-nowrap hover:bg-blue-50 rounded-md transition-all"
-              >
-                <X className="w-3 h-3" />
-                Clear All
-              </button>
-            )}
           </div>
         </div>
       </div>
@@ -243,8 +226,6 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
           ))}
         </div>
       )}
-
-      {/* Removed Active Filters Display section */}
     </div>
   );
 };
