@@ -5,7 +5,7 @@ export interface ElectronicsFilters {
   sortBy: string;
   freeShipping: boolean;
   brand: string | null;
-  priceRange: { min: number; max: number } | null; // Add priceRange back as dropdown
+  priceRange: { min: number; max: number } | null;
 }
 
 export const useElectronicsFilters = () => {
@@ -13,7 +13,7 @@ export const useElectronicsFilters = () => {
     sortBy: 'popular',
     freeShipping: false,
     brand: null,
-    priceRange: null, // Initialize as null
+    priceRange: null,
   });
 
   const handleTabChange = (tabId: string, value: any) => {
@@ -62,7 +62,6 @@ export const useElectronicsFilters = () => {
         label: 'Price',
         type: 'dropdown' as const,
         value: filters.priceRange,
-        // No icon property
         options: [
           { label: 'Any Price', value: null },
           { label: 'Under $50', value: { min: 0, max: 50 } },
@@ -77,14 +76,12 @@ export const useElectronicsFilters = () => {
         label: 'Free Shipping',
         type: 'checkbox' as const,
         value: filters.freeShipping,
-        // No icon property
       },
       {
         id: 'brand',
         label: 'Brand',
         type: 'dropdown' as const,
         value: filters.brand,
-        // No icon property
         options: [
           { label: 'All Brands', value: null },
           { label: 'Apple', value: 'apple' },
@@ -153,7 +150,7 @@ export const useElectronicsFilters = () => {
   };
 };
 
-// ... rest of the file remains the same (useElectronicsData, etc.)
+// ... rest of the file
 
 export const useElectronicsData = () => {
   const electronicsChannels = useMemo(() => [
