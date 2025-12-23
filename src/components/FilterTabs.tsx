@@ -53,10 +53,10 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
   // Handler for removing selections from any tab
   const handleRemoveSelection = (tabId: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent triggering the main button click
-    
+
     const tab = tabs.find(t => t.id === tabId);
     if (!tab) return;
-    
+
     // Reset the value based on tab type
     if (tab.type === 'checkbox') {
       onTabChange(tabId, false); // Set checkbox to false
@@ -79,7 +79,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
           return `$${tab.value.min} - $${tab.value.max}`;
         }
       }
-      
+
       // For other dropdowns (like brand), find and show the option label
       const option = tab.options?.find(o => {
         // Handle price range comparison
@@ -89,7 +89,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
         // Handle simple value comparison
         return o.value === tab.value;
       });
-      
+
       if (option) {
         return option.label; // Show only the option label (e.g., "Apple", "$50 - $200")
       }
@@ -173,7 +173,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                         onClick={(e) => handleRemoveSelection(tab.id, e)}
                         className="ml-0.5 p-0.5 hover:bg-red-100 rounded-full transition-colors" // Changed from blue to red
                       >
-                        <X className="w-3 h-3 text-red-600" /> {/* Changed from blue to red */}
+                        <X className="w-3 h-3 text-red-600" /> // Changed from blue to red
                       </div>
                     )}
                   </button>
@@ -195,7 +195,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                         onClick={(e) => handleRemoveSelection(tab.id, e)}
                         className="ml-1 p-0.5 hover:bg-red-100 rounded-full transition-colors" // Changed from blue to red
                       >
-                        <X className="w-3 h-3 text-red-600" /> {/* Changed from blue to red */}
+                        <X className="w-3 h-3 text-red-600" /> // Changed from blue to red
                       </div>
                     )}
                   </button>
