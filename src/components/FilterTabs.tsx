@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ChevronDown, X } from "lucide-react";
+import { ChevronDown, X, ArrowUp, ArrowDown } from "lucide-react";
 
 export interface FilterTab {
   id: string;
@@ -54,11 +54,23 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
     const newValues = currentValues.includes(optionValue)
       ? currentValues.filter(v => v !== optionValue)
       : [...currentValues, optionValue];
-    
+
     onTabChange(tabId, newValues);
   };
 
+  // Special handler for price sort toggle
+  const handlePriceSortToggle = (tabId: string, currentValue: 'asc' | 'desc' | null) => {
+    onTabChange(tabId, null); // The value will be handled in the hook
+  };
+
   const getTabLabel = (tab: FilterTab) => {
+    if (tab.type === 'toggle' && tab.id === 'priceSort') {
+      // Special handling for price sort toggle
+      if (tab.value === 'asc') return 'Price: Low to High';
+      if (tab.value === 'desc') return 'Price: High to Low';
+      return tab.label;
+    }
+
     if (tab.type === 'checkbox' || tab.type === 'toggle') {
       return tab.label;
     }
@@ -79,15 +91,45 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
   };
 
   const isTabActive = (tab: FilterTab) => {
+    if (tab.id === 'priceSort') {
+      return tab.value !== null; // Price sort is active when direction is set
+    }
+
     if (tab.type === 'checkbox' || tab.type === 'toggle') {
       return Boolean(tab.value);
     }
-    
+
     if (tab.type === 'multi-select') {
       return Array.isArray(tab.value) && tab.value.length > 0;
     }
-    
+
     return tab.value && tab.value !== '' && tab.value !== null;
+  };
+
+  // Render price sort icon based on direction
+  const renderPriceSortIcon = (value: 'asc' | 'desc' | null) => {
+    if (value === 'asc') {
+      return (
+        <div className="flex items-center gap-0.5">
+          <ArrowUp className="w-3 h-3" />
+          <ArrowDown className="w-3 h-3 opacity-50" />
+        </div>
+      );
+    } else if (value === 'desc') {
+      return (
+        <div className="flex items-center gap-0.5">
+          <ArrowDown className="w-3 h-3" />
+          <ArrowUp className="w-3 h-3 opacity-50" />
+        </div>
+      );
+    } else {
+      return (
+        <div className="flex items-center gap-0.5">
+          <ArrowUp className="w-3 h-3 opacity-50" />
+          <ArrowDown className="w-3 h-3 opacity-50" />
+        </div>
+      );
+    }
   };
 
   const renderDropdownContent = (tab: FilterTab) => {
@@ -164,7 +206,35 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                   </button>
                 )}
 
-                {(tab.type === 'checkbox' || tab.type === 'toggle') && (
+                {tab.type === 'checkbox' && (
+                  <button
+                    onClick={() => handleCheckboxToggle(tab.id, tab.value)}
+                    className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
+                      isTabActive(tab)
+                        ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
+                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                    }`}
+                  >
+                    {tab.icon}
+                    {getTabLabel(tab)}
+                  </button>
+                )}
+
+                {tab.type === 'toggle' && tab.id === 'priceSort' && (
+                  <button
+                    onClick={() => handlePriceSortToggle(tab.id, tab.value)}
+                    className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
+                      isTabActive(tab)
+                        ? 'bg-blue-50 border border-blue-100 text-blue-700 shadow-sm'
+                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                    }`}
+                  >
+                    {renderPriceSortIcon(tab.value)}
+                    {getTabLabel(tab)}
+                  </button>
+                )}
+
+                {tab.type === 'toggle' && tab.id !== 'priceSort' && (
                   <button
                     onClick={() => handleCheckboxToggle(tab.id, tab.value)}
                     className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
