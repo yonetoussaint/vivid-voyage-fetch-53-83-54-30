@@ -30,6 +30,80 @@ const ElectronicsPage: React.FC<ElectronicsPageProps> = ({ category = 'electroni
     getSubcategoryFilters,
   } = useElectronicsData();
 
+  // Create electronics channels with images
+  const electronicsChannelsWithImages = useMemo(() => [
+    {
+      id: "all",
+      name: "All",
+      imageUrl: "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=200&h=200&fit=crop&crop=center",
+      bgColor: "bg-blue-50",
+      textColor: "text-blue-600"
+    },
+    {
+      id: "smartphones",
+      name: "Phones",
+      imageUrl: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=200&h=200&fit=crop&crop=center",
+      bgColor: "bg-purple-50",
+      textColor: "text-purple-600"
+    },
+    {
+      id: "laptops",
+      name: "Laptops",
+      imageUrl: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=200&h=200&fit=crop&crop=center",
+      bgColor: "bg-gray-50",
+      textColor: "text-gray-600"
+    },
+    {
+      id: "headphones",
+      name: "Audio",
+      imageUrl: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&h=200&fit=crop&crop=center",
+      bgColor: "bg-green-50",
+      textColor: "text-green-600"
+    },
+    {
+      id: "smartwatches",
+      name: "Watches",
+      imageUrl: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&h=200&fit=crop&crop=center",
+      bgColor: "bg-red-50",
+      textColor: "text-red-600"
+    },
+    {
+      id: "cameras",
+      name: "Cameras",
+      imageUrl: "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=200&h=200&fit=crop&crop=center",
+      bgColor: "bg-yellow-50",
+      textColor: "text-yellow-600"
+    },
+    {
+      id: "gaming",
+      name: "Gaming",
+      imageUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=200&h=200&fit=crop&crop=center",
+      bgColor: "bg-indigo-50",
+      textColor: "text-indigo-600"
+    },
+    {
+      id: "accessories",
+      name: "Accessories",
+      imageUrl: "https://images.unsplash.com/photo-1586950012036-b957f2c7cbf3?w=200&h=200&fit=crop&crop=center",
+      bgColor: "bg-pink-50",
+      textColor: "text-pink-600"
+    },
+    {
+      id: "tablets",
+      name: "Tablets",
+      imageUrl: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=200&h=200&fit=crop&crop=center",
+      bgColor: "bg-orange-50",
+      textColor: "text-orange-600"
+    },
+    {
+      id: "home-appliances",
+      name: "Home Tech",
+      imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200&h=200&fit=crop&crop=center",
+      bgColor: "bg-teal-50",
+      textColor: "text-teal-600"
+    }
+  ], []);
+
   const handleSubcategorySelect = (channelId: string) => {
     setActiveSubcategory(channelId);
 
@@ -53,7 +127,7 @@ const ElectronicsPage: React.FC<ElectronicsPageProps> = ({ category = 'electroni
   const components = [
     <div key="favourite-channels-wrapper" className="pt-2">
       <FavouriteChannels 
-        channels={electronicsChannels}
+        channels={electronicsChannelsWithImages}
         activeChannel={activeSubcategory}
         onChannelSelect={handleSubcategorySelect}
       />
