@@ -1,9 +1,10 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, ReactNode } from "react";
 
 export interface ChannelItem {
   id: string;
   name: string;
-  imageUrl: string;
+  imageUrl?: string; // Make imageUrl optional
+  icon?: ReactNode;   // Add optional icon prop
   bgColor: string;
   textColor: string;
 }
@@ -30,7 +31,7 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
     const itemWidth = container.children[0]?.clientWidth || 0;
     const gap = 2; // gap-0.5 = 0.125rem = 2px
     const scrollPosition = index * (itemWidth + gap);
-    
+
     container.scrollTo({
       left: scrollPosition,
       behavior: 'smooth'
@@ -98,8 +99,15 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
                   ${activeChannel === channel.id ? 'ring-2 ring-red-500 ring-offset-1' : ''}
                 `}
               >
-                {/* Background image for the circle */}
-                {channel.imageUrl && (
+                {/* If there's an icon, render it */}
+                {channel.icon && (
+                  <div className="relative z-10 flex items-center justify-center w-full h-full">
+                    {channel.icon}
+                  </div>
+                )}
+                
+                {/* Background image for the circle (only if no icon provided) */}
+                {channel.imageUrl && !channel.icon && (
                   <div 
                     className="absolute inset-0 bg-cover bg-center"
                     style={{ backgroundImage: `url(${channel.imageUrl})` }}
