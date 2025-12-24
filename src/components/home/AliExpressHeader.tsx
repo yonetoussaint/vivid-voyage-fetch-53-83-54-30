@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import CategoryTabs from './header/CategoryTabs';
@@ -9,6 +9,19 @@ interface AliExpressHeaderProps {
   showCategoryTabs?: boolean;
   customTabs?: Array<{ id: string; name: string; path?: string }>;
   onCustomTabChange?: (tabId: string) => void;
+  showSectionHeader?: boolean;
+  sectionHeaderTitle?: string;
+  sectionHeaderViewAllLink?: string;
+  sectionHeaderViewAllText?: string;
+  sectionHeaderShowStackedProfiles?: boolean;
+  sectionHeaderStackedProfiles?: Array<{ id: string; image: string; alt?: string }>;
+  sectionHeaderStackedProfilesText?: string;
+  sectionHeaderShowCountdown?: boolean;
+  sectionHeaderCountdown?: string;
+  sectionHeaderShowSponsorCount?: boolean;
+  sectionHeaderShowVerifiedSellers?: boolean;
+  sectionHeaderVerifiedSellersText?: string;
+  sectionHeaderIcon?: React.ComponentType<{ className?: string }>;
 }
 
 export default function AliExpressHeader({ 
@@ -16,9 +29,23 @@ export default function AliExpressHeader({
   showCategoryTabs = true,
   customTabs,
   onCustomTabChange,
+  showSectionHeader = false,
+  sectionHeaderTitle = '',
+  sectionHeaderViewAllLink,
+  sectionHeaderViewAllText = 'View All',
+  sectionHeaderShowStackedProfiles = false,
+  sectionHeaderStackedProfiles = [],
+  sectionHeaderStackedProfilesText = "Handpicked by",
+  sectionHeaderShowCountdown = false,
+  sectionHeaderCountdown,
+  sectionHeaderShowSponsorCount = false,
+  sectionHeaderShowVerifiedSellers = false,
+  sectionHeaderVerifiedSellersText = 'Verified Sellers',
+  sectionHeaderIcon,
 }: AliExpressHeaderProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [activeTab, setActiveTab] = useState(activeTabId);
   const [searchQuery, setSearchQuery] = useState('');
@@ -47,7 +74,7 @@ export default function AliExpressHeader({
     { id: 'books', name: t('books', { ns: 'categories' }), path: '/categories/books' },
   ], [t]);
 
-  // Determine which tabs to show based on custom tabs or default categories
+  // Determine which tabs to show
   const tabsToShow = customTabs || categories;
 
   // Generate a unique key for CategoryTabs based on the actual tabs being displayed
@@ -69,19 +96,10 @@ export default function AliExpressHeader({
     return () => clearInterval(interval);
   }, [popularSearches]);
 
-  // Update active tab when prop changes
+  // Update active tab when prop changes or route changes
   useEffect(() => {
-    if (customTabs && customTabs.length > 0) {
-      const matchingCustomTab = customTabs.find(tab => tab.id === activeTabId);
-      if (matchingCustomTab) {
-        setActiveTab(activeTabId);
-      } else {
-        setActiveTab(customTabs[0].id);
-      }
-    } else {
-      setActiveTab(activeTabId);
-    }
-  }, [activeTabId, customTabs]);
+    setActiveTab(activeTabId);
+  }, [activeTabId, location.pathname]);
 
   // Handle tab change
   const handleTabChange = (tabId: string) => {
@@ -114,6 +132,7 @@ export default function AliExpressHeader({
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery(''); // Clear search after submit
     }
   };
 
@@ -135,7 +154,7 @@ export default function AliExpressHeader({
       className="fixed top-0 w-full z-40 bg-white" 
       style={{ margin: 0, padding: 0, boxShadow: 'none' }}
     >
-      {/* Search Bar - Simplified Inline Implementation */}
+      {/* Search Bar */}
       <div 
         className="flex items-center justify-between px-2 transition-all duration-500 ease-in-out bg-white"
         style={{ height: '36px' }}
