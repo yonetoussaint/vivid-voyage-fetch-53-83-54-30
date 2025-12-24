@@ -61,20 +61,20 @@ const ReelCard: React.FC<ReelCardProps> = ({ reel }) => {
           {formatDuration(reel.duration)}
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 z-10">
-          <div className="flex items-center text-white text-[10px] gap-1">
-            <Play className="w-3 h-3" fill="white" />
-            <span>{formatNumber(reel.views)} views</span>
-          </div>
-        </div>
+        {/* Removed the bottom gradient with views */}
       </div>
 
       <div className="p-2">
         <p className="text-[11px] text-white font-medium line-clamp-2 mb-1">
           {reel.title}
         </p>
+        {/* Views moved here - where trending element was */}
+        <div className="flex items-center text-white text-[10px] gap-1">
+          <Play className="w-3 h-3" fill="white" />
+          <span>{formatNumber(reel.views)} views</span>
+        </div>
         {reel.is_live && (
-          <div className="flex items-center gap-1 text-[10px] text-pink-300">
+          <div className="flex items-center gap-1 text-[10px] text-pink-300 mt-1">
             <Users className="w-3 h-3" />
             <span>Live now • {formatNumber(reel.views)} watching</span>
           </div>
