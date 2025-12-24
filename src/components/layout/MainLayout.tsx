@@ -6,7 +6,7 @@ import ProductUploadOverlay from "@/components/product/ProductUploadOverlay";
 import LocationScreen from "@/components/home/header/LocationScreen";
 import LocationListScreen from "@/components/home/header/LocationListScreen";
 import AuthOverlay from "@/components/auth/AuthOverlay";
-import { useMainLayout } from "@/hooks/use-main-layout";
+import { useMainLayout } from "@/hooks/main-layout.hooks";
 import { HeaderFilterProvider } from "@/contexts/HeaderFilterContext";
 
 function MainLayoutContent() {
