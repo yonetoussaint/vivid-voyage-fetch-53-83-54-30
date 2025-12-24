@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import HeroBanner from "@/components/home/HeroBanner";
 import FlashDeals from "@/components/home/FlashDeals";
 import FavouriteChannels, { ChannelItem } from "@/components/FavouriteChannels";
@@ -25,8 +24,6 @@ import {
 
 const ForYou: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState('recommendations');
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [gridKey, setGridKey] = useState(Date.now()); // Key to force remount
 
   // Define feature channels with icons instead of images
   const featureChannels: ChannelItem[] = [
@@ -144,12 +141,7 @@ const ForYou: React.FC = () => {
 
   useEffect(() => {
     const handleCategoryChange = (event: CustomEvent) => {
-      setIsAnimating(true);
       setActiveCategory(event.detail.category);
-      // Force remount of grid with new key
-      setGridKey(Date.now());
-      // Small delay to allow animation to complete
-      setTimeout(() => setIsAnimating(false), 300);
     };
 
     window.addEventListener('categoryChange', handleCategoryChange as EventListener);
@@ -158,52 +150,38 @@ const ForYou: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Animated Header Section Only */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={`header-${activeCategory}`}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.3, ease: "easeInOut" }}
-          onAnimationComplete={() => setIsAnimating(false)}
-        >
-          <div className="overflow-hidden">
-            <div className="pb-2">
-              <div className="mb-2">
-                <HeroBanner showNewsTicker={true} />
-              </div>
-
-              <div className="">
-                <FavouriteChannels 
-                  channels={featureChannels}
-                  onChannelSelect={handleChannelSelect}
-                />
-              </div>
-
-              <div className="w-full bg-gray-100 h-1 mb-2"></div>
-
-              <div className="mb-2">
-                <FlashDeals
-                  showCountdown={true}
-                  showTitleChevron={true}
-                />
-              </div>
-
-              <div className="w-full bg-gray-100 h-1 mb-2"></div>
-            </div>
+      {/* NO ANIMATIONS AT ALL - This is critical */}
+      <div className="overflow-hidden">
+        <div className="pb-2">
+          <div className="mb-2">
+            <HeroBanner showNewsTicker={true} />
           </div>
-        </motion.div>
-      </AnimatePresence>
 
-      {/* InfiniteContentGrid OUTSIDE of all animations */}
-      {/* No animation wrapper - this is critical for video loading */}
-      <div className={`transition-opacity duration-200 ${isAnimating ? 'opacity-70' : 'opacity-100'}`}>
-        <InfiniteContentGrid 
-          key={gridKey} // Force remount when category changes
-          category={activeCategory} 
-        />
+          <div className="">
+            <FavouriteChannels 
+              channels={featureChannels}
+              onChannelSelect={handleChannelSelect}
+            />
+          </div>
+
+          <div className="w-full bg-gray-100 h-1 mb-2"></div>
+
+          <div className="mb-2">
+            <FlashDeals
+              showCountdown={true}
+              showTitleChevron={true}
+            />
+          </div>
+
+          <div className="w-full bg-gray-100 h-1 mb-2"></div>
+        </div>
       </div>
+
+      {/* InfiniteContentGrid - NO animations, NO opacity transitions */}
+      <InfiniteContentGrid 
+        key={activeCategory} // Key based on category only
+        category={activeCategory} 
+      />
 
       {/* Hidden Footer */}
       <div 
