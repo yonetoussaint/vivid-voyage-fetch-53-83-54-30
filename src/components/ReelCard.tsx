@@ -26,6 +26,35 @@ const ReelCard: React.FC<ReelCardProps> = ({ reel }) => {
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [isInView, setIsInView] = useState(false);
+
+  // Simple in-view detection
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsInView(true);
+          } else {
+            setIsInView(false);
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => {
+      if (containerRef.current) {
+        observer.unobserve(containerRef.current);
+      }
+    };
+  }, []);
 
   const handleClick = () => {
     navigate(`/reels?video=${reel.id}`);
@@ -46,32 +75,35 @@ const ReelCard: React.FC<ReelCardProps> = ({ reel }) => {
     return num.toString();
   };
 
-  // Initialize video when component mounts
+  // Load video when in view
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !reel.video_url) return;
+    if (!video || !reel.video_url || !isInView) return;
+
+    console.log(`Loading video for reel ${reel.id}: ${reel.video_url}`);
 
     const handleLoadedData = () => {
+      console.log(`Video loaded for reel ${reel.id}`);
       setIsVideoLoaded(true);
       setIsLoading(false);
       setHasError(false);
+      
+      // Try to play muted video
+      video.play().catch(e => {
+        console.log(`Auto-play prevented for reel ${reel.id}:`, e);
+      });
     };
 
-    const handleError = () => {
-      console.error('Video load error for:', reel.video_url);
+    const handleError = (e: any) => {
+      console.error(`Video error for reel ${reel.id}:`, e);
       setIsLoading(false);
       setHasError(true);
     };
 
-    const handleCanPlay = () => {
-      setIsLoading(false);
-    };
-
     video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('error', handleError);
-    video.addEventListener('canplay', handleCanPlay);
 
-    // Set video source - IMPORTANT: Same as MobileOptimizedReels
+    // Set video source if not already set
     if (video.src !== reel.video_url) {
       video.src = reel.video_url;
       video.load();
@@ -80,17 +112,41 @@ const ReelCard: React.FC<ReelCardProps> = ({ reel }) => {
     return () => {
       video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('error', handleError);
-      video.removeEventListener('canplay', handleCanPlay);
     };
-  }, [reel.video_url]);
+  }, [reel.id, reel.video_url, isInView]);
+
+  // Pause video when out of view
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !isVideoLoaded) return;
+
+    if (!isInView) {
+      video.pause();
+    } else if (isInView && !hasError) {
+      video.play().catch(e => console.log('Play error:', e));
+    }
+  }, [isInView, isVideoLoaded, hasError]);
+
+  // Debug
+  useEffect(() => {
+    console.log(`ReelCard ${reel.id}:`, {
+      video_url: reel.video_url,
+      thumbnail_url: reel.thumbnail_url,
+      hasThumbnail: !!reel.thumbnail_url,
+      isInView,
+      isVideoLoaded,
+      hasError
+    });
+  }, [reel, isInView, isVideoLoaded, hasError]);
 
   return (
     <div 
+      ref={containerRef}
       className="bg-black rounded overflow-hidden relative cursor-pointer mb-2"
       onClick={handleClick}
     >
       <div className="w-full aspect-[3/4] bg-gray-800 relative overflow-hidden">
-        {/* Video element - EXACTLY like MobileOptimizedReels */}
+        {/* Video element */}
         <video 
           ref={videoRef}
           className="w-full h-full object-cover"
@@ -98,7 +154,6 @@ const ReelCard: React.FC<ReelCardProps> = ({ reel }) => {
           loop
           playsInline
           preload="metadata"
-          autoPlay // Auto-play muted video to show first frame
           style={{ 
             opacity: isVideoLoaded ? 1 : 0,
             transition: 'opacity 0.3s ease'
@@ -106,19 +161,23 @@ const ReelCard: React.FC<ReelCardProps> = ({ reel }) => {
         />
 
         {/* Loading state */}
-        {isLoading && (
+        {isLoading && isInView && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
             <Loader2 className="w-6 h-6 text-white animate-spin" />
           </div>
         )}
 
-        {/* Error state - Show thumbnail if video fails */}
-        {hasError && reel.thumbnail_url && (
+        {/* Thumbnail fallback (shows while loading or if video fails) */}
+        {(!isVideoLoaded || hasError) && reel.thumbnail_url && (
           <div className="absolute inset-0">
             <img 
               src={reel.thumbnail_url}
               alt={reel.title}
               className="w-full h-full object-cover"
+              onError={() => {
+                console.error(`Thumbnail failed to load for reel ${reel.id}`);
+                setHasError(true);
+              }}
             />
           </div>
         )}
@@ -127,6 +186,7 @@ const ReelCard: React.FC<ReelCardProps> = ({ reel }) => {
         {hasError && !reel.thumbnail_url && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
             <Play className="w-8 h-8 text-gray-400" />
+            <span className="sr-only">Video failed to load</span>
           </div>
         )}
 
@@ -149,7 +209,7 @@ const ReelCard: React.FC<ReelCardProps> = ({ reel }) => {
           </div>
         )}
 
-        {/* Views at bottom - EXACTLY like MobileOptimizedReels */}
+        {/* Views at bottom */}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
           <div className="flex items-center text-white text-[10px] gap-1">
             <Play className="w-3 h-3" fill="white" />
