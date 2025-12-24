@@ -57,11 +57,9 @@ const ReelCard: React.FC<ReelCardProps> = ({ reel }) => {
           preload="metadata"
         />
 
-        <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded z-10">
-          {formatDuration(reel.duration)}
-        </div>
+        {/* Removed duration display div */}
 
-        {/* Views at the bottom of the video - removed "views" word */}
+        {/* Views at the bottom of the video */}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 z-10">
           <div className="flex items-center text-white text-[10px] gap-1">
             <Play className="w-3 h-3" fill="white" />
