@@ -15,20 +15,20 @@ function MainLayoutContent() {
     headerRef,
     bottomNavRef,
     contentRef,
-    
+
     // Page flags
     pageFlags,
-    
+
     // Layout
     layoutHeightStyle,
     measurements,
-    
+
     // Configuration
     headerProps,
-    
+
     // State setters
     setShowProductUpload,
-    
+
     // Context values
     isAuthOverlayOpen,
     setIsAuthOverlayOpen,
@@ -98,15 +98,15 @@ function MainLayoutContent() {
         />
       )}
 
-      {/* Auth Overlay - Fixed z-index */}
-{isAuthOverlayOpen && (
-  <div className="fixed inset-0 z-[9999]">
-    <AuthOverlay
-      isOpen={isAuthOverlayOpen}
-      onClose={() => setIsAuthOverlayOpen(false)}
-    />
-  </div>
-)}
+      {/* Auth Overlay - Fixed with high z-index to appear above everything */}
+      {isAuthOverlayOpen && (
+        <div className="fixed inset-0 z-[9999]">
+          <AuthOverlay
+            isOpen={isAuthOverlayOpen}
+            onClose={() => setIsAuthOverlayOpen(false)}
+          />
+        </div>
+      )}
     </div>
   );
 }
