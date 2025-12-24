@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Sparkles, Play, Users, Heart, MessageCircle, Send, MoreHorizontal, Store, User, CheckCircle } from "lucide-react";
 
 // Import the custom hook
-import { useContentGrid, FilterState, ContentItem } from "./useContentGrid";
+import { useContentGrid, FilterState, ContentItem } from "@/hooks/useContentGrid";
 
 // Import card components (these can stay in separate files)
 import { ProductCard } from "./ProductCard";
