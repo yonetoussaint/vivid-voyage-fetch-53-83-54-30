@@ -36,10 +36,13 @@ const CategoryTabs = ({
   const [underlineLeft, setUnderlineLeft] = useState(0);
   const [targetWidth, setTargetWidth] = useState(0);
   const [targetLeft, setTargetLeft] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
   const isInitialMount = useRef(true);
   const [isScrolling, setIsScrolling] = useState(false);
-  const transitionRef = useRef<NodeJS.Timeout | null>(null);
+  const animationRef = useRef<number | null>(null);
+  const [previousTab, setPreviousTab] = useState<string>('');
+  const [previousLeft, setPreviousLeft] = useState(0);
+  const [previousWidth, setPreviousWidth] = useState(0);
 
   // Memoize refs update and reset initial mount flag
   useEffect(() => {
@@ -53,11 +56,11 @@ const CategoryTabs = ({
   }, [activeTab]);
 
   // Calculate target position for the underline
-  const calculateTargetPosition = useCallback(() => {
-    const activeTabIndex = categories.findIndex(cat => cat.id === activeTab);
+  const calculateTargetPosition = useCallback((tabId: string) => {
+    const activeTabIndex = categories.findIndex(cat => cat.id === tabId);
 
     if (activeTabIndex === -1) {
-      return;
+      return { width: 0, left: 0 };
     }
 
     const activeTabElement = tabRefs.current[activeTabIndex];
@@ -83,72 +86,86 @@ const CategoryTabs = ({
         const buttonCenter = relativeLeft + (buttonRect.width / 2);
         const underlineStart = buttonCenter - (newWidth / 2);
 
-        // Set target values for smooth transition
-        setTargetWidth(newWidth);
-        setTargetLeft(underlineStart);
+        return { width: newWidth, left: underlineStart };
       }
     }
-  }, [activeTab, categories]);
+    return { width: 0, left: 0 };
+  }, [categories]);
 
-  // Smooth transition to target position
-  const startTransition = useCallback(() => {
-    if (transitionRef.current) {
-      clearTimeout(transitionRef.current);
+  // Start smooth slide animation
+  const startSlideAnimation = useCallback((fromLeft: number, fromWidth: number, toLeft: number, toWidth: number) => {
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
     }
 
-    setIsTransitioning(true);
+    setIsAnimating(true);
+    setUnderlineLeft(fromLeft);
+    setUnderlineWidth(fromWidth);
     
-    // Use CSS transitions for smooth movement
-    // The actual transition happens in the CSS with transition property
-    // We just update the state and CSS handles the animation
-    
-    // Reset transitioning state after animation completes
-    transitionRef.current = setTimeout(() => {
-      setIsTransitioning(false);
-    }, 300); // Match this with CSS transition duration
+    const startTime = performance.now();
+    const duration = 300; // ms
+    const easing = (t: number) => {
+      // Smooth cubic bezier easing: ease-in-out
+      return t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
+    };
+
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const easedProgress = easing(progress);
+
+      // Interpolate position and width simultaneously
+      const currentLeft = fromLeft + (toLeft - fromLeft) * easedProgress;
+      const currentWidth = fromWidth + (toWidth - fromWidth) * easedProgress;
+
+      setUnderlineLeft(currentLeft);
+      setUnderlineWidth(currentWidth);
+
+      if (progress < 1) {
+        animationRef.current = requestAnimationFrame(animate);
+      } else {
+        // Animation complete
+        setUnderlineLeft(toLeft);
+        setUnderlineWidth(toWidth);
+        setTargetWidth(toWidth);
+        setTargetLeft(toLeft);
+        setIsAnimating(false);
+        animationRef.current = null;
+      }
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
   }, []);
 
-  // Update underline position with smooth transition
-  const updateUnderline = useCallback(() => {
-    // Calculate where we want to go
-    calculateTargetPosition();
-    
-    // Start the smooth transition
-    startTransition();
-  }, [calculateTargetPosition, startTransition]);
+  // Update underline position with smooth slide animation
+  const updateUnderlineWithSlide = useCallback((newTabId: string) => {
+    const currentPosition = calculateTargetPosition(activeTab);
+    const targetPosition = calculateTargetPosition(newTabId);
 
-  // Immediate update without transition (for initial load)
+    if (currentPosition.width > 0 && targetPosition.width > 0) {
+      // Store previous values for animation
+      setPreviousTab(activeTab);
+      setPreviousLeft(currentPosition.left);
+      setPreviousWidth(currentPosition.width);
+
+      // Start sliding animation
+      startSlideAnimation(
+        currentPosition.left,
+        currentPosition.width,
+        targetPosition.left,
+        targetPosition.width
+      );
+    }
+  }, [activeTab, calculateTargetPosition, startSlideAnimation]);
+
+  // Immediate update without animation (for initial load)
   const updateUnderlineImmediate = useCallback(() => {
-    const activeTabIndex = categories.findIndex(cat => cat.id === activeTab);
-
-    if (activeTabIndex === -1) {
-      return;
-    }
-
-    const activeTabElement = tabRefs.current[activeTabIndex];
-    const containerElement = scrollContainerRef.current;
-
-    if (activeTabElement && containerElement) {
-      const textSpan = activeTabElement.querySelector('span');
-      if (textSpan) {
-        const textRect = textSpan.getBoundingClientRect();
-        const textWidth = textRect.width;
-        const newWidth = Math.max(textWidth * 0.6, 20);
-
-        const buttonRect = activeTabElement.getBoundingClientRect();
-        const containerRect = containerElement.getBoundingClientRect();
-        const relativeLeft = buttonRect.left - containerRect.left + containerElement.scrollLeft;
-        const buttonCenter = relativeLeft + (buttonRect.width / 2);
-        const underlineStart = buttonCenter - (newWidth / 2);
-
-        // Set immediate values (no transition)
-        setUnderlineWidth(newWidth);
-        setUnderlineLeft(underlineStart);
-        setTargetWidth(newWidth);
-        setTargetLeft(underlineStart);
-      }
-    }
-  }, [activeTab, categories]);
+    const position = calculateTargetPosition(activeTab);
+    setUnderlineWidth(position.width);
+    setUnderlineLeft(position.left);
+    setTargetWidth(position.width);
+    setTargetLeft(position.left);
+  }, [activeTab, calculateTargetPosition]);
 
   // Snap active tab to left
   const snapToTab = useCallback(() => {
@@ -200,59 +217,29 @@ const CategoryTabs = ({
     }
   }, [activeTab, categories, updateUnderlineImmediate, snapToTab]);
 
-  // Animate underline to target values
-  useEffect(() => {
-    if (isTransitioning) {
-      // Gradually move toward target values for smooth animation
-      const step = () => {
-        setUnderlineWidth(prev => {
-          const diff = targetWidth - prev;
-          return prev + diff * 0.2; // Easing factor
-        });
-        
-        setUnderlineLeft(prev => {
-          const diff = targetLeft - prev;
-          return prev + diff * 0.2; // Easing factor
-        });
-        
-        // Continue animation until we're close enough
-        if (Math.abs(underlineWidth - targetWidth) > 0.5 || Math.abs(underlineLeft - targetLeft) > 0.5) {
-          requestAnimationFrame(step);
-        } else {
-          // Snap to exact values at the end
-          setUnderlineWidth(targetWidth);
-          setUnderlineLeft(targetLeft);
-          setIsTransitioning(false);
-        }
-      };
-      
-      requestAnimationFrame(step);
-    }
-  }, [isTransitioning, targetWidth, targetLeft, underlineWidth, underlineLeft]);
-
   // Backup async updates for edge cases
   useEffect(() => {
     if (activeTab && categories.length > 0) {
       const timers = [
         setTimeout(() => {
-          updateUnderline();
+          updateUnderlineImmediate();
           snapToTab();
         }, 50),
         setTimeout(() => {
-          updateUnderline();
+          updateUnderlineImmediate();
           snapToTab();
         }, 200),
       ];
 
       return () => timers.forEach(timer => clearTimeout(timer));
     }
-  }, [activeTab, categories, updateUnderline, snapToTab]);
+  }, [activeTab, categories, updateUnderlineImmediate, snapToTab]);
 
   // Update on resize and scroll
   useEffect(() => {
     const handleResize = () => {
       if (activeTab && categories.length > 0) {
-        updateUnderline();
+        updateUnderlineImmediate();
         if (!isScrolling) {
           snapToTab();
         }
@@ -260,8 +247,8 @@ const CategoryTabs = ({
     };
 
     const handleScroll = () => {
-      if (activeTab && categories.length > 0 && !isScrolling) {
-        updateUnderline();
+      if (activeTab && categories.length > 0 && !isScrolling && !isAnimating) {
+        updateUnderlineImmediate();
       }
     };
 
@@ -276,22 +263,30 @@ const CategoryTabs = ({
       if (container) {
         container.removeEventListener('scroll', handleScroll);
       }
-      if (transitionRef.current) {
-        clearTimeout(transitionRef.current);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [activeTab, categories, updateUnderline, snapToTab, isScrolling]);
+  }, [activeTab, categories, updateUnderlineImmediate, snapToTab, isScrolling, isAnimating]);
 
-  // Tab click handler with snapping and smooth transition
+  // Tab click handler with snapping and smooth slide animation
   const handleTabClick = useCallback((id: string, path?: string) => {
+    // If clicking the same tab or animation is in progress, do nothing
+    if (id === activeTab || isAnimating) {
+      return;
+    }
+
+    // Store the previous tab before updating
+    const oldTab = activeTab;
+    
     // First update the active tab
     setActiveTab(id);
 
+    // Start smooth slide animation from old tab to new tab
+    updateUnderlineWithSlide(id);
+
     // Snap to the clicked tab
     snapToTab();
-
-    // Start smooth underline transition
-    updateUnderline();
 
     if (path && !isSearchOverlayActive && !path.startsWith('#')) {
       navigate(path, { 
@@ -302,7 +297,7 @@ const CategoryTabs = ({
     if (isSearchOverlayActive && process.env.NODE_ENV === 'development') {
       console.log(`Search tab selected: ${id}`);
     }
-  }, [setActiveTab, navigate, isSearchOverlayActive, categories, updateUnderline, snapToTab]);
+  }, [activeTab, setActiveTab, navigate, isSearchOverlayActive, categories, updateUnderlineWithSlide, snapToTab, isAnimating]);
 
   const handleCategoriesClick = useCallback(() => {
     navigate('/categories', { preventScrollReset: true });
@@ -332,16 +327,6 @@ const CategoryTabs = ({
     }
   }, [activeTab, updateUnderlineImmediate, snapToTab]);
 
-  // Calculate transition duration based on distance
-  const calculateTransitionDuration = () => {
-    if (!isTransitioning) return '0ms';
-    
-    const distance = Math.abs(underlineLeft - targetLeft);
-    // Dynamic duration: faster for short distances, slower for long ones
-    const duration = Math.min(300, Math.max(150, distance * 0.5));
-    return `${duration}ms`;
-  };
-
   return (
     <div className="relative w-full overflow-hidden bg-white" style={{ maxHeight: '40px' }}>
       <div className="h-full w-full">
@@ -369,18 +354,28 @@ const CategoryTabs = ({
             </button>
           ))}
 
-          {/* Animated underline with smooth transition */}
+          {/* Animated underline with realistic sliding motion */}
           {activeTab && underlineWidth > 0 && (
             <div
               className="absolute bottom-0 h-1 bg-gradient-to-r from-red-500 to-red-600 rounded-full"
               style={{ 
                 width: underlineWidth,
                 left: underlineLeft,
-                transition: isTransitioning ? `
-                  width ${calculateTransitionDuration()} cubic-bezier(0.4, 0, 0.2, 1),
-                  left ${calculateTransitionDuration()} cubic-bezier(0.4, 0, 0.2, 1)
-                ` : 'none',
-                willChange: isTransitioning ? 'width, left' : 'auto'
+                transition: isAnimating ? 'none' : 'left 0.2s ease, width 0.2s ease',
+                willChange: isAnimating ? 'left, width' : 'auto',
+                transform: 'translateZ(0)', // Hardware acceleration
+              }}
+            />
+          )}
+
+          {/* Optional: Visual indicator of the animation path */}
+          {isAnimating && previousTab && previousTab !== activeTab && (
+            <div
+              className="absolute bottom-0 h-1 bg-gradient-to-r from-transparent via-red-300 to-transparent opacity-30"
+              style={{
+                width: Math.abs(underlineLeft - previousLeft) + Math.max(underlineWidth, previousWidth),
+                left: Math.min(underlineLeft, previousLeft) - Math.max(underlineWidth, previousWidth) / 2,
+                transition: 'none',
               }}
             />
           )}
