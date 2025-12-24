@@ -68,6 +68,7 @@ const formatNumber = (num: number): string => {
 };
 
 // REAL REELS FETCH FUNCTION - Using the SAME query as useVideos
+// In your useContentGrid.ts, update the fetchReels function:
 const fetchReels = async (limit: number = 20): Promise<Reel[]> => {
   try {
     console.log("Fetching reels from Supabase videos table...");
@@ -88,18 +89,24 @@ const fetchReels = async (limit: number = 20): Promise<Reel[]> => {
       return [];
     }
 
-    // Filter to only show videos from the storage bucket (same as useVideos)
+    // Filter to only show videos from the storage bucket
     const bucketVideos = data?.filter(video => 
-      video.video_url && video.video_url.includes('wkfzhcszhgewkvwukzes.supabase.co/storage/v1/object/public/videos')
+      video.video_url && video.video_url.includes('storage/v1/object/public/videos')
     ) || [];
 
     console.log(`Fetched ${bucketVideos.length} reels from Supabase`);
 
     // Transform to match your Reel interface
     const reels: Reel[] = bucketVideos.map(video => {
-      console.log("Video data:", video); // Debug each video
-      
-      const reel: Reel = {
+      // Debug log for each video
+      console.log("Video from Supabase:", {
+        id: video.id,
+        video_url: video.video_url,
+        thumbnail_url: video.thumbnail_url,
+        has_thumbnail: !!video.thumbnail_url
+      });
+
+      return {
         id: video.id,
         title: video.title || `Reel ${video.id}`,
         video_url: video.video_url,
@@ -112,16 +119,6 @@ const fetchReels = async (limit: number = 20): Promise<Reel[]> => {
         is_live: video.is_live || false,
         type: 'reel' as const
       };
-
-      // DEBUG: Log thumbnail status
-      console.log(`Reel ${reel.id}:`, {
-        hasVideo: !!reel.video_url,
-        hasThumbnail: !!reel.thumbnail_url,
-        videoUrl: reel.video_url,
-        thumbnailUrl: reel.thumbnail_url
-      });
-
-      return reel;
     });
 
     return reels;
