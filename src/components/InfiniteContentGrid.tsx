@@ -4,7 +4,7 @@ import { Sparkles } from "lucide-react";
 // Import the custom hook
 import { useContentGrid, FilterState, ContentItem } from "@/hooks/useContentGrid";
 
-// Import card components (only need ProductCard and ReelCard now)
+// Import card components
 import { ProductCard } from "./ProductCard";
 import { ReelCard } from "./ReelCard";
 
@@ -22,7 +22,7 @@ const renderTag = (tag: string) => {
   return null;
 };
 
-// ContentCard Factory - Only handles products and reels now
+// ContentCard Factory
 const ContentCard: React.FC<{ item: ContentItem }> = ({ item }) => {
   switch (item.type) {
     case 'product':
@@ -52,7 +52,6 @@ const intersperseProductsAndReels = (items: ContentItem[]): ContentItem[] => {
 
   // We want 70% products, 30% reels
   // For every 10 items: 7 products, 3 reels
-  // We'll use a pattern of 7 products followed by 3 reels
   const productsPerBatch = 7;
   const reelsPerBatch = 3;
 
@@ -83,61 +82,86 @@ const intersperseProductsAndReels = (items: ContentItem[]): ContentItem[] => {
   return result;
 };
 
-// Alternative: More evenly distributed interspersion
-// Fixed version: Maintains 70/30 ratio without repeating reels
+// Evenly distributed interspersion - FIXED VERSION
 const evenlyIntersperse = (items: ContentItem[]): ContentItem[] => {
-  if (items.length === 0) return [];
+  if (items.length === 0) {
+    console.log("evenlyIntersperse: No items to intersperse");
+    return [];
+  }
 
   // Separate products and reels
   const products = items.filter(item => item.type === 'product');
   const reels = items.filter(item => item.type === 'reel');
 
+  console.log(`evenlyIntersperse: ${products.length} products, ${reels.length} reels`);
+
+  // Debug: Show reel thumbnails
+  reels.forEach((reel, idx) => {
+    const r = reel as any;
+    console.log(`Reel ${idx}: id=${r.id}, thumb=${r.thumbnail_url ? 'YES' : 'NO'}, video=${r.video_url ? 'YES' : 'NO'}`);
+  });
+
   // If no products or reels, return whatever we have
-  if (products.length === 0) return reels;
-  if (reels.length === 0) return products;
+  if (products.length === 0) {
+    console.log("evenlyIntersperse: No products, returning reels only");
+    return reels;
+  }
+  if (reels.length === 0) {
+    console.log("evenlyIntersperse: No reels, returning products only");
+    return products;
+  }
 
   const result: ContentItem[] = [];
   let productIndex = 0;
   let reelIndex = 0;
 
-  // Calculate the optimal distribution for 70/30 ratio
-  // For every 10 items, we want 7 products and 3 reels
-  // So for every 7 products, we should show 3 reels
-  const productsPerCycle = 7;
-  const reelsPerCycle = 3;
+  // Calculate ratio: 70% products, 30% reels
+  // For every 7 products, insert 3 reels
+  const productsPerGroup = 7;
+  const reelsPerGroup = 3;
 
-  while (productIndex < products.length && reelIndex < reels.length) {
-    // Add up to 7 products
-    const productsToAdd = Math.min(productsPerCycle, products.length - productIndex);
-    for (let i = 0; i < productsToAdd && productIndex < products.length; i++) {
+  // Calculate how many full groups we can make
+  const fullProductGroups = Math.floor(products.length / productsPerGroup);
+  const fullReelGroups = Math.floor(reels.length / reelsPerGroup);
+  const groups = Math.min(fullProductGroups, fullReelGroups);
+
+  console.log(`evenlyIntersperse: Creating ${groups} groups of ${productsPerGroup} products + ${reelsPerGroup} reels`);
+
+  // Create the interspersed pattern
+  for (let group = 0; group < groups; group++) {
+    // Add products for this group
+    for (let i = 0; i < productsPerGroup && productIndex < products.length; i++) {
       result.push(products[productIndex++]);
     }
 
-    // Add up to 3 reels
-    const reelsToAdd = Math.min(reelsPerCycle, reels.length - reelIndex);
-    for (let i = 0; i < reelsToAdd && reelIndex < reels.length; i++) {
+    // Add reels for this group
+    for (let i = 0; i < reelsPerGroup && reelIndex < reels.length; i++) {
       result.push(reels[reelIndex++]);
     }
   }
 
-  // Add any remaining products (if we ran out of reels)
+  // Add any remaining products
   while (productIndex < products.length) {
     result.push(products[productIndex++]);
   }
 
-  // Add any remaining reels (if we ran out of products - unlikely)
+  // Add any remaining reels
   while (reelIndex < reels.length) {
     result.push(reels[reelIndex++]);
   }
 
+  console.log(`evenlyIntersperse: Final result - ${result.length} items (${result.filter(i => i.type === 'product').length} products, ${result.filter(i => i.type === 'reel').length} reels)`);
+  
   return result;
 };
 
-// Masonry Grid Component
+// Masonry Grid Component - FIXED VERSION
 const MasonryGrid: React.FC<{ items: ContentItem[] }> = ({ items }) => {
   // Filter to only include products and reels
   const filteredItems = items.filter(item => item.type === 'product' || item.type === 'reel');
-  
+
+  console.log(`MasonryGrid received: ${items.length} total items, ${filteredItems.length} filtered items`);
+
   // Apply the interspersion algorithm
   const interspersedItems = evenlyIntersperse(filteredItems);
 
@@ -150,15 +174,21 @@ const MasonryGrid: React.FC<{ items: ContentItem[] }> = ({ items }) => {
       cols[colIndex].push(item);
     });
 
+    // Debug column distribution
+    console.log(`MasonryGrid columns: ${cols[0].length} items in col 0, ${cols[1].length} items in col 1`);
+    
     return cols;
   }, [interspersedItems]);
 
   return (
     <div className="grid grid-cols-2 gap-2 px-2">
       {columns.map((column, colIndex) => (
-        <div key={colIndex} className="flex flex-col gap-px">
+        <div key={`col-${colIndex}`} className="flex flex-col gap-px">
           {column.map((item) => (
-            <ContentCard key={`${item.type}-${item.id}`} item={item} />
+            <ContentCard 
+              key={`${item.type}-${item.id}`}
+              item={item} 
+            />
           ))}
         </div>
       ))}
@@ -185,12 +215,26 @@ const InfiniteContentGrid: React.FC<InfiniteContentGridProps> = ({
     hasActiveFilters
   } = useContentGrid(category, filters);
 
+  // Debug: Log what we're getting from the hook
+  React.useEffect(() => {
+    const reels = visibleContent.filter(item => item.type === 'reel');
+    console.log(`InfiniteContentGrid: ${visibleContent.length} items visible, ${reels.length} reels`);
+    
+    if (reels.length > 0) {
+      reels.forEach((reel, idx) => {
+        const r = reel as any;
+        console.log(`Visible Reel ${idx}: id=${r.id}, thumb=${r.thumbnail_url ? 'YES' : 'NO'}, video=${r.video_url ? 'YES' : 'NO'}`);
+      });
+    }
+  }, [visibleContent]);
+
   // Show loading state while fetching initial data
   if (initialLoading && visibleContent.length === 0) {
+    console.log("InfiniteContentGrid: Showing initial loading skeleton");
     return (
       <div className="px-2">
         <div className="grid grid-cols-2 gap-2">
-          {Array(4).fill(0).map((_, i) => (
+          {Array(6).fill(0).map((_, i) => (
             <div key={i} className="bg-gray-200 animate-pulse rounded" style={{ height: '300px' }}></div>
           ))}
         </div>
@@ -200,6 +244,7 @@ const InfiniteContentGrid: React.FC<InfiniteContentGridProps> = ({
 
   // Show empty state if no content
   if (!initialLoading && visibleContent.length === 0) {
+    console.log("InfiniteContentGrid: Showing empty state");
     return (
       <div className="text-center py-8 text-gray-500">
         {hasActiveFilters() ? (
@@ -209,14 +254,20 @@ const InfiniteContentGrid: React.FC<InfiniteContentGridProps> = ({
             <p className="text-xs text-gray-500 mb-4">Try adjusting your filters</p>
           </>
         ) : (
-          "No content found. Check back soon!"
+          <div>
+            <Sparkles className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+            <p className="text-sm font-medium text-gray-700 mb-1">No content found</p>
+            <p className="text-xs text-gray-500 mb-4">Check back soon for new products and reels!</p>
+          </div>
         )}
       </div>
     );
   }
 
+  console.log(`InfiniteContentGrid: Rendering ${visibleContent.length} items, hasMore: ${hasMore}, loading: ${loading}`);
+
   return (
-    <div>
+    <div className="pb-20">
       {/* Masonry Grid */}
       <MasonryGrid items={visibleContent} />
 
@@ -225,10 +276,15 @@ const InfiniteContentGrid: React.FC<InfiniteContentGridProps> = ({
         ref={loaderRef}
         className="flex justify-center items-center py-6"
       >
-        {hasMore ? (
+        {loading ? (
           <div className="text-center">
             <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
             <p className="text-xs text-gray-500">Loading more content...</p>
+          </div>
+        ) : hasMore ? (
+          <div className="text-center">
+            <div className="w-5 h-5 border-2 border-gray-300 border-t-transparent rounded-full animate-spin mx-auto mb-2 opacity-50"></div>
+            <p className="text-xs text-gray-400">Scroll to load more</p>
           </div>
         ) : visibleContent.length > 0 ? (
           <div className="text-center py-4">
