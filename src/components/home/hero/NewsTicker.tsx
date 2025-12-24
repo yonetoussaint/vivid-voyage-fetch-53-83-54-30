@@ -1,54 +1,38 @@
 import { useState } from 'react';
 
-// News items - removed icons
+// News items with only black background
 const newsItems = [
   { 
     id: 1, 
-    text: "EXTRA 10% OFF WITH CODE: SUMMER10", 
-    bgColor: "bg-gradient-to-r from-orange-500 to-red-500",
-    textColor: "text-white"
+    text: "EXTRA 10% OFF WITH CODE: SUMMER10"
   },
   { 
     id: 2, 
-    text: "FREE SHIPPING ON ORDERS OVER ¥99", 
-    bgColor: "bg-gradient-to-r from-blue-600 to-indigo-600",
-    textColor: "text-white"
+    text: "FREE SHIPPING ON ORDERS OVER ¥99"
   },
   { 
     id: 3, 
-    text: "LIMITED TIME: BUY 2 GET 1 FREE", 
-    bgColor: "bg-gradient-to-r from-green-600 to-emerald-600",
-    textColor: "text-white"
+    text: "LIMITED TIME: BUY 2 GET 1 FREE"
   },
   { 
     id: 4, 
-    text: "NEW SEASON ITEMS JUST ARRIVED", 
-    bgColor: "bg-gradient-to-r from-purple-600 to-pink-600",
-    textColor: "text-white"
+    text: "NEW SEASON ITEMS JUST ARRIVED"
   },
   { 
     id: 5, 
-    text: "FLASH SALE: 50% OFF SELECTED ITEMS", 
-    bgColor: "bg-gradient-to-r from-red-600 to-orange-600",
-    textColor: "text-white"
+    text: "FLASH SALE: 50% OFF SELECTED ITEMS"
   },
   { 
     id: 6, 
-    text: "EXCLUSIVE APP-ONLY DEALS", 
-    bgColor: "bg-gradient-to-r from-indigo-600 to-blue-600",
-    textColor: "text-white"
+    text: "EXCLUSIVE APP-ONLY DEALS"
   },
   { 
     id: 7, 
-    text: "VIP MEMBERS GET EXTRA 15% OFF", 
-    bgColor: "bg-gradient-to-r from-amber-600 to-yellow-600",
-    textColor: "text-white"
+    text: "VIP MEMBERS GET EXTRA 15% OFF"
   },
   { 
     id: 8, 
-    text: "FREE RETURNS WITHIN 30 DAYS", 
-    bgColor: "bg-gradient-to-r from-cyan-600 to-teal-600",
-    textColor: "text-white"
+    text: "FREE RETURNS WITHIN 30 DAYS"
   }
 ];
 
@@ -74,9 +58,9 @@ export default function NewsTicker() {
           >
             {newsRepeats.map((item, index) => (
               <div key={`item-${index}`} className="flex items-center flex-shrink-0">
-                {/* Item with background */}
-                <div className={`flex items-center px-6 h-7 ${item.bgColor}`}>
-                  <span className={`text-xs font-medium ${item.textColor}`}>
+                {/* Item with black background */}
+                <div className="flex items-center px-6 h-7 bg-black">
+                  <span className="text-xs font-medium text-white">
                     {item.text}
                   </span>
                 </div>
