@@ -93,9 +93,8 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
               <div 
                 className={`
                   w-11 h-11 rounded-full ${channel.bgColor} 
-                  flex items-center justify-center shadow-md 
-                  cursor-pointer hover:scale-105 transition-transform
-                  relative overflow-hidden
+                  flex items-center justify-center
+                  cursor-pointer relative overflow-hidden
                   ${activeChannel === channel.id ? 'ring-2 ring-red-500 ring-offset-1' : ''}
                 `}
               >
