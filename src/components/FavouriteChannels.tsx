@@ -72,7 +72,7 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
       <div className="relative">
         <div 
           ref={containerRef}
-          className="flex gap-0.5 py-2 overflow-x-auto scrollbar-hide" {/* Reduced from gap-1 to gap-0.5, py-3 to py-2 */}
+          className="flex gap-0.5 py-2 overflow-x-auto scrollbar-hide"
           style={{
             scrollSnapType: 'x mandatory',
             WebkitOverflowScrolling: 'touch',
@@ -82,10 +82,14 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
           {channels.map((channel, index) => (
             <div 
               key={channel.id} 
-              className="flex flex-col items-center gap-1 flex-shrink-0" {/* Reduced from gap-2 to gap-1 */}
+              className="flex flex-col items-center gap-1 flex-shrink-0"
               style={{
-                width: `calc(100vw / 5.5)`,
-                minWidth: `calc(100vw / 5.5)`,
+                // Calculate width to show exactly 5.5 items
+                // We need to account for 5 gaps between 6 items (5 * 2px = 10px)
+                // Or we can calculate: total gap space = (5.5 - 1) * 2px = 9px
+                // Item width = (100vw - 9px) / 5.5
+                width: `calc((100vw - 9px) / 5.5)`,
+                minWidth: `calc((100vw - 9px) / 5.5)`,
                 scrollSnapAlign: 'start'
               }}
               onClick={() => handleChannelSelect(channel.id, index)}
