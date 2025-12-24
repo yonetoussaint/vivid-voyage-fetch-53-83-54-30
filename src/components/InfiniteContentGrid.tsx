@@ -84,12 +84,15 @@ const intersperseProductsAndReels = (items: ContentItem[]): ContentItem[] => {
 };
 
 // Alternative: More evenly distributed interspersion
+// Fixed version: Maintains 70/30 ratio without repeating reels
 const evenlyIntersperse = (items: ContentItem[]): ContentItem[] => {
   if (items.length === 0) return [];
 
+  // Separate products and reels
   const products = items.filter(item => item.type === 'product');
   const reels = items.filter(item => item.type === 'reel');
 
+  // If no products or reels, return whatever we have
   if (products.length === 0) return reels;
   if (reels.length === 0) return products;
 
@@ -97,26 +100,34 @@ const evenlyIntersperse = (items: ContentItem[]): ContentItem[] => {
   let productIndex = 0;
   let reelIndex = 0;
 
-  // Insert 1 reel for every ~2.33 products (to maintain 70/30 ratio)
-  // Simplified: Insert 1 reel after every 2-3 products
-  const productsBetweenReels = 2; // Will give us roughly 66/33 ratio
-  // Or use 3 for 75/25: const productsBetweenReels = 3;
+  // Calculate the optimal distribution for 70/30 ratio
+  // For every 10 items, we want 7 products and 3 reels
+  // So for every 7 products, we should show 3 reels
+  const productsPerCycle = 7;
+  const reelsPerCycle = 3;
 
-  while (productIndex < products.length || reelIndex < reels.length) {
-    // Add 2-3 products
-    const productsToAdd = Math.min(productsBetweenReels, products.length - productIndex);
+  while (productIndex < products.length && reelIndex < reels.length) {
+    // Add up to 7 products
+    const productsToAdd = Math.min(productsPerCycle, products.length - productIndex);
     for (let i = 0; i < productsToAdd && productIndex < products.length; i++) {
       result.push(products[productIndex++]);
     }
 
-    // Add 1 reel if available
-    if (reelIndex < reels.length) {
+    // Add up to 3 reels
+    const reelsToAdd = Math.min(reelsPerCycle, reels.length - reelIndex);
+    for (let i = 0; i < reelsToAdd && reelIndex < reels.length; i++) {
       result.push(reels[reelIndex++]);
-    } else if (productIndex < products.length) {
-      // If no more reels, just add remaining products
-      result.push(...products.slice(productIndex));
-      break;
     }
+  }
+
+  // Add any remaining products (if we ran out of reels)
+  while (productIndex < products.length) {
+    result.push(products[productIndex++]);
+  }
+
+  // Add any remaining reels (if we ran out of products - unlikely)
+  while (reelIndex < reels.length) {
+    result.push(reels[reelIndex++]);
   }
 
   return result;
