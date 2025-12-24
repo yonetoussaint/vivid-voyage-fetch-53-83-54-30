@@ -1,160 +1,24 @@
-import React, { useState, useEffect } from "react";
-import HeroBanner from "@/components/home/HeroBanner";
+// ForYou.tsx
+import React from "react";
+import NewsTicker from "@/components/home/hero/NewsTicker";
 import FlashDeals from "@/components/home/FlashDeals";
-import FavouriteChannels, { ChannelItem } from "@/components/FavouriteChannels";
+import FavouriteChannels from "@/components/FavouriteChannels";
 import InfiniteContentGrid from "@/components/InfiniteContentGrid";
 import Footer from "@/components/Footer";
-import { 
-  Wallet, 
-  Award, 
-  Star, 
-  Zap, 
-  Tag, 
-  Gift, 
-  Clock, 
-  TrendingUp, 
-  Shield,
-  Percent,
-  Crown,
-  ShoppingBag,
-  Heart,
-  DollarSign,
-  BadgeCheck
-} from "lucide-react";
+import { useForYou } from "@/hooks/foryou.hooks";
 
 const ForYou: React.FC = () => {
-  const [activeCategory, setActiveCategory] = useState('recommendations');
-
-  // Define feature channels with icons instead of images
-  const featureChannels: ChannelItem[] = [
-    {
-      id: 'wallet',
-      name: 'Wallet',
-      icon: <Wallet className="w-6 h-6" />,
-      bgColor: 'bg-gradient-to-br from-green-500 to-green-600',
-      textColor: 'text-white'
-    },
-    {
-      id: 'choice',
-      name: 'CHOICE',
-      icon: <Crown className="w-6 h-6" />,
-      bgColor: 'bg-gradient-to-br from-yellow-500 to-yellow-600',
-      textColor: 'text-white'
-    },
-    {
-      id: 'bestsellers',
-      name: 'Bestsellers',
-      icon: <TrendingUp className="w-6 h-6" />,
-      bgColor: 'bg-gradient-to-br from-blue-500 to-blue-600',
-      textColor: 'text-white'
-    },
-    {
-      id: 'deals',
-      name: 'Deals',
-      icon: <Percent className="w-6 h-6" />,
-      bgColor: 'bg-gradient-to-br from-red-500 to-red-600',
-      textColor: 'text-white'
-    },
-    {
-      id: 'flash-sales',
-      name: 'Flash Sales',
-      icon: <Zap className="w-6 h-6" />,
-      bgColor: 'bg-gradient-to-br from-orange-500 to-orange-600',
-      textColor: 'text-white'
-    },
-    {
-      id: 'new-arrivals',
-      name: 'New Arrivals',
-      icon: <Tag className="w-6 h-6" />,
-      bgColor: 'bg-gradient-to-br from-purple-500 to-purple-600',
-      textColor: 'text-white'
-    },
-    {
-      id: 'recommended',
-      name: 'Recommended',
-      icon: <Heart className="w-6 h-6" />,
-      bgColor: 'bg-gradient-to-br from-pink-500 to-pink-600',
-      textColor: 'text-white'
-    },
-    {
-      id: 'free-shipping',
-      name: 'Free Shipping',
-      icon: <ShoppingBag className="w-6 h-6" />,
-      bgColor: 'bg-gradient-to-br from-cyan-500 to-cyan-600',
-      textColor: 'text-white'
-    },
-    {
-      id: 'exclusive',
-      name: 'Exclusive',
-      icon: <Award className="w-6 h-6" />,
-      bgColor: 'bg-gradient-to-br from-indigo-500 to-indigo-600',
-      textColor: 'text-white'
-    },
-    {
-      id: 'top-rated',
-      name: 'Top Rated',
-      icon: <Star className="w-6 h-6" />,
-      bgColor: 'bg-gradient-to-br from-amber-500 to-amber-600',
-      textColor: 'text-white'
-    },
-    {
-      id: 'gift-cards',
-      name: 'Gift Cards',
-      icon: <Gift className="w-6 h-6" />,
-      bgColor: 'bg-gradient-to-br from-rose-500 to-rose-600',
-      textColor: 'text-white'
-    },
-    {
-      id: 'limited-time',
-      name: 'Limited Time',
-      icon: <Clock className="w-6 h-6" />,
-      bgColor: 'bg-gradient-to-br from-violet-500 to-violet-600',
-      textColor: 'text-white'
-    },
-    {
-      id: 'secure-payment',
-      name: 'Secure Payment',
-      icon: <Shield className="w-6 h-6" />,
-      bgColor: 'bg-gradient-to-br from-emerald-500 to-emerald-600',
-      textColor: 'text-white'
-    },
-    {
-      id: 'budget-friendly',
-      name: 'Budget Friendly',
-      icon: <DollarSign className="w-6 h-6" />,
-      bgColor: 'bg-gradient-to-br from-lime-500 to-lime-600',
-      textColor: 'text-white'
-    },
-    {
-      id: 'verified',
-      name: 'Verified',
-      icon: <BadgeCheck className="w-6 h-6" />,
-      bgColor: 'bg-gradient-to-br from-teal-500 to-teal-600',
-      textColor: 'text-white'
-    }
-  ];
-
-  const handleChannelSelect = (channelId: string) => {
-    console.log(`Selected channel: ${channelId}`);
-    // Add your channel selection logic here
-  };
-
-  useEffect(() => {
-    const handleCategoryChange = (event: CustomEvent) => {
-      setActiveCategory(event.detail.category);
-    };
-
-    window.addEventListener('categoryChange', handleCategoryChange as EventListener);
-    return () => window.removeEventListener('categoryChange', handleCategoryChange as EventListener);
-  }, []);
+  // Get all data and handlers from the custom hook
+  const { activeCategory, featureChannels, handleChannelSelect } = useForYou();
 
   return (
     <div className="min-h-screen bg-white">
       {/* NO ANIMATIONS AT ALL - This is critical */}
       <div className="overflow-hidden">
         <div className="pb-2">
+          {/* NewsTicker directly */}
           <div className="mb-2">
-            <HeroBanner showNewsTicker={true} />
+            <NewsTicker />
           </div>
 
           <div className="">
@@ -184,25 +48,30 @@ const ForYou: React.FC = () => {
       />
 
       {/* Hidden Footer */}
-      <div 
-        className="sr-only" 
-        style={{
-          position: 'absolute',
-          width: '1px',
-          height: '1px',
-          padding: 0,
-          margin: '-1px',
-          overflow: 'hidden',
-          clip: 'rect(0, 0, 0, 0)',
-          whiteSpace: 'nowrap',
-          borderWidth: 0
-        }}
-        aria-hidden="true"
-      >
-        <Footer />
-      </div>
+      <FooterWrapper />
     </div>
   );
 };
+
+// Optional: You can extract this to a separate component if needed
+const FooterWrapper = () => (
+  <div 
+    className="sr-only" 
+    style={{
+      position: 'absolute',
+      width: '1px',
+      height: '1px',
+      padding: 0,
+      margin: '-1px',
+      overflow: 'hidden',
+      clip: 'rect(0, 0, 0, 0)',
+      whiteSpace: 'nowrap',
+      borderWidth: 0
+    }}
+    aria-hidden="true"
+  >
+    <Footer />
+  </div>
+);
 
 export default ForYou;
