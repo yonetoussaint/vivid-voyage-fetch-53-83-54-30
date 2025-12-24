@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAllProducts } from "@/integrations/supabase/products";
+import { supabase } from "@/integrations/supabase/client";
 
 // Types
 interface FilterState {
@@ -54,61 +55,7 @@ interface Reel {
   type: 'reel';
 }
 
-interface Post {
-  id: string;
-  type: 'post';
-  author: {
-    id: string;
-    username: string;
-    avatar: string;
-    is_verified: boolean;
-    follower_count: number;
-  };
-  content: {
-    images: string[];
-    caption: string;
-    location?: string;
-    hashtags: string[];
-  };
-  engagement: {
-    likes: number;
-    comments: number;
-    shares: number;
-    saves: number;
-    views?: number;
-  };
-  products_tagged: Array<{
-    id: string;
-    name: string;
-    price: number;
-    image: string;
-    x_position: number;
-    y_position: number;
-  }>;
-  created_at: string;
-  is_sponsored: boolean;
-  is_liked?: boolean;
-  is_saved?: boolean;
-}
-
-interface Vendor {
-  id: string;
-  name: string;
-  type: 'vendor';
-  rating: number;
-  followers: number;
-  verified: boolean;
-  rank: number;
-  discount?: string;
-  image?: string;
-  products: Array<{
-    id: string;
-    image?: string;
-  }>;
-  isPickupStation?: boolean;
-}
-
-type ContentItem = Product | Reel | Post | Vendor;
+type ContentItem = Product | Reel;
 
 // Utility Functions
 const formatNumber = (num: number): string => {
@@ -120,97 +67,78 @@ const formatNumber = (num: number): string => {
   return num.toString();
 };
 
-const fetchReels = async (limit: number = 8): Promise<Reel[]> => {
-  const mockReels: Reel[] = Array.from({ length: limit }, (_, i) => ({
-    id: `reel-${i}`,
-    title: `Trending Reel #${i + 1}`,
-    video_url: `https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4`,
-    thumbnail_url: `https://images.unsplash.com/photo-${150000 + i}?w=400&h=600&fit=crop`,
-    views: Math.floor(Math.random() * 1000000) + 10000,
-    duration: Math.floor(Math.random() * 60) + 15,
-    likes: Math.floor(Math.random() * 10000) + 100,
-    comments: Math.floor(Math.random() * 1000) + 10,
-    created_at: new Date().toISOString(),
-    is_live: i % 5 === 0,
-    type: 'reel' as const
-  }));
-  return mockReels;
-};
+// REAL REELS FETCH FUNCTION - Using the SAME query as useVideos
+const fetchReels = async (limit: number = 20): Promise<Reel[]> => {
+  try {
+    console.log("Fetching reels from Supabase videos table...");
+    
+    let query = supabase
+      .from('videos')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-const fetchPosts = async (limit: number = 15): Promise<Post[]> => {
-  const mockPosts: Post[] = [
-    {
-      id: 'post-1',
-      type: 'post',
-      author: {
-        id: 'user-1',
-        username: 'FashionistaJane',
-        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=200&h=200&fit=crop&crop=face',
-        is_verified: true,
-        follower_count: 14500
-      },
-      content: {
-        images: [
-          'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=800&h=600&fit=crop',
-          'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&h=600&fit=crop',
-          'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=800&h=600&fit=crop'
-        ],
-        caption: 'Just got these amazing summer outfits! Perfect for the beach #summerfashion #beachvibes #ootd',
-        location: 'Miami Beach',
-        hashtags: ['summerfashion', 'beachvibes', 'ootd', 'fashion', 'style']
-      },
-      engagement: {
-        likes: 2450,
-        comments: 128,
-        shares: 56,
-        saves: 312,
-        views: 12500
-      },
-      products_tagged: [
-        {
-          id: 'prod-1',
-          name: 'Floral Summer Dress',
-          price: 45.99,
-          image: 'https://images.unsplash.com/photo-1561042187-5b4d1c493f3d?w=300&h=400&fit=crop',
-          x_position: 65,
-          y_position: 40
-        },
-        {
-          id: 'prod-2',
-          name: 'Straw Beach Hat',
-          price: 24.99,
-          image: 'https://images.unsplash.com/photo-1521369909029-2afed882baee?w-300&h=400&fit=crop',
-          x_position: 35,
-          y_position: 20
-        }
-      ],
-      created_at: new Date(Date.now() - 3600000).toISOString(),
-      is_sponsored: false,
-      is_liked: false,
-      is_saved: false
+    if (limit) {
+      query = query.limit(limit);
     }
-  ];
-  return mockPosts.slice(0, limit);
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error fetching videos:', error);
+      return [];
+    }
+
+    // Filter to only show videos from the storage bucket (same as useVideos)
+    const bucketVideos = data?.filter(video => 
+      video.video_url && video.video_url.includes('wkfzhcszhgewkvwukzes.supabase.co/storage/v1/object/public/videos')
+    ) || [];
+
+    console.log(`Fetched ${bucketVideos.length} reels from Supabase`);
+
+    // Transform to match your Reel interface
+    const reels: Reel[] = bucketVideos.map(video => {
+      console.log("Video data:", video); // Debug each video
+      
+      const reel: Reel = {
+        id: video.id,
+        title: video.title || `Reel ${video.id}`,
+        video_url: video.video_url,
+        thumbnail_url: video.thumbnail_url,
+        views: video.views || 0,
+        duration: video.duration || 30,
+        likes: video.likes || 0,
+        comments: video.comments || 0,
+        created_at: video.created_at,
+        is_live: video.is_live || false,
+        type: 'reel' as const
+      };
+
+      // DEBUG: Log thumbnail status
+      console.log(`Reel ${reel.id}:`, {
+        hasVideo: !!reel.video_url,
+        hasThumbnail: !!reel.thumbnail_url,
+        videoUrl: reel.video_url,
+        thumbnailUrl: reel.thumbnail_url
+      });
+
+      return reel;
+    });
+
+    return reels;
+  } catch (error) {
+    console.error('Error in fetchReels:', error);
+    return [];
+  }
 };
 
-const fetchVendors = async (limit: number = 6): Promise<Vendor[]> => {
-  const mockVendors: Vendor[] = Array.from({ length: limit }, (_, i) => ({
-    id: `vendor-${i}`,
-    name: `Vendor ${i + 1}`,
-    type: 'vendor' as const,
-    rating: parseFloat((Math.random() * 1 + 4).toFixed(1)),
-    followers: Math.floor(Math.random() * 10000) + 1000,
-    verified: Math.random() > 0.3,
-    rank: i + 1,
-    discount: Math.random() > 0.5 ? `-${Math.floor(Math.random() * 50) + 10}%` : undefined,
-    image: `https://images.unsplash.com/photo-${150000 + i}?w=200&h=200&fit=crop&crop=face`,
-    products: Array.from({ length: 4 }, (_, j) => ({
-      id: `vendor-${i}-product-${j}`,
-      image: `https://images.unsplash.com/photo-${160000 + (i * 10) + j}?w=200&h=200&fit=crop`
-    })),
-    isPickupStation: i % 3 === 0
-  }));
-  return mockVendors;
+// Helper to check if thumbnail exists
+const checkThumbnailExists = async (url: string): Promise<boolean> => {
+  try {
+    const response = await fetch(url, { method: 'HEAD' });
+    return response.ok;
+  } catch (error) {
+    return false;
+  }
 };
 
 const applyFilters = (items: ContentItem[], filters: FilterState): ContentItem[] => {
@@ -245,6 +173,7 @@ const applyFilters = (items: ContentItem[], filters: FilterState): ContentItem[]
       return true;
     }
 
+    // Reels are not filtered (unless you want to add reel filters later)
     return true;
   });
 };
@@ -266,6 +195,7 @@ const sortContent = (items: ContentItem[], sortBy: FilterState['sortBy']): Conte
         if (a.type === 'product' && b.type === 'product') {
           return (a as Product).price - (b as Product).price;
         }
+        // Keep reels in their relative position
         return 0;
       });
       break;
@@ -289,13 +219,22 @@ const sortContent = (items: ContentItem[], sortBy: FilterState['sortBy']): Conte
 
     case 'popular':
     default:
+      // For popular, sort products by sold_count and reels by views
+      sorted.sort((a, b) => {
+        if (a.type === 'product' && b.type === 'product') {
+          return ((b as Product).sold_count || 0) - ((a as Product).sold_count || 0);
+        } else if (a.type === 'reel' && b.type === 'reel') {
+          return (b as Reel).views - (a as Reel).views;
+        }
+        return 0;
+      });
       break;
   }
 
   return sorted;
 };
 
-// Main Custom Hook - SIMPLIFIED FIXED VERSION
+// Main Custom Hook - SIMPLIFIED for only reels and products
 export const useContentGrid = (category?: string, filters?: FilterState) => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -317,21 +256,31 @@ export const useContentGrid = (category?: string, filters?: FilterState) => {
 
   const appliedFilters = filters || defaultFilters;
 
-  // Fetch ALL content initially
+  // Fetch ONLY products and reels
   const { data: allContent, isLoading: initialLoading, refetch } = useQuery({
     queryKey: ["content", "for-you", category, JSON.stringify(appliedFilters)],
     queryFn: async () => {
-      console.log("Fetching all content...");
+      console.log("Fetching products and reels only...");
       try {
-        const [products, reels, posts, vendors] = await Promise.all([
+        const [products, reels] = await Promise.all([
           fetchAllProducts(),
-          fetchReels(8),
-          fetchPosts(10),
-          fetchVendors(6)
+          fetchReels(12) // Fetch 12 reels
         ]);
 
         console.log(`Fetched: ${products.length} products, ${reels.length} reels`);
+        
+        // Debug reels thumbnails
+        reels.forEach((reel, index) => {
+          console.log(`Reel ${index + 1}:`, {
+            id: reel.id,
+            title: reel.title,
+            video_url: reel.video_url ? "YES" : "NO",
+            thumbnail_url: reel.thumbnail_url ? "YES" : "NO",
+            thumbnail: reel.thumbnail_url
+          });
+        });
 
+        // Transform products with shipping info
         const productsWithShipping = products.map(p => ({
           ...p,
           shipping: {
@@ -341,11 +290,10 @@ export const useContentGrid = (category?: string, filters?: FilterState) => {
           }
         }));
 
+        // Combine only products and reels
         let allContent: ContentItem[] = [
           ...productsWithShipping.map(p => ({ ...p, type: 'product' as const })),
-          ...reels.map(r => ({ ...r, type: 'reel' as const })),
-          ...posts.map(p => ({ ...p, type: 'post' as const })),
-          ...vendors.map(v => ({ ...v, type: 'vendor' as const }))
+          ...reels.map(r => ({ ...r, type: 'reel' as const }))
         ];
 
         // Filter by category if needed
@@ -362,18 +310,11 @@ export const useContentGrid = (category?: string, filters?: FilterState) => {
 
         // Apply filters
         allContent = applyFilters(allContent, appliedFilters);
-        
+
         // Sort content
         allContent = sortContent(allContent, appliedFilters.sortBy);
 
-        // Shuffle content for variety
-        const shuffled = [...allContent];
-        for (let i = shuffled.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-        }
-        
-        return shuffled;
+        return allContent;
       } catch (error) {
         console.error('Error fetching content:', error);
         return [];
@@ -385,13 +326,27 @@ export const useContentGrid = (category?: string, filters?: FilterState) => {
   // Calculate visible content based on current page
   const visibleContent = useMemo(() => {
     if (!allContent || allContent.length === 0) return [];
-    
+
     const startIndex = 0;
     const endIndex = page * contentPerPage;
     const result = allContent.slice(startIndex, endIndex);
+
+    // Debug: Count reels in visible content
+    const reelsInView = result.filter(item => item.type === 'reel');
+    console.log(`Visible content: ${result.length} items, ${reelsInView.length} reels`);
     
-    console.log(`Visible content: page=${page}, showing ${result.length} of ${allContent.length} total items`);
-    
+    if (reelsInView.length > 0) {
+      reelsInView.forEach((reel, idx) => {
+        const r = reel as Reel;
+        console.log(`Visible Reel ${idx + 1}:`, {
+          id: r.id,
+          hasThumbnail: !!r.thumbnail_url,
+          thumbnail: r.thumbnail_url,
+          video: r.video_url
+        });
+      });
+    }
+
     return result;
   }, [allContent, page, contentPerPage]);
 
@@ -401,23 +356,16 @@ export const useContentGrid = (category?: string, filters?: FilterState) => {
       setHasMore(false);
       return;
     }
-    
+
     const totalLoaded = page * contentPerPage;
     const hasMoreContent = totalLoaded < allContent.length;
-    console.log(`Has more check: totalLoaded=${totalLoaded}, allContent=${allContent.length}, hasMore=${hasMoreContent}`);
     setHasMore(hasMoreContent);
   }, [page, allContent, contentPerPage]);
 
   const loadMoreContent = useCallback(() => {
-    if (isLoadingMore || !hasMore) {
-      console.log(`Load more blocked: isLoadingMore=${isLoadingMore}, hasMore=${hasMore}`);
-      return;
-    }
+    if (isLoadingMore || !hasMore) return;
 
-    console.log(`Loading more content: page ${page} -> ${page + 1}`);
     setIsLoadingMore(true);
-    
-    // Simulate API delay
     setTimeout(() => {
       setPage(prev => prev + 1);
       setIsLoadingMore(false);
@@ -426,30 +374,22 @@ export const useContentGrid = (category?: string, filters?: FilterState) => {
 
   // Setup intersection observer
   useEffect(() => {
-    if (!loaderRef.current || !hasMore) {
-      console.log("Observer not setup: no loader ref or no more content");
-      return;
-    }
+    if (!loaderRef.current || !hasMore) return;
 
-    // Cleanup previous observer
     if (observerRef.current) {
       observerRef.current.disconnect();
     }
 
-    console.log("Setting up intersection observer");
     const observer = new IntersectionObserver(
       (entries) => {
         const target = entries[0];
-        console.log(`Observer triggered: intersecting=${target.isIntersecting}, hasMore=${hasMore}, isLoadingMore=${isLoadingMore}`);
-        
         if (target.isIntersecting && hasMore && !isLoadingMore) {
-          console.log("Loading more content triggered by observer");
           loadMoreContent();
         }
       },
       {
         root: null,
-        rootMargin: "100px", // Start loading 100px before reaching the element
+        rootMargin: "100px",
         threshold: 0.1,
       }
     );
@@ -464,25 +404,6 @@ export const useContentGrid = (category?: string, filters?: FilterState) => {
       }
     };
   }, [hasMore, isLoadingMore, loadMoreContent]);
-
-  // Also listen to scroll events as backup
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!loaderRef.current || isLoadingMore || !hasMore) return;
-
-      const loaderRect = loaderRef.current.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
-      
-      // If loader is within 200px of viewport bottom
-      if (loaderRect.top <= windowHeight + 200) {
-        console.log("Scroll triggered load more");
-        loadMoreContent();
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [isLoadingMore, hasMore, loadMoreContent]);
 
   const hasActiveFilters = useCallback(() => {
     return (
@@ -518,7 +439,5 @@ export type {
   FilterState,
   Product,
   Reel,
-  Post,
-  Vendor,
   ContentItem
 };
