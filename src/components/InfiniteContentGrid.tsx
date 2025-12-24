@@ -44,121 +44,123 @@ const ContentCard: React.FC<{ item: ContentItem }> = ({ item }) => {
   }
 };
 
-// Helper function to distribute content with specified ratios
-const distributeContentWithRatios = (items: ContentItem[]): ContentItem[] => {
+// Helper function to intersperse non-product content among all products
+const intersperseContent = (items: ContentItem[]): ContentItem[] => {
   if (items.length === 0) return [];
   
-  // Categorize items by type
+  // Separate products from other content types
   const products = items.filter(item => item.type === 'product');
   const reels = items.filter(item => item.type === 'reel');
   const posts = items.filter(item => item.type === 'post');
   const others = items.filter(item => item.type !== 'product' && item.type !== 'reel' && item.type !== 'post');
   
-  // Calculate target counts based on percentages
-  const totalItems = items.length;
-  const productCount = Math.floor(totalItems * 0.8); // 80%
-  const reelCount = Math.floor(totalItems * 0.1);    // 10%
-  const postCount = Math.floor(totalItems * 0.05);   // 5%
-  const otherCount = Math.floor(totalItems * 0.05);  // 5%
-  
-  // Take items for each category (limit to available count)
-  const selectedProducts = products.slice(0, Math.min(productCount, products.length));
-  const selectedReels = reels.slice(0, Math.min(reelCount, reels.length));
-  const selectedPosts = posts.slice(0, Math.min(postCount, posts.length));
-  const selectedOthers = others.slice(0, Math.min(otherCount, others.length));
-  
-  // Combine all selected items
-  const selectedItems = [
-    ...selectedProducts,
-    ...selectedReels,
-    ...selectedPosts,
-    ...selectedOthers
-  ];
-  
-  // If we have fewer items than expected, fill with remaining products first
-  if (selectedItems.length < totalItems) {
-    const remainingSlots = totalItems - selectedItems.length;
-    const remainingProducts = products.slice(selectedProducts.length, selectedProducts.length + remainingSlots);
-    selectedItems.push(...remainingProducts);
+  // If no products, just return all items
+  if (products.length === 0) {
+    return [...reels, ...posts, ...others];
   }
   
-  // Shuffle the array to mix content types (optional)
-  return shuffleArray(selectedItems);
-};
-
-// Helper function to shuffle array (Fisher-Yates algorithm)
-const shuffleArray = <T,>(array: T[]): T[] => {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-};
-
-// Alternative: Deterministic distribution for consistent pagination
-const distributeContentDeterministic = (items: ContentItem[]): ContentItem[] => {
-  if (items.length === 0) return [];
-  
-  // Categorize items by type
-  const products = items.filter(item => item.type === 'product');
-  const reels = items.filter(item => item.type === 'reel');
-  const posts = items.filter(item => item.type === 'post');
-  const others = items.filter(item => item.type !== 'product' && item.type !== 'reel' && item.type !== 'post');
-  
-  const distributed: ContentItem[] = [];
+  const result: ContentItem[] = [];
   let productIndex = 0;
   let reelIndex = 0;
   let postIndex = 0;
   let otherIndex = 0;
   
-  // Distribute items in a deterministic pattern
-  for (let i = 0; i < items.length; i++) {
-    const position = i % 20; // Pattern repeats every 20 items
+  // Calculate how often to insert non-product content
+  // For every 8 products (80%), insert 1 reel (10%), 0.5 post (5%), and 0.5 other (5%)
+  // Since we can't insert half items, we'll use a pattern of 16 products, 2 reels, 1 post, 1 other
+  const patternSize = 20; // 16 products + 2 reels + 1 post + 1 other
+  
+  while (productIndex < products.length) {
+    // Add products in batches of 16
+    for (let i = 0; i < 16 && productIndex < products.length; i++) {
+      result.push(products[productIndex++]);
+    }
     
-    if (position < 16 && productIndex < products.length) {
-      // 0-15: Products (80% of 20 = 16 slots)
-      distributed.push(products[productIndex++]);
-    } else if (position < 18 && reelIndex < reels.length) {
-      // 16-17: Reels (10% of 20 = 2 slots)
-      distributed.push(reels[reelIndex++]);
-    } else if (position < 19 && postIndex < posts.length) {
-      // 18: Posts (5% of 20 = 1 slot)
-      distributed.push(posts[postIndex++]);
-    } else if (position < 20 && otherIndex < others.length) {
-      // 19: Others (5% of 20 = 1 slot)
-      distributed.push(others[otherIndex++]);
-    } else if (productIndex < products.length) {
-      // Fallback to products if other types are exhausted
-      distributed.push(products[productIndex++]);
-    } else if (reelIndex < reels.length) {
-      distributed.push(reels[reelIndex++]);
-    } else if (postIndex < posts.length) {
-      distributed.push(posts[postIndex++]);
-    } else if (otherIndex < others.length) {
-      distributed.push(others[otherIndex++]);
+    // Add 2 reels if available
+    for (let i = 0; i < 2 && reelIndex < reels.length; i++) {
+      result.push(reels[reelIndex++]);
+    }
+    
+    // Add 1 post if available
+    if (postIndex < posts.length) {
+      result.push(posts[postIndex++]);
+    }
+    
+    // Add 1 other if available
+    if (otherIndex < others.length) {
+      result.push(others[otherIndex++]);
     }
   }
   
-  return distributed;
+  // If we still have non-product content after all products are added,
+  // append them at the end
+  if (reelIndex < reels.length) {
+    result.push(...reels.slice(reelIndex));
+  }
+  
+  if (postIndex < posts.length) {
+    result.push(...posts.slice(postIndex));
+  }
+  
+  if (otherIndex < others.length) {
+    result.push(...others.slice(otherIndex));
+  }
+  
+  return result;
+};
+
+// Alternative: Simple interspersion for better UX
+const simpleIntersperseContent = (items: ContentItem[]): ContentItem[] => {
+  if (items.length === 0) return [];
+  
+  // Separate products from other content types
+  const products = items.filter(item => item.type === 'product');
+  const nonProducts = items.filter(item => item.type !== 'product');
+  
+  // If few non-products, just return products first
+  if (nonProducts.length === 0) return products;
+  
+  const result: ContentItem[] = [];
+  let productIndex = 0;
+  let nonProductIndex = 0;
+  
+  // Insert 1 non-product item for every 8 products
+  const productsPerNonProduct = 8;
+  
+  while (productIndex < products.length || nonProductIndex < nonProducts.length) {
+    // Add products in chunks
+    for (let i = 0; i < productsPerNonProduct && productIndex < products.length; i++) {
+      result.push(products[productIndex++]);
+    }
+    
+    // Add one non-product if available
+    if (nonProductIndex < nonProducts.length) {
+      result.push(nonProducts[nonProductIndex++]);
+    } else if (productIndex < products.length) {
+      // If no more non-products, just add remaining products
+      result.push(products[productIndex++]);
+    }
+  }
+  
+  return result;
 };
 
 // Masonry Grid Component
 const MasonryGrid: React.FC<{ items: ContentItem[] }> = ({ items }) => {
-  // Apply the distribution algorithm
-  const distributedItems = distributeContentDeterministic(items);
+  // Apply the interspersion algorithm
+  const interspersedItems = simpleIntersperseContent(items);
   
   const columns = React.useMemo(() => {
     const colCount = 2;
     const cols: ContentItem[][] = Array.from({ length: colCount }, () => []);
 
-    distributedItems.forEach((item, index) => {
+    interspersedItems.forEach((item, index) => {
       const colIndex = index % colCount;
       cols[colIndex].push(item);
     });
 
     return cols;
-  }, [distributedItems]);
+  }, [interspersedItems]);
 
   return (
     <div className="grid grid-cols-2 gap-2 px-2">
