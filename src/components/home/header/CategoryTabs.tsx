@@ -19,6 +19,11 @@ interface CategoryTabsProps {
   isSearchOverlayActive?: boolean;
 }
 
+// Helper function for smooth easing
+const easeOutCubic = (t: number): number => 1 - Math.pow(1 - t, 3);
+const easeInOutCubic = (t: number): number => 
+  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
 const CategoryTabs = ({
   progress,
   activeTab,
@@ -32,32 +37,36 @@ const CategoryTabs = ({
   const location = useLocation();
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [underlineWidth, setUnderlineWidth] = useState(0);
-  const [underlineLeft, setUnderlineLeft] = useState(0);
-  const [targetWidth, setTargetWidth] = useState(0);
-  const [targetLeft, setTargetLeft] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  
+  // Animation state
+  const [underlineState, setUnderlineState] = useState({
+    width: 0,
+    left: 0,
+    targetWidth: 0,
+    targetLeft: 0,
+    isAnimating: false,
+    startTime: 0,
+    startWidth: 0,
+    startLeft: 0
+  });
+  
   const isInitialMount = useRef(true);
   const [isScrolling, setIsScrolling] = useState(false);
-  const transitionRef = useRef<NodeJS.Timeout | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const lastTabClickTime = useRef<number>(0);
 
   // Memoize refs update and reset initial mount flag
   useEffect(() => {
     tabRefs.current = tabRefs.current.slice(0, categories.length);
-    isInitialMount.current = true; // Reset flag when categories change
-  }, [categories]);
-
-  // Reset initial mount flag when active tab changes
-  useEffect(() => {
     isInitialMount.current = true;
-  }, [activeTab]);
+  }, [categories]);
 
   // Calculate target position for the underline
   const calculateTargetPosition = useCallback(() => {
     const activeTabIndex = categories.findIndex(cat => cat.id === activeTab);
 
     if (activeTabIndex === -1) {
-      return;
+      return null;
     }
 
     const activeTabElement = tabRefs.current[activeTabIndex];
@@ -66,91 +75,112 @@ const CategoryTabs = ({
     if (activeTabElement && containerElement) {
       const textSpan = activeTabElement.querySelector('span');
       if (textSpan) {
-        // Force layout recalculation before measuring
-        void activeTabElement.offsetHeight;
-        void textSpan.offsetHeight;
-
-        // Use getBoundingClientRect for more accurate measurements
-        const textRect = textSpan.getBoundingClientRect();
+        // Use getBoundingClientRect for pixel-perfect measurements
+        const textRect = textRect = textSpan.getBoundingClientRect();
         const textWidth = textRect.width;
 
-        // Make underline 60-70% of text width for a sleek look
-        const newWidth = Math.max(textWidth * 0.6, 20);
+        // Underline width based on text (60-70% for elegant look)
+        const targetWidth = Math.max(textWidth * 0.65, 20);
 
         const buttonRect = activeTabElement.getBoundingClientRect();
         const containerRect = containerElement.getBoundingClientRect();
         const relativeLeft = buttonRect.left - containerRect.left + containerElement.scrollLeft;
         const buttonCenter = relativeLeft + (buttonRect.width / 2);
-        const underlineStart = buttonCenter - (newWidth / 2);
+        const targetLeft = buttonCenter - (targetWidth / 2);
 
-        // Set target values for smooth transition
-        setTargetWidth(newWidth);
-        setTargetLeft(underlineStart);
+        return { targetWidth, targetLeft };
       }
     }
+    return null;
   }, [activeTab, categories]);
 
-  // Smooth transition to target position
-  const startTransition = useCallback(() => {
-    if (transitionRef.current) {
-      clearTimeout(transitionRef.current);
+  // Ultra-smooth animation using requestAnimationFrame
+  const animateUnderline = useCallback(() => {
+    const now = Date.now();
+    const elapsed = now - underlineState.startTime;
+    const duration = 350; // Slightly longer for ultra-smooth feel
+    const progress = Math.min(elapsed / duration, 1);
+
+    // Use easing function for smooth animation
+    const easedProgress = easeInOutCubic(progress);
+
+    if (progress < 1) {
+      // Calculate current position with easing
+      const currentWidth = underlineState.startWidth + 
+        (underlineState.targetWidth - underlineState.startWidth) * easedProgress;
+      const currentLeft = underlineState.startLeft + 
+        (underlineState.targetLeft - underlineState.startLeft) * easedProgress;
+
+      setUnderlineState(prev => ({
+        ...prev,
+        width: currentWidth,
+        left: currentLeft
+      }));
+
+      // Continue animation
+      animationFrameRef.current = requestAnimationFrame(animateUnderline);
+    } else {
+      // Animation complete
+      setUnderlineState(prev => ({
+        ...prev,
+        width: prev.targetWidth,
+        left: prev.targetLeft,
+        isAnimating: false
+      }));
+    }
+  }, [underlineState]);
+
+  // Start smooth animation to target
+  const startSmoothAnimation = useCallback((targetWidth: number, targetLeft: number) => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
     }
 
-    setIsTransitioning(true);
-    
-    // Use CSS transitions for smooth movement
-    // The actual transition happens in the CSS with transition property
-    // We just update the state and CSS handles the animation
-    
-    // Reset transitioning state after animation completes
-    transitionRef.current = setTimeout(() => {
-      setIsTransitioning(false);
-    }, 300); // Match this with CSS transition duration
-  }, []);
+    // Debounce rapid clicks (minimum 100ms between animations)
+    const now = Date.now();
+    if (now - lastTabClickTime.current < 100) {
+      return;
+    }
+    lastTabClickTime.current = now;
 
-  // Update underline position with smooth transition
-  const updateUnderline = useCallback(() => {
-    // Calculate where we want to go
-    calculateTargetPosition();
-    
-    // Start the smooth transition
-    startTransition();
-  }, [calculateTargetPosition, startTransition]);
+    setUnderlineState(prev => ({
+      ...prev,
+      targetWidth,
+      targetLeft,
+      startWidth: prev.width,
+      startLeft: prev.left,
+      startTime: Date.now(),
+      isAnimating: true
+    }));
 
-  // Immediate update without transition (for initial load)
+    // Start animation loop
+    animationFrameRef.current = requestAnimationFrame(animateUnderline);
+  }, [animateUnderline]);
+
+  // Update underline position with ultra-smooth animation
+  const updateUnderlineSmoothly = useCallback(() => {
+    const target = calculateTargetPosition();
+    if (target) {
+      startSmoothAnimation(target.targetWidth, target.targetLeft);
+    }
+  }, [calculateTargetPosition, startSmoothAnimation]);
+
+  // Immediate update without animation (for initial load)
   const updateUnderlineImmediate = useCallback(() => {
-    const activeTabIndex = categories.findIndex(cat => cat.id === activeTab);
-
-    if (activeTabIndex === -1) {
-      return;
+    const target = calculateTargetPosition();
+    if (target) {
+      setUnderlineState(prev => ({
+        ...prev,
+        width: target.targetWidth,
+        left: target.targetLeft,
+        targetWidth: target.targetWidth,
+        targetLeft: target.targetLeft,
+        isAnimating: false
+      }));
     }
+  }, [calculateTargetPosition]);
 
-    const activeTabElement = tabRefs.current[activeTabIndex];
-    const containerElement = scrollContainerRef.current;
-
-    if (activeTabElement && containerElement) {
-      const textSpan = activeTabElement.querySelector('span');
-      if (textSpan) {
-        const textRect = textSpan.getBoundingClientRect();
-        const textWidth = textRect.width;
-        const newWidth = Math.max(textWidth * 0.6, 20);
-
-        const buttonRect = activeTabElement.getBoundingClientRect();
-        const containerRect = containerElement.getBoundingClientRect();
-        const relativeLeft = buttonRect.left - containerRect.left + containerElement.scrollLeft;
-        const buttonCenter = relativeLeft + (buttonRect.width / 2);
-        const underlineStart = buttonCenter - (newWidth / 2);
-
-        // Set immediate values (no transition)
-        setUnderlineWidth(newWidth);
-        setUnderlineLeft(underlineStart);
-        setTargetWidth(newWidth);
-        setTargetLeft(underlineStart);
-      }
-    }
-  }, [activeTab, categories]);
-
-  // Snap active tab to left
+  // Snap active tab to left with smooth scrolling
   const snapToTab = useCallback(() => {
     const activeTabIndex = categories.findIndex(cat => cat.id === activeTab);
     
@@ -165,134 +195,108 @@ const CategoryTabs = ({
     const containerRect = container.getBoundingClientRect();
     const tabRect = activeTabElement.getBoundingClientRect();
     
-    // Check if tab is already visible
-    const isTabVisible = 
-      tabRect.left >= containerRect.left && 
+    // Check if tab is already visible and properly positioned
+    const isTabPerfectlyVisible = 
+      Math.abs(tabRect.left - containerRect.left) <= 16 && // Within 16px of left edge
       tabRect.right <= containerRect.right;
     
-    // If tab is not fully visible, scroll to make it visible on the left
-    if (!isTabVisible || tabRect.left < containerRect.left) {
+    if (!isTabPerfectlyVisible) {
       setIsScrolling(true);
       
-      // Calculate scroll position to bring tab to left side
-      const scrollLeft = activeTabElement.offsetLeft - 16; // Add small padding
+      // Calculate precise scroll position
+      const scrollLeft = activeTabElement.offsetLeft - 16;
       
+      // Use smooth scroll with optimized timing
       container.scrollTo({
         left: scrollLeft,
         behavior: 'smooth'
       });
 
-      // Reset scrolling state after animation completes
-      setTimeout(() => setIsScrolling(false), 300);
+      // Reset scrolling state with delay
+      setTimeout(() => setIsScrolling(false), 350);
     }
   }, [activeTab, categories]);
 
-  // Use useLayoutEffect for initial positioning
+  // Initial setup and snap
   useLayoutEffect(() => {
     if (activeTab && categories.length > 0) {
-      // Immediate synchronous update for initial load
-      updateUnderlineImmediate();
+      if (isInitialMount.current) {
+        // Immediate positioning for initial load
+        updateUnderlineImmediate();
+        isInitialMount.current = false;
+      } else {
+        // Smooth animation for subsequent changes
+        updateUnderlineSmoothly();
+      }
       
-      // Snap to tab on active tab change
+      // Snap to tab with slight delay to ensure DOM is ready
       requestAnimationFrame(() => {
-        snapToTab();
+        setTimeout(() => snapToTab(), 50);
       });
     }
-  }, [activeTab, categories, updateUnderlineImmediate, snapToTab]);
+  }, [activeTab, categories, updateUnderlineImmediate, updateUnderlineSmoothly, snapToTab]);
 
-  // Animate underline to target values
-  useEffect(() => {
-    if (isTransitioning) {
-      // Gradually move toward target values for smooth animation
-      const step = () => {
-        setUnderlineWidth(prev => {
-          const diff = targetWidth - prev;
-          return prev + diff * 0.2; // Easing factor
-        });
-        
-        setUnderlineLeft(prev => {
-          const diff = targetLeft - prev;
-          return prev + diff * 0.2; // Easing factor
-        });
-        
-        // Continue animation until we're close enough
-        if (Math.abs(underlineWidth - targetWidth) > 0.5 || Math.abs(underlineLeft - targetLeft) > 0.5) {
-          requestAnimationFrame(step);
-        } else {
-          // Snap to exact values at the end
-          setUnderlineWidth(targetWidth);
-          setUnderlineLeft(targetLeft);
-          setIsTransitioning(false);
-        }
-      };
-      
-      requestAnimationFrame(step);
-    }
-  }, [isTransitioning, targetWidth, targetLeft, underlineWidth, underlineLeft]);
-
-  // Backup async updates for edge cases
-  useEffect(() => {
-    if (activeTab && categories.length > 0) {
-      const timers = [
-        setTimeout(() => {
-          updateUnderline();
-          snapToTab();
-        }, 50),
-        setTimeout(() => {
-          updateUnderline();
-          snapToTab();
-        }, 200),
-      ];
-
-      return () => timers.forEach(timer => clearTimeout(timer));
-    }
-  }, [activeTab, categories, updateUnderline, snapToTab]);
-
-  // Update on resize and scroll
+  // Handle resize and scroll events
   useEffect(() => {
     const handleResize = () => {
       if (activeTab && categories.length > 0) {
-        updateUnderline();
+        updateUnderlineSmoothly();
         if (!isScrolling) {
-          snapToTab();
+          setTimeout(() => snapToTab(), 100);
         }
       }
     };
 
     const handleScroll = () => {
       if (activeTab && categories.length > 0 && !isScrolling) {
-        updateUnderline();
+        updateUnderlineSmoothly();
       }
     };
 
-    window.addEventListener('resize', handleResize);
+    // Use optimized event listeners
+    let resizeTimer: NodeJS.Timeout;
+    const handleResizeOptimized = () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(handleResize, 100);
+    };
+
+    let scrollTimer: NodeJS.Timeout;
+    const handleScrollOptimized = () => {
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(handleScroll, 50);
+    };
+
+    window.addEventListener('resize', handleResizeOptimized);
     const container = scrollContainerRef.current;
     if (container) {
-      container.addEventListener('scroll', handleScroll);
+      container.addEventListener('scroll', handleScrollOptimized);
     }
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', handleResizeOptimized);
       if (container) {
-        container.removeEventListener('scroll', handleScroll);
+        container.removeEventListener('scroll', handleScrollOptimized);
       }
-      if (transitionRef.current) {
-        clearTimeout(transitionRef.current);
+      clearTimeout(resizeTimer);
+      clearTimeout(scrollTimer);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [activeTab, categories, updateUnderline, snapToTab, isScrolling]);
+  }, [activeTab, categories, updateUnderlineSmoothly, snapToTab, isScrolling]);
 
-  // Tab click handler with snapping and smooth transition
+  // Tab click handler with ultra-smooth experience
   const handleTabClick = useCallback((id: string, path?: string) => {
-    // First update the active tab
+    // Update active tab
     setActiveTab(id);
 
-    // Snap to the clicked tab
+    // Snap to tab immediately
     snapToTab();
 
-    // Start smooth underline transition
-    updateUnderline();
+    // Start smooth underline animation
+    updateUnderlineSmoothly();
 
+    // Navigation
     if (path && !isSearchOverlayActive && !path.startsWith('#')) {
       navigate(path, { 
         preventScrollReset: true 
@@ -302,45 +306,33 @@ const CategoryTabs = ({
     if (isSearchOverlayActive && process.env.NODE_ENV === 'development') {
       console.log(`Search tab selected: ${id}`);
     }
-  }, [setActiveTab, navigate, isSearchOverlayActive, categories, updateUnderline, snapToTab]);
+  }, [setActiveTab, navigate, isSearchOverlayActive, categories, updateUnderlineSmoothly, snapToTab]);
 
   const handleCategoriesClick = useCallback(() => {
     navigate('/categories', { preventScrollReset: true });
   }, [navigate]);
 
-  // Tab styles
+  // Tab styles with smooth color transition
   const getTabClassName = useCallback((isActive: boolean) => {
-    return `relative flex items-center px-3 py-2 text-sm font-medium whitespace-nowrap outline-none flex-shrink-0 transition-colors duration-300 ${
+    return `relative flex items-center px-3 py-2 text-sm font-medium whitespace-nowrap outline-none flex-shrink-0 transition-all duration-300 ${
       isActive
-        ? 'text-red-600'
-        : 'text-gray-700 hover:text-red-600'
+        ? 'text-red-600 scale-[1.02]'
+        : 'text-gray-700 hover:text-red-600 hover:scale-[1.02]'
     }`;
   }, []);
 
-  // Ref callback that updates underline when refs are set
+  // Ref callback
   const setTabRef = useCallback((el: HTMLButtonElement | null, index: number, id: string) => {
     tabRefs.current[index] = el;
 
-    // If this is the active tab and we have the element, update underline immediately
-    if (el && id === activeTab && isInitialMount.current) {
-      // Use requestAnimationFrame to ensure DOM is ready but still appear instant
+    if (el && id === activeTab && !underlineState.isAnimating) {
       requestAnimationFrame(() => {
-        updateUnderlineImmediate();
-        snapToTab();
-        isInitialMount.current = false;
+        if (isInitialMount.current) {
+          updateUnderlineImmediate();
+        }
       });
     }
-  }, [activeTab, updateUnderlineImmediate, snapToTab]);
-
-  // Calculate transition duration based on distance
-  const calculateTransitionDuration = () => {
-    if (!isTransitioning) return '0ms';
-    
-    const distance = Math.abs(underlineLeft - targetLeft);
-    // Dynamic duration: faster for short distances, slower for long ones
-    const duration = Math.min(300, Math.max(150, distance * 0.5));
-    return `${duration}ms`;
-  };
+  }, [activeTab, underlineState.isAnimating, updateUnderlineImmediate]);
 
   return (
     <div className="relative w-full overflow-hidden bg-white" style={{ maxHeight: '40px' }}>
@@ -364,23 +356,21 @@ const CategoryTabs = ({
               aria-pressed={activeTab === id}
               className={getTabClassName(activeTab === id)}
             >
-              {icon && <span className="mr-2">{icon}</span>}
-              <span className="font-medium select-none">{name}</span>
+              {icon && <span className="mr-2 transition-transform duration-300">{icon}</span>}
+              <span className="font-medium select-none transition-all duration-300">{name}</span>
             </button>
           ))}
 
-          {/* Animated underline with smooth transition */}
-          {activeTab && underlineWidth > 0 && (
+          {/* Ultra-smooth animated underline */}
+          {activeTab && underlineState.width > 0 && (
             <div
-              className="absolute bottom-0 h-1 bg-gradient-to-r from-red-500 to-red-600 rounded-full"
+              className="absolute bottom-0 h-1 bg-gradient-to-r from-red-500 via-red-600 to-red-500 rounded-full shadow-[0_2px_8px_rgba(239,68,68,0.3)]"
               style={{ 
-                width: underlineWidth,
-                left: underlineLeft,
-                transition: isTransitioning ? `
-                  width ${calculateTransitionDuration()} cubic-bezier(0.4, 0, 0.2, 1),
-                  left ${calculateTransitionDuration()} cubic-bezier(0.4, 0, 0.2, 1)
-                ` : 'none',
-                willChange: isTransitioning ? 'width, left' : 'auto'
+                width: `${underlineState.width}px`,
+                left: `${underlineState.left}px`,
+                transition: underlineState.isAnimating ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                willChange: 'transform, width, left',
+                transform: 'translateZ(0)', // GPU acceleration
               }}
             />
           )}
@@ -389,14 +379,14 @@ const CategoryTabs = ({
 
       {showCategoriesButton && !isSearchOverlayActive && (
         <div className="absolute top-0 right-0 h-full flex items-center z-20 bg-white">
-          <div className="h-6 w-px bg-gray-200 opacity-50" />
+          <div className="h-6 w-px bg-gradient-to-b from-transparent via-gray-300 to-transparent opacity-70" />
           <button
             type="button"
             onClick={handleCategoriesClick}
-            className="p-2 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-colors duration-150"
+            className="p-2 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 transition-all duration-300 hover:scale-110"
             aria-label={t('allCategories', { ns: 'categories' })}
           >
-            <LayoutGrid className="h-5 w-5" />
+            <LayoutGrid className="h-5 w-5 transition-transform duration-300" />
           </button>
         </div>
       )}
