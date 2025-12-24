@@ -150,64 +150,122 @@ export const useElectronicsFilters = () => {
   };
 };
 
-// ... rest of the file
-
 export const useElectronicsData = () => {
   const electronicsChannels = useMemo(() => [
     {
-      id: 'all',
-      name: 'All',
-      imageUrl: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=200&h=200&fit=crop&crop=center',
-      bgColor: 'bg-gradient-to-br from-blue-500/20 to-blue-600/20',
-      textColor: 'text-white',
-      icon: <div className="w-6 h-6" />
+      id: "all",
+      name: "All",
+      imageUrl: "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=200&h=200&fit=crop&crop=center",
+      bgColor: "bg-blue-50",
+      textColor: "text-blue-600"
     },
     {
-      id: 'smartphones',
-      name: 'Smartphones',
-      imageUrl: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=200&h=200&fit=crop&crop=center',
-      bgColor: 'bg-gradient-to-br from-purple-500/20 to-purple-600/20',
-      textColor: 'text-white',
-      icon: <div className="w-6 h-6" />
+      id: "smartphones",
+      name: "Phones",
+      imageUrl: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=200&h=200&fit=crop&crop=center",
+      bgColor: "bg-purple-50",
+      textColor: "text-purple-600"
     },
     {
-      id: 'laptops',
-      name: 'Laptops',
-      imageUrl: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=200&h=200&fit=crop&crop=center',
-      bgColor: 'bg-gradient-to-br from-gray-700/20 to-gray-800/20',
-      textColor: 'text-white',
-      icon: <div className="w-6 h-6" />
+      id: "laptops",
+      name: "Laptops",
+      imageUrl: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=200&h=200&fit=crop&crop=center",
+      bgColor: "bg-gray-50",
+      textColor: "text-gray-600"
     },
     {
-      id: 'headphones',
-      name: 'Headphones',
-      imageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&h=200&fit=crop&crop=center',
-      bgColor: 'bg-gradient-to-br from-green-500/20 to-green-600/20',
-      textColor: 'text-white',
-      icon: <div className="w-6 h-6" />
+      id: "headphones",
+      name: "Audio",
+      imageUrl: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&h=200&fit=crop&crop=center",
+      bgColor: "bg-green-50",
+      textColor: "text-green-600"
     },
     {
-      id: 'tvs',
-      name: 'TVs',
-      imageUrl: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=200&h=200&fit=crop&crop=center',
-      bgColor: 'bg-gradient-to-br from-red-500/20 to-red-600/20',
-      textColor: 'text-white',
-      icon: <div className="w-6 h-6" />
+      id: "smartwatches",
+      name: "Watches",
+      imageUrl: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&h=200&fit=crop&crop=center",
+      bgColor: "bg-red-50",
+      textColor: "text-red-600"
     },
     {
-      id: 'smartwatches',
-      name: 'Smart Watches',
-      imageUrl: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&h=200&fit=crop&crop=center',
-      bgColor: 'bg-gradient-to-br from-pink-500/20 to-pink-600/20',
-      textColor: 'text-white',
-      icon: <div className="w-6 h-6" />
+      id: "cameras",
+      name: "Cameras",
+      imageUrl: "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=200&h=200&fit=crop&crop=center",
+      bgColor: "bg-yellow-50",
+      textColor: "text-yellow-600"
     },
+    {
+      id: "gaming",
+      name: "Gaming",
+      imageUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=200&h=200&fit=crop&crop=center",
+      bgColor: "bg-indigo-50",
+      textColor: "text-indigo-600"
+    },
+    {
+      id: "accessories",
+      name: "Accessories",
+      imageUrl: "https://images.unsplash.com/photo-1586950012036-b957f2c7cbf3?w=200&h=200&fit=crop&crop=center",
+      bgColor: "bg-pink-50",
+      textColor: "text-pink-600"
+    },
+    {
+      id: "tablets",
+      name: "Tablets",
+      imageUrl: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=200&h=200&fit=crop&crop=center",
+      bgColor: "bg-orange-50",
+      textColor: "text-orange-600"
+    },
+    {
+      id: "home-appliances",
+      name: "Home Tech",
+      imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200&h=200&fit=crop&crop=center",
+      bgColor: "bg-teal-50",
+      textColor: "text-teal-600"
+    }
   ], []);
 
   const getSubcategoryFilters = (channelId: string) => {
-    const subcategoryFilters: Partial<ElectronicsFilters> = {};
-    // Since we removed most filters, just return empty object
-    return subcategoryFilters;
+    const filters: Record<string, any> = {};
+    
+    switch(channelId) {
+      case 'smartphones':
+        filters.category = 'smartphones';
+        filters.brand = ['Apple', 'Samsung', 'Google'];
+        break;
+      case 'laptops':
+        filters.category = 'laptops';
+        filters.brand = ['Apple', 'Dell', 'HP', 'Lenovo'];
+        break;
+      case 'headphones':
+        filters.category = 'audio';
+        filters.brand = ['Sony', 'Bose', 'Sennheiser'];
+        break;
+      case 'smartwatches':
+        filters.category = 'wearables';
+        filters.brand = ['Apple', 'Samsung', 'Fitbit'];
+        break;
+      case 'cameras':
+        filters.category = 'cameras';
+        filters.brand = ['Canon', 'Nikon', 'Sony'];
+        break;
+      case 'gaming':
+        filters.category = 'gaming';
+        filters.brand = ['PlayStation', 'Xbox', 'Nintendo'];
+        break;
+      case 'tablets':
+        filters.category = 'tablets';
+        filters.brand = ['Apple', 'Samsung', 'Microsoft'];
+        break;
+      case 'home-appliances':
+        filters.category = 'home-electronics';
+        filters.brand = ['LG', 'Samsung', 'Bosch'];
+        break;
+      default:
+        // For 'all' or other categories, no specific filters
+        break;
+    }
+    
+    return filters;
   };
 
   return {
