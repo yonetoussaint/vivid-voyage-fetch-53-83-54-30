@@ -28,7 +28,8 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
     if (!container) return;
 
     const itemWidth = container.children[0]?.clientWidth || 0;
-    const gap = 4; // gap-1 = 0.25rem = 4px
+    const computedStyle = getComputedStyle(container);
+    const gap = parseFloat(computedStyle.gap) || 0;
     const scrollPosition = index * (itemWidth + gap);
     
     container.scrollTo({
@@ -66,18 +67,25 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
     };
   }, []);
 
+  // Calculate the exact gap needed to show 5.5 items
+  // Formula: (total available width) = (number of items * item width) + ((number of items - 1) * gap)
+  // For 5.5 items visible, we want: 100vw = 5.5 * itemWidth + 4.5 * gap
+  // We want a small gap, so let's calculate itemWidth first, then gap
+
   return (
     <div className="bg-white relative">
       {/* Horizontally scrollable container */}
       <div className="relative">
         <div 
           ref={containerRef}
-          className="flex gap-1 py-2 overflow-x-auto scrollbar-hide"
+          className="flex py-2 overflow-x-auto scrollbar-hide"
           style={{
             scrollSnapType: 'x mandatory',
             WebkitOverflowScrolling: 'touch',
-            // Remove scroll padding to allow items to snap to left edge
             scrollPadding: '0px',
+            // We want 5.5 items visible, so calculate appropriate gap
+            // Let's use 2px gap (half of gap-1) to ensure 5.5 items fit
+            gap: '2px',
           }}
         >
           {channels.map((channel, index) => (
@@ -85,11 +93,11 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
               key={channel.id} 
               className="flex flex-col items-center gap-1 flex-shrink-0"
               style={{
-                // Calculate width to show exactly 5.5 items edge-to-edge
-                // 5.5 items means each item takes up 100% / 5.5 of the viewport width
-                width: `calc(100vw / 5.5)`,
-                minWidth: `calc(100vw / 5.5)`,
-                // Snap to the left edge of container
+                // Calculate width to show 5.5 items with 2px gaps between them
+                // Total width for items + gaps: 100vw = 5.5 * itemWidth + 4.5 * 2px
+                // So: itemWidth = (100vw - 9px) / 5.5
+                width: 'calc((100vw - 9px) / 5.5)',
+                minWidth: 'calc((100vw - 9px) / 5.5)',
                 scrollSnapAlign: 'start'
               }}
               onClick={() => handleChannelSelect(channel.id, index)}
