@@ -28,7 +28,7 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
     if (!container) return;
 
     const itemWidth = container.children[0]?.clientWidth || 0;
-    const gap = 4; // gap-1 = 0.25rem = 4px
+    const gap = 2; // gap-0.5 = 0.125rem = 2px
     const scrollPosition = index * (itemWidth + gap);
     
     container.scrollTo({
@@ -72,7 +72,7 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
       <div className="relative">
         <div 
           ref={containerRef}
-          className="flex gap-1 py-3 overflow-x-auto scrollbar-hide"
+          className="flex gap-0.5 py-2 overflow-x-auto scrollbar-hide" {/* Reduced from gap-1 to gap-0.5, py-3 to py-2 */}
           style={{
             scrollSnapType: 'x mandatory',
             WebkitOverflowScrolling: 'touch',
@@ -82,7 +82,7 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
           {channels.map((channel, index) => (
             <div 
               key={channel.id} 
-              className="flex flex-col items-center gap-2 flex-shrink-0"
+              className="flex flex-col items-center gap-1 flex-shrink-0" {/* Reduced from gap-2 to gap-1 */}
               style={{
                 width: `calc(100vw / 5.5)`,
                 minWidth: `calc(100vw / 5.5)`,
@@ -107,7 +107,7 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
                   />
                 )}
               </div>
-              <span className="text-[9px] font-medium text-gray-800 text-center max-w-[50px] overflow-hidden text-ellipsis leading-tight">
+              <span className="text-[9px] font-medium text-gray-800 text-center max-w-[50px] overflow-hidden text-ellipsis whitespace-nowrap leading-tight">
                 {channel.name}
               </span>
             </div>
