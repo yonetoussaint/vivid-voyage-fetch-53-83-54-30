@@ -25,6 +25,8 @@ import {
 
 const ForYou: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState('recommendations');
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [gridKey, setGridKey] = useState(Date.now()); // Key to force remount
 
   // Define feature channels with icons instead of images
   const featureChannels: ChannelItem[] = [
@@ -142,7 +144,12 @@ const ForYou: React.FC = () => {
 
   useEffect(() => {
     const handleCategoryChange = (event: CustomEvent) => {
+      setIsAnimating(true);
       setActiveCategory(event.detail.category);
+      // Force remount of grid with new key
+      setGridKey(Date.now());
+      // Small delay to allow animation to complete
+      setTimeout(() => setIsAnimating(false), 300);
     };
 
     window.addEventListener('categoryChange', handleCategoryChange as EventListener);
@@ -150,16 +157,18 @@ const ForYou: React.FC = () => {
   }, []);
 
   return (
-    <>
+    <div className="min-h-screen bg-white">
+      {/* Animated Header Section Only */}
       <AnimatePresence mode="wait">
         <motion.div
-          key={activeCategory}
+          key={`header-${activeCategory}`}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.3, ease: "easeInOut" }}
+          onAnimationComplete={() => setIsAnimating(false)}
         >
-          <div className="overflow-hidden relative">
+          <div className="overflow-hidden">
             <div className="pb-2">
               <div className="mb-2">
                 <HeroBanner showNewsTicker={true} />
@@ -182,32 +191,39 @@ const ForYou: React.FC = () => {
               </div>
 
               <div className="w-full bg-gray-100 h-1 mb-2"></div>
-
-              <InfiniteContentGrid category={activeCategory} />
-            </div>
-
-            {/* Hidden Footer */}
-            <div 
-              className="sr-only" 
-              style={{
-                position: 'absolute',
-                width: '1px',
-                height: '1px',
-                padding: 0,
-                margin: '-1px',
-                overflow: 'hidden',
-                clip: 'rect(0, 0, 0, 0)',
-                whiteSpace: 'nowrap',
-                borderWidth: 0
-              }}
-              aria-hidden="true"
-            >
-              <Footer />
             </div>
           </div>
         </motion.div>
       </AnimatePresence>
-    </>
+
+      {/* InfiniteContentGrid OUTSIDE of all animations */}
+      {/* No animation wrapper - this is critical for video loading */}
+      <div className={`transition-opacity duration-200 ${isAnimating ? 'opacity-70' : 'opacity-100'}`}>
+        <InfiniteContentGrid 
+          key={gridKey} // Force remount when category changes
+          category={activeCategory} 
+        />
+      </div>
+
+      {/* Hidden Footer */}
+      <div 
+        className="sr-only" 
+        style={{
+          position: 'absolute',
+          width: '1px',
+          height: '1px',
+          padding: 0,
+          margin: '-1px',
+          overflow: 'hidden',
+          clip: 'rect(0, 0, 0, 0)',
+          whiteSpace: 'nowrap',
+          borderWidth: 0
+        }}
+        aria-hidden="true"
+      >
+        <Footer />
+      </div>
+    </div>
   );
 };
 
