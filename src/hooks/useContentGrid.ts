@@ -297,7 +297,7 @@ const sortContent = (items: ContentItem[], sortBy: FilterState['sortBy']): Conte
 
 // Main Custom Hook
 export const useContentGrid = (category?: string, filters?: FilterState) => {
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1); // Start from page 1
   const [allContent, setAllContent] = useState<ContentItem[]>([]);
   const [filteredContent, setFilteredContent] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -359,6 +359,7 @@ export const useContentGrid = (category?: string, filters?: FilterState) => {
     staleTime: 60000,
   });
 
+  // Initialize and filter content
   useEffect(() => {
     if (initialContent) {
       let categoryFiltered = initialContent;
@@ -378,69 +379,82 @@ export const useContentGrid = (category?: string, filters?: FilterState) => {
 
       setAllContent(sorted);
       setFilteredContent(sorted);
+      // Reset to page 1 when content changes
+      setPage(1);
+      // Only set hasMore if there's more content than the first page
       setHasMore(sorted.length > contentPerPage);
-      setPage(0);
     }
   }, [initialContent, category, appliedFilters]);
 
+  // Calculate visible content based on current page
   const visibleContent = useMemo(() => {
     const startIndex = 0;
-    const endIndex = (page + 1) * contentPerPage;
+    const endIndex = page * contentPerPage;
     return filteredContent.slice(startIndex, endIndex);
   }, [filteredContent, page, contentPerPage]);
 
+  // Update hasMore state when page or filteredContent changes
   useEffect(() => {
-    if (filteredContent.length > 0) {
-      const totalLoaded = (page + 1) * contentPerPage;
-      const hasMoreContent = totalLoaded < filteredContent.length;
-      setHasMore(hasMoreContent);
-    }
-  }, [filteredContent, page, contentPerPage]);
+    const totalLoaded = page * contentPerPage;
+    const hasMoreContent = totalLoaded < filteredContent.length;
+    setHasMore(hasMoreContent);
+  }, [page, filteredContent, contentPerPage]);
 
-  const loadMoreContent = useCallback(async () => {
+  const loadMoreContent = useCallback(() => {
     if (loading || !hasMore) return;
 
     setLoading(true);
-    try {
-      const nextPage = page + 1;
-      setPage(nextPage);
-
-      const totalLoaded = (nextPage + 1) * contentPerPage;
-      if (totalLoaded >= filteredContent.length) {
-        setHasMore(false);
-      }
-    } catch (error) {
-      console.error("Error loading more content:", error);
-    } finally {
+    setTimeout(() => {
+      setPage(prevPage => prevPage + 1);
       setLoading(false);
-    }
-  }, [page, loading, hasMore, filteredContent, contentPerPage]);
+    }, 500); // Small delay to show loading
+  }, [loading, hasMore]);
 
+  // Intersection Observer for infinite scroll
   useEffect(() => {
-    if (!loaderRef.current || !hasMore) return;
+    const currentLoaderRef = loaderRef.current;
+    if (!currentLoaderRef || !hasMore || loading) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
-        const target = entries[0];
-        if (target.isIntersecting && hasMore && !loading) {
+        const firstEntry = entries[0];
+        if (firstEntry.isIntersecting && hasMore && !loading) {
           loadMoreContent();
         }
       },
       {
         root: null,
-        rootMargin: "200px",
+        rootMargin: "100px 0px", // Start loading 100px before reaching the bottom
         threshold: 0.1,
       }
     );
 
-    observer.observe(loaderRef.current);
+    observer.observe(currentLoaderRef);
 
     return () => {
-      if (loaderRef.current) {
-        observer.unobserve(loaderRef.current);
+      if (currentLoaderRef) {
+        observer.unobserve(currentLoaderRef);
       }
     };
   }, [hasMore, loading, loadMoreContent]);
+
+  // Also listen to scroll events as a backup
+  useEffect(() => {
+    const handleScroll = () => {
+      if (loading || !hasMore || !loaderRef.current) return;
+
+      const loaderRect = loaderRef.current.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+      
+      // If loader is visible in viewport
+      if (loaderRect.top <= windowHeight + 100) {
+        loadMoreContent();
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [loading, hasMore, loadMoreContent]);
 
   const hasActiveFilters = useCallback(() => {
     return (
