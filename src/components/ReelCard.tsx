@@ -60,23 +60,25 @@ const ReelCard: React.FC<ReelCardProps> = ({ reel }) => {
         <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded z-10">
           {formatDuration(reel.duration)}
         </div>
+
+        {/* Views at the bottom of the video */}
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 z-10">
+          <div className="flex items-center text-white text-[10px] gap-1">
+            <Play className="w-3 h-3" fill="white" />
+            <span>{formatNumber(reel.views)} views</span>
+          </div>
+        </div>
       </div>
 
-      <div className="p-2">
-        <p className="text-[11px] text-white font-medium line-clamp-2 mb-1">
-          {reel.title}
-        </p>
-        <div className="flex items-center text-white text-[10px] gap-1">
-          <Play className="w-3 h-3" fill="white" />
-          <span>{formatNumber(reel.views)} views</span>
-        </div>
-        {reel.is_live && (
-          <div className="flex items-center gap-1 text-[10px] text-pink-300 mt-1">
+      {/* Removed the entire title section */}
+      {reel.is_live && (
+        <div className="p-2">
+          <div className="flex items-center gap-1 text-[10px] text-pink-300">
             <Users className="w-3 h-3" />
             <span>Live now • {formatNumber(reel.views)} watching</span>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
