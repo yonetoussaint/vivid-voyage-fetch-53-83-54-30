@@ -295,15 +295,14 @@ const sortContent = (items: ContentItem[], sortBy: FilterState['sortBy']): Conte
   return sorted;
 };
 
-// Main Custom Hook
+// Main Custom Hook - SIMPLIFIED FIXED VERSION
 export const useContentGrid = (category?: string, filters?: FilterState) => {
-  const [page, setPage] = useState(1); // Start from page 1
-  const [allContent, setAllContent] = useState<ContentItem[]>([]);
-  const [filteredContent, setFilteredContent] = useState<ContentItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const loaderRef = useRef<HTMLDivElement>(null);
   const contentPerPage = 20;
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
   const defaultFilters: FilterState = {
     priceRange: null,
@@ -318,9 +317,11 @@ export const useContentGrid = (category?: string, filters?: FilterState) => {
 
   const appliedFilters = filters || defaultFilters;
 
-  const { data: initialContent, isLoading: initialLoading } = useQuery({
-    queryKey: ["content", "for-you", category],
+  // Fetch ALL content initially
+  const { data: allContent, isLoading: initialLoading, refetch } = useQuery({
+    queryKey: ["content", "for-you", category, JSON.stringify(appliedFilters)],
     queryFn: async () => {
+      console.log("Fetching all content...");
       try {
         const [products, reels, posts, vendors] = await Promise.all([
           fetchAllProducts(),
@@ -328,6 +329,8 @@ export const useContentGrid = (category?: string, filters?: FilterState) => {
           fetchPosts(10),
           fetchVendors(6)
         ]);
+
+        console.log(`Fetched: ${products.length} products, ${reels.length} reels`);
 
         const productsWithShipping = products.map(p => ({
           ...p,
@@ -338,18 +341,38 @@ export const useContentGrid = (category?: string, filters?: FilterState) => {
           }
         }));
 
-        const allContent: ContentItem[] = [
+        let allContent: ContentItem[] = [
           ...productsWithShipping.map(p => ({ ...p, type: 'product' as const })),
           ...reels.map(r => ({ ...r, type: 'reel' as const })),
           ...posts.map(p => ({ ...p, type: 'post' as const })),
           ...vendors.map(v => ({ ...v, type: 'vendor' as const }))
         ];
 
+        // Filter by category if needed
+        if (category && category !== 'recommendations') {
+          allContent = allContent.filter(item => {
+            if (item.type === 'product') {
+              const product = item as any;
+              return product.category?.toLowerCase() === category.toLowerCase() ||
+                     product.tags?.some((tag: string) => tag.toLowerCase() === category.toLowerCase());
+            }
+            return true;
+          });
+        }
+
+        // Apply filters
+        allContent = applyFilters(allContent, appliedFilters);
+        
+        // Sort content
+        allContent = sortContent(allContent, appliedFilters.sortBy);
+
+        // Shuffle content for variety
         const shuffled = [...allContent];
         for (let i = shuffled.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
         }
+        
         return shuffled;
       } catch (error) {
         console.error('Error fetching content:', error);
@@ -359,102 +382,107 @@ export const useContentGrid = (category?: string, filters?: FilterState) => {
     staleTime: 60000,
   });
 
-  // Initialize and filter content
-  useEffect(() => {
-    if (initialContent) {
-      let categoryFiltered = initialContent;
-      if (category && category !== 'recommendations') {
-        categoryFiltered = initialContent.filter(item => {
-          if (item.type === 'product') {
-            const product = item as any;
-            return product.category?.toLowerCase() === category.toLowerCase() ||
-                   product.tags?.some((tag: string) => tag.toLowerCase() === category.toLowerCase());
-          }
-          return true;
-        });
-      }
-
-      const filtered = applyFilters(categoryFiltered, appliedFilters);
-      const sorted = sortContent(filtered, appliedFilters.sortBy);
-
-      setAllContent(sorted);
-      setFilteredContent(sorted);
-      // Reset to page 1 when content changes
-      setPage(1);
-      // Only set hasMore if there's more content than the first page
-      setHasMore(sorted.length > contentPerPage);
-    }
-  }, [initialContent, category, appliedFilters]);
-
   // Calculate visible content based on current page
   const visibleContent = useMemo(() => {
+    if (!allContent || allContent.length === 0) return [];
+    
     const startIndex = 0;
     const endIndex = page * contentPerPage;
-    return filteredContent.slice(startIndex, endIndex);
-  }, [filteredContent, page, contentPerPage]);
+    const result = allContent.slice(startIndex, endIndex);
+    
+    console.log(`Visible content: page=${page}, showing ${result.length} of ${allContent.length} total items`);
+    
+    return result;
+  }, [allContent, page, contentPerPage]);
 
-  // Update hasMore state when page or filteredContent changes
+  // Update hasMore state when page or allContent changes
   useEffect(() => {
+    if (!allContent || allContent.length === 0) {
+      setHasMore(false);
+      return;
+    }
+    
     const totalLoaded = page * contentPerPage;
-    const hasMoreContent = totalLoaded < filteredContent.length;
+    const hasMoreContent = totalLoaded < allContent.length;
+    console.log(`Has more check: totalLoaded=${totalLoaded}, allContent=${allContent.length}, hasMore=${hasMoreContent}`);
     setHasMore(hasMoreContent);
-  }, [page, filteredContent, contentPerPage]);
+  }, [page, allContent, contentPerPage]);
 
   const loadMoreContent = useCallback(() => {
-    if (loading || !hasMore) return;
+    if (isLoadingMore || !hasMore) {
+      console.log(`Load more blocked: isLoadingMore=${isLoadingMore}, hasMore=${hasMore}`);
+      return;
+    }
 
-    setLoading(true);
+    console.log(`Loading more content: page ${page} -> ${page + 1}`);
+    setIsLoadingMore(true);
+    
+    // Simulate API delay
     setTimeout(() => {
-      setPage(prevPage => prevPage + 1);
-      setLoading(false);
-    }, 500); // Small delay to show loading
-  }, [loading, hasMore]);
+      setPage(prev => prev + 1);
+      setIsLoadingMore(false);
+    }, 300);
+  }, [isLoadingMore, hasMore, page]);
 
-  // Intersection Observer for infinite scroll
+  // Setup intersection observer
   useEffect(() => {
-    const currentLoaderRef = loaderRef.current;
-    if (!currentLoaderRef || !hasMore || loading) return;
+    if (!loaderRef.current || !hasMore) {
+      console.log("Observer not setup: no loader ref or no more content");
+      return;
+    }
 
+    // Cleanup previous observer
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
+    console.log("Setting up intersection observer");
     const observer = new IntersectionObserver(
       (entries) => {
-        const firstEntry = entries[0];
-        if (firstEntry.isIntersecting && hasMore && !loading) {
+        const target = entries[0];
+        console.log(`Observer triggered: intersecting=${target.isIntersecting}, hasMore=${hasMore}, isLoadingMore=${isLoadingMore}`);
+        
+        if (target.isIntersecting && hasMore && !isLoadingMore) {
+          console.log("Loading more content triggered by observer");
           loadMoreContent();
         }
       },
       {
         root: null,
-        rootMargin: "100px 0px", // Start loading 100px before reaching the bottom
+        rootMargin: "100px", // Start loading 100px before reaching the element
         threshold: 0.1,
       }
     );
 
-    observer.observe(currentLoaderRef);
+    observer.observe(loaderRef.current);
+    observerRef.current = observer;
 
     return () => {
-      if (currentLoaderRef) {
-        observer.unobserve(currentLoaderRef);
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
       }
     };
-  }, [hasMore, loading, loadMoreContent]);
+  }, [hasMore, isLoadingMore, loadMoreContent]);
 
-  // Also listen to scroll events as a backup
+  // Also listen to scroll events as backup
   useEffect(() => {
     const handleScroll = () => {
-      if (loading || !hasMore || !loaderRef.current) return;
+      if (!loaderRef.current || isLoadingMore || !hasMore) return;
 
       const loaderRect = loaderRef.current.getBoundingClientRect();
       const windowHeight = window.innerHeight;
       
-      // If loader is visible in viewport
-      if (loaderRect.top <= windowHeight + 100) {
+      // If loader is within 200px of viewport bottom
+      if (loaderRect.top <= windowHeight + 200) {
+        console.log("Scroll triggered load more");
         loadMoreContent();
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [loading, hasMore, loadMoreContent]);
+  }, [isLoadingMore, hasMore, loadMoreContent]);
 
   const hasActiveFilters = useCallback(() => {
     return (
@@ -470,9 +498,8 @@ export const useContentGrid = (category?: string, filters?: FilterState) => {
 
   return {
     visibleContent,
-    allContent,
-    filteredContent,
-    loading,
+    allContent: allContent || [],
+    loading: isLoadingMore,
     initialLoading,
     hasMore,
     loaderRef,
@@ -481,7 +508,8 @@ export const useContentGrid = (category?: string, filters?: FilterState) => {
     hasActiveFilters,
     loadMoreContent,
     contentPerPage,
-    formatNumber
+    formatNumber,
+    refetch
   };
 };
 
