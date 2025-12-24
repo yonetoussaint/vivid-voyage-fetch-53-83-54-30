@@ -61,16 +61,16 @@ const ReelCard: React.FC<ReelCardProps> = ({ reel }) => {
           {formatDuration(reel.duration)}
         </div>
 
-        {/* Views at the bottom of the video */}
+        {/* Views at the bottom of the video - removed "views" word */}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 z-10">
           <div className="flex items-center text-white text-[10px] gap-1">
             <Play className="w-3 h-3" fill="white" />
-            <span>{formatNumber(reel.views)} views</span>
+            <span>{formatNumber(reel.views)}</span>
           </div>
         </div>
       </div>
 
-      {/* Removed the entire title section */}
+      {/* Live status section */}
       {reel.is_live && (
         <div className="p-2">
           <div className="flex items-center gap-1 text-[10px] text-pink-300">
