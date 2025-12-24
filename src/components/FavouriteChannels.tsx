@@ -84,10 +84,6 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
               key={channel.id} 
               className="flex flex-col items-center gap-1 flex-shrink-0"
               style={{
-                // Calculate width to show exactly 5.5 items
-                // We need to account for 5 gaps between 6 items (5 * 2px = 10px)
-                // Or we can calculate: total gap space = (5.5 - 1) * 2px = 9px
-                // Item width = (100vw - 9px) / 5.5
                 width: `calc((100vw - 9px) / 5.5)`,
                 minWidth: `calc((100vw - 9px) / 5.5)`,
                 scrollSnapAlign: 'start'
