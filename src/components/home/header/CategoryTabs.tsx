@@ -20,7 +20,6 @@ interface CategoryTabsProps {
 }
 
 // Helper function for smooth easing
-const easeOutCubic = (t: number): number => 1 - Math.pow(1 - t, 3);
 const easeInOutCubic = (t: number): number => 
   t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
@@ -42,18 +41,20 @@ const CategoryTabs = ({
   const [underlineState, setUnderlineState] = useState({
     width: 0,
     left: 0,
-    targetWidth: 0,
-    targetLeft: 0,
-    isAnimating: false,
-    startTime: 0,
-    startWidth: 0,
-    startLeft: 0
+    isAnimating: false
   });
   
   const isInitialMount = useRef(true);
   const [isScrolling, setIsScrolling] = useState(false);
   const animationFrameRef = useRef<number | null>(null);
-  const lastTabClickTime = useRef<number>(0);
+  const animationStateRef = useRef({
+    startWidth: 0,
+    startLeft: 0,
+    targetWidth: 0,
+    targetLeft: 0,
+    startTime: 0,
+    duration: 300
+  });
 
   // Memoize refs update and reset initial mount flag
   useEffect(() => {
@@ -97,19 +98,18 @@ const CategoryTabs = ({
   // Ultra-smooth animation using requestAnimationFrame
   const animateUnderline = useCallback(() => {
     const now = Date.now();
-    const elapsed = now - underlineState.startTime;
-    const duration = 350; // Slightly longer for ultra-smooth feel
-    const progress = Math.min(elapsed / duration, 1);
+    const elapsed = now - animationStateRef.current.startTime;
+    const progress = Math.min(elapsed / animationStateRef.current.duration, 1);
 
     // Use easing function for smooth animation
     const easedProgress = easeInOutCubic(progress);
 
     if (progress < 1) {
       // Calculate current position with easing
-      const currentWidth = underlineState.startWidth + 
-        (underlineState.targetWidth - underlineState.startWidth) * easedProgress;
-      const currentLeft = underlineState.startLeft + 
-        (underlineState.targetLeft - underlineState.startLeft) * easedProgress;
+      const currentWidth = animationStateRef.current.startWidth + 
+        (animationStateRef.current.targetWidth - animationStateRef.current.startWidth) * easedProgress;
+      const currentLeft = animationStateRef.current.startLeft + 
+        (animationStateRef.current.targetLeft - animationStateRef.current.startLeft) * easedProgress;
 
       setUnderlineState(prev => ({
         ...prev,
@@ -123,12 +123,12 @@ const CategoryTabs = ({
       // Animation complete
       setUnderlineState(prev => ({
         ...prev,
-        width: prev.targetWidth,
-        left: prev.targetLeft,
+        width: animationStateRef.current.targetWidth,
+        left: animationStateRef.current.targetLeft,
         isAnimating: false
       }));
     }
-  }, [underlineState]);
+  }, []);
 
   // Start smooth animation to target
   const startSmoothAnimation = useCallback((targetWidth: number, targetLeft: number) => {
@@ -136,26 +136,24 @@ const CategoryTabs = ({
       cancelAnimationFrame(animationFrameRef.current);
     }
 
-    // Debounce rapid clicks (minimum 100ms between animations)
-    const now = Date.now();
-    if (now - lastTabClickTime.current < 100) {
-      return;
-    }
-    lastTabClickTime.current = now;
+    // Store current values for animation
+    animationStateRef.current = {
+      startWidth: underlineState.width,
+      startLeft: underlineState.left,
+      targetWidth,
+      targetLeft,
+      startTime: Date.now(),
+      duration: 300
+    };
 
     setUnderlineState(prev => ({
       ...prev,
-      targetWidth,
-      targetLeft,
-      startWidth: prev.width,
-      startLeft: prev.left,
-      startTime: Date.now(),
       isAnimating: true
     }));
 
     // Start animation loop
     animationFrameRef.current = requestAnimationFrame(animateUnderline);
-  }, [animateUnderline]);
+  }, [underlineState.width, underlineState.left, animateUnderline]);
 
   // Update underline position with ultra-smooth animation
   const updateUnderlineSmoothly = useCallback(() => {
@@ -169,14 +167,11 @@ const CategoryTabs = ({
   const updateUnderlineImmediate = useCallback(() => {
     const target = calculateTargetPosition();
     if (target) {
-      setUnderlineState(prev => ({
-        ...prev,
+      setUnderlineState({
         width: target.targetWidth,
         left: target.targetLeft,
-        targetWidth: target.targetWidth,
-        targetLeft: target.targetLeft,
         isAnimating: false
-      }));
+      });
     }
   }, [calculateTargetPosition]);
 
@@ -217,7 +212,7 @@ const CategoryTabs = ({
     }
   }, [activeTab, categories]);
 
-  // Initial setup and snap
+  // Initial setup and snap - FIXED: Add dependency array
   useLayoutEffect(() => {
     if (activeTab && categories.length > 0) {
       if (isInitialMount.current) {
@@ -290,11 +285,11 @@ const CategoryTabs = ({
     // Update active tab
     setActiveTab(id);
 
-    // Snap to tab immediately
-    snapToTab();
-
-    // Start smooth underline animation
+    // Start smooth underline animation FIRST
     updateUnderlineSmoothly();
+
+    // Then snap to tab
+    setTimeout(() => snapToTab(), 10);
 
     // Navigation
     if (path && !isSearchOverlayActive && !path.startsWith('#')) {
