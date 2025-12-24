@@ -1,15 +1,12 @@
 import React from "react";
-import { useNavigate } from 'react-router-dom';
-import { Sparkles, Play, Users, Heart, MessageCircle, Send, MoreHorizontal, Store, User, CheckCircle } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 // Import the custom hook
 import { useContentGrid, FilterState, ContentItem } from "@/hooks/useContentGrid";
 
-// Import card components (these can stay in separate files)
+// Import card components (only need ProductCard and ReelCard now)
 import { ProductCard } from "./ProductCard";
 import { ReelCard } from "./ReelCard";
-import { PostCard } from "./PostCard";
-import { VendorCardWrapper } from "./VendorCard";
 
 // Helper function to render tag elements
 const renderTag = (tag: string) => {
@@ -22,134 +19,117 @@ const renderTag = (tag: string) => {
   if (tag === "Brand+" || tag === "premium") {
     return <span className="bg-blue-500 text-white px-1 py-0.5 rounded text-[10px] mr-1 inline-block align-middle">Brand+</span>;
   }
-  if (tag === "POST" || tag === "post") {
-    return <span className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-1.5 py-0.5 rounded text-[10px] mr-1 inline-block align-middle font-semibold">POST</span>;
-  }
   return null;
 };
 
-// ContentCard Factory
+// ContentCard Factory - Only handles products and reels now
 const ContentCard: React.FC<{ item: ContentItem }> = ({ item }) => {
   switch (item.type) {
     case 'product':
       return <ProductCard product={item} renderTag={renderTag} />;
     case 'reel':
       return <ReelCard reel={item} />;
-    case 'post':
-      return <PostCard post={item} />;
-    case 'vendor':
-      return <VendorCardWrapper vendor={item} />;
     default:
       return null;
   }
 };
 
-// Helper function to intersperse non-product content among all products
-const intersperseContent = (items: ContentItem[]): ContentItem[] => {
+// Helper function to intersperse reels among products with 70% products, 30% reels ratio
+const intersperseProductsAndReels = (items: ContentItem[]): ContentItem[] => {
   if (items.length === 0) return [];
-  
-  // Separate products from other content types
+
+  // Separate products and reels
   const products = items.filter(item => item.type === 'product');
   const reels = items.filter(item => item.type === 'reel');
-  const posts = items.filter(item => item.type === 'post');
-  const others = items.filter(item => item.type !== 'product' && item.type !== 'reel' && item.type !== 'post');
-  
-  // If no products, just return all items
-  if (products.length === 0) {
-    return [...reels, ...posts, ...others];
-  }
-  
+
+  // If no products or reels, return whatever we have
+  if (products.length === 0) return reels;
+  if (reels.length === 0) return products;
+
   const result: ContentItem[] = [];
   let productIndex = 0;
   let reelIndex = 0;
-  let postIndex = 0;
-  let otherIndex = 0;
-  
-  // Calculate how often to insert non-product content
-  // For every 8 products (80%), insert 1 reel (10%), 0.5 post (5%), and 0.5 other (5%)
-  // Since we can't insert half items, we'll use a pattern of 16 products, 2 reels, 1 post, 1 other
-  const patternSize = 20; // 16 products + 2 reels + 1 post + 1 other
-  
-  while (productIndex < products.length) {
-    // Add products in batches of 16
-    for (let i = 0; i < 16 && productIndex < products.length; i++) {
+
+  // We want 70% products, 30% reels
+  // For every 10 items: 7 products, 3 reels
+  // We'll use a pattern of 7 products followed by 3 reels
+  const productsPerBatch = 7;
+  const reelsPerBatch = 3;
+
+  while (productIndex < products.length || reelIndex < reels.length) {
+    // Add products batch
+    for (let i = 0; i < productsPerBatch && productIndex < products.length; i++) {
       result.push(products[productIndex++]);
     }
-    
-    // Add 2 reels if available
-    for (let i = 0; i < 2 && reelIndex < reels.length; i++) {
+
+    // Add reels batch
+    for (let i = 0; i < reelsPerBatch && reelIndex < reels.length; i++) {
       result.push(reels[reelIndex++]);
     }
-    
-    // Add 1 post if available
-    if (postIndex < posts.length) {
-      result.push(posts[postIndex++]);
+
+    // If we run out of reels but still have products, add remaining products
+    if (reelIndex >= reels.length && productIndex < products.length) {
+      result.push(...products.slice(productIndex));
+      break;
     }
-    
-    // Add 1 other if available
-    if (otherIndex < others.length) {
-      result.push(others[otherIndex++]);
+
+    // If we run out of products but still have reels, add remaining reels
+    if (productIndex >= products.length && reelIndex < reels.length) {
+      result.push(...reels.slice(reelIndex));
+      break;
     }
   }
-  
-  // If we still have non-product content after all products are added,
-  // append them at the end
-  if (reelIndex < reels.length) {
-    result.push(...reels.slice(reelIndex));
-  }
-  
-  if (postIndex < posts.length) {
-    result.push(...posts.slice(postIndex));
-  }
-  
-  if (otherIndex < others.length) {
-    result.push(...others.slice(otherIndex));
-  }
-  
+
   return result;
 };
 
-// Alternative: Simple interspersion for better UX
-const simpleIntersperseContent = (items: ContentItem[]): ContentItem[] => {
+// Alternative: More evenly distributed interspersion
+const evenlyIntersperse = (items: ContentItem[]): ContentItem[] => {
   if (items.length === 0) return [];
-  
-  // Separate products from other content types
+
   const products = items.filter(item => item.type === 'product');
-  const nonProducts = items.filter(item => item.type !== 'product');
-  
-  // If few non-products, just return products first
-  if (nonProducts.length === 0) return products;
-  
+  const reels = items.filter(item => item.type === 'reel');
+
+  if (products.length === 0) return reels;
+  if (reels.length === 0) return products;
+
   const result: ContentItem[] = [];
   let productIndex = 0;
-  let nonProductIndex = 0;
-  
-  // Insert 1 non-product item for every 8 products
-  const productsPerNonProduct = 8;
-  
-  while (productIndex < products.length || nonProductIndex < nonProducts.length) {
-    // Add products in chunks
-    for (let i = 0; i < productsPerNonProduct && productIndex < products.length; i++) {
+  let reelIndex = 0;
+
+  // Insert 1 reel for every ~2.33 products (to maintain 70/30 ratio)
+  // Simplified: Insert 1 reel after every 2-3 products
+  const productsBetweenReels = 2; // Will give us roughly 66/33 ratio
+  // Or use 3 for 75/25: const productsBetweenReels = 3;
+
+  while (productIndex < products.length || reelIndex < reels.length) {
+    // Add 2-3 products
+    const productsToAdd = Math.min(productsBetweenReels, products.length - productIndex);
+    for (let i = 0; i < productsToAdd && productIndex < products.length; i++) {
       result.push(products[productIndex++]);
     }
-    
-    // Add one non-product if available
-    if (nonProductIndex < nonProducts.length) {
-      result.push(nonProducts[nonProductIndex++]);
+
+    // Add 1 reel if available
+    if (reelIndex < reels.length) {
+      result.push(reels[reelIndex++]);
     } else if (productIndex < products.length) {
-      // If no more non-products, just add remaining products
-      result.push(products[productIndex++]);
+      // If no more reels, just add remaining products
+      result.push(...products.slice(productIndex));
+      break;
     }
   }
-  
+
   return result;
 };
 
 // Masonry Grid Component
 const MasonryGrid: React.FC<{ items: ContentItem[] }> = ({ items }) => {
-  // Apply the interspersion algorithm
-  const interspersedItems = simpleIntersperseContent(items);
+  // Filter to only include products and reels
+  const filteredItems = items.filter(item => item.type === 'product' || item.type === 'reel');
   
+  // Apply the interspersion algorithm
+  const interspersedItems = evenlyIntersperse(filteredItems);
+
   const columns = React.useMemo(() => {
     const colCount = 2;
     const cols: ContentItem[][] = Array.from({ length: colCount }, () => []);
