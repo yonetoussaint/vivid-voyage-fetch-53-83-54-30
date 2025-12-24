@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Search, X, ScanLine, Mic } from 'lucide-react';
+import { X } from 'lucide-react';
 import CategoryTabs from './header/CategoryTabs';
 import VoiceSearchOverlay from './header/VoiceSearchOverlay';
 
@@ -190,13 +190,6 @@ export default function AliExpressHeader({
               } ${transparentStyles}`}
               ref={searchRef}
             />
-
-            {/* Search Icon on Left */}
-            {!isTransparent && (
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                <Search className="h-4 w-4 text-gray-500" />
-              </div>
-            )}
 
             {/* Right icons */}
             <div className={`absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center space-x-2 ${
