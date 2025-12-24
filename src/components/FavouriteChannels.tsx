@@ -28,8 +28,7 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
     if (!container) return;
 
     const itemWidth = container.children[0]?.clientWidth || 0;
-    const computedStyle = getComputedStyle(container);
-    const gap = parseFloat(computedStyle.gap) || 0;
+    const gap = 4; // gap-1 = 0.25rem = 4px
     const scrollPosition = index * (itemWidth + gap);
     
     container.scrollTo({
@@ -67,44 +66,33 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
     };
   }, []);
 
-  // Calculate the exact gap needed to show 5.5 items
-  // Formula: (total available width) = (number of items * item width) + ((number of items - 1) * gap)
-  // For 5.5 items visible, we want: 100vw = 5.5 * itemWidth + 4.5 * gap
-  // We want a small gap, so let's calculate itemWidth first, then gap
-
   return (
     <div className="bg-white relative">
       {/* Horizontally scrollable container */}
       <div className="relative">
         <div 
           ref={containerRef}
-          className="flex py-2 overflow-x-auto scrollbar-hide"
+          className="flex gap-1 py-3 overflow-x-auto scrollbar-hide" {/* Increased py-2 to py-3 */}
           style={{
             scrollSnapType: 'x mandatory',
             WebkitOverflowScrolling: 'touch',
             scrollPadding: '0px',
-            // We want 5.5 items visible, so calculate appropriate gap
-            // Let's use 2px gap (half of gap-1) to ensure 5.5 items fit
-            gap: '2px',
           }}
         >
           {channels.map((channel, index) => (
             <div 
               key={channel.id} 
-              className="flex flex-col items-center gap-1 flex-shrink-0"
+              className="flex flex-col items-center gap-2 flex-shrink-0" {/* Increased gap-1 to gap-2 */}
               style={{
-                // Calculate width to show 5.5 items with 2px gaps between them
-                // Total width for items + gaps: 100vw = 5.5 * itemWidth + 4.5 * 2px
-                // So: itemWidth = (100vw - 9px) / 5.5
-                width: 'calc((100vw - 9px) / 5.5)',
-                minWidth: 'calc((100vw - 9px) / 5.5)',
+                width: `calc(100vw / 5.5)`,
+                minWidth: `calc(100vw / 5.5)`,
                 scrollSnapAlign: 'start'
               }}
               onClick={() => handleChannelSelect(channel.id, index)}
             >
               <div 
                 className={`
-                  w-9 h-9 rounded-full ${channel.bgColor} 
+                  w-11 h-11 rounded-full ${channel.bgColor} /* Increased from w-9 h-9 to w-11 h-11 */
                   flex items-center justify-center shadow-md 
                   cursor-pointer hover:scale-105 transition-transform
                   relative overflow-hidden
@@ -119,7 +107,7 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
                   />
                 )}
               </div>
-              <span className="text-[8px] font-medium text-gray-800 text-center max-w-[42px] overflow-hidden text-ellipsis leading-tight">
+              <span className="text-[9px] font-medium text-gray-800 text-center max-w-[50px] overflow-hidden text-ellipsis leading-tight"> {/* Increased text size and max-width */}
                 {channel.name}
               </span>
             </div>
