@@ -25,6 +25,18 @@ const newsItems = [
     icon: <Newspaper className="w-3 h-3 text-white" />, 
     text: "NEW SEASON ITEMS JUST ARRIVED",
     bgColor: "bg-gradient-to-r from-purple-600 to-pink-600"
+  },
+  { 
+    id: 5, 
+    icon: <ShoppingBag className="w-3 h-3 text-white" />, 
+    text: "FLASH SALE: 50% OFF SELECTED ITEMS",
+    bgColor: "bg-gradient-to-r from-red-600 to-orange-600"
+  },
+  { 
+    id: 6, 
+    icon: <Tag className="w-3 h-3 text-white" />, 
+    text: "EXCLUSIVE APP-ONLY DEALS",
+    bgColor: "bg-gradient-to-r from-indigo-600 to-blue-600"
   }
 ];
 
@@ -89,39 +101,12 @@ export default function NewsTicker() {
             ))}
           </div>
 
-          {/* Progress Indicator */}
-          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black/20">
-            <div 
-              className="h-full bg-white/80 transition-all duration-3000"
-              style={{ 
-                width: isPaused ? '100%' : '0%',
-                animation: isPaused ? 'none' : 'progress 3s linear forwards'
-              }}
-            />
-          </div>
-
-          {/* Slide Dots */}
-          <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 flex items-center gap-1">
-            {newsItems.map((_, index) => (
-              <div
-                key={index}
-                className={`w-1 h-1 rounded-full ${
-                  index === activeIndex ? 'bg-white' : 'bg-white/30'
-                }`}
-              />
-            ))}
+          {/* Pause Indicator (small dot) */}
+          <div className="absolute top-1 right-1">
+            <div className={`w-1.5 h-1.5 rounded-full ${isPaused ? 'bg-green-400 animate-pulse' : 'bg-white/40'}`} />
           </div>
         </div>
       </div>
-
-      <style dangerouslySetInnerHTML={{
-        __html: `
-          @keyframes progress {
-            from { width: 0%; }
-            to { width: 100%; }
-          }
-        `
-      }} />
     </div>
   );
 }
