@@ -1,107 +1,89 @@
+import React, { useState } from "react";
 
-import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Heart } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useTranslation } from 'react-i18next';
-
-export interface ProductProps {
-  id: string; // Changed from number to string for compatibility
+interface Product {
+  id: string;
   name: string;
   price: number;
-  discountPrice?: number;
-  rating: number;
-  image: string;
-  isNew?: boolean;
-  category: string;
-  sold?: number;
-  // Allow for additional properties that might be needed
-  product_images?: { src: string }[];
-  [key: string]: any;
+  discount_price?: number;
+  sold_count?: number;
+  rating?: number;
+  product_images?: Array<{ src: string }>;
+  flash_start_time?: string;
+  category?: string;
+  tags?: string[];
 }
 
 interface ProductCardProps {
-  product: ProductProps;
-  className?: string;
-  showTitle?: boolean;
-  showButton?: boolean;
-  compact?: boolean;
-  onProductClick?: (productId: string) => void;
+  product: Product;
+  renderTag: (tag: string) => React.ReactNode;
 }
 
-const ProductCard = ({
-  product,
-  className = "",
-  showTitle = true,
-  showButton = true,
-  compact = false,
-  onProductClick,
-}: ProductCardProps) => {
-  const { id, name, price, discountPrice, rating, image, isNew, sold } = product;
-  const discount = discountPrice ? Math.round(((price - discountPrice) / price) * 100) : 0;
-  const { t } = useTranslation();
+const ProductCard: React.FC<ProductCardProps> = ({ product, renderTag }) => {
+  const [imageError, setImageError] = useState(false);
+  const soldCount = product.sold_count || Math.floor(Math.random() * 10000) + 100;
+  const rating = product.rating || parseFloat((Math.random() * 1 + 4).toFixed(1));
+  const imageUrl = product.product_images?.[0]?.src || `https://placehold.co/300x400?text=Product`;
+  const displayImageUrl = imageError 
+    ? `https://placehold.co/300x400?text=${encodeURIComponent(product.name)}` 
+    : imageUrl;
 
-  const handleClick = (e: React.MouseEvent) => {
-    if (onProductClick) {
-      e.preventDefault();
-      onProductClick(id);
+  const generateTags = () => {
+    const tags = [];
+    if (product.discount_price) tags.push("Sale");
+    if (product.flash_start_time) tags.push("SuperDeals");
+    if (product.category?.toLowerCase().includes("premium")) tags.push("Brand+");
+    if (product.tags && product.tags.length > 0) {
+      tags.push(...product.tags.slice(0, 2));
     }
+    return tags.length > 0 ? tags : ["Popular"];
   };
 
-  return (
-    <Card className={`overflow-hidden group border rounded-sm h-full transition-all ${className}`}>
-      <Link to={`/product/${id}`} className="block h-full" onClick={handleClick}>
-        <div className="relative overflow-hidden aspect-square bg-white">
-          <img
-            src={image}
-            alt={name}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-          <div className="absolute top-1.5 right-1.5">
-            <Heart className="h-4 w-4 text-gray-400 hover:text-red-500 transition-colors cursor-pointer" />
-          </div>
-          {discount > 0 && (
-            <Badge className="absolute top-1.5 left-1.5 bg-red-500 hover:bg-red-600 text-[10px] px-1.5 py-0.5 rounded-sm">
-              -{discount}%
-            </Badge>
-          )}
-          {isNew && (
-            <Badge className="absolute bottom-1.5 left-1.5 bg-green-500 hover:bg-green-600 text-[10px] px-1.5 py-0.5 rounded-sm">
-              New
-            </Badge>
-          )}
-        </div>
+  const tags = generateTags();
+  const displayPrice = product.discount_price || product.price;
+  const hasDiscount = !!product.discount_price && product.discount_price < product.price;
 
-        {showTitle && (
-          <CardContent className={`flex flex-col gap-0.5 ${compact ? "p-2" : "p-3"}`}>
-            <h3 className="text-xs font-normal text-gray-800 line-clamp-2 leading-snug">
-              {name}
-            </h3>
-            <div className="flex items-baseline gap-1 mt-0.5">
-              <span className="text-red-500 font-bold text-sm">
-                ${discountPrice ?? price}
-              </span>
-              {discountPrice && (
-                <span className="text-gray-400 line-through text-xs">
-                  ${price}
-                </span>
-              )}
-            </div>
-            <div className="flex justify-between items-center mt-0.5 text-[10px] text-gray-500">
-              <span>{rating}★</span>
-              {sold && <span>{sold} sold</span>}
-            </div>
-            {showButton && (
-              <button className="text-[10px] mt-1 px-2 py-0.5 bg-orange-500 text-white rounded-sm hover:bg-orange-600 transition-colors w-full">
-                {t('product.addToCart')}
-              </button>
-            )}
-          </CardContent>
+  return (
+    <div className="bg-white overflow-hidden mb-2 flex flex-col">
+      <div className="w-full max-h-80 bg-white overflow-hidden mb-0.5 relative flex items-center justify-center">
+        <img 
+          src={displayImageUrl} 
+          alt={product.name} 
+          className="w-full h-auto max-h-full object-contain" 
+          loading="lazy"
+          onError={() => setImageError(true)}
+        />
+        {(imageError || !product.product_images?.[0]?.src) && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+            <span className="text-gray-400 text-xs text-center px-2">
+              {product.name}
+            </span>
+          </div>
         )}
-      </Link>
-    </Card>
+      </div>
+      <div className="p-0.5 flex-grow">
+        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
+          {tags.map((tag) => renderTag(tag))}
+          {product.name}
+        </p>
+        <div className="flex items-center gap-0.5 mb-0.5">
+          <span className="text-[10px] text-gray-500">{soldCount.toLocaleString()} sold</span>
+          <span className="text-[10px] text-gray-400">|</span>
+          <div className="flex items-center">
+            <span className="text-[10px] text-gray-700 mr-0.5">★</span>
+            <span className="text-[10px] text-gray-700">{rating}</span>
+          </div>
+        </div>
+        <p className="text-sm font-bold text-gray-900">
+          G{displayPrice.toLocaleString('en-US')}
+          {hasDiscount && (
+            <span className="text-[10px] text-gray-500 line-through ml-0.5">
+              G{product.price.toLocaleString('en-US')}
+            </span>
+          )}
+        </p>
+      </div>
+    </div>
   );
 };
 
-export default ProductCard;
+export { ProductCard };
