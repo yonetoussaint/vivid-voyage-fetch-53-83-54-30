@@ -60,15 +60,12 @@ const ReelCard: React.FC<ReelCardProps> = ({ reel }) => {
         <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded z-10">
           {formatDuration(reel.duration)}
         </div>
-
-        {/* Removed the bottom gradient with views */}
       </div>
 
       <div className="p-2">
         <p className="text-[11px] text-white font-medium line-clamp-2 mb-1">
           {reel.title}
         </p>
-        {/* Views moved here - where trending element was */}
         <div className="flex items-center text-white text-[10px] gap-1">
           <Play className="w-3 h-3" fill="white" />
           <span>{formatNumber(reel.views)} views</span>
