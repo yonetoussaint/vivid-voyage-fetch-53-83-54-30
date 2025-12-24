@@ -85,8 +85,10 @@ const FavouriteChannels: React.FC<FavouriteChannelsProps> = ({
               key={channel.id} 
               className="flex flex-col items-center gap-1 flex-shrink-0"
               style={{
-                width: 'calc((100vw) / 5.5)',
-                minWidth: 'calc((100vw) / 5.5)',
+                // Calculate width to show exactly 5.5 items edge-to-edge
+                // 5.5 items means each item takes up 100% / 5.5 of the viewport width
+                width: `calc(100vw / 5.5)`,
+                minWidth: `calc(100vw / 5.5)`,
                 // Snap to the left edge of container
                 scrollSnapAlign: 'start'
               }}
