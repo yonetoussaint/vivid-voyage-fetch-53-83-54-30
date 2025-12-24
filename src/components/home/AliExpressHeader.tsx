@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import CategoryTabs from './header/CategoryTabs';
-import VoiceSearchOverlay from './header/VoiceSearchOverlay';
 
 interface AliExpressHeaderProps {
   activeTabId?: string;
@@ -23,7 +22,6 @@ export default function AliExpressHeader({
 
   const [activeTab, setActiveTab] = useState(activeTabId);
   const [searchQuery, setSearchQuery] = useState('');
-  const [voiceSearchActive, setVoiceSearchActive] = useState(false);
   const [placeholder, setPlaceholder] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -99,9 +97,6 @@ export default function AliExpressHeader({
     }
   };
 
-  // Handle voice search toggle
-  const handleVoiceSearch = () => setVoiceSearchActive(!voiceSearchActive);
-
   // Handle settings button click
   const handleSettingsClick = () => {
     console.log('Settings button clicked');
@@ -135,85 +130,54 @@ export default function AliExpressHeader({
     // You can add any focus logic here if needed
   };
 
-  // Render search bar right icons - EXACT LOGIC FROM ReusableSearchBar
-  const renderRightIcons = () => {
-    // Clear button when there's text
-    if (searchQuery.trim()) {
-      return (
-        <button
-          type="button"
-          onClick={handleClearSearch}
-          className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-        >
-          <X className="h-4 w-4 text-gray-600" />
-        </button>
-      );
-    }
-    // Settings button when specified
-    else {
-      return (
-        <button
-          type="button"
-          onClick={handleSettingsClick}
-          className="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full transition-colors hover:bg-gray-200"
-        >
-          Settings
-        </button>
-      );
-    }
-  };
-
-  // Inline ReusableSearchBar component
-  const InlineSearchBar = () => {
-    const isTransparent = false;
-    const isOverlayOpen = false;
-    const showScanMic = false;
-    const showSettingsButton = true;
-
-    // Transparent state styles
-    const transparentStyles = isTransparent
-      ? 'bg-transparent border-white/30 text-white placeholder-white/70'
-      : 'bg-white border-gray-800 text-gray-900 placeholder-gray-500';
-
-    return (
-      <div className="flex-1 relative max-w-full mx-auto">
-        <form onSubmit={handleSubmit}>
-          <div className="relative">
-            <input
-              type="text"
-              placeholder={placeholder}
-              value={searchQuery}
-              onChange={handleInputChange}
-              onFocus={handleFocus}
-              className={`w-full px-3 py-1 text-sm font-medium border-2 rounded-full transition-all duration-300 shadow-sm ${
-                isTransparent ? 'pr-12 pl-10' : 'pr-16 pl-3'
-              } ${transparentStyles}`}
-              ref={searchRef}
-            />
-
-            {/* Right icons */}
-            <div className={`absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center space-x-2 ${
-              isTransparent ? 'pr-1' : ''
-            }`}>
-              {renderRightIcons()}
-            </div>
-          </div>
-        </form>
-      </div>
-    );
-  };
-
   return (
     <header 
       className="fixed top-0 w-full z-40 bg-white" 
       style={{ margin: 0, padding: 0, boxShadow: 'none' }}
     >
-      {/* Search Bar - Inline Implementation */}
+      {/* Search Bar - Simplified Inline Implementation */}
       <div 
         className="flex items-center justify-between px-2 transition-all duration-500 ease-in-out bg-white"
         style={{ height: '36px' }}
       >
-        <InlineSearchBar />
+        <div className="flex-1 relative max-w-full mx-auto">
+          <form onSubmit={handleSubmit}>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder={placeholder}
+                value={searchQuery}
+                onChange={handleInputChange}
+                onFocus={handleFocus}
+                className="w-full px-3 py-1 pr-16 text-sm font-medium text-gray-900 bg-white border-2 border-gray-800 rounded-full transition-all duration-300 shadow-sm placeholder-gray-500"
+                ref={searchRef}
+              />
+
+              {/* Right icons */}
+              <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
+                {/* Clear button when there's text */}
+                {searchQuery.trim() ? (
+                  <button
+                    type="button"
+                    onClick={handleClearSearch}
+                    className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                  >
+                    <X className="h-4 w-4 text-gray-600" />
+                  </button>
+                ) : (
+                  // Settings button when no text
+                  <button
+                    type="button"
+                    onClick={handleSettingsClick}
+                    className="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full transition-colors hover:bg-gray-200"
+                  >
+                    Settings
+                  </button>
+                )}
+              </div>
+            </div>
+          </form>
+        </div>
       </div>
 
       {/* Category Tabs */}
@@ -229,12 +193,6 @@ export default function AliExpressHeader({
           />
         </div>
       )}
-
-      {/* Voice Search Overlay */}
-      <VoiceSearchOverlay
-        active={voiceSearchActive}
-        onCancel={handleVoiceSearch}
-      />
     </header>
   );
 }
