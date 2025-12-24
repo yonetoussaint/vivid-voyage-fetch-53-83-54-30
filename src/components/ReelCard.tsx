@@ -26,35 +26,17 @@ const ReelCard: React.FC<ReelCardProps> = ({ reel }) => {
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
-  const [isInView, setIsInView] = useState(false);
+  const [showThumbnail, setShowThumbnail] = useState(true);
 
-  // Simple in-view detection
-  const containerRef = useRef<HTMLDivElement>(null);
-
+  // DEBUG: Log when component mounts
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setIsInView(true);
-          } else {
-            setIsInView(false);
-          }
-        });
-      },
-      { threshold: 0.1 }
-    );
-
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
-    }
-
-    return () => {
-      if (containerRef.current) {
-        observer.unobserve(containerRef.current);
-      }
-    };
-  }, []);
+    console.log(`🎬 ReelCard MOUNTED: ${reel.id}`, {
+      video_url: reel.video_url,
+      thumbnail_url: reel.thumbnail_url,
+      hasThumbnail: !!reel.thumbnail_url,
+      time: new Date().toLocaleTimeString()
+    });
+  }, [reel]);
 
   const handleClick = () => {
     navigate(`/reels?video=${reel.id}`);
@@ -75,137 +57,128 @@ const ReelCard: React.FC<ReelCardProps> = ({ reel }) => {
     return num.toString();
   };
 
-  // Load video when in view
+  // Load video IMMEDIATELY when component mounts (not waiting for scroll)
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !reel.video_url || !isInView) return;
+    if (!video || !reel.video_url) {
+      console.log(`❌ No video element or URL for reel ${reel.id}`);
+      setIsLoading(false);
+      setHasError(true);
+      return;
+    }
 
-    console.log(`Loading video for reel ${reel.id}: ${reel.video_url}`);
+    console.log(`📹 Starting video load for reel ${reel.id}: ${reel.video_url}`);
 
     const handleLoadedData = () => {
-      console.log(`Video loaded for reel ${reel.id}`);
+      console.log(`✅ Video loaded for reel ${reel.id}`);
       setIsVideoLoaded(true);
       setIsLoading(false);
       setHasError(false);
+      setShowThumbnail(false); // Hide thumbnail when video loads
       
-      // Try to play muted video
+      // Try to play the video (muted)
       video.play().catch(e => {
-        console.log(`Auto-play prevented for reel ${reel.id}:`, e);
+        console.log(`⚠️ Auto-play prevented for reel ${reel.id}:`, e.message);
       });
     };
 
-    const handleError = (e: any) => {
-      console.error(`Video error for reel ${reel.id}:`, e);
+    const handleError = (e: Event) => {
+      console.error(`❌ Video error for reel ${reel.id}:`, e);
       setIsLoading(false);
       setHasError(true);
     };
 
+    const handleCanPlay = () => {
+      console.log(`🎥 Video can play for reel ${reel.id}`);
+      setIsLoading(false);
+    };
+
     video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('error', handleError);
+    video.addEventListener('canplay', handleCanPlay);
 
-    // Set video source if not already set
-    if (video.src !== reel.video_url) {
-      video.src = reel.video_url;
-      video.load();
-    }
+    // Set video source and LOAD IMMEDIATELY
+    video.src = reel.video_url;
+    video.load(); // This is CRITICAL - forces immediate loading
+    video.muted = true;
+    video.playsInline = true;
+    video.loop = true;
+    video.preload = "auto"; // Changed from "metadata" to "auto"
+
+    // Set a timeout to show thumbnail if video takes too long
+    const loadTimeout = setTimeout(() => {
+      if (!isVideoLoaded && !hasError) {
+        console.log(`⏰ Video load timeout for reel ${reel.id}, showing thumbnail`);
+        setIsLoading(false);
+      }
+    }, 3000); // 3 second timeout
 
     return () => {
+      clearTimeout(loadTimeout);
       video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('error', handleError);
+      video.removeEventListener('canplay', handleCanPlay);
     };
-  }, [reel.id, reel.video_url, isInView]);
-
-  // Pause video when out of view
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !isVideoLoaded) return;
-
-    if (!isInView) {
-      video.pause();
-    } else if (isInView && !hasError) {
-      video.play().catch(e => console.log('Play error:', e));
-    }
-  }, [isInView, isVideoLoaded, hasError]);
-
-  // Debug
-  useEffect(() => {
-    console.log(`ReelCard ${reel.id}:`, {
-      video_url: reel.video_url,
-      thumbnail_url: reel.thumbnail_url,
-      hasThumbnail: !!reel.thumbnail_url,
-      isInView,
-      isVideoLoaded,
-      hasError
-    });
-  }, [reel, isInView, isVideoLoaded, hasError]);
+  }, [reel.video_url, reel.id]);
 
   return (
     <div 
-      ref={containerRef}
       className="bg-black rounded overflow-hidden relative cursor-pointer mb-2"
       onClick={handleClick}
     >
       <div className="w-full aspect-[3/4] bg-gray-800 relative overflow-hidden">
-        {/* Video element */}
+        {/* Video element - Loads immediately */}
         <video 
           ref={videoRef}
           className="w-full h-full object-cover"
-          muted
-          loop
-          playsInline
-          preload="metadata"
           style={{ 
             opacity: isVideoLoaded ? 1 : 0,
-            transition: 'opacity 0.3s ease'
+            transition: 'opacity 0.3s ease-in-out'
           }}
         />
 
-        {/* Loading state */}
-        {isLoading && isInView && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
-            <Loader2 className="w-6 h-6 text-white animate-spin" />
-          </div>
-        )}
-
-        {/* Thumbnail fallback (shows while loading or if video fails) */}
-        {(!isVideoLoaded || hasError) && reel.thumbnail_url && (
+        {/* Thumbnail image - Shows while video loads */}
+        {showThumbnail && reel.thumbnail_url && (
           <div className="absolute inset-0">
             <img 
               src={reel.thumbnail_url}
               alt={reel.title}
               className="w-full h-full object-cover"
               onError={() => {
-                console.error(`Thumbnail failed to load for reel ${reel.id}`);
-                setHasError(true);
+                console.error(`❌ Thumbnail failed to load for reel ${reel.id}`);
+                setShowThumbnail(false);
+              }}
+              onLoad={() => {
+                console.log(`✅ Thumbnail loaded for reel ${reel.id}`);
               }}
             />
           </div>
         )}
 
-        {/* Error state - No thumbnail available */}
-        {hasError && !reel.thumbnail_url && (
+        {/* Loading spinner */}
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-900/80">
+            <Loader2 className="w-8 h-8 text-white animate-spin" />
+          </div>
+        )}
+
+        {/* Error state */}
+        {hasError && !showThumbnail && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
-            <Play className="w-8 h-8 text-gray-400" />
+            <Play className="w-12 h-12 text-gray-400" />
             <span className="sr-only">Video failed to load</span>
           </div>
         )}
+
+        {/* Debug overlay - Shows reel ID and status */}
+        <div className="absolute top-1 left-1 bg-black/60 text-white text-[8px] px-1 py-0.5 rounded opacity-70">
+          #{reel.id.slice(0, 4)}
+        </div>
 
         {/* Duration badge */}
         {!reel.is_live && (
           <div className="absolute top-2 right-2 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded">
             {formatDuration(reel.duration)}
-          </div>
-        )}
-
-        {/* Live badge */}
-        {reel.is_live && (
-          <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded-full">
-            <div className="flex items-center gap-0.5">
-              <div className="w-1 h-3 bg-white animate-pulse" style={{ animationDelay: '0s' }}></div>
-              <div className="w-1 h-3 bg-white animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-              <div className="w-1 h-3 bg-white animate-pulse" style={{ animationDelay: '0.4s' }}></div>
-            </div>
-            <span>LIVE</span>
           </div>
         )}
 
