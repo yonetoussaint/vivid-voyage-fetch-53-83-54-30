@@ -35,6 +35,7 @@ const CategoryTabs = ({
   const [underlineWidth, setUnderlineWidth] = useState(0);
   const [underlineLeft, setUnderlineLeft] = useState(0);
   const isInitialMount = useRef(true);
+  const [isScrolling, setIsScrolling] = useState(false);
 
   // Memoize refs update and reset initial mount flag
   useEffect(() => {
@@ -84,36 +85,87 @@ const CategoryTabs = ({
     }
   }, [activeTab, categories]);
 
-  // Use useLayoutEffect for initial positioning - runs synchronously after DOM mutations
+  // Snap active tab to left
+  const snapToTab = useCallback(() => {
+    const activeTabIndex = categories.findIndex(cat => cat.id === activeTab);
+    
+    if (activeTabIndex === -1 || !scrollContainerRef.current) {
+      return;
+    }
+
+    const activeTabElement = tabRefs.current[activeTabIndex];
+    if (!activeTabElement) return;
+
+    const container = scrollContainerRef.current;
+    const containerRect = container.getBoundingClientRect();
+    const tabRect = activeTabElement.getBoundingClientRect();
+    
+    // Check if tab is already visible
+    const isTabVisible = 
+      tabRect.left >= containerRect.left && 
+      tabRect.right <= containerRect.right;
+    
+    // If tab is not fully visible, scroll to make it visible on the left
+    if (!isTabVisible || tabRect.left < containerRect.left) {
+      setIsScrolling(true);
+      
+      // Calculate scroll position to bring tab to left side
+      const scrollLeft = activeTabElement.offsetLeft - 16; // Add small padding
+      
+      container.scrollTo({
+        left: scrollLeft,
+        behavior: 'smooth'
+      });
+
+      // Reset scrolling state after animation completes
+      setTimeout(() => setIsScrolling(false), 300);
+    }
+  }, [activeTab, categories]);
+
+  // Use useLayoutEffect for initial positioning
   useLayoutEffect(() => {
     if (activeTab && categories.length > 0) {
       // Immediate synchronous update
       updateUnderline();
+      
+      // Snap to tab on active tab change
+      requestAnimationFrame(() => {
+        snapToTab();
+      });
     }
-  }, [activeTab, categories, updateUnderline]);
+  }, [activeTab, categories, updateUnderline, snapToTab]);
 
   // Backup async updates for edge cases
   useEffect(() => {
     if (activeTab && categories.length > 0) {
       const timers = [
-        setTimeout(() => updateUnderline(), 50),
-        setTimeout(() => updateUnderline(), 200),
+        setTimeout(() => {
+          updateUnderline();
+          snapToTab();
+        }, 50),
+        setTimeout(() => {
+          updateUnderline();
+          snapToTab();
+        }, 200),
       ];
 
       return () => timers.forEach(timer => clearTimeout(timer));
     }
-  }, [activeTab, categories, updateUnderline]);
+  }, [activeTab, categories, updateUnderline, snapToTab]);
 
   // Update on resize and scroll
   useEffect(() => {
     const handleResize = () => {
       if (activeTab && categories.length > 0) {
         updateUnderline();
+        if (!isScrolling) {
+          snapToTab();
+        }
       }
     };
 
     const handleScroll = () => {
-      if (activeTab && categories.length > 0) {
+      if (activeTab && categories.length > 0 && !isScrolling) {
         updateUnderline();
       }
     };
@@ -130,9 +182,9 @@ const CategoryTabs = ({
         container.removeEventListener('scroll', handleScroll);
       }
     };
-  }, [activeTab, categories, updateUnderline]);
+  }, [activeTab, categories, updateUnderline, snapToTab, isScrolling]);
 
-  // Tab click handler - UPDATED: with retry logic for first tab
+  // Tab click handler with snapping
   const handleTabClick = useCallback((id: string, path?: string) => {
     // First update the active tab
     setActiveTab(id);
@@ -159,10 +211,14 @@ const CategoryTabs = ({
         setUnderlineWidth(newWidth);
         setUnderlineLeft(underlineStart);
       }
+
+      // Snap to the clicked tab
+      snapToTab();
     } else {
       // If refs aren't available yet, retry after a short delay
       setTimeout(() => {
         updateUnderline();
+        snapToTab();
       }, 10);
     }
 
@@ -175,11 +231,11 @@ const CategoryTabs = ({
     if (isSearchOverlayActive && process.env.NODE_ENV === 'development') {
       console.log(`Search tab selected: ${id}`);
     }
-  }, [setActiveTab, navigate, isSearchOverlayActive, categories, updateUnderline]);
+  }, [setActiveTab, navigate, isSearchOverlayActive, categories, updateUnderline, snapToTab]);
 
   const handleCategoriesClick = useCallback(() => {
-  navigate('/categories', { preventScrollReset: true });
-}, [navigate]);
+    navigate('/categories', { preventScrollReset: true });
+  }, [navigate]);
 
   // Tab styles
   const getTabClassName = useCallback((isActive: boolean) => {
@@ -199,10 +255,11 @@ const CategoryTabs = ({
       // Use requestAnimationFrame to ensure DOM is ready but still appear instant
       requestAnimationFrame(() => {
         updateUnderline();
+        snapToTab();
         isInitialMount.current = false;
       });
     }
-  }, [activeTab, updateUnderline]);
+  }, [activeTab, updateUnderline, snapToTab]);
 
   return (
     <div className="relative w-full overflow-hidden bg-white" style={{ maxHeight: '40px' }}>
@@ -215,6 +272,7 @@ const CategoryTabs = ({
             msOverflowStyle: 'none',
             WebkitOverflowScrolling: 'touch',
             paddingRight: isSearchOverlayActive ? '0px' : '2.5rem',
+            scrollBehavior: isScrolling ? 'smooth' : 'auto'
           }}
         >
           {categories.map(({ id, name, icon, path }, index) => (
