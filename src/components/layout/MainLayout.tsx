@@ -98,11 +98,15 @@ function MainLayoutContent() {
         />
       )}
 
-      {/* Auth Overlay */}
-      <AuthOverlay
-        isOpen={isAuthOverlayOpen}
-        onClose={() => setIsAuthOverlayOpen(false)}
-      />
+      {/* Auth Overlay - Fixed z-index */}
+{isAuthOverlayOpen && (
+  <div className="fixed inset-0 z-[9999]">
+    <AuthOverlay
+      isOpen={isAuthOverlayOpen}
+      onClose={() => setIsAuthOverlayOpen(false)}
+    />
+  </div>
+)}
     </div>
   );
 }
