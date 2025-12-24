@@ -76,7 +76,7 @@ const CategoryTabs = ({
       const textSpan = activeTabElement.querySelector('span');
       if (textSpan) {
         // Use getBoundingClientRect for pixel-perfect measurements
-        const textRect = textRect = textSpan.getBoundingClientRect();
+        const textRect = textSpan.getBoundingClientRect();
         const textWidth = textRect.width;
 
         // Underline width based on text (60-70% for elegant look)
