@@ -97,12 +97,8 @@ export const useMainLayout = (props?: UseMainLayoutProps) => {
     { id: 'books', name: t('books', { ns: 'categories' }), path: '/categories/books' },
   ], [t]);
 
-  // Page flags - DEFINE THIS PROPERLY
+  // Page flags
   const pageFlags: PageFlags = useMemo(() => {
-    const messagesFilter = searchParams.get('filter') || 'all';
-    const walletFilter = searchParams.get('tab') || 'main';
-    const exploreFilter = searchParams.get('tab') || 'products';
-
     const isRootHomePage = pathname === "/" || pathname === "/for-you";
     const isForYouPage = pathname === "/" || pathname === "/for-you";
     const isMessagesPage = pathname === '/messages' || pathname.startsWith('/messages/');
@@ -188,7 +184,268 @@ export const useMainLayout = (props?: UseMainLayoutProps) => {
     };
   }, [pathname, location.search, categories, isMobile]);
 
-  // ... rest of your hook code remains the same ...
+  // Update active tab based on location
+  useEffect(() => {
+    const currentCategory = categories.find(cat => location.pathname === cat.path);
+    if (currentCategory) {
+      setActiveTab(currentCategory.id);
+    } else if (location.pathname === '/' || location.pathname === '/for-you') {
+      setActiveTab('recommendations');
+    }
+  }, [location.pathname, categories]);
+
+  // Auth redirect effect
+  useEffect(() => {
+    if (pathname === "/auth") {
+      openAuthOverlay();
+      window.history.replaceState({}, "", "/");
+    }
+  }, [pathname, openAuthOverlay]);
+
+  // Redirect to include default filter if missing
+  useEffect(() => {
+    if (pageFlags.isMessagesPage && pathname === '/messages' && !searchParams.get('filter')) {
+      navigate('/messages?filter=all', { replace: true });
+    }
+    if (pageFlags.isWalletPage && !searchParams.get('tab')) {
+      navigate('/wallet?tab=main', { replace: true });
+    }
+    if (pageFlags.isExplorePage && !searchParams.get('tab')) {
+      navigate('/explore?tab=products', { replace: true });
+    }
+  }, [pageFlags.isMessagesPage, pageFlags.isWalletPage, pageFlags.isExplorePage, searchParams, navigate, pathname]);
+
+  // Measure header height dynamically
+  const updateHeaderHeight = useCallback(() => {
+    if (pageFlags.shouldShowHeader && headerRef.current) {
+      const headerElement = headerRef.current.querySelector('header, [data-header]');
+      if (headerElement) {
+        const height = headerElement.getBoundingClientRect().height;
+        setMeasurements(prev => ({ ...prev, headerHeight: height }));
+        document.documentElement.style.setProperty('--header-height', `${height}px`);
+        return;
+      }
+    }
+    setMeasurements(prev => ({ ...prev, headerHeight: 0 }));
+    document.documentElement.style.setProperty('--header-height', '0px');
+  }, [pageFlags.shouldShowHeader]);
+
+  // Measure bottom nav height dynamically
+  const updateBottomNavHeight = useCallback(() => {
+    if (pageFlags.shouldShowBottomNav && bottomNavRef.current) {
+      const bottomNavElement = bottomNavRef.current.querySelector('nav, [data-bottom-nav]');
+      if (bottomNavElement) {
+        const height = bottomNavElement.getBoundingClientRect().height;
+        setMeasurements(prev => ({ ...prev, bottomNavHeight: height }));
+        document.documentElement.style.setProperty('--bottom-nav-height', `${height}px`);
+
+        const safeAreaBottom = getComputedStyle(document.documentElement)
+          .getPropertyValue('--safe-area-inset-bottom') || '0px';
+        const totalBottomHeight = height + parseInt(safeAreaBottom);
+        document.documentElement.style.setProperty('--total-bottom-height', `${totalBottomHeight}px`);
+        return;
+      }
+    }
+    setMeasurements(prev => ({ ...prev, bottomNavHeight: 0 }));
+    document.documentElement.style.setProperty('--bottom-nav-height', '0px');
+    document.documentElement.style.setProperty('--total-bottom-height', '0px');
+  }, [pageFlags.shouldShowBottomNav]);
+
+  // Update content height
+  const updateContentHeight = useCallback(() => {
+    const windowHeight = window.innerHeight;
+    const { headerHeight, bottomNavHeight } = measurements;
+    const calculatedHeight = windowHeight - headerHeight - bottomNavHeight;
+
+    setMeasurements(prev => ({ ...prev, contentHeight: calculatedHeight }));
+
+    // Apply to content ref if it exists
+    if (contentRef.current) {
+      contentRef.current.style.height = `${calculatedHeight}px`;
+      contentRef.current.style.maxHeight = `${calculatedHeight}px`;
+      contentRef.current.style.minHeight = `${calculatedHeight}px`;
+    }
+  }, [measurements.headerHeight, measurements.bottomNavHeight]);
+
+  // Setup measurements observers and listeners
+  useEffect(() => {
+    const updateMeasurements = () => {
+      updateHeaderHeight();
+      updateBottomNavHeight();
+      updateContentHeight();
+    };
+
+    // Initial measurements with delay
+    const timer = setTimeout(updateMeasurements, 50);
+
+    // Setup observers
+    const headerObserver = new MutationObserver(updateHeaderHeight);
+    const bottomNavObserver = new MutationObserver(updateBottomNavHeight);
+
+    if (headerRef.current) {
+      headerObserver.observe(headerRef.current, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        characterData: true
+      });
+    }
+
+    if (bottomNavRef.current) {
+      bottomNavObserver.observe(bottomNavRef.current, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        characterData: true
+      });
+    }
+
+    // Setup resize listener
+    let rafId: number;
+    const handleResize = () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(updateMeasurements);
+    };
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+      if (rafId) cancelAnimationFrame(rafId);
+      headerObserver.disconnect();
+      bottomNavObserver.disconnect();
+    };
+  }, [updateHeaderHeight, updateBottomNavHeight, updateContentHeight]);
+
+  // Generate CSS for layout - MAKE SURE THIS IS DEFINED
+  const layoutHeightStyle = useMemo(() => {
+    const { headerHeight, bottomNavHeight } = measurements;
+
+    return `
+      :root {
+        --header-height: ${headerHeight}px;
+        --bottom-nav-height: ${bottomNavHeight}px;
+        --safe-area-inset-top: env(safe-area-inset-top, 0px);
+        --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+        --total-bottom-height: ${bottomNavHeight}px;
+      }
+
+      .app-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        overflow: hidden;
+        background: white;
+        transform: translateZ(0);
+        backface-visibility: hidden;
+        perspective: 1000;
+        will-change: transform;
+      }
+
+      .app-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        background: white;
+        transform: translateZ(0);
+        will-change: transform;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      }
+
+      .app-content {
+        position: absolute;
+        top: ${headerHeight}px;
+        left: 0;
+        right: 0;
+        bottom: ${bottomNavHeight}px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        transform: translateZ(0);
+        will-change: transform, scroll-position;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        scroll-behavior: smooth;
+        backface-visibility: hidden;
+        perspective: 1000;
+      }
+
+      .app-content::-webkit-scrollbar {
+        display: none;
+        width: 0;
+        height: 0;
+      }
+
+      .app-bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        transform: translateZ(0);
+        will-change: transform;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08);
+      }
+
+      ${pageFlags.isConversationDetailPage ? `
+        .app-content {
+          top: 0 !important;
+          bottom: 0 !important;
+        }
+      ` : ''}
+
+      *:not(input):not(textarea):not([contenteditable="true"]) {
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+
+      input, textarea, [contenteditable="true"] {
+        -webkit-user-select: text;
+        user-select: text;
+      }
+
+      .page-transition {
+        animation: fadeIn 0.2s ease-out;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      @supports (-webkit-overflow-scrolling: touch) {
+        .app-content {
+          -webkit-overflow-scrolling: touch;
+          overflow-y: scroll;
+        }
+      }
+
+      @supports (overflow: overlay) {
+        .app-content {
+          overflow-y: overlay;
+        }
+      }
+
+      .app-content {
+        overscroll-behavior-y: contain;
+        height: calc(100vh - ${headerHeight}px - ${bottomNavHeight}px);
+      }
+    `;
+  }, [measurements, pageFlags.isConversationDetailPage]);
 
   // Location options
   const locationOptions = useMemo(() => [
@@ -224,7 +481,7 @@ export const useMainLayout = (props?: UseMainLayoutProps) => {
     }
   }, [locationOptions, handleLocationChange]);
 
-  // Return statement - MAKE SURE pageFlags IS INCLUDED
+  // Return ALL required values - CRITICAL
   return {
     // State
     activeTab,
@@ -241,8 +498,8 @@ export const useMainLayout = (props?: UseMainLayoutProps) => {
     bottomNavRef,
     contentRef,
 
-    // Page flags - THIS IS CRITICAL
-    pageFlags, // <-- Make sure this is returned
+    // Page flags
+    pageFlags,
 
     // Configuration
     categories,
@@ -254,8 +511,8 @@ export const useMainLayout = (props?: UseMainLayoutProps) => {
     handleCitySelect,
     handleLocationChange,
 
-    // Layout
-    layoutHeightStyle,
+    // Layout - MAKE SURE THIS IS RETURNED
+    layoutHeightStyle, // <-- THIS IS CRITICAL
 
     // Header props
     headerProps: {
