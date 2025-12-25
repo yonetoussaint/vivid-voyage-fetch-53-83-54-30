@@ -43,7 +43,7 @@ const AuthOverlay: React.FC = () => {
     getFaviconUrl,
     handleClose,
     handleBackToMain,
-    handleContinueWithPassword, // ✅ Use the correct handler from AuthContext
+    handleContinueWithPassword,
     handleContinueWithCode,
     handleCreateAccount,
     handleSignUpClick,
@@ -282,7 +282,7 @@ const AuthOverlay: React.FC = () => {
   // Get SlideUpPanel props based on current screen
   const getSlideUpPanelProps = () => {
     const baseProps = {
-      isOpen: isAuthOverlayOpen, // ✅ Use context value
+      isOpen: true, // ✅ FORCE OPEN - AuthOverlay already checked isAuthOverlayOpen
       onClose: handleClose, // ✅ Use context handler
       preventBodyScroll: true,
       className: "bg-white",
@@ -393,7 +393,7 @@ const AuthOverlay: React.FC = () => {
               <EmailAuthScreen
                 onBack={handleBackToMain}
                 selectedLanguage={selectedLanguage}
-                onContinueWithPassword={handleContinueWithPassword} // ✅ Use the correct handler directly
+                onContinueWithPassword={handleContinueWithPassword}
                 onContinueWithCode={handleContinueWithCodeWithMethod}
                 onCreateAccount={handleCreateAccountWithEmail}
                 onSignUpClick={handleSignUpClick}
@@ -576,12 +576,15 @@ const AuthOverlay: React.FC = () => {
   return (
     <>
       <ErrorBanner />
-      <SlideUpPanel {...slideUpPanelProps}>
-        {/* Content area */}
-        <div className="px-0">
-          {renderCurrentScreen()}
-        </div>
-      </SlideUpPanel>
+      {/* ✅ CRITICAL: Add high z-index wrapper */}
+      <div className="fixed inset-0 z-[10000]">
+        <SlideUpPanel {...slideUpPanelProps}>
+          {/* Content area */}
+          <div className="px-0">
+            {renderCurrentScreen()}
+          </div>
+        </SlideUpPanel>
+      </div>
     </>
   );
 };
