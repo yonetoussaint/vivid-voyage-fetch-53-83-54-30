@@ -6,7 +6,7 @@ import ProductUploadOverlay from "@/components/product/ProductUploadOverlay";
 import LocationScreen from "@/components/home/header/LocationScreen";
 import LocationListScreen from "@/components/home/header/LocationListScreen";
 import AuthOverlay from "@/components/auth/AuthOverlay";
-import SignInBanner from "@/components/layout/SignInBanner"; // Make sure to import
+import SignInBanner from "@/components/auth/SignInBanner";
 import { useMainLayout } from "@/hooks/main-layout.hooks";
 import { HeaderFilterProvider } from "@/contexts/HeaderFilterContext";
 
@@ -40,9 +40,6 @@ function MainLayoutContent() {
     setLocationScreenOpen
   } = useMainLayout();
 
-  // ✅ Debug log
-  console.log('🏠 MainLayout - isAuthOverlayOpen:', isAuthOverlayOpen);
-
   return (
     <div className="app-container">
       <style dangerouslySetInnerHTML={{ __html: layoutHeightStyle }} />
@@ -73,17 +70,6 @@ function MainLayoutContent() {
           <IndexBottomNav />
         </div>
       )}
-
-      {/* ✅ DEBUG BUTTON - Remove after testing */}
-      <button 
-        onClick={() => {
-          console.log('🔘 Test button clicked');
-          setIsAuthOverlayOpen(true);
-        }}
-        className="fixed top-20 right-4 bg-green-500 text-white px-4 py-2 rounded-lg z-[99999] shadow-lg"
-      >
-        TEST Open Auth
-      </button>
 
       {/* Sign In Banner */}
       <SignInBanner />
@@ -116,7 +102,7 @@ function MainLayoutContent() {
         />
       )}
 
-      {/* ✅ Auth Overlay - No wrapper needed */}
+      {/* Auth Overlay */}
       <AuthOverlay />
     </div>
   );
