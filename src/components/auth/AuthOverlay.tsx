@@ -26,10 +26,18 @@ const AccountCreationSuccessStep = React.lazy(() => import('./AccountCreationSuc
 const SuccessScreen = React.lazy(() => import('./SuccessScreen'));
 const FAQScreen = React.lazy(() => import('./FAQScreen'));
 
-const AuthOverlay: React.FC = () => {
+interface AuthOverlayProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const AuthOverlay: React.FC<AuthOverlayProps> = ({ isOpen, onClose }) => {
+  // ✅ EARLY RETURN - CRITICAL FIX
+  if (!isOpen) {
+    return null;
+  }
+
   const {
-    isAuthOverlayOpen,
-    setIsAuthOverlayOpen,
     currentScreen,
     setCurrentScreen,
     selectedLanguage,
@@ -41,9 +49,8 @@ const AuthOverlay: React.FC = () => {
     authError,
     setAuthError,
     getFaviconUrl,
-    handleClose,
     handleBackToMain,
-    handleContinueWithPassword, // ✅ Use the correct handler from AuthContext
+    handleContinueWithPassword,
     handleContinueWithCode,
     handleCreateAccount,
     handleSignUpClick,
@@ -188,11 +195,11 @@ const AuthOverlay: React.FC = () => {
       case 'account-creation':
         return handleBackFromAccountCreation();
       case 'success':
-        return handleClose();
+        return onClose(); // ✅ Use the prop
       case 'faq':
         return handleBackFromFAQ();
       default:
-        return handleClose();
+        return onClose(); // ✅ Use the prop
     }
   };
 
@@ -202,9 +209,10 @@ const AuthOverlay: React.FC = () => {
       currentScreen,
       authMethod,
       userEmail,
-      userPhone
+      userPhone,
+      isOpen // Debug prop
     });
-  }, [currentScreen, authMethod, userEmail, userPhone]);
+  }, [currentScreen, authMethod, userEmail, userPhone, isOpen]);
 
   // Clear server error when changing screens
   React.useEffect(() => {
@@ -274,8 +282,8 @@ const AuthOverlay: React.FC = () => {
   // Get SlideUpPanel props based on current screen
   const getSlideUpPanelProps = () => {
     const baseProps = {
-      isOpen: isAuthOverlayOpen,
-      onClose: handleClose,
+      isOpen: isOpen, // ✅ Use the prop
+      onClose: onClose, // ✅ Use the prop
       preventBodyScroll: true,
       className: "bg-white",
       dynamicHeight: true,
@@ -385,7 +393,7 @@ const AuthOverlay: React.FC = () => {
               <EmailAuthScreen
                 onBack={handleBackToMain}
                 selectedLanguage={selectedLanguage}
-                onContinueWithPassword={handleContinueWithPassword} // ✅ Use the correct handler directly
+                onContinueWithPassword={handleContinueWithPassword}
                 onContinueWithCode={handleContinueWithCodeWithMethod}
                 onCreateAccount={handleCreateAccountWithEmail}
                 onSignUpClick={handleSignUpClick}
@@ -549,7 +557,7 @@ const AuthOverlay: React.FC = () => {
             <React.Suspense fallback={<SuccessScreenSkeleton />}>
               <SuccessScreen
                 email={userEmail}
-                onContinue={handleContinueToApp}
+                onContinue={onClose} // ✅ Use the prop
                 {...compactProps}
               />
             </React.Suspense>
