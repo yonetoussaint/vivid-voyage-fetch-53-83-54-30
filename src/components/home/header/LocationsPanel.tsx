@@ -147,8 +147,8 @@ export default function LocationsPanel({
       onClose={onClose}
       title="Vil Ayisyen Favori"
       showCloseButton={true}
-      maxHeight={0.9}
-      dynamicHeight={false}
+      maxHeight={0.95} // Increased from 0.9 to 0.95
+      dynamicHeight={true} // Changed to true for better content fitting
       showDragHandle={true}
       preventBodyScroll={true}
     >
@@ -229,7 +229,7 @@ export default function LocationsPanel({
         </div>
 
         {locations.length > 0 ? (
-          <div className="space-y-6">
+          <div className="space-y-6 pb-6"> {/* Added pb-6 for extra bottom padding */}
             {departments.map((dept) => (
               <div key={dept} className="space-y-3">
                 <h3 className="text-sm font-semibold text-gray-700 px-1">{dept}</h3>
@@ -242,7 +242,7 @@ export default function LocationsPanel({
                       onDragOver={(e) => handleDragOver(e, locations.findIndex(l => l.id === location.id))}
                       onDrop={(e) => handleDrop(e, locations.findIndex(l => l.id === location.id))}
                       onDragEnd={handleDragEnd}
-                      className={`relative flex flex-col p-3 bg-white border rounded-lg transition-all duration-200 cursor-move ${
+                      className={`relative flex flex-col p-3 bg-white border rounded-lg transition-all duration-200 cursor-move min-h-[100px] ${
                         draggingIndex === locations.findIndex(l => l.id === location.id)
                           ? 'shadow-lg border-blue-300 bg-blue-50 opacity-75'
                           : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
