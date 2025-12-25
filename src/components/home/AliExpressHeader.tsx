@@ -82,7 +82,7 @@ export default function AliExpressHeader({
     });
     
     return processedItems;
-  }, [searchListItems, popularSearches]); // Removed popularSearches dependency if not used
+  }, [searchListItems, popularSearches]);
 
   // Generate a unique key for CategoryTabs based on the actual tabs being displayed
   const categoryTabsKey = tabsToShow.map(tab => tab.id).join('-');
@@ -182,7 +182,7 @@ export default function AliExpressHeader({
       className="fixed top-0 w-full z-40 bg-white" 
       style={{ margin: 0, padding: 0, boxShadow: 'none' }}
     >
-      {/* Search Bar */}
+      {/* Search Bar - Updated to be flat with small border */}
       <div 
         className="flex items-center justify-between px-2 transition-all duration-500 ease-in-out bg-white"
         style={{ height: '36px' }}
@@ -196,7 +196,11 @@ export default function AliExpressHeader({
                 value={searchQuery}
                 onChange={handleInputChange}
                 onFocus={handleFocus}
-                className="w-full px-3 py-1 pr-16 text-sm font-medium text-gray-900 bg-white border-2 border-gray-800 rounded-full transition-all duration-300 shadow-sm placeholder-gray-500"
+                className={`
+                  w-full px-3 py-1 pr-16 text-sm font-medium text-gray-900 bg-white 
+                  transition-all duration-300 shadow-sm placeholder-gray-500
+                  ${flatBorders ? 'rounded-none border border-gray-300' : 'rounded-full border-2 border-gray-800'}
+                `}
                 ref={searchRef}
               />
 
@@ -207,7 +211,7 @@ export default function AliExpressHeader({
                   <button
                     type="button"
                     onClick={handleClearSearch}
-                    className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                    className="p-1 hover:bg-gray-100 transition-colors"
                   >
                     <X className="h-4 w-4 text-gray-600" />
                   </button>
@@ -216,7 +220,11 @@ export default function AliExpressHeader({
                   <button
                     type="button"
                     onClick={handleSettingsClick}
-                    className="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full transition-colors hover:bg-gray-200"
+                    className={`
+                      px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 
+                      transition-colors hover:bg-gray-200
+                      ${flatBorders ? 'rounded-none' : 'rounded-full'}
+                    `}
                   >
                     Settings
                   </button>
