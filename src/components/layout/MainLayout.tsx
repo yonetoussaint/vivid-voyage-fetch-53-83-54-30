@@ -9,6 +9,7 @@ import AuthOverlay from "@/components/auth/AuthOverlay";
 import SignInBanner from "@/components/layout/SignInBanner";
 import { useMainLayout } from "@/hooks/main-layout.hooks";
 import { HeaderFilterProvider } from "@/contexts/HeaderFilterContext";
+import LocationsPanel from "@/components/home/header/LocationsPanel"; // Add this import
 
 function MainLayoutContent() {
   const location = useLocation();
@@ -39,7 +40,13 @@ function MainLayoutContent() {
     locationListScreenData,
     setLocationListScreenOpen,
     isLocationScreenOpen,
-    setLocationScreenOpen
+    setLocationScreenOpen,
+    
+    // Add location panel state (you'll need to add this to your hook)
+    isLocationsPanelOpen,
+    setIsLocationsPanelOpen,
+    selectedCity,
+    setSelectedCity
   } = useMainLayout();
 
   // Determine if we're on the mall route
@@ -66,7 +73,19 @@ function MainLayoutContent() {
     } : {
       showCategoryTabs: true,  // Show category tabs everywhere else
       showSearchList: false,   // Hide search list everywhere else
-    })
+    }),
+    // Pass location panel props to header
+    cityName: selectedCity,
+    onLocationChange: (locationId: string) => {
+      // Handle location change if needed
+      console.log('Location changed to:', locationId);
+    }
+  };
+
+  const handleCitySelect = (cityName: string) => {
+    setSelectedCity(cityName);
+    // You might want to save this to localStorage or context
+    localStorage.setItem('currentCity', cityName);
   };
 
   return (
@@ -76,7 +95,11 @@ function MainLayoutContent() {
       {/* Header - Now hidden on conversation detail pages */}
       {pageFlags.shouldShowHeader && (
         <div ref={headerRef} className="app-header">
-          <AliExpressHeader {...finalHeaderProps} />
+          <AliExpressHeader 
+            {...finalHeaderProps}
+            // Pass the function to open locations panel
+            onOpenLocationsPanel={() => setIsLocationsPanelOpen(true)}
+          />
         </div>
       )}
 
@@ -130,6 +153,14 @@ function MainLayoutContent() {
           showHeader={true}
         />
       )}
+
+      {/* Locations Panel */}
+      <LocationsPanel
+        isOpen={isLocationsPanelOpen}
+        onClose={() => setIsLocationsPanelOpen(false)}
+        currentCity={selectedCity}
+        onCitySelect={handleCitySelect}
+      />
 
       {/* Auth Overlay */}
       <AuthOverlay />
