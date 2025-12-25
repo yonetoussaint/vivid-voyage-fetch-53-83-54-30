@@ -6,7 +6,7 @@ import ProductUploadOverlay from "@/components/product/ProductUploadOverlay";
 import LocationScreen from "@/components/home/header/LocationScreen";
 import LocationListScreen from "@/components/home/header/LocationListScreen";
 import AuthOverlay from "@/components/auth/AuthOverlay";
-import SignInBanner from "@/components/auth/SignInBanner";
+import SignInBanner from "@/components/layout/SignInBanner";
 import { useMainLayout } from "@/hooks/main-layout.hooks";
 import { HeaderFilterProvider } from "@/contexts/HeaderFilterContext";
 
