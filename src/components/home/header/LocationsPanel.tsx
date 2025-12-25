@@ -6,7 +6,8 @@ import SlideUpPanel from '@/components/shared/SlideUpPanel';
 interface Location {
   id: string;
   name: string;
-  country?: string;
+  department: string;
+  population?: string;
   isDefault?: boolean;
 }
 
@@ -24,17 +25,23 @@ export default function LocationsPanel({
   onCitySelect
 }: LocationsPanelProps) {
   const [locations, setLocations] = useState<Location[]>([
-    { id: '1', name: 'New York', country: 'USA', isDefault: true },
-    { id: '2', name: 'Los Angeles', country: 'USA' },
-    { id: '3', name: 'Chicago', country: 'USA' },
-    { id: '4', name: 'Miami', country: 'USA' },
-    { id: '5', name: 'Houston', country: 'USA' },
+    { id: '1', name: 'Port-au-Prince', department: 'Ouest', population: '987,310', isDefault: true },
+    { id: '2', name: 'Cap-Haïtien', department: 'Nord', population: '274,404' },
+    { id: '3', name: 'Gonaïves', department: 'Artibonite', population: '300,000' },
+    { id: '4', name: 'Saint-Marc', department: 'Artibonite', population: '242,485' },
+    { id: '5', name: 'Les Cayes', department: 'Sud', population: '137,952' },
+    { id: '6', name: 'Jacmel', department: 'Sud-Est', population: '170,289' },
+    { id: '7', name: 'Port-de-Paix', department: 'Nord-Ouest', population: '462,000' },
+    { id: '8', name: 'Jérémie', department: 'Grand\'Anse', population: '122,149' },
+    { id: '9', name: 'Miragoâne', department: 'Nippes', population: '85,269' },
+    { id: '10', name: 'Hinche', department: 'Centre', population: '50,000' },
   ]);
 
   const [newCityInput, setNewCityInput] = useState('');
+  const [newDeptInput, setNewDeptInput] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
-  const MAX_FAVORITES = 10;
+  const MAX_FAVORITES = 12;
 
   useEffect(() => {
     const savedLocations = localStorage.getItem('favoriteLocations');
@@ -79,15 +86,16 @@ export default function LocationsPanel({
   };
 
   const handleAddCity = () => {
-    if (newCityInput.trim() && locations.length < MAX_FAVORITES) {
+    if (newCityInput.trim() && newDeptInput.trim() && locations.length < MAX_FAVORITES) {
       const newLocation: Location = {
         id: Date.now().toString(),
         name: newCityInput.trim(),
-        country: 'USA'
+        department: newDeptInput.trim(),
       };
 
       setLocations([...locations, newLocation]);
       setNewCityInput('');
+      setNewDeptInput('');
       setIsAdding(false);
     }
   };
@@ -125,22 +133,30 @@ export default function LocationsPanel({
     onCitySelect(cityName);
   };
 
+  // Group locations by department for better organization
+  const departments = Array.from(new Set(locations.map(loc => loc.department)));
+  const locationsByDept: Record<string, Location[]> = {};
+  
+  departments.forEach(dept => {
+    locationsByDept[dept] = locations.filter(loc => loc.department === dept);
+  });
+
   return (
     <SlideUpPanel
       isOpen={isOpen}
       onClose={onClose}
-      title="Favorite Locations"
+      title="Vil Ayisyen Favori"
       showCloseButton={true}
-      maxHeight={0.8}
+      maxHeight={0.9}
       dynamicHeight={false}
       showDragHandle={true}
       preventBodyScroll={true}
     >
-      <div className="px-4 pb-4">
+      <div className="px-4 pb-6">
         <div className="mb-6 pt-2">
-          <h2 className="text-lg font-semibold text-gray-900">Favorite Locations</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Vil Ayisyen Favori</h2>
           <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
-            <span>{locations.length} of {MAX_FAVORITES}</span>
+            <span>{locations.length} nan {MAX_FAVORITES}</span>
             <span className="flex items-center gap-1">
               <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
               Default
@@ -150,32 +166,51 @@ export default function LocationsPanel({
 
         <div className="mb-6">
           {isAdding ? (
-            <div className="flex items-center gap-2">
-              <div className="flex-1 relative">
-                <input
-                  type="text"
-                  value={newCityInput}
-                  onChange={(e) => setNewCityInput(e.target.value)}
-                  placeholder="Enter city name"
-                  className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  autoFocus
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddCity()}
-                />
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <div className="space-y-3 bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <div className="flex items-center gap-2">
+                <div className="flex-1 relative">
+                  <input
+                    type="text"
+                    value={newCityInput}
+                    onChange={(e) => setNewCityInput(e.target.value)}
+                    placeholder="Non vil"
+                    className="w-full px-4 py-2.5 pl-10 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    autoFocus
+                  />
+                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                </div>
+                <div className="flex-1 relative">
+                  <input
+                    type="text"
+                    value={newDeptInput}
+                    onChange={(e) => setNewDeptInput(e.target.value)}
+                    placeholder="Depatman"
+                    className="w-full px-4 py-2.5 pl-10 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    onKeyPress={(e) => e.key === 'Enter' && handleAddCity()}
+                  />
+                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400">D</div>
+                </div>
               </div>
-              <button
-                onClick={handleAddCity}
-                disabled={!newCityInput.trim() || locations.length >= MAX_FAVORITES}
-                className="px-4 py-3 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
-              >
-                <Check className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setIsAdding(false)}
-                className="p-3 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleAddCity}
+                  disabled={!newCityInput.trim() || !newDeptInput.trim() || locations.length >= MAX_FAVORITES}
+                  className="flex-1 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Check className="h-4 w-4 inline mr-2" />
+                  Ajoute
+                </button>
+                <button
+                  onClick={() => {
+                    setIsAdding(false);
+                    setNewCityInput('');
+                    setNewDeptInput('');
+                  }}
+                  className="px-4 py-2.5 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors border border-gray-300"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           ) : (
             <button
@@ -186,83 +221,105 @@ export default function LocationsPanel({
               <Plus className="h-5 w-5 text-gray-400 group-hover:text-blue-500" />
               <span className="text-sm font-medium text-gray-600 group-hover:text-blue-600">
                 {locations.length >= MAX_FAVORITES 
-                  ? `Maximum ${MAX_FAVORITES} favorites reached` 
-                  : 'Add a new city'}
+                  ? `Maksimòm ${MAX_FAVORITES} favori` 
+                  : 'Ajoute yon vil'}
               </span>
             </button>
           )}
         </div>
 
         {locations.length > 0 ? (
-          <div className="space-y-2">
-            {locations.map((location, index) => (
-              <div
-                key={location.id}
-                draggable
-                onDragStart={() => handleDragStart(index)}
-                onDragOver={(e) => handleDragOver(e, index)}
-                onDrop={(e) => handleDrop(e, index)}
-                onDragEnd={handleDragEnd}
-                className={`relative flex items-center gap-3 p-3 bg-white border rounded-lg transition-all duration-200 cursor-move ${
-                  draggingIndex === index
-                    ? 'shadow-lg border-blue-300 bg-blue-50 opacity-75'
-                    : 'border-gray-200 hover:border-gray-300'
-                } ${
-                  location.name === currentCity
-                    ? 'ring-2 ring-blue-500 ring-opacity-50'
-                    : ''
-                }`}
-              >
-                <div className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600">
-                  <GripVertical className="h-5 w-5" />
-                </div>
-
-                <MapPin className={`h-5 w-5 flex-shrink-0 ${
-                  location.name === currentCity 
-                    ? 'text-blue-600' 
-                    : 'text-gray-400'
-                }`} />
-
-                <div 
-                  className="flex-1 min-w-0 cursor-pointer"
-                  onClick={() => handleCityClick(location.name)}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className={`text-sm font-medium truncate ${
-                      location.name === currentCity
-                        ? 'text-blue-700'
-                        : 'text-gray-900'
-                    }`}>
-                      {location.name}
-                    </span>
-                    {location.isDefault && (
-                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400 flex-shrink-0" />
-                    )}
-                  </div>
-                  {location.country && (
-                    <p className="text-xs text-gray-500 truncate">
-                      {location.country}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  {!location.isDefault && (
-                    <button
-                      onClick={() => handleSetDefault(location.id)}
-                      className="p-2 text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 rounded-md transition-colors"
+          <div className="space-y-6">
+            {departments.map((dept) => (
+              <div key={dept} className="space-y-3">
+                <h3 className="text-sm font-semibold text-gray-700 px-1">{dept}</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {locationsByDept[dept].map((location, index) => (
+                    <div
+                      key={location.id}
+                      draggable
+                      onDragStart={() => handleDragStart(locations.findIndex(l => l.id === location.id))}
+                      onDragOver={(e) => handleDragOver(e, locations.findIndex(l => l.id === location.id))}
+                      onDrop={(e) => handleDrop(e, locations.findIndex(l => l.id === location.id))}
+                      onDragEnd={handleDragEnd}
+                      className={`relative flex flex-col p-3 bg-white border rounded-lg transition-all duration-200 cursor-move ${
+                        draggingIndex === locations.findIndex(l => l.id === location.id)
+                          ? 'shadow-lg border-blue-300 bg-blue-50 opacity-75'
+                          : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                      } ${
+                        location.name === currentCity
+                          ? 'ring-2 ring-blue-500 ring-opacity-50 border-blue-300'
+                          : ''
+                      }`}
                     >
-                      <Star className="h-4 w-4" />
-                    </button>
-                  )}
-                  {!location.isDefault && (
-                    <button
-                      onClick={() => handleDeleteCity(location.id)}
-                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  )}
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600">
+                            <GripVertical className="h-4 w-4" />
+                          </div>
+                          <MapPin className={`h-4 w-4 flex-shrink-0 ${
+                            location.name === currentCity 
+                              ? 'text-blue-600' 
+                              : 'text-gray-400'
+                          }`} />
+                        </div>
+                        
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          {!location.isDefault && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSetDefault(location.id);
+                              }}
+                              className="p-1 text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 rounded transition-colors"
+                            >
+                              <Star className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                          {!location.isDefault && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteCity(location.id);
+                              }}
+                              className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div 
+                        className="flex-1 min-w-0 cursor-pointer"
+                        onClick={() => handleCityClick(location.name)}
+                      >
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <span className={`text-sm font-semibold truncate ${
+                            location.name === currentCity
+                              ? 'text-blue-700'
+                              : 'text-gray-900'
+                          }`}>
+                            {location.name}
+                          </span>
+                          {location.isDefault && (
+                            <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400 flex-shrink-0" />
+                          )}
+                        </div>
+                        
+                        <div className="space-y-1">
+                          <p className="text-xs text-gray-600 truncate">
+                            {location.department}
+                          </p>
+                          {location.population && (
+                            <p className="text-xs text-gray-500">
+                              {location.population} moun
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
@@ -270,8 +327,8 @@ export default function LocationsPanel({
         ) : (
           <div className="text-center py-8">
             <MapPin className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-            <h3 className="text-sm font-medium text-gray-900 mb-1">No favorite locations</h3>
-            <p className="text-xs text-gray-500">Add cities to get quick access</p>
+            <h3 className="text-sm font-medium text-gray-900 mb-1">Pa gen vil favori</h3>
+            <p className="text-xs text-gray-500">Ajoute vil pou aksè rapid</p>
           </div>
         )}
       </div>
