@@ -12,7 +12,7 @@ interface AliExpressHeaderProps {
 
   // New props for optional search list
   showSearchList?: boolean;
-  searchListItems?: Array<string | { term: string; trend?: 'hot' | 'trending-up' | 'trending-down' | 'popular' }>;
+  searchListItems?: Array<{ term: string; trend?: 'hot' | 'trending-up' | 'trending-down' | 'popular' }> | string[];
   onSearchItemClick?: (searchTerm: string) => void;
   flatBorders?: boolean;
 }
@@ -39,7 +39,7 @@ export default function AliExpressHeader({
   const searchRef = useRef<HTMLInputElement>(null);
   const searchListRef = useRef<HTMLDivElement>(null);
 
-  // Popular searches data with trend indicators
+  // Popular searches data with trend indicators - FIXED: Consistent trends
   const popularSearches = useMemo(() => [
     { term: "Wireless earbuds", trend: 'hot' as const },
     { term: "Smart watches", trend: 'trending-up' as const },
@@ -64,26 +64,30 @@ export default function AliExpressHeader({
   // Determine which tabs to show
   const tabsToShow = customTabs || categories;
 
-  // Process search list items to ensure they have the correct format
+  // Process search list items to ensure they have the correct format - FIXED: Use deterministic trend assignment
   const searchItemsToShow = useMemo(() => {
     if (!searchListItems) return popularSearches;
     
-    return searchListItems.map(item => {
+    // Convert all items to objects with deterministic trends
+    const processedItems = searchListItems.map((item, index) => {
       if (typeof item === 'string') {
-        // For string items, randomly assign a trend (or default to 'popular')
-        const trends: Array<'hot' | 'trending-up' | 'trending-down' | 'popular'> = ['hot', 'trending-up', 'trending-down', 'popular'];
-        const randomTrend = trends[Math.floor(Math.random() * trends.length)];
-        return { term: item, trend: randomTrend };
+        // Deterministic trend assignment based on index to avoid flashing
+        const trends: Array<'hot' | 'trending-up' | 'trending-down' | 'popular'> = 
+          ['hot', 'trending-up', 'popular', 'trending-down'];
+        const trendIndex = index % trends.length;
+        return { term: item, trend: trends[trendIndex] };
       }
       // For object items, ensure they have a trend
       return { term: item.term, trend: item.trend || 'popular' };
     });
-  }, [searchListItems, popularSearches]);
+    
+    return processedItems;
+  }, [searchListItems, popularSearches]); // Removed popularSearches dependency if not used
 
   // Generate a unique key for CategoryTabs based on the actual tabs being displayed
   const categoryTabsKey = tabsToShow.map(tab => tab.id).join('-');
 
-  // Cycle through popular searches for placeholder
+  // Cycle through popular searches for placeholder - FIXED: Use string items
   useEffect(() => {
     let currentIndex = 0;
     const updatePlaceholder = () => {
@@ -161,21 +165,17 @@ export default function AliExpressHeader({
     }
   };
 
-  // Get icon based on trend
-  const getTrendIcon = (trend: string) => {
-    switch (trend) {
-      case 'hot':
-        return <Flame className="h-3 w-3 mr-1.5 text-orange-500" />;
-      case 'trending-up':
-        return <TrendingUp className="h-3 w-3 mr-1.5 text-green-500" />;
-      case 'trending-down':
-        return <TrendingDown className="h-3 w-3 mr-1.5 text-red-500" />;
-      case 'popular':
-        return <Zap className="h-3 w-3 mr-1.5 text-blue-500" />;
-      default:
-        return <Search className="h-3 w-3 mr-1.5 text-gray-500" />;
-    }
-  };
+  // Get icon based on trend - FIXED: Use useMemo for consistent icons
+  const getTrendIcon = useMemo(() => {
+    const iconMap = {
+      'hot': <Flame className="h-3 w-3 mr-1.5 text-orange-500" />,
+      'trending-up': <TrendingUp className="h-3 w-3 mr-1.5 text-green-500" />,
+      'trending-down': <TrendingDown className="h-3 w-3 mr-1.5 text-red-500" />,
+      'popular': <Zap className="h-3 w-3 mr-1.5 text-blue-500" />,
+    };
+    
+    return (trend: string) => iconMap[trend as keyof typeof iconMap] || <Search className="h-3 w-3 mr-1.5 text-gray-500" />;
+  }, []);
 
   return (
     <header 
