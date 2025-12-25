@@ -10,8 +10,6 @@ interface AliExpressHeaderProps {
   customTabs?: Array<{ id: string; name: string; path?: string }>;
   onCustomTabChange?: (tabId: string) => void;
 
-  // Removed all section header props
-
   // New props for optional search list
   showSearchList?: boolean;
   searchListItems?: string[];
@@ -24,8 +22,6 @@ export default function AliExpressHeader({
   showCategoryTabs = true,
   customTabs,
   onCustomTabChange,
-
-  // Removed all section header props
 
   // New props with defaults
   showSearchList = false,
@@ -217,8 +213,8 @@ export default function AliExpressHeader({
         </div>
       ) : showSearchList ? (
         // Horizontally Scrollable Search List
-        <div className="bg-white border-t border-gray-100">
-          {/* Scrollable search list - title removed */}
+        <div className="bg-white">
+          {/* Scrollable search list - border top removed */}
           <div 
             ref={searchListRef}
             className="relative overflow-x-auto scrollbar-hide"
