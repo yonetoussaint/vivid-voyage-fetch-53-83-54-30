@@ -9,25 +9,13 @@ interface AliExpressHeaderProps {
   showCategoryTabs?: boolean;
   customTabs?: Array<{ id: string; name: string; path?: string }>;
   onCustomTabChange?: (tabId: string) => void;
-  showSectionHeader?: boolean;
-  sectionHeaderTitle?: string;
-  sectionHeaderViewAllLink?: string;
-  sectionHeaderViewAllText?: string;
-  sectionHeaderShowStackedProfiles?: boolean;
-  sectionHeaderStackedProfiles?: Array<{ id: string; image: string; alt?: string }>;
-  sectionHeaderStackedProfilesText?: string;
-  sectionHeaderShowCountdown?: boolean;
-  sectionHeaderCountdown?: string;
-  sectionHeaderShowSponsorCount?: boolean;
-  sectionHeaderShowVerifiedSellers?: boolean;
-  sectionHeaderVerifiedSellersText?: string;
-  sectionHeaderIcon?: React.ComponentType<{ className?: string }>;
-  
+
+  // Removed all section header props
+
   // New props for optional search list
   showSearchList?: boolean;
   searchListItems?: string[];
   onSearchItemClick?: (searchTerm: string) => void;
-  searchListTitle?: string;
   flatBorders?: boolean;
 }
 
@@ -36,25 +24,13 @@ export default function AliExpressHeader({
   showCategoryTabs = true,
   customTabs,
   onCustomTabChange,
-  showSectionHeader = false,
-  sectionHeaderTitle = '',
-  sectionHeaderViewAllLink,
-  sectionHeaderViewAllText = 'View All',
-  sectionHeaderShowStackedProfiles = false,
-  sectionHeaderStackedProfiles = [],
-  sectionHeaderStackedProfilesText = "Handpicked by",
-  sectionHeaderShowCountdown = false,
-  sectionHeaderCountdown,
-  sectionHeaderShowSponsorCount = false,
-  sectionHeaderShowVerifiedSellers = false,
-  sectionHeaderVerifiedSellersText = 'Verified Sellers',
-  sectionHeaderIcon,
-  
+
+  // Removed all section header props
+
   // New props with defaults
   showSearchList = false,
   searchListItems,
   onSearchItemClick,
-  searchListTitle = 'Popular Searches',
   flatBorders = true,
 }: AliExpressHeaderProps) {
   const { t } = useTranslation();
@@ -242,14 +218,7 @@ export default function AliExpressHeader({
       ) : showSearchList ? (
         // Horizontally Scrollable Search List
         <div className="bg-white border-t border-gray-100">
-          {/* Optional title */}
-          {searchListTitle && (
-            <div className="px-2 pt-2 pb-1">
-              <p className="text-xs font-medium text-gray-600">{searchListTitle}</p>
-            </div>
-          )}
-          
-          {/* Scrollable search list */}
+          {/* Scrollable search list - title removed */}
           <div 
             ref={searchListRef}
             className="relative overflow-x-auto scrollbar-hide"
@@ -259,7 +228,7 @@ export default function AliExpressHeader({
               msOverflowStyle: 'none'
             }}
           >
-            <div className="flex px-2 pb-2 space-x-2 min-w-max">
+            <div className="flex px-2 py-2 space-x-2 min-w-max">
               {searchItemsToShow.map((item, index) => (
                 <button
                   key={index}
@@ -286,7 +255,7 @@ export default function AliExpressHeader({
                 </button>
               ))}
             </div>
-            
+
             {/* Fade effect on the right side to indicate scrollability */}
             <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white to-transparent pointer-events-none" />
           </div>
