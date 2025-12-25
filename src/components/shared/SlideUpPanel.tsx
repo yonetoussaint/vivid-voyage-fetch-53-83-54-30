@@ -49,6 +49,9 @@ export default function SlideUpPanel({
   const [startY, setStartY] = useState(0);
   const [currentTranslate, setCurrentTranslate] = useState(0);
 
+  // ✅ CRITICAL: Early return when not open
+  if (!isOpen) return null;
+
   // ✅ DEBUG LOG
   console.log('🚀 SlideUpPanel: isOpen =', isOpen);
 
@@ -225,9 +228,6 @@ export default function SlideUpPanel({
       document.removeEventListener('touchmove', handleTouchMove);
     };
   }, [isOpen, preventBodyScroll, contentHeight]);
-
-  // ✅ REMOVED: if (!isOpen) return null; 
-  // Let AuthOverlay handle the conditional rendering
 
   // Calculate if we need scrolling - with dynamic height option
   const maxPanelHeight = window.innerHeight * maxHeight;
