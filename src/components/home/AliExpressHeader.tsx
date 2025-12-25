@@ -1,10 +1,9 @@
-// components/AliExpressHeader.tsx
+// components/home/AliExpressHeader.tsx
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { X, Search, TrendingUp, TrendingDown, Flame, Zap, ChevronDown, MapPin } from 'lucide-react';
 import CategoryTabs from './header/CategoryTabs';
-import LocationsPanel from './header/LocationsPanel';
 
 interface AliExpressHeaderProps {
   activeTabId?: string;
@@ -18,10 +17,23 @@ interface AliExpressHeaderProps {
   onSearchItemClick?: (searchTerm: string) => void;
   flatBorders?: boolean;
 
-  // New props for location dropdown
+  // Filter bar props
+  showFilterBar?: boolean;
+  filterCategories?: Array<{ id: string; name: string }>;
+  selectedFilters?: string[];
+  onFilterSelect?: (filterId: string) => void;
+  onFilterClear?: (filterId: string) => void;
+  onClearAll?: () => void;
+  onFilterButtonClick?: () => void;
+  isFilterDisabled?: boolean;
+
+  // Location dropdown props
   cityName?: string;
   locationOptions?: Array<{ id: string; name: string }>;
   onLocationChange?: (locationId: string) => void;
+  
+  // New prop for opening locations panel
+  onOpenLocationsPanel?: () => void;
 }
 
 export default function AliExpressHeader({ 
@@ -36,6 +48,16 @@ export default function AliExpressHeader({
   onSearchItemClick,
   flatBorders = true,
 
+  // Filter bar props
+  showFilterBar = false,
+  filterCategories = [],
+  selectedFilters = [],
+  onFilterSelect,
+  onFilterClear,
+  onClearAll,
+  onFilterButtonClick,
+  isFilterDisabled = false,
+
   // Location dropdown props
   cityName = 'New York',
   locationOptions = [
@@ -46,6 +68,9 @@ export default function AliExpressHeader({
     { id: 'miami', name: 'Miami' },
   ],
   onLocationChange,
+  
+  // New prop for locations panel
+  onOpenLocationsPanel,
 }: AliExpressHeaderProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -74,7 +99,12 @@ export default function AliExpressHeader({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Popular searches data with trend indicators - FIXED: Consistent trends
+  // Update selected city when prop changes
+  useEffect(() => {
+    setSelectedCity(cityName);
+  }, [cityName]);
+
+  // Popular searches data with trend indicators
   const popularSearches = useMemo(() => [
     { term: "Wireless earbuds", trend: 'hot' as const },
     { term: "Smart watches", trend: 'trending-up' as const },
@@ -99,7 +129,7 @@ export default function AliExpressHeader({
   // Determine which tabs to show
   const tabsToShow = customTabs || categories;
 
-  // Process search list items to ensure they have the correct format - FIXED: Use deterministic trend assignment
+  // Process search list items to ensure they have the correct format
   const searchItemsToShow = useMemo(() => {
     if (!searchListItems) return popularSearches;
 
@@ -122,7 +152,7 @@ export default function AliExpressHeader({
   // Generate a unique key for CategoryTabs based on the actual tabs being displayed
   const categoryTabsKey = tabsToShow.map(tab => tab.id).join('-');
 
-  // Cycle through popular searches for placeholder - FIXED: Use string items
+  // Cycle through popular searches for placeholder
   useEffect(() => {
     let currentIndex = 0;
     const updatePlaceholder = () => {
@@ -143,11 +173,6 @@ export default function AliExpressHeader({
     setActiveTab(activeTabId);
   }, [activeTabId, location.pathname]);
 
-  // Update selected city when prop changes
-  useEffect(() => {
-    setSelectedCity(cityName);
-  }, [cityName]);
-
   // Handle tab change
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
@@ -164,21 +189,13 @@ export default function AliExpressHeader({
 
   // Handle location button click - UPDATED
   const handleLocationClick = () => {
-    // Open the locations panel instead of the dropdown
-    setIsLocationsPanelOpen(true);
-    // Close the dropdown if it's open
-    setIsLocationDropdownOpen(false);
-  };
-
-  // Handle location selection from the panel
-  const handleCitySelect = (cityName: string) => {
-    setSelectedCity(cityName);
-    
-    // Find the location ID from options
-    const location = locationOptions.find(loc => loc.name === cityName);
-    if (location && onLocationChange) {
-      onLocationChange(location.id);
+    // Open the locations panel
+    if (onOpenLocationsPanel) {
+      onOpenLocationsPanel();
+    } else {
+      setIsLocationsPanelOpen(true);
     }
+    setIsLocationDropdownOpen(false);
   };
 
   // Handle location selection from dropdown (for backward compatibility)
@@ -228,7 +245,7 @@ export default function AliExpressHeader({
     }
   };
 
-  // Get icon based on trend - FIXED: Use useMemo for consistent icons
+  // Get icon based on trend
   const getTrendIcon = useMemo(() => {
     const iconMap = {
       'hot': <Flame className="h-3 w-3 mr-1.5 text-orange-500" />,
@@ -240,13 +257,41 @@ export default function AliExpressHeader({
     return (trend: string) => iconMap[trend as keyof typeof iconMap] || <Search className="h-3 w-3 mr-1.5 text-gray-500" />;
   }, []);
 
+  // Handle filter selection
+  const handleFilterSelect = (filterId: string) => {
+    if (onFilterSelect) {
+      onFilterSelect(filterId);
+    }
+  };
+
+  // Handle filter clear
+  const handleFilterClear = (filterId: string) => {
+    if (onFilterClear) {
+      onFilterClear(filterId);
+    }
+  };
+
+  // Handle clear all filters
+  const handleClearAllFilters = () => {
+    if (onClearAll) {
+      onClearAll();
+    }
+  };
+
+  // Handle filter button click
+  const handleFilterButtonClick = () => {
+    if (onFilterButtonClick) {
+      onFilterButtonClick();
+    }
+  };
+
   return (
     <>
       <header 
         className="fixed top-0 w-full z-40 bg-white" 
         style={{ margin: 0, padding: 0, boxShadow: 'none' }}
       >
-        {/* Search Bar - Updated to show black border initially */}
+        {/* Search Bar */}
         <div 
           className="flex items-center justify-between px-2 transition-all duration-500 ease-in-out bg-white"
           style={{ height: '36px' }}
@@ -280,7 +325,7 @@ export default function AliExpressHeader({
                       <X className="h-4 w-4 text-gray-600" />
                     </button>
                   ) : (
-                    // Location dropdown button when no text
+                    // Location button - UPDATED to use handleLocationClick
                     <div className="relative" ref={locationDropdownRef}>
                       <button
                         type="button"
@@ -332,7 +377,7 @@ export default function AliExpressHeader({
                               type="button"
                               onClick={() => {
                                 setIsLocationDropdownOpen(false);
-                                setIsLocationsPanelOpen(true);
+                                handleLocationClick();
                               }}
                               className="text-xs font-medium text-blue-600 hover:text-blue-700"
                             >
@@ -348,6 +393,61 @@ export default function AliExpressHeader({
             </form>
           </div>
         </div>
+
+        {/* Filter Bar */}
+        {showFilterBar && filterCategories.length > 0 && (
+          <div className="bg-white border-b border-gray-200">
+            <div className="flex items-center justify-between px-2 py-1">
+              <div className="flex-1 overflow-x-auto scrollbar-hide">
+                <div className="flex items-center space-x-2 py-1 min-w-max">
+                  {filterCategories.map((category) => {
+                    const isSelected = selectedFilters.includes(category.id);
+                    return (
+                      <button
+                        key={category.id}
+                        onClick={() => handleFilterSelect(category.id)}
+                        disabled={isFilterDisabled}
+                        className={`
+                          flex items-center justify-center px-3 py-1 text-xs font-medium
+                          whitespace-nowrap transition-all duration-200
+                          ${flatBorders ? 'rounded-none' : 'rounded-full'}
+                          ${isSelected 
+                            ? 'bg-blue-600 text-white border border-blue-600' 
+                            : 'bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200'
+                          }
+                          ${isFilterDisabled ? 'opacity-50 cursor-not-allowed' : ''}
+                        `}
+                      >
+                        {category.name}
+                        {isSelected && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleFilterClear(category.id);
+                            }}
+                            className="ml-1.5 text-current hover:text-white/80"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              
+              {selectedFilters.length > 0 && (
+                <button
+                  onClick={handleClearAllFilters}
+                  disabled={isFilterDisabled}
+                  className="ml-2 px-2 py-1 text-xs font-medium text-red-600 hover:text-red-700 whitespace-nowrap"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Optional Element Below Header */}
         {showCategoryTabs ? (
@@ -407,14 +507,6 @@ export default function AliExpressHeader({
           </div>
         ) : null}
       </header>
-
-      {/* Locations Panel */}
-      <LocationsPanel
-        isOpen={isLocationsPanelOpen}
-        onClose={() => setIsLocationsPanelOpen(false)}
-        currentCity={selectedCity}
-        onCitySelect={handleCitySelect}
-      />
     </>
   );
 }
