@@ -13,6 +13,7 @@ import { ProductEditRoutes } from "../routes/ProductEditRoutes";
 import { PaymentRoutes } from "../routes/PaymentRoutes";
 import { MiscRoutes } from "../routes/MiscRoutes";
 import AdminPage from "@/pages/AdminPage";
+import CommunesPage from "@/pages/CommunesPage";
 // Import the MallPage component
 import MallPage from "@/pages/MallPage";
 
@@ -37,6 +38,7 @@ export function AppRoutes() {
 
         {/* Add Admin Route */}
         <Route path="/admin" element={<AdminPage />} />
+ <Route path="/communes" element={<CommunesPage/>} />
       </Route>
     </Routes>
   );
