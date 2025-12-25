@@ -81,7 +81,6 @@ export default function AliExpressHeader({
   const [placeholder, setPlaceholder] = useState('');
   const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
   const [selectedCity, setSelectedCity] = useState(cityName);
-  const [isLocationsPanelOpen, setIsLocationsPanelOpen] = useState(false);
 
   const searchRef = useRef<HTMLInputElement>(null);
   const searchListRef = useRef<HTMLDivElement>(null);
@@ -187,24 +186,27 @@ export default function AliExpressHeader({
     }
   };
 
-  // Handle location button click - UPDATED
+  // Handle location button click - ONLY TOGGLE DROPDOWN
   const handleLocationClick = () => {
-    // Open the locations panel
-    if (onOpenLocationsPanel) {
-      onOpenLocationsPanel();
-    } else {
-      setIsLocationsPanelOpen(true);
-    }
-    setIsLocationDropdownOpen(false);
+    setIsLocationDropdownOpen(!isLocationDropdownOpen);
   };
 
-  // Handle location selection from dropdown (for backward compatibility)
+  // Handle location selection from dropdown
   const handleLocationSelect = (locationId: string, locationName: string) => {
     setSelectedCity(locationName);
     setIsLocationDropdownOpen(false);
 
     if (onLocationChange) {
       onLocationChange(locationId);
+    }
+  };
+
+  // Handle "Manage favorites" click - OPEN THE PANEL
+  const handleManageFavoritesClick = () => {
+    setIsLocationDropdownOpen(false);
+    // Open the locations panel
+    if (onOpenLocationsPanel) {
+      onOpenLocationsPanel();
     }
   };
 
@@ -325,7 +327,7 @@ export default function AliExpressHeader({
                       <X className="h-4 w-4 text-gray-600" />
                     </button>
                   ) : (
-                    // Location button - UPDATED to use handleLocationClick
+                    // Location button - ONLY TOGGLES DROPDOWN
                     <div className="relative" ref={locationDropdownRef}>
                       <button
                         type="button"
@@ -337,7 +339,7 @@ export default function AliExpressHeader({
                           bg-gray-100 hover:bg-gray-200
                           transition-all duration-200
                           ${flatBorders ? 'rounded-none' : 'rounded-full'}
-                          ${isLocationsPanelOpen || isLocationDropdownOpen ? 'bg-gray-200' : ''}
+                          ${isLocationDropdownOpen ? 'bg-gray-200' : ''}
                         `}
                       >
                         {/* Location icon */}
@@ -350,7 +352,7 @@ export default function AliExpressHeader({
                         <ChevronDown className={`h-3.5 w-3.5 text-gray-500 flex-shrink-0 transition-transform duration-200 ${isLocationDropdownOpen ? 'rotate-180' : ''}`} />
                       </button>
 
-                      {/* Dropdown menu (for backward compatibility) */}
+                      {/* Dropdown menu */}
                       {isLocationDropdownOpen && (
                         <div className="absolute right-0 mt-1 py-1 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-50">
                           <div className="px-3 py-2 text-xs font-medium text-gray-500 border-b border-gray-100">
@@ -375,10 +377,7 @@ export default function AliExpressHeader({
                           <div className="border-t border-gray-100 px-3 py-2">
                             <button
                               type="button"
-                              onClick={() => {
-                                setIsLocationDropdownOpen(false);
-                                handleLocationClick();
-                              }}
+                              onClick={handleManageFavoritesClick}
                               className="text-xs font-medium text-blue-600 hover:text-blue-700"
                             >
                               Manage favorites
