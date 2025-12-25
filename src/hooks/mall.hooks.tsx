@@ -1,5 +1,11 @@
 import { useState, useMemo } from "react";
 import { FilterTab, ActiveFilter } from "@/components/FilterTabs";
+import { 
+  ShoppingBag, Store, Crown, Award, Zap, Star, 
+  Smartphone, Shirt, Home, Sparkles, Dumbbell, Car, 
+  Watch, Trophy, Gift, Leaf, Diamond, TrendingUp,
+  Package, CheckCircle, Shield, Truck, Tag, Clock
+} from "lucide-react";
 
 export interface MallFilters {
   sortBy: string;
@@ -379,86 +385,107 @@ export const useMallData = () => {
     {
       id: 'all',
       name: 'All',
-      imageUrl: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=200&h=200&fit=crop&crop=center',
+      icon: <ShoppingBag className="w-6 h-6" />,
       bgColor: 'bg-blue-50',
       textColor: 'text-blue-600'
     },
     {
       id: 'official-stores',
       name: 'Official Stores',
-      imageUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=200&h=200&fit=crop&crop=center',
+      icon: <Store className="w-6 h-6" />,
       bgColor: 'bg-purple-50',
       textColor: 'text-purple-600'
     },
     {
       id: 'mall-exclusives',
       name: 'Mall Exclusives',
-      imageUrl: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=200&h=200&fit=crop&crop=center',
+      icon: <Diamond className="w-6 h-6" />,
       bgColor: 'bg-amber-50',
       textColor: 'text-amber-600'
     },
     {
       id: 'top-brands',
       name: 'Top Brands',
-      imageUrl: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=200&h=200&fit=crop&crop=center',
+      icon: <Crown className="w-6 h-6" />,
       bgColor: 'bg-red-50',
       textColor: 'text-red-600'
     },
     {
       id: 'luxury',
       name: 'Luxury',
-      imageUrl: 'https://images.unsplash.com/photo-1555212697-194d092e3b8f?w=200&h=200&fit=crop&crop=center',
+      icon: <Award className="w-6 h-6" />,
       bgColor: 'bg-yellow-50',
       textColor: 'text-yellow-600'
     },
     {
-      id: 'electronics',
-      name: 'Electronics',
-      imageUrl: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=200&h=200&fit=crop&crop=center',
+      id: 'trending',
+      name: 'Trending',
+      icon: <TrendingUp className="w-6 h-6" />,
       bgColor: 'bg-gray-50',
       textColor: 'text-gray-600'
     },
     {
+      id: 'electronics',
+      name: 'Electronics',
+      icon: <Smartphone className="w-6 h-6" />,
+      bgColor: 'bg-indigo-50',
+      textColor: 'text-indigo-600'
+    },
+    {
       id: 'fashion',
       name: 'Fashion',
-      imageUrl: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=200&h=200&fit=crop&crop=center',
+      icon: <Shirt className="w-6 h-6" />,
       bgColor: 'bg-pink-50',
       textColor: 'text-pink-600'
     },
     {
       id: 'home-living',
       name: 'Home & Living',
-      imageUrl: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=200&h=200&fit=crop&crop=center',
+      icon: <Home className="w-6 h-6" />,
       bgColor: 'bg-green-50',
       textColor: 'text-green-600'
     },
     {
       id: 'beauty',
       name: 'Beauty',
-      imageUrl: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=200&h=200&fit=crop&crop=center',
+      icon: <Sparkles className="w-6 h-6" />,
       bgColor: 'bg-rose-50',
       textColor: 'text-rose-600'
     },
     {
       id: 'sports-outdoors',
       name: 'Sports & Outdoors',
-      imageUrl: 'https://images.unsplash.com/photo-1541625602330-2277a4c46182?w=200&h=200&fit=crop&crop=center',
+      icon: <Dumbbell className="w-6 h-6" />,
       bgColor: 'bg-orange-50',
       textColor: 'text-orange-600'
     },
     {
       id: 'toys-kids',
       name: 'Toys & Kids',
-      imageUrl: 'https://images.unsplash.com/photo-1587654780298-8ded0b58d469?w=200&h=200&fit=crop&crop=center',
+      icon: <Gift className="w-6 h-6" />,
       bgColor: 'bg-cyan-50',
       textColor: 'text-cyan-600'
     },
     {
       id: 'automotive',
       name: 'Automotive',
-      imageUrl: 'https://images.unsplash.com/photo-1553440569-bcc63803a83d?w=200&h=200&fit=crop&crop=center',
+      icon: <Car className="w-6 h-6" />,
       bgColor: 'bg-indigo-50',
       textColor: 'text-indigo-600'
+    },
+    {
+      id: 'best-deals',
+      name: 'Best Deals',
+      icon: <Tag className="w-6 h-6" />,
+      bgColor: 'bg-emerald-50',
+      textColor: 'text-emerald-600'
+    },
+    {
+      id: 'fast-shipping',
+      name: 'Fast Shipping',
+      icon: <Truck className="w-6 h-6" />,
+      bgColor: 'bg-teal-50',
+      textColor: 'text-teal-600'
     }
   ], []);
 
@@ -483,6 +510,10 @@ export const useMallData = () => {
         filters.priceRange = { min: 500, max: 10000 };
         filters.brand = ['Apple', 'Samsung', 'Sony', 'Dell', 'HP'];
         filters.verifiedSeller = true;
+        break;
+      case 'trending':
+        filters.sortBy = 'popular';
+        filters.rating = 4.0;
         break;
       case 'electronics':
         filters.category = ['smartphones', 'laptops', 'tvs', 'headphones', 'wearables', 'cameras'];
@@ -511,6 +542,15 @@ export const useMallData = () => {
         break;
       case 'automotive':
         filters.category = 'automotive';
+        break;
+      case 'best-deals':
+        filters.onSale = true;
+        filters.discount = true;
+        filters.priceRange = { min: 0, max: 100 };
+        break;
+      case 'fast-shipping':
+        filters.fastDispatch = true;
+        filters.freeShipping = true;
         break;
       default:
         // For 'all' or other categories, no specific filters
