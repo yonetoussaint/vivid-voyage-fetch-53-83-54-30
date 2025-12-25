@@ -214,7 +214,7 @@ export default function AliExpressHeader({
       ) : showSearchList ? (
         // Horizontally Scrollable Search List
         <div className="bg-white">
-          {/* Scrollable search list - border top removed */}
+          {/* Scrollable search list - reduced vertical padding */}
           <div 
             ref={searchListRef}
             className="relative overflow-x-auto scrollbar-hide"
@@ -224,14 +224,14 @@ export default function AliExpressHeader({
               msOverflowStyle: 'none'
             }}
           >
-            <div className="flex px-2 py-2 space-x-2 min-w-max">
+            <div className="flex px-2 py-1 space-x-2 min-w-max">
               {searchItemsToShow.map((item, index) => (
                 <button
                   key={index}
                   onClick={() => handleSearchItemClick(item)}
                   className={`
                     flex items-center justify-center
-                    px-3 py-1.5
+                    px-3 py-1
                     text-xs font-medium
                     whitespace-nowrap
                     transition-all duration-200
