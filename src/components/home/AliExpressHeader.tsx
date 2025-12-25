@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { X, Search } from 'lucide-react';
+import { X, Search, TrendingUp, TrendingDown, Flame, Zap, Star } from 'lucide-react';
 import CategoryTabs from './header/CategoryTabs';
 
 interface AliExpressHeaderProps {
@@ -39,15 +39,15 @@ export default function AliExpressHeader({
   const searchRef = useRef<HTMLInputElement>(null);
   const searchListRef = useRef<HTMLDivElement>(null);
 
-  // Popular searches data
+  // Popular searches data with trend indicators
   const popularSearches = useMemo(() => [
-    "Wireless earbuds",
-    "Smart watches",
-    "Summer dresses",
-    "Phone cases",
-    "Home decor",
-    "Fitness trackers",
-    "LED strip lights"
+    { term: "Wireless earbuds", trend: 'hot' as const },
+    { term: "Smart watches", trend: 'trending-up' as const },
+    { term: "Summer dresses", trend: 'hot' as const },
+    { term: "Phone cases", trend: 'popular' as const },
+    { term: "Home decor", trend: 'trending-down' as const },
+    { term: "Fitness trackers", trend: 'trending-up' as const },
+    { term: "LED strip lights", trend: 'popular' as const }
   ], []);
 
   const categories = useMemo(() => [
@@ -65,7 +65,9 @@ export default function AliExpressHeader({
   const tabsToShow = customTabs || categories;
 
   // Use provided search list items or default popular searches
-  const searchItemsToShow = searchListItems || popularSearches;
+  const searchItemsToShow = searchListItems 
+    ? searchListItems.map(term => ({ term, trend: 'popular' as const }))
+    : popularSearches;
 
   // Generate a unique key for CategoryTabs based on the actual tabs being displayed
   const categoryTabsKey = tabsToShow.map(tab => tab.id).join('-');
@@ -74,7 +76,7 @@ export default function AliExpressHeader({
   useEffect(() => {
     let currentIndex = 0;
     const updatePlaceholder = () => {
-      setPlaceholder(popularSearches[currentIndex]);
+      setPlaceholder(popularSearches[currentIndex].term);
       currentIndex = (currentIndex + 1) % popularSearches.length;
     };
 
@@ -148,6 +150,22 @@ export default function AliExpressHeader({
     }
   };
 
+  // Get icon based on trend
+  const getTrendIcon = (trend: string) => {
+    switch (trend) {
+      case 'hot':
+        return <Flame className="h-3 w-3 mr-1.5 text-orange-500" />;
+      case 'trending-up':
+        return <TrendingUp className="h-3 w-3 mr-1.5 text-green-500" />;
+      case 'trending-down':
+        return <TrendingDown className="h-3 w-3 mr-1.5 text-red-500" />;
+      case 'popular':
+        return <Zap className="h-3 w-3 mr-1.5 text-blue-500" />;
+      default:
+        return <Search className="h-3 w-3 mr-1.5 text-gray-500" />;
+    }
+  };
+
   return (
     <header 
       className="fixed top-0 w-full z-40 bg-white" 
@@ -214,7 +232,7 @@ export default function AliExpressHeader({
       ) : showSearchList ? (
         // Horizontally Scrollable Search List
         <div className="bg-white">
-          {/* Scrollable search list - reduced vertical padding */}
+          {/* Scrollable search list */}
           <div 
             ref={searchListRef}
             className="relative overflow-x-auto scrollbar-hide"
@@ -228,7 +246,7 @@ export default function AliExpressHeader({
               {searchItemsToShow.map((item, index) => (
                 <button
                   key={index}
-                  onClick={() => handleSearchItemClick(item)}
+                  onClick={() => handleSearchItemClick(item.term)}
                   className={`
                     flex items-center justify-center
                     px-3 py-1
@@ -236,18 +254,16 @@ export default function AliExpressHeader({
                     whitespace-nowrap
                     transition-all duration-200
                     ${flatBorders ? 'rounded-none' : 'rounded-full'}
-                    bg-gray-50
+                    bg-gray-100
                     text-gray-700
-                    border border-gray-200
-                    hover:bg-gray-100
+                    hover:bg-gray-200
                     hover:text-gray-900
-                    hover:border-gray-300
-                    active:bg-gray-200
+                    active:bg-gray-300
                     focus:outline-none focus:ring-1 focus:ring-gray-400 focus:ring-offset-1
                   `}
                 >
-                  <Search className="h-3 w-3 mr-1.5 text-gray-500" />
-                  {item}
+                  {getTrendIcon(item.trend)}
+                  {item.term}
                 </button>
               ))}
             </div>
