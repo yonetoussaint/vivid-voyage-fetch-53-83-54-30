@@ -186,27 +186,23 @@ export default function AliExpressHeader({
     }
   };
 
-  // Handle location button click - ONLY TOGGLE DROPDOWN
+  // Handle location button click - DIRECTLY OPEN THE PANEL
   const handleLocationClick = () => {
-    setIsLocationDropdownOpen(!isLocationDropdownOpen);
+    // Open the locations panel directly
+    if (onOpenLocationsPanel) {
+      onOpenLocationsPanel();
+    }
+    // Don't show dropdown at all
+    setIsLocationDropdownOpen(false);
   };
 
-  // Handle location selection from dropdown
+  // Handle location selection from dropdown (if we keep it as backup)
   const handleLocationSelect = (locationId: string, locationName: string) => {
     setSelectedCity(locationName);
     setIsLocationDropdownOpen(false);
 
     if (onLocationChange) {
       onLocationChange(locationId);
-    }
-  };
-
-  // Handle "Manage favorites" click - OPEN THE PANEL
-  const handleManageFavoritesClick = () => {
-    setIsLocationDropdownOpen(false);
-    // Open the locations panel
-    if (onOpenLocationsPanel) {
-      onOpenLocationsPanel();
     }
   };
 
@@ -327,7 +323,7 @@ export default function AliExpressHeader({
                       <X className="h-4 w-4 text-gray-600" />
                     </button>
                   ) : (
-                    // Location button - ONLY TOGGLES DROPDOWN
+                    // Location button - DIRECTLY OPENS PANEL
                     <div className="relative" ref={locationDropdownRef}>
                       <button
                         type="button"
@@ -339,7 +335,6 @@ export default function AliExpressHeader({
                           bg-gray-100 hover:bg-gray-200
                           transition-all duration-200
                           ${flatBorders ? 'rounded-none' : 'rounded-full'}
-                          ${isLocationDropdownOpen ? 'bg-gray-200' : ''}
                         `}
                       >
                         {/* Location icon */}
@@ -349,42 +344,10 @@ export default function AliExpressHeader({
                         <span className="max-w-[80px] truncate">{selectedCity}</span>
 
                         {/* Chevron icon */}
-                        <ChevronDown className={`h-3.5 w-3.5 text-gray-500 flex-shrink-0 transition-transform duration-200 ${isLocationDropdownOpen ? 'rotate-180' : ''}`} />
+                        <ChevronDown className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
                       </button>
 
-                      {/* Dropdown menu */}
-                      {isLocationDropdownOpen && (
-                        <div className="absolute right-0 mt-1 py-1 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-50">
-                          <div className="px-3 py-2 text-xs font-medium text-gray-500 border-b border-gray-100">
-                            Select Location
-                          </div>
-                          {locationOptions.map((location) => (
-                            <button
-                              key={location.id}
-                              type="button"
-                              onClick={() => handleLocationSelect(location.id, location.name)}
-                              className={`
-                                w-full text-left px-3 py-2 text-xs font-medium
-                                hover:bg-gray-50 transition-colors
-                                flex items-center gap-2
-                                ${selectedCity === location.name ? 'bg-gray-50 text-gray-900' : 'text-gray-700'}
-                              `}
-                            >
-                              <MapPin className="h-3 w-3 text-gray-400" />
-                              {location.name}
-                            </button>
-                          ))}
-                          <div className="border-t border-gray-100 px-3 py-2">
-                            <button
-                              type="button"
-                              onClick={handleManageFavoritesClick}
-                              className="text-xs font-medium text-blue-600 hover:text-blue-700"
-                            >
-                              Manage favorites
-                            </button>
-                          </div>
-                        </div>
-                      )}
+                      {/* REMOVED DROPDOWN MENU - Panel opens directly instead */}
                     </div>
                   )}
                 </div>
