@@ -12,7 +12,7 @@ interface AliExpressHeaderProps {
 
   // New props for optional search list
   showSearchList?: boolean;
-  searchListItems?: string[];
+  searchListItems?: Array<string | { term: string; trend?: 'hot' | 'trending-up' | 'trending-down' | 'popular' }>;
   onSearchItemClick?: (searchTerm: string) => void;
   flatBorders?: boolean;
 }
@@ -64,10 +64,21 @@ export default function AliExpressHeader({
   // Determine which tabs to show
   const tabsToShow = customTabs || categories;
 
-  // Use provided search list items or default popular searches
-  const searchItemsToShow = searchListItems 
-    ? searchListItems.map(term => ({ term, trend: 'popular' as const }))
-    : popularSearches;
+  // Process search list items to ensure they have the correct format
+  const searchItemsToShow = useMemo(() => {
+    if (!searchListItems) return popularSearches;
+    
+    return searchListItems.map(item => {
+      if (typeof item === 'string') {
+        // For string items, randomly assign a trend (or default to 'popular')
+        const trends: Array<'hot' | 'trending-up' | 'trending-down' | 'popular'> = ['hot', 'trending-up', 'trending-down', 'popular'];
+        const randomTrend = trends[Math.floor(Math.random() * trends.length)];
+        return { term: item, trend: randomTrend };
+      }
+      // For object items, ensure they have a trend
+      return { term: item.term, trend: item.trend || 'popular' };
+    });
+  }, [searchListItems, popularSearches]);
 
   // Generate a unique key for CategoryTabs based on the actual tabs being displayed
   const categoryTabsKey = tabsToShow.map(tab => tab.id).join('-');
