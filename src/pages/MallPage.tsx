@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import FlashDeals from "@/components/home/FlashDeals";
 import FavouriteChannels from "@/components/FavouriteChannels";
 import InfiniteContentGrid from "@/components/InfiniteContentGrid";
 import HeroBanner from "@/components/home/HeroBanner";
-import { useMallFilters, useMallData } from "@/hooks/mall.hooks";
+import { useMallData } from "@/hooks/mall.hooks";
 
 interface MallPageProps {
   category?: string;
@@ -13,38 +13,8 @@ interface MallPageProps {
 const MallPage: React.FC<MallPageProps> = ({ category = 'mall' }) => {
   const [activeCategory, setActiveCategory] = useState(category);
 
-  // We still use the mall hooks for data, but ignore the filter-related parts
-  const {
-    mallChannels,
-  } = useMallData();
-
-  // Create empty filters since we're not showing filter tabs
-  const safeFilters = useMemo(() => {
-    return {
-      priceRange: null,
-      rating: null,
-      freeShipping: false,
-      onSale: false,
-      freeReturns: false,
-      newArrivals: false,
-      shippedFrom: null,
-      sortBy: 'popular',
-      brand: null,
-      category: null,
-      color: null,
-      sellerRating: null,
-      fastDispatch: false,
-      discount: false,
-      verifiedSeller: false,
-      mallExclusive: false,
-    };
-  }, []);
-
-  // Optional: If you want channels to have some visual feedback
-  const handleChannelClick = () => {
-    // Do nothing or add minimal feedback
-    console.log('Channel clicked');
-  };
+  // Use the simplified mall data hook
+  const { mallChannels } = useMallData();
 
   useEffect(() => {
     const handleCategoryChange = (event: CustomEvent) => {
@@ -63,7 +33,7 @@ const MallPage: React.FC<MallPageProps> = ({ category = 'mall' }) => {
     <div key="favourite-channels-wrapper" className="">
       <FavouriteChannels 
         channels={mallChannels}
-        onChannelSelect={handleChannelClick}
+        onChannelSelect={() => {}} // Empty function since not selectable
       />
     </div>,
 
@@ -82,7 +52,7 @@ const MallPage: React.FC<MallPageProps> = ({ category = 'mall' }) => {
     <div key="infinite-grid-wrapper" className="pt-2">
       <InfiniteContentGrid 
         category={activeCategory}
-        filters={safeFilters} 
+        filters={{}} // Empty filters object
       />
     </div>,
   ];
