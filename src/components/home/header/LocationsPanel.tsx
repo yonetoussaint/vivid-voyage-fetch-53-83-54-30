@@ -1,8 +1,7 @@
-// components/header/LocationsPanel.tsx
+// components/home/header/LocationsPanel.tsx
 import { useState, useEffect } from 'react';
 import { MapPin, GripVertical, Plus, X, Star, Trash2, Check } from 'lucide-react';
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import SlideUpPanel from '../shared/SlideUpPanel';
+import SlideUpPanel from '@/components/shared/SlideUpPanel';
 
 interface Location {
   id: string;
@@ -34,6 +33,7 @@ export default function LocationsPanel({
 
   const [newCityInput, setNewCityInput] = useState('');
   const [isAdding, setIsAdding] = useState(false);
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const MAX_FAVORITES = 10;
 
   // Load saved locations from localStorage on mount
@@ -56,14 +56,29 @@ export default function LocationsPanel({
     localStorage.setItem('favoriteLocations', JSON.stringify(locations));
   }, [locations]);
 
-  const handleDragEnd = (result: DropResult) => {
-    if (!result.destination) return;
+  // Native drag and drop handlers
+  const handleDragStart = (index: number) => {
+    setDraggingIndex(index);
+  };
 
-    const items = Array.from(locations);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    if (draggingIndex === null) return;
+
+    const items = [...locations];
+    const [draggedItem] = items.splice(draggingIndex, 1);
+    items.splice(dropIndex, 0, draggedItem);
     
     setLocations(items);
+    setDraggingIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggingIndex(null);
   };
 
   const handleAddCity = () => {
@@ -189,105 +204,89 @@ export default function LocationsPanel({
           )}
         </div>
 
-        {/* Locations list */}
+        {/* Locations list using native drag and drop */}
         {locations.length > 0 ? (
-          <DragDropContext onDragEnd={handleDragEnd}>
-            <Droppable droppableId="locations">
-              {(provided) => (
+          <div className="space-y-2">
+            {locations.map((location, index) => (
+              <div
+                key={location.id}
+                draggable
+                onDragStart={() => handleDragStart(index)}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDrop={(e) => handleDrop(e, index)}
+                onDragEnd={handleDragEnd}
+                className={`relative flex items-center gap-3 p-3 bg-white border rounded-lg transition-all duration-200 cursor-move ${
+                  draggingIndex === index
+                    ? 'shadow-lg border-blue-300 bg-blue-50 opacity-75'
+                    : 'border-gray-200 hover:border-gray-300'
+                } ${
+                  location.name === currentCity
+                    ? 'ring-2 ring-blue-500 ring-opacity-50'
+                    : ''
+                }`}
+              >
+                {/* Drag handle */}
                 <div
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
-                  className="space-y-2"
+                  className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600"
                 >
-                  {locations.map((location, index) => (
-                    <Draggable
-                      key={location.id}
-                      draggableId={location.id}
-                      index={index}
-                    >
-                      {(provided, snapshot) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          className={`relative flex items-center gap-3 p-3 bg-white border rounded-lg transition-all duration-200 ${
-                            snapshot.isDragging
-                              ? 'shadow-lg border-blue-300 bg-blue-50'
-                              : 'border-gray-200 hover:border-gray-300'
-                          } ${
-                            location.name === currentCity
-                              ? 'ring-2 ring-blue-500 ring-opacity-50'
-                              : ''
-                          }`}
-                        >
-                          {/* Drag handle */}
-                          <div
-                            {...provided.dragHandleProps}
-                            className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600"
-                          >
-                            <GripVertical className="h-5 w-5" />
-                          </div>
-
-                          {/* Location icon */}
-                          <MapPin className={`h-5 w-5 flex-shrink-0 ${
-                            location.name === currentCity 
-                              ? 'text-blue-600' 
-                              : 'text-gray-400'
-                          }`} />
-
-                          {/* Location details */}
-                          <div 
-                            className="flex-1 min-w-0 cursor-pointer"
-                            onClick={() => handleCityClick(location.name)}
-                          >
-                            <div className="flex items-center gap-2">
-                              <span className={`text-sm font-medium truncate ${
-                                location.name === currentCity
-                                  ? 'text-blue-700'
-                                  : 'text-gray-900'
-                              }`}>
-                                {location.name}
-                              </span>
-                              {location.isDefault && (
-                                <Star className="h-3 w-3 fill-yellow-400 text-yellow-400 flex-shrink-0" />
-                              )}
-                            </div>
-                            {location.country && (
-                              <p className="text-xs text-gray-500 truncate">
-                                {location.country}
-                              </p>
-                            )}
-                          </div>
-
-                          {/* Actions */}
-                          <div className="flex items-center gap-1 flex-shrink-0 no-drag">
-                            {!location.isDefault && (
-                              <button
-                                onClick={() => handleSetDefault(location.id)}
-                                className="p-2 text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 rounded-md transition-colors"
-                                title="Set as default"
-                              >
-                                <Star className="h-4 w-4" />
-                              </button>
-                            )}
-                            {!location.isDefault && (
-                              <button
-                                onClick={() => handleDeleteCity(location.id)}
-                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                                title="Remove from favorites"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
+                  <GripVertical className="h-5 w-5" />
                 </div>
-              )}
-            </Droppable>
-          </DragDropContext>
+
+                {/* Location icon */}
+                <MapPin className={`h-5 w-5 flex-shrink-0 ${
+                  location.name === currentCity 
+                    ? 'text-blue-600' 
+                    : 'text-gray-400'
+                }`} />
+
+                {/* Location details */}
+                <div 
+                  className="flex-1 min-w-0 cursor-pointer"
+                  onClick={() => handleCityClick(location.name)}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={`text-sm font-medium truncate ${
+                      location.name === currentCity
+                        ? 'text-blue-700'
+                        : 'text-gray-900'
+                    }`}>
+                      {location.name}
+                    </span>
+                    {location.isDefault && (
+                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400 flex-shrink-0" />
+                    )}
+                  </div>
+                  {location.country && (
+                    <p className="text-xs text-gray-500 truncate">
+                      {location.country}
+                    </p>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-1 flex-shrink-0 no-drag">
+                  {!location.isDefault && (
+                    <button
+                      onClick={() => handleSetDefault(location.id)}
+                      className="p-2 text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 rounded-md transition-colors"
+                      title="Set as default"
+                    >
+                      <Star className="h-4 w-4" />
+                    </button>
+                  )}
+                  {!location.isDefault && (
+                    <button
+                      onClick={() => handleDeleteCity(location.id)}
+                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                      title="Remove from favorites"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="text-center py-8">
             <MapPin className="h-12 w-12 text-gray-300 mx-auto mb-3" />
@@ -303,6 +302,12 @@ export default function LocationsPanel({
               <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
             </div>
             <p>Tap a city to select it immediately. The blue outline shows your current selection.</p>
+          </div>
+          <div className="flex items-start gap-2 text-xs text-gray-500 mt-2">
+            <div className="flex-shrink-0 mt-0.5">
+              <div className="h-2 w-2 bg-amber-500 rounded-full"></div>
+            </div>
+            <p>Drag cities using the handle (≡) to rearrange them. Default city cannot be deleted.</p>
           </div>
         </div>
       </div>
