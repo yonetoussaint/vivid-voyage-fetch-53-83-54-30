@@ -516,11 +516,6 @@ export const useMainLayout = (props?: UseMainLayoutProps) => {
     return undefined;
   }, [pageFlags.isExplorePage]);
 
-  // Section header configuration
-  const productsTitle = pageFlags.isProductsPage ? searchParams.get('title') || 'Products' : '';
-  const iconName = searchParams.get('icon');
-  const sectionHeaderIcon = iconName ? iconMapper[iconName as keyof typeof iconMapper] : undefined;
-
   // Tab change handler
   const handleCustomTabChange = useCallback((tabId: string) => {
     if (pageFlags.isCategoryRoute) {
@@ -585,30 +580,25 @@ export const useMainLayout = (props?: UseMainLayoutProps) => {
     // Layout
     layoutHeightStyle,
 
-    // Header props
+    // Header props - UPDATED TO MATCH NEW AliExpressHeader PROPS
     headerProps: {
       activeTabId: currentActiveTabId,
-      showFilterBar,
-      // Show category tabs on home, for-you, and category routes, but NOT on mall route
       showCategoryTabs: (pageFlags.isRootHomePage || pageFlags.isForYouPage || pageFlags.isCategoryRoute) && !pageFlags.isMallPage,
       // Show search list only on mall route
       showSearchList: pageFlags.isMallPage,
-      searchListTitle: pageFlags.isMallPage ? "Popular in Mall" : undefined,
-      flatBorders: pageFlags.isMallPage ? true : undefined,
-      // Custom search items for mall
+      flatBorders: true,
+      // Custom search items for mall with trend indicators
       searchListItems: pageFlags.isMallPage ? [
-        "Luxury watches",
-        "Designer bags", 
-        "Premium electronics",
-        "High-end fashion",
-        "Branded cosmetics",
-        "Smart home devices",
-        "Gaming accessories",
-        "Premium watches",
-        "Designer sunglasses",
-        "Luxury skincare"
+        { term: "Luxury watches", trend: 'hot' as const },
+        { term: "Designer bags", trend: 'trending-up' as const },
+        { term: "Premium electronics", trend: 'hot' as const },
+        { term: "High-end fashion", trend: 'popular' as const },
+        { term: "Branded cosmetics", trend: 'trending-up' as const },
+        { term: "Smart home devices", trend: 'trending-down' as const },
+        { term: "Gaming accessories", trend: 'popular' as const }
       ] : undefined,
-      
+      // Filter bar props
+      showFilterBar,
       filterCategories,
       selectedFilters,
       onFilterSelect,
@@ -616,46 +606,9 @@ export const useMainLayout = (props?: UseMainLayoutProps) => {
       onClearAll,
       onFilterButtonClick,
       isFilterDisabled,
-      
-      // Pass customTabs for mall too, but they won't show when showCategoryTabs is false
+      // Custom tabs
       customTabs: categoryTabs || messagesTabs || walletTabs || exploreTabs,
       onCustomTabChange: handleCustomTabChange,
-      
-      showSectionHeader: pageFlags.isProductsPage,
-      sectionHeaderTitle: productsTitle,
-      sectionHeaderShowStackedProfiles: searchParams.get('showProfiles') === 'true',
-      sectionHeaderShowVerifiedSellers: searchParams.get('showVerifiedSellers') === 'true',
-      sectionHeaderVerifiedSellersText: searchParams.get('verifiedSellersText') || 'Verified Sellers',
-      sectionHeaderStackedProfiles: searchParams.get('showProfiles') === 'true' ? [
-        {
-          id: '1',
-          image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
-          alt: 'Sarah Johnson'
-        },
-        {
-          id: '2',
-          image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-          alt: 'Mike Chen'
-        },
-        {
-          id: '3',
-          image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-          alt: 'Emma Davis'
-        }
-      ] : [],
-      sectionHeaderStackedProfilesText: searchParams.get('profilesText') || 'Handpicked by',
-      sectionHeaderShowCountdown: searchParams.get('showCountdown') === 'true',
-      sectionHeaderCountdown: searchParams.get('countdown') || undefined,
-      sectionHeaderShowSponsorCount: searchParams.get('showSponsorCount') === 'true',
-      ...(sectionHeaderIcon && { sectionHeaderIcon }),
-      sectionHeaderViewAllLink: (
-        (searchParams.get('showProfiles') !== 'true' &&
-         searchParams.get('showVerifiedSellers') !== 'true' &&
-         searchParams.get('showCountdown') !== 'true')
-          ? "/vendors"
-          : undefined
-      ),
-      sectionHeaderViewAllText: "View All"
     },
 
     // Context values
