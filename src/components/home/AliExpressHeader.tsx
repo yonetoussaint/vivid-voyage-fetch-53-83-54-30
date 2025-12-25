@@ -182,7 +182,7 @@ export default function AliExpressHeader({
       className="fixed top-0 w-full z-40 bg-white" 
       style={{ margin: 0, padding: 0, boxShadow: 'none' }}
     >
-      {/* Search Bar - Updated to be flat with small border */}
+      {/* Search Bar - Updated to show black border initially */}
       <div 
         className="flex items-center justify-between px-2 transition-all duration-500 ease-in-out bg-white"
         style={{ height: '36px' }}
@@ -199,7 +199,7 @@ export default function AliExpressHeader({
                 className={`
                   w-full px-3 py-1 pr-16 text-sm font-medium text-gray-900 bg-white 
                   transition-all duration-300 shadow-sm placeholder-gray-500
-                  ${flatBorders ? 'rounded-none border border-gray-300' : 'rounded-full border-2 border-gray-800'}
+                  ${flatBorders ? 'rounded-none border-2 border-gray-900' : 'rounded-full border-2 border-gray-800'}
                 `}
                 ref={searchRef}
               />
