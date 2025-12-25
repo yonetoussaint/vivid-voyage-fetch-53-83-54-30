@@ -101,7 +101,7 @@ function MainLayoutContent() {
       {/* Auth Overlay - Fixed with high z-index to appear above everything */}
       {isAuthOverlayOpen && (
         <div className="fixed inset-0 z-[9999]">
-          // In MainLayout.tsx - Update the AuthOverlay usage
+          
 {/* Auth Overlay */}
 <AuthOverlay
   isOpen={isAuthOverlayOpen}
