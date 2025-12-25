@@ -1,8 +1,10 @@
+// components/AliExpressHeader.tsx
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { X, Search, TrendingUp, TrendingDown, Flame, Zap, ChevronDown, MapPin } from 'lucide-react';
 import CategoryTabs from './header/CategoryTabs';
+import LocationsPanel from './header/LocationsPanel';
 
 interface AliExpressHeaderProps {
   activeTabId?: string;
@@ -15,7 +17,7 @@ interface AliExpressHeaderProps {
   searchListItems?: Array<{ term: string; trend?: 'hot' | 'trending-up' | 'trending-down' | 'popular' }> | string[];
   onSearchItemClick?: (searchTerm: string) => void;
   flatBorders?: boolean;
-  
+
   // New props for location dropdown
   cityName?: string;
   locationOptions?: Array<{ id: string; name: string }>;
@@ -33,7 +35,7 @@ export default function AliExpressHeader({
   searchListItems,
   onSearchItemClick,
   flatBorders = true,
-  
+
   // Location dropdown props
   cityName = 'New York',
   locationOptions = [
@@ -54,7 +56,8 @@ export default function AliExpressHeader({
   const [placeholder, setPlaceholder] = useState('');
   const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
   const [selectedCity, setSelectedCity] = useState(cityName);
-  
+  const [isLocationsPanelOpen, setIsLocationsPanelOpen] = useState(false);
+
   const searchRef = useRef<HTMLInputElement>(null);
   const searchListRef = useRef<HTMLDivElement>(null);
   const locationDropdownRef = useRef<HTMLDivElement>(null);
@@ -140,6 +143,11 @@ export default function AliExpressHeader({
     setActiveTab(activeTabId);
   }, [activeTabId, location.pathname]);
 
+  // Update selected city when prop changes
+  useEffect(() => {
+    setSelectedCity(cityName);
+  }, [cityName]);
+
   // Handle tab change
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
@@ -154,16 +162,30 @@ export default function AliExpressHeader({
     }
   };
 
-  // Handle location dropdown toggle
+  // Handle location button click - UPDATED
   const handleLocationClick = () => {
-    setIsLocationDropdownOpen(!isLocationDropdownOpen);
+    // Open the locations panel instead of the dropdown
+    setIsLocationsPanelOpen(true);
+    // Close the dropdown if it's open
+    setIsLocationDropdownOpen(false);
   };
 
-  // Handle location selection
+  // Handle location selection from the panel
+  const handleCitySelect = (cityName: string) => {
+    setSelectedCity(cityName);
+    
+    // Find the location ID from options
+    const location = locationOptions.find(loc => loc.name === cityName);
+    if (location && onLocationChange) {
+      onLocationChange(location.id);
+    }
+  };
+
+  // Handle location selection from dropdown (for backward compatibility)
   const handleLocationSelect = (locationId: string, locationName: string) => {
     setSelectedCity(locationName);
     setIsLocationDropdownOpen(false);
-    
+
     if (onLocationChange) {
       onLocationChange(locationId);
     }
@@ -219,170 +241,180 @@ export default function AliExpressHeader({
   }, []);
 
   return (
-    <header 
-      className="fixed top-0 w-full z-40 bg-white" 
-      style={{ margin: 0, padding: 0, boxShadow: 'none' }}
-    >
-      {/* Search Bar - Updated to show black border initially */}
-      <div 
-        className="flex items-center justify-between px-2 transition-all duration-500 ease-in-out bg-white"
-        style={{ height: '36px' }}
+    <>
+      <header 
+        className="fixed top-0 w-full z-40 bg-white" 
+        style={{ margin: 0, padding: 0, boxShadow: 'none' }}
       >
-        <div className="flex-1 relative max-w-full mx-auto">
-          <form onSubmit={handleSubmit}>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder={placeholder}
-                value={searchQuery}
-                onChange={handleInputChange}
-                onFocus={handleFocus}
-                className={`
-                  w-full px-3 py-1 pr-16 text-sm font-medium text-gray-900 bg-white 
-                  transition-all duration-300 shadow-sm placeholder-gray-500
-                  ${flatBorders ? 'rounded-none border-2 border-gray-900' : 'rounded-full border-2 border-gray-800'}
-                `}
-                ref={searchRef}
-              />
+        {/* Search Bar - Updated to show black border initially */}
+        <div 
+          className="flex items-center justify-between px-2 transition-all duration-500 ease-in-out bg-white"
+          style={{ height: '36px' }}
+        >
+          <div className="flex-1 relative max-w-full mx-auto">
+            <form onSubmit={handleSubmit}>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder={placeholder}
+                  value={searchQuery}
+                  onChange={handleInputChange}
+                  onFocus={handleFocus}
+                  className={`
+                    w-full px-3 py-1 pr-16 text-sm font-medium text-gray-900 bg-white 
+                    transition-all duration-300 shadow-sm placeholder-gray-500
+                    ${flatBorders ? 'rounded-none border-2 border-gray-900' : 'rounded-full border-2 border-gray-800'}
+                  `}
+                  ref={searchRef}
+                />
 
-              {/* Right icons */}
-              <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
-                {/* Clear button when there's text */}
-                {searchQuery.trim() ? (
-                  <button
-                    type="button"
-                    onClick={handleClearSearch}
-                    className="p-1 hover:bg-gray-100 transition-colors"
-                  >
-                    <X className="h-4 w-4 text-gray-600" />
-                  </button>
-                ) : (
-                  // Location dropdown button when no text
-                  <div className="relative" ref={locationDropdownRef}>
+                {/* Right icons */}
+                <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
+                  {/* Clear button when there's text */}
+                  {searchQuery.trim() ? (
                     <button
                       type="button"
-                      onClick={handleLocationClick}
-                      className={`
-                        flex items-center justify-between gap-1.5
-                        px-2.5 py-1
-                        text-xs font-medium text-gray-600 
-                        bg-gray-100 hover:bg-gray-200
-                        transition-all duration-200
-                        ${flatBorders ? 'rounded-none' : 'rounded-full'}
-                        ${isLocationDropdownOpen ? 'bg-gray-200' : ''}
-                      `}
+                      onClick={handleClearSearch}
+                      className="p-1 hover:bg-gray-100 transition-colors"
                     >
-                      {/* Location icon */}
-                      <MapPin className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
-                      
-                      {/* City name - truncated if too long */}
-                      <span className="max-w-[80px] truncate">{selectedCity}</span>
-                      
-                      {/* Chevron icon */}
-                      <ChevronDown className={`h-3.5 w-3.5 text-gray-500 flex-shrink-0 transition-transform duration-200 ${isLocationDropdownOpen ? 'rotate-180' : ''}`} />
+                      <X className="h-4 w-4 text-gray-600" />
                     </button>
+                  ) : (
+                    // Location dropdown button when no text
+                    <div className="relative" ref={locationDropdownRef}>
+                      <button
+                        type="button"
+                        onClick={handleLocationClick}
+                        className={`
+                          flex items-center justify-between gap-1.5
+                          px-2.5 py-1
+                          text-xs font-medium text-gray-600 
+                          bg-gray-100 hover:bg-gray-200
+                          transition-all duration-200
+                          ${flatBorders ? 'rounded-none' : 'rounded-full'}
+                          ${isLocationsPanelOpen || isLocationDropdownOpen ? 'bg-gray-200' : ''}
+                        `}
+                      >
+                        {/* Location icon */}
+                        <MapPin className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
 
-                    {/* Dropdown menu */}
-                    {isLocationDropdownOpen && (
-                      <div className="absolute right-0 mt-1 py-1 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-50">
-                        <div className="px-3 py-2 text-xs font-medium text-gray-500 border-b border-gray-100">
-                          Select Location
+                        {/* City name - truncated if too long */}
+                        <span className="max-w-[80px] truncate">{selectedCity}</span>
+
+                        {/* Chevron icon */}
+                        <ChevronDown className={`h-3.5 w-3.5 text-gray-500 flex-shrink-0 transition-transform duration-200 ${isLocationDropdownOpen ? 'rotate-180' : ''}`} />
+                      </button>
+
+                      {/* Dropdown menu (for backward compatibility) */}
+                      {isLocationDropdownOpen && (
+                        <div className="absolute right-0 mt-1 py-1 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                          <div className="px-3 py-2 text-xs font-medium text-gray-500 border-b border-gray-100">
+                            Select Location
+                          </div>
+                          {locationOptions.map((location) => (
+                            <button
+                              key={location.id}
+                              type="button"
+                              onClick={() => handleLocationSelect(location.id, location.name)}
+                              className={`
+                                w-full text-left px-3 py-2 text-xs font-medium
+                                hover:bg-gray-50 transition-colors
+                                flex items-center gap-2
+                                ${selectedCity === location.name ? 'bg-gray-50 text-gray-900' : 'text-gray-700'}
+                              `}
+                            >
+                              <MapPin className="h-3 w-3 text-gray-400" />
+                              {location.name}
+                            </button>
+                          ))}
+                          <div className="border-t border-gray-100 px-3 py-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsLocationDropdownOpen(false);
+                                setIsLocationsPanelOpen(true);
+                              }}
+                              className="text-xs font-medium text-blue-600 hover:text-blue-700"
+                            >
+                              Manage favorites
+                            </button>
+                          </div>
                         </div>
-                        {locationOptions.map((location) => (
-                          <button
-                            key={location.id}
-                            type="button"
-                            onClick={() => handleLocationSelect(location.id, location.name)}
-                            className={`
-                              w-full text-left px-3 py-2 text-xs font-medium
-                              hover:bg-gray-50 transition-colors
-                              flex items-center gap-2
-                              ${selectedCity === location.name ? 'bg-gray-50 text-gray-900' : 'text-gray-700'}
-                            `}
-                          >
-                            <MapPin className="h-3 w-3 text-gray-400" />
-                            {location.name}
-                          </button>
-                        ))}
-                        <div className="border-t border-gray-100 px-3 py-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              console.log('Manage locations clicked');
-                              setIsLocationDropdownOpen(false);
-                            }}
-                            className="text-xs font-medium text-blue-600 hover:text-blue-700"
-                          >
-                            Manage locations
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      {/* Optional Element Below Header */}
-      {showCategoryTabs ? (
-        // Category Tabs
-        <div className="relative overflow-hidden">
-          <CategoryTabs 
-            key={categoryTabsKey}
-            progress={1}
-            activeTab={activeTab}
-            setActiveTab={handleTabChange}
-            categories={tabsToShow}
-            isSearchOverlayActive={false}
-          />
-        </div>
-      ) : showSearchList ? (
-        // Horizontally Scrollable Search List
-        <div className="bg-white">
-          {/* Scrollable search list */}
-          <div 
-            ref={searchListRef}
-            className="relative overflow-x-auto scrollbar-hide"
-            style={{ 
-              WebkitOverflowScrolling: 'touch',
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none'
-            }}
-          >
-            <div className="flex px-2 py-1 space-x-2 min-w-max">
-              {searchItemsToShow.map((item, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleSearchItemClick(item.term)}
-                  className={`
-                    flex items-center justify-center
-                    px-3 py-1
-                    text-xs font-medium
-                    whitespace-nowrap
-                    transition-all duration-200
-                    ${flatBorders ? 'rounded-none' : 'rounded-full'}
-                    bg-gray-100
-                    text-gray-700
-                    hover:bg-gray-200
-                    hover:text-gray-900
-                    active:bg-gray-300
-                    focus:outline-none focus:ring-1 focus:ring-gray-400 focus:ring-offset-1
-                  `}
-                >
-                  {getTrendIcon(item.trend)}
-                  {item.term}
-                </button>
-              ))}
-            </div>
-
-            {/* Fade effect on the right side to indicate scrollability */}
-            <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white to-transparent pointer-events-none" />
+            </form>
           </div>
         </div>
-      ) : null}
-    </header>
+
+        {/* Optional Element Below Header */}
+        {showCategoryTabs ? (
+          // Category Tabs
+          <div className="relative overflow-hidden">
+            <CategoryTabs 
+              key={categoryTabsKey}
+              progress={1}
+              activeTab={activeTab}
+              setActiveTab={handleTabChange}
+              categories={tabsToShow}
+              isSearchOverlayActive={false}
+            />
+          </div>
+        ) : showSearchList ? (
+          // Horizontally Scrollable Search List
+          <div className="bg-white">
+            {/* Scrollable search list */}
+            <div 
+              ref={searchListRef}
+              className="relative overflow-x-auto scrollbar-hide"
+              style={{ 
+                WebkitOverflowScrolling: 'touch',
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none'
+              }}
+            >
+              <div className="flex px-2 py-1 space-x-2 min-w-max">
+                {searchItemsToShow.map((item, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleSearchItemClick(item.term)}
+                    className={`
+                      flex items-center justify-center
+                      px-3 py-1
+                      text-xs font-medium
+                      whitespace-nowrap
+                      transition-all duration-200
+                      ${flatBorders ? 'rounded-none' : 'rounded-full'}
+                      bg-gray-100
+                      text-gray-700
+                      hover:bg-gray-200
+                      hover:text-gray-900
+                      active:bg-gray-300
+                      focus:outline-none focus:ring-1 focus:ring-gray-400 focus:ring-offset-1
+                    `}
+                  >
+                    {getTrendIcon(item.trend)}
+                    {item.term}
+                  </button>
+                ))}
+              </div>
+
+              {/* Fade effect on the right side to indicate scrollability */}
+              <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white to-transparent pointer-events-none" />
+            </div>
+          </div>
+        ) : null}
+      </header>
+
+      {/* Locations Panel */}
+      <LocationsPanel
+        isOpen={isLocationsPanelOpen}
+        onClose={() => setIsLocationsPanelOpen(false)}
+        currentCity={selectedCity}
+        onCitySelect={handleCitySelect}
+      />
+    </>
   );
 }
