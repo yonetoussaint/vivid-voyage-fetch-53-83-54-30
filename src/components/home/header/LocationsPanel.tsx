@@ -36,7 +36,6 @@ export default function LocationsPanel({
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const MAX_FAVORITES = 10;
 
-  // Load saved locations from localStorage on mount
   useEffect(() => {
     const savedLocations = localStorage.getItem('favoriteLocations');
     if (savedLocations) {
@@ -51,12 +50,10 @@ export default function LocationsPanel({
     }
   }, []);
 
-  // Save locations to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('favoriteLocations', JSON.stringify(locations));
   }, [locations]);
 
-  // Native drag and drop handlers
   const handleDragStart = (index: number) => {
     setDraggingIndex(index);
   };
@@ -72,7 +69,7 @@ export default function LocationsPanel({
     const items = [...locations];
     const [draggedItem] = items.splice(draggingIndex, 1);
     items.splice(dropIndex, 0, draggedItem);
-    
+
     setLocations(items);
     setDraggingIndex(null);
   };
@@ -88,7 +85,7 @@ export default function LocationsPanel({
         name: newCityInput.trim(),
         country: 'USA'
       };
-      
+
       setLocations([...locations, newLocation]);
       setNewCityInput('');
       setIsAdding(false);
@@ -97,20 +94,18 @@ export default function LocationsPanel({
 
   const handleDeleteCity = (id: string) => {
     const locationToDelete = locations.find(loc => loc.id === id);
-    
-    // Don't allow deleting default location
+
     if (locationToDelete?.isDefault) {
       return;
     }
-    
-    // If we're deleting the currently selected city, switch to default
+
     if (locationToDelete?.name === currentCity) {
       const defaultCity = locations.find(loc => loc.isDefault)?.name || locations[0]?.name;
       if (defaultCity) {
         onCitySelect(defaultCity);
       }
     }
-    
+
     setLocations(locations.filter(loc => loc.id !== id));
   };
 
@@ -119,8 +114,7 @@ export default function LocationsPanel({
       ...loc,
       isDefault: loc.id === id
     })));
-    
-    // Update current city to the new default
+
     const newDefaultCity = locations.find(loc => loc.id === id);
     if (newDefaultCity) {
       onCitySelect(newDefaultCity.name);
@@ -143,25 +137,20 @@ export default function LocationsPanel({
       preventBodyScroll={true}
     >
       <div className="px-4 pb-4">
-        {/* Header */}
         <div className="mb-6 pt-2">
           <h2 className="text-lg font-semibold text-gray-900">Favorite Locations</h2>
-          <p className="text-sm text-gray-500 mt-1">
-            Drag to rearrange, tap to select. Maximum {MAX_FAVORITES} cities.
-          </p>
           <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
-            <span>{locations.length} of {MAX_FAVORITES} spots used</span>
+            <span>{locations.length} of {MAX_FAVORITES}</span>
             <span className="flex items-center gap-1">
               <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-              Default location
+              Default
             </span>
           </div>
         </div>
 
-        {/* Add new city form */}
         <div className="mb-6">
           {isAdding ? (
-            <div className="flex items-center gap-2 no-drag">
+            <div className="flex items-center gap-2">
               <div className="flex-1 relative">
                 <input
                   type="text"
@@ -192,7 +181,7 @@ export default function LocationsPanel({
             <button
               onClick={() => setIsAdding(true)}
               disabled={locations.length >= MAX_FAVORITES}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3.5 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors group no-drag"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3.5 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors group"
             >
               <Plus className="h-5 w-5 text-gray-400 group-hover:text-blue-500" />
               <span className="text-sm font-medium text-gray-600 group-hover:text-blue-600">
@@ -204,7 +193,6 @@ export default function LocationsPanel({
           )}
         </div>
 
-        {/* Locations list using native drag and drop */}
         {locations.length > 0 ? (
           <div className="space-y-2">
             {locations.map((location, index) => (
@@ -225,21 +213,16 @@ export default function LocationsPanel({
                     : ''
                 }`}
               >
-                {/* Drag handle */}
-                <div
-                  className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600"
-                >
+                <div className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600">
                   <GripVertical className="h-5 w-5" />
                 </div>
 
-                {/* Location icon */}
                 <MapPin className={`h-5 w-5 flex-shrink-0 ${
                   location.name === currentCity 
                     ? 'text-blue-600' 
                     : 'text-gray-400'
                 }`} />
 
-                {/* Location details */}
                 <div 
                   className="flex-1 min-w-0 cursor-pointer"
                   onClick={() => handleCityClick(location.name)}
@@ -263,13 +246,11 @@ export default function LocationsPanel({
                   )}
                 </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-1 flex-shrink-0 no-drag">
+                <div className="flex items-center gap-1 flex-shrink-0">
                   {!location.isDefault && (
                     <button
                       onClick={() => handleSetDefault(location.id)}
                       className="p-2 text-gray-400 hover:text-yellow-500 hover:bg-yellow-50 rounded-md transition-colors"
-                      title="Set as default"
                     >
                       <Star className="h-4 w-4" />
                     </button>
@@ -278,7 +259,6 @@ export default function LocationsPanel({
                     <button
                       onClick={() => handleDeleteCity(location.id)}
                       className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                      title="Remove from favorites"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -294,22 +274,6 @@ export default function LocationsPanel({
             <p className="text-xs text-gray-500">Add cities to get quick access</p>
           </div>
         )}
-
-        {/* Help text */}
-        <div className="mt-6 pt-4 border-t border-gray-100">
-          <div className="flex items-start gap-2 text-xs text-gray-500">
-            <div className="flex-shrink-0 mt-0.5">
-              <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
-            </div>
-            <p>Tap a city to select it immediately. The blue outline shows your current selection.</p>
-          </div>
-          <div className="flex items-start gap-2 text-xs text-gray-500 mt-2">
-            <div className="flex-shrink-0 mt-0.5">
-              <div className="h-2 w-2 bg-amber-500 rounded-full"></div>
-            </div>
-            <p>Drag cities using the handle (≡) to rearrange them. Default city cannot be deleted.</p>
-          </div>
-        </div>
       </div>
     </SlideUpPanel>
   );
