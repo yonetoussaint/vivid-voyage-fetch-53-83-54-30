@@ -49,9 +49,6 @@ export default function SlideUpPanel({
   const [startY, setStartY] = useState(0);
   const [currentTranslate, setCurrentTranslate] = useState(0);
 
-  // ✅ CRITICAL: Early return when not open
-  if (!isOpen) return null;
-
   // ✅ DEBUG LOG
   console.log('🚀 SlideUpPanel: isOpen =', isOpen);
 
@@ -228,6 +225,9 @@ export default function SlideUpPanel({
       document.removeEventListener('touchmove', handleTouchMove);
     };
   }, [isOpen, preventBodyScroll, contentHeight]);
+
+  // ✅ CRITICAL: Early return when not open - MUST COME AFTER ALL HOOKS
+  if (!isOpen) return null;
 
   // Calculate if we need scrolling - with dynamic height option
   const maxPanelHeight = window.innerHeight * maxHeight;
