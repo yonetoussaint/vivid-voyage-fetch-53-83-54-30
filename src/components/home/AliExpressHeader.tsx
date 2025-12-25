@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { X } from 'lucide-react';
+import { X, Search } from 'lucide-react';
 import CategoryTabs from './header/CategoryTabs';
 
 interface AliExpressHeaderProps {
@@ -22,6 +22,13 @@ interface AliExpressHeaderProps {
   sectionHeaderShowVerifiedSellers?: boolean;
   sectionHeaderVerifiedSellersText?: string;
   sectionHeaderIcon?: React.ComponentType<{ className?: string }>;
+  
+  // New props for optional search list
+  showSearchList?: boolean;
+  searchListItems?: string[];
+  onSearchItemClick?: (searchTerm: string) => void;
+  searchListTitle?: string;
+  flatBorders?: boolean;
 }
 
 export default function AliExpressHeader({ 
@@ -42,6 +49,13 @@ export default function AliExpressHeader({
   sectionHeaderShowVerifiedSellers = false,
   sectionHeaderVerifiedSellersText = 'Verified Sellers',
   sectionHeaderIcon,
+  
+  // New props with defaults
+  showSearchList = false,
+  searchListItems,
+  onSearchItemClick,
+  searchListTitle = 'Popular Searches',
+  flatBorders = true,
 }: AliExpressHeaderProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -51,6 +65,7 @@ export default function AliExpressHeader({
   const [searchQuery, setSearchQuery] = useState('');
   const [placeholder, setPlaceholder] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);
+  const searchListRef = useRef<HTMLDivElement>(null);
 
   // Popular searches data
   const popularSearches = useMemo(() => [
@@ -76,6 +91,9 @@ export default function AliExpressHeader({
 
   // Determine which tabs to show
   const tabsToShow = customTabs || categories;
+
+  // Use provided search list items or default popular searches
+  const searchItemsToShow = searchListItems || popularSearches;
 
   // Generate a unique key for CategoryTabs based on the actual tabs being displayed
   const categoryTabsKey = tabsToShow.map(tab => tab.id).join('-');
@@ -149,6 +167,15 @@ export default function AliExpressHeader({
     // You can add any focus logic here if needed
   };
 
+  // Handle search item click
+  const handleSearchItemClick = (searchTerm: string) => {
+    if (onSearchItemClick) {
+      onSearchItemClick(searchTerm);
+    } else {
+      navigate(`/search?q=${encodeURIComponent(searchTerm)}`);
+    }
+  };
+
   return (
     <header 
       className="fixed top-0 w-full z-40 bg-white" 
@@ -199,8 +226,9 @@ export default function AliExpressHeader({
         </div>
       </div>
 
-      {/* Category Tabs */}
-      {showCategoryTabs && (
+      {/* Optional Element Below Header */}
+      {showCategoryTabs ? (
+        // Category Tabs
         <div className="relative overflow-hidden">
           <CategoryTabs 
             key={categoryTabsKey}
@@ -211,7 +239,59 @@ export default function AliExpressHeader({
             isSearchOverlayActive={false}
           />
         </div>
-      )}
+      ) : showSearchList ? (
+        // Horizontally Scrollable Search List
+        <div className="bg-white border-t border-gray-100">
+          {/* Optional title */}
+          {searchListTitle && (
+            <div className="px-2 pt-2 pb-1">
+              <p className="text-xs font-medium text-gray-600">{searchListTitle}</p>
+            </div>
+          )}
+          
+          {/* Scrollable search list */}
+          <div 
+            ref={searchListRef}
+            className="relative overflow-x-auto scrollbar-hide"
+            style={{ 
+              WebkitOverflowScrolling: 'touch',
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none'
+            }}
+          >
+            <div className="flex px-2 pb-2 space-x-2 min-w-max">
+              {searchItemsToShow.map((item, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleSearchItemClick(item)}
+                  className={`
+                    flex items-center justify-center
+                    px-3 py-1.5
+                    text-xs font-medium
+                    whitespace-nowrap
+                    transition-all duration-200
+                    ${flatBorders ? 'rounded-none' : 'rounded-full'}
+                    bg-gray-50
+                    text-gray-700
+                    border border-gray-200
+                    hover:bg-gray-100
+                    hover:text-gray-900
+                    hover:border-gray-300
+                    active:bg-gray-200
+                    focus:outline-none focus:ring-1 focus:ring-gray-400 focus:ring-offset-1
+                  `}
+                >
+                  <Search className="h-3 w-3 mr-1.5 text-gray-500" />
+                  {item}
+                </button>
+              ))}
+            </div>
+            
+            {/* Fade effect on the right side to indicate scrollability */}
+            <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white to-transparent pointer-events-none" />
+          </div>
+        </div>
+      ) : null}
     </header>
   );
 }
