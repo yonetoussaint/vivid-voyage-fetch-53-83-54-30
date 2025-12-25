@@ -108,14 +108,6 @@ export default function LocationsPanel({
     onCitySelect(cityName);
   };
 
-  // Group locations by department for better organization
-  const departments = Array.from(new Set(locations.map(loc => loc.department)));
-  const locationsByDept: Record<string, Location[]> = {};
-  
-  departments.forEach(dept => {
-    locationsByDept[dept] = locations.filter(loc => loc.department === dept);
-  });
-
   return (
     <SlideUpPanel
       isOpen={isOpen}
@@ -202,75 +194,68 @@ export default function LocationsPanel({
         </div>
 
         {locations.length > 0 ? (
-          <div className="space-y-6 pb-6">
-            {departments.map((dept) => (
-              <div key={dept} className="space-y-2">
-                <h3 className="text-sm font-semibold text-gray-700 px-1">{dept}</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {locationsByDept[dept].map((location) => (
-                    <div
-                      key={location.id}
-                      className={`relative flex flex-col p-3 transition-all duration-200 cursor-pointer rounded-lg ${
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 pb-6">
+            {locations.map((location) => (
+              <div
+                key={location.id}
+                className={`relative flex flex-col p-3 transition-all duration-200 cursor-pointer rounded-lg ${
+                  location.name === currentCity
+                    ? 'bg-blue-50'
+                    : 'bg-gray-50 hover:bg-gray-100'
+                }`}
+                onClick={() => handleCityClick(location.name)}
+              >
+                <div className="flex items-start justify-between mb-1">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-sm font-semibold truncate ${
                         location.name === currentCity
-                          ? 'bg-blue-50'
-                          : 'bg-gray-50 hover:bg-gray-100'
-                      }`}
-                      onClick={() => handleCityClick(location.name)}
-                    >
-                      <div className="flex items-start justify-between mb-1">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className={`text-sm font-semibold truncate ${
-                              location.name === currentCity
-                                ? 'text-blue-700'
-                                : 'text-gray-900'
-                            }`}>
-                              {location.name}
-                            </span>
-                            {location.isDefault && (
-                              <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400 flex-shrink-0" />
-                            )}
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-                          {!location.isDefault && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleSetDefault(location.id);
-                              }}
-                              className="p-1 text-gray-400 hover:text-yellow-500 hover:bg-gray-200 rounded transition-colors"
-                            >
-                              <Star className="h-3.5 w-3.5" />
-                            </button>
-                          )}
-                          {!location.isDefault && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteCity(location.id);
-                              }}
-                              className="p-1 text-gray-400 hover:text-red-500 hover:bg-gray-200 rounded transition-colors"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="space-y-0.5">
-                        <p className="text-xs text-gray-600">
-                          {location.department}
-                        </p>
-                        {location.population && (
-                          <p className="text-xs text-gray-500">
-                            {location.population} moun
-                          </p>
-                        )}
-                      </div>
+                          ? 'text-blue-700'
+                          : 'text-gray-900'
+                      }`}>
+                        {location.name}
+                      </span>
+                      {location.isDefault && (
+                        <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400 flex-shrink-0" />
+                      )}
                     </div>
-                  ))}
+                  </div>
+                  
+                  <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                    {!location.isDefault && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSetDefault(location.id);
+                        }}
+                        className="p-1 text-gray-400 hover:text-yellow-500 hover:bg-gray-200 rounded transition-colors"
+                      >
+                        <Star className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                    {!location.isDefault && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteCity(location.id);
+                        }}
+                        className="p-1 text-gray-400 hover:text-red-500 hover:bg-gray-200 rounded transition-colors"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-0.5">
+                  <p className="text-xs text-gray-600">
+                    {location.department}
+                  </p>
+                  {location.population && (
+                    <p className="text-xs text-gray-500">
+                      {location.population} moun
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
