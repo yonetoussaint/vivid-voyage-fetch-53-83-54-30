@@ -1,3 +1,4 @@
+// components/layout/MainLayout.tsx
 import React from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import IndexBottomNav from "@/components/layout/IndexBottomNav";
@@ -5,11 +6,11 @@ import AliExpressHeader from "@/components/home/AliExpressHeader";
 import ProductUploadOverlay from "@/components/product/ProductUploadOverlay";
 import LocationScreen from "@/components/home/header/LocationScreen";
 import LocationListScreen from "@/components/home/header/LocationListScreen";
+import LocationsPanel from "@/components/home/header/LocationsPanel"; // Add this
 import AuthOverlay from "@/components/auth/AuthOverlay";
 import SignInBanner from "@/components/layout/SignInBanner";
 import { useMainLayout } from "@/hooks/main-layout.hooks";
 import { HeaderFilterProvider } from "@/contexts/HeaderFilterContext";
-import LocationsPanel from "@/components/home/header/LocationsPanel"; // Add this import
 
 function MainLayoutContent() {
   const location = useLocation();
@@ -20,7 +21,7 @@ function MainLayoutContent() {
     bottomNavRef,
     contentRef,
 
-    // Page flags
+    // Page flags - NOW DEFINED
     pageFlags,
 
     // Layout
@@ -41,12 +42,12 @@ function MainLayoutContent() {
     setLocationListScreenOpen,
     isLocationScreenOpen,
     setLocationScreenOpen,
-    
-    // Add location panel state (you'll need to add this to your hook)
+
+    // Location panel state
     isLocationsPanelOpen,
     setIsLocationsPanelOpen,
     selectedCity,
-    setSelectedCity
+    handleCitySelect
   } = useMainLayout();
 
   // Determine if we're on the mall route
@@ -74,36 +75,22 @@ function MainLayoutContent() {
       showCategoryTabs: true,  // Show category tabs everywhere else
       showSearchList: false,   // Hide search list everywhere else
     }),
-    // Pass location panel props to header
-    cityName: selectedCity,
-    onLocationChange: (locationId: string) => {
-      // Handle location change if needed
-      console.log('Location changed to:', locationId);
-    }
-  };
-
-  const handleCitySelect = (cityName: string) => {
-    setSelectedCity(cityName);
-    // You might want to save this to localStorage or context
-    localStorage.setItem('currentCity', cityName);
+    // Pass the function to open locations panel
+    onOpenLocationsPanel: () => setIsLocationsPanelOpen(true)
   };
 
   return (
     <div className="app-container">
       <style dangerouslySetInnerHTML={{ __html: layoutHeightStyle }} />
 
-      {/* Header - Now hidden on conversation detail pages */}
+      {/* Header */}
       {pageFlags.shouldShowHeader && (
         <div ref={headerRef} className="app-header">
-          <AliExpressHeader 
-            {...finalHeaderProps}
-            // Pass the function to open locations panel
-            onOpenLocationsPanel={() => setIsLocationsPanelOpen(true)}
-          />
+          <AliExpressHeader {...finalHeaderProps} />
         </div>
       )}
 
-      {/* Main Content Area - Native-like scrolling */}
+      {/* Main Content Area */}
       <div 
         ref={contentRef} 
         className="app-content page-transition"
