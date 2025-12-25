@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { X, Search, TrendingUp, TrendingDown, Flame, Zap, Star } from 'lucide-react';
+import { X, Search, TrendingUp, TrendingDown, Flame, Zap, ChevronDown, MapPin } from 'lucide-react';
 import CategoryTabs from './header/CategoryTabs';
 
 interface AliExpressHeaderProps {
@@ -15,6 +15,11 @@ interface AliExpressHeaderProps {
   searchListItems?: Array<{ term: string; trend?: 'hot' | 'trending-up' | 'trending-down' | 'popular' }> | string[];
   onSearchItemClick?: (searchTerm: string) => void;
   flatBorders?: boolean;
+  
+  // New props for location dropdown
+  cityName?: string;
+  locationOptions?: Array<{ id: string; name: string }>;
+  onLocationChange?: (locationId: string) => void;
 }
 
 export default function AliExpressHeader({ 
@@ -28,6 +33,17 @@ export default function AliExpressHeader({
   searchListItems,
   onSearchItemClick,
   flatBorders = true,
+  
+  // Location dropdown props
+  cityName = 'New York',
+  locationOptions = [
+    { id: 'new-york', name: 'New York' },
+    { id: 'los-angeles', name: 'Los Angeles' },
+    { id: 'chicago', name: 'Chicago' },
+    { id: 'houston', name: 'Houston' },
+    { id: 'miami', name: 'Miami' },
+  ],
+  onLocationChange,
 }: AliExpressHeaderProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -36,8 +52,24 @@ export default function AliExpressHeader({
   const [activeTab, setActiveTab] = useState(activeTabId);
   const [searchQuery, setSearchQuery] = useState('');
   const [placeholder, setPlaceholder] = useState('');
+  const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
+  const [selectedCity, setSelectedCity] = useState(cityName);
+  
   const searchRef = useRef<HTMLInputElement>(null);
   const searchListRef = useRef<HTMLDivElement>(null);
+  const locationDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (locationDropdownRef.current && !locationDropdownRef.current.contains(event.target as Node)) {
+        setIsLocationDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Popular searches data with trend indicators - FIXED: Consistent trends
   const popularSearches = useMemo(() => [
@@ -67,7 +99,7 @@ export default function AliExpressHeader({
   // Process search list items to ensure they have the correct format - FIXED: Use deterministic trend assignment
   const searchItemsToShow = useMemo(() => {
     if (!searchListItems) return popularSearches;
-    
+
     // Convert all items to objects with deterministic trends
     const processedItems = searchListItems.map((item, index) => {
       if (typeof item === 'string') {
@@ -80,7 +112,7 @@ export default function AliExpressHeader({
       // For object items, ensure they have a trend
       return { term: item.term, trend: item.trend || 'popular' };
     });
-    
+
     return processedItems;
   }, [searchListItems, popularSearches]);
 
@@ -122,10 +154,19 @@ export default function AliExpressHeader({
     }
   };
 
-  // Handle settings button click
-  const handleSettingsClick = () => {
-    console.log('Settings button clicked');
-    // You can add your settings panel logic here
+  // Handle location dropdown toggle
+  const handleLocationClick = () => {
+    setIsLocationDropdownOpen(!isLocationDropdownOpen);
+  };
+
+  // Handle location selection
+  const handleLocationSelect = (locationId: string, locationName: string) => {
+    setSelectedCity(locationName);
+    setIsLocationDropdownOpen(false);
+    
+    if (onLocationChange) {
+      onLocationChange(locationId);
+    }
   };
 
   // Handle search input change
@@ -173,7 +214,7 @@ export default function AliExpressHeader({
       'trending-down': <TrendingDown className="h-3 w-3 mr-1.5 text-red-500" />,
       'popular': <Zap className="h-3 w-3 mr-1.5 text-blue-500" />,
     };
-    
+
     return (trend: string) => iconMap[trend as keyof typeof iconMap] || <Search className="h-3 w-3 mr-1.5 text-gray-500" />;
   }, []);
 
@@ -216,18 +257,68 @@ export default function AliExpressHeader({
                     <X className="h-4 w-4 text-gray-600" />
                   </button>
                 ) : (
-                  // Settings button when no text
-                  <button
-                    type="button"
-                    onClick={handleSettingsClick}
-                    className={`
-                      px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 
-                      transition-colors hover:bg-gray-200
-                      ${flatBorders ? 'rounded-none' : 'rounded-full'}
-                    `}
-                  >
-                    Settings
-                  </button>
+                  // Location dropdown button when no text
+                  <div className="relative" ref={locationDropdownRef}>
+                    <button
+                      type="button"
+                      onClick={handleLocationClick}
+                      className={`
+                        flex items-center justify-between gap-1.5
+                        px-2.5 py-1
+                        text-xs font-medium text-gray-600 
+                        bg-gray-100 hover:bg-gray-200
+                        transition-all duration-200
+                        ${flatBorders ? 'rounded-none' : 'rounded-full'}
+                        ${isLocationDropdownOpen ? 'bg-gray-200' : ''}
+                      `}
+                    >
+                      {/* Location icon */}
+                      <MapPin className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
+                      
+                      {/* City name - truncated if too long */}
+                      <span className="max-w-[80px] truncate">{selectedCity}</span>
+                      
+                      {/* Chevron icon */}
+                      <ChevronDown className={`h-3.5 w-3.5 text-gray-500 flex-shrink-0 transition-transform duration-200 ${isLocationDropdownOpen ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {/* Dropdown menu */}
+                    {isLocationDropdownOpen && (
+                      <div className="absolute right-0 mt-1 py-1 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                        <div className="px-3 py-2 text-xs font-medium text-gray-500 border-b border-gray-100">
+                          Select Location
+                        </div>
+                        {locationOptions.map((location) => (
+                          <button
+                            key={location.id}
+                            type="button"
+                            onClick={() => handleLocationSelect(location.id, location.name)}
+                            className={`
+                              w-full text-left px-3 py-2 text-xs font-medium
+                              hover:bg-gray-50 transition-colors
+                              flex items-center gap-2
+                              ${selectedCity === location.name ? 'bg-gray-50 text-gray-900' : 'text-gray-700'}
+                            `}
+                          >
+                            <MapPin className="h-3 w-3 text-gray-400" />
+                            {location.name}
+                          </button>
+                        ))}
+                        <div className="border-t border-gray-100 px-3 py-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              console.log('Manage locations clicked');
+                              setIsLocationDropdownOpen(false);
+                            }}
+                            className="text-xs font-medium text-blue-600 hover:text-blue-700"
+                          >
+                            Manage locations
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
