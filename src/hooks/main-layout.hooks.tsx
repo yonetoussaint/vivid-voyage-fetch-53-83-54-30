@@ -117,7 +117,7 @@ export const useMainLayout = (props?: UseMainLayoutProps) => {
     const messagesFilter = searchParams.get('filter') || 'all';
     const walletFilter = searchParams.get('tab') || 'main';
     const exploreFilter = searchParams.get('tab') || 'products';
-    
+
     const isRootHomePage = pathname === "/" || pathname === "/for-you";
     const isForYouPage = pathname === "/" || pathname === "/for-you";
     const isMessagesPage = pathname === '/messages' || pathname.startsWith('/messages/');
@@ -276,7 +276,7 @@ export const useMainLayout = (props?: UseMainLayoutProps) => {
       const windowHeight = window.innerHeight;
       const { headerHeight, bottomNavHeight } = measurements;
       const calculatedHeight = windowHeight - headerHeight - bottomNavHeight;
-      
+
       setMeasurements(prev => ({ ...prev, contentHeight: calculatedHeight }));
 
       // Apply directly to the element
@@ -342,7 +342,7 @@ export const useMainLayout = (props?: UseMainLayoutProps) => {
   // Generate CSS for layout
   const layoutHeightStyle = useMemo(() => {
     const { headerHeight, bottomNavHeight } = measurements;
-    
+
     return `
       :root {
         --header-height: ${headerHeight}px;
@@ -560,15 +560,15 @@ export const useMainLayout = (props?: UseMainLayoutProps) => {
     showProductUpload,
     searchQuery,
     measurements,
-    
+
     // Refs
     headerRef,
     bottomNavRef,
     contentRef,
-    
+
     // Page flags
     pageFlags,
-    
+
     // Configuration
     categories,
     categoryTabs,
@@ -576,20 +576,39 @@ export const useMainLayout = (props?: UseMainLayoutProps) => {
     walletTabs,
     exploreTabs,
     currentActiveTabId,
-    
+
     // Functions
     setShowProductUpload,
     setSearchQuery,
     handleCustomTabChange,
-    
+
     // Layout
     layoutHeightStyle,
-    
+
     // Header props
     headerProps: {
       activeTabId: currentActiveTabId,
       showFilterBar,
-      showCategoryTabs: pageFlags.isRootHomePage || pageFlags.isForYouPage || pageFlags.isCategoryRoute || pageFlags.isMallPage,
+      // Show category tabs on home, for-you, and category routes, but NOT on mall route
+      showCategoryTabs: (pageFlags.isRootHomePage || pageFlags.isForYouPage || pageFlags.isCategoryRoute) && !pageFlags.isMallPage,
+      // Show search list only on mall route
+      showSearchList: pageFlags.isMallPage,
+      searchListTitle: pageFlags.isMallPage ? "Popular in Mall" : undefined,
+      flatBorders: pageFlags.isMallPage ? true : undefined,
+      // Custom search items for mall
+      searchListItems: pageFlags.isMallPage ? [
+        "Luxury watches",
+        "Designer bags", 
+        "Premium electronics",
+        "High-end fashion",
+        "Branded cosmetics",
+        "Smart home devices",
+        "Gaming accessories",
+        "Premium watches",
+        "Designer sunglasses",
+        "Luxury skincare"
+      ] : undefined,
+      
       filterCategories,
       selectedFilters,
       onFilterSelect,
@@ -597,8 +616,11 @@ export const useMainLayout = (props?: UseMainLayoutProps) => {
       onClearAll,
       onFilterButtonClick,
       isFilterDisabled,
+      
+      // Pass customTabs for mall too, but they won't show when showCategoryTabs is false
       customTabs: categoryTabs || messagesTabs || walletTabs || exploreTabs,
       onCustomTabChange: handleCustomTabChange,
+      
       showSectionHeader: pageFlags.isProductsPage,
       sectionHeaderTitle: productsTitle,
       sectionHeaderShowStackedProfiles: searchParams.get('showProfiles') === 'true',
@@ -635,7 +657,7 @@ export const useMainLayout = (props?: UseMainLayoutProps) => {
       ),
       sectionHeaderViewAllText: "View All"
     },
-    
+
     // Context values
     isAuthOverlayOpen,
     setIsAuthOverlayOpen,
