@@ -1,5 +1,5 @@
 import React from "react";
-import { Outlet, useLocation } from "react-router-dom"; // Add useLocation
+import { Outlet, useLocation } from "react-router-dom";
 import IndexBottomNav from "@/components/layout/IndexBottomNav";
 import AliExpressHeader from "@/components/home/AliExpressHeader";
 import ProductUploadOverlay from "@/components/product/ProductUploadOverlay";
@@ -11,8 +11,8 @@ import { useMainLayout } from "@/hooks/main-layout.hooks";
 import { HeaderFilterProvider } from "@/contexts/HeaderFilterContext";
 
 function MainLayoutContent() {
-  const location = useLocation(); // Get current route
-  
+  const location = useLocation();
+
   const {
     // Refs
     headerRef,
@@ -44,7 +44,7 @@ function MainLayoutContent() {
 
   // Determine if we're on the mall route
   const isMallRoute = location.pathname === '/mall' || location.pathname.startsWith('/mall/');
-  
+
   // Prepare header props conditionally
   const finalHeaderProps = {
     ...headerProps,
@@ -52,10 +52,17 @@ function MainLayoutContent() {
     ...(isMallRoute ? {
       showCategoryTabs: false, // Hide category tabs on mall
       showSearchList: true,    // Show search list on mall
-      searchListTitle: "Popular in Mall",
       flatBorders: true,
       // Optional: Custom search items for mall
-      // searchListItems: ["Luxury watches", "Designer bags", "Premium electronics"]
+      searchListItems: [
+        "Luxury watches", 
+        "Designer bags", 
+        "Premium electronics",
+        "High-end fashion",
+        "Luxury cosmetics",
+        "Designer shoes",
+        "Luxury jewelry"
+      ]
     } : {
       showCategoryTabs: true,  // Show category tabs everywhere else
       showSearchList: false,   // Hide search list everywhere else
