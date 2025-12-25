@@ -55,15 +55,11 @@ const MallPage: React.FC<MallPageProps> = ({ category = 'mall' }) => {
     };
   }, [filters]);
 
-  const handleSubcategorySelect = (channelId: string) => {
-    setActiveSubcategory(channelId);
-
-    // Apply subcategory-specific filters
-    const subcategoryFilters = getSubcategoryFilters(channelId);
-    setFilters(prev => ({
-      ...prev,
-      ...subcategoryFilters
-    }));
+  // Remove the handleSubcategorySelect function since channels are not selectable
+  // Optional: If you want to keep some functionality but not selection, you can add a different handler
+  const handleChannelClick = () => {
+    // Optional: Add any other behavior when channels are clicked
+    console.log('Channel clicked (non-selectable)');
   };
 
   useEffect(() => {
@@ -83,8 +79,8 @@ const MallPage: React.FC<MallPageProps> = ({ category = 'mall' }) => {
     <div key="favourite-channels-wrapper" className="">
       <FavouriteChannels 
         channels={mallChannels}
-        activeChannel={activeSubcategory}
-        onChannelSelect={handleSubcategorySelect}
+        // Don't pass activeChannel prop to make them non-selectable
+        onChannelSelect={handleChannelClick} // Optional: Still pass a handler if you want click feedback
       />
     </div>,
 
@@ -112,7 +108,7 @@ const MallPage: React.FC<MallPageProps> = ({ category = 'mall' }) => {
 
     <div key="infinite-grid-wrapper" className="pt-2">
       <InfiniteContentGrid 
-        category={activeSubcategory === 'all' ? activeCategory : activeSubcategory} 
+        category={activeCategory} // Just use the main category since subchannels aren't selectable
         filters={safeFilters} 
       />
     </div>,
