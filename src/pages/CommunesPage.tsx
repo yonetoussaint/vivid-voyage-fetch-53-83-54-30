@@ -1,6 +1,6 @@
 // pages/CommunesPage.tsx
 import { Search, X, ChevronLeft, ChevronDown, ChevronUp } from 'lucide-react';
-import { useCommunes } from '@/hooks/communes.hooks';
+import { useCommunes } from '@/hooks/communes.hook';
 
 interface CommunesPageProps {
   onClose: () => void;
@@ -93,10 +93,10 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
         </div>
       </div>
 
-      {/* Communes List - Scrollable area */}
-      <div className="absolute top-[140px] bottom-[70px] left-0 right-0 overflow-y-auto px-3 py-4">
+      {/* Communes List - Scrollable area - FIXED: Removed excessive top padding */}
+      <div className="absolute top-[108px] bottom-[70px] left-0 right-0 overflow-y-auto">
         {departments.length > 0 ? (
-          <div className="space-y-4">
+          <div className="px-3 py-2 space-y-4">
             {departments.map((department) => (
               <div key={department} className="space-y-2">
                 {/* Department Header with Chevron */}
