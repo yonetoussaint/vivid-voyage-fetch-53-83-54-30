@@ -59,15 +59,16 @@ export default function LocationsPanel({
   };
 
   return (
-    <SlideUpPanel
-      isOpen={isOpen}
-      onClose={onClose}
-      title="" // Removed the title
-      showCloseButton={true}
-      maxHeight={0.95}
-      dynamicHeight={true}
-      preventBodyScroll={true}
-    >
+   <SlideUpPanel
+  isOpen={isOpen}
+  onClose={onClose}
+  title="" // Removed the title
+  showCloseButton={true}
+  maxHeight={0.95}
+  dynamicHeight={true}
+  preventBodyScroll={true}
+  showDragHandle={false} // Add this to explicitly hide it
+>
       <div className="px-3 pb-16">
         <div className="columns-2 md:columns-3 gap-2 pb-6">
           {locations.map((location) => (
