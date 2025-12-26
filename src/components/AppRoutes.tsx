@@ -33,6 +33,7 @@ import MyStations from "@/pages/MyStations";
 import ProductsPage from "@/pages/ProductsPage";
 import CartPage from "@/pages/CartPage";
 import MenuPage from "@/pages/MenuPage";
+import CommunesPage from "@/pages/CommunesPage"; // Add this import
 
 export function AppRoutes() {
   return (
@@ -262,6 +263,16 @@ export function AppRoutes() {
           element={
             <CachedRoute>
               <MenuPage />
+            </CachedRoute>
+          }
+        />
+
+        {/* Add CommunesPage route */}
+        <Route
+          path="communes"
+          element={
+            <CachedRoute>
+              <CommunesPage />
             </CachedRoute>
           }
         />
