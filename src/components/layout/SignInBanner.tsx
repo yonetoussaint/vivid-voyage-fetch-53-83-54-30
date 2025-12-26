@@ -51,7 +51,7 @@ export default function SignInBanner() {
   const zIndex = hasStickyCheckout ? 'z-50' : 'z-40';
 
   return (
-    <div className={`fixed ${bottomPosition} left-0 right-0 ${zIndex} bg-black/70 backdrop-blur-sm py-1.5 px-4 flex items-center justify-between`}>
+    <div className={`fixed ${bottomPosition} left-0 right-0 ${zIndex} bg-black/50 backdrop-blur-sm py-1.5 px-2 flex items-center justify-between`}>
       <div className="text-white text-xs font-medium">Sign in to explore more</div>
       <Button 
         onClick={handleSignInClick}
