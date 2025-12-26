@@ -77,9 +77,10 @@ export default function LocationsPanel({
     preventBodyScroll={true}
     showDragHandle={false}
   >
-    {/* Main wrapper with bottom padding for the button */}
-    <div className="px-3 pt-6 pb-16"> {/* Added pb-16 for button space */}
-      <div className="columns-2 md:columns-3 gap-2">
+    {/* Main wrapper with flex column layout */}
+    <div className="px-3 pt-6 pb-3 min-h-full flex flex-col">
+      {/* Content area that can grow */}
+      <div className="columns-2 md:columns-3 gap-2 flex-1">
         {locations.map((location) => (
           <div
             key={location.id}
@@ -115,8 +116,8 @@ export default function LocationsPanel({
         ))}
       </div>
 
-      {/* Add Button - Now part of the content flow, not fixed */}
-      <div className="mt-6"> {/* Added margin top to separate from content */}
+      {/* Sticky button container */}
+      <div className="sticky bottom-0 mt-6 pt-3 bg-white">
         <button
           onClick={handleNavigateToCommunes}
           className="w-full px-3 py-3 border-2 border-dashed border-gray-400 text-gray-700 text-sm hover:border-red-400 hover:text-red-700 transition-colors bg-white flex items-center justify-center gap-2"
