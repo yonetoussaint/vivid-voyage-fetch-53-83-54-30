@@ -20,183 +20,252 @@ import ProductCommentsPage from "@/pages/ProductCommentsPage";
 import ProductQAPage from "@/pages/ProductQAPage";
 import AskQuestionPage from "@/pages/AskQuestionPage";
 import Wallet from "@/pages/Wallet";
-import Messages from '@/pages/Messages';
-import { ChatPage } from '@/pages/Messages';
+import Messages from "@/pages/Messages";
+import { ChatPage } from "@/pages/Messages";
 import ProfilePage from "@/pages/ProfilePage";
 import MoreMenu from "@/pages/MoreMenu";
-import Explore from '@/pages/Explore';
-import Wishlist from '@/pages/Wishlist';
-import Notifications from '@/pages/Notifications";
-import Addresses from '@/pages/Addresses';
-import Help from '@/pages/Help';
+import Explore from "@/pages/Explore";
+import Wishlist from "@/pages/Wishlist";
+import Notifications from "@/pages/Notifications";
+import Addresses from "@/pages/Addresses";
+import Help from "@/pages/Help";
 import MyStations from "@/pages/MyStations";
 import ProductsPage from "@/pages/ProductsPage";
-import CartPage from '@/pages/CartPage';
-import MenuPage from '@/pages/MenuPage';
+import CartPage from "@/pages/CartPage";
+import MenuPage from "@/pages/MenuPage";
 
 export function AppRoutes() {
   return (
     <Routes>
-      {/* All routes inside MainLayout */}
       <Route path="/" element={<MainLayout />}>
-        {/* Homepage routes */}
-        <Route index element={
-          <CachedRoute>
-            <ConditionalHomepage />
-          </CachedRoute>
-        } />
-        <Route path="for-you" element={
-          <CachedRoute>
-            <ConditionalHomepage />
-          </CachedRoute>
-        } />
-        <Route path="index" element={
-          <CachedRoute>
-            <Index />
-          </CachedRoute>
-        } />
-        
-        {/* Product routes */}
-        <Route path="product/:id/:tab" element={
-          <CachedRoute>
-            <ProductDetail />
-          </CachedRoute>
-        } />
+        <Route
+          index
+          element={
+            <CachedRoute>
+              <ConditionalHomepage />
+            </CachedRoute>
+          }
+        />
+        <Route
+          path="for-you"
+          element={
+            <CachedRoute>
+              <ConditionalHomepage />
+            </CachedRoute>
+          }
+        />
+        <Route
+          path="index"
+          element={
+            <CachedRoute>
+              <Index />
+            </CachedRoute>
+          }
+        />
 
-        <Route path="product/:id" element={
-          <Navigate to="overview" replace />
-        } />
+        <Route
+          path="product/:id/:tab"
+          element={
+            <CachedRoute>
+              <ProductDetail />
+            </CachedRoute>
+          }
+        />
 
-        <Route path="product/:id/description" element={
-          <CachedRoute>
-            <ProductDescriptionPage />
-          </CachedRoute>
-        } />
+        <Route path="product/:id" element={<Navigate to="overview" replace />} />
 
-        <Route path="product/:id/comments" element={
-          <CachedRoute>
-            <ProductCommentsPage />
-          </CachedRoute>
-        } />
+        <Route
+          path="product/:id/description"
+          element={
+            <CachedRoute>
+              <ProductDescriptionPage />
+            </CachedRoute>
+          }
+        />
 
-        <Route path="product/:id/qa" element={
-          <CachedRoute>
-            <ProductQAPage />
-          </CachedRoute>
-        } />
+        <Route
+          path="product/:id/comments"
+          element={
+            <CachedRoute>
+              <ProductCommentsPage />
+            </CachedRoute>
+          }
+        />
 
-        <Route path="product/:id/ask-question" element={
-          <CachedRoute>
-            <AskQuestionPage />
-          </CachedRoute>
-        } />
+        <Route
+          path="product/:id/qa"
+          element={
+            <CachedRoute>
+              <ProductQAPage />
+            </CachedRoute>
+          }
+        />
 
-        <Route path="single-product/:id" element={
-          <CachedRoute>
-            <SingleProductDetail />
-          </CachedRoute>
-        } />
+        <Route
+          path="product/:id/ask-question"
+          element={
+            <CachedRoute>
+              <AskQuestionPage />
+            </CachedRoute>
+          }
+        />
 
-        <Route path="single-product/:id/comments" element={
-          <CachedRoute>
-            <ProductCommentsPage />
-          </CachedRoute>
-        } />
+        <Route
+          path="single-product/:id"
+          element={
+            <CachedRoute>
+              <SingleProductDetail />
+            </CachedRoute>
+          }
+        />
 
-        <Route path="single-product/:id/ask-question" element={
-          <CachedRoute>
-            <AskQuestionPage />
-          </CachedRoute>
-        } />
+        <Route
+          path="single-product/:id/comments"
+          element={
+            <CachedRoute>
+              <ProductCommentsPage />
+            </CachedRoute>
+          }
+        />
 
-        {/* User routes moved from UserRoutes.tsx */}
-        <Route path="wallet" element={
-          <CachedRoute>
-            <Wallet />
-          </CachedRoute>
-        } />
+        <Route
+          path="single-product/:id/ask-question"
+          element={
+            <CachedRoute>
+              <AskQuestionPage />
+            </CachedRoute>
+          }
+        />
 
-        {/* Messages list */}
-        <Route path="messages" element={
-          <CachedRoute>
-            <Messages />
-          </CachedRoute>
-        } />
+        <Route
+          path="wallet"
+          element={
+            <CachedRoute>
+              <Wallet />
+            </CachedRoute>
+          }
+        />
 
-        {/* Chat detail page */}
-        <Route path="messages/:conversationId" element={
-          <CachedRoute>
-            <ChatPage />
-          </CachedRoute>
-        } />
+        <Route
+          path="messages"
+          element={
+            <CachedRoute>
+              <Messages />
+            </CachedRoute>
+          }
+        />
 
-        <Route path="profile/*" element={
-          <CachedRoute>
-            <ProfilePage />
-          </CachedRoute>
-        } />
+        <Route
+          path="messages/:conversationId"
+          element={
+            <CachedRoute>
+              <ChatPage />
+            </CachedRoute>
+          }
+        />
 
-        <Route path="more" element={
-          <CachedRoute>
-            <MoreMenu />
-          </CachedRoute>
-        } />
-        <Route path="more-menu" element={
-          <CachedRoute>
-            <MoreMenu />
-          </CachedRoute>
-        } />
-        <Route path="explore" element={
-          <CachedRoute>
-            <Explore />
-          </CachedRoute>
-        } />
-        <Route path="wishlist" element={
-          <CachedRoute>
-            <Wishlist />
-          </CachedRoute>
-        } />
-        <Route path="notifications" element={
-          <CachedRoute>
-            <Notifications />
-          </CachedRoute>
-        } />
-        <Route path="addresses" element={
-          <CachedRoute>
-            <Addresses />
-          </CachedRoute>
-        } />
-        <Route path="help" element={
-          <CachedRoute>
-            <Help />
-          </CachedRoute>
-        } />
+        <Route
+          path="profile/*"
+          element={
+            <CachedRoute>
+              <ProfilePage />
+            </CachedRoute>
+          }
+        />
 
-        <Route path="my-stations" element={
-          <CachedRoute>
-            <MyStations />
-          </CachedRoute>
-        } />
+        <Route
+          path="more"
+          element={
+            <CachedRoute>
+              <MoreMenu />
+            </CachedRoute>
+          }
+        />
+        <Route
+          path="more-menu"
+          element={
+            <CachedRoute>
+              <MoreMenu />
+            </CachedRoute>
+          }
+        />
+        <Route
+          path="explore"
+          element={
+            <CachedRoute>
+              <Explore />
+            </CachedRoute>
+          }
+        />
+        <Route
+          path="wishlist"
+          element={
+            <CachedRoute>
+              <Wishlist />
+            </CachedRoute>
+          }
+        />
+        <Route
+          path="notifications"
+          element={
+            <CachedRoute>
+              <Notifications />
+            </CachedRoute>
+          }
+        />
+        <Route
+          path="addresses"
+          element={
+            <CachedRoute>
+              <Addresses />
+            </CachedRoute>
+          }
+        />
+        <Route
+          path="help"
+          element={
+            <CachedRoute>
+              <Help />
+            </CachedRoute>
+          }
+        />
 
-        <Route path="products" element={
-          <CachedRoute>
-            <ProductsPage />
-          </CachedRoute>
-        } />
+        <Route
+          path="my-stations"
+          element={
+            <CachedRoute>
+              <MyStations />
+            </CachedRoute>
+          }
+        />
 
-        <Route path="cart" element={
-          <CachedRoute>
-            <CartPage />
-          </CachedRoute>
-        } />
+        <Route
+          path="products"
+          element={
+            <CachedRoute>
+              <ProductsPage />
+            </CachedRoute>
+          }
+        />
 
-        <Route path="menu" element={
-          <CachedRoute>
-            <MenuPage />
-          </CachedRoute>
-        } />
+        <Route
+          path="cart"
+          element={
+            <CachedRoute>
+              <CartPage />
+            </CachedRoute>
+          }
+        />
 
-        {/* Call the remaining route functions */}
+        <Route
+          path="menu"
+          element={
+            <CachedRoute>
+              <MenuPage />
+            </CachedRoute>
+          }
+        />
+
         {CategoryRoutes()}
         {ContentRoutes()}
         {AuthRoutes()}
@@ -205,13 +274,9 @@ export function AppRoutes() {
         {PaymentRoutes()}
         {MiscRoutes()}
 
-        {/* Add Mall Route directly */}
         <Route path="mall" element={<MallPage />} />
 
-        {/* Add Admin Route */}
         <Route path="admin" element={<AdminPage />} />
-        
-        {/* CommunesPage is handled as a modal in MainLayout, not as a route */}
       </Route>
     </Routes>
   );
