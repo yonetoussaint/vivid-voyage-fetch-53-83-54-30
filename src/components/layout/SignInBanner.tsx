@@ -60,7 +60,7 @@ export default function SignInBanner() {
       <Button 
         onClick={handleSignInClick}
         size="sm" 
-        className="bg-red-300 hover:bg-red-400 text-gray-800 font-bold px-3 py-0.5 h-6 rounded-none border-0 shadow-none"
+        className="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-0.5 h-6 rounded-none border-0 shadow-none"
       >
         <span className="text-xs font-bold">LOGIN NOW</span>
       </Button>
