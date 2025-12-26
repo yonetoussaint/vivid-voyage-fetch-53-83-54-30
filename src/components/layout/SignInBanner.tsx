@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth/AuthContext";
 
@@ -52,15 +51,14 @@ export default function SignInBanner() {
   const zIndex = hasStickyCheckout ? 'z-50' : 'z-40';
 
   return (
-    <div className={`fixed ${bottomPosition} left-0 right-0 ${zIndex} bg-gradient-to-r from-red-500/80 to-orange-500/80 backdrop-blur-sm py-1.5 px-4 flex items-center justify-between shadow-md`}>
+    <div className={`fixed ${bottomPosition} left-0 right-0 ${zIndex} bg-black/70 backdrop-blur-sm py-1.5 px-4 flex items-center justify-between`}>
       <div className="text-white text-xs font-medium">Sign in to explore more</div>
       <Button 
         onClick={handleSignInClick}
         size="sm" 
-        className="bg-white hover:bg-white/90 text-red-500 shadow-sm flex items-center gap-1 px-2 py-0.5 h-6 rounded-full"
+        className="bg-red-300 hover:bg-red-400 text-gray-800 font-bold px-3 py-0.5 h-6 rounded-none border-0 shadow-none"
       >
-        <LogIn className="w-3 h-3" />
-        <span className="text-xs font-medium">Sign in</span>
+        <span className="text-xs font-bold">LOGIN NOW</span>
       </Button>
     </div>
   );
