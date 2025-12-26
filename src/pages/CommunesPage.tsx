@@ -1,6 +1,6 @@
 // pages/CommunesPage.tsx
-import { Search, X, ChevronLeft } from 'lucide-react';
-import { useCommunes } from '@/hooks/communes.hook';
+import { Search, X, ChevronLeft, ChevronDown, ChevronUp } from 'lucide-react';
+import { useCommunes } from '../hooks/communes.hook';
 
 interface CommunesPageProps {
   onClose: () => void;
@@ -11,18 +11,30 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
     // State
     searchQuery,
     hoveredId,
+    expandedDepartments,
     communesByDepartment,
     departments,
     
     // Actions
     setSearchQuery,
     setHoveredId,
+    toggleDepartment,
+    expandAllDepartments,
+    collapseAllDepartments,
     handleGoBack,
     handleSelectCommune,
     handleDeleteCommune,
     handleAddNewCommune,
     clearSearch,
   } = useCommunes({ onClose });
+
+  // Check if all departments are expanded
+  const allExpanded = departments.length > 0 && 
+    departments.every(dept => expandedDepartments.has(dept));
+  
+  // Check if all departments are collapsed
+  const allCollapsed = departments.length === 0 || 
+    departments.every(dept => !expandedDepartments.has(dept));
 
   return (
     <div className="fixed inset-0 z-[9999] bg-white">
@@ -36,6 +48,26 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
             <ChevronLeft className="h-5 w-5" />
           </button>
           <h1 className="text-lg font-semibold text-gray-900">Tout Komin Ayiti</h1>
+          
+          {/* Expand/Collapse All buttons */}
+          <div className="ml-auto flex items-center gap-2">
+            {!allExpanded && (
+              <button
+                onClick={expandAllDepartments}
+                className="text-xs px-2 py-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
+              >
+                Elaji tout
+              </button>
+            )}
+            {!allCollapsed && (
+              <button
+                onClick={collapseAllDepartments}
+                className="text-xs px-2 py-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
+              >
+                Fèmen tout
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Search Bar */}
@@ -64,41 +96,61 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
       {/* Communes List - Scrollable area */}
       <div className="absolute top-[140px] bottom-[70px] left-0 right-0 overflow-y-auto px-3 py-4">
         {departments.length > 0 ? (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {departments.map((department) => (
               <div key={department} className="space-y-2">
-                <h2 className="text-sm font-semibold text-gray-900 px-1">
-                  {department}
-                </h2>
-                <div className="columns-2 md:columns-3 gap-2">
-                  {communesByDepartment[department].map((commune) => (
-                    <div
-                      key={commune.id}
-                      className={`group inline-block w-full mb-2 break-inside-avoid transition-colors duration-150 cursor-pointer relative ${
-                        'bg-gray-100 hover:bg-gray-200'
-                      }`}
-                      onClick={() => handleSelectCommune(commune.name)}
-                      onMouseEnter={() => setHoveredId(commune.id)}
-                      onMouseLeave={() => setHoveredId(null)}
-                    >
-                      <div className="p-2.5 pr-8">
-                        <span className="text-sm text-gray-900">
-                          {commune.name}
-                        </span>
-                      </div>
-
-                      {/* Delete button - shows on hover */}
-                      {hoveredId === commune.id && (
-                        <button
-                          onClick={(e) => handleDeleteCommune(commune.id, e)}
-                          className="absolute right-1 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-red-500 transition-colors"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                {/* Department Header with Chevron */}
+                <div 
+                  className="flex items-center justify-between p-2 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => toggleDepartment(department)}
+                >
+                  <h2 className="text-sm font-semibold text-gray-900">
+                    {department}
+                    <span className="ml-2 text-xs font-normal text-gray-500">
+                      ({communesByDepartment[department].length})
+                    </span>
+                  </h2>
+                  <div className="flex items-center">
+                    {expandedDepartments.has(department) ? (
+                      <ChevronUp className="h-4 w-4 text-gray-500" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 text-gray-500" />
+                    )}
+                  </div>
                 </div>
+
+                {/* Communes List (collapsible) */}
+                {expandedDepartments.has(department) && (
+                  <div className="columns-2 md:columns-3 gap-2 ml-2">
+                    {communesByDepartment[department].map((commune) => (
+                      <div
+                        key={commune.id}
+                        className={`group inline-block w-full mb-2 break-inside-avoid transition-colors duration-150 cursor-pointer relative ${
+                          'bg-gray-100 hover:bg-gray-200'
+                        }`}
+                        onClick={() => handleSelectCommune(commune.name)}
+                        onMouseEnter={() => setHoveredId(commune.id)}
+                        onMouseLeave={() => setHoveredId(null)}
+                      >
+                        <div className="p-2.5 pr-8">
+                          <span className="text-sm text-gray-900">
+                            {commune.name}
+                          </span>
+                        </div>
+
+                        {/* Delete button - shows on hover */}
+                        {hoveredId === commune.id && (
+                          <button
+                            onClick={(e) => handleDeleteCommune(commune.id, e)}
+                            className="absolute right-1 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-red-500 transition-colors"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
