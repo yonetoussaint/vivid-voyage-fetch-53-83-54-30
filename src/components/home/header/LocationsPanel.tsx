@@ -58,17 +58,25 @@ export default function LocationsPanel({
     navigate('/communes');
   };
 
+  const handleHelpClick = () => {
+    // You can implement help functionality here
+    console.log('Help clicked');
+    // For example, show a help modal or navigate to help page
+  };
+
   return (
-   <SlideUpPanel
-  isOpen={isOpen}
-  onClose={onClose}
-  title="" // Removed the title
-  showCloseButton={true}
-  maxHeight={0.95}
-  dynamicHeight={true}
-  preventBodyScroll={true}
-  showDragHandle={false} // Add this to explicitly hide it
->
+    <SlideUpPanel
+      isOpen={isOpen}
+      onClose={onClose}
+      title="" // Removed the title
+      showCloseButton={true}
+      showHelpButton={true} // Add the help button
+      onHelpClick={handleHelpClick} // Pass the help click handler
+      maxHeight={0.95}
+      dynamicHeight={true}
+      preventBodyScroll={true}
+      showDragHandle={false} // Explicitly set to false to hide drag bar
+    >
       <div className="px-3 pb-16">
         <div className="columns-2 md:columns-3 gap-2 pb-6">
           {locations.map((location) => (
