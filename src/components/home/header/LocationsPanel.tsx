@@ -1,6 +1,6 @@
 // components/home/header/LocationsPanel.tsx
 import { useState } from 'react';
-import { Plus, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import SlideUpPanel from '@/components/shared/SlideUpPanel';
 
 interface Location {
@@ -77,7 +77,7 @@ export default function LocationsPanel({
       showDragHandle={true}
       preventBodyScroll={true}
     >
-      <div className="px-3 pb-20">
+      <div className="px-3 pb-16">
         <div className="mb-5 pt-1">
           <h2 className="text-base font-semibold text-gray-900">Chwazi yon vil</h2>
           <div className="mt-1 text-xs text-gray-500">
@@ -112,7 +112,7 @@ export default function LocationsPanel({
               {hoveredId === location.id && (
                 <button
                   onClick={(e) => handleDeleteCity(location.id, e)}
-                  className="absolute right-1 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-red-500 hover:bg-gray-300 rounded transition-colors"
+                  className="absolute right-1 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-red-500 transition-colors"
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -121,17 +121,17 @@ export default function LocationsPanel({
           ))}
         </div>
 
-        {/* Sticky Add Button */}
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-[calc(100%-2rem)] max-w-[500px] bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200">
+        {/* Sticky Add Button - Clean, Flat, Dotted */}
+        <div className="fixed bottom-3 left-1/2 transform -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-[500px]">
           {isAdding ? (
-            <div className="p-3">
-              <div className="flex items-center gap-2 mb-3">
+            <div className="p-2 bg-white border border-gray-300 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
                 <input
                   type="text"
                   value={newCityInput}
                   onChange={(e) => setNewCityInput(e.target.value)}
                   placeholder="Antre non vil la"
-                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-blue-500"
                   autoFocus
                   onKeyPress={(e) => e.key === 'Enter' && handleAddCity()}
                 />
@@ -140,7 +140,7 @@ export default function LocationsPanel({
                     setIsAdding(false);
                     setNewCityInput('');
                   }}
-                  className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -148,18 +148,17 @@ export default function LocationsPanel({
               <button
                 onClick={handleAddCity}
                 disabled={!newCityInput.trim()}
-                className="w-full px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full px-3 py-2 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
-                Ajoute Vil
+                Ajoute
               </button>
             </div>
           ) : (
             <button
               onClick={() => setIsAdding(true)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3.5 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+              className="w-full px-3 py-3 border-2 border-dashed border-gray-400 text-gray-700 text-sm hover:border-gray-600 hover:text-gray-900 transition-colors bg-white"
             >
-              <Plus className="h-4 w-4 text-gray-500" />
-              Ajoute yon vil
+              + Ajoute yon vil
             </button>
           )}
         </div>
