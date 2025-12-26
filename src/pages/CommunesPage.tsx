@@ -49,7 +49,7 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
-                onClick={handleBack} {/* Use direct handler */}
+                onClick={handleBack}
                 className="p-1 text-gray-600 hover:text-gray-900"
               >
                 <ChevronLeft className="h-5 w-5" />
