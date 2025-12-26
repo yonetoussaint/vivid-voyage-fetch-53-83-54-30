@@ -1,4 +1,4 @@
-// routes/UserRoutes.tsx
+// routes/UserRoutes.tsx - RENAMED TO AuthRoutes (but keeping user imports)
 import React from "react";
 import { Route } from "react-router-dom";
 import CachedRoute from "../components/CachedRoute";
@@ -10,15 +10,15 @@ import ProfilePage from "../pages/ProfilePage";
 import MoreMenu from "../pages/MoreMenu";
 import Explore from '../pages/Explore';
 import Wishlist from '../pages/Wishlist';
-import Notifications from '../pages/Notifications';
-import Addresses from '../pages/Addresses";
-import Help from '../pages/Help';
+import Notifications from "../pages/Notifications";
+import Addresses from "../pages/Addresses";
+import Help from "../pages/Help";
 import MyStations from "../pages/MyStations";
 import ProductsPage from "../pages/ProductsPage";
 import CartPage from '../pages/CartPage';
 import MenuPage from '../pages/MenuPage';
 
-export function UserRoutes() {
+export function AuthRoutes() { // Changed from UserRoutes to AuthRoutes
   return (
     <>
       <Route path="wallet" element={
