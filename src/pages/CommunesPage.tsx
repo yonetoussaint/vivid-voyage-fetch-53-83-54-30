@@ -38,9 +38,9 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
 
   return (
     <div className="fixed inset-0 z-[9999] bg-white">
-      {/* Header - Clean version */}
+      {/* Header - Reduced height and removed border */}
       {!isSearchVisible ? (
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 z-10">
+        <div className="sticky top-0 bg-white px-4 py-2 z-10"> {/* Reduced from py-3 to py-2 */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
@@ -82,7 +82,7 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
         </div>
       ) : (
         /* Search Bar Header - When search is active */
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 z-10">
+        <div className="sticky top-0 bg-white px-4 py-2 z-10"> {/* Reduced from py-3 to py-2 */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
@@ -103,10 +103,10 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
         </div>
       )}
 
-      {/* Communes List - Scrollable area - now extends to bottom */}
-      <div className="absolute top-[60px] bottom-0 left-0 right-0 overflow-y-auto">
+      {/* Communes List - Scrollable area with balanced padding */}
+      <div className="absolute top-[52px] bottom-0 left-0 right-0 overflow-y-auto"> {/* Reduced from top-[60px] to top-[52px] */}
         {departments.length > 0 ? (
-          <div className="px-3 py-2 space-y-4">
+          <div className="px-4 space-y-4 py-2"> {/* Changed from px-3 to px-4 for balanced padding */}
             {departments.map((department) => (
               <div key={department} className="space-y-2">
                 {/* Department Header with Chevron */}
@@ -131,7 +131,7 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
 
                 {/* Communes List (collapsible) */}
                 {expandedDepartments.has(department) && (
-                  <div className="columns-2 md:columns-3 gap-2 ml-2">
+                  <div className="columns-2 md:columns-3 gap-2 px-2"> {/* Added px-2 for balanced padding */}
                     {communesByDepartment[department].map((commune) => (
                       <div
                         key={commune.id}
@@ -178,8 +178,6 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
           </div>
         )}
       </div>
-
-      {/* Removed: Sticky Add Button section */}
     </div>
   );
 }
