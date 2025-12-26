@@ -1,7 +1,8 @@
 // components/home/header/LocationsPanel.tsx
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, ArrowRight } from 'lucide-react';
 import SlideUpPanel from '@/components/shared/SlideUpPanel';
+import { useRouter } from 'next/navigation';
 
 interface Location {
   id: string;
@@ -21,6 +22,7 @@ export default function LocationsPanel({
   currentCity,
   onCitySelect
 }: LocationsPanelProps) {
+  const router = useRouter();
   const [locations, setLocations] = useState<Location[]>([
     { id: '1', name: 'Port-au-Prince' },
     { id: '2', name: 'Cap-Haïtien' },
@@ -64,6 +66,11 @@ export default function LocationsPanel({
     e.stopPropagation();
     setLocations(locations.filter(loc => loc.id !== id));
     setHoveredId(null);
+  };
+
+  const handleNavigateToCommunes = () => {
+    onClose(); // Close the panel first
+    router.push('/communes');
   };
 
   return (
@@ -121,46 +128,15 @@ export default function LocationsPanel({
           ))}
         </div>
 
-        {/* Sticky Add Button - Clean, Flat, Dotted */}
+        {/* Sticky Add Button - Navigates to communes page */}
         <div className="fixed bottom-3 left-1/2 transform -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-[500px]">
-          {isAdding ? (
-            <div className="p-2 bg-white border border-gray-300 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <input
-                  type="text"
-                  value={newCityInput}
-                  onChange={(e) => setNewCityInput(e.target.value)}
-                  placeholder="Antre non vil la"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-red-500"
-                  autoFocus
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddCity()}
-                />
-                <button
-                  onClick={() => {
-                    setIsAdding(false);
-                    setNewCityInput('');
-                  }}
-                  className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-              <button
-                onClick={handleAddCity}
-                disabled={!newCityInput.trim()}
-                className="w-full px-3 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                Ajoute
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setIsAdding(true)}
-              className="w-full px-3 py-3 border-2 border-dashed border-gray-400 text-gray-700 text-sm hover:border-red-400 hover:text-red-700 transition-colors bg-white"
-            >
-              + Ajoute yon vil
-            </button>
-          )}
+          <button
+            onClick={handleNavigateToCommunes}
+            className="w-full px-3 py-3 border-2 border-dashed border-gray-400 text-gray-700 text-sm hover:border-red-400 hover:text-red-700 transition-colors bg-white flex items-center justify-center gap-2"
+          >
+            + Ajoute yon vil
+            <ArrowRight className="h-3.5 w-3.5" />
+          </button>
         </div>
       </div>
     </SlideUpPanel>
