@@ -1,6 +1,6 @@
 // pages/CommunesPage.tsx
 import { Search, X, ChevronLeft, ChevronDown, ChevronUp } from 'lucide-react';
-import { useCommunes } from '../hooks/communes.hook';
+import { useCommunes } from '@/hooks/communes.hook';
 
 interface CommunesPageProps {
   onClose: () => void;
