@@ -1,5 +1,5 @@
 // pages/CommunesPage.tsx
-import { Search, X, ChevronLeft, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, X, ChevronLeft, ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
 import { useCommunes } from '@/hooks/communes.hooks';
 
 interface CommunesPageProps {
@@ -14,6 +14,7 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
     expandedDepartments,
     communesByDepartment,
     departments,
+    isSearchVisible,
     
     // Actions
     setSearchQuery,
@@ -21,11 +22,14 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
     toggleDepartment,
     expandAllDepartments,
     collapseAllDepartments,
+    toggleSearch,
+    closeSearch,
     handleGoBack,
     handleSelectCommune,
     handleDeleteCommune,
     handleAddNewCommune,
     clearSearch,
+    handleHelp,
   } = useCommunes({ onClose });
 
   // Check if all departments are expanded
@@ -38,40 +42,62 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
 
   return (
     <div className="fixed inset-0 z-[9999] bg-white">
-      {/* Header */}
-      <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 z-10">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleGoBack}
-            className="p-1 text-gray-600 hover:text-gray-900"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <h1 className="text-lg font-semibold text-gray-900">Tout Komin Ayiti</h1>
-          
-          {/* Expand/Collapse All buttons */}
-          <div className="ml-auto flex items-center gap-2">
-            {!allExpanded && (
+      {/* Header - Clean version */}
+      {!isSearchVisible ? (
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 z-10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
               <button
-                onClick={expandAllDepartments}
-                className="text-xs px-2 py-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
+                onClick={handleGoBack}
+                className="p-1 text-gray-600 hover:text-gray-900"
               >
-                Elaji tout
+                <ChevronLeft className="h-5 w-5" />
               </button>
-            )}
-            {!allCollapsed && (
+              <h1 className="text-lg font-semibold text-gray-900">Tout Komin Ayiti</h1>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              {/* Expand/Collapse All buttons */}
+              <div className="flex items-center gap-1">
+                {!allExpanded && (
+                  <button
+                    onClick={expandAllDepartments}
+                    className="text-xs px-2 py-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
+                  >
+                    Elaji tout
+                  </button>
+                )}
+                {!allCollapsed && (
+                  <button
+                    onClick={collapseAllDepartments}
+                    className="text-xs px-2 py-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
+                  >
+                    Fèmen tout
+                  </button>
+                )}
+              </div>
+              
+              {/* Search Icon */}
               <button
-                onClick={collapseAllDepartments}
-                className="text-xs px-2 py-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
+                onClick={toggleSearch}
+                className="p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full"
               >
-                Fèmen tout
+                <Search className="h-5 w-5" />
               </button>
-            )}
+              
+              {/* Help Icon */}
+              <button
+                onClick={handleHelp}
+                className="p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full"
+              >
+                <HelpCircle className="h-5 w-5" />
+              </button>
+            </div>
           </div>
         </div>
-
-        {/* Search Bar */}
-        <div className="mt-3">
+      ) : (
+        /* Search Bar Header - When search is active */
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 z-10">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
@@ -79,22 +105,21 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Chache yon komin oswa depatman..."
+              autoFocus
               className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-red-500"
             />
-            {searchQuery && (
-              <button
-                onClick={clearSearch}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
+            <button
+              onClick={closeSearch}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Communes List - Scrollable area - FIXED: Removed excessive top padding */}
-      <div className="absolute top-[108px] bottom-[70px] left-0 right-0 overflow-y-auto">
+      {/* Communes List - Scrollable area */}
+      <div className="absolute top-[60px] bottom-[70px] left-0 right-0 overflow-y-auto">
         {departments.length > 0 ? (
           <div className="px-3 py-2 space-y-4">
             {departments.map((department) => (
