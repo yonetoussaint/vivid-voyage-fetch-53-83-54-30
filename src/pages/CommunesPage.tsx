@@ -2,11 +2,7 @@
 import { Search, X, ChevronLeft, ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
 import { useCommunes } from '@/hooks/communes.hooks';
 
-interface CommunesPageProps {
-  onClose: () => void;
-}
-
-export default function CommunesPage({ onClose }: CommunesPageProps) {
+export default function CommunesPage() {
   const {
     // State
     searchQuery,
@@ -30,16 +26,11 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
     handleAddNewCommune,
     clearSearch,
     handleHelp,
-  } = useCommunes({ onClose });
+  } = useCommunes();
 
   // Check if all departments are expanded
   const allExpanded = departments.length > 0 && 
     departments.every(dept => expandedDepartments.has(dept));
-
-  // Direct back handler that calls onClose
-  const handleBack = () => {
-    onClose();
-  };
 
   return (
     <div className="fixed inset-0 z-[9999] bg-white">
@@ -49,7 +40,7 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
-                onClick={handleBack}
+                onClick={handleGoBack}
                 className="p-1 text-gray-600 hover:text-gray-900"
               >
                 <ChevronLeft className="h-5 w-5" />
