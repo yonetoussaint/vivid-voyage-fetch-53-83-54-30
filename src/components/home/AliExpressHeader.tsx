@@ -324,16 +324,23 @@ export default function AliExpressHeader({
                     </button>
                   ) : (
                     <>
-                      {/* Camera icon button */}
+                      {/* Camera icon button - same height as location button */}
                       <button
                         type="button"
-                        className="p-1 hover:bg-gray-100 transition-colors rounded-full"
+                        className={`
+                          flex items-center justify-center
+                          px-2.5 py-1
+                          text-xs font-medium text-gray-600 
+                          bg-gray-100 hover:bg-gray-200
+                          transition-all duration-200
+                          ${flatBorders ? 'rounded-none' : 'rounded-full'}
+                        `}
                         onClick={() => {
                           // Add camera functionality here
                           console.log('Camera button clicked');
                         }}
                       >
-                        <Camera className="h-4 w-4 text-gray-600" />
+                        <Camera className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
                       </button>
 
                       {/* Location button - DIRECTLY OPENS PANEL */}
