@@ -1,6 +1,6 @@
 // components/home/header/LocationsPanel.tsx
 import { useState } from 'react';
-import { X, ArrowRight, Info } from 'lucide-react';
+import { X, ArrowRight } from 'lucide-react';
 import SlideUpPanel from '@/components/shared/SlideUpPanel';
 import { useNavigate } from 'react-router-dom';
 
@@ -70,7 +70,7 @@ export default function LocationsPanel({
       preventBodyScroll={true}
     >
       <div className="px-3 pb-16">
-        <div className="columns-2 md:columns-3 gap-2 pb-24">
+        <div className="columns-2 md:columns-3 gap-2 pb-6">
           {locations.map((location) => (
             <div
               key={location.id}
@@ -104,16 +104,6 @@ export default function LocationsPanel({
               )}
             </div>
           ))}
-        </div>
-
-        {/* Informative notice positioned right before the button */}
-        <div className="fixed bottom-16 left-1/2 transform -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-[500px] mb-3">
-          <div className="flex items-start gap-1.5 bg-white rounded-lg p-2.5">
-            <Info className="h-3.5 w-3.5 text-gray-400 flex-shrink-0 mt-0.5" />
-            <div className="text-xs text-gray-600 leading-tight">
-              <span className="font-medium">Enfòmasyon:</span> Vil yo ki anwo a se sèlman sijesyon. Si w pa jwen vil ou ap chache a, ou ka ajoute li atravè bouton "Ajoute yon vil" ki anba a.
-            </div>
-          </div>
         </div>
 
         {/* Sticky Add Button - Navigates to communes page */}
