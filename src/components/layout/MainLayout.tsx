@@ -53,6 +53,9 @@ function MainLayoutContent() {
   // Determine if we're on the mall route
   const isMallRoute = location.pathname === '/mall' || location.pathname.startsWith('/mall/');
 
+  // Determine if we're on the communes route
+  const isCommunesRoute = location.pathname === '/communes';
+
   // Prepare header props conditionally
   const finalHeaderProps = {
     ...headerProps,
@@ -110,8 +113,8 @@ function MainLayoutContent() {
         </div>
       )}
 
-      {/* Sign In Banner */}
-      <SignInBanner />
+      {/* Sign In Banner - Hide on communes route */}
+      {!isCommunesRoute && <SignInBanner />}
 
       {/* Product Upload Overlay */}
       <ProductUploadOverlay
