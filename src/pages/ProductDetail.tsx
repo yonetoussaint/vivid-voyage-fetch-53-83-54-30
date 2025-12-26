@@ -8,7 +8,6 @@ import { useAuthOverlay } from '@/context/AuthOverlayContext';
 import { Heart, Share } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
 import ProductDetailError from "@/components/product/ProductDetailError";
-import SlideUpPanel from "@/components/shared/SlideUpPanel";
 
 // Import components
 import ProductImageGallery from "@/components/ProductImageGallery";
@@ -18,7 +17,6 @@ import { useNavigationLoading } from '@/hooks/useNavigationLoading';
 
 // Import tab components
 import ProductOverview from "@/components/product/tabs/ProductOverview";
-import ProductVariants from "@/components/product/tabs/ProductVariants";
 import CustomerReviewsEnhanced from "@/components/product/CustomerReviewsEnhanced";
 import ProductQA from "@/components/product/ProductQA"; // Updated import
 
@@ -62,7 +60,6 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   // States
   const [isFavorite, setIsFavorite] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isDescriptionPanelOpen, setIsDescriptionPanelOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [currentGalleryIndex, setCurrentGalleryIndex] = useState(0);
 
@@ -71,21 +68,14 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     window.scrollTo(0, 0);
   }, [productId]);
 
-  // Tabs configuration - conditionally show variants tab
+  // Tabs configuration
   const tabs = React.useMemo(() => {
-    const baseTabs = [
+    return [
       { id: 'overview', label: 'Overview' },
       { id: 'reviews', label: 'Reviews' },
       { id: 'qna', label: 'Q&A' }
     ];
-
-    // Add variants tab if product has variants
-    if (product?.variants?.length > 0 || product?.variant_names?.length > 0) {
-      baseTabs.splice(1, 0, { id: 'variants', label: 'Variants' });
-    }
-
-    return baseTabs;
-  }, [product?.variants, product?.variant_names]);
+  }, []);
 
   // ===== Tab Management =====
   const getCurrentTab = () => {
@@ -140,8 +130,6 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   };
 
   // Event handlers
-  const handleReadMore = () => setIsDescriptionPanelOpen(true);
-  const handleCloseDescriptionPanel = () => setIsDescriptionPanelOpen(false);
   const handleBackClick = () => navigate(-1);
   const handleFavoriteClick = () => setIsFavorite(!isFavorite);
 
@@ -215,8 +203,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   ];
 
   const isOverviewTab = activeTab === 'overview';
-  const isVariantsTab = activeTab === 'variants';
-  const showGallery = isOverviewTab || isVariantsTab;
+  const showGallery = isOverviewTab;
 
   // Show error if no productId
   if (!productId) {
@@ -274,7 +261,6 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   const renderTabContent = () => {
     switch (activeTab) {
       case 'overview':
-      case 'variants':
         return (
           <ProductOverview 
             product={product} 
@@ -321,18 +307,16 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   ) : null;
 
   // Top content - ProductImageGallery with proper data sync
-  // Show gallery for both overview and variants tabs, but with different images
-  const galleryImages = isVariantsTab && product?.variants?.length > 0
-    ? product.variants.map((v: any) => v.image || v.src || '/placeholder.svg')
-    : product?.product_images?.map(img => img.src) || product?.images || ["/placeholder.svg"];
-
+  // Only show gallery for overview tab
+  const galleryImages = product?.product_images?.map(img => img.src) || product?.images || ["/placeholder.svg"];
+  
   const topContent = showGallery ? (
     <div ref={topContentRef} className="w-full bg-white">
       <ProductImageGallery 
         ref={galleryRef}
         images={galleryImages}
-        videos={isVariantsTab ? [] : (product?.product_videos || [])}
-        model3dUrl={isVariantsTab ? undefined : product?.model_3d_url}
+        videos={product?.product_videos || []}
+        model3dUrl={product?.model_3d_url}
         seller={product?.sellers}
         product={{
           id: product?.id || '',
@@ -348,7 +332,6 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
           }
         }}
         onBuyNow={buyNow}
-        onReadMore={handleReadMore}
         onImageIndexChange={(currentIndex, totalItems) => {
           setCurrentGalleryIndex(currentIndex);
         }}
@@ -361,42 +344,26 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   console.log('🎯 In panel mode:', inPanel);
 
   return (
-    <>
-      <StickyTabsLayout
-        header={header}
-        headerRef={headerRef}
-        topContent={topContent}
-        topContentRef={topContentRef}
-        tabs={tabs}
-        activeTab={activeTab}
-        onTabChange={inPanel ? setActiveTab : handleTabChange} // Simplified tab change in panel
-        isProductsTab={showGallery}
-        showTopBorder={false}
-        variant="underline"
-        stickyBuffer={4}
-        alwaysStickyForNonProducts={true}
-        inPanel={inPanel}
-        scrollContainerRef={scrollContainerRef}
-        stickyTopOffset={stickyTopOffset}
-      >
-        {/* Render the appropriate tab content */}
-        {renderTabContent()}
-      </StickyTabsLayout>
-
-      {/* SlideUpPanel for description */}
-      <SlideUpPanel
-        isOpen={isDescriptionPanelOpen}
-        onClose={handleCloseDescriptionPanel}
-        title="Product Description"
-        showCloseButton={true}
-      >
-        <div className="p-4">
-          <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-            {product?.description || product?.short_description || 'No description available.'}
-          </p>
-        </div>
-      </SlideUpPanel>
-    </>
+    <StickyTabsLayout
+      header={header}
+      headerRef={headerRef}
+      topContent={topContent}
+      topContentRef={topContentRef}
+      tabs={tabs}
+      activeTab={activeTab}
+      onTabChange={inPanel ? setActiveTab : handleTabChange} // Simplified tab change in panel
+      isProductsTab={showGallery}
+      showTopBorder={false}
+      variant="underline"
+      stickyBuffer={4}
+      alwaysStickyForNonProducts={true}
+      inPanel={inPanel}
+      scrollContainerRef={scrollContainerRef}
+      stickyTopOffset={stickyTopOffset}
+    >
+      {/* Render the appropriate tab content */}
+      {renderTabContent()}
+    </StickyTabsLayout>
   );
 };
 
