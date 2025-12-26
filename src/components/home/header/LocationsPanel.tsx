@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { X, ArrowRight } from 'lucide-react';
 import SlideUpPanel from '@/components/shared/SlideUpPanel';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
 
 interface Location {
   id: string;
@@ -22,7 +22,7 @@ export default function LocationsPanel({
   currentCity,
   onCitySelect
 }: LocationsPanelProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const [locations, setLocations] = useState<Location[]>([
     { id: '1', name: 'Port-au-Prince' },
     { id: '2', name: 'Cap-Haïtien' },
@@ -41,25 +41,10 @@ export default function LocationsPanel({
     { id: '15', name: 'Croix-des-Bouquets' },
   ]);
 
-  const [newCityInput, setNewCityInput] = useState('');
-  const [isAdding, setIsAdding] = useState(false);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   const handleCityClick = (cityName: string) => {
     onCitySelect(cityName);
-  };
-
-  const handleAddCity = () => {
-    if (newCityInput.trim()) {
-      const newLocation: Location = {
-        id: Date.now().toString(),
-        name: newCityInput.trim(),
-      };
-
-      setLocations([...locations, newLocation]);
-      setNewCityInput('');
-      setIsAdding(false);
-    }
   };
 
   const handleDeleteCity = (id: string, e: React.MouseEvent) => {
@@ -70,7 +55,7 @@ export default function LocationsPanel({
 
   const handleNavigateToCommunes = () => {
     onClose(); // Close the panel first
-    router.push('/communes');
+    navigate('/communes');
   };
 
   return (
