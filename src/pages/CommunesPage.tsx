@@ -36,15 +36,20 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
   const allExpanded = departments.length > 0 && 
     departments.every(dept => expandedDepartments.has(dept));
 
+  // Direct back handler that calls onClose
+  const handleBack = () => {
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 z-[9999] bg-white">
       {/* Header - Reduced height and removed border */}
       {!isSearchVisible ? (
-        <div className="sticky top-0 bg-white px-2 py-2 z-10"> {/* Changed from px-4 to px-2 */}
+        <div className="sticky top-0 bg-white px-2 py-2 z-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
-                onClick={handleGoBack}
+                onClick={handleBack} {/* Use direct handler */}
                 className="p-1 text-gray-600 hover:text-gray-900"
               >
                 <ChevronLeft className="h-5 w-5" />
@@ -82,7 +87,7 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
         </div>
       ) : (
         /* Search Bar Header - When search is active */
-        <div className="sticky top-0 bg-white px-2 py-2 z-10"> {/* Changed from px-4 to px-2 */}
+        <div className="sticky top-0 bg-white px-2 py-2 z-10">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
@@ -106,7 +111,7 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
       {/* Communes List - Scrollable area with balanced padding */}
       <div className="absolute top-[52px] bottom-0 left-0 right-0 overflow-y-auto">
         {departments.length > 0 ? (
-          <div className="px-2 space-y-4 py-2"> {/* Changed from px-4 to px-2 */}
+          <div className="px-2 space-y-4 py-2">
             {departments.map((department) => (
               <div key={department} className="space-y-2">
                 {/* Department Header with Chevron */}
@@ -131,7 +136,7 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
 
                 {/* Communes List (collapsible) */}
                 {expandedDepartments.has(department) && (
-                  <div className="columns-2 md:columns-3 gap-2 px-2"> {/* Already has px-2 */}
+                  <div className="columns-2 md:columns-3 gap-2 px-2">
                     {communesByDepartment[department].map((commune) => (
                       <div
                         key={commune.id}
