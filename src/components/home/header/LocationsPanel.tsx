@@ -77,9 +77,9 @@ export default function LocationsPanel({
     preventBodyScroll={true}
     showDragHandle={false}
   >
-    {/* Main content area with equal top and bottom padding */}
-    <div className="px-3 py-6">
-      <div className="columns-2 md:columns-3 gap-2 pb-6">
+    {/* Main wrapper with bottom padding for the button */}
+    <div className="px-3 pt-6 pb-16"> {/* Added pb-16 for button space */}
+      <div className="columns-2 md:columns-3 gap-2">
         {locations.map((location) => (
           <div
             key={location.id}
@@ -114,17 +114,17 @@ export default function LocationsPanel({
           </div>
         ))}
       </div>
-    </div>
 
-    {/* Sticky Add Button - Separate from main content */}
-    <div className="fixed bottom-3 left-1/2 transform -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-[500px]">
-      <button
-        onClick={handleNavigateToCommunes}
-        className="w-full px-3 py-3 border-2 border-dashed border-gray-400 text-gray-700 text-sm hover:border-red-400 hover:text-red-700 transition-colors bg-white flex items-center justify-center gap-2"
-      >
-        + Ajoute yon vil
-        <ArrowRight className="h-3.5 w-3.5" />
-      </button>
+      {/* Add Button - Now part of the content flow, not fixed */}
+      <div className="mt-6"> {/* Added margin top to separate from content */}
+        <button
+          onClick={handleNavigateToCommunes}
+          className="w-full px-3 py-3 border-2 border-dashed border-gray-400 text-gray-700 text-sm hover:border-red-400 hover:text-red-700 transition-colors bg-white flex items-center justify-center gap-2"
+        >
+          + Ajoute yon vil
+          <ArrowRight className="h-3.5 w-3.5" />
+        </button>
+      </div>
     </div>
   </SlideUpPanel>
 );
