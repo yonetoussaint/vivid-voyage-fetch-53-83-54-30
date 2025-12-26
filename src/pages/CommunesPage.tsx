@@ -1,9 +1,7 @@
-// app/communes/page.tsx
-'use client';
-
+// pages/CommunesPage.tsx
 import { useState } from 'react';
 import { Search, X, ChevronLeft } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useNavigate } from 'react-router-dom';
 
 interface Commune {
   id: string;
@@ -12,7 +10,7 @@ interface Commune {
 }
 
 export default function CommunesPage() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
@@ -104,13 +102,13 @@ export default function CommunesPage() {
   const departments = Object.keys(communesByDepartment).sort();
 
   const handleGoBack = () => {
-    router.back();
+    navigate(-1);
   };
 
   const handleSelectCommune = (communeName: string) => {
-    // Here you would typically save the selected commune and navigate back
+    // Here you would typically save the selected commune
     console.log('Selected commune:', communeName);
-    router.back();
+    navigate(-1); // Go back to previous page
   };
 
   const handleDeleteCommune = (id: string, e: React.MouseEvent) => {
