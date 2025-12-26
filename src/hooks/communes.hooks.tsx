@@ -15,6 +15,7 @@ export interface UseCommunesReturn {
   // State
   searchQuery: string;
   hoveredId: string | null;
+  expandedDepartments: Set<string>;
   filteredCommunes: Commune[];
   communesByDepartment: Record<string, Commune[]>;
   departments: string[];
@@ -22,6 +23,9 @@ export interface UseCommunesReturn {
   // Actions
   setSearchQuery: (query: string) => void;
   setHoveredId: (id: string | null) => void;
+  toggleDepartment: (department: string) => void;
+  expandAllDepartments: () => void;
+  collapseAllDepartments: () => void;
   handleGoBack: () => void;
   handleSelectCommune: (communeName: string) => void;
   handleDeleteCommune: (id: string, e: React.MouseEvent) => void;
@@ -99,6 +103,9 @@ const ALL_COMMUNES: Commune[] = [
 export function useCommunes({ onClose }: UseCommunesProps): UseCommunesReturn {
   const [searchQuery, setSearchQuery] = useState('');
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [expandedDepartments, setExpandedDepartments] = useState<Set<string>>(
+    new Set(ALL_COMMUNES.map(c => c.department))
+  );
 
   // Filter communes based on search query
   const filteredCommunes = useMemo(() => {
@@ -126,6 +133,26 @@ export function useCommunes({ onClose }: UseCommunesProps): UseCommunesReturn {
   const departments = useMemo(() => {
     return Object.keys(communesByDepartment).sort();
   }, [communesByDepartment]);
+
+  const toggleDepartment = useCallback((department: string) => {
+    setExpandedDepartments(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(department)) {
+        newSet.delete(department);
+      } else {
+        newSet.add(department);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const expandAllDepartments = useCallback(() => {
+    setExpandedDepartments(new Set(departments));
+  }, [departments]);
+
+  const collapseAllDepartments = useCallback(() => {
+    setExpandedDepartments(new Set());
+  }, []);
 
   const handleGoBack = useCallback(() => {
     onClose();
@@ -157,6 +184,7 @@ export function useCommunes({ onClose }: UseCommunesProps): UseCommunesReturn {
     // State
     searchQuery,
     hoveredId,
+    expandedDepartments,
     filteredCommunes,
     communesByDepartment,
     departments,
@@ -164,6 +192,9 @@ export function useCommunes({ onClose }: UseCommunesProps): UseCommunesReturn {
     // Actions
     setSearchQuery,
     setHoveredId,
+    toggleDepartment,
+    expandAllDepartments,
+    collapseAllDepartments,
     handleGoBack,
     handleSelectCommune,
     handleDeleteCommune,
