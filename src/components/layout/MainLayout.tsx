@@ -52,6 +52,9 @@ function MainLayoutContent() {
 
   // Determine if we're on the mall route
   const isMallRoute = location.pathname === '/mall' || location.pathname.startsWith('/mall/');
+  
+  // Determine if we're on the communes route
+  const isCommunesRoute = location.pathname === '/communes';
 
   // Prepare header props conditionally
   const finalHeaderProps = {
@@ -83,35 +86,42 @@ function MainLayoutContent() {
     <div className="app-container">
       <style dangerouslySetInnerHTML={{ __html: layoutHeightStyle || '' }} />
 
-      {/* Header - Now hidden on conversation detail pages */}
-      {pageFlags?.shouldShowHeader && (
+      {/* Header - Now hidden on conversation detail pages and communes route */}
+      {pageFlags?.shouldShowHeader && !isCommunesRoute && (
         <div ref={headerRef} className="app-header">
           <AliExpressHeader {...finalHeaderProps} />
         </div>
       )}
 
       {/* Main Content Area - Native-like scrolling */}
-      <div 
-        ref={contentRef} 
-        className="app-content page-transition"
-        style={{
-          height: measurements?.contentHeight ? `${measurements.contentHeight}px` : '100vh',
-          maxHeight: measurements?.contentHeight ? `${measurements.contentHeight}px` : '100vh',
-          minHeight: measurements?.contentHeight ? `${measurements.contentHeight}px` : '100vh',
-        }}
-      >
-        <Outlet />
-      </div>
+      {/* Special handling for communes route - no fixed height */}
+      {isCommunesRoute ? (
+        <div className="app-content">
+          <Outlet />
+        </div>
+      ) : (
+        <div 
+          ref={contentRef} 
+          className="app-content page-transition"
+          style={{
+            height: measurements?.contentHeight ? `${measurements.contentHeight}px` : '100vh',
+            maxHeight: measurements?.contentHeight ? `${measurements.contentHeight}px` : '100vh',
+            minHeight: measurements?.contentHeight ? `${measurements.contentHeight}px` : '100vh',
+          }}
+        >
+          <Outlet />
+        </div>
+      )}
 
-      {/* Bottom Navigation */}
-      {pageFlags?.shouldShowBottomNav && (
+      {/* Bottom Navigation - Hidden on communes route */}
+      {pageFlags?.shouldShowBottomNav && !isCommunesRoute && (
         <div ref={bottomNavRef} className="app-bottom-nav">
           <IndexBottomNav />
         </div>
       )}
 
-      {/* Sign In Banner */}
-      <SignInBanner />
+      {/* Sign In Banner - Hidden on communes route */}
+      {!isCommunesRoute && <SignInBanner />}
 
       {/* Product Upload Overlay */}
       <ProductUploadOverlay
