@@ -66,7 +66,6 @@ export default function LocationsPanel({
       showCloseButton={true}
       maxHeight={0.95}
       dynamicHeight={true}
-      showDragHandle={true}
       preventBodyScroll={true}
     >
       <div className="px-3 pb-16">
