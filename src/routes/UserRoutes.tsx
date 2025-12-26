@@ -11,7 +11,7 @@ import MoreMenu from "../pages/MoreMenu";
 import Explore from '../pages/Explore';
 import Wishlist from '../pages/Wishlist';
 import Notifications from '../pages/Notifications';
-import Addresses from '../pages/Addresses';
+import Addresses from '../pages/Addresses";
 import Help from '../pages/Help';
 import MyStations from "../pages/MyStations";
 import ProductsPage from "../pages/ProductsPage";
@@ -26,30 +26,30 @@ export function UserRoutes() {
           <Wallet />
         </CachedRoute>
       } />
-      
+
       {/* Messages list */}
       <Route path="messages" element={
         <CachedRoute>
           <Messages />
         </CachedRoute>
       } />
-      
+
       {/* Chat detail page - Use ChatPage from Messages.tsx */}
       <Route path="messages/:conversationId" element={
         <CachedRoute>
           <ChatPage />
         </CachedRoute>
       } />
-      
+
       {/* Remove the duplicate route below */}
       {/* <Route path="/messages/:conversationId" element={<ChatPage />} /> */}
-      
+
       <Route path="profile/*" element={
         <CachedRoute>
           <ProfilePage />
         </CachedRoute>
       } />
-      
+
       <Route path="more" element={
         <CachedRoute>
           <MoreMenu />
@@ -85,22 +85,30 @@ export function UserRoutes() {
           <Help />
         </CachedRoute>
       } />
-      <Route path="/my-stations" element={
+      
+      {/* FIXED: Changed from "/my-stations" to "my-stations" */}
+      <Route path="my-stations" element={
         <CachedRoute>
           <MyStations />
         </CachedRoute>
       } />
-      <Route path="/products" element={
+      
+      {/* FIXED: Changed from "/products" to "products" */}
+      <Route path="products" element={
         <CachedRoute>
           <ProductsPage />
         </CachedRoute>
       } />
-      <Route path="/cart" element={
+      
+      {/* FIXED: Changed from "/cart" to "cart" */}
+      <Route path="cart" element={
         <CachedRoute>
           <CartPage />
         </CachedRoute>
       } />
-      <Route path="/menu" element={
+      
+      {/* FIXED: Changed from "/menu" to "menu" */}
+      <Route path="menu" element={
         <CachedRoute>
           <MenuPage />
         </CachedRoute>
