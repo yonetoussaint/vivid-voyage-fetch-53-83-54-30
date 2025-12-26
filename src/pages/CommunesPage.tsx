@@ -1,7 +1,6 @@
 // pages/CommunesPage.tsx
 import { useState } from 'react';
 import { Search, X, ChevronLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 interface Commune {
   id: string;
@@ -9,8 +8,11 @@ interface Commune {
   department: string;
 }
 
-export default function CommunesPage() {
-  const navigate = useNavigate();
+interface CommunesPageProps {
+  onClose: () => void;
+}
+
+export default function CommunesPage({ onClose }: CommunesPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
@@ -102,13 +104,13 @@ export default function CommunesPage() {
   const departments = Object.keys(communesByDepartment).sort();
 
   const handleGoBack = () => {
-    navigate(-1);
+    onClose();
   };
 
   const handleSelectCommune = (communeName: string) => {
     // Here you would typically save the selected commune
     console.log('Selected commune:', communeName);
-    navigate(-1); // Go back to previous page
+    onClose();
   };
 
   const handleDeleteCommune = (id: string, e: React.MouseEvent) => {
@@ -119,9 +121,9 @@ export default function CommunesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      {/* Header - Fixed */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3">
+    <div className="fixed inset-0 z-[9999] bg-white">
+      {/* Header */}
+      <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 z-10">
         <div className="flex items-center gap-3">
           <button
             onClick={handleGoBack}
@@ -156,9 +158,9 @@ export default function CommunesPage() {
       </div>
 
       {/* Communes List - Scrollable area */}
-      <div className="flex-1 overflow-y-auto px-3 py-4">
+      <div className="absolute top-[140px] bottom-[70px] left-0 right-0 overflow-y-auto px-3 py-4">
         {departments.length > 0 ? (
-          <div className="space-y-6 pb-20"> {/* Added pb-20 for button space */}
+          <div className="space-y-6">
             {departments.map((department) => (
               <div key={department} className="space-y-2">
                 <h2 className="text-sm font-semibold text-gray-900 px-1">
@@ -212,7 +214,7 @@ export default function CommunesPage() {
       </div>
 
       {/* Sticky Add Button */}
-      <div className="sticky bottom-0 bg-white border-t border-gray-200 p-3">
+      <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3">
         <button
           onClick={() => {
             // In a real app, this would show a form to add a new commune
