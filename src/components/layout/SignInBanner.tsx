@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth/AuthContext";
+import { LogIn } from "lucide-react";
 
 export default function SignInBanner() {
   const { user, setIsAuthOverlayOpen } = useAuth();
@@ -52,7 +53,10 @@ export default function SignInBanner() {
 
   return (
     <div className={`fixed ${bottomPosition} left-0 right-0 ${zIndex} bg-black/50 backdrop-blur-sm py-1.5 px-2 flex items-center justify-between`}>
-      <div className="text-white text-xs font-medium">Sign in to explore more</div>
+      <div className="flex items-center gap-1.5">
+        <LogIn className="w-3 h-3 text-white" />
+        <div className="text-white text-xs font-medium">Sign in to explore more</div>
+      </div>
       <Button 
         onClick={handleSignInClick}
         size="sm" 
