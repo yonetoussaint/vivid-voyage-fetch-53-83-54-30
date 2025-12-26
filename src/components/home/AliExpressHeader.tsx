@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { X, Search, TrendingUp, TrendingDown, Flame, Zap, ChevronDown, MapPin } from 'lucide-react';
+import { X, Search, TrendingUp, TrendingDown, Flame, Zap, ChevronDown, MapPin, Camera } from 'lucide-react';
 import CategoryTabs from './header/CategoryTabs';
 
 interface AliExpressHeaderProps {
@@ -31,7 +31,7 @@ interface AliExpressHeaderProps {
   cityName?: string;
   locationOptions?: Array<{ id: string; name: string }>;
   onLocationChange?: (locationId: string) => void;
-  
+
   // New prop for opening locations panel
   onOpenLocationsPanel?: () => void;
 }
@@ -68,7 +68,7 @@ export default function AliExpressHeader({
     { id: 'miami', name: 'Miami' },
   ],
   onLocationChange,
-  
+
   // New prop for locations panel
   onOpenLocationsPanel,
 }: AliExpressHeaderProps) {
@@ -323,32 +323,46 @@ export default function AliExpressHeader({
                       <X className="h-4 w-4 text-gray-600" />
                     </button>
                   ) : (
-                    // Location button - DIRECTLY OPENS PANEL
-                    <div className="relative" ref={locationDropdownRef}>
+                    <>
+                      {/* Camera icon button */}
                       <button
                         type="button"
-                        onClick={handleLocationClick}
-                        className={`
-                          flex items-center justify-between gap-1.5
-                          px-2.5 py-1
-                          text-xs font-medium text-gray-600 
-                          bg-gray-100 hover:bg-gray-200
-                          transition-all duration-200
-                          ${flatBorders ? 'rounded-none' : 'rounded-full'}
-                        `}
+                        className="p-1 hover:bg-gray-100 transition-colors rounded-full"
+                        onClick={() => {
+                          // Add camera functionality here
+                          console.log('Camera button clicked');
+                        }}
                       >
-                        {/* Location icon */}
-                        <MapPin className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
-
-                        {/* City name - truncated if too long */}
-                        <span className="max-w-[80px] truncate">{selectedCity}</span>
-
-                        {/* Chevron icon */}
-                        <ChevronDown className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
+                        <Camera className="h-4 w-4 text-gray-600" />
                       </button>
 
-                      {/* REMOVED DROPDOWN MENU - Panel opens directly instead */}
-                    </div>
+                      {/* Location button - DIRECTLY OPENS PANEL */}
+                      <div className="relative" ref={locationDropdownRef}>
+                        <button
+                          type="button"
+                          onClick={handleLocationClick}
+                          className={`
+                            flex items-center justify-between gap-1.5
+                            px-2.5 py-1
+                            text-xs font-medium text-gray-600 
+                            bg-gray-100 hover:bg-gray-200
+                            transition-all duration-200
+                            ${flatBorders ? 'rounded-none' : 'rounded-full'}
+                          `}
+                        >
+                          {/* Location icon */}
+                          <MapPin className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
+
+                          {/* City name - truncated if too long */}
+                          <span className="max-w-[80px] truncate">{selectedCity}</span>
+
+                          {/* Chevron icon */}
+                          <ChevronDown className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
+                        </button>
+
+                        {/* REMOVED DROPDOWN MENU - Panel opens directly instead */}
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
@@ -397,7 +411,7 @@ export default function AliExpressHeader({
                   })}
                 </div>
               </div>
-              
+
               {selectedFilters.length > 0 && (
                 <button
                   onClick={handleClearAllFilters}
