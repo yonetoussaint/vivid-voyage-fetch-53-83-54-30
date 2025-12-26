@@ -1,6 +1,6 @@
 // pages/CommunesPage.tsx
 import { Search, X, ChevronLeft, ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
-import { useCommunes } from '@/hooks/communes.hooks';
+import { useCommunes } from '../hooks/communes.hook';
 
 interface CommunesPageProps {
   onClose: () => void;
@@ -36,10 +36,6 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
   const allExpanded = departments.length > 0 && 
     departments.every(dept => expandedDepartments.has(dept));
   
-  // Check if all departments are collapsed
-  const allCollapsed = departments.length === 0 || 
-    departments.every(dept => !expandedDepartments.has(dept));
-
   return (
     <div className="fixed inset-0 z-[9999] bg-white">
       {/* Header - Clean version */}
@@ -53,29 +49,18 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
-              <h1 className="text-lg font-semibold text-gray-900">Tout Komin Ayiti</h1>
             </div>
             
             <div className="flex items-center gap-3">
-              {/* Expand/Collapse All buttons */}
-              <div className="flex items-center gap-1">
-                {!allExpanded && (
-                  <button
-                    onClick={expandAllDepartments}
-                    className="text-xs px-2 py-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
-                  >
-                    Elaji tout
-                  </button>
-                )}
-                {!allCollapsed && (
-                  <button
-                    onClick={collapseAllDepartments}
-                    className="text-xs px-2 py-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
-                  >
-                    Fèmen tout
-                  </button>
-                )}
-              </div>
+              {/* Expand All button - only show when not all expanded */}
+              {!allExpanded && (
+                <button
+                  onClick={expandAllDepartments}
+                  className="text-xs px-2 py-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
+                >
+                  Elaji tout
+                </button>
+              )}
               
               {/* Search Icon */}
               <button
