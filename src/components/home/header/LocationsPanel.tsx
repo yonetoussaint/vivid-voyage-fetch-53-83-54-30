@@ -91,7 +91,7 @@ export default function LocationsPanel({
               key={location.id}
               className={`group inline-block w-full mb-2 break-inside-avoid transition-colors duration-150 cursor-pointer relative ${
                 location.name === currentCity
-                  ? 'bg-blue-600'
+                  ? 'bg-red-100'
                   : 'bg-gray-100 hover:bg-gray-200'
               }`}
               onClick={() => handleCityClick(location.name)}
@@ -101,7 +101,7 @@ export default function LocationsPanel({
               <div className="p-2.5 pr-8">
                 <span className={`text-sm ${
                   location.name === currentCity
-                    ? 'text-white font-medium'
+                    ? 'text-red-700 font-medium'
                     : 'text-gray-900'
                 }`}>
                   {location.name}
@@ -131,7 +131,7 @@ export default function LocationsPanel({
                   value={newCityInput}
                   onChange={(e) => setNewCityInput(e.target.value)}
                   placeholder="Antre non vil la"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-blue-500"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:border-red-500"
                   autoFocus
                   onKeyPress={(e) => e.key === 'Enter' && handleAddCity()}
                 />
@@ -148,7 +148,7 @@ export default function LocationsPanel({
               <button
                 onClick={handleAddCity}
                 disabled={!newCityInput.trim()}
-                className="w-full px-3 py-2 bg-gray-900 text-white text-sm rounded hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="w-full px-3 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 Ajoute
               </button>
@@ -156,7 +156,7 @@ export default function LocationsPanel({
           ) : (
             <button
               onClick={() => setIsAdding(true)}
-              className="w-full px-3 py-3 border-2 border-dashed border-gray-400 text-gray-700 text-sm hover:border-gray-600 hover:text-gray-900 transition-colors bg-white"
+              className="w-full px-3 py-3 border-2 border-dashed border-gray-400 text-gray-700 text-sm hover:border-red-400 hover:text-red-700 transition-colors bg-white"
             >
               + Ajoute yon vil
             </button>
