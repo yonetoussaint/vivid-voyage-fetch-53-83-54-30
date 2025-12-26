@@ -1,6 +1,7 @@
 // pages/CommunesPage.tsx
 import { Search, X, ChevronLeft, ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
 import { useCommunes } from '@/hooks/communes.hooks';
+import { useEffect, useRef } from 'react';
 
 export default function CommunesPage() {
   const {
@@ -19,6 +20,7 @@ export default function CommunesPage() {
     expandAllDepartments,
     collapseAllDepartments,
     toggleSearch,
+    openSearch,
     closeSearch,
     handleGoBack,
     handleSelectCommune,
@@ -77,26 +79,12 @@ export default function CommunesPage() {
           </div>
         </div>
       ) : (
-        /* Search Bar Header - When search is active */
-        <div className="sticky top-0 bg-white px-2 py-2 z-10">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Chache yon komin oswa depatman..."
-              autoFocus
-              className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-red-500"
-            />
-            <button
-              onClick={closeSearch}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
+        /* Search Bar Header - When search is active with click outside functionality */
+        <SearchBarHeader 
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          closeSearch={closeSearch}
+        />
       )}
 
       {/* Communes List - Scrollable area with balanced padding */}
@@ -173,6 +161,64 @@ export default function CommunesPage() {
             </p>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// Separate component for the search bar with click-outside functionality
+interface SearchBarHeaderProps {
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  closeSearch: () => void;
+}
+
+function SearchBarHeader({ searchQuery, setSearchQuery, closeSearch }: SearchBarHeaderProps) {
+  const searchRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Focus input when component mounts
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
+
+  // Handle click outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        closeSearch();
+      }
+    }
+
+    // Add event listener when search is visible
+    document.addEventListener('mousedown', handleClickOutside);
+    
+    // Clean up
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [closeSearch]);
+
+  return (
+    <div className="sticky top-0 bg-white px-2 py-2 z-10" ref={searchRef}>
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <input
+          ref={inputRef}
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Chache yon komin oswa depatman..."
+          className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-red-500"
+        />
+        <button
+          onClick={closeSearch}
+          className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
+        >
+          <X className="h-4 w-4" />
+        </button>
       </div>
     </div>
   );
