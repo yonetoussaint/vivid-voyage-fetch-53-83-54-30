@@ -15,7 +15,7 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
     communesByDepartment,
     departments,
     isSearchVisible,
-    
+
     // Actions
     setSearchQuery,
     setHoveredId,
@@ -35,7 +35,7 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
   // Check if all departments are expanded
   const allExpanded = departments.length > 0 && 
     departments.every(dept => expandedDepartments.has(dept));
-  
+
   return (
     <div className="fixed inset-0 z-[9999] bg-white">
       {/* Header - Clean version */}
@@ -50,7 +50,7 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
                 <ChevronLeft className="h-5 w-5" />
               </button>
             </div>
-            
+
             <div className="flex items-center gap-3">
               {/* Expand All button - only show when not all expanded */}
               {!allExpanded && (
@@ -61,7 +61,7 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
                   Elaji tout
                 </button>
               )}
-              
+
               {/* Search Icon */}
               <button
                 onClick={toggleSearch}
@@ -69,7 +69,7 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
               >
                 <Search className="h-5 w-5" />
               </button>
-              
+
               {/* Help Icon */}
               <button
                 onClick={handleHelp}
@@ -103,8 +103,8 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
         </div>
       )}
 
-      {/* Communes List - Scrollable area */}
-      <div className="absolute top-[60px] bottom-[70px] left-0 right-0 overflow-y-auto">
+      {/* Communes List - Scrollable area - now extends to bottom */}
+      <div className="absolute top-[60px] bottom-0 left-0 right-0 overflow-y-auto">
         {departments.length > 0 ? (
           <div className="px-3 py-2 space-y-4">
             {departments.map((department) => (
@@ -179,15 +179,7 @@ export default function CommunesPage({ onClose }: CommunesPageProps) {
         )}
       </div>
 
-      {/* Sticky Add Button */}
-      <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3">
-        <button
-          onClick={handleAddNewCommune}
-          className="w-full px-3 py-3 border-2 border-dashed border-gray-400 text-gray-700 text-sm hover:border-red-400 hover:text-red-700 transition-colors"
-        >
-          + Propoze yon nouvo komin
-        </button>
-      </div>
+      {/* Removed: Sticky Add Button section */}
     </div>
   );
 }
