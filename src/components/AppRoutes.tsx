@@ -1,4 +1,4 @@
-// components/AppRoutes.tsx
+// components/AppRoutes.tsx - UPDATED
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import MainLayout from "./layout/MainLayout";
@@ -13,18 +13,14 @@ import { ProductEditRoutes } from "../routes/ProductEditRoutes";
 import { PaymentRoutes } from "../routes/PaymentRoutes";
 import { MiscRoutes } from "../routes/MiscRoutes";
 import AdminPage from "@/pages/AdminPage";
-import CommunesPage from "@/pages/CommunesPage";
-// Import the MallPage component
+// REMOVED: CommunesPage import
 import MallPage from "@/pages/MallPage";
 
 export function AppRoutes() {
   return (
     <Routes>
-      {/* CommunesPage as standalone route - NOT inside MainLayout */}
-      <Route path="/communes" element={<CommunesPage />} />
-      
-      {/* All other routes inside MainLayout */}
-      <Route path="/" element={<MainLayout />}>
+      {/* All routes inside MainLayout */}
+      <Route path="/*" element={<MainLayout />}>
         {/* Call the route functions to get Route elements */}
         {HomepageRoutes()}
         {ProductRoutes()}
@@ -43,7 +39,7 @@ export function AppRoutes() {
         {/* Add Admin Route */}
         <Route path="/admin" element={<AdminPage />} />
         
-        {/* NOTE: Removed /communes from here - it's now above */}
+        {/* NO CommunesPage route here - it's handled as a modal in MainLayout */}
       </Route>
     </Routes>
   );
