@@ -1,5 +1,6 @@
 // hooks/communes.hook.tsx
 import { useState, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export interface Commune {
   id: string;
@@ -8,7 +9,7 @@ export interface Commune {
 }
 
 interface UseCommunesProps {
-  onClose: () => void;
+  // No props needed since we use navigation
 }
 
 export interface UseCommunesReturn {
@@ -20,7 +21,7 @@ export interface UseCommunesReturn {
   filteredCommunes: Commune[];
   communesByDepartment: Record<string, Commune[]>;
   departments: string[];
-  
+
   // Actions
   setSearchQuery: (query: string) => void;
   setHoveredId: (id: string | null) => void;
@@ -105,7 +106,9 @@ const ALL_COMMUNES: Commune[] = [
   { id: '47', name: 'Thomassique', department: 'Centre' },
 ];
 
-export function useCommunes({ onClose }: UseCommunesProps): UseCommunesReturn {
+export function useCommunes({}: UseCommunesProps = {}): UseCommunesReturn {
+  const navigate = useNavigate();
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [expandedDepartments, setExpandedDepartments] = useState<Set<string>>(
@@ -116,7 +119,7 @@ export function useCommunes({ onClose }: UseCommunesProps): UseCommunesReturn {
   // Filter communes based on search query
   const filteredCommunes = useMemo(() => {
     if (!searchQuery.trim()) return ALL_COMMUNES;
-    
+
     const query = searchQuery.toLowerCase().trim();
     return ALL_COMMUNES.filter(commune =>
       commune.name.toLowerCase().includes(query) ||
@@ -174,14 +177,14 @@ export function useCommunes({ onClose }: UseCommunesProps): UseCommunesReturn {
   }, []);
 
   const handleGoBack = useCallback(() => {
-    onClose();
-  }, [onClose]);
+    navigate('/'); // Navigate to main route
+  }, [navigate]);
 
   const handleSelectCommune = useCallback((communeName: string) => {
     // Here you would typically save the selected commune
     console.log('Selected commune:', communeName);
-    onClose();
-  }, [onClose]);
+    navigate('/'); // Navigate back to main route after selection
+  }, [navigate]);
 
   const handleDeleteCommune = useCallback((id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -213,7 +216,7 @@ export function useCommunes({ onClose }: UseCommunesProps): UseCommunesReturn {
     filteredCommunes,
     communesByDepartment,
     departments,
-    
+
     // Actions
     setSearchQuery,
     setHoveredId,
