@@ -174,10 +174,10 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
           </CarouselContent>
         </Carousel>
 
-        {/* Image Counter - Rectangular version */}
-        <div className="absolute bottom-3 right-3 z-10">
-          <div className="bg-black/60 backdrop-blur-sm px-2.5 py-0.5">
-            <span className="text-white text-xs font-medium">
+        {/* Image Counter - Ultra thin rectangular version */}
+        <div className="absolute bottom-2 right-2 z-10">
+          <div className="bg-black/60 backdrop-blur-sm px-2 py-0.5">
+            <span className="text-white text-xs font-medium leading-none">
               {currentIndex + 1}/{totalItems}
             </span>
           </div>
