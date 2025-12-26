@@ -120,8 +120,8 @@ export default function CommunesPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3">
+      {/* Header - Fixed but with proper z-index */}
+      <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3">
         <div className="flex items-center gap-3">
           <button
             onClick={handleGoBack}
@@ -133,7 +133,7 @@ export default function CommunesPage() {
         </div>
         
         {/* Search Bar */}
-        <div className="mt-3 relative">
+        <div className="mt-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
@@ -155,8 +155,8 @@ export default function CommunesPage() {
         </div>
       </div>
 
-      {/* Communes List */}
-      <div className="px-3 py-4">
+      {/* Communes List - Main content area with bottom padding */}
+      <div className="px-3 py-4 pb-20">
         {departments.length > 0 ? (
           <div className="space-y-6">
             {departments.map((department) => (
@@ -211,14 +211,14 @@ export default function CommunesPage() {
         )}
       </div>
 
-      {/* Sticky Add Button */}
-      <div className="fixed bottom-3 left-1/2 transform -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-[500px]">
+      {/* Sticky Add Button - Simple fixed positioning without complex z-index */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3">
         <button
           onClick={() => {
             // In a real app, this would show a form to add a new commune
             console.log('Add new commune');
           }}
-          className="w-full px-3 py-3 border-2 border-dashed border-gray-400 text-gray-700 text-sm hover:border-red-400 hover:text-red-700 transition-colors bg-white"
+          className="w-full px-3 py-3 border-2 border-dashed border-gray-400 text-gray-700 text-sm hover:border-red-400 hover:text-red-700 transition-colors"
         >
           + Propoze yon nouvo komin
         </button>
