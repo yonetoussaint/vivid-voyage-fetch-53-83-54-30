@@ -324,7 +324,7 @@ export default function AliExpressHeader({
                     </button>
                   ) : (
                     <>
-                      {/* Camera icon button - larger and bold (not extra bold) */}
+                      {/* Camera icon button - larger, bold, with reduced stroke */}
                       <button
                         type="button"
                         className="p-1 hover:bg-gray-100 transition-colors rounded-full"
@@ -333,7 +333,7 @@ export default function AliExpressHeader({
                           console.log('Camera button clicked');
                         }}
                       >
-                        <Camera className="h-6 w-6 text-gray-900 font-bold stroke-[1.75]" />
+                        <Camera className="h-6 w-6 text-gray-900 font-bold stroke-[1.5]" />
                       </button>
 
                       {/* Location button - DIRECTLY OPENS PANEL */}
