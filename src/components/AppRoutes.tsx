@@ -20,6 +20,10 @@ import MallPage from "@/pages/MallPage";
 export function AppRoutes() {
   return (
     <Routes>
+      {/* CommunesPage as standalone route - NOT inside MainLayout */}
+      <Route path="/communes" element={<CommunesPage />} />
+      
+      {/* All other routes inside MainLayout */}
       <Route path="/" element={<MainLayout />}>
         {/* Call the route functions to get Route elements */}
         {HomepageRoutes()}
@@ -38,7 +42,8 @@ export function AppRoutes() {
 
         {/* Add Admin Route */}
         <Route path="/admin" element={<AdminPage />} />
- <Route path="/communes" element={<CommunesPage/>} />
+        
+        {/* NOTE: Removed /communes from here - it's now above */}
       </Route>
     </Routes>
   );
