@@ -69,8 +69,8 @@ export default function LocationsPanel({
       showDragHandle={true}
       preventBodyScroll={true}
     >
-      <div className="px-3 pb-24">
-        <div className="columns-2 md:columns-3 gap-2 pb-6">
+      <div className="px-3 pb-16">
+        <div className="columns-2 md:columns-3 gap-2 pb-24">
           {locations.map((location) => (
             <div
               key={location.id}
@@ -106,8 +106,18 @@ export default function LocationsPanel({
           ))}
         </div>
 
+        {/* Informative notice positioned right before the button */}
+        <div className="fixed bottom-16 left-1/2 transform -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-[500px] mb-3">
+          <div className="flex items-start gap-1.5 bg-white rounded-lg p-2.5">
+            <Info className="h-3.5 w-3.5 text-gray-400 flex-shrink-0 mt-0.5" />
+            <div className="text-xs text-gray-600 leading-tight">
+              <span className="font-medium">Enfòmasyon:</span> Vil yo ki anwo a se sèlman sijesyon. Si w pa jwen vil ou ap chache a, ou ka ajoute li atravè bouton "Ajoute yon vil" ki anba a.
+            </div>
+          </div>
+        </div>
+
         {/* Sticky Add Button - Navigates to communes page */}
-        <div className="fixed bottom-16 left-1/2 transform -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-[500px]">
+        <div className="fixed bottom-3 left-1/2 transform -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-[500px]">
           <button
             onClick={handleNavigateToCommunes}
             className="w-full px-3 py-3 border-2 border-dashed border-gray-400 text-gray-700 text-sm hover:border-red-400 hover:text-red-700 transition-colors bg-white flex items-center justify-center gap-2"
@@ -115,16 +125,6 @@ export default function LocationsPanel({
             + Ajoute yon vil
             <ArrowRight className="h-3.5 w-3.5" />
           </button>
-        </div>
-
-        {/* Suggestion notice at the very bottom - like movie end credits */}
-        <div className="absolute bottom-3 left-0 right-0 px-3">
-          <div className="flex items-center justify-center gap-1.5 text-gray-500">
-            <Info className="h-3.5 w-3.5 flex-shrink-0" />
-            <div className="text-xs text-center">
-              <span className="font-medium">Sajès:</span> Se sèlman vil yo nou sijere
-            </div>
-          </div>
         </div>
       </div>
     </SlideUpPanel>
