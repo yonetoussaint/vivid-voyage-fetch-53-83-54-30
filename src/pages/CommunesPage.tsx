@@ -119,9 +119,9 @@ export default function CommunesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header - Fixed but with proper z-index */}
-      <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3">
+    <div className="min-h-screen bg-white flex flex-col">
+      {/* Header - Fixed */}
+      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3">
         <div className="flex items-center gap-3">
           <button
             onClick={handleGoBack}
@@ -155,10 +155,10 @@ export default function CommunesPage() {
         </div>
       </div>
 
-      {/* Communes List - Main content area with bottom padding */}
-      <div className="px-3 py-4 pb-20">
+      {/* Communes List - Scrollable area */}
+      <div className="flex-1 overflow-y-auto px-3 py-4">
         {departments.length > 0 ? (
-          <div className="space-y-6">
+          <div className="space-y-6 pb-20"> {/* Added pb-20 for button space */}
             {departments.map((department) => (
               <div key={department} className="space-y-2">
                 <h2 className="text-sm font-semibold text-gray-900 px-1">
@@ -211,8 +211,8 @@ export default function CommunesPage() {
         )}
       </div>
 
-      {/* Sticky Add Button - Simple fixed positioning without complex z-index */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3">
+      {/* Sticky Add Button */}
+      <div className="sticky bottom-0 bg-white border-t border-gray-200 p-3">
         <button
           onClick={() => {
             // In a real app, this would show a form to add a new commune
