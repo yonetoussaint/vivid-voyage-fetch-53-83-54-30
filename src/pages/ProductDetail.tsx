@@ -108,9 +108,10 @@ interface IPhoneXRListingProps {
     paymentTerms?: string;
     tradeAssurance?: boolean;
   };
+  onReadMore?: () => void;
 }
 
-const IPhoneXRListing = ({ product }: IPhoneXRListingProps) => {
+const IPhoneXRListing = ({ product, onReadMore }: IPhoneXRListingProps) => {
   // Only two currencies: HTG first, then USD
   const currencies = {
     HTG: 'HTG',
@@ -150,7 +151,7 @@ const IPhoneXRListing = ({ product }: IPhoneXRListingProps) => {
     setCurrentCurrency(currencyKeys[nextIndex]);
   };
 
-  const formatPrice = (price, currency = currentCurrency) => {
+  const formatPrice = (price: number, currency = currentCurrency) => {
     const convertedPrice = price * exchangeRates[currency];
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -354,9 +355,9 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Header */}
+      {/* Header - Remove fixed positioning, let ProductHeader handle sticky behavior */}
       {!hideHeader && (
-        <div ref={headerRef} className="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+        <div ref={headerRef} className="relative z-50">
           <ProductHeader
             onCloseClick={handleBackClick}
             onShareClick={handleShareClick}
@@ -377,11 +378,10 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
         </div>
       )}
 
-      {/* Main content with scrollable area */}
+      {/* Main content with scrollable area - NO padding-top, content starts from top */}
       <div 
         ref={scrollContainerRef}
         className="flex-1 overflow-y-auto"
-        style={{ paddingTop: hideHeader ? '0' : '56px' }}
       >
         {/* ProductImageGallery */}
         <div className="w-full bg-white">
