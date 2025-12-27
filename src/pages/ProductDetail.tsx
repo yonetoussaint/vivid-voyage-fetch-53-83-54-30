@@ -5,7 +5,7 @@ import { useProduct } from "@/hooks/useProduct";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/RedirectAuthContext';
 import { useAuthOverlay } from '@/context/AuthOverlayContext';
-import { Heart, Share } from 'lucide-react';
+import { Heart, Share, ChevronLeft, ChevronRight } from 'lucide-react';
 import ProductDetailError from "@/components/product/ProductDetailError";
 import { useQuery } from '@tanstack/react-query';
 import { fetchAllProducts } from '@/integrations/supabase/products';
@@ -24,7 +24,7 @@ interface ProductDetailProps {
   stickyTopOffset?: number;
 }
 
-// Simple GalleryThumbnails without complex hooks
+// Enhanced GalleryThumbnails with 5.5 items and horizontal scrolling
 const GalleryThumbnails = ({
   images,
   currentIndex,
@@ -34,25 +34,123 @@ const GalleryThumbnails = ({
   currentIndex: number;
   onThumbnailClick: (index: number) => void;
 }) => {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(true);
+
+  // Calculate how many items to show (5.5 items)
+  const itemCount = 5.5;
+  const itemWidth = 16.5; // percentage for 5.5 items (100/5.5 ≈ 18.18, reduced a bit for spacing)
+  
+  const updateScrollButtons = () => {
+    if (!scrollContainerRef.current) return;
+    
+    const container = scrollContainerRef.current;
+    const scrollLeft = container.scrollLeft;
+    const scrollWidth = container.scrollWidth;
+    const clientWidth = container.clientWidth;
+    
+    setShowLeftArrow(scrollLeft > 0);
+    setShowRightArrow(scrollLeft + clientWidth < scrollWidth);
+  };
+
+  useEffect(() => {
+    updateScrollButtons();
+    const container = scrollContainerRef.current;
+    if (container) {
+      container.addEventListener('scroll', updateScrollButtons);
+      window.addEventListener('resize', updateScrollButtons);
+    }
+    
+    return () => {
+      if (container) {
+        container.removeEventListener('scroll', updateScrollButtons);
+      }
+      window.removeEventListener('resize', updateScrollButtons);
+    };
+  }, [images]);
+
+  const scrollLeft = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({
+        left: -100,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({
+        left: 100,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   return (
-    <div className="flex items-center gap-1.5 w-full">
-      {images.slice(0, 5).map((src, index) => (
-        <div
-          key={index}
-          className={`relative overflow-hidden border aspect-square w-[18%] cursor-pointer transition-all ${
-            currentIndex === index 
-              ? "border-2 border-primary" 
-              : "border border-gray-300 hover:border-gray-400"
-          }`}
-          onClick={() => onThumbnailClick(index)}
+    <div className="relative pl-2 pr-2"> {/* Edge-to-edge padding */}
+      <div className="relative">
+        {/* Left scroll arrow */}
+        {showLeftArrow && (
+          <button
+            onClick={scrollLeft}
+            className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-white/80 backdrop-blur-sm p-1 rounded-r-md shadow-md hover:bg-white"
+          >
+            <ChevronLeft className="h-4 w-4 text-gray-700" />
+          </button>
+        )}
+
+        {/* Scrollable container */}
+        <div 
+          ref={scrollContainerRef}
+          className="flex overflow-x-auto scrollbar-hide gap-1.5 py-1"
+          style={{
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none'
+          }}
         >
-          <img 
-            src={src} 
-            alt={`Thumbnail ${index}`} 
-            className="w-full h-full object-cover"
-          />
+          {images.map((src, index) => (
+            <div
+              key={index}
+              className="flex-shrink-0"
+              style={{ width: `${itemWidth}%` }}
+            >
+              <div
+                className={`relative overflow-hidden border aspect-square cursor-pointer transition-all ${
+                  currentIndex === index 
+                    ? "border-2 border-primary" 
+                    : "border border-gray-300 hover:border-gray-400"
+                }`}
+                onClick={() => onThumbnailClick(index)}
+              >
+                <img 
+                  src={src} 
+                  alt={`Thumbnail ${index}`} 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
+
+        {/* Right scroll arrow */}
+        {showRightArrow && (
+          <button
+            onClick={scrollRight}
+            className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-white/80 backdrop-blur-sm p-1 rounded-l-md shadow-md hover:bg-white"
+          >
+            <ChevronRight className="h-4 w-4 text-gray-700" />
+          </button>
+        )}
+      </div>
+
+      {/* Custom scrollbar style */}
+      <style jsx>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </div>
   );
 };
