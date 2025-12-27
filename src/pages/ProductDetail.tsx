@@ -5,7 +5,7 @@ import { useProduct } from "@/hooks/useProduct";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/RedirectAuthContext';
 import { useAuthOverlay } from '@/context/AuthOverlayContext';
-import { Heart, Share, Star, ShieldCheck, Video, CreditCard, ChevronDown, Info } from 'lucide-react';
+import { Heart, Share, Star, ShieldCheck, Video, CreditCard, ChevronDown } from 'lucide-react';
 import ProductDetailError from "@/components/product/ProductDetailError";
 import { useQuery } from '@tanstack/react-query';
 import { fetchAllProducts } from '@/integrations/supabase/products';
@@ -128,17 +128,6 @@ const IPhoneXRListing = ({ product, onReadMore }: IPhoneXRListingProps) => {
     USD: 1
   };
 
-  // Product pricing data structure
-  const productPricing = {
-    basePrice: 25, // Base price per unit
-    priceTiers: [
-      { minQty: 100, maxQty: 499, discount: 0 },
-      { minQty: 500, maxQty: 999, discount: 0.05 },
-      { minQty: 1000, maxQty: 4999, discount: 0.10 },
-      { minQty: 5000, maxQty: null, discount: 0.15 }
-    ]
-  };
-
   // Mock data for demonstration
   const mockB2BData = {
     unitPrice: 189.99,
@@ -163,7 +152,6 @@ const IPhoneXRListing = ({ product, onReadMore }: IPhoneXRListingProps) => {
 
   // PriceInfo logic moved inline - HTG set as default
   const [currentCurrency, setCurrentCurrency] = useState('HTG');
-  const [showPriceTiers, setShowPriceTiers] = useState(false);
 
   const toggleCurrency = () => {
     const currencyKeys = Object.keys(currencies);
@@ -182,11 +170,7 @@ const IPhoneXRListing = ({ product, onReadMore }: IPhoneXRListingProps) => {
     }).format(convertedPrice);
   };
 
-  const currentTier = useMemo(() => {
-    return productPricing.priceTiers[0]; // Default to first tier
-  }, []);
-
-  const currentPrice = (mergedProduct.unitPrice || productPricing.basePrice) * (1 - currentTier.discount);
+  const currentPrice = mergedProduct.unitPrice || 25; // Default price if not provided
 
   // CurrencySwitcher Component - Updated to show currency code
   const CurrencySwitcher = () => {
@@ -203,43 +187,6 @@ const IPhoneXRListing = ({ product, onReadMore }: IPhoneXRListingProps) => {
           <ChevronDown className="w-3 h-3 text-gray-500" />
         </button>
       </>
-    );
-  };
-
-  // PriceTier Component - FIXED: Now shows price per unit instead of total
-  const PriceTier = ({ tier }) => {
-    const calculateUnitPrice = (basePrice, discount) => {
-      return basePrice * (1 - discount);
-    };
-
-    const unitPrice = calculateUnitPrice(mergedProduct.unitPrice || productPricing.basePrice, tier.discount);
-    const rangeText = tier.maxQty 
-      ? `${tier.minQty}-${tier.maxQty} units`
-      : `≥${tier.minQty} units`;
-
-    return (
-      <div className="flex justify-between items-center py-2 px-3 hover:bg-gray-50 rounded">
-        <span className="text-sm text-gray-600">{rangeText}</span>
-        <div className="flex flex-col items-end">
-          <span className="text-sm font-semibold text-orange-500">
-            {formatPrice(unitPrice, currentCurrency)}
-          </span>
-          <span className="text-xs text-gray-500">per unit</span>
-        </div>
-      </div>
-    );
-  };
-
-  // Bulk Pricing Toggle Component
-  const BulkPricingToggle = () => {
-    return (
-      <button
-        onClick={() => setShowPriceTiers(!showPriceTiers)}
-        className="flex items-center gap-1 text-xs text-orange-500 hover:text-orange-600 transition-colors"
-      >
-        <span>Bulk pricing</span>
-        <ChevronDown className={`w-3 h-3 transition-transform ${showPriceTiers ? 'rotate-180' : ''}`} />
-      </button>
     );
   };
 
@@ -262,22 +209,6 @@ const IPhoneXRListing = ({ product, onReadMore }: IPhoneXRListingProps) => {
         </div>
         <CurrencySwitcher />
       </div>
-
-      {/* Bulk Pricing Toggle - Simple button to show/hide price tiers */}
-      <div className="flex justify-center">
-        <BulkPricingToggle />
-      </div>
-
-      {/* Price Tiers - Conditionally shown */}
-      {showPriceTiers && (
-        <div>
-          <div className="bg-gray-50 rounded-lg border border-gray-200 divide-y divide-gray-200">
-            {productPricing.priceTiers.map((tier, index) => (
-              <PriceTier key={index} tier={tier} />
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Description Section - Always present */}
       <div className="space-y-2">
