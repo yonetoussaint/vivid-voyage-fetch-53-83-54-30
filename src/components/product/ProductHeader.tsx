@@ -257,16 +257,18 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
 
   return (
     <div
-      className={`flex flex-col transition-all duration-300 ${
+      className={`sticky top-0 z-50 flex flex-col transition-all duration-300 ${
         focusMode && !showHeaderInFocus ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'
       }`}
     >
-      {/* Main Header Container */}
+      {/* Main Header Container - Starts as transparent overlay */}
       <div
         className="w-full transition-all duration-700"
         style={{
           backgroundColor: `rgba(255, 255, 255, ${displayProgress * 0.95})`,
           backdropFilter: `blur(${displayProgress * 8}px)`,
+          // Start with transparent background, become opaque on scroll
+          boxShadow: displayProgress > 0.1 ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
         }}
       >
         {/* Main Header Content */}
@@ -274,7 +276,7 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
           <div className="flex items-center justify-between w-full max-w-6xl mx-auto gap-4">
             {/* Left side - Back button and seller info */}
             <div className="flex items-center gap-3 flex-shrink-0 min-w-0 flex-1">
-              {/* Back/Close Button */}
+              {/* Back/Close Button - Always visible */}
               <div 
                 className="rounded-full transition-all duration-700"
                 style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})` }}
