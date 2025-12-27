@@ -352,22 +352,6 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     change: product?.sales_change
   };
 
-  // Prepare related products - use all products excluding current one
-  const relatedProducts = allProducts
-    .filter(p => p.id !== product?.id)
-    .slice(0, 8)
-    .map(p => ({
-      id: p.id,
-      name: p.name || 'Unnamed Product',
-      price: Number(p.price) || 0,
-      discount_price: p.discount_price ? Number(p.discount_price) : undefined,
-      product_images: p.product_images || [{ src: "https://placehold.co/300x300?text=No+Image" }],
-      inventory: p.inventory || 0,
-      category: p.category || 'Uncategorized',
-      flash_start_time: p.flash_start_time,
-      seller_id: p.seller_id,
-    }));
-
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header */}
@@ -392,7 +376,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
           />
         </div>
       )}
-      
+
       {/* Main content with scrollable area */}
       <div 
         ref={scrollContainerRef}
@@ -426,7 +410,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
             }}
           />
         </div>
-        
+
         {/* GalleryThumbnails */}
         <div className="mt-2">
           <GalleryThumbnails
@@ -448,16 +432,6 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
             onReadMore={() => {}}
           />
         </div>
-
-        {/* Related products section */}
-        {!isLoadingProducts && relatedProducts.length > 0 && (
-          <div className="mt-4">
-            <h3 className="text-lg font-semibold mb-2">Related Products</h3>
-            <p className="text-gray-600">
-              {relatedProducts.length} related products available
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );
