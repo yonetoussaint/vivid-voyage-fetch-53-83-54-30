@@ -131,7 +131,6 @@ const IPhoneXRListing = ({ product, onReadMore }: IPhoneXRListingProps) => {
   // Product pricing data structure
   const productPricing = {
     basePrice: 25, // Base price per unit
-    moq: 100, // Minimum Order Quantity
     priceTiers: [
       { minQty: 100, maxQty: 499, discount: 0 },
       { minQty: 500, maxQty: 999, discount: 0.05 },
@@ -264,12 +263,8 @@ const IPhoneXRListing = ({ product, onReadMore }: IPhoneXRListingProps) => {
         <CurrencySwitcher />
       </div>
 
-      {/* MOQ Row - Always present */}
-      <div className="flex justify-between items-center bg-orange-50 rounded px-3 py-2 border border-orange-200">
-        <div className="flex items-center gap-1 text-orange-700 text-xs">
-          <Info className="w-3 h-3" />
-          <span>MOQ: {productPricing.moq} units</span>
-        </div>
+      {/* Bulk Pricing Toggle - Simple button to show/hide price tiers */}
+      <div className="flex justify-center">
         <BulkPricingToggle />
       </div>
 
