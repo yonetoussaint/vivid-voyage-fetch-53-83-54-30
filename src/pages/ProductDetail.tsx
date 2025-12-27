@@ -12,7 +12,7 @@ import { fetchAllProducts } from '@/integrations/supabase/products';
 import { IPhoneXRListing } from '@/components/product/iPhoneXRListing';
 import ProductImageGallery from "@/components/ProductImageGallery";
 import TabsNavigation from '@/components/home/TabsNavigation';
-import ProductHeader from '@/components/product/ProductHeader";
+import ProductHeader from '@/components/product/ProductHeader';
 import { useNavigationLoading } from '@/hooks/useNavigationLoading';
 import CustomerReviewsEnhanced from "@/components/product/CustomerReviewsEnhanced";
 import { cn } from "@/lib/utils";
@@ -94,7 +94,7 @@ const GalleryThumbnails = ({
           <div
             key={index}
             className={cn(
-              "relative overflow-hidden border aspect-square w-[18%]", // Reduced size, flat borders
+              "relative overflow-hidden border aspect-square w-[18%]",
               "cursor-pointer transition-all",
               currentIndex === index 
                 ? "border-2 border-primary" 
@@ -126,9 +126,9 @@ const GalleryThumbnails = ({
                       "absolute inset-0 flex items-center justify-center bg-black/40",
                       currentIndex === index && isPlaying && "opacity-0"
                     )}>
-                      <Play className="h-3 w-3 text-white" /> {/* Smaller icon */}
+                      <Play className="h-3 w-3 text-white" />
                     </div>
-                    <div className="absolute top-0.5 left-0.5 text-[7px] bg-black/60 text-white px-0.5"> {/* Smaller text */}
+                    <div className="absolute top-0.5 left-0.5 text-[7px] bg-black/60 text-white px-0.5">
                       VIDEO
                     </div>
                   </>
@@ -148,13 +148,13 @@ const GalleryThumbnails = ({
 
             {isLastThumbnailWithCounter && isImageLoaded && (
               <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                <span className="text-white text-[10px] font-semibold">+{Math.ceil(remainingCount)}</span> {/* Smaller text */}
+                <span className="text-white text-[10px] font-semibold">+{Math.ceil(remainingCount)}</span>
               </div>
             )}
 
             {variantName && isImageLoaded && (
-              <div className="absolute bottom-0 left-0 right-0 bg-white/90 px-0.5 py-0.5"> {/* Smaller padding */}
-                <p className="text-[8px] text-center text-foreground truncate font-medium"> {/* Smaller text */}
+              <div className="absolute bottom-0 left-0 right-0 bg-white/90 px-0.5 py-0.5">
+                <p className="text-[8px] text-center text-foreground truncate font-medium">
                   {variantName}
                 </p>
               </div>
@@ -402,7 +402,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     switch (activeTab) {
       case 'overview':
         return (
-          <div className="w-full space-y-2"> {/* Removed mt-2 */}
+          <div className="w-full space-y-2">
             <GalleryThumbnails
               images={galleryImages}
               currentIndex={currentGalleryIndex}
@@ -436,7 +436,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
         return <CustomerReviewsEnhanced productId={productId} />;
       default:
         return (
-          <div className="w-full space-y-2"> {/* Removed mt-2 */}
+          <div className="w-full space-y-2">
             <GalleryThumbnails
               images={galleryImages}
               currentIndex={currentGalleryIndex}
