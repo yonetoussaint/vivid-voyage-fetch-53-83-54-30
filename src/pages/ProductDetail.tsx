@@ -93,35 +93,6 @@ const GalleryThumbnails = ({
   );
 };
 
-// Simple tabs component in normal document flow
-const TabNavigation = ({
-  tabs,
-  activeTab,
-  onTabChange
-}: {
-  tabs: Array<{ id: string; label: string }>;
-  activeTab: string;
-  onTabChange: (id: string) => void;
-}) => {
-  return (
-    <div className="flex border-b border-gray-200 bg-white">
-      {tabs.map((tab) => (
-        <button
-          key={tab.id}
-          className={`flex-1 py-3 text-sm font-medium text-center transition-colors relative ${
-            activeTab === tab.id 
-              ? 'text-primary border-b-2 border-primary' 
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
-          onClick={() => onTabChange(tab.id)}
-        >
-          {tab.label}
-        </button>
-      ))}
-    </div>
-  );
-};
-
 const ProductDetailContent: React.FC<ProductDetailProps> = ({ 
   productId: propProductId, 
   hideHeader = false, 
@@ -141,12 +112,10 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   const { data: product, isLoading, error } = useProduct(productId!);
 
   const headerRef = useRef<HTMLDivElement>(null);
-  const topContentRef = useRef<HTMLDivElement>(null);
   const galleryRef = useRef<any>(null);
 
   const [isFavorite, setIsFavorite] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('overview');
   const [currentGalleryIndex, setCurrentGalleryIndex] = useState(0);
 
   // Fetch all products for overview tab
@@ -158,53 +127,6 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [productId]);
-
-  const tabs = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'reviews', label: 'Reviews' }
-  ];
-
-  const getCurrentTab = () => {
-    const pathParts = location.pathname.split('/');
-    const lastPart = pathParts[pathParts.length - 1];
-    const validTab = tabs.find(tab => tab.id === lastPart);
-    return validTab ? validTab.id : 'overview';
-  };
-
-  useEffect(() => {
-    if (inPanel) return;
-
-    const currentTabFromURL = getCurrentTab();
-    if (currentTabFromURL !== activeTab) {
-      setActiveTab(currentTabFromURL);
-    }
-  }, [location.pathname, inPanel]);
-
-  useEffect(() => {
-    if (inPanel || !productId) return;
-
-    const currentPath = window.location.pathname;
-    const pathParts = currentPath.split('/');
-    const lastPart = pathParts[pathParts.length - 1];
-
-    const isProductRoot = currentPath.match(/\/product\/[^/]+$/) || 
-                         !tabs.find(tab => tab.id === lastPart);
-
-    if (isProductRoot) {
-      const newPath = `/product/${productId}/overview`;
-      navigate(newPath, { replace: true });
-    }
-  }, [navigate, productId, tabs, inPanel]);
-
-  const handleTabChange = (tabId: string) => {
-    setActiveTab(tabId);
-
-    if (!productId || inPanel) return;
-
-    const newPath = `/product/${productId}/${tabId}`;
-    navigate(newPath);
-    window.scrollTo(0, 0);
-  };
 
   const handleBackClick = () => navigate(-1);
   const handleFavoriteClick = () => setIsFavorite(!isFavorite);
@@ -276,9 +198,6 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     }
   ];
 
-  const isOverviewTab = activeTab === 'overview';
-  const showGallery = isOverviewTab;
-
   if (!productId) {
     return <ProductDetailError message="Product ID is missing" />;
   }
@@ -302,7 +221,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     return <ProductDetailError />;
   }
 
-  // Prepare data for overview tab components
+  // Prepare data for components
   const galleryImages = product?.product_images?.map((img: any) => img.src) || product?.images || ["https://placehold.co/300x300?text=No+Image"];
 
   const listingProduct = {
@@ -332,127 +251,30 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
       seller_id: p.seller_id,
     }));
 
-  // Render tab content directly based on activeTab
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'overview':
-        return (
-          <div className="w-full space-y-2">
-            <GalleryThumbnails
-              images={galleryImages}
-              currentIndex={currentGalleryIndex}
-              onThumbnailClick={(index) => {
-                setCurrentGalleryIndex(index);
-                if (galleryRef.current) {
-                  galleryRef.current.scrollTo?.(index);
-                }
-              }}
-            />
-
-            <IPhoneXRListing 
-              product={listingProduct}
-              onReadMore={() => {}}
-            />
-
-            {!isLoadingProducts && relatedProducts.length > 0 && (
-              <div className="mt-4">
-                <h3 className="text-lg font-semibold mb-2">Related Products</h3>
-                <p className="text-gray-600">
-                  {relatedProducts.length} related products available
-                </p>
-              </div>
-            )}
-          </div>
-        );
-      case 'reviews':
-        return <CustomerReviewsEnhanced productId={productId} />;
-      default:
-        return (
-          <div className="w-full space-y-2">
-            <GalleryThumbnails
-              images={galleryImages}
-              currentIndex={currentGalleryIndex}
-              onThumbnailClick={(index) => {
-                setCurrentGalleryIndex(index);
-                if (galleryRef.current) {
-                  galleryRef.current.scrollTo?.(index);
-                }
-              }}
-            />
-
-            <IPhoneXRListing 
-              product={listingProduct}
-              onReadMore={() => {}}
-            />
-
-            {!isLoadingProducts && relatedProducts.length > 0 && (
-              <div className="mt-4">
-                <h3 className="text-lg font-semibold mb-2">Related Products</h3>
-                <p className="text-gray-600">
-                  {relatedProducts.length} related products available
-                </p>
-              </div>
-            )}
-          </div>
-        );
-    }
-  };
-
-  const header = !hideHeader ? (
-    <div ref={headerRef} className="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
-      <ProductHeader
-        onCloseClick={handleBackClick}
-        onShareClick={handleShareClick}
-        actionButtons={actionButtons}
-        forceScrolledState={!isOverviewTab}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        onSearch={handleSearch}
-        onSearchFocus={handleSearchFocus}
-        inPanel={inPanel}
-        seller={product?.sellers}
-        onSellerClick={() => {
-          if (product?.sellers?.id) {
-            navigate(`/seller/${product?.sellers?.id}`);
-          }
-        }}
-      />
-    </div>
-  ) : null;
-  
-  const topContent = showGallery ? (
-    <div ref={topContentRef} className="w-full bg-white">
-      <ProductImageGallery 
-        ref={galleryRef}
-        images={galleryImages}
-        videos={product?.product_videos || []}
-        model3dUrl={product?.model_3d_url}
-        seller={product?.sellers}
-        product={{
-          id: product?.id || '',
-          name: product?.name || '',
-          price: product?.price || 0,
-          discount_price: product?.discount_price,
-          inventory: product?.inventory || 0,
-          sold_count: product?.sold_count || 0
-        }}
-        onSellerClick={() => {
-          if (product?.sellers?.id) {
-            navigate(`/seller/${product?.sellers?.id}`);
-          }
-        }}
-        onBuyNow={buyNow}
-        onImageIndexChange={(currentIndex) => {
-          setCurrentGalleryIndex(currentIndex);
-        }}
-      />
-    </div>
-  ) : undefined;
-
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header */}
-      {header}
+      {!hideHeader && (
+        <div ref={headerRef} className="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+          <ProductHeader
+            onCloseClick={handleBackClick}
+            onShareClick={handleShareClick}
+            actionButtons={actionButtons}
+            forceScrolledState={false}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            onSearch={handleSearch}
+            onSearchFocus={handleSearchFocus}
+            inPanel={inPanel}
+            seller={product?.sellers}
+            onSellerClick={() => {
+              if (product?.sellers?.id) {
+                navigate(`/seller/${product?.sellers?.id}`);
+              }
+            }}
+          />
+        </div>
+      )}
       
       {/* Main content with scrollable area */}
       <div 
@@ -460,20 +282,70 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
         className="flex-1 overflow-y-auto"
         style={{ paddingTop: hideHeader ? '0' : '56px' }}
       >
-        {/* Top content (Gallery) - only shown for overview tab */}
-        {topContent}
-        
-        {/* Tabs Navigation - in normal document flow, not sticky */}
-        <TabNavigation
-          tabs={tabs}
-          activeTab={activeTab}
-          onTabChange={inPanel ? setActiveTab : handleTabChange}
-        />
-        
-        {/* Tab content */}
-        <div>
-          {renderTabContent()}
+        {/* ProductImageGallery */}
+        <div className="w-full bg-white">
+          <ProductImageGallery 
+            ref={galleryRef}
+            images={galleryImages}
+            videos={product?.product_videos || []}
+            model3dUrl={product?.model_3d_url}
+            seller={product?.sellers}
+            product={{
+              id: product?.id || '',
+              name: product?.name || '',
+              price: product?.price || 0,
+              discount_price: product?.discount_price,
+              inventory: product?.inventory || 0,
+              sold_count: product?.sold_count || 0
+            }}
+            onSellerClick={() => {
+              if (product?.sellers?.id) {
+                navigate(`/seller/${product?.sellers?.id}`);
+              }
+            }}
+            onBuyNow={buyNow}
+            onImageIndexChange={(currentIndex) => {
+              setCurrentGalleryIndex(currentIndex);
+            }}
+          />
         </div>
+        
+        {/* GalleryThumbnails */}
+        <div className="mt-2">
+          <GalleryThumbnails
+            images={galleryImages}
+            currentIndex={currentGalleryIndex}
+            onThumbnailClick={(index) => {
+              setCurrentGalleryIndex(index);
+              if (galleryRef.current) {
+                galleryRef.current.scrollTo?.(index);
+              }
+            }}
+          />
+        </div>
+
+        {/* IPhoneXRListing */}
+        <div className="mt-2">
+          <IPhoneXRListing 
+            product={listingProduct}
+            onReadMore={() => {}}
+          />
+        </div>
+
+        {/* CustomerReviewsEnhanced */}
+        <div className="mt-4">
+          <CustomerReviewsEnhanced productId={productId} />
+        </div>
+
+        {/* Related products section */}
+        {!isLoadingProducts && relatedProducts.length > 0 && (
+          <div className="mt-4">
+            <h3 className="text-lg font-semibold mb-2">Related Products</h3>
+            <p className="text-gray-600">
+              {relatedProducts.length} related products available
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
