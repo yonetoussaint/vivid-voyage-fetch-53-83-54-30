@@ -91,7 +91,7 @@ const GalleryThumbnails = ({
   );
 };
 
-// Inline iPhoneXRListing component with only USD and HTG currencies
+// Inline iPhoneXRListing component - Clean version with title, price, and description
 interface IPhoneXRListingProps {
   product?: {
     name?: string;
@@ -108,27 +108,6 @@ interface IPhoneXRListingProps {
     paymentTerms?: string;
     tradeAssurance?: boolean;
   };
-  onReadMore?: () => void;
-}
-
-// Inline iPhoneXRListing component - Clean version with only title and price
-interface IPhoneXRListingProps {
-  product?: {
-    name?: string;
-    short_description?: string;
-    description?: string;
-    rating?: number;
-    reviewCount?: number;
-    inventory?: number;
-    sold_count?: number;
-    change?: number;
-    unitPrice?: number;
-    demoVideoUrl?: string;
-    minOrderQty?: number;
-    paymentTerms?: string;
-    tradeAssurance?: boolean;
-  };
-  onReadMore?: () => void;
 }
 
 const IPhoneXRListing = ({ product }: IPhoneXRListingProps) => {
@@ -155,6 +134,11 @@ const IPhoneXRListing = ({ product }: IPhoneXRListingProps) => {
 
   // Merge product with mock B2B data
   const mergedProduct = { ...mockB2BData, ...product };
+
+  const displayDescription =
+    mergedProduct?.short_description || mergedProduct?.description || 'Product description not available.';
+  const needsTruncation = displayDescription.length > 150;
+  const truncatedDescription = displayDescription.slice(0, 150) + (displayDescription.length > 150 ? '...' : '');
 
   // PriceInfo logic moved inline - HTG set as default
   const [currentCurrency, setCurrentCurrency] = useState('HTG');
@@ -214,6 +198,13 @@ const IPhoneXRListing = ({ product }: IPhoneXRListingProps) => {
           <span className="text-sm text-gray-500">/ unit</span>
         </div>
         <CurrencySwitcher />
+      </div>
+
+      {/* Description Section */}
+      <div className="space-y-1">
+        <p className="text-sm text-gray-600 leading-relaxed">
+          {truncatedDescription}
+        </p>
       </div>
     </div>
   );
