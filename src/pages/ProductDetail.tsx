@@ -40,6 +40,11 @@ interface GalleryThumbnailsProps {
   variantNames?: string[];
 }
 
+// ThumbnailSkeleton component defined outside GalleryThumbnails
+const ThumbnailSkeleton = ({ className }: { className?: string }) => (
+  <div className={cn("bg-gray-200 animate-pulse", className)} />
+);
+
 const GalleryThumbnails = ({
   images,
   currentIndex,
@@ -64,10 +69,6 @@ const GalleryThumbnails = ({
   const remainingCount = images.length - maxThumbnails;
 
   const slots = Array.from({ length: Math.ceil(maxThumbnails) }, (_, i) => i);
-
-  const ThumbnailSkeleton = ({ className }: { className?: string }) => (
-    <div className={cn("bg-gray-200 animate-pulse", className)} />
-  );
 
   return (
     <div className="flex items-center gap-1.5 w-full">
