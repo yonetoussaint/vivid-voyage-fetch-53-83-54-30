@@ -1,11 +1,11 @@
-// ProductDetail.tsx - Simplified version
-import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+// ProductDetail.tsx - Fixed version with proper fixed header
+import React, { useState, useRef, useEffect } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useProduct } from "@/hooks/useProduct";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/RedirectAuthContext';
 import { useAuthOverlay } from '@/context/AuthOverlayContext';
-import { Heart, Share, Star, ShieldCheck, Video, CreditCard, ChevronDown } from 'lucide-react';
+import { Heart, Share, ChevronDown } from 'lucide-react';
 import ProductDetailError from "@/components/product/ProductDetailError";
 import { useQuery } from '@tanstack/react-query';
 import { fetchAllProducts } from '@/integrations/supabase/products';
@@ -355,9 +355,17 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Header - Remove fixed positioning, let ProductHeader handle sticky behavior */}
+      {/* Header - FIXED at the top */}
       {!hideHeader && (
-        <div ref={headerRef} className="relative z-50">
+        <div 
+          ref={headerRef} 
+          className="fixed top-0 left-0 right-0 z-50"
+          style={{
+            // Ensure the fixed header doesn't push content down
+            position: 'fixed',
+            width: '100%'
+          }}
+        >
           <ProductHeader
             onCloseClick={handleBackClick}
             onShareClick={handleShareClick}
@@ -378,59 +386,62 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
         </div>
       )}
 
-      {/* Main content with scrollable area - NO padding-top, content starts from top */}
+      {/* Main content with scrollable area - Content starts from top, flows under fixed header */}
       <div 
         ref={scrollContainerRef}
         className="flex-1 overflow-y-auto"
       >
-        {/* ProductImageGallery */}
-        <div className="w-full bg-white">
-          <ProductImageGallery 
-            ref={galleryRef}
-            images={galleryImages}
-            videos={product?.product_videos || []}
-            model3dUrl={product?.model_3d_url}
-            seller={product?.sellers}
-            product={{
-              id: product?.id || '',
-              name: product?.name || '',
-              price: product?.price || 0,
-              discount_price: product?.discount_price,
-              inventory: product?.inventory || 0,
-              sold_count: product?.sold_count || 0
-            }}
-            onSellerClick={() => {
-              if (product?.sellers?.id) {
-                navigate(`/seller/${product?.sellers?.id}`);
-              }
-            }}
-            onBuyNow={buyNow}
-            onImageIndexChange={(currentIndex) => {
-              setCurrentGalleryIndex(currentIndex);
-            }}
-          />
-        </div>
+        {/* Content starts here - no top padding needed since header is fixed overlay */}
+        <div className="w-full">
+          {/* ProductImageGallery - should extend to top of viewport */}
+          <div className="w-full bg-white">
+            <ProductImageGallery 
+              ref={galleryRef}
+              images={galleryImages}
+              videos={product?.product_videos || []}
+              model3dUrl={product?.model_3d_url}
+              seller={product?.sellers}
+              product={{
+                id: product?.id || '',
+                name: product?.name || '',
+                price: product?.price || 0,
+                discount_price: product?.discount_price,
+                inventory: product?.inventory || 0,
+                sold_count: product?.sold_count || 0
+              }}
+              onSellerClick={() => {
+                if (product?.sellers?.id) {
+                  navigate(`/seller/${product?.sellers?.id}`);
+                }
+              }}
+              onBuyNow={buyNow}
+              onImageIndexChange={(currentIndex) => {
+                setCurrentGalleryIndex(currentIndex);
+              }}
+            />
+          </div>
 
-        {/* GalleryThumbnails */}
-        <div className="mt-2">
-          <GalleryThumbnails
-            images={galleryImages}
-            currentIndex={currentGalleryIndex}
-            onThumbnailClick={(index) => {
-              setCurrentGalleryIndex(index);
-              if (galleryRef.current) {
-                galleryRef.current.scrollTo?.(index);
-              }
-            }}
-          />
-        </div>
+          {/* GalleryThumbnails */}
+          <div className="mt-2">
+            <GalleryThumbnails
+              images={galleryImages}
+              currentIndex={currentGalleryIndex}
+              onThumbnailClick={(index) => {
+                setCurrentGalleryIndex(index);
+                if (galleryRef.current) {
+                  galleryRef.current.scrollTo?.(index);
+                }
+              }}
+            />
+          </div>
 
-        {/* IPhoneXRListing */}
-        <div className="mt-2">
-          <IPhoneXRListing 
-            product={listingProduct}
-            onReadMore={() => {}}
-          />
+          {/* IPhoneXRListing */}
+          <div className="mt-2">
+            <IPhoneXRListing 
+              product={listingProduct}
+              onReadMore={() => {}}
+            />
+          </div>
         </div>
       </div>
     </div>
