@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchAllProducts } from '@/integrations/supabase/products';
 import { GalleryThumbnails } from '@/components/product/GalleryThumbnails';
 import { IPhoneXRListing } from '@/components/product/iPhoneXRListing';
-import BookGenreFlashDeals from '@/components/home/BookGenreFlashDeals';
 
 interface ProductOverviewProps {
   product: any;
@@ -83,12 +82,12 @@ const ProductOverview: React.FC<ProductOverviewProps> = ({
 
   // Determine what to show in GalleryThumbnails based on active tab
   const isVariantsTab = activeTab === 'variants';
-  
+
   // For variants tab, show variant images if available, otherwise show product images
   const thumbnailImages = isVariantsTab && product?.variants?.length > 0
     ? product.variants.map((v: any) => v.image || v.src || '/placeholder.svg')
     : galleryImages;
-  
+
   const thumbnailVariantNames = isVariantsTab
     ? product?.variants?.map((v: any) => v.name) || []
     : [];
@@ -115,17 +114,15 @@ const ProductOverview: React.FC<ProductOverviewProps> = ({
         onReadMore={() => console.log('Read more clicked')}
       />
 
-      {/* BookGenreFlashDeals - Show related products */}
+      {/* Related products section could be added here with a different component if needed */}
       {!isLoadingProducts && relatedProducts.length > 0 && (
-        <BookGenreFlashDeals
-          title="Related Products"
-          subtitle="Customers also viewed"
-          products={relatedProducts}
-          showSectionHeader={true}
-          showSummary={false}
-          showFilters={false}
-          summaryMode="products"
-        />
+        <div className="mt-4">
+          {/* Placeholder for related products - you can add your own component here */}
+          <h3 className="text-lg font-semibold mb-2">Related Products</h3>
+          <p className="text-gray-600">
+            {relatedProducts.length} related products available
+          </p>
+        </div>
       )}
     </div>
   );
