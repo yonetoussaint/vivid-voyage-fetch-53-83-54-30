@@ -11,7 +11,6 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchAllProducts } from '@/integrations/supabase/products';
 import { IPhoneXRListing } from '@/components/product/iPhoneXRListing';
 import ProductImageGallery from "@/components/ProductImageGallery";
-import TabsNavigation from '@/components/home/TabsNavigation';
 import ProductHeader from '@/components/product/ProductHeader';
 import { useNavigationLoading } from '@/hooks/useNavigationLoading';
 import CustomerReviewsEnhanced from "@/components/product/CustomerReviewsEnhanced";
@@ -94,6 +93,35 @@ const GalleryThumbnails = ({
   );
 };
 
+// Simple tabs component in normal document flow
+const TabNavigation = ({
+  tabs,
+  activeTab,
+  onTabChange
+}: {
+  tabs: Array<{ id: string; label: string }>;
+  activeTab: string;
+  onTabChange: (id: string) => void;
+}) => {
+  return (
+    <div className="flex border-b border-gray-200 bg-white">
+      {tabs.map((tab) => (
+        <button
+          key={tab.id}
+          className={`flex-1 py-3 text-sm font-medium text-center transition-colors relative ${
+            activeTab === tab.id 
+              ? 'text-primary border-b-2 border-primary' 
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+          onClick={() => onTabChange(tab.id)}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  );
+};
+
 const ProductDetailContent: React.FC<ProductDetailProps> = ({ 
   productId: propProductId, 
   hideHeader = false, 
@@ -115,7 +143,6 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   const headerRef = useRef<HTMLDivElement>(null);
   const topContentRef = useRef<HTMLDivElement>(null);
   const galleryRef = useRef<any>(null);
-  const tabsRef = useRef<any>(null);
 
   const [isFavorite, setIsFavorite] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -436,21 +463,12 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
         {/* Top content (Gallery) - only shown for overview tab */}
         {topContent}
         
-        {/* Tabs Navigation */}
-        <div 
-          className="sticky top-[56px] z-40 bg-white"
-          style={{ top: hideHeader ? '0' : '56px' }}
-        >
-          <TabsNavigation
-            ref={tabsRef}
-            tabs={tabs}
-            activeTab={activeTab}
-            onTabChange={inPanel ? setActiveTab : handleTabChange}
-            variant="underline"
-            showTopBorder={false}
-            edgeToEdge={true}
-          />
-        </div>
+        {/* Tabs Navigation - in normal document flow, not sticky */}
+        <TabNavigation
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={inPanel ? setActiveTab : handleTabChange}
+        />
         
         {/* Tab content */}
         <div>
