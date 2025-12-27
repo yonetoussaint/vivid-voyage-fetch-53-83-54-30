@@ -176,7 +176,7 @@ const ProductImageGallery = forwardRef<ProductImageGalleryRef, ProductImageGalle
 
         {/* Image Counter - Ultra thin rectangular version */}
         <div className="absolute bottom-2 right-2 z-10">
-         <div className="bg-black/60 backdrop-blur-sm px-2 flex items-center h-4">
+         <div className="bg-black/60 backdrop-blur-sm px-2 flex items-center h-4 rounded">
   <span className="text-white text-xs font-medium">
     {currentIndex + 1}/{totalItems}
   </span>
