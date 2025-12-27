@@ -192,11 +192,11 @@ const IPhoneXRListing = ({ product, onReadMore }: IPhoneXRListingProps) => {
 
   return (
     <div className="w-full px-2 bg-white font-sans space-y-2">
-
+      {/* Product Title - Using exact same style as ProductCard */}
       {mergedProduct?.name && (
-        <h2 className="text-sm font-normal text-gray-400 leading-none !important">
+        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
           {mergedProduct?.name}
-        </h2>
+        </p>
       )}
 
       {/* Price Row - Always present */}
