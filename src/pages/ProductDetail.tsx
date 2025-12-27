@@ -1,21 +1,21 @@
-// ProductDetail.tsx - Clean version
-import React, { useState, useRef, useEffect } from "react";
+// ProductDetail.tsx - Clean version with direct tab rendering
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useProduct } from "@/hooks/useProduct";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/RedirectAuthContext';
 import { useAuthOverlay } from '@/context/AuthOverlayContext';
-import { Heart, Share } from 'lucide-react';
+import { Heart, Share, Play } from 'lucide-react';
 import ProductDetailError from "@/components/product/ProductDetailError";
 import { useQuery } from '@tanstack/react-query';
 import { fetchAllProducts } from '@/integrations/supabase/products';
-import { GalleryThumbnails } from '@/components/product/GalleryThumbnails';
 import { IPhoneXRListing } from '@/components/product/iPhoneXRListing';
 import ProductImageGallery from "@/components/ProductImageGallery";
 import TabsNavigation from '@/components/home/TabsNavigation';
-import ProductHeader from '@/components/product/ProductHeader';
+import ProductHeader from '@/components/product/ProductHeader";
 import { useNavigationLoading } from '@/hooks/useNavigationLoading';
 import CustomerReviewsEnhanced from "@/components/product/CustomerReviewsEnhanced";
+import { cn } from "@/lib/utils";
 
 interface ProductDetailProps {
   productId?: string;
@@ -25,95 +25,143 @@ interface ProductDetailProps {
   stickyTopOffset?: number;
 }
 
-// ProductOverview component moved inline
-interface ProductOverviewProps {
-  product: any;
-  activeTab?: string;
-  currentIndex?: number;
-  onThumbnailClick?: (index: number) => void;
+// GalleryThumbnails component moved inline
+interface GalleryThumbnailsProps {
+  images: string[];
+  currentIndex: number;
+  onThumbnailClick: (index: number) => void;
+  isPlaying?: boolean;
+  videoIndices?: number[];
+  galleryItems?: Array<{
+    type: 'image' | 'video';
+    src: string;
+    videoData?: any;
+  }>;
+  variantNames?: string[];
 }
 
-const ProductOverview: React.FC<ProductOverviewProps> = ({ 
-  product, 
-  currentIndex = 0,
-  onThumbnailClick
-}) => {
-  const { data: allProducts = [], isLoading: isLoadingProducts } = useQuery({
-    queryKey: ['all-products-overview'],
-    queryFn: fetchAllProducts,
-  });
+const GalleryThumbnails = ({
+  images,
+  currentIndex,
+  onThumbnailClick,
+  isPlaying = false,
+  videoIndices = [],
+  galleryItems = [],
+  variantNames = []
+}: GalleryThumbnailsProps) => {
+  const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set());
 
-  const galleryImages = product?.images?.length > 0 
-    ? product.images 
-    : product?.product_images?.map((img: any) => img.src) || ["https://placehold.co/300x300?text=No+Image"];
+  const handleImageLoad = useCallback((index: number) => {
+    setLoadedImages(prev => new Set(prev).add(index));
+  }, []);
 
-  const videoIndices = product?.product_videos?.length > 0 ? [galleryImages.length] : [];
+  const handleImageError = useCallback((index: number) => {
+    setLoadedImages(prev => new Set(prev).add(index));
+  }, []);
 
-  const allGalleryItems = [
-    ...(galleryImages.map((src: string) => ({ type: 'image' as const, src }))),
-    ...(product?.product_videos?.map((video: any) => ({ 
-      type: 'video' as const, 
-      src: video.url,
-      videoData: video 
-    })) || [])
-  ];
+  const maxThumbnails = 5.5; // Show 5.5 elements
+  const displayImages = images.slice(0, maxThumbnails);
+  const remainingCount = images.length - maxThumbnails;
 
-  const listingProduct = {
-    name: product?.name,
-    short_description: product?.short_description,
-    description: product?.description,
-    rating: product?.rating,
-    reviewCount: product?.review_count,
-    inventory: product?.inventory,
-    sold_count: product?.sold_count,
-    change: product?.sales_change
-  };
+  const slots = Array.from({ length: Math.ceil(maxThumbnails) }, (_, i) => i);
 
-  const relatedProducts = React.useMemo(() => {
-    if (isLoadingProducts) {
-      return [];
-    }
-
-    return allProducts
-      .filter(p => p.id !== product?.id)
-      .slice(0, 8)
-      .map(p => ({
-        id: p.id,
-        name: p.name || 'Unnamed Product',
-        price: Number(p.price) || 0,
-        discount_price: p.discount_price ? Number(p.discount_price) : undefined,
-        product_images: p.product_images || [{ src: "https://placehold.co/300x300?text=No+Image" }],
-        inventory: p.inventory || 0,
-        category: p.category || 'Uncategorized',
-        flash_start_time: p.flash_start_time,
-        seller_id: p.seller_id,
-      }));
-  }, [allProducts, product?.id, isLoadingProducts]);
+  const ThumbnailSkeleton = ({ className }: { className?: string }) => (
+    <div className={cn("bg-gray-200 animate-pulse", className)} />
+  );
 
   return (
-    <div className="w-full mt-2 space-y-2">
-      <GalleryThumbnails
-        images={galleryImages}
-        currentIndex={currentIndex}
-        onThumbnailClick={onThumbnailClick || (() => {})}
-        videoIndices={videoIndices}
-        galleryItems={allGalleryItems}
-        variantNames={[]}
-      />
+    <div className="flex items-center gap-1.5 w-full">
+      {slots.map((slotIndex) => {
+        const src = displayImages[slotIndex];
+        const index = slotIndex;
+        
+        if (!src) {
+          return (
+            <div
+              key={`empty-${slotIndex}`}
+              className="aspect-square w-[18%] opacity-0 pointer-events-none"
+            />
+          );
+        }
 
-      <IPhoneXRListing 
-        product={listingProduct}
-        onReadMore={() => {}}
-      />
+        const isVideo = videoIndices.includes(index);
+        const galleryItem = galleryItems[index];
+        const isImageLoaded = loadedImages.has(index);
+        const isLastThumbnailWithCounter = index === maxThumbnails - 1 && remainingCount > 0;
+        const variantName = variantNames[index];
 
-      {!isLoadingProducts && relatedProducts.length > 0 && (
-        <div className="mt-4">
-          <h3 className="text-lg font-semibold mb-2">Related Products</h3>
-          <p className="text-gray-600">
-            {relatedProducts.length} related products available
-          </p>
-        </div>
-      )}
+        return (
+          <div
+            key={index}
+            className={cn(
+              "relative overflow-hidden border aspect-square w-[18%]", // Reduced size, flat borders
+              "cursor-pointer transition-all",
+              currentIndex === index 
+                ? "border-2 border-primary" 
+                : "border border-gray-300 hover:border-gray-400"
+            )}
+            onClick={() => onThumbnailClick(index)}
+          >
+            {!isImageLoaded && (
+              <ThumbnailSkeleton className="absolute inset-0 w-full h-full" />
+            )}
+
+            {isVideo || galleryItem?.type === 'video' ? (
+              <>
+                <video 
+                  src={src}
+                  className={cn("w-full h-full object-cover", 
+                    !isImageLoaded && "opacity-0"
+                  )}
+                  muted
+                  preload="metadata"
+                  poster={galleryItem?.videoData?.thumbnail_url}
+                  onLoadedData={() => handleImageLoad(index)}
+                  onError={() => handleImageError(index)}
+                />
+
+                {isImageLoaded && (
+                  <>
+                    <div className={cn(
+                      "absolute inset-0 flex items-center justify-center bg-black/40",
+                      currentIndex === index && isPlaying && "opacity-0"
+                    )}>
+                      <Play className="h-3 w-3 text-white" /> {/* Smaller icon */}
+                    </div>
+                    <div className="absolute top-0.5 left-0.5 text-[7px] bg-black/60 text-white px-0.5"> {/* Smaller text */}
+                      VIDEO
+                    </div>
+                  </>
+                )}
+              </>
+            ) : (
+              <img 
+                src={src} 
+                alt={`Thumbnail ${index}`} 
+                className={cn("w-full h-full object-cover", 
+                  !isImageLoaded && "opacity-0"
+                )}
+                onLoad={() => handleImageLoad(index)}
+                onError={() => handleImageError(index)}
+              />
+            )}
+
+            {isLastThumbnailWithCounter && isImageLoaded && (
+              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                <span className="text-white text-[10px] font-semibold">+{Math.ceil(remainingCount)}</span> {/* Smaller text */}
+              </div>
+            )}
+
+            {variantName && isImageLoaded && (
+              <div className="absolute bottom-0 left-0 right-0 bg-white/90 px-0.5 py-0.5"> {/* Smaller padding */}
+                <p className="text-[8px] text-center text-foreground truncate font-medium"> {/* Smaller text */}
+                  {variantName}
+                </p>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -145,6 +193,12 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
   const [currentGalleryIndex, setCurrentGalleryIndex] = useState(0);
+
+  // Fetch all products for overview tab
+  const { data: allProducts = [], isLoading: isLoadingProducts } = useQuery({
+    queryKey: ['all-products-overview'],
+    queryFn: fetchAllProducts,
+  });
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -295,26 +349,123 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     return <ProductDetailError />;
   }
 
+  // Prepare data for overview tab components
+  const galleryImages = product?.images?.length > 0 
+    ? product.images 
+    : product?.product_images?.map((img: any) => img.src) || ["https://placehold.co/300x300?text=No+Image"];
+
+  const videoIndices = product?.product_videos?.length > 0 ? [galleryImages.length] : [];
+
+  const allGalleryItems = [
+    ...(galleryImages.map((src: string) => ({ type: 'image' as const, src }))),
+    ...(product?.product_videos?.map((video: any) => ({ 
+      type: 'video' as const, 
+      src: video.url,
+      videoData: video 
+    })) || [])
+  ];
+
+  const listingProduct = {
+    name: product?.name,
+    short_description: product?.short_description,
+    description: product?.description,
+    rating: product?.rating,
+    reviewCount: product?.review_count,
+    inventory: product?.inventory,
+    sold_count: product?.sold_count,
+    change: product?.sales_change
+  };
+
+  const relatedProducts = React.useMemo(() => {
+    if (isLoadingProducts) {
+      return [];
+    }
+
+    return allProducts
+      .filter(p => p.id !== product?.id)
+      .slice(0, 8)
+      .map(p => ({
+        id: p.id,
+        name: p.name || 'Unnamed Product',
+        price: Number(p.price) || 0,
+        discount_price: p.discount_price ? Number(p.discount_price) : undefined,
+        product_images: p.product_images || [{ src: "https://placehold.co/300x300?text=No+Image" }],
+        inventory: p.inventory || 0,
+        category: p.category || 'Uncategorized',
+        flash_start_time: p.flash_start_time,
+        seller_id: p.seller_id,
+      }));
+  }, [allProducts, product?.id, isLoadingProducts]);
+
+  // Render tab content directly based on activeTab
   const renderTabContent = () => {
     switch (activeTab) {
       case 'overview':
         return (
-          <ProductOverview 
-            product={product} 
-            activeTab={activeTab}
-            currentIndex={currentGalleryIndex}
-            onThumbnailClick={(index) => {
-              setCurrentGalleryIndex(index);
-              if (galleryRef.current) {
-                galleryRef.current.scrollTo?.(index);
-              }
-            }}
-          />
+          <div className="w-full space-y-2"> {/* Removed mt-2 */}
+            <GalleryThumbnails
+              images={galleryImages}
+              currentIndex={currentGalleryIndex}
+              onThumbnailClick={(index) => {
+                setCurrentGalleryIndex(index);
+                if (galleryRef.current) {
+                  galleryRef.current.scrollTo?.(index);
+                }
+              }}
+              videoIndices={videoIndices}
+              galleryItems={allGalleryItems}
+              variantNames={[]}
+            />
+
+            <IPhoneXRListing 
+              product={listingProduct}
+              onReadMore={() => {}}
+            />
+
+            {!isLoadingProducts && relatedProducts.length > 0 && (
+              <div className="mt-4">
+                <h3 className="text-lg font-semibold mb-2">Related Products</h3>
+                <p className="text-gray-600">
+                  {relatedProducts.length} related products available
+                </p>
+              </div>
+            )}
+          </div>
         );
       case 'reviews':
         return <CustomerReviewsEnhanced productId={productId} />;
       default:
-        return <ProductOverview product={product} activeTab="overview" />;
+        return (
+          <div className="w-full space-y-2"> {/* Removed mt-2 */}
+            <GalleryThumbnails
+              images={galleryImages}
+              currentIndex={currentGalleryIndex}
+              onThumbnailClick={(index) => {
+                setCurrentGalleryIndex(index);
+                if (galleryRef.current) {
+                  galleryRef.current.scrollTo?.(index);
+                }
+              }}
+              videoIndices={videoIndices}
+              galleryItems={allGalleryItems}
+              variantNames={[]}
+            />
+
+            <IPhoneXRListing 
+              product={listingProduct}
+              onReadMore={() => {}}
+            />
+
+            {!isLoadingProducts && relatedProducts.length > 0 && (
+              <div className="mt-4">
+                <h3 className="text-lg font-semibold mb-2">Related Products</h3>
+                <p className="text-gray-600">
+                  {relatedProducts.length} related products available
+                </p>
+              </div>
+            )}
+          </div>
+        );
     }
   };
 
@@ -340,13 +491,13 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     </div>
   ) : null;
 
-  const galleryImages = product?.product_images?.map(img => img.src) || product?.images || ["/placeholder.svg"];
+  const productGalleryImages = product?.product_images?.map(img => img.src) || product?.images || ["/placeholder.svg"];
   
   const topContent = showGallery ? (
     <div ref={topContentRef} className="w-full bg-white">
       <ProductImageGallery 
         ref={galleryRef}
-        images={galleryImages}
+        images={productGalleryImages}
         videos={product?.product_videos || []}
         model3dUrl={product?.model_3d_url}
         seller={product?.sellers}
@@ -401,8 +552,8 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
           />
         </div>
         
-        {/* Tab content */}
-        <div className="p-4">
+        {/* Tab content - removed p-4 padding */}
+        <div>
           {renderTabContent()}
         </div>
       </div>
