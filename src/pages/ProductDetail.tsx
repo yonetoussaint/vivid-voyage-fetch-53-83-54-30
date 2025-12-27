@@ -1,11 +1,11 @@
-// ProductDetail.tsx - Clean version with direct tab rendering
+// ProductDetail.tsx - Simplified version
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useProduct } from "@/hooks/useProduct";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/RedirectAuthContext';
 import { useAuthOverlay } from '@/context/AuthOverlayContext';
-import { Heart, Share, Play } from 'lucide-react';
+import { Heart, Share } from 'lucide-react';
 import ProductDetailError from "@/components/product/ProductDetailError";
 import { useQuery } from '@tanstack/react-query';
 import { fetchAllProducts } from '@/integrations/supabase/products';
@@ -15,7 +15,6 @@ import TabsNavigation from '@/components/home/TabsNavigation';
 import ProductHeader from '@/components/product/ProductHeader';
 import { useNavigationLoading } from '@/hooks/useNavigationLoading';
 import CustomerReviewsEnhanced from "@/components/product/CustomerReviewsEnhanced";
-import { cn } from "@/lib/utils";
 
 interface ProductDetailProps {
   productId?: string;
@@ -25,144 +24,35 @@ interface ProductDetailProps {
   stickyTopOffset?: number;
 }
 
-// GalleryThumbnails component moved inline
-interface GalleryThumbnailsProps {
-  images: string[];
-  currentIndex: number;
-  onThumbnailClick: (index: number) => void;
-  isPlaying?: boolean;
-  videoIndices?: number[];
-  galleryItems?: Array<{
-    type: 'image' | 'video';
-    src: string;
-    videoData?: any;
-  }>;
-  variantNames?: string[];
-}
-
-// ThumbnailSkeleton component defined outside GalleryThumbnails
-const ThumbnailSkeleton = ({ className }: { className?: string }) => (
-  <div className={cn("bg-gray-200 animate-pulse", className)} />
-);
-
+// Simple GalleryThumbnails without complex hooks
 const GalleryThumbnails = ({
   images,
   currentIndex,
   onThumbnailClick,
-  isPlaying = false,
-  videoIndices = [],
-  galleryItems = [],
-  variantNames = []
-}: GalleryThumbnailsProps) => {
-  const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set());
-
-  const handleImageLoad = useCallback((index: number) => {
-    setLoadedImages(prev => new Set(prev).add(index));
-  }, []);
-
-  const handleImageError = useCallback((index: number) => {
-    setLoadedImages(prev => new Set(prev).add(index));
-  }, []);
-
-  const maxThumbnails = 5.5; // Show 5.5 elements
-  const displayImages = images.slice(0, maxThumbnails);
-  const remainingCount = images.length - maxThumbnails;
-
-  const slots = Array.from({ length: Math.ceil(maxThumbnails) }, (_, i) => i);
-
+}: {
+  images: string[];
+  currentIndex: number;
+  onThumbnailClick: (index: number) => void;
+}) => {
   return (
     <div className="flex items-center gap-1.5 w-full">
-      {slots.map((slotIndex) => {
-        const src = displayImages[slotIndex];
-        const index = slotIndex;
-        
-        if (!src) {
-          return (
-            <div
-              key={`empty-${slotIndex}`}
-              className="aspect-square w-[18%] opacity-0 pointer-events-none"
-            />
-          );
-        }
-
-        const isVideo = videoIndices.includes(index);
-        const galleryItem = galleryItems[index];
-        const isImageLoaded = loadedImages.has(index);
-        const isLastThumbnailWithCounter = index === maxThumbnails - 1 && remainingCount > 0;
-        const variantName = variantNames[index];
-
-        return (
-          <div
-            key={index}
-            className={cn(
-              "relative overflow-hidden border aspect-square w-[18%]",
-              "cursor-pointer transition-all",
-              currentIndex === index 
-                ? "border-2 border-primary" 
-                : "border border-gray-300 hover:border-gray-400"
-            )}
-            onClick={() => onThumbnailClick(index)}
-          >
-            {!isImageLoaded && (
-              <ThumbnailSkeleton className="absolute inset-0 w-full h-full" />
-            )}
-
-            {isVideo || galleryItem?.type === 'video' ? (
-              <>
-                <video 
-                  src={src}
-                  className={cn("w-full h-full object-cover", 
-                    !isImageLoaded && "opacity-0"
-                  )}
-                  muted
-                  preload="metadata"
-                  poster={galleryItem?.videoData?.thumbnail_url}
-                  onLoadedData={() => handleImageLoad(index)}
-                  onError={() => handleImageError(index)}
-                />
-
-                {isImageLoaded && (
-                  <>
-                    <div className={cn(
-                      "absolute inset-0 flex items-center justify-center bg-black/40",
-                      currentIndex === index && isPlaying && "opacity-0"
-                    )}>
-                      <Play className="h-3 w-3 text-white" />
-                    </div>
-                    <div className="absolute top-0.5 left-0.5 text-[7px] bg-black/60 text-white px-0.5">
-                      VIDEO
-                    </div>
-                  </>
-                )}
-              </>
-            ) : (
-              <img 
-                src={src} 
-                alt={`Thumbnail ${index}`} 
-                className={cn("w-full h-full object-cover", 
-                  !isImageLoaded && "opacity-0"
-                )}
-                onLoad={() => handleImageLoad(index)}
-                onError={() => handleImageError(index)}
-              />
-            )}
-
-            {isLastThumbnailWithCounter && isImageLoaded && (
-              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                <span className="text-white text-[10px] font-semibold">+{Math.ceil(remainingCount)}</span>
-              </div>
-            )}
-
-            {variantName && isImageLoaded && (
-              <div className="absolute bottom-0 left-0 right-0 bg-white/90 px-0.5 py-0.5">
-                <p className="text-[8px] text-center text-foreground truncate font-medium">
-                  {variantName}
-                </p>
-              </div>
-            )}
-          </div>
-        );
-      })}
+      {images.slice(0, 5).map((src, index) => (
+        <div
+          key={index}
+          className={`relative overflow-hidden border aspect-square w-[18%] cursor-pointer transition-all ${
+            currentIndex === index 
+              ? "border-2 border-primary" 
+              : "border border-gray-300 hover:border-gray-400"
+          }`}
+          onClick={() => onThumbnailClick(index)}
+        >
+          <img 
+            src={src} 
+            alt={`Thumbnail ${index}`} 
+            className="w-full h-full object-cover"
+          />
+        </div>
+      ))}
     </div>
   );
 };
@@ -205,12 +95,10 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     window.scrollTo(0, 0);
   }, [productId]);
 
-  const tabs = React.useMemo(() => {
-    return [
-      { id: 'overview', label: 'Overview' },
-      { id: 'reviews', label: 'Reviews' }
-    ];
-  }, []);
+  const tabs = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'reviews', label: 'Reviews' }
+  ];
 
   const getCurrentTab = () => {
     const pathParts = location.pathname.split('/');
@@ -351,20 +239,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   }
 
   // Prepare data for overview tab components
-  const galleryImages = product?.images?.length > 0 
-    ? product.images 
-    : product?.product_images?.map((img: any) => img.src) || ["https://placehold.co/300x300?text=No+Image"];
-
-  const videoIndices = product?.product_videos?.length > 0 ? [galleryImages.length] : [];
-
-  const allGalleryItems = [
-    ...(galleryImages.map((src: string) => ({ type: 'image' as const, src }))),
-    ...(product?.product_videos?.map((video: any) => ({ 
-      type: 'video' as const, 
-      src: video.url,
-      videoData: video 
-    })) || [])
-  ];
+  const galleryImages = product?.product_images?.map((img: any) => img.src) || product?.images || ["https://placehold.co/300x300?text=No+Image"];
 
   const listingProduct = {
     name: product?.name,
@@ -377,26 +252,21 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     change: product?.sales_change
   };
 
-  const relatedProducts = React.useMemo(() => {
-    if (isLoadingProducts) {
-      return [];
-    }
-
-    return allProducts
-      .filter(p => p.id !== product?.id)
-      .slice(0, 8)
-      .map(p => ({
-        id: p.id,
-        name: p.name || 'Unnamed Product',
-        price: Number(p.price) || 0,
-        discount_price: p.discount_price ? Number(p.discount_price) : undefined,
-        product_images: p.product_images || [{ src: "https://placehold.co/300x300?text=No+Image" }],
-        inventory: p.inventory || 0,
-        category: p.category || 'Uncategorized',
-        flash_start_time: p.flash_start_time,
-        seller_id: p.seller_id,
-      }));
-  }, [allProducts, product?.id, isLoadingProducts]);
+  // Prepare related products - use all products excluding current one
+  const relatedProducts = allProducts
+    .filter(p => p.id !== product?.id)
+    .slice(0, 8)
+    .map(p => ({
+      id: p.id,
+      name: p.name || 'Unnamed Product',
+      price: Number(p.price) || 0,
+      discount_price: p.discount_price ? Number(p.discount_price) : undefined,
+      product_images: p.product_images || [{ src: "https://placehold.co/300x300?text=No+Image" }],
+      inventory: p.inventory || 0,
+      category: p.category || 'Uncategorized',
+      flash_start_time: p.flash_start_time,
+      seller_id: p.seller_id,
+    }));
 
   // Render tab content directly based on activeTab
   const renderTabContent = () => {
@@ -413,9 +283,6 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
                   galleryRef.current.scrollTo?.(index);
                 }
               }}
-              videoIndices={videoIndices}
-              galleryItems={allGalleryItems}
-              variantNames={[]}
             />
 
             <IPhoneXRListing 
@@ -447,9 +314,6 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
                   galleryRef.current.scrollTo?.(index);
                 }
               }}
-              videoIndices={videoIndices}
-              galleryItems={allGalleryItems}
-              variantNames={[]}
             />
 
             <IPhoneXRListing 
@@ -491,14 +355,12 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
       />
     </div>
   ) : null;
-
-  const productGalleryImages = product?.product_images?.map(img => img.src) || product?.images || ["/placeholder.svg"];
   
   const topContent = showGallery ? (
     <div ref={topContentRef} className="w-full bg-white">
       <ProductImageGallery 
         ref={galleryRef}
-        images={productGalleryImages}
+        images={galleryImages}
         videos={product?.product_videos || []}
         model3dUrl={product?.model_3d_url}
         seller={product?.sellers}
@@ -553,7 +415,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
           />
         </div>
         
-        {/* Tab content - removed p-4 padding */}
+        {/* Tab content */}
         <div>
           {renderTabContent()}
         </div>
