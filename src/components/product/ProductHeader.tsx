@@ -257,11 +257,18 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
 
   return (
     <div
-      className={`sticky top-0 z-50 flex flex-col transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-50 flex flex-col transition-all duration-300 ${
         focusMode && !showHeaderInFocus ? '-translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'
       }`}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        width: '100%'
+      }}
     >
-      {/* Main Header Container - Starts as transparent overlay */}
+      {/* Main Header Container - Fixed at the top */}
       <div
         className="w-full transition-all duration-700"
         style={{
