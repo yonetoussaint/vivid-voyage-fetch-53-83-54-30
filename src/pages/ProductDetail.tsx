@@ -1,4 +1,4 @@
-// ProductDetail.tsx - Fixed version with proper fixed header
+// ProductDetail.tsx - Fixed version with proper fixed header and bottom spacer
 import React, { useState, useRef, useEffect } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useProduct } from "@/hooks/useProduct";
@@ -441,6 +441,20 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
               product={listingProduct}
               onReadMore={() => {}}
             />
+          </div>
+
+          {/* LARGE BOTTOM SPACER for scrolling room */}
+          <div 
+            className="w-full"
+            style={{
+              height: 'calc(100vh + 200px)', // Adds one viewport height + extra 200px for scrolling
+              backgroundColor: 'transparent' // Transparent so it doesn't affect design
+            }}
+          >
+            {/* Optional: You can add some content here if needed, or leave it empty */}
+            <div className="p-4 text-center text-gray-400 text-sm">
+              {/* Empty space for scrolling */}
+            </div>
           </div>
         </div>
       </div>
