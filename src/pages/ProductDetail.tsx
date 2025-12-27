@@ -1,24 +1,21 @@
-// ProductDetail.tsx - Fixed version with CustomerReviewsEnhanced
+// ProductDetail.tsx - Clean version
 import React, { useState, useRef, useEffect } from "react";
-import { Routes, Route, Navigate, useParams, useLocation, useNavigate } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useProduct } from "@/hooks/useProduct";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/RedirectAuthContext';
 import { useAuthOverlay } from '@/context/AuthOverlayContext';
 import { Heart, Share } from 'lucide-react';
-import { Skeleton } from "@/components/ui/skeleton";
 import ProductDetailError from "@/components/product/ProductDetailError";
-
-// Import components
+import { useQuery } from '@tanstack/react-query';
+import { fetchAllProducts } from '@/integrations/supabase/products';
+import { GalleryThumbnails } from '@/components/product/GalleryThumbnails';
+import { IPhoneXRListing } from '@/components/product/iPhoneXRListing';
 import ProductImageGallery from "@/components/ProductImageGallery";
-import StickyTabsLayout from '@/components/layout/StickyTabsLayout';
+import TabsNavigation from '@/components/home/TabsNavigation';
 import ProductHeader from '@/components/product/ProductHeader';
 import { useNavigationLoading } from '@/hooks/useNavigationLoading';
-
-// Import tab components
-import ProductOverview from "@/components/product/tabs/ProductOverview";
 import CustomerReviewsEnhanced from "@/components/product/CustomerReviewsEnhanced";
-import ProductQA from "@/components/product/ProductQA"; // Updated import
 
 interface ProductDetailProps {
   productId?: string;
@@ -28,6 +25,99 @@ interface ProductDetailProps {
   stickyTopOffset?: number;
 }
 
+// ProductOverview component moved inline
+interface ProductOverviewProps {
+  product: any;
+  activeTab?: string;
+  currentIndex?: number;
+  onThumbnailClick?: (index: number) => void;
+}
+
+const ProductOverview: React.FC<ProductOverviewProps> = ({ 
+  product, 
+  currentIndex = 0,
+  onThumbnailClick
+}) => {
+  const { data: allProducts = [], isLoading: isLoadingProducts } = useQuery({
+    queryKey: ['all-products-overview'],
+    queryFn: fetchAllProducts,
+  });
+
+  const galleryImages = product?.images?.length > 0 
+    ? product.images 
+    : product?.product_images?.map((img: any) => img.src) || ["https://placehold.co/300x300?text=No+Image"];
+
+  const videoIndices = product?.product_videos?.length > 0 ? [galleryImages.length] : [];
+
+  const allGalleryItems = [
+    ...(galleryImages.map((src: string) => ({ type: 'image' as const, src }))),
+    ...(product?.product_videos?.map((video: any) => ({ 
+      type: 'video' as const, 
+      src: video.url,
+      videoData: video 
+    })) || [])
+  ];
+
+  const listingProduct = {
+    name: product?.name,
+    short_description: product?.short_description,
+    description: product?.description,
+    rating: product?.rating,
+    reviewCount: product?.review_count,
+    inventory: product?.inventory,
+    sold_count: product?.sold_count,
+    change: product?.sales_change
+  };
+
+  const relatedProducts = React.useMemo(() => {
+    if (isLoadingProducts) {
+      return [];
+    }
+
+    return allProducts
+      .filter(p => p.id !== product?.id)
+      .slice(0, 8)
+      .map(p => ({
+        id: p.id,
+        name: p.name || 'Unnamed Product',
+        price: Number(p.price) || 0,
+        discount_price: p.discount_price ? Number(p.discount_price) : undefined,
+        product_images: p.product_images || [{ src: "https://placehold.co/300x300?text=No+Image" }],
+        inventory: p.inventory || 0,
+        category: p.category || 'Uncategorized',
+        flash_start_time: p.flash_start_time,
+        seller_id: p.seller_id,
+      }));
+  }, [allProducts, product?.id, isLoadingProducts]);
+
+  return (
+    <div className="w-full mt-2 space-y-2">
+      <GalleryThumbnails
+        images={galleryImages}
+        currentIndex={currentIndex}
+        onThumbnailClick={onThumbnailClick || (() => {})}
+        videoIndices={videoIndices}
+        galleryItems={allGalleryItems}
+        variantNames={[]}
+      />
+
+      <IPhoneXRListing 
+        product={listingProduct}
+        onReadMore={() => {}}
+      />
+
+      {!isLoadingProducts && relatedProducts.length > 0 && (
+        <div className="mt-4">
+          <h3 className="text-lg font-semibold mb-2">Related Products</h3>
+          <p className="text-gray-600">
+            {relatedProducts.length} related products available
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ProductDetailContent: React.FC<ProductDetailProps> = ({ 
   productId: propProductId, 
   hideHeader = false, 
@@ -35,8 +125,6 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   scrollContainerRef,
   stickyTopOffset 
 }) => {
-  console.log('🚀 ProductDetailContent component loaded');
-
   const { id: paramId } = useParams<{ id: string }>();
   const location = useLocation();
   const navigate = useNavigate();
@@ -45,39 +133,30 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   const { openAuthOverlay } = useAuthOverlay();
   const { startLoading } = useNavigationLoading();
 
-  // Use prop productId first, then param
   const productId = propProductId || paramId;
-
-  console.log('🔍 Product ID debug:', { propProductId, paramId, finalProductId: productId });
-
   const { data: product, isLoading, error } = useProduct(productId!);
 
-  // Refs
   const headerRef = useRef<HTMLDivElement>(null);
   const topContentRef = useRef<HTMLDivElement>(null);
   const galleryRef = useRef<any>(null);
+  const tabsRef = useRef<any>(null);
 
-  // States
   const [isFavorite, setIsFavorite] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
   const [currentGalleryIndex, setCurrentGalleryIndex] = useState(0);
 
-  // Scroll to top when component mounts or productId changes
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [productId]);
 
-  // Tabs configuration
   const tabs = React.useMemo(() => {
     return [
       { id: 'overview', label: 'Overview' },
-      { id: 'reviews', label: 'Reviews' },
-      { id: 'qna', label: 'Q&A' }
+      { id: 'reviews', label: 'Reviews' }
     ];
   }, []);
 
-  // ===== Tab Management =====
   const getCurrentTab = () => {
     const pathParts = location.pathname.split('/');
     const lastPart = pathParts[pathParts.length - 1];
@@ -85,18 +164,15 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     return validTab ? validTab.id : 'overview';
   };
 
-  // Sync URL with active tab - only if we're not in a panel
   useEffect(() => {
-    if (inPanel) return; // Don't sync URL in panel mode
+    if (inPanel) return;
 
     const currentTabFromURL = getCurrentTab();
     if (currentTabFromURL !== activeTab) {
-      console.log('🔄 Syncing active tab from URL:', currentTabFromURL);
       setActiveTab(currentTabFromURL);
     }
   }, [location.pathname, inPanel]);
 
-  // Redirect to default tab if no tab in URL - only if we're not in a panel
   useEffect(() => {
     if (inPanel || !productId) return;
 
@@ -109,27 +185,20 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
 
     if (isProductRoot) {
       const newPath = `/product/${productId}/overview`;
-      console.log('🔄 Redirecting to default tab:', newPath);
       navigate(newPath, { replace: true });
     }
   }, [navigate, productId, tabs, inPanel]);
 
-  // Tab change handler
   const handleTabChange = (tabId: string) => {
-    console.log('🔄 Tab changed to:', tabId);
     setActiveTab(tabId);
 
-    if (!productId || inPanel) return; // Don't navigate in panel mode
+    if (!productId || inPanel) return;
 
-    // Update URL to reflect tab change
     const newPath = `/product/${productId}/${tabId}`;
     navigate(newPath);
-
-    // Scroll to top when changing tabs
     window.scrollTo(0, 0);
   };
 
-  // Event handlers
   const handleBackClick = () => navigate(-1);
   const handleFavoriteClick = () => setIsFavorite(!isFavorite);
 
@@ -149,7 +218,6 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
         });
       }
     } catch (error) {
-      console.error('Error sharing:', error);
       toast({
         title: "Share failed",
         description: "Could not share the product",
@@ -186,7 +254,6 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     navigate(`/product-checkout?${checkoutParams.toString()}`);
   };
 
-  // Action buttons
   const actionButtons = [
     {
       Icon: Heart,
@@ -205,59 +272,29 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   const isOverviewTab = activeTab === 'overview';
   const showGallery = isOverviewTab;
 
-  // Show error if no productId
   if (!productId) {
     return <ProductDetailError message="Product ID is missing" />;
   }
 
-  // Loading state
   if (isLoading) {
     return (
-      <div className="animate-pulse p-4 space-y-6">
-        {/* Header skeleton */}
-        <div className="flex items-center space-x-4">
-          <Skeleton className="h-8 w-8 rounded-full" />
-          <Skeleton className="h-6 w-32" />
-        </div>
-
-        {/* Image gallery skeleton */}
-        <div className="space-y-4">
-          <Skeleton className="h-64 w-full rounded-lg" />
-          <div className="flex space-x-2">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-16 w-16 rounded" />
-            ))}
-          </div>
-        </div>
-
-        {/* Product info skeleton */}
-        <div className="space-y-4">
-          <Skeleton className="h-8 w-3/4" />
-          <Skeleton className="h-6 w-24" />
+      <div className="p-4">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-200 rounded w-32"></div>
+          <div className="h-64 bg-gray-200 rounded"></div>
           <div className="space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-2/3" />
-          </div>
-        </div>
-
-        {/* Tabs skeleton */}
-        <div className="space-y-4">
-          <div className="flex space-x-4">
-            {[...Array(3)].map((_, i) => (
-              <Skeleton key={i} className="h-8 w-20" />
-            ))}
+            <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
           </div>
         </div>
       </div>
     );
   }
 
-  // Error state
   if (error || !product) {
     return <ProductDetailError />;
   }
 
-  // ===== RENDER TAB CONTENT BASED ON ACTIVE TAB =====
   const renderTabContent = () => {
     switch (activeTab) {
       case 'overview':
@@ -276,14 +313,11 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
         );
       case 'reviews':
         return <CustomerReviewsEnhanced productId={productId} />;
-      case 'qna':
-        return <ProductQA product={product} />; // Updated to use ProductQA
       default:
         return <ProductOverview product={product} activeTab="overview" />;
     }
   };
 
-  // Header component
   const header = !hideHeader ? (
     <div ref={headerRef} className="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
       <ProductHeader
@@ -306,8 +340,6 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     </div>
   ) : null;
 
-  // Top content - ProductImageGallery with proper data sync
-  // Only show gallery for overview tab
   const galleryImages = product?.product_images?.map(img => img.src) || product?.images || ["/placeholder.svg"];
   
   const topContent = showGallery ? (
@@ -332,57 +364,60 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
           }
         }}
         onBuyNow={buyNow}
-        onImageIndexChange={(currentIndex, totalItems) => {
+        onImageIndexChange={(currentIndex) => {
           setCurrentGalleryIndex(currentIndex);
         }}
       />
     </div>
   ) : undefined;
 
-  console.log('🎯 ProductDetail rendering with product:', product?.name);
-  console.log('🎯 Active tab:', activeTab);
-  console.log('🎯 In panel mode:', inPanel);
-
   return (
-    <StickyTabsLayout
-      header={header}
-      headerRef={headerRef}
-      topContent={topContent}
-      topContentRef={topContentRef}
-      tabs={tabs}
-      activeTab={activeTab}
-      onTabChange={inPanel ? setActiveTab : handleTabChange} // Simplified tab change in panel
-      isProductsTab={showGallery}
-      showTopBorder={false}
-      variant="underline"
-      stickyBuffer={4}
-      alwaysStickyForNonProducts={true}
-      inPanel={inPanel}
-      scrollContainerRef={scrollContainerRef}
-      stickyTopOffset={stickyTopOffset}
-    >
-      {/* Render the appropriate tab content */}
-      {renderTabContent()}
-    </StickyTabsLayout>
+    <div className="flex flex-col min-h-screen">
+      {/* Header */}
+      {header}
+      
+      {/* Main content with scrollable area */}
+      <div 
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto"
+        style={{ paddingTop: hideHeader ? '0' : '56px' }}
+      >
+        {/* Top content (Gallery) - only shown for overview tab */}
+        {topContent}
+        
+        {/* Tabs Navigation */}
+        <div 
+          className="sticky top-[56px] z-40 bg-white"
+          style={{ top: hideHeader ? '0' : '56px' }}
+        >
+          <TabsNavigation
+            ref={tabsRef}
+            tabs={tabs}
+            activeTab={activeTab}
+            onTabChange={inPanel ? setActiveTab : handleTabChange}
+            variant="underline"
+            showTopBorder={false}
+            edgeToEdge={true}
+          />
+        </div>
+        
+        {/* Tab content */}
+        <div className="p-4">
+          {renderTabContent()}
+        </div>
+      </div>
+    </div>
   );
 };
 
-// Main wrapper component with routing
 const ProductDetail: React.FC = () => {
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
 
-  // Scroll to top when route changes
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [location.pathname]);
 
-  console.log('🔍 ProductDetail routing debug:', {
-    location: location.pathname,
-    params: { id }
-  });
-
-  // If no ID, show error
   if (!id) {
     return <ProductDetailError message="Product not found" />;
   }
@@ -392,6 +427,5 @@ const ProductDetail: React.FC = () => {
   );
 };
 
-// Export both components for flexibility
 export { ProductDetailContent };
 export default ProductDetail;
