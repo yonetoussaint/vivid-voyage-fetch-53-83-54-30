@@ -1,4 +1,4 @@
-// ProductDetail.tsx - Outside MainLayout with unified AliExpressHeader
+// src/pages/ProductDetail.tsx
 import React, { useState, useRef, useEffect } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useProduct } from "@/hooks/useProduct";
@@ -14,6 +14,7 @@ import AliExpressHeader from "@/components/home/AliExpressHeader";
 import { VerificationBadge } from '@/components/shared/VerificationBadge';
 import InfiniteContentGrid from "@/components/InfiniteContentGrid";
 import FlashDeals from "@/components/home/FlashDeals";
+import Separator from "@/components/shared/Separator";
 
 interface ProductDetailProps {
   productId?: string;
@@ -389,6 +390,9 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
           />
         </div>
 
+        {/* Separator between iPhoneXRListing and FlashDeals */}
+        <Separator />
+
         {/* More from this store - FlashDeals Component with Store icon and View More button */}
         <div className="mt-4">
           <FlashDeals 
@@ -402,6 +406,9 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
             viewAllText="View More"
           />
         </div>
+
+        {/* Separator between FlashDeals and InfiniteContentGrid */}
+        <Separator />
 
         {/* InfiniteContentGrid for related products */}
         <InfiniteContentGrid
