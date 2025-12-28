@@ -9,7 +9,6 @@ import StackedReactionIcons from '@/components/shared/StackedReactionIcons';
 import ReactionButton from '@/components/shared/ReactionButton';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import PostMenuPanel from './PostMenuPanel';
-import ProductSemiPanel from './ProductSemiPanel';
 import { useScreenOverlay } from "@/context/ScreenOverlayContext";
 import { EngagementSection } from '@/components/shared/EngagementSection';
 
