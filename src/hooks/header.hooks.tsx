@@ -1,4 +1,4 @@
-// hooks/use-header-actions.tsx
+// hooks/header.hooks.ts
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +32,8 @@ export interface FilterCategory {
   id: string;
   name: string;
 }
+
+// Existing Hooks
 
 export const useHeaderActions = (
   mode: 'home' | 'product-detail' = 'home',
@@ -154,7 +156,7 @@ export const useHeaderScroll = (mode: 'home' | 'product-detail' = 'home', scroll
   const maxScroll = 120;
   const scrollProgress = Math.min(scrollY / maxScroll, 1);
   const displayProgress = mode === 'product-detail' ? scrollProgress : 0;
-  
+
   const searchBarThreshold = 0.3;
   const showSearchBarInProductDetail = mode === 'product-detail' && displayProgress > searchBarThreshold;
 
@@ -253,7 +255,7 @@ export const useHeaderFilters = (
 
   const handleClearAll = useCallback(() => {
     setSelectedFilters([]);
-    
+
     if (onClearAll) {
       onClearAll();
     }
@@ -441,4 +443,309 @@ export const useHeaderActionButtons = ({
   }, [actionButtons, actions, mode, onFavoriteClick, onShareClick, isFavorite, productData]);
 
   return { defaultActionButtons };
+};
+
+// New Hooks
+
+export interface UseHeaderActionButtonProps {
+  Icon: React.ComponentType<any>;
+  active?: boolean;
+  onClick?: () => void;
+  activeColor?: string;
+  fillWhenActive?: boolean;
+  progress: number;
+  likeCount?: number;
+  shareCount?: number;
+  scrolled?: boolean;
+  badge?: number;
+}
+
+export const useHeaderActionButton = ({
+  Icon,
+  active = false,
+  onClick,
+  activeColor = '#f97316',
+  fillWhenActive = true,
+  progress,
+  likeCount,
+  shareCount,
+  scrolled = false,
+  badge
+}: UseHeaderActionButtonProps) => {
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [iconProps, setIconProps] = useState<Record<string, any>>({});
+  
+  // Determine which count to show
+  const count = likeCount ?? shareCount;
+  
+  // Transition thresholds for smoother animation
+  const expandedThreshold = 0.2;
+  const fadingThreshold = 0.4;
+  
+  // Check icon type
+  const isLucideIcon = Icon.name && typeof Icon.name === 'string';
+  const isReactIcon = Icon.displayName && typeof Icon.displayName === 'string';
+
+  useEffect(() => {
+    const determineIconProps = () => {
+      if (isLucideIcon) {
+        return { strokeWidth: 2.5 };
+      } else if (isReactIcon) {
+        return {};
+      }
+      return {};
+    };
+    
+    setIconProps(determineIconProps());
+  }, [Icon, isLucideIcon, isReactIcon]);
+
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    }
+
+    // Only trigger animation for heart icon
+    const isHeartIcon = Icon.name === "Heart" || Icon.displayName === "Heart";
+    if (isHeartIcon) {
+      setIsAnimating(true);
+      setTimeout(() => setIsAnimating(false), 700);
+    }
+  };
+
+  const getIconStyle = (): { color: string; fill: string } => {
+    const baseColor = progress > 0.5 
+      ? `rgba(75, 85, 99, ${0.7 + (progress * 0.3)})` 
+      : `rgba(255, 255, 255, ${0.9 - (progress * 0.2)})`;
+
+    const scrolledColor = 'rgba(75, 85, 99, 0.9)';
+
+    if (scrolled) {
+      return {
+        color: scrolledColor,
+        fill: isReactIcon ? scrolledColor : (active && fillWhenActive ? activeColor : 'transparent')
+      };
+    }
+
+    if (isReactIcon) {
+      return {
+        color: baseColor,
+        fill: active && fillWhenActive ? activeColor : baseColor
+      };
+    }
+
+    // Lucide icons
+    return {
+      color: baseColor,
+      fill: active && fillWhenActive ? activeColor : 'transparent'
+    };
+  };
+
+  const shouldShowHorizontalLayout = count !== undefined && progress < expandedThreshold;
+  const shouldShowFadingCount = count !== undefined && progress < fadingThreshold;
+  const shouldShowCompactButton = !shouldShowHorizontalLayout && !shouldShowFadingCount;
+  
+  const transitionProgress = shouldShowFadingCount 
+    ? (progress - expandedThreshold) / (fadingThreshold - expandedThreshold)
+    : 0;
+
+  return {
+    isAnimating,
+    iconProps,
+    count,
+    shouldShowHorizontalLayout,
+    shouldShowFadingCount,
+    shouldShowCompactButton,
+    transitionProgress,
+    handleClick,
+    getIconStyle,
+    expandedThreshold,
+    fadingThreshold
+  };
+};
+
+export interface UseSellerInfoProps {
+  productData?: {
+    sellers?: {
+      id?: string;
+      name?: string;
+      image_url?: string;
+      verified?: boolean;
+      followers_count?: number;
+    };
+  };
+  displayProgress: number;
+  showSearchBarInProductDetail: boolean;
+}
+
+export const useSellerInfo = ({ 
+  productData, 
+  displayProgress, 
+  showSearchBarInProductDetail 
+}: UseSellerInfoProps) => {
+  const formatFollowerCount = (count?: number): string => {
+    if (!count) return '0';
+    
+    if (count >= 1000000) {
+      return `${(count / 1000000).toFixed(1)}M`;
+    } else if (count >= 1000) {
+      return `${(count / 1000).toFixed(1)}K`;
+    }
+    return count.toString();
+  };
+
+  const handleSellerClick = () => {
+    if (productData?.sellers?.id) {
+      // navigate(`/seller/${productData.sellers.id}`);
+      console.log(`Navigating to seller: ${productData.sellers.id}`);
+    }
+  };
+
+  const shouldShowSellerInfo = displayProgress < 0.3 && 
+                              productData?.sellers && 
+                              !showSearchBarInProductDetail;
+
+  const getSellerContainerStyle = (): React.CSSProperties => ({
+    backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})`
+  });
+
+  const getSellerTextStyle = (): React.CSSProperties => ({
+    color: `rgba(255, 255, 255, ${0.95 - (displayProgress * 0.2)})`
+  });
+
+  const getFollowerTextStyle = (): React.CSSProperties => ({
+    color: `rgba(255, 255, 255, ${0.7 - (displayProgress * 0.2)})`
+  });
+
+  return {
+    shouldShowSellerInfo,
+    formatFollowerCount,
+    handleSellerClick,
+    getSellerContainerStyle,
+    getSellerTextStyle,
+    getFollowerTextStyle
+  };
+};
+
+export interface UseHeaderBackgroundProps {
+  mode: 'home' | 'product-detail';
+  displayProgress: number;
+}
+
+export const useHeaderBackground = ({ mode, displayProgress }: UseHeaderBackgroundProps) => {
+  const getHeaderStyle = (): React.CSSProperties => {
+    if (mode === 'product-detail') {
+      return {
+        backgroundColor: `rgba(255, 255, 255, ${displayProgress * 0.95})`,
+        backdropFilter: displayProgress > 0 ? `blur(${displayProgress * 8}px)` : 'none',
+        boxShadow: displayProgress > 0.1 ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+      };
+    }
+    
+    return {
+      backgroundColor: 'white'
+    };
+  };
+
+  return {
+    getHeaderStyle
+  };
+};
+
+export interface UseHeaderSearchBarProps {
+  searchQuery: string;
+  placeholder: string;
+  flatBorders: boolean;
+  handleSubmit: (e: React.FormEvent) => void;
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleFocus: () => void;
+  handleClearSearch: () => void;
+}
+
+export const useHeaderSearchBar = ({
+  searchQuery,
+  placeholder,
+  flatBorders,
+  handleSubmit,
+  handleInputChange,
+  handleFocus,
+  handleClearSearch
+}: UseHeaderSearchBarProps) => {
+  const getInputClassName = (): string => {
+    const baseClass = `
+      w-full px-3 py-1 pr-10 text-sm font-medium text-gray-900 bg-white 
+      transition-all duration-300 shadow-sm placeholder-gray-500
+    `;
+    
+    const borderClass = flatBorders 
+      ? 'rounded-none border-2 border-gray-900' 
+      : 'rounded-full border-2 border-gray-800';
+    
+    return `${baseClass} ${borderClass}`;
+  };
+
+  return {
+    getInputClassName
+  };
+};
+
+export interface UseHeaderIconProps {
+  Icon: React.ComponentType<any>;
+  inPanel?: boolean;
+}
+
+export const useHeaderIcon = ({ Icon, inPanel = false }: UseHeaderIconProps) => {
+  const getIconComponent = (): React.ComponentType<any> => {
+    return inPanel ? X : ChevronLeft;
+  };
+
+  const getIconStrokeWidth = (): number => {
+    return 2.5; // Default for lucide icons
+  };
+
+  return {
+    IconComponent: getIconComponent(),
+    iconStrokeWidth: getIconStrokeWidth()
+  };
+};
+
+export interface UseHeaderRightIconsProps {
+  searchQuery: string;
+  handleClearSearch: () => void;
+  selectedCity: string;
+  locationDropdownRef: React.RefObject<HTMLDivElement>;
+  handleLocationClick: () => void;
+  flatBorders: boolean;
+}
+
+export const useHeaderRightIcons = ({
+  searchQuery,
+  handleClearSearch,
+  selectedCity,
+  locationDropdownRef,
+  handleLocationClick,
+  flatBorders
+}: UseHeaderRightIconsProps) => {
+  const handleCameraClick = () => {
+    console.log('Camera button clicked');
+    // Add camera logic here
+  };
+
+  const getLocationButtonClassName = (): string => {
+    const baseClass = `
+      flex items-center justify-between gap-1.5
+      px-2.5 py-1
+      text-xs font-medium text-gray-600 
+      bg-gray-100 hover:bg-gray-200
+      transition-all duration-200
+    `;
+    
+    const borderRadiusClass = flatBorders ? 'rounded-none' : 'rounded-full';
+    
+    return `${baseClass} ${borderRadiusClass}`;
+  };
+
+  return {
+    handleCameraClick,
+    getLocationButtonClassName
+  };
 };
