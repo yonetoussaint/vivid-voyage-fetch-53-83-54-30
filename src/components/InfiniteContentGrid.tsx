@@ -31,23 +31,52 @@ const ContentCard: React.FC<{ item: ContentItem }> = ({ item }) => {
   return null;
 };
 
-// Simple 2-column Masonry Grid
+// True 2-column Masonry Grid
 const MasonryGrid: React.FC<{ items: ContentItem[] }> = ({ items }) => {
   // Filter to ONLY include products (no reels)
   const productsOnly = items.filter(item => item.type === 'product');
+
+  // Split products into two columns by distributing them
+  const columns = React.useMemo(() => {
+    const col1: ContentItem[] = [];
+    const col2: ContentItem[] = [];
+    
+    productsOnly.forEach((item, index) => {
+      if (index % 2 === 0) {
+        col1.push(item);
+      } else {
+        col2.push(item);
+      }
+    });
+    
+    return [col1, col2];
+  }, [productsOnly]);
 
   console.log(`MasonryGrid: Showing ${productsOnly.length} products (reels filtered out)`);
 
   return (
     <div className="px-2">
-      {/* Simple 2-column grid - this creates a masonry-like layout */}
-      <div className="grid grid-cols-2 gap-2">
-        {productsOnly.map((item) => (
-          <ContentCard 
-            key={`${item.type}-${item.id}`}
-            item={item} 
-          />
-        ))}
+      {/* True masonry: two independent columns */}
+      <div className="flex gap-2">
+        {/* Column 1 */}
+        <div className="flex-1 flex flex-col gap-2">
+          {columns[0].map((item) => (
+            <ContentCard 
+              key={`${item.type}-${item.id}`}
+              item={item} 
+            />
+          ))}
+        </div>
+        
+        {/* Column 2 */}
+        <div className="flex-1 flex flex-col gap-2">
+          {columns[1].map((item) => (
+            <ContentCard 
+              key={`${item.type}-${item.id}`}
+              item={item} 
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -94,10 +123,17 @@ const InfiniteContentGrid: React.FC<InfiniteContentGridProps> = ({
     console.log("Showing initial loading skeleton (products only)");
     return (
       <div className="px-2">
-        <div className="grid grid-cols-2 gap-2">
-          {Array(6).fill(0).map((_, i) => (
-            <div key={i} className="bg-gray-200 animate-pulse rounded" style={{ height: '300px' }}></div>
-          ))}
+        <div className="flex gap-2">
+          <div className="flex-1 flex flex-col gap-2">
+            {Array(3).fill(0).map((_, i) => (
+              <div key={i} className="bg-gray-200 animate-pulse rounded" style={{ height: '300px' }}></div>
+            ))}
+          </div>
+          <div className="flex-1 flex flex-col gap-2">
+            {Array(3).fill(0).map((_, i) => (
+              <div key={i} className="bg-gray-200 animate-pulse rounded" style={{ height: '300px' }}></div>
+            ))}
+          </div>
         </div>
       </div>
     );
