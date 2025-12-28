@@ -70,7 +70,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           </div>
         )}
       </div>
-      <div className="p-0.5 flex-grow">
+      <div className="flex-grow">
         <p className={`text-[11px] text-gray-700 mb-0.5 leading-tight ${singleLineName ? 'line-clamp-1' : 'line-clamp-2'}`}>
           {showTags && renderTag && tags.map((tag) => renderTag(tag))}
           {product.name}
