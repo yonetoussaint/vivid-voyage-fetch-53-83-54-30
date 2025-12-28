@@ -31,33 +31,45 @@ const ContentCard: React.FC<{ item: ContentItem }> = ({ item }) => {
   return null;
 };
 
-// True 2-column Masonry Grid
+// True Pinterest-style Masonry Grid
 const MasonryGrid: React.FC<{ items: ContentItem[] }> = ({ items }) => {
   // Filter to ONLY include products (no reels)
   const productsOnly = items.filter(item => item.type === 'product');
 
-  // Split products into two columns by distributing them
+  // Distribute products based on estimated heights (add to shortest column)
   const columns = React.useMemo(() => {
     const col1: ContentItem[] = [];
     const col2: ContentItem[] = [];
+    let col1Height = 0;
+    let col2Height = 0;
     
-    productsOnly.forEach((item, index) => {
-      if (index % 2 === 0) {
+    productsOnly.forEach((item) => {
+      // Estimate height based on product properties
+      // Images are typically taller, description length matters
+      const estimatedHeight = 
+        250 + // base card height
+        (item.description?.length || 0) * 0.5 + // description adds height
+        (item.tags?.length || 0) * 10; // tags add height
+      
+      // Add to the shorter column
+      if (col1Height <= col2Height) {
         col1.push(item);
+        col1Height += estimatedHeight;
       } else {
         col2.push(item);
+        col2Height += estimatedHeight;
       }
     });
     
     return [col1, col2];
   }, [productsOnly]);
 
-  console.log(`MasonryGrid: Showing ${productsOnly.length} products (reels filtered out)`);
+  console.log(`MasonryGrid: Showing ${productsOnly.length} products in balanced columns`);
 
   return (
     <div className="px-2">
-      {/* True masonry: two independent columns */}
-      <div className="flex gap-2">
+      {/* True masonry: two independent columns, balanced by height */}
+      <div className="flex gap-2 items-start">
         {/* Column 1 */}
         <div className="flex-1 flex flex-col gap-2">
           {columns[0].map((item) => (
