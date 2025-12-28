@@ -565,7 +565,7 @@ export default function AliExpressHeader({
     >
       {/* Header content based on mode */}
       {mode === 'home' && !hideSearchBar ? (
-        // HOME MODE: Original search bar design
+        // HOME MODE: Original search bar design WITH camera and location buttons
         <div 
           className="flex items-center justify-between px-2 transition-all duration-500 ease-in-out bg-white"
           style={{ height: '36px' }}
@@ -587,7 +587,7 @@ export default function AliExpressHeader({
                   ref={searchRef}
                 />
 
-                {/* Right icons - ORIGINAL DESIGN */}
+                {/* Right icons - ORIGINAL DESIGN WITH CAMERA AND LOCATION */}
                 <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
                   {/* Clear button when there's text */}
                   {searchQuery.trim() ? (
@@ -726,7 +726,7 @@ export default function AliExpressHeader({
               )}
             </div>
 
-            {/* Middle: Search bar appears when scrolled - ORIGINAL DESIGN */}
+            {/* Middle: Clean search bar appears when scrolled - NO CAMERA/LOCATION BUTTONS */}
             {showSearchBarInProductDetail && (
               <div className="flex-1 mx-2">
                 <div className="relative max-w-full">
@@ -739,17 +739,17 @@ export default function AliExpressHeader({
                         onChange={handleInputChange}
                         onFocus={handleFocus}
                         className={`
-                          w-full px-3 py-1 pr-16 text-sm font-medium text-gray-900 bg-white 
+                          w-full px-3 py-1 pr-10 text-sm font-medium text-gray-900 bg-white 
                           transition-all duration-300 shadow-sm placeholder-gray-500
                           ${flatBorders ? 'rounded-none border-2 border-gray-900' : 'rounded-full border-2 border-gray-800'}
                         `}
                         ref={searchRef}
                       />
 
-                      {/* Right icons - ORIGINAL DESIGN */}
-                      <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
+                      {/* Right side - ONLY CLEAR BUTTON (NO CAMERA/LOCATION) */}
+                      <div className="absolute right-1 top-1/2 transform -translate-y-1/2">
                         {/* Clear button when there's text */}
-                        {searchQuery.trim() ? (
+                        {searchQuery.trim() && (
                           <button
                             type="button"
                             onClick={handleClearSearch}
@@ -757,46 +757,8 @@ export default function AliExpressHeader({
                           >
                             <X className="h-4 w-4 text-gray-600" />
                           </button>
-                        ) : (
-                          <>
-                            {/* Camera icon button - ORIGINAL SIZE */}
-                            <button
-                              type="button"
-                              className="p-1 hover:bg-gray-100 transition-colors rounded-full"
-                              onClick={() => {
-                                // Add camera functionality here
-                                console.log('Camera button clicked');
-                              }}
-                            >
-                              <Camera className="h-6 w-6 text-gray-900 font-bold stroke-[1.5]" />
-                            </button>
-
-                            {/* Location button - ORIGINAL DESIGN */}
-                            <div className="relative" ref={locationDropdownRef}>
-                              <button
-                                type="button"
-                                onClick={handleLocationClick}
-                                className={`
-                                  flex items-center justify-between gap-1.5
-                                  px-2.5 py-1
-                                  text-xs font-medium text-gray-600 
-                                  bg-gray-100 hover:bg-gray-200
-                                  transition-all duration-200
-                                  ${flatBorders ? 'rounded-none' : 'rounded-full'}
-                                `}
-                              >
-                                {/* Location icon - ORIGINAL SIZE */}
-                                <MapPin className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
-
-                                {/* City name - ORIGINAL TRUNCATION */}
-                                <span className="max-w-[80px] truncate">{selectedCity}</span>
-
-                                {/* Chevron icon - ORIGINAL SIZE */}
-                                <ChevronDown className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
-                              </button>
-                            </div>
-                          </>
                         )}
+                        {/* NO CAMERA OR LOCATION BUTTONS IN PRODUCT DETAIL MODE */}
                       </div>
                     </div>
                   </form>
