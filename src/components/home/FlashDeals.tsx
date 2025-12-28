@@ -16,14 +16,8 @@ interface FlashDealsProps {
   showCountdown?: boolean;
   maxProducts?: number;
   showSectionHeader?: boolean;
-  showStackedProfiles?: boolean;
-  stackedProfiles?: Array<{ id: string; image: string; alt?: string }>;
-  onProfileClick?: (profileId: string) => void;
-  stackedProfilesText?: string;
   showTitleChevron?: boolean;
   onTitleClick?: () => void;
-  showSponsorCount?: boolean;
-  maxProfiles?: number;
 }
 
 // Skeleton Component for carousel only
@@ -85,14 +79,8 @@ export default function FlashDeals({
   showCountdown,
   maxProducts = 20,
   showSectionHeader = true,
-  showStackedProfiles = false,
-  stackedProfiles = [],
-  onProfileClick,
-  stackedProfilesText = "Handpicked by",
   showTitleChevron = false,
   onTitleClick,
-  showSponsorCount = false,
-  maxProfiles = 3
 }: FlashDealsProps) {
   const isMobile = useIsMobile();
   const scrollRef = useRef(null);
@@ -196,14 +184,8 @@ export default function FlashDeals({
           countdown={displayCountdown}
           viewAllLink="/search?category=flash-deals"
           viewAllText="View All"
-          showStackedProfiles={showStackedProfiles}
-          stackedProfiles={stackedProfiles}
-          onProfileClick={onProfileClick}
-          stackedProfilesText={stackedProfilesText}
-          maxProfiles={maxProfiles}
           showTitleChevron={showTitleChevron}
           onTitleClick={onTitleClick}
-          showSponsorCount={showSponsorCount}
         />
       )}
 
