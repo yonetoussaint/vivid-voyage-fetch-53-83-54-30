@@ -65,6 +65,7 @@ interface AliExpressHeaderProps {
     count?: number;
   }>;
   hideSearchBar?: boolean; // Hide search bar in product detail mode
+  onSearchSubmit?: (query: string) => void; // Custom search handler for product detail
 }
 
 // Header Action Button Component (moved from ProductDetail)
@@ -79,6 +80,7 @@ interface HeaderActionButtonProps {
   transform?: string;
   likeCount?: number;
   shareCount?: number;
+  compact?: boolean; // New prop for compact mode
 }
 
 const HeaderActionButton = ({ 
@@ -91,7 +93,8 @@ const HeaderActionButton = ({
   fillWhenActive = true,
   transform = '',
   likeCount,
-  shareCount
+  shareCount,
+  compact = false // New: compact mode for scrolled state
 }: HeaderActionButtonProps) => {
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -113,6 +116,36 @@ const HeaderActionButton = ({
   // Improved transition thresholds for smoother animation
   const expandedThreshold = 0.2;
   const fadingThreshold = 0.4;
+
+  // In compact mode, always show circular button
+  if (compact) {
+    return (
+      <div 
+        className="rounded-full transition-all duration-700"
+        style={{ backgroundColor: `rgba(0, 0, 0, 0.1)` }}
+      >
+        <button
+          onClick={handleClick}
+          className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700 relative"
+        >
+          <Icon
+            size={20}
+            strokeWidth={2.5}
+            className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
+            style={{
+              fill: active && fillWhenActive ? activeColor : 'transparent',
+              color: `rgba(75, 85, 99, 0.9)`
+            }}
+          />
+          {badge && (
+            <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[8px] rounded-full h-3 w-3 flex items-center justify-center animate-scale-in">
+              {badge}
+            </span>
+          )}
+        </button>
+      </div>
+    );
+  }
 
   // Show horizontal layout with count in non-scroll state
   if (count !== undefined && progress < expandedThreshold) {
@@ -272,6 +305,7 @@ export default function AliExpressHeader({
   inPanel = false,
   actionButtons = [],
   hideSearchBar = false,
+  onSearchSubmit,
 }: AliExpressHeaderProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -291,6 +325,10 @@ export default function AliExpressHeader({
   const maxScroll = 120;
   const scrollProgress = Math.min(scrollY / maxScroll, 1);
   const displayProgress = mode === 'product-detail' ? scrollProgress : 0;
+  
+  // Threshold when search bar should appear in product detail mode
+  const searchBarThreshold = 0.3;
+  const showSearchBarInProductDetail = mode === 'product-detail' && displayProgress > searchBarThreshold;
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -422,7 +460,11 @@ export default function AliExpressHeader({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      if (onSearchSubmit) {
+        onSearchSubmit(searchQuery.trim());
+      } else {
+        navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      }
       setSearchQuery(''); // Clear search after submit
     }
   };
@@ -516,6 +558,83 @@ export default function AliExpressHeader({
   // Back/Close icon component
   const IconComponent = inPanel ? X : ChevronLeft;
 
+  // Render search bar component (reusable)
+  const renderSearchBar = (compact = false) => (
+    <div className={`relative ${compact ? 'flex-1 max-w-md mx-2' : 'w-full'}`}>
+      <form onSubmit={handleSubmit}>
+        <div className="relative">
+          <input
+            type="text"
+            placeholder={placeholder}
+            value={searchQuery}
+            onChange={handleInputChange}
+            onFocus={handleFocus}
+            className={`
+              w-full px-3 py-1 pr-10 text-sm font-medium text-gray-900 bg-white 
+              transition-all duration-300 shadow-sm placeholder-gray-500
+              ${flatBorders ? 'rounded-none border-2 border-gray-900' : 'rounded-full border-2 border-gray-800'}
+              ${compact ? 'h-8' : ''}
+            `}
+            ref={searchRef}
+          />
+
+          {/* Right icons */}
+          <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
+            {/* Clear button when there's text */}
+            {searchQuery.trim() ? (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="p-1 hover:bg-gray-100 transition-colors rounded-full"
+              >
+                <X className="h-4 w-4 text-gray-600" />
+              </button>
+            ) : !compact && (
+              <>
+                {/* Camera icon button - larger, bold, with reduced stroke */}
+                <button
+                  type="button"
+                  className="p-1 hover:bg-gray-100 transition-colors rounded-full"
+                  onClick={() => {
+                    // Add camera functionality here
+                    console.log('Camera button clicked');
+                  }}
+                >
+                  <Camera className="h-5 w-5 text-gray-900 font-bold stroke-[1.5]" />
+                </button>
+
+                {/* Location button - DIRECTLY OPENS PANEL */}
+                <div className="relative" ref={locationDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={handleLocationClick}
+                    className={`
+                      flex items-center justify-between gap-1
+                      px-2 py-0.5
+                      text-xs font-medium text-gray-600 
+                      bg-gray-100 hover:bg-gray-200
+                      transition-all duration-200
+                      ${flatBorders ? 'rounded-none' : 'rounded-full'}
+                    `}
+                  >
+                    {/* Location icon */}
+                    <MapPin className="h-3 w-3 text-gray-500 flex-shrink-0" />
+
+                    {/* City name - truncated if too long */}
+                    <span className="max-w-[60px] truncate text-xs">{selectedCity}</span>
+
+                    {/* Chevron icon */}
+                    <ChevronDown className="h-3 w-3 text-gray-500 flex-shrink-0" />
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </form>
+    </div>
+  );
+
   return (
     <header 
       className="fixed top-0 w-full z-40"
@@ -532,89 +651,21 @@ export default function AliExpressHeader({
     >
       {/* Header content based on mode */}
       {mode === 'home' && !hideSearchBar ? (
-        // HOME MODE: Search Bar
+        // HOME MODE: Full search bar at top
         <div 
           className="flex items-center justify-between px-2 transition-all duration-500 ease-in-out bg-white"
           style={{ height: '36px' }}
         >
           <div className="flex-1 relative max-w-full mx-auto">
-            <form onSubmit={handleSubmit}>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder={placeholder}
-                  value={searchQuery}
-                  onChange={handleInputChange}
-                  onFocus={handleFocus}
-                  className={`
-                    w-full px-3 py-1 pr-16 text-sm font-medium text-gray-900 bg-white 
-                    transition-all duration-300 shadow-sm placeholder-gray-500
-                    ${flatBorders ? 'rounded-none border-2 border-gray-900' : 'rounded-full border-2 border-gray-800'}
-                  `}
-                  ref={searchRef}
-                />
-
-                {/* Right icons */}
-                <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
-                  {/* Clear button when there's text */}
-                  {searchQuery.trim() ? (
-                    <button
-                      type="button"
-                      onClick={handleClearSearch}
-                      className="p-1 hover:bg-gray-100 transition-colors"
-                    >
-                      <X className="h-4 w-4 text-gray-600" />
-                    </button>
-                  ) : (
-                    <>
-                      {/* Camera icon button - larger, bold, with reduced stroke */}
-                      <button
-                        type="button"
-                        className="p-1 hover:bg-gray-100 transition-colors rounded-full"
-                        onClick={() => {
-                          // Add camera functionality here
-                          console.log('Camera button clicked');
-                        }}
-                      >
-                        <Camera className="h-6 w-6 text-gray-900 font-bold stroke-[1.5]" />
-                      </button>
-
-                      {/* Location button - DIRECTLY OPENS PANEL */}
-                      <div className="relative" ref={locationDropdownRef}>
-                        <button
-                          type="button"
-                          onClick={handleLocationClick}
-                          className={`
-                            flex items-center justify-between gap-1.5
-                            px-2.5 py-1
-                            text-xs font-medium text-gray-600 
-                            bg-gray-100 hover:bg-gray-200
-                            transition-all duration-200
-                            ${flatBorders ? 'rounded-none' : 'rounded-full'}
-                          `}
-                        >
-                          {/* Location icon */}
-                          <MapPin className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
-
-                          {/* City name - truncated if too long */}
-                          <span className="max-w-[80px] truncate">{selectedCity}</span>
-
-                          {/* Chevron icon */}
-                          <ChevronDown className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            </form>
+            {renderSearchBar()}
           </div>
         </div>
       ) : mode === 'product-detail' ? (
-        // PRODUCT DETAIL MODE: Custom Header
+        // PRODUCT DETAIL MODE: Dynamic header based on scroll
         <div className="py-2 px-3 w-full">
-          <div className="flex items-center justify-between w-full max-w-6xl mx-auto gap-4">
-            <div className="flex items-center gap-3 flex-shrink-0 min-w-0 flex-1">
+          <div className="flex items-center justify-between w-full max-w-6xl mx-auto gap-2">
+            {/* Left side: Back button */}
+            <div className="flex items-center flex-shrink-0">
               <div 
                 className="rounded-full transition-all duration-700"
                 style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})` }}
@@ -636,9 +687,10 @@ export default function AliExpressHeader({
                 </button>
               </div>
 
-              {displayProgress < 0.5 && productData?.sellers && (
+              {/* Seller info when not scrolled much */}
+              {displayProgress < 0.3 && productData?.sellers && (
                 <div 
-                  className="rounded-full transition-all duration-700 flex-shrink-0"
+                  className="ml-2 rounded-full transition-all duration-700 flex-shrink-0"
                   style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})` }}
                 >
                   <button
@@ -691,6 +743,14 @@ export default function AliExpressHeader({
               )}
             </div>
 
+            {/* Middle: Search bar appears when scrolled */}
+            {showSearchBarInProductDetail && (
+              <div className="flex-1 mx-2">
+                {renderSearchBar(true)}
+              </div>
+            )}
+
+            {/* Right side: Action buttons */}
             <div className="flex gap-2 flex-shrink-0">
               {defaultActionButtons.map((button, index) => (
                 <HeaderActionButton
@@ -701,6 +761,7 @@ export default function AliExpressHeader({
                   progress={displayProgress}
                   activeColor={button.activeColor}
                   likeCount={button.count}
+                  compact={showSearchBarInProductDetail}
                 />
               ))}
             </div>
