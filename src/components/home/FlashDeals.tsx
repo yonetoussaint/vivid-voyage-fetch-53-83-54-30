@@ -48,7 +48,7 @@ const FlashDealsSkeleton: React.FC<{
         </div>
       )}
 
-      {/* Products Skeleton */}
+      {/* Products Skeleton - Square aspect ratio */}
       <div className="pl-2 flex overflow-x-hidden">
         {Array.from({ length: skeletonCount }).map((_, index) => (
           <div 
@@ -56,7 +56,7 @@ const FlashDealsSkeleton: React.FC<{
             className="w-[calc(100%/3.5)] flex-shrink-0 mr-[3vw]"
             style={{ maxWidth: '160px' }}
           >
-            <div className={`${productType === 'books' ? 'aspect-[1.6:1]' : 'aspect-square'} bg-gray-200 animate-pulse rounded-md mb-1.5`}></div>
+            <div className="aspect-square bg-gray-200 animate-pulse rounded-md mb-1.5"></div>
           </div>
         ))}
       </div>
@@ -233,20 +233,16 @@ export default function FlashDeals({
                 >
                   <div 
                     onClick={() => handleProductClick(product.id)}
-                    className="cursor-pointer"
+                    className="cursor-pointer h-full"
                   >
-                    {/* Use ProductCard component */}
+                    {/* Use ProductCard component with square aspect ratio */}
                     <ProductCard 
                       product={product}
                       renderTag={renderTag}
+                      aspectRatio="square" // Force square images
+                      showStockIndicator={productType !== 'books'} // Show stock indicator for non-books
+                      stock={product.stock}
                     />
-                    
-                    {/* Stock indicator for non-book products */}
-                    {productType !== 'books' && product.stock > 0 && (
-                      <div className="absolute top-0 left-0 bg-[#FF4747] text-white text-[10px] px-1.5 py-0.5 rounded-br-md font-medium">
-                        {product.stock} left
-                      </div>
-                    )}
                   </div>
                 </div>
               ))}
