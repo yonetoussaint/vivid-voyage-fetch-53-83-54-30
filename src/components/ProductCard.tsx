@@ -64,7 +64,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         />
         {(imageError || !product.product_images?.[0]?.src) && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-            <span className="text-gray-400 text-xs text-center px-2">
+            <span className="text-gray-400 text-xs text-center">
               {product.name}
             </span>
           </div>
