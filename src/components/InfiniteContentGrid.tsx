@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 
 // Import the custom hook
@@ -21,35 +21,84 @@ const renderTag = (tag: string) => {
   return null;
 };
 
-// ContentCard Factory - Only handles products now
-const ContentCard: React.FC<{ item: ContentItem }> = ({ item }) => {
-  // Only render product cards
-  if (item.type === 'product') {
-    return <ProductCard product={item} renderTag={renderTag} />;
-  }
-  // Don't render anything for reels
-  return null;
-};
+// ContentCard Factory with ref forwarding
+interface ContentCardProps {
+  item: ContentItem;
+  onHeightChange?: (id: string, height: number) => void;
+}
 
-// True Pinterest-style Masonry Grid
+const ContentCard = React.forwardRef<HTMLDivElement, ContentCardProps>(({ item, onHeightChange }, ref) => {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  useEffect(() => {
+    if (imageLoaded && cardRef.current && onHeightChange) {
+      const height = cardRef.current.offsetHeight;
+      onHeightChange(`${item.type}-${item.id}`, height);
+    }
+  }, [imageLoaded, item.id, item.type, onHeightChange]);
+
+  // Combine refs
+  useEffect(() => {
+    if (ref && cardRef.current) {
+      if (typeof ref === 'function') {
+        ref(cardRef.current);
+      } else {
+        ref.current = cardRef.current;
+      }
+    }
+  }, [ref]);
+
+  if (item.type === 'product') {
+    return (
+      <div ref={cardRef}>
+        <ProductCard 
+          product={item} 
+          renderTag={renderTag}
+          aspectRatio="auto"
+        />
+        {/* Hidden image to detect when loaded */}
+        {item.product_images?.[0]?.src && (
+          <img
+            src={item.product_images[0].src}
+            alt=""
+            style={{ display: 'none' }}
+            onLoad={() => setImageLoaded(true)}
+            onError={() => setImageLoaded(true)}
+          />
+        )}
+      </div>
+    );
+  }
+  return null;
+});
+
+ContentCard.displayName = 'ContentCard';
+
+// True Pinterest-style Masonry Grid with dynamic rebalancing
 const MasonryGrid: React.FC<{ items: ContentItem[] }> = ({ items }) => {
-  // Filter to ONLY include products (no reels)
+  const [columns, setColumns] = useState<[ContentItem[], ContentItem[]]>([[], []]);
+  const [measuredHeights, setMeasuredHeights] = useState<Map<string, number>>(new Map());
   const productsOnly = items.filter(item => item.type === 'product');
 
-  // Distribute products based on estimated heights (add to shortest column)
-  const columns = React.useMemo(() => {
+  // Initial distribution with estimated heights
+  useEffect(() => {
     const col1: ContentItem[] = [];
     const col2: ContentItem[] = [];
     let col1Height = 0;
     let col2Height = 0;
     
     productsOnly.forEach((item) => {
-      // Estimate height based on product properties
-      // Images are typically taller, description length matters
-      const estimatedHeight = 
-        250 + // base card height
-        (item.description?.length || 0) * 0.5 + // description adds height
-        (item.tags?.length || 0) * 10; // tags add height
+      // Check if we have a measured height
+      const itemKey = `${item.type}-${item.id}`;
+      const measuredHeight = measuredHeights.get(itemKey);
+      
+      // Use measured height if available, otherwise estimate
+      const estimatedHeight = measuredHeight || (
+        300 + // base card height with auto image
+        (item.description?.length || 0) * 0.3 +
+        (item.tags?.length || 0) * 8
+      );
       
       // Add to the shorter column
       if (col1Height <= col2Height) {
@@ -61,10 +110,23 @@ const MasonryGrid: React.FC<{ items: ContentItem[] }> = ({ items }) => {
       }
     });
     
-    return [col1, col2];
-  }, [productsOnly]);
+    setColumns([col1, col2]);
+  }, [productsOnly, measuredHeights]);
 
-  console.log(`MasonryGrid: Showing ${productsOnly.length} products in balanced columns`);
+  // Callback when a card's height is measured
+  const handleHeightChange = (id: string, height: number) => {
+    setMeasuredHeights(prev => {
+      const newMap = new Map(prev);
+      const oldHeight = newMap.get(id);
+      
+      // Only update if height changed significantly (more than 10px difference)
+      if (!oldHeight || Math.abs(oldHeight - height) > 10) {
+        newMap.set(id, height);
+        return newMap;
+      }
+      return prev;
+    });
+  };
 
   return (
     <div className="px-2">
@@ -75,7 +137,8 @@ const MasonryGrid: React.FC<{ items: ContentItem[] }> = ({ items }) => {
           {columns[0].map((item) => (
             <ContentCard 
               key={`${item.type}-${item.id}`}
-              item={item} 
+              item={item}
+              onHeightChange={handleHeightChange}
             />
           ))}
         </div>
@@ -85,7 +148,8 @@ const MasonryGrid: React.FC<{ items: ContentItem[] }> = ({ items }) => {
           {columns[1].map((item) => (
             <ContentCard 
               key={`${item.type}-${item.id}`}
-              item={item} 
+              item={item}
+              onHeightChange={handleHeightChange}
             />
           ))}
         </div>
@@ -118,32 +182,19 @@ const InfiniteContentGrid: React.FC<InfiniteContentGridProps> = ({
     return visibleContent.filter(item => item.type === 'product');
   }, [visibleContent]);
 
-  // Debug: Log what we're getting
-  React.useEffect(() => {
-    const reels = visibleContent.filter(item => item.type === 'reel');
-    const products = visibleContent.filter(item => item.type === 'product');
-
-    console.log(`InfiniteContentGrid - Products Only Mode:`);
-    console.log(`  Total items from hook: ${visibleContent.length}`);
-    console.log(`  Products: ${products.length}`);
-    console.log(`  Reels (filtered out): ${reels.length}`);
-    console.log(`  Showing only: ${productsOnly.length} products`);
-  }, [visibleContent, productsOnly]);
-
   // Show loading state while fetching initial data
   if (initialLoading && productsOnly.length === 0) {
-    console.log("Showing initial loading skeleton (products only)");
     return (
       <div className="px-2">
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-start">
           <div className="flex-1 flex flex-col gap-2">
             {Array(3).fill(0).map((_, i) => (
-              <div key={i} className="bg-gray-200 animate-pulse rounded" style={{ height: '300px' }}></div>
+              <div key={i} className="bg-gray-200 animate-pulse rounded" style={{ height: `${250 + Math.random() * 150}px` }}></div>
             ))}
           </div>
           <div className="flex-1 flex flex-col gap-2">
             {Array(3).fill(0).map((_, i) => (
-              <div key={i} className="bg-gray-200 animate-pulse rounded" style={{ height: '300px' }}></div>
+              <div key={i} className="bg-gray-200 animate-pulse rounded" style={{ height: `${250 + Math.random() * 150}px` }}></div>
             ))}
           </div>
         </div>
@@ -153,7 +204,6 @@ const InfiniteContentGrid: React.FC<InfiniteContentGridProps> = ({
 
   // Show empty state if no products
   if (!initialLoading && productsOnly.length === 0) {
-    console.log("Showing empty state (no products found)");
     return (
       <div className="text-center py-8 text-gray-500">
         {hasActiveFilters() ? (
@@ -173,11 +223,9 @@ const InfiniteContentGrid: React.FC<InfiniteContentGridProps> = ({
     );
   }
 
-  console.log(`Rendering ${productsOnly.length} products, hasMore: ${hasMore}`);
-
   return (
     <div className="pb-20">
-      {/* Masonry Grid - Shows only products */}
+      {/* Masonry Grid - Shows only products with dynamic rebalancing */}
       <MasonryGrid items={productsOnly} />
 
       {/* Load more trigger */}
