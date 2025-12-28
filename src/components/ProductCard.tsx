@@ -15,14 +15,18 @@ interface Product {
 
 interface ProductCardProps {
   product: Product;
-  renderTag: (tag: string) => React.ReactNode;
+  renderTag?: (tag: string) => React.ReactNode; // Make optional
   aspectRatio?: 'square' | 'auto';
+  showTags?: boolean; // New prop to control tag visibility
+  singleLineName?: boolean; // New prop to control name line count
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ 
   product, 
   renderTag,
   aspectRatio = 'auto',
+  showTags = true, // Default to showing tags
+  singleLineName = false, // Default to multi-line
 }) => {
   const [imageError, setImageError] = useState(false);
   const soldCount = product.sold_count || Math.floor(Math.random() * 10000) + 100;
@@ -67,8 +71,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
         )}
       </div>
       <div className="p-0.5 flex-grow">
-        <p className="text-[11px] text-gray-700 mb-0.5 line-clamp-2 leading-tight">
-          {tags.map((tag) => renderTag(tag))}
+        <p className={`text-[11px] text-gray-700 mb-0.5 leading-tight ${singleLineName ? 'line-clamp-1' : 'line-clamp-2'}`}>
+          {showTags && renderTag && tags.map((tag) => renderTag(tag))}
           {product.name}
         </p>
         <div className="flex items-center gap-0.5 mb-0.5">
