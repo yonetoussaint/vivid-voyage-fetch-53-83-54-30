@@ -1,3 +1,4 @@
+// Updated ProductCard.tsx
 import React, { useState } from "react";
 
 interface Product {
@@ -16,15 +17,24 @@ interface Product {
 interface ProductCardProps {
   product: Product;
   renderTag: (tag: string) => React.ReactNode;
+  aspectRatio?: 'square' | 'auto'; // Add aspectRatio prop
+  showStockIndicator?: boolean; // Add stock indicator prop
+  stock?: number; // Add stock prop
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, renderTag }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ 
+  product, 
+  renderTag,
+  aspectRatio = 'auto', // Default to auto
+  showStockIndicator = false,
+  stock = 0
+}) => {
   const [imageError, setImageError] = useState(false);
   const soldCount = product.sold_count || Math.floor(Math.random() * 10000) + 100;
   const rating = product.rating || parseFloat((Math.random() * 1 + 4).toFixed(1));
-  const imageUrl = product.product_images?.[0]?.src || `https://placehold.co/300x400?text=Product`;
+  const imageUrl = product.product_images?.[0]?.src || `https://placehold.co/300x300?text=Product`;
   const displayImageUrl = imageError 
-    ? `https://placehold.co/300x400?text=${encodeURIComponent(product.name)}` 
+    ? `https://placehold.co/300x300?text=${encodeURIComponent(product.name)}` 
     : imageUrl;
 
   const generateTags = () => {
@@ -43,15 +53,22 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, renderTag }) => {
   const hasDiscount = !!product.discount_price && product.discount_price < product.price;
 
   return (
-    <div className="bg-white overflow-hidden mb-2 flex flex-col">
-      <div className="w-full max-h-80 bg-white overflow-hidden mb-0.5 relative flex items-center justify-center">
+    <div className="bg-white overflow-hidden mb-2 flex flex-col h-full">
+      {/* Image Container with flexible aspect ratio */}
+      <div className={`w-full ${aspectRatio === 'square' ? 'aspect-square' : 'max-h-80'} bg-white overflow-hidden mb-0.5 relative flex items-center justify-center`}>
         <img 
           src={displayImageUrl} 
           alt={product.name} 
-          className="w-full h-auto max-h-full object-contain" 
+          className="w-full h-full object-contain" 
           loading="lazy"
           onError={() => setImageError(true)}
         />
+        {/* Stock Indicator */}
+        {showStockIndicator && stock > 0 && (
+          <div className="absolute top-0 left-0 bg-[#FF4747] text-white text-[10px] px-1.5 py-0.5 rounded-br-md font-medium">
+            {stock} left
+          </div>
+        )}
         {(imageError || !product.product_images?.[0]?.src) && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
             <span className="text-gray-400 text-xs text-center px-2">
