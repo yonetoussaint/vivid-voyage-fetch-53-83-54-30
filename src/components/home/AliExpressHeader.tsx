@@ -650,7 +650,7 @@ export default function AliExpressHeader({
       ) : mode === 'product-detail' ? (
         // PRODUCT DETAIL MODE: Dynamic header based on scroll
         <div className="py-2 px-3 w-full">
-          <div className="flex items-center justify-between w-full max-w-6xl mx-auto gap-2">
+          <div className="flex items-center justify-between w-full max-w-6xl mx-auto">
             {/* Left side: Back button */}
             <div className="flex items-center flex-shrink-0">
               <button 
@@ -734,7 +734,7 @@ export default function AliExpressHeader({
 
             {/* Middle: Clean search bar appears when scrolled - NO CAMERA/LOCATION BUTTONS */}
             {showSearchBarInProductDetail && (
-              <div className="flex-1 mx-2">
+              <div className="flex-1 px-2"> {/* Reduced mx-2 to px-2 */}
                 <div className="relative max-w-full">
                   <form onSubmit={handleSubmit}>
                     <div className="relative">
@@ -773,7 +773,7 @@ export default function AliExpressHeader({
             )}
 
             {/* Right side: Action buttons - NO BACKGROUND WHEN SCROLLED */}
-            <div className="flex gap-2 flex-shrink-0">
+            <div className="flex gap-1 flex-shrink-0"> {/* Reduced gap from gap-2 to gap-1 */}
               {defaultActionButtons.map((button, index) => (
                 <HeaderActionButton
                   key={index}
