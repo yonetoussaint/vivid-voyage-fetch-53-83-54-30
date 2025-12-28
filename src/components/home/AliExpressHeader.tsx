@@ -122,7 +122,7 @@ const HeaderActionButton = ({
     return (
       <button
         onClick={handleClick}
-        className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700 relative hover:bg-gray-100"
+        className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700 hover:bg-gray-100"
       >
         <Icon
           size={20}
@@ -604,10 +604,10 @@ export default function AliExpressHeader({
                     </button>
                   ) : (
                     <>
-                      {/* Camera icon button - ORIGINAL: larger, bold, with reduced stroke */}
+                      {/* Camera icon button - NO HOVER BACKGROUND */}
                       <button
                         type="button"
-                        className="p-1 hover:bg-gray-100 transition-colors rounded-full"
+                        className="p-1 transition-colors"
                         onClick={() => {
                           // Add camera functionality here
                           console.log('Camera button clicked');
