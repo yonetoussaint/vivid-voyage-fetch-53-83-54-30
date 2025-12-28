@@ -558,106 +558,89 @@ export default function AliExpressHeader({
   // Back/Close icon component
   const IconComponent = inPanel ? X : ChevronLeft;
 
-  // Render search bar component (reusable)
-  const renderSearchBar = (compact = false) => (
-    <div className={`relative ${compact ? 'flex-1 max-w-md mx-2' : 'w-full'}`}>
-      <form onSubmit={handleSubmit}>
-        <div className="relative">
-          <input
-            type="text"
-            placeholder={placeholder}
-            value={searchQuery}
-            onChange={handleInputChange}
-            onFocus={handleFocus}
-            className={`
-              w-full px-3 py-1 pr-10 text-sm font-medium text-gray-900 bg-white 
-              transition-all duration-300 shadow-sm placeholder-gray-500
-              ${flatBorders ? 'rounded-none border-2 border-gray-900' : 'rounded-full border-2 border-gray-800'}
-              ${compact ? 'h-8' : ''}
-            `}
-            ref={searchRef}
-          />
-
-          {/* Right icons */}
-          <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
-            {/* Clear button when there's text */}
-            {searchQuery.trim() ? (
-              <button
-                type="button"
-                onClick={handleClearSearch}
-                className="p-1 hover:bg-gray-100 transition-colors rounded-full"
-              >
-                <X className="h-4 w-4 text-gray-600" />
-              </button>
-            ) : !compact && (
-              <>
-                {/* Camera icon button - larger, bold, with reduced stroke */}
-                <button
-                  type="button"
-                  className="p-1 hover:bg-gray-100 transition-colors rounded-full"
-                  onClick={() => {
-                    // Add camera functionality here
-                    console.log('Camera button clicked');
-                  }}
-                >
-                  <Camera className="h-5 w-5 text-gray-900 font-bold stroke-[1.5]" />
-                </button>
-
-                {/* Location button - DIRECTLY OPENS PANEL */}
-                <div className="relative" ref={locationDropdownRef}>
-                  <button
-                    type="button"
-                    onClick={handleLocationClick}
-                    className={`
-                      flex items-center justify-between gap-1
-                      px-2 py-0.5
-                      text-xs font-medium text-gray-600 
-                      bg-gray-100 hover:bg-gray-200
-                      transition-all duration-200
-                      ${flatBorders ? 'rounded-none' : 'rounded-full'}
-                    `}
-                  >
-                    {/* Location icon */}
-                    <MapPin className="h-3 w-3 text-gray-500 flex-shrink-0" />
-
-                    {/* City name - truncated if too long */}
-                    <span className="max-w-[60px] truncate text-xs">{selectedCity}</span>
-
-                    {/* Chevron icon */}
-                    <ChevronDown className="h-3 w-3 text-gray-500 flex-shrink-0" />
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </form>
-    </div>
-  );
-
   return (
     <header 
-      className="fixed top-0 w-full z-40"
-      style={{ 
-        margin: 0, 
-        padding: 0, 
-        boxShadow: 'none',
-        backgroundColor: mode === 'product-detail' 
-          ? `rgba(255, 255, 255, ${displayProgress * 0.95})` 
-          : 'white',
-        backdropFilter: mode === 'product-detail' && displayProgress > 0 ? `blur(${displayProgress * 8}px)` : 'none',
-        boxShadow: mode === 'product-detail' && displayProgress > 0.1 ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
-      }}
+      className="fixed top-0 w-full z-40" 
+      style={{ margin: 0, padding: 0, boxShadow: 'none' }}
     >
       {/* Header content based on mode */}
       {mode === 'home' && !hideSearchBar ? (
-        // HOME MODE: Full search bar at top
+        // HOME MODE: Original search bar design
         <div 
           className="flex items-center justify-between px-2 transition-all duration-500 ease-in-out bg-white"
           style={{ height: '36px' }}
         >
           <div className="flex-1 relative max-w-full mx-auto">
-            {renderSearchBar()}
+            <form onSubmit={handleSubmit}>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder={placeholder}
+                  value={searchQuery}
+                  onChange={handleInputChange}
+                  onFocus={handleFocus}
+                  className={`
+                    w-full px-3 py-1 pr-16 text-sm font-medium text-gray-900 bg-white 
+                    transition-all duration-300 shadow-sm placeholder-gray-500
+                    ${flatBorders ? 'rounded-none border-2 border-gray-900' : 'rounded-full border-2 border-gray-800'}
+                  `}
+                  ref={searchRef}
+                />
+
+                {/* Right icons - ORIGINAL DESIGN */}
+                <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
+                  {/* Clear button when there's text */}
+                  {searchQuery.trim() ? (
+                    <button
+                      type="button"
+                      onClick={handleClearSearch}
+                      className="p-1 hover:bg-gray-100 transition-colors"
+                    >
+                      <X className="h-4 w-4 text-gray-600" />
+                    </button>
+                  ) : (
+                    <>
+                      {/* Camera icon button - ORIGINAL: larger, bold, with reduced stroke */}
+                      <button
+                        type="button"
+                        className="p-1 hover:bg-gray-100 transition-colors rounded-full"
+                        onClick={() => {
+                          // Add camera functionality here
+                          console.log('Camera button clicked');
+                        }}
+                      >
+                        <Camera className="h-6 w-6 text-gray-900 font-bold stroke-[1.5]" />
+                      </button>
+
+                      {/* Location button - ORIGINAL DESIGN */}
+                      <div className="relative" ref={locationDropdownRef}>
+                        <button
+                          type="button"
+                          onClick={handleLocationClick}
+                          className={`
+                            flex items-center justify-between gap-1.5
+                            px-2.5 py-1
+                            text-xs font-medium text-gray-600 
+                            bg-gray-100 hover:bg-gray-200
+                            transition-all duration-200
+                            ${flatBorders ? 'rounded-none' : 'rounded-full'}
+                          `}
+                        >
+                          {/* Location icon - ORIGINAL SIZE */}
+                          <MapPin className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
+
+                          {/* City name - ORIGINAL TRUNCATION */}
+                          <span className="max-w-[80px] truncate">{selectedCity}</span>
+
+                          {/* Chevron icon - ORIGINAL SIZE */}
+                          <ChevronDown className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </form>
           </div>
         </div>
       ) : mode === 'product-detail' ? (
@@ -743,10 +726,81 @@ export default function AliExpressHeader({
               )}
             </div>
 
-            {/* Middle: Search bar appears when scrolled */}
+            {/* Middle: Search bar appears when scrolled - ORIGINAL DESIGN */}
             {showSearchBarInProductDetail && (
               <div className="flex-1 mx-2">
-                {renderSearchBar(true)}
+                <div className="relative max-w-full">
+                  <form onSubmit={handleSubmit}>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder={placeholder}
+                        value={searchQuery}
+                        onChange={handleInputChange}
+                        onFocus={handleFocus}
+                        className={`
+                          w-full px-3 py-1 pr-16 text-sm font-medium text-gray-900 bg-white 
+                          transition-all duration-300 shadow-sm placeholder-gray-500
+                          ${flatBorders ? 'rounded-none border-2 border-gray-900' : 'rounded-full border-2 border-gray-800'}
+                        `}
+                        ref={searchRef}
+                      />
+
+                      {/* Right icons - ORIGINAL DESIGN */}
+                      <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
+                        {/* Clear button when there's text */}
+                        {searchQuery.trim() ? (
+                          <button
+                            type="button"
+                            onClick={handleClearSearch}
+                            className="p-1 hover:bg-gray-100 transition-colors"
+                          >
+                            <X className="h-4 w-4 text-gray-600" />
+                          </button>
+                        ) : (
+                          <>
+                            {/* Camera icon button - ORIGINAL SIZE */}
+                            <button
+                              type="button"
+                              className="p-1 hover:bg-gray-100 transition-colors rounded-full"
+                              onClick={() => {
+                                // Add camera functionality here
+                                console.log('Camera button clicked');
+                              }}
+                            >
+                              <Camera className="h-6 w-6 text-gray-900 font-bold stroke-[1.5]" />
+                            </button>
+
+                            {/* Location button - ORIGINAL DESIGN */}
+                            <div className="relative" ref={locationDropdownRef}>
+                              <button
+                                type="button"
+                                onClick={handleLocationClick}
+                                className={`
+                                  flex items-center justify-between gap-1.5
+                                  px-2.5 py-1
+                                  text-xs font-medium text-gray-600 
+                                  bg-gray-100 hover:bg-gray-200
+                                  transition-all duration-200
+                                  ${flatBorders ? 'rounded-none' : 'rounded-full'}
+                                `}
+                              >
+                                {/* Location icon - ORIGINAL SIZE */}
+                                <MapPin className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
+
+                                {/* City name - ORIGINAL TRUNCATION */}
+                                <span className="max-w-[80px] truncate">{selectedCity}</span>
+
+                                {/* Chevron icon - ORIGINAL SIZE */}
+                                <ChevronDown className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </form>
+                </div>
               </div>
             )}
 
@@ -769,7 +823,7 @@ export default function AliExpressHeader({
         </div>
       ) : null}
 
-      {/* Filter Bar (only in home mode) */}
+      {/* Filter Bar (only in home mode) - ORIGINAL DESIGN */}
       {mode === 'home' && showFilterBar && filterCategories.length > 0 && (
         <div className="bg-white border-b border-gray-200">
           <div className="flex items-center justify-between px-2 py-1">
