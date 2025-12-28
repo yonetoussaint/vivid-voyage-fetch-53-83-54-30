@@ -529,27 +529,27 @@ export default function AliExpressHeader({
 
   // Default action buttons for product detail
   const defaultActionButtons = useMemo(() => {
-    if (actionButtons.length > 0) return actionButtons;
-    
-    if (mode === 'product-detail') {
-      return [
-        {
-          Icon: Heart,
-          onClick: onFavoriteClick,
-          active: isFavorite,
-          activeColor: "#f43f5e",
-          count: productData?.favorite_count || 0
-        },
-        {
-          Icon: Share,
-          onClick: onShareClick,
-          active: false
-        }
-      ];
-    }
-    
-    return [];
-  }, [actionButtons, mode, onFavoriteClick, onShareClick, isFavorite, productData?.favorite_count]);
+  if (actionButtons.length > 0) return actionButtons;
+
+  if (mode === 'product-detail') {
+    return [
+      {
+        Icon: Heart,
+        onClick: onFavoriteClick,
+        active: isFavorite,
+        activeColor: "#f43f5e",
+        count: productData?.favorite_count || 0
+      },
+      {
+        Icon: PiShareFat, // Use the React Icon here
+        onClick: onShareClick,
+        active: false
+      }
+    ];
+  }
+
+  return [];
+}, [actionButtons, mode, onFavoriteClick, onShareClick, isFavorite, productData?.favorite_count]);
 
   // Back/Close icon component
   const IconComponent = inPanel ? X : ChevronLeft;
