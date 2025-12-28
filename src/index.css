@@ -151,9 +151,16 @@ img.interactive {
     @apply bg-white text-foreground;
   }
 
-  html, body, #root {
+  /* FIXED: Removed overflow-x: hidden from #root to allow position: fixed to work */
+  html, body {
     @apply bg-white;
     overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  #root {
+    @apply bg-white;
+    /* overflow-x: hidden removed - this was breaking position: fixed */
     max-width: 100vw;
   }
 
