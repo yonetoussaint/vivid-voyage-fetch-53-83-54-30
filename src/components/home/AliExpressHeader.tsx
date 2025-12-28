@@ -7,7 +7,6 @@ import {
   useHeaderSearch,
   useHeaderScroll,
   useHeaderLocation,
-  useHeaderFilters,
   useHeaderTabs,
   useHeaderSearchList,
   useHeaderActionButtons
@@ -23,15 +22,6 @@ interface AliExpressHeaderProps {
   searchListItems?: Array<{ term: string; trend?: 'hot' | 'trending-up' | 'trending-down' | 'popular' }> | string[];
   onSearchItemClick?: (searchTerm: string) => void;
   flatBorders?: boolean;
-
-  showFilterBar?: boolean;
-  filterCategories?: Array<{ id: string; name: string }>;
-  selectedFilters?: string[];
-  onFilterSelect?: (filterId: string) => void;
-  onFilterClear?: (filterId: string) => void;
-  onClearAll?: () => void;
-  onFilterButtonClick?: () => void;
-  isFilterDisabled?: boolean;
 
   cityName?: string;
   locationOptions?: Array<{ id: string; name: string }>;
@@ -99,7 +89,7 @@ const HeaderActionButton = ({
   useEffect(() => {
     const isLucideIcon = Icon.name && typeof Icon.name === 'string';
     const isReactIcon = Icon.displayName && typeof Icon.displayName === 'string';
-    
+
     if (isLucideIcon) {
       setIconProps({ strokeWidth: 2.5 });
     } else if (isReactIcon) {
@@ -135,23 +125,23 @@ const HeaderActionButton = ({
     const baseColor = progress > 0.5 
       ? `rgba(75, 85, 99, ${0.7 + (progress * 0.3)})` 
       : `rgba(255, 255, 255, ${0.9 - (progress * 0.2)})`;
-    
+
     const scrolledColor = 'rgba(75, 85, 99, 0.9)';
-    
+
     if (scrolled) {
       return {
         color: scrolledColor,
         fill: isReactIcon ? scrolledColor : (active && fillWhenActive ? activeColor : 'transparent')
       };
     }
-    
+
     if (isReactIcon) {
       return {
         color: baseColor,
         fill: active && fillWhenActive ? activeColor : baseColor
       };
     }
-    
+
     // Lucide icons
     return {
       color: baseColor,
@@ -290,14 +280,6 @@ export default function AliExpressHeader({
   searchListItems,
   onSearchItemClick,
   flatBorders = true,
-  showFilterBar = false,
-  filterCategories = [],
-  selectedFilters = [],
-  onFilterSelect,
-  onFilterClear,
-  onClearAll,
-  onFilterButtonClick,
-  isFilterDisabled = false,
   cityName = 'New York',
   onLocationChange,
   onOpenLocationsPanel,
@@ -339,13 +321,6 @@ export default function AliExpressHeader({
     locationDropdownRef,
     handleLocationClick
   } = useHeaderLocation(cityName, onLocationChange, onOpenLocationsPanel);
-
-  const {
-    selectedFilters: filterState,
-    handleFilterSelect,
-    handleFilterClear,
-    handleClearAll
-  } = useHeaderFilters(selectedFilters, onFilterSelect, onFilterClear, onClearAll);
 
   const {
     searchItemsToShow,
@@ -413,19 +388,6 @@ export default function AliExpressHeader({
           defaultActionButtons={defaultActionButtons}
         />
       ) : null}
-
-      {/* Filter Bar */}
-      {mode === 'home' && showFilterBar && filterCategories.length > 0 && (
-        <FilterBar
-          filterCategories={filterCategories}
-          filterState={filterState}
-          isFilterDisabled={isFilterDisabled}
-          flatBorders={flatBorders}
-          handleFilterSelect={handleFilterSelect}
-          handleFilterClear={handleFilterClear}
-          handleClearAll={handleClearAll}
-        />
-      )}
 
       {/* Optional Element Below Header */}
       {mode === 'home' && showCategoryTabs ? (
@@ -786,75 +748,6 @@ const ActionButtonsSection = ({
         scrolled={showSearchBarInProductDetail}
       />
     ))}
-  </div>
-);
-
-const FilterBar = ({
-  filterCategories,
-  filterState,
-  isFilterDisabled,
-  flatBorders,
-  handleFilterSelect,
-  handleFilterClear,
-  handleClearAll
-}: {
-  filterCategories: Array<{ id: string; name: string }>;
-  filterState: string[];
-  isFilterDisabled: boolean;
-  flatBorders: boolean;
-  handleFilterSelect: (filterId: string) => void;
-  handleFilterClear: (filterId: string) => void;
-  handleClearAll: () => void;
-}) => (
-  <div className="bg-white border-b border-gray-200">
-    <div className="flex items-center justify-between px-2 py-1">
-      <div className="flex-1 overflow-x-auto scrollbar-hide">
-        <div className="flex items-center space-x-2 py-1 min-w-max">
-          {filterCategories.map((category) => {
-            const isSelected = filterState.includes(category.id);
-            return (
-              <button
-                key={category.id}
-                onClick={() => handleFilterSelect(category.id)}
-                disabled={isFilterDisabled}
-                className={`
-                  flex items-center justify-center px-3 py-1 text-xs font-medium
-                  whitespace-nowrap transition-all duration-200
-                  ${flatBorders ? 'rounded-none' : 'rounded-full'}
-                  ${isSelected 
-                    ? 'bg-blue-600 text-white border border-blue-600' 
-                    : 'bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200'
-                  }
-                  ${isFilterDisabled ? 'opacity-50 cursor-not-allowed' : ''}
-                `}
-              >
-                {category.name}
-                {isSelected && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleFilterClear(category.id);
-                    }}
-                    className="ml-1.5 text-current hover:text-white/80"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-      {filterState.length > 0 && (
-        <button
-          onClick={handleClearAll}
-          disabled={isFilterDisabled}
-          className="ml-2 px-2 py-1 text-xs font-medium text-red-600 hover:text-red-700 whitespace-nowrap"
-        >
-          Clear all
-        </button>
-      )}
-    </div>
   </div>
 );
 
