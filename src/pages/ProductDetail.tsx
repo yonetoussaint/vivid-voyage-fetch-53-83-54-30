@@ -660,6 +660,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
                   )}
                 </div>
               </div>
+              </div>
             </div>
           </div>
         </div>
