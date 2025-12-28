@@ -12,6 +12,7 @@ import { ChatPage } from "@/pages/Messages";
 import ProfilePage from "@/pages/ProfilePage";
 import ProductDetail from "@/pages/ProductDetail";
 import ProductCommentsPage from "@/pages/ProductCommentsPage";
+import Index from "@/pages/Index";
 
 export function AppRoutes() {
   return (
@@ -38,13 +39,13 @@ export function AppRoutes() {
         <Route
           index
           element={
-            <MallPage />
+            <Index />
           }
         />
         <Route
           path="for-you"
           element={
-            <MallPage />
+            <Index />
           }
         />
 
