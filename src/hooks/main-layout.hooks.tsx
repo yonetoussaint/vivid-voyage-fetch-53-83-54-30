@@ -321,131 +321,133 @@ export const useMainLayout = (props?: UseMainLayoutProps) => {
   }, [updateHeaderHeight, updateBottomNavHeight, updateContentHeight]);
 
   // Generate CSS for layout - MAKE SURE THIS IS DEFINED
-  const layoutHeightStyle = useMemo(() => {
-    const { headerHeight, bottomNavHeight } = measurements;
+  // Replace the layoutHeightStyle section in your main-layout.hooks.ts with this:
 
-    return `
-      :root {
-        --header-height: ${headerHeight}px;
-        --bottom-nav-height: ${bottomNavHeight}px;
-        --safe-area-inset-top: env(safe-area-inset-top, 0px);
-        --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
-        --total-bottom-height: ${bottomNavHeight}px;
-      }
+const layoutHeightStyle = useMemo(() => {
+  const { headerHeight, bottomNavHeight } = measurements;
 
-      .app-container {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        overflow: hidden;
-        background: white;
-        transform: translateZ(0);
-        backface-visibility: hidden;
-        perspective: 1000;
-        will-change: transform;
-      }
+  return `
+    :root {
+      --header-height: ${headerHeight}px;
+      --bottom-nav-height: ${bottomNavHeight}px;
+      --safe-area-inset-top: env(safe-area-inset-top, 0px);
+      --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+      --total-bottom-height: ${bottomNavHeight}px;
+    }
 
-      .app-header {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: 1000;
-        background: white;
-        transform: translateZ(0);
-        will-change: transform;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-      }
+    .app-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      /* REMOVED: overflow: hidden; - This was breaking position: fixed */
+      background: white;
+      transform: translateZ(0);
+      backface-visibility: hidden;
+      perspective: 1000;
+      will-change: transform;
+    }
 
+    .app-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: white;
+      transform: translateZ(0);
+      will-change: transform;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .app-content {
+      position: absolute;
+      top: ${headerHeight}px;
+      left: 0;
+      right: 0;
+      bottom: ${bottomNavHeight}px;
+      overflow-y: auto;
+      /* REMOVED: overflow-x: hidden; - This was breaking position: fixed */
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      transform: translateZ(0);
+      will-change: transform, scroll-position;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      scroll-behavior: smooth;
+      backface-visibility: hidden;
+      perspective: 1000;
+    }
+
+    .app-content::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+
+    .app-bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      transform: translateZ(0);
+      will-change: transform;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    ${pageFlags.isConversationDetailPage ? `
       .app-content {
-        position: absolute;
-        top: ${headerHeight}px;
-        left: 0;
-        right: 0;
-        bottom: ${bottomNavHeight}px;
-        overflow-y: auto;
-        overflow-x: hidden;
+        top: 0 !important;
+        bottom: 0 !important;
+      }
+    ` : ''}
+
+    *:not(input):not(textarea):not([contenteditable="true"]) {
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    input, textarea, [contenteditable="true"] {
+      -webkit-user-select: text;
+      user-select: text;
+    }
+
+    .page-transition {
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @supports (-webkit-overflow-scrolling: touch) {
+      .app-content {
         -webkit-overflow-scrolling: touch;
-        overscroll-behavior: contain;
-        transform: translateZ(0);
-        will-change: transform, scroll-position;
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-        scroll-behavior: smooth;
-        backface-visibility: hidden;
-        perspective: 1000;
+        overflow-y: scroll;
       }
+    }
 
-      .app-content::-webkit-scrollbar {
-        display: none;
-        width: 0;
-        height: 0;
-      }
-
-      .app-bottom-nav {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        z-index: 1000;
-        transform: translateZ(0);
-        will-change: transform;
-        padding-bottom: env(safe-area-inset-bottom, 0px);
-        background: rgba(255, 255, 255, 0.98);
-        backdrop-filter: blur(10px);
-        border-top: 1px solid rgba(0, 0, 0, 0.1);
-        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08);
-      }
-
-      ${pageFlags.isConversationDetailPage ? `
-        .app-content {
-          top: 0 !important;
-          bottom: 0 !important;
-        }
-      ` : ''}
-
-      *:not(input):not(textarea):not([contenteditable="true"]) {
-        -webkit-tap-highlight-color: transparent;
-        -webkit-touch-callout: none;
-        -webkit-user-select: none;
-        user-select: none;
-      }
-
-      input, textarea, [contenteditable="true"] {
-        -webkit-user-select: text;
-        user-select: text;
-      }
-
-      .page-transition {
-        animation: fadeIn 0.2s ease-out;
-      }
-
-      @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(5px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-
-      @supports (-webkit-overflow-scrolling: touch) {
-        .app-content {
-          -webkit-overflow-scrolling: touch;
-          overflow-y: scroll;
-        }
-      }
-
-      @supports (overflow: overlay) {
-        .app-content {
-          overflow-y: overlay;
-        }
-      }
-
+    @supports (overflow: overlay) {
       .app-content {
-        overscroll-behavior-y: contain;
-        height: calc(100vh - ${headerHeight}px - ${bottomNavHeight}px);
+        overflow-y: overlay;
       }
-    `;
-  }, [measurements, pageFlags.isConversationDetailPage]);
+    }
+
+    .app-content {
+      overscroll-behavior-y: contain;
+      height: calc(100vh - ${headerHeight}px - ${bottomNavHeight}px);
+    }
+  `;
+}, [measurements, pageFlags.isConversationDetailPage]);
 
   // Location options
   const locationOptions = useMemo(() => [
