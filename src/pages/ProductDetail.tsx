@@ -664,10 +664,9 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
         </div>
       </div>
 
-      {/* Main content - Add top padding equal to header height */}
+      {/* Main content - Content starts from top (no padding-top) */}
       <div style={{ 
-        minHeight: '100vh',
-        paddingTop: '48px' // Space for the fixed header
+        minHeight: '100vh'
       }}>
         {/* ProductImageGallery */}
         <div className="w-full bg-white">
