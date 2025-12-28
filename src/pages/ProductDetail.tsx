@@ -390,16 +390,20 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
         </div>
 
         {/* More from this store - FlashDeals Component */}
-        <div className="mt-4">
-          <FlashDeals 
-            title="More from this store"
-            showSectionHeader={true}
-            showCountdown={false}
-            showTitleChevron={false}
-            maxProducts={20}
-            // You can add more props as needed
-            // productType={product?.category} // If you want to filter by category
-          />
+       {/* More from this store - FlashDeals Component with View More button */}
+<div className="mt-4">
+  <FlashDeals 
+    title="More from this store"
+    showSectionHeader={true}
+    showCountdown={false}
+    showTitleChevron={false}
+    maxProducts={20}
+    viewAllLink={`/seller/${product?.sellers?.id}`} // Link to seller page
+    viewAllText="View More"
+    // You can add more props as needed
+    // productType={product?.category} // If you want to filter by category
+  />
+</div>
         </div>
 
         {/* Related Products Section */}
