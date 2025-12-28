@@ -406,15 +406,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
 </div>
         </div>
 
-        {/* Related Products Section */}
-        <div className="px-4 py-3 bg-white border-t border-gray-200 mt-4">
-          <h2 className="text-lg font-semibold text-gray-800">
-            Related Products
-          </h2>
-          <p className="text-sm text-gray-500 mt-1">
-            Discover similar items you might like
-          </p>
-        </div>
+        
 
         {/* InfiniteContentGrid for related products */}
         <InfiniteContentGrid
