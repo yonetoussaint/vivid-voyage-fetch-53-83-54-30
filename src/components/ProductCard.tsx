@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Star } from "lucide-react"; // Import the Star icon
 
 interface Product {
   id: string;
@@ -94,7 +95,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
           <span className="text-[10px] text-gray-500">{soldCount.toLocaleString()} sold</span>
           <span className="text-[10px] text-gray-400">|</span>
           <div className="flex items-center">
-            <span className="text-[10px] text-gray-700 mr-0.5">★</span>
+            {/* Replaced ★ with Star icon with yellow color */}
+            <Star className="w-2.5 h-2.5 text-yellow-500 fill-yellow-500 mr-0.5" />
             <span className="text-[10px] text-gray-700">{rating}</span>
           </div>
         </div>
