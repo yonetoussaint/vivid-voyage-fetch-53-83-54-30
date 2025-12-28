@@ -5,7 +5,7 @@ import { useProduct } from "@/hooks/useProduct";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/RedirectAuthContext';
 import { useAuthOverlay } from '@/context/AuthOverlayContext';
-import { Heart, Share, ChevronDown, ChevronLeft, X } from 'lucide-react';
+import { Heart, Share, ChevronDown, ChevronLeft, X, Store } from 'lucide-react';
 import ProductDetailError from "@/components/product/ProductDetailError";
 import { useQuery } from '@tanstack/react-query';
 import { fetchAllProducts } from '@/integrations/supabase/products';
@@ -389,24 +389,19 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
           />
         </div>
 
-        {/* More from this store - FlashDeals Component */}
-       {/* More from this store - FlashDeals Component with View More button */}
-<div className="mt-4">
-  <FlashDeals 
-    title="More from this store"
-    showSectionHeader={true}
-    showCountdown={false}
-    showTitleChevron={false}
-    maxProducts={20}
-    viewAllLink={`/seller/${product?.sellers?.id}`} // Link to seller page
-    viewAllText="View More"
-    // You can add more props as needed
-    // productType={product?.category} // If you want to filter by category
-  />
-</div>
+        {/* More from this store - FlashDeals Component with Store icon and View More button */}
+        <div className="mt-4">
+          <FlashDeals 
+            title="More from this store"
+            icon={Store}  // Add Store icon here
+            showSectionHeader={true}
+            showCountdown={false}
+            showTitleChevron={false}
+            maxProducts={20}
+            viewAllLink={`/seller/${product?.sellers?.id}`}
+            viewAllText="View More"
+          />
         </div>
-
-        
 
         {/* InfiniteContentGrid for related products */}
         <InfiniteContentGrid
