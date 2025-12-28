@@ -33,11 +33,87 @@ import MyStations from "@/pages/MyStations";
 import ProductsPage from "@/pages/ProductsPage";
 import CartPage from "@/pages/CartPage";
 import MenuPage from "@/pages/MenuPage";
-import CommunesPage from "@/pages/CommunesPage"; // Add this import
+import CommunesPage from "@/pages/CommunesPage";
 
 export function AppRoutes() {
   return (
     <Routes>
+      {/* Product Detail Routes - OUTSIDE MainLayout for unrestricted scrolling */}
+      <Route
+        path="product/:id/:tab"
+        element={
+          <CachedRoute>
+            <ProductDetail />
+          </CachedRoute>
+        }
+      />
+      
+      <Route path="product/:id" element={<Navigate to="overview" replace />} />
+
+      <Route
+        path="product/:id/description"
+        element={
+          <CachedRoute>
+            <ProductDescriptionPage />
+          </CachedRoute>
+        }
+      />
+
+      <Route
+        path="product/:id/comments"
+        element={
+          <CachedRoute>
+            <ProductCommentsPage />
+          </CachedRoute>
+        }
+      />
+
+      <Route
+        path="product/:id/qa"
+        element={
+          <CachedRoute>
+            <ProductQAPage />
+          </CachedRoute>
+        }
+      />
+
+      <Route
+        path="product/:id/ask-question"
+        element={
+          <CachedRoute>
+            <AskQuestionPage />
+          </CachedRoute>
+        }
+      />
+
+      <Route
+        path="single-product/:id"
+        element={
+          <CachedRoute>
+            <SingleProductDetail />
+          </CachedRoute>
+        }
+      />
+
+      <Route
+        path="single-product/:id/comments"
+        element={
+          <CachedRoute>
+            <ProductCommentsPage />
+          </CachedRoute>
+        }
+      />
+
+      <Route
+        path="single-product/:id/ask-question"
+        element={
+          <CachedRoute>
+            <AskQuestionPage />
+          </CachedRoute>
+        }
+      />
+
+      {/* All other routes - INSIDE MainLayout */}
       <Route path="/" element={<MainLayout />}>
         <Route
           index
@@ -60,80 +136,6 @@ export function AppRoutes() {
           element={
             <CachedRoute>
               <Index />
-            </CachedRoute>
-          }
-        />
-
-        <Route
-          path="product/:id/:tab"
-          element={
-            <CachedRoute>
-              <ProductDetail />
-            </CachedRoute>
-          }
-        />
-
-        <Route path="product/:id" element={<Navigate to="overview" replace />} />
-
-        <Route
-          path="product/:id/description"
-          element={
-            <CachedRoute>
-              <ProductDescriptionPage />
-            </CachedRoute>
-          }
-        />
-
-        <Route
-          path="product/:id/comments"
-          element={
-            <CachedRoute>
-              <ProductCommentsPage />
-            </CachedRoute>
-          }
-        />
-
-        <Route
-          path="product/:id/qa"
-          element={
-            <CachedRoute>
-              <ProductQAPage />
-            </CachedRoute>
-          }
-        />
-
-        <Route
-          path="product/:id/ask-question"
-          element={
-            <CachedRoute>
-              <AskQuestionPage />
-            </CachedRoute>
-          }
-        />
-
-        <Route
-          path="single-product/:id"
-          element={
-            <CachedRoute>
-              <SingleProductDetail />
-            </CachedRoute>
-          }
-        />
-
-        <Route
-          path="single-product/:id/comments"
-          element={
-            <CachedRoute>
-              <ProductCommentsPage />
-            </CachedRoute>
-          }
-        />
-
-        <Route
-          path="single-product/:id/ask-question"
-          element={
-            <CachedRoute>
-              <AskQuestionPage />
             </CachedRoute>
           }
         />
@@ -267,7 +269,6 @@ export function AppRoutes() {
           }
         />
 
-        {/* Add CommunesPage route */}
         <Route
           path="communes"
           element={
