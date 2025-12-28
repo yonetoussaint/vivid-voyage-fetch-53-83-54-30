@@ -6,6 +6,7 @@ import {
   X, Search, TrendingUp, TrendingDown, Flame, Zap, ChevronDown, 
   MapPin, Camera, Heart, Share, ChevronLeft, LucideIcon 
 } from 'lucide-react';
+import { PiShareFat } from 'react-icons/pi';
 import CategoryTabs from './header/CategoryTabs';
 import { VerificationBadge } from '@/components/shared/VerificationBadge';
 
