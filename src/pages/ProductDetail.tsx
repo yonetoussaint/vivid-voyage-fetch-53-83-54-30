@@ -13,6 +13,7 @@ import ProductImageGallery from "@/components/ProductImageGallery";
 import AliExpressHeader from "@/components/home/AliExpressHeader";
 import { VerificationBadge } from '@/components/shared/VerificationBadge';
 import InfiniteContentGrid from "@/components/InfiniteContentGrid";
+import FlashDeals from "@/components/home/FlashDeals";
 
 interface ProductDetailProps {
   productId?: string;
@@ -385,6 +386,19 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
           <IPhoneXRListing 
             product={listingProduct}
             onReadMore={() => {}}
+          />
+        </div>
+
+        {/* More from this store - FlashDeals Component */}
+        <div className="mt-4">
+          <FlashDeals 
+            title="More from this store"
+            showSectionHeader={true}
+            showCountdown={false}
+            showTitleChevron={false}
+            maxProducts={20}
+            // You can add more props as needed
+            // productType={product?.category} // If you want to filter by category
           />
         </div>
 
