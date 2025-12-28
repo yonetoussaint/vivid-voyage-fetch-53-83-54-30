@@ -1,4 +1,3 @@
-// Updated ProductCard.tsx
 import React, { useState } from "react";
 
 interface Product {
@@ -17,17 +16,13 @@ interface Product {
 interface ProductCardProps {
   product: Product;
   renderTag: (tag: string) => React.ReactNode;
-  aspectRatio?: 'square' | 'auto'; // Add aspectRatio prop
-  showStockIndicator?: boolean; // Add stock indicator prop
-  stock?: number; // Add stock prop
+  aspectRatio?: 'square' | 'auto';
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ 
   product, 
   renderTag,
-  aspectRatio = 'auto', // Default to auto
-  showStockIndicator = false,
-  stock = 0
+  aspectRatio = 'auto',
 }) => {
   const [imageError, setImageError] = useState(false);
   const soldCount = product.sold_count || Math.floor(Math.random() * 10000) + 100;
@@ -63,12 +58,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
           loading="lazy"
           onError={() => setImageError(true)}
         />
-        {/* Stock Indicator */}
-        {showStockIndicator && stock > 0 && (
-          <div className="absolute top-0 left-0 bg-[#FF4747] text-white text-[10px] px-1.5 py-0.5 rounded-br-md font-medium">
-            {stock} left
-          </div>
-        )}
         {(imageError || !product.product_images?.[0]?.src) && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
             <span className="text-gray-400 text-xs text-center px-2">
