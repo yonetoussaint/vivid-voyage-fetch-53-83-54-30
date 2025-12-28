@@ -58,19 +58,6 @@ const FlashDealsSkeleton: React.FC<{
   );
 };
 
-// Helper function to render tags for ProductCard
-const renderTag = (tag: string) => {
-  const cleanTag = tag.replace(/\+/g, ' ');
-  return (
-    <span 
-      key={tag} 
-      className="inline-block bg-[#FF4747] text-white text-[8px] px-1 py-0.5 mr-0.5 rounded-sm font-medium"
-    >
-      {cleanTag}
-    </span>
-  );
-};
-
 export default function FlashDeals({ 
   productType, 
   title = "FLASH DEALS", 
@@ -217,11 +204,12 @@ export default function FlashDeals({
                     onClick={() => handleProductClick(product.id)}
                     className="cursor-pointer h-full"
                   >
-                    {/* Use ProductCard component with square aspect ratio */}
+                    {/* Use ProductCard component without tags, single line name */}
                     <ProductCard 
                       product={product}
-                      renderTag={renderTag}
                       aspectRatio="square" // Force square images
+                      showTags={false} // Don't show tags in FlashDeals
+                      singleLineName={true} // Single line name for FlashDeals
                     />
                   </div>
                 </div>
