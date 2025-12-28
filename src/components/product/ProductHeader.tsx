@@ -61,6 +61,7 @@ interface HeaderActionButtonProps {
   shareCount?: number;
 }
 
+// Update the HeaderActionButton component to handle react-icons properly
 const HeaderActionButton = ({ 
   Icon, 
   active = false, 
@@ -71,7 +72,8 @@ const HeaderActionButton = ({
   fillWhenActive = true,
   transform = '',
   likeCount,
-  shareCount
+  shareCount,
+  scrolled = false // New: scrolled state removes background
 }: HeaderActionButtonProps) => {
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -94,6 +96,36 @@ const HeaderActionButton = ({
   const expandedThreshold = 0.2;
   const fadingThreshold = 0.4;
 
+  // Check if it's a react-icon (they usually have displayName)
+  const isReactIcon = Icon.displayName !== undefined;
+
+  // When scrolled, show simple button without background
+  if (scrolled) {
+    return (
+      <button
+        onClick={handleClick}
+        className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700 hover:bg-gray-100"
+      >
+        <Icon
+          size={20}
+          // React icons use fill, lucide uses strokeWidth
+          strokeWidth={!isReactIcon ? 2.5 : undefined}
+          className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
+          style={{
+            fill: active && fillWhenActive ? activeColor : 
+                  isReactIcon ? 'rgba(75, 85, 99, 0.9)' : 'transparent',
+            color: `rgba(75, 85, 99, 0.9)`
+          }}
+        />
+        {badge && (
+          <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[8px] rounded-full h-3 w-3 flex items-center justify-center animate-scale-in">
+            {badge}
+          </span>
+        )}
+      </button>
+    );
+  }
+
   // Show horizontal layout with count in non-scroll state
   if (count !== undefined && progress < expandedThreshold) {
     return (
@@ -107,10 +139,11 @@ const HeaderActionButton = ({
         >
           <Icon
             size={20}
-            strokeWidth={2.5}
+            strokeWidth={!isReactIcon ? 2.5 : undefined}
             className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
             style={{
-              fill: active && fillWhenActive ? activeColor : 'transparent',
+              fill: active && fillWhenActive ? activeColor : 
+                    isReactIcon ? `rgba(255, 255, 255, ${0.9 - (progress * 0.2)})` : 'transparent',
               color: `rgba(255, 255, 255, ${0.9 - (progress * 0.2)})`
             }}
           />
@@ -146,10 +179,14 @@ const HeaderActionButton = ({
         >
           <Icon
             size={20}
-            strokeWidth={2.5}
+            strokeWidth={!isReactIcon ? 2.5 : undefined}
             className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
             style={{
-              fill: active && fillWhenActive ? activeColor : 'transparent',
+              fill: active && fillWhenActive ? activeColor : 
+                    isReactIcon ? (progress > 0.5 
+                      ? `rgba(75, 85, 99, ${0.7 + (progress * 0.3)})` 
+                      : `rgba(255, 255, 255, ${0.9 - (progress * 0.3)})`)
+                    : 'transparent',
               color: progress > 0.5 
                 ? `rgba(75, 85, 99, ${0.7 + (progress * 0.3)})` 
                 : `rgba(255, 255, 255, ${0.9 - (progress * 0.3)})`
@@ -174,7 +211,7 @@ const HeaderActionButton = ({
     );
   }
 
-  // Compact circular button state
+  // Compact circular button state (for transition before scrolled)
   return (
     <div 
       className="rounded-full transition-all duration-700"
@@ -186,10 +223,14 @@ const HeaderActionButton = ({
       >
         <Icon
           size={20}
-          strokeWidth={2.5}
+          strokeWidth={!isReactIcon ? 2.5 : undefined}
           className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
           style={{
-            fill: active && fillWhenActive ? activeColor : 'transparent',
+            fill: active && fillWhenActive ? activeColor : 
+                  isReactIcon ? (progress > 0.5 
+                    ? `rgba(75, 85, 99, ${0.7 + (progress * 0.3)})` 
+                    : `rgba(255, 255, 255, ${0.9 - (progress * 0.2)})`)
+                  : 'transparent',
             color: progress > 0.5 
               ? `rgba(75, 85, 99, ${0.7 + (progress * 0.3)})` 
               : `rgba(255, 255, 255, ${0.9 - (progress * 0.2)})`
