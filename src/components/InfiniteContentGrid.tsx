@@ -96,7 +96,7 @@ const InfiniteContentGrid: React.FC<InfiniteContentGridProps> = ({
   React.useEffect(() => {
     const reels = visibleContent.filter(item => item.type === 'reel');
     const products = visibleContent.filter(item => item.type === 'product');
-    
+
     console.log(`InfiniteContentGrid - Products Only Mode:`);
     console.log(`  Total items from hook: ${visibleContent.length}`);
     console.log(`  Products: ${products.length}`);
