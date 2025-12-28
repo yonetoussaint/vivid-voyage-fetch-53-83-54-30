@@ -1,4 +1,4 @@
-// ProductDetail.tsx - With ProductHeader inline and fixed
+// ProductDetail.tsx - Fixed header version
 import React, { useState, useRef, useEffect } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useProduct } from "@/hooks/useProduct";
@@ -534,20 +534,19 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   const IconComponent = inPanel ? X : ChevronLeft;
 
   return (
-    <>
-      {/* INLINE PRODUCT HEADER - FIXED AT THE TOP */}
+    <div className="relative">
+      {/* FIXED HEADER - This will stay fixed at the top */}
       {!hideHeader && (
-        <div
-          className="fixed top-0 left-0 right-0 z-50 flex flex-col transition-all duration-300"
+        <div 
           style={{
             position: 'fixed',
             top: 0,
             left: 0,
             right: 0,
+            zIndex: 50,
             width: '100%'
           }}
         >
-          {/* Main Header Container - Fixed at the top */}
           <div
             className="w-full transition-all duration-700"
             style={{
@@ -676,9 +675,9 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
         </div>
       )}
 
-      {/* Main content - Starts from top edge, flows under fixed header */}
-      <div className="pt-0">
-        {/* ProductImageGallery - Should extend to top of viewport */}
+      {/* Main content - Add top padding to account for fixed header height */}
+      <div style={{ paddingTop: hideHeader ? '0px' : '56px' }}>
+        {/* ProductImageGallery */}
         <div className="w-full bg-white">
           <ProductImageGallery 
             ref={galleryRef}
@@ -739,7 +738,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
           {/* Empty space for scrolling */}
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
