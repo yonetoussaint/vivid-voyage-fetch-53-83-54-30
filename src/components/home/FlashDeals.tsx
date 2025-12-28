@@ -222,8 +222,6 @@ export default function FlashDeals({
                       product={product}
                       renderTag={renderTag}
                       aspectRatio="square" // Force square images
-                      showStockIndicator={productType !== 'books'} // Show stock indicator for non-books
-                      stock={product.stock}
                     />
                   </div>
                 </div>
