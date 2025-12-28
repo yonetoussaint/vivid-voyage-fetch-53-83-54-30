@@ -80,7 +80,7 @@ interface HeaderActionButtonProps {
   transform?: string;
   likeCount?: number;
   shareCount?: number;
-  compact?: boolean; // New prop for compact mode
+  scrolled?: boolean; // New prop for scrolled state (no background)
 }
 
 const HeaderActionButton = ({ 
@@ -94,7 +94,7 @@ const HeaderActionButton = ({
   transform = '',
   likeCount,
   shareCount,
-  compact = false // New: compact mode for scrolled state
+  scrolled = false // New: scrolled state removes background
 }: HeaderActionButtonProps) => {
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -117,33 +117,28 @@ const HeaderActionButton = ({
   const expandedThreshold = 0.2;
   const fadingThreshold = 0.4;
 
-  // In compact mode, always show circular button
-  if (compact) {
+  // When scrolled, show simple button without background
+  if (scrolled) {
     return (
-      <div 
-        className="rounded-full transition-all duration-700"
-        style={{ backgroundColor: `rgba(0, 0, 0, 0.1)` }}
+      <button
+        onClick={handleClick}
+        className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700 relative hover:bg-gray-100"
       >
-        <button
-          onClick={handleClick}
-          className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700 relative"
-        >
-          <Icon
-            size={20}
-            strokeWidth={2.5}
-            className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
-            style={{
-              fill: active && fillWhenActive ? activeColor : 'transparent',
-              color: `rgba(75, 85, 99, 0.9)`
-            }}
-          />
-          {badge && (
-            <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[8px] rounded-full h-3 w-3 flex items-center justify-center animate-scale-in">
-              {badge}
-            </span>
-          )}
-        </button>
-      </div>
+        <Icon
+          size={20}
+          strokeWidth={2.5}
+          className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
+          style={{
+            fill: active && fillWhenActive ? activeColor : 'transparent',
+            color: `rgba(75, 85, 99, 0.9)`
+          }}
+        />
+        {badge && (
+          <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[8px] rounded-full h-3 w-3 flex items-center justify-center animate-scale-in">
+            {badge}
+          </span>
+        )}
+      </button>
     );
   }
 
@@ -227,7 +222,7 @@ const HeaderActionButton = ({
     );
   }
 
-  // Compact circular button state
+  // Compact circular button state (for transition before scrolled)
   return (
     <div 
       className="rounded-full transition-all duration-700"
@@ -561,7 +556,16 @@ export default function AliExpressHeader({
   return (
     <header 
       className="fixed top-0 w-full z-40" 
-      style={{ margin: 0, padding: 0, boxShadow: 'none' }}
+      style={{ 
+        margin: 0, 
+        padding: 0, 
+        boxShadow: 'none',
+        backgroundColor: mode === 'product-detail' 
+          ? `rgba(255, 255, 255, ${displayProgress * 0.95})` 
+          : 'white',
+        backdropFilter: mode === 'product-detail' && displayProgress > 0 ? `blur(${displayProgress * 8}px)` : 'none',
+        boxShadow: mode === 'product-detail' && displayProgress > 0.1 ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+      }}
     >
       {/* Header content based on mode */}
       {mode === 'home' && !hideSearchBar ? (
@@ -649,29 +653,31 @@ export default function AliExpressHeader({
           <div className="flex items-center justify-between w-full max-w-6xl mx-auto gap-2">
             {/* Left side: Back button */}
             <div className="flex items-center flex-shrink-0">
-              <div 
-                className="rounded-full transition-all duration-700"
-                style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})` }}
+              <button 
+                className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700 hover:bg-gray-100"
+                onClick={onBackClick}
+                style={{
+                  backgroundColor: showSearchBarInProductDetail 
+                    ? 'transparent' 
+                    : `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})`
+                }}
               >
-                <button 
-                  className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700"
-                  onClick={onBackClick}
-                >
-                  <IconComponent
-                    size={24}
-                    strokeWidth={2.5}
-                    className="transition-all duration-700"
-                    style={{
-                      color: displayProgress > 0.5 
+                <IconComponent
+                  size={24}
+                  strokeWidth={2.5}
+                  className="transition-all duration-700"
+                  style={{
+                    color: showSearchBarInProductDetail
+                      ? `rgba(75, 85, 99, 0.9)`
+                      : displayProgress > 0.5 
                         ? `rgba(75, 85, 99, ${0.7 + (displayProgress * 0.3)})` 
                         : `rgba(255, 255, 255, ${0.9 - (displayProgress * 0.2)})`
-                    }}
-                  />
-                </button>
-              </div>
+                  }}
+                />
+              </button>
 
               {/* Seller info when not scrolled much */}
-              {displayProgress < 0.3 && productData?.sellers && (
+              {displayProgress < 0.3 && productData?.sellers && !showSearchBarInProductDetail && (
                 <div 
                   className="ml-2 rounded-full transition-all duration-700 flex-shrink-0"
                   style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})` }}
@@ -766,7 +772,7 @@ export default function AliExpressHeader({
               </div>
             )}
 
-            {/* Right side: Action buttons */}
+            {/* Right side: Action buttons - NO BACKGROUND WHEN SCROLLED */}
             <div className="flex gap-2 flex-shrink-0">
               {defaultActionButtons.map((button, index) => (
                 <HeaderActionButton
@@ -777,7 +783,7 @@ export default function AliExpressHeader({
                   progress={displayProgress}
                   activeColor={button.activeColor}
                   likeCount={button.count}
-                  compact={showSearchBarInProductDetail}
+                  scrolled={showSearchBarInProductDetail} // Pass scrolled state
                 />
               ))}
             </div>
