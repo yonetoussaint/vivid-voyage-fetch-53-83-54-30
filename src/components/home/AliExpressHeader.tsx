@@ -9,7 +9,13 @@ import {
   useHeaderLocation,
   useHeaderTabs,
   useHeaderSearchList,
-  useHeaderActionButtons
+  useHeaderActionButtons,
+  useHeaderActionButton,
+  useSellerInfo,
+  useHeaderBackground,
+  useHeaderSearchBar,
+  useHeaderIcon,
+  useHeaderRightIcons
 } from '@/hooks/header.hooks';
 
 interface AliExpressHeaderProps {
@@ -82,72 +88,30 @@ const HeaderActionButton = ({
   shareCount?: number;
   scrolled?: boolean;
 }) => {
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [iconProps, setIconProps] = useState<Record<string, any>>({});
-
-  // Check if it's a lucide icon or react-icon
-  useEffect(() => {
-    const isLucideIcon = Icon.name && typeof Icon.name === 'string';
-    const isReactIcon = Icon.displayName && typeof Icon.displayName === 'string';
-
-    if (isLucideIcon) {
-      setIconProps({ strokeWidth: 2.5 });
-    } else if (isReactIcon) {
-      setIconProps({});
-    }
-  }, [Icon]);
-
-  const handleClick = () => {
-    if (onClick) {
-      onClick();
-    }
-
-    // Only trigger animation for heart icon
-    if (Icon.name === "Heart" || Icon.displayName === "Heart") {
-      setIsAnimating(true);
-      setTimeout(() => setIsAnimating(false), 700);
-    }
-  };
-
-  // Determine which count to show
-  const count = likeCount ?? shareCount;
-
-  // Improved transition thresholds for smoother animation
-  const expandedThreshold = 0.2;
-  const fadingThreshold = 0.4;
-
-  // Check icon type
-  const isLucideIcon = Icon.name && typeof Icon.name === 'string';
-  const isReactIcon = Icon.displayName && typeof Icon.displayName === 'string';
-
-  // Get appropriate color and fill based on icon type
-  const getIconStyle = () => {
-    const baseColor = progress > 0.5 
-      ? `rgba(75, 85, 99, ${0.7 + (progress * 0.3)})` 
-      : `rgba(255, 255, 255, ${0.9 - (progress * 0.2)})`;
-
-    const scrolledColor = 'rgba(75, 85, 99, 0.9)';
-
-    if (scrolled) {
-      return {
-        color: scrolledColor,
-        fill: isReactIcon ? scrolledColor : (active && fillWhenActive ? activeColor : 'transparent')
-      };
-    }
-
-    if (isReactIcon) {
-      return {
-        color: baseColor,
-        fill: active && fillWhenActive ? activeColor : baseColor
-      };
-    }
-
-    // Lucide icons
-    return {
-      color: baseColor,
-      fill: active && fillWhenActive ? activeColor : 'transparent'
-    };
-  };
+  const {
+    isAnimating,
+    iconProps,
+    count,
+    shouldShowHorizontalLayout,
+    shouldShowFadingCount,
+    shouldShowCompactButton,
+    transitionProgress,
+    handleClick,
+    getIconStyle,
+    expandedThreshold,
+    fadingThreshold
+  } = useHeaderActionButton({
+    Icon,
+    active,
+    onClick,
+    activeColor,
+    fillWhenActive,
+    progress,
+    likeCount,
+    shareCount,
+    scrolled,
+    badge
+  });
 
   const iconStyle = getIconStyle();
 
@@ -174,7 +138,7 @@ const HeaderActionButton = ({
   }
 
   // Show horizontal layout with count in non-scroll state
-  if (count !== undefined && progress < expandedThreshold) {
+  if (shouldShowHorizontalLayout) {
     return (
       <div 
         className="rounded-full transition-all duration-700 hover-scale"
@@ -205,9 +169,7 @@ const HeaderActionButton = ({
   }
 
   // Transitional state - fading count while shrinking
-  if (count !== undefined && progress < fadingThreshold) {
-    const transitionProgress = (progress - expandedThreshold) / (fadingThreshold - expandedThreshold);
-
+  if (shouldShowFadingCount) {
     return (
       <div 
         className="rounded-full transition-all duration-700"
@@ -340,21 +302,45 @@ export default function AliExpressHeader({
     isFavorite
   });
 
-  const IconComponent = inPanel ? X : ChevronLeft;
+  const { getHeaderStyle } = useHeaderBackground({ mode, displayProgress });
+  const { getInputClassName } = useHeaderSearchBar({
+    searchQuery,
+    placeholder,
+    flatBorders,
+    handleSubmit,
+    handleInputChange,
+    handleFocus,
+    handleClearSearch
+  });
+  const { IconComponent, iconStrokeWidth } = useHeaderIcon({ Icon: inPanel ? X : ChevronLeft, inPanel });
+  const { 
+    shouldShowSellerInfo,
+    formatFollowerCount,
+    handleSellerClick,
+    getSellerContainerStyle,
+    getSellerTextStyle,
+    getFollowerTextStyle
+  } = useSellerInfo({
+    productData,
+    displayProgress,
+    showSearchBarInProductDetail
+  });
+  const {
+    handleCameraClick,
+    getLocationButtonClassName
+  } = useHeaderRightIcons({
+    searchQuery,
+    handleClearSearch,
+    selectedCity,
+    locationDropdownRef,
+    handleLocationClick,
+    flatBorders
+  });
 
   return (
     <header 
       className="fixed top-0 w-full z-40" 
-      style={{ 
-        margin: 0, 
-        padding: 0, 
-        boxShadow: 'none',
-        backgroundColor: mode === 'product-detail' 
-          ? `rgba(255, 255, 255, ${displayProgress * 0.95})` 
-          : 'white',
-        backdropFilter: mode === 'product-detail' && displayProgress > 0 ? `blur(${displayProgress * 8}px)` : 'none',
-        boxShadow: mode === 'product-detail' && displayProgress > 0.1 ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
-      }}
+      style={getHeaderStyle()}
     >
       {/* Header content based on mode */}
       {mode === 'home' && !hideSearchBar ? (
@@ -369,6 +355,9 @@ export default function AliExpressHeader({
           selectedCity={selectedCity}
           locationDropdownRef={locationDropdownRef}
           handleLocationClick={handleLocationClick}
+          getInputClassName={getInputClassName}
+          handleCameraClick={handleCameraClick}
+          getLocationButtonClassName={getLocationButtonClassName}
         />
       ) : mode === 'product-detail' ? (
         <ProductDetailHeader
@@ -378,14 +367,21 @@ export default function AliExpressHeader({
           onBackClick={onBackClick}
           inPanel={inPanel}
           IconComponent={IconComponent}
+          iconStrokeWidth={iconStrokeWidth}
           searchQuery={searchQuery}
           placeholder={placeholder}
-          flatBorders={flatBorders}
+          getInputClassName={getInputClassName}
           handleSubmit={handleSubmit}
           handleInputChange={handleInputChange}
           handleFocus={handleFocus}
           handleClearSearch={handleClearSearch}
           defaultActionButtons={defaultActionButtons}
+          shouldShowSellerInfo={shouldShowSellerInfo}
+          formatFollowerCount={formatFollowerCount}
+          handleSellerClick={handleSellerClick}
+          getSellerContainerStyle={getSellerContainerStyle}
+          getSellerTextStyle={getSellerTextStyle}
+          getFollowerTextStyle={getFollowerTextStyle}
         />
       ) : null}
 
@@ -421,7 +417,10 @@ const HomeHeader = ({
   handleClearSearch,
   selectedCity,
   locationDropdownRef,
-  handleLocationClick
+  handleLocationClick,
+  getInputClassName,
+  handleCameraClick,
+  getLocationButtonClassName
 }: {
   searchQuery: string;
   placeholder: string;
@@ -433,6 +432,9 @@ const HomeHeader = ({
   selectedCity: string;
   locationDropdownRef: React.RefObject<HTMLDivElement>;
   handleLocationClick: () => void;
+  getInputClassName: () => string;
+  handleCameraClick: () => void;
+  getLocationButtonClassName: () => string;
 }) => (
   <div className="flex items-center justify-between px-2 transition-all duration-500 ease-in-out bg-white" style={{ height: '36px' }}>
     <div className="flex-1 relative max-w-full mx-auto">
@@ -444,11 +446,7 @@ const HomeHeader = ({
             value={searchQuery}
             onChange={handleInputChange}
             onFocus={handleFocus}
-            className={`
-              w-full px-3 py-1 pr-16 text-sm font-medium text-gray-900 bg-white 
-              transition-all duration-300 shadow-sm placeholder-gray-500
-              ${flatBorders ? 'rounded-none border-2 border-gray-900' : 'rounded-full border-2 border-gray-800'}
-            `}
+            className={getInputClassName()}
           />
           <RightIcons
             searchQuery={searchQuery}
@@ -456,7 +454,8 @@ const HomeHeader = ({
             selectedCity={selectedCity}
             locationDropdownRef={locationDropdownRef}
             handleLocationClick={handleLocationClick}
-            flatBorders={flatBorders}
+            handleCameraClick={handleCameraClick}
+            getLocationButtonClassName={getLocationButtonClassName}
           />
         </div>
       </form>
@@ -470,14 +469,16 @@ const RightIcons = ({
   selectedCity,
   locationDropdownRef,
   handleLocationClick,
-  flatBorders
+  handleCameraClick,
+  getLocationButtonClassName
 }: {
   searchQuery: string;
   handleClearSearch: () => void;
   selectedCity: string;
   locationDropdownRef: React.RefObject<HTMLDivElement>;
   handleLocationClick: () => void;
-  flatBorders: boolean;
+  handleCameraClick: () => void;
+  getLocationButtonClassName: () => string;
 }) => (
   <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
     {searchQuery.trim() ? (
@@ -493,7 +494,7 @@ const RightIcons = ({
         <button
           type="button"
           className="p-1 transition-colors"
-          onClick={() => console.log('Camera button clicked')}
+          onClick={handleCameraClick}
         >
           <Camera className="h-6 w-6 text-gray-900 font-bold stroke-[1.5]" />
         </button>
@@ -501,14 +502,7 @@ const RightIcons = ({
           <button
             type="button"
             onClick={handleLocationClick}
-            className={`
-              flex items-center justify-between gap-1.5
-              px-2.5 py-1
-              text-xs font-medium text-gray-600 
-              bg-gray-100 hover:bg-gray-200
-              transition-all duration-200
-              ${flatBorders ? 'rounded-none' : 'rounded-full'}
-            `}
+            className={getLocationButtonClassName()}
           >
             <MapPin className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
             <span className="max-w-[80px] truncate">{selectedCity}</span>
@@ -527,14 +521,21 @@ const ProductDetailHeader = ({
   onBackClick,
   inPanel,
   IconComponent,
+  iconStrokeWidth,
   searchQuery,
   placeholder,
-  flatBorders,
+  getInputClassName,
   handleSubmit,
   handleInputChange,
   handleFocus,
   handleClearSearch,
-  defaultActionButtons
+  defaultActionButtons,
+  shouldShowSellerInfo,
+  formatFollowerCount,
+  handleSellerClick,
+  getSellerContainerStyle,
+  getSellerTextStyle,
+  getFollowerTextStyle
 }: {
   displayProgress: number;
   showSearchBarInProductDetail: boolean;
@@ -542,14 +543,21 @@ const ProductDetailHeader = ({
   onBackClick?: () => void;
   inPanel: boolean;
   IconComponent: React.ComponentType<any>;
+  iconStrokeWidth: number;
   searchQuery: string;
   placeholder: string;
-  flatBorders: boolean;
+  getInputClassName: () => string;
   handleSubmit: (e: React.FormEvent) => void;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleFocus: () => void;
   handleClearSearch: () => void;
   defaultActionButtons: Array<any>;
+  shouldShowSellerInfo: boolean;
+  formatFollowerCount: (count?: number) => string;
+  handleSellerClick: () => void;
+  getSellerContainerStyle: () => React.CSSProperties;
+  getSellerTextStyle: () => React.CSSProperties;
+  getFollowerTextStyle: () => React.CSSProperties;
 }) => (
   <div className="py-2 px-3 w-full">
     <div className="flex items-center justify-between w-full max-w-6xl mx-auto">
@@ -558,14 +566,20 @@ const ProductDetailHeader = ({
         showSearchBarInProductDetail={showSearchBarInProductDetail}
         productData={productData}
         onBackClick={onBackClick}
-        inPanel={inPanel}
         IconComponent={IconComponent}
+        iconStrokeWidth={iconStrokeWidth}
+        shouldShowSellerInfo={shouldShowSellerInfo}
+        formatFollowerCount={formatFollowerCount}
+        handleSellerClick={handleSellerClick}
+        getSellerContainerStyle={getSellerContainerStyle}
+        getSellerTextStyle={getSellerTextStyle}
+        getFollowerTextStyle={getFollowerTextStyle}
       />
       {showSearchBarInProductDetail && (
         <SearchBarSection
           searchQuery={searchQuery}
           placeholder={placeholder}
-          flatBorders={flatBorders}
+          getInputClassName={getInputClassName}
           handleSubmit={handleSubmit}
           handleInputChange={handleInputChange}
           handleFocus={handleFocus}
@@ -586,15 +600,27 @@ const LeftSection = ({
   showSearchBarInProductDetail,
   productData,
   onBackClick,
-  inPanel,
-  IconComponent
+  IconComponent,
+  iconStrokeWidth,
+  shouldShowSellerInfo,
+  formatFollowerCount,
+  handleSellerClick,
+  getSellerContainerStyle,
+  getSellerTextStyle,
+  getFollowerTextStyle
 }: {
   displayProgress: number;
   showSearchBarInProductDetail: boolean;
   productData?: any;
   onBackClick?: () => void;
-  inPanel: boolean;
   IconComponent: React.ComponentType<any>;
+  iconStrokeWidth: number;
+  shouldShowSellerInfo: boolean;
+  formatFollowerCount: (count?: number) => string;
+  handleSellerClick: () => void;
+  getSellerContainerStyle: () => React.CSSProperties;
+  getSellerTextStyle: () => React.CSSProperties;
+  getFollowerTextStyle: () => React.CSSProperties;
 }) => (
   <div className="flex items-center flex-shrink-0">
     <button 
@@ -608,7 +634,7 @@ const LeftSection = ({
     >
       <IconComponent
         size={24}
-        strokeWidth={2.5}
+        strokeWidth={iconStrokeWidth}
         className="transition-all duration-700"
         style={{
           color: showSearchBarInProductDetail
@@ -619,23 +645,40 @@ const LeftSection = ({
         }}
       />
     </button>
-    {displayProgress < 0.3 && productData?.sellers && !showSearchBarInProductDetail && (
-      <SellerInfo productData={productData} displayProgress={displayProgress} />
+    {shouldShowSellerInfo && productData?.sellers && (
+      <SellerInfo 
+        productData={productData}
+        formatFollowerCount={formatFollowerCount}
+        handleSellerClick={handleSellerClick}
+        getSellerContainerStyle={getSellerContainerStyle}
+        getSellerTextStyle={getSellerTextStyle}
+        getFollowerTextStyle={getFollowerTextStyle}
+      />
     )}
   </div>
 );
 
-const SellerInfo = ({ productData, displayProgress }: { productData: any; displayProgress: number }) => (
+const SellerInfo = ({ 
+  productData, 
+  formatFollowerCount,
+  handleSellerClick,
+  getSellerContainerStyle,
+  getSellerTextStyle,
+  getFollowerTextStyle
+}: { 
+  productData: any; 
+  formatFollowerCount: (count?: number) => string;
+  handleSellerClick: () => void;
+  getSellerContainerStyle: () => React.CSSProperties;
+  getSellerTextStyle: () => React.CSSProperties;
+  getFollowerTextStyle: () => React.CSSProperties;
+}) => (
   <div 
     className="ml-2 rounded-full transition-all duration-700 flex-shrink-0"
-    style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})` }}
+    style={getSellerContainerStyle()}
   >
     <button
-      onClick={() => {
-        if (productData?.sellers?.id) {
-          // navigate(`/seller/${productData.sellers.id}`);
-        }
-      }}
+      onClick={handleSellerClick}
       className="flex items-center gap-1.5 px-2.5 h-8 rounded-full transition-all duration-700 relative"
     >
       <div className="w-5 h-5 rounded-full bg-gray-100 overflow-hidden flex-shrink-0">
@@ -652,25 +695,16 @@ const SellerInfo = ({ productData, displayProgress }: { productData: any; displa
       </div>
       <span 
         className="text-xs font-medium transition-all duration-700"
-        style={{
-          color: `rgba(255, 255, 255, ${0.95 - (displayProgress * 0.2)})`
-        }}
+        style={getSellerTextStyle()}
       >
         {productData.sellers.name}
       </span>
       {productData.sellers.verified && <VerificationBadge />}
       <span 
         className="text-xs font-medium transition-all duration-700"
-        style={{
-          color: `rgba(255, 255, 255, ${0.7 - (displayProgress * 0.2)})`
-        }}
+        style={getFollowerTextStyle()}
       >
-        {productData.sellers.followers_count && productData.sellers.followers_count >= 1000000 
-          ? `${(productData.sellers.followers_count / 1000000).toFixed(1)}M`
-          : productData.sellers.followers_count && productData.sellers.followers_count >= 1000
-          ? `${(productData.sellers.followers_count / 1000).toFixed(1)}K`
-          : productData.sellers.followers_count?.toString() || '0'
-        }
+        {formatFollowerCount(productData.sellers.followers_count)}
       </span>
     </button>
   </div>
@@ -679,7 +713,7 @@ const SellerInfo = ({ productData, displayProgress }: { productData: any; displa
 const SearchBarSection = ({
   searchQuery,
   placeholder,
-  flatBorders,
+  getInputClassName,
   handleSubmit,
   handleInputChange,
   handleFocus,
@@ -687,7 +721,7 @@ const SearchBarSection = ({
 }: {
   searchQuery: string;
   placeholder: string;
-  flatBorders: boolean;
+  getInputClassName: () => string;
   handleSubmit: (e: React.FormEvent) => void;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleFocus: () => void;
@@ -703,11 +737,7 @@ const SearchBarSection = ({
             value={searchQuery}
             onChange={handleInputChange}
             onFocus={handleFocus}
-            className={`
-              w-full px-3 py-1 pr-10 text-sm font-medium text-gray-900 bg-white 
-              transition-all duration-300 shadow-sm placeholder-gray-500
-              ${flatBorders ? 'rounded-none border-2 border-gray-900' : 'rounded-full border-2 border-gray-800'}
-            `}
+            className={getInputClassName()}
           />
           <div className="absolute right-1 top-1/2 transform -translate-y-1/2">
             {searchQuery.trim() && (
@@ -817,7 +847,7 @@ const SearchListSection = ({
               focus:outline-none focus:ring-1 focus:ring-gray-400 focus:ring-offset-1
             `}
           >
-            {getTrendIcon(item.trend)}
+            {getTrendIcon(item.trend || 'popular')}
             {item.term}
           </button>
         ))}
