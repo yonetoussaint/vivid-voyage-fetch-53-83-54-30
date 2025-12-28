@@ -1,17 +1,16 @@
-// ProductDetail.tsx - Fixed version with proper fixed header and bottom spacer
+// ProductDetail.tsx - With ProductHeader inline and fixed
 import React, { useState, useRef, useEffect } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useProduct } from "@/hooks/useProduct";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/RedirectAuthContext';
 import { useAuthOverlay } from '@/context/AuthOverlayContext';
-import { Heart, Share, ChevronDown } from 'lucide-react';
+import { Heart, Share, ChevronDown, ChevronLeft, X, LucideIcon } from 'lucide-react';
 import ProductDetailError from "@/components/product/ProductDetailError";
 import { useQuery } from '@tanstack/react-query';
 import { fetchAllProducts } from '@/integrations/supabase/products';
 import ProductImageGallery from "@/components/ProductImageGallery";
-import ProductHeader from '@/components/product/ProductHeader';
-import { useNavigationLoading } from '@/hooks/useNavigationLoading';
+import { VerificationBadge } from '@/components/shared/VerificationBadge';
 
 interface ProductDetailProps {
   productId?: string;
@@ -20,6 +19,172 @@ interface ProductDetailProps {
   scrollContainerRef?: React.RefObject<HTMLDivElement>;
   stickyTopOffset?: number;
 }
+
+interface ActionButton {
+  Icon: any;
+  onClick?: () => void;
+  active?: boolean;
+  activeColor?: string;
+  count?: number;
+}
+
+// Header Action Button Component
+interface HeaderActionButtonProps {
+  Icon: LucideIcon;
+  active?: boolean;
+  onClick?: () => void;
+  progress: number;
+  activeColor?: string;
+  badge?: number;
+  fillWhenActive?: boolean;
+  transform?: string;
+  likeCount?: number;
+  shareCount?: number;
+}
+
+const HeaderActionButton = ({ 
+  Icon, 
+  active = false, 
+  onClick, 
+  progress, 
+  activeColor = '#f97316',
+  badge,
+  fillWhenActive = true,
+  transform = '',
+  likeCount,
+  shareCount
+}: HeaderActionButtonProps) => {
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    }
+
+    // Only trigger animation for heart icon
+    if (Icon.name === "Heart" || Icon.displayName === "Heart") {
+      setIsAnimating(true);
+      setTimeout(() => setIsAnimating(false), 700);
+    }
+  };
+
+  // Determine which count to show
+  const count = likeCount ?? shareCount;
+
+  // Improved transition thresholds for smoother animation
+  const expandedThreshold = 0.2;
+  const fadingThreshold = 0.4;
+
+  // Show horizontal layout with count in non-scroll state
+  if (count !== undefined && progress < expandedThreshold) {
+    return (
+      <div 
+        className="rounded-full transition-all duration-700 hover-scale"
+        style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - progress)})` }}
+      >
+        <button
+          onClick={handleClick}
+          className="flex items-center gap-1.5 px-2.5 h-8 rounded-full transition-all duration-700 relative"
+        >
+          <Icon
+            size={20}
+            strokeWidth={2.5}
+            className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
+            style={{
+              fill: active && fillWhenActive ? activeColor : 'transparent',
+              color: `rgba(255, 255, 255, ${0.9 - (progress * 0.2)})`
+            }}
+          />
+          <span 
+            className="text-xs font-medium transition-all duration-700 ease-out animate-fade-in"
+            style={{
+              color: active ? activeColor : `rgba(255, 255, 255, ${0.95 - (progress * 0.2)})`,
+              opacity: 1 - (progress / expandedThreshold),
+            }}
+          >
+            {count}
+          </span>
+        </button>
+      </div>
+    );
+  }
+
+  // Transitional state - fading count while shrinking
+  if (count !== undefined && progress < fadingThreshold) {
+    const transitionProgress = (progress - expandedThreshold) / (fadingThreshold - expandedThreshold);
+
+    return (
+      <div 
+        className="rounded-full transition-all duration-700"
+        style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - progress)})` }}
+      >
+        <button
+          onClick={handleClick}
+          className="flex items-center h-8 px-3 rounded-full transition-all duration-700 relative"
+          style={{
+            gap: `${6 - (transitionProgress * 6)}px`,
+          }}
+        >
+          <Icon
+            size={20}
+            strokeWidth={2.5}
+            className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
+            style={{
+              fill: active && fillWhenActive ? activeColor : 'transparent',
+              color: progress > 0.5 
+                ? `rgba(75, 85, 99, ${0.7 + (progress * 0.3)})` 
+                : `rgba(255, 255, 255, ${0.9 - (progress * 0.3)})`
+            }}
+          />
+          <span 
+            className="text-xs font-medium transition-all duration-700"
+            style={{
+              color: active ? activeColor : `rgba(255, 255, 255, ${0.9 - (progress * 0.3)})`,
+              opacity: 1 - transitionProgress,
+              transform: `scaleX(${1 - transitionProgress})`,
+              transformOrigin: 'left center',
+              width: `${20 * (1 - transitionProgress)}px`,
+              overflow: 'hidden',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {count}
+          </span>
+        </button>
+      </div>
+    );
+  }
+
+  // Compact circular button state
+  return (
+    <div 
+      className="rounded-full transition-all duration-700"
+      style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - progress)})` }}
+    >
+      <button
+        onClick={handleClick}
+        className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700 relative"
+      >
+        <Icon
+          size={20}
+          strokeWidth={2.5}
+          className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
+          style={{
+            fill: active && fillWhenActive ? activeColor : 'transparent',
+            color: progress > 0.5 
+              ? `rgba(75, 85, 99, ${0.7 + (progress * 0.3)})` 
+              : `rgba(255, 255, 255, ${0.9 - (progress * 0.2)})`
+          }}
+        />
+        {badge && (
+          <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[8px] rounded-full h-3 w-3 flex items-center justify-center animate-scale-in">
+            {badge}
+          </span>
+        )}
+      </button>
+    </div>
+  );
+};
 
 // Enhanced GalleryThumbnails with 5.5 items and horizontal scrolling
 const GalleryThumbnails = ({
@@ -224,23 +389,37 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   const { toast } = useToast();
   const { user } = useAuth();
   const { openAuthOverlay } = useAuthOverlay();
-  const { startLoading } = useNavigationLoading();
 
   const productId = propProductId || paramId;
   const { data: product, isLoading, error } = useProduct(productId!);
 
-  const headerRef = useRef<HTMLDivElement>(null);
   const galleryRef = useRef<any>(null);
 
   const [isFavorite, setIsFavorite] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentGalleryIndex, setCurrentGalleryIndex] = useState(0);
+  const [scrollY, setScrollY] = useState(0); // For scroll progress
 
   // Fetch all products for overview tab
   const { data: allProducts = [], isLoading: isLoadingProducts } = useQuery({
     queryKey: ['all-products-overview'],
     queryFn: fetchAllProducts,
   });
+
+  // Scroll progress tracking
+  useEffect(() => {
+    const onScroll = () => {
+      setScrollY(window.scrollY || window.pageYOffset || 0);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Calculate scroll progress for header transitions
+  const maxScroll = 120;
+  const scrollProgress = Math.min(scrollY / maxScroll, 1);
+  const displayProgress = scrollProgress;
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -275,13 +454,11 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
 
   const handleSearch = (query: string) => {
     if (query.trim()) {
-      startLoading();
       navigate(`/search?q=${encodeURIComponent(query.trim())}`);
     }
   };
 
   const handleSearchFocus = () => {
-    startLoading();
     navigate('/search');
   };
 
@@ -353,112 +530,216 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     change: product?.sales_change
   };
 
+  // Back/Close icon component
+  const IconComponent = inPanel ? X : ChevronLeft;
+
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Header - FIXED at the top */}
+    <>
+      {/* INLINE PRODUCT HEADER - FIXED AT THE TOP */}
       {!hideHeader && (
-        <div 
-          ref={headerRef} 
-          className="fixed top-0 left-0 right-0 z-50"
+        <div
+          className="fixed top-0 left-0 right-0 z-50 flex flex-col transition-all duration-300"
           style={{
-            // Ensure the fixed header doesn't push content down
             position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
             width: '100%'
           }}
         >
-          <ProductHeader
-            onCloseClick={handleBackClick}
-            onShareClick={handleShareClick}
-            actionButtons={actionButtons}
-            forceScrolledState={false}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            onSearch={handleSearch}
-            onSearchFocus={handleSearchFocus}
-            inPanel={inPanel}
+          {/* Main Header Container - Fixed at the top */}
+          <div
+            className="w-full transition-all duration-700"
+            style={{
+              backgroundColor: `rgba(255, 255, 255, ${displayProgress * 0.95})`,
+              backdropFilter: `blur(${displayProgress * 8}px)`,
+              // Start with transparent background, become opaque on scroll
+              boxShadow: displayProgress > 0.1 ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+            }}
+          >
+            {/* Main Header Content */}
+            <div className="py-2 px-3 w-full">
+              <div className="flex items-center justify-between w-full max-w-6xl mx-auto gap-4">
+                {/* Left side - Back button and seller info */}
+                <div className="flex items-center gap-3 flex-shrink-0 min-w-0 flex-1">
+                  {/* Back/Close Button - Always visible */}
+                  <div 
+                    className="rounded-full transition-all duration-700"
+                    style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})` }}
+                  >
+                    <button 
+                      className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700"
+                      onClick={handleBackClick}
+                    >
+                      <IconComponent
+                        size={24}
+                        strokeWidth={2.5}
+                        className="transition-all duration-700"
+                        style={{
+                          color: displayProgress > 0.5 
+                            ? `rgba(75, 85, 99, ${0.7 + (displayProgress * 0.3)})` 
+                            : `rgba(255, 255, 255, ${0.9 - (displayProgress * 0.2)})`
+                        }}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Seller info - shows when not scrolled AND seller exists */}
+                  {displayProgress < 0.5 && product?.sellers && (
+                    <div 
+                      className="rounded-full transition-all duration-700 flex-shrink-0"
+                      style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})` }}
+                    >
+                      <button
+                        onClick={() => {
+                          if (product?.sellers?.id) {
+                            navigate(`/seller/${product.sellers.id}`);
+                          }
+                        }}
+                        className="flex items-center gap-1.5 px-2.5 h-8 rounded-full transition-all duration-700 relative"
+                      >
+                        {/* Seller Avatar */}
+                        <div className="w-5 h-5 rounded-full bg-gray-100 overflow-hidden flex-shrink-0">
+                          <img 
+                            src={product.sellers.image_url || "https://picsum.photos/100/100?random=1"}
+                            alt={`${product.sellers.name} seller`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = "https://picsum.photos/100/100?random=1";
+                              target.onerror = null;
+                            }}
+                          />
+                        </div>
+                        
+                        {/* Seller Name */}
+                        <span 
+                          className="text-xs font-medium transition-all duration-700"
+                          style={{
+                            color: `rgba(255, 255, 255, ${0.95 - (displayProgress * 0.2)})`
+                          }}
+                        >
+                          {product.sellers.name}
+                        </span>
+                        
+                        {/* Verification Badge */}
+                        {product.sellers.verified && <VerificationBadge />}
+                        
+                        {/* Follower Count */}
+                        <span 
+                          className="text-xs font-medium transition-all duration-700"
+                          style={{
+                            color: `rgba(255, 255, 255, ${0.7 - (displayProgress * 0.2)})`
+                          }}
+                        >
+                          {product.sellers.followers_count >= 1000000 
+                            ? `${(product.sellers.followers_count / 1000000).toFixed(1)}M`
+                            : product.sellers.followers_count >= 1000
+                            ? `${(product.sellers.followers_count / 1000).toFixed(1)}K`
+                            : product.sellers.followers_count.toString()
+                          }
+                        </span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Right side - Action buttons */}
+                <div className="flex gap-2 flex-shrink-0">
+                  {/* Custom action buttons OR default heart button */}
+                  {actionButtons.length > 0 ? (
+                    actionButtons.map((button, index) => (
+                      <HeaderActionButton
+                        key={index}
+                        Icon={button.Icon}
+                        active={button.active}
+                        onClick={button.onClick}
+                        progress={displayProgress}
+                        activeColor={button.activeColor}
+                        likeCount={button.count}
+                      />
+                    ))
+                  ) : (
+                    <HeaderActionButton
+                      Icon={Heart}
+                      active={isFavorite}
+                      onClick={handleFavoriteClick}
+                      progress={displayProgress}
+                      activeColor="#f43f5e"
+                      likeCount={147}
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main content - Starts from top edge, flows under fixed header */}
+      <div className="pt-0">
+        {/* ProductImageGallery - Should extend to top of viewport */}
+        <div className="w-full bg-white">
+          <ProductImageGallery 
+            ref={galleryRef}
+            images={galleryImages}
+            videos={product?.product_videos || []}
+            model3dUrl={product?.model_3d_url}
             seller={product?.sellers}
+            product={{
+              id: product?.id || '',
+              name: product?.name || '',
+              price: product?.price || 0,
+              discount_price: product?.discount_price,
+              inventory: product?.inventory || 0,
+              sold_count: product?.sold_count || 0
+            }}
             onSellerClick={() => {
               if (product?.sellers?.id) {
                 navigate(`/seller/${product?.sellers?.id}`);
               }
             }}
+            onBuyNow={buyNow}
+            onImageIndexChange={(currentIndex) => {
+              setCurrentGalleryIndex(currentIndex);
+            }}
           />
         </div>
-      )}
 
-      {/* Main content with scrollable area - Content starts from top, flows under fixed header */}
-      <div 
-        ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto"
-      >
-        {/* Content starts here - no top padding needed since header is fixed overlay */}
-        <div className="w-full">
-          {/* ProductImageGallery - should extend to top of viewport */}
-          <div className="w-full bg-white">
-            <ProductImageGallery 
-              ref={galleryRef}
-              images={galleryImages}
-              videos={product?.product_videos || []}
-              model3dUrl={product?.model_3d_url}
-              seller={product?.sellers}
-              product={{
-                id: product?.id || '',
-                name: product?.name || '',
-                price: product?.price || 0,
-                discount_price: product?.discount_price,
-                inventory: product?.inventory || 0,
-                sold_count: product?.sold_count || 0
-              }}
-              onSellerClick={() => {
-                if (product?.sellers?.id) {
-                  navigate(`/seller/${product?.sellers?.id}`);
-                }
-              }}
-              onBuyNow={buyNow}
-              onImageIndexChange={(currentIndex) => {
-                setCurrentGalleryIndex(currentIndex);
-              }}
-            />
-          </div>
-
-          {/* GalleryThumbnails */}
-          <div className="mt-2">
-            <GalleryThumbnails
-              images={galleryImages}
-              currentIndex={currentGalleryIndex}
-              onThumbnailClick={(index) => {
-                setCurrentGalleryIndex(index);
-                if (galleryRef.current) {
-                  galleryRef.current.scrollTo?.(index);
-                }
-              }}
-            />
-          </div>
-
-          {/* IPhoneXRListing */}
-          <div className="mt-2">
-            <IPhoneXRListing 
-              product={listingProduct}
-              onReadMore={() => {}}
-            />
-          </div>
-
-          {/* LARGE BOTTOM SPACER for scrolling room */}
-          <div 
-            className="w-full"
-            style={{
-              height: 'calc(100vh + 200px)', // Adds one viewport height + extra 200px for scrolling
-              backgroundColor: 'transparent' // Transparent so it doesn't affect design
+        {/* GalleryThumbnails */}
+        <div className="mt-2">
+          <GalleryThumbnails
+            images={galleryImages}
+            currentIndex={currentGalleryIndex}
+            onThumbnailClick={(index) => {
+              setCurrentGalleryIndex(index);
+              if (galleryRef.current) {
+                galleryRef.current.scrollTo?.(index);
+              }
             }}
-          >
-            {/* Optional: You can add some content here if needed, or leave it empty */}
-            <div className="p-4 text-center text-gray-400 text-sm">
-              {/* Empty space for scrolling */}
-            </div>
-          </div>
+          />
+        </div>
+
+        {/* IPhoneXRListing */}
+        <div className="mt-2">
+          <IPhoneXRListing 
+            product={listingProduct}
+            onReadMore={() => {}}
+          />
+        </div>
+
+        {/* LARGE BOTTOM SPACER for scrolling room */}
+        <div 
+          className="w-full"
+          style={{
+            height: 'calc(100vh + 200px)',
+            backgroundColor: 'transparent'
+          }}
+        >
+          {/* Empty space for scrolling */}
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
