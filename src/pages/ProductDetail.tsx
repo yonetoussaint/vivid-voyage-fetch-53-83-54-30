@@ -12,6 +12,7 @@ import { fetchAllProducts } from '@/integrations/supabase/products';
 import ProductImageGallery from "@/components/ProductImageGallery";
 import AliExpressHeader from "@/components/home/AliExpressHeader";
 import { VerificationBadge } from '@/components/shared/VerificationBadge';
+import InfiniteContentGrid from "@/components/InfiniteContentGrid";
 
 interface ProductDetailProps {
   productId?: string;
@@ -38,11 +39,10 @@ const GalleryThumbnails = ({
   const itemWidth = 16.5; // percentage for 5.5 items (100/5.5 ≈ 18.18, reduced a bit for spacing)
 
   return (
-    <div className="relative w-full overflow-hidden"> {/* Edge-to-edge container */}
-      {/* Scrollable container with internal padding */}
+    <div className="relative w-full overflow-hidden">
       <div 
         ref={scrollContainerRef}
-        className="flex overflow-x-auto scrollbar-hide gap-1.5 py-1 px-2" // px-2 for internal breathing room
+        className="flex overflow-x-auto scrollbar-hide gap-1.5 py-1 px-2"
         style={{
           scrollbarWidth: 'none',
           msOverflowStyle: 'none'
@@ -67,7 +67,6 @@ const GalleryThumbnails = ({
                 alt={`Thumbnail ${index}`} 
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  // Fallback for broken images
                   const target = e.target as HTMLImageElement;
                   target.src = "https://placehold.co/300x300?text=No+Image";
                 }}
@@ -77,7 +76,6 @@ const GalleryThumbnails = ({
         ))}
       </div>
 
-      {/* Custom scrollbar style */}
       <style jsx>{`
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
@@ -91,7 +89,7 @@ const GalleryThumbnails = ({
   );
 };
 
-// Inline iPhoneXRListing component - Clean version with title, price, and description
+// Inline iPhoneXRListing component
 interface IPhoneXRListingProps {
   product?: {
     name?: string;
@@ -112,7 +110,6 @@ interface IPhoneXRListingProps {
 }
 
 const IPhoneXRListing = ({ product, onReadMore }: IPhoneXRListingProps) => {
-  // Only two currencies: HTG first, then USD
   const currencies = {
     HTG: 'HTG',
     USD: 'USD'
@@ -124,16 +121,14 @@ const IPhoneXRListing = ({ product, onReadMore }: IPhoneXRListingProps) => {
   };
 
   const exchangeRates = {
-    HTG: 132.50, // Example exchange rate
+    HTG: 132.50,
     USD: 1
   };
 
-  // Mock data for demonstration
   const mockB2BData = {
     unitPrice: 189.99,
   };
 
-  // Merge product with mock B2B data
   const mergedProduct = { ...mockB2BData, ...product };
 
   const displayDescription =
@@ -141,7 +136,6 @@ const IPhoneXRListing = ({ product, onReadMore }: IPhoneXRListingProps) => {
   const needsTruncation = displayDescription.length > 150;
   const truncatedDescription = displayDescription.slice(0, 150) + (displayDescription.length > 150 ? '...' : '');
 
-  // PriceInfo logic moved inline - HTG set as default
   const [currentCurrency, setCurrentCurrency] = useState('HTG');
 
   const toggleCurrency = () => {
@@ -161,9 +155,8 @@ const IPhoneXRListing = ({ product, onReadMore }: IPhoneXRListingProps) => {
     }).format(convertedPrice);
   };
 
-  const currentPrice = mergedProduct.unitPrice || 25; // Default price if not provided
+  const currentPrice = mergedProduct.unitPrice || 25;
 
-  // CurrencySwitcher Component
   const CurrencySwitcher = () => {
     return (
       <>
@@ -183,14 +176,12 @@ const IPhoneXRListing = ({ product, onReadMore }: IPhoneXRListingProps) => {
 
   return (
     <div className="w-full px-2 bg-white font-sans space-y-2">
-      {/* Product Title */}
       {mergedProduct?.name && (
         <h2 className="text-sm text-gray-700 leading-tight">
           {mergedProduct?.name}
         </h2>
       )}
 
-      {/* Price Row with Currency Selector */}
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           <span className="text-2xl font-bold text-orange-500 leading-none">
@@ -201,7 +192,6 @@ const IPhoneXRListing = ({ product, onReadMore }: IPhoneXRListingProps) => {
         <CurrencySwitcher />
       </div>
 
-      {/* Description Section */}
       <div className="space-y-1">
         <p className="text-sm text-gray-600 leading-relaxed">
           {truncatedDescription}
@@ -232,15 +222,13 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
 
   const [isFavorite, setIsFavorite] = useState(false);
   const [currentGalleryIndex, setCurrentGalleryIndex] = useState(0);
-  const [scrollY, setScrollY] = useState(0); // For scroll progress
+  const [scrollY, setScrollY] = useState(0);
 
-  // Fetch all products for overview tab
   const { data: allProducts = [], isLoading: isLoadingProducts } = useQuery({
     queryKey: ['all-products-overview'],
     queryFn: fetchAllProducts,
   });
 
-  // Scroll progress tracking
   useEffect(() => {
     const onScroll = () => {
       setScrollY(window.scrollY || window.pageYOffset || 0);
@@ -320,7 +308,6 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
     return <ProductDetailError />;
   }
 
-  // Prepare data for components
   const galleryImages = product?.product_images?.map((img: any) => img.src) || product?.images || ["https://placehold.co/300x300?text=No+Image"];
 
   const listingProduct = {
@@ -336,7 +323,6 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
 
   return (
     <>
-      {/* Use the unified AliExpressHeader in product-detail mode */}
       <AliExpressHeader
         mode="product-detail"
         scrollY={scrollY}
@@ -352,11 +338,9 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
         hideSearchBar={true}
       />
 
-      {/* Main content - Content starts from top */}
       <div style={{ 
         minHeight: '100vh'
       }}>
-        {/* ProductImageGallery */}
         <div className="w-full bg-white">
           <ProductImageGallery 
             ref={galleryRef}
@@ -384,7 +368,6 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
           />
         </div>
 
-        {/* GalleryThumbnails */}
         <div className="mt-2">
           <GalleryThumbnails
             images={galleryImages}
@@ -398,7 +381,6 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
           />
         </div>
 
-        {/* IPhoneXRListing */}
         <div className="mt-2">
           <IPhoneXRListing 
             product={listingProduct}
@@ -406,16 +388,27 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
           />
         </div>
 
-        {/* LARGE BOTTOM SPACER for scrolling room */}
-        <div 
-          className="w-full"
-          style={{
-            height: 'calc(100vh + 200px)',
-            backgroundColor: 'transparent'
-          }}
-        >
-          {/* Empty space for scrolling */}
+        {/* Related Products Section */}
+        <div className="px-4 py-3 bg-white border-t border-gray-200 mt-4">
+          <h2 className="text-lg font-semibold text-gray-800">
+            Related Products
+          </h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Discover similar items you might like
+          </p>
         </div>
+
+        {/* InfiniteContentGrid for related products */}
+        <InfiniteContentGrid
+          initialProducts={[]}
+          fetchPageSize={20}
+          enableFilters={true}
+          enableSorting={true}
+          gridLayout="fluid"
+          showHeader={false}
+          containerClassName="mt-0"
+          contentClassName="px-4"
+        />
       </div>
     </>
   );
