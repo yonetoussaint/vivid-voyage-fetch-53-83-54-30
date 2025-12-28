@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Sparkles } from "lucide-react";
 
 // Import the custom hook
@@ -31,39 +31,79 @@ const ContentCard: React.FC<{ item: ContentItem }> = ({ item }) => {
   return null;
 };
 
-// Masonry Grid Component - Only shows products
+// Real Masonry Grid Component
 const MasonryGrid: React.FC<{ items: ContentItem[] }> = ({ items }) => {
   // Filter to ONLY include products (no reels)
   const productsOnly = items.filter(item => item.type === 'product');
+  
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [columnCount, setColumnCount] = useState(2);
 
-  console.log(`MasonryGrid: Showing ${productsOnly.length} products (reels filtered out)`);
+  // Calculate column count based on container width
+  useEffect(() => {
+    const updateColumnCount = () => {
+      if (containerRef.current) {
+        const width = containerRef.current.offsetWidth;
+        // On mobile: 2 columns
+        // On larger screens: 3 columns (you can adjust this)
+        const cols = width >= 768 ? 3 : 2;
+        setColumnCount(cols);
+      }
+    };
 
+    updateColumnCount();
+    window.addEventListener('resize', updateColumnCount);
+    return () => window.removeEventListener('resize', updateColumnCount);
+  }, []);
+
+  // Organize items into true masonry columns
   const columns = React.useMemo(() => {
-    const colCount = 2;
-    const cols: ContentItem[][] = Array.from({ length: colCount }, () => []);
-
-    productsOnly.forEach((item, index) => {
-      const colIndex = index % colCount;
-      cols[colIndex].push(item);
+    const cols: ContentItem[][] = Array.from({ length: columnCount }, () => []);
+    
+    // Track the current height of each column
+    const columnHeights = new Array(columnCount).fill(0);
+    
+    // For proper masonry, we need to know which column is shortest
+    productsOnly.forEach((item) => {
+      // Find the column with the minimum height
+      let shortestColumnIndex = 0;
+      let minHeight = columnHeights[0];
+      
+      for (let i = 1; i < columnCount; i++) {
+        if (columnHeights[i] < minHeight) {
+          minHeight = columnHeights[i];
+          shortestColumnIndex = i;
+        }
+      }
+      
+      // Add item to the shortest column
+      cols[shortestColumnIndex].push(item);
+      
+      // Since we don't know the exact height in advance (images load async),
+      // we can estimate or just increment a counter
+      // For now, we'll use a simple counter approach
+      columnHeights[shortestColumnIndex] += 1;
     });
-
-    console.log(`MasonryGrid columns: ${cols[0].length} items in col 0, ${cols[1].length} items in col 1`);
-
+    
+    console.log(`MasonryGrid: ${columnCount} columns, ${productsOnly.length} products`);
+    
     return cols;
-  }, [productsOnly]);
+  }, [productsOnly, columnCount]);
 
   return (
-    <div className="grid grid-cols-2 gap-2 px-2">
-      {columns.map((column, colIndex) => (
-        <div key={`col-${colIndex}`} className="flex flex-col gap-px">
-          {column.map((item) => (
-            <ContentCard 
-              key={`${item.type}-${item.id}`}
-              item={item} 
-            />
-          ))}
-        </div>
-      ))}
+    <div ref={containerRef} className="px-2">
+      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2`}>
+        {columns.map((column, colIndex) => (
+          <div key={`col-${colIndex}`} className="flex flex-col gap-2">
+            {column.map((item) => (
+              <ContentCard 
+                key={`${item.type}-${item.id}`}
+                item={item} 
+              />
+            ))}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
@@ -144,7 +184,7 @@ const InfiniteContentGrid: React.FC<InfiniteContentGridProps> = ({
 
   return (
     <div className="pb-20">
-      {/* Masonry Grid - Shows only products */}
+      {/* Real Masonry Grid - Shows only products */}
       <MasonryGrid items={productsOnly} />
 
       {/* Load more trigger */}
