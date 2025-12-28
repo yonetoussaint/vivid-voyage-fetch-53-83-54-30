@@ -1,4 +1,4 @@
-// ProductDetail.tsx - Fixed with absolute fixed header
+// ProductDetail.tsx - Outside MainLayout with simple fixed header
 import React, { useState, useRef, useEffect } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useProduct } from "@/hooks/useProduct";
@@ -535,7 +535,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
 
   return (
     <>
-      {/* FIXED HEADER - Using portal-like approach */}
+      {/* FIXED HEADER - Simple fixed positioning, no portal needed */}
       <div
         id="fixed-product-header"
         style={{
@@ -556,119 +556,119 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
             boxShadow: displayProgress > 0.1 ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
           }}
         >
-          <div className="py-2 px-3 w-full">
-            <div className="flex items-center justify-between w-full max-w-6xl mx-auto gap-4">
-              <div className="flex items-center gap-3 flex-shrink-0 min-w-0 flex-1">
-                <div 
-                  className="rounded-full transition-all duration-700"
-                  style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})` }}
-                >
-                  <button 
-                    className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700"
-                    onClick={handleBackClick}
-                  >
-                    <IconComponent
-                      size={24}
-                      strokeWidth={2.5}
-                      className="transition-all duration-700"
-                      style={{
-                        color: displayProgress > 0.5 
-                          ? `rgba(75, 85, 99, ${0.7 + (displayProgress * 0.3)})` 
-                          : `rgba(255, 255, 255, ${0.9 - (displayProgress * 0.2)})`
-                      }}
-                    />
-                  </button>
-                </div>
-
-                {displayProgress < 0.5 && product?.sellers && (
+            <div className="py-2 px-3 w-full">
+              <div className="flex items-center justify-between w-full max-w-6xl mx-auto gap-4">
+                <div className="flex items-center gap-3 flex-shrink-0 min-w-0 flex-1">
                   <div 
-                    className="rounded-full transition-all duration-700 flex-shrink-0"
+                    className="rounded-full transition-all duration-700"
                     style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})` }}
                   >
-                    <button
-                      onClick={() => {
-                        if (product?.sellers?.id) {
-                          navigate(`/seller/${product.sellers.id}`);
-                        }
-                      }}
-                      className="flex items-center gap-1.5 px-2.5 h-8 rounded-full transition-all duration-700 relative"
+                    <button 
+                      className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700"
+                      onClick={handleBackClick}
                     >
-                      <div className="w-5 h-5 rounded-full bg-gray-100 overflow-hidden flex-shrink-0">
-                        <img 
-                          src={product.sellers.image_url || "https://picsum.photos/100/100?random=1"}
-                          alt={`${product.sellers.name} seller`}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = "https://picsum.photos/100/100?random=1";
-                            target.onerror = null;
-                          }}
-                        />
-                      </div>
-                      
-                      <span 
-                        className="text-xs font-medium transition-all duration-700"
+                      <IconComponent
+                        size={24}
+                        strokeWidth={2.5}
+                        className="transition-all duration-700"
                         style={{
-                          color: `rgba(255, 255, 255, ${0.95 - (displayProgress * 0.2)})`
+                          color: displayProgress > 0.5 
+                            ? `rgba(75, 85, 99, ${0.7 + (displayProgress * 0.3)})` 
+                            : `rgba(255, 255, 255, ${0.9 - (displayProgress * 0.2)})`
                         }}
-                      >
-                        {product.sellers.name}
-                      </span>
-                      
-                      {product.sellers.verified && <VerificationBadge />}
-                      
-                      <span 
-                        className="text-xs font-medium transition-all duration-700"
-                        style={{
-                          color: `rgba(255, 255, 255, ${0.7 - (displayProgress * 0.2)})`
-                        }}
-                      >
-                        {product.sellers.followers_count >= 1000000 
-                          ? `${(product.sellers.followers_count / 1000000).toFixed(1)}M`
-                          : product.sellers.followers_count >= 1000
-                          ? `${(product.sellers.followers_count / 1000).toFixed(1)}K`
-                          : product.sellers.followers_count.toString()
-                        }
-                      </span>
+                      />
                     </button>
                   </div>
-                )}
-              </div>
 
-              <div className="flex gap-2 flex-shrink-0">
-                {actionButtons.length > 0 ? (
-                  actionButtons.map((button, index) => (
+                  {displayProgress < 0.5 && product?.sellers && (
+                    <div 
+                      className="rounded-full transition-all duration-700 flex-shrink-0"
+                      style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})` }}
+                    >
+                      <button
+                        onClick={() => {
+                          if (product?.sellers?.id) {
+                            navigate(`/seller/${product.sellers.id}`);
+                          }
+                        }}
+                        className="flex items-center gap-1.5 px-2.5 h-8 rounded-full transition-all duration-700 relative"
+                      >
+                        <div className="w-5 h-5 rounded-full bg-gray-100 overflow-hidden flex-shrink-0">
+                          <img 
+                            src={product.sellers.image_url || "https://picsum.photos/100/100?random=1"}
+                            alt={`${product.sellers.name} seller`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = "https://picsum.photos/100/100?random=1";
+                              target.onerror = null;
+                            }}
+                          />
+                        </div>
+                        
+                        <span 
+                          className="text-xs font-medium transition-all duration-700"
+                          style={{
+                            color: `rgba(255, 255, 255, ${0.95 - (displayProgress * 0.2)})`
+                          }}
+                        >
+                          {product.sellers.name}
+                        </span>
+                        
+                        {product.sellers.verified && <VerificationBadge />}
+                        
+                        <span 
+                          className="text-xs font-medium transition-all duration-700"
+                          style={{
+                            color: `rgba(255, 255, 255, ${0.7 - (displayProgress * 0.2)})`
+                          }}
+                        >
+                          {product.sellers.followers_count >= 1000000 
+                            ? `${(product.sellers.followers_count / 1000000).toFixed(1)}M`
+                            : product.sellers.followers_count >= 1000
+                            ? `${(product.sellers.followers_count / 1000).toFixed(1)}K`
+                            : product.sellers.followers_count.toString()
+                          }
+                        </span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-2 flex-shrink-0">
+                  {actionButtons.length > 0 ? (
+                    actionButtons.map((button, index) => (
+                      <HeaderActionButton
+                        key={index}
+                        Icon={button.Icon}
+                        active={button.active}
+                        onClick={button.onClick}
+                        progress={displayProgress}
+                        activeColor={button.activeColor}
+                        likeCount={button.count}
+                      />
+                    ))
+                  ) : (
                     <HeaderActionButton
-                      key={index}
-                      Icon={button.Icon}
-                      active={button.active}
-                      onClick={button.onClick}
+                      Icon={Heart}
+                      active={isFavorite}
+                      onClick={handleFavoriteClick}
                       progress={displayProgress}
-                      activeColor={button.activeColor}
-                      likeCount={button.count}
+                      activeColor="#f43f5e"
+                      likeCount={147}
                     />
-                  ))
-                ) : (
-                  <HeaderActionButton
-                    Icon={Heart}
-                    active={isFavorite}
-                    onClick={handleFavoriteClick}
-                    progress={displayProgress}
-                    activeColor="#f43f5e"
-                    likeCount={147}
-                  />
-                )}
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main content - NO top padding, header is absolutely fixed */}
+      {/* Main content - Add top padding equal to header height */}
       <div style={{ 
         minHeight: '100vh',
-        marginTop: '0px',
-        paddingTop: '0px'
+        paddingTop: '48px' // Space for the fixed header
       }}>
         {/* ProductImageGallery */}
         <div className="w-full bg-white">
