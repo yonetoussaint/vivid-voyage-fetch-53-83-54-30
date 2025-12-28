@@ -1,4 +1,4 @@
-// ProductDetail.tsx - Fixed header version
+// ProductDetail.tsx - Fixed with absolute fixed header
 import React, { useState, useRef, useEffect } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useProduct } from "@/hooks/useProduct";
@@ -534,149 +534,142 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
   const IconComponent = inPanel ? X : ChevronLeft;
 
   return (
-    <div className="relative">
-      {/* FIXED HEADER - This will stay fixed at the top */}
-      {!hideHeader && (
-        <div 
+    <>
+      {/* FIXED HEADER - Using portal-like approach */}
+      <div
+        id="fixed-product-header"
+        style={{
+          position: 'fixed',
+          top: '0px',
+          left: '0px',
+          right: '0px',
+          zIndex: 9999,
+          width: '100%'
+        }}
+      >
+        {/* Header content */}
+        <div
+          className="w-full transition-all duration-700"
           style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            zIndex: 50,
-            width: '100%'
+            backgroundColor: `rgba(255, 255, 255, ${displayProgress * 0.95})`,
+            backdropFilter: `blur(${displayProgress * 8}px)`,
+            boxShadow: displayProgress > 0.1 ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
           }}
         >
-          <div
-            className="w-full transition-all duration-700"
-            style={{
-              backgroundColor: `rgba(255, 255, 255, ${displayProgress * 0.95})`,
-              backdropFilter: `blur(${displayProgress * 8}px)`,
-              // Start with transparent background, become opaque on scroll
-              boxShadow: displayProgress > 0.1 ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
-            }}
-          >
-            {/* Main Header Content */}
-            <div className="py-2 px-3 w-full">
-              <div className="flex items-center justify-between w-full max-w-6xl mx-auto gap-4">
-                {/* Left side - Back button and seller info */}
-                <div className="flex items-center gap-3 flex-shrink-0 min-w-0 flex-1">
-                  {/* Back/Close Button - Always visible */}
+          <div className="py-2 px-3 w-full">
+            <div className="flex items-center justify-between w-full max-w-6xl mx-auto gap-4">
+              <div className="flex items-center gap-3 flex-shrink-0 min-w-0 flex-1">
+                <div 
+                  className="rounded-full transition-all duration-700"
+                  style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})` }}
+                >
+                  <button 
+                    className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700"
+                    onClick={handleBackClick}
+                  >
+                    <IconComponent
+                      size={24}
+                      strokeWidth={2.5}
+                      className="transition-all duration-700"
+                      style={{
+                        color: displayProgress > 0.5 
+                          ? `rgba(75, 85, 99, ${0.7 + (displayProgress * 0.3)})` 
+                          : `rgba(255, 255, 255, ${0.9 - (displayProgress * 0.2)})`
+                      }}
+                    />
+                  </button>
+                </div>
+
+                {displayProgress < 0.5 && product?.sellers && (
                   <div 
-                    className="rounded-full transition-all duration-700"
+                    className="rounded-full transition-all duration-700 flex-shrink-0"
                     style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})` }}
                   >
-                    <button 
-                      className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700"
-                      onClick={handleBackClick}
+                    <button
+                      onClick={() => {
+                        if (product?.sellers?.id) {
+                          navigate(`/seller/${product.sellers.id}`);
+                        }
+                      }}
+                      className="flex items-center gap-1.5 px-2.5 h-8 rounded-full transition-all duration-700 relative"
                     >
-                      <IconComponent
-                        size={24}
-                        strokeWidth={2.5}
-                        className="transition-all duration-700"
+                      <div className="w-5 h-5 rounded-full bg-gray-100 overflow-hidden flex-shrink-0">
+                        <img 
+                          src={product.sellers.image_url || "https://picsum.photos/100/100?random=1"}
+                          alt={`${product.sellers.name} seller`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = "https://picsum.photos/100/100?random=1";
+                            target.onerror = null;
+                          }}
+                        />
+                      </div>
+                      
+                      <span 
+                        className="text-xs font-medium transition-all duration-700"
                         style={{
-                          color: displayProgress > 0.5 
-                            ? `rgba(75, 85, 99, ${0.7 + (displayProgress * 0.3)})` 
-                            : `rgba(255, 255, 255, ${0.9 - (displayProgress * 0.2)})`
+                          color: `rgba(255, 255, 255, ${0.95 - (displayProgress * 0.2)})`
                         }}
-                      />
+                      >
+                        {product.sellers.name}
+                      </span>
+                      
+                      {product.sellers.verified && <VerificationBadge />}
+                      
+                      <span 
+                        className="text-xs font-medium transition-all duration-700"
+                        style={{
+                          color: `rgba(255, 255, 255, ${0.7 - (displayProgress * 0.2)})`
+                        }}
+                      >
+                        {product.sellers.followers_count >= 1000000 
+                          ? `${(product.sellers.followers_count / 1000000).toFixed(1)}M`
+                          : product.sellers.followers_count >= 1000
+                          ? `${(product.sellers.followers_count / 1000).toFixed(1)}K`
+                          : product.sellers.followers_count.toString()
+                        }
+                      </span>
                     </button>
                   </div>
+                )}
+              </div>
 
-                  {/* Seller info - shows when not scrolled AND seller exists */}
-                  {displayProgress < 0.5 && product?.sellers && (
-                    <div 
-                      className="rounded-full transition-all duration-700 flex-shrink-0"
-                      style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})` }}
-                    >
-                      <button
-                        onClick={() => {
-                          if (product?.sellers?.id) {
-                            navigate(`/seller/${product.sellers.id}`);
-                          }
-                        }}
-                        className="flex items-center gap-1.5 px-2.5 h-8 rounded-full transition-all duration-700 relative"
-                      >
-                        {/* Seller Avatar */}
-                        <div className="w-5 h-5 rounded-full bg-gray-100 overflow-hidden flex-shrink-0">
-                          <img 
-                            src={product.sellers.image_url || "https://picsum.photos/100/100?random=1"}
-                            alt={`${product.sellers.name} seller`}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = "https://picsum.photos/100/100?random=1";
-                              target.onerror = null;
-                            }}
-                          />
-                        </div>
-                        
-                        {/* Seller Name */}
-                        <span 
-                          className="text-xs font-medium transition-all duration-700"
-                          style={{
-                            color: `rgba(255, 255, 255, ${0.95 - (displayProgress * 0.2)})`
-                          }}
-                        >
-                          {product.sellers.name}
-                        </span>
-                        
-                        {/* Verification Badge */}
-                        {product.sellers.verified && <VerificationBadge />}
-                        
-                        {/* Follower Count */}
-                        <span 
-                          className="text-xs font-medium transition-all duration-700"
-                          style={{
-                            color: `rgba(255, 255, 255, ${0.7 - (displayProgress * 0.2)})`
-                          }}
-                        >
-                          {product.sellers.followers_count >= 1000000 
-                            ? `${(product.sellers.followers_count / 1000000).toFixed(1)}M`
-                            : product.sellers.followers_count >= 1000
-                            ? `${(product.sellers.followers_count / 1000).toFixed(1)}K`
-                            : product.sellers.followers_count.toString()
-                          }
-                        </span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Right side - Action buttons */}
-                <div className="flex gap-2 flex-shrink-0">
-                  {/* Custom action buttons OR default heart button */}
-                  {actionButtons.length > 0 ? (
-                    actionButtons.map((button, index) => (
-                      <HeaderActionButton
-                        key={index}
-                        Icon={button.Icon}
-                        active={button.active}
-                        onClick={button.onClick}
-                        progress={displayProgress}
-                        activeColor={button.activeColor}
-                        likeCount={button.count}
-                      />
-                    ))
-                  ) : (
+              <div className="flex gap-2 flex-shrink-0">
+                {actionButtons.length > 0 ? (
+                  actionButtons.map((button, index) => (
                     <HeaderActionButton
-                      Icon={Heart}
-                      active={isFavorite}
-                      onClick={handleFavoriteClick}
+                      key={index}
+                      Icon={button.Icon}
+                      active={button.active}
+                      onClick={button.onClick}
                       progress={displayProgress}
-                      activeColor="#f43f5e"
-                      likeCount={147}
+                      activeColor={button.activeColor}
+                      likeCount={button.count}
                     />
-                  )}
-                </div>
+                  ))
+                ) : (
+                  <HeaderActionButton
+                    Icon={Heart}
+                    active={isFavorite}
+                    onClick={handleFavoriteClick}
+                    progress={displayProgress}
+                    activeColor="#f43f5e"
+                    likeCount={147}
+                  />
+                )}
               </div>
             </div>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Main content - Add top padding to account for fixed header height */}
-      <div style={{ paddingTop: hideHeader ? '0px' : '56px' }}>
+      {/* Main content - NO top padding, header is absolutely fixed */}
+      <div style={{ 
+        minHeight: '100vh',
+        marginTop: '0px',
+        paddingTop: '0px'
+      }}>
         {/* ProductImageGallery */}
         <div className="w-full bg-white">
           <ProductImageGallery 
@@ -738,7 +731,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
           {/* Empty space for scrolling */}
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
