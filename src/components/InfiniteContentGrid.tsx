@@ -21,52 +21,20 @@ const renderTag = (tag: string) => {
   return null;
 };
 
-// ContentCard Factory with ref forwarding
+// ContentCard Factory - Simplified without height measurement
 interface ContentCardProps {
   item: ContentItem;
-  onHeightChange?: (id: string, height: number) => void;
 }
 
-const ContentCard = React.forwardRef<HTMLDivElement, ContentCardProps>(({ item, onHeightChange }, ref) => {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [imageLoaded, setImageLoaded] = useState(false);
-
-  useEffect(() => {
-    if (imageLoaded && cardRef.current && onHeightChange) {
-      const height = cardRef.current.offsetHeight;
-      onHeightChange(`${item.type}-${item.id}`, height);
-    }
-  }, [imageLoaded, item.id, item.type, onHeightChange]);
-
-  // Combine refs
-  useEffect(() => {
-    if (ref && cardRef.current) {
-      if (typeof ref === 'function') {
-        ref(cardRef.current);
-      } else {
-        ref.current = cardRef.current;
-      }
-    }
-  }, [ref]);
-
+const ContentCard = React.forwardRef<HTMLDivElement, ContentCardProps>(({ item }, ref) => {
   if (item.type === 'product') {
     return (
-      <div ref={cardRef}>
+      <div ref={ref}>
         <ProductCard 
           product={item} 
           renderTag={renderTag}
           aspectRatio="auto"
         />
-        {/* Hidden image to detect when loaded */}
-        {item.product_images?.[0]?.src && (
-          <img
-            src={item.product_images[0].src}
-            alt=""
-            style={{ display: 'none' }}
-            onLoad={() => setImageLoaded(true)}
-            onError={() => setImageLoaded(true)}
-          />
-        )}
       </div>
     );
   }
@@ -75,30 +43,53 @@ const ContentCard = React.forwardRef<HTMLDivElement, ContentCardProps>(({ item, 
 
 ContentCard.displayName = 'ContentCard';
 
-// True Pinterest-style Masonry Grid with dynamic rebalancing
+// True Pinterest-style Masonry Grid with stable distribution
 const MasonryGrid: React.FC<{ items: ContentItem[] }> = ({ items }) => {
-  const [columns, setColumns] = useState<[ContentItem[], ContentItem[]]>([[], []]);
-  const [measuredHeights, setMeasuredHeights] = useState<Map<string, number>>(new Map());
   const productsOnly = items.filter(item => item.type === 'product');
+  const prevItemsRef = useRef<ContentItem[]>([]);
+  const columnsRef = useRef<[ContentItem[], ContentItem[]]>([[], []]);
 
-  // Initial distribution with estimated heights
-  useEffect(() => {
-    const col1: ContentItem[] = [];
-    const col2: ContentItem[] = [];
-    let col1Height = 0;
-    let col2Height = 0;
+  // Only recalculate when new items are added (not on every render)
+  const columns = React.useMemo(() => {
+    const prevItems = prevItemsRef.current;
+    const newItems = productsOnly;
+
+    // If items haven't changed, return cached columns
+    if (prevItems.length === newItems.length && 
+        prevItems.every((item, idx) => item.id === newItems[idx]?.id)) {
+      return columnsRef.current;
+    }
+
+    // Only process NEW items that weren't in previous render
+    const newlyAddedItems = newItems.slice(prevItems.length);
     
-    productsOnly.forEach((item) => {
-      // Check if we have a measured height
-      const itemKey = `${item.type}-${item.id}`;
-      const measuredHeight = measuredHeights.get(itemKey);
-      
-      // Use measured height if available, otherwise estimate
-      const estimatedHeight = measuredHeight || (
-        300 + // base card height with auto image
+    if (newlyAddedItems.length === 0 && prevItems.length > 0) {
+      return columnsRef.current;
+    }
+
+    // Start with existing columns
+    const col1 = [...columnsRef.current[0]];
+    const col2 = [...columnsRef.current[1]];
+    
+    // Calculate current column heights (estimated)
+    let col1Height = col1.reduce((sum, item) => sum + (
+      300 + 
+      (item.description?.length || 0) * 0.3 +
+      (item.tags?.length || 0) * 8
+    ), 0);
+    
+    let col2Height = col2.reduce((sum, item) => sum + (
+      300 + 
+      (item.description?.length || 0) * 0.3 +
+      (item.tags?.length || 0) * 8
+    ), 0);
+
+    // Distribute ONLY new items
+    newlyAddedItems.forEach((item) => {
+      const estimatedHeight = 
+        300 + 
         (item.description?.length || 0) * 0.3 +
-        (item.tags?.length || 0) * 8
-      );
+        (item.tags?.length || 0) * 8;
       
       // Add to the shorter column
       if (col1Height <= col2Height) {
@@ -109,24 +100,13 @@ const MasonryGrid: React.FC<{ items: ContentItem[] }> = ({ items }) => {
         col2Height += estimatedHeight;
       }
     });
-    
-    setColumns([col1, col2]);
-  }, [productsOnly, measuredHeights]);
 
-  // Callback when a card's height is measured
-  const handleHeightChange = (id: string, height: number) => {
-    setMeasuredHeights(prev => {
-      const newMap = new Map(prev);
-      const oldHeight = newMap.get(id);
-      
-      // Only update if height changed significantly (more than 10px difference)
-      if (!oldHeight || Math.abs(oldHeight - height) > 10) {
-        newMap.set(id, height);
-        return newMap;
-      }
-      return prev;
-    });
-  };
+    // Cache the new columns
+    columnsRef.current = [col1, col2];
+    prevItemsRef.current = newItems;
+    
+    return columnsRef.current;
+  }, [productsOnly]);
 
   return (
     <div className="px-2">
@@ -138,7 +118,6 @@ const MasonryGrid: React.FC<{ items: ContentItem[] }> = ({ items }) => {
             <ContentCard 
               key={`${item.type}-${item.id}`}
               item={item}
-              onHeightChange={handleHeightChange}
             />
           ))}
         </div>
@@ -149,7 +128,6 @@ const MasonryGrid: React.FC<{ items: ContentItem[] }> = ({ items }) => {
             <ContentCard 
               key={`${item.type}-${item.id}`}
               item={item}
-              onHeightChange={handleHeightChange}
             />
           ))}
         </div>
