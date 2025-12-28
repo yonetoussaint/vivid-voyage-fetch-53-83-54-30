@@ -541,7 +541,7 @@ export default function AliExpressHeader({
         count: productData?.favorite_count || 0
       },
       {
-        Icon: PiShareFat, // Use the React Icon here
+        Icon: PiShareFatBold, // Use the React Icon here
         onClick: onShareClick,
         active: false
       }
