@@ -1,4 +1,4 @@
-// ForYou.tsx
+// src/pages/ForYou.tsx
 import React from "react";
 import NewsTicker from "@/components/home/hero/NewsTicker";
 import FlashDeals from "@/components/home/FlashDeals";
@@ -6,6 +6,7 @@ import FavouriteChannels, { ChannelItem } from "@/components/FavouriteChannels";
 import InfiniteContentGrid from "@/components/InfiniteContentGrid";
 import Footer from "@/components/Footer";
 import { useForYou } from "@/hooks/foryou.hooks";
+import Separator from "@/components/shared/Separator";
 
 const ForYou: React.FC = () => {
   // Get all data and handlers from the custom hook
@@ -101,14 +102,6 @@ const ForYou: React.FC = () => {
         </svg>
       )
     },
-    // You can still use imageUrl if you want
-    // {
-    //   id: "brand",
-    //   name: "Brand",
-    //   imageUrl: "/path/to/image.png",
-    //   bgColor: "bg-gray-50",
-    //   textColor: "text-gray-600"
-    // }
   ];
 
   // Use either the channels from hook or the ones with icons
@@ -131,7 +124,8 @@ const ForYou: React.FC = () => {
             />
           </div>
 
-          <div className="w-full bg-gray-100 h-1 mb-2"></div>
+          {/* Use Separator component */}
+          <Separator />
 
           <div className="mb-2">
             <FlashDeals
@@ -140,7 +134,8 @@ const ForYou: React.FC = () => {
             />
           </div>
 
-          <div className="w-full bg-gray-100 h-1 mb-2"></div>
+          {/* Use Separator component */}
+          <Separator />
         </div>
       </div>
 
