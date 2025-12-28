@@ -4,11 +4,18 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { 
   X, Search, TrendingUp, TrendingDown, Flame, Zap, ChevronDown, 
-  MapPin, Camera, Heart, Share, ChevronLeft, LucideIcon 
+  MapPin, Camera, Heart, ChevronLeft, LucideIcon 
 } from 'lucide-react';
-import { PiShareFatBold } from 'react-icons/pi';
+import { PiShareFat } from 'react-icons/pi'; // Import the share icon from react-icons
 import CategoryTabs from './header/CategoryTabs';
 import { VerificationBadge } from '@/components/shared/VerificationBadge';
+import {
+  useHeaderActions,
+  useHeaderSearch,
+  useHeaderScroll,
+  useHeaderLocation,
+  useHeaderFilters
+} from '@/hooks/use-header-actions';
 
 interface AliExpressHeaderProps {
   activeTabId?: string;
@@ -59,7 +66,7 @@ interface AliExpressHeaderProps {
   isFavorite?: boolean;
   inPanel?: boolean;
   actionButtons?: Array<{
-    Icon: LucideIcon;
+    Icon: React.ComponentType<any>; // Changed to accept any component type
     onClick?: () => void;
     active?: boolean;
     activeColor?: string;
@@ -71,7 +78,7 @@ interface AliExpressHeaderProps {
 
 // Header Action Button Component (moved from ProductDetail)
 interface HeaderActionButtonProps {
-  Icon: LucideIcon;
+  Icon: React.ComponentType<any>; // Changed to accept any component type
   active?: boolean;
   onClick?: () => void;
   progress: number;
@@ -95,9 +102,22 @@ const HeaderActionButton = ({
   transform = '',
   likeCount,
   shareCount,
-  scrolled = false // New: scrolled state removes background
+  scrolled = false
 }: HeaderActionButtonProps) => {
   const [isAnimating, setIsAnimating] = useState(false);
+  const [iconProps, setIconProps] = useState<Record<string, any>>({});
+
+  // Check if it's a lucide icon or react-icon
+  useEffect(() => {
+    const isLucideIcon = Icon.name && typeof Icon.name === 'string';
+    const isReactIcon = Icon.displayName && typeof Icon.displayName === 'string';
+    
+    if (isLucideIcon) {
+      setIconProps({ strokeWidth: 2.5 });
+    } else if (isReactIcon) {
+      setIconProps({});
+    }
+  }, [Icon]);
 
   const handleClick = () => {
     if (onClick) {
@@ -118,6 +138,41 @@ const HeaderActionButton = ({
   const expandedThreshold = 0.2;
   const fadingThreshold = 0.4;
 
+  // Check icon type
+  const isLucideIcon = Icon.name && typeof Icon.name === 'string';
+  const isReactIcon = Icon.displayName && typeof Icon.displayName === 'string';
+
+  // Get appropriate color and fill based on icon type
+  const getIconStyle = () => {
+    const baseColor = progress > 0.5 
+      ? `rgba(75, 85, 99, ${0.7 + (progress * 0.3)})` 
+      : `rgba(255, 255, 255, ${0.9 - (progress * 0.2)})`;
+    
+    const scrolledColor = 'rgba(75, 85, 99, 0.9)';
+    
+    if (scrolled) {
+      return {
+        color: scrolledColor,
+        fill: isReactIcon ? scrolledColor : (active && fillWhenActive ? activeColor : 'transparent')
+      };
+    }
+    
+    if (isReactIcon) {
+      return {
+        color: baseColor,
+        fill: active && fillWhenActive ? activeColor : baseColor
+      };
+    }
+    
+    // Lucide icons
+    return {
+      color: baseColor,
+      fill: active && fillWhenActive ? activeColor : 'transparent'
+    };
+  };
+
+  const iconStyle = getIconStyle();
+
   // When scrolled, show simple button without background
   if (scrolled) {
     return (
@@ -127,12 +182,9 @@ const HeaderActionButton = ({
       >
         <Icon
           size={20}
-          strokeWidth={2.5}
+          {...iconProps}
           className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
-          style={{
-            fill: active && fillWhenActive ? activeColor : 'transparent',
-            color: `rgba(75, 85, 99, 0.9)`
-          }}
+          style={iconStyle}
         />
         {badge && (
           <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[8px] rounded-full h-3 w-3 flex items-center justify-center animate-scale-in">
@@ -156,12 +208,9 @@ const HeaderActionButton = ({
         >
           <Icon
             size={20}
-            strokeWidth={2.5}
+            {...iconProps}
             className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
-            style={{
-              fill: active && fillWhenActive ? activeColor : 'transparent',
-              color: `rgba(255, 255, 255, ${0.9 - (progress * 0.2)})`
-            }}
+            style={iconStyle}
           />
           <span 
             className="text-xs font-medium transition-all duration-700 ease-out animate-fade-in"
@@ -195,14 +244,9 @@ const HeaderActionButton = ({
         >
           <Icon
             size={20}
-            strokeWidth={2.5}
+            {...iconProps}
             className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
-            style={{
-              fill: active && fillWhenActive ? activeColor : 'transparent',
-              color: progress > 0.5 
-                ? `rgba(75, 85, 99, ${0.7 + (progress * 0.3)})` 
-                : `rgba(255, 255, 255, ${0.9 - (progress * 0.3)})`
-            }}
+            style={iconStyle}
           />
           <span 
             className="text-xs font-medium transition-all duration-700"
@@ -235,14 +279,9 @@ const HeaderActionButton = ({
       >
         <Icon
           size={20}
-          strokeWidth={2.5}
+          {...iconProps}
           className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
-          style={{
-            fill: active && fillWhenActive ? activeColor : 'transparent',
-            color: progress > 0.5 
-              ? `rgba(75, 85, 99, ${0.7 + (progress * 0.3)})` 
-              : `rgba(255, 255, 255, ${0.9 - (progress * 0.2)})`
-          }}
+          style={iconStyle}
         />
         {badge && (
           <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[8px] rounded-full h-3 w-3 flex items-center justify-center animate-scale-in">
@@ -308,39 +347,60 @@ export default function AliExpressHeader({
   const location = useLocation();
 
   const [activeTab, setActiveTab] = useState(activeTabId);
-  const [searchQuery, setSearchQuery] = useState('');
   const [placeholder, setPlaceholder] = useState('');
-  const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
-  const [selectedCity, setSelectedCity] = useState(cityName);
 
   const searchRef = useRef<HTMLInputElement>(null);
   const searchListRef = useRef<HTMLDivElement>(null);
   const locationDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Calculate scroll progress for product detail mode
-  const maxScroll = 120;
-  const scrollProgress = Math.min(scrollY / maxScroll, 1);
-  const displayProgress = mode === 'product-detail' ? scrollProgress : 0;
-  
-  // Threshold when search bar should appear in product detail mode
-  const searchBarThreshold = 0.3;
-  const showSearchBarInProductDetail = mode === 'product-detail' && displayProgress > searchBarThreshold;
+  // Use custom hooks
+  const {
+    actions: headerActions,
+    updateAction
+  } = useHeaderActions(mode, productData, onFavoriteClick, onShareClick, isFavorite);
+
+  const {
+    searchQuery,
+    handleSubmit,
+    handleClearSearch,
+    handleInputChange
+  } = useHeaderSearch('', onSearchSubmit);
+
+  const {
+    displayProgress,
+    showSearchBarInProductDetail
+  } = useHeaderScroll(mode, scrollY);
+
+  const {
+    selectedCity,
+    handleLocationClick
+  } = useHeaderLocation(cityName, onLocationChange, onOpenLocationsPanel);
+
+  const {
+    selectedFilters: filterState,
+    handleFilterSelect,
+    handleFilterClear,
+    handleClearAll
+  } = useHeaderFilters(selectedFilters, onFilterSelect, onFilterClear, onClearAll);
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (locationDropdownRef.current && !locationDropdownRef.current.contains(event.target as Node)) {
-        setIsLocationDropdownOpen(false);
+        // Only handle if we're not using the panel
+        if (!onOpenLocationsPanel) {
+          // setIsLocationDropdownOpen(false);
+        }
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [onOpenLocationsPanel]);
 
   // Update selected city when prop changes
   useEffect(() => {
-    setSelectedCity(cityName);
+    // setSelectedCity(cityName);
   }, [cityName]);
 
   // Popular searches data with trend indicators
@@ -426,53 +486,6 @@ export default function AliExpressHeader({
     }
   };
 
-  // Handle location button click - DIRECTLY OPEN THE PANEL
-  const handleLocationClick = () => {
-    // Open the locations panel directly
-    if (onOpenLocationsPanel) {
-      onOpenLocationsPanel();
-    }
-    // Don't show dropdown at all
-    setIsLocationDropdownOpen(false);
-  };
-
-  // Handle location selection from dropdown (if we keep it as backup)
-  const handleLocationSelect = (locationId: string, locationName: string) => {
-    setSelectedCity(locationName);
-    setIsLocationDropdownOpen(false);
-
-    if (onLocationChange) {
-      onLocationChange(locationId);
-    }
-  };
-
-  // Handle search input change
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setSearchQuery(newValue);
-  };
-
-  // Handle search submit
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      if (onSearchSubmit) {
-        onSearchSubmit(searchQuery.trim());
-      } else {
-        navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      }
-      setSearchQuery(''); // Clear search after submit
-    }
-  };
-
-  // Clear search query
-  const handleClearSearch = () => {
-    setSearchQuery('');
-    if (searchRef.current) {
-      searchRef.current.focus();
-    }
-  };
-
   // Handle search focus
   const handleFocus = () => {
     // You can add any focus logic here if needed
@@ -499,27 +512,6 @@ export default function AliExpressHeader({
     return (trend: string) => iconMap[trend as keyof typeof iconMap] || <Search className="h-3 w-3 mr-1.5 text-gray-500" />;
   }, []);
 
-  // Handle filter selection
-  const handleFilterSelect = (filterId: string) => {
-    if (onFilterSelect) {
-      onFilterSelect(filterId);
-    }
-  };
-
-  // Handle filter clear
-  const handleFilterClear = (filterId: string) => {
-    if (onFilterClear) {
-      onFilterClear(filterId);
-    }
-  };
-
-  // Handle clear all filters
-  const handleClearAllFilters = () => {
-    if (onClearAll) {
-      onClearAll();
-    }
-  };
-
   // Handle filter button click
   const handleFilterButtonClick = () => {
     if (onFilterButtonClick) {
@@ -529,27 +521,38 @@ export default function AliExpressHeader({
 
   // Default action buttons for product detail
   const defaultActionButtons = useMemo(() => {
-  if (actionButtons.length > 0) return actionButtons;
+    if (actionButtons.length > 0) return actionButtons;
 
-  if (mode === 'product-detail') {
-    return [
-      {
-        Icon: Heart,
-        onClick: onFavoriteClick,
-        active: isFavorite,
-        activeColor: "#f43f5e",
-        count: productData?.favorite_count || 0
-      },
-      {
-        Icon: PiShareFatBold, // Use the React Icon here
-        onClick: onShareClick,
-        active: false
-      }
-    ];
-  }
+    // Use the actions from our hook or fallback
+    if (headerActions.length > 0) {
+      return headerActions.map(action => ({
+        Icon: action.icon,
+        onClick: action.onClick,
+        active: action.active,
+        activeColor: action.activeColor,
+        count: action.count
+      }));
+    }
 
-  return [];
-}, [actionButtons, mode, onFavoriteClick, onShareClick, isFavorite, productData?.favorite_count]);
+    if (mode === 'product-detail') {
+      return [
+        {
+          Icon: Heart,
+          onClick: onFavoriteClick,
+          active: isFavorite,
+          activeColor: "#f43f5e",
+          count: productData?.favorite_count || 0
+        },
+        {
+          Icon: PiShareFat, // Use the React Icon here
+          onClick: onShareClick,
+          active: false
+        }
+      ];
+    }
+
+    return [];
+  }, [actionButtons, headerActions, mode, onFavoriteClick, onShareClick, isFavorite, productData?.favorite_count]);
 
   // Back/Close icon component
   const IconComponent = inPanel ? X : ChevronLeft;
@@ -703,7 +706,7 @@ export default function AliExpressHeader({
                         }}
                       />
                     </div>
-                    
+
                     <span 
                       className="text-xs font-medium transition-all duration-700"
                       style={{
@@ -712,9 +715,9 @@ export default function AliExpressHeader({
                     >
                       {productData.sellers.name}
                     </span>
-                    
+
                     {productData.sellers.verified && <VerificationBadge />}
-                    
+
                     <span 
                       className="text-xs font-medium transition-all duration-700"
                       style={{
@@ -799,7 +802,7 @@ export default function AliExpressHeader({
             <div className="flex-1 overflow-x-auto scrollbar-hide">
               <div className="flex items-center space-x-2 py-1 min-w-max">
                 {filterCategories.map((category) => {
-                  const isSelected = selectedFilters.includes(category.id);
+                  const isSelected = filterState.includes(category.id);
                   return (
                     <button
                       key={category.id}
@@ -834,9 +837,9 @@ export default function AliExpressHeader({
               </div>
             </div>
 
-            {selectedFilters.length > 0 && (
+            {filterState.length > 0 && (
               <button
-                onClick={handleClearAllFilters}
+                onClick={handleClearAll}
                 disabled={isFilterDisabled}
                 className="ml-2 px-2 py-1 text-xs font-medium text-red-600 hover:text-red-700 whitespace-nowrap"
               >
