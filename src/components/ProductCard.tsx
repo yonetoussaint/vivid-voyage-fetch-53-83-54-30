@@ -64,17 +64,15 @@ const ProductCard: React.FC<ProductCardProps> = ({
           flex 
           items-center 
           justify-center
-          ${aspectRatio === 'square' ? 'aspect-square' : ''}
+          ${aspectRatio === 'square' ? 'aspect-square' : 'max-h-80'}
         `}
-        style={aspectRatio === 'auto' ? { maxHeight: '20rem' } : {}}
       >
         <img 
           src={displayImageUrl} 
           alt={product.name} 
           className={`
             w-full 
-            h-auto
-            ${aspectRatio === 'square' ? 'h-full object-contain' : 'max-h-full object-contain'}
+            ${aspectRatio === 'square' ? 'h-full object-contain' : 'h-auto max-h-full object-contain'}
           `} 
           loading="lazy"
           onError={() => setImageError(true)}
