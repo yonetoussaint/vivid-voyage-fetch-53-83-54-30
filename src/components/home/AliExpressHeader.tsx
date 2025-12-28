@@ -2,8 +2,12 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { X, Search, TrendingUp, TrendingDown, Flame, Zap, ChevronDown, MapPin, Camera } from 'lucide-react';
+import { 
+  X, Search, TrendingUp, TrendingDown, Flame, Zap, ChevronDown, 
+  MapPin, Camera, Heart, Share, ChevronLeft, LucideIcon 
+} from 'lucide-react';
 import CategoryTabs from './header/CategoryTabs';
+import { VerificationBadge } from '@/components/shared/VerificationBadge';
 
 interface AliExpressHeaderProps {
   activeTabId?: string;
@@ -34,7 +38,192 @@ interface AliExpressHeaderProps {
 
   // New prop for opening locations panel
   onOpenLocationsPanel?: () => void;
+
+  // NEW: Product Detail Header Props
+  mode?: 'home' | 'product-detail';
+  scrollY?: number; // For product detail scroll progress
+  productData?: {
+    sellers?: {
+      id?: string;
+      name?: string;
+      image_url?: string;
+      verified?: boolean;
+      followers_count?: number;
+    };
+    favorite_count?: number;
+  };
+  onBackClick?: () => void;
+  onFavoriteClick?: () => void;
+  onShareClick?: () => void;
+  isFavorite?: boolean;
+  inPanel?: boolean;
+  actionButtons?: Array<{
+    Icon: LucideIcon;
+    onClick?: () => void;
+    active?: boolean;
+    activeColor?: string;
+    count?: number;
+  }>;
+  hideSearchBar?: boolean; // Hide search bar in product detail mode
 }
+
+// Header Action Button Component (moved from ProductDetail)
+interface HeaderActionButtonProps {
+  Icon: LucideIcon;
+  active?: boolean;
+  onClick?: () => void;
+  progress: number;
+  activeColor?: string;
+  badge?: number;
+  fillWhenActive?: boolean;
+  transform?: string;
+  likeCount?: number;
+  shareCount?: number;
+}
+
+const HeaderActionButton = ({ 
+  Icon, 
+  active = false, 
+  onClick, 
+  progress, 
+  activeColor = '#f97316',
+  badge,
+  fillWhenActive = true,
+  transform = '',
+  likeCount,
+  shareCount
+}: HeaderActionButtonProps) => {
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    }
+
+    // Only trigger animation for heart icon
+    if (Icon.name === "Heart" || Icon.displayName === "Heart") {
+      setIsAnimating(true);
+      setTimeout(() => setIsAnimating(false), 700);
+    }
+  };
+
+  // Determine which count to show
+  const count = likeCount ?? shareCount;
+
+  // Improved transition thresholds for smoother animation
+  const expandedThreshold = 0.2;
+  const fadingThreshold = 0.4;
+
+  // Show horizontal layout with count in non-scroll state
+  if (count !== undefined && progress < expandedThreshold) {
+    return (
+      <div 
+        className="rounded-full transition-all duration-700 hover-scale"
+        style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - progress)})` }}
+      >
+        <button
+          onClick={handleClick}
+          className="flex items-center gap-1.5 px-2.5 h-8 rounded-full transition-all duration-700 relative"
+        >
+          <Icon
+            size={20}
+            strokeWidth={2.5}
+            className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
+            style={{
+              fill: active && fillWhenActive ? activeColor : 'transparent',
+              color: `rgba(255, 255, 255, ${0.9 - (progress * 0.2)})`
+            }}
+          />
+          <span 
+            className="text-xs font-medium transition-all duration-700 ease-out animate-fade-in"
+            style={{
+              color: active ? activeColor : `rgba(255, 255, 255, ${0.95 - (progress * 0.2)})`,
+              opacity: 1 - (progress / expandedThreshold),
+            }}
+          >
+            {count}
+          </span>
+        </button>
+      </div>
+    );
+  }
+
+  // Transitional state - fading count while shrinking
+  if (count !== undefined && progress < fadingThreshold) {
+    const transitionProgress = (progress - expandedThreshold) / (fadingThreshold - expandedThreshold);
+
+    return (
+      <div 
+        className="rounded-full transition-all duration-700"
+        style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - progress)})` }}
+      >
+        <button
+          onClick={handleClick}
+          className="flex items-center h-8 px-3 rounded-full transition-all duration-700 relative"
+          style={{
+            gap: `${6 - (transitionProgress * 6)}px`,
+          }}
+        >
+          <Icon
+            size={20}
+            strokeWidth={2.5}
+            className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
+            style={{
+              fill: active && fillWhenActive ? activeColor : 'transparent',
+              color: progress > 0.5 
+                ? `rgba(75, 85, 99, ${0.7 + (progress * 0.3)})` 
+                : `rgba(255, 255, 255, ${0.9 - (progress * 0.3)})`
+            }}
+          />
+          <span 
+            className="text-xs font-medium transition-all duration-700"
+            style={{
+              color: active ? activeColor : `rgba(255, 255, 255, ${0.9 - (progress * 0.3)})`,
+              opacity: 1 - transitionProgress,
+              transform: `scaleX(${1 - transitionProgress})`,
+              transformOrigin: 'left center',
+              width: `${20 * (1 - transitionProgress)}px`,
+              overflow: 'hidden',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {count}
+          </span>
+        </button>
+      </div>
+    );
+  }
+
+  // Compact circular button state
+  return (
+    <div 
+      className="rounded-full transition-all duration-700"
+      style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - progress)})` }}
+    >
+      <button
+        onClick={handleClick}
+        className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700 relative"
+      >
+        <Icon
+          size={20}
+          strokeWidth={2.5}
+          className={`transition-all duration-700 ${isAnimating ? 'heart-animation' : ''}`}
+          style={{
+            fill: active && fillWhenActive ? activeColor : 'transparent',
+            color: progress > 0.5 
+              ? `rgba(75, 85, 99, ${0.7 + (progress * 0.3)})` 
+              : `rgba(255, 255, 255, ${0.9 - (progress * 0.2)})`
+          }}
+        />
+        {badge && (
+          <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[8px] rounded-full h-3 w-3 flex items-center justify-center animate-scale-in">
+            {badge}
+          </span>
+        )}
+      </button>
+    </div>
+  );
+};
 
 export default function AliExpressHeader({ 
   activeTabId = 'recommendations', 
@@ -71,6 +260,18 @@ export default function AliExpressHeader({
 
   // New prop for locations panel
   onOpenLocationsPanel,
+
+  // NEW: Product Detail Header Props
+  mode = 'home',
+  scrollY = 0,
+  productData,
+  onBackClick,
+  onFavoriteClick,
+  onShareClick,
+  isFavorite = false,
+  inPanel = false,
+  actionButtons = [],
+  hideSearchBar = false,
 }: AliExpressHeaderProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -85,6 +286,11 @@ export default function AliExpressHeader({
   const searchRef = useRef<HTMLInputElement>(null);
   const searchListRef = useRef<HTMLDivElement>(null);
   const locationDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Calculate scroll progress for product detail mode
+  const maxScroll = 120;
+  const scrollProgress = Math.min(scrollY / maxScroll, 1);
+  const displayProgress = mode === 'product-detail' ? scrollProgress : 0;
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -283,13 +489,50 @@ export default function AliExpressHeader({
     }
   };
 
+  // Default action buttons for product detail
+  const defaultActionButtons = useMemo(() => {
+    if (actionButtons.length > 0) return actionButtons;
+    
+    if (mode === 'product-detail') {
+      return [
+        {
+          Icon: Heart,
+          onClick: onFavoriteClick,
+          active: isFavorite,
+          activeColor: "#f43f5e",
+          count: productData?.favorite_count || 0
+        },
+        {
+          Icon: Share,
+          onClick: onShareClick,
+          active: false
+        }
+      ];
+    }
+    
+    return [];
+  }, [actionButtons, mode, onFavoriteClick, onShareClick, isFavorite, productData?.favorite_count]);
+
+  // Back/Close icon component
+  const IconComponent = inPanel ? X : ChevronLeft;
+
   return (
-    <>
-      <header 
-        className="fixed top-0 w-full z-40 bg-white" 
-        style={{ margin: 0, padding: 0, boxShadow: 'none' }}
-      >
-        {/* Search Bar */}
+    <header 
+      className="fixed top-0 w-full z-40"
+      style={{ 
+        margin: 0, 
+        padding: 0, 
+        boxShadow: 'none',
+        backgroundColor: mode === 'product-detail' 
+          ? `rgba(255, 255, 255, ${displayProgress * 0.95})` 
+          : 'white',
+        backdropFilter: mode === 'product-detail' && displayProgress > 0 ? `blur(${displayProgress * 8}px)` : 'none',
+        boxShadow: mode === 'product-detail' && displayProgress > 0.1 ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
+      }}
+    >
+      {/* Header content based on mode */}
+      {mode === 'home' && !hideSearchBar ? (
+        // HOME MODE: Search Bar
         <div 
           className="flex items-center justify-between px-2 transition-all duration-500 ease-in-out bg-white"
           style={{ height: '36px' }}
@@ -359,8 +602,6 @@ export default function AliExpressHeader({
                           {/* Chevron icon */}
                           <ChevronDown className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
                         </button>
-
-                        {/* REMOVED DROPDOWN MENU - Panel opens directly instead */}
                       </div>
                     </>
                   )}
@@ -369,120 +610,213 @@ export default function AliExpressHeader({
             </form>
           </div>
         </div>
-
-        {/* Filter Bar */}
-        {showFilterBar && filterCategories.length > 0 && (
-          <div className="bg-white border-b border-gray-200">
-            <div className="flex items-center justify-between px-2 py-1">
-              <div className="flex-1 overflow-x-auto scrollbar-hide">
-                <div className="flex items-center space-x-2 py-1 min-w-max">
-                  {filterCategories.map((category) => {
-                    const isSelected = selectedFilters.includes(category.id);
-                    return (
-                      <button
-                        key={category.id}
-                        onClick={() => handleFilterSelect(category.id)}
-                        disabled={isFilterDisabled}
-                        className={`
-                          flex items-center justify-center px-3 py-1 text-xs font-medium
-                          whitespace-nowrap transition-all duration-200
-                          ${flatBorders ? 'rounded-none' : 'rounded-full'}
-                          ${isSelected 
-                            ? 'bg-blue-600 text-white border border-blue-600' 
-                            : 'bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200'
-                          }
-                          ${isFilterDisabled ? 'opacity-50 cursor-not-allowed' : ''}
-                        `}
-                      >
-                        {category.name}
-                        {isSelected && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleFilterClear(category.id);
-                            }}
-                            className="ml-1.5 text-current hover:text-white/80"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+      ) : mode === 'product-detail' ? (
+        // PRODUCT DETAIL MODE: Custom Header
+        <div className="py-2 px-3 w-full">
+          <div className="flex items-center justify-between w-full max-w-6xl mx-auto gap-4">
+            <div className="flex items-center gap-3 flex-shrink-0 min-w-0 flex-1">
+              <div 
+                className="rounded-full transition-all duration-700"
+                style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})` }}
+              >
+                <button 
+                  className="h-8 w-8 rounded-full flex items-center justify-center p-1 transition-all duration-700"
+                  onClick={onBackClick}
+                >
+                  <IconComponent
+                    size={24}
+                    strokeWidth={2.5}
+                    className="transition-all duration-700"
+                    style={{
+                      color: displayProgress > 0.5 
+                        ? `rgba(75, 85, 99, ${0.7 + (displayProgress * 0.3)})` 
+                        : `rgba(255, 255, 255, ${0.9 - (displayProgress * 0.2)})`
+                    }}
+                  />
+                </button>
               </div>
 
-              {selectedFilters.length > 0 && (
-                <button
-                  onClick={handleClearAllFilters}
-                  disabled={isFilterDisabled}
-                  className="ml-2 px-2 py-1 text-xs font-medium text-red-600 hover:text-red-700 whitespace-nowrap"
+              {displayProgress < 0.5 && productData?.sellers && (
+                <div 
+                  className="rounded-full transition-all duration-700 flex-shrink-0"
+                  style={{ backgroundColor: `rgba(0, 0, 0, ${0.1 * (1 - displayProgress)})` }}
                 >
-                  Clear all
-                </button>
+                  <button
+                    onClick={() => {
+                      if (productData?.sellers?.id) {
+                        navigate(`/seller/${productData.sellers.id}`);
+                      }
+                    }}
+                    className="flex items-center gap-1.5 px-2.5 h-8 rounded-full transition-all duration-700 relative"
+                  >
+                    <div className="w-5 h-5 rounded-full bg-gray-100 overflow-hidden flex-shrink-0">
+                      <img 
+                        src={productData.sellers.image_url || "https://picsum.photos/100/100?random=1"}
+                        alt={`${productData.sellers.name} seller`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "https://picsum.photos/100/100?random=1";
+                          target.onerror = null;
+                        }}
+                      />
+                    </div>
+                    
+                    <span 
+                      className="text-xs font-medium transition-all duration-700"
+                      style={{
+                        color: `rgba(255, 255, 255, ${0.95 - (displayProgress * 0.2)})`
+                      }}
+                    >
+                      {productData.sellers.name}
+                    </span>
+                    
+                    {productData.sellers.verified && <VerificationBadge />}
+                    
+                    <span 
+                      className="text-xs font-medium transition-all duration-700"
+                      style={{
+                        color: `rgba(255, 255, 255, ${0.7 - (displayProgress * 0.2)})`
+                      }}
+                    >
+                      {productData.sellers.followers_count && productData.sellers.followers_count >= 1000000 
+                        ? `${(productData.sellers.followers_count / 1000000).toFixed(1)}M`
+                        : productData.sellers.followers_count && productData.sellers.followers_count >= 1000
+                        ? `${(productData.sellers.followers_count / 1000).toFixed(1)}K`
+                        : productData.sellers.followers_count?.toString() || '0'
+                      }
+                    </span>
+                  </button>
+                </div>
               )}
             </div>
-          </div>
-        )}
 
-        {/* Optional Element Below Header */}
-        {showCategoryTabs ? (
-          // Category Tabs
-          <div className="relative overflow-hidden">
-            <CategoryTabs 
-              key={categoryTabsKey}
-              progress={1}
-              activeTab={activeTab}
-              setActiveTab={handleTabChange}
-              categories={tabsToShow}
-              isSearchOverlayActive={false}
-            />
-          </div>
-        ) : showSearchList ? (
-          // Horizontally Scrollable Search List
-          <div className="bg-white">
-            {/* Scrollable search list */}
-            <div 
-              ref={searchListRef}
-              className="relative overflow-x-auto scrollbar-hide"
-              style={{ 
-                WebkitOverflowScrolling: 'touch',
-                scrollbarWidth: 'none',
-                msOverflowStyle: 'none'
-              }}
-            >
-              <div className="flex px-2 py-1 space-x-2 min-w-max">
-                {searchItemsToShow.map((item, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleSearchItemClick(item.term)}
-                    className={`
-                      flex items-center justify-center
-                      px-3 py-1
-                      text-xs font-medium
-                      whitespace-nowrap
-                      transition-all duration-200
-                      ${flatBorders ? 'rounded-none' : 'rounded-full'}
-                      bg-gray-100
-                      text-gray-700
-                      hover:bg-gray-200
-                      hover:text-gray-900
-                      active:bg-gray-300
-                      focus:outline-none focus:ring-1 focus:ring-gray-400 focus:ring-offset-1
-                    `}
-                  >
-                    {getTrendIcon(item.trend)}
-                    {item.term}
-                  </button>
-                ))}
-              </div>
-
-              {/* Fade effect on the right side to indicate scrollability */}
-              <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white to-transparent pointer-events-none" />
+            <div className="flex gap-2 flex-shrink-0">
+              {defaultActionButtons.map((button, index) => (
+                <HeaderActionButton
+                  key={index}
+                  Icon={button.Icon}
+                  active={button.active}
+                  onClick={button.onClick}
+                  progress={displayProgress}
+                  activeColor={button.activeColor}
+                  likeCount={button.count}
+                />
+              ))}
             </div>
           </div>
-        ) : null}
-      </header>
-    </>
+        </div>
+      ) : null}
+
+      {/* Filter Bar (only in home mode) */}
+      {mode === 'home' && showFilterBar && filterCategories.length > 0 && (
+        <div className="bg-white border-b border-gray-200">
+          <div className="flex items-center justify-between px-2 py-1">
+            <div className="flex-1 overflow-x-auto scrollbar-hide">
+              <div className="flex items-center space-x-2 py-1 min-w-max">
+                {filterCategories.map((category) => {
+                  const isSelected = selectedFilters.includes(category.id);
+                  return (
+                    <button
+                      key={category.id}
+                      onClick={() => handleFilterSelect(category.id)}
+                      disabled={isFilterDisabled}
+                      className={`
+                        flex items-center justify-center px-3 py-1 text-xs font-medium
+                        whitespace-nowrap transition-all duration-200
+                        ${flatBorders ? 'rounded-none' : 'rounded-full'}
+                        ${isSelected 
+                          ? 'bg-blue-600 text-white border border-blue-600' 
+                          : 'bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200'
+                        }
+                        ${isFilterDisabled ? 'opacity-50 cursor-not-allowed' : ''}
+                      `}
+                    >
+                      {category.name}
+                      {isSelected && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleFilterClear(category.id);
+                          }}
+                          className="ml-1.5 text-current hover:text-white/80"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {selectedFilters.length > 0 && (
+              <button
+                onClick={handleClearAllFilters}
+                disabled={isFilterDisabled}
+                className="ml-2 px-2 py-1 text-xs font-medium text-red-600 hover:text-red-700 whitespace-nowrap"
+              >
+                Clear all
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Optional Element Below Header */}
+      {mode === 'home' && showCategoryTabs ? (
+        // Category Tabs
+        <div className="relative overflow-hidden">
+          <CategoryTabs 
+            key={categoryTabsKey}
+            progress={1}
+            activeTab={activeTab}
+            setActiveTab={handleTabChange}
+            categories={tabsToShow}
+            isSearchOverlayActive={false}
+          />
+        </div>
+      ) : mode === 'home' && showSearchList ? (
+        // Horizontally Scrollable Search List
+        <div className="bg-white">
+          <div 
+            ref={searchListRef}
+            className="relative overflow-x-auto scrollbar-hide"
+            style={{ 
+              WebkitOverflowScrolling: 'touch',
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none'
+            }}
+          >
+            <div className="flex px-2 py-1 space-x-2 min-w-max">
+              {searchItemsToShow.map((item, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleSearchItemClick(item.term)}
+                  className={`
+                    flex items-center justify-center
+                    px-3 py-1
+                    text-xs font-medium
+                    whitespace-nowrap
+                    transition-all duration-200
+                    ${flatBorders ? 'rounded-none' : 'rounded-full'}
+                    bg-gray-100
+                    text-gray-700
+                    hover:bg-gray-200
+                    hover:text-gray-900
+                    active:bg-gray-300
+                    focus:outline-none focus:ring-1 focus:ring-gray-400 focus:ring-offset-1
+                  `}
+                >
+                  {getTrendIcon(item.trend)}
+                  {item.term}
+                </button>
+              ))}
+            </div>
+            <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white to-transparent pointer-events-none" />
+          </div>
+        </div>
+      ) : null}
+    </header>
   );
 }
