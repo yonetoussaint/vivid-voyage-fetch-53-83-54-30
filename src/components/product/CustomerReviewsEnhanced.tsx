@@ -9,7 +9,7 @@ import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
 import ProductFilterBar from '@/components/home/ProductFilterBar';
 import { EngagementSection } from '@/components/shared/EngagementSection';
 import VerificationBadge from '@/components/shared/VerificationBadge';
-import Button from './Button'; // Assuming you have a Button component
+import Button from "@/components/ui/button";
 import ErrorBoundary from './ErrorBoundary'; // Assuming you have an ErrorBoundary component
 import CustomerReviewsSkeleton from './CustomerReviewsSkeleton'; // Assuming you have a Skeleton component
 import { useCustomerReviews, truncateText } from "@/hooks/customer-reviews.hooks";
