@@ -15,7 +15,6 @@ const GalleryThumbnails: React.FC<GalleryThumbnailsProps> = ({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Calculate how many items to show (5.5 items)
-  const itemCount = 5.5;
   const itemWidth = 16.5; // percentage for 5.5 items (100/5.5 ≈ 18.18, reduced a bit for spacing)
 
   return (
@@ -69,4 +68,4 @@ const GalleryThumbnails: React.FC<GalleryThumbnailsProps> = ({
   );
 };
 
-export default GalleryThumbnails;
+export default GalleryThumbnails; // Make sure this is default export
