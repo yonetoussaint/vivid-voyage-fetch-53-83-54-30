@@ -1,4 +1,5 @@
 import React from 'react';
+import SectionHeader from '@/components/home/SectionHeader';
 
 interface RatingDistribution {
   stars: number;
@@ -34,14 +35,30 @@ interface ReviewsSummaryProps {
     icon?: React.ComponentType<{ className?: string }>;
     onClick: () => void;
   };
+  viewAllLink?: string;
+  viewAllText?: string;
+  showCountdown?: boolean;
+  countdown?: string;
+  showCustomButton?: boolean;
+  customButtonText?: string;
+  customButtonIcon?: React.ComponentType<{ className?: string }>;
+  onCustomButtonClick?: () => void;
 }
 
 const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
-  title = "Reviews Summary",
+  title = "Reviews/Comments",
   subtitle = "Ratings and reviews are verified and are from people who use the same type of device that you use",
   reviewsSummary = mockReviewsSummary,
   className = '',
   actionButton,
+  viewAllLink,
+  viewAllText = "View All",
+  showCountdown = false,
+  countdown,
+  showCustomButton = false,
+  customButtonText = "Tout regarder",
+  customButtonIcon,
+  onCustomButtonClick,
 }) => {
   const renderStars = (rating: number) => {
     const fullStars = Math.floor(rating);
@@ -81,18 +98,34 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
   };
 
   return (
-    <div className={`bg-white border-b ${className}`}>
+    <div className={`bg-white ${className}`}>
+      {/* Section Header */}
+      <SectionHeader
+        title={title}
+        viewAllLink={viewAllLink}
+        viewAllText={viewAllText}
+        titleSize="base"
+        titleTransform="none"
+        paddingBottom={false}
+        showCountdown={showCountdown}
+        countdown={countdown}
+        showCustomButton={showCustomButton}
+        customButtonText={customButtonText}
+        customButtonIcon={customButtonIcon}
+        onCustomButtonClick={onCustomButtonClick}
+      />
+
+      {/* Reviews summary content */}
       <div className="px-2 py-3">
-        {/* Subtitle - Centered */}
+        {/* Subtitle */}
         {subtitle && (
           <div className="mb-3">
-            <p className="text-xs text-gray-500 text-center leading-relaxed">
+            <p className="text-xs text-gray-500 leading-relaxed">
               {subtitle}
             </p>
           </div>
         )}
 
-        {/* Reviews summary content */}
         <div>
           <div className="flex items-stretch gap-6">
             {/* Rating number and stars */}
