@@ -5,7 +5,7 @@ import {
   Send,
   Heart
 } from 'lucide-react';
-import SellerSummaryHeader from '@/components/seller-app/SellerSummaryHeader';
+import ReviewsSummary from '@/components/product/ReviewsSummary.tsx';
 import ProductFilterBar from '@/components/home/ProductFilterBar';
 import { EngagementSection } from '@/components/shared/EngagementSection';
 import VerificationBadge from '@/components/shared/VerificationBadge';
