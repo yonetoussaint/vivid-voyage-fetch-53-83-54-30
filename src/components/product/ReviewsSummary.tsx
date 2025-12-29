@@ -83,10 +83,10 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
   return (
     <div className={`bg-white border-b ${className}`}>
       <div className="px-2 py-3">
-        {/* Subtitle - Centered and Justified */}
+        {/* Subtitle - Centered */}
         {subtitle && (
           <div className="mb-3">
-            <p className="text-xs text-gray-500 text-center text-justify leading-relaxed">
+            <p className="text-xs text-gray-500 text-center leading-relaxed">
               {subtitle}
             </p>
           </div>
