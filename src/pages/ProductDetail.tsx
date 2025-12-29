@@ -12,7 +12,7 @@ import StoreBanner from "@/components/StoreBanner";
 import GalleryThumbnails from "@/components/product/GalleryThumbnails";
 import ProductDetailInfo from "@/components/product/ProductDetailInfo";
 import ProductDetailLoading from "@/components/product/ProductDetailLoading";
-import { useProductDetail } from "@/hooks/useProductDetail";
+import { useProductDetail } from "@/hooks/product-detail.hooks";
 
 interface ProductDetailProps {
   productId?: string;
