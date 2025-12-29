@@ -82,10 +82,7 @@ const CustomerReviews = ({ productId, limit }: CustomerReviewsProps) => {
   return (
     <ErrorBoundary>
       <div className="w-full bg-white">
-        <SellerSummaryHeader 
-          mode="reviews"
-          reviewsSummary={reviewsSummary}
-        />
+        <ReviewsSummary/>
 
         <ProductFilterBar
           filterCategories={filterCategories}
