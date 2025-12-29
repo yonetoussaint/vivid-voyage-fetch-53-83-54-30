@@ -12,7 +12,8 @@ import StoreBanner from "@/components/StoreBanner";
 import GalleryThumbnails from "@/components/product/GalleryThumbnails";
 import ProductDetailInfo from "@/components/product/ProductDetailInfo";
 import ProductDetailLoading from "@/components/product/ProductDetailLoading";
-import { useProductDetail } from "@/hooks/product-detail.hooks";
+import CustomerReviews from "@/components/product/CustomerReviewsEnhanced"; // Import the CustomerReviews component
+import { useProductDetail } from "@/hooks/useProductDetail";
 
 interface ProductDetailProps {
   productId?: string;
@@ -122,7 +123,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
 
         <Separator />
 
-        <div className="mt-2">
+        <div className="mt-4 px-4">
           <StoreBanner />
         </div>
 
@@ -141,6 +142,18 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
           />
         </div>
 
+        {/* Separator between FlashDeals and CustomerReviews */}
+        <Separator />
+
+        {/* Customer Reviews Section */}
+        <div className="mt-4">
+          <CustomerReviews 
+            productId={productId}
+            limit={5} // Show 5 reviews initially with "View All" button
+          />
+        </div>
+
+        {/* Separator between CustomerReviews and InfiniteContentGrid */}
         <Separator />
 
         <InfiniteContentGrid
