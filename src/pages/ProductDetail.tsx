@@ -122,7 +122,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
 
         <Separator />
 
-        <div className="mt-4 px-4">
+        <div className="mt-2">
           <StoreBanner />
         </div>
 
