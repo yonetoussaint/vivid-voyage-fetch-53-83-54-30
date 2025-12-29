@@ -1,6 +1,6 @@
 // src/pages/ProductDetail.tsx
-import React from "react";
-import { useParams, useLocation, useEffect } from "react-router-dom";
+import React, { useEffect } from "react";
+import { useParams, useLocation } from "react-router-dom";
 import { Store } from 'lucide-react';
 import ProductDetailError from "@/components/product/ProductDetailError";
 import ProductImageGallery from "@/components/ProductImageGallery";
@@ -12,7 +12,7 @@ import StoreBanner from "@/components/StoreBanner";
 import GalleryThumbnails from "@/components/product/GalleryThumbnails";
 import ProductDetailInfo from "@/components/product/ProductDetailInfo";
 import ProductDetailLoading from "@/components/product/ProductDetailLoading";
-import { useProductDetail } from "@/hooks/product-detail.hooks";
+import { useProductDetail } from "@/hooks/useProductDetail";
 
 interface ProductDetailProps {
   productId?: string;
