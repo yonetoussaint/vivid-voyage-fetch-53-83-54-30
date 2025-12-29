@@ -1,5 +1,4 @@
 import React from 'react';
-import { Star, Info, LucideIcon } from 'lucide-react';
 
 interface RatingDistribution {
   stars: number;
@@ -28,7 +27,6 @@ const mockReviewsSummary: ReviewsSummaryData = {
 interface ReviewsSummaryProps {
   title?: string;
   subtitle?: string;
-  subtitleIcon?: React.ComponentType<{ className?: string }>;
   reviewsSummary?: ReviewsSummaryData;
   className?: string;
   actionButton?: {
@@ -41,7 +39,6 @@ interface ReviewsSummaryProps {
 const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
   title = "Reviews Summary",
   subtitle = "Ratings and reviews are verified and are from people who use the same type of device that you use",
-  subtitleIcon,
   reviewsSummary = mockReviewsSummary,
   className = '',
   actionButton,
@@ -83,24 +80,17 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
     return num.toString();
   };
 
-  const getSubtitleIcon = () => {
-    if (subtitleIcon) {
-      const CustomIcon = subtitleIcon;
-      return <CustomIcon className="w-4 h-4 text-gray-500 flex-shrink-0" />;
-    }
-    return <Star className="w-4 h-4 text-gray-500 flex-shrink-0" />;
-  };
-
   return (
     <div className={`bg-white border-b ${className}`}>
       <div className="px-2 py-3">
-        {/* Subtitle with icon at the top */}
-        <div className="flex items-start gap-2 mb-3">
-          {getSubtitleIcon()}
-          <p className="text-xs text-gray-500 flex-1 leading-relaxed">
-            {subtitle}
-          </p>
-        </div>
+        {/* Subtitle */}
+        {subtitle && (
+          <div className="mb-3">
+            <p className="text-xs text-gray-500 leading-relaxed">
+              {subtitle}
+            </p>
+          </div>
+        )}
 
         {/* Reviews summary content */}
         <div>
