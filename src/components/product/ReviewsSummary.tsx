@@ -1,5 +1,6 @@
 import React from 'react';
 import SectionHeader from '@/components/home/SectionHeader';
+import { MessageCircle } from 'lucide-react';
 
 interface RatingDistribution {
   stars: number;
@@ -43,15 +44,16 @@ interface ReviewsSummaryProps {
   customButtonText?: string;
   customButtonIcon?: React.ComponentType<{ className?: string }>;
   onCustomButtonClick?: () => void;
+  icon?: React.ComponentType<{ className?: string }>;
 }
 
 const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
-  title = "Reviews/Comments",
+  title = "REVIEWS/COMMENTS",
   subtitle = "Ratings and reviews are verified and are from people who use the same type of device that you use",
   reviewsSummary = mockReviewsSummary,
   className = '',
   actionButton,
-  viewAllLink,
+  viewAllLink = '/reviews/all',
   viewAllText = "View All",
   showCountdown = false,
   countdown,
@@ -59,6 +61,7 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
   customButtonText = "Tout regarder",
   customButtonIcon,
   onCustomButtonClick,
+  icon = MessageCircle,
 }) => {
   const renderStars = (rating: number) => {
     const fullStars = Math.floor(rating);
@@ -99,13 +102,14 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
 
   return (
     <div className={`bg-white ${className}`}>
-      {/* Section Header */}
+      {/* Section Header with uppercase title, icon, and view all button */}
       <SectionHeader
         title={title}
+        icon={icon}
         viewAllLink={viewAllLink}
         viewAllText={viewAllText}
         titleSize="base"
-        titleTransform="none"
+        titleTransform="uppercase"
         paddingBottom={false}
         showCountdown={showCountdown}
         countdown={countdown}
