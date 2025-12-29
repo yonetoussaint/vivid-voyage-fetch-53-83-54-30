@@ -108,7 +108,6 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
         icon={icon}
         viewAllLink={viewAllLink}
         viewAllText={viewAllText}
-        titleSize="base"
         titleTransform="uppercase"
         paddingBottom={false}
         showCountdown={showCountdown}
