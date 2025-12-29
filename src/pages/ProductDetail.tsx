@@ -15,6 +15,7 @@ import { VerificationBadge } from '@/components/shared/VerificationBadge';
 import InfiniteContentGrid from "@/components/InfiniteContentGrid";
 import FlashDeals from "@/components/home/FlashDeals";
 import Separator from "@/components/shared/Separator";
+import StoreBanner from "@/components/StoreBanner"; // Import the StoreBanner component
 
 interface ProductDetailProps {
   productId?: string;
@@ -390,7 +391,15 @@ const ProductDetailContent: React.FC<ProductDetailProps> = ({
           />
         </div>
 
-        {/* Separator between iPhoneXRListing and FlashDeals */}
+        {/* Separator between iPhoneXRListing and StoreBanner */}
+        <Separator />
+
+        {/* Store Banner - Added before FlashDeals */}
+        <div className="mt-4 px-4">
+          <StoreBanner />
+        </div>
+
+        {/* Separator between StoreBanner and FlashDeals */}
         <Separator />
 
         {/* More from this store - FlashDeals Component with Store icon and View More button */}
