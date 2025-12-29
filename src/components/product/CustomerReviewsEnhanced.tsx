@@ -12,7 +12,7 @@ import VerificationBadge from '@/components/shared/VerificationBadge';
 import Button from './Button'; // Assuming you have a Button component
 import ErrorBoundary from './ErrorBoundary'; // Assuming you have an ErrorBoundary component
 import CustomerReviewsSkeleton from './CustomerReviewsSkeleton'; // Assuming you have a Skeleton component
-import { useCustomerReviews, truncateText } from '@hooks/customer-reviews.hooks';
+import { useCustomerReviews, truncateText } from "@/hooks/customer-reviews.hooks";
 import { formatDate, formatDateForReply } from './DateUtils';
 
 interface CustomerReviewsProps {
