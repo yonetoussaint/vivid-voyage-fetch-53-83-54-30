@@ -3,31 +3,42 @@ import SectionHeader from '@/components/home/SectionHeader';
 
 interface ReviewsGalleryProps {
   title?: string;
-  icon?: React.ReactNode;
+  subtitle?: string;
+  icon?: React.ComponentType<{ className?: string }> | string;
   viewAllLink?: string;
   viewAllText?: string;
+  titleTransform?: "uppercase" | "capitalize" | "none";
+  titleSize?: "xs" | "sm" | "base" | "lg" | "xl";
+  showClearButton?: boolean;
+  clearButtonText?: string;
+  onClearClick?: () => void;
   showCountdown?: boolean;
-  countdown?: {
-    targetDate: Date;
-    title?: string;
-  };
+  countdown?: string;
   showCustomButton?: boolean;
   customButtonText?: string;
-  customButtonIcon?: React.ReactNode;
+  customButtonIcon?: React.ComponentType<{ className?: string }> | string;
   onCustomButtonClick?: () => void;
+  paddingBottom?: boolean;
 }
 
 export default function ReviewsGallery({
   title = "Reviews Gallery",
-  icon = <GalleryVertical className="w-5 h-5" />,
+  subtitle,
+  icon = GalleryVertical,
   viewAllLink,
   viewAllText = "View All",
+  titleTransform = "uppercase",
+  titleSize = "xs",
+  showClearButton = false,
+  clearButtonText = "× Clear",
+  onClearClick,
   showCountdown = false,
   countdown,
   showCustomButton = false,
   customButtonText,
   customButtonIcon,
   onCustomButtonClick,
+  paddingBottom = false,
 }: ReviewGalleryProps) {
   const reviews = [
     { id: 1, rating: 5.0 },
@@ -43,17 +54,22 @@ export default function ReviewsGallery({
       {/* Section Header */}
       <SectionHeader
         title={title}
+        subtitle={subtitle}
         icon={icon}
         viewAllLink={viewAllLink}
         viewAllText={viewAllText}
-        titleTransform="uppercase"
-        paddingBottom={false}
+        titleTransform={titleTransform}
+        titleSize={titleSize}
+        showClearButton={showClearButton}
+        clearButtonText={clearButtonText}
+        onClearClick={onClearClick}
         showCountdown={showCountdown}
         countdown={countdown}
         showCustomButton={showCustomButton}
         customButtonText={customButtonText}
         customButtonIcon={customButtonIcon}
         onCustomButtonClick={onCustomButtonClick}
+        paddingBottom={paddingBottom}
       />
 
       {/* Reviews Gallery */}
