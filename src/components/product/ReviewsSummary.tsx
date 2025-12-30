@@ -120,12 +120,12 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
 
       {/* Reviews summary content */}
       <div className="px-2 py-2">
-        {/* Subtitle with help icon */}
+        {/* Subtitle with help icon at the end */}
         {subtitle && (
           <div className="mb-3">
-            <p className="text-xs text-gray-500 leading-relaxed flex items-center">
-              {subtitle}
-              <HelpCircle className="inline-block ml-1.5 w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+            <p className="text-xs text-gray-500 leading-relaxed inline-flex items-baseline flex-wrap">
+              <span className="inline">{subtitle}</span>
+              <HelpCircle className="inline align-baseline ml-1 w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
             </p>
           </div>
         )}
