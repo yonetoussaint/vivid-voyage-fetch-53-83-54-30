@@ -1,7 +1,7 @@
 import { Star, GalleryVertical } from 'lucide-react';
 import SectionHeader from '@/components/home/SectionHeader';
 
-interface ReviewGalleryProps {
+interface ReviewsGalleryProps {
   title?: string;
   subtitle?: string;
   icon?: React.ComponentType<{ className?: string }> | string;
@@ -21,7 +21,7 @@ interface ReviewGalleryProps {
   paddingBottom?: boolean;
 }
 
-export default function ReviewGallery({
+export default function ReviewsGallery({
   title = "Reviews Gallery",
   subtitle,
   icon = GalleryVertical,
