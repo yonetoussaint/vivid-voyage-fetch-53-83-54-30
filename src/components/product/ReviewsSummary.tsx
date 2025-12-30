@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
 import SectionHeader from '@/components/home/SectionHeader';
-import { MessageCircle, HelpCircle } from 'lucide-react';
+import { 
+  MessageCircle, 
+  HelpCircle, 
+  ArrowUpDown, // For Sort by
+  Star, // For Rating
+  Image, // For Media Type
+  Smartphone, // For Device Type
+  BadgeCheck, // For Verified Purchase
+  DollarSign // For Price Range
+} from 'lucide-react';
 import FilterTabs, { FilterTab, ActiveFilter } from '@/components/FilterTabs'; // Adjust the import path as needed
 
 interface RatingDistribution {
@@ -64,13 +73,14 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
   onCustomButtonClick,
   icon = MessageCircle,
 }) => {
-  // Filter tabs state
+  // Filter tabs state with icons
   const [filterTabs, setFilterTabs] = useState<FilterTab[]>([
     {
       id: 'sortBy',
       label: 'Sort by',
       type: 'dropdown',
       value: 'mostRelevant',
+      icon: ArrowUpDown, // Added icon
       options: [
         { label: 'Most Relevant', value: 'mostRelevant' },
         { label: 'Most Recent', value: 'mostRecent' },
@@ -83,6 +93,7 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
       label: 'Rating',
       type: 'dropdown',
       value: null,
+      icon: Star, // Added icon
       options: [
         { label: '5 Stars', value: 5 },
         { label: '4 Stars', value: 4 },
@@ -96,6 +107,7 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
       label: 'Media Type',
       type: 'dropdown',
       value: null,
+      icon: Image, // Added icon
       options: [
         { label: 'All Media', value: 'all' },
         { label: 'With Photos', value: 'photos' },
@@ -107,6 +119,7 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
       label: 'Device Type',
       type: 'dropdown',
       value: null,
+      icon: Smartphone, // Added icon
       options: [
         { label: 'All Devices', value: 'all' },
         { label: 'iPhone', value: 'iphone' },
@@ -118,13 +131,15 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
       id: 'verifiedPurchase',
       label: 'Verified Purchase',
       type: 'checkbox',
-      value: false
+      value: false,
+      icon: BadgeCheck // Added icon
     },
     {
       id: 'priceRange',
       label: 'Price Range',
       type: 'dropdown',
       value: null,
+      icon: DollarSign, // Added icon
       options: [
         { label: 'All Prices', value: null },
         { label: '$0 - $100', value: { min: 0, max: 100 } },
@@ -149,7 +164,7 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
       const tab = filterTabs.find(t => t.id === tabId);
       if (tab) {
         let displayValue = '';
-        
+
         if (tab.type === 'checkbox') {
           displayValue = 'Yes';
         } else if (tab.id === 'priceRange' && value && typeof value === 'object') {
