@@ -119,7 +119,7 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
       />
 
       {/* Reviews summary content */}
-      <div className="px-2 py-3">
+      <div className="px-2 py-2">
         {/* Subtitle */}
         {subtitle && (
           <div className="mb-3">
