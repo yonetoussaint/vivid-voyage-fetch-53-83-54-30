@@ -79,7 +79,7 @@ const ReviewItem = ({
 
   return (
     <div 
-      className="p-2"
+      className="p-2.5"
       style={{
         backgroundColor: '#f5f5f5',
         border: 'none',
