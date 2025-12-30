@@ -59,59 +59,60 @@ const CustomerReviews = ({ productId, limit }: CustomerReviewsProps) => {
   }
 
   return (
-    <ErrorBoundary>
-      <div className="w-full bg-white">
-        <ReviewsSummary />
+   <ErrorBoundary>
+  <div className="w-full bg-white">
+    <ReviewsSummary />
 
-        <div className="py-4">
-          <div className="space-y-4">
-            {finalReviews.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground" style={{ color: '#666' }}>
-                  No reviews found for this product.
-                </p>
-                <p className="text-sm text-muted-foreground mt-1" style={{ color: '#666' }}>
-                  Be the first to leave a review!
-                </p>
-              </div>
-            ) : (
-              finalReviews.map((review: Review) => (
-                <ReviewItem
-                  key={review.id}
-                  review={review}
-                  expandedReviews={expandedReviews}
-                  expandedReplies={expandedReplies}
-                  onToggleReadMore={toggleReadMore}
-                  onToggleShowMoreReplies={toggleShowMoreReplies}
-                  onCommentClick={handleCommentClick}
-                  onShareClick={handleShareClick}
-                  onLikeReply={handleLikeReply}
-                  onReplyToReply={handleReplyToReply}
-                />
-              ))
-            )}
+    <div className="py-4">
+      <div className="space-y-4">
+        {finalReviews.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground" style={{ color: '#666' }}>
+              No reviews found for this product.
+            </p>
+            <p className="text-sm text-muted-foreground mt-1" style={{ color: '#666' }}>
+              Be the first to leave a review!
+            </p>
           </div>
-        </div>
-
-        {limit && finalReviews.length > limit && (
-          <Button
-            variant="outline"
-            className="w-full mt-4"
-            onClick={() => window.location.href = `/product/${productId}/reviews`}
-          >
-            View All {finalReviews.length} Reviews
-          </Button>
+        ) : (
+          finalReviews.map((review: Review) => (
+            <div key={review.id} className="px-2">
+              <ReviewItem
+                review={review}
+                expandedReviews={expandedReviews}
+                expandedReplies={expandedReplies}
+                onToggleReadMore={toggleReadMore}
+                onToggleShowMoreReplies={toggleShowMoreReplies}
+                onCommentClick={handleCommentClick}
+                onShareClick={handleShareClick}
+                onLikeReply={handleLikeReply}
+                onReplyToReply={handleReplyToReply}
+              />
+            </div>
+          ))
         )}
-
-        <ReplyBar
-          replyingTo={replyingTo}
-          replyText={replyText}
-          onReplyTextChange={setReplyText}
-          onSubmitReply={handleSubmitReply}
-          onCancelReply={handleCancelReply}
-        />
       </div>
-    </ErrorBoundary>
+    </div>
+
+    {limit && finalReviews.length > limit && (
+      <Button
+        variant="outline"
+        className="w-full mt-4"
+        onClick={() => window.location.href = `/product/${productId}/reviews`}
+      >
+        View All {finalReviews.length} Reviews
+      </Button>
+    )}
+
+    <ReplyBar
+      replyingTo={replyingTo}
+      replyText={replyText}
+      onReplyTextChange={setReplyText}
+      onSubmitReply={handleSubmitReply}
+      onCancelReply={handleCancelReply}
+    />
+  </div>
+</ErrorBoundary>
   );
 };
 
