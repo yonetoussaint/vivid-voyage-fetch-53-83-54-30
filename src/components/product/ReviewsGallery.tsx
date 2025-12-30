@@ -1,7 +1,7 @@
 import { Star, GalleryVertical } from 'lucide-react';
 import SectionHeader from '@/components/home/SectionHeader';
 
-interface ReviewsGalleryProps {
+interface ReviewGalleryProps {
   title?: string;
   subtitle?: string;
   icon?: React.ComponentType<{ className?: string }> | string;
@@ -19,9 +19,17 @@ interface ReviewsGalleryProps {
   customButtonIcon?: React.ComponentType<{ className?: string }> | string;
   onCustomButtonClick?: () => void;
   paddingBottom?: boolean;
+  showStackedProfiles?: boolean;
+  stackedProfiles?: Array<{ id: string; image: string; alt?: string }>;
+  onProfileClick?: (profileId: string) => void;
+  maxProfiles?: number;
+  stackedProfilesText?: string;
+  showVerifiedSellers?: boolean;
+  verifiedSellersText?: string;
+  verifiedIcon?: React.ComponentType<{ className?: string }>;
 }
 
-export default function ReviewsGallery({
+export default function ReviewGallery({
   title = "Reviews Gallery",
   subtitle,
   icon = GalleryVertical,
@@ -39,6 +47,14 @@ export default function ReviewsGallery({
   customButtonIcon,
   onCustomButtonClick,
   paddingBottom = false,
+  showStackedProfiles = false,
+  stackedProfiles = [],
+  onProfileClick,
+  maxProfiles = 3,
+  stackedProfilesText = "Handpicked by",
+  showVerifiedSellers = false,
+  verifiedSellersText = "Verified Sellers",
+  verifiedIcon
 }: ReviewGalleryProps) {
   const reviews = [
     { id: 1, rating: 5.0 },
@@ -70,6 +86,14 @@ export default function ReviewsGallery({
         customButtonIcon={customButtonIcon}
         onCustomButtonClick={onCustomButtonClick}
         paddingBottom={paddingBottom}
+        showStackedProfiles={showStackedProfiles}
+        stackedProfiles={stackedProfiles}
+        onProfileClick={onProfileClick}
+        maxProfiles={maxProfiles}
+        stackedProfilesText={stackedProfilesText}
+        showVerifiedSellers={showVerifiedSellers}
+        verifiedSellersText={verifiedSellersText}
+        verifiedIcon={verifiedIcon}
       />
 
       {/* Reviews Gallery */}
