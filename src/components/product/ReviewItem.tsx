@@ -51,7 +51,7 @@ interface ReviewItemProps {
   onMediaClick?: (url: string) => void;
 }
 
- const ReviewItem = ({
+const ReviewItem = ({
   review,
   expandedReviews,
   expandedReplies,
@@ -78,9 +78,16 @@ interface ReviewItemProps {
   } = review;
 
   return (
-    <div className="border-b pb-4" style={{ borderBottom: '1px solid #e5e5e5' }}>
+    <div 
+      className="rounded-lg p-4"
+      style={{
+        backgroundColor: '#f5f5f5',
+        border: 'none',
+        boxShadow: 'none'
+      }}
+    >
       {/* Review Header */}
-      <div className="flex items-start justify-between mb-2 px-2">
+      <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
           <div 
             className="w-8 h-8 bg-muted rounded-full flex items-center justify-center text-sm font-semibold" 
@@ -92,12 +99,21 @@ interface ReviewItemProps {
             <div className="flex items-center gap-2">
               <span className="font-medium">{user_name || 'Anonymous'}</span>
               {verified_purchase && (
-                <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                <span 
+                  className="text-xs px-2 py-1 rounded"
+                  style={{
+                    backgroundColor: '#e6f4ea',
+                    color: '#1e7e34'
+                  }}
+                >
                   Verified Purchase
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground" style={{ color: '#666' }}>
+            <div 
+              className="flex items-center gap-2 text-sm"
+              style={{ color: '#666' }}
+            >
               <div className="flex">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
@@ -114,7 +130,10 @@ interface ReviewItemProps {
       </div>
 
       {/* Review Comment */}
-      <div className="text-foreground text-sm mb-2 px-2">
+      <div 
+        className="text-sm mb-3"
+        style={{ color: '#333' }}
+      >
         <span>
           {expandedReviews.has(id) ? comment : truncateText(comment)}
           {comment.length > 120 && (
@@ -130,7 +149,7 @@ interface ReviewItemProps {
 
       {/* Media Section */}
       {media.length > 0 && (
-        <div className="px-2">
+        <div className="mb-3">
           <div className="flex gap-2 overflow-x-auto pb-2">
             {media.map((item, index) => (
               <div key={index} className="flex-shrink-0 relative">
@@ -151,7 +170,10 @@ interface ReviewItemProps {
                       alt={item.alt}
                       className="w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+                    <div 
+                      className="absolute inset-0 flex items-center justify-center"
+                      style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
+                    >
                       <Play className="w-6 h-6 text-white fill-white" />
                     </div>
                   </div>
@@ -161,7 +183,6 @@ interface ReviewItemProps {
           </div>
         </div>
       )}
-        
 
       {/* Engagement Section */}
       <EngagementSection
@@ -174,7 +195,14 @@ interface ReviewItemProps {
 
       {/* Replies Section */}
       {replies.length > 0 && (
-        <div className="mt-4 ml-6 space-y-3 px-2">
+        <div 
+          className="mt-4 ml-6 space-y-3"
+          style={{ 
+            backgroundColor: '#fafafa',
+            borderRadius: '8px',
+            padding: '12px'
+          }}
+        >
           {(expandedReplies.has(id) ? replies : replies.slice(0, 2)).map((reply) => (
             <ReplyItem
               key={reply.id}
@@ -221,10 +249,13 @@ const ReplyItem = ({ reply, onLike, onReply }: ReplyItemProps) => {
   } = reply;
 
   return (
-    <div className="border-l-2 border-gray-200 pl-4">
+    <div 
+      className="border-l-2 pl-4"
+      style={{ borderColor: '#e0e0e0' }}
+    >
       <div className="flex items-start gap-2">
         <div
-          className="w-6 h-6 bg-muted rounded-full flex items-center justify-center text-xs font-semibold"
+          className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold"
           style={{
             backgroundColor: is_seller ? '#3b82f6' : 'rgba(0,0,0,0.1)',
             color: is_seller ? 'white' : 'black'
@@ -234,37 +265,59 @@ const ReplyItem = ({ reply, onLike, onReply }: ReplyItemProps) => {
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <span className="font-medium text-sm">{user_name || 'Anonymous'}</span>
+            <span 
+              className="font-medium text-sm"
+              style={{ color: '#333' }}
+            >
+              {user_name || 'Anonymous'}
+            </span>
             {is_seller && (
               <div className="flex items-center gap-1">
                 {verified_seller && <VerificationBadge size="sm" />}
-                <span className="text-xs text-gray-500">•</span>
-                <span className="font-bold text-sm text-orange-500">Seller</span>
+                <span 
+                  className="text-xs"
+                  style={{ color: '#999' }}
+                >
+                  •
+                </span>
+                <span 
+                  className="font-bold text-sm"
+                  style={{ color: '#f97316' }}
+                >
+                  Seller
+                </span>
               </div>
             )}
           </div>
 
           {replying_to && (
-            <div className="text-xs text-gray-500 mt-1">
+            <div 
+              className="text-xs mt-1"
+              style={{ color: '#666' }}
+            >
               Replying to <span className="font-medium">{replying_to}</span>
             </div>
           )}
 
-          <div className="text-sm text-foreground mt-1">
+          <div 
+            className="text-sm mt-1"
+            style={{ color: '#333' }}
+          >
             {comment}
           </div>
 
           <div className="flex items-center gap-4 mt-2">
             <button
               onClick={onLike}
-              className="flex items-center gap-1.5 text-gray-600 hover:text-red-600 text-sm font-medium transition-colors"
+              className="flex items-center gap-1.5 text-sm font-medium transition-colors"
               style={{
                 background: 'none',
                 border: 'none',
                 padding: 0,
                 cursor: 'pointer',
                 font: 'inherit',
-                lineHeight: '1'
+                lineHeight: '1',
+                color: liked ? '#dc2626' : '#4b5563'
               }}
             >
               <Heart
@@ -289,7 +342,7 @@ const ReplyItem = ({ reply, onLike, onReply }: ReplyItemProps) => {
             </button>
 
             <span
-              className="text-sm text-muted-foreground font-medium"
+              className="text-sm font-medium"
               style={{
                 color: '#666',
                 lineHeight: '1'
