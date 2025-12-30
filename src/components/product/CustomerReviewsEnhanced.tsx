@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import ErrorBoundary from './ErrorBoundary';
 import CustomerReviewsSkeleton from './CustomerReviewsSkeleton';
 import { useCustomerReviews } from "@/hooks/customer-reviews.hooks";
-import ReviewsSummary from '@/components/product/ReviewsSummary.tsx';
+import ReviewsSummary from '@/components/product/ReviewsSummary';
 import ReviewItem, { Review } from '@/components/product/ReviewItem';
 import ReplyBar from '@/components/product/ReplyBar';
 
