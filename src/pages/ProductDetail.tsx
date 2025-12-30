@@ -148,7 +148,7 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
 
         {/* Customer Reviews Section */}
         <div className="mt-4">
-          <ReviewGallery viewAllLink="/reviews" />
+          <ReviewsGallery viewAllLink="/reviews" />
         </div>
 
         {/* Separator between FlashDeals and CustomerReviews */}
