@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ChevronDown, X } from "lucide-react";
+import { ChevronDown, X, LucideIcon } from "lucide-react";
 
 export interface FilterTab {
   id: string;
@@ -10,7 +10,7 @@ export interface FilterTab {
     label: string;
     value: any;
   }>;
-  // Removed icon property
+  icon?: LucideIcon; // Added icon property back
 }
 
 export interface ActiveFilter {
@@ -149,59 +149,76 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
       <div>
         <div className="overflow-x-auto hide-scrollbar">
           <div className="flex items-center gap-1 px-2 min-w-max py-1">
-            {tabs.map((tab) => (
-              <React.Fragment key={tab.id}>
-                {tab.type === 'dropdown' && (
-                  <button
-                    onClick={() => toggleDropdown(tab.id)}
-                    className={`flex items-center gap-1 px-3 py-2 text-xs font-medium whitespace-nowrap transition-all border ${
-                      isTabActive(tab)
-                        ? 'bg-red-50 text-red-700 border-red-200' // Changed from blue to red, added border
-                        : activeDropdown === tab.id
-                        ? 'bg-white border-gray-300 shadow-sm text-gray-900'
-                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-200'
-                    }`}
-                  >
-                    <span className="truncate max-w-[100px]">{getTabLabel(tab)}</span>
-                    {/* Always show chevron for dropdowns */}
-                    <ChevronDown className={`w-3 h-3 flex-shrink-0 transition-transform ${
-                      activeDropdown === tab.id ? 'rotate-180' : ''
-                    }`} />
-                    {/* Show X icon when dropdown has a selected value */}
-                    {isTabActive(tab) && (
-                      <div 
-                        onClick={(e) => handleRemoveSelection(tab.id, e)}
-                        className="ml-0.5 p-0.5 hover:bg-red-100 transition-colors" // Removed rounded-full
-                      >
-                        <X className="w-3 h-3 text-red-600" /> {/* Changed from blue to red */}
-                      </div>
-                    )}
-                  </button>
-                )}
+            {tabs.map((tab) => {
+              const IconComponent = tab.icon;
+              
+              return (
+                <React.Fragment key={tab.id}>
+                  {tab.type === 'dropdown' && (
+                    <button
+                      onClick={() => toggleDropdown(tab.id)}
+                      className={`flex items-center gap-1 px-3 py-2 text-xs font-medium whitespace-nowrap transition-all border ${
+                        isTabActive(tab)
+                          ? 'bg-red-50 text-red-700 border-red-200' // Changed from blue to red, added border
+                          : activeDropdown === tab.id
+                          ? 'bg-white border-gray-300 shadow-sm text-gray-900'
+                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-200'
+                      }`}
+                    >
+                      {/* Render icon if provided */}
+                      {IconComponent && (
+                        <IconComponent className="w-3 h-3 flex-shrink-0" />
+                      )}
+                      
+                      <span className="truncate max-w-[100px]">{getTabLabel(tab)}</span>
+                      
+                      {/* Always show chevron for dropdowns */}
+                      <ChevronDown className={`w-3 h-3 flex-shrink-0 transition-transform ${
+                        activeDropdown === tab.id ? 'rotate-180' : ''
+                      }`} />
+                      
+                      {/* Show X icon when dropdown has a selected value */}
+                      {isTabActive(tab) && (
+                        <div 
+                          onClick={(e) => handleRemoveSelection(tab.id, e)}
+                          className="ml-0.5 p-0.5 hover:bg-red-100 transition-colors" // Removed rounded-full
+                        >
+                          <X className="w-3 h-3 text-red-600" /> {/* Changed from blue to red */}
+                        </div>
+                      )}
+                    </button>
+                  )}
 
-                {tab.type === 'checkbox' && (
-                  <button
-                    onClick={() => handleCheckboxToggle(tab.id, tab.value)}
-                    className={`flex items-center gap-1 px-3 py-2 text-xs font-medium whitespace-nowrap transition-all border ${
-                      isTabActive(tab)
-                        ? 'bg-red-50 text-red-700 border-red-200' // Changed from blue to red, added border
-                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-200'
-                    }`}
-                  >
-                    <span className="truncate max-w-[100px]">{getTabLabel(tab)}</span>
-                    {/* Show X icon when checkbox is selected */}
-                    {isTabActive(tab) && (
-                      <div 
-                        onClick={(e) => handleRemoveSelection(tab.id, e)}
-                        className="ml-1 p-0.5 hover:bg-red-100 transition-colors" // Removed rounded-full
-                      >
-                        <X className="w-3 h-3 text-red-600" /> {/* Changed from blue to red */}
-                      </div>
-                    )}
-                  </button>
-                )}
-              </React.Fragment>
-            ))}
+                  {tab.type === 'checkbox' && (
+                    <button
+                      onClick={() => handleCheckboxToggle(tab.id, tab.value)}
+                      className={`flex items-center gap-1 px-3 py-2 text-xs font-medium whitespace-nowrap transition-all border ${
+                        isTabActive(tab)
+                          ? 'bg-red-50 text-red-700 border-red-200' // Changed from blue to red, added border
+                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-200'
+                      }`}
+                    >
+                      {/* Render icon if provided */}
+                      {IconComponent && (
+                        <IconComponent className="w-3 h-3 flex-shrink-0" />
+                      )}
+                      
+                      <span className="truncate max-w-[100px]">{getTabLabel(tab)}</span>
+                      
+                      {/* Show X icon when checkbox is selected */}
+                      {isTabActive(tab) && (
+                        <div 
+                          onClick={(e) => handleRemoveSelection(tab.id, e)}
+                          className="ml-1 p-0.5 hover:bg-red-100 transition-colors" // Removed rounded-full
+                        >
+                          <X className="w-3 h-3 text-red-600" /> {/* Changed from blue to red */}
+                        </div>
+                      )}
+                    </button>
+                  )}
+                </React.Fragment>
+              );
+            })}
           </div>
         </div>
       </div>
