@@ -6,7 +6,6 @@ import {
   Heart
 } from 'lucide-react';
 import ReviewsSummary from '@/components/product/ReviewsSummary.tsx';
-import ProductFilterBar from '@/components/home/ProductFilterBar';
 import { EngagementSection } from '@/components/shared/EngagementSection';
 import VerificationBadge from '@/components/shared/VerificationBadge';
 import { Button } from "@/components/ui/button";
@@ -25,12 +24,11 @@ const CustomerReviews = ({ productId, limit }: CustomerReviewsProps) => {
     // State
     expandedReviews,
     expandedReplies,
-    selectedFilters,
     isLoading,
     error,
     replyingTo,
     replyText,
-    
+
     // Handlers
     setReplyText,
     handleLikeReply,
@@ -41,18 +39,12 @@ const CustomerReviews = ({ productId, limit }: CustomerReviewsProps) => {
     handleShareClick,
     handleSubmitReply,
     handleCancelReply,
-    handleFilterSelect,
-    handleFilterClear,
-    handleClearAll,
-    handleFilterButtonClick,
     fetchReviews,
-    
+
     // Computed values
-    filterCategories,
     finalReviews,
-    reviewsSummary,
     itemBeingReplied,
-    
+
     // Statistics
     summaryStats
   } = useCustomerReviews({ productId, limit });
@@ -83,15 +75,6 @@ const CustomerReviews = ({ productId, limit }: CustomerReviewsProps) => {
     <ErrorBoundary>
       <div className="w-full bg-white">
         <ReviewsSummary/>
-
-        <ProductFilterBar
-          filterCategories={filterCategories}
-          selectedFilters={selectedFilters}
-          onFilterSelect={handleFilterSelect}
-          onFilterClear={handleFilterClear}
-          onClearAll={handleClearAll}
-          onFilterButtonClick={handleFilterButtonClick}
-        />
 
         <div className="py-4">
           {/* Reviews List */}
