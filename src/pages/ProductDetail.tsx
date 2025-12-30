@@ -1,7 +1,7 @@
 // src/pages/ProductDetail.tsx
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useLocation } from "react-router-dom";
-import { Store, Send, Star, MessageSquare } from 'lucide-react';
+import { Store, Send, Star, MessageSquare, X } from 'lucide-react';
 import ProductDetailError from "@/components/product/ProductDetailError";
 import ProductImageGallery from "@/components/ProductImageGallery";
 import AliExpressHeader from "@/components/home/AliExpressHeader";
@@ -27,9 +27,7 @@ interface ProductDetailProps {
 const ReviewTypingBar: React.FC<{ 
   productName: string; 
   onSubmit: (review: string, rating: number) => void;
-  onClose?: () => void;
-  isOpen?: boolean;
-}> = ({ productName, onSubmit, onClose, isOpen = true }) => {
+}> = ({ productName, onSubmit }) => {
   const [reviewText, setReviewText] = useState("");
   const [rating, setRating] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -52,34 +50,33 @@ const ReviewTypingBar: React.FC<{
   };
 
   const toggleExpand = () => {
-    setIsExpanded(!isExpanded);
-    if (!isExpanded && textareaRef.current) {
+    const newExpandedState = !isExpanded;
+    setIsExpanded(newExpandedState);
+    if (newExpandedState && textareaRef.current) {
       setTimeout(() => textareaRef.current?.focus(), 100);
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-40 transition-transform duration-300 ease-in-out">
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-40">
       <div className="container mx-auto max-w-6xl px-2 md:px-4">
         {/* Minimized State */}
         {!isExpanded ? (
-          <div className="py-2">
+          <div className="py-3">
             <button
               onClick={toggleExpand}
-              className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gray-50 border border-gray-300 rounded-full hover:bg-gray-100 transition-colors"
+              className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-blue-50 border border-blue-200 rounded-full hover:bg-blue-100 transition-colors"
             >
-              <MessageSquare size={20} className="text-gray-600" />
-              <span className="text-gray-700 font-medium">Write a review</span>
+              <MessageSquare size={20} className="text-blue-600" />
+              <span className="text-blue-700 font-medium">Write a review</span>
             </button>
           </div>
         ) : (
           /* Expanded State */
           <div className="py-3">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center space-x-2">
-                <span className="text-sm font-medium text-gray-700">Your Review</span>
+                <h3 className="text-sm font-semibold text-gray-800">Write Your Review</h3>
                 <div className="flex items-center space-x-1">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
@@ -96,51 +93,50 @@ const ReviewTypingBar: React.FC<{
                 </div>
               </div>
               <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 p-1"
+                onClick={toggleExpand}
+                className="p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
               >
-                <span className="text-sm">×</span>
+                <X size={20} />
               </button>
             </div>
 
-            <div className="mb-2 px-1">
-              <span className="text-xs text-gray-500">Reviewing: </span>
-              <span className="text-sm font-medium text-gray-800">{productName}</span>
+            <div className="mb-2">
+              <div className="text-xs text-gray-500 mb-1">Reviewing:</div>
+              <div className="text-sm font-medium text-gray-800 bg-gray-50 px-3 py-1.5 rounded-lg">
+                {productName}
+              </div>
             </div>
 
-            <div className="flex items-end space-x-2">
+            <div className="flex items-end gap-3">
               <div className="flex-1 relative">
                 <textarea
                   ref={textareaRef}
                   value={reviewText}
                   onChange={(e) => setReviewText(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder="Share your experience with this product..."
+                  placeholder="Share your honest experience with this product. What did you like or dislike?"
                   className="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                   rows={3}
-                  style={{ minHeight: '80px' }}
+                  style={{ minHeight: '100px' }}
                 />
                 <button
                   onClick={handleSubmit}
                   disabled={!reviewText.trim() || rating === 0}
-                  className={`absolute right-2 bottom-2 p-2 rounded-full transition-all ${
+                  className={`absolute right-3 bottom-3 p-2.5 rounded-full transition-all ${
                     reviewText.trim() && rating > 0
-                      ? 'bg-blue-500 hover:bg-blue-600 text-white shadow-md'
+                      ? 'bg-blue-500 hover:bg-blue-600 text-white shadow-md hover:shadow-lg'
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   }`}
+                  title="Submit review"
                 >
                   <Send size={18} />
                 </button>
               </div>
+            </div>
 
-              <div className="flex flex-col space-y-2 pb-2">
-                <button
-                  onClick={toggleExpand}
-                  className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
-                >
-                  Minimize
-                </button>
-              </div>
+            <div className="mt-2 text-xs text-gray-500 flex justify-between">
+              <span>Your review helps other shoppers</span>
+              <span>{reviewText.length}/500</span>
             </div>
           </div>
         )}
@@ -177,11 +173,6 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
     handleImageIndexChange,
   } = useProductDetail(props);
 
-  const [showReviewBar, setShowReviewBar] = useState(false);
-  const [isReviewBarOpen, setIsReviewBarOpen] = useState(false);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
-  const lastScrollYRef = useRef(0);
-
   // Handle review submission
   const handleReviewSubmit = async (review: string, rating: number) => {
     try {
@@ -193,61 +184,6 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
       alert('Failed to submit review. Please try again.');
     }
   };
-
-  // Show/hide review bar based on scroll position with debouncing
-  const handleScroll = useCallback(() => {
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-    }
-
-    scrollTimeoutRef.current = setTimeout(() => {
-      const currentScrollY = window.scrollY;
-      const windowHeight = window.innerHeight;
-      const documentHeight = document.documentElement.scrollHeight;
-
-      // Always show if user scrolled past half the page
-      if (currentScrollY > windowHeight / 2) {
-        setShowReviewBar(true);
-      }
-      // Hide if at the very top or bottom
-      else if (currentScrollY < 100 || currentScrollY + windowHeight >= documentHeight - 100) {
-        setShowReviewBar(false);
-      }
-
-      lastScrollYRef.current = currentScrollY;
-    }, 150); // Increased debounce time for stability
-  }, []);
-
-  // Handle manual close of review bar
-  const handleCloseReviewBar = () => {
-    setIsReviewBarOpen(false);
-    setShowReviewBar(false);
-  };
-
-  // Auto-open review bar when it appears for the first time
-  useEffect(() => {
-    if (showReviewBar && !isReviewBarOpen) {
-      setIsReviewBarOpen(true);
-    }
-  }, [showReviewBar, isReviewBarOpen]);
-
-  // Set up scroll listener
-  useEffect(() => {
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    
-    // Initial check after a delay to ensure page is loaded
-    const initialTimeout = setTimeout(() => {
-      handleScroll();
-    }, 1000);
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-      clearTimeout(initialTimeout);
-    };
-  }, [handleScroll]);
 
   if (!productId) {
     return <ProductDetailError message="Product ID is missing" />;
@@ -278,7 +214,8 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
         hideSearchBar={true}
       />
 
-      <div style={{ minHeight: '100vh', paddingBottom: '80px' }}>
+      {/* Add padding at the bottom to account for the fixed review bar */}
+      <div style={{ minHeight: '100vh', paddingBottom: '120px' }}>
         <div className="w-full bg-white">
           <ProductImageGallery 
             ref={galleryRef}
@@ -369,12 +306,10 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
         />
       </div>
 
-      {/* Sticky Review Typing Bar */}
+      {/* ALWAYS VISIBLE Review Typing Bar */}
       <ReviewTypingBar 
         productName={product.name || 'This product'}
         onSubmit={handleReviewSubmit}
-        onClose={handleCloseReviewBar}
-        isOpen={showReviewBar && isReviewBarOpen}
       />
     </>
   );
