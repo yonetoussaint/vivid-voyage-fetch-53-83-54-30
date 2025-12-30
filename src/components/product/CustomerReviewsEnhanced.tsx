@@ -65,7 +65,7 @@ const CustomerReviews = ({ productId, limit }: CustomerReviewsProps) => {
 
         <div className="py-4">
           {/* Container with 1px gap between cards */}
-          <div className="space-y-px"> {/* Changed from space-y-4 to space-y-px */}
+          <div className="space-y-2"> {/* Changed from space-y-4 to space-y-px */}
             {finalReviews.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-muted-foreground" style={{ color: '#666' }}>
