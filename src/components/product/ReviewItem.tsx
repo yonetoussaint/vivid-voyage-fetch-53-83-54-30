@@ -87,7 +87,7 @@ const ReviewItem = ({
       }}
     >
       {/* Review Header */}
-      <div className="flex items-start justify-between mb-3">
+      <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           <div 
             className="w-8 h-8 bg-muted flex items-center justify-center text-sm font-semibold" 
