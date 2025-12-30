@@ -52,7 +52,7 @@ const ReviewTypingBar: React.FC<ReviewTypingBarProps> = ({
   };
 
   return (
-    <div className={`fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-40 ${className}`}>
+    <div className={`fixed bottom-0 left-0 right-0 bg-transparent z-40 ${className}`}>
       <div className="container mx-auto max-w-6xl px-2 md:px-4">
         {/* Minimized State */}
         {!isExpanded ? (
@@ -115,7 +115,7 @@ const ReviewTypingBar: React.FC<ReviewTypingBarProps> = ({
                   onChange={handleTextChange}
                   onKeyPress={handleKeyPress}
                   placeholder={placeholder}
-                  className="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                   rows={3}
                   style={{ minHeight: "100px" }}
                   aria-label="Review text"
