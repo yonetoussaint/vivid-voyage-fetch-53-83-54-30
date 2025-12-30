@@ -79,15 +79,16 @@ const ReviewItem = ({
 
   return (
     <div 
-      className="p-4"
+      className="p-3"
       style={{
         backgroundColor: '#f5f5f5',
         border: 'none',
-        boxShadow: 'none'
+        boxShadow: 'none',
+        marginBottom: '1px' // Reduced gap between cards
       }}
     >
       {/* Review Header */}
-      <div className="flex items-start justify-between mb-3">
+      <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           <div 
             className="w-8 h-8 bg-muted flex items-center justify-center text-sm font-semibold" 
@@ -131,7 +132,7 @@ const ReviewItem = ({
 
       {/* Review Comment */}
       <div 
-        className="text-sm mb-3"
+        className="text-sm mb-2"
         style={{ color: '#333' }}
       >
         <span>
@@ -149,8 +150,8 @@ const ReviewItem = ({
 
       {/* Media Section */}
       {media.length > 0 && (
-        <div className="mb-3">
-          <div className="flex gap-2 overflow-x-auto pb-2">
+        <div className="mb-2">
+          <div className="flex gap-2 overflow-x-auto">
             {media.map((item, index) => (
               <div key={index} className="flex-shrink-0 relative">
                 {item.type === 'image' ? (
@@ -196,10 +197,10 @@ const ReviewItem = ({
       {/* Replies Section */}
       {replies.length > 0 && (
         <div 
-          className="mt-4 ml-6 space-y-3"
+          className="mt-3 ml-6 space-y-2"
           style={{ 
             backgroundColor: '#fafafa',
-            padding: '12px'
+            padding: '8px'
           }}
         >
           {(expandedReplies.has(id) ? replies : replies.slice(0, 2)).map((reply) => (
@@ -249,7 +250,7 @@ const ReplyItem = ({ reply, onLike, onReply }: ReplyItemProps) => {
 
   return (
     <div 
-      className="border-l-2 pl-4"
+      className="border-l-2 pl-3"
       style={{ borderColor: '#e0e0e0' }}
     >
       <div className="flex items-start gap-2">
@@ -291,7 +292,7 @@ const ReplyItem = ({ reply, onLike, onReply }: ReplyItemProps) => {
 
           {replying_to && (
             <div 
-              className="text-xs mt-1"
+              className="text-xs mt-0.5"
               style={{ color: '#666' }}
             >
               Replying to <span className="font-medium">{replying_to}</span>
@@ -299,16 +300,16 @@ const ReplyItem = ({ reply, onLike, onReply }: ReplyItemProps) => {
           )}
 
           <div 
-            className="text-sm mt-1"
+            className="text-sm mt-0.5"
             style={{ color: '#333' }}
           >
             {comment}
           </div>
 
-          <div className="flex items-center gap-4 mt-2">
+          <div className="flex items-center gap-3 mt-1">
             <button
               onClick={onLike}
-              className="flex items-center gap-1.5 text-sm font-medium transition-colors"
+              className="flex items-center gap-1 text-sm font-medium transition-colors"
               style={{
                 background: 'none',
                 border: 'none',
@@ -320,7 +321,7 @@ const ReplyItem = ({ reply, onLike, onReply }: ReplyItemProps) => {
               }}
             >
               <Heart
-                className={`w-4 h-4 flex-shrink-0 ${liked ? 'fill-red-600 text-red-600' : ''}`}
+                className={`w-3 h-3 flex-shrink-0 ${liked ? 'fill-red-600 text-red-600' : ''}`}
               />
               <span style={{ lineHeight: '1' }}>{likeCount}</span>
             </button>
