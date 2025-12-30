@@ -51,7 +51,7 @@ interface ReviewItemProps {
   onMediaClick?: (url: string) => void;
 }
 
-const ReviewItem = ({
+ const ReviewItem = ({
   review,
   expandedReviews,
   expandedReplies,
@@ -62,7 +62,7 @@ const ReviewItem = ({
   onLikeReply,
   onReplyToReply,
   onMediaClick = (url) => window.open(url, '_blank')
-}) => {
+}: ReviewItemProps) => {
   const {
     id,
     user_name,
@@ -77,19 +77,8 @@ const ReviewItem = ({
     replies = []
   } = review;
 
-  const formatDate = (date) => {
-    if (!date) return '';
-    const d = new Date(date);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  };
-
-  const truncateText = (text) => {
-    if (text.length <= 120) return text;
-    return text.substring(0, 120) + '...';
-  };
-
   return (
-    <div className="bg-gray-100 rounded-lg p-4 mb-4">
+    <div className="border-b pb-4" style={{ borderBottom: '1px solid #e5e5e5' }}>
       {/* Review Header */}
       <div className="flex items-start justify-between mb-2 px-2">
         <div className="flex items-center gap-2">
@@ -172,31 +161,7 @@ const ReviewItem = ({
           </div>
         </div>
       )}
-
-      {/* Interaction Buttons */}
-      <div className="flex items-center gap-4 mt-3 px-2 pt-2 border-t border-gray-300">
-        <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-blue-600">
-          <ThumbsUp className="w-4 h-4" />
-          <span>{likeCount}</span>
-        </button>
-        <button 
-          onClick={() => onCommentClick(id)}
-          className="flex items-center gap-1 text-sm text-gray-600 hover:text-blue-600"
-        >
-          <MessageCircle className="w-4 h-4" />
-          <span>{commentCount}</span>
-        </button>
-        <button 
-          onClick={() => onShareClick(id)}
-          className="flex items-center gap-1 text-sm text-gray-600 hover:text-blue-600"
-        >
-          <Share2 className="w-4 h-4" />
-          <span>{shareCount}</span>
-        </button>
-      </div>
-    </div>
-  );
-})
+        
 
       {/* Engagement Section */}
       <EngagementSection
