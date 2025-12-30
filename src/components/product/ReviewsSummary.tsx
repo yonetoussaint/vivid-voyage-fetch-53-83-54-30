@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import SectionHeader from '@/components/home/SectionHeader';
 import { MessageCircle, HelpCircle } from 'lucide-react';
+import FilterTabs, { FilterTab, ActiveFilter } from '@/components/FilterTabs'; // Adjust the import path as needed
 
 interface RatingDistribution {
   stars: number;
@@ -63,6 +64,134 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
   onCustomButtonClick,
   icon = MessageCircle,
 }) => {
+  // Filter tabs state
+  const [filterTabs, setFilterTabs] = useState<FilterTab[]>([
+    {
+      id: 'sortBy',
+      label: 'Sort by',
+      type: 'dropdown',
+      value: 'mostRelevant',
+      options: [
+        { label: 'Most Relevant', value: 'mostRelevant' },
+        { label: 'Most Recent', value: 'mostRecent' },
+        { label: 'Highest Rated', value: 'highestRated' },
+        { label: 'Lowest Rated', value: 'lowestRated' },
+      ]
+    },
+    {
+      id: 'rating',
+      label: 'Rating',
+      type: 'dropdown',
+      value: null,
+      options: [
+        { label: '5 Stars', value: 5 },
+        { label: '4 Stars', value: 4 },
+        { label: '3 Stars', value: 3 },
+        { label: '2 Stars', value: 2 },
+        { label: '1 Star', value: 1 },
+      ]
+    },
+    {
+      id: 'mediaType',
+      label: 'Media Type',
+      type: 'dropdown',
+      value: null,
+      options: [
+        { label: 'All Media', value: 'all' },
+        { label: 'With Photos', value: 'photos' },
+        { label: 'With Videos', value: 'videos' },
+      ]
+    },
+    {
+      id: 'deviceType',
+      label: 'Device Type',
+      type: 'dropdown',
+      value: null,
+      options: [
+        { label: 'All Devices', value: 'all' },
+        { label: 'iPhone', value: 'iphone' },
+        { label: 'iPad', value: 'ipad' },
+        { label: 'Android', value: 'android' },
+      ]
+    },
+    {
+      id: 'verifiedPurchase',
+      label: 'Verified Purchase',
+      type: 'checkbox',
+      value: false
+    },
+    {
+      id: 'priceRange',
+      label: 'Price Range',
+      type: 'dropdown',
+      value: null,
+      options: [
+        { label: 'All Prices', value: null },
+        { label: '$0 - $100', value: { min: 0, max: 100 } },
+        { label: '$100 - $500', value: { min: 100, max: 500 } },
+        { label: '$500 - $1000', value: { min: 500, max: 1000 } },
+        { label: '$1000+', value: { min: 1000, max: 10000 } },
+      ]
+    }
+  ]);
+
+  const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
+
+  const handleTabChange = (tabId: string, value: any) => {
+    setFilterTabs(prev => prev.map(tab => 
+      tab.id === tabId ? { ...tab, value } : tab
+    ));
+
+    // Update active filters
+    if (value === null || value === false || value === '') {
+      setActiveFilters(prev => prev.filter(filter => filter.id !== tabId));
+    } else {
+      const tab = filterTabs.find(t => t.id === tabId);
+      if (tab) {
+        let displayValue = '';
+        
+        if (tab.type === 'checkbox') {
+          displayValue = 'Yes';
+        } else if (tab.id === 'priceRange' && value && typeof value === 'object') {
+          displayValue = `$${value.min} - $${value.max}`;
+        } else if (tab.options) {
+          const option = tab.options.find(opt => {
+            if (tab.id === 'priceRange' && value && opt.value) {
+              return opt.value.min === value.min && opt.value.max === value.max;
+            }
+            return opt.value === value;
+          });
+          displayValue = option ? option.label : String(value);
+        } else {
+          displayValue = String(value);
+        }
+
+        setActiveFilters(prev => {
+          const newFilters = prev.filter(filter => filter.id !== tabId);
+          newFilters.push({
+            id: tabId,
+            label: tab.label,
+            value,
+            displayValue
+          });
+          return newFilters;
+        });
+      }
+    }
+  };
+
+  const handleRemoveFilter = (filterId: string) => {
+    handleTabChange(filterId, filterTabs.find(t => t.id === filterId)?.type === 'checkbox' ? false : null);
+  };
+
+  const handleClearAll = () => {
+    setFilterTabs(prev => prev.map(tab => ({
+      ...tab,
+      value: tab.type === 'checkbox' ? false : null
+    })));
+    setActiveFilters([]);
+  };
+
   const renderStars = (rating: number) => {
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 >= 0.5;
@@ -166,6 +295,17 @@ const ReviewsSummary: React.FC<ReviewsSummaryProps> = ({
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Filter Tabs Section at the Bottom */}
+      <div className="border-t border-gray-200 pt-2 mt-2">
+        <FilterTabs
+          tabs={filterTabs}
+          activeFilters={activeFilters}
+          onTabChange={handleTabChange}
+          onRemoveFilter={handleRemoveFilter}
+          onClearAll={handleClearAll}
+        />
       </div>
     </div>
   );
