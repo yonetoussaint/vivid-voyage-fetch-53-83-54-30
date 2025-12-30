@@ -149,7 +149,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
       <div>
         <div className="overflow-x-auto hide-scrollbar">
           {/* Changed gap from gap-1 to gap-2 for more spacing */}
-          <div className="flex items-center gap-2 px-2 min-w-max py-1">
+          <div className="flex items-center gap-1.5 px-2 min-w-max py-1">
             {tabs.map((tab) => {
               const IconComponent = tab.icon;
 
