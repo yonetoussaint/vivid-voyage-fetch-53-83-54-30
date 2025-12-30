@@ -6,6 +6,7 @@ interface MessageTypingBarProps {
   onImageUpload?: () => void;
   onVoiceRecord?: () => void;
   placeholder?: string;
+  className?: string;
 }
 
 const MessageTypingBar: React.FC<MessageTypingBarProps> = ({
@@ -13,6 +14,7 @@ const MessageTypingBar: React.FC<MessageTypingBarProps> = ({
   onImageUpload,
   onVoiceRecord,
   placeholder = "Type a message",
+  className = "",
 }) => {
   const [message, setMessage] = useState("");
 
@@ -31,8 +33,8 @@ const MessageTypingBar: React.FC<MessageTypingBarProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-end">
-      <div className="w-full bg-white border-t border-gray-200 p-2">
+    <div className={`fixed bottom-0 left-0 right-0 bg-transparent z-40 ${className}`}>
+      <div className="bg-white border-t border-gray-200 p-2">
         <div className="max-w-4xl mx-auto flex items-center gap-2">
           {/* Image button */}
           <button 
