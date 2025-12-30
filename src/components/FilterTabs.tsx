@@ -115,7 +115,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
     if (!tab.options) return null;
 
     return (
-      <div className="bg-white border border-gray-200 rounded-md shadow-sm">
+      <div className="bg-white border border-gray-200 shadow-sm">
         <div className="py-1">
           {tab.options.map((option) => (
             <button
@@ -148,18 +148,18 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
       {/* Filter Tabs Row */}
       <div>
         <div className="overflow-x-auto hide-scrollbar">
-          <div className="flex items-center gap-2 px-2 min-w-max py-1">
+          <div className="flex items-center gap-1 px-2 min-w-max py-1">
             {tabs.map((tab) => (
               <React.Fragment key={tab.id}>
                 {tab.type === 'dropdown' && (
                   <button
                     onClick={() => toggleDropdown(tab.id)}
-                    className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
+                    className={`flex items-center gap-1 px-3 py-2 text-xs font-medium whitespace-nowrap transition-all border ${
                       isTabActive(tab)
-                        ? 'bg-red-50 text-red-700' // Changed from blue to red
+                        ? 'bg-red-50 text-red-700 border-red-200' // Changed from blue to red, added border
                         : activeDropdown === tab.id
-                        ? 'bg-white border border-gray-200 shadow-sm text-gray-900'
-                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                        ? 'bg-white border-gray-300 shadow-sm text-gray-900'
+                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-200'
                     }`}
                   >
                     <span className="truncate max-w-[100px]">{getTabLabel(tab)}</span>
@@ -171,7 +171,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                     {isTabActive(tab) && (
                       <div 
                         onClick={(e) => handleRemoveSelection(tab.id, e)}
-                        className="ml-0.5 p-0.5 hover:bg-red-100 rounded-full transition-colors" // Changed from blue to red
+                        className="ml-0.5 p-0.5 hover:bg-red-100 transition-colors" // Removed rounded-full
                       >
                         <X className="w-3 h-3 text-red-600" /> {/* Changed from blue to red */}
                       </div>
@@ -182,10 +182,10 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                 {tab.type === 'checkbox' && (
                   <button
                     onClick={() => handleCheckboxToggle(tab.id, tab.value)}
-                    className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-all ${
+                    className={`flex items-center gap-1 px-3 py-2 text-xs font-medium whitespace-nowrap transition-all border ${
                       isTabActive(tab)
-                        ? 'bg-red-50 text-red-700' // Changed from blue to red
-                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                        ? 'bg-red-50 text-red-700 border-red-200' // Changed from blue to red, added border
+                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-200'
                     }`}
                   >
                     <span className="truncate max-w-[100px]">{getTabLabel(tab)}</span>
@@ -193,7 +193,7 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                     {isTabActive(tab) && (
                       <div 
                         onClick={(e) => handleRemoveSelection(tab.id, e)}
-                        className="ml-1 p-0.5 hover:bg-red-100 rounded-full transition-colors" // Changed from blue to red
+                        className="ml-1 p-0.5 hover:bg-red-100 transition-colors" // Removed rounded-full
                       >
                         <X className="w-3 h-3 text-red-600" /> {/* Changed from blue to red */}
                       </div>
