@@ -1,8 +1,10 @@
 import React, { useState, useRef } from "react";
-import { Send, MessageSquare, X } from "lucide-react";
+import { Send, ImageIcon, Mic, X } from "lucide-react";
 
 interface MessageTypingBarProps {
   onSubmit: (message: string) => void;
+  onImageUpload?: () => void;
+  onVoiceRecord?: () => void;
   placeholder?: string;
   maxLength?: number;
   className?: string;
@@ -10,6 +12,8 @@ interface MessageTypingBarProps {
 
 const MessageTypingBar: React.FC<MessageTypingBarProps> = ({
   onSubmit,
+  onImageUpload,
+  onVoiceRecord,
   placeholder = "Type your message...",
   maxLength = 500,
   className = "",
@@ -55,11 +59,38 @@ const MessageTypingBar: React.FC<MessageTypingBarProps> = ({
           <div className="py-3">
             <button
               onClick={toggleExpand}
-              className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-blue-50 border border-blue-200 hover:bg-blue-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="w-full px-4 py-3 bg-white border border-gray-300 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left"
               style={{ borderRadius: '0' }}
             >
-              <MessageSquare size={20} className="text-blue-600" />
-              <span className="text-blue-700 font-medium">Type a message</span>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 font-normal">Write a message</span>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onImageUpload?.();
+                    }}
+                    className="p-1.5 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ borderRadius: '0' }}
+                    aria-label="Upload image"
+                  >
+                    <ImageIcon size={18} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onVoiceRecord?.();
+                    }}
+                    className="p-1.5 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ borderRadius: '0' }}
+                    aria-label="Record voice message"
+                  >
+                    <Mic size={18} />
+                  </button>
+                </div>
+              </div>
             </button>
           </div>
         ) : (
@@ -85,25 +116,45 @@ const MessageTypingBar: React.FC<MessageTypingBarProps> = ({
                   onChange={handleTextChange}
                   onKeyPress={handleKeyPress}
                   placeholder={placeholder}
-                  className="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 pr-32 bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                   style={{ minHeight: "100px", borderRadius: '0' }}
                   rows={3}
                   aria-label="Message text"
                   maxLength={maxLength}
                 />
-                <button
-                  onClick={handleSubmit}
-                  disabled={!messageText.trim()}
-                  className={`absolute right-3 bottom-3 p-2.5 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                    messageText.trim()
-                      ? "bg-blue-500 hover:bg-blue-600 text-white focus:ring-blue-500"
-                      : "bg-gray-200 text-gray-400 cursor-not-allowed focus:ring-gray-300"
-                  }`}
-                  style={{ borderRadius: '0' }}
-                  aria-label="Send message"
-                >
-                  <Send size={18} />
-                </button>
+                <div className="absolute right-3 bottom-3 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={onImageUpload}
+                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ borderRadius: '0' }}
+                    aria-label="Upload image"
+                  >
+                    <ImageIcon size={18} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onVoiceRecord}
+                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={{ borderRadius: '0' }}
+                    aria-label="Record voice message"
+                  >
+                    <Mic size={18} />
+                  </button>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={!messageText.trim()}
+                    className={`p-2 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                      messageText.trim()
+                        ? "bg-blue-500 hover:bg-blue-600 text-white focus:ring-blue-500"
+                        : "bg-gray-200 text-gray-400 cursor-not-allowed focus:ring-gray-300"
+                    }`}
+                    style={{ borderRadius: '0' }}
+                    aria-label="Send message"
+                  >
+                    <Send size={18} />
+                  </button>
+                </div>
               </div>
             </div>
 
