@@ -148,10 +148,11 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
       {/* Filter Tabs Row */}
       <div>
         <div className="overflow-x-auto hide-scrollbar">
-          <div className="flex items-center gap-1 px-2 min-w-max py-1">
+          {/* Changed gap from gap-1 to gap-2 for more spacing */}
+          <div className="flex items-center gap-2 px-2 min-w-max py-1">
             {tabs.map((tab) => {
               const IconComponent = tab.icon;
-              
+
               return (
                 <React.Fragment key={tab.id}>
                   {tab.type === 'dropdown' && (
@@ -169,14 +170,14 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                       {IconComponent && (
                         <IconComponent className="w-3 h-3 flex-shrink-0" />
                       )}
-                      
+
                       <span className="truncate max-w-[100px]">{getTabLabel(tab)}</span>
-                      
+
                       {/* Always show chevron for dropdowns */}
                       <ChevronDown className={`w-3 h-3 flex-shrink-0 transition-transform ${
                         activeDropdown === tab.id ? 'rotate-180' : ''
                       }`} />
-                      
+
                       {/* Show X icon when dropdown has a selected value */}
                       {isTabActive(tab) && (
                         <div 
@@ -202,9 +203,9 @@ const FilterTabs: React.FC<FilterTabsProps> = ({
                       {IconComponent && (
                         <IconComponent className="w-3 h-3 flex-shrink-0" />
                       )}
-                      
+
                       <span className="truncate max-w-[100px]">{getTabLabel(tab)}</span>
-                      
+
                       {/* Show X icon when checkbox is selected */}
                       {isTabActive(tab) && (
                         <div 
