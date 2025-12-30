@@ -84,7 +84,6 @@ const ReviewItem = ({
         backgroundColor: '#f5f5f5',
         border: 'none',
         boxShadow: 'none',
-        marginBottom: '1px' // Reduced gap between cards
       }}
     >
       {/* Review Header */}
@@ -197,10 +196,10 @@ const ReviewItem = ({
       {/* Replies Section */}
       {replies.length > 0 && (
         <div 
-          className="mt-3 ml-6 space-y-2"
+          className="mt-2 ml-6 space-y-1"
           style={{ 
             backgroundColor: '#fafafa',
-            padding: '8px'
+            padding: '6px'
           }}
         >
           {(expandedReplies.has(id) ? replies : replies.slice(0, 2)).map((reply) => (
@@ -250,12 +249,12 @@ const ReplyItem = ({ reply, onLike, onReply }: ReplyItemProps) => {
 
   return (
     <div 
-      className="border-l-2 pl-3"
+      className="border-l-2 pl-2"
       style={{ borderColor: '#e0e0e0' }}
     >
-      <div className="flex items-start gap-2">
+      <div className="flex items-start gap-1">
         <div
-          className="w-6 h-6 flex items-center justify-center text-xs font-semibold"
+          className="w-5 h-5 flex items-center justify-center text-xs font-semibold"
           style={{
             backgroundColor: is_seller ? '#3b82f6' : 'rgba(0,0,0,0.1)',
             color: is_seller ? 'white' : 'black'
@@ -264,16 +263,16 @@ const ReplyItem = ({ reply, onLike, onReply }: ReplyItemProps) => {
           {user_name?.charAt(0) || 'U'}
         </div>
         <div className="flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <span 
-              className="font-medium text-sm"
+              className="font-medium text-xs"
               style={{ color: '#333' }}
             >
               {user_name || 'Anonymous'}
             </span>
             {is_seller && (
-              <div className="flex items-center gap-1">
-                {verified_seller && <VerificationBadge size="sm" />}
+              <div className="flex items-center gap-0.5">
+                {verified_seller && <VerificationBadge size="xs" />}
                 <span 
                   className="text-xs"
                   style={{ color: '#999' }}
@@ -281,7 +280,7 @@ const ReplyItem = ({ reply, onLike, onReply }: ReplyItemProps) => {
                   •
                 </span>
                 <span 
-                  className="font-bold text-sm"
+                  className="font-bold text-xs"
                   style={{ color: '#f97316' }}
                 >
                   Seller
@@ -292,7 +291,7 @@ const ReplyItem = ({ reply, onLike, onReply }: ReplyItemProps) => {
 
           {replying_to && (
             <div 
-              className="text-xs mt-0.5"
+              className="text-xs"
               style={{ color: '#666' }}
             >
               Replying to <span className="font-medium">{replying_to}</span>
@@ -300,16 +299,16 @@ const ReplyItem = ({ reply, onLike, onReply }: ReplyItemProps) => {
           )}
 
           <div 
-            className="text-sm mt-0.5"
+            className="text-xs"
             style={{ color: '#333' }}
           >
             {comment}
           </div>
 
-          <div className="flex items-center gap-3 mt-1">
+          <div className="flex items-center gap-2 mt-0.5">
             <button
               onClick={onLike}
-              className="flex items-center gap-1 text-sm font-medium transition-colors"
+              className="flex items-center gap-0.5 text-xs font-medium transition-colors"
               style={{
                 background: 'none',
                 border: 'none',
@@ -328,7 +327,7 @@ const ReplyItem = ({ reply, onLike, onReply }: ReplyItemProps) => {
 
             <button
               onClick={onReply}
-              className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+              className="text-blue-600 hover:text-blue-800 text-xs font-medium transition-colors"
               style={{
                 background: 'none',
                 border: 'none',
@@ -342,7 +341,7 @@ const ReplyItem = ({ reply, onLike, onReply }: ReplyItemProps) => {
             </button>
 
             <span
-              className="text-sm font-medium"
+              className="text-xs font-medium"
               style={{
                 color: '#666',
                 lineHeight: '1'
