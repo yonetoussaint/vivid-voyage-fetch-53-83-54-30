@@ -143,6 +143,14 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
           />
         </div>
 
+   {/* Separator between FlashDeals and CustomerReviews */}
+        <Separator />
+
+        {/* Customer Reviews Section */}
+        <div className="mt-4">
+          <ReviewsGallery/>
+        </div>
+
         {/* Separator between FlashDeals and CustomerReviews */}
         <Separator />
 
