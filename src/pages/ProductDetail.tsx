@@ -13,6 +13,7 @@ import GalleryThumbnails from "@/components/product/GalleryThumbnails";
 import ProductDetailInfo from "@/components/product/ProductDetailInfo";
 import ProductDetailLoading from "@/components/product/ProductDetailLoading";
 import CustomerReviews from "@/components/product/CustomerReviewsEnhanced"; // Import the CustomerReviews component
+import ReviewsGallery from "@/components/product/ReviewsGallery"; // Import the CustomerReviews component
 import { useProductDetail } from "@/hooks/product-detail.hooks";
 
 interface ProductDetailProps {
