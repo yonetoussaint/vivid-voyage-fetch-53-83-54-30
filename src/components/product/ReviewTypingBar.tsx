@@ -1,31 +1,27 @@
 import React, { useState, useRef } from "react";
-import { Send, Star, MessageSquare, X } from "lucide-react";
+import { Send, MessageSquare, X } from "lucide-react";
 
-interface ReviewTypingBarProps {
-  productName: string;
-  onSubmit: (review: string, rating: number) => void;
+interface MessageTypingBarProps {
+  onSubmit: (message: string) => void;
   placeholder?: string;
   maxLength?: number;
   className?: string;
 }
 
-const ReviewTypingBar: React.FC<ReviewTypingBarProps> = ({
-  productName,
+const MessageTypingBar: React.FC<MessageTypingBarProps> = ({
   onSubmit,
-  placeholder = "Share your honest experience with this product. What did you like or dislike?",
+  placeholder = "Type your message...",
   maxLength = 500,
   className = "",
 }) => {
-  const [reviewText, setReviewText] = useState("");
-  const [rating, setRating] = useState(0);
+  const [messageText, setMessageText] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSubmit = () => {
-    if (reviewText.trim() && rating > 0) {
-      onSubmit(reviewText, rating);
-      setReviewText("");
-      setRating(0);
+    if (messageText.trim()) {
+      onSubmit(messageText.trim());
+      setMessageText("");
       setIsExpanded(false);
     }
   };
@@ -39,7 +35,7 @@ const ReviewTypingBar: React.FC<ReviewTypingBarProps> = ({
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (e.target.value.length <= maxLength) {
-      setReviewText(e.target.value);
+      setMessageText(e.target.value);
     }
   };
 
@@ -59,91 +55,65 @@ const ReviewTypingBar: React.FC<ReviewTypingBarProps> = ({
           <div className="py-3">
             <button
               onClick={toggleExpand}
-              className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-blue-50 border border-blue-200 rounded-full hover:bg-blue-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-blue-50 border border-blue-200 hover:bg-blue-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              style={{ borderRadius: '0' }}
             >
               <MessageSquare size={20} className="text-blue-600" />
-              <span className="text-blue-700 font-medium">Write a review</span>
+              <span className="text-blue-700 font-medium">Type a message</span>
             </button>
           </div>
         ) : (
           /* Expanded State */
           <div className="py-3">
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center space-x-2">
-                <h3 className="text-sm font-semibold text-gray-800">Write Your Review</h3>
-                <div className="flex items-center space-x-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      onClick={() => setRating(star)}
-                      className="p-1 transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
-                      aria-label={`Rate ${star} star${star !== 1 ? "s" : ""}`}
-                    >
-                      <Star
-                        size={18}
-                        className={
-                          star <= rating
-                            ? "fill-yellow-400 text-yellow-400"
-                            : "text-gray-300"
-                        }
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <h3 className="text-sm font-semibold text-gray-800">New Message</h3>
               <button
                 onClick={toggleExpand}
-                className="p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300"
-                aria-label="Close review form"
+                className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                style={{ borderRadius: '0' }}
+                aria-label="Close message form"
               >
                 <X size={20} />
               </button>
-            </div>
-
-            <div className="mb-2">
-              <div className="text-xs text-gray-500 mb-1">Reviewing:</div>
-              <div className="text-sm font-medium text-gray-800 bg-gray-50 px-3 py-1.5 rounded-lg">
-                {productName}
-              </div>
             </div>
 
             <div className="flex items-end gap-3">
               <div className="flex-1 relative">
                 <textarea
                   ref={textareaRef}
-                  value={reviewText}
+                  value={messageText}
                   onChange={handleTextChange}
                   onKeyPress={handleKeyPress}
                   placeholder={placeholder}
                   className="w-full px-4 py-3 pr-12 bg-gray-50 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  style={{ minHeight: "100px", borderRadius: '0' }}
                   rows={3}
-                  style={{ minHeight: "100px" }}
-                  aria-label="Review text"
+                  aria-label="Message text"
                   maxLength={maxLength}
                 />
                 <button
                   onClick={handleSubmit}
-                  disabled={!reviewText.trim() || rating === 0}
-                  className={`absolute right-3 bottom-3 p-2.5 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                    reviewText.trim() && rating > 0
-                      ? "bg-blue-500 hover:bg-blue-600 text-white shadow-md hover:shadow-lg focus:ring-blue-500"
+                  disabled={!messageText.trim()}
+                  className={`absolute right-3 bottom-3 p-2.5 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                    messageText.trim()
+                      ? "bg-blue-500 hover:bg-blue-600 text-white focus:ring-blue-500"
                       : "bg-gray-200 text-gray-400 cursor-not-allowed focus:ring-gray-300"
                   }`}
-                  aria-label="Submit review"
+                  style={{ borderRadius: '0' }}
+                  aria-label="Send message"
                 >
                   <Send size={18} />
                 </button>
               </div>
             </div>
 
-            <div className="mt-2 text-xs text-gray-500 flex justify-between">
-              <span>Your review helps other shoppers</span>
+            <div className="mt-2 text-xs text-gray-500 flex justify-end">
               <span
                 className={
-                  reviewText.length >= maxLength ? "text-red-500 font-medium" : ""
+                  messageText.length >= maxLength ? "text-red-500 font-medium" : ""
                 }
               >
-                {reviewText.length}/{maxLength}
+                {messageText.length}/{maxLength}
               </span>
             </div>
           </div>
@@ -153,4 +123,4 @@ const ReviewTypingBar: React.FC<ReviewTypingBarProps> = ({
   );
 };
 
-export default ReviewTypingBar;
+export default MessageTypingBar;
