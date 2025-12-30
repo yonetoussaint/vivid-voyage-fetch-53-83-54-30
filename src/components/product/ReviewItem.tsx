@@ -79,7 +79,7 @@ const ReviewItem = ({
 
   return (
     <div 
-      className="rounded-lg p-4"
+      className="p-4"
       style={{
         backgroundColor: '#f5f5f5',
         border: 'none',
@@ -90,7 +90,7 @@ const ReviewItem = ({
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
           <div 
-            className="w-8 h-8 bg-muted rounded-full flex items-center justify-center text-sm font-semibold" 
+            className="w-8 h-8 bg-muted flex items-center justify-center text-sm font-semibold" 
             style={{ backgroundColor: 'rgba(0,0,0,0.1)' }}
           >
             {user_name?.charAt(0) || 'U'}
@@ -100,7 +100,7 @@ const ReviewItem = ({
               <span className="font-medium">{user_name || 'Anonymous'}</span>
               {verified_purchase && (
                 <span 
-                  className="text-xs px-2 py-1 rounded"
+                  className="text-xs px-2 py-1"
                   style={{
                     backgroundColor: '#e6f4ea',
                     color: '#1e7e34'
@@ -157,12 +157,12 @@ const ReviewItem = ({
                   <img
                     src={item.url}
                     alt={item.alt}
-                    className="w-24 h-24 object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                    className="w-24 h-24 object-cover cursor-pointer hover:opacity-90 transition-opacity"
                     onClick={() => onMediaClick(item.url)}
                   />
                 ) : item.type === 'video' ? (
                   <div
-                    className="w-24 h-24 relative cursor-pointer hover:opacity-90 transition-opacity rounded-lg overflow-hidden"
+                    className="w-24 h-24 relative cursor-pointer hover:opacity-90 transition-opacity overflow-hidden"
                     onClick={() => onMediaClick(item.url)}
                   >
                     <img
@@ -199,7 +199,6 @@ const ReviewItem = ({
           className="mt-4 ml-6 space-y-3"
           style={{ 
             backgroundColor: '#fafafa',
-            borderRadius: '8px',
             padding: '12px'
           }}
         >
@@ -255,7 +254,7 @@ const ReplyItem = ({ reply, onLike, onReply }: ReplyItemProps) => {
     >
       <div className="flex items-start gap-2">
         <div
-          className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold"
+          className="w-6 h-6 flex items-center justify-center text-xs font-semibold"
           style={{
             backgroundColor: is_seller ? '#3b82f6' : 'rgba(0,0,0,0.1)',
             color: is_seller ? 'white' : 'black'
