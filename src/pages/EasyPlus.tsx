@@ -1074,12 +1074,13 @@ const GasStationSystem = () => {
       <div className="p-4 max-w-2xl mx-auto">
         {showSellers ? (
           <SellerManagement
-            sellers={sellers}
-            newSellerName={newSellerName}
-            setNewSellerName={setNewSellerName}
-            addSeller={addSeller}
-            removeSeller={removeSeller}
-          />
+  sellers={sellers}
+  newSellerName={newSellerName}
+  setNewSellerName={setNewSellerName}
+  addSeller={addSeller}
+  removeSeller={removeSeller}
+  getPumpAssignmentCount={getPumpAssignmentCount} // Add this
+/>
         ) : showDeposits ? (
           <SellerDeposits
             shift={shift}
