@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calculator, FileText, Trash2, Fuel } from 'lucide-react';
+import { Calculator, FileText, Trash2, Fuel, User, DollarSign, Users } from 'lucide-react';
 
 const GasStationSystem = () => {
   const [shift, setShift] = useState('AM');
@@ -12,18 +12,18 @@ const GasStationSystem = () => {
     // Pumps 1-4: 6 pistols with specific fuel types
     for (let p = 1; p <= 4; p++) {
       pumps[`P${p}`] = {
-        pistol1: { fuelType: 'Gasoline 1', start: '', end: '' },
-        pistol2: { fuelType: 'Gasoline 2', start: '', end: '' },
-        pistol3: { fuelType: 'Diesel', start: '', end: '' },
-        pistol4: { fuelType: 'Gasoline 1', start: '', end: '' },
-        pistol5: { fuelType: 'Gasoline 2', start: '', end: '' },
-        pistol6: { fuelType: 'Diesel', start: '', end: '' }
+        pistol1: { fuelType: 'Gasoline 1', start: '', end: '', seller: '' },
+        pistol2: { fuelType: 'Gasoline 2', start: '', end: '', seller: '' },
+        pistol3: { fuelType: 'Diesel', start: '', end: '', seller: '' },
+        pistol4: { fuelType: 'Gasoline 1', start: '', end: '', seller: '' },
+        pistol5: { fuelType: 'Gasoline 2', start: '', end: '', seller: '' },
+        pistol6: { fuelType: 'Diesel', start: '', end: '', seller: '' }
       };
     }
 
     // Pump 5: Only 1 pistol - Gasoline only
     pumps['P5'] = {
-      pistol1: { fuelType: 'Gasoline', start: '', end: '' }
+      pistol1: { fuelType: 'Gasoline', start: '', end: '', seller: '' }
     };
 
     return pumps;
@@ -36,7 +36,18 @@ const GasStationSystem = () => {
     
     if (savedData) {
       try {
-        return JSON.parse(savedData);
+        const parsed = JSON.parse(savedData);
+        // Ensure all pistols have seller field
+        Object.keys(parsed).forEach(shiftKey => {
+          Object.keys(parsed[shiftKey]).forEach(pump => {
+            Object.keys(parsed[shiftKey][pump]).forEach(pistol => {
+              if (!parsed[shiftKey][pump][pistol].seller) {
+                parsed[shiftKey][pump][pistol].seller = '';
+              }
+            });
+          });
+        });
+        return parsed;
       } catch (e) {
         console.error('Error parsing saved data:', e);
       }
@@ -48,9 +59,39 @@ const GasStationSystem = () => {
     };
   };
 
+  // Initialize sellers
+  const initializeSellers = () => {
+    const storageKey = 'gasStationSellers';
+    const savedSellers = localStorage.getItem(storageKey);
+    return savedSellers ? JSON.parse(savedSellers) : [];
+  };
+
+  // Initialize deposits
+  const initializeDeposits = () => {
+    const storageKey = `gasStationDeposits_${date}`;
+    const savedDeposits = localStorage.getItem(storageKey);
+    
+    if (savedDeposits) {
+      try {
+        return JSON.parse(savedDeposits);
+      } catch (e) {
+        console.error('Error parsing saved deposits:', e);
+      }
+    }
+    
+    return {
+      AM: {},
+      PM: {}
+    };
+  };
+
   // State to hold ALL shifts data
   const [allShiftsData, setAllShiftsData] = useState(initializeAllShifts());
+  const [sellers, setSellers] = useState(initializeSellers());
+  const [newSellerName, setNewSellerName] = useState('');
+  const [allDeposits, setAllDeposits] = useState(initializeDeposits());
   const [showReport, setShowReport] = useState(false);
+  const [showSellers, setShowSellers] = useState(false);
   const [expandedPump, setExpandedPump] = useState('P1');
 
   const prices = {
@@ -58,20 +99,63 @@ const GasStationSystem = () => {
     diesel: 650
   };
 
+  // Format number to show full decimals without rounding
+  const formatNumber = (num) => {
+    if (num === null || num === undefined || isNaN(num)) return '0';
+    
+    // Convert to number if it's a string
+    const number = typeof num === 'string' ? parseFloat(num) : num;
+    
+    if (isNaN(number)) return '0';
+    
+    // Show full decimal without rounding
+    const parts = number.toString().split('.');
+    if (parts.length === 1) {
+      return number.toString();
+    } else {
+      // Keep all decimals but trim trailing zeros
+      const decimals = parts[1].replace(/0+$/, '');
+      return decimals ? `${parts[0]}.${decimals}` : parts[0];
+    }
+  };
+
+  // Format for display - keep full precision
+  const formatDisplay = (num) => {
+    return formatNumber(num);
+  };
+
+  // Format for money - keep 2 decimals
+  const formatMoney = (num) => {
+    if (num === null || num === undefined || isNaN(num)) return '0.00';
+    const number = typeof num === 'string' ? parseFloat(num) : num;
+    return isNaN(number) ? '0.00' : number.toFixed(2);
+  };
+
   // Save to localStorage whenever data changes
   useEffect(() => {
     const storageKey = `gasStationData_${date}`;
     localStorage.setItem(storageKey, JSON.stringify(allShiftsData));
-  }, [allShiftsData, date]);
+    
+    const depositsKey = `gasStationDeposits_${date}`;
+    localStorage.setItem(depositsKey, JSON.stringify(allDeposits));
+    
+    localStorage.setItem('gasStationSellers', JSON.stringify(sellers));
+  }, [allShiftsData, allDeposits, sellers, date]);
 
   // Initialize new day's data when date changes
   useEffect(() => {
     setAllShiftsData(initializeAllShifts());
+    setAllDeposits(initializeDeposits());
   }, [date]);
 
   // Get current shift's readings
   const getCurrentReadings = () => {
     return allShiftsData[shift] || initializePumpReadings();
+  };
+
+  // Get current shift's deposits
+  const getCurrentDeposits = () => {
+    return allDeposits[shift] || {};
   };
 
   const updateReading = (pump, pistol, field, value) => {
@@ -90,10 +174,71 @@ const GasStationSystem = () => {
     }));
   };
 
+  const updateSeller = (pump, pistol, sellerName) => {
+    setAllShiftsData(prev => ({
+      ...prev,
+      [shift]: {
+        ...prev[shift],
+        [pump]: {
+          ...prev[shift][pump],
+          [pistol]: {
+            ...prev[shift][pump][pistol],
+            seller: sellerName
+          }
+        }
+      }
+    }));
+  };
+
+  const updateDeposit = (sellerName, amount) => {
+    setAllDeposits(prev => ({
+      ...prev,
+      [shift]: {
+        ...prev[shift],
+        [sellerName]: parseFloat(amount) || 0
+      }
+    }));
+  };
+
+  const addSeller = () => {
+    if (newSellerName.trim() && !sellers.includes(newSellerName.trim())) {
+      setSellers(prev => [...prev, newSellerName.trim()]);
+      setNewSellerName('');
+    }
+  };
+
+  const removeSeller = (sellerName) => {
+    if (confirm(`Remove seller "${sellerName}"? This will also remove their assignments from pumps.`)) {
+      setSellers(prev => prev.filter(s => s !== sellerName));
+      
+      // Remove seller from all pumps
+      const updatedData = { ...allShiftsData };
+      Object.keys(updatedData).forEach(shiftKey => {
+        Object.keys(updatedData[shiftKey]).forEach(pump => {
+          Object.keys(updatedData[shiftKey][pump]).forEach(pistol => {
+            if (updatedData[shiftKey][pump][pistol].seller === sellerName) {
+              updatedData[shiftKey][pump][pistol].seller = '';
+            }
+          });
+        });
+      });
+      setAllShiftsData(updatedData);
+      
+      // Remove seller's deposits
+      const updatedDeposits = { ...allDeposits };
+      Object.keys(updatedDeposits).forEach(shiftKey => {
+        if (updatedDeposits[shiftKey][sellerName]) {
+          delete updatedDeposits[shiftKey][sellerName];
+        }
+      });
+      setAllDeposits(updatedDeposits);
+    }
+  };
+
   const calculateGallons = (start, end) => {
     const s = parseFloat(start) || 0;
     const e = parseFloat(end) || 0;
-    return Math.max(0, e - s);
+    return e - s;
   };
 
   // Calculate totals for a specific shift
@@ -120,11 +265,11 @@ const GasStationSystem = () => {
     });
 
     return {
-      totalGasolineGallons: totalGasolineGallons.toFixed(2),
-      totalDieselGallons: totalDieselGallons.toFixed(2),
-      totalGasolineSales: totalGasolineSales.toFixed(2),
-      totalDieselSales: totalDieselSales.toFixed(2),
-      grandTotal: (totalGasolineSales + totalDieselSales).toFixed(2)
+      totalGasolineGallons,
+      totalDieselGallons,
+      totalGasolineSales,
+      totalDieselSales,
+      grandTotal: totalGasolineSales + totalDieselSales
     };
   };
 
@@ -150,13 +295,55 @@ const GasStationSystem = () => {
     });
 
     return {
-      gasolineGallons: pumpGasolineGallons.toFixed(2),
-      dieselGallons: pumpDieselGallons.toFixed(2),
-      gasolineSales: pumpGasolineSales.toFixed(2),
-      dieselSales: pumpDieselSales.toFixed(2),
-      totalGallons: (pumpGasolineGallons + pumpDieselGallons).toFixed(2),
-      totalSales: (pumpGasolineSales + pumpDieselSales).toFixed(2)
+      gasolineGallons: pumpGasolineGallons,
+      dieselGallons: pumpDieselGallons,
+      gasolineSales: pumpGasolineSales,
+      dieselSales: pumpDieselSales,
+      totalGallons: pumpGasolineGallons + pumpDieselGallons,
+      totalSales: pumpGasolineSales + pumpDieselSales
     };
+  };
+
+  // Calculate seller totals for a specific shift
+  const calculateSellerTotals = (shiftData = null, shiftKey = null) => {
+    const shiftToCalculate = shiftData || getCurrentReadings();
+    const shiftDeposits = shiftKey ? allDeposits[shiftKey] : getCurrentDeposits();
+    const sellerTotals = {};
+
+    // Initialize all sellers
+    sellers.forEach(seller => {
+      sellerTotals[seller] = {
+        gasolineGallons: 0,
+        dieselGallons: 0,
+        gasolineSales: 0,
+        dieselSales: 0,
+        totalSales: 0,
+        deposit: shiftDeposits[seller] || 0,
+        expectedCash: 0
+      };
+    });
+
+    // Calculate sales per seller
+    Object.entries(shiftToCalculate).forEach(([pump, pistols]) => {
+      Object.entries(pistols).forEach(([pistol, data]) => {
+        const gallons = calculateGallons(data.start, data.end);
+        const seller = data.seller;
+
+        if (seller && sellerTotals[seller]) {
+          if (data.fuelType.includes('Gasoline')) {
+            sellerTotals[seller].gasolineGallons += gallons;
+            sellerTotals[seller].gasolineSales += gallons * prices.gasoline;
+          } else if (data.fuelType === 'Diesel') {
+            sellerTotals[seller].dieselGallons += gallons;
+            sellerTotals[seller].dieselSales += gallons * prices.diesel;
+          }
+          sellerTotals[seller].totalSales = sellerTotals[seller].gasolineSales + sellerTotals[seller].dieselSales;
+          sellerTotals[seller].expectedCash = sellerTotals[seller].totalSales - sellerTotals[seller].deposit;
+        }
+      });
+    });
+
+    return sellerTotals;
   };
 
   const getPumpDetails = () => {
@@ -166,7 +353,7 @@ const GasStationSystem = () => {
     Object.entries(currentReadings).forEach(([pump, pistols]) => {
       Object.entries(pistols).forEach(([pistol, data]) => {
         const gallons = calculateGallons(data.start, data.end);
-        if (gallons > 0 || data.start || data.end) {
+        if (gallons !== 0 || data.start || data.end || data.seller) {
           const price = data.fuelType === 'Diesel' ? prices.diesel : prices.gasoline;
           const sales = gallons * price;
 
@@ -174,11 +361,12 @@ const GasStationSystem = () => {
             pump,
             pistol: pistol.replace('pistol', 'P'),
             fuelType: data.fuelType,
+            seller: data.seller,
             start: data.start || '0',
             end: data.end || '0',
-            gallons: gallons.toFixed(2),
+            gallons,
             price,
-            sales: sales.toFixed(2)
+            sales
           });
         }
       });
@@ -193,6 +381,10 @@ const GasStationSystem = () => {
         AM: initializePumpReadings(),
         PM: initializePumpReadings()
       });
+      setAllDeposits({
+        AM: {},
+        PM: {}
+      });
       setShowReport(false);
     }
   };
@@ -203,25 +395,32 @@ const GasStationSystem = () => {
         ...prev,
         [shift]: initializePumpReadings()
       }));
+      setAllDeposits(prev => ({
+        ...prev,
+        [shift]: {}
+      }));
     }
   };
 
   const totals = calculateTotals();
   const pumpDetails = getPumpDetails();
   const currentReadings = getCurrentReadings();
+  const currentDeposits = getCurrentDeposits();
+  const sellerTotals = calculateSellerTotals();
+  const amSellerTotals = calculateSellerTotals(allShiftsData.AM, 'AM');
+  const pmSellerTotals = calculateSellerTotals(allShiftsData.PM, 'PM');
 
   // Calculate daily totals (AM + PM)
+  const amTotals = calculateTotals(allShiftsData.AM);
+  const pmTotals = calculateTotals(allShiftsData.PM);
+  
   const dailyTotals = {
-    gasolineGallons: (parseFloat(calculateTotals(allShiftsData.AM).totalGasolineGallons) + 
-                     parseFloat(calculateTotals(allShiftsData.PM).totalGasolineGallons)).toFixed(2),
-    dieselGallons: (parseFloat(calculateTotals(allShiftsData.AM).totalDieselGallons) + 
-                   parseFloat(calculateTotals(allShiftsData.PM).totalDieselGallons)).toFixed(2),
-    gasolineSales: (parseFloat(calculateTotals(allShiftsData.AM).totalGasolineSales) + 
-                   parseFloat(calculateTotals(allShiftsData.PM).totalGasolineSales)).toFixed(2),
-    dieselSales: (parseFloat(calculateTotals(allShiftsData.AM).totalDieselSales) + 
-                 parseFloat(calculateTotals(allShiftsData.PM).totalDieselSales)).toFixed(2),
+    gasolineGallons: amTotals.totalGasolineGallons + pmTotals.totalGasolineGallons,
+    dieselGallons: amTotals.totalDieselGallons + pmTotals.totalDieselGallons,
+    gasolineSales: amTotals.totalGasolineSales + pmTotals.totalGasolineSales,
+    dieselSales: amTotals.totalDieselSales + pmTotals.totalDieselSales,
   };
-  dailyTotals.grandTotal = (parseFloat(dailyTotals.gasolineSales) + parseFloat(dailyTotals.dieselSales)).toFixed(2);
+  dailyTotals.grandTotal = dailyTotals.gasolineSales + dailyTotals.dieselSales;
 
   const getFuelColor = (fuelType) => {
     if (fuelType === 'Diesel') return 'bg-amber-100 border-amber-400';
@@ -256,7 +455,7 @@ const GasStationSystem = () => {
           <Fuel size={32} />
           <div>
             <h1 className="text-xl font-bold">Gas Station</h1>
-            <p className="text-sm text-blue-100">Sales Management</p>
+            <p className="text-sm text-blue-100">Sales & Seller Management</p>
           </div>
         </div>
 
@@ -281,13 +480,26 @@ const GasStationSystem = () => {
           </select>
         </div>
 
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-4 gap-2">
           <button
-            onClick={() => setShowReport(!showReport)}
+            onClick={() => {
+              setShowReport(!showReport);
+              setShowSellers(false);
+            }}
             className="bg-white text-blue-600 px-4 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition"
           >
             <FileText size={18} />
-            {showReport ? 'Data Entry' : 'View Report'}
+            {showReport ? 'Data Entry' : 'Report'}
+          </button>
+          <button
+            onClick={() => {
+              setShowSellers(!showSellers);
+              setShowReport(false);
+            }}
+            className="bg-purple-500 text-white px-4 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition"
+          >
+            <Users size={18} />
+            Sellers
           </button>
           <button
             onClick={resetCurrentShift}
@@ -307,7 +519,70 @@ const GasStationSystem = () => {
       </div>
 
       <div className="p-4 max-w-2xl mx-auto">
-        {!showReport ? (
+        {showSellers ? (
+          <div className="space-y-4">
+            {/* Manage Sellers */}
+            <div className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-xl p-5 shadow-xl">
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <Users size={24} />
+                Manage Sellers
+              </h2>
+              
+              {/* Add Seller */}
+              <div className="mb-6">
+                <h3 className="text-lg font-bold mb-3">Add New Seller</h3>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newSellerName}
+                    onChange={(e) => setNewSellerName(e.target.value)}
+                    placeholder="Enter seller name"
+                    className="flex-1 px-4 py-3 rounded-lg text-gray-900 font-semibold"
+                    onKeyPress={(e) => e.key === 'Enter' && addSeller()}
+                  />
+                  <button
+                    onClick={addSeller}
+                    className="bg-white text-purple-600 px-6 py-3 rounded-lg font-bold"
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+
+              {/* Seller List */}
+              <div>
+                <h3 className="text-lg font-bold mb-3">Current Sellers</h3>
+                <div className="space-y-2">
+                  {sellers.length > 0 ? (
+                    sellers.map((seller, index) => (
+                      <div key={seller} className="bg-white bg-opacity-20 rounded-lg p-4 flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+                            <User size={20} />
+                          </div>
+                          <div>
+                            <p className="font-bold">{seller}</p>
+                            <p className="text-sm opacity-90">ID: {index + 1}</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => removeSeller(seller)}
+                          className="bg-red-500 text-white px-4 py-2 rounded-lg font-bold text-sm"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-white text-opacity-70">
+                      No sellers added yet
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : !showReport ? (
           <div className="space-y-3">
             {/* Shift Indicator */}
             <div className="bg-slate-800 text-white rounded-lg p-3 text-center">
@@ -319,13 +594,62 @@ const GasStationSystem = () => {
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-xl p-4 shadow-lg">
                 <p className="text-xs opacity-90 mb-1">Gasoline ({shift})</p>
-                <p className="text-2xl font-bold">{totals.totalGasolineGallons}</p>
+                <p className="text-2xl font-bold">{formatDisplay(totals.totalGasolineGallons)}</p>
                 <p className="text-xs opacity-90">gallons</p>
               </div>
               <div className="bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-xl p-4 shadow-lg">
                 <p className="text-xs opacity-90 mb-1">Diesel ({shift})</p>
-                <p className="text-2xl font-bold">{totals.totalDieselGallons}</p>
+                <p className="text-2xl font-bold">{formatDisplay(totals.totalDieselGallons)}</p>
                 <p className="text-xs opacity-90">gallons</p>
+              </div>
+            </div>
+
+            {/* Seller Deposits Section */}
+            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl p-5 shadow-xl">
+              <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                <DollarSign size={20} />
+                Seller Deposits - {shift} Shift
+              </h3>
+              <div className="space-y-3">
+                {sellers.map(seller => (
+                  <div key={seller} className="bg-white bg-opacity-20 rounded-lg p-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="flex items-center gap-2">
+                        <User size={20} />
+                        <span className="font-bold">{seller}</span>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+                        sellerTotals[seller]?.expectedCash > 0 
+                          ? 'bg-green-500' 
+                          : sellerTotals[seller]?.expectedCash < 0 
+                          ? 'bg-red-500' 
+                          : 'bg-gray-500'
+                      }`}>
+                        Expected: {formatMoney(sellerTotals[seller]?.expectedCash || 0)} HTG
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <p className="opacity-90">Total Sales</p>
+                        <p className="font-bold">{formatMoney(sellerTotals[seller]?.totalSales || 0)} HTG</p>
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="opacity-90">Deposit</p>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={currentDeposits[seller] || ''}
+                            onChange={(e) => updateDeposit(seller, e.target.value)}
+                            placeholder="0.00"
+                            className="flex-1 px-3 py-1 rounded text-gray-900 font-semibold text-right"
+                          />
+                          <span className="font-bold">HTG</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -366,7 +690,7 @@ const GasStationSystem = () => {
                       </div>
                       <div className="text-right">
                         <p className="text-sm opacity-90">{shift} Shift Total</p>
-                        <p className="text-2xl font-bold">{pumpTotal?.totalSales || '0.00'} HTG</p>
+                        <p className="text-2xl font-bold">{formatMoney(pumpTotal?.totalSales || 0)} HTG</p>
                       </div>
                     </div>
                     
@@ -374,14 +698,14 @@ const GasStationSystem = () => {
                     <div className="grid grid-cols-2 gap-3 mt-3">
                       <div className="bg-white bg-opacity-20 rounded-lg p-3">
                         <p className="text-xs opacity-90">Gasoline</p>
-                        <p className="text-lg font-bold">{pumpTotal?.gasolineGallons || '0.00'} gal</p>
-                        <p className="text-sm opacity-90">{pumpTotal?.gasolineSales || '0.00'} HTG</p>
+                        <p className="text-lg font-bold">{formatDisplay(pumpTotal?.gasolineGallons || 0)} gal</p>
+                        <p className="text-sm opacity-90">{formatMoney(pumpTotal?.gasolineSales || 0)} HTG</p>
                       </div>
                       {pump !== 'P5' && (
                         <div className="bg-white bg-opacity-20 rounded-lg p-3">
                           <p className="text-xs opacity-90">Diesel</p>
-                          <p className="text-lg font-bold">{pumpTotal?.dieselGallons || '0.00'} gal</p>
-                          <p className="text-sm opacity-90">{pumpTotal?.dieselSales || '0.00'} HTG</p>
+                          <p className="text-lg font-bold">{formatDisplay(pumpTotal?.dieselGallons || 0)} gal</p>
+                          <p className="text-sm opacity-90">{formatMoney(pumpTotal?.dieselSales || 0)} HTG</p>
                         </div>
                       )}
                     </div>
@@ -408,17 +732,34 @@ const GasStationSystem = () => {
                           </div>
 
                           <div className="p-4 space-y-3">
+                            {/* Seller Selection */}
+                            <div>
+                              <label className="text-xs font-bold text-gray-700 block mb-1">
+                                SELLER ASSIGNMENT
+                              </label>
+                              <select
+                                value={data.seller}
+                                onChange={(e) => updateSeller(pump, pistol, e.target.value)}
+                                className="w-full px-4 py-3 text-lg font-semibold border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              >
+                                <option value="">Select Seller</option>
+                                {sellers.map(seller => (
+                                  <option key={seller} value={seller}>{seller}</option>
+                                ))}
+                              </select>
+                            </div>
+
                             <div>
                               <label className="text-xs font-bold text-gray-700 block mb-1">
                                 START METER
                               </label>
                               <input
                                 type="number"
-                                step="0.01"
+                                step="0.001"
                                 value={data.start}
                                 onChange={(e) => updateReading(pump, pistol, 'start', e.target.value)}
                                 className="w-full px-4 py-3 text-lg font-semibold border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="0.00"
+                                placeholder="0.000"
                               />
                             </div>
 
@@ -428,11 +769,11 @@ const GasStationSystem = () => {
                               </label>
                               <input
                                 type="number"
-                                step="0.01"
+                                step="0.001"
                                 value={data.end}
                                 onChange={(e) => updateReading(pump, pistol, 'end', e.target.value)}
                                 className="w-full px-4 py-3 text-lg font-semibold border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="0.00"
+                                placeholder="0.000"
                               />
                             </div>
 
@@ -440,11 +781,11 @@ const GasStationSystem = () => {
                               <div className="bg-white rounded-lg p-3 space-y-1 border-2 border-gray-300">
                                 <div className="flex justify-between items-center">
                                   <span className="text-sm font-semibold text-gray-600">Gallons</span>
-                                  <span className="text-xl font-bold text-gray-900">{gallons.toFixed(2)}</span>
+                                  <span className="text-xl font-bold text-gray-900">{formatDisplay(gallons)}</span>
                                 </div>
                                 <div className="flex justify-between items-center pt-2 border-t border-gray-200">
                                   <span className="text-sm font-semibold text-gray-600">Total Sales</span>
-                                  <span className="text-xl font-bold text-green-600">{sales.toFixed(2)} HTG</span>
+                                  <span className="text-xl font-bold text-green-600">{formatMoney(sales)} HTG</span>
                                 </div>
                               </div>
                             )}
@@ -468,11 +809,107 @@ const GasStationSystem = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm opacity-90">AM Shift</p>
-                  <p className="text-lg font-bold">{calculateTotals(allShiftsData.AM).grandTotal} HTG</p>
+                  <p className="text-lg font-bold">{formatMoney(amTotals.grandTotal)} HTG</p>
                 </div>
                 <div>
                   <p className="text-sm opacity-90">PM Shift</p>
-                  <p className="text-lg font-bold">{calculateTotals(allShiftsData.PM).grandTotal} HTG</p>
+                  <p className="text-lg font-bold">{formatMoney(pmTotals.grandTotal)} HTG</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Seller Financial Summary */}
+            <div className="bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-xl p-5 shadow-xl">
+              <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                <User size={20} />
+                Seller Financial Summary
+              </h3>
+              
+              {/* AM Shift Sellers */}
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                  <h4 className="font-bold">AM Shift Sellers</h4>
+                </div>
+                <div className="space-y-3">
+                  {sellers.map(seller => {
+                    const sellerData = amSellerTotals[seller];
+                    if (!sellerData || sellerData.totalSales === 0) return null;
+                    
+                    return (
+                      <div key={`am-${seller}`} className="bg-white bg-opacity-20 rounded-lg p-4">
+                        <div className="flex justify-between items-center mb-2">
+                          <div className="flex items-center gap-2">
+                            <User size={16} />
+                            <span className="font-bold">{seller}</span>
+                          </div>
+                          <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+                            sellerData.expectedCash > 0 
+                              ? 'bg-green-500' 
+                              : sellerData.expectedCash < 0 
+                              ? 'bg-red-500' 
+                              : 'bg-gray-500'
+                          }`}>
+                            Expected: {formatMoney(sellerData.expectedCash)} HTG
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>
+                            <p className="opacity-90">Total Sales</p>
+                            <p className="font-bold">{formatMoney(sellerData.totalSales)} HTG</p>
+                          </div>
+                          <div>
+                            <p className="opacity-90">Deposit</p>
+                            <p className="font-bold">{formatMoney(sellerData.deposit)} HTG</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* PM Shift Sellers */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+                  <h4 className="font-bold">PM Shift Sellers</h4>
+                </div>
+                <div className="space-y-3">
+                  {sellers.map(seller => {
+                    const sellerData = pmSellerTotals[seller];
+                    if (!sellerData || sellerData.totalSales === 0) return null;
+                    
+                    return (
+                      <div key={`pm-${seller}`} className="bg-white bg-opacity-20 rounded-lg p-4">
+                        <div className="flex justify-between items-center mb-2">
+                          <div className="flex items-center gap-2">
+                            <User size={16} />
+                            <span className="font-bold">{seller}</span>
+                          </div>
+                          <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+                            sellerData.expectedCash > 0 
+                              ? 'bg-green-500' 
+                              : sellerData.expectedCash < 0 
+                              ? 'bg-red-500' 
+                              : 'bg-gray-500'
+                          }`}>
+                            Expected: {formatMoney(sellerData.expectedCash)} HTG
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>
+                            <p className="opacity-90">Total Sales</p>
+                            <p className="font-bold">{formatMoney(sellerData.totalSales)} HTG</p>
+                          </div>
+                          <div>
+                            <p className="opacity-90">Deposit</p>
+                            <p className="font-bold">{formatMoney(sellerData.deposit)} HTG</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -496,7 +933,7 @@ const GasStationSystem = () => {
                       <div className="space-y-3">
                         {pumpData && Object.entries(pumpData).map(([pistol, data]) => {
                           const gallons = calculateGallons(data.start, data.end);
-                          if (gallons === 0 && !data.start && !data.end) return null;
+                          if (gallons === 0 && !data.start && !data.end && !data.seller) return null;
                           
                           return (
                             <div key={pistol} className="flex justify-between items-center text-sm">
@@ -505,9 +942,14 @@ const GasStationSystem = () => {
                                 <span className={`px-2 py-1 rounded text-xs font-bold ${getFuelBadgeColor(data.fuelType)}`}>
                                   {data.fuelType.replace('Gasoline ', 'G')}
                                 </span>
+                                {data.seller && (
+                                  <span className="px-2 py-1 rounded text-xs font-bold bg-indigo-500">
+                                    {data.seller}
+                                  </span>
+                                )}
                               </div>
                               <div className="text-right">
-                                <div className="font-bold">{gallons.toFixed(2)} gal</div>
+                                <div className="font-bold">{formatDisplay(gallons)} gal</div>
                                 <div className="text-xs opacity-90">
                                   {data.start || '0'} → {data.end || '0'}
                                 </div>
@@ -517,13 +959,13 @@ const GasStationSystem = () => {
                         })}
                         
                         {/* Pump Total */}
-                        {pumpTotal && parseFloat(pumpTotal.totalGallons) > 0 && (
+                        {pumpTotal && (pumpTotal.totalGallons !== 0 || Object.values(pumpData).some(data => data.start || data.end || data.seller)) && (
                           <div className="pt-3 mt-3 border-t border-white border-opacity-30">
                             <div className="flex justify-between items-center">
                               <span className="font-bold">Pump {pump} Total:</span>
                               <div className="text-right">
-                                <div className="font-bold">{pumpTotal.totalGallons} gal</div>
-                                <div className="text-lg font-bold">{pumpTotal.totalSales} HTG</div>
+                                <div className="font-bold">{formatDisplay(pumpTotal.totalGallons)} gal</div>
+                                <div className="text-lg font-bold">{formatMoney(pumpTotal.totalSales)} HTG</div>
                               </div>
                             </div>
                           </div>
@@ -554,7 +996,7 @@ const GasStationSystem = () => {
                       <div className="space-y-3">
                         {pumpData && Object.entries(pumpData).map(([pistol, data]) => {
                           const gallons = calculateGallons(data.start, data.end);
-                          if (gallons === 0 && !data.start && !data.end) return null;
+                          if (gallons === 0 && !data.start && !data.end && !data.seller) return null;
                           
                           return (
                             <div key={pistol} className="flex justify-between items-center text-sm">
@@ -563,9 +1005,14 @@ const GasStationSystem = () => {
                                 <span className={`px-2 py-1 rounded text-xs font-bold ${getFuelBadgeColor(data.fuelType)}`}>
                                   {data.fuelType.replace('Gasoline ', 'G')}
                                 </span>
+                                {data.seller && (
+                                  <span className="px-2 py-1 rounded text-xs font-bold bg-indigo-500">
+                                    {data.seller}
+                                  </span>
+                                )}
                               </div>
                               <div className="text-right">
-                                <div className="font-bold">{gallons.toFixed(2)} gal</div>
+                                <div className="font-bold">{formatDisplay(gallons)} gal</div>
                                 <div className="text-xs opacity-90">
                                   {data.start || '0'} → {data.end || '0'}
                                 </div>
@@ -575,13 +1022,13 @@ const GasStationSystem = () => {
                         })}
                         
                         {/* Pump Total */}
-                        {pumpTotal && parseFloat(pumpTotal.totalGallons) > 0 && (
+                        {pumpTotal && (pumpTotal.totalGallons !== 0 || Object.values(pumpData).some(data => data.start || data.end || data.seller)) && (
                           <div className="pt-3 mt-3 border-t border-white border-opacity-30">
                             <div className="flex justify-between items-center">
                               <span className="font-bold">Pump {pump} Total:</span>
                               <div className="text-right">
-                                <div className="font-bold">{pumpTotal.totalGallons} gal</div>
-                                <div className="text-lg font-bold">{pumpTotal.totalSales} HTG</div>
+                                <div className="font-bold">{formatDisplay(pumpTotal.totalGallons)} gal</div>
+                                <div className="text-lg font-bold">{formatMoney(pumpTotal.totalSales)} HTG</div>
                               </div>
                             </div>
                           </div>
@@ -593,55 +1040,13 @@ const GasStationSystem = () => {
               </div>
             </div>
 
-            {/* AM Shift Summary */}
-            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-xl p-5 shadow-xl">
-              <h3 className="text-lg font-bold mb-3">🌅 AM Shift Summary</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm opacity-90">Gasoline</p>
-                  <p className="text-xl font-bold">{calculateTotals(allShiftsData.AM).totalGasolineGallons} gal</p>
-                </div>
-                <div>
-                  <p className="text-sm opacity-90">Diesel</p>
-                  <p className="text-xl font-bold">{calculateTotals(allShiftsData.AM).totalDieselGallons} gal</p>
-                </div>
-              </div>
-              <div className="mt-3 pt-3 border-t border-white border-opacity-30">
-                <div className="flex justify-between">
-                  <span>AM Total</span>
-                  <span className="font-bold">{calculateTotals(allShiftsData.AM).grandTotal} HTG</span>
-                </div>
-              </div>
-            </div>
-
-            {/* PM Shift Summary */}
-            <div className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-xl p-5 shadow-xl">
-              <h3 className="text-lg font-bold mb-3">🌇 PM Shift Summary</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm opacity-90">Gasoline</p>
-                  <p className="text-xl font-bold">{calculateTotals(allShiftsData.PM).totalGasolineGallons} gal</p>
-                </div>
-                <div>
-                  <p className="text-sm opacity-90">Diesel</p>
-                  <p className="text-xl font-bold">{calculateTotals(allShiftsData.PM).totalDieselGallons} gal</p>
-                </div>
-              </div>
-              <div className="mt-3 pt-3 border-t border-white border-opacity-30">
-                <div className="flex justify-between">
-                  <span>PM Total</span>
-                  <span className="font-bold">{calculateTotals(allShiftsData.PM).grandTotal} HTG</span>
-                </div>
-              </div>
-            </div>
-
             {/* Daily Totals */}
             <div className="bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-xl p-5 shadow-xl">
               <h3 className="text-lg font-bold mb-3">💚 Gasoline - Daily Total</h3>
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>Gallons</span>
-                  <span className="font-bold">{dailyTotals.gasolineGallons}</span>
+                  <span className="font-bold">{formatDisplay(dailyTotals.gasolineGallons)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Price/Gallon</span>
@@ -649,7 +1054,7 @@ const GasStationSystem = () => {
                 </div>
                 <div className="flex justify-between text-lg pt-2 border-t border-white border-opacity-30">
                   <span className="font-bold">Total Sales</span>
-                  <span className="font-bold">{dailyTotals.gasolineSales} HTG</span>
+                  <span className="font-bold">{formatMoney(dailyTotals.gasolineSales)} HTG</span>
                 </div>
               </div>
             </div>
@@ -659,7 +1064,7 @@ const GasStationSystem = () => {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>Gallons</span>
-                  <span className="font-bold">{dailyTotals.dieselGallons}</span>
+                  <span className="font-bold">{formatDisplay(dailyTotals.dieselGallons)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Price/Gallon</span>
@@ -667,7 +1072,7 @@ const GasStationSystem = () => {
                 </div>
                 <div className="flex justify-between text-lg pt-2 border-t border-white border-opacity-30">
                   <span className="font-bold">Total Sales</span>
-                  <span className="font-bold">{dailyTotals.dieselSales} HTG</span>
+                  <span className="font-bold">{formatMoney(dailyTotals.dieselSales)} HTG</span>
                 </div>
               </div>
             </div>
@@ -675,61 +1080,7 @@ const GasStationSystem = () => {
             <div className="bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-xl p-5 shadow-xl">
               <div className="flex justify-between items-center">
                 <span className="text-lg font-bold">DAILY GRAND TOTAL</span>
-                <span className="text-2xl font-bold">{dailyTotals.grandTotal} HTG</span>
-              </div>
-            </div>
-
-            {/* Detailed Report */}
-            <div className="bg-white rounded-xl shadow-xl overflow-hidden">
-              <div className="bg-slate-800 text-white p-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-bold">Detailed Report - {shift} Shift</h3>
-                  <select
-                    value={shift}
-                    onChange={(e) => setShift(e.target.value)}
-                    className="bg-slate-700 text-white px-3 py-1 rounded-lg text-sm font-bold"
-                  >
-                    <option value="AM">AM Shift</option>
-                    <option value="PM">PM Shift</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-slate-100 border-b-2 border-slate-300">
-                    <tr>
-                      <th className="px-3 py-2 text-left font-bold text-slate-700">Pump</th>
-                      <th className="px-3 py-2 text-left font-bold text-slate-700">Pistol</th>
-                      <th className="px-3 py-2 text-left font-bold text-slate-700">Type</th>
-                      <th className="px-3 py-2 text-right font-bold text-slate-700">Gal</th>
-                      <th className="px-3 py-2 text-right font-bold text-slate-700">Sales</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200">
-                    {pumpDetails.length > 0 ? (
-                      pumpDetails.map((detail, index) => (
-                        <tr key={index} className="hover:bg-slate-50">
-                          <td className="px-3 py-2 font-bold text-slate-800">{detail.pump}</td>
-                          <td className="px-3 py-2 text-slate-700">{detail.pistol}</td>
-                          <td className="px-3 py-2">
-                            <span className={`${getFuelBadgeColor(detail.fuelType)} text-white px-2 py-1 rounded text-xs font-bold`}>
-                              {detail.fuelType.replace('Gasoline ', 'G')}
-                            </span>
-                          </td>
-                          <td className="px-3 py-2 text-right font-bold text-slate-800">{detail.gallons}</td>
-                          <td className="px-3 py-2 text-right font-bold text-green-600">{detail.sales}</td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="5" className="px-3 py-8 text-center text-slate-500">
-                          No data entered for {shift} shift
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                <span className="text-2xl font-bold">{formatMoney(dailyTotals.grandTotal)} HTG</span>
               </div>
             </div>
           </div>
