@@ -96,6 +96,7 @@ const GasStationSystem = () => {
     return Math.max(0, e - s);
   };
 
+  // Calculate totals for a specific shift
   const calculateTotals = (shiftData = null) => {
     const dataToCalculate = shiftData || getCurrentReadings();
     
@@ -125,6 +126,42 @@ const GasStationSystem = () => {
       totalDieselSales: totalDieselSales.toFixed(2),
       grandTotal: (totalGasolineSales + totalDieselSales).toFixed(2)
     };
+  };
+
+  // Calculate per-pump totals for a specific shift
+  const calculatePumpTotals = (shiftData = null) => {
+    const dataToCalculate = shiftData || getCurrentReadings();
+    const pumpTotals = {};
+
+    Object.entries(dataToCalculate).forEach(([pump, pistols]) => {
+      let pumpGasolineGallons = 0;
+      let pumpDieselGallons = 0;
+      let pumpGasolineSales = 0;
+      let pumpDieselSales = 0;
+
+      Object.entries(pistols).forEach(([pistol, data]) => {
+        const gallons = calculateGallons(data.start, data.end);
+
+        if (data.fuelType.includes('Gasoline')) {
+          pumpGasolineGallons += gallons;
+          pumpGasolineSales += gallons * prices.gasoline;
+        } else if (data.fuelType === 'Diesel') {
+          pumpDieselGallons += gallons;
+          pumpDieselSales += gallons * prices.diesel;
+        }
+      });
+
+      pumpTotals[pump] = {
+        gasolineGallons: pumpGasolineGallons.toFixed(2),
+        dieselGallons: pumpDieselGallons.toFixed(2),
+        gasolineSales: pumpGasolineSales.toFixed(2),
+        dieselSales: pumpDieselSales.toFixed(2),
+        totalGallons: (pumpGasolineGallons + pumpDieselGallons).toFixed(2),
+        totalSales: (pumpGasolineSales + pumpDieselSales).toFixed(2)
+      };
+    });
+
+    return pumpTotals;
   };
 
   const getPumpDetails = () => {
@@ -177,6 +214,9 @@ const GasStationSystem = () => {
   const totals = calculateTotals();
   const pumpDetails = getPumpDetails();
   const currentReadings = getCurrentReadings();
+  const pumpTotals = calculatePumpTotals();
+  const amPumpTotals = calculatePumpTotals(allShiftsData.AM);
+  const pmPumpTotals = calculatePumpTotals(allShiftsData.PM);
 
   // Calculate daily totals (AM + PM)
   const dailyTotals = {
@@ -205,6 +245,17 @@ const GasStationSystem = () => {
     return 'bg-purple-500';
   };
 
+  const getPumpColor = (pumpNumber) => {
+    const colors = [
+      'bg-gradient-to-br from-blue-500 to-blue-600',
+      'bg-gradient-to-br from-emerald-500 to-emerald-600',
+      'bg-gradient-to-br from-purple-500 to-purple-600',
+      'bg-gradient-to-br from-amber-500 to-amber-600',
+      'bg-gradient-to-br from-rose-500 to-rose-600'
+    ];
+    return colors[pumpNumber - 1] || colors[0];
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 pb-20">
       {/* Header */}
@@ -229,7 +280,6 @@ const GasStationSystem = () => {
             value={shift}
             onChange={(e) => {
               setShift(e.target.value);
-              // Reset to first pump when switching shifts
               setExpandedPump('P1');
             }}
             className="px-3 py-2 text-sm bg-white text-gray-900 rounded-lg font-semibold"
@@ -285,6 +335,39 @@ const GasStationSystem = () => {
                 <p className="text-2xl font-bold">{totals.totalDieselGallons}</p>
                 <p className="text-xs opacity-90">gallons</p>
               </div>
+            </div>
+
+            {/* Pump Quick Summary */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {Object.entries(pumpTotals).map(([pump, totals], index) => (
+                <div 
+                  key={pump} 
+                  className={`${getPumpColor(index + 1)} text-white rounded-xl p-4 shadow-lg`}
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-lg font-bold">{pump}</span>
+                    <span className="text-xs bg-white bg-opacity-20 px-2 py-1 rounded">
+                      {shift}
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span>Gasoline:</span>
+                      <span className="font-bold">{totals.gasolineGallons} gal</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Diesel:</span>
+                      <span className="font-bold">{totals.dieselGallons} gal</span>
+                    </div>
+                    <div className="pt-2 mt-2 border-t border-white border-opacity-30">
+                      <div className="flex justify-between">
+                        <span className="text-xs">Total:</span>
+                        <span className="font-bold">{totals.totalSales} HTG</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
 
             {/* Pump Selector Tabs */}
@@ -392,18 +475,103 @@ const GasStationSystem = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm opacity-90">AM Shift</p>
-                  <p className="text-lg font-bold">${calculateTotals(allShiftsData.AM).grandTotal} HTG</p>
+                  <p className="text-lg font-bold">{calculateTotals(allShiftsData.AM).grandTotal} HTG</p>
                 </div>
                 <div>
                   <p className="text-sm opacity-90">PM Shift</p>
-                  <p className="text-lg font-bold">${calculateTotals(allShiftsData.PM).grandTotal} HTG</p>
+                  <p className="text-lg font-bold">{calculateTotals(allShiftsData.PM).grandTotal} HTG</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Pump Totals by Shift */}
+            <div className="bg-white rounded-xl shadow-xl overflow-hidden">
+              <div className="bg-slate-800 text-white p-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-bold">Pump Totals by Shift</h3>
+                </div>
+              </div>
+              
+              <div className="p-4">
+                {/* AM Shift Pump Totals */}
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                    <h4 className="font-bold text-gray-800">AM Shift Pump Totals</h4>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {Object.entries(amPumpTotals).map(([pump, totals], index) => (
+                      <div 
+                        key={`am-${pump}`} 
+                        className={`${getPumpColor(index + 1)} text-white rounded-lg p-4`}
+                      >
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="font-bold">{pump}</span>
+                          <span className="text-xs bg-white bg-opacity-20 px-2 py-1 rounded">AM</span>
+                        </div>
+                        <div className="space-y-1 text-sm">
+                          <div className="flex justify-between">
+                            <span>Gasoline:</span>
+                            <span>{totals.gasolineGallons} gal</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Diesel:</span>
+                            <span>{totals.dieselGallons} gal</span>
+                          </div>
+                          <div className="pt-2 mt-2 border-t border-white border-opacity-30">
+                            <div className="flex justify-between font-bold">
+                              <span>Total:</span>
+                              <span>{totals.totalSales} HTG</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* PM Shift Pump Totals */}
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+                    <h4 className="font-bold text-gray-800">PM Shift Pump Totals</h4>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {Object.entries(pmPumpTotals).map(([pump, totals], index) => (
+                      <div 
+                        key={`pm-${pump}`} 
+                        className={`${getPumpColor(index + 1)} text-white rounded-lg p-4`}
+                      >
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="font-bold">{pump}</span>
+                          <span className="text-xs bg-white bg-opacity-20 px-2 py-1 rounded">PM</span>
+                        </div>
+                        <div className="space-y-1 text-sm">
+                          <div className="flex justify-between">
+                            <span>Gasoline:</span>
+                            <span>{totals.gasolineGallons} gal</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Diesel:</span>
+                            <span>{totals.dieselGallons} gal</span>
+                          </div>
+                          <div className="pt-2 mt-2 border-t border-white border-opacity-30">
+                            <div className="flex justify-between font-bold">
+                              <span>Total:</span>
+                              <span>{totals.totalSales} HTG</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* AM Shift Summary */}
             <div className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-xl p-5 shadow-xl">
-              <h3 className="text-lg font-bold mb-3">🌅 AM Shift</h3>
+              <h3 className="text-lg font-bold mb-3">🌅 AM Shift Summary</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm opacity-90">Gasoline</p>
@@ -424,7 +592,7 @@ const GasStationSystem = () => {
 
             {/* PM Shift Summary */}
             <div className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-xl p-5 shadow-xl">
-              <h3 className="text-lg font-bold mb-3">🌇 PM Shift</h3>
+              <h3 className="text-lg font-bold mb-3">🌇 PM Shift Summary</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm opacity-90">Gasoline</p>
@@ -487,11 +655,11 @@ const GasStationSystem = () => {
               </div>
             </div>
 
-            {/* Shift Selector for Detailed Report */}
+            {/* Detailed Report */}
             <div className="bg-white rounded-xl shadow-xl overflow-hidden">
               <div className="bg-slate-800 text-white p-4">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-bold">Detailed Report</h3>
+                  <h3 className="text-lg font-bold">Detailed Report - {shift} Shift</h3>
                   <select
                     value={shift}
                     onChange={(e) => setShift(e.target.value)}
