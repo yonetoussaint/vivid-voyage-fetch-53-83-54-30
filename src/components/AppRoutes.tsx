@@ -35,6 +35,14 @@ export function AppRoutes() {
         }
       />
 
+
+ <Route
+          path="easy"
+          element={
+            <GasStationSystem />
+          }
+        />
+
       {/* All other routes - INSIDE MainLayout */}
       <Route path="/" element={<MainLayout />}>
         <Route
@@ -50,12 +58,7 @@ export function AppRoutes() {
           }
         />
 
-        <Route
-          path="easy"
-          element={
-            <GasStationSystem />
-          }
-        />
+       
 
         <Route
           path="wallet"
