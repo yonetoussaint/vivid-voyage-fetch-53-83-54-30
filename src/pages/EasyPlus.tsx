@@ -2,67 +2,86 @@ import React, { useState, useEffect } from 'react';
 import { Calculator, FileText, Trash2, Fuel, User, DollarSign, Users, Plus, Minus } from 'lucide-react';
 
 // Reusable Seller Management Component
+// Reusable Seller Management Component
 const SellerManagement = ({ sellers, newSellerName, setNewSellerName, addSeller, removeSeller }) => {
   return (
     <div className="space-y-4">
       {/* Manage Sellers */}
-      <div className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-xl p-5 shadow-xl">
-        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-          <Users size={24} />
-          Manage Sellers
-        </h2>
+      <div className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-xl p-4 shadow-xl">
+        <div className="flex items-center gap-2 mb-4">
+          <Users size={22} />
+          <h2 className="text-lg font-bold">Manage Sellers</h2>
+        </div>
         
         {/* Add Seller */}
         <div className="mb-6">
-          <h3 className="text-lg font-bold mb-3">Add New Seller</h3>
-          <div className="flex gap-2">
+          <h3 className="text-md font-bold mb-3">Add New Seller</h3>
+          <div className="flex flex-col sm:flex-row gap-2">
             <input
               type="text"
               value={newSellerName}
               onChange={(e) => setNewSellerName(e.target.value)}
               placeholder="Enter seller name"
-              className="flex-1 px-4 py-3 rounded-lg text-gray-900 font-semibold"
+              className="flex-1 px-4 py-3 rounded-lg text-gray-900 font-semibold text-base"
               onKeyPress={(e) => e.key === 'Enter' && addSeller()}
             />
             <button
               onClick={addSeller}
-              className="bg-white text-purple-600 px-6 py-3 rounded-lg font-bold"
+              className="bg-white text-purple-600 px-4 py-3 rounded-lg font-bold text-base sm:w-auto w-full active:scale-95 transition"
             >
-              Add
+              Add Seller
             </button>
           </div>
         </div>
 
         {/* Seller List */}
         <div>
-          <h3 className="text-lg font-bold mb-3">Current Sellers</h3>
-          <div className="space-y-2">
-            {sellers.length > 0 ? (
-              sellers.map((seller, index) => (
-                <div key={seller} className="bg-white bg-opacity-20 rounded-lg p-4 flex justify-between items-center">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
-                      <User size={20} />
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-md font-bold">Current Sellers</h3>
+            <div className="text-sm opacity-90">
+              Total: {sellers.length}
+            </div>
+          </div>
+          
+          {sellers.length > 0 ? (
+            <div className="space-y-3">
+              {sellers.map((seller, index) => (
+                <div key={seller} className="bg-white bg-opacity-15 rounded-lg p-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-white bg-opacity-20 flex items-center justify-center flex-shrink-0">
+                        <User size={20} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-base truncate">{seller}</p>
+                        <p className="text-sm opacity-90">ID: {index + 1}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-bold">{seller}</p>
-                      <p className="text-sm opacity-90">ID: {index + 1}</p>
+                    <div className="flex gap-2 self-end sm:self-center">
+                      <div className="bg-white bg-opacity-20 px-3 py-1.5 rounded-lg text-sm">
+                        Assigned to: {getPumpAssignmentCount(seller)} pump(s)
+                      </div>
+                      <button
+                        onClick={() => removeSeller(seller)}
+                        className="bg-red-500 text-white px-4 py-1.5 rounded-lg font-bold text-sm active:scale-95 transition"
+                        aria-label={`Remove seller ${seller}`}
+                      >
+                        Remove
+                      </button>
                     </div>
                   </div>
-                  <button
-                    onClick={() => removeSeller(seller)}
-                    className="bg-red-500 text-white px-4 py-2 rounded-lg font-bold text-sm"
-                  >
-                    Remove
-                  </button>
                 </div>
-              ))
-            ) : (
-              <div className="text-center py-8 text-white text-opacity-70">
-                No sellers added yet
-              </div>
-            )}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white bg-opacity-10 rounded-lg p-6 text-center">
+              <Users size={32} className="mx-auto mb-3 opacity-70" />
+              <p className="text-white text-opacity-80 mb-2">No sellers added yet</p>
+              <p className="text-sm text-white text-opacity-60">
+                Add sellers above to start assigning them to pumps
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
