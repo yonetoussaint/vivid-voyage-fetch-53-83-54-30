@@ -3,6 +3,21 @@ import { Calculator, FileText, Trash2, Fuel, User, DollarSign, Users, Plus, Minu
 
 // Reusable Seller Management Component
 // Reusable Seller Management Component
+
+
+// Helper function to count pump assignments for a seller
+const getPumpAssignmentCount = (sellerName) => {
+  let count = 0;
+  ['AM', 'PM'].forEach(shiftKey => {
+    Object.values(allShiftsData[shiftKey] || {}).forEach(pumpData => {
+      if (pumpData._seller === sellerName) {
+        count++;
+      }
+    });
+  });
+  return count;
+};
+
 const SellerManagement = ({ sellers, newSellerName, setNewSellerName, addSeller, removeSeller }) => {
   return (
     <div className="space-y-4">
