@@ -2,22 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Calculator, FileText, Trash2, Fuel, User, DollarSign, Users, Plus, Minus } from 'lucide-react';
 
 // Reusable Seller Management Component
-// Reusable Seller Management Component
-
-
-// Helper function to count pump assignments for a seller
-const getPumpAssignmentCount = (sellerName) => {
-  let count = 0;
-  ['AM', 'PM'].forEach(shiftKey => {
-    Object.values(allShiftsData[shiftKey] || {}).forEach(pumpData => {
-      if (pumpData._seller === sellerName) {
-        count++;
-      }
-    });
-  });
-  return count;
-};
-
 const SellerManagement = ({ sellers, newSellerName, setNewSellerName, addSeller, removeSeller, getPumpAssignmentCount }) => {
   return (
     <div className="space-y-4">
@@ -74,7 +58,7 @@ const SellerManagement = ({ sellers, newSellerName, setNewSellerName, addSeller,
                     </div>
                     <div className="flex gap-2 self-end sm:self-center">
                       <div className="bg-white bg-opacity-20 px-3 py-1.5 rounded-lg text-sm">
-                        Assigned to: {getPumpAssignmentCount(seller)} pump(s)
+                        Assigned to: {getPumpAssignmentCount ? getPumpAssignmentCount(seller) : 0} pump(s)
                       </div>
                       <button
                         onClick={() => removeSeller(seller)}
@@ -206,7 +190,6 @@ const PistolInput = ({ pistol, data, pump, updateReading, getFuelColor, getFuelB
   );
 };
 
-// Reusable Seller Deposits Component
 // Reusable Seller Deposits Component
 const SellerDeposits = ({ shift, sellers, sellerTotals, allDeposits, updateDeposit, addDeposit, removeDeposit, formatMoney }) => {
   const currentDeposits = allDeposits[shift] || {};
@@ -343,16 +326,16 @@ const SellerDeposits = ({ shift, sellers, sellerTotals, allDeposits, updateDepos
 // Reusable Seller Assignment Component
 const SellerAssignment = ({ pump, sellers, currentSeller, updateSellerAssignment }) => {
   return (
-    <div className="bg-white rounded-lg p-4 border-2 border-indigo-300 mb-3">
-      <h4 className="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
+    <div className="bg-white rounded-lg p-3 border-2 border-indigo-300 mb-3">
+      <div className="flex items-center gap-2 mb-2">
         <User size={18} />
-        Seller Assignment for {pump}
-      </h4>
-      <div className="flex items-center gap-3">
+        <h4 className="text-base font-bold text-gray-800 truncate">Seller for {pump}</h4>
+      </div>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
         <select
           value={currentSeller}
           onChange={(e) => updateSellerAssignment(pump, e.target.value)}
-          className="flex-1 px-4 py-3 text-lg font-semibold border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="flex-1 px-3 py-2.5 text-base font-semibold border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
         >
           <option value="">Select Seller</option>
           {sellers.map(seller => (
@@ -360,7 +343,7 @@ const SellerAssignment = ({ pump, sellers, currentSeller, updateSellerAssignment
           ))}
         </select>
         {currentSeller && (
-          <div className="bg-indigo-100 text-indigo-800 px-4 py-2 rounded-lg font-bold">
+          <div className="bg-indigo-100 text-indigo-800 px-3 py-2 rounded-lg font-bold text-sm truncate max-w-full sm:w-auto w-full text-center">
             {currentSeller}
           </div>
         )}
@@ -372,8 +355,11 @@ const SellerAssignment = ({ pump, sellers, currentSeller, updateSellerAssignment
 // Reusable Shift Pump Details Component
 const ShiftPumpDetails = ({ shift, pumps, allShiftsData, calculatePumpTotals, calculateGallons, getFuelBadgeColor, formatGallons, formatMoney }) => {
   return (
-    <div className={`bg-gradient-to-br ${shift === 'AM' ? 'from-blue-500 to-indigo-600' : 'from-purple-500 to-indigo-600'} text-white rounded-xl p-5 shadow-xl`}>
-      <h3 className="text-lg font-bold mb-4">{shift === 'AM' ? '🌅' : '🌇'} {shift} Shift Pump Details</h3>
+    <div className={`bg-gradient-to-br ${shift === 'AM' ? 'from-blue-500 to-indigo-600' : 'from-purple-500 to-indigo-600'} text-white rounded-xl p-4 shadow-xl`}>
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-lg">{shift === 'AM' ? '🌅' : '🌇'}</span>
+        <h3 className="text-lg font-bold">{shift} Shift Pump Details</h3>
+      </div>
       <div className="space-y-4">
         {pumps.map((pump) => {
           const pumpData = allShiftsData[shift][pump];
@@ -382,36 +368,36 @@ const ShiftPumpDetails = ({ shift, pumps, allShiftsData, calculatePumpTotals, ca
           const pumpSeller = pumpData._seller || '';
 
           return (
-            <div key={`${shift}-${pump}`} className="bg-white bg-opacity-20 rounded-xl p-4">
-              <div className="flex justify-between items-center mb-3">
+            <div key={`${shift}-${pump}`} className="bg-white bg-opacity-15 rounded-lg p-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                 <div>
-                  <h4 className="text-lg font-bold">{pump}</h4>
+                  <h4 className="text-base font-bold">{pump}</h4>
                   {pumpSeller && (
-                    <div className="flex items-center gap-2 mt-1">
-                      <User size={14} />
-                      <span className="text-sm bg-white bg-opacity-20 px-2 py-1 rounded">Seller: {pumpSeller}</span>
+                    <div className="flex items-center gap-1 mt-1">
+                      <User size={12} />
+                      <span className="text-xs bg-white bg-opacity-20 px-2 py-1 rounded truncate">Seller: {pumpSeller}</span>
                     </div>
                   )}
                 </div>
-                <span className="text-sm bg-white bg-opacity-20 px-3 py-1 rounded-full">{shift}</span>
+                <span className="text-xs bg-white bg-opacity-20 px-2 py-1 rounded-full self-start sm:self-center">{shift}</span>
               </div>
               
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {pumpData && Object.entries(pumpData).filter(([key]) => key !== '_seller').map(([pistol, data]) => {
                   const gallons = calculateGallons(data.start, data.end);
                   if (gallons === 0 && !data.start && !data.end) return null;
                   
                   return (
                     <div key={pistol} className="flex justify-between items-center text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold">{pistol.replace('pistol', 'P')}</span>
-                        <span className={`px-2 py-1 rounded text-xs font-bold ${getFuelBadgeColor(data.fuelType)}`}>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-bold truncate">{pistol.replace('pistol', 'P')}</span>
+                        <span className={`px-2 py-1 rounded text-xs font-bold flex-shrink-0 ${getFuelBadgeColor(data.fuelType)}`}>
                           {data.fuelType.replace('Gasoline ', 'G')}
                         </span>
                       </div>
-                      <div className="text-right">
-                        <div className="font-bold">{formatGallons(gallons)} gal</div>
-                        <div className="text-xs opacity-90">
+                      <div className="text-right min-w-0">
+                        <div className="font-bold truncate">{formatGallons(gallons)} gal</div>
+                        <div className="text-xs opacity-90 truncate">
                           {data.start || '0'} → {data.end || '0'}
                         </div>
                       </div>
@@ -421,12 +407,12 @@ const ShiftPumpDetails = ({ shift, pumps, allShiftsData, calculatePumpTotals, ca
                 
                 {/* Pump Total */}
                 {pumpTotal && (pumpTotal.totalGallons !== 0 || Object.values(pumpData).some(data => data && data.start || data.end)) && (
-                  <div className="pt-3 mt-3 border-t border-white border-opacity-30">
+                  <div className="pt-2 mt-2 border-t border-white border-opacity-30">
                     <div className="flex justify-between items-center">
-                      <span className="font-bold">Pump {pump} Total:</span>
+                      <span className="font-bold text-sm">Pump {pump} Total:</span>
                       <div className="text-right">
-                        <div className="font-bold">{formatGallons(pumpTotal.totalGallons)} gal</div>
-                        <div className="text-lg font-bold">{formatMoney(pumpTotal.totalSales)} HTG</div>
+                        <div className="font-bold text-sm">{formatGallons(pumpTotal.totalGallons)} gal</div>
+                        <div className="font-bold">{formatMoney(pumpTotal.totalSales)} HTG</div>
                       </div>
                     </div>
                   </div>
@@ -449,7 +435,7 @@ const SellerFinancialSummary = ({ shift, sellers, sellerTotals, formatMoney }) =
     <div className="mb-6">
       <div className="flex items-center gap-2 mb-3">
         <div className={`w-3 h-3 rounded-full ${shift === 'AM' ? 'bg-blue-500' : 'bg-purple-500'}`}></div>
-        <h4 className="font-bold">{shift} Shift Sellers</h4>
+        <h4 className="font-bold text-base">{shift} Shift Sellers</h4>
       </div>
       <div className="space-y-3">
         {sellers.map(seller => {
@@ -457,40 +443,43 @@ const SellerFinancialSummary = ({ shift, sellers, sellerTotals, formatMoney }) =
           if (!sellerData || sellerData.totalSales === 0) return null;
           
           return (
-            <div key={`${shift}-${seller}`} className="bg-white bg-opacity-20 rounded-lg p-4">
-              <div className="flex justify-between items-center mb-2">
+            <div key={`${shift}-${seller}`} className="bg-white bg-opacity-15 rounded-lg p-3 space-y-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <User size={16} />
-                  <span className="font-bold">{seller}</span>
+                  <span className="font-bold truncate">{seller}</span>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+                <div className={`px-3 py-1.5 rounded-full text-sm font-bold text-center min-w-[120px] ${
                   sellerData.expectedCash > 0 
                     ? 'bg-green-500' 
                     : sellerData.expectedCash < 0 
                     ? 'bg-red-500' 
                     : 'bg-gray-500'
                 }`}>
-                  Expected: {formatMoney(sellerData.expectedCash)} HTG
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>
-                  <p className="opacity-90">Total Sales</p>
-                  <p className="font-bold">{formatMoney(sellerData.totalSales)} HTG</p>
-                </div>
-                <div>
-                  <p className="opacity-90">Total Deposits</p>
-                  <p className="font-bold">{formatMoney(sellerData.deposit)} HTG</p>
+                  Expected: {formatMoney(sellerData.expectedCash)}
                 </div>
               </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                <div className="bg-white bg-opacity-10 rounded-lg p-2">
+                  <p className="opacity-90 text-xs">Total Sales</p>
+                  <p className="font-bold text-base">{formatMoney(sellerData.totalSales)} HTG</p>
+                </div>
+                <div className="bg-white bg-opacity-10 rounded-lg p-2">
+                  <p className="opacity-90 text-xs">Total Deposits</p>
+                  <p className="font-bold text-base">{formatMoney(sellerData.deposit)} HTG</p>
+                </div>
+              </div>
+              
               {sellerData.deposits && sellerData.deposits.length > 0 && (
-                <div className="mt-2 pt-2 border-t border-white border-opacity-30">
+                <div className="pt-2 border-t border-white border-opacity-30">
                   <p className="text-xs opacity-90 mb-1">Individual Deposits:</p>
                   <div className="flex flex-wrap gap-1">
                     {sellerData.deposits.map((deposit, idx) => (
-                      <span key={idx} className="text-xs bg-white bg-opacity-20 px-2 py-1 rounded">
-                        {formatMoney(deposit)}
-                      </span>
+                      <div key={idx} className="flex items-center gap-1 bg-white bg-opacity-20 px-2 py-1 rounded text-xs">
+                        <span>{idx + 1}.</span>
+                        <span>{formatMoney(deposit)}</span>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -614,6 +603,19 @@ const GasStationSystem = () => {
   };
 
   const pumps = ['P1', 'P2', 'P3', 'P4', 'P5'];
+
+  // Helper function to count pump assignments for a seller
+  const getPumpAssignmentCount = (sellerName) => {
+    let count = 0;
+    ['AM', 'PM'].forEach(shiftKey => {
+      Object.values(allShiftsData[shiftKey] || {}).forEach(pumpData => {
+        if (pumpData._seller === sellerName) {
+          count++;
+        }
+      });
+    });
+    return count;
+  };
 
   // Format number with 3 decimal places for gallons
   const formatGallons = (num) => {
@@ -990,97 +992,97 @@ const GasStationSystem = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 pb-20">
       {/* Header */}
-<div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 sticky top-0 z-50 shadow-lg">
-  <div className="flex items-center gap-3 mb-3">
-    <Fuel size={28} />
-    <div className="flex-1 min-w-0">
-      <h1 className="text-lg font-bold truncate">Gas Station</h1>
-      <p className="text-xs text-blue-100 truncate">Sales & Seller Management</p>
-    </div>
-  </div>
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 sticky top-0 z-50 shadow-lg">
+        <div className="flex items-center gap-3 mb-3">
+          <Fuel size={28} />
+          <div className="flex-1 min-w-0">
+            <h1 className="text-lg font-bold truncate">Gas Station</h1>
+            <p className="text-xs text-blue-100 truncate">Sales & Seller Management</p>
+          </div>
+        </div>
 
-  <div className="grid grid-cols-2 gap-2 mb-3">
-    <input
-      type="date"
-      value={date}
-      onChange={(e) => setDate(e.target.value)}
-      className="px-3 py-2 text-sm bg-white text-gray-900 rounded-lg font-semibold w-full"
-    />
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="px-3 py-2 text-sm bg-white text-gray-900 rounded-lg font-semibold w-full"
+          />
 
-    <select
-      value={shift}
-      onChange={(e) => {
-        setShift(e.target.value);
-        setExpandedPump('P1');
-      }}
-      className="px-3 py-2 text-sm bg-white text-gray-900 rounded-lg font-semibold w-full"
-    >
-      <option value="AM">AM Shift</option>
-      <option value="PM">PM Shift</option>
-    </select>
-  </div>
+          <select
+            value={shift}
+            onChange={(e) => {
+              setShift(e.target.value);
+              setExpandedPump('P1');
+            }}
+            className="px-3 py-2 text-sm bg-white text-gray-900 rounded-lg font-semibold w-full"
+          >
+            <option value="AM">AM Shift</option>
+            <option value="PM">PM Shift</option>
+          </select>
+        </div>
 
-  <div className="grid grid-cols-5 gap-1">
-    <button
-      onClick={() => {
-        setShowReport(!showReport);
-        setShowSellers(false);
-        setShowDeposits(false);
-      }}
-      className="bg-white text-blue-600 px-2 py-2 rounded-lg font-bold text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 transition min-h-[60px]"
-    >
-      <FileText size={16} />
-      <span>{showReport ? 'Data' : 'Report'}</span>
-    </button>
-    <button
-      onClick={() => {
-        setShowSellers(!showSellers);
-        setShowReport(false);
-        setShowDeposits(false);
-      }}
-      className="bg-purple-500 text-white px-2 py-2 rounded-lg font-bold text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 transition min-h-[60px]"
-    >
-      <Users size={16} />
-      <span>Sellers</span>
-    </button>
-    <button
-      onClick={() => {
-        setShowDeposits(!showDeposits);
-        setShowReport(false);
-        setShowSellers(false);
-      }}
-      className="bg-green-500 text-white px-2 py-2 rounded-lg font-bold text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 transition min-h-[60px]"
-    >
-      <DollarSign size={16} />
-      <span>Deposits</span>
-    </button>
-    <button
-      onClick={resetCurrentShift}
-      className="bg-orange-500 text-white px-2 py-2 rounded-lg font-bold text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 transition min-h-[60px]"
-    >
-      <Trash2 size={16} />
-      <span>Reset {shift}</span>
-    </button>
-    <button
-      onClick={resetForm}
-      className="bg-red-500 text-white px-2 py-2 rounded-lg font-bold text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 transition min-h-[60px]"
-    >
-      <Trash2 size={16} />
-      <span>Reset Day</span>
-    </button>
-  </div>
-</div>
+        <div className="grid grid-cols-5 gap-1">
+          <button
+            onClick={() => {
+              setShowReport(!showReport);
+              setShowSellers(false);
+              setShowDeposits(false);
+            }}
+            className="bg-white text-blue-600 px-2 py-2 rounded-lg font-bold text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 transition min-h-[60px]"
+          >
+            <FileText size={16} />
+            <span>{showReport ? 'Data' : 'Report'}</span>
+          </button>
+          <button
+            onClick={() => {
+              setShowSellers(!showSellers);
+              setShowReport(false);
+              setShowDeposits(false);
+            }}
+            className="bg-purple-500 text-white px-2 py-2 rounded-lg font-bold text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 transition min-h-[60px]"
+          >
+            <Users size={16} />
+            <span>Sellers</span>
+          </button>
+          <button
+            onClick={() => {
+              setShowDeposits(!showDeposits);
+              setShowReport(false);
+              setShowSellers(false);
+            }}
+            className="bg-green-500 text-white px-2 py-2 rounded-lg font-bold text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 transition min-h-[60px]"
+          >
+            <DollarSign size={16} />
+            <span>Deposits</span>
+          </button>
+          <button
+            onClick={resetCurrentShift}
+            className="bg-orange-500 text-white px-2 py-2 rounded-lg font-bold text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 transition min-h-[60px]"
+          >
+            <Trash2 size={16} />
+            <span>Reset {shift}</span>
+          </button>
+          <button
+            onClick={resetForm}
+            className="bg-red-500 text-white px-2 py-2 rounded-lg font-bold text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 transition min-h-[60px]"
+          >
+            <Trash2 size={16} />
+            <span>Reset Day</span>
+          </button>
+        </div>
+      </div>
 
       <div className="p-4 max-w-2xl mx-auto">
         {showSellers ? (
           <SellerManagement
-  sellers={sellers}
-  newSellerName={newSellerName}
-  setNewSellerName={setNewSellerName}
-  addSeller={addSeller}
-  removeSeller={removeSeller}
-  getPumpAssignmentCount={getPumpAssignmentCount} // Add this
-/>
+            sellers={sellers}
+            newSellerName={newSellerName}
+            setNewSellerName={setNewSellerName}
+            addSeller={addSeller}
+            removeSeller={removeSeller}
+            getPumpAssignmentCount={getPumpAssignmentCount}
+          />
         ) : showDeposits ? (
           <SellerDeposits
             shift={shift}
