@@ -18,7 +18,7 @@ const getPumpAssignmentCount = (sellerName) => {
   return count;
 };
 
-const SellerManagement = ({ sellers, newSellerName, setNewSellerName, addSeller, removeSeller }) => {
+const SellerManagement = ({ sellers, newSellerName, setNewSellerName, addSeller, removeSeller, getPumpAssignmentCount }) => {
   return (
     <div className="space-y-4">
       {/* Manage Sellers */}
