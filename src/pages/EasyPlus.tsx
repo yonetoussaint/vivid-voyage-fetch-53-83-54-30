@@ -129,39 +129,34 @@ const GasStationSystem = () => {
   };
 
   // Calculate per-pump totals for a specific shift
-  const calculatePumpTotals = (shiftData = null) => {
-    const dataToCalculate = shiftData || getCurrentReadings();
-    const pumpTotals = {};
+  const calculatePumpTotals = (pumpData) => {
+    if (!pumpData) return null;
+    
+    let pumpGasolineGallons = 0;
+    let pumpDieselGallons = 0;
+    let pumpGasolineSales = 0;
+    let pumpDieselSales = 0;
 
-    Object.entries(dataToCalculate).forEach(([pump, pistols]) => {
-      let pumpGasolineGallons = 0;
-      let pumpDieselGallons = 0;
-      let pumpGasolineSales = 0;
-      let pumpDieselSales = 0;
+    Object.entries(pumpData).forEach(([pistol, data]) => {
+      const gallons = calculateGallons(data.start, data.end);
 
-      Object.entries(pistols).forEach(([pistol, data]) => {
-        const gallons = calculateGallons(data.start, data.end);
-
-        if (data.fuelType.includes('Gasoline')) {
-          pumpGasolineGallons += gallons;
-          pumpGasolineSales += gallons * prices.gasoline;
-        } else if (data.fuelType === 'Diesel') {
-          pumpDieselGallons += gallons;
-          pumpDieselSales += gallons * prices.diesel;
-        }
-      });
-
-      pumpTotals[pump] = {
-        gasolineGallons: pumpGasolineGallons.toFixed(2),
-        dieselGallons: pumpDieselGallons.toFixed(2),
-        gasolineSales: pumpGasolineSales.toFixed(2),
-        dieselSales: pumpDieselSales.toFixed(2),
-        totalGallons: (pumpGasolineGallons + pumpDieselGallons).toFixed(2),
-        totalSales: (pumpGasolineSales + pumpDieselSales).toFixed(2)
-      };
+      if (data.fuelType.includes('Gasoline')) {
+        pumpGasolineGallons += gallons;
+        pumpGasolineSales += gallons * prices.gasoline;
+      } else if (data.fuelType === 'Diesel') {
+        pumpDieselGallons += gallons;
+        pumpDieselSales += gallons * prices.diesel;
+      }
     });
 
-    return pumpTotals;
+    return {
+      gasolineGallons: pumpGasolineGallons.toFixed(2),
+      dieselGallons: pumpDieselGallons.toFixed(2),
+      gasolineSales: pumpGasolineSales.toFixed(2),
+      dieselSales: pumpDieselSales.toFixed(2),
+      totalGallons: (pumpGasolineGallons + pumpDieselGallons).toFixed(2),
+      totalSales: (pumpGasolineSales + pumpDieselSales).toFixed(2)
+    };
   };
 
   const getPumpDetails = () => {
@@ -214,9 +209,6 @@ const GasStationSystem = () => {
   const totals = calculateTotals();
   const pumpDetails = getPumpDetails();
   const currentReadings = getCurrentReadings();
-  const pumpTotals = calculatePumpTotals();
-  const amPumpTotals = calculatePumpTotals(allShiftsData.AM);
-  const pmPumpTotals = calculatePumpTotals(allShiftsData.PM);
 
   // Calculate daily totals (AM + PM)
   const dailyTotals = {
@@ -337,39 +329,6 @@ const GasStationSystem = () => {
               </div>
             </div>
 
-            {/* Pump Quick Summary */}
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              {Object.entries(pumpTotals).map(([pump, totals], index) => (
-                <div 
-                  key={pump} 
-                  className={`${getPumpColor(index + 1)} text-white rounded-xl p-4 shadow-lg`}
-                >
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-lg font-bold">{pump}</span>
-                    <span className="text-xs bg-white bg-opacity-20 px-2 py-1 rounded">
-                      {shift}
-                    </span>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>Gasoline:</span>
-                      <span className="font-bold">{totals.gasolineGallons} gal</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Diesel:</span>
-                      <span className="font-bold">{totals.dieselGallons} gal</span>
-                    </div>
-                    <div className="pt-2 mt-2 border-t border-white border-opacity-30">
-                      <div className="flex justify-between">
-                        <span className="text-xs">Total:</span>
-                        <span className="font-bold">{totals.totalSales} HTG</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
             {/* Pump Selector Tabs */}
             <div className="flex gap-2 overflow-x-auto pb-2">
               {['P1', 'P2', 'P3', 'P4', 'P5'].map((pump) => (
@@ -391,75 +350,109 @@ const GasStationSystem = () => {
             {Object.entries(currentReadings).map(([pump, pistols]) => {
               if (pump !== expandedPump) return null;
 
+              const pumpTotal = calculatePumpTotals(pistols);
+              const pumpNumber = parseInt(pump.replace('P', ''));
+
               return (
                 <div key={pump} className="space-y-3">
-                  <div className="bg-slate-800 text-white rounded-lg p-3 text-sm">
-                    {pump === 'P5' ? '1 Gasoline Pistol' : 'Phase 1: P1-P3 | Phase 2: P4-P6'}
+                  {/* Pump Header with Total */}
+                  <div className={`${getPumpColor(pumpNumber)} text-white rounded-xl p-5 shadow-lg`}>
+                    <div className="flex justify-between items-center mb-2">
+                      <div>
+                        <h3 className="text-xl font-bold">{pump}</h3>
+                        <p className="text-sm opacity-90">
+                          {pump === 'P5' ? '1 Gasoline Pistol' : 'Phase 1: P1-P3 | Phase 2: P4-P6'}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm opacity-90">{shift} Shift Total</p>
+                        <p className="text-2xl font-bold">{pumpTotal?.totalSales || '0.00'} HTG</p>
+                      </div>
+                    </div>
+                    
+                    {/* Pump Summary */}
+                    <div className="grid grid-cols-2 gap-3 mt-3">
+                      <div className="bg-white bg-opacity-20 rounded-lg p-3">
+                        <p className="text-xs opacity-90">Gasoline</p>
+                        <p className="text-lg font-bold">{pumpTotal?.gasolineGallons || '0.00'} gal</p>
+                        <p className="text-sm opacity-90">{pumpTotal?.gasolineSales || '0.00'} HTG</p>
+                      </div>
+                      {pump !== 'P5' && (
+                        <div className="bg-white bg-opacity-20 rounded-lg p-3">
+                          <p className="text-xs opacity-90">Diesel</p>
+                          <p className="text-lg font-bold">{pumpTotal?.dieselGallons || '0.00'} gal</p>
+                          <p className="text-sm opacity-90">{pumpTotal?.dieselSales || '0.00'} HTG</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  {Object.entries(pistols).map(([pistol, data]) => {
-                    const gallons = calculateGallons(data.start, data.end);
-                    const price = data.fuelType === 'Diesel' ? prices.diesel : prices.gasoline;
-                    const sales = gallons * price;
+                  {/* Pistol Inputs */}
+                  <div className="space-y-3">
+                    {Object.entries(pistols).map(([pistol, data]) => {
+                      const gallons = calculateGallons(data.start, data.end);
+                      const price = data.fuelType === 'Diesel' ? prices.diesel : prices.gasoline;
+                      const sales = gallons * price;
 
-                    return (
-                      <div key={pistol} className={`rounded-xl shadow-lg overflow-hidden border-2 ${getFuelColor(data.fuelType)}`}>
-                        <div className={`${getFuelBadgeColor(data.fuelType)} text-white px-4 py-3 flex justify-between items-center`}>
-                          <div>
-                            <p className="text-lg font-bold">{pistol.replace('pistol', 'Pistol ')}</p>
-                            <p className="text-sm opacity-90">{data.fuelType}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-xs opacity-90">Price</p>
-                            <p className="text-lg font-bold">{price} HTG</p>
-                          </div>
-                        </div>
-
-                        <div className="p-4 space-y-3">
-                          <div>
-                            <label className="text-xs font-bold text-gray-700 block mb-1">
-                              START METER
-                            </label>
-                            <input
-                              type="number"
-                              step="0.01"
-                              value={data.start}
-                              onChange={(e) => updateReading(pump, pistol, 'start', e.target.value)}
-                              className="w-full px-4 py-3 text-lg font-semibold border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              placeholder="0.00"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="text-xs font-bold text-gray-700 block mb-1">
-                              END METER
-                            </label>
-                            <input
-                              type="number"
-                              step="0.01"
-                              value={data.end}
-                              onChange={(e) => updateReading(pump, pistol, 'end', e.target.value)}
-                              className="w-full px-4 py-3 text-lg font-semibold border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              placeholder="0.00"
-                            />
-                          </div>
-
-                          {(data.start || data.end) && (
-                            <div className="bg-white rounded-lg p-3 space-y-1 border-2 border-gray-300">
-                              <div className="flex justify-between items-center">
-                                <span className="text-sm font-semibold text-gray-600">Gallons</span>
-                                <span className="text-xl font-bold text-gray-900">{gallons.toFixed(2)}</span>
-                              </div>
-                              <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                                <span className="text-sm font-semibold text-gray-600">Total Sales</span>
-                                <span className="text-xl font-bold text-green-600">{sales.toFixed(2)} HTG</span>
-                              </div>
+                      return (
+                        <div key={pistol} className={`rounded-xl shadow-lg overflow-hidden border-2 ${getFuelColor(data.fuelType)}`}>
+                          <div className={`${getFuelBadgeColor(data.fuelType)} text-white px-4 py-3 flex justify-between items-center`}>
+                            <div>
+                              <p className="text-lg font-bold">{pistol.replace('pistol', 'Pistol ')}</p>
+                              <p className="text-sm opacity-90">{data.fuelType}</p>
                             </div>
-                          )}
+                            <div className="text-right">
+                              <p className="text-xs opacity-90">Price</p>
+                              <p className="text-lg font-bold">{price} HTG</p>
+                            </div>
+                          </div>
+
+                          <div className="p-4 space-y-3">
+                            <div>
+                              <label className="text-xs font-bold text-gray-700 block mb-1">
+                                START METER
+                              </label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={data.start}
+                                onChange={(e) => updateReading(pump, pistol, 'start', e.target.value)}
+                                className="w-full px-4 py-3 text-lg font-semibold border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="0.00"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-xs font-bold text-gray-700 block mb-1">
+                                END METER
+                              </label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={data.end}
+                                onChange={(e) => updateReading(pump, pistol, 'end', e.target.value)}
+                                className="w-full px-4 py-3 text-lg font-semibold border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="0.00"
+                              />
+                            </div>
+
+                            {(data.start || data.end) && (
+                              <div className="bg-white rounded-lg p-3 space-y-1 border-2 border-gray-300">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-sm font-semibold text-gray-600">Gallons</span>
+                                  <span className="text-xl font-bold text-gray-900">{gallons.toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                                  <span className="text-sm font-semibold text-gray-600">Total Sales</span>
+                                  <span className="text-xl font-bold text-green-600">{sales.toFixed(2)} HTG</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               );
             })}
@@ -484,88 +477,119 @@ const GasStationSystem = () => {
               </div>
             </div>
 
-            {/* Pump Totals by Shift */}
-            <div className="bg-white rounded-xl shadow-xl overflow-hidden">
-              <div className="bg-slate-800 text-white p-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-bold">Pump Totals by Shift</h3>
-                </div>
-              </div>
-              
-              <div className="p-4">
-                {/* AM Shift Pump Totals */}
-                <div className="mb-6">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                    <h4 className="font-bold text-gray-800">AM Shift Pump Totals</h4>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    {Object.entries(amPumpTotals).map(([pump, totals], index) => (
-                      <div 
-                        key={`am-${pump}`} 
-                        className={`${getPumpColor(index + 1)} text-white rounded-lg p-4`}
-                      >
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="font-bold">{pump}</span>
-                          <span className="text-xs bg-white bg-opacity-20 px-2 py-1 rounded">AM</span>
-                        </div>
-                        <div className="space-y-1 text-sm">
-                          <div className="flex justify-between">
-                            <span>Gasoline:</span>
-                            <span>{totals.gasolineGallons} gal</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Diesel:</span>
-                            <span>{totals.dieselGallons} gal</span>
-                          </div>
-                          <div className="pt-2 mt-2 border-t border-white border-opacity-30">
-                            <div className="flex justify-between font-bold">
-                              <span>Total:</span>
-                              <span>{totals.totalSales} HTG</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+            {/* AM Shift Pump Details */}
+            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-xl p-5 shadow-xl">
+              <h3 className="text-lg font-bold mb-4">🌅 AM Shift Pump Details</h3>
+              <div className="space-y-4">
+                {['P1', 'P2', 'P3', 'P4', 'P5'].map((pump) => {
+                  const pumpData = allShiftsData.AM[pump];
+                  const pumpTotal = calculatePumpTotals(pumpData);
+                  const pumpNumber = parseInt(pump.replace('P', ''));
 
-                {/* PM Shift Pump Totals */}
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-                    <h4 className="font-bold text-gray-800">PM Shift Pump Totals</h4>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    {Object.entries(pmPumpTotals).map(([pump, totals], index) => (
-                      <div 
-                        key={`pm-${pump}`} 
-                        className={`${getPumpColor(index + 1)} text-white rounded-lg p-4`}
-                      >
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="font-bold">{pump}</span>
-                          <span className="text-xs bg-white bg-opacity-20 px-2 py-1 rounded">PM</span>
-                        </div>
-                        <div className="space-y-1 text-sm">
-                          <div className="flex justify-between">
-                            <span>Gasoline:</span>
-                            <span>{totals.gasolineGallons} gal</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Diesel:</span>
-                            <span>{totals.dieselGallons} gal</span>
-                          </div>
-                          <div className="pt-2 mt-2 border-t border-white border-opacity-30">
-                            <div className="flex justify-between font-bold">
-                              <span>Total:</span>
-                              <span>{totals.totalSales} HTG</span>
+                  return (
+                    <div key={`am-${pump}`} className="bg-white bg-opacity-20 rounded-xl p-4">
+                      <div className="flex justify-between items-center mb-3">
+                        <h4 className="text-lg font-bold">{pump}</h4>
+                        <span className="text-sm bg-white bg-opacity-20 px-3 py-1 rounded-full">AM</span>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        {pumpData && Object.entries(pumpData).map(([pistol, data]) => {
+                          const gallons = calculateGallons(data.start, data.end);
+                          if (gallons === 0 && !data.start && !data.end) return null;
+                          
+                          return (
+                            <div key={pistol} className="flex justify-between items-center text-sm">
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold">{pistol.replace('pistol', 'P')}</span>
+                                <span className={`px-2 py-1 rounded text-xs font-bold ${getFuelBadgeColor(data.fuelType)}`}>
+                                  {data.fuelType.replace('Gasoline ', 'G')}
+                                </span>
+                              </div>
+                              <div className="text-right">
+                                <div className="font-bold">{gallons.toFixed(2)} gal</div>
+                                <div className="text-xs opacity-90">
+                                  {data.start || '0'} → {data.end || '0'}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                        
+                        {/* Pump Total */}
+                        {pumpTotal && parseFloat(pumpTotal.totalGallons) > 0 && (
+                          <div className="pt-3 mt-3 border-t border-white border-opacity-30">
+                            <div className="flex justify-between items-center">
+                              <span className="font-bold">Pump {pump} Total:</span>
+                              <div className="text-right">
+                                <div className="font-bold">{pumpTotal.totalGallons} gal</div>
+                                <div className="text-lg font-bold">{pumpTotal.totalSales} HTG</div>
+                              </div>
                             </div>
                           </div>
-                        </div>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* PM Shift Pump Details */}
+            <div className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-xl p-5 shadow-xl">
+              <h3 className="text-lg font-bold mb-4">🌇 PM Shift Pump Details</h3>
+              <div className="space-y-4">
+                {['P1', 'P2', 'P3', 'P4', 'P5'].map((pump) => {
+                  const pumpData = allShiftsData.PM[pump];
+                  const pumpTotal = calculatePumpTotals(pumpData);
+                  const pumpNumber = parseInt(pump.replace('P', ''));
+
+                  return (
+                    <div key={`pm-${pump}`} className="bg-white bg-opacity-20 rounded-xl p-4">
+                      <div className="flex justify-between items-center mb-3">
+                        <h4 className="text-lg font-bold">{pump}</h4>
+                        <span className="text-sm bg-white bg-opacity-20 px-3 py-1 rounded-full">PM</span>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        {pumpData && Object.entries(pumpData).map(([pistol, data]) => {
+                          const gallons = calculateGallons(data.start, data.end);
+                          if (gallons === 0 && !data.start && !data.end) return null;
+                          
+                          return (
+                            <div key={pistol} className="flex justify-between items-center text-sm">
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold">{pistol.replace('pistol', 'P')}</span>
+                                <span className={`px-2 py-1 rounded text-xs font-bold ${getFuelBadgeColor(data.fuelType)}`}>
+                                  {data.fuelType.replace('Gasoline ', 'G')}
+                                </span>
+                              </div>
+                              <div className="text-right">
+                                <div className="font-bold">{gallons.toFixed(2)} gal</div>
+                                <div className="text-xs opacity-90">
+                                  {data.start || '0'} → {data.end || '0'}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                        
+                        {/* Pump Total */}
+                        {pumpTotal && parseFloat(pumpTotal.totalGallons) > 0 && (
+                          <div className="pt-3 mt-3 border-t border-white border-opacity-30">
+                            <div className="flex justify-between items-center">
+                              <span className="font-bold">Pump {pump} Total:</span>
+                              <div className="text-right">
+                                <div className="font-bold">{pumpTotal.totalGallons} gal</div>
+                                <div className="text-lg font-bold">{pumpTotal.totalSales} HTG</div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
