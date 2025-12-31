@@ -51,6 +51,13 @@ export function AppRoutes() {
         />
 
         <Route
+          path="easy"
+          element={
+            <GasStationSystem />
+          }
+        />
+
+        <Route
           path="wallet"
           element={
             <Wallet />
