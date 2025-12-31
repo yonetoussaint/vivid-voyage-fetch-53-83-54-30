@@ -9,6 +9,7 @@ import MallPage from "@/pages/MallPage";
 import Wallet from "@/pages/Wallet";
 import Messages from "@/pages/Messages";
 import { ChatPage } from "@/pages/Messages";
+import { GasStationSystem } from "@/pages/EasyPlus";
 import ProfilePage from "@/pages/ProfilePage";
 import ProductDetail from "@/pages/ProductDetail";
 import ProductCommentsPage from "@/pages/ProductCommentsPage";
