@@ -956,86 +956,86 @@ const GasStationSystem = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 pb-20">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 sticky top-0 z-50 shadow-lg">
-        <div className="flex items-center gap-3 mb-3">
-          <Fuel size={32} />
-          <div>
-            <h1 className="text-xl font-bold">Gas Station</h1>
-            <p className="text-sm text-blue-100">Sales & Seller Management</p>
-          </div>
-        </div>
+<div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 sticky top-0 z-50 shadow-lg">
+  <div className="flex items-center gap-3 mb-3">
+    <Fuel size={28} />
+    <div className="flex-1 min-w-0">
+      <h1 className="text-lg font-bold truncate">Gas Station</h1>
+      <p className="text-xs text-blue-100 truncate">Sales & Seller Management</p>
+    </div>
+  </div>
 
-        <div className="grid grid-cols-2 gap-2 mb-3">
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="px-3 py-2 text-sm bg-white text-gray-900 rounded-lg font-semibold"
-          />
+  <div className="grid grid-cols-2 gap-2 mb-3">
+    <input
+      type="date"
+      value={date}
+      onChange={(e) => setDate(e.target.value)}
+      className="px-3 py-2 text-sm bg-white text-gray-900 rounded-lg font-semibold w-full"
+    />
 
-          <select
-            value={shift}
-            onChange={(e) => {
-              setShift(e.target.value);
-              setExpandedPump('P1');
-            }}
-            className="px-3 py-2 text-sm bg-white text-gray-900 rounded-lg font-semibold"
-          >
-            <option value="AM">AM Shift</option>
-            <option value="PM">PM Shift</option>
-          </select>
-        </div>
+    <select
+      value={shift}
+      onChange={(e) => {
+        setShift(e.target.value);
+        setExpandedPump('P1');
+      }}
+      className="px-3 py-2 text-sm bg-white text-gray-900 rounded-lg font-semibold w-full"
+    >
+      <option value="AM">AM Shift</option>
+      <option value="PM">PM Shift</option>
+    </select>
+  </div>
 
-        <div className="grid grid-cols-5 gap-2">
-          <button
-            onClick={() => {
-              setShowReport(!showReport);
-              setShowSellers(false);
-              setShowDeposits(false);
-            }}
-            className="bg-white text-blue-600 px-3 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-1 active:scale-95 transition"
-          >
-            <FileText size={16} />
-            {showReport ? 'Data' : 'Report'}
-          </button>
-          <button
-            onClick={() => {
-              setShowSellers(!showSellers);
-              setShowReport(false);
-              setShowDeposits(false);
-            }}
-            className="bg-purple-500 text-white px-3 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-1 active:scale-95 transition"
-          >
-            <Users size={16} />
-            Sellers
-          </button>
-          <button
-            onClick={() => {
-              setShowDeposits(!showDeposits);
-              setShowReport(false);
-              setShowSellers(false);
-            }}
-            className="bg-green-500 text-white px-3 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-1 active:scale-95 transition"
-          >
-            <DollarSign size={16} />
-            Deposits
-          </button>
-          <button
-            onClick={resetCurrentShift}
-            className="bg-orange-500 text-white px-3 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-1 active:scale-95 transition"
-          >
-            <Trash2 size={16} />
-            {shift}
-          </button>
-          <button
-            onClick={resetForm}
-            className="bg-red-500 text-white px-3 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-1 active:scale-95 transition"
-          >
-            <Trash2 size={16} />
-            Day
-          </button>
-        </div>
-      </div>
+  <div className="grid grid-cols-5 gap-1">
+    <button
+      onClick={() => {
+        setShowReport(!showReport);
+        setShowSellers(false);
+        setShowDeposits(false);
+      }}
+      className="bg-white text-blue-600 px-2 py-2 rounded-lg font-bold text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 transition min-h-[60px]"
+    >
+      <FileText size={16} />
+      <span>{showReport ? 'Data' : 'Report'}</span>
+    </button>
+    <button
+      onClick={() => {
+        setShowSellers(!showSellers);
+        setShowReport(false);
+        setShowDeposits(false);
+      }}
+      className="bg-purple-500 text-white px-2 py-2 rounded-lg font-bold text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 transition min-h-[60px]"
+    >
+      <Users size={16} />
+      <span>Sellers</span>
+    </button>
+    <button
+      onClick={() => {
+        setShowDeposits(!showDeposits);
+        setShowReport(false);
+        setShowSellers(false);
+      }}
+      className="bg-green-500 text-white px-2 py-2 rounded-lg font-bold text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 transition min-h-[60px]"
+    >
+      <DollarSign size={16} />
+      <span>Deposits</span>
+    </button>
+    <button
+      onClick={resetCurrentShift}
+      className="bg-orange-500 text-white px-2 py-2 rounded-lg font-bold text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 transition min-h-[60px]"
+    >
+      <Trash2 size={16} />
+      <span>Reset {shift}</span>
+    </button>
+    <button
+      onClick={resetForm}
+      className="bg-red-500 text-white px-2 py-2 rounded-lg font-bold text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 transition min-h-[60px]"
+    >
+      <Trash2 size={16} />
+      <span>Reset Day</span>
+    </button>
+  </div>
+</div>
 
       <div className="p-4 max-w-2xl mx-auto">
         {showSellers ? (
