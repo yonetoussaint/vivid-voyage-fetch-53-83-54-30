@@ -173,89 +173,133 @@ const PistolInput = ({ pistol, data, pump, updateReading, getFuelColor, getFuelB
 };
 
 // Reusable Seller Deposits Component
+// Reusable Seller Deposits Component
 const SellerDeposits = ({ shift, sellers, sellerTotals, allDeposits, updateDeposit, addDeposit, removeDeposit, formatMoney }) => {
   const currentDeposits = allDeposits[shift] || {};
 
   return (
-    <div className="space-y-3">
-      <div className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl p-5 shadow-xl">
-        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-          <DollarSign size={20} />
-          Seller Deposits - {shift} Shift
-        </h3>
+    <div className="space-y-4">
+      <div className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl p-4 shadow-xl">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <DollarSign size={20} />
+            <h3 className="text-lg font-bold">Deposits - {shift} Shift</h3>
+          </div>
+        </div>
+        
         <div className="space-y-4">
-          {sellers.map(seller => {
-            const deposits = currentDeposits[seller] || [];
-            const totalDeposit = deposits.reduce((sum, deposit) => sum + (parseFloat(deposit) || 0), 0);
-            const sellerData = sellerTotals[seller];
-            const expectedCash = sellerData ? (sellerData.totalSales - totalDeposit) : 0;
+          {sellers.length === 0 ? (
+            <div className="text-center py-6 text-white text-opacity-70">
+              No sellers added yet. Add sellers first.
+            </div>
+          ) : (
+            sellers.map(seller => {
+              const deposits = currentDeposits[seller] || [];
+              const totalDeposit = deposits.reduce((sum, deposit) => sum + (parseFloat(deposit) || 0), 0);
+              const sellerData = sellerTotals[seller];
+              const expectedCash = sellerData ? (sellerData.totalSales - totalDeposit) : 0;
 
-            return (
-              <div key={seller} className="bg-white bg-opacity-20 rounded-xl p-4 space-y-3">
-                <div className="flex justify-between items-center mb-2">
-                  <div className="flex items-center gap-2">
-                    <User size={20} />
-                    <span className="font-bold">{seller}</span>
-                  </div>
-                  <span className={`px-3 py-1 rounded-full text-sm font-bold ${
-                    expectedCash > 0 
-                      ? 'bg-green-500' 
-                      : expectedCash < 0 
-                      ? 'bg-red-500' 
-                      : 'bg-gray-500'
-                  }`}>
-                    Expected: {formatMoney(expectedCash)} HTG
-                  </span>
-                </div>
-
-                {/* Deposit Inputs */}
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm opacity-90">Deposits</span>
-                    <button
-                      onClick={() => addDeposit(seller)}
-                      className="bg-white text-indigo-600 px-3 py-1 rounded-lg font-bold text-sm flex items-center gap-1"
-                    >
-                      <Plus size={16} />
-                      Add Deposit
-                    </button>
+              return (
+                <div key={seller} className="bg-white bg-opacity-15 rounded-lg p-3 space-y-3">
+                  {/* Seller Header */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+                        <User size={16} />
+                      </div>
+                      <span className="font-bold">{seller}</span>
+                    </div>
+                    <div className={`px-3 py-1 rounded-full text-sm font-bold text-center ${
+                      expectedCash > 0 
+                        ? 'bg-green-500' 
+                        : expectedCash < 0 
+                        ? 'bg-red-500' 
+                        : 'bg-gray-500'
+                    }`}>
+                      Expected: {formatMoney(expectedCash)} HTG
+                    </div>
                   </div>
 
-                  {deposits.map((deposit, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={deposit}
-                        onChange={(e) => updateDeposit(seller, index, e.target.value)}
-                        placeholder="0.00"
-                        className="flex-1 px-3 py-2 rounded text-gray-900 font-semibold text-right"
-                      />
-                      <span className="font-bold text-white">HTG</span>
+                  {/* Sales Info */}
+                  <div className="bg-white bg-opacity-10 rounded-lg p-3 space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm opacity-90">Total Sales</span>
+                      <span className="font-bold">{formatMoney(sellerData?.totalSales || 0)} HTG</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm opacity-90">Total Deposits</span>
+                      <span className="font-bold">{formatMoney(totalDeposit)} HTG</span>
+                    </div>
+                  </div>
+
+                  {/* Deposit Inputs */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-semibold">Deposit Entries</span>
                       <button
-                        onClick={() => removeDeposit(seller, index)}
-                        className="bg-red-500 text-white px-3 py-2 rounded-lg font-bold text-sm"
+                        onClick={() => addDeposit(seller)}
+                        className="bg-white text-indigo-600 px-3 py-1.5 rounded-lg font-bold text-sm flex items-center gap-1 active:scale-95 transition"
                       >
-                        <Minus size={16} />
+                        <Plus size={14} />
+                        Add
                       </button>
                     </div>
-                  ))}
-                </div>
 
-                {/* Totals */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm pt-3 border-t border-white border-opacity-30">
-                  <div>
-                    <p className="opacity-90">Total Sales</p>
-                    <p className="font-bold">{formatMoney(sellerData?.totalSales || 0)} HTG</p>
+                    {deposits.length === 0 ? (
+                      <div className="text-center py-3 text-white text-opacity-70 text-sm">
+                        No deposits added yet
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {deposits.map((deposit, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <div className="flex-1 flex items-center bg-white bg-opacity-20 rounded-lg overflow-hidden">
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={deposit}
+                                onChange={(e) => updateDeposit(seller, index, e.target.value)}
+                                placeholder="0.00"
+                                className="flex-1 px-3 py-2 bg-transparent text-white text-right font-semibold placeholder-white placeholder-opacity-50"
+                              />
+                              <span className="px-2 py-2 font-bold text-sm">HTG</span>
+                            </div>
+                            <button
+                              onClick={() => removeDeposit(seller, index)}
+                              className="bg-red-500 text-white p-2 rounded-lg font-bold active:scale-95 transition"
+                              aria-label={`Remove deposit ${index + 1}`}
+                            >
+                              <Minus size={16} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <div>
-                    <p className="opacity-90">Total Deposits</p>
-                    <p className="font-bold">{formatMoney(totalDeposit)} HTG</p>
-                  </div>
+
+                  {/* Deposit Summary */}
+                  {deposits.length > 0 && (
+                    <div className="pt-3 border-t border-white border-opacity-30">
+                      <div className="flex flex-col gap-1">
+                        <div className="text-xs opacity-90">Individual Deposits:</div>
+                        <div className="flex flex-wrap gap-1">
+                          {deposits.map((deposit, idx) => (
+                            <div 
+                              key={idx} 
+                              className="bg-white bg-opacity-20 px-2 py-1 rounded text-xs flex items-center gap-1"
+                            >
+                              <span>{idx + 1}.</span>
+                              <span>{formatMoney(deposit)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       </div>
     </div>
