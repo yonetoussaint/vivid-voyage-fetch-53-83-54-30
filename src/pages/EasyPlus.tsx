@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calculator, FileText, Trash2, Fuel, User, DollarSign, Users } from 'lucide-react';
+import { Calculator, FileText, Trash2, Fuel, User, DollarSign, Users, Plus, Minus } from 'lucide-react';
 
 // Reusable Seller Management Component
 const SellerManagement = ({ sellers, newSellerName, setNewSellerName, addSeller, removeSeller }) => {
@@ -70,7 +70,7 @@ const SellerManagement = ({ sellers, newSellerName, setNewSellerName, addSeller,
 };
 
 // Reusable Pump Header Component
-const PumpHeader = ({ pump, shift, pumpTotal, pumpNumber, getPumpColor, formatMoney, formatDisplay, prices, children }) => {
+const PumpHeader = ({ pump, shift, pumpTotal, pumpNumber, getPumpColor, formatMoney, formatGallons, prices, children }) => {
   return (
     <div className={`${getPumpColor(pumpNumber)} text-white rounded-xl p-5 shadow-lg`}>
       <div className="flex justify-between items-center mb-2">
@@ -90,13 +90,13 @@ const PumpHeader = ({ pump, shift, pumpTotal, pumpNumber, getPumpColor, formatMo
       <div className="grid grid-cols-2 gap-3 mt-3">
         <div className="bg-white bg-opacity-20 rounded-lg p-3">
           <p className="text-xs opacity-90">Gasoline</p>
-          <p className="text-lg font-bold">{formatDisplay(pumpTotal?.gasolineGallons || 0)} gal</p>
+          <p className="text-lg font-bold">{formatGallons(pumpTotal?.gasolineGallons || 0)} gal</p>
           <p className="text-sm opacity-90">{formatMoney(pumpTotal?.gasolineSales || 0)} HTG</p>
         </div>
         {pump !== 'P5' && (
           <div className="bg-white bg-opacity-20 rounded-lg p-3">
             <p className="text-xs opacity-90">Diesel</p>
-            <p className="text-lg font-bold">{formatDisplay(pumpTotal?.dieselGallons || 0)} gal</p>
+            <p className="text-lg font-bold">{formatGallons(pumpTotal?.dieselGallons || 0)} gal</p>
             <p className="text-sm opacity-90">{formatMoney(pumpTotal?.dieselSales || 0)} HTG</p>
           </div>
         )}
@@ -108,7 +108,7 @@ const PumpHeader = ({ pump, shift, pumpTotal, pumpNumber, getPumpColor, formatMo
 };
 
 // Reusable Pistol Input Component
-const PistolInput = ({ pistol, data, pump, updateReading, updateSeller, sellers, getFuelColor, getFuelBadgeColor, prices, calculateGallons, formatDisplay, formatMoney }) => {
+const PistolInput = ({ pistol, data, pump, updateReading, getFuelColor, getFuelBadgeColor, prices, calculateGallons, formatGallons, formatMoney }) => {
   const gallons = calculateGallons(data.start, data.end);
   const price = data.fuelType === 'Diesel' ? prices.diesel : prices.gasoline;
   const sales = gallons * price;
@@ -159,7 +159,7 @@ const PistolInput = ({ pistol, data, pump, updateReading, updateSeller, sellers,
           <div className="bg-white rounded-lg p-3 space-y-1 border-2 border-gray-300">
             <div className="flex justify-between items-center">
               <span className="text-sm font-semibold text-gray-600">Gallons</span>
-              <span className="text-xl font-bold text-gray-900">{formatDisplay(gallons)}</span>
+              <span className="text-xl font-bold text-gray-900">{formatGallons(gallons)}</span>
             </div>
             <div className="flex justify-between items-center pt-2 border-t border-gray-200">
               <span className="text-sm font-semibold text-gray-600">Total Sales</span>
@@ -173,53 +173,90 @@ const PistolInput = ({ pistol, data, pump, updateReading, updateSeller, sellers,
 };
 
 // Reusable Seller Deposits Component
-const SellerDeposits = ({ shift, sellers, sellerTotals, currentDeposits, updateDeposit, formatMoney }) => {
+const SellerDeposits = ({ shift, sellers, sellerTotals, allDeposits, updateDeposit, addDeposit, removeDeposit, formatMoney }) => {
+  const currentDeposits = allDeposits[shift] || {};
+
   return (
-    <div className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl p-5 shadow-xl">
-      <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-        <DollarSign size={20} />
-        Seller Deposits - {shift} Shift
-      </h3>
-      <div className="space-y-3">
-        {sellers.map(seller => (
-          <div key={seller} className="bg-white bg-opacity-20 rounded-lg p-4">
-            <div className="flex justify-between items-center mb-2">
-              <div className="flex items-center gap-2">
-                <User size={20} />
-                <span className="font-bold">{seller}</span>
-              </div>
-              <span className={`px-3 py-1 rounded-full text-sm font-bold ${
-                sellerTotals[seller]?.expectedCash > 0 
-                  ? 'bg-green-500' 
-                  : sellerTotals[seller]?.expectedCash < 0 
-                  ? 'bg-red-500' 
-                  : 'bg-gray-500'
-              }`}>
-                Expected: {formatMoney(sellerTotals[seller]?.expectedCash || 0)} HTG
-              </span>
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div>
-                <p className="opacity-90">Total Sales</p>
-                <p className="font-bold">{formatMoney(sellerTotals[seller]?.totalSales || 0)} HTG</p>
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <p className="opacity-90">Deposit</p>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={currentDeposits[seller] || ''}
-                    onChange={(e) => updateDeposit(seller, e.target.value)}
-                    placeholder="0.00"
-                    className="flex-1 px-3 py-1 rounded text-gray-900 font-semibold text-right"
-                  />
-                  <span className="font-bold">HTG</span>
+    <div className="space-y-3">
+      <div className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl p-5 shadow-xl">
+        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+          <DollarSign size={20} />
+          Seller Deposits - {shift} Shift
+        </h3>
+        <div className="space-y-4">
+          {sellers.map(seller => {
+            const deposits = currentDeposits[seller] || [];
+            const totalDeposit = deposits.reduce((sum, deposit) => sum + (parseFloat(deposit) || 0), 0);
+            const sellerData = sellerTotals[seller];
+            const expectedCash = sellerData ? (sellerData.totalSales - totalDeposit) : 0;
+
+            return (
+              <div key={seller} className="bg-white bg-opacity-20 rounded-xl p-4 space-y-3">
+                <div className="flex justify-between items-center mb-2">
+                  <div className="flex items-center gap-2">
+                    <User size={20} />
+                    <span className="font-bold">{seller}</span>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+                    expectedCash > 0 
+                      ? 'bg-green-500' 
+                      : expectedCash < 0 
+                      ? 'bg-red-500' 
+                      : 'bg-gray-500'
+                  }`}>
+                    Expected: {formatMoney(expectedCash)} HTG
+                  </span>
+                </div>
+
+                {/* Deposit Inputs */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm opacity-90">Deposits</span>
+                    <button
+                      onClick={() => addDeposit(seller)}
+                      className="bg-white text-indigo-600 px-3 py-1 rounded-lg font-bold text-sm flex items-center gap-1"
+                    >
+                      <Plus size={16} />
+                      Add Deposit
+                    </button>
+                  </div>
+
+                  {deposits.map((deposit, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={deposit}
+                        onChange={(e) => updateDeposit(seller, index, e.target.value)}
+                        placeholder="0.00"
+                        className="flex-1 px-3 py-2 rounded text-gray-900 font-semibold text-right"
+                      />
+                      <span className="font-bold text-white">HTG</span>
+                      <button
+                        onClick={() => removeDeposit(seller, index)}
+                        className="bg-red-500 text-white px-3 py-2 rounded-lg font-bold text-sm"
+                      >
+                        <Minus size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Totals */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm pt-3 border-t border-white border-opacity-30">
+                  <div>
+                    <p className="opacity-90">Total Sales</p>
+                    <p className="font-bold">{formatMoney(sellerData?.totalSales || 0)} HTG</p>
+                  </div>
+                  <div>
+                    <p className="opacity-90">Total Deposits</p>
+                    <p className="font-bold">{formatMoney(totalDeposit)} HTG</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        ))}
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -255,7 +292,7 @@ const SellerAssignment = ({ pump, sellers, currentSeller, updateSellerAssignment
 };
 
 // Reusable Shift Pump Details Component
-const ShiftPumpDetails = ({ shift, pumps, allShiftsData, calculatePumpTotals, calculateGallons, getFuelBadgeColor, formatDisplay, formatMoney }) => {
+const ShiftPumpDetails = ({ shift, pumps, allShiftsData, calculatePumpTotals, calculateGallons, getFuelBadgeColor, formatGallons, formatMoney }) => {
   return (
     <div className={`bg-gradient-to-br ${shift === 'AM' ? 'from-blue-500 to-indigo-600' : 'from-purple-500 to-indigo-600'} text-white rounded-xl p-5 shadow-xl`}>
       <h3 className="text-lg font-bold mb-4">{shift === 'AM' ? '🌅' : '🌇'} {shift} Shift Pump Details</h3>
@@ -295,7 +332,7 @@ const ShiftPumpDetails = ({ shift, pumps, allShiftsData, calculatePumpTotals, ca
                         </span>
                       </div>
                       <div className="text-right">
-                        <div className="font-bold">{formatDisplay(gallons)} gal</div>
+                        <div className="font-bold">{formatGallons(gallons)} gal</div>
                         <div className="text-xs opacity-90">
                           {data.start || '0'} → {data.end || '0'}
                         </div>
@@ -310,7 +347,7 @@ const ShiftPumpDetails = ({ shift, pumps, allShiftsData, calculatePumpTotals, ca
                     <div className="flex justify-between items-center">
                       <span className="font-bold">Pump {pump} Total:</span>
                       <div className="text-right">
-                        <div className="font-bold">{formatDisplay(pumpTotal.totalGallons)} gal</div>
+                        <div className="font-bold">{formatGallons(pumpTotal.totalGallons)} gal</div>
                         <div className="text-lg font-bold">{formatMoney(pumpTotal.totalSales)} HTG</div>
                       </div>
                     </div>
@@ -364,10 +401,22 @@ const SellerFinancialSummary = ({ shift, sellers, sellerTotals, formatMoney }) =
                   <p className="font-bold">{formatMoney(sellerData.totalSales)} HTG</p>
                 </div>
                 <div>
-                  <p className="opacity-90">Deposit</p>
+                  <p className="opacity-90">Total Deposits</p>
                   <p className="font-bold">{formatMoney(sellerData.deposit)} HTG</p>
                 </div>
               </div>
+              {sellerData.deposits && sellerData.deposits.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-white border-opacity-30">
+                  <p className="text-xs opacity-90 mb-1">Individual Deposits:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {sellerData.deposits.map((deposit, idx) => (
+                      <span key={idx} className="text-xs bg-white bg-opacity-20 px-2 py-1 rounded">
+                        {formatMoney(deposit)}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}
@@ -380,6 +429,10 @@ const SellerFinancialSummary = ({ shift, sellers, sellerTotals, formatMoney }) =
 const GasStationSystem = () => {
   const [shift, setShift] = useState('AM');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [showDeposits, setShowDeposits] = useState(false);
+  const [showSellers, setShowSellers] = useState(false);
+  const [showReport, setShowReport] = useState(false);
+  const [expandedPump, setExpandedPump] = useState('P1');
 
   // Initialize pump readings structure with seller field
   const initializePumpReadings = () => {
@@ -442,14 +495,24 @@ const GasStationSystem = () => {
     return savedSellers ? JSON.parse(savedSellers) : [];
   };
 
-  // Initialize deposits
+  // Initialize deposits as arrays for multiple deposits
   const initializeDeposits = () => {
     const storageKey = `gasStationDeposits_${date}`;
     const savedDeposits = localStorage.getItem(storageKey);
     
     if (savedDeposits) {
       try {
-        return JSON.parse(savedDeposits);
+        const parsed = JSON.parse(savedDeposits);
+        // Convert old single deposit format to array format
+        Object.keys(parsed).forEach(shiftKey => {
+          Object.keys(parsed[shiftKey]).forEach(seller => {
+            if (!Array.isArray(parsed[shiftKey][seller])) {
+              const singleDeposit = parsed[shiftKey][seller];
+              parsed[shiftKey][seller] = singleDeposit ? [singleDeposit] : [];
+            }
+          });
+        });
+        return parsed;
       } catch (e) {
         console.error('Error parsing saved deposits:', e);
       }
@@ -466,9 +529,6 @@ const GasStationSystem = () => {
   const [sellers, setSellers] = useState(initializeSellers());
   const [newSellerName, setNewSellerName] = useState('');
   const [allDeposits, setAllDeposits] = useState(initializeDeposits());
-  const [showReport, setShowReport] = useState(false);
-  const [showSellers, setShowSellers] = useState(false);
-  const [expandedPump, setExpandedPump] = useState('P1');
 
   const prices = {
     gasoline: 600,
@@ -477,36 +537,35 @@ const GasStationSystem = () => {
 
   const pumps = ['P1', 'P2', 'P3', 'P4', 'P5'];
 
-  // Format number to show full decimals without rounding
-  const formatNumber = (num) => {
-    if (num === null || num === undefined || isNaN(num)) return '0';
-    
-    // Convert to number if it's a string
+  // Format number with 3 decimal places for gallons
+  const formatGallons = (num) => {
+    if (num === null || num === undefined || isNaN(num)) return '0.000';
     const number = typeof num === 'string' ? parseFloat(num) : num;
-    
-    if (isNaN(number)) return '0';
-    
-    // Show full decimal without rounding
-    const parts = number.toString().split('.');
-    if (parts.length === 1) {
-      return number.toString();
-    } else {
-      // Keep all decimals but trim trailing zeros
-      const decimals = parts[1].replace(/0+$/, '');
-      return decimals ? `${parts[0]}.${decimals}` : parts[0];
-    }
+    return isNaN(number) ? '0.000' : number.toFixed(3);
   };
 
-  // Format for display - keep full precision
-  const formatDisplay = (num) => {
-    return formatNumber(num);
-  };
-
-  // Format for money - keep 2 decimals
+  // Format number with 2 decimal places for money
   const formatMoney = (num) => {
     if (num === null || num === undefined || isNaN(num)) return '0.00';
     const number = typeof num === 'string' ? parseFloat(num) : num;
     return isNaN(number) ? '0.00' : number.toFixed(2);
+  };
+
+  // Parse input value to have max 3 decimals
+  const parseGallonsInput = (value) => {
+    if (!value) return '';
+    // Remove any non-numeric characters except decimal point
+    const cleanValue = value.replace(/[^\d.]/g, '');
+    // Allow only one decimal point
+    const parts = cleanValue.split('.');
+    if (parts.length > 2) {
+      return parts[0] + '.' + parts.slice(1).join('');
+    }
+    // Limit to 3 decimal places
+    if (parts[1] && parts[1].length > 3) {
+      return parts[0] + '.' + parts[1].substring(0, 3);
+    }
+    return cleanValue;
   };
 
   // Save to localStorage whenever data changes
@@ -531,12 +590,10 @@ const GasStationSystem = () => {
     return allShiftsData[shift] || initializePumpReadings();
   };
 
-  // Get current shift's deposits
-  const getCurrentDeposits = () => {
-    return allDeposits[shift] || {};
-  };
-
   const updateReading = (pump, pistol, field, value) => {
+    // Parse gallons input to limit to 3 decimals
+    const parsedValue = field === 'start' || field === 'end' ? parseGallonsInput(value) : value;
+    
     setAllShiftsData(prev => ({
       ...prev,
       [shift]: {
@@ -545,7 +602,7 @@ const GasStationSystem = () => {
           ...prev[shift][pump],
           [pistol]: {
             ...prev[shift][pump][pistol],
-            [field]: value
+            [field]: parsedValue
           }
         }
       }
@@ -565,14 +622,39 @@ const GasStationSystem = () => {
     }));
   };
 
-  const updateDeposit = (sellerName, amount) => {
-    setAllDeposits(prev => ({
-      ...prev,
-      [shift]: {
-        ...prev[shift],
-        [sellerName]: parseFloat(amount) || 0
+  const updateDeposit = (sellerName, index, value) => {
+    setAllDeposits(prev => {
+      const newDeposits = { ...prev };
+      if (!newDeposits[shift][sellerName]) {
+        newDeposits[shift][sellerName] = [];
       }
-    }));
+      newDeposits[shift][sellerName][index] = parseFloat(value) || 0;
+      return newDeposits;
+    });
+  };
+
+  const addDeposit = (sellerName) => {
+    setAllDeposits(prev => {
+      const newDeposits = { ...prev };
+      if (!newDeposits[shift][sellerName]) {
+        newDeposits[shift][sellerName] = [];
+      }
+      newDeposits[shift][sellerName].push(0);
+      return newDeposits;
+    });
+  };
+
+  const removeDeposit = (sellerName, index) => {
+    setAllDeposits(prev => {
+      const newDeposits = { ...prev };
+      if (newDeposits[shift][sellerName]) {
+        newDeposits[shift][sellerName] = newDeposits[shift][sellerName].filter((_, i) => i !== index);
+        if (newDeposits[shift][sellerName].length === 0) {
+          delete newDeposits[shift][sellerName];
+        }
+      }
+      return newDeposits;
+    });
   };
 
   const addSeller = () => {
@@ -611,7 +693,7 @@ const GasStationSystem = () => {
   const calculateGallons = (start, end) => {
     const s = parseFloat(start) || 0;
     const e = parseFloat(end) || 0;
-    return e - s;
+    return parseFloat((e - s).toFixed(3)); // Round to 3 decimals for calculations
   };
 
   // Calculate totals for a specific shift
@@ -641,11 +723,11 @@ const GasStationSystem = () => {
     });
 
     return {
-      totalGasolineGallons,
-      totalDieselGallons,
-      totalGasolineSales,
-      totalDieselSales,
-      grandTotal: totalGasolineSales + totalDieselSales
+      totalGasolineGallons: parseFloat(totalGasolineGallons.toFixed(3)),
+      totalDieselGallons: parseFloat(totalDieselGallons.toFixed(3)),
+      totalGasolineSales: parseFloat(totalGasolineSales.toFixed(2)),
+      totalDieselSales: parseFloat(totalDieselSales.toFixed(2)),
+      grandTotal: parseFloat((totalGasolineSales + totalDieselSales).toFixed(2))
     };
   };
 
@@ -674,12 +756,12 @@ const GasStationSystem = () => {
     });
 
     return {
-      gasolineGallons: pumpGasolineGallons,
-      dieselGallons: pumpDieselGallons,
-      gasolineSales: pumpGasolineSales,
-      dieselSales: pumpDieselSales,
-      totalGallons: pumpGasolineGallons + pumpDieselGallons,
-      totalSales: pumpGasolineSales + pumpDieselSales
+      gasolineGallons: parseFloat(pumpGasolineGallons.toFixed(3)),
+      dieselGallons: parseFloat(pumpDieselGallons.toFixed(3)),
+      gasolineSales: parseFloat(pumpGasolineSales.toFixed(2)),
+      dieselSales: parseFloat(pumpDieselSales.toFixed(2)),
+      totalGallons: parseFloat((pumpGasolineGallons + pumpDieselGallons).toFixed(3)),
+      totalSales: parseFloat((pumpGasolineSales + pumpDieselSales).toFixed(2))
     };
   };
 
@@ -698,7 +780,8 @@ const GasStationSystem = () => {
         gasolineSales: 0,
         dieselSales: 0,
         totalSales: 0,
-        deposit: allDeposits.AM[seller] || 0,
+        deposit: 0,
+        deposits: [],
         expectedCash: 0
       };
       
@@ -708,7 +791,8 @@ const GasStationSystem = () => {
         gasolineSales: 0,
         dieselSales: 0,
         totalSales: 0,
-        deposit: allDeposits.PM[seller] || 0,
+        deposit: 0,
+        deposits: [],
         expectedCash: 0
       };
     });
@@ -734,10 +818,20 @@ const GasStationSystem = () => {
             }
           });
           
+          // Get deposits
+          const deposits = allDeposits[shiftKey]?.[seller] || [];
+          const totalDeposit = deposits.reduce((sum, deposit) => sum + (parseFloat(deposit) || 0), 0);
+          
           // Update totals
           const sellerData = sellerTotals[shiftKey][seller];
-          sellerData.totalSales = sellerData.gasolineSales + sellerData.dieselSales;
-          sellerData.expectedCash = sellerData.totalSales - sellerData.deposit;
+          sellerData.gasolineGallons = parseFloat(sellerData.gasolineGallons.toFixed(3));
+          sellerData.dieselGallons = parseFloat(sellerData.dieselGallons.toFixed(3));
+          sellerData.gasolineSales = parseFloat(sellerData.gasolineSales.toFixed(2));
+          sellerData.dieselSales = parseFloat(sellerData.dieselSales.toFixed(2));
+          sellerData.totalSales = parseFloat((sellerData.gasolineSales + sellerData.dieselSales).toFixed(2));
+          sellerData.deposit = parseFloat(totalDeposit.toFixed(2));
+          sellerData.deposits = deposits.map(d => parseFloat(d));
+          sellerData.expectedCash = parseFloat((sellerData.totalSales - sellerData.deposit).toFixed(2));
         }
       });
     });
@@ -756,6 +850,7 @@ const GasStationSystem = () => {
         PM: {}
       });
       setShowReport(false);
+      setShowDeposits(false);
     }
   };
 
@@ -774,7 +869,6 @@ const GasStationSystem = () => {
 
   const totals = calculateTotals();
   const currentReadings = getCurrentReadings();
-  const currentDeposits = getCurrentDeposits();
   const sellerTotals = calculateSellerTotals();
   const currentSellerTotals = sellerTotals[shift];
 
@@ -783,12 +877,12 @@ const GasStationSystem = () => {
   const pmTotals = calculateTotals(allShiftsData.PM);
   
   const dailyTotals = {
-    gasolineGallons: amTotals.totalGasolineGallons + pmTotals.totalGasolineGallons,
-    dieselGallons: amTotals.totalDieselGallons + pmTotals.totalDieselGallons,
-    gasolineSales: amTotals.totalGasolineSales + pmTotals.totalGasolineSales,
-    dieselSales: amTotals.totalDieselSales + pmTotals.totalDieselSales,
+    gasolineGallons: parseFloat((amTotals.totalGasolineGallons + pmTotals.totalGasolineGallons).toFixed(3)),
+    dieselGallons: parseFloat((amTotals.totalDieselGallons + pmTotals.totalDieselGallons).toFixed(3)),
+    gasolineSales: parseFloat((amTotals.totalGasolineSales + pmTotals.totalGasolineSales).toFixed(2)),
+    dieselSales: parseFloat((amTotals.totalDieselSales + pmTotals.totalDieselSales).toFixed(2)),
   };
-  dailyTotals.grandTotal = dailyTotals.gasolineSales + dailyTotals.dieselSales;
+  dailyTotals.grandTotal = parseFloat((dailyTotals.gasolineSales + dailyTotals.dieselSales).toFixed(2));
 
   const getFuelColor = (fuelType) => {
     if (fuelType === 'Diesel') return 'bg-amber-100 border-amber-400';
@@ -848,40 +942,53 @@ const GasStationSystem = () => {
           </select>
         </div>
 
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-5 gap-2">
           <button
             onClick={() => {
               setShowReport(!showReport);
               setShowSellers(false);
+              setShowDeposits(false);
             }}
-            className="bg-white text-blue-600 px-4 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition"
+            className="bg-white text-blue-600 px-3 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-1 active:scale-95 transition"
           >
-            <FileText size={18} />
-            {showReport ? 'Data Entry' : 'Report'}
+            <FileText size={16} />
+            {showReport ? 'Data' : 'Report'}
           </button>
           <button
             onClick={() => {
               setShowSellers(!showSellers);
               setShowReport(false);
+              setShowDeposits(false);
             }}
-            className="bg-purple-500 text-white px-4 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition"
+            className="bg-purple-500 text-white px-3 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-1 active:scale-95 transition"
           >
-            <Users size={18} />
+            <Users size={16} />
             Sellers
           </button>
           <button
-            onClick={resetCurrentShift}
-            className="bg-orange-500 text-white px-4 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition"
+            onClick={() => {
+              setShowDeposits(!showDeposits);
+              setShowReport(false);
+              setShowSellers(false);
+            }}
+            className="bg-green-500 text-white px-3 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-1 active:scale-95 transition"
           >
-            <Trash2 size={18} />
-            Reset {shift}
+            <DollarSign size={16} />
+            Deposits
+          </button>
+          <button
+            onClick={resetCurrentShift}
+            className="bg-orange-500 text-white px-3 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-1 active:scale-95 transition"
+          >
+            <Trash2 size={16} />
+            {shift}
           </button>
           <button
             onClick={resetForm}
-            className="bg-red-500 text-white px-4 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition"
+            className="bg-red-500 text-white px-3 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-1 active:scale-95 transition"
           >
-            <Trash2 size={18} />
-            Reset Day
+            <Trash2 size={16} />
+            Day
           </button>
         </div>
       </div>
@@ -895,6 +1002,17 @@ const GasStationSystem = () => {
             addSeller={addSeller}
             removeSeller={removeSeller}
           />
+        ) : showDeposits ? (
+          <SellerDeposits
+            shift={shift}
+            sellers={sellers}
+            sellerTotals={currentSellerTotals}
+            allDeposits={allDeposits}
+            updateDeposit={updateDeposit}
+            addDeposit={addDeposit}
+            removeDeposit={removeDeposit}
+            formatMoney={formatMoney}
+          />
         ) : !showReport ? (
           <div className="space-y-3">
             {/* Shift Indicator */}
@@ -907,25 +1025,15 @@ const GasStationSystem = () => {
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-xl p-4 shadow-lg">
                 <p className="text-xs opacity-90 mb-1">Gasoline ({shift})</p>
-                <p className="text-2xl font-bold">{formatDisplay(totals.totalGasolineGallons)}</p>
+                <p className="text-2xl font-bold">{formatGallons(totals.totalGasolineGallons)}</p>
                 <p className="text-xs opacity-90">gallons</p>
               </div>
               <div className="bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-xl p-4 shadow-lg">
                 <p className="text-xs opacity-90 mb-1">Diesel ({shift})</p>
-                <p className="text-2xl font-bold">{formatDisplay(totals.totalDieselGallons)}</p>
+                <p className="text-2xl font-bold">{formatGallons(totals.totalDieselGallons)}</p>
                 <p className="text-xs opacity-90">gallons</p>
               </div>
             </div>
-
-            {/* Seller Deposits Section */}
-            <SellerDeposits
-              shift={shift}
-              sellers={sellers}
-              sellerTotals={currentSellerTotals}
-              currentDeposits={currentDeposits}
-              updateDeposit={updateDeposit}
-              formatMoney={formatMoney}
-            />
 
             {/* Pump Selector Tabs */}
             <div className="flex gap-2 overflow-x-auto pb-2">
@@ -933,7 +1041,7 @@ const GasStationSystem = () => {
                 <button
                   key={pump}
                   onClick={() => setExpandedPump(pump)}
-                  className={`px-6 py-2.5 rounded-lg font-bold text-sm whitespace-nowrap transition ${
+                  className={`px-4 py-2.5 rounded-lg font-bold text-sm whitespace-nowrap transition ${
                     expandedPump === pump
                       ? 'bg-white text-blue-600 shadow-lg'
                       : 'bg-slate-700 text-white'
@@ -970,7 +1078,7 @@ const GasStationSystem = () => {
                     pumpNumber={pumpNumber}
                     getPumpColor={getPumpColor}
                     formatMoney={formatMoney}
-                    formatDisplay={formatDisplay}
+                    formatGallons={formatGallons}
                     prices={prices}
                   />
 
@@ -983,12 +1091,11 @@ const GasStationSystem = () => {
                         data={data}
                         pump={pump}
                         updateReading={updateReading}
-                        sellers={sellers}
                         getFuelColor={getFuelColor}
                         getFuelBadgeColor={getFuelBadgeColor}
                         prices={prices}
                         calculateGallons={calculateGallons}
-                        formatDisplay={formatDisplay}
+                        formatGallons={formatGallons}
                         formatMoney={formatMoney}
                       />
                     ))}
@@ -1047,7 +1154,7 @@ const GasStationSystem = () => {
               calculatePumpTotals={calculatePumpTotals}
               calculateGallons={calculateGallons}
               getFuelBadgeColor={getFuelBadgeColor}
-              formatDisplay={formatDisplay}
+              formatGallons={formatGallons}
               formatMoney={formatMoney}
             />
 
@@ -1059,7 +1166,7 @@ const GasStationSystem = () => {
               calculatePumpTotals={calculatePumpTotals}
               calculateGallons={calculateGallons}
               getFuelBadgeColor={getFuelBadgeColor}
-              formatDisplay={formatDisplay}
+              formatGallons={formatGallons}
               formatMoney={formatMoney}
             />
 
@@ -1069,7 +1176,7 @@ const GasStationSystem = () => {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>Gallons</span>
-                  <span className="font-bold">{formatDisplay(dailyTotals.gasolineGallons)}</span>
+                  <span className="font-bold">{formatGallons(dailyTotals.gasolineGallons)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Price/Gallon</span>
@@ -1087,7 +1194,7 @@ const GasStationSystem = () => {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>Gallons</span>
-                  <span className="font-bold">{formatDisplay(dailyTotals.dieselGallons)}</span>
+                  <span className="font-bold">{formatGallons(dailyTotals.dieselGallons)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Price/Gallon</span>
