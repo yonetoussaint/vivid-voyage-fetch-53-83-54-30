@@ -8,73 +8,92 @@ const USDManager = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, supprimerUSD
 
   return (
     <div className="space-y-4">
-      <div className="bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-xl p-3 sm:p-4 shadow-xl">
-        {/* Header with shift info */}
-        <div className="flex items-center justify-between mb-3 sm:mb-4">
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <Globe size={18} className="sm:size-5" />
-            <h3 className="text-sm sm:text-base font-bold">USD - Shift {shift}</h3>
+      <div className="bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-xl p-4 shadow-xl">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <Globe className="h-5 w-5" />
+            <div>
+              <h3 className="text-lg font-bold">Ventes en USD</h3>
+              <p className="text-sm opacity-90">Shift {shift}</p>
+            </div>
           </div>
           <button
             onClick={() => ajouterUSD()}
-            className="bg-white text-amber-600 px-2.5 sm:px-3 py-1.5 rounded-lg font-bold text-xs sm:text-sm flex items-center gap-0.5 sm:gap-1 active:scale-95 transition min-h-[36px] sm:min-h-[40px]"
+            className="bg-white text-amber-600 px-4 py-2.5 rounded-lg font-bold flex items-center gap-2 active:scale-95 transition-transform hover:shadow-md"
           >
-            <Plus size={12} className="sm:size-14" />
-            <span className="hidden sm:inline">Ajouter</span>
-            <span className="sm:hidden">+</span>
+            <Plus className="h-4 w-4" />
+            <span>Ajouter</span>
           </button>
         </div>
 
-        {/* USD Summary */}
-        <div className="bg-white bg-opacity-20 rounded-lg p-2.5 sm:p-3 mb-3 sm:mb-4">
-          <div className="grid grid-cols-2 gap-2 sm:gap-3">
-            <div>
-              <p className="text-[10px] sm:text-xs opacity-90">Total USD</p>
-              <p className="text-base sm:text-xl font-bold">${formaterArgent(totalUSD)}</p>
-            </div>
-            <div>
-              <p className="text-[10px] sm:text-xs opacity-90">Équivalent HTG</p>
-              <p className="text-base sm:text-xl font-bold">{formaterArgent(totalHTG)} HTG</p>
-            </div>
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div className="bg-white bg-opacity-20 rounded-lg p-4">
+            <p className="text-sm opacity-90 mb-1">Total USD</p>
+            <p className="text-2xl font-bold">${formaterArgent(totalUSD)}</p>
           </div>
-          <div className="text-[10px] sm:text-xs opacity-90 mt-1.5 sm:mt-2 text-center">
-            Taux: 1 USD = {tauxUSD} HTG
+          <div className="bg-white bg-opacity-20 rounded-lg p-4">
+            <p className="text-sm opacity-90 mb-1">Équivalent HTG</p>
+            <p className="text-2xl font-bold">{formaterArgent(totalHTG)} HTG</p>
+            <p className="text-xs opacity-90 mt-2">Taux: 1 USD = {tauxUSD} HTG</p>
           </div>
         </div>
 
         {/* USD Entries */}
-        <div className="space-y-1.5 sm:space-y-2">
+        <div className="mb-6">
+          <h4 className="text-sm font-semibold mb-3 opacity-90">Entrées USD</h4>
+          
           {(!usdVentes[shift] || usdVentes[shift].length === 0) ? (
-            <div className="text-center py-2 sm:py-3 text-white text-opacity-70 text-xs sm:text-sm">
-              Aucune vente en USD enregistrée
+            <div className="bg-white bg-opacity-10 rounded-lg p-6 text-center">
+              <p className="text-white text-opacity-70">Aucune vente en USD enregistrée</p>
+              <p className="text-xs opacity-70 mt-1">Cliquez sur "Ajouter" pour commencer</p>
             </div>
           ) : (
-            <div className="space-y-1.5 sm:space-y-2">
+            <div className="space-y-3">
               {usdVentes[shift].map((usd, index) => (
-                <div key={index} className="flex items-center gap-1.5 sm:gap-2">
-                  <div className="flex-1 flex items-center bg-white bg-opacity-20 rounded-lg overflow-hidden min-h-[44px] sm:min-h-[48px]">
-                    <span className="px-2 sm:px-3 py-1.5 sm:py-2 font-bold text-white text-sm sm:text-base">$</span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={usd}
-                      onChange={(e) => mettreAJourUSD(index, e.target.value)}
-                      placeholder="Montant"
-                      className="flex-1 px-2 sm:px-3 py-1.5 sm:py-2 bg-transparent text-white text-right font-semibold placeholder-white placeholder-opacity-50 text-sm sm:text-base w-full min-w-0"
-                      inputMode="decimal"
-                    />
-                    <span className="px-1 sm:px-2 py-1.5 sm:py-2 font-bold text-xs sm:text-sm text-white">=</span>
-                    <span className="px-1 sm:px-2 py-1.5 sm:py-2 font-bold text-xs sm:text-sm text-white whitespace-nowrap">
-                      {formaterArgent((parseFloat(usd) || 0) * tauxUSD)} HTG
-                    </span>
+                <div key={index} className="bg-white bg-opacity-10 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium opacity-90">Entrée #{index + 1}</span>
+                    <button
+                      onClick={() => supprimerUSD(index)}
+                      className="bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-md font-bold transition-colors"
+                      aria-label="Supprimer"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </button>
                   </div>
-                  <button
-                    onClick={() => supprimerUSD(index)}
-                    className="bg-red-500 text-white p-1.5 sm:p-2 rounded-lg font-bold active:scale-95 transition min-h-[44px] sm:min-h-[48px] min-w-[44px] sm:min-w-[48px] flex items-center justify-center"
-                    aria-label={`Supprimer USD ${index + 1}`}
-                  >
-                    <Minus size={14} className="sm:size-16" />
-                  </button>
+                  
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div className="flex-1">
+                      <label className="block text-xs opacity-80 mb-1">Montant USD</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white font-bold">$</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={usd}
+                          onChange={(e) => mettreAJourUSD(index, e.target.value)}
+                          placeholder="0.00"
+                          className="w-full pl-8 pr-3 py-2.5 bg-white bg-opacity-20 rounded-lg text-white text-right font-semibold placeholder-white placeholder-opacity-50 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-30"
+                          inputMode="decimal"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-center">
+                      <span className="text-xl font-bold mx-2 opacity-80">=</span>
+                    </div>
+                    
+                    <div className="flex-1">
+                      <label className="block text-xs opacity-80 mb-1">Équivalent HTG</label>
+                      <div className="bg-white bg-opacity-20 rounded-lg px-3 py-2.5">
+                        <p className="text-white font-semibold text-right">
+                          {formaterArgent((parseFloat(usd) || 0) * tauxUSD)} HTG
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -82,9 +101,12 @@ const USDManager = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, supprimerUSD
         </div>
 
         {/* Information Note */}
-        <div className="mt-3 sm:mt-4 p-1.5 sm:p-2 bg-white bg-opacity-10 rounded-lg text-[10px] sm:text-xs">
-          <p className="font-bold mb-0.5 sm:mb-1">Note:</p>
-          <p className="leading-tight">Les ventes en USD sont soustraites du total HTG pour l'équilibrage de caisse.</p>
+        <div className="bg-white bg-opacity-10 rounded-lg p-4">
+          <p className="font-bold mb-2">Note importante</p>
+          <p className="text-sm opacity-90 leading-relaxed">
+            Les ventes en USD sont soustraites du total HTG pour l'équilibrage de caisse. 
+            Assurez-vous que les montants soient correctement convertis.
+          </p>
         </div>
       </div>
     </div>
