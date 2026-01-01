@@ -9,39 +9,102 @@ export const formaterGallons = (num) => {
 export const formaterArgent = (num) => {
   if (num === null || num === undefined || isNaN(num)) return '0.00';
   const nombre = typeof num === 'string' ? parseFloat(num) : num;
-  return isNaN(nombre) ? '0.00' : nombre.toFixed(2);
+  if (isNaN(nombre)) return '0.00';
+  
+  // Format with apostrophe separators for thousands
+  const formatted = nombre.toFixed(2);
+  const parts = formatted.split('.');
+  const integerPart = parts[0];
+  const decimalPart = parts[1];
+  
+  // Add apostrophe separators for thousands
+  const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+  
+  return `${formattedInteger}.${decimalPart}`;
 };
 
-// Formater pour la caisse - arrondi à 0 ou 5, pas de décimales
+// Format avec apostrophes pour les grands nombres
+export const formaterNombre = (num) => {
+  if (num === null || num === undefined || isNaN(num)) return '0';
+  const nombre = typeof num === 'string' ? parseFloat(num) : num;
+  if (isNaN(nombre)) return '0';
+  
+  // Arrondir à l'entier le plus proche
+  const rounded = Math.round(nombre);
+  
+  // Ajouter des apostrophes pour les milliers
+  return rounded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+};
+
+// Formater pour la caisse - toujours arrondir AU PLUS HAUT au multiple de 5
 export const formaterCaisse = (num) => {
   if (num === null || num === undefined || isNaN(num)) return '0';
   const nombre = typeof num === 'string' ? parseFloat(num) : num;
   
   if (isNaN(nombre)) return '0';
   
-  // Arrondir au multiple de 5 le plus proche
-  const rounded = Math.round(nombre / 5) * 5;
+  // TOUJOURS arrondir AU PLUS HAUT au multiple de 5
+  const rounded = Math.ceil(nombre / 5) * 5;
   
   // S'assurer que c'est un entier (pas de décimales)
-  return Math.round(rounded).toString();
+  const result = Math.round(rounded);
+  
+  // Ajouter des apostrophes pour les milliers
+  return result.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'");
 };
 
-// Alternative: arrondir à la dizaine la plus proche
+// Alternative: arrondir AU PLUS HAUT à la dizaine la plus proche
 export const formaterCaisseDizaine = (num) => {
   if (num === null || num === undefined || isNaN(num)) return '0';
   const nombre = typeof num === 'string' ? parseFloat(num) : num;
   
   if (isNaN(nombre)) return '0';
   
-  // Arrondir à la dizaine la plus proche
-  const rounded = Math.round(nombre / 10) * 10;
+  // TOUJOURS arrondir AU PLUS HAUT à la dizaine la plus proche
+  const rounded = Math.ceil(nombre / 10) * 10;
   
   // S'assurer que c'est un entier (pas de décimales)
-  return Math.round(rounded).toString();
+  const result = Math.round(rounded);
+  
+  // Ajouter des apostrophes pour les milliers
+  return result.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'");
 };
 
 // Formater pour affichage caisse avec symbole HTG
 export const formaterCaisseHTG = (num) => {
   const valeur = formaterCaisse(num);
   return `${valeur} HTG`;
+};
+
+// Formater pour affichage caisse avec symbole HTG et apostrophes
+export const formaterArgentHTG = (num) => {
+  if (num === null || num === undefined || isNaN(num)) return '0 HTG';
+  const nombre = typeof num === 'string' ? parseFloat(num) : num;
+  if (isNaN(nombre)) return '0 HTG';
+  
+  // Format avec apostrophe separators pour les milliers
+  const formatted = nombre.toFixed(2);
+  const parts = formatted.split('.');
+  const integerPart = parts[0];
+  const decimalPart = parts[1];
+  
+  // Add apostrophe separators for thousands
+  const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+  
+  return `${formattedInteger}.${decimalPart} HTG`;
+};
+
+// Formater pour affichage caisse avec symbole HTG (sans décimales)
+export const formaterArgentHTGSansDecimales = (num) => {
+  if (num === null || num === undefined || isNaN(num)) return '0 HTG';
+  const nombre = typeof num === 'string' ? parseFloat(num) : num;
+  if (isNaN(nombre)) return '0 HTG';
+  
+  // Arrondir à l'entier le plus proche
+  const rounded = Math.round(nombre);
+  
+  // Ajouter des apostrophes pour les milliers
+  const formatted = rounded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+  
+  return `${formatted} HTG`;
 };
