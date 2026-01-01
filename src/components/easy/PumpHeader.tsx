@@ -46,9 +46,6 @@ const PumpHeader = ({ pompe, shift, donneesPompe, vendeurs, mettreAJourAffectati
           <div className="flex justify-between items-start">
             <div>
               <h3 className="text-xl font-bold leading-tight">{pompe}</h3>
-              <p className="text-xs opacity-90 mt-1 line-clamp-2">
-                {pompe === 'P5' ? '1 Pistolet Essence' : 'Phase 1: P1-P3 | Phase 2: P4-P6'}
-              </p>
             </div>
             <div className="text-right">
               <p className="text-xs opacity-90">Total {shift}</p>
