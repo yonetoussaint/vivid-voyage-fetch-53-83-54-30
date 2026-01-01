@@ -212,7 +212,8 @@ const SellerDeposits = ({ shift, sellers, sellerTotals, allDeposits, updateDepos
           ) : (
             sellers.map(seller => {
               const deposits = currentDeposits[seller] || [];
-              const totalDeposit = deposits.reduce((sum, deposit) => sum + (parseFloat(deposit) || 0), 0);
+              const validDeposits = deposits.filter(deposit => deposit !== '');
+              const totalDeposit = validDeposits.reduce((sum, deposit) => sum + (parseFloat(deposit) || 0), 0);
               const sellerData = sellerTotals[seller];
               const expectedCash = sellerData ? (sellerData.totalSales - totalDeposit) : 0;
 
@@ -276,7 +277,7 @@ const SellerDeposits = ({ shift, sellers, sellerTotals, allDeposits, updateDepos
                                 step="0.01"
                                 value={deposit}
                                 onChange={(e) => updateDeposit(seller, index, e.target.value)}
-                                placeholder="0.00"
+                                placeholder="Enter amount"
                                 className="flex-1 px-3 py-2 bg-transparent text-white text-right font-semibold placeholder-white placeholder-opacity-50"
                               />
                               <span className="px-2 py-2 font-bold text-sm">HTG</span>
@@ -295,12 +296,12 @@ const SellerDeposits = ({ shift, sellers, sellerTotals, allDeposits, updateDepos
                   </div>
 
                   {/* Deposit Summary */}
-                  {deposits.length > 0 && (
+                  {validDeposits.length > 0 && (
                     <div className="pt-3 border-t border-white border-opacity-30">
                       <div className="flex flex-col gap-1">
                         <div className="text-xs opacity-90">Individual Deposits:</div>
                         <div className="flex flex-wrap gap-1">
-                          {deposits.map((deposit, idx) => (
+                          {validDeposits.map((deposit, idx) => (
                             <div 
                               key={idx} 
                               className="bg-white bg-opacity-20 px-2 py-1 rounded text-xs flex items-center gap-1"
@@ -577,6 +578,10 @@ const GasStationSystem = () => {
               const singleDeposit = parsed[shiftKey][seller];
               parsed[shiftKey][seller] = singleDeposit ? [singleDeposit] : [];
             }
+            // Convert any 0 values to empty strings for new inputs
+            parsed[shiftKey][seller] = parsed[shiftKey][seller].map(deposit => 
+              deposit === 0 ? '' : deposit
+            );
           });
         });
         return parsed;
@@ -708,7 +713,8 @@ const GasStationSystem = () => {
       if (!newDeposits[shift][sellerName]) {
         newDeposits[shift][sellerName] = [];
       }
-      newDeposits[shift][sellerName][index] = parseFloat(value) || 0;
+      // Store empty string if value is empty, otherwise parse as float
+      newDeposits[shift][sellerName][index] = value === '' ? '' : parseFloat(value) || 0;
       return newDeposits;
     });
   };
@@ -719,7 +725,8 @@ const GasStationSystem = () => {
       if (!newDeposits[shift][sellerName]) {
         newDeposits[shift][sellerName] = [];
       }
-      newDeposits[shift][sellerName].push(0);
+      // Add empty string instead of 0
+      newDeposits[shift][sellerName].push('');
       return newDeposits;
     });
   };
@@ -898,9 +905,10 @@ const GasStationSystem = () => {
             }
           });
           
-          // Get deposits
-          const deposits = allDeposits[shiftKey]?.[seller] || [];
-          const totalDeposit = deposits.reduce((sum, deposit) => sum + (parseFloat(deposit) || 0), 0);
+          // Get deposits - filter out empty strings
+          const deposits = (allDeposits[shiftKey]?.[seller] || []).filter(deposit => deposit !== '');
+          const validDeposits = deposits.map(deposit => parseFloat(deposit) || 0);
+          const totalDeposit = validDeposits.reduce((sum, deposit) => sum + deposit, 0);
           
           // Update totals
           const sellerData = sellerTotals[shiftKey][seller];
@@ -910,7 +918,7 @@ const GasStationSystem = () => {
           sellerData.dieselSales = parseFloat(sellerData.dieselSales.toFixed(2));
           sellerData.totalSales = parseFloat((sellerData.gasolineSales + sellerData.dieselSales).toFixed(2));
           sellerData.deposit = parseFloat(totalDeposit.toFixed(2));
-          sellerData.deposits = deposits.map(d => parseFloat(d));
+          sellerData.deposits = validDeposits;
           sellerData.expectedCash = parseFloat((sellerData.totalSales - sellerData.deposit).toFixed(2));
         }
       });
