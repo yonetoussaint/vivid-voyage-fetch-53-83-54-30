@@ -1,8 +1,11 @@
 import React from 'react';
-import { DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
-import { formaterArgent, formaterGallons } from '@/utils/formatters';
+import { DollarSign, TrendingUp, TrendingDown, ArrowUpRight } from 'lucide-react';
+import { formaterArgent, formaterGallons, formaterCaisse } from '@/utils/formatters';
 
 const StatsCards = ({ shift, totaux, tauxUSD }) => {
+  // Calculate rounded adjusted total
+  const totalAjusteArrondi = formaterCaisse(totaux.totalAjuste);
+  
   return (
     <>
       {/* Statistiques Rapides - Mobile Optimized */}
@@ -60,20 +63,33 @@ const StatsCards = ({ shift, totaux, tauxUSD }) => {
             </div>
           </div>
           
-          {/* Final Adjusted Total - Still Important */}
-          <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg p-3">
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-1">
-                <TrendingUp size={14} className="text-white" />
-                <p className="text-sm font-bold">TOTAL AJUSTÉ</p>
+          {/* Final Adjusted Total - ROUNDED */}
+          <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg p-3 relative overflow-hidden">
+            {/* Decorative corner */}
+            <div className="absolute top-0 right-0 w-16 h-16 bg-white bg-opacity-10 rounded-full -translate-y-8 translate-x-8"></div>
+            
+            <div className="flex items-center justify-between mb-1 relative z-10">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+                  <ArrowUpRight size={16} className="text-white" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold">TOTAL AJUSTÉ (CAISSE)</p>
+                  <p className="text-[10px] opacity-80">Arrondi à la dizaine</p>
+                </div>
               </div>
-              <div className="bg-white bg-opacity-20 px-2 py-1 rounded-full">
-                <p className="text-xs font-bold">CAISSE</p>
+              <div className="bg-white bg-opacity-25 px-3 py-1 rounded-full">
+                <p className="text-xs font-bold">FINAL</p>
               </div>
             </div>
-            <div className="flex items-end justify-between">
-              <p className="text-xl sm:text-2xl font-bold">{formaterArgent(totaux.totalAjuste)}</p>
-              <span className="text-sm font-medium">HTG</span>
+            <div className="flex items-end justify-between relative z-10">
+              <div>
+                <p className="text-xl sm:text-2xl font-bold">{totalAjusteArrondi}</p>
+                <p className="text-[10px] opacity-80 mt-1">
+                  Exact: {formaterArgent(totaux.totalAjuste)} HTG
+                </p>
+              </div>
+              <span className="text-lg font-bold">HTG</span>
             </div>
           </div>
         </div>
