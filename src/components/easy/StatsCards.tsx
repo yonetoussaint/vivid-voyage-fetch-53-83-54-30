@@ -18,7 +18,7 @@ const StatsCards = ({ shift, totaux, tauxUSD }) => {
         </div>
       </div>
 
-      {/* Total USD Ajusté avec Propane */}
+      {/* Total USD Ajusté SANS Propane */}
       <div className="bg-gradient-to-br from-amber-600 to-orange-600 text-white rounded-xl p-4 shadow-lg">
         <div className="flex justify-between items-center mb-2">
           <div>
@@ -31,9 +31,9 @@ const StatsCards = ({ shift, totaux, tauxUSD }) => {
           </div>
         </div>
         <div className="pt-2 border-t border-white border-opacity-30">
-          <div className="flex justify-between items-center">
-            <span className="text-xs opacity-90">Propane: {formaterArgent(totaux.propaneVentes)} HTG</span>
-            <span className="text-xs opacity-90">Brut: {formaterArgent(totaux.totalBrut)} HTG</span>
+          <div className="flex justify-between items-center text-xs opacity-90">
+            <span>Essence & Diesel Bruts:</span>
+            <span>{formaterArgent(totaux.totalBrut)} HTG</span>
           </div>
         </div>
       </div>
