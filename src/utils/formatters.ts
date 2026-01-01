@@ -7,6 +7,15 @@ const ajouterApostrophes = (str) => {
   return cleanStr.replace(/\B(?=(\d{3})+(?!\d))/g, "'");
 };
 
+// Helper function to format decimal numbers with 2 decimal places
+const formaterDecimal = (num, decimalPlaces = 2) => {
+  if (num === null || num === undefined || isNaN(num)) return `0.${'0'.repeat(decimalPlaces)}`;
+  const nombre = typeof num === 'string' ? parseFloat(num) : num;
+  if (isNaN(nombre)) return `0.${'0'.repeat(decimalPlaces)}`;
+  
+  return nombre.toFixed(decimalPlaces);
+};
+
 // Formater nombre avec 3 décimales pour gallons
 export const formaterGallons = (num) => {
   if (num === null || num === undefined || isNaN(num)) return '0.000';
