@@ -76,48 +76,41 @@ const StatsCards = ({ shift, totaux, tauxUSD }) => {
             </div>
           </div>
 
-          {/* Final Adjusted Total - ROUNDED */}
-          <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg p-3 relative overflow-hidden">
-            {/* Decorative corner */}
-            <div className="absolute top-0 right-0 w-16 h-16 bg-white bg-opacity-10 rounded-full -translate-y-8 translate-x-8"></div>
-
-            <div className="flex items-center justify-between mb-1 relative z-10">
+          {/* Final Adjusted Total - SIMPLIFIED */}
+          <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg p-3">
+            <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
-                  <DollarSign size={16} className="text-white" />
-                </div>
+                <DollarSign size={20} className="text-white" />
                 <div>
                   <p className="text-sm font-bold">TOTAL AJUSTÉ (CAISSE)</p>
-                  <p className="text-[10px] opacity-80">Arrondi à 0 ou 5</p>
+                  <p className="text-[10px] opacity-80">Arrondi au multiple de 5 le plus proche</p>
                 </div>
-              </div>
-              <div className="bg-white bg-opacity-25 px-3 py-1 rounded-full">
-                <p className="text-xs font-bold">FINAL</p>
               </div>
             </div>
 
-            <div className="flex items-end justify-between relative z-10">
-              <div>
-                <p className="text-2xl sm:text-3xl font-bold">{formaterCaisseHTG(totaux.totalAjuste)}</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <p className="text-[10px] opacity-80">
-                    Exact: {formaterArgent(totaux.totalAjuste)} HTG
-                  </p>
-                  {hasAdjustment && (
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                      isRoundedUp ? 'bg-amber-500' : 'bg-blue-500'
-                    }`}>
-                      {isRoundedUp ? `+${adjustment.toFixed(2)}` : `${adjustment.toFixed(2)}`}
-                    </span>
-                  )}
+            {/* Final Amount - Large and Clear */}
+            <div className="mb-2">
+              <p className="text-3xl sm:text-4xl font-bold text-center">{formaterCaisse(totaux.totalAjuste)}</p>
+              <p className="text-sm opacity-80 text-center">HTG</p>
+            </div>
+
+            {/* Adjustment Details - Compact */}
+            <div className="bg-white bg-opacity-10 rounded-lg p-2">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-xs opacity-90">Montant exact:</span>
+                <span className="text-xs font-medium">{formaterArgent(totaux.totalAjuste)} HTG</span>
+              </div>
+              
+              {hasAdjustment && (
+                <div className="flex justify-between items-center pt-1 border-t border-white border-opacity-20">
+                  <span className="text-xs opacity-90">Ajustement:</span>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${
+                    isRoundedUp ? 'bg-amber-500' : 'bg-blue-500'
+                  }`}>
+                    {isRoundedUp ? `+${adjustment.toFixed(2)}` : `${adjustment.toFixed(2)}`} HTG
+                  </span>
                 </div>
-              </div>
-              <div className="flex flex-col items-end">
-                <span className="text-lg font-bold">HTG</span>
-                <span className="text-[10px] opacity-70 mt-1">
-                  {roundedValue % 10 === 0 ? '0' : '5'}
-                </span>
-              </div>
+              )}
             </div>
           </div>
         </div>
