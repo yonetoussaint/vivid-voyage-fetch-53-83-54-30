@@ -36,9 +36,9 @@ export const useStationData = (date, shift) => {
     setVentesUSD(initialiserDonnees(date, 'usd'));
   }, [date]);
 
-  // Parser l'input gallons pour max 3 décimales - FIXED VERSION
+  // Parser l'input gallons pour max 3 décimales
   const parserInputGallons = (valeur) => {
-    if (valeur === '' || valeur === null || valeur === undefined) return '';
+    if (!valeur && valeur !== 0) return '';
     
     // Convert to string if it's a number
     const valeurStr = String(valeur);
@@ -77,7 +77,14 @@ export const useStationData = (date, shift) => {
     return count;
   }, [toutesDonnees]);
 
-  // Fonctions de mise à jour - FIXED mettreAJourPropane
+  // Calculer gallons
+  const calculerGallons = useCallback((debut, fin) => {
+    const d = parseFloat(debut) || 0;
+    const f = parseFloat(fin) || 0;
+    return parseFloat((f - d).toFixed(3));
+  }, []);
+
+  // Fonctions de mise à jour
   const mettreAJourLecture = useCallback((pompe, pistolet, champ, valeur) => {
     const valeurParse = parserInputGallons(valeur);
 
@@ -97,7 +104,6 @@ export const useStationData = (date, shift) => {
   }, [shift]);
 
   const mettreAJourPropane = useCallback((champ, valeur) => {
-    // Use the same parser as other inputs
     const valeurParse = parserInputGallons(valeur);
     
     setPropaneDonnees(prev => ({
@@ -218,11 +224,11 @@ export const useStationData = (date, shift) => {
     if (window.confirm(`Voulez-vous vraiment réinitialiser les données du shift ${currentShift}?`)) {
       setToutesDonnees(prev => ({
         ...prev,
-        [currentShift]: initialiserDonnees(date, 'pompes')
+        [currentShift]: initialiserDonnees(date, 'pompes')[currentShift]
       }));
       setPropaneDonnees(prev => ({
         ...prev,
-        [currentShift]: initialiserDonnees(date, 'propane')
+        [currentShift]: initialiserDonnees(date, 'propane')[currentShift]
       }));
       setTousDepots(prev => ({
         ...prev,
@@ -244,17 +250,15 @@ export const useStationData = (date, shift) => {
     }
   }, [date]);
 
-  // Calculs
+  // Constantes pour calculs
   const prix = { essence: 600, diesel: 650 };
   const tauxUSD = 132;
   const prixPropane = 450;
 
-  // Calculer gallons
-  const calculerGallons = useCallback((debut, fin) => {
-    const d = parseFloat(debut) || 0;
-    const f = parseFloat(fin) || 0;
-    return parseFloat((f - d).toFixed(3));
-  }, []);
+  // Obtenir les lectures du shift courant
+  const obtenirLecturesCourantes = useCallback(() => {
+    return toutesDonnees[shift] || {};
+  }, [toutesDonnees, shift]);
 
   // Calculer totaux courants
   const totaux = calculerTotaux(
@@ -312,11 +316,6 @@ export const useStationData = (date, shift) => {
     totauxQuotidiens.totalHTGenUSD
   ).toFixed(2));
 
-  // Obtenir les lectures du shift courant
-  const obtenirLecturesCourantes = useCallback(() => {
-    return toutesDonnees[shift] || initialiserDonnees(date, 'pompes')[shift];
-  }, [toutesDonnees, shift, date]);
-
   return {
     // États
     toutesDonnees,
@@ -328,11 +327,6 @@ export const useStationData = (date, shift) => {
     
     // Setters
     setNouveauVendeur,
-    setToutesDonnees,
-    setPropaneDonnees,
-    setVendeurs,
-    setTousDepots,
-    setVentesUSD,
     
     // Fonctions
     reinitialiserShift,
