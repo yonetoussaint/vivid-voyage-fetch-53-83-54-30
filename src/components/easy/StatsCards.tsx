@@ -97,28 +97,26 @@ const StatsCards = ({ shift, totaux, tauxUSD }) => {
 
             <div className="relative z-10">
               {/* Main rounded amount with HTG */}
-              <div className="mb-3">
+              <div className="mb-1">
                 <div className="flex items-end justify-between">
                   <p className="text-2xl sm:text-3xl font-bold">{formaterCaisse(totaux.totalAjuste)}</p>
                   <span className="text-xl font-bold ml-2">HTG</span>
                 </div>
-                <p className="text-xs opacity-80 mt-1">Valeur arrondie</p>
               </div>
 
-              {/* Exact amount and adjustment */}
-              <div className="flex items-center justify-between pt-3 border-t border-white border-opacity-20">
-                <div className="flex items-center gap-2">
-                  <p className="text-xs opacity-80">
-                    Exact: {formaterArgent(totaux.totalAjuste)} HTG
-                  </p>
-                  {hasAdjustment && (
+              {/* Valeur arrondie label with adjustment on far right */}
+              <div className="flex items-center justify-between pt-2">
+                <p className="text-xs opacity-80">Valeur arrondie</p>
+                {hasAdjustment && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs opacity-80">Écart:</span>
                     <span className={`text-xs px-2 py-0.5 rounded-full ${
                       isRoundedUp ? 'bg-amber-500' : 'bg-blue-500'
                     }`}>
                       {isRoundedUp ? `+${adjustment.toFixed(2)}` : `${adjustment.toFixed(2)}`}
                     </span>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
