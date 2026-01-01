@@ -23,11 +23,6 @@ const SystemeStationService = () => {
     ventesUSD,
     nouveauVendeur,
     setNouveauVendeur,
-    setToutesDonnees,
-    setPropaneDonnees,
-    setVendeurs,
-    setTousDepots,
-    setVentesUSD,
     reinitialiserShift,
     reinitialiserJour,
     ajouterVendeur,
@@ -47,7 +42,9 @@ const SystemeStationService = () => {
     totauxVendeursCourants,
     totauxAM,
     totauxPM,
-    totauxQuotidiens
+    totauxQuotidiens,
+    calculerGallons,
+    obtenirLecturesCourantes
   } = useStationData(date, shift);
 
   // Constantes
@@ -58,6 +55,9 @@ const SystemeStationService = () => {
     diesel: 650
   };
   const pompes = ['P1', 'P2', 'P3', 'P4', 'P5'];
+
+  // Get current propane data for the shift
+  const propaneDonneesCourantes = propaneDonnees[shift] || { debut: '', fin: '' };
 
   // Fonction pour changer de vue
   const handleViewChange = (view) => {
@@ -118,7 +118,7 @@ const SystemeStationService = () => {
         return (
           <PropaneManager
             shift={shift}
-            propaneDonnees={propaneDonnees}
+            propaneDonnees={propaneDonneesCourantes}
             mettreAJourPropane={mettreAJourPropane}
             prixPropane={prixPropane}
           />
@@ -156,6 +156,8 @@ const SystemeStationService = () => {
             mettreAJourLecture={mettreAJourLecture}
             mettreAJourAffectationVendeur={mettreAJourAffectationVendeur}
             prix={prix}
+            calculerGallons={calculerGallons}
+            obtenirLecturesCourantes={obtenirLecturesCourantes}
           />
         );
     }
