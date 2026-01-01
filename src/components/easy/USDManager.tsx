@@ -10,21 +10,12 @@ const USDManager = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, supprimerUSD
     <div className="space-y-4">
       <div className="bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-xl p-4 shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <Globe className="h-5 w-5" />
-            <div>
-              <h3 className="text-lg font-bold">Ventes en USD</h3>
-              <p className="text-sm opacity-90">Shift {shift}</p>
-            </div>
+        <div className="flex items-center gap-3 mb-6">
+          <Globe className="h-6 w-6" />
+          <div>
+            <h3 className="text-xl font-bold">Ventes en USD</h3>
+            <p className="text-sm opacity-90">Shift {shift}</p>
           </div>
-          <button
-            onClick={() => ajouterUSD()}
-            className="bg-white text-amber-600 px-4 py-2.5 rounded-lg font-bold flex items-center gap-2 active:scale-95 transition-transform hover:shadow-md"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Ajouter</span>
-          </button>
         </div>
 
         {/* Summary Cards */}
@@ -41,30 +32,33 @@ const USDManager = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, supprimerUSD
         </div>
 
         {/* USD Entries */}
-        <div className="mb-6">
+        <div className="mb-4">
           <h4 className="text-sm font-semibold mb-3 opacity-90">Entrées USD</h4>
           
           {(!usdVentes[shift] || usdVentes[shift].length === 0) ? (
-            <div className="bg-white bg-opacity-10 rounded-lg p-6 text-center">
-              <p className="text-white text-opacity-70">Aucune vente en USD enregistrée</p>
-              <p className="text-xs opacity-70 mt-1">Cliquez sur "Ajouter" pour commencer</p>
+            <div className="bg-white bg-opacity-10 rounded-lg p-8 text-center mb-4">
+              <div className="mb-3">
+                <Globe className="h-10 w-10 mx-auto opacity-50" />
+              </div>
+              <p className="text-white text-opacity-70 mb-1">Aucune vente en USD enregistrée</p>
+              <p className="text-xs opacity-70">Appuyez sur le bouton ci-dessous pour ajouter</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-3 mb-4">
               {usdVentes[shift].map((usd, index) => (
-                <div key={index} className="bg-white bg-opacity-10 rounded-lg p-3">
-                  <div className="flex items-center justify-between mb-2">
+                <div key={index} className="bg-white bg-opacity-10 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-medium opacity-90">Entrée #{index + 1}</span>
                     <button
                       onClick={() => supprimerUSD(index)}
-                      className="bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-md font-bold transition-colors"
+                      className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-md font-bold transition-colors active:scale-95"
                       aria-label="Supprimer"
                     >
                       <Minus className="h-4 w-4" />
                     </button>
                   </div>
                   
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                     <div className="flex-1">
                       <label className="block text-xs opacity-80 mb-1">Montant USD</label>
                       <div className="relative">
@@ -75,7 +69,7 @@ const USDManager = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, supprimerUSD
                           value={usd}
                           onChange={(e) => mettreAJourUSD(index, e.target.value)}
                           placeholder="0.00"
-                          className="w-full pl-8 pr-3 py-2.5 bg-white bg-opacity-20 rounded-lg text-white text-right font-semibold placeholder-white placeholder-opacity-50 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-30"
+                          className="w-full pl-8 pr-3 py-3 bg-white bg-opacity-20 rounded-lg text-white text-right font-semibold placeholder-white placeholder-opacity-50 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-30"
                           inputMode="decimal"
                         />
                       </div>
@@ -87,7 +81,7 @@ const USDManager = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, supprimerUSD
                     
                     <div className="flex-1">
                       <label className="block text-xs opacity-80 mb-1">Équivalent HTG</label>
-                      <div className="bg-white bg-opacity-20 rounded-lg px-3 py-2.5">
+                      <div className="bg-white bg-opacity-20 rounded-lg px-3 py-3">
                         <p className="text-white font-semibold text-right">
                           {formaterArgent((parseFloat(usd) || 0) * tauxUSD)} HTG
                         </p>
@@ -98,10 +92,19 @@ const USDManager = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, supprimerUSD
               ))}
             </div>
           )}
+
+          {/* Add Button - Now at the bottom */}
+          <button
+            onClick={() => ajouterUSD()}
+            className="w-full bg-white text-amber-600 py-3 rounded-lg font-bold flex items-center justify-center gap-3 active:scale-[0.98] transition-transform hover:shadow-lg"
+          >
+            <Plus className="h-5 w-5" />
+            <span className="text-lg">Ajouter une entrée USD</span>
+          </button>
         </div>
 
         {/* Information Note */}
-        <div className="bg-white bg-opacity-10 rounded-lg p-4">
+        <div className="bg-white bg-opacity-10 rounded-lg p-4 mt-6">
           <p className="font-bold mb-2">Note importante</p>
           <p className="text-sm opacity-90 leading-relaxed">
             Les ventes en USD sont soustraites du total HTG pour l'équilibrage de caisse. 
