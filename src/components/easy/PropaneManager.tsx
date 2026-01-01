@@ -3,15 +3,6 @@ import { Flame } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 
 const PropaneManager = ({ shift, propaneDonnees, mettreAJourPropane, prixPropane }) => {
-  // Simple direct update without parsing for now
-  const handleDebutChange = (e) => {
-    mettreAJourPropane('debut', e.target.value);
-  };
-
-  const handleFinChange = (e) => {
-    mettreAJourPropane('fin', e.target.value);
-  };
-
   // Calculate propane sales
   const gallons = (parseFloat(propaneDonnees?.fin) || 0) - (parseFloat(propaneDonnees?.debut) || 0);
   const ventes = gallons * prixPropane;
@@ -44,16 +35,17 @@ const PropaneManager = ({ shift, propaneDonnees, mettreAJourPropane, prixPropane
           </div>
         </div>
 
-        {/* Entrées Propane */}
+        {/* Entrées Propane - Using type="number" with step="0.001" like the original */}
         <div className="space-y-3">
           <div>
             <label className="text-xs font-bold text-white block mb-1">
               INDEX DÉBUT PROPANE
             </label>
             <input
-              type="text"
+              type="number"  // Keep as number like original
+              step="0.001"
               value={propaneDonnees?.debut || ''}
-              onChange={handleDebutChange}
+              onChange={(e) => mettreAJourPropane('debut', e.target.value)}
               className="w-full px-4 py-3 text-lg font-semibold border-2 border-white border-opacity-30 bg-white bg-opacity-10 text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 placeholder-white placeholder-opacity-50"
               placeholder="0.000"
             />
@@ -64,9 +56,10 @@ const PropaneManager = ({ shift, propaneDonnees, mettreAJourPropane, prixPropane
               INDEX FIN PROPANE
             </label>
             <input
-              type="text"
+              type="number"  // Keep as number like original
+              step="0.001"
               value={propaneDonnees?.fin || ''}
-              onChange={handleFinChange}
+              onChange={(e) => mettreAJourPropane('fin', e.target.value)}
               className="w-full px-4 py-3 text-lg font-semibold border-2 border-white border-opacity-30 bg-white bg-opacity-10 text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 placeholder-white placeholder-opacity-50"
               placeholder="0.000"
             />
