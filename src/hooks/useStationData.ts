@@ -36,26 +36,33 @@ export const useStationData = (date, shift) => {
     setVentesUSD(initialiserDonnees(date, 'usd'));
   }, [date]);
 
-  // Parser l'input gallons pour max 3 décimales
+  // Parser l'input gallons pour max 3 décimales - FIXED VERSION
   const parserInputGallons = (valeur) => {
-    if (!valeur) return '';
-    const valeurPropre = valeur.replace(/[^\d.]/g, '');
+    if (valeur === '' || valeur === null || valeur === undefined) return '';
+    
+    // Convert to string if it's a number
+    const valeurStr = String(valeur);
+    
+    // Remove non-numeric characters except decimal point and minus sign
+    const valeurPropre = valeurStr.replace(/[^\d.-]/g, '');
+    
+    // Handle empty result
+    if (valeurPropre === '' || valeurPropre === '-') return valeurPropre;
+    
     const parties = valeurPropre.split('.');
+    
+    // If there are multiple decimal points, keep only the first one
     if (parties.length > 2) {
       return parties[0] + '.' + parties.slice(1).join('');
     }
+    
+    // Limit to 3 decimal places
     if (parties[1] && parties[1].length > 3) {
       return parties[0] + '.' + parties[1].substring(0, 3);
     }
+    
     return valeurPropre;
   };
-
-  // Calculer gallons
-  const calculerGallons = useCallback((debut, fin) => {
-    const d = parseFloat(debut) || 0;
-    const f = parseFloat(fin) || 0;
-    return parseFloat((f - d).toFixed(3));
-  }, []);
 
   // Fonction pour compter les affectations de pompes pour un vendeur
   const getNombreAffectations = useCallback((nomVendeur) => {
@@ -70,9 +77,9 @@ export const useStationData = (date, shift) => {
     return count;
   }, [toutesDonnees]);
 
-  // Fonctions de mise à jour
+  // Fonctions de mise à jour - FIXED mettreAJourPropane
   const mettreAJourLecture = useCallback((pompe, pistolet, champ, valeur) => {
-    const valeurParse = champ === 'debut' || champ === 'fin' ? parserInputGallons(valeur) : valeur;
+    const valeurParse = parserInputGallons(valeur);
 
     setToutesDonnees(prev => ({
       ...prev,
@@ -90,6 +97,7 @@ export const useStationData = (date, shift) => {
   }, [shift]);
 
   const mettreAJourPropane = useCallback((champ, valeur) => {
+    // Use the same parser as other inputs
     const valeurParse = parserInputGallons(valeur);
     
     setPropaneDonnees(prev => ({
@@ -241,6 +249,13 @@ export const useStationData = (date, shift) => {
   const tauxUSD = 132;
   const prixPropane = 450;
 
+  // Calculer gallons
+  const calculerGallons = useCallback((debut, fin) => {
+    const d = parseFloat(debut) || 0;
+    const f = parseFloat(fin) || 0;
+    return parseFloat((f - d).toFixed(3));
+  }, []);
+
   // Calculer totaux courants
   const totaux = calculerTotaux(
     toutesDonnees[shift], 
@@ -299,7 +314,7 @@ export const useStationData = (date, shift) => {
 
   // Obtenir les lectures du shift courant
   const obtenirLecturesCourantes = useCallback(() => {
-    return toutesDonnees[shift] || initialiserDonnees(date, 'pompes');
+    return toutesDonnees[shift] || initialiserDonnees(date, 'pompes')[shift];
   }, [toutesDonnees, shift, date]);
 
   return {
