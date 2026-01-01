@@ -11,7 +11,7 @@ const StatsCards = ({ shift, totaux, tauxUSD }) => {
   // Remove apostrophes for parsing
   const roundedValue = parseFloat(totalAjusteArrondi.replace(/'/g, ''));
   
-  // Calculate adjustment (positive or negative)
+  // Calculate EXACT adjustment (with decimals)
   const adjustment = roundedValue - exactValue;
   const hasAdjustment = Math.abs(adjustment) > 0;
   
@@ -107,7 +107,7 @@ const StatsCards = ({ shift, totaux, tauxUSD }) => {
                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                       isRoundedUp ? 'bg-amber-500' : 'bg-blue-500'
                     }`}>
-                      {isRoundedUp ? `+${Math.abs(adjustment).toFixed(0)}` : `-${Math.abs(adjustment).toFixed(0)}`}
+                      {isRoundedUp ? `+${adjustment.toFixed(2)}` : `${adjustment.toFixed(2)}`}
                     </span>
                   )}
                 </div>
