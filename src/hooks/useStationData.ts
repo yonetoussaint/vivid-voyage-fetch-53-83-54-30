@@ -36,19 +36,6 @@ export const useStationData = (date, shift) => {
     setVentesUSD(initialiserDonnees(date, 'usd'));
   }, [date]);
 
-  // Fonction pour compter les affectations de pompes pour un vendeur
-  const getNombreAffectations = useCallback((nomVendeur) => {
-    let count = 0;
-    ['AM', 'PM'].forEach(shiftKey => {
-      Object.values(toutesDonnees[shiftKey] || {}).forEach(donneesPompe => {
-        if (donneesPompe._vendeur === nomVendeur) {
-          count++;
-        }
-      });
-    });
-    return count;
-  }, [toutesDonnees]);
-
   // Parser l'input gallons pour max 3 décimales
   const parserInputGallons = (valeur) => {
     if (!valeur) return '';
@@ -62,6 +49,26 @@ export const useStationData = (date, shift) => {
     }
     return valeurPropre;
   };
+
+  // Calculer gallons
+  const calculerGallons = useCallback((debut, fin) => {
+    const d = parseFloat(debut) || 0;
+    const f = parseFloat(fin) || 0;
+    return parseFloat((f - d).toFixed(3));
+  }, []);
+
+  // Fonction pour compter les affectations de pompes pour un vendeur
+  const getNombreAffectations = useCallback((nomVendeur) => {
+    let count = 0;
+    ['AM', 'PM'].forEach(shiftKey => {
+      Object.values(toutesDonnees[shiftKey] || {}).forEach(donneesPompe => {
+        if (donneesPompe._vendeur === nomVendeur) {
+          count++;
+        }
+      });
+    });
+    return count;
+  }, [toutesDonnees]);
 
   // Fonctions de mise à jour
   const mettreAJourLecture = useCallback((pompe, pistolet, champ, valeur) => {
@@ -234,12 +241,40 @@ export const useStationData = (date, shift) => {
   const tauxUSD = 132;
   const prixPropane = 450;
 
-  const totaux = calculerTotaux(toutesDonnees[shift], propaneDonnees[shift], ventesUSD[shift], prix, tauxUSD, prixPropane);
+  // Calculer totaux courants
+  const totaux = calculerTotaux(
+    toutesDonnees[shift], 
+    propaneDonnees[shift], 
+    ventesUSD[shift], 
+    prix, 
+    tauxUSD, 
+    prixPropane
+  );
+
+  // Calculer totaux vendeurs
   const totauxVendeurs = calculerTotauxVendeurs(vendeurs, toutesDonnees, tousDepots, prix);
   const totauxVendeursCourants = totauxVendeurs[shift];
-  const totauxAM = calculerTotaux(toutesDonnees.AM, propaneDonnees.AM, ventesUSD.AM, prix, tauxUSD, prixPropane);
-  const totauxPM = calculerTotaux(toutesDonnees.PM, propaneDonnees.PM, ventesUSD.PM, prix, tauxUSD, prixPropane);
 
+  // Calculer totaux par shift
+  const totauxAM = calculerTotaux(
+    toutesDonnees.AM, 
+    propaneDonnees.AM, 
+    ventesUSD.AM, 
+    prix, 
+    tauxUSD, 
+    prixPropane
+  );
+
+  const totauxPM = calculerTotaux(
+    toutesDonnees.PM, 
+    propaneDonnees.PM, 
+    ventesUSD.PM, 
+    prix, 
+    tauxUSD, 
+    prixPropane
+  );
+
+  // Calculer totaux quotidiens
   const totauxQuotidiens = {
     gallonsEssence: parseFloat((totauxAM.totalGallonsEssence + totauxPM.totalGallonsEssence).toFixed(3)),
     gallonsDiesel: parseFloat((totauxAM.totalGallonsDiesel + totauxPM.totalGallonsDiesel).toFixed(3)),
@@ -250,8 +285,22 @@ export const useStationData = (date, shift) => {
     totalUSD: parseFloat((totauxAM.totalUSD + totauxPM.totalUSD).toFixed(2)),
     totalHTGenUSD: parseFloat((totauxAM.totalHTGenUSD + totauxPM.totalHTGenUSD).toFixed(2)),
   };
-  totauxQuotidiens.totalBrut = parseFloat((totauxQuotidiens.ventesEssence + totauxQuotidiens.ventesDiesel + totauxQuotidiens.propaneVentes).toFixed(2));
-  totauxQuotidiens.totalAjuste = parseFloat((totauxQuotidiens.totalBrut - totauxQuotidiens.totalHTGenUSD).toFixed(2));
+  
+  totauxQuotidiens.totalBrut = parseFloat((
+    totauxQuotidiens.ventesEssence + 
+    totauxQuotidiens.ventesDiesel + 
+    totauxQuotidiens.propaneVentes
+  ).toFixed(2));
+  
+  totauxQuotidiens.totalAjuste = parseFloat((
+    totauxQuotidiens.totalBrut - 
+    totauxQuotidiens.totalHTGenUSD
+  ).toFixed(2));
+
+  // Obtenir les lectures du shift courant
+  const obtenirLecturesCourantes = useCallback(() => {
+    return toutesDonnees[shift] || initialiserDonnees(date, 'pompes');
+  }, [toutesDonnees, shift, date]);
 
   return {
     // États
@@ -285,6 +334,8 @@ export const useStationData = (date, shift) => {
     mettreAJourUSD,
     supprimerUSD,
     getNombreAffectations,
+    calculerGallons,
+    obtenirLecturesCourantes,
     
     // Calculs
     totaux,
@@ -292,6 +343,11 @@ export const useStationData = (date, shift) => {
     totauxVendeursCourants,
     totauxAM,
     totauxPM,
-    totauxQuotidiens
+    totauxQuotidiens,
+    
+    // Constantes
+    prix,
+    tauxUSD,
+    prixPropane
   };
 };
