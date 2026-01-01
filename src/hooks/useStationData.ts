@@ -305,12 +305,13 @@ export const useStationData = (date, shift) => {
     totalHTGenUSD: parseFloat((totauxAM.totalHTGenUSD + totauxPM.totalHTGenUSD).toFixed(2)),
   };
   
+  // Total brut WITHOUT propane
   totauxQuotidiens.totalBrut = parseFloat((
     totauxQuotidiens.ventesEssence + 
-    totauxQuotidiens.ventesDiesel + 
-    totauxQuotidiens.propaneVentes
+    totauxQuotidiens.ventesDiesel 
   ).toFixed(2));
   
+  // Total ajusté WITHOUT propane
   totauxQuotidiens.totalAjuste = parseFloat((
     totauxQuotidiens.totalBrut - 
     totauxQuotidiens.totalHTGenUSD
