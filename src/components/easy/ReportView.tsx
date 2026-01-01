@@ -73,11 +73,11 @@ const ReportView = ({
         </div>
       </div>
 
-      {/* Résumé Propane Quotidien */}
+      {/* Résumé Propane Quotidien SEPARATE */}
       <div className="bg-gradient-to-br from-red-500 to-orange-600 text-white rounded-xl p-5 shadow-xl">
         <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
           <Flame size={20} />
-          Propane - Total Quotidien
+          Propane - Total Quotidien (Séparé)
         </h3>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
@@ -94,7 +94,7 @@ const ReportView = ({
           </div>
           <div className="bg-white bg-opacity-20 rounded-lg p-3">
             <div className="flex justify-between items-center">
-              <span className="font-bold">Total Gallons:</span>
+              <span className="font-bold">Total Gallons Propane:</span>
               <span className="text-xl font-bold">{totauxQuotidiens.propaneGallons.toFixed(3)}</span>
             </div>
             <div className="flex justify-between items-center mt-2 pt-2 border-t border-white border-opacity-30">
@@ -180,7 +180,7 @@ const ReportView = ({
         </div>
       </div>
 
-      {/* Total Final Ajusté avec Propane */}
+      {/* Total Final Ajusté SANS Propane */}
       <div className="bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-xl p-5 shadow-xl">
         <div className="space-y-2">
           <div className="flex justify-between items-center">
@@ -196,10 +196,6 @@ const ReportView = ({
               <span className="opacity-90">• Diesel</span>
               <span>{formaterArgent(totauxQuotidiens.ventesDiesel)} HTG</span>
             </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="opacity-90">• Propane</span>
-              <span>{formaterArgent(totauxQuotidiens.propaneVentes)} HTG</span>
-            </div>
           </div>
           <div className="flex justify-between items-center pt-2 border-t border-white border-opacity-30">
             <span className="text-sm opacity-90">Moins: USD converti</span>
@@ -208,6 +204,32 @@ const ReportView = ({
           <div className="flex justify-between items-center pt-2">
             <span className="text-lg font-bold">TOTAL FINAL AJUSTÉ</span>
             <span className="text-2xl font-bold">{formaterArgent(totauxQuotidiens.totalAjuste)} HTG</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Propane Report Card - SEPARATE */}
+      <div className="bg-gradient-to-br from-red-500 to-orange-600 text-white rounded-xl p-5 shadow-xl">
+        <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
+          <Flame size={20} />
+          Rapport Propane Quotidien (Séparé)
+        </h3>
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white bg-opacity-20 rounded-lg p-3">
+              <p className="text-xs opacity-90">Total Gallons</p>
+              <p className="text-xl font-bold">{totauxQuotidiens.propaneGallons.toFixed(3)}</p>
+            </div>
+            <div className="bg-white bg-opacity-20 rounded-lg p-3">
+              <p className="text-xs opacity-90">Prix/Gallon</p>
+              <p className="text-xl font-bold">{prixPropane} HTG</p>
+            </div>
+          </div>
+          <div className="bg-white bg-opacity-20 rounded-lg p-3">
+            <div className="flex justify-between items-center">
+              <span className="font-bold">Total Ventes Propane:</span>
+              <span className="text-2xl font-bold">{formaterArgent(totauxQuotidiens.propaneVentes)} HTG</span>
+            </div>
           </div>
         </div>
       </div>
