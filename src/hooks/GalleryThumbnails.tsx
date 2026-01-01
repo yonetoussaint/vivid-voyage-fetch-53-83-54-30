@@ -16,7 +16,7 @@ const GalleryThumbnails: React.FC<GalleryThumbnailsProps> = ({
   const thumbnailRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [containerWidth, setContainerWidth] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [isScrolling, setIsScrolling] = useState(false);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Observe container width for responsive behavior
   useEffect(() => {
@@ -45,27 +45,16 @@ const GalleryThumbnails: React.FC<GalleryThumbnailsProps> = ({
     };
   }, [isInitialized]);
 
-  // Calculate thumbnail width based on container width
+  // Calculate thumbnail width - fixed value for consistent snapping
   const getThumbnailWidth = useCallback(() => {
-    if (!containerWidth || containerWidth < 300) return '80px'; // Default fallback for small screens
-    
-    // Show approximately 5.5 thumbnails in view
-    const thumbnailCount = 5.5;
-    const gap = 6; // 1.5rem gap = 6px
-    
-    // Calculate available width after accounting for gaps
-    const totalGapWidth = gap * (Math.ceil(thumbnailCount) - 1);
-    const availableWidth = containerWidth - totalGapWidth;
-    
-    // Calculate width for each thumbnail
-    const thumbnailWidth = availableWidth / thumbnailCount;
-    
-    return `${Math.max(70, thumbnailWidth)}px`; // Minimum 70px
-  }, [containerWidth]);
+    // Fixed width for consistent snapping behavior
+    // This should match the CSS width in the container
+    return '90px';
+  }, []);
 
-  // Snap to selected thumbnail
-  const snapToThumbnail = useCallback((index: number) => {
-    if (!scrollContainerRef.current || !thumbnailRefs.current[index] || isScrolling) {
+  // Snap selected thumbnail to LEFT SIDE
+  const snapToThumbnail = useCallback((index: number, immediate = false) => {
+    if (!scrollContainerRef.current || !thumbnailRefs.current[index]) {
       return;
     }
 
@@ -74,47 +63,63 @@ const GalleryThumbnails: React.FC<GalleryThumbnailsProps> = ({
     
     if (!selectedThumbnail) return;
 
-    setIsScrolling(true);
+    // Clear any pending timeout
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
 
     requestAnimationFrame(() => {
       const containerRect = container.getBoundingClientRect();
       const thumbnailRect = selectedThumbnail.getBoundingClientRect();
       const containerScrollLeft = container.scrollLeft;
       
-      // Calculate scroll position to center the selected thumbnail
-      const thumbnailLeft = thumbnailRect.left - containerRect.left + containerScrollLeft;
-      const thumbnailCenter = thumbnailLeft - (containerRect.width - thumbnailRect.width) / 2;
+      // Calculate the position of the thumbnail relative to container
+      const thumbnailLeftRelative = thumbnailRect.left - containerRect.left + containerScrollLeft;
+      
+      // For left-side snapping, we want the thumbnail's left edge aligned with container's left edge
+      // But we'll add a small offset (16px) for visual padding
+      const padding = 16;
+      let targetScroll = thumbnailLeftRelative - padding;
       
       // Calculate max scroll
       const maxScroll = container.scrollWidth - container.clientWidth;
-      let targetScroll = Math.max(0, Math.min(thumbnailCenter, maxScroll));
       
-      // Adjust for first and last thumbnails
+      // Clamp the target scroll within bounds
+      targetScroll = Math.max(0, Math.min(targetScroll, maxScroll));
+      
+      // Adjust for edge cases
       if (index === 0) {
+        // First thumbnail: align to start
         targetScroll = 0;
-      } else if (index === images.length - 1) {
-        targetScroll = maxScroll;
+      } else if (index === images.length - 1 && targetScroll < maxScroll - 50) {
+        // Last thumbnail: ensure it's fully visible on the right if possible
+        targetScroll = Math.min(targetScroll, maxScroll);
       }
       
-      // Only scroll if necessary (more than 10px difference)
-      if (Math.abs(container.scrollLeft - targetScroll) > 10) {
+      // Only scroll if we're not already close to the target
+      const currentScroll = container.scrollLeft;
+      const scrollDiff = Math.abs(currentScroll - targetScroll);
+      
+      if (scrollDiff > 5) { // Only scroll if difference is more than 5px
         container.scrollTo({
           left: targetScroll,
-          behavior: 'smooth'
+          behavior: immediate ? 'auto' : 'smooth'
         });
       }
 
-      // Reset scrolling flag after animation
-      setTimeout(() => {
-        setIsScrolling(false);
+      // Reset any active states
+      scrollTimeoutRef.current = setTimeout(() => {
+        // Optional: Add any cleanup logic here
       }, 300);
     });
-  }, [images.length, isScrolling]);
+  }, [images.length]);
 
   // Snap when currentIndex changes
   useEffect(() => {
     if (isInitialized && images.length > 0) {
-      snapToThumbnail(currentIndex);
+      // Use immediate snap on first load, smooth for subsequent changes
+      const isInitialLoad = currentIndex === 0;
+      snapToThumbnail(currentIndex, isInitialLoad);
     }
   }, [currentIndex, isInitialized, images.length, snapToThumbnail]);
 
@@ -123,49 +128,56 @@ const GalleryThumbnails: React.FC<GalleryThumbnailsProps> = ({
     thumbnailRefs.current = thumbnailRefs.current.slice(0, images.length);
   }, [images.length]);
 
-  // Handle thumbnail click with immediate scroll
+  // Handle thumbnail click
   const handleThumbnailClick = useCallback((index: number) => {
+    // Update the active index first
     onThumbnailClick(index);
-    snapToThumbnail(index);
+    
+    // Then snap to position
+    setTimeout(() => {
+      snapToThumbnail(index, false);
+    }, 10);
   }, [onThumbnailClick, snapToThumbnail]);
 
-  // Handle manual scroll end to update snapping if needed
-  const handleScroll = useCallback(() => {
-    if (isScrolling) return;
-    
-    // Optional: You can add logic here to snap to nearest thumbnail on scroll end
-  }, [isScrolling]);
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="relative w-full overflow-hidden bg-white">
       <div 
         ref={scrollContainerRef}
-        className="flex overflow-x-auto scrollbar-hide py-2 px-4"
+        className="flex overflow-x-auto scrollbar-hide py-3 px-4"
         style={{
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
           scrollPadding: '0 16px',
         }}
-        onScroll={handleScroll}
       >
-        <div className="flex gap-3 flex-nowrap">
+        <div className="flex gap-3 flex-nowrap items-center">
           {images.map((src, index) => (
             <div
               key={index}
               ref={el => {
                 thumbnailRefs.current[index] = el;
               }}
-              className="flex-shrink-0 transition-all duration-200"
+              className="flex-shrink-0 transition-all duration-150"
               style={{ 
                 width: getThumbnailWidth(),
+                scrollSnapAlign: 'start',
               }}
               data-index={index}
             >
               <button
-                className={`relative overflow-hidden border aspect-square w-full rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+                className={`relative overflow-hidden border aspect-square w-full rounded-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 ${
                   currentIndex === index 
-                    ? "border-2 border-primary shadow-md" 
-                    : "border-gray-200 hover:border-gray-300 hover:shadow-sm"
+                    ? "border-2 border-primary shadow-sm scale-[1.02]" 
+                    : "border-gray-200 hover:border-gray-300"
                 }`}
                 onClick={() => handleThumbnailClick(index)}
                 aria-label={`View image ${index + 1}`}
@@ -182,16 +194,9 @@ const GalleryThumbnails: React.FC<GalleryThumbnailsProps> = ({
                   }}
                 />
                 
-                {/* Selected indicator overlay */}
+                {/* Selected indicator */}
                 {currentIndex === index && (
-                  <div className="absolute inset-0 bg-primary/10 pointer-events-none rounded-lg" />
-                )}
-                
-                {/* Index indicator for selected thumbnail */}
-                {currentIndex === index && (
-                  <div className="absolute top-1 right-1 bg-primary text-white text-xs font-medium w-5 h-5 flex items-center justify-center rounded-full">
-                    {index + 1}
-                  </div>
+                  <div className="absolute inset-0 border-2 border-primary pointer-events-none rounded-md" />
                 )}
               </button>
             </div>
@@ -199,48 +204,23 @@ const GalleryThumbnails: React.FC<GalleryThumbnailsProps> = ({
         </div>
       </div>
 
-      {/* Scroll indicators - only show when there's more content to scroll */}
-      {isInitialized && containerWidth > 0 && (
+      {/* Simple scroll indicators */}
+      {containerWidth > 0 && images.length > 5 && (
         <>
-          {/* Left scroll indicator */}
           <div 
-            className={`absolute left-0 top-0 bottom-0 w-8 flex items-center justify-center bg-gradient-to-r from-white via-white to-transparent pointer-events-none transition-opacity duration-300 ${
-              scrollContainerRef.current?.scrollLeft > 20 ? 'opacity-100' : 'opacity-0'
+            className={`absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-white to-transparent pointer-events-none transition-opacity duration-200 ${
+              scrollContainerRef.current?.scrollLeft > 10 ? 'opacity-100' : 'opacity-0'
             }`}
-          >
-            <div className="w-2 h-2 border-t-2 border-r-2 border-gray-500 transform -rotate-135" />
-          </div>
-          
-          {/* Right scroll indicator */}
+          />
           <div 
-            className={`absolute right-0 top-0 bottom-0 w-8 flex items-center justify-center bg-gradient-to-l from-white via-white to-transparent pointer-events-none transition-opacity duration-300 ${
+            className={`absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white to-transparent pointer-events-none transition-opacity duration-200 ${
               scrollContainerRef.current && 
-              scrollContainerRef.current.scrollWidth - scrollContainerRef.current.scrollLeft - scrollContainerRef.current.clientWidth > 20 
+              scrollContainerRef.current.scrollWidth - scrollContainerRef.current.scrollLeft - scrollContainerRef.current.clientWidth > 10 
                 ? 'opacity-100' 
                 : 'opacity-0'
             }`}
-          >
-            <div className="w-2 h-2 border-t-2 border-r-2 border-gray-500 transform rotate-45" />
-          </div>
+          />
         </>
-      )}
-
-      {/* Progress indicator */}
-      {images.length > 1 && (
-        <div className="flex justify-center items-center gap-1 py-2">
-          {images.map((_, index) => (
-            <button
-              key={index}
-              className={`w-1.5 h-1.5 rounded-full transition-all duration-200 focus:outline-none ${
-                currentIndex === index 
-                  ? "bg-primary w-4" 
-                  : "bg-gray-300 hover:bg-gray-400"
-              }`}
-              onClick={() => handleThumbnailClick(index)}
-              aria-label={`Go to image ${index + 1}`}
-            />
-          ))}
-        </div>
       )}
 
       <style jsx>{`
@@ -251,18 +231,12 @@ const GalleryThumbnails: React.FC<GalleryThumbnailsProps> = ({
         .scrollbar-hide {
           -ms-overflow-style: none;
           scrollbar-width: none;
-          -webkit-overflow-scrolling: touch;
         }
         
-        /* Smooth scrolling */
+        /* Enable CSS snapping for better mobile experience */
         .scrollbar-hide {
-          scroll-behavior: smooth;
+          scroll-snap-type: x mandatory;
           -webkit-overflow-scrolling: touch;
-        }
-        
-        /* Ensure buttons are properly styled */
-        button {
-          -webkit-tap-highlight-color: transparent;
         }
       `}</style>
     </div>
