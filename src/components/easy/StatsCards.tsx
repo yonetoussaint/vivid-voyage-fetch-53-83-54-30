@@ -95,21 +95,21 @@ const StatsCards = ({ shift, totaux, tauxUSD }) => {
               </div>
             </div>
 
-            <div className="space-y-1 relative z-10">
-              {/* Main rounded amount */}
-              <div className="flex items-end justify-between">
-                <div>
+            <div className="relative z-10">
+              {/* Main rounded amount with HTG */}
+              <div className="mb-3">
+                <div className="flex items-end justify-between">
                   <p className="text-2xl sm:text-3xl font-bold">{formaterCaisse(totaux.totalAjuste)}</p>
-                  <p className="text-xs opacity-80 mt-1">Valeur arrondie</p>
+                  <span className="text-xl font-bold ml-2">HTG</span>
                 </div>
-                <span className="text-lg font-bold mb-1">HTG</span>
+                <p className="text-xs opacity-80 mt-1">Valeur arrondie</p>
               </div>
 
               {/* Exact amount and adjustment */}
-              <div className="flex items-center justify-between pt-2 border-t border-white border-opacity-20">
+              <div className="flex items-center justify-between pt-3 border-t border-white border-opacity-20">
                 <div className="flex items-center gap-2">
                   <p className="text-xs opacity-80">
-                    Valeur exacte: {formaterArgent(totaux.totalAjuste)} HTG
+                    Exact: {formaterArgent(totaux.totalAjuste)} HTG
                   </p>
                   {hasAdjustment && (
                     <span className={`text-xs px-2 py-0.5 rounded-full ${
@@ -118,12 +118,6 @@ const StatsCards = ({ shift, totaux, tauxUSD }) => {
                       {isRoundedUp ? `+${adjustment.toFixed(2)}` : `${adjustment.toFixed(2)}`}
                     </span>
                   )}
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="text-[10px] opacity-70">Se termine par</span>
-                  <span className="text-xs font-bold bg-white bg-opacity-20 px-2 py-0.5 rounded">
-                    {roundedValue % 10 === 0 ? '0' : '5'}
-                  </span>
                 </div>
               </div>
             </div>
