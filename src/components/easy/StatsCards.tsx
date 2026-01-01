@@ -1,10 +1,19 @@
 import React from 'react';
-import { DollarSign, TrendingUp, TrendingDown, ArrowUpRight } from 'lucide-react';
-import { formaterArgent, formaterGallons, formaterCaisse } from '@/utils/formatters';
+import { DollarSign, TrendingUp, TrendingDown, ArrowUpRight, Calculator } from 'lucide-react';
+import { formaterArgent, formaterGallons, formaterCaisse, formaterCaisseHTG } from '@/utils/formatters';
 
 const StatsCards = ({ shift, totaux, tauxUSD }) => {
-  // Calculate rounded adjusted total
+  // Calculate rounded adjusted total (to nearest 5)
   const totalAjusteArrondi = formaterCaisse(totaux.totalAjuste);
+  
+  // Calculate exact value for comparison
+  const exactValue = parseFloat(totaux.totalAjuste);
+  const roundedValue = parseFloat(totalAjusteArrondi);
+  const difference = roundedValue - exactValue;
+  
+  // Determine if rounded up or down
+  const isRoundedUp = difference > 0;
+  const isRoundedDown = difference < 0;
   
   return (
     <>
@@ -35,7 +44,7 @@ const StatsCards = ({ shift, totaux, tauxUSD }) => {
             <div className="w-3 h-3 rounded-full bg-white bg-opacity-80"></div>
             <p className="text-sm font-bold">TOTAL VENTES ({shift})</p>
           </div>
-          <DollarSign size={18} className="opacity-80" />
+          <Calculator size={18} className="opacity-80" />
         </div>
         
         <div className="space-y-2">
@@ -71,25 +80,40 @@ const StatsCards = ({ shift, totaux, tauxUSD }) => {
             <div className="flex items-center justify-between mb-1 relative z-10">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
-                  <ArrowUpRight size={16} className="text-white" />
+                  <DollarSign size={16} className="text-white" />
                 </div>
                 <div>
                   <p className="text-sm font-bold">TOTAL AJUSTÉ (CAISSE)</p>
-                  <p className="text-[10px] opacity-80">Arrondi à la dizaine</p>
+                  <p className="text-[10px] opacity-80">Arrondi à 0 ou 5</p>
                 </div>
               </div>
               <div className="bg-white bg-opacity-25 px-3 py-1 rounded-full">
                 <p className="text-xs font-bold">FINAL</p>
               </div>
             </div>
+            
             <div className="flex items-end justify-between relative z-10">
               <div>
-                <p className="text-xl sm:text-2xl font-bold">{totalAjusteArrondi}</p>
-                <p className="text-[10px] opacity-80 mt-1">
-                  Exact: {formaterArgent(totaux.totalAjuste)} HTG
-                </p>
+                <p className="text-2xl sm:text-3xl font-bold">{formaterCaisseHTG(totaux.totalAjuste)}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-[10px] opacity-80">
+                    Exact: {formaterArgent(totaux.totalAjuste)} HTG
+                  </p>
+                  {difference !== 0 && (
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                      isRoundedUp ? 'bg-amber-500' : 'bg-blue-500'
+                    }`}>
+                      {isRoundedUp ? `+${difference.toFixed(0)}` : `${difference.toFixed(0)}`}
+                    </span>
+                  )}
+                </div>
               </div>
-              <span className="text-lg font-bold">HTG</span>
+              <div className="flex flex-col items-end">
+                <span className="text-lg font-bold">HTG</span>
+                <span className="text-[10px] opacity-70 mt-1">
+                  {roundedValue % 10 === 0 ? '0' : '5'}
+                </span>
+              </div>
             </div>
           </div>
         </div>
