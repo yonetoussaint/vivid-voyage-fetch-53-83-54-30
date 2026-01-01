@@ -1,35 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Flame } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 
 const PropaneManager = ({ shift, propaneDonnees, mettreAJourPropane, prixPropane }) => {
-  // Local state for immediate feedback
-  const [localDebut, setLocalDebut] = useState(propaneDonnees?.debut || '');
-  const [localFin, setLocalFin] = useState(propaneDonnees?.fin || '');
-
-  // Sync with parent state when it changes
-  useEffect(() => {
-    setLocalDebut(propaneDonnees?.debut || '');
-    setLocalFin(propaneDonnees?.fin || '');
-  }, [propaneDonnees]);
-
-  // Handle input changes with immediate feedback
+  // Simple direct update without parsing for now
   const handleDebutChange = (e) => {
-    const value = e.target.value;
-    setLocalDebut(value);
-    // Update parent state after a short delay
-    setTimeout(() => mettreAJourPropane('debut', value), 0);
+    mettreAJourPropane('debut', e.target.value);
   };
 
   const handleFinChange = (e) => {
-    const value = e.target.value;
-    setLocalFin(value);
-    // Update parent state after a short delay
-    setTimeout(() => mettreAJourPropane('fin', value), 0);
+    mettreAJourPropane('fin', e.target.value);
   };
 
   // Calculate propane sales
-  const gallons = (parseFloat(localFin) || 0) - (parseFloat(localDebut) || 0);
+  const gallons = (parseFloat(propaneDonnees?.fin) || 0) - (parseFloat(propaneDonnees?.debut) || 0);
   const ventes = gallons * prixPropane;
 
   return (
@@ -68,7 +52,7 @@ const PropaneManager = ({ shift, propaneDonnees, mettreAJourPropane, prixPropane
             </label>
             <input
               type="text"
-              value={localDebut}
+              value={propaneDonnees?.debut || ''}
               onChange={handleDebutChange}
               className="w-full px-4 py-3 text-lg font-semibold border-2 border-white border-opacity-30 bg-white bg-opacity-10 text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 placeholder-white placeholder-opacity-50"
               placeholder="0.000"
@@ -81,14 +65,14 @@ const PropaneManager = ({ shift, propaneDonnees, mettreAJourPropane, prixPropane
             </label>
             <input
               type="text"
-              value={localFin}
+              value={propaneDonnees?.fin || ''}
               onChange={handleFinChange}
               className="w-full px-4 py-3 text-lg font-semibold border-2 border-white border-opacity-30 bg-white bg-opacity-10 text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 placeholder-white placeholder-opacity-50"
               placeholder="0.000"
             />
           </div>
 
-          {(localDebut || localFin) && (
+          {(propaneDonnees?.debut || propaneDonnees?.fin) && (
             <div className="bg-white bg-opacity-20 rounded-lg p-3 border-2 border-white border-opacity-30">
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
