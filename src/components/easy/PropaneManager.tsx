@@ -3,7 +3,49 @@ import { Flame } from 'lucide-react';
 import { formaterArgent } from '@/utils/formatters';
 
 const PropaneManager = ({ shift, propaneDonnees, mettreAJourPropane, prixPropane }) => {
-  const gallons = (parseFloat(propaneDonnees?.fin) || 0) - (parseFloat(propaneDonnees?.debut) || 0);
+  // Create local state for parsing inputs
+  const [localDebut, setLocalDebut] = React.useState(propaneDonnees?.debut || '');
+  const [localFin, setLocalFin] = React.useState(propaneDonnees?.fin || '');
+
+  // Sync with parent state when it changes
+  React.useEffect(() => {
+    setLocalDebut(propaneDonnees?.debut || '');
+    setLocalFin(propaneDonnees?.fin || '');
+  }, [propaneDonnees]);
+
+  // Parse input for propane (allow 3 decimals)
+  const parsePropaneInput = (value) => {
+    if (!value) return '';
+    // Remove non-numeric characters except decimal point
+    const cleanValue = value.replace(/[^\d.]/g, '');
+    // Allow only one decimal point
+    const parts = cleanValue.split('.');
+    if (parts.length > 2) {
+      return parts[0] + '.' + parts.slice(1).join('');
+    }
+    // Limit to 3 decimal places
+    if (parts[1] && parts[1].length > 3) {
+      return parts[0] + '.' + parts[1].substring(0, 3);
+    }
+    return cleanValue;
+  };
+
+  // Handle debut change
+  const handleDebutChange = (e) => {
+    const parsedValue = parsePropaneInput(e.target.value);
+    setLocalDebut(parsedValue);
+    mettreAJourPropane('debut', parsedValue);
+  };
+
+  // Handle fin change
+  const handleFinChange = (e) => {
+    const parsedValue = parsePropaneInput(e.target.value);
+    setLocalFin(parsedValue);
+    mettreAJourPropane('fin', parsedValue);
+  };
+
+  // Calculate propane sales
+  const gallons = (parseFloat(localFin) || 0) - (parseFloat(localDebut) || 0);
   const ventes = gallons * prixPropane;
 
   return (
@@ -41,10 +83,10 @@ const PropaneManager = ({ shift, propaneDonnees, mettreAJourPropane, prixPropane
               INDEX DÉBUT PROPANE
             </label>
             <input
-              type="number"
-              step="0.001"
-              value={propaneDonnees?.debut || ''}
-              onChange={(e) => mettreAJourPropane('debut', e.target.value)}
+              type="text"
+              inputMode="decimal"
+              value={localDebut}
+              onChange={handleDebutChange}
               className="w-full px-4 py-3 text-lg font-semibold border-2 border-white border-opacity-30 bg-white bg-opacity-10 text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 placeholder-white placeholder-opacity-50"
               placeholder="0.000"
             />
@@ -55,16 +97,16 @@ const PropaneManager = ({ shift, propaneDonnees, mettreAJourPropane, prixPropane
               INDEX FIN PROPANE
             </label>
             <input
-              type="number"
-              step="0.001"
-              value={propaneDonnees?.fin || ''}
-              onChange={(e) => mettreAJourPropane('fin', e.target.value)}
+              type="text"
+              inputMode="decimal"
+              value={localFin}
+              onChange={handleFinChange}
               className="w-full px-4 py-3 text-lg font-semibold border-2 border-white border-opacity-30 bg-white bg-opacity-10 text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 placeholder-white placeholder-opacity-50"
               placeholder="0.000"
             />
           </div>
 
-          {(propaneDonnees?.debut || propaneDonnees?.fin) && (
+          {(localDebut || localFin) && (
             <div className="bg-white bg-opacity-20 rounded-lg p-3 border-2 border-white border-opacity-30">
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
