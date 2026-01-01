@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calculator, FileText, Trash2, Fuel, User, DollarSign, Users, Plus, Minus, Globe } from 'lucide-react';
+import { Calculator, FileText, Trash2, Fuel, User, DollarSign, Users, Plus, Minus, Globe, Flame } from 'lucide-react';
 
 // Composant de Gestion des Vendeurs (réutilisable)
 const GestionVendeurs = ({ vendeurs, nouveauVendeur, setNouveauVendeur, ajouterVendeur, supprimerVendeur, getNombreAffectations }) => {
@@ -11,7 +11,7 @@ const GestionVendeurs = ({ vendeurs, nouveauVendeur, setNouveauVendeur, ajouterV
           <Users size={22} />
           <h2 className="text-lg font-bold">Gérer les Vendeurs</h2>
         </div>
-        
+
         {/* Ajouter Vendeur */}
         <div className="mb-6">
           <h3 className="text-md font-bold mb-3">Ajouter un Vendeur</h3>
@@ -41,7 +41,7 @@ const GestionVendeurs = ({ vendeurs, nouveauVendeur, setNouveauVendeur, ajouterV
               Total: {vendeurs.length}
             </div>
           </div>
-          
+
           {vendeurs.length > 0 ? (
             <div className="space-y-3">
               {vendeurs.map((vendeur, index) => (
@@ -103,7 +103,7 @@ const EnTetePompe = ({ pompe, shift, totalPompe, numeroPompe, getCouleurPompe, f
           <p className="text-2xl font-bold">{formaterArgent(totalPompe?.ventesTotales || 0)} HTG</p>
         </div>
       </div>
-      
+
       {/* Résumé Pompe */}
       <div className="grid grid-cols-2 gap-3 mt-3">
         <div className="bg-white bg-opacity-20 rounded-lg p-3">
@@ -119,7 +119,7 @@ const EnTetePompe = ({ pompe, shift, totalPompe, numeroPompe, getCouleurPompe, f
           </div>
         )}
       </div>
-      
+
       {enfants}
     </div>
   );
@@ -190,7 +190,96 @@ const SaisiePistolet = ({ pistolet, donnees, pompe, mettreAJourLecture, getCoule
   );
 };
 
-// Composant Section USD (Nouveau)
+// Composant Saisie Propane (Nouveau)
+const SaisiePropane = ({ shift, propaneDonnees, mettreAJourPropane, formaterArgent, prixPropane }) => {
+  const gallons = (parseFloat(propaneDonnees.fin) || 0) - (parseFloat(propaneDonnees.debut) || 0);
+  const ventes = gallons * prixPropane;
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-gradient-to-br from-red-500 to-orange-600 text-white rounded-xl p-4 shadow-xl">
+        <div className="flex items-center gap-2 mb-4">
+          <Flame size={22} />
+          <h3 className="text-lg font-bold">Propane - Shift {shift}</h3>
+        </div>
+
+        {/* Résumé Propane */}
+        <div className="bg-white bg-opacity-20 rounded-lg p-3 mb-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-xs opacity-90">Prix/Gallon</p>
+              <p className="text-xl font-bold">{prixPropane} HTG</p>
+            </div>
+            <div>
+              <p className="text-xs opacity-90">Total Ventes</p>
+              <p className="text-xl font-bold">{formaterArgent(ventes)} HTG</p>
+            </div>
+          </div>
+          <div className="mt-2 pt-2 border-t border-white border-opacity-30">
+            <div className="flex justify-between items-center">
+              <span className="text-sm opacity-90">Gallons Vendus</span>
+              <span className="text-lg font-bold">{gallons.toFixed(3)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Entrées Propane */}
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs font-bold text-white block mb-1">
+              INDEX DÉBUT PROPANE
+            </label>
+            <input
+              type="number"
+              step="0.001"
+              value={propaneDonnees.debut}
+              onChange={(e) => mettreAJourPropane('debut', e.target.value)}
+              className="w-full px-4 py-3 text-lg font-semibold border-2 border-white border-opacity-30 bg-white bg-opacity-10 text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 placeholder-white placeholder-opacity-50"
+              placeholder="0.000"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-bold text-white block mb-1">
+              INDEX FIN PROPANE
+            </label>
+            <input
+              type="number"
+              step="0.001"
+              value={propaneDonnees.fin}
+              onChange={(e) => mettreAJourPropane('fin', e.target.value)}
+              className="w-full px-4 py-3 text-lg font-semibold border-2 border-white border-opacity-30 bg-white bg-opacity-10 text-white rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 placeholder-white placeholder-opacity-50"
+              placeholder="0.000"
+            />
+          </div>
+
+          {(propaneDonnees.debut || propaneDonnees.fin) && (
+            <div className="bg-white bg-opacity-20 rounded-lg p-3 border-2 border-white border-opacity-30">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-semibold">Gallons Propane</span>
+                  <span className="text-xl font-bold">{gallons.toFixed(3)}</span>
+                </div>
+                <div className="flex justify-between items-center pt-2 border-t border-white border-opacity-30">
+                  <span className="text-sm font-semibold">Ventes Total Propane</span>
+                  <span className="text-xl font-bold">{formaterArgent(ventes)} HTG</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Note d'information */}
+        <div className="mt-4 p-2 bg-white bg-opacity-10 rounded-lg text-xs">
+          <p className="font-bold mb-1">Note:</p>
+          <p>Les ventes de propane sont additionnées aux totaux finaux.</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Composant Section USD
 const SectionUSD = ({ shift, usdVentes, ajouterUSD, mettreAJourUSD, supprimerUSD, tauxUSD, formaterArgent }) => {
   const totalUSD = usdVentes[shift]?.reduce((total, usd) => total + (parseFloat(usd) || 0), 0) || 0;
   const totalHTG = totalUSD * tauxUSD;
@@ -290,7 +379,7 @@ const DepotsVendeurs = ({ shift, vendeurs, totauxVendeurs, tousDepots, mettreAJo
             <h3 className="text-lg font-bold">Dépôts - Shift {shift}</h3>
           </div>
         </div>
-        
+
         <div className="space-y-4">
           {vendeurs.length === 0 ? (
             <div className="text-center py-6 text-white text-opacity-70">
@@ -469,12 +558,12 @@ const DetailsPompesShift = ({ shift, pompes, toutesDonnees, calculerTotalPompe, 
                 </div>
                 <span className="text-xs bg-white bg-opacity-20 px-2 py-1 rounded-full self-start sm:self-center">{shift}</span>
               </div>
-              
+
               <div className="space-y-2">
                 {donneesPompe && Object.entries(donneesPompe).filter(([key]) => key !== '_vendeur').map(([pistolet, donnees]) => {
                   const gallons = calculerGallons(donnees.debut, donnees.fin);
                   if (gallons === 0 && !donnees.debut && !donnees.fin) return null;
-                  
+
                   return (
                     <div key={pistolet} className="flex justify-between items-center text-sm">
                       <div className="flex items-center gap-2 min-w-0">
@@ -492,7 +581,7 @@ const DetailsPompesShift = ({ shift, pompes, toutesDonnees, calculerTotalPompe, 
                     </div>
                   );
                 })}
-                
+
                 {/* Total Pompe */}
                 {totalPompe && (totalPompe.totalGallons !== 0 || Object.values(donneesPompe).some(donnees => donnees && donnees.debut || donnees.fin)) && (
                   <div className="pt-2 mt-2 border-t border-white border-opacity-30">
@@ -529,7 +618,7 @@ const ResumeFinancierVendeurs = ({ shift, vendeurs, totauxVendeurs, formaterArge
         {vendeurs.map(vendeur => {
           const donneesVendeur = donneesShift[vendeur];
           if (!donneesVendeur || donneesVendeur.ventesTotales === 0) return null;
-          
+
           return (
             <div key={`${shift}-${vendeur}`} className="bg-white bg-opacity-15 rounded-lg p-3 space-y-2">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -547,7 +636,7 @@ const ResumeFinancierVendeurs = ({ shift, vendeurs, totauxVendeurs, formaterArge
                   Espèces: {formaterArgent(donneesVendeur.especesAttendues)}
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                 <div className="bg-white bg-opacity-10 rounded-lg p-2">
                   <p className="opacity-90 text-xs">Ventes Total</p>
@@ -558,7 +647,7 @@ const ResumeFinancierVendeurs = ({ shift, vendeurs, totauxVendeurs, formaterArge
                   <p className="font-bold text-base">{formaterArgent(donneesVendeur.depot)} HTG</p>
                 </div>
               </div>
-              
+
               {donneesVendeur.depots && donneesVendeur.depots.length > 0 && (
                 <div className="pt-2 border-t border-white border-opacity-30">
                   <p className="text-xs opacity-90 mb-1">Dépôts individuels:</p>
@@ -588,10 +677,13 @@ const SystemeStationService = () => {
   const [montrerVendeurs, setMontrerVendeurs] = useState(false);
   const [montrerRapport, setMontrerRapport] = useState(false);
   const [montrerUSD, setMontrerUSD] = useState(false);
+  const [montrerPropane, setMontrerPropane] = useState(false);
   const [pompeEtendue, setPompeEtendue] = useState('P1');
 
   // Taux de change USD/HTG
   const tauxUSD = 132;
+  // Prix Propane
+  const prixPropane = 450;
 
   // Initialiser la structure des lectures de pompes avec champ vendeur
   const initialiserLecturesPompes = () => {
@@ -619,11 +711,19 @@ const SystemeStationService = () => {
     return pompes;
   };
 
+  // Initialiser la structure de stockage pour propane
+  const initialiserDonneesPropane = () => {
+    return {
+      debut: '',
+      fin: ''
+    };
+  };
+
   // Initialiser la structure de stockage pour tous les shifts
   const initialiserTousShifts = () => {
     const cleStockage = `donneesStationService_${date}`;
     const donneesSauvegardees = localStorage.getItem(cleStockage);
-    
+
     if (donneesSauvegardees) {
       try {
         const parse = JSON.parse(donneesSauvegardees);
@@ -640,10 +740,30 @@ const SystemeStationService = () => {
         console.error('Erreur parsing données sauvegardées:', e);
       }
     }
-    
+
     return {
       AM: initialiserLecturesPompes(),
       PM: initialiserLecturesPompes()
+    };
+  };
+
+  // Initialiser les données propane
+  const initialiserPropaneDonnees = () => {
+    const cleStockage = `propaneDonnees_${date}`;
+    const donneesSauvegardees = localStorage.getItem(cleStockage);
+
+    if (donneesSauvegardees) {
+      try {
+        const parse = JSON.parse(donneesSauvegardees);
+        return parse;
+      } catch (e) {
+        console.error('Erreur parsing données propane:', e);
+      }
+    }
+
+    return {
+      AM: initialiserDonneesPropane(),
+      PM: initialiserDonneesPropane()
     };
   };
 
@@ -658,7 +778,7 @@ const SystemeStationService = () => {
   const initialiserDepots = () => {
     const cleStockage = `depotsStationService_${date}`;
     const depotsSauvegardes = localStorage.getItem(cleStockage);
-    
+
     if (depotsSauvegardes) {
       try {
         const parse = JSON.parse(depotsSauvegardes);
@@ -680,7 +800,7 @@ const SystemeStationService = () => {
         console.error('Erreur parsing dépôts sauvegardés:', e);
       }
     }
-    
+
     return {
       AM: {},
       PM: {}
@@ -691,7 +811,7 @@ const SystemeStationService = () => {
   const initialiserVentesUSD = () => {
     const cleStockage = `ventesUSD_${date}`;
     const ventesSauvegardees = localStorage.getItem(cleStockage);
-    
+
     if (ventesSauvegardees) {
       try {
         const parse = JSON.parse(ventesSauvegardees);
@@ -700,7 +820,7 @@ const SystemeStationService = () => {
         console.error('Erreur parsing ventes USD:', e);
       }
     }
-    
+
     return {
       AM: [],
       PM: []
@@ -709,6 +829,7 @@ const SystemeStationService = () => {
 
   // États pour toutes les données
   const [toutesDonnees, setToutesDonnees] = useState(initialiserTousShifts());
+  const [propaneDonnees, setPropaneDonnees] = useState(initialiserPropaneDonnees());
   const [vendeurs, setVendeurs] = useState(initialiserVendeurs());
   const [nouveauVendeur, setNouveauVendeur] = useState('');
   const [tousDepots, setTousDepots] = useState(initialiserDepots());
@@ -769,19 +890,23 @@ const SystemeStationService = () => {
   useEffect(() => {
     const cleStockage = `donneesStationService_${date}`;
     localStorage.setItem(cleStockage, JSON.stringify(toutesDonnees));
-    
+
+    const clePropane = `propaneDonnees_${date}`;
+    localStorage.setItem(clePropane, JSON.stringify(propaneDonnees));
+
     const cleDepots = `depotsStationService_${date}`;
     localStorage.setItem(cleDepots, JSON.stringify(tousDepots));
-    
+
     const cleUSD = `ventesUSD_${date}`;
     localStorage.setItem(cleUSD, JSON.stringify(ventesUSD));
-    
+
     localStorage.setItem('vendeursStationService', JSON.stringify(vendeurs));
-  }, [toutesDonnees, tousDepots, ventesUSD, vendeurs, date]);
+  }, [toutesDonnees, propaneDonnees, tousDepots, ventesUSD, vendeurs, date]);
 
   // Initialiser nouvelles données quand date change
   useEffect(() => {
     setToutesDonnees(initialiserTousShifts());
+    setPropaneDonnees(initialiserPropaneDonnees());
     setTousDepots(initialiserDepots());
     setVentesUSD(initialiserVentesUSD());
   }, [date]);
@@ -794,7 +919,7 @@ const SystemeStationService = () => {
   const mettreAJourLecture = (pompe, pistolet, champ, valeur) => {
     // Parser input gallons pour limiter à 3 décimales
     const valeurParse = champ === 'debut' || champ === 'fin' ? parserInputGallons(valeur) : valeur;
-    
+
     setToutesDonnees(prev => ({
       ...prev,
       [shift]: {
@@ -806,6 +931,18 @@ const SystemeStationService = () => {
             [champ]: valeurParse
           }
         }
+      }
+    }));
+  };
+
+  const mettreAJourPropane = (champ, valeur) => {
+    const valeurParse = parserInputGallons(valeur);
+    
+    setPropaneDonnees(prev => ({
+      ...prev,
+      [shift]: {
+        ...prev[shift],
+        [champ]: valeurParse
       }
     }));
   };
@@ -892,7 +1029,7 @@ const SystemeStationService = () => {
   const supprimerVendeur = (nomVendeur) => {
     if (confirm(`Supprimer vendeur "${nomVendeur}"? Cela supprimera aussi ses affectations aux pompes.`)) {
       setVendeurs(prev => prev.filter(v => v !== nomVendeur));
-      
+
       // Retirer vendeur de toutes les pompes
       const donneesMAJ = { ...toutesDonnees };
       Object.keys(donneesMAJ).forEach(shiftKey => {
@@ -903,7 +1040,7 @@ const SystemeStationService = () => {
         });
       });
       setToutesDonnees(donneesMAJ);
-      
+
       // Retirer dépôts du vendeur
       const depotsMAJ = { ...tousDepots };
       Object.keys(depotsMAJ).forEach(shiftKey => {
@@ -921,10 +1058,23 @@ const SystemeStationService = () => {
     return parseFloat((f - d).toFixed(3)); // Arrondir à 3 décimales
   };
 
-  // Calculer totaux pour un shift spécifique
-  const calculerTotaux = (donneesShift = null) => {
+  // Calculer propane pour un shift
+  const calculerPropane = (donneesShift = null) => {
+    const donnees = donneesShift || propaneDonnees[shift];
+    const gallons = (parseFloat(donnees.fin) || 0) - (parseFloat(donnees.debut) || 0);
+    const ventes = gallons * prixPropane;
+
+    return {
+      gallons: parseFloat(gallons.toFixed(3)),
+      ventes: parseFloat(ventes.toFixed(2))
+    };
+  };
+
+  // Calculer totaux pour un shift spécifique (avec propane)
+  const calculerTotaux = (donneesShift = null, donneesPropaneShift = null) => {
     const donneesACalculer = donneesShift || obtenirLecturesCourantes();
-    
+    const propaneACalculer = donneesPropaneShift || propaneDonnees[shift];
+
     let totalGallonsEssence = 0;
     let totalGallonsDiesel = 0;
     let totalVentesEssence = 0;
@@ -934,7 +1084,7 @@ const SystemeStationService = () => {
       Object.entries(donneesPompe).forEach(([key, donnees]) => {
         // Passer le champ _vendeur
         if (key === '_vendeur') return;
-        
+
         const gallons = calculerGallons(donnees.debut, donnees.fin);
 
         if (donnees.typeCarburant.includes('Essence')) {
@@ -947,22 +1097,28 @@ const SystemeStationService = () => {
       });
     });
 
+    // Calculer propane pour ce shift
+    const propane = calculerPropane(propaneACalculer);
+
     // Calculer USD pour ce shift
     const usdShift = ventesUSD[shift] || [];
     const totalUSD = usdShift.reduce((total, usd) => total + (parseFloat(usd) || 0), 0);
     const totalHTGenUSD = totalUSD * tauxUSD;
-    
-    // Total ajusté (HTG - USD converti)
-    const totalAjuste = (totalVentesEssence + totalVentesDiesel) - totalHTGenUSD;
+
+    // Total ajusté (HTG + Propane - USD converti)
+    const totalBrut = totalVentesEssence + totalVentesDiesel + propane.ventes;
+    const totalAjuste = totalBrut - totalHTGenUSD;
 
     return {
       totalGallonsEssence: parseFloat(totalGallonsEssence.toFixed(3)),
       totalGallonsDiesel: parseFloat(totalGallonsDiesel.toFixed(3)),
       totalVentesEssence: parseFloat(totalVentesEssence.toFixed(2)),
       totalVentesDiesel: parseFloat(totalVentesDiesel.toFixed(2)),
+      propaneGallons: propane.gallons,
+      propaneVentes: propane.ventes,
       totalUSD: parseFloat(totalUSD.toFixed(2)),
       totalHTGenUSD: parseFloat(totalHTGenUSD.toFixed(2)),
-      totalBrut: parseFloat((totalVentesEssence + totalVentesDiesel).toFixed(2)),
+      totalBrut: parseFloat(totalBrut.toFixed(2)),
       totalAjuste: parseFloat(totalAjuste.toFixed(2))
     };
   };
@@ -970,7 +1126,7 @@ const SystemeStationService = () => {
   // Calculer totaux par pompe pour un shift spécifique
   const calculerTotalPompe = (donneesPompe) => {
     if (!donneesPompe) return null;
-    
+
     let gallonsEssence = 0;
     let gallonsDiesel = 0;
     let ventesEssence = 0;
@@ -979,7 +1135,7 @@ const SystemeStationService = () => {
     Object.entries(donneesPompe).forEach(([key, donnees]) => {
       // Passer le champ _vendeur
       if (key === '_vendeur') return;
-      
+
       const gallons = calculerGallons(donnees.debut, donnees.fin);
 
       if (donnees.typeCarburant.includes('Essence')) {
@@ -1020,7 +1176,7 @@ const SystemeStationService = () => {
         depots: [],
         especesAttendues: 0
       };
-      
+
       totauxVendeurs.PM[vendeur] = {
         gallonsEssence: 0,
         gallonsDiesel: 0,
@@ -1037,12 +1193,12 @@ const SystemeStationService = () => {
     ['AM', 'PM'].forEach(shiftKey => {
       Object.entries(toutesDonnees[shiftKey]).forEach(([pompe, donneesPompe]) => {
         const vendeur = donneesPompe._vendeur;
-        
+
         if (vendeur && totauxVendeurs[shiftKey][vendeur]) {
           Object.entries(donneesPompe).forEach(([key, donnees]) => {
             // Passer le champ _vendeur
             if (key === '_vendeur') return;
-            
+
             const gallons = calculerGallons(donnees.debut, donnees.fin);
 
             if (donnees.typeCarburant.includes('Essence')) {
@@ -1053,12 +1209,12 @@ const SystemeStationService = () => {
               totauxVendeurs[shiftKey][vendeur].ventesDiesel += gallons * prix.diesel;
             }
           });
-          
+
           // Obtenir dépôts - filtrer chaînes vides
           const depots = (tousDepots[shiftKey]?.[vendeur] || []).filter(depot => depot !== '');
           const depotsValides = depots.map(depot => parseFloat(depot) || 0);
           const totalDepot = depotsValides.reduce((sum, depot) => sum + depot, 0);
-          
+
           // Mettre à jour totaux
           const donneesVendeur = totauxVendeurs[shiftKey][vendeur];
           donneesVendeur.gallonsEssence = parseFloat(donneesVendeur.gallonsEssence.toFixed(3));
@@ -1082,6 +1238,10 @@ const SystemeStationService = () => {
         AM: initialiserLecturesPompes(),
         PM: initialiserLecturesPompes()
       });
+      setPropaneDonnees({
+        AM: initialiserDonneesPropane(),
+        PM: initialiserDonneesPropane()
+      });
       setTousDepots({
         AM: {},
         PM: {}
@@ -1093,6 +1253,7 @@ const SystemeStationService = () => {
       setMontrerRapport(false);
       setMontrerDepots(false);
       setMontrerUSD(false);
+      setMontrerPropane(false);
     }
   };
 
@@ -1101,6 +1262,10 @@ const SystemeStationService = () => {
       setToutesDonnees(prev => ({
         ...prev,
         [shift]: initialiserLecturesPompes()
+      }));
+      setPropaneDonnees(prev => ({
+        ...prev,
+        [shift]: initialiserDonneesPropane()
       }));
       setTousDepots(prev => ({
         ...prev,
@@ -1119,18 +1284,20 @@ const SystemeStationService = () => {
   const totauxVendeursCourants = totauxVendeurs[shift];
 
   // Calculer totaux quotidiens (AM + PM)
-  const totauxAM = calculerTotaux(toutesDonnees.AM);
-  const totauxPM = calculerTotaux(toutesDonnees.PM);
-  
+  const totauxAM = calculerTotaux(toutesDonnees.AM, propaneDonnees.AM);
+  const totauxPM = calculerTotaux(toutesDonnees.PM, propaneDonnees.PM);
+
   const totauxQuotidiens = {
     gallonsEssence: parseFloat((totauxAM.totalGallonsEssence + totauxPM.totalGallonsEssence).toFixed(3)),
     gallonsDiesel: parseFloat((totauxAM.totalGallonsDiesel + totauxPM.totalGallonsDiesel).toFixed(3)),
+    propaneGallons: parseFloat((totauxAM.propaneGallons + totauxPM.propaneGallons).toFixed(3)),
     ventesEssence: parseFloat((totauxAM.totalVentesEssence + totauxPM.totalVentesEssence).toFixed(2)),
     ventesDiesel: parseFloat((totauxAM.totalVentesDiesel + totauxPM.totalVentesDiesel).toFixed(2)),
+    propaneVentes: parseFloat((totauxAM.propaneVentes + totauxPM.propaneVentes).toFixed(2)),
     totalUSD: parseFloat((totauxAM.totalUSD + totauxPM.totalUSD).toFixed(2)),
     totalHTGenUSD: parseFloat((totauxAM.totalHTGenUSD + totauxPM.totalHTGenUSD).toFixed(2)),
-    totalBrut: parseFloat((totauxAM.totalBrut + totauxPM.totalBrut).toFixed(2)),
   };
+  totauxQuotidiens.totalBrut = parseFloat((totauxQuotidiens.ventesEssence + totauxQuotidiens.ventesDiesel + totauxQuotidiens.propaneVentes).toFixed(2));
   totauxQuotidiens.totalAjuste = parseFloat((totauxQuotidiens.totalBrut - totauxQuotidiens.totalHTGenUSD).toFixed(2));
 
   const getCouleurCarburant = (typeCarburant) => {
@@ -1200,6 +1367,7 @@ const SystemeStationService = () => {
                 setMontrerVendeurs(false);
                 setMontrerDepots(false);
                 setMontrerUSD(false);
+                setMontrerPropane(false);
               }}
               className="bg-white text-blue-600 px-3 py-2.5 rounded-lg font-bold text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 transition min-h-[60px] min-w-[70px]"
             >
@@ -1212,6 +1380,7 @@ const SystemeStationService = () => {
                 setMontrerRapport(false);
                 setMontrerDepots(false);
                 setMontrerUSD(false);
+                setMontrerPropane(false);
               }}
               className="bg-purple-500 text-white px-3 py-2.5 rounded-lg font-bold text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 transition min-h-[60px] min-w-[70px]"
             >
@@ -1224,6 +1393,7 @@ const SystemeStationService = () => {
                 setMontrerRapport(false);
                 setMontrerVendeurs(false);
                 setMontrerUSD(false);
+                setMontrerPropane(false);
               }}
               className="bg-green-500 text-white px-3 py-2.5 rounded-lg font-bold text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 transition min-h-[60px] min-w-[70px]"
             >
@@ -1236,11 +1406,25 @@ const SystemeStationService = () => {
                 setMontrerRapport(false);
                 setMontrerVendeurs(false);
                 setMontrerDepots(false);
+                setMontrerPropane(false);
               }}
               className="bg-amber-500 text-white px-3 py-2.5 rounded-lg font-bold text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 transition min-h-[60px] min-w-[70px]"
             >
               <Globe size={16} />
               <span>USD</span>
+            </button>
+            <button
+              onClick={() => {
+                setMontrerPropane(!montrerPropane);
+                setMontrerRapport(false);
+                setMontrerVendeurs(false);
+                setMontrerDepots(false);
+                setMontrerUSD(false);
+              }}
+              className="bg-red-500 text-white px-3 py-2.5 rounded-lg font-bold text-xs flex flex-col items-center justify-center gap-0.5 active:scale-95 transition min-h-[60px] min-w-[70px]"
+            >
+              <Flame size={16} />
+              <span>Propane</span>
             </button>
             <button
               onClick={reinitialiserShiftCourant}
@@ -1291,6 +1475,14 @@ const SystemeStationService = () => {
             tauxUSD={tauxUSD}
             formaterArgent={formaterArgent}
           />
+        ) : montrerPropane ? (
+          <SaisiePropane
+            shift={shift}
+            propaneDonnees={propaneDonnees[shift]}
+            mettreAJourPropane={mettreAJourPropane}
+            formaterArgent={formaterArgent}
+            prixPropane={prixPropane}
+          />
         ) : !montrerRapport ? (
           <div className="space-y-3">
             {/* Indicateur Shift */}
@@ -1313,9 +1505,9 @@ const SystemeStationService = () => {
               </div>
             </div>
 
-            {/* Total USD Ajusté */}
+            {/* Total USD Ajusté avec Propane */}
             <div className="bg-gradient-to-br from-amber-600 to-orange-600 text-white rounded-xl p-4 shadow-lg">
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center mb-2">
                 <div>
                   <p className="text-xs opacity-90 mb-1">Total Ajusté ({shift})</p>
                   <p className="text-2xl font-bold">{formaterArgent(totaux.totalAjuste)} HTG</p>
@@ -1323,6 +1515,12 @@ const SystemeStationService = () => {
                 <div className="text-right">
                   <p className="text-xs opacity-90">USD: ${formaterArgent(totaux.totalUSD)}</p>
                   <p className="text-xs">= {formaterArgent(totaux.totalHTGenUSD)} HTG</p>
+                </div>
+              </div>
+              <div className="pt-2 border-t border-white border-opacity-30">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs opacity-90">Propane: {formaterArgent(totaux.propaneVentes)} HTG</span>
+                  <span className="text-xs opacity-90">Brut: {formaterArgent(totaux.totalBrut)} HTG</span>
                 </div>
               </div>
             </div>
@@ -1450,20 +1648,55 @@ const SystemeStationService = () => {
               </div>
             </div>
 
+            {/* Résumé Propane Quotidien */}
+            <div className="bg-gradient-to-br from-red-500 to-orange-600 text-white rounded-xl p-5 shadow-xl">
+              <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
+                <Flame size={20} />
+                Propane - Total Quotidien
+              </h3>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-white bg-opacity-20 rounded-lg p-3">
+                    <p className="text-xs opacity-90">Shift Matin</p>
+                    <p className="text-lg font-bold">{totauxAM.propaneGallons.toFixed(3)} gal</p>
+                    <p className="text-sm opacity-90">{formaterArgent(totauxAM.propaneVentes)} HTG</p>
+                  </div>
+                  <div className="bg-white bg-opacity-20 rounded-lg p-3">
+                    <p className="text-xs opacity-90">Shift Soir</p>
+                    <p className="text-lg font-bold">{totauxPM.propaneGallons.toFixed(3)} gal</p>
+                    <p className="text-sm opacity-90">{formaterArgent(totauxPM.propaneVentes)} HTG</p>
+                  </div>
+                </div>
+                <div className="bg-white bg-opacity-20 rounded-lg p-3">
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold">Total Gallons:</span>
+                    <span className="text-xl font-bold">{totauxQuotidiens.propaneGallons.toFixed(3)}</span>
+                  </div>
+                  <div className="flex justify-between items-center mt-2 pt-2 border-t border-white border-opacity-30">
+                    <span className="font-bold">Total Ventes Propane:</span>
+                    <span className="text-xl font-bold">{formaterArgent(totauxQuotidiens.propaneVentes)} HTG</span>
+                  </div>
+                  <div className="text-center text-xs opacity-90 mt-2">
+                    Prix: {prixPropane} HTG par gallon
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Résumé Financier Vendeurs */}
             <div className="bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-xl p-5 shadow-xl">
               <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                 <User size={20} />
                 Résumé Financier Vendeurs
               </h3>
-              
+
               <ResumeFinancierVendeurs
                 shift="AM"
                 vendeurs={vendeurs}
                 totauxVendeurs={totauxVendeurs}
                 formaterArgent={formaterArgent}
               />
-              
+
               <ResumeFinancierVendeurs
                 shift="PM"
                 vendeurs={vendeurs}
@@ -1534,12 +1767,26 @@ const SystemeStationService = () => {
               </div>
             </div>
 
-            {/* Total Final Ajusté */}
+            {/* Total Final Ajusté avec Propane */}
             <div className="bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-xl p-5 shadow-xl">
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-bold">TOTAL BRUT (HTG)</span>
                   <span className="text-2xl font-bold">{formaterArgent(totauxQuotidiens.totalBrut)} HTG</span>
+                </div>
+                <div className="space-y-1 pl-2 border-l-2 border-white border-opacity-30 ml-2">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="opacity-90">• Essence</span>
+                    <span>{formaterArgent(totauxQuotidiens.ventesEssence)} HTG</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="opacity-90">• Diesel</span>
+                    <span>{formaterArgent(totauxQuotidiens.ventesDiesel)} HTG</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="opacity-90">• Propane</span>
+                    <span>{formaterArgent(totauxQuotidiens.propaneVentes)} HTG</span>
+                  </div>
                 </div>
                 <div className="flex justify-between items-center pt-2 border-t border-white border-opacity-30">
                   <span className="text-sm opacity-90">Moins: USD converti</span>
