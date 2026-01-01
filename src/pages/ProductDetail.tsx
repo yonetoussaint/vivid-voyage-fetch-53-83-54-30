@@ -1,5 +1,4 @@
-// src/components/product/ProductDetail.tsx
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { Store } from "lucide-react";
 import ProductDetailError from "@/components/product/ProductDetailError";
@@ -14,7 +13,7 @@ import ProductDetailInfo from "@/components/product/ProductDetailInfo";
 import ProductDetailLoading from "@/components/product/ProductDetailLoading";
 import CustomerReviews from "@/components/product/CustomerReviewsEnhanced";
 import ReviewsGallery from "@/components/product/ReviewsGallery";
-import ReviewTypingBar from "@/components/product/ReviewTypingBar";
+import ReviewTypingBar from "@/components/product/ReviewTypingBar"; // Import the new component
 import { useProductDetail } from "@/hooks/product-detail.hooks";
 
 interface ProductDetailProps {
@@ -53,31 +52,6 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
     handleImageIndexChange,
   } = useProductDetail(props);
 
-  const [isThumbnailsVisible, setIsThumbnailsVisible] = useState(false);
-  const thumbnailsContainerRef = useRef<HTMLDivElement>(null);
-
-  // Ensure thumbnails are visible after initial load
-  useEffect(() => {
-    if (galleryImages.length > 0 && !isLoading) {
-      const timer = setTimeout(() => {
-        setIsThumbnailsVisible(true);
-        
-        // Trigger resize to ensure proper layout
-        window.dispatchEvent(new Event('resize'));
-        
-        // Small delay to ensure DOM is ready
-        setTimeout(() => {
-          if (thumbnailsContainerRef.current) {
-            thumbnailsContainerRef.current.style.opacity = "1";
-            thumbnailsContainerRef.current.style.transform = "translateY(0)";
-          }
-        }, 100);
-      }, 300);
-
-      return () => clearTimeout(timer);
-    }
-  }, [galleryImages.length, isLoading]);
-
   // Handle review submission
   const handleReviewSubmit = async (review: string, rating: number) => {
     try {
@@ -89,17 +63,6 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
       alert("Failed to submit review. Please try again.");
     }
   };
-
-  // Force scroll to top on image change
-  useEffect(() => {
-    if (thumbnailsContainerRef.current && galleryImages.length > 0) {
-      // Ensure gallery thumbnails are visible
-      thumbnailsContainerRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-      });
-    }
-  }, [currentGalleryIndex, galleryImages.length]);
 
   if (!productId) {
     return <ProductDetailError message="Product ID is missing" />;
@@ -132,7 +95,6 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
 
       {/* Add padding at the bottom to account for the fixed review bar */}
       <div style={{ minHeight: "100vh", paddingBottom: "120px" }}>
-        {/* Main Image Gallery */}
         <div className="w-full bg-white">
           <ProductImageGallery
             ref={galleryRef}
@@ -158,33 +120,15 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
           />
         </div>
 
-        {/* Gallery Thumbnails with proper container and snapping */}
-        {galleryImages.length > 1 && (
-          <div 
-            ref={thumbnailsContainerRef}
-            className="mt-2 bg-white border-t border-b border-gray-100 transition-all duration-300 ease-out"
-            style={{
-              opacity: isThumbnailsVisible ? 1 : 0,
-              transform: isThumbnailsVisible ? 'translateY(0)' : 'translateY(-10px)',
-            }}
-          >
-            <div className="py-1">
-              <GalleryThumbnails
-                images={galleryImages}
-                currentIndex={currentGalleryIndex}
-                onThumbnailClick={handleThumbnailClick}
-              />
-            </div>
-            
-            {/* Current image indicator */}
-            <div className="text-center text-xs text-gray-500 pb-1">
-              Image {currentGalleryIndex + 1} of {galleryImages.length}
-            </div>
-          </div>
-        )}
+        <div className="mt-2">
+          <GalleryThumbnails
+            images={galleryImages}
+            currentIndex={currentGalleryIndex}
+            onThumbnailClick={handleThumbnailClick}
+          />
+        </div>
 
-        {/* Product Information */}
-        <div className="mt-4 px-4">
+        <div className="mt-2">
           <ProductDetailInfo
             product={listingProduct}
             onReadMore={handleReadMore}
@@ -193,15 +137,13 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
 
         <Separator />
 
-        {/* Store Information */}
-        <div className="mt-4 px-4">
+        <div className="mt-4">
           <StoreBanner />
         </div>
 
         <Separator />
 
-        {/* More from this store */}
-        <div className="mt-4 px-4">
+        <div className="mt-4">
           <FlashDeals
             title="More from this store"
             icon={Store}
@@ -216,45 +158,28 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
 
         <Separator />
 
-        {/* Reviews Gallery */}
-        <div className="mt-4 px-4">
+        <div className="mt-4">
           <ReviewsGallery viewAllLink="/reviews" />
         </div>
 
         <Separator />
 
-        {/* Customer Reviews */}
-        <div className="mt-4 px-4">
-          <CustomerReviews 
-            productId={productId} 
-            limit={5}
-            onReviewClick={() => {
-              // Scroll to reviews section
-              document.getElementById('reviews-section')?.scrollIntoView({
-                behavior: 'smooth'
-              });
-            }}
-          />
+        <div className="mt-4">
+          <CustomerReviews productId={productId} limit={5} />
         </div>
-
-        <div id="reviews-section" className="mt-2" />
 
         <Separator />
 
-        {/* Related Products */}
-        <div className="mt-4 px-4">
-          <h2 className="text-lg font-semibold mb-4">Related Products</h2>
-          <InfiniteContentGrid
-            initialProducts={[]}
-            fetchPageSize={20}
-            enableFilters={true}
-            enableSorting={true}
-            gridLayout="fluid"
-            showHeader={false}
-            containerClassName="mt-0"
-            contentClassName="px-0"
-          />
-        </div>
+        <InfiniteContentGrid
+          initialProducts={[]}
+          fetchPageSize={20}
+          enableFilters={true}
+          enableSorting={true}
+          gridLayout="fluid"
+          showHeader={false}
+          containerClassName="mt-0"
+          contentClassName="px-4"
+        />
       </div>
 
       {/* ALWAYS VISIBLE Review Typing Bar */}
@@ -271,19 +196,8 @@ const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
 
   useEffect(() => {
-    // Smooth scroll to top on page load
     window.scrollTo({ top: 0, behavior: "smooth" });
-    
-    // Reset scroll position for thumbnails
-    const timer = setTimeout(() => {
-      const thumbnails = document.querySelector('.gallery-thumbnails-container');
-      if (thumbnails) {
-        (thumbnails as HTMLElement).scrollLeft = 0;
-      }
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [location.pathname, id]);
+  }, [location.pathname]);
 
   if (!id) {
     return <ProductDetailError message="Product not found" />;
