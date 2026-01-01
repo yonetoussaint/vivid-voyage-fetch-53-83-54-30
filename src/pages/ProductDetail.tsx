@@ -1,3 +1,4 @@
+// src/components/product/ProductDetailContent.tsx
 import React, { useEffect } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { Store } from "lucide-react";
@@ -13,7 +14,7 @@ import ProductDetailInfo from "@/components/product/ProductDetailInfo";
 import ProductDetailLoading from "@/components/product/ProductDetailLoading";
 import CustomerReviews from "@/components/product/CustomerReviewsEnhanced";
 import ReviewsGallery from "@/components/product/ReviewsGallery";
-import ReviewTypingBar from "@/components/product/ReviewTypingBar"; // Import the new component
+import ReviewTypingBar from "@/components/product/ReviewTypingBar";
 import { useProductDetail } from "@/hooks/product-detail.hooks";
 
 interface ProductDetailProps {
@@ -51,6 +52,18 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
     handleThumbnailClick,
     handleImageIndexChange,
   } = useProductDetail(props);
+
+  // Force reflow on mount to ensure proper thumbnail sizing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (galleryRef.current) {
+        // Trigger resize event to ensure proper layout
+        window.dispatchEvent(new Event('resize'));
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [galleryRef]);
 
   // Handle review submission
   const handleReviewSubmit = async (review: string, rating: number) => {
@@ -120,7 +133,8 @@ const ProductDetailContent: React.FC<ProductDetailProps> = (props) => {
           />
         </div>
 
-        <div className="mt-2">
+        {/* Gallery Thumbnails with proper container */}
+        <div className="mt-1 bg-white shadow-sm">
           <GalleryThumbnails
             images={galleryImages}
             currentIndex={currentGalleryIndex}
