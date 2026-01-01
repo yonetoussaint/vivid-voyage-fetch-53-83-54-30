@@ -35,14 +35,14 @@ const PropaneManager = ({ shift, propaneDonnees, mettreAJourPropane, prixPropane
           </div>
         </div>
 
-        {/* Entrées Propane - Using type="number" with step="0.001" like the original */}
+        {/* Entrées Propane - Using type="number" with step="0.001" */}
         <div className="space-y-3">
           <div>
             <label className="text-xs font-bold text-white block mb-1">
               INDEX DÉBUT PROPANE
             </label>
             <input
-              type="number"  // Keep as number like original
+              type="number"
               step="0.001"
               value={propaneDonnees?.debut || ''}
               onChange={(e) => mettreAJourPropane('debut', e.target.value)}
@@ -56,7 +56,7 @@ const PropaneManager = ({ shift, propaneDonnees, mettreAJourPropane, prixPropane
               INDEX FIN PROPANE
             </label>
             <input
-              type="number"  // Keep as number like original
+              type="number"
               step="0.001"
               value={propaneDonnees?.fin || ''}
               onChange={(e) => mettreAJourPropane('fin', e.target.value)}
@@ -84,7 +84,7 @@ const PropaneManager = ({ shift, propaneDonnees, mettreAJourPropane, prixPropane
         {/* Note d'information */}
         <div className="mt-4 p-2 bg-white bg-opacity-10 rounded-lg text-xs">
           <p className="font-bold mb-1">Note:</p>
-          <p>Les ventes de propane sont additionnées aux totaux finaux.</p>
+          <p>Les ventes de propane sont traitées séparément des ventes d'essence et diesel.</p>
         </div>
       </div>
     </div>
