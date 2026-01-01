@@ -12,40 +12,36 @@ export const formaterArgent = (num) => {
   return isNaN(nombre) ? '0.00' : nombre.toFixed(2);
 };
 
-// Arrondir à la dizaine la plus proche (56.87 → 56.90, 67 → 70)
-export const arrondirDizaine = (num) => {
-  if (num === null || num === undefined || isNaN(num)) return '0.00';
-  const nombre = typeof num === 'string' ? parseFloat(num) : num;
-  
-  if (isNaN(nombre)) return '0.00';
-  
-  // Arrondir à 2 décimales d'abord
-  const arrondi2 = Math.round(nombre * 100) / 100;
-  
-  // Arrondir à la dizaine (centime) supérieure
-  const arrondiDizaine = Math.ceil(arrondi2 * 10) / 10;
-  
-  return arrondiDizaine.toFixed(2);
-};
-
-// Arrondir pour l'affichage (pour totaux ajustés)
-export const formaterArrondiCaisse = (num) => {
-  if (num === null || num === undefined || isNaN(num)) return '0.00';
-  const nombre = typeof num === 'string' ? parseFloat(num) : num;
-  
-  if (isNaN(nombre)) return '0.00';
-  
-  // Arrondir à 2 décimales d'abord
-  const arrondi2 = Math.round(nombre * 100) / 100;
-  
-  // Arrondir à la dizaine (centime) supérieure
-  const arrondiDizaine = Math.ceil(arrondi2 * 10) / 10;
-  
-  // Formater avec 2 décimales
-  return arrondiDizaine.toFixed(2);
-};
-
-// Formater pour affichage caisse (avec arrondi)
+// Formater pour la caisse - arrondi à 0 ou 5, pas de décimales
 export const formaterCaisse = (num) => {
-  return formaterArrondiCaisse(num);
+  if (num === null || num === undefined || isNaN(num)) return '0';
+  const nombre = typeof num === 'string' ? parseFloat(num) : num;
+  
+  if (isNaN(nombre)) return '0';
+  
+  // Arrondir au multiple de 5 le plus proche
+  const rounded = Math.round(nombre / 5) * 5;
+  
+  // S'assurer que c'est un entier (pas de décimales)
+  return Math.round(rounded).toString();
+};
+
+// Alternative: arrondir à la dizaine la plus proche
+export const formaterCaisseDizaine = (num) => {
+  if (num === null || num === undefined || isNaN(num)) return '0';
+  const nombre = typeof num === 'string' ? parseFloat(num) : num;
+  
+  if (isNaN(nombre)) return '0';
+  
+  // Arrondir à la dizaine la plus proche
+  const rounded = Math.round(nombre / 10) * 10;
+  
+  // S'assurer que c'est un entier (pas de décimales)
+  return Math.round(rounded).toString();
+};
+
+// Formater pour affichage caisse avec symbole HTG
+export const formaterCaisseHTG = (num) => {
+  const valeur = formaterCaisse(num);
+  return `${valeur} HTG`;
 };
