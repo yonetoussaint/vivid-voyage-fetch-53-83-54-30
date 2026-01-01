@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Navbar from '@/components/easy/Navbar';
 import ShiftManager from '@/components/easy/ShiftManager';
 import VendeursManager from '@/components/easy/VendeursManager';
@@ -8,6 +8,8 @@ import PropaneManager from '@/components/easy/PropaneManager';
 import ReportView from '@/components/easy/ReportView';
 import PumpInputView from '@/components/easy/PumpInputView';
 import { useStationData } from '@/hooks/useStationData';
+import { Flame } from 'lucide-react';
+import { formaterArgent } from '@/utils/formatters';
 
 const SystemeStationService = () => {
   const [shift, setShift] = useState('AM');
@@ -44,16 +46,12 @@ const SystemeStationService = () => {
     totauxPM,
     totauxQuotidiens,
     calculerGallons,
-    obtenirLecturesCourantes
+    obtenirLecturesCourantes,
+    prix,
+    tauxUSD,
+    prixPropane
   } = useStationData(date, shift);
 
-  // Constantes
-  const tauxUSD = 132;
-  const prixPropane = 450;
-  const prix = {
-    essence: 600,
-    diesel: 650
-  };
   const pompes = ['P1', 'P2', 'P3', 'P4', 'P5'];
 
   // Get current propane data for the shift
@@ -116,12 +114,39 @@ const SystemeStationService = () => {
         );
       case 'propane':
         return (
-          <PropaneManager
-            shift={shift}
-            propaneDonnees={propaneDonneesCourantes}
-            mettreAJourPropane={mettreAJourPropane}
-            prixPropane={prixPropane}
-          />
+          <div className="space-y-4">
+            <PropaneManager
+              shift={shift}
+              propaneDonnees={propaneDonneesCourantes}
+              mettreAJourPropane={mettreAJourPropane}
+              prixPropane={prixPropane}
+            />
+            {/* Separate propane report card */}
+            <div className="bg-gradient-to-br from-red-500 to-orange-600 text-white rounded-xl p-4 shadow-xl">
+              <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
+                <Flame size={20} />
+                Rapport Propane - Shift {shift}
+              </h3>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-white bg-opacity-20 rounded-lg p-3">
+                    <p className="text-xs opacity-90">Total Gallons</p>
+                    <p className="text-xl font-bold">{totaux.propaneGallons.toFixed(3)}</p>
+                  </div>
+                  <div className="bg-white bg-opacity-20 rounded-lg p-3">
+                    <p className="text-xs opacity-90">Prix/Gallon</p>
+                    <p className="text-xl font-bold">{prixPropane} HTG</p>
+                  </div>
+                </div>
+                <div className="bg-white bg-opacity-20 rounded-lg p-3">
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold">Total Ventes Propane:</span>
+                    <span className="text-2xl font-bold">{formaterArgent(totaux.propaneVentes)} HTG</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         );
       case 'report':
         return (
