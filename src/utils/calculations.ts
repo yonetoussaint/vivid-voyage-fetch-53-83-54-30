@@ -1,6 +1,6 @@
 import { calculerGallons } from './helpers';
 
-// Calculer totaux pour un shift spécifique (avec propane)
+// Calculer totaux pour un shift spécifique (propane SEPARATE)
 export const calculerTotaux = (donneesShift, propaneShift, usdShift, prix, tauxUSD, prixPropane) => {
   if (!donneesShift) return getEmptyTotals();
 
@@ -25,7 +25,7 @@ export const calculerTotaux = (donneesShift, propaneShift, usdShift, prix, tauxU
     });
   });
 
-  // Calculer propane
+  // Calculer propane SEPARATELY (not added to main totals)
   const propaneGallons = (parseFloat(propaneShift?.fin) || 0) - (parseFloat(propaneShift?.debut) || 0);
   const propaneVentes = propaneGallons * prixPropane;
 
@@ -33,8 +33,8 @@ export const calculerTotaux = (donneesShift, propaneShift, usdShift, prix, tauxU
   const totalUSD = (usdShift || []).reduce((total, usd) => total + (parseFloat(usd) || 0), 0);
   const totalHTGenUSD = totalUSD * tauxUSD;
 
-  // Totaux
-  const totalBrut = totalVentesEssence + totalVentesDiesel + propaneVentes;
+  // Totaux - DO NOT include propane in main totals
+  const totalBrut = totalVentesEssence + totalVentesDiesel; // REMOVED propaneVentes
   const totalAjuste = totalBrut - totalHTGenUSD;
 
   return {
@@ -43,15 +43,15 @@ export const calculerTotaux = (donneesShift, propaneShift, usdShift, prix, tauxU
     propaneGallons: parseFloat(propaneGallons.toFixed(3)),
     totalVentesEssence: parseFloat(totalVentesEssence.toFixed(2)),
     totalVentesDiesel: parseFloat(totalVentesDiesel.toFixed(2)),
-    propaneVentes: parseFloat(propaneVentes.toFixed(2)),
+    propaneVentes: parseFloat(propaneVentes.toFixed(2)), // Still calculated but separate
     totalUSD: parseFloat(totalUSD.toFixed(2)),
     totalHTGenUSD: parseFloat(totalHTGenUSD.toFixed(2)),
-    totalBrut: parseFloat(totalBrut.toFixed(2)),
+    totalBrut: parseFloat(totalBrut.toFixed(2)), // Now only essence + diesel
     totalAjuste: parseFloat(totalAjuste.toFixed(2))
   };
 };
 
-// Calculer totaux vendeurs
+// Calculer totaux vendeurs (no propane in vendeur totals)
 export const calculerTotauxVendeurs = (vendeurs, toutesDonnees, tousDepots, prix) => {
   const totauxVendeurs = { AM: {}, PM: {} };
 
@@ -63,8 +63,8 @@ export const calculerTotauxVendeurs = (vendeurs, toutesDonnees, tousDepots, prix
 
   // Calculer ventes par vendeur
   ['AM', 'PM'].forEach(shiftKey => {
-    Object.entries(toutesDonnees[shiftKey]).forEach(([pompe, donneesPompe]) => {
-      const vendeur = donneesPompe._vendeur;
+    Object.entries(toutesDonnees[shiftKey] || {}).forEach(([pompe, donneesPompe]) => {
+      const vendeur = donneesPompe?._vendeur || '';
 
       if (vendeur && totauxVendeurs[shiftKey][vendeur]) {
         Object.entries(donneesPompe).forEach(([key, donnees]) => {
@@ -81,6 +81,9 @@ export const calculerTotauxVendeurs = (vendeurs, toutesDonnees, tousDepots, prix
           }
         });
 
+        // Mettre à jour les totaux
+        updateVendeurTotals(totauxVendeurs[shiftKey][vendeur]);
+        
         // Calculer dépôts
         updateDepotsForVendeur(totauxVendeurs, shiftKey, vendeur, tousDepots);
       }
@@ -88,6 +91,27 @@ export const calculerTotauxVendeurs = (vendeurs, toutesDonnees, tousDepots, prix
   });
 
   return totauxVendeurs;
+};
+
+// Mettre à jour les totaux du vendeur
+const updateVendeurTotals = (donneesVendeur) => {
+  donneesVendeur.gallonsEssence = parseFloat(donneesVendeur.gallonsEssence.toFixed(3));
+  donneesVendeur.gallonsDiesel = parseFloat(donneesVendeur.gallonsDiesel.toFixed(3));
+  donneesVendeur.ventesEssence = parseFloat(donneesVendeur.ventesEssence.toFixed(2));
+  donneesVendeur.ventesDiesel = parseFloat(donneesVendeur.ventesDiesel.toFixed(2));
+  donneesVendeur.ventesTotales = parseFloat((donneesVendeur.ventesEssence + donneesVendeur.ventesDiesel).toFixed(2));
+};
+
+// Mettre à jour les dépôts du vendeur
+const updateDepotsForVendeur = (totauxVendeurs, shiftKey, vendeur, tousDepots) => {
+  const depots = (tousDepots[shiftKey]?.[vendeur] || []).filter(depot => depot !== '');
+  const depotsValides = depots.map(depot => parseFloat(depot) || 0);
+  const totalDepot = depotsValides.reduce((sum, depot) => sum + depot, 0);
+
+  const donneesVendeur = totauxVendeurs[shiftKey][vendeur];
+  donneesVendeur.depot = parseFloat(totalDepot.toFixed(2));
+  donneesVendeur.depots = depotsValides;
+  donneesVendeur.especesAttendues = parseFloat((donneesVendeur.ventesTotales - donneesVendeur.depot).toFixed(2));
 };
 
 // Helper functions
@@ -114,19 +138,3 @@ const getEmptyVendeurData = () => ({
   depots: [],
   especesAttendues: 0
 });
-
-const updateDepotsForVendeur = (totauxVendeurs, shiftKey, vendeur, tousDepots) => {
-  const depots = (tousDepots[shiftKey]?.[vendeur] || []).filter(depot => depot !== '');
-  const depotsValides = depots.map(depot => parseFloat(depot) || 0);
-  const totalDepot = depotsValides.reduce((sum, depot) => sum + depot, 0);
-
-  const donneesVendeur = totauxVendeurs[shiftKey][vendeur];
-  donneesVendeur.gallonsEssence = parseFloat(donneesVendeur.gallonsEssence.toFixed(3));
-  donneesVendeur.gallonsDiesel = parseFloat(donneesVendeur.gallonsDiesel.toFixed(3));
-  donneesVendeur.ventesEssence = parseFloat(donneesVendeur.ventesEssence.toFixed(2));
-  donneesVendeur.ventesDiesel = parseFloat(donneesVendeur.ventesDiesel.toFixed(2));
-  donneesVendeur.ventesTotales = parseFloat((donneesVendeur.ventesEssence + donneesVendeur.ventesDiesel).toFixed(2));
-  donneesVendeur.depot = parseFloat(totalDepot.toFixed(2));
-  donneesVendeur.depots = depotsValides;
-  donneesVendeur.especesAttendues = parseFloat((donneesVendeur.ventesTotales - donneesVendeur.depot).toFixed(2));
-};
