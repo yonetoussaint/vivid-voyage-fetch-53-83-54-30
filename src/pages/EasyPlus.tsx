@@ -15,7 +15,7 @@ import { formaterArgent } from '@/utils/formatters';
 const SystemeStationService = () => {
   const [shift, setShift] = useState('AM');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [activeView, setActiveView] = useState('pumps'); // pumps, report, vendeurs, depots, usd, propane
+  const [activeView, setActiveView] = useState('pumps'); // pumps, stock, report, vendeurs, depots, usd, propane
   const [pompeEtendue, setPompeEtendue] = useState('P1');
 
   const {
@@ -102,18 +102,17 @@ const SystemeStationService = () => {
             supprimerDepot={supprimerDepot}
           />
         );
-
-case 'stock':
-  return (
-    <StockRestant
-      date={date}
-      shift={shift}
-      toutesDonnees={toutesDonnees}
-      propaneDonnees={propaneDonnees}
-      pompes={pompes}
-      prix={prix}
-    />
-  );
+      case 'stock':
+        return (
+          <StockRestant
+            date={date}
+            shift={shift}
+            toutesDonnees={toutesDonnees}
+            propaneDonnees={propaneDonnees}
+            pompes={pompes}
+            prix={prix}
+          />
+        );
       case 'usd':
         return (
           <USDManager
