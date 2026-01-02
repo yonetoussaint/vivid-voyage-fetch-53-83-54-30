@@ -150,7 +150,43 @@ const cisternCalibration = {
   { depth: 17.625, gallons: 1064 },
   { depth: 17.750, gallons: 1074 },
   { depth: 17.875, gallons: 1085 },
-  { depth: 18.000, gallons: 1096 }
+  { depth: 18.000, gallons: 1096 },
+{ depth: 18.125, gallons: 1106 },
+{ depth: 18.250, gallons: 1117 },
+{ depth: 18.375, gallons: 1128 },
+{ depth: 18.500, gallons: 1139 },
+{ depth: 18.625, gallons: 1150 },
+{ depth: 18.750, gallons: 1161 },
+{ depth: 18.875, gallons: 1172 },
+{ depth: 19.000, gallons: 1183 },
+{ depth: 19.125, gallons: 1194 },
+{ depth: 19.250, gallons: 1205 },
+{ depth: 19.375, gallons: 1216 },
+{ depth: 19.500, gallons: 1227 },
+{ depth: 19.625, gallons: 1238 },
+{ depth: 19.750, gallons: 1249 },
+{ depth: 19.875, gallons: 1260 },
+{ depth: 20.000, gallons: 1271 },
+{ depth: 20.125, gallons: 1283 },
+{ depth: 20.250, gallons: 1294 }, // Assuming "1,29" was meant to be 1294
+{ depth: 20.375, gallons: 1305 },
+{ depth: 20.500, gallons: 1316 },
+{ depth: 20.625, gallons: 1328 },
+{ depth: 20.750, gallons: 1339 },
+{ depth: 20.875, gallons: 1350 },
+{ depth: 21.000, gallons: 1362 },
+{ depth: 21.125, gallons: 1373 },
+{ depth: 21.250, gallons: 1385 },
+{ depth: 21.375, gallons: 1396 }, // Assuming "1,390" was a typo and should follow pattern
+{ depth: 21.500, gallons: 1408 }, // Assuming "1.40" was meant to be 1408
+{ depth: 21.625, gallons: 1419 }, // Assuming "1.41" was meant to be 1419
+{ depth: 21.750, gallons: 1431 }, // Assuming "1.43" was meant to be 1431
+{ depth: 21.875, gallons: 1442 }, // Assuming "1,54" was a typo
+{ depth: 22.000, gallons: 1454 }, // Assuming "142" was incomplete
+{ depth: 22.125, gallons: 1466 }, // Assuming "1.4" was incomplete
+{ depth: 22.250, gallons: 1477 }, // Assuming "1,47" was meant to be 1477
+{ depth: 22.375, gallons: 1489 }, // Assuming "1," was incomplete
+{ depth: 22.500, gallons: 1501 }, // Assuming "1." was incomplete
 ],
   
   // 6000 gal cistern (standard: 6000, max: 6094)
