@@ -364,8 +364,7 @@ const cisternCalibration = {
 { depth: 44.625, gallons: 3797 },
 { depth: 44.750, gallons: 3810 },
 { depth: 44.875, gallons: 3824 },
-{ depth: 45.000, gallons: 3838 }
-],
+{ depth: 45.000, gallons: 3838 },
 { depth: 45.125, gallons: 3851 },
 { depth: 45.250, gallons: 3865 },
 { depth: 45.375, gallons: 3879 },
