@@ -4,6 +4,7 @@ import ShiftManager from '@/components/easy/ShiftManager';
 import VendeursManager from '@/components/easy/VendeursManager';
 import DepotsManager from '@/components/easy/DepotsManager';
 import USDManager from '@/components/easy/USDManager';
+import StockRestant from '@/components/easy/StockRestant';
 import PropaneManager from '@/components/easy/PropaneManager';
 import ReportView from '@/components/easy/ReportView';
 import PumpInputView from '@/components/easy/PumpInputView';
@@ -101,6 +102,18 @@ const SystemeStationService = () => {
             supprimerDepot={supprimerDepot}
           />
         );
+
+case 'stock':
+  return (
+    <StockRestant
+      date={date}
+      shift={shift}
+      toutesDonnees={toutesDonnees}
+      propaneDonnees={propaneDonnees}
+      pompes={pompes}
+      prix={prix}
+    />
+  );
       case 'usd':
         return (
           <USDManager
