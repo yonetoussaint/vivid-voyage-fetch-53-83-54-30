@@ -100,7 +100,7 @@ const CustomerReviews = ({ productId, limit }: CustomerReviewsProps) => {
 
         {/* Show "View All" button if there are more than 2 reviews */}
         {finalReviews.length > 2 && (
-          <div className="px-4 pb-4">
+          <div className="px-2 pb-2">
             <Button
               variant="outline"
               className="w-full"
