@@ -774,7 +774,7 @@ const cisternCalibration = {
   { depth: 95.750, gallons: 8305 },
   { depth: 95.875, gallons: 8306 },
   { depth: 96.000, gallons: 8307 }
-]
+],
   
   // 6000 gal cistern (standard: 6000, max: 6094)
   6000: [
