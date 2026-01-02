@@ -37,6 +37,9 @@ const CustomerReviews = ({ productId, limit }: CustomerReviewsProps) => {
     summaryStats
   } = useCustomerReviews({ productId, limit });
 
+  // Get only the first 2 reviews to display
+  const displayedReviews = finalReviews.slice(0, 2);
+
   if (isLoading) {
     return <CustomerReviewsSkeleton />;
   }
@@ -76,7 +79,7 @@ const CustomerReviews = ({ productId, limit }: CustomerReviewsProps) => {
                 </p>
               </div>
             ) : (
-              finalReviews.map((review: Review) => (
+              displayedReviews.map((review: Review) => (
                 <div key={review.id} className="px-2">
                   <ReviewItem
                     review={review}
@@ -95,14 +98,17 @@ const CustomerReviews = ({ productId, limit }: CustomerReviewsProps) => {
           </div>
         </div>
 
-        {limit && finalReviews.length > limit && (
-          <Button
-            variant="outline"
-            className="w-full mt-4"
-            onClick={() => window.location.href = `/product/${productId}/reviews`}
-          >
-            View All {finalReviews.length} Reviews
-          </Button>
+        {/* Show "View All" button if there are more than 2 reviews */}
+        {finalReviews.length > 2 && (
+          <div className="px-4 pb-4">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => window.location.href = `/product/${productId}/reviews`}
+            >
+              View All {finalReviews.length} Reviews
+            </Button>
+          </div>
         )}
 
         <ReplyBar
