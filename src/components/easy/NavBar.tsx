@@ -1,9 +1,10 @@
 import React from 'react';
-import { FileText, Trash2, Fuel, Users, DollarSign, Globe, Flame } from 'lucide-react';
+import { FileText, Trash2, Fuel, Users, DollarSign, Globe, Database, Flame } from 'lucide-react';
 
 const Navbar = ({ date, setDate, shift, setShift, activeView, onViewChange, onResetShift, onResetDay }) => {
   const navItems = [
     { id: 'pumps', label: 'Données', icon: FileText, color: 'bg-white text-blue-600' },
+{ id: 'stock', label: 'Stock', icon: Database, color: 'bg-teal-500 text-white' },
     { id: 'report', label: 'Rapport', icon: FileText, color: 'bg-white text-blue-600' },
     { id: 'vendeurs', label: 'Vendeurs', icon: Users, color: 'bg-purple-500 text-white' },
     { id: 'depots', label: 'Dépôts', icon: DollarSign, color: 'bg-green-500 text-white' },
