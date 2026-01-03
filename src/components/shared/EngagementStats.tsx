@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, MessageCircle } from 'lucide-react';
+import { Heart, MessageCircle, Send } from 'lucide-react';
 
 interface EngagementStatsProps {
   likeCount: number;
@@ -17,35 +17,36 @@ export const EngagementStats: React.FC<EngagementStatsProps> = ({
   showIcon = true
 }) => {
   return (
-    <div className={`px-3 py-1.5 flex items-center gap-6 text-sm text-gray-600 ${className}`}>
-      {/* Heart button with like count */}
-      <div className="flex items-center gap-2">
-        <div className="flex items-center gap-1">
-          <Heart 
-            className="w-4 h-4 text-red-500 fill-current cursor-pointer hover:scale-110 transition-transform" 
-            aria-label="Like"
-          />
-          <span className="font-medium">{likeCount}</span>
+    <div className={`flex items-center justify-between px-2 py-1 gap-3 ${className}`}>
+      {/* Like count */}
+      <div className="flex-1">
+        <div className="flex items-center justify-center gap-2 w-full py-2 bg-gray-100 rounded-full h-8">
+          <Heart className="w-4 h-4 text-red-500 fill-current" />
+          <span className="text-xs text-gray-600 font-medium">
+            {likeCount}
+          </span>
         </div>
       </div>
-      
-      {/* Comments count with icon */}
-      <div className="flex items-center gap-2">
-        <div className="flex items-center gap-1">
-          <MessageCircle 
-            className="w-4 h-4 text-blue-500 cursor-pointer hover:scale-110 transition-transform" 
-            aria-label="Comments"
-          />
-          <span className="font-medium">{commentCount}</span>
-          <span>comments</span>
+
+      {/* Comment count */}
+      <div className="flex-1">
+        <div className="flex items-center justify-center gap-2 w-full py-2 bg-gray-100 rounded-full h-8">
+          <MessageCircle className="w-4 h-4 text-blue-500" />
+          <span className="text-xs text-gray-600 font-medium">
+            {commentCount}
+          </span>
         </div>
       </div>
-      
-      {/* Optional shares count */}
+
+      {/* Share count - only shown if provided */}
       {shareCount !== undefined && (
-        <div className="flex items-center gap-1">
-          <span className="font-medium">{shareCount}</span>
-          <span>shares</span>
+        <div className="flex-1">
+          <div className="flex items-center justify-center gap-2 w-full py-2 bg-gray-100 rounded-full h-8">
+            <Send className="w-4 h-4 text-gray-600" />
+            <span className="text-xs text-gray-600 font-medium">
+              {shareCount}
+            </span>
+          </div>
         </div>
       )}
     </div>
