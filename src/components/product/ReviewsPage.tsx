@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import ReviewItem, { Review } from './ReviewItem';
 import { mockReviews, mockComments, Comment } from './mockReviewsData';
-import { ArrowLeft, MessageCircle, Send, Heart, Star, MoreVertical, ThumbsUp, Flag, Smile } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Send, Heart, Star, MoreVertical, ThumbsUp, Flag, Smile, Search } from 'lucide-react';
 
 const ReviewsPage: React.FC = () => {
   const { reviewId } = useParams<{ reviewId: string }>();
@@ -86,67 +86,62 @@ const ReviewsPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Header - Fixed at top */}
       <div className="fixed top-0 left-0 right-0 z-30 bg-white border-b border-gray-200">
-        <div className="max-w-3xl mx-auto px-4 py-3">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate(-1)}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-gray-700" />
-            </button>
-            <div className="flex-1">
-              <h1 className="text-lg font-semibold text-gray-900">Review Comments</h1>
-              <p className="text-xs text-gray-500">
-                {reviewComments.length} comment{reviewComments.length !== 1 ? 's' : ''}
-              </p>
-            </div>
+        <div className="flex items-center justify-between p-2">
+          {/* Back Button - Left */}
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <ArrowLeft className="w-6 h-6 text-gray-900 stroke-2" />
+          </button>
+          
+          {/* Title - Center */}
+          <div className="flex-1 text-center">
+            <h1 className="text-lg font-bold text-gray-900 truncate px-2">
+              {selectedReview.user_name || 'Anonymous'}'s Review
+            </h1>
           </div>
+          
+          {/* Search Icon - Right */}
+          <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <Search className="w-6 h-6 text-gray-900 stroke-2" />
+          </button>
         </div>
       </div>
 
       {/* Main Content - Offset for fixed header and footer */}
-      <div className="pt-14 pb-20"> {/* pt-14 for header, pb-20 for comment bar */}
+      <div className="pt-16 pb-20"> {/* pt-16 for header, pb-20 for comment bar */}
         <div className="max-w-3xl mx-auto">
           {/* Selected Review - Edge to edge */}
           <div className="bg-white">
-            {/* Review Header */}
-            <div className="p-4">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-full bg-gray-200">
-                  {selectedReview.user_name?.charAt(0) || 'U'}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold text-gray-900">{selectedReview.user_name || 'Anonymous'}</span>
-                        {selectedReview.verified_purchase && (
-                          <span className="text-xs px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded">
-                            ✓ Verified
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <div className="flex">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Star
-                              key={star}
-                              className={`w-3.5 h-3.5 ${star <= (selectedReview.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
-                            />
-                          ))}
-                        </div>
-                        <span>•</span>
-                        <span>{new Date(selectedReview.created_at).toLocaleDateString('en-US', { 
-                          month: 'short', 
-                          day: 'numeric',
-                          year: 'numeric'
-                        })}</span>
-                      </div>
+            {/* Review Header - Modified to show less info since it's in the header now */}
+            <div className="p-4 pt-0">
+              <div className="pt-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <div className="flex">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={`w-4 h-4 ${star <= (selectedReview.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+                        />
+                      ))}
                     </div>
-                    <button className="p-1.5 hover:bg-gray-100 rounded-full">
-                      <MoreVertical className="w-4 h-4 text-gray-500" />
-                    </button>
+                    <span>•</span>
+                    <span>{new Date(selectedReview.created_at).toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric',
+                      year: 'numeric'
+                    })}</span>
+                    {selectedReview.verified_purchase && (
+                      <span className="text-xs px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded">
+                        ✓ Verified
+                      </span>
+                    )}
                   </div>
+                  <button className="p-1.5 hover:bg-gray-100 rounded-full">
+                    <MoreVertical className="w-4 h-4 text-gray-500" />
+                  </button>
                 </div>
               </div>
 
