@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Heart, Share2 } from 'lucide-react';
+import { Play, Heart, Share2, CheckCircle } from 'lucide-react';
 import { formatDate } from './DateUtils';
 import { truncateText } from "@/hooks/customer-reviews.hooks";
 import { useNavigate } from 'react-router-dom';
@@ -64,7 +64,7 @@ const ReviewItem = ({
 
   return (
     <div 
-      className="p-4 mb-4"
+      className="p-2 mb-4"
       style={{
         backgroundColor: '#ffffff',
         border: '1px solid #e0e0e0',
@@ -84,26 +84,31 @@ const ReviewItem = ({
           >
             {user_name?.charAt(0) || 'U'}
           </div>
-          <div>
-            <div className="flex items-center gap-2">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-0.5">
               <span className="font-medium text-gray-900">{user_name || 'Anonymous'}</span>
               {verified_purchase && (
-                <span 
-                  className="text-xs px-2 py-0.5"
-                  style={{
-                    backgroundColor: '#e6f4ea',
-                    color: '#1e7e34'
-                  }}
-                >
-                  Verified Purchase
-                </span>
+                <CheckCircle className="w-4 h-4 text-green-600" />
               )}
             </div>
-            <div className="text-sm text-gray-600 mt-0.5">
+            <div className="text-sm text-gray-600">
               <span>{formatDate(created_at)}</span>
             </div>
           </div>
         </div>
+        {/* Follow Button */}
+        <button
+          className="text-sm px-3 py-1.5 border border-gray-300 hover:bg-gray-50 transition-colors"
+          style={{
+            borderRadius: '4px',
+            background: 'none',
+            color: '#333',
+            fontWeight: '500',
+            minWidth: '80px'
+          }}
+        >
+          Follow
+        </button>
       </div>
 
       {/* Review Comment */}
