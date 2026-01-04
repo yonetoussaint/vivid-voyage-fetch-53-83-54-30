@@ -56,16 +56,16 @@ const ReviewItem = ({
       className="p-4 mb-4"
       style={{
         backgroundColor: '#ffffff',
-        border: '1px solid #e5e5e5',
-        borderRadius: '8px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+        border: '1px solid #e0e0e0',
+        boxShadow: 'none',
+        borderRadius: '0'
       }}
     >
       {/* Review Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
           <div 
-            className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold" 
+            className="w-10 h-10 flex items-center justify-center text-sm font-semibold" 
             style={{ 
               backgroundColor: 'rgba(0,0,0,0.08)',
               color: '#333'
@@ -78,7 +78,7 @@ const ReviewItem = ({
               <span className="font-medium text-gray-900">{user_name || 'Anonymous'}</span>
               {verified_purchase && (
                 <span 
-                  className="text-xs px-2 py-0.5 rounded"
+                  className="text-xs px-2 py-0.5"
                   style={{
                     backgroundColor: '#e6f4ea',
                     color: '#1e7e34'
@@ -131,12 +131,14 @@ const ReviewItem = ({
                   <img
                     src={item.url}
                     alt={item.alt}
-                    className="w-28 h-28 object-cover cursor-pointer hover:opacity-90 transition-opacity rounded"
+                    className="w-28 h-28 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                    style={{ borderRadius: '0' }}
                     onClick={() => onMediaClick(item.url)}
                   />
                 ) : item.type === 'video' ? (
                   <div
-                    className="w-28 h-28 relative cursor-pointer hover:opacity-90 transition-opacity overflow-hidden rounded"
+                    className="w-28 h-28 relative cursor-pointer hover:opacity-90 transition-opacity overflow-hidden"
+                    style={{ borderRadius: '0' }}
                     onClick={() => onMediaClick(item.url)}
                   >
                     <img
@@ -159,63 +161,55 @@ const ReviewItem = ({
       )}
 
       {/* Clean Engagement Section */}
-      <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-        {/* Left side: Date */}
-        <span className="text-sm text-gray-500">
-          {formatDate(created_at)}
-        </span>
+      <div className="flex items-center justify-between pt-3 border-t border-gray-200">
+        {/* Left side: Like button */}
+        <button
+          onClick={() => onLikeClick?.(id)}
+          className="text-sm text-gray-600 hover:text-red-600 transition-colors flex items-center gap-1.5"
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            cursor: 'pointer',
+            font: 'inherit'
+          }}
+        >
+          <Heart
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+          {likeCount > 0 ? likeCount : 'Like'}
+        </button>
         
-        {/* Right side: Buttons */}
-        <div className="flex items-center gap-6">
-          {/* Comments button */}
-          <button
-            onClick={() => onCommentClick(id)}
-            className="text-sm text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-1.5"
-            style={{
-              background: 'none',
-              border: 'none',
-              padding: 0,
-              cursor: 'pointer',
-              font: 'inherit'
-            }}
+        {/* Right side: Comments button */}
+        <button
+          onClick={() => onCommentClick(id)}
+          className="text-sm text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-1.5"
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            cursor: 'pointer',
+            font: 'inherit'
+          }}
+        >
+          <svg 
+            className="w-4 h-4" 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
           >
-            <svg 
-              className="w-4 h-4" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth="2" 
-                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-              />
-            </svg>
-            {commentCount > 0 ? `${commentCount} comments` : 'Comment'}
-          </button>
-
-          {/* Heart button with counter */}
-          <button
-            onClick={() => onLikeClick?.(id)}
-            className="text-sm text-gray-600 hover:text-red-600 transition-colors flex items-center gap-1.5"
-            style={{
-              background: 'none',
-              border: 'none',
-              padding: 0,
-              cursor: 'pointer',
-              font: 'inherit'
-            }}
-          >
-            <Heart
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
+            <path 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              strokeWidth="2" 
+              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
             />
-            {likeCount > 0 ? likeCount : 'Like'}
-          </button>
-        </div>
+          </svg>
+          {commentCount > 0 ? `${commentCount} comments` : 'Comment'}
+        </button>
       </div>
     </div>
   );
