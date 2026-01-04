@@ -14,7 +14,7 @@ import ProfilePage from "@/pages/ProfilePage";
 import ProductDetail from "@/pages/ProductDetail";
 import ProductCommentsPage from "@/pages/ProductCommentsPage";
 import Index from "@/pages/Index";
-import ReviewsPage from "@/components/product/ReviewsPage"; // Add this import
+import ReviewsPage from "@/components/product/ReviewsPage";
 
 export function AppRoutes() {
   return (
@@ -36,7 +36,15 @@ export function AppRoutes() {
         }
       />
 
-      {/* Reviews Page - OUTSIDE MainLayout for unrestricted scrolling */}
+      {/* Reviews Page - OUTSIDE MainLayout */}
+      <Route
+        path="reviews/:reviewId"  // Add this route for specific review
+        element={
+          <ReviewsPage />
+        }
+      />
+
+      {/* Optional: Keep the general reviews page if you want it */}
       <Route
         path="reviews"
         element={
